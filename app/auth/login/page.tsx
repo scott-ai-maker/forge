@@ -1,11 +1,10 @@
 import type { Metadata } from 'next'
 import AuthForm from '@/components/auth/AuthForm'
 import { Camera, CirclePlay, Users, BriefcaseBusiness } from 'lucide-react'
-import ForgeBrandMark from '@/components/ui/ForgeBrandMark'
 
 export const metadata: Metadata = {
-  title: 'Client & Coach Authentication | Forge Athletic',
-  description: 'Secure sign-in for Forge Athletic athletes, members, and coaches.',
+  title: 'Client & Coach Authentication',
+  description: 'Secure sign-in for Gordon Athletic Advisory athletes and coaches.',
 }
 
 const SOCIAL_LINKS = [
@@ -31,7 +30,7 @@ function getLoginSurface(nextPath: string, isCompanion: boolean) {
   if (isCompanion) {
     return {
       eyebrow: 'Athlete In-Gym Companion',
-      title: 'Forge Helper Access',
+      title: 'GAA Helper Access',
       description: 'Sign in to access your active training program, plate calculator, and wearable telemetry sync.',
     }
   }
@@ -78,27 +77,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     >
       <div className="sgf-auth-content" style={{ width: '100%', maxWidth: 420 }}>
         <div
+          className="sgf-auth-crest"
+          aria-hidden
           style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: 20,
+            width: 100,
+            height: 100,
+            margin: '0 auto 20px',
+            borderRadius: 18,
+            border: '2px solid var(--gold)',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.7), 0 0 25px rgba(197,160,89,0.45)',
+            backgroundImage: "url('/images/gaa-brand-crest.jpg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
-        >
-          <img
-            src="/images/brand/logo-concept-1-kinetic-f.jpg"
-            alt="Forge Athletic"
-            width={96}
-            height={96}
-            style={{
-              width: 96,
-              height: 96,
-              borderRadius: 18,
-              border: '1.5px solid rgba(245, 158, 11, 0.45)',
-              boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(245, 158, 11, 0.3)',
-              objectFit: 'cover',
-            }}
-          />
-        </div>
+        />
         <h1
           className="font-serif gold-gradient-text"
           style={{

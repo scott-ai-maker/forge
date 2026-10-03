@@ -6,8 +6,8 @@ import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
 import GaaIcon from '@/components/ui/GaaIcon'
 
 export const metadata: Metadata = {
-  title: 'Terms of Service & Intellectual Property Rights | Forge Athletic',
-  description: 'Member agreement, service-level commitments, liability screening conditions, and proprietary intellectual property protections of Forge Athletic.',
+  title: 'Terms of Service & Intellectual Property Rights',
+  description: 'Client agreement, service-level commitments, liability screening conditions, and proprietary intellectual property protections of Gordon Athletic Advisory.',
 }
 
 export default function TermsOfServicePage() {
@@ -17,7 +17,7 @@ export default function TermsOfServicePage() {
         fixed
         links={[
           { href: '/', label: 'Home' },
-          { href: '/packages', label: 'Memberships' },
+          { href: '/packages', label: 'Retainers' },
           { href: '/apply', label: 'Apply' },
         ]}
         actions={<MarketingLoginActions />}
@@ -31,7 +31,7 @@ export default function TermsOfServicePage() {
           Terms of Service &amp; Proprietary Rights
         </h1>
         <p style={{ color: '#8A99AA', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
-          Effective &amp; Last Updated: August 28, 2026 · Forge Athletic LLC
+          Effective &amp; Last Updated: August 28, 2026 · Gordon Athletic Advisory LLC
         </p>
       </div>
 
@@ -40,7 +40,7 @@ export default function TermsOfServicePage() {
           1. Acceptance of Terms &amp; Binding Agreement
         </h2>
         <p>
-          By accessing, browsing, creating an account on, subscribing to, or utilizing any website, software application, live video consultation studio, or digital training service provided by <strong>Forge Athletic LLC</strong> (&quot;Forge Athletic&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), you (&quot;Client&quot;, &quot;Athlete&quot;, &quot;Coach&quot;, or &quot;User&quot;) agree to be legally bound by these Terms of Service, our Privacy Policy, and all incorporated proprietary agreements. If you do not unconditionally agree to these terms, you are strictly prohibited from using the platform and must discontinue access immediately.
+          By accessing, browsing, creating an account on, subscribing to, or utilizing any website, software application, live video consultation studio, or digital advisory service provided by <strong>Gordon Athletic Advisory LLC</strong> (&quot;GAA&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), you (&quot;Client&quot;, &quot;Athlete&quot;, &quot;Coach&quot;, or &quot;User&quot;) agree to be legally bound by these Terms of Service, our Privacy Policy, and all incorporated proprietary agreements. If you do not unconditionally agree to these terms, you are strictly prohibited from using the platform and must discontinue access immediately.
         </p>
       </section>
 
@@ -54,7 +54,7 @@ export default function TermsOfServicePage() {
             <span>Exclusive Ownership of Proprietary Software, Algorithms &amp; Methodologies</span>
           </p>
           <p style={{ margin: 0, fontSize: '0.92rem', color: '#CBD5E1' }}>
-            The Forge Athletic digital platform, including without limitation its software source code, object code, system architecture, database schemas, proprietary algorithms (including the <strong>Forge Periodization Engine™</strong>, <strong>OPT™ Periodization Architect™</strong>, <strong>AI Postural Distortion Mesh Scanner™</strong>, <strong>Chrono-Dosing Ergogenic Protocol™</strong>, <strong>Live Kinetic Telestrator HUD™</strong>, and <strong>Sunday Performance Dossier™</strong>), RAG knowledge bases, prompt engineering pipelines, visual interfaces, UI design components, 3D badges, video analytics, audio cadences, and training protocols (collectively, the &quot;Proprietary IP&quot;), are the exclusive property of Forge Athletic LLC.
+            The GAA digital platform, including without limitation its software source code, object code, system architecture, database schemas, proprietary algorithms (including the <strong>Gordon Adaptive Training Engine™</strong>, <strong>OPT™ Periodization Architect™</strong>, <strong>AI Postural Distortion Mesh Scanner™</strong>, <strong>Chrono-Dosing Ergogenic Protocol™</strong>, <strong>Live Kinetic Telestrator HUD™</strong>, and <strong>Executive Sunday Intelligence Dossier™</strong>), RAG knowledge bases, prompt engineering pipelines, visual interfaces, UI design components, 3D badges, video analytics, audio cadences, and clinical protocols (collectively, the &quot;Proprietary IP&quot;), are the exclusive property of Gordon Athletic Advisory LLC.
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export default function TermsOfServicePage() {
           2.1 Trademarks &amp; Service Marks
         </h3>
         <p style={{ fontSize: '0.95rem' }}>
-          &quot;Forge Athletic&quot;, &quot;Forge&quot;, &quot;Forge Periodization Engine&quot;, &quot;Sunday Performance Dossier&quot;, the Forge Brand Mark, and all associated logos, product names, and brand badges are proprietary trademarks and service marks of Forge Athletic LLC. All Rights Reserved. NASM and OPT™ are registered marks of the National Academy of Sports Medicine used under license and standard educational citation.
+          &quot;Gordon Athletic Advisory&quot;, &quot;GAA&quot;, &quot;GATE&quot;, &quot;Executive Sunday Dossier&quot;, the GAA Architectural Swiss Monogram, and all associated logos, product names, and brand badges are proprietary trademarks and service marks of Gordon Athletic Advisory LLC. All Rights Reserved. NASM and OPT™ are registered marks of the National Academy of Sports Medicine used under license and standard educational citation.
         </p>
 
         <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.15rem', color: '#FFFFFF', margin: '1.25rem 0 0.5rem', letterSpacing: '0.03em' }}>
@@ -79,10 +79,10 @@ export default function TermsOfServicePage() {
             Scrape, crawl, harvest, data-mine, or ingest any portion of the platform, training programs, exercise databases, prompt chains, or client telemetry using automated bots, crawlers, or AI systems;
           </li>
           <li style={{ marginBottom: '0.4rem' }}>
-            Feed, input, or train any third-party artificial intelligence, machine learning model, large language model (LLM), or neural network on Forge Athletic proprietary workout structures, periodization logic, or training protocols;
+            Feed, input, or train any third-party artificial intelligence, machine learning model, large language model (LLM), or neural network on GAA proprietary workout structures, periodization logic, or clinical protocols;
           </li>
           <li style={{ marginBottom: '0.4rem' }}>
-            Create derivative works, clone software, white-label services, or commercial coaching applications incorporating or copying Forge Athletic’s periodization engines, live telestrator HUD, or chronodosing systems.
+            Create derivative works, clone software, white-label services, or commercial coaching applications incorporating or copying GAA’s unique four-pillar advisory structure, live telestrator HUD, or chrono-dosing engines.
           </li>
         </ul>
 
@@ -90,14 +90,14 @@ export default function TermsOfServicePage() {
           2.3 Limited, Revocable User License
         </h3>
         <p style={{ fontSize: '0.95rem' }}>
-          Upon active subscription and good standing, Forge Athletic grants you a non-exclusive, non-transferable, non-sublicensable, revocable, personal license to access and use the platform strictly for your personal, non-commercial athletic training and human performance development. You may not distribute, resell, rent, lease, or publicly display any prescribed materials, workout plans, or software interfaces without express written authorization.
+          Upon active subscription and good standing, GAA grants you a non-exclusive, non-transferable, non-sublicensable, revocable, personal license to access and use the platform strictly for your personal, non-commercial athletic training and human performance advisory. You may not distribute, resell, rent, lease, or publicly display any prescribed materials, workout plans, or software interfaces without express written authorization.
         </p>
 
         <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.15rem', color: '#FFFFFF', margin: '1.25rem 0 0.5rem', letterSpacing: '0.03em' }}>
           2.4 Legal Remedies &amp; Injunctive Relief
         </h3>
         <p style={{ fontSize: '0.95rem' }}>
-          You acknowledge that any breach of these Intellectual Property provisions will cause irreparable and immediate harm to Forge Athletic LLC for which monetary damages alone would be inadequate. Accordingly, in addition to all other available legal remedies, Forge Athletic shall be entitled to seek immediate preliminary and permanent injunctive relief against any actual or threatened infringement without the necessity of posting a bond.
+          You acknowledge that any breach of these Intellectual Property provisions will cause irreparable and immediate harm to Gordon Athletic Advisory LLC for which monetary damages alone would be inadequate. Accordingly, in addition to all other available legal remedies, GAA shall be entitled to seek immediate preliminary and permanent injunctive relief against any actual or threatened infringement without the necessity of posting a bond.
         </p>
       </section>
 
@@ -108,10 +108,10 @@ export default function TermsOfServicePage() {
         <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.35)', borderRadius: 8, padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
           <p style={{ margin: '0 0 0.5rem', fontWeight: 700, color: '#FCA5A5', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <GaaIcon name="alert-triangle" size={14} tone="ruby" />
-            <span>Educational Performance Guidance · Not Medical Treatment</span>
+            <span>Educational Performance Advisory · Not Medical Treatment</span>
           </p>
           <p style={{ margin: 0, fontSize: '0.92rem', color: '#E2E8F0' }}>
-            Forge Athletic provides high-performance athletic conditioning, movement analysis, and nutritional supplementation education. Forge Athletic is <strong>not</strong> a medical healthcare provider, physical therapy clinic, or emergency medical facility. No communication, assessment, or AI synthesis constitutes medical diagnosis, physical therapy prescription, or pharmacological medical advice.
+            Gordon Athletic Advisory provides high-performance athletic conditioning, movement analysis, and nutritional supplementation education. Gordon Athletic Advisory is <strong>not</strong> a medical healthcare provider, physical therapy clinic, or emergency medical facility. No communication, assessment, or AI synthesis constitutes medical diagnosis, physical therapy prescription, or pharmacological medical advice.
           </p>
         </div>
         <p style={{ fontSize: '0.95rem' }}>
@@ -127,7 +127,7 @@ export default function TermsOfServicePage() {
           4. Payments, Subscriptions &amp; Retainer Commitments
         </h2>
         <p style={{ fontSize: '0.95rem' }}>
-          Memberships and training packages are billed per 30-day coaching cycle as selected at checkout. Subscriptions renew automatically each billing period until formally canceled via your Account Portal or written notice prior to the next billing date. Due to the bespoke, dedicated allocation of coach time and program architecture, all sales are final unless otherwise provided in writing. Payments are encrypted and processed securely via Stripe.
+          Coaching retainers and advisory packages are billed per 30-day coaching cycle as selected at checkout. Subscriptions renew automatically each billing period until formally canceled via your Account Portal or written notice prior to the next billing date. Due to the bespoke, dedicated allocation of coach time and program architecture, all sales are final unless otherwise provided in writing. Payments are encrypted and processed securely via Stripe.
         </p>
       </section>
 
@@ -166,10 +166,10 @@ export default function TermsOfServicePage() {
           6. Limitation of Liability &amp; Indemnification
         </h2>
         <p style={{ fontSize: '0.95rem' }}>
-          To the maximum extent permitted by applicable law, in no event shall Forge Athletic LLC, its founders, coaches, officers, employees, or technology providers be liable for any indirect, punitive, incidental, special, consequential, or exemplary damages, including without limitation damages for loss of profits, bodily injury, goodwill, data, or other intangible losses.
+          To the maximum extent permitted by applicable law, in no event shall Gordon Athletic Advisory LLC, its founders, coaches, officers, employees, or technology providers be liable for any indirect, punitive, incidental, special, consequential, or exemplary damages, including without limitation damages for loss of profits, bodily injury, goodwill, data, or other intangible losses.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
-          You agree to defend, indemnify, and hold harmless Forge Athletic LLC from and against any and all claims, damages, obligations, losses, liabilities, costs, or debt arising from your violation of these Terms, misuse of the platform, or breach of any third-party intellectual property or privacy rights.
+          You agree to defend, indemnify, and hold harmless Gordon Athletic Advisory LLC from and against any and all claims, damages, obligations, losses, liabilities, costs, or debt arising from your violation of these Terms, misuse of the platform, or breach of any third-party intellectual property or privacy rights.
         </p>
       </section>
 
@@ -191,7 +191,7 @@ export default function TermsOfServicePage() {
             <strong>Trademark Ownership Acknowledgement:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks owned exclusively by the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC.
           </p>
           <p style={{ margin: 0, fontSize: '0.92rem', color: '#CBD5E1', lineHeight: 1.6 }}>
-            <strong>Independent Status &amp; Nominative Fair Use:</strong> Forge Athletic LLC is an independent private organization and is <strong>not affiliated with, sponsored by, authorized by, or endorsed by</strong> NASM or Ascend Learning, LLC. All references throughout the application, user interfaces, educational documentation, and algorithms to the Optimum Performance Training (OPT™) framework, phase categorizations (Stabilization, Strength, Power), and kinetic screening protocols are made strictly for educational, methodological compatibility, and scientific periodization reference under the <em>Nominative Fair Use Doctrine</em> (15 U.S.C. § 1125).
+            <strong>Independent Status &amp; Nominative Fair Use:</strong> Gordon Athletic Advisory LLC and Scott Gordon Fitness are independent private organizations and are <strong>not affiliated with, sponsored by, authorized by, or endorsed by</strong> NASM or Ascend Learning, LLC. All references throughout the application, user interfaces, educational documentation, and algorithms to the Optimum Performance Training (OPT™) framework, phase categorizations (Stabilization, Strength, Power), and kinetic screening protocols are made strictly for educational, methodological compatibility, and scientific periodization reference under the <em>Nominative Fair Use Doctrine</em> (15 U.S.C. § 1125).
           </p>
         </div>
         <p style={{ fontSize: '0.92rem', color: '#94A3B8' }}>
@@ -207,9 +207,9 @@ export default function TermsOfServicePage() {
           For inquiries regarding intellectual property licensing, trademark permissions, or legal notices, contact:
         </p>
         <p style={{ margin: '0.4rem 0 0', fontSize: '0.95rem', color: 'var(--gold-lt)' }}>
-          <strong>Forge Athletic LLC</strong><br />
+          <strong>Gordon Athletic Advisory LLC</strong><br />
           Legal &amp; Intellectual Property Department<br />
-          Email: <a href="mailto:scott@forgeathletic.com" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forgeathletic.com</a>
+          Email: <a href="mailto:scott@gordonathleticadvisory.com" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@gordonathleticadvisory.com</a>
         </p>
       </section>
     </main>

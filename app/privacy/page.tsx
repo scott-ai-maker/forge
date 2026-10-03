@@ -5,8 +5,8 @@ import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
 import GaaIcon from '@/components/ui/GaaIcon'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy & Biometric Data Shield | Forge Athletic',
-  description: 'Privacy standards, HIPAA-aligned data governance, and cryptographic protection of biometric telemetry at Forge Athletic.',
+  title: 'Privacy Policy & Biometric Data Shield',
+  description: 'Executive privacy standards, HIPAA-aligned data governance, and cryptographic protection of biometric telemetry at Gordon Athletic Advisory.',
 }
 
 export default function PrivacyPolicyPage() {
@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         fixed
         links={[
           { href: '/', label: 'Home' },
-          { href: '/packages', label: 'Memberships' },
+          { href: '/packages', label: 'Retainers' },
           { href: '/apply', label: 'Apply' },
         ]}
         actions={<MarketingLoginActions />}
@@ -24,13 +24,13 @@ export default function PrivacyPolicyPage() {
       <main id="main-content" style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(5rem, 8vw, 7rem) clamp(16px, 3vw, 24px) 4rem', fontFamily: 'Raleway, sans-serif', color: '#F5F0E8', lineHeight: 1.65, boxSizing: 'border-box' }}>
         <div style={{ borderBottom: '1px solid rgba(197, 160, 89, 0.3)', paddingBottom: '1.5rem', marginBottom: '2.5rem' }}>
         <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.18em', color: 'var(--gold-lt)' }}>
-          Privacy &amp; Data Security
+          Executive Privacy &amp; Data Security
         </span>
         <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '2.5rem', letterSpacing: '0.04em', margin: '0.5rem 0 0', color: '#FFFFFF' }}>
           Privacy Policy &amp; Biometric Data Shield
         </h1>
         <p style={{ color: '#8A99AA', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
-          Effective &amp; Last Updated: August 28, 2026 · Forge Athletic LLC
+          Effective &amp; Last Updated: August 28, 2026 · Gordon Athletic Advisory LLC
         </p>
       </div>
 
@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
           1. Scope &amp; Commitment to Confidentiality
         </h2>
         <p>
-          Forge Athletic LLC (&quot;Forge Athletic&quot;, &quot;we&quot;, &quot;us&quot;) recognizes the sensitive and highly confidential nature of health metrics, physical movement screenings, physique progression photographs, and biometric telemetry. We maintain the highest standards of data security, cryptographic isolation, and privacy governance.
+          Gordon Athletic Advisory LLC (&quot;GAA&quot;, &quot;we&quot;, &quot;us&quot;) recognizes the sensitive and highly confidential nature of executive health metrics, physical movement screenings, physique progression photographs, and biometric telemetry. We maintain the highest standards of data security, cryptographic isolation, and privacy governance.
         </p>
       </section>
 
@@ -76,7 +76,7 @@ export default function PrivacyPolicyPage() {
             <strong>Media &amp; Video Streams:</strong> Form check videos, live session telestrator recordings, posture screen images, and check-in photos stored securely in private Supabase Storage buckets with Row-Level Security (RLS) enforcement.
           </li>
           <li style={{ marginBottom: '0.4rem' }}>
-            <strong>Payment Data:</strong> Payment details are processed directly via Stripe; Forge Athletic never stores your credit card numbers or raw billing credentials on our servers.
+            <strong>Payment Data:</strong> Payment details are processed directly via Stripe; GAA never stores your credit card numbers or raw billing credentials on our servers.
           </li>
         </ul>
       </section>
@@ -107,9 +107,9 @@ export default function PrivacyPolicyPage() {
           For inquiries regarding your biometric data or privacy protections, contact:
         </p>
         <p style={{ margin: '0.4rem 0 0', fontSize: '0.95rem', color: 'var(--gold-lt)' }}>
-          <strong>Forge Athletic LLC</strong><br />
+          <strong>Gordon Athletic Advisory LLC</strong><br />
           Data Protection &amp; Privacy Office<br />
-          Email: <a href="mailto:scott@forgeathletic.com" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forgeathletic.com</a>
+          Email: <a href="mailto:scott@gordonathleticadvisory.com" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@gordonathleticadvisory.com</a>
         </p>
       </section>
     </main>

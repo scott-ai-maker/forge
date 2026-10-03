@@ -15,7 +15,7 @@ export default function GaaMasterWatermarkSeal({
   opacity = 0.12,
   className = '',
   style = {},
-  subtitle = 'PRECISION SPORTS SCIENCE',
+  subtitle = 'NASM OPT™ MASTER ADVISORY',
 }: GaaMasterWatermarkSealProps) {
   return (
     <div
@@ -31,8 +31,8 @@ export default function GaaMasterWatermarkSeal({
         justifyContent: 'center',
         padding: size * 0.08,
         textAlign: 'center',
-        background: 'radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.15) 0%, transparent 80%)',
-        boxShadow: '0 0 20px rgba(245, 158, 11, 0.2)',
+        background: 'radial-gradient(circle at 50% 50%, rgba(197, 160, 89, 0.15) 0%, transparent 80%)',
+        boxShadow: '0 0 20px rgba(197, 160, 89, 0.15)',
         opacity,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -42,14 +42,14 @@ export default function GaaMasterWatermarkSeal({
       <div
         className="font-serif"
         style={{
-          fontSize: size * 0.18,
+          fontSize: size * 0.2,
           color: 'var(--gold-lt)',
           letterSpacing: '0.14em',
           lineHeight: 1,
           fontWeight: 700,
         }}
       >
-        FORGE
+        GAA
       </div>
       <div
         style={{
@@ -62,8 +62,8 @@ export default function GaaMasterWatermarkSeal({
       />
       <div
         style={{
-          fontFamily: 'var(--font-heading, Barlow Condensed), sans-serif',
-          fontSize: Math.max(7, size * 0.06),
+          fontFamily: 'Raleway, sans-serif',
+          fontSize: Math.max(7, size * 0.065),
           fontWeight: 800,
           color: '#FFFFFF',
           letterSpacing: '0.18em',
@@ -75,14 +75,13 @@ export default function GaaMasterWatermarkSeal({
       </div>
       <div
         style={{
-          fontSize: Math.max(6, size * 0.045),
+          fontSize: Math.max(6, size * 0.05),
           color: 'var(--gold-lt)',
-          letterSpacing: '0.12em',
+          letterSpacing: '0.14em',
           marginTop: size * 0.02,
-          whiteSpace: 'nowrap',
         }}
       >
-        ★ BUILT FROM THE GROUND UP ★
+        ★ VERIFIED CLINICAL ★
       </div>
     </div>
   )

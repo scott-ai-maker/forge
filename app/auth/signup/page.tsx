@@ -2,11 +2,10 @@ import type { Metadata } from 'next'
 import AuthForm from '@/components/auth/AuthForm'
 import { Camera, CirclePlay, Users, BriefcaseBusiness } from 'lucide-react'
 import { supabaseAdmin } from '@/lib/supabase'
-import ForgeBrandMark from '@/components/ui/ForgeBrandMark'
 
 export const metadata: Metadata = {
-  title: 'Create Your Athlete Account | Forge Athletic',
-  description: 'Join Forge Athletic for precision sports science, automated periodization, and real-time biomechanics.',
+  title: 'Create Your Athlete Account',
+  description: 'Join Gordon Athletic Advisory for private athletic coaching and telemetry-backed periodization.',
 }
 
 const SOCIAL_LINKS = [
@@ -65,27 +64,19 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
     >
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div
+          aria-hidden
           style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: 20,
+            width: 100,
+            height: 100,
+            margin: '0 auto 20px',
+            borderRadius: 18,
+            border: '2px solid var(--gold)',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.7), 0 0 25px rgba(197,160,89,0.45)',
+            backgroundImage: "url('/images/gaa-brand-crest.jpg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
-        >
-          <img
-            src="/images/brand/logo-concept-1-kinetic-f.jpg"
-            alt="Forge Athletic"
-            width={96}
-            height={96}
-            style={{
-              width: 96,
-              height: 96,
-              borderRadius: 18,
-              border: '1.5px solid rgba(245, 158, 11, 0.45)',
-              boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(245, 158, 11, 0.3)',
-              objectFit: 'cover',
-            }}
-          />
-        </div>
+        />
         <h1
           className="font-serif gold-gradient-text"
           style={{
@@ -96,7 +87,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
             fontWeight: 700,
           }}
         >
-          FORGE ATHLETIC
+          GORDON ATHLETIC ADVISORY
         </h1>
         <p
           style={{

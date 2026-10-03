@@ -6,11 +6,11 @@ import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
 import GaaIcon from '@/components/ui/GaaIcon'
 
 export const metadata: Metadata = {
-  title: 'Apply for Diagnostic Intake | Forge Athletic',
-  description: 'Take the 2-minute biomechanical diagnostic intake to align your membership tier, periodization pathway, and sports science support level.',
+  title: 'Apply for Advisory & Performance Diagnostic',
+  description: 'Take the 2-minute biomechanical diagnostic intake to align your private advisory tier, periodization pathway, and concierge support level.',
   openGraph: {
-    title: 'Apply for Diagnostic Intake | Forge Athletic',
-    description: 'Take the 2-minute biomechanical diagnostic intake to align your membership tier, periodization pathway, and sports science support level.',
+    title: 'Apply for Advisory & Performance Diagnostic | Gordon Athletic Advisory',
+    description: 'Take the 2-minute biomechanical diagnostic intake to align your private advisory tier, periodization pathway, and concierge support level.',
   },
 }
 
@@ -19,7 +19,7 @@ export default function ApplyPage() {
     <main id="main-content" className="apply-page" style={{ minHeight: '100vh', background: 'var(--navy)', padding: '2rem 1rem 4rem' }}>
       <SiteHeader
         links={[
-          { href: '/packages', label: 'Memberships' },
+          { href: '/packages', label: 'Retainer Tiers' },
           { href: '/audit', label: '3D AI Audit' },
         ]}
         actions={<MarketingLoginActions />}
@@ -38,20 +38,20 @@ export default function ApplyPage() {
             className="sgf-button sgf-button-secondary tactile-btn"
             style={{ fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', fontSize: 13 }}
           >
-            Explore Memberships
+            Explore Retainer Tiers
           </Link>
         </div>
 
         <p style={{ fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 8 }}>
-          Forge Athletic · Diagnostic Onboarding
+          Gordon Athletic Advisory · Diagnostic Onboarding
         </p>
         <h1 className="font-serif" style={{ fontSize: 'clamp(2.4rem, 6vw, 4rem)', lineHeight: 1.1, marginBottom: 14, color: '#FFFFFF', fontWeight: 700 }}>
           Biomechanical Profiling &amp;
           <br />
-          <span className="gold-gradient-text">Membership Alignment</span>
+          <span className="gold-gradient-text">Advisory Tier Alignment</span>
         </h1>
         <p style={{ color: '#CBD5E1', fontSize: 16, lineHeight: 1.75, marginBottom: 28, maxWidth: 720 }}>
-          Complete this 2-minute diagnostic intake to evaluate your training age, orthopedic history, and required direction level. You will be matched to the ideal Forge Athletic sports science program.
+          Complete this 2-minute diagnostic intake to evaluate your training age, orthopedic history, and required direction level. You will be matched to the ideal Gordon Athletic sports science retainer.
         </p>
 
         <div

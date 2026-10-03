@@ -116,7 +116,7 @@ describe('Commercial Retainers & Tier 3 Architecture Enforcements', () => {
   })
 })
 
-describe('Clinical Aristocracy Typography & Architecture on Public Funnel', () => {
+describe('Public Funnel & Architecture', () => {
   const homePageSource = fs.readFileSync(path.resolve(process.cwd(), 'app/page.tsx'), 'utf-8')
   const packagesStudioSource = fs.readFileSync(path.resolve(process.cwd(), 'components/packages/PackagesStudioClient.tsx'), 'utf-8')
   const corporatePageSource = fs.readFileSync(path.resolve(process.cwd(), 'app/corporate/page.tsx'), 'utf-8')
@@ -125,15 +125,17 @@ describe('Clinical Aristocracy Typography & Architecture on Public Funnel', () =
   const purchaseButtonSource = fs.readFileSync(path.resolve(process.cwd(), 'components/packages/PurchaseButton.tsx'), 'utf-8')
   const masterModalSource = fs.readFileSync(path.resolve(process.cwd(), 'components/packages/MasterAllocationModal.tsx'), 'utf-8')
 
-  it('guarantees homepage hero h1 uses Cinzel serif with Clinical Aristocracy styling', () => {
-    expect(homePageSource).toContain('className="home-hero-title font-serif"')
-    expect(homePageSource).toContain("fontFamily: 'var(--font-serif, Cinzel), Georgia, serif'")
+  it('provides the clean foundation landing hero and sign-up action', () => {
+    expect(homePageSource).toContain('className="foundation-home"')
+    expect(homePageSource).toContain('A new foundation for athletic performance.')
+    expect(homePageSource).toContain('href="/auth/signup"')
   })
 
-  it('guarantees homepage stats, transformations, and retainer prices use monospace tabular telemetry', () => {
-    expect(homePageSource).toContain('font-telemetry font-mono')
-    expect(homePageSource).toContain("fontFamily: 'var(--font-telemetry, monospace)'")
-    expect(homePageSource).toContain("fontVariantNumeric: 'tabular-nums'")
+  it('lists the imported platform features and Phase 2 membership placeholders', () => {
+    expect(homePageSource).toContain('NASM 5-phase OPT periodization engines')
+    expect(homePageSource).toContain('3D AI postural and kinetic-chain screening')
+    expect(homePageSource).toContain('Foundation status')
+    expect(homePageSource).toContain('Details will be announced in Phase 2.')
   })
 
   it('guarantees PackagesStudioClient formats prices with monospace tabular telemetry', () => {

@@ -7,7 +7,6 @@ interface ForgeBrandMarkProps {
   className?: string
   style?: React.CSSProperties
   withGlow?: boolean
-  variant?: 'vector' | 'raster'
 }
 
 export default function ForgeBrandMark({
@@ -17,7 +16,7 @@ export default function ForgeBrandMark({
   withGlow = true,
 }: ForgeBrandMarkProps) {
   const gradientId = React.useId()
-  const clipId = React.useId()
+  const glowId = React.useId()
 
   return (
     <svg
@@ -29,52 +28,79 @@ export default function ForgeBrandMark({
       className={className}
       style={{
         flexShrink: 0,
-        filter: withGlow
-          ? `drop-shadow(0 2px ${size * 0.18}px rgba(245, 158, 11, 0.45)) drop-shadow(0 0 ${size * 0.12}px rgba(56, 189, 248, 0.35))`
-          : undefined,
-        borderRadius: Math.round(size * 0.18),
-        overflow: 'hidden',
+        filter: withGlow ? `drop-shadow(0 0 ${size * 0.15}px rgba(245, 158, 11, 0.45))` : undefined,
         ...style,
       }}
       aria-hidden="true"
     >
       <defs>
         {/* Kinetic Forge Gradient: Forged Steel to Flame Amber */}
-        <linearGradient id={gradientId} x1="12" y1="14" x2="88" y2="86" gradientUnits="userSpaceOnUse">
+        <linearGradient id={gradientId} x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#F59E0B" />
-          <stop offset="45%" stopColor="#FB923C" />
+          <stop offset="50%" stopColor="#FB923C" />
           <stop offset="100%" stopColor="#EF4444" />
         </linearGradient>
 
-        <clipPath id={clipId}>
-          <rect x="0" y="0" width="100" height="100" rx="18" />
-        </clipPath>
+        <linearGradient id={`${gradientId}-steel`} x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#1E293B" />
+          <stop offset="100%" stopColor="#0F172A" />
+        </linearGradient>
 
-        {/* Heavy Foundation Base (The Anvil / Ground) */}
-        {/* Vertical Spine of the "F" */}
+        <linearGradient id={`${gradientId}-accent`} x1="20" y1="0" x2="80" y2="100" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#38BDF8" />
+          <stop offset="100%" stopColor="#0284C7" />
+        </linearGradient>
+
+        <radialGradient id={glowId} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+        </radialGradient>
       </defs>
 
-      {/* Embedded Concept 1 Master Brand Image */}
-      <image
-        href="/images/brand/logo-concept-1-kinetic-f.jpg"
-        x="0"
-        y="0"
-        width="100"
-        height="100"
-        preserveAspectRatio="xMidYMid slice"
-        clipPath={`url(#${clipId})`}
-      />
-
-      {/* Sleek Golden Border Frame */}
+      {/* Outer Hexagonal Shield Background */}
       <rect
-        x="1.5"
-        y="1.5"
-        width="97"
-        height="97"
-        rx="17"
-        fill="none"
+        x="2"
+        y="2"
+        width="96"
+        height="96"
+        rx="22"
+        fill={`url(#${gradientId}-steel)`}
         stroke={`url(#${gradientId})`}
         strokeWidth="2.5"
+      />
+
+      {/* Ambient Inner Heat Glow */}
+      <circle cx="50" cy="50" r="40" fill={`url(#${glowId})`} />
+
+      {/* The FORGE Kinetic Monogram: Anvil Base + Dynamic "F" + Upward Apex Vector */}
+      {/* 1. Heavy Foundation Base (The Anvil / Ground) */}
+      <path
+        d="M26 76H74L68 66H32L26 76Z"
+        fill={`url(#${gradientId})`}
+      />
+
+      {/* 2. Vertical Spine of the "F" */}
+      <path
+        d="M28 24H42V62H28V24Z"
+        fill="#F8FAFC"
+      />
+
+      {/* 3. Top Driving Crossbar & Arrowhead Apex */}
+      <path
+        d="M42 24H76L66 36H42V24Z"
+        fill={`url(#${gradientId})`}
+      />
+
+      {/* 4. Mid Crossbar (Kinetic Surge) */}
+      <path
+        d="M42 42H64L56 52H42V42Z"
+        fill={`url(#${gradientId}-accent)`}
+      />
+
+      {/* 5. Center Core Spark Dot */}
+      <polygon
+        points="70,47 74,41 78,47 74,53"
+        fill="#F59E0B"
       />
     </svg>
   )

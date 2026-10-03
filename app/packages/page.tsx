@@ -6,11 +6,11 @@ import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
 import PackagesStudioClient from '@/components/packages/PackagesStudioClient'
 
 export const metadata: Metadata = {
-  title: 'Sports Science Memberships & Retainers | Forge Athletic',
-  description: 'Evidence-based NASM OPT™ sports science memberships, bespoke neuromuscular periodization, and clinical performance tools.',
+  title: 'Concierge Coaching Pathways & Retainers',
+  description: 'Evidence-based NASM OPT™ sports science memberships, bespoke neuromuscular periodization, and clinical performance retainers.',
   openGraph: {
-    title: 'Sports Science Memberships & Retainers | Forge Athletic',
-    description: 'Evidence-based NASM OPT™ sports science memberships, bespoke neuromuscular periodization, and clinical performance tools.',
+    title: 'Concierge Coaching Pathways & Retainers | Gordon Athletic Advisory',
+    description: 'Evidence-based NASM OPT™ sports science memberships, bespoke neuromuscular periodization, and clinical performance retainers.',
   },
 }
 

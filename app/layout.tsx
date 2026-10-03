@@ -1,29 +1,22 @@
 import type { Metadata, Viewport } from 'next'
-import { Barlow_Condensed, Inter, Cinzel, Raleway } from 'next/font/google'
+import { Bebas_Neue, Raleway, Cinzel } from 'next/font/google'
 import './globals.css'
 import MobilePortraitLock from '@/components/ui/MobilePortraitLock'
 import ServiceWorkerRegistrar from '@/components/ui/ServiceWorkerRegistrar'
 import PwaInstallPrompt from '@/components/ui/PwaInstallPrompt'
-
-const barlowCondensed = Barlow_Condensed({
-  weight: ['400', '500', '600', '700', '800', '900'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-barlow-condensed',
-})
-
-const inter = Inter({
-  weight: ['300', '400', '500', '600', '700', '800'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-})
 
 const cinzel = Cinzel({
   weight: ['500', '600', '700', '800'],
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-cinzel',
+})
+
+const bebasNeue = Bebas_Neue({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-bebas',
 })
 
 const raleway = Raleway({
@@ -35,10 +28,10 @@ const raleway = Raleway({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Forge Athletic | Precision Sports Science For Real Lives',
-    template: '%s | Forge Athletic',
+    default: 'Gordon Athletic Advisory | Elite Human Performance',
+    template: '%s | Gordon Athletic Advisory',
   },
-  description: 'Precision sports science for real lives — 5-phase NASM OPT™ periodization, 33-point 3D AI biomechanical screening, automated telemetry, and elite performance tools.',
+  description: 'Private human performance advisory — 5-phase NASM OPT™ periodization, 33-point 3D AI biomechanical screening, closed-loop telemetry, and high-performance retainers.',
   metadataBase: new URL('https://gordonathleticadvisory.com'),
   manifest: '/manifest.webmanifest',
   icons: {
@@ -58,30 +51,30 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Forge Athletic',
+    title: 'Gordon Athletic',
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
-    title: 'Forge Athletic | Precision Sports Science For Real Lives',
-    description: 'Olympic-caliber sports science and biomechanics engineered for real lives. 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, and automated progression.',
+    title: 'Gordon Athletic Advisory | Elite Human Performance',
+    description: 'Elite sports science advisory powered by 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, real-time wearable telemetry, and 1:1 WebRTC live studio consultations.',
     url: 'https://gordonathleticadvisory.com',
-    siteName: 'Forge Athletic',
+    siteName: 'Gordon Athletic Advisory',
     type: 'website',
     images: [
       {
         url: '/images/og-image.jpg',
         width: 1344,
         height: 768,
-        alt: 'Forge Athletic precision sports science visual',
+        alt: 'Gordon Athletic Advisory private performance training visual',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Forge Athletic | Precision Sports Science For Real Lives',
-    description: 'Olympic-caliber sports science and biomechanics engineered for real lives. 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, and automated progression.',
+    title: 'Gordon Athletic Advisory | Elite Human Performance',
+    description: 'Elite sports science advisory powered by 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, real-time wearable telemetry, and 1:1 WebRTC live studio consultations.',
     images: ['/images/og-image.jpg'],
   },
 }
@@ -97,9 +90,9 @@ export const viewport: Viewport = {
 const gaaStructuredData = {
   '@context': 'https://schema.org',
   '@type': 'SportsActivityLocation',
-  name: 'Forge Athletic',
-  alternateName: 'Forge Athletic LLC',
-  description: 'Precision sports science for real lives — 5-phase NASM OPT™ periodization, MediaPipe 33-point 3D AI biomechanical screening, and automated progression.',
+  name: 'Gordon Athletic Advisory',
+  alternateName: 'GAA Performance',
+  description: 'Private human performance advisory — 5-phase NASM OPT™ periodization, MediaPipe 33-point 3D AI biomechanical screening, closed-loop wearable telemetry, and high-performance retainers.',
   url: 'https://gordonathleticadvisory.com',
   logo: 'https://gordonathleticadvisory.com/images/icon-512.png',
   image: 'https://gordonathleticadvisory.com/images/og-image.jpg',
@@ -121,7 +114,7 @@ const gaaStructuredData = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${barlowCondensed.variable} ${inter.variable} ${cinzel.variable} ${raleway.variable}`}>
+    <html lang="en" className={`${cinzel.variable} ${bebasNeue.variable} ${raleway.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

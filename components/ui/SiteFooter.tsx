@@ -5,7 +5,8 @@ import { Camera, CirclePlay, Users, BriefcaseBusiness } from 'lucide-react'
 import { APP_VERSION, APP_RELEASE_CODENAME } from '@/lib/app-version'
 import { AppleLogoIcon, AndroidLogoIcon } from '@/components/marketing/AppStoreBadges'
 import { isCompanionApp, useHelperAppMode } from '@/lib/native-companion'
-import ForgeBrandMark from '@/components/ui/ForgeBrandMark'
+
+const BRAND_LOGO = '/images/gaa-brand-crest.jpg'
 
 const SOCIAL_LINKS = [
   { name: 'Instagram', href: 'https://instagram.com/scottgordonfitness', Icon: Camera },
@@ -23,39 +24,27 @@ export default function SiteFooter() {
     <footer className="site-footer" style={{ borderTop: '1px solid rgba(197, 160, 89, 0.25)', background: 'linear-gradient(180deg, #080E14 0%, #04070D 100%)', padding: '3rem 1.5rem 2rem' }}>
       <div className="site-footer-inner" style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem' }}>
         <div className="site-footer-column site-footer-brand-col" style={{ maxWidth: 380 }}>
-          <Link href="/" className="site-footer-brand" aria-label="Forge Athletic home" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+          <Link href="/" className="site-footer-brand" aria-label="Gordon Athletic Advisory home" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
             <span
               aria-hidden
               className="site-footer-mark"
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
+                backgroundImage: `url('${BRAND_LOGO}')`,
+                width: 52,
+                height: 52,
+                borderRadius: 12,
+                border: '1.5px solid var(--gold)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                boxShadow: '0 0 16px rgba(197, 160, 89, 0.4)',
               }}
-            >
-              <img
-                src="/images/brand/logo-concept-1-kinetic-f.jpg"
-                alt="Forge Athletic"
-                width={52}
-                height={52}
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 10,
-                  border: '1.5px solid rgba(245, 158, 11, 0.45)',
-                  boxShadow: '0 0 16px rgba(245, 158, 11, 0.3)',
-                  objectFit: 'cover',
-                  flexShrink: 0,
-                }}
-              />
-            </span>
+            />
             <span className="site-footer-text font-serif" style={{ fontSize: '1.25rem', color: '#FFFFFF', letterSpacing: '0.08em', fontWeight: 700 }}>
-              Forge <span style={{ color: 'var(--gold)' }}>Athletic</span>
+              Gordon <span style={{ color: 'var(--gold)' }}>Athletic Advisory</span>
             </span>
           </Link>
           <p className="site-footer-tagline" style={{ color: 'var(--gray)', fontSize: '0.85rem', marginTop: '0.75rem', lineHeight: 1.5 }}>
-            Built From The Ground Up. Precision Science For Real Lives.
+            Evidence-based closed-loop athletic advisory and clinical human performance for high-performing executives.
           </p>
         </div>
 
@@ -143,16 +132,16 @@ export default function SiteFooter() {
             }}
           >
             <span style={{ width: 6, height: 6, borderRadius: 3, background: 'var(--gold)' }} />
-            <span>Forge Athletic Platform v{APP_VERSION} · {APP_RELEASE_CODENAME}</span>
+            <span>GAA Platform v{APP_VERSION} · {APP_RELEASE_CODENAME}</span>
             <span style={{ color: 'var(--gold)' }}>→ What&apos;s New</span>
           </Link>
         </div>
 
         <p style={{ fontSize: '0.72rem', color: '#64748B', margin: 0, lineHeight: 1.55, maxWidth: 960, marginInline: 'auto' }}>
-          <strong>Trademark &amp; Certification Non-Affiliation Notice:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Forge Athletic LLC and Scott Gordon Fitness are independent private entities and are not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. References to the Optimum Performance Training (OPT™) framework are made for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
+          <strong>Trademark &amp; Certification Non-Affiliation Notice:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Gordon Athletic Advisory LLC and Scott Gordon Fitness are independent private entities and are not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. References to the Optimum Performance Training (OPT™) framework are made for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
         </p>
         <p style={{ fontSize: '0.78rem', color: 'var(--gray)', margin: 0, letterSpacing: '0.04em' }}>
-          © {new Date().getFullYear()} Forge Athletic LLC. All Rights Reserved. Protected under U.S. and International Intellectual Property and Copyright Laws. Patents Pending.
+          © {new Date().getFullYear()} Gordon Athletic Advisory LLC. All Rights Reserved. Protected under U.S. and International Intellectual Property and Copyright Laws. Patents Pending.
         </p>
       </div>
     </footer>
