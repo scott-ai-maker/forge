@@ -139,7 +139,7 @@ export default function SiteHeader({
               <ForgeBrandMark size={50} />
             </span>
             <span className="site-brand-meta" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-              <span className="site-brand-text font-serif" style={{ fontSize: '1.18rem', letterSpacing: '0.08em', color: '#FFFFFF', whiteSpace: 'nowrap', fontWeight: 700 }}>
+              <span className="site-brand-text font-serif" style={{ fontSize: '1.24rem', letterSpacing: '0.06em', color: '#FFFFFF', whiteSpace: 'nowrap', fontWeight: 800, textTransform: 'uppercase' }}>
                 Forge <span style={{ color: 'var(--gold)' }}>Athletic</span>
               </span>
               <span className="site-brand-subtitle" style={{ fontSize: '0.68rem', letterSpacing: '0.14em', color: 'var(--gray)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
