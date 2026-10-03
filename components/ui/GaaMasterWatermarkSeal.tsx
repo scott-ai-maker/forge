@@ -62,7 +62,7 @@ export default function GaaMasterWatermarkSeal({
       />
       <div
         style={{
-          fontFamily: 'Raleway, sans-serif',
+          fontFamily: 'var(--font-heading, Barlow Condensed), sans-serif',
           fontSize: Math.max(7, size * 0.06),
           fontWeight: 800,
           color: '#FFFFFF',

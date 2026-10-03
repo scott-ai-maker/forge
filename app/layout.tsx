@@ -1,22 +1,29 @@
 import type { Metadata, Viewport } from 'next'
-import { Bebas_Neue, Raleway, Cinzel } from 'next/font/google'
+import { Barlow_Condensed, Inter, Cinzel, Raleway } from 'next/font/google'
 import './globals.css'
 import MobilePortraitLock from '@/components/ui/MobilePortraitLock'
 import ServiceWorkerRegistrar from '@/components/ui/ServiceWorkerRegistrar'
 import PwaInstallPrompt from '@/components/ui/PwaInstallPrompt'
+
+const barlowCondensed = Barlow_Condensed({
+  weight: ['400', '500', '600', '700', '800', '900'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-barlow-condensed',
+})
+
+const inter = Inter({
+  weight: ['300', '400', '500', '600', '700', '800'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
 const cinzel = Cinzel({
   weight: ['500', '600', '700', '800'],
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-cinzel',
-})
-
-const bebasNeue = Bebas_Neue({
-  weight: '400',
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-bebas',
 })
 
 const raleway = Raleway({
@@ -114,7 +121,7 @@ const gaaStructuredData = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${cinzel.variable} ${bebasNeue.variable} ${raleway.variable}`}>
+    <html lang="en" className={`${barlowCondensed.variable} ${inter.variable} ${cinzel.variable} ${raleway.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
