@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import FoundingIntakeSplashClient from '@/components/marketing/FoundingIntakeSplashClient'
 
 export const metadata: Metadata = {
-  title: 'Founding Principal Cohort Intake | Gordon Athletic Advisory',
-  description: 'Preliminary intake registry for the Gordon Athletic Advisory Founding Principal Cohort. Reserve priority 1:1 Live Diagnostic Consultation slots and locked lifetime grandfathered retainers.',
+  title: 'Founding Cohort Intake | Forge Athletic',
+  description: 'Preliminary intake registry for the Forge Athletic Founding Cohort. Reserve priority 1:1 Live Diagnostic Consultation slots and locked lifetime grandfathered memberships.',
   openGraph: {
-    title: 'Founding Principal Cohort Intake | Gordon Athletic Advisory',
-    description: 'Preliminary intake registry for the Gordon Athletic Advisory Founding Principal Cohort. Strictly capped at 15 allocations.',
+    title: 'Founding Cohort Intake | Forge Athletic',
+    description: 'Preliminary intake registry for the Forge Athletic Founding Cohort. Precision sports science for real lives.',
     images: ['/images/backgrounds/coach-olympic-facility-gaa.jpg'],
   },
 }

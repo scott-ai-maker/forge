@@ -1,6 +1,7 @@
 {
-  "name": "gaa-app",
+  "name": "forge-athletic",
   "version": "1.35.39",
+  "description": "Forge Athletic — Precision Sports Science For Real Lives",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",

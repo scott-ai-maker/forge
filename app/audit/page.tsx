@@ -8,11 +8,11 @@ import PurchaseButton from '@/components/packages/PurchaseButton'
 import { STANDALONE_PRODUCTS } from '@/lib/stripe'
 
 export const metadata: Metadata = {
-  title: 'Clinical 3D AI Kinetic Chain & Postural Distortion Screen | Gordon Athletic Advisory',
+  title: 'Clinical 3D AI Kinetic Chain & Postural Distortion Screen | Forge Athletic',
   description:
     'Self-guided computer-vision movement screening analyzing all 5 kinetic chain checkpoints. Detect silent injury risks, posture imbalances, and get an automated 4-phase corrective protocol.',
   openGraph: {
-    title: 'Clinical 3D AI Kinetic Chain & Postural Distortion Screen | Gordon Athletic Advisory',
+    title: 'Clinical 3D AI Kinetic Chain & Postural Distortion Screen | Forge Athletic',
     description:
       'Computer-vision biomechanical screening. Detect silent kinetic chain compensations, muscle imbalances, and get an automated corrective exercise continuum.',
   },
@@ -104,7 +104,7 @@ const FAQS = [
   },
   {
     q: 'How does the $97 coaching credit voucher work?',
-    a: 'We believe diagnostics should lead directly to real physical results. When you complete your audit, 100% of your $97 investment is credited toward any Gordon Athletic 12-Week Transformation Block or Monthly Retainer.',
+    a: 'We believe diagnostics should lead directly to real physical results. When you complete your audit, 100% of your $97 investment is credited toward any Forge Athletic 12-Week Transformation Block or Membership.',
   },
   {
     q: 'Are my photos private and secure?',
@@ -222,7 +222,7 @@ export default function AuditLandingPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/package-audit.jpg"
-              alt="Gordon Athletic Advisory 3D AI Biomechanical & Postural Mesh Scanner"
+              alt="Forge Athletic 3D AI Biomechanical & Postural Mesh Scanner"
               style={{ width: '100%', height: 'auto', display: 'block' }}
             />
           </div>

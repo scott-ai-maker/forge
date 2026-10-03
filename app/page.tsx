@@ -10,6 +10,7 @@ import GaaMasterWatermarkSeal from '@/components/ui/GaaMasterWatermarkSeal'
 import AppStoreBadges from '@/components/marketing/AppStoreBadges'
 import MobileAppPromoSection from '@/components/marketing/MobileAppPromoSection'
 import HelperAppRootGuard from '@/components/ui/HelperAppRootGuard'
+import ForgeBrandMark from '@/components/ui/ForgeBrandMark'
 import { PACKAGES } from '@/lib/stripe'
 
 const COACH_PORTRAIT_IMAGE = '/images/coach-portrait.jpg?v=0.9.9'
@@ -112,10 +113,10 @@ export default function Home() {
             justifyContent: 'center',
           }}
         >
-          <GaaIcon name="crown" size={13} tone="gold" />
-          <span style={{ color: 'var(--gold-lt)' }}>Founding Principal Cohort:</span>
-          <span>Accreditation In Progress · Preliminary Intake Open (15 Allocations)</span>
-          <span style={{ color: 'var(--gold)', textDecoration: 'underline', marginLeft: 4 }}>Reserve Allocation →</span>
+          <ForgeBrandMark size={14} withGlow={false} />
+          <span style={{ color: 'var(--gold-lt)' }}>Founding Cohort:</span>
+          <span>Precision Sports Science · Free 7-Day Trial Open</span>
+          <span style={{ color: 'var(--gold)', textDecoration: 'underline', marginLeft: 4 }}>Start Free Trial →</span>
         </Link>
       </div>
 
@@ -124,7 +125,7 @@ export default function Home() {
         links={[
           { href: '/intake', label: 'Founding Intake' },
           { href: '/async-coaching', label: 'Async Coaching' },
-          { href: '/packages', label: 'Private Retainers' },
+          { href: '/packages', label: 'Memberships' },
           { href: '/audit', label: '3D AI Audit' },
           { href: '/apply', label: 'Apply' },
         ]}
@@ -153,8 +154,8 @@ export default function Home() {
           <div className="home-shell home-hero-grid" style={{ maxWidth: 1320, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 'clamp(1.5rem, 4vw, 3rem)', alignItems: 'center', position: 'relative', zIndex: 1, boxSizing: 'border-box' }}>
             <div className="home-hero-copy fade-in-up">
               <div className="crest-badge" style={{ marginBottom: 18 }}>
-                <GaaIcon name="crown" size={13} tone="gold" />
-                <span>Private Sports Science Advisory · Clinical Aristocracy</span>
+                <ForgeBrandMark size={18} withGlow={false} />
+                <span>Precision Sports Science · Built From The Ground Up</span>
               </div>
 
               <h1
@@ -169,13 +170,13 @@ export default function Home() {
                   fontWeight: 700,
                 }}
               >
-                Sovereign Physical Architecture.<br />
-                <strong style={{ fontWeight: 800, color: 'var(--gold-lt)' }}>Clinical Biomechanics.</strong><br />
-                Master Periodization.
+                Precision Sports Science.<br />
+                <strong style={{ fontWeight: 800, color: 'var(--gold-lt)' }}>Built From The Ground Up.</strong><br />
+                For Real Lives.
               </h1>
 
               <p className="home-hero-description" style={{ fontSize: 'clamp(1.05rem, 1.8vw, 1.22rem)', color: '#CBD5E1', lineHeight: 1.65, maxWidth: 600, margin: '0 0 2rem' }}>
-                Individualized 5-phase NASM OPT™ periodization, continuous biometric telemetry sync, 3D computer-vision kinetic diagnostics, and private athletic counsel for leaders who demand uncompromising physical sovereignty.
+                Elite 5-phase NASM OPT™ periodization, 3D computer-vision posture diagnostics, real-time telemetry, and precision training tools engineered for everyday, hardworking people who want extraordinary results.
               </p>
 
               <div className="home-hero-actions" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -187,7 +188,7 @@ export default function Home() {
                     eventPayload={{ mode: 'prelaunch', target: 'waitlist' }}
                     style={{ padding: '14px 28px', fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', boxShadow: '0 4px 20px rgba(197,160,89,0.4)' }}
                   >
-                    Join Priority Waitlist
+                    Start 7-Day Free Trial
                   </TrackedCtaLink>
                 ) : (
                   <TrackedCtaLink
@@ -197,7 +198,7 @@ export default function Home() {
                     eventPayload={{ mode: 'live', target: 'apply' }}
                     style={{ padding: '14px 30px', fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', boxShadow: '0 4px 20px rgba(197,160,89,0.4)' }}
                   >
-                    Apply for Bespoke Advisory
+                    Start 7-Day Free Trial
                   </TrackedCtaLink>
                 )}
 
@@ -208,7 +209,7 @@ export default function Home() {
                   eventPayload={{ destination: 'packages' }}
                   style={{ padding: '14px 24px', fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(197,160,89,0.4)', color: 'var(--gold-lt)' }}
                 >
-                  Explore Private Retainers
+                  Explore Memberships
                 </TrackedCtaLink>
               </div>
 
@@ -221,14 +222,14 @@ export default function Home() {
               <div className="home-hero-apps" style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
                 <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', marginBottom: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <GaaIcon name="smartphone" size={13} tone="gold" />
-                  <span>GAA Mobile App · Native Telemetry &amp; In-Gym HUD</span>
+                  <span>Forge Athletic Mobile App · Native Telemetry &amp; In-Gym HUD</span>
                 </div>
                 <AppStoreBadges variant="glass" size="sm" sourceEventPrefix="hero" />
               </div>
 
               <p className="home-hero-footnote" style={{ marginTop: 18, fontSize: 12, color: 'var(--gray)', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <GaaIcon name="shield" size={12} tone="gold" />
-                <span>Strict capacity limit · Selective intake for qualified executives and competitive athletes.</span>
+                <span>Engineered for real lives · Elite periodization, 1RM telemetry, and 3D computer-vision biomechanics.</span>
               </p>
             </div>
 
@@ -243,7 +244,7 @@ export default function Home() {
                   Clinical Sports Science Standards
                 </span>
                 <h3 className="font-serif" style={{ fontSize: 24, margin: '4px 0 0', color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 700 }}>
-                  Why Sovereign Leaders Retain GAA
+                  Why Athletes Train With Forge
                 </h3>
               </div>
 
@@ -648,19 +649,19 @@ export default function Home() {
               </div>
 
               <h2 className="font-serif" style={{ fontSize: 'clamp(2.2rem, 3.8vw, 3.2rem)', color: '#FFFFFF', letterSpacing: '0.02em', margin: 0, lineHeight: 1.1, fontWeight: 700 }}>
-                Scott Gordon <span style={{ fontSize: '1.2rem', color: 'var(--gold)', fontFamily: 'Raleway, sans-serif', fontWeight: 600, verticalAlign: 'middle' }}>· Lead Athletic Advisor</span>
+                Scott Gordon <span style={{ fontSize: '1.2rem', color: 'var(--gold)', fontFamily: 'Raleway, sans-serif', fontWeight: 600, verticalAlign: 'middle' }}>· Founder &amp; Head Coach</span>
               </h2>
 
               <p style={{ fontSize: 14.5, color: '#CBD5E1', lineHeight: 1.65, margin: 0 }}>
-                Over <strong>17 years</strong> coaching thousands of high-performance hours, Scott has pioneered closed-loop athletic advisory for C-suite executives, physicians, founders, and elite athletes.
+                Coach Scott Gordon grew up with humble beginnings; his parents were poor and had nothing. He didn&apos;t come from money or country clubs. After transforming his own body and life by <strong>50+ lbs</strong>, he mastered NASM Sports Science (CPT, CES, PES, FNS) with over <strong>17 years</strong> of coaching experience.
               </p>
 
               <p style={{ fontSize: 14.5, color: '#CBD5E1', lineHeight: 1.65, margin: 0 }}>
-                Having personally completed a <strong>50+ lb physical transformation</strong> before coaching professionally, every protocol merges clinical sports science with real-world executive practicality.
+                He engineered <strong>Forge Athletic</strong> to give real, hardworking people the exact precision training tools, 5-phase OPT™ periodization, and computer-vision biomechanics previously locked behind luxury paywalls.
               </p>
 
               <p style={{ fontSize: 14.5, color: '#CBD5E1', lineHeight: 1.65, margin: 0 }}>
-                Grounded in the <strong>NASM Optimum Performance Training (OPT™) framework</strong> and certified across Corrective Exercise (CES), Performance Enhancement (PES), and Senior Fitness (SFS), Scott architects your program around your precise biomechanics, travel schedule, orthopedic history, and biological markers.
+                Whether you train in a garage gym or a commercial facility, Forge delivers elite periodization, automated 1RM progression, and instant form corrections directly to your smartphone.
               </p>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
@@ -671,7 +672,7 @@ export default function Home() {
                   eventPayload={{ target: 'apply' }}
                   style={{ padding: '12px 24px', fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}
                 >
-                  Consult with Coach Gordon
+                  Start 7-Day Free Trial
                 </TrackedCtaLink>
               </div>
             </div>
@@ -683,16 +684,16 @@ export default function Home() {
           <div className="home-shell home-cta-inner" style={{ maxWidth: 720, margin: '0 auto', position: 'relative', zIndex: 1 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderRadius: 20, background: 'rgba(197, 160, 89, 0.15)', border: '1px solid rgba(197, 160, 89, 0.4)', marginBottom: 16 }}>
               <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)' }}>
-                Selective Client Intake
+                Built For Real Lives
               </span>
             </div>
 
             <h2 className="font-serif" style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.6rem)', color: '#FFFFFF', letterSpacing: '0.02em', margin: '0 0 14px', lineHeight: 1.15, fontWeight: 700 }}>
-              Ready to Command Your <span className="gold-gradient-text">Physical Sovereignty?</span>
+              Ready to Command Your <span className="gold-gradient-text">Physical Potential?</span>
             </h2>
 
             <p style={{ fontSize: 15, color: '#CBD5E1', lineHeight: 1.6, maxWidth: 580, margin: '0 auto 2rem' }}>
-              Bespoke athletic advisory retainers are strictly limited to maintain uncompromising quality of direction. Submit your application or explore our retainers to review cohort availability.
+              Experience automated periodization, real-time 1RM progression, and 3D computer-vision movement diagnostics. Start your 100% free 7-day trial today.
             </p>
 
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -703,23 +704,23 @@ export default function Home() {
                 eventPayload={{ mode: 'live', destination: 'apply' }}
                 style={{ padding: '14px 32px', fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', boxShadow: '0 4px 20px rgba(197,160,89,0.4)' }}
               >
-                Apply for Bespoke Advisory
+                Start 7-Day Free Trial
               </TrackedCtaLink>
 
               <TrackedCtaLink
-                href="/async-coaching"
+                href="/packages"
                 className="sgf-button sgf-button-secondary tactile-btn"
                 eventName="bottom_cta_click"
-                eventPayload={{ mode: 'live', destination: 'async_coaching' }}
+                eventPayload={{ mode: 'live', destination: 'packages' }}
                 style={{ padding: '14px 24px', fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(197,160,89,0.4)', color: 'var(--gold-lt)' }}
               >
-                Review Async Specifications
+                Explore Memberships
               </TrackedCtaLink>
             </div>
 
             <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
               <p style={{ fontSize: 12, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 12 }}>
-                Download the Gordon Athletic Native App
+                Download the Forge Athletic Native App
               </p>
               <AppStoreBadges variant="glass" size="md" align="center" sourceEventPrefix="bottom_cta" />
             </div>

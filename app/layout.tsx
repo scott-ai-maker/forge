@@ -28,10 +28,10 @@ const raleway = Raleway({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Gordon Athletic Advisory | Elite Human Performance',
-    template: '%s | Gordon Athletic Advisory',
+    default: 'Forge Athletic | Precision Sports Science For Real Lives',
+    template: '%s | Forge Athletic',
   },
-  description: 'Private human performance advisory — 5-phase NASM OPT™ periodization, 33-point 3D AI biomechanical screening, closed-loop telemetry, and high-performance retainers.',
+  description: 'Precision sports science for real lives — 5-phase NASM OPT™ periodization, 33-point 3D AI biomechanical screening, automated telemetry, and elite performance tools.',
   metadataBase: new URL('https://gordonathleticadvisory.com'),
   manifest: '/manifest.webmanifest',
   icons: {
@@ -51,30 +51,30 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Gordon Athletic',
+    title: 'Forge Athletic',
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
-    title: 'Gordon Athletic Advisory | Elite Human Performance',
-    description: 'Elite sports science advisory powered by 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, real-time wearable telemetry, and 1:1 WebRTC live studio consultations.',
+    title: 'Forge Athletic | Precision Sports Science For Real Lives',
+    description: 'Olympic-caliber sports science and biomechanics engineered for real lives. 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, and automated progression.',
     url: 'https://gordonathleticadvisory.com',
-    siteName: 'Gordon Athletic Advisory',
+    siteName: 'Forge Athletic',
     type: 'website',
     images: [
       {
         url: '/images/og-image.jpg',
         width: 1344,
         height: 768,
-        alt: 'Gordon Athletic Advisory private performance training visual',
+        alt: 'Forge Athletic precision sports science visual',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gordon Athletic Advisory | Elite Human Performance',
-    description: 'Elite sports science advisory powered by 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, real-time wearable telemetry, and 1:1 WebRTC live studio consultations.',
+    title: 'Forge Athletic | Precision Sports Science For Real Lives',
+    description: 'Olympic-caliber sports science and biomechanics engineered for real lives. 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, and automated progression.',
     images: ['/images/og-image.jpg'],
   },
 }
@@ -90,9 +90,9 @@ export const viewport: Viewport = {
 const gaaStructuredData = {
   '@context': 'https://schema.org',
   '@type': 'SportsActivityLocation',
-  name: 'Gordon Athletic Advisory',
-  alternateName: 'GAA Performance',
-  description: 'Private human performance advisory — 5-phase NASM OPT™ periodization, MediaPipe 33-point 3D AI biomechanical screening, closed-loop wearable telemetry, and high-performance retainers.',
+  name: 'Forge Athletic',
+  alternateName: 'Forge Athletic LLC',
+  description: 'Precision sports science for real lives — 5-phase NASM OPT™ periodization, MediaPipe 33-point 3D AI biomechanical screening, and automated progression.',
   url: 'https://gordonathleticadvisory.com',
   logo: 'https://gordonathleticadvisory.com/images/icon-512.png',
   image: 'https://gordonathleticadvisory.com/images/og-image.jpg',

@@ -15,7 +15,7 @@ export default function GaaMasterWatermarkSeal({
   opacity = 0.12,
   className = '',
   style = {},
-  subtitle = 'NASM OPT™ MASTER ADVISORY',
+  subtitle = 'PRECISION SPORTS SCIENCE',
 }: GaaMasterWatermarkSealProps) {
   return (
     <div
@@ -42,14 +42,14 @@ export default function GaaMasterWatermarkSeal({
       <div
         className="font-serif"
         style={{
-          fontSize: size * 0.2,
+          fontSize: size * 0.18,
           color: 'var(--gold-lt)',
           letterSpacing: '0.14em',
           lineHeight: 1,
           fontWeight: 700,
         }}
       >
-        GAA
+        FORGE
       </div>
       <div
         style={{
@@ -63,7 +63,7 @@ export default function GaaMasterWatermarkSeal({
       <div
         style={{
           fontFamily: 'Raleway, sans-serif',
-          fontSize: Math.max(7, size * 0.065),
+          fontSize: Math.max(7, size * 0.06),
           fontWeight: 800,
           color: '#FFFFFF',
           letterSpacing: '0.18em',
@@ -75,13 +75,14 @@ export default function GaaMasterWatermarkSeal({
       </div>
       <div
         style={{
-          fontSize: Math.max(6, size * 0.05),
+          fontSize: Math.max(6, size * 0.045),
           color: 'var(--gold-lt)',
-          letterSpacing: '0.14em',
+          letterSpacing: '0.12em',
           marginTop: size * 0.02,
+          whiteSpace: 'nowrap',
         }}
       >
-        ★ VERIFIED CLINICAL ★
+        ★ BUILT FROM THE GROUND UP ★
       </div>
     </div>
   )
