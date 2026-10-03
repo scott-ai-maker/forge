@@ -1,0 +1,8 @@
+{
+  "git.autofetch": false,
+  "git.autorefresh": true,
+  "git.confirmSync": false,
+  "git.syncType": "push",
+  "java.configuration.updateBuildConfiguration": "interactive"
+}
+

@@ -1,0 +1,1582 @@
+-- Scott Gordon Fitness — Supabase Schema
+-- Run this in your Supabase SQL editor
+
+-- ── WAITLIST ──────────────────────────────────────────────
+create table if not exists waitlist (
+  id          uuid primary key default gen_random_uuid(),
+  email       text unique not null,
+  created_at  timestamptz default now()
+);
+
+alter table waitlist
+  add column if not exists first_name text;
+
+alter table waitlist
+  add column if not exists training_level text
+  check (training_level is null or training_level in ('beginner', 'intermediate', 'advanced'));
+
+alter table waitlist
+  add column if not exists primary_goal text;
+
+alter table waitlist
+  add column if not exists source text not null default 'waitlist';
+
+-- ── COACHING APPLICATIONS (FUNNEL QUIZ) ─────────────────
+create table if not exists coaching_applications (
+  id                    uuid primary key default gen_random_uuid(),
+  email                 text not null,
+  first_name            text,
+  goal                  text not null,
+  timeline              text not null,
+  training_days         text not null,
+  support_level         text not null,
+  primary_obstacle      text not null,
+  coaching_history      text not null,
+  budget_band           text not null,
+  readiness             text not null,
+  recommended_tier      text not null,
+  source                text default 'apply_quiz',
+  created_at            timestamptz default now()
+);
+
+create table if not exists marketing_email_queue (
+  id                    uuid primary key default gen_random_uuid(),
+  email                 text not null,
+  first_name            text,
+  template_key          text not null,
+  source                text not null default 'launch_funnel',
+  send_after            timestamptz not null,
+  status                text not null default 'pending'
+    check (status in ('pending', 'sent', 'failed', 'cancelled', 'suppressed')),
+  attempts              int not null default 0,
+  provider_message_id   text,
+  last_error            text,
+  sent_at               timestamptz,
+  created_at            timestamptz default now()
+);
+
+-- ── EMAIL SUPPRESSIONS & UNLINKED UNSUBSCRIBES ──────────────
+create table if not exists email_suppressions (
+  id          uuid primary key default gen_random_uuid(),
+  email       text unique not null,
+  reason      text not null check (reason in ('unsubscribed', 'bounced', 'complained', 'manual')),
+  created_at  timestamptz default now()
+);
+
+create index if not exists idx_email_suppressions_email on email_suppressions (email);
+
+-- ── CLIENTS ───────────────────────────────────────────────
+create table if not exists clients (
+  id              uuid primary key references auth.users(id) on delete cascade,
+  email           text unique not null,
+  full_name       text,
+  phone           text,
+  designated_coach_id uuid references clients(id) on delete set null,
+  stripe_customer_id text unique,
+  created_at      timestamptz default now()
+);
+
+-- ── ROLE MIGRATION (run after initial schema) ─────────────
+alter table clients add column if not exists role text default 'client'
+  check (role in ('client', 'coach'));
+
+alter table clients add column if not exists must_reset_password boolean not null default false;
+
+alter table clients add column if not exists designated_coach_id uuid references clients(id) on delete set null;
+
+alter table clients add column if not exists avatar_path text;
+
+-- ── CLIENT LIFECYCLE & STATUS ─────────────────────────────
+alter table clients add column if not exists status text not null default 'active'
+  check (status in ('active', 'inactive', 'paused', 'archived'));
+
+alter table clients add column if not exists status_reason text;
+
+alter table clients add column if not exists status_updated_at timestamptz default now();
+
+alter table clients add column if not exists status_updated_by uuid references clients(id) on delete set null;
+
+create index if not exists clients_status_idx on clients(status);
+create index if not exists clients_email_lower_idx on clients(lower(email));
+
+-- ── CLIENT LIFECYCLE AUDIT LOGS ───────────────────────────
+create table if not exists client_lifecycle_audit_logs (
+  id              uuid primary key default gen_random_uuid(),
+  client_id       uuid not null references clients(id) on delete cascade,
+  actor_id        uuid not null references clients(id) on delete cascade,
+  actor_name      text,
+  actor_role      text not null default 'coach',
+  action          text not null, -- 'status_change', 'activation', 'deactivation', 'pause', 'archive', 'duplicate_merged'
+  previous_status text,
+  new_status      text not null,
+  reason_code     text not null,
+  reason_notes    text,
+  effective_date  timestamptz not null default now(),
+  metadata        jsonb default '{}'::jsonb,
+  created_at      timestamptz not null default now()
+);
+
+create index if not exists idx_client_lifecycle_audit_client_id on client_lifecycle_audit_logs(client_id);
+create index if not exists idx_client_lifecycle_audit_created_at on client_lifecycle_audit_logs(created_at desc);
+
+-- ── COACH ONBOARDING AUTHORIZATION GATES ──────────────────
+create table if not exists coach_onboarding_gates (
+  id              uuid primary key default gen_random_uuid(),
+  client_id       uuid not null references clients(id) on delete cascade,
+  stage_number    int not null check (stage_number between 1 and 7),
+  stage_id        text not null,
+  status          text not null default 'pending' check (status in ('pending', 'authorized', 'rejected')),
+  authorized_by   uuid references clients(id) on delete set null,
+  authorized_at   timestamptz,
+  notes           text,
+  metadata        jsonb default '{}'::jsonb,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  unique(client_id, stage_number)
+);
+
+create index if not exists idx_coach_onboarding_gates_client on coach_onboarding_gates(client_id);
+create index if not exists idx_coach_onboarding_gates_stage on coach_onboarding_gates(client_id, stage_number);
+
+-- ── PACKAGES ──────────────────────────────────────────────
+create table if not exists client_packages (
+  id                uuid primary key default gen_random_uuid(),
+  client_id         uuid references clients(id) on delete cascade,
+  package_name      text not null,           -- e.g. 'Momentum Pack'
+  sessions_total    int not null,
+  sessions_remaining int not null,
+  source            text not null default 'purchase'
+    check (source in ('purchase', 'comp')),
+  granted_by_coach_id uuid references clients(id) on delete set null,
+  grant_note        text,
+  discount_code     text,
+  discount_amount_cents int not null default 0,
+  stripe_payment_id text,
+  purchased_at      timestamptz default now(),
+  expires_at        timestamptz              -- optional expiry
+);
+
+-- Existing projects may already have client_packages from older schema versions.
+-- Keep this migration idempotent by backfilling newly introduced columns.
+alter table client_packages
+  add column if not exists source text default 'purchase'
+  check (source in ('purchase', 'comp'));
+
+alter table client_packages
+  alter column source set default 'purchase';
+
+update client_packages
+set source = 'purchase'
+where source is null;
+
+alter table client_packages
+  alter column source set not null;
+
+alter table client_packages
+  add column if not exists granted_by_coach_id uuid references clients(id) on delete set null;
+
+alter table client_packages
+  add column if not exists grant_note text;
+
+alter table client_packages
+  add column if not exists discount_code text;
+
+alter table client_packages
+  add column if not exists discount_amount_cents int not null default 0;
+
+create table if not exists comp_session_grants (
+  id                uuid primary key default gen_random_uuid(),
+  client_id         uuid not null references clients(id) on delete cascade,
+  coach_id          uuid not null references clients(id) on delete cascade,
+  sessions_granted  int not null check (sessions_granted > 0),
+  note              text,
+  client_package_id uuid references client_packages(id) on delete set null,
+  created_at        timestamptz default now()
+);
+
+-- Existing projects may already have comp_session_grants from older schema versions.
+alter table comp_session_grants
+  add column if not exists client_package_id uuid references client_packages(id) on delete set null;
+
+alter table comp_session_grants
+  add column if not exists created_at timestamptz default now();
+
+update comp_session_grants
+set created_at = now()
+where created_at is null;
+
+create table if not exists discount_codes (
+  id                  uuid primary key default gen_random_uuid(),
+  code                text unique not null,
+  description         text,
+  discount_type       text not null check (discount_type in ('percent', 'fixed_amount')),
+  discount_value      int not null check (discount_value > 0),
+  is_active           boolean not null default true,
+  max_redemptions     int check (max_redemptions is null or max_redemptions > 0),
+  redemptions_count   int not null default 0,
+  starts_at           timestamptz not null default now(),
+  expires_at          timestamptz,
+  applies_to_package_ids text[],
+  restricted_client_id uuid references clients(id) on delete set null,
+  created_by_coach_id uuid references clients(id) on delete set null,
+  created_at          timestamptz default now()
+);
+
+-- Existing projects may already have discount_codes from older schema versions.
+alter table discount_codes
+  add column if not exists description text;
+
+alter table discount_codes
+  add column if not exists discount_type text
+  check (discount_type in ('percent', 'fixed_amount'));
+
+alter table discount_codes
+  add column if not exists discount_value int;
+
+alter table discount_codes
+  add column if not exists is_active boolean default true;
+
+alter table discount_codes
+  add column if not exists max_redemptions int check (max_redemptions is null or max_redemptions > 0);
+
+alter table discount_codes
+  add column if not exists redemptions_count int default 0;
+
+alter table discount_codes
+  add column if not exists starts_at timestamptz default now();
+
+alter table discount_codes
+  add column if not exists expires_at timestamptz;
+
+alter table discount_codes
+  add column if not exists applies_to_package_ids text[];
+
+alter table discount_codes
+  add column if not exists restricted_client_id uuid references clients(id) on delete set null;
+
+alter table discount_codes
+  add column if not exists created_by_coach_id uuid references clients(id) on delete set null;
+
+alter table discount_codes
+  add column if not exists created_at timestamptz default now();
+
+alter table discount_codes
+  alter column is_active set default true;
+
+alter table discount_codes
+  alter column redemptions_count set default 0;
+
+alter table discount_codes
+  alter column starts_at set default now();
+
+update discount_codes
+set is_active = true
+where is_active is null;
+
+update discount_codes
+set redemptions_count = 0
+where redemptions_count is null;
+
+update discount_codes
+set starts_at = now()
+where starts_at is null;
+
+update discount_codes
+set created_at = now()
+where created_at is null;
+
+alter table discount_codes
+  alter column is_active set not null;
+
+alter table discount_codes
+  alter column redemptions_count set not null;
+
+alter table discount_codes
+  alter column starts_at set not null;
+
+create table if not exists discount_code_redemptions (
+  id                uuid primary key default gen_random_uuid(),
+  discount_code_id  uuid not null references discount_codes(id) on delete cascade,
+  client_id         uuid not null references clients(id) on delete cascade,
+  stripe_payment_id text not null unique,
+  amount_cents      int not null default 0,
+  created_at        timestamptz default now()
+);
+
+-- Existing projects may already have discount_code_redemptions from older schema versions.
+alter table discount_code_redemptions
+  add column if not exists amount_cents int default 0;
+
+alter table discount_code_redemptions
+  add column if not exists created_at timestamptz default now();
+
+alter table discount_code_redemptions
+  alter column amount_cents set default 0;
+
+update discount_code_redemptions
+set amount_cents = 0
+where amount_cents is null;
+
+update discount_code_redemptions
+set created_at = now()
+where created_at is null;
+
+alter table discount_code_redemptions
+  alter column amount_cents set not null;
+
+-- ── SESSIONS ──────────────────────────────────────────────
+create table if not exists sessions (
+  id              uuid primary key default gen_random_uuid(),
+  client_id       uuid references clients(id) on delete cascade,
+  package_id      uuid references client_packages(id),
+  scheduled_at    timestamptz not null,
+  duration_mins   int default 60,
+  status          text default 'scheduled'  -- scheduled | completed | cancelled | no_show
+    check (status in ('scheduled','completed','cancelled','no_show')),
+  notes           text,                     -- coach notes post-session
+  created_at      timestamptz default now()
+);
+
+-- ── ROW LEVEL SECURITY ────────────────────────────────────
+alter table waitlist enable row level security;
+alter table coaching_applications enable row level security;
+alter table marketing_email_queue enable row level security;
+alter table clients enable row level security;
+alter table client_packages enable row level security;
+alter table sessions enable row level security;
+alter table comp_session_grants enable row level security;
+alter table discount_codes enable row level security;
+alter table discount_code_redemptions enable row level security;
+
+-- Waitlist: anyone can insert, only service role can read
+drop policy if exists "Public can join waitlist" on waitlist;
+create policy "Public can join waitlist" on waitlist
+  for insert with check (true);
+
+-- Coaching applications: anyone can submit, only service role reads
+drop policy if exists "Public can submit coaching application" on coaching_applications;
+create policy "Public can submit coaching application" on coaching_applications
+  for insert with check (true);
+
+-- Clients: users can only read/update their own non-privileged record fields
+drop policy if exists "Client reads own record" on clients;
+create policy "Client reads own record" on clients
+  for select using (auth.uid() = id);
+drop policy if exists "Client updates own record" on clients;
+create policy "Client updates own record" on clients
+  for update using (auth.uid() = id)
+  with check (
+    auth.uid() = id
+    and role = (select c.role from clients c where c.id = auth.uid())
+    and (
+      designated_coach_id is not distinct from (select c.designated_coach_id from clients c where c.id = auth.uid())
+    )
+    and (
+      stripe_customer_id is not distinct from (select c.stripe_customer_id from clients c where c.id = auth.uid())
+    )
+  );
+
+-- Packages: clients see only their own
+drop policy if exists "Client sees own packages" on client_packages;
+create policy "Client sees own packages" on client_packages
+  for select using (auth.uid() = client_id);
+
+-- Sessions: clients see only their own
+drop policy if exists "Client sees own sessions" on sessions;
+create policy "Client sees own sessions" on sessions
+  for select using (auth.uid() = client_id);
+
+-- ── INDEXES ───────────────────────────────────────────────
+create index if not exists sessions_client_id_idx on sessions(client_id);
+create index if not exists sessions_scheduled_at_idx on sessions(scheduled_at);
+create unique index if not exists sessions_unique_scheduled_slot_idx
+  on sessions(scheduled_at)
+  where status = 'scheduled';
+create index if not exists packages_client_id_idx on client_packages(client_id);
+create index if not exists packages_source_idx on client_packages(source);
+create index if not exists comp_session_grants_client_idx on comp_session_grants(client_id, created_at desc);
+create index if not exists comp_session_grants_coach_idx on comp_session_grants(coach_id, created_at desc);
+create index if not exists discount_codes_code_idx on discount_codes(code);
+create index if not exists discount_codes_active_idx on discount_codes(is_active, expires_at);
+create index if not exists discount_code_redemptions_discount_idx on discount_code_redemptions(discount_code_id, created_at desc);
+create index if not exists coaching_applications_email_idx on coaching_applications(email);
+create index if not exists coaching_applications_created_at_idx on coaching_applications(created_at);
+create index if not exists marketing_email_queue_dispatch_idx on marketing_email_queue(status, send_after);
+create unique index if not exists marketing_email_queue_unique_template_idx on marketing_email_queue(email, template_key);
+
+-- ── COACH POLICIES ────────────────────────────────────────
+-- Coach can read assigned clients
+drop policy if exists "Coach reads all clients" on clients;
+drop policy if exists "Coach reads assigned clients" on clients;
+create policy "Coach reads assigned clients" on clients
+  for select using (
+    (
+      id = auth.uid()
+      and exists (select 1 from clients c where c.id = auth.uid() and c.role = 'coach')
+    )
+    or (
+      designated_coach_id = auth.uid()
+      and exists (select 1 from clients c where c.id = auth.uid() and c.role = 'coach')
+    )
+  );
+
+-- Coach can read assigned client packages
+drop policy if exists "Coach reads all packages" on client_packages;
+drop policy if exists "Coach reads assigned packages" on client_packages;
+create policy "Coach reads assigned packages" on client_packages
+  for select using (
+    exists (
+      select 1
+      from clients c
+      join clients cl on cl.id = client_packages.client_id
+      where c.id = auth.uid()
+        and c.role = 'coach'
+        and cl.designated_coach_id = auth.uid()
+    )
+  );
+
+drop policy if exists "Coach reads assigned comp grants" on comp_session_grants;
+create policy "Coach reads assigned comp grants" on comp_session_grants
+  for select using (
+    exists (
+      select 1
+      from clients coach
+      join clients cl on cl.id = comp_session_grants.client_id
+      where coach.id = auth.uid()
+        and coach.role = 'coach'
+        and cl.designated_coach_id = auth.uid()
+    )
+  );
+
+drop policy if exists "Coach reads own discount codes" on discount_codes;
+create policy "Coach reads own discount codes" on discount_codes
+  for select using (
+    exists (
+      select 1
+      from clients coach
+      where coach.id = auth.uid()
+        and coach.role = 'coach'
+        and discount_codes.created_by_coach_id = auth.uid()
+    )
+  );
+
+-- Coach can read and update assigned client sessions
+drop policy if exists "Coach reads all sessions" on sessions;
+drop policy if exists "Coach reads assigned sessions" on sessions;
+create policy "Coach reads assigned sessions" on sessions
+  for select using (
+    exists (
+      select 1
+      from clients c
+      join clients cl on cl.id = sessions.client_id
+      where c.id = auth.uid()
+        and c.role = 'coach'
+        and cl.designated_coach_id = auth.uid()
+    )
+  );
+drop policy if exists "Coach updates sessions" on sessions;
+drop policy if exists "Coach updates assigned sessions" on sessions;
+create policy "Coach updates assigned sessions" on sessions
+  for update using (
+    exists (
+      select 1
+      from clients c
+      join clients cl on cl.id = sessions.client_id
+      where c.id = auth.uid()
+        and c.role = 'coach'
+        and cl.designated_coach_id = auth.uid()
+    )
+  );
+
+-- ── FITNESS PROFILES / WORKOUT TRACKER ───────────────────
+create table if not exists fitness_profiles (
+  user_id                  uuid primary key references auth.users(id) on delete cascade,
+  preferred_units          text default 'metric' check (preferred_units in ('metric', 'imperial')),
+  age                      int,
+  sex                      text check (sex in ('male', 'female', 'other')),
+  height_cm                numeric(5,2),
+  weight_kg                numeric(5,2),
+  waist_cm                 numeric(5,2),
+  neck_cm                  numeric(5,2),
+  hip_cm                   numeric(5,2),
+  activity_level           text,
+  training_days_per_week   int,
+  fitness_goal             text,
+  target_weight_kg         numeric(5,2),
+  target_bodyfat_percent   numeric(5,2),
+  injuries_limitations     text,
+  experience_level         text,
+  workout_location         text,
+  equipment_access         text[] default array['bodyweight']::text[],
+  before_photo_url         text,
+  onboarding_completed_at  timestamptz,
+  created_at               timestamptz default now(),
+  updated_at               timestamptz default now()
+);
+
+create table if not exists client_intake_forms (
+  user_id                        uuid primary key references auth.users(id) on delete cascade,
+  parq_answers                   jsonb not null,
+  parq_any_yes                   boolean default false,
+  medical_conditions             text,
+  medications                    text,
+  surgeries_or_injuries          text,
+  allergies                      text,
+  emergency_contact_name         text not null,
+  emergency_contact_phone        text not null,
+  primary_physician_name         text,
+  primary_physician_phone        text,
+  consent_liability_waiver       boolean not null default false,
+  consent_informed_consent       boolean not null default false,
+  consent_privacy_practices      boolean not null default false,
+  consent_coaching_agreement     boolean not null default false,
+  consent_emergency_care         boolean not null default false,
+  consent_signature_name         text not null,
+  consent_signed_at              timestamptz not null default now(),
+  created_at                     timestamptz default now(),
+  updated_at                     timestamptz default now()
+);
+
+create table if not exists coach_client_messages (
+  id                             uuid primary key default gen_random_uuid(),
+  client_id                      uuid not null references clients(id) on delete cascade,
+  coach_id                       uuid not null references clients(id) on delete cascade,
+  sender_id                      uuid not null references clients(id) on delete cascade,
+  message_body                   text not null,
+  read_at                        timestamptz,
+  is_deleted                     boolean default false,
+  deleted_at                     timestamptz,
+  deleted_by                     uuid references clients(id),
+  created_at                     timestamptz default now()
+);
+
+alter table coach_client_messages
+  add column if not exists is_deleted boolean default false,
+  add column if not exists deleted_at timestamptz,
+  add column if not exists deleted_by uuid references clients(id);
+
+alter table fitness_profiles
+  add column if not exists preferred_units text default 'metric'
+  check (preferred_units in ('metric', 'imperial'));
+
+alter table fitness_profiles
+  add column if not exists before_photo_url text;
+
+alter table fitness_profiles
+  add column if not exists before_photo_path text;
+
+alter table fitness_profiles
+  add column if not exists workout_location text;
+
+alter table fitness_profiles
+  add column if not exists equipment_access text[] default array['bodyweight']::text[];
+
+alter table fitness_profiles
+  add column if not exists cardio_equipment_access text[] default array[]::text[];
+
+alter table fitness_profiles
+  add column if not exists preferred_training_days text[] default array[]::text[];
+
+alter table fitness_profiles
+  add column if not exists primary_telemetry_source text default 'apple_health'
+  check (primary_telemetry_source in ('apple_health', 'google_fit'));
+
+create table if not exists workout_plans (
+  id                        uuid primary key default gen_random_uuid(),
+  user_id                   uuid references auth.users(id) on delete cascade,
+  name                      text not null,
+  goal                      text,
+  nasm_opt_phase            int not null check (nasm_opt_phase between 1 and 5),
+  phase_name                text not null,
+  sessions_per_week         int not null,
+  estimated_duration_mins   int not null,
+  plan_json                 jsonb not null,
+  created_at                timestamptz default now()
+);
+
+create table if not exists workout_program_templates (
+  id                        uuid primary key default gen_random_uuid(),
+  slug                      text unique,
+  source                    text not null default 'licensed_import',
+  title                     text not null,
+  goal                      text,
+  nasm_opt_phase            int check (nasm_opt_phase between 1 and 5),
+  phase_name                text,
+  sessions_per_week         int,
+  estimated_duration_mins   int,
+  template_json             jsonb not null default '{}'::jsonb,
+  is_active                 boolean not null default true,
+  created_at                timestamptz default now(),
+  updated_at                timestamptz default now()
+);
+
+create table if not exists coach_program_templates (
+  id                        uuid primary key default gen_random_uuid(),
+  coach_id                  uuid not null references clients(id) on delete cascade,
+  title                     text not null,
+  goal                      text,
+  nasm_opt_phase            int check (nasm_opt_phase between 1 and 5),
+  phase_name                text,
+  sessions_per_week         int,
+  estimated_duration_mins   int,
+  template_json             jsonb not null default '{}'::jsonb,
+  is_active                 boolean not null default true,
+  created_at                timestamptz default now(),
+  updated_at                timestamptz default now()
+);
+
+create index if not exists coach_program_templates_coach_idx on coach_program_templates(coach_id, created_at desc);
+
+create table if not exists exercise_library_entries (
+  id                        uuid primary key default gen_random_uuid(),
+  source                    text not null default 'licensed_import',
+  source_id                 text,
+  slug                      text,
+  name                      text not null,
+  description               text,
+  coaching_cues             text[] default array[]::text[],
+  primary_equipment         text[] default array[]::text[],
+  muscle_groups             text[] default array[]::text[],
+  media_image_url           text,
+  media_video_url           text,
+  open_externally_only      boolean not null default false,
+  metadata_json             jsonb not null default '{}'::jsonb,
+  is_active                 boolean not null default true,
+  created_at                timestamptz default now(),
+  updated_at                timestamptz default now()
+);
+
+-- Add muscle_groups column if it doesn't exist (for existing schemas)
+alter table exercise_library_entries
+  add column if not exists muscle_groups text[] default array[]::text[];
+
+alter table exercise_library_entries
+  add column if not exists open_externally_only boolean not null default false;
+
+create unique index if not exists exercise_library_entries_source_id_idx
+  on exercise_library_entries(source, source_id)
+  where source_id is not null;
+
+create table if not exists equipment_library_entries (
+  id                        uuid primary key default gen_random_uuid(),
+  source                    text not null default 'licensed_import',
+  source_id                 text,
+  slug                      text,
+  name                      text not null,
+  description               text,
+  media_image_url           text,
+  metadata_json             jsonb not null default '{}'::jsonb,
+  is_active                 boolean not null default true,
+  created_at                timestamptz default now(),
+  updated_at                timestamptz default now()
+);
+
+create unique index if not exists equipment_library_entries_source_id_idx
+  on equipment_library_entries(source, source_id)
+  where source_id is not null;
+
+do $$
+begin
+  -- Legacy typo migration for older databases:
+  -- if only nams_opt_phase exists, rename it;
+  -- if both exist, keep nasm_opt_phase and remove the typo column after backfill.
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'workout_plans'
+      and column_name = 'nams_opt_phase'
+  ) and not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'workout_plans'
+      and column_name = 'nasm_opt_phase'
+  ) then
+    execute 'alter table public.workout_plans rename column nams_opt_phase to nasm_opt_phase';
+  elsif exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'workout_plans'
+      and column_name = 'nams_opt_phase'
+  ) and exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'workout_plans'
+      and column_name = 'nasm_opt_phase'
+  ) then
+    execute 'update public.workout_plans set nasm_opt_phase = coalesce(nasm_opt_phase, nams_opt_phase)';
+    execute 'alter table public.workout_plans drop column nams_opt_phase';
+  end if;
+end $$;
+
+create table if not exists workout_logs (
+  id                        uuid primary key default gen_random_uuid(),
+  user_id                   uuid references auth.users(id) on delete cascade,
+  workout_plan_id           uuid references workout_plans(id) on delete set null,
+  session_date              date not null,
+  session_title             text not null,
+  completed                 boolean default false,
+  exertion_rpe              int check (exertion_rpe between 1 and 10),
+  notes                     text,
+  created_at                timestamptz default now()
+);
+
+create table if not exists workout_set_logs (
+  id                        uuid primary key default gen_random_uuid(),
+  user_id                   uuid references auth.users(id) on delete cascade,
+  workout_log_id            uuid references workout_logs(id) on delete set null,
+  workout_plan_id           uuid references workout_plans(id) on delete set null,
+  session_date              date not null,
+  exercise_name             text not null,
+  set_number                int,
+  reps                      int not null,
+  weight_kg                 numeric(7,2),
+  rest_seconds              int,
+  rpe                       numeric(3,1),
+  rir                       numeric(3,1),
+  tempo                     text,
+  is_warmup                 boolean default false,
+  notes                     text,
+  created_at                timestamptz default now()
+);
+
+create table if not exists workout_video_events (
+  id                        uuid primary key default gen_random_uuid(),
+  user_id                   uuid references auth.users(id) on delete cascade,
+  workout_plan_id           uuid references workout_plans(id) on delete set null,
+  exercise_name             text not null,
+  video_url                 text,
+  event_type                text not null check (event_type in ('started', 'completed')),
+  watch_seconds             int,
+  metadata_json             jsonb not null default '{}'::jsonb,
+  created_at                timestamptz default now()
+);
+
+create table if not exists body_composition_analyses (
+  id                        uuid primary key default gen_random_uuid(),
+  user_id                   uuid references auth.users(id) on delete cascade,
+  photo_data_url            text,
+  estimated_bodyfat_percent numeric(5,2),
+  method                    text,
+  confidence_score          numeric(5,2),
+  created_at                timestamptz default now()
+);
+
+alter table fitness_profiles enable row level security;
+alter table client_intake_forms enable row level security;
+alter table coach_client_messages enable row level security;
+alter table workout_plans enable row level security;
+alter table workout_logs enable row level security;
+alter table workout_set_logs enable row level security;
+alter table workout_video_events enable row level security;
+alter table body_composition_analyses enable row level security;
+alter table workout_program_templates enable row level security;
+alter table coach_program_templates enable row level security;
+alter table exercise_library_entries enable row level security;
+alter table equipment_library_entries enable row level security;
+
+drop policy if exists "User reads own fitness profile" on fitness_profiles;
+create policy "User reads own fitness profile" on fitness_profiles
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own fitness profile" on fitness_profiles;
+create policy "User writes own fitness profile" on fitness_profiles
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "User reads own intake form" on client_intake_forms;
+create policy "User reads own intake form" on client_intake_forms
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own intake form" on client_intake_forms;
+create policy "User writes own intake form" on client_intake_forms
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Client reads own messages" on coach_client_messages;
+create policy "Client reads own messages" on coach_client_messages
+  for select using (auth.uid() = client_id);
+
+drop policy if exists "Coach reads designated messages" on coach_client_messages;
+create policy "Coach reads designated messages" on coach_client_messages
+  for select using (
+    auth.uid() = coach_id
+    and exists (
+      select 1
+      from clients c
+      where c.id = coach_client_messages.client_id
+        and c.designated_coach_id = auth.uid()
+    )
+  );
+
+drop policy if exists "Client sends message to designated coach" on coach_client_messages;
+create policy "Client sends message to designated coach" on coach_client_messages
+  for insert with check (
+    auth.uid() = client_id
+    and auth.uid() = sender_id
+    and exists (
+      select 1
+      from clients c
+      where c.id = coach_client_messages.client_id
+        and c.designated_coach_id = coach_client_messages.coach_id
+    )
+  );
+
+drop policy if exists "Coach sends message to assigned client" on coach_client_messages;
+create policy "Coach sends message to assigned client" on coach_client_messages
+  for insert with check (
+    auth.uid() = coach_id
+    and auth.uid() = sender_id
+    and exists (
+      select 1
+      from clients c
+      where c.id = coach_client_messages.client_id
+        and c.designated_coach_id = auth.uid()
+    )
+  );
+
+drop policy if exists "User reads own workout plans" on workout_plans;
+create policy "User reads own workout plans" on workout_plans
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own workout plans" on workout_plans;
+create policy "User writes own workout plans" on workout_plans
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "User reads own workout logs" on workout_logs;
+create policy "User reads own workout logs" on workout_logs
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own workout logs" on workout_logs;
+create policy "User writes own workout logs" on workout_logs
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "User reads own workout set logs" on workout_set_logs;
+create policy "User reads own workout set logs" on workout_set_logs
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own workout set logs" on workout_set_logs;
+create policy "User writes own workout set logs" on workout_set_logs
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "User reads own workout video events" on workout_video_events;
+create policy "User reads own workout video events" on workout_video_events
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own workout video events" on workout_video_events;
+create policy "User writes own workout video events" on workout_video_events
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "User reads own body composition analyses" on body_composition_analyses;
+create policy "User reads own body composition analyses" on body_composition_analyses
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own body composition analyses" on body_composition_analyses;
+create policy "User writes own body composition analyses" on body_composition_analyses
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Authenticated reads workout program templates" on workout_program_templates;
+create policy "Authenticated reads workout program templates" on workout_program_templates
+  for select to authenticated using (is_active = true);
+
+drop policy if exists "Coach reads own program templates" on coach_program_templates;
+create policy "Coach reads own program templates" on coach_program_templates
+  for select to authenticated using (
+    auth.uid() = coach_id
+    and is_active = true
+    and exists (select 1 from clients c where c.id = auth.uid() and c.role = 'coach')
+  );
+
+drop policy if exists "Coach creates own program templates" on coach_program_templates;
+create policy "Coach creates own program templates" on coach_program_templates
+  for insert to authenticated with check (
+    auth.uid() = coach_id
+    and exists (select 1 from clients c where c.id = auth.uid() and c.role = 'coach')
+  );
+
+drop policy if exists "Coach updates own program templates" on coach_program_templates;
+create policy "Coach updates own program templates" on coach_program_templates
+  for update to authenticated using (
+    auth.uid() = coach_id
+    and exists (select 1 from clients c where c.id = auth.uid() and c.role = 'coach')
+  ) with check (
+    auth.uid() = coach_id
+    and exists (select 1 from clients c where c.id = auth.uid() and c.role = 'coach')
+  );
+
+drop policy if exists "Coach deletes own program templates" on coach_program_templates;
+create policy "Coach deletes own program templates" on coach_program_templates
+  for delete to authenticated using (
+    auth.uid() = coach_id
+    and exists (select 1 from clients c where c.id = auth.uid() and c.role = 'coach')
+  );
+
+drop policy if exists "Authenticated reads exercise library" on exercise_library_entries;
+create policy "Authenticated reads exercise library" on exercise_library_entries
+  for select to authenticated using (is_active = true);
+
+drop policy if exists "Authenticated reads equipment library" on equipment_library_entries;
+create policy "Authenticated reads equipment library" on equipment_library_entries
+  for select to authenticated using (is_active = true);
+
+create index if not exists fitness_profiles_updated_at_idx on fitness_profiles(updated_at desc);
+create index if not exists client_intake_forms_signed_at_idx on client_intake_forms(user_id, consent_signed_at desc);
+create index if not exists clients_designated_coach_idx on clients(designated_coach_id);
+create index if not exists coach_client_messages_thread_idx on coach_client_messages(client_id, coach_id, created_at desc);
+create index if not exists workout_plans_user_id_idx on workout_plans(user_id, created_at desc);
+create index if not exists workout_logs_user_id_idx on workout_logs(user_id, session_date desc);
+create index if not exists workout_set_logs_user_id_idx on workout_set_logs(user_id, session_date desc);
+create index if not exists workout_set_logs_exercise_idx on workout_set_logs(user_id, exercise_name, session_date desc);
+create index if not exists workout_video_events_user_id_idx on workout_video_events(user_id, created_at desc);
+create index if not exists workout_video_events_plan_exercise_idx on workout_video_events(user_id, workout_plan_id, exercise_name, created_at desc);
+create index if not exists body_composition_user_id_idx on body_composition_analyses(user_id, created_at desc);
+create index if not exists workout_program_templates_active_idx on workout_program_templates(is_active, created_at desc);
+create index if not exists exercise_library_entries_name_idx on exercise_library_entries(name);
+create index if not exists equipment_library_entries_name_idx on equipment_library_entries(name);
+
+-- ── STORAGE: BEFORE PHOTOS ───────────────────────────────
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'fitness-photos',
+  'fitness-photos',
+  false,
+  5242880,
+  array['image/png', 'image/jpeg', 'image/webp']
+)
+on conflict (id) do nothing;
+
+update storage.buckets
+set public = false
+where id = 'fitness-photos';
+
+drop policy if exists "Users upload own fitness photos" on storage.objects;
+create policy "Users upload own fitness photos" on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'fitness-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Users view own fitness photos" on storage.objects;
+create policy "Users view own fitness photos" on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'fitness-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Users delete own fitness photos" on storage.objects;
+create policy "Users delete own fitness photos" on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'fitness-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- ── STORAGE: COACH VOICE NOTES ────────────────────────────
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'coach-voice-notes',
+  'coach-voice-notes',
+  false,
+  5242880,
+  array['audio/mp4', 'audio/webm', 'audio/aac', 'audio/ogg', 'audio/mpeg', 'audio/wav']
+)
+on conflict (id) do nothing;
+
+update storage.buckets
+set public = false
+where id = 'coach-voice-notes';
+
+drop policy if exists "Authenticated users upload voice notes" on storage.objects;
+create policy "Authenticated users upload voice notes" on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'coach-voice-notes'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Authenticated users view voice notes" on storage.objects;
+create policy "Authenticated users view voice notes" on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'coach-voice-notes'
+  );
+
+create or replace function public.book_client_session(
+  p_client_id uuid,
+  p_package_id uuid,
+  p_scheduled_at timestamptz
+)
+returns setof public.sessions
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  package_row public.client_packages%rowtype;
+  booked_session public.sessions%rowtype;
+begin
+  if p_client_id is null then
+    raise exception 'CLIENT_ID_REQUIRED';
+  end if;
+
+  if p_package_id is null then
+    raise exception 'PACKAGE_ID_REQUIRED';
+  end if;
+
+  if p_scheduled_at is null then
+    raise exception 'SCHEDULED_AT_REQUIRED';
+  end if;
+
+  if p_scheduled_at <= now() then
+    raise exception 'SLOT_MUST_BE_IN_FUTURE';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtext('session-slot:' || p_scheduled_at::text));
+
+  select *
+  into package_row
+  from public.client_packages
+  where id = p_package_id
+    and client_id = p_client_id
+  for update;
+
+  if not found then
+    raise exception 'PACKAGE_NOT_FOUND';
+  end if;
+
+  if package_row.sessions_remaining <= 0 then
+    raise exception 'NO_SESSIONS_REMAINING';
+  end if;
+
+  if exists (
+    select 1
+    from public.sessions
+    where scheduled_at = p_scheduled_at
+      and status = 'scheduled'
+  ) then
+    raise exception 'SLOT_ALREADY_BOOKED';
+  end if;
+
+  begin
+    insert into public.sessions (
+      client_id,
+      package_id,
+      scheduled_at,
+      status
+    )
+    values (
+      p_client_id,
+      p_package_id,
+      p_scheduled_at,
+      'scheduled'
+    )
+    returning * into booked_session;
+  exception
+    when unique_violation then
+      raise exception 'SLOT_ALREADY_BOOKED';
+  end;
+
+  update public.client_packages
+  set sessions_remaining = sessions_remaining - 1
+  where id = package_row.id;
+
+  return next booked_session;
+end;
+$$;
+
+revoke all on function public.book_client_session(uuid, uuid, timestamptz) from public;
+grant execute on function public.book_client_session(uuid, uuid, timestamptz) to service_role;
+
+-- ── API RATE LIMITING ────────────────────────────────────
+create table if not exists api_rate_limits (
+  key              text primary key,
+  window_start     timestamptz not null,
+  count            int not null default 0,
+  updated_at       timestamptz not null default now()
+);
+
+alter table api_rate_limits enable row level security;
+
+create or replace function public.check_rate_limit(
+  p_key text,
+  p_limit int,
+  p_window_seconds int
+)
+returns table(
+  allowed boolean,
+  remaining int,
+  reset_at timestamptz,
+  current_count int
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  now_ts timestamptz := now();
+  row_state public.api_rate_limits%rowtype;
+begin
+  if p_key is null or length(trim(p_key)) = 0 then
+    raise exception 'p_key is required';
+  end if;
+
+  if p_limit <= 0 then
+    raise exception 'p_limit must be greater than zero';
+  end if;
+
+  if p_window_seconds <= 0 then
+    raise exception 'p_window_seconds must be greater than zero';
+  end if;
+
+  insert into public.api_rate_limits as rl (key, window_start, count, updated_at)
+  values (p_key, now_ts, 1, now_ts)
+  on conflict (key) do update
+    set window_start = case
+      when rl.window_start <= now_ts - make_interval(secs => p_window_seconds) then now_ts
+      else rl.window_start
+    end,
+    count = case
+      when rl.window_start <= now_ts - make_interval(secs => p_window_seconds) then 1
+      else rl.count + 1
+    end,
+    updated_at = now_ts
+  returning * into row_state;
+
+  allowed := row_state.count <= p_limit;
+  remaining := greatest(p_limit - row_state.count, 0);
+  reset_at := row_state.window_start + make_interval(secs => p_window_seconds);
+  current_count := row_state.count;
+
+  return next;
+end;
+$$;
+
+revoke all on function public.check_rate_limit(text, int, int) from public;
+grant execute on function public.check_rate_limit(text, int, int) to service_role;
+
+create or replace function public.increment_discount_code_redemptions(
+  p_discount_code text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_discount_code is null or length(trim(p_discount_code)) = 0 then
+    return;
+  end if;
+
+  update public.discount_codes
+  set redemptions_count = redemptions_count + 1
+  where code = upper(trim(p_discount_code));
+end;
+$$;
+
+revoke all on function public.increment_discount_code_redemptions(text) from public;
+grant execute on function public.increment_discount_code_redemptions(text) to service_role;
+
+-- ── SESSION CHECK-IN / CHECK-OUT ─────────────────────────
+alter table sessions add column if not exists checked_in_at timestamptz;
+alter table sessions add column if not exists checked_out_at timestamptz;
+
+-- ── WEEKLY CLIENT CHECK-INS ──────────────────────────────
+create table if not exists weekly_checkins (
+  id                    uuid primary key default gen_random_uuid(),
+  user_id               uuid references auth.users(id) on delete cascade,
+  week_start            date not null,
+  sleep_quality         int check (sleep_quality between 1 and 5),
+  stress_level          int check (stress_level between 1 and 5),
+  soreness_level        int check (soreness_level between 1 and 5),
+  energy_level          int check (energy_level between 1 and 5),
+  weight_kg             numeric(7,2),
+  waist_cm              numeric(6,1),
+  hip_cm                numeric(6,1),
+  neck_cm               numeric(6,1),
+  notes                 text,
+  coach_feedback        text,
+  coach_rating_adjustment int check (coach_rating_adjustment between -2 and 2),
+  created_at            timestamptz default now(),
+  updated_at            timestamptz default now(),
+  unique (user_id, week_start)
+);
+
+alter table weekly_checkins add column if not exists waist_cm numeric(6,1);
+alter table weekly_checkins add column if not exists hip_cm numeric(6,1);
+alter table weekly_checkins add column if not exists neck_cm numeric(6,1);
+
+-- ── PROGRESS PHOTOS ───────────────────────────────────────
+create table if not exists progress_photos (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references auth.users(id) on delete cascade,
+  photo_url   text not null,
+  taken_at    date not null,
+  notes       text,
+  created_at  timestamptz default now()
+);
+
+-- ── CARDIO SESSION LOGS ───────────────────────────────────
+create table if not exists cardio_logs (
+  id                uuid primary key default gen_random_uuid(),
+  user_id           uuid references auth.users(id) on delete cascade,
+  session_date      date not null,
+  activity_type     text not null,
+  duration_mins     int not null,
+  distance_km       numeric(7,3),
+  avg_heart_rate    int,
+  calories          int,
+  perceived_effort  int check (perceived_effort between 1 and 10),
+  notes             text,
+  created_at        timestamptz default now()
+);
+
+-- ── EXERCISE SKIPS ────────────────────────────────────────
+create table if not exists exercise_skips (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references auth.users(id) on delete cascade,
+  session_date  date not null,
+  exercise_name text not null,
+  workout_day   int,
+  reason        text check (reason in ('no_equipment','injury','time','other')),
+  notes         text,
+  created_at    timestamptz default now()
+);
+
+-- RLS for new tables
+alter table weekly_checkins enable row level security;
+alter table progress_photos enable row level security;
+alter table cardio_logs enable row level security;
+alter table exercise_skips enable row level security;
+
+drop policy if exists "User reads own checkins" on weekly_checkins;
+create policy "User reads own checkins" on weekly_checkins
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own checkins" on weekly_checkins;
+create policy "User writes own checkins" on weekly_checkins
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "User reads own progress photos" on progress_photos;
+create policy "User reads own progress photos" on progress_photos
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own progress photos" on progress_photos;
+create policy "User writes own progress photos" on progress_photos
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "User reads own cardio logs" on cardio_logs;
+create policy "User reads own cardio logs" on cardio_logs
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own cardio logs" on cardio_logs;
+create policy "User writes own cardio logs" on cardio_logs
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "User reads own exercise skips" on exercise_skips;
+create policy "User reads own exercise skips" on exercise_skips
+  for select using (auth.uid() = user_id);
+drop policy if exists "User writes own exercise skips" on exercise_skips;
+create policy "User writes own exercise skips" on exercise_skips
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Indexes for new tables
+create index if not exists weekly_checkins_user_week_idx on weekly_checkins(user_id, week_start desc);
+create index if not exists progress_photos_user_taken_idx on progress_photos(user_id, taken_at desc);
+create index if not exists cardio_logs_user_date_idx on cardio_logs(user_id, session_date desc);
+create index if not exists exercise_skips_user_date_idx on exercise_skips(user_id, session_date desc);
+
+-- ── PUSH TOKENS ──────────────────────────────────────────
+create table if not exists push_tokens (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references auth.users(id) on delete cascade,
+  device_token  text not null unique,
+  platform      text not null default 'ios',
+  updated_at    timestamptz default now(),
+  created_at    timestamptz default now()
+);
+
+alter table push_tokens enable row level security;
+
+drop policy if exists "User manages own push tokens" on push_tokens;
+create policy "User manages own push tokens" on push_tokens
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create index if not exists push_tokens_user_id_idx on push_tokens(user_id);
+
+-- ── CLIENT GOALS ─────────────────────────────────────────
+create table if not exists client_goals (
+  id                uuid primary key default gen_random_uuid(),
+  user_id           uuid not null references auth.users(id) on delete cascade,
+  title             text not null,
+  category          text not null check (category in ('weight', 'strength', 'cardio', 'body_composition', 'custom')),
+  target_value      numeric(10,2),
+  target_unit       text,
+  baseline_value    numeric(10,2),
+  current_value     numeric(10,2),
+  target_date       date,
+  is_achieved       boolean not null default false,
+  achieved_at       timestamptz,
+  notes             text,
+  created_at        timestamptz default now(),
+  updated_at        timestamptz default now()
+);
+
+alter table client_goals enable row level security;
+
+drop policy if exists "User reads own goals" on client_goals;
+create policy "User reads own goals" on client_goals
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "User writes own goals" on client_goals;
+create policy "User writes own goals" on client_goals
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Coach can read goals for assigned clients
+drop policy if exists "Coach reads assigned client goals" on client_goals;
+create policy "Coach reads assigned client goals" on client_goals
+  for select using (
+    exists (
+      select 1
+      from clients c
+      join clients cl on cl.id = client_goals.user_id
+      where c.id = auth.uid()
+        and c.role = 'coach'
+        and cl.designated_coach_id = auth.uid()
+    )
+  );
+
+create index if not exists client_goals_user_id_idx on client_goals(user_id, created_at desc);
+create index if not exists client_goals_category_idx on client_goals(user_id, category);
+create index if not exists client_goals_active_idx on client_goals(user_id, is_achieved, target_date);
+
+-- ── NASM ASSESSMENTS ─────────────────────────────────────
+create table if not exists nasm_assessments (
+  id                      uuid primary key default gen_random_uuid(),
+  client_id               uuid not null references clients(id) on delete cascade,
+  coach_id                uuid not null references clients(id) on delete cascade,
+  assessment_date         date not null default current_date,
+  title                   text,
+  static_posture          jsonb not null default '[]'::jsonb,
+  ohsa_findings           jsonb not null default '[]'::jsonb,
+  single_leg_squat        jsonb not null default '[]'::jsonb,
+  push_pull               jsonb not null default '[]'::jsonb,
+  cardio_vitals           jsonb not null default '{}'::jsonb,
+  overactive_muscles      text[] not null default array[]::text[],
+  underactive_muscles     text[] not null default array[]::text[],
+  prescribed_correctives  jsonb not null default '{}'::jsonb,
+  coach_summary_notes     text,
+  created_at              timestamptz default now(),
+  updated_at              timestamptz default now()
+);
+
+alter table nasm_assessments enable row level security;
+
+-- Client can read own NASM assessments
+drop policy if exists "Client reads own nasm assessments" on nasm_assessments;
+create policy "Client reads own nasm assessments" on nasm_assessments
+  for select using (auth.uid() = client_id);
+
+-- Coach can read assigned clients' assessments
+drop policy if exists "Coach reads assigned client assessments" on nasm_assessments;
+create policy "Coach reads assigned client assessments" on nasm_assessments
+  for select using (
+    auth.uid() = coach_id
+    or exists (
+      select 1
+      from clients c
+      join clients cl on cl.id = nasm_assessments.client_id
+      where c.id = auth.uid()
+        and c.role = 'coach'
+        and cl.designated_coach_id = auth.uid()
+    )
+  );
+
+-- Coach can insert assessments for assigned clients
+drop policy if exists "Coach inserts client assessments" on nasm_assessments;
+create policy "Coach inserts client assessments" on nasm_assessments
+  for insert with check (
+    auth.uid() = coach_id
+    and exists (
+      select 1
+      from clients c
+      where c.id = auth.uid()
+        and c.role = 'coach'
+    )
+  );
+
+-- Coach can update own client assessments
+drop policy if exists "Coach updates client assessments" on nasm_assessments;
+create policy "Coach updates client assessments" on nasm_assessments
+  for update using (
+    auth.uid() = coach_id
+  ) with check (
+    auth.uid() = coach_id
+  );
+
+-- Coach can delete own client assessments
+drop policy if exists "Coach deletes client assessments" on nasm_assessments;
+create policy "Coach deletes client assessments" on nasm_assessments
+  for delete using (
+    auth.uid() = coach_id
+  );
+
+create index if not exists nasm_assessments_client_idx on nasm_assessments(client_id, assessment_date desc);
+create index if not exists nasm_assessments_coach_idx on nasm_assessments(coach_id, assessment_date desc);
+
+-- ── ATHLETE WEARABLE & APPLE HEALTH METRICS ──────────────────────
+create table if not exists athlete_wearable_metrics (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null references clients(id) on delete cascade,
+  sample_date date not null,
+  provider text not null default 'apple_health',
+  resting_heart_rate int,
+  hrv_rmssd numeric(6,2),
+  cns_stress_score int,
+  readiness_score int,
+  sleep_hours numeric(4,2),
+  deep_sleep_hours numeric(4,2),
+  rem_sleep_hours numeric(4,2),
+  core_sleep_hours numeric(4,2),
+  awake_sleep_hours numeric(4,2),
+  sleep_efficiency_percent int,
+  steps_count int,
+  active_calories_kcal int,
+  calories_consumed_kcal int,
+  protein_grams numeric(6,1),
+  carbs_grams numeric(6,1),
+  fat_grams numeric(6,1),
+  fiber_grams numeric(6,1),
+  water_oz numeric(6,1),
+  raw_payload jsonb default '{}'::jsonb,
+  synced_at timestamptz default now(),
+  created_at timestamptz default now(),
+  unique (client_id, sample_date, provider)
+);
+
+alter table athlete_wearable_metrics enable row level security;
+
+drop policy if exists "Users read own wearable metrics" on athlete_wearable_metrics;
+create policy "Users read own wearable metrics" on athlete_wearable_metrics
+  for select to authenticated
+  using (
+    auth.uid() = client_id
+    or exists (
+      select 1 from clients c
+      where c.id = auth.uid() and c.role = 'coach'
+    )
+  );
+
+drop policy if exists "Users insert own wearable metrics" on athlete_wearable_metrics;
+create policy "Users insert own wearable metrics" on athlete_wearable_metrics
+  for insert to authenticated
+  with check (auth.uid() = client_id);
+
+drop policy if exists "Users update own wearable metrics" on athlete_wearable_metrics;
+create policy "Users update own wearable metrics" on athlete_wearable_metrics
+  for update to authenticated
+  using (auth.uid() = client_id)
+  with check (auth.uid() = client_id);
+
+-- ── HIGH-PERFORMANCE COMPOSITE INDICES (GYM-FLOOR OPTIMIZATIONS) ──
+create index if not exists workout_set_logs_composite_perf_idx 
+  on workout_set_logs(user_id, is_warmup, session_date desc, exercise_name);
+
+create index if not exists athlete_wearable_metrics_date_idx 
+  on athlete_wearable_metrics(client_id, sample_date desc);
+
+create index if not exists weekly_checkins_user_date_idx 
+  on weekly_checkins(user_id, created_at desc);
+
+-- ── ATHLETE PERSONAL RECORDS SUMMARY & AUTO-TRIGGER ────────────
+create table if not exists client_personal_records (
+  id                  uuid primary key default gen_random_uuid(),
+  user_id             uuid not null references clients(id) on delete cascade,
+  exercise_name       text not null,
+  max_weight_kg       numeric(6,2) not null default 0,
+  max_weight_reps     int not null default 0,
+  max_weight_date     date not null,
+  estimated_1rm_kg    numeric(6,2) not null default 0,
+  total_sets_logged   int not null default 1,
+  first_logged_date   date not null,
+  latest_logged_date  date not null,
+  created_at          timestamptz default now(),
+  updated_at          timestamptz default now(),
+  unique (user_id, exercise_name)
+);
+
+alter table client_personal_records enable row level security;
+
+drop policy if exists "Users read own personal records" on client_personal_records;
+create policy "Users read own personal records" on client_personal_records
+  for select to authenticated
+  using (
+    auth.uid() = user_id
+    or exists (
+      select 1 from clients c
+      where c.id = auth.uid() and c.role = 'coach'
+    )
+  );
+
+create index if not exists client_personal_records_lookup_idx 
+  on client_personal_records(user_id, exercise_name);
+
+-- Auto-Sync Trigger Function for Instant PR Updates on Set Log Insert/Update
+create or replace function sync_client_personal_record()
+returns trigger as $$
+declare
+  v_e1rm numeric(6,2);
+begin
+  -- Only process non-warmup sets with valid weight and reps
+  if new.is_warmup = false and new.weight_kg is not null and new.weight_kg > 0 and new.reps > 0 then
+    -- Epley 1RM estimation: weight * (1 + reps / 30)
+    v_e1rm := round(new.weight_kg * (1.0 + (new.reps::numeric / 30.0)), 2);
+
+    insert into client_personal_records (
+      user_id,
+      exercise_name,
+      max_weight_kg,
+      max_weight_reps,
+      max_weight_date,
+      estimated_1rm_kg,
+      total_sets_logged,
+      first_logged_date,
+      latest_logged_date,
+      updated_at
+    )
+    values (
+      new.user_id,
+      trim(new.exercise_name),
+      new.weight_kg,
+      new.reps,
+      new.session_date,
+      v_e1rm,
+      1,
+      new.session_date,
+      new.session_date,
+      now()
+    )
+    on conflict (user_id, exercise_name) do update
+    set
+      total_sets_logged = client_personal_records.total_sets_logged + 1,
+      latest_logged_date = greatest(client_personal_records.latest_logged_date, excluded.latest_logged_date),
+      first_logged_date = least(client_personal_records.first_logged_date, excluded.first_logged_date),
+      max_weight_kg = case 
+        when excluded.max_weight_kg > client_personal_records.max_weight_kg then excluded.max_weight_kg 
+        else client_personal_records.max_weight_kg 
+      end,
+      max_weight_reps = case 
+        when excluded.max_weight_kg > client_personal_records.max_weight_kg then excluded.max_weight_reps 
+        when excluded.max_weight_kg = client_personal_records.max_weight_kg and excluded.max_weight_reps > client_personal_records.max_weight_reps then excluded.max_weight_reps
+        else client_personal_records.max_weight_reps 
+      end,
+      max_weight_date = case 
+        when excluded.max_weight_kg >= client_personal_records.max_weight_kg then excluded.max_weight_date 
+        else client_personal_records.max_weight_date 
+      end,
+      estimated_1rm_kg = greatest(client_personal_records.estimated_1rm_kg, excluded.estimated_1rm_kg),
+      updated_at = now();
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists trg_sync_personal_records on workout_set_logs;
+create trigger trg_sync_personal_records
+  after insert or update on workout_set_logs
+  for each row
+  execute function sync_client_personal_record();
+
+

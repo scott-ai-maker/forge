@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/marketing/dispatch",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/internal/notifications/weekly-checkin",
+      "schedule": "0 14 * * 0"
+    }
+  ]
+}
+

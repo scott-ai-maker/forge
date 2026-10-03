@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gordon Athletic Advisory</string>
+    <string name="title_activity_main">Gordon Athletic Advisory</string>
+    <string name="package_name">com.gordonathletic.app</string>
+    <string name="custom_url_scheme">com.gordonathletic.app</string>
+    <string name="health_permissions_rationale">Gordon Athletic Advisory reads your heart rate, HRV, active calories, sleep stages, dietary nutrition, and workouts to calculate real-time CNS readiness and dynamically calibrate your periodized coaching program.</string>
+</resources>
+

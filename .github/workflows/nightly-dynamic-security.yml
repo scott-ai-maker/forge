@@ -1,0 +1,175 @@
+name: Nightly Dynamic Security
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      enable_booking:
+        description: 'Run booking checks'
+        required: false
+        default: true
+        type: boolean
+      enable_checkout:
+        description: 'Run checkout checks'
+        required: false
+        default: false
+        type: boolean
+      run_playwright:
+        description: 'Run Playwright UI smoke suite'
+        required: false
+        default: true
+        type: boolean
+      run_api_smoke:
+        description: 'Run Authenticated API smoke suite'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: nightly-dynamic-security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  playwright-ui-smoke:
+    name: Playwright UI Smoke
+    if: github.event_name == 'schedule' || inputs.run_playwright != false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    permissions:
+      contents: read
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js (LTS 22)
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4.2.2
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Playwright System Dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Install Playwright Browser & Dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright UI Smoke Tests
+        run: npm run test:ui
+
+      - name: Upload Playwright Report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nightly-playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+
+  authenticated-api-smoke:
+    name: Authenticated API Smoke
+    if: github.event_name == 'schedule' || inputs.run_api_smoke != false
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: production
+    permissions:
+      contents: read
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SMOKE_COACH_PASSWORD: ${{ secrets.SMOKE_COACH_PASSWORD }}
+      SMOKE_ASSIGNED_CLIENT_PASSWORD: ${{ secrets.SMOKE_ASSIGNED_CLIENT_PASSWORD }}
+      SMOKE_UNASSIGNED_CLIENT_PASSWORD: ${{ secrets.SMOKE_UNASSIGNED_CLIENT_PASSWORD }}
+      SMOKE_BASE_URL: http://127.0.0.1:3000
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js (LTS 22)
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Start Application Server
+        run: |
+          npm run dev > /tmp/next-dev.log 2>&1 &
+          echo $! > /tmp/next-dev.pid
+
+      - name: Wait for Server Readiness
+        run: |
+          DEV_PID=$(cat /tmp/next-dev.pid)
+          for i in {1..60}; do
+            if ! kill -0 "$DEV_PID" 2>/dev/null; then
+              echo "Next.js dev process (PID $DEV_PID) terminated unexpectedly!"
+              cat /tmp/next-dev.log || true
+              exit 1
+            fi
+
+            if curl -s --max-time 2 -o /dev/null "$SMOKE_BASE_URL"; then
+              echo "App ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "App did not become ready in 60s"
+          cat /tmp/next-dev.log || true
+          exit 1
+
+      - name: Run Authenticated Smoke Suite
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ENABLE_BOOKING: ${{ inputs.enable_booking }}
+          INPUT_ENABLE_CHECKOUT: ${{ inputs.enable_checkout }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ "$INPUT_ENABLE_BOOKING" == "true" ]]; then
+              export SMOKE_ENABLE_BOOKING=1
+            fi
+            if [[ "$INPUT_ENABLE_CHECKOUT" == "true" ]]; then
+              export SMOKE_ENABLE_CHECKOUT=1
+            fi
+          else
+            export SMOKE_ENABLE_BOOKING=1
+          fi
+
+          node scripts/authenticated-smoke-harness.mjs
+
+      - name: Upload Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nightly-authenticated-smoke-next-dev-log
+          path: /tmp/next-dev.log
+          if-no-files-found: ignore
+
+      - name: Clean Up Application Process
+        if: always()
+        run: |
+          if [[ -f /tmp/next-dev.pid ]]; then
+            DEV_PID=$(cat /tmp/next-dev.pid)
+            pkill -P "$DEV_PID" 2>/dev/null || true
+            kill "$DEV_PID" 2>/dev/null || true
+          fi
