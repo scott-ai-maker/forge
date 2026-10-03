@@ -498,13 +498,11 @@ a:focus-visible {
 }
 
 .site-brand-mark {
-  width: 58px;
-  height: 58px;
-  border-radius: 12px;
-  border: 1.5px solid var(--gold);
-  background-size: cover;
-  background-position: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 16px rgba(197, 160, 89, 0.35);
+  width: 50px;
+  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -1982,9 +1980,8 @@ a:focus-visible {
   }
 
   .site-brand-mark {
-    width: 48px !important;
-    height: 48px !important;
-    border-radius: 10px !important;
+    width: 44px !important;
+    height: 44px !important;
   }
 
   .site-brand-subtitle {
@@ -2053,9 +2050,8 @@ a:focus-visible {
     font-size: 1.24rem !important;
   }
   .site-brand-mark {
-    width: 44px !important;
-    height: 44px !important;
-    border-radius: 9px !important;
+    width: 40px !important;
+    height: 40px !important;
   }
 }
 

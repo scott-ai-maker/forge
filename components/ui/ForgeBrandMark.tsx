@@ -23,7 +23,7 @@ export default function ForgeBrandMark({
   if (variant === 'raster') {
     return (
       <img
-        src="/images/brand/forge-brand-mark.png"
+        src="/images/brand/forge-brand-mark.png?v=2"
         alt="Forge Athletic Brand Mark"
         width={size}
         height={size}

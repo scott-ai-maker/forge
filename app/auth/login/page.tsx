@@ -84,7 +84,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             marginBottom: 20,
           }}
         >
-          <ForgeBrandMark size={84} />
+          <ForgeBrandMark size={84} variant="raster" />
         </div>
         <h1
           className="font-serif gold-gradient-text"
