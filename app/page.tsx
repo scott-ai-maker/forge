@@ -153,9 +153,25 @@ export default function Home() {
 
           <div className="home-shell home-hero-grid" style={{ maxWidth: 1320, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 'clamp(1.5rem, 4vw, 3rem)', alignItems: 'center', position: 'relative', zIndex: 1, boxSizing: 'border-box' }}>
             <div className="home-hero-copy fade-in-up">
-              <div className="crest-badge" style={{ marginBottom: 18 }}>
-                <ForgeBrandMark size={18} withGlow={false} />
-                <span>Precision Sports Science · Built From The Ground Up</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+                <img
+                  src="/images/brand/logo-concept-1-kinetic-f.jpg"
+                  alt="Forge Athletic"
+                  width={56}
+                  height={56}
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 12,
+                    border: '1.5px solid rgba(245, 158, 11, 0.45)',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.3)',
+                    objectFit: 'cover',
+                    flexShrink: 0,
+                  }}
+                />
+                <div className="crest-badge" style={{ margin: 0 }}>
+                  <span>Precision Sports Science · Built From The Ground Up</span>
+                </div>
               </div>
 
               <h1
@@ -239,13 +255,30 @@ export default function Home() {
                 <GaaMasterWatermarkSeal size={150} opacity={0.08} />
               </div>
 
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.16em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                  Clinical Sports Science Standards
-                </span>
-                <h3 className="font-serif" style={{ fontSize: 24, margin: '4px 0 0', color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 700 }}>
-                  Why Athletes Train With Forge
-                </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, position: 'relative', zIndex: 1 }}>
+                <img
+                  src="/images/brand/logo-concept-1-kinetic-f.jpg"
+                  alt="Forge Athletic"
+                  width={54}
+                  height={54}
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: 10,
+                    border: '1.5px solid rgba(245, 158, 11, 0.45)',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6), 0 0 14px rgba(245, 158, 11, 0.3)',
+                    objectFit: 'cover',
+                    flexShrink: 0,
+                  }}
+                />
+                <div>
+                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.16em', color: 'var(--gold-lt)', fontWeight: 800, display: 'block' }}>
+                    Clinical Sports Science Standards
+                  </span>
+                  <h3 className="font-serif" style={{ fontSize: 22, margin: '2px 0 0', color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 700 }}>
+                    Why Athletes Train With Forge
+                  </h3>
+                </div>
               </div>
 
               <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 10, fontSize: 13.5, color: '#CBD5E1', position: 'relative', zIndex: 1 }}>

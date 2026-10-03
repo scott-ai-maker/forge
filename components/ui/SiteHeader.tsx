@@ -136,7 +136,21 @@ export default function SiteHeader({
                 flexShrink: 0,
               }}
             >
-              <ForgeBrandMark size={50} />
+              <img
+                src="/images/brand/logo-concept-1-kinetic-f.jpg"
+                alt="Forge Athletic"
+                width={52}
+                height={52}
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 10,
+                  border: '1.5px solid rgba(245, 158, 11, 0.45)',
+                  boxShadow: '0 0 16px rgba(245, 158, 11, 0.3)',
+                  objectFit: 'cover',
+                  flexShrink: 0,
+                }}
+              />
             </span>
             <span className="site-brand-meta" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
               <span className="site-brand-text font-serif" style={{ fontSize: '1.18rem', letterSpacing: '0.08em', color: '#FFFFFF', whiteSpace: 'nowrap', fontWeight: 700 }}>

@@ -84,7 +84,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             marginBottom: 20,
           }}
         >
-          <ForgeBrandMark size={84} />
+          <img
+            src="/images/brand/logo-concept-1-kinetic-f.jpg"
+            alt="Forge Athletic"
+            width={96}
+            height={96}
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 18,
+              border: '1.5px solid rgba(245, 158, 11, 0.45)',
+              boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(245, 158, 11, 0.3)',
+              objectFit: 'cover',
+            }}
+          />
         </div>
         <h1
           className="font-serif gold-gradient-text"

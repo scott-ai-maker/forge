@@ -34,7 +34,21 @@ export default function SiteFooter() {
                 flexShrink: 0,
               }}
             >
-              <ForgeBrandMark size={48} />
+              <img
+                src="/images/brand/logo-concept-1-kinetic-f.jpg"
+                alt="Forge Athletic"
+                width={52}
+                height={52}
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 10,
+                  border: '1.5px solid rgba(245, 158, 11, 0.45)',
+                  boxShadow: '0 0 16px rgba(245, 158, 11, 0.3)',
+                  objectFit: 'cover',
+                  flexShrink: 0,
+                }}
+              />
             </span>
             <span className="site-footer-text font-serif" style={{ fontSize: '1.25rem', color: '#FFFFFF', letterSpacing: '0.08em', fontWeight: 700 }}>
               Forge <span style={{ color: 'var(--gold)' }}>Athletic</span>
