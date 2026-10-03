@@ -153,11 +153,9 @@ export default function Home() {
 
           <div className="home-shell home-hero-grid" style={{ maxWidth: 1320, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 'clamp(1.5rem, 4vw, 3rem)', alignItems: 'center', position: 'relative', zIndex: 1, boxSizing: 'border-box' }}>
             <div className="home-hero-copy fade-in-up">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-                <ForgeBrandMark size={56} variant="raster" />
-                <div className="crest-badge" style={{ margin: 0 }}>
-                  <span>Precision Sports Science · Built From The Ground Up</span>
-                </div>
+              <div className="crest-badge" style={{ marginBottom: 18 }}>
+                <ForgeBrandMark size={18} withGlow={false} />
+                <span>Precision Sports Science · Built From The Ground Up</span>
               </div>
 
               <h1
@@ -241,16 +239,13 @@ export default function Home() {
                 <GaaMasterWatermarkSeal size={150} opacity={0.08} />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, position: 'relative', zIndex: 1 }}>
-                <ForgeBrandMark size={54} variant="raster" />
-                <div>
-                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.16em', color: 'var(--gold-lt)', fontWeight: 800, display: 'block' }}>
-                    Clinical Sports Science Standards
-                  </span>
-                  <h3 className="font-serif" style={{ fontSize: 22, margin: '2px 0 0', color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 700 }}>
-                    Why Athletes Train With Forge
-                  </h3>
-                </div>
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.16em', color: 'var(--gold-lt)', fontWeight: 800 }}>
+                  Clinical Sports Science Standards
+                </span>
+                <h3 className="font-serif" style={{ fontSize: 24, margin: '4px 0 0', color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 700 }}>
+                  Why Athletes Train With Forge
+                </h3>
               </div>
 
               <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 10, fontSize: 13.5, color: '#CBD5E1', position: 'relative', zIndex: 1 }}>

@@ -136,7 +136,7 @@ export default function SiteHeader({
                 flexShrink: 0,
               }}
             >
-              <ForgeBrandMark size={52} variant="raster" />
+              <ForgeBrandMark size={50} />
             </span>
             <span className="site-brand-meta" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
               <span className="site-brand-text font-serif" style={{ fontSize: '1.18rem', letterSpacing: '0.08em', color: '#FFFFFF', whiteSpace: 'nowrap', fontWeight: 700 }}>
