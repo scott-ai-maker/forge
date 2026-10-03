@@ -36,7 +36,7 @@ export default function SiteFooter() {
             >
               <ForgeBrandMark size={48} />
             </span>
-            <span className="site-footer-text font-serif" style={{ fontSize: '1.25rem', color: '#FFFFFF', letterSpacing: '0.06em', fontWeight: 800, textTransform: 'uppercase' }}>
+            <span className="site-footer-text font-serif" style={{ fontSize: '1.25rem', color: '#FFFFFF', letterSpacing: '0.08em', fontWeight: 700 }}>
               Forge <span style={{ color: 'var(--gold)' }}>Athletic</span>
             </span>
           </Link>

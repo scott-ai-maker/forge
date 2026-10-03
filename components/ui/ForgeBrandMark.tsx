@@ -7,6 +7,7 @@ interface ForgeBrandMarkProps {
   className?: string
   style?: React.CSSProperties
   withGlow?: boolean
+  variant?: 'vector' | 'raster'
 }
 
 export default function ForgeBrandMark({
@@ -14,9 +15,32 @@ export default function ForgeBrandMark({
   className = '',
   style = {},
   withGlow = true,
+  variant = 'vector',
 }: ForgeBrandMarkProps) {
   const gradientId = React.useId()
   const glowId = React.useId()
+
+  if (variant === 'raster') {
+    return (
+      <img
+        src="/images/brand/forge-brand-mark.png"
+        alt="Forge Athletic Brand Mark"
+        width={size}
+        height={size}
+        className={className}
+        style={{
+          width: size,
+          height: size,
+          objectFit: 'contain',
+          flexShrink: 0,
+          filter: withGlow
+            ? `drop-shadow(0 4px ${size * 0.2}px rgba(245, 158, 11, 0.4)) drop-shadow(0 0 ${size * 0.12}px rgba(56, 189, 248, 0.3))`
+            : undefined,
+          ...style,
+        }}
+      />
+    )
+  }
 
   return (
     <svg
