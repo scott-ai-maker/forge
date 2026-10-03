@@ -1,4 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Forge Athletic
+
+Forge Athletic is a sports-science training platform built on adaptive NASM OPT™ periodization, movement screening, performance telemetry, and coaching workflows.
+
+The current public memberships are Core Membership ($19.99/month or $149/year, with a seven-day free trial), Pro Athlete ($49/month), and Transformation Direct ($199/month). The Core trial is provisioned in Stripe Checkout.
 
 ## Getting Started
 
@@ -18,7 +22,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The interface uses Barlow Condensed for headings and Inter for body text through `next/font`.
 
 ## Testing
 
@@ -141,5 +145,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+The production domain is `https://forge-athletic.app`. Set `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_APP_URL`, and `APP_BASE_URL` to this origin in the Vercel project environment variables. Set `EMAIL_LINK_BASE_URL` to the same origin for password-reset and marketing-email links. Keep local `.env.local` URL values pointed at localhost for local development.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

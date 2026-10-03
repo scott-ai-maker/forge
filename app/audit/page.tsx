@@ -122,7 +122,7 @@ export default function AuditLandingPage() {
       <SiteHeader
         fixed
         links={[
-          { href: '/packages', label: 'Private Retainers' },
+          { href: '/packages', label: 'Memberships' },
           { href: '/apply', label: 'Diagnostic Quiz' },
           { href: '/dashboard', label: 'Client Lab' },
         ]}
@@ -428,4 +428,3 @@ export default function AuditLandingPage() {
     </main>
   )
 }
-

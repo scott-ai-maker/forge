@@ -201,7 +201,7 @@ export default async function BookPage() {
                   <span>Message Coach Gordon to Request Session</span>
                 </a>
                 <span style={{ fontSize: 11.5, color: 'var(--gray)' }}>
-                  Retainer tiers &amp; membership options can be adjusted at <strong style={{ color: 'var(--gold-lt)' }}>gordonathleticadvisory.com</strong>.
+                  Membership options can be adjusted at <strong style={{ color: 'var(--gold-lt)' }}>forge-athletic.app</strong>.
                 </span>
               </div>
             </div>

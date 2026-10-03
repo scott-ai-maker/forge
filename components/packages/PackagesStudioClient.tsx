@@ -84,7 +84,7 @@ export default function PackagesStudioClient({
                 GAA Mobile Gym Companion App
               </div>
               <div style={{ fontSize: 13.5, color: '#FFFFFF', fontWeight: 600 }}>
-                Retainer subscriptions and memberships are managed exclusively on our web portal at <strong style={{ color: 'var(--gold)' }}>gordonathleticadvisory.com</strong>.
+                Memberships and billing are managed exclusively on our web portal at <strong style={{ color: 'var(--gold)' }}>forge-athletic.app</strong>.
               </div>
             </div>
           </div>

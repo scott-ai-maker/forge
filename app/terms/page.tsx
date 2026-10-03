@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { PACKAGES } from '@/lib/stripe'
+import { FORGE_MEMBERSHIPS } from '@/lib/forge-memberships'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SiteFooter from '@/components/ui/SiteFooter'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
@@ -7,7 +7,7 @@ import GaaIcon from '@/components/ui/GaaIcon'
 
 export const metadata: Metadata = {
   title: 'Terms of Service & Intellectual Property Rights',
-  description: 'Client agreement, service-level commitments, liability screening conditions, and proprietary intellectual property protections of Gordon Athletic Advisory.',
+  description: 'Membership terms, liability screening conditions, and intellectual property protections for Forge Athletic.',
 }
 
 export default function TermsOfServicePage() {
@@ -17,7 +17,7 @@ export default function TermsOfServicePage() {
         fixed
         links={[
           { href: '/', label: 'Home' },
-          { href: '/packages', label: 'Retainers' },
+          { href: '/packages', label: 'Memberships' },
           { href: '/apply', label: 'Apply' },
         ]}
         actions={<MarketingLoginActions />}
@@ -124,39 +124,35 @@ export default function TermsOfServicePage() {
 
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.4rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
-          4. Payments, Subscriptions &amp; Retainer Commitments
+          4. Membership Payments &amp; Subscriptions
         </h2>
         <p style={{ fontSize: '0.95rem' }}>
-          Coaching retainers and advisory packages are billed per 30-day coaching cycle as selected at checkout. Subscriptions renew automatically each billing period until formally canceled via your Account Portal or written notice prior to the next billing date. Due to the bespoke, dedicated allocation of coach time and program architecture, all sales are final unless otherwise provided in writing. Payments are encrypted and processed securely via Stripe.
+          Memberships are billed monthly or annually as displayed at checkout and renew automatically until cancelled through your account. Core Membership includes a seven-day free trial before the selected recurring billing begins. Payments are processed securely by Stripe. All sales are final unless otherwise provided in writing.
         </p>
       </section>
 
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.4rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
-          5. Service Levels &amp; Advisory Deliverables (SLA)
+          5. Membership Features
         </h2>
         <p style={{ marginBottom: '0.75rem', fontSize: '0.95rem' }}>
-          The following standards define client deliverables for each advisory tier. Response windows apply to business hours (Monday–Friday, Eastern Time), excluding major US holidays:
+          Membership features are defined by the current plan selected at checkout:
         </p>
-        {PACKAGES.map(pkg => (
-          <div key={pkg.id} style={{ border: '1px solid rgba(197,160,89,0.25)', padding: '1rem 1.25rem', marginBottom: '0.9rem', background: 'rgba(14, 23, 36, 0.75)', borderRadius: 6 }}>
-            <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.2rem', margin: '0 0 0.3rem', color: 'var(--gold-lt)', letterSpacing: '0.03em' }}>
-              {pkg.name} (<span style={{ fontFamily: 'var(--font-telemetry, monospace)' }}>${pkg.price / 100}</span>/{pkg.billingLabel})
+        {FORGE_MEMBERSHIPS.map(membership => (
+          <div key={membership.id} style={{ border: '1px solid rgba(245,158,11,0.25)', padding: '1rem 1.25rem', marginBottom: '0.9rem', background: 'rgba(15, 23, 42, 0.75)', borderRadius: 6 }}>
+            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', margin: '0 0 0.3rem', color: 'var(--gold-lt)', letterSpacing: '0.03em' }}>
+              {membership.name} (<span style={{ fontFamily: 'var(--font-telemetry, monospace)' }}>${membership.monthlyPriceCents / 100}/month</span>)
             </h3>
-            <p style={{ margin: '0 0 0.5rem', color: '#94A3B8', fontSize: '0.9rem' }}>{pkg.description}</p>
-            <p style={{ margin: '0 0 0.25rem', fontSize: '0.88rem' }}><strong>Deliverables:</strong></p>
+            {membership.annualPriceCents !== undefined && (
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.88rem' }}>
+                Annual option: <span style={{ fontFamily: 'var(--font-telemetry, monospace)' }}>${membership.annualPriceCents / 100}/year</span>. Seven-day free trial.
+              </p>
+            )}
             <ul style={{ margin: '0 0 0.5rem 1.1rem', padding: 0, fontSize: '0.88rem' }}>
-              {pkg.deliverables.map(item => (
-                <li key={item} style={{ marginBottom: '0.2rem' }}>{item}</li>
+              {membership.features.map(feature => (
+                <li key={feature} style={{ marginBottom: '0.2rem' }}>{feature}</li>
               ))}
             </ul>
-            <p style={{ margin: '0 0 0.25rem', fontSize: '0.88rem' }}><strong>SLA Commitments:</strong></p>
-            <ul style={{ margin: '0 0 0.5rem 1.1rem', padding: 0, fontSize: '0.88rem' }}>
-              {pkg.serviceLevels.map(item => (
-                <li key={item} style={{ marginBottom: '0.2rem' }}>{item}</li>
-              ))}
-            </ul>
-            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--gold-lt)' }}><strong>Commitment:</strong> {pkg.commitment}</p>
           </div>
         ))}
       </section>

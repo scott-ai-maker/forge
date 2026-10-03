@@ -70,7 +70,7 @@ describe('POST /api/apply/master-allocation', () => {
         email: 'julian@sterlingadvisory.com',
         first_name: 'Julian Sterling',
         recommended_tier: 'transformation',
-        support_level: 'Executive 1:1 Master Retainer',
+        support_level: 'Transformation Direct',
         source: 'master_allocation_modal',
       })
     )

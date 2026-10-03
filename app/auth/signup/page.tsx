@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import AuthForm from '@/components/auth/AuthForm'
 import { Camera, CirclePlay, Users, BriefcaseBusiness } from 'lucide-react'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const metadata: Metadata = {
-  title: 'Create Your Athlete Account',
-  description: 'Join Gordon Athletic Advisory for private athletic coaching and telemetry-backed periodization.',
+  title: 'Create Your Forge Athletic Account',
+  description: 'Join Forge Athletic for evidence-led coaching, periodization, and performance telemetry.',
 }
 
 const SOCIAL_LINKS = [
@@ -63,19 +64,13 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
       }}
     >
       <div style={{ width: '100%', maxWidth: 420 }}>
-        <div
-          aria-hidden
-          style={{
-            width: 100,
-            height: 100,
-            margin: '0 auto 20px',
-            borderRadius: 18,
-            border: '2px solid var(--gold)',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.7), 0 0 25px rgba(197,160,89,0.45)',
-            backgroundImage: "url('/images/gaa-brand-crest.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
+        <Image
+          className="forge-auth-logo"
+          src="/images/brand/logo-concept-1-kinetic-f.jpg"
+          alt="Forge Athletic"
+          width={112}
+          height={112}
+          priority
         />
         <h1
           className="font-serif gold-gradient-text"
@@ -87,7 +82,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
             fontWeight: 700,
           }}
         >
-          GORDON ATHLETIC ADVISORY
+          FORGE ATHLETIC
         </h1>
         <p
           style={{

@@ -706,7 +706,7 @@ export default function GlobalCommandPalette({
             <span><strong style={{ color: '#CBD5E1' }}>↵</strong> Select</span>
             <span><strong style={{ color: '#CBD5E1' }}>ESC</strong> Close</span>
           </div>
-          <span>Gordon Athletic Advisory Global Navigator</span>
+          <span>Forge Athletic Global Navigator</span>
         </div>
       </div>
     </div>

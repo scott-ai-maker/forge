@@ -1,16 +1,18 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('Packages, Corporate Architecture & Marketing Feature Suite', () => {
-  test('renders packages page with tier comparison and concierge benefits', async ({ page }) => {
+  test('renders Forge Athletic memberships with current pricing', async ({ page }) => {
     await page.goto('/packages')
 
-    // Header & Crest Badge
-    await expect(page.getByText(/Sports Science Memberships & Private Retainers/i)).toBeVisible()
-    await expect(page.getByRole('heading', { name: /Sovereign Advisory Pathways/i })).toBeVisible()
-
-    // Application CTA buttons linking to /apply
-    const applyLinks = page.locator('a[href^="/apply"]')
-    expect(await applyLinks.count()).toBeGreaterThanOrEqual(1)
+    await expect(page.getByText(/Forge Athletic memberships/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Train with a plan that fits your life/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Core Membership' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Pro Athlete' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Transformation Direct' })).toBeVisible()
+    await expect(page.getByText('$19.99')).toBeVisible()
+    await expect(page.getByText('$149/year')).toBeVisible()
+    await expect(page.getByText('$49')).toBeVisible()
+    await expect(page.getByText('$199')).toBeVisible()
   })
 
   test('renders corporate executive performance advisory and proposal inquiry', async ({ page }) => {
@@ -34,10 +36,10 @@ test.describe('Packages, Corporate Architecture & Marketing Feature Suite', () =
     await expect(page.getByText(/Gordon Athletic Advisory/i).first()).toBeVisible()
   })
 
-  test('renders waitlist and inquiry capture form', async ({ page }) => {
+  test('renders Forge Athletic early access inquiry form', async ({ page }) => {
     await page.goto('/waitlist')
-    await expect(page.getByText(/Private Founding Cohort Intake/i)).toBeVisible()
-    await expect(page.getByRole('heading', { name: /Sovereign Physical Architecture/i })).toBeVisible()
+    await expect(page.getByText(/Forge Athletic · Early Access Membership Updates/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Built From The Ground Up/i })).toBeVisible()
     await expect(page.locator('input[type="email"]')).toBeVisible()
   })
 })

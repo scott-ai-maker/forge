@@ -257,11 +257,11 @@ describe('GAA Native HealthKit & Health Connect Bridge', () => {
       try {
         vi.stubGlobal('window', { location: { origin: 'capacitor://localhost' } })
         const resolvedCapacitor = resolveSyncEndpoint('/api/wearables/sync')
-        expect(resolvedCapacitor).toBe('https://gordonathleticadvisory.com/api/wearables/sync')
+        expect(resolvedCapacitor).toBe('https://forge-athletic.app/api/wearables/sync')
 
         vi.stubGlobal('window', { location: { origin: 'http://localhost:3000' } })
         const resolvedLocal = resolveSyncEndpoint('/api/wearables/sync')
-        expect(resolvedLocal).toBe('https://gordonathleticadvisory.com/api/wearables/sync')
+        expect(resolvedLocal).toBe('https://forge-athletic.app/api/wearables/sync')
       } finally {
         vi.unstubAllGlobals()
       }

@@ -2,12 +2,12 @@ import type { Metadata } from 'next'
 import FoundingIntakeSplashClient from '@/components/marketing/FoundingIntakeSplashClient'
 
 export const metadata: Metadata = {
-  title: 'Priority Waitlist & Founding Intake | Gordon Athletic Advisory',
-  description: 'Reserve priority allocation in the Gordon Athletic Advisory Founding Principal Cohort while certification protocols finalize.',
+  title: 'Forge Athletic Early Access',
+  description: 'Get Forge Athletic product and membership updates.',
   openGraph: {
-    title: 'Priority Waitlist & Founding Intake | Gordon Athletic Advisory',
-    description: 'Reserve priority allocation in the Gordon Athletic Advisory Founding Principal Cohort.',
-    images: ['/images/backgrounds/coach-olympic-facility-gaa.jpg'],
+    title: 'Forge Athletic Early Access',
+    description: 'Get Forge Athletic product and membership updates.',
+    images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
   },
 }
 
@@ -18,4 +18,3 @@ export default function WaitlistPage() {
     </main>
   )
 }
-

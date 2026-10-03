@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm'
 import { Camera, CirclePlay, Users, BriefcaseBusiness } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Reset Account Password',
-  description: 'Update your Gordon Athletic Advisory account credentials.',
+  description: 'Update your Forge Athletic account credentials.',
 }
 
 const SOCIAL_LINKS = [
@@ -36,20 +37,14 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
         padding: 24,
       }}
     >
-      <div style={{ width: '100%', maxWidth: 420 }}>
-        <div
-          aria-hidden
-          style={{
-            width: 100,
-            height: 100,
-            margin: '0 auto 20px',
-            borderRadius: 18,
-            border: '2px solid var(--gold)',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.7), 0 0 25px rgba(197,160,89,0.45)',
-            backgroundImage: "url('/images/gaa-brand-crest.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
+      <div className="forge-auth-content" style={{ width: '100%', maxWidth: 420 }}>
+        <Image
+          className="forge-auth-logo"
+          src="/images/brand/logo-concept-1-kinetic-f.jpg"
+          alt="Forge Athletic"
+          width={112}
+          height={112}
+          priority
         />
         <h1
           className="font-serif gold-gradient-text"
@@ -61,7 +56,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
             fontWeight: 700,
           }}
         >
-          GORDON ATHLETIC ADVISORY
+          FORGE ATHLETIC
         </h1>
         <p
           style={{

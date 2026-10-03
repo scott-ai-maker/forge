@@ -1,38 +1,39 @@
 import type { Metadata, Viewport } from 'next'
-import { Bebas_Neue, Raleway, Cinzel } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 import MobilePortraitLock from '@/components/ui/MobilePortraitLock'
 import ServiceWorkerRegistrar from '@/components/ui/ServiceWorkerRegistrar'
 import PwaInstallPrompt from '@/components/ui/PwaInstallPrompt'
 
-const cinzel = Cinzel({
-  weight: ['500', '600', '700', '800'],
-  subsets: ['latin'],
+const barlowCondensed = localFont({
+  src: [
+    { path: './fonts/barlow-condensed-500.woff2', weight: '500' },
+    { path: './fonts/barlow-condensed-600.woff2', weight: '600' },
+    { path: './fonts/barlow-condensed-700.woff2', weight: '700' },
+    { path: './fonts/barlow-condensed-800.woff2', weight: '800' },
+  ],
   display: 'swap',
-  variable: '--font-cinzel',
+  variable: '--font-barlow-condensed',
 })
 
-const bebasNeue = Bebas_Neue({
-  weight: '400',
-  subsets: ['latin'],
+const inter = localFont({
+  src: './fonts/inter-latin-variable.woff2',
+  weight: '400 700',
   display: 'swap',
-  variable: '--font-bebas',
+  variable: '--font-inter',
 })
 
-const raleway = Raleway({
-  weight: ['300', '400', '600', '700', '800'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-raleway',
-})
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.NODE_ENV === 'production' ? 'https://forge-athletic.app' : 'http://localhost:3000')
 
 export const metadata: Metadata = {
   title: {
-    default: 'Gordon Athletic Advisory | Elite Human Performance',
-    template: '%s | Gordon Athletic Advisory',
+    default: 'Forge Athletic | Precision Science For Real Lives',
+    template: '%s | Forge Athletic',
   },
-  description: 'Private human performance advisory — 5-phase NASM OPT™ periodization, 33-point 3D AI biomechanical screening, closed-loop telemetry, and high-performance retainers.',
-  metadataBase: new URL('https://gordonathleticadvisory.com'),
+  description: 'Built From The Ground Up. Precision Science For Real Lives. Evidence-led training, movement screening, and coaching.',
+  metadataBase: new URL(siteUrl),
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [
@@ -51,31 +52,31 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Gordon Athletic',
+    title: 'Forge Athletic',
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
-    title: 'Gordon Athletic Advisory | Elite Human Performance',
-    description: 'Elite sports science advisory powered by 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, real-time wearable telemetry, and 1:1 WebRTC live studio consultations.',
-    url: 'https://gordonathleticadvisory.com',
-    siteName: 'Gordon Athletic Advisory',
+    title: 'Forge Athletic | Precision Science For Real Lives',
+    description: 'Built From The Ground Up. Precision Science For Real Lives. Evidence-led training for real schedules and real lives.',
+    url: '/',
+    siteName: 'Forge Athletic',
     type: 'website',
     images: [
       {
-        url: '/images/og-image.jpg',
-        width: 1344,
-        height: 768,
-        alt: 'Gordon Athletic Advisory private performance training visual',
+        url: '/images/brand/logo-concept-1-kinetic-f.jpg',
+        width: 1024,
+        height: 1024,
+        alt: 'Forge Athletic kinetic F monogram',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gordon Athletic Advisory | Elite Human Performance',
-    description: 'Elite sports science advisory powered by 5-phase NASM OPT™ macrocycles, MediaPipe 3D AI biomechanics, real-time wearable telemetry, and 1:1 WebRTC live studio consultations.',
-    images: ['/images/og-image.jpg'],
+    title: 'Forge Athletic | Precision Science For Real Lives',
+    description: 'Built From The Ground Up. Precision Science For Real Lives.',
+    images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
   },
 }
 
@@ -87,15 +88,14 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-const gaaStructuredData = {
+const forgeStructuredData = {
   '@context': 'https://schema.org',
-  '@type': 'SportsActivityLocation',
-  name: 'Gordon Athletic Advisory',
-  alternateName: 'GAA Performance',
-  description: 'Private human performance advisory — 5-phase NASM OPT™ periodization, MediaPipe 33-point 3D AI biomechanical screening, closed-loop wearable telemetry, and high-performance retainers.',
-  url: 'https://gordonathleticadvisory.com',
-  logo: 'https://gordonathleticadvisory.com/images/icon-512.png',
-  image: 'https://gordonathleticadvisory.com/images/og-image.jpg',
+  '@type': 'Organization',
+  name: 'Forge Athletic',
+  description: 'Built From The Ground Up. Precision Science For Real Lives. Evidence-led training, movement screening, and coaching.',
+  url: siteUrl,
+  logo: `${siteUrl}/images/icon-512.png`,
+  image: `${siteUrl}/images/brand/logo-concept-1-kinetic-f.jpg`,
   founder: {
     '@type': 'Person',
     name: 'Scott Gordon',
@@ -114,7 +114,7 @@ const gaaStructuredData = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${cinzel.variable} ${bebasNeue.variable} ${raleway.variable}`}>
+    <html lang="en" className={`${barlowCondensed.variable} ${inter.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -137,7 +137,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-startup-image" href="/splash/apple-splash-1488-2266.png" media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(gaaStructuredData) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(forgeStructuredData) }}
         />
       </head>
       <body>
@@ -155,4 +155,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
-

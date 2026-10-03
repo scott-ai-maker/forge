@@ -10,10 +10,10 @@
 import { Capacitor } from '@capacitor/core'
 import { useState, useEffect } from 'react'
 
-export const WEB_PORTAL_URL = 'https://gordonathleticadvisory.com'
+export const WEB_PORTAL_URL = 'https://forge-athletic.app'
 
 export const COMPANION_BILLING_DISCLOSURE =
-  'Gordon Athletic Advisory Gym Companion: Memberships, retainers, and billing methods are configured and managed exclusively on our web portal. Visit gordonathleticadvisory.com in your web browser to manage your account or modify your retainer.'
+  'Forge Athletic Gym Companion: Memberships and billing methods are managed on our web portal. Visit forge-athletic.app in your web browser to manage your account or membership.'
 
 /**
  * Returns true if currently running inside a native Capacitor mobile container (iOS or Android).

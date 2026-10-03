@@ -168,10 +168,10 @@ export default function MasterAllocationModal({
               Advisory Alignment Notice
             </h3>
             <p style={{ color: 'var(--gray)', fontSize: 14.5, lineHeight: 1.7, maxWidth: 480, margin: '0 auto 24px' }}>
-              The <strong>Executive Master Retainer (<span className="font-telemetry font-mono" style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums' }}>$1,495/mo</span>)</strong> is strictly reserved for operators with allocated capital who execute autonomously without cheerleading.
+              <strong>Transformation Direct ($199/mo)</strong> includes quarterly asynchronous video critiques with Coach Scott Gordon.
             </p>
             <p style={{ color: 'var(--gold-lt)', fontSize: 14, lineHeight: 1.6, maxWidth: 460, margin: '0 auto 28px' }}>
-              We recommend beginning with the <strong>Autonomous Digital Lab (<span className="font-telemetry font-mono" style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums' }}>$59/mo</span>)</strong> or our <strong>Performance Protocol (<span className="font-telemetry font-mono" style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums' }}>$349/mo</span>)</strong> to establish neuromuscular periodization momentum before applying for private 1:1 master counsel.
+              Start with Core Membership for automated periodization and telemetry, or choose Pro Athlete for voice cadences and biomechanical mesh diagnostics.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
@@ -230,7 +230,7 @@ export default function MasterAllocationModal({
             <div style={{ marginBottom: 20 }}>
               <div className="crest-badge" style={{ marginBottom: 12 }}>
                 <GaaIcon name="crown" size={12} tone="gold" />
-                <span>Executive 1:1 Master Retainer · Q4 Allocation</span>
+                <span>Transformation Direct · Quarterly Video Critiques</span>
               </div>
               <h2 className="font-serif" style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)', color: '#FFFFFF', margin: '0 0 8px', fontWeight: 700, lineHeight: 1.15 }}>
                 Request Master Diagnostic Allocation
@@ -414,7 +414,7 @@ export default function MasterAllocationModal({
                   4. Capital Allocation Readiness *
                 </label>
                 <p style={{ fontSize: 12, color: 'var(--gray)', margin: '0 0 8px' }}>
-                  The Executive Master Retainer requires an initial engagement of <span className="font-telemetry font-mono" style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums' }}>$3,895–$4,485</span> (<span className="font-telemetry font-mono" style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums' }}>$1,495/mo</span> equivalent). Are you prepared to allocate this capital to your physical infrastructure today?
+                  Transformation Direct is a recurring $199/month membership with quarterly asynchronous video critiques by Coach Scott Gordon.
                 </p>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#FFFFFF', cursor: 'pointer' }}>

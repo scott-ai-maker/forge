@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import AuthForm from '@/components/auth/AuthForm'
 import { Camera, CirclePlay, Users, BriefcaseBusiness } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Client & Coach Authentication',
-  description: 'Secure sign-in for Gordon Athletic Advisory athletes and coaches.',
+  title: 'Athlete & Coach Sign In',
+  description: 'Secure sign-in for Forge Athletic athletes and coaches.',
 }
 
 const SOCIAL_LINKS = [
@@ -29,8 +30,8 @@ type LoginPageProps = {
 function getLoginSurface(nextPath: string, isCompanion: boolean) {
   if (isCompanion) {
     return {
-      eyebrow: 'Athlete In-Gym Companion',
-      title: 'GAA Helper Access',
+      eyebrow: 'Forge Athletic Companion',
+      title: 'Athlete Sign In',
       description: 'Sign in to access your active training program, plate calculator, and wearable telemetry sync.',
     }
   }
@@ -42,7 +43,7 @@ function getLoginSurface(nextPath: string, isCompanion: boolean) {
       }
     : {
         eyebrow: 'Client Access',
-        title: 'Client Login',
+        title: 'Athlete Login',
         description: 'Sign in with 1-click Fast Pass or your email to access your training studio.',
       }
 }
@@ -75,21 +76,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         padding: 24,
       }}
     >
-      <div className="sgf-auth-content" style={{ width: '100%', maxWidth: 420 }}>
-        <div
-          className="sgf-auth-crest"
-          aria-hidden
-          style={{
-            width: 100,
-            height: 100,
-            margin: '0 auto 20px',
-            borderRadius: 18,
-            border: '2px solid var(--gold)',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.7), 0 0 25px rgba(197,160,89,0.45)',
-            backgroundImage: "url('/images/gaa-brand-crest.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
+      <div className="sgf-auth-content forge-auth-content" style={{ width: '100%', maxWidth: 420 }}>
+        <Image
+          className="sgf-auth-crest forge-auth-logo"
+          src="/images/brand/logo-concept-1-kinetic-f.jpg"
+          alt="Forge Athletic"
+          width={112}
+          height={112}
+          priority
         />
         <h1
           className="font-serif gold-gradient-text"
@@ -278,16 +272,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               Gym Companion Notice
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--gray)', lineHeight: 1.5 }}>
-              Memberships, retainers, and billing are managed exclusively on our web portal. Visit{' '}
+              Memberships and billing are managed through the Forge Athletic website. Visit{' '}
               <a
-                href="https://gordonathleticadvisory.com"
+              href="/"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: 'var(--gold)', textDecoration: 'underline', fontWeight: 600 }}
               >
-                gordonathleticadvisory.com
+                Forge Athletic
               </a>{' '}
-              in your browser to apply or modify your retainer.
+              in your browser to manage your membership.
             </div>
           </div>
         )}

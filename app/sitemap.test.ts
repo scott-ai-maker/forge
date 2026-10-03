@@ -9,13 +9,13 @@ describe('app/sitemap.ts', () => {
     expect(entries.length).toBeGreaterThanOrEqual(7)
 
     const urls = entries.map(e => e.url)
-    expect(urls).toContain('https://gordonathleticadvisory.com/')
-    expect(urls).toContain('https://gordonathleticadvisory.com/packages')
-    expect(urls).toContain('https://gordonathleticadvisory.com/async-coaching')
-    expect(urls).toContain('https://gordonathleticadvisory.com/apply')
-    expect(urls).toContain('https://gordonathleticadvisory.com/whats-new')
-    expect(urls).toContain('https://gordonathleticadvisory.com/privacy')
-    expect(urls).toContain('https://gordonathleticadvisory.com/terms')
+    expect(urls).toContain('https://forge-athletic.app/')
+    expect(urls).toContain('https://forge-athletic.app/packages')
+    expect(urls).toContain('https://forge-athletic.app/async-coaching')
+    expect(urls).toContain('https://forge-athletic.app/apply')
+    expect(urls).toContain('https://forge-athletic.app/whats-new')
+    expect(urls).toContain('https://forge-athletic.app/privacy')
+    expect(urls).toContain('https://forge-athletic.app/terms')
 
     // Verify all entries have valid priorities and change frequencies
     for (const entry of entries) {

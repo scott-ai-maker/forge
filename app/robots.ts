@@ -26,7 +26,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/'],
       },
     ],
-    sitemap: 'https://gordonathleticadvisory.com/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://forge-athletic.app'}/sitemap.xml`,
   }
 }
-

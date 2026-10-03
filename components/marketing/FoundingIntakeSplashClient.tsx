@@ -200,7 +200,7 @@ export default function FoundingIntakeSplashClient() {
                 color: 'var(--gold-lt)',
               }}
             >
-              Accreditation In Progress · Private Founding Cohort Intake
+              Forge Athletic · Early Access Membership Updates
             </span>
             <span
               style={{
@@ -230,7 +230,7 @@ export default function FoundingIntakeSplashClient() {
               letterSpacing: '0.03em',
             }}
           >
-            Sovereign Physical Architecture.
+            Built From The Ground Up.
             <br />
             <span
               style={{
@@ -254,7 +254,7 @@ export default function FoundingIntakeSplashClient() {
               margin: '0 auto 20px',
             }}
           >
-            Gordon Athletic Advisory is preparing the private launch of its 1:1 Live Diagnostic Consultation Studio and NASM OPT™ periodization engine. Reserve your position in the exclusive Founding Principal Cohort.
+            Forge Athletic brings evidence-led training, movement screening, and coaching together for real lives. Join the early-access list for product and membership updates.
           </p>
 
           <div
@@ -321,7 +321,7 @@ export default function FoundingIntakeSplashClient() {
           </div>
         </div>
 
-        {/* The 3 Sovereign Founding Privileges */}
+        {/* Early-access information */}
         <div style={{ marginBottom: 50 }}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <span
@@ -345,7 +345,7 @@ export default function FoundingIntakeSplashClient() {
                 color: '#FFFFFF',
               }}
             >
-              The Three Founding Principal Privileges
+              What to expect from Forge Athletic
             </h2>
           </div>
 
@@ -359,21 +359,21 @@ export default function FoundingIntakeSplashClient() {
             {[
               {
                 icon: 'video-studio' as const,
-                title: 'Priority Live Diagnostic Consult',
-                body: 'Guaranteed first reservation for the 45-Minute Live Diagnostic Consultation Playbook in our WebRTC Studio with Coach Gordon upon certification finalization.',
-                value: '45-Min 1:1 Clinical Screen',
+                title: 'Practical sports science',
+                body: 'NASM OPT™ periodization, training telemetry, and coaching tools designed to support steady progress.',
+                value: 'Training built around you',
               },
               {
                 icon: 'lock' as const,
-                title: 'Grandfathered Lifetime Pricing',
-                body: 'Permanent lifetime rate lock on Tier 2 (Hybrid Concierge · $649/mo) and Tier 3 (Executive 1:1 Master Retainer · $1,495/mo), exempt from future rate increases.',
-                value: 'Lifetime Price Lock',
+                title: 'Clear membership choices',
+                body: 'Choose Core Membership, Pro Athlete, or Transformation Direct with straightforward monthly pricing.',
+                value: 'From $19.99/month',
               },
               {
                 icon: 'microscope' as const,
                 title: 'Complimentary 3D AI Biomechanical Audit',
-                body: 'Immediate inclusion of our full 3D AI Biomechanical & Postural Mesh Audit ($197 value) analyzing 5 kinetic chain checkpoints to detect joint compensations.',
-                value: '$197 Value Included',
+                body: 'Computer-vision movement screening helps you better understand posture and kinetic-chain patterns.',
+                value: '3D AI movement insights',
               },
             ].map((p, idx) => (
               <div
@@ -518,7 +518,7 @@ export default function FoundingIntakeSplashClient() {
                     color: 'var(--gold-lt)',
                   }}
                 >
-                  Founding Principal #{assignedNumber} of 15
+                  Early-access request #{assignedNumber}
                 </span>
               </div>
 
@@ -614,7 +614,7 @@ export default function FoundingIntakeSplashClient() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 12 }}>
                   <div>
-                    <label style={labelStyle}>Executive Email *</label>
+                    <label style={labelStyle}>Email address *</label>
                     <input
                       type="email"
                       required
@@ -691,7 +691,7 @@ export default function FoundingIntakeSplashClient() {
                     boxShadow: '0 4px 18px rgba(197, 160, 89, 0.4)',
                   }}
                 >
-                  {status === 'loading' ? 'Securing Allocation...' : 'Secure Founding Principal Allocation →'}
+                  {status === 'loading' ? 'Submitting...' : 'Request early access →'}
                 </button>
 
                 <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--gray)', margin: '4px 0 0' }}>
@@ -729,4 +729,3 @@ const inputStyle: React.CSSProperties = {
   fontSize: 13,
   outline: 'none',
 }
-

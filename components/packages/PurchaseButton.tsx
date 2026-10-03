@@ -7,10 +7,11 @@ import { isCompanionApp } from '@/lib/native-companion'
 interface PurchaseButtonProps {
   packageId?: string
   productId?: string
-  cadence?: 'monthly' | 'twelve_week'
+  cadence?: 'monthly' | 'annual' | 'twelve_week'
   selectedAddonIds?: string[]
   buttonLabel?: string
   redirectNext?: string
+  showDiscountCode?: boolean
 }
 
 export default function PurchaseButton({
@@ -20,6 +21,7 @@ export default function PurchaseButton({
   selectedAddonIds = [],
   buttonLabel,
   redirectNext,
+  showDiscountCode = true,
 }: PurchaseButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -43,7 +45,7 @@ export default function PurchaseButton({
 
   async function handlePurchase() {
     if (isCompanionApp()) {
-      setError('In-app purchases are disabled on mobile companion devices. Please visit gordonathleticadvisory.com.')
+      setError('In-app purchases are disabled on mobile companion devices. Please visit the Forge Athletic website.')
       return
     }
 
@@ -117,7 +119,7 @@ export default function PurchaseButton({
           Gym Companion Notice
         </div>
         <div style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.45 }}>
-          Memberships and add-ons are configured exclusively on our web portal. Please visit <strong style={{ color: 'var(--white)' }}>gordonathleticadvisory.com</strong> in your browser to manage your retainer.
+          Memberships and add-ons are managed on the Forge Athletic website.
         </div>
       </div>
     )
@@ -125,41 +127,45 @@ export default function PurchaseButton({
 
   return (
     <div>
-      <label
-        htmlFor={`discount-${packageId}`}
-        style={{
-          display: 'block',
-          fontFamily: 'Raleway, sans-serif',
-          fontWeight: 600,
-          fontSize: 11,
-          color: 'var(--gray)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          marginBottom: 6,
-        }}
-      >
-        Discount Code (Optional)
-      </label>
-      <input
-        id={`discount-${packageId}`}
-        type="text"
-        value={discountCode}
-        onChange={e => setDiscountCode(e.target.value.toUpperCase())}
-        placeholder="COACH-XXXXXX"
-        style={{
-          width: '100%',
-          marginBottom: 12,
-          padding: '11px 14px',
-          background: 'var(--navy)',
-          border: '1px solid rgba(197, 160, 89, 0.3)',
-          borderRadius: 6,
-          color: 'var(--white)',
-          fontFamily: 'Raleway, sans-serif',
-          fontSize: 16,
-          outline: 'none',
-          boxSizing: 'border-box',
-        }}
-      />
+      {showDiscountCode && (
+        <>
+          <label
+            htmlFor={`discount-${packageId}`}
+            style={{
+              display: 'block',
+              fontFamily: 'Raleway, sans-serif',
+              fontWeight: 600,
+              fontSize: 11,
+              color: 'var(--gray)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: 6,
+            }}
+          >
+            Discount Code (Optional)
+          </label>
+          <input
+            id={`discount-${packageId}`}
+            type="text"
+            value={discountCode}
+            onChange={e => setDiscountCode(e.target.value.toUpperCase())}
+            placeholder="COACH-XXXXXX"
+            style={{
+              width: '100%',
+              marginBottom: 12,
+              padding: '11px 14px',
+              background: 'var(--navy)',
+              border: '1px solid rgba(197, 160, 89, 0.3)',
+              borderRadius: 6,
+              color: 'var(--white)',
+              fontFamily: 'Raleway, sans-serif',
+              fontSize: 16,
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+        </>
+      )}
       <button
         onClick={handlePurchase}
         disabled={loading}

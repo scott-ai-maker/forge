@@ -743,7 +743,7 @@ export default function AuthForm({
               margin: '6px 0 0',
             }}
           >
-            By continuing, you agree to Gordon Athletic Advisory&apos;s{' '}
+            By continuing, you agree to Forge Athletic&apos;s{' '}
             <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
               Terms of Service
             </a>{' '}

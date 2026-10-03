@@ -66,7 +66,7 @@ export default function CorporateRetainersPage() {
       <SiteHeader
         fixed
         links={[
-          { href: '/packages', label: 'Private Retainers' },
+          { href: '/packages', label: 'Memberships' },
           { href: '/audit', label: '3D AI Audit' },
           { href: '/apply', label: 'Diagnostic Quiz' },
         ]}
@@ -438,4 +438,3 @@ export default function CorporateRetainersPage() {
     </main>
   )
 }
-

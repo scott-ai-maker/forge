@@ -41,7 +41,7 @@ export default async function CorporateProposalPage({ searchParams }: CorporateP
       <SiteHeader
         fixed
         links={[
-          { href: '/packages', label: 'Private Retainers' },
+          { href: '/packages', label: 'Memberships' },
           { href: '/corporate', label: 'Corporate Retainers' },
           { href: '/audit', label: '3D AI Audit' },
           { href: '/apply', label: 'Diagnostic Quiz' },

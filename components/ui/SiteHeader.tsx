@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import GlobalCommandPalette from '@/components/ui/GlobalCommandPalette'
@@ -11,7 +12,7 @@ import { triggerHaptic } from '@/lib/offline-sync-queue'
 import { createClient } from '@/lib/supabase-browser'
 import { isCompanionApp, useHelperAppMode } from '@/lib/native-companion'
 
-const BRAND_LOGO = '/images/gaa-brand-crest.jpg'
+const BRAND_LOGO = '/images/brand/logo-concept-1-kinetic-f.jpg'
 
 type NavLink = {
   label: string
@@ -116,7 +117,7 @@ export default function SiteHeader({
           <Link
             href={isCompanion ? (isCoach ? '/coach' : '/dashboard/fitness') : '/'}
             className="site-brand-link"
-            aria-label={isCompanion ? 'Gordon Athletic Companion' : 'Gordon Athletic Advisory home'}
+            aria-label={isCompanion ? 'Forge Athletic Companion' : 'Forge Athletic home'}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -127,27 +128,21 @@ export default function SiteHeader({
               overflow: 'hidden',
             }}
           >
-            <span
+            <Image
               aria-hidden
               className="site-brand-mark"
-              style={{
-                backgroundImage: `url('${BRAND_LOGO}')`,
-                width: 54,
-                height: 54,
-                borderRadius: 12,
-                border: '2px solid var(--gold)',
-                boxShadow: '0 0 16px rgba(197, 160, 89, 0.45)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                flexShrink: 0,
-              }}
+              src={BRAND_LOGO}
+              alt=""
+              width={54}
+              height={54}
+              priority
             />
             <span className="site-brand-meta" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-              <span className="site-brand-text font-serif" style={{ fontSize: '1.18rem', letterSpacing: '0.08em', color: '#FFFFFF', whiteSpace: 'nowrap', fontWeight: 700 }}>
-                Gordon <span style={{ color: 'var(--gold)' }}>Athletic</span><span className="brand-word-advisory"> Advisory</span>
+              <span className="site-brand-text font-serif" style={{ fontSize: '1.35rem', letterSpacing: '0.03em', color: '#FFFFFF', whiteSpace: 'nowrap', fontWeight: 700 }}>
+                Forge <span style={{ color: 'var(--gold)' }}>Athletic</span>
               </span>
               <span className="site-brand-subtitle" style={{ fontSize: '0.68rem', letterSpacing: '0.14em', color: 'var(--gray)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                Private Performance Advisory · NASM OPT™
+                Precision Science For Real Lives
               </span>
             </span>
           </Link>

@@ -33,9 +33,9 @@ describe('lib/native-companion', () => {
   })
 
   it('exports valid web portal constants and compliant disclosure text', () => {
-    expect(WEB_PORTAL_URL).toBe('https://gordonathleticadvisory.com')
+    expect(WEB_PORTAL_URL).toBe('https://forge-athletic.app')
     expect(COMPANION_BILLING_DISCLOSURE).toContain('Gym Companion')
-    expect(COMPANION_BILLING_DISCLOSURE).toContain('gordonathleticadvisory.com')
+    expect(COMPANION_BILLING_DISCLOSURE).toContain('forge-athletic.app')
   })
 
   describe('when running in Web browser environment', () => {

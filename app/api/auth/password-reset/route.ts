@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
       console.warn(
         '[PasswordReset] Warning: Outbound reset link uses a localhost origin. ' +
         'Recipient spam filters (and Resend Insights) may flag this due to domain mismatch with your sending domain. ' +
-        'Set EMAIL_LINK_BASE_URL=https://gordonathleticadvisory.com in .env.local to send canonical production links.'
+        'Set EMAIL_LINK_BASE_URL=https://forge-athletic.app in .env.local to send canonical production links.'
       )
     }
 

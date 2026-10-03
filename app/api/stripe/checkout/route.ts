@@ -8,6 +8,7 @@ import {
   normalizeDiscountCode,
   type DiscountCodeRecord,
 } from '@/lib/discount-codes'
+import { getForgeMembership, getForgeMembershipPrice } from '@/lib/forge-memberships'
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'Purchases cannot take place within mobile companion apps. Please manage subscriptions at gordonathleticadvisory.com.',
+            'Purchases cannot take place within mobile companion apps. Please manage memberships on the Forge Athletic website.',
         },
         { status: 403 }
       )
@@ -60,6 +61,86 @@ export async function POST(req: NextRequest) {
     }
 
     const { stripe, PACKAGES, COACHING_ADDONS, STANDALONE_PRODUCTS } = await import('@/lib/stripe')
+
+    const forgeMembership = typeof packageId === 'string' ? getForgeMembership(packageId) : undefined
+    if (forgeMembership) {
+      if (body?.cadence !== 'monthly' && body?.cadence !== 'annual') {
+        return NextResponse.json({ error: 'A valid membership billing cadence is required' }, { status: 400 })
+      }
+
+      const membershipPrice = getForgeMembershipPrice(forgeMembership, body.cadence)
+      if (!membershipPrice) {
+        return NextResponse.json({ error: 'Annual billing is not available for this membership' }, { status: 400 })
+      }
+
+      let appUrl: string
+      try {
+        appUrl = getTrustedAppBaseUrl()
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'App base URL is not configured'
+        return NextResponse.json({ error: message }, { status: 503 })
+      }
+
+      if (!process.env.STRIPE_SECRET_KEY || !stripe) {
+        return NextResponse.json({
+          error: 'Stripe payments are not currently configured. Please contact support or try again later.',
+        }, { status: 503 })
+      }
+
+      const metadataPayload = {
+        clientId: userId,
+        packageId: forgeMembership.id,
+        packageName: forgeMembership.name,
+        sessionsTotal: '0',
+        cadence: body.cadence,
+        basePriceCents: String(membershipPrice.amountCents),
+        finalPriceCents: String(membershipPrice.amountCents),
+        source: 'forge_membership',
+      }
+
+      try {
+        const session = await stripe.checkout.sessions.create({
+          mode: 'subscription',
+          client_reference_id: userId,
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: forgeMembership.name,
+                  description: forgeMembership.features.join(' · '),
+                },
+                recurring: { interval: membershipPrice.interval },
+                unit_amount: membershipPrice.amountCents,
+              },
+              quantity: 1,
+            },
+          ],
+          subscription_data: {
+            metadata: metadataPayload,
+            ...(forgeMembership.trialDays
+              ? { trial_period_days: forgeMembership.trialDays }
+              : {}),
+          },
+          metadata: metadataPayload,
+          success_url: `${appUrl}/dashboard?success=true`,
+          cancel_url: `${appUrl}/packages`,
+        })
+
+        return NextResponse.json({
+          url: session.url,
+          pricing: {
+            basePriceCents: membershipPrice.amountCents,
+            discountAmountCents: 0,
+            finalPriceCents: membershipPrice.amountCents,
+            discountCode: null,
+          },
+        })
+      } catch (stripeErr) {
+        const errMsg = stripeErr instanceof Error ? stripeErr.message : 'Stripe checkout error'
+        return NextResponse.json({ error: errMsg }, { status: 400 })
+      }
+    }
 
     if (productId) {
       const product = (STANDALONE_PRODUCTS || []).find(p => p.id === productId)
@@ -128,6 +209,13 @@ export async function POST(req: NextRequest) {
           discountCode: null,
         },
       })
+    }
+
+    if (typeof packageId === 'string' && PACKAGES.some(pkg => pkg.id === packageId)) {
+      return NextResponse.json(
+        { error: 'This legacy plan is no longer available. Choose a current Forge Athletic membership.' },
+        { status: 410 }
+      )
     }
 
     const pkg = PACKAGES.find(p => p.id === packageId)

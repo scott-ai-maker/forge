@@ -274,7 +274,7 @@ export function resolveSyncEndpoint(endpoint?: string): string {
     origin.startsWith('file://') ||
     origin.includes('localhost')
 
-  const base = isInvalidOrigin ? 'https://gordonathleticadvisory.com' : origin
+  const base = isInvalidOrigin ? 'https://forge-athletic.app' : origin
   const path = endpoint || '/api/wearables/sync'
   return `${base}${path.startsWith('/') ? '' : '/'}${path}`
 }

@@ -1,10 +1,9 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { getRequestAuthzMock, requireRoleMock, supabaseAdminMock, createSessionMock } = vi.hoisted(() => ({
+const { getRequestAuthzMock, requireRoleMock, createSessionMock } = vi.hoisted(() => ({
   getRequestAuthzMock: vi.fn(),
   requireRoleMock: vi.fn(),
-  supabaseAdminMock: vi.fn(),
   createSessionMock: vi.fn(),
 }))
 
@@ -16,10 +15,6 @@ vi.mock('@/lib/authz', async () => {
     requireRole: requireRoleMock,
   }
 })
-
-vi.mock('@/lib/supabase', () => ({
-  supabaseAdmin: supabaseAdminMock,
-}))
 
 vi.mock('@/lib/stripe', () => ({
   PACKAGES: [
@@ -52,6 +47,18 @@ vi.mock('@/lib/stripe', () => ({
       pifSessions: 12,
       pifSavings: '$70',
       pifBonusDescription: 'Complimentary Diagnostic Screen',
+    },
+    {
+      id: 'momentum',
+      name: 'Legacy Coaching Package',
+      sessions: 1,
+      price: 64900,
+    },
+    {
+      id: 'transformation',
+      name: 'Legacy Private Retainer',
+      sessions: 4,
+      price: 149500,
     },
     {
       id: 'corporate',
@@ -103,28 +110,6 @@ vi.mock('@/lib/stripe', () => ({
 
 import { POST } from '@/app/api/stripe/checkout/route'
 
-function createDiscountAdmin(discount: Record<string, unknown> | null) {
-  return {
-    from(table: string) {
-      if (table !== 'discount_codes') {
-        throw new Error(`Unexpected table: ${table}`)
-      }
-
-      return {
-        select() {
-          return {
-            eq() {
-              return {
-                maybeSingle: async () => ({ data: discount, error: null }),
-              }
-            },
-          }
-        },
-      }
-    },
-  }
-}
-
 describe('stripe checkout route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -137,138 +122,20 @@ describe('stripe checkout route', () => {
     createSessionMock.mockResolvedValue({ url: 'https://checkout.stripe.com/test' })
   })
 
-  it('applies a valid percentage discount code', async () => {
-    supabaseAdminMock.mockReturnValue(
-      createDiscountAdmin({
-        id: 'code-1',
-        code: 'COACH-15OFF',
-        description: null,
-        discount_type: 'percent',
-        discount_value: 15,
-        is_active: true,
-        max_redemptions: null,
-        redemptions_count: 0,
-        starts_at: new Date(Date.now() - 60_000).toISOString(),
-        expires_at: new Date(Date.now() + 3600_000).toISOString(),
-        applies_to_package_ids: null,
-        restricted_client_id: null,
+  it('retires the old private coaching packages from new checkout', async () => {
+    for (const packageId of ['lab', 'alumni', 'starter', 'momentum', 'transformation', 'corporate']) {
+      const req = new NextRequest('http://localhost/api/stripe/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ packageId, cadence: 'monthly' }),
       })
-    )
 
-    const req = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({ packageId: 'starter', discountCode: 'coach-15off' }),
-    })
-
-    const res = await POST(req)
-    expect(res.status).toBe(200)
-
-    expect(createSessionMock).toHaveBeenCalledTimes(1)
-    const createArgs = createSessionMock.mock.calls[0][0]
-    expect(createArgs.mode).toBe('subscription')
-    expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'month' })
-    expect(createArgs.line_items[0].price_data.unit_amount).toBe(20400)
-    expect(createArgs.metadata.discountCode).toBe('COACH-15OFF')
-
-    await expect(res.json()).resolves.toMatchObject({
-      pricing: {
-        basePriceCents: 24000,
-        discountAmountCents: 3600,
-        finalPriceCents: 20400,
-      },
-    })
-  })
-
-  it('rejects expired discount codes', async () => {
-    supabaseAdminMock.mockReturnValue(
-      createDiscountAdmin({
-        id: 'code-1',
-        code: 'OLDCODE',
-        description: null,
-        discount_type: 'fixed_amount',
-        discount_value: 1000,
-        is_active: true,
-        max_redemptions: null,
-        redemptions_count: 0,
-        starts_at: new Date(Date.now() - 3600_000).toISOString(),
-        expires_at: new Date(Date.now() - 60_000).toISOString(),
-        applies_to_package_ids: null,
-        restricted_client_id: null,
+      const res = await POST(req)
+      expect(res.status).toBe(410)
+      await expect(res.json()).resolves.toMatchObject({
+        error: 'This legacy plan is no longer available. Choose a current Forge Athletic membership.',
       })
-    )
-
-    const req = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({ packageId: 'starter', discountCode: 'oldcode' }),
-    })
-
-    const res = await POST(req)
-    expect(res.status).toBe(400)
-    await expect(res.json()).resolves.toEqual({
-      error: 'This discount code is inactive or expired',
-    })
-  })
-
-  it('attaches selected addons to line items and metadata', async () => {
-    const req = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({
-        packageId: 'starter',
-        selectedAddonIds: ['metabolic-nutrition'],
-      }),
-    })
-
-    const res = await POST(req)
-    expect(res.status).toBe(200)
-
-    expect(createSessionMock).toHaveBeenCalledTimes(1)
-    const createArgs = createSessionMock.mock.calls[0][0]
-    expect(createArgs.line_items).toHaveLength(2)
-    expect(createArgs.line_items[1].price_data.unit_amount).toBe(14900)
-    expect(createArgs.metadata.selectedAddonIds).toBe('metabolic-nutrition')
-  })
-
-  it('handles 12-week PIF cadence with one-time payment mode, correct sessions, and 3x recurring addon', async () => {
-    const req = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({
-        packageId: 'starter',
-        cadence: 'twelve_week',
-        selectedAddonIds: ['metabolic-nutrition'],
-      }),
-    })
-
-    const res = await POST(req)
-    expect(res.status).toBe(200)
-
-    expect(createSessionMock).toHaveBeenCalledTimes(1)
-    const createArgs = createSessionMock.mock.calls[0][0]
-
-    // Verify mode is payment (not subscription)
-    expect(createArgs.mode).toBe('payment')
-    expect(createArgs.subscription_data).toBeUndefined()
-
-    // Main package line item
-    expect(createArgs.line_items[0].price_data.recurring).toBeUndefined()
-    expect(createArgs.line_items[0].price_data.unit_amount).toBe(65000)
-    expect(createArgs.line_items[0].price_data.product_data.name).toContain('12-Week Transformation Block')
-
-    // Addon line item should be 3x because it's recurring_monthly billed upfront
-    expect(createArgs.line_items[1].price_data.recurring).toBeUndefined()
-    expect(createArgs.line_items[1].price_data.unit_amount).toBe(14900 * 3)
-
-    // Metadata contains correct cadence and total sessions
-    expect(createArgs.metadata.cadence).toBe('twelve_week')
-    expect(createArgs.metadata.sessionsTotal).toBe('12')
-    expect(createArgs.metadata.packageName).toBe('Starter Pack (12-Week Block)')
-
-    await expect(res.json()).resolves.toMatchObject({
-      pricing: {
-        basePriceCents: 65000,
-        discountAmountCents: 0,
-        finalPriceCents: 65000,
-      },
-    })
+    }
+    expect(createSessionMock).not.toHaveBeenCalled()
   })
 
   it('handles standalone product checkout (e.g. ai-postural-audit) in payment mode', async () => {
@@ -302,124 +169,69 @@ describe('stripe checkout route', () => {
     })
   })
 
-  it('handles Autonomous Digital Lab (lab) checkout in both monthly subscription and annual PIF mode', async () => {
-    // Monthly subscription ($59/mo)
-    const reqMonthly = new NextRequest('http://localhost/api/stripe/checkout', {
+  it('creates Core monthly subscriptions with a seven-day free trial', async () => {
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',
-      body: JSON.stringify({
-        packageId: 'lab',
-        cadence: 'monthly',
-      }),
+      body: JSON.stringify({ packageId: 'forge-core', cadence: 'monthly' }),
     })
 
-    const resMonthly = await POST(reqMonthly)
-    expect(resMonthly.status).toBe(200)
-
-    const monthlyArgs = createSessionMock.mock.calls[0][0]
-    expect(monthlyArgs.mode).toBe('subscription')
-    expect(monthlyArgs.line_items[0].price_data.unit_amount).toBe(5900)
-    expect(monthlyArgs.line_items[0].price_data.recurring).toEqual({ interval: 'month' })
-
-    createSessionMock.mockClear()
-
-    // Annual Pass PIF ($499/yr)
-    const reqAnnual = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({
-        packageId: 'lab',
-        cadence: 'twelve_week',
-      }),
-    })
-
-    const resAnnual = await POST(reqAnnual)
-    expect(resAnnual.status).toBe(200)
-
-    const annualArgs = createSessionMock.mock.calls[0][0]
-    expect(annualArgs.mode).toBe('payment')
-    expect(annualArgs.subscription_data).toBeUndefined()
-    expect(annualArgs.line_items[0].price_data.unit_amount).toBe(49900)
-    expect(annualArgs.line_items[0].price_data.recurring).toBeUndefined()
-    expect(annualArgs.metadata.packageName).toBe('Autonomous Digital Lab (12-Week Block)')
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+    const createArgs = createSessionMock.mock.calls[0][0]
+    expect(createArgs.mode).toBe('subscription')
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(1999)
+    expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'month' })
+    expect(createArgs.subscription_data.trial_period_days).toBe(7)
+    expect(createArgs.metadata.packageName).toBe('Core Membership')
   })
 
-  it('handles Alumni Continuity Retainer (alumni) checkout in both monthly and annual PIF mode', async () => {
-    // Monthly subscription ($149/mo)
-    const reqMonthly = new NextRequest('http://localhost/api/stripe/checkout', {
+  it('bills Core annually at $149 with the same seven-day trial', async () => {
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',
-      body: JSON.stringify({
-        packageId: 'alumni',
-        cadence: 'monthly',
-      }),
+      body: JSON.stringify({ packageId: 'forge-core', cadence: 'annual' }),
     })
 
-    const resMonthly = await POST(reqMonthly)
-    expect(resMonthly.status).toBe(200)
-
-    const monthlyArgs = createSessionMock.mock.calls[0][0]
-    expect(monthlyArgs.mode).toBe('subscription')
-    expect(monthlyArgs.line_items[0].price_data.unit_amount).toBe(14900)
-    expect(monthlyArgs.line_items[0].price_data.recurring).toEqual({ interval: 'month' })
-
-    createSessionMock.mockClear()
-
-    // Annual Pass PIF ($1,295/yr)
-    const reqAnnual = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({
-        packageId: 'alumni',
-        cadence: 'twelve_week',
-      }),
-    })
-
-    const resAnnual = await POST(reqAnnual)
-    expect(resAnnual.status).toBe(200)
-
-    const annualArgs = createSessionMock.mock.calls[0][0]
-    expect(annualArgs.mode).toBe('payment')
-    expect(annualArgs.subscription_data).toBeUndefined()
-    expect(annualArgs.line_items[0].price_data.unit_amount).toBe(129500)
-    expect(annualArgs.line_items[0].price_data.recurring).toBeUndefined()
-    expect(annualArgs.metadata.packageName).toBe('Alumni Continuity Retainer (12-Week Block)')
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+    const createArgs = createSessionMock.mock.calls[0][0]
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(14900)
+    expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'year' })
+    expect(createArgs.subscription_data.trial_period_days).toBe(7)
+    expect(createArgs.metadata.cadence).toBe('annual')
   })
 
-  it('handles Corporate Executive Retainer (corporate) checkout in both monthly and annual PIF mode', async () => {
-    // Monthly subscription ($3,500/mo)
-    const reqMonthly = new NextRequest('http://localhost/api/stripe/checkout', {
+  it('creates Pro Athlete and Transformation Direct monthly subscriptions without a trial', async () => {
+    for (const [packageId, amount] of [
+      ['forge-pro-athlete', 4900],
+      ['forge-transformation-direct', 19900],
+    ] as const) {
+      createSessionMock.mockClear()
+      const req = new NextRequest('http://localhost/api/stripe/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ packageId, cadence: 'monthly' }),
+      })
+
+      const res = await POST(req)
+      expect(res.status).toBe(200)
+      const createArgs = createSessionMock.mock.calls[0][0]
+      expect(createArgs.line_items[0].price_data.unit_amount).toBe(amount)
+      expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'month' })
+      expect(createArgs.subscription_data.trial_period_days).toBeUndefined()
+    }
+  })
+
+  it('rejects unsupported membership billing cadences', async () => {
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',
-      body: JSON.stringify({
-        packageId: 'corporate',
-        cadence: 'monthly',
-      }),
+      body: JSON.stringify({ packageId: 'forge-pro-athlete', cadence: 'annual' }),
     })
 
-    const resMonthly = await POST(reqMonthly)
-    expect(resMonthly.status).toBe(200)
-
-    const monthlyArgs = createSessionMock.mock.calls[0][0]
-    expect(monthlyArgs.mode).toBe('subscription')
-    expect(monthlyArgs.line_items[0].price_data.unit_amount).toBe(350000)
-    expect(monthlyArgs.line_items[0].price_data.recurring).toEqual({ interval: 'month' })
-
-    createSessionMock.mockClear()
-
-    // Annual Corporate Pass PIF ($35,000/yr)
-    const reqAnnual = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({
-        packageId: 'corporate',
-        cadence: 'twelve_week',
-      }),
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+    await expect(res.json()).resolves.toEqual({
+      error: 'Annual billing is not available for this membership',
     })
-
-    const resAnnual = await POST(reqAnnual)
-    expect(resAnnual.status).toBe(200)
-
-    const annualArgs = createSessionMock.mock.calls[0][0]
-    expect(annualArgs.mode).toBe('payment')
-    expect(annualArgs.subscription_data).toBeUndefined()
-    expect(annualArgs.line_items[0].price_data.unit_amount).toBe(3500000)
-    expect(annualArgs.line_items[0].price_data.recurring).toBeUndefined()
-    expect(annualArgs.metadata.packageName).toBe('Corporate Executive Retainer (12-Week Block)')
+    expect(createSessionMock).not.toHaveBeenCalled()
   })
 
   it('strictly rejects native companion app checkout requests with 403 Forbidden', async () => {
@@ -444,7 +256,7 @@ describe('stripe checkout route', () => {
     const resBody = await POST(reqBody)
     expect(resBody.status).toBe(403)
     const jsonBody = await resBody.json()
-    expect(jsonBody.error).toContain('gordonathleticadvisory.com')
+    expect(jsonBody.error).toContain('Forge Athletic website')
 
     // Via PWA companion platform in body
     const reqPwa = new NextRequest('http://localhost/api/stripe/checkout', {

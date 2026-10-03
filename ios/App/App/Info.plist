@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Gordon Athletic Advisory</string>
+        <string>Forge Athletic</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Gordon Athletic Advisory</string>
+	<string>Forge Athletic</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -78,19 +78,19 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Gordon Athletic Advisory reads your heart rate, HRV, active calories, sleep architecture, workouts, and dietary nutrition to calculate real-time CNS readiness and calibrate your periodized coaching program.</string>
+	<string>Forge Athletic reads your heart rate, HRV, active calories, sleep architecture, workouts, and dietary nutrition to calculate real-time CNS readiness and calibrate your periodized coaching program.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Gordon Athletic Advisory logs completed workout sessions and cardio telemetry directly into Apple Health.</string>
+	<string>Forge Athletic logs completed workout sessions and cardio telemetry directly into Apple Health.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Gordon Athletic Advisory uses your camera for 1:1 live telehealth video consultations, real-time MediaPipe 3D postural distortion mesh scans, and lifting form critique capture.</string>
+	<string>Forge Athletic uses your camera for live video coaching, real-time 3D postural screening, and lifting form critique capture.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Gordon Athletic Advisory uses your microphone for real-time two-way audio during live telehealth consultations and encrypted audio voice notes with your lead coach.</string>
+	<string>Forge Athletic uses your microphone for live coaching audio and voice notes with your coach.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Gordon Athletic Advisory accesses your photo library to allow you to upload physique progression photos and gym movement critique videos.</string>
+	<string>Forge Athletic accesses your photo library to allow you to upload training progress photos and movement critique videos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Gordon Athletic Advisory saves your 3D postural screen reports and milestone workout summary cards to your photo library.</string>
+	<string>Forge Athletic saves postural screen reports and milestone workout summary cards to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Gordon Athletic Advisory uses your location to track outdoor running distance, split pace, and route elevation during outdoor cardio sessions.</string>
+	<string>Forge Athletic uses your location to track outdoor running distance, split pace, and route elevation during cardio sessions.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIBackgroundModes</key>

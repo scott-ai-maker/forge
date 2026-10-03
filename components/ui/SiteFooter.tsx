@@ -1,12 +1,13 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { Camera, CirclePlay, Users, BriefcaseBusiness } from 'lucide-react'
 import { APP_VERSION, APP_RELEASE_CODENAME } from '@/lib/app-version'
 import { AppleLogoIcon, AndroidLogoIcon } from '@/components/marketing/AppStoreBadges'
 import { isCompanionApp, useHelperAppMode } from '@/lib/native-companion'
 
-const BRAND_LOGO = '/images/gaa-brand-crest.jpg'
+const BRAND_LOGO = '/images/brand/logo-concept-1-kinetic-f.jpg'
 
 const SOCIAL_LINKS = [
   { name: 'Instagram', href: 'https://instagram.com/scottgordonfitness', Icon: Camera },
@@ -24,37 +25,29 @@ export default function SiteFooter() {
     <footer className="site-footer" style={{ borderTop: '1px solid rgba(197, 160, 89, 0.25)', background: 'linear-gradient(180deg, #080E14 0%, #04070D 100%)', padding: '3rem 1.5rem 2rem' }}>
       <div className="site-footer-inner" style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem' }}>
         <div className="site-footer-column site-footer-brand-col" style={{ maxWidth: 380 }}>
-          <Link href="/" className="site-footer-brand" aria-label="Gordon Athletic Advisory home" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-            <span
+          <Link href="/" className="site-footer-brand" aria-label="Forge Athletic home" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+            <Image
               aria-hidden
               className="site-footer-mark"
-              style={{
-                backgroundImage: `url('${BRAND_LOGO}')`,
-                width: 52,
-                height: 52,
-                borderRadius: 12,
-                border: '1.5px solid var(--gold)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                boxShadow: '0 0 16px rgba(197, 160, 89, 0.4)',
-              }}
+              src={BRAND_LOGO}
+              alt=""
+              width={52}
+              height={52}
             />
-            <span className="site-footer-text font-serif" style={{ fontSize: '1.25rem', color: '#FFFFFF', letterSpacing: '0.08em', fontWeight: 700 }}>
-              Gordon <span style={{ color: 'var(--gold)' }}>Athletic Advisory</span>
+            <span className="site-footer-text font-serif" style={{ fontSize: '1.35rem', color: '#FFFFFF', letterSpacing: '0.03em', fontWeight: 700 }}>
+              Forge <span style={{ color: 'var(--gold)' }}>Athletic</span>
             </span>
           </Link>
           <p className="site-footer-tagline" style={{ color: 'var(--gray)', fontSize: '0.85rem', marginTop: '0.75rem', lineHeight: 1.5 }}>
-            Evidence-based closed-loop athletic advisory and clinical human performance for high-performing executives.
+            Built From The Ground Up. Precision Science For Real Lives.
           </p>
         </div>
 
-        <nav className="site-footer-nav" aria-label="Footer" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.88rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)' }}>Advisory</span>
-          <Link href="/async-coaching" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Async Coaching</Link>
-          <Link href="/packages" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Private Retainers</Link>
-          <Link href="/audit" style={{ color: '#CBD5E1', textDecoration: 'none' }}>3D Postural Audit ($97)</Link>
-          <Link href="/corporate" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Corporate Retainers (B2B)</Link>
-          <Link href="/apply" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Apply for Advisory</Link>
+        <nav className="site-footer-nav" aria-label="Training and coaching" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.88rem' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)' }}>Training</span>
+          <Link href="/packages" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Memberships</Link>
+          <Link href="/audit" style={{ color: '#CBD5E1', textDecoration: 'none' }}>AI Posture Audit</Link>
+          <Link href="/apply" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Find your starting point</Link>
           <Link href="/whats-new" style={{ color: 'var(--gold-lt)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
             <span>What&apos;s New</span>
             <span style={{ fontSize: 9, background: 'var(--gold)', color: '#080E14', padding: '1px 5px', borderRadius: 3, fontWeight: 800 }}>v{APP_VERSION}</span>
@@ -132,7 +125,7 @@ export default function SiteFooter() {
             }}
           >
             <span style={{ width: 6, height: 6, borderRadius: 3, background: 'var(--gold)' }} />
-            <span>GAA Platform v{APP_VERSION} · {APP_RELEASE_CODENAME}</span>
+            <span>Forge Athletic v{APP_VERSION} · {APP_RELEASE_CODENAME}</span>
             <span style={{ color: 'var(--gold)' }}>→ What&apos;s New</span>
           </Link>
         </div>

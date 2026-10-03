@@ -45,26 +45,26 @@ const sequenceTemplates = [
       text: [
         `Hi ${name},`,
         '',
-        'Welcome to Gordon Athletic Advisory.',
+        'Welcome to Forge Athletic.',
         '',
-        'Most training programs fail high performers because they rely on generic templates and randomized workouts. GAA is built on a closed-loop sports science system:',
-        '- Individualized 5-phase NASM OPT™ neuromuscular periodization',
-        '- Continuous wearable telemetry sync (Apple HealthKit & Android Health Connect)',
-        '- In-gym Cadence Pulse HUD for precise eccentric/isometric tempo control',
-        '- Weekly Sunday Intelligence Dossiers & progressive overload recalibration',
+        'Forge Athletic pairs practical coaching with sports science that fits real life:',
+        '- Automated NASM OPT™ periodization',
+        '- 1RM strength telemetry and 3D AI posture audits',
+        '- Wearable data support for Apple HealthKit and Android Health Connect',
+        '- Training plans designed to progress with your schedule and goals',
         '',
         'The objective is simple: eliminate kinetic power leaks, protect joint longevity, and engineer undeniable physical performance.',
         '',
         `Complete your diagnostic fit quiz: ${baseUrl}/apply`,
       ].join('\n'),
       html: `<p>Hi ${name},</p>
-<p>Welcome to Gordon Athletic Advisory.</p>
-<p>Most training programs fail high performers because they rely on generic templates and randomized workouts. GAA is built on a closed-loop sports science system:</p>
+<p>Welcome to Forge Athletic.</p>
+<p>Forge Athletic pairs practical coaching with sports science that fits real life:</p>
 <ul>
-  <li><strong>Individualized 5-phase NASM OPT™ neuromuscular periodization</strong></li>
-  <li><strong>Continuous wearable telemetry sync</strong> (Apple HealthKit & Android Health Connect)</li>
-  <li><strong>In-gym Cadence Pulse HUD</strong> for precise eccentric/isometric tempo control</li>
-  <li><strong>Weekly Sunday Intelligence Dossiers</strong> & progressive overload recalibration</li>
+  <li><strong>Automated NASM OPT™ periodization</strong></li>
+  <li><strong>1RM strength telemetry and 3D AI posture audits</strong></li>
+  <li><strong>Wearable data support</strong> for Apple HealthKit and Android Health Connect</li>
+  <li>Training plans designed to progress with your schedule and goals</li>
 </ul>
 <p>The objective is simple: eliminate kinetic power leaks, protect joint longevity, and engineer undeniable physical performance.</p>
 <p><a href="${baseUrl}/apply">Complete your diagnostic fit quiz</a></p>`,
@@ -86,7 +86,7 @@ const sequenceTemplates = [
         '',
         'Our computer-vision engine detects compensations and auto-generates 4-phase Corrective Exercise Continuums (Inhibit, Lengthen, Activate, Integrate).',
         '',
-        `Explore the 3D AI Movement Audit ($97 voucher credit): ${baseUrl}/audit`,
+        `Explore the 3D AI Movement Audit: ${baseUrl}/audit`,
       ].join('\n'),
       html: `<p>Before adding heavy load, we must verify structural alignment.</p>
 <p>Prolonged sitting and executive travel trigger silent kinetic distortions: anterior pelvic tilt, medial knee collapse, and forward head translation. In our platform, we screen all 5 kinetic chain checkpoints:</p>
@@ -98,34 +98,32 @@ const sequenceTemplates = [
   <li>Cervical spine plumb-line alignment</li>
 </ul>
 <p>Our computer-vision engine detects compensations and auto-generates 4-phase Corrective Exercise Continuums (Inhibit, Lengthen, Activate, Integrate).</p>
-<p><a href="${baseUrl}/audit">Explore the 3D AI Movement Audit ($97 voucher credit)</a></p>`,
+<p><a href="${baseUrl}/audit">Explore the 3D AI Movement Audit</a></p>`,
     }),
   },
   {
     key: 'launch_day_3',
-    subject: 'Four Bespoke Advisory Pathways: From Software to Private 1:1',
+    subject: 'Choose your Forge Athletic membership',
     body: (_name: string, baseUrl: string) => ({
       text: [
-        'Gordon Athletic Advisory operates four distinct retainer pathways:',
+        'Choose the Forge Athletic membership that fits your training goals:',
         '',
-        '1. Autonomous Digital Lab ($59/mo): 5-phase OPT™ engine, Cadence HUD, Tanaka cardio, and monthly 3D AI scans.',
-        '2. Performance Protocol ($349/mo): Individualized periodization, Apple Health/Health Connect telemetry sync, and weekly Sunday Dossiers.',
-        '3. Hybrid Concierge ($649/mo · Flagship): Everything in Protocol + monthly 1:1 live WebRTC consultation studio with real-time telestrator, form critiques, and metabolic nutrition.',
-        '4. Executive 1:1 Master Retainer ($1,495/mo): Weekly live WebRTC video studios, Voice S.O.A.P. clinical notes, clinical supplement prescribing, and VIP same-day access.',
+        'Core Membership: $19.99/month or $149/year, with a 7-day free trial. Includes automated periodization, 1RM telemetry, and a 3D AI posture audit.',
+        'Pro Athlete: $49/month. Includes Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.',
+        'Transformation Direct: $199/month. Includes quarterly asynchronous video critiques with Coach Scott Gordon.',
         '',
-        'Every tier carries defined contractual SLAs and transparent 30-day billing.',
+        'Memberships renew automatically until cancelled.',
         '',
-        `Review retainer specifications: ${baseUrl}/packages`,
+        `Compare memberships: ${baseUrl}/packages`,
       ].join('\n'),
-      html: `<p>Gordon Athletic Advisory operates four distinct retainer pathways:</p>
+      html: `<p>Choose the Forge Athletic membership that fits your training goals:</p>
 <ol>
-  <li><strong>Autonomous Digital Lab ($59/mo):</strong> 5-phase OPT™ engine, Cadence HUD, Tanaka cardio, and monthly 3D AI scans.</li>
-  <li><strong>Performance Protocol ($349/mo):</strong> Individualized periodization, Apple Health/Health Connect telemetry sync, and weekly Sunday Dossiers.</li>
-  <li><strong>Hybrid Concierge ($649/mo · Flagship):</strong> Everything in Protocol + monthly 1:1 live WebRTC consultation studio with real-time telestrator, form critiques, and metabolic nutrition.</li>
-  <li><strong>Executive 1:1 Master Retainer ($1,495/mo):</strong> Weekly live WebRTC video studios, Voice S.O.A.P. clinical notes, clinical supplement prescribing, and VIP same-day access.</li>
+  <li><strong>Core Membership — $19.99/month or $149/year:</strong> 7-day free trial, automated periodization, 1RM telemetry, and a 3D AI posture audit.</li>
+  <li><strong>Pro Athlete — $49/month:</strong> Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.</li>
+  <li><strong>Transformation Direct — $199/month:</strong> Quarterly asynchronous video critiques with Coach Scott Gordon.</li>
 </ol>
-<p>Every tier carries defined contractual SLAs and transparent 30-day billing.</p>
-<p><a href="${baseUrl}/packages">Review retainer specifications</a></p>`,
+<p>Memberships renew automatically until cancelled.</p>
+<p><a href="${baseUrl}/packages">Compare memberships</a></p>`,
     }),
   },
   {
@@ -135,19 +133,19 @@ const sequenceTemplates = [
       text: [
         'High-performing executives cannot afford to lose momentum during cross-country travel or redeye flights.',
         '',
-        'Inside GAA, our clients maintain zero missed weeks using:',
-        '- Executive Road-Warrior Travel Adapter: 1-click workout conversion for hotel gym dumbbells, cables, or bands while preserving your periodization phase.',
-        '- 24/7 Wearable Ingestion: Background sync of HRV rMSSD, resting heart rate, and sleep architecture to modulate intensity when jet-lagged.',
-        '- Offline Gym Logging: Record your sets with zero cellular connection in basement gyms; syncs automatically once reconnected.',
+        'Forge Athletic helps you keep training when your routine changes:',
+        '- Adapt your workouts to the equipment available while keeping your plan on track.',
+        '- Connect supported health data to inform training and recovery.',
+        '- Keep building consistency around work, travel, and everyday commitments.',
         '',
         `Take the 2-minute diagnostic fit quiz: ${baseUrl}/apply`,
       ].join('\n'),
       html: `<p>High-performing executives cannot afford to lose momentum during cross-country travel or redeye flights.</p>
-<p>Inside GAA, our clients maintain zero missed weeks using:</p>
+<p>Forge Athletic helps you keep training when your routine changes:</p>
 <ul>
-  <li><strong>Executive Road-Warrior Travel Adapter:</strong> 1-click workout conversion for hotel gym dumbbells, cables, or bands while preserving your periodization phase.</li>
-  <li><strong>24/7 Wearable Ingestion:</strong> Background sync of HRV rMSSD, resting heart rate, and sleep architecture to modulate intensity when jet-lagged.</li>
-  <li><strong>Offline Gym Logging:</strong> Record your sets with zero cellular connection in basement gyms; syncs automatically once reconnected.</li>
+  <li>Adapt your workouts to the equipment available while keeping your plan on track.</li>
+  <li>Connect supported health data to inform training and recovery.</li>
+  <li>Keep building consistency around work, travel, and everyday commitments.</li>
 </ul>
 <p><a href="${baseUrl}/apply">Take the 2-minute diagnostic fit quiz</a></p>`,
     }),
@@ -157,25 +155,20 @@ const sequenceTemplates = [
     subject: 'Cohort Intake Notice & 3D Movement Diagnostic Voucher',
     body: (_name: string, baseUrl: string) => ({
       text: [
-        'Private 1:1 and hybrid retainers are strictly capped to maintain uncompromising advisory rigor.',
+        'Start with practical training tools and add coaching support as your needs change.',
         '',
-        'If you are ready to command your physical performance this quarter:',
-        '- Choose your retainer tier on our secure Stripe portal',
-        '- Or complete the diagnostic intake quiz for Coach Gordon to review your profile',
+        'Core Membership offers a 7-day free trial and starts at $19.99/month, or $149/year.',
+        'Pro Athlete is $49/month. Transformation Direct is $199/month.',
         '',
-        'All new members receive immediate access to the GAA native mobile apps, 3D AI postural mesh scanner, and in-gym Cadence HUD.',
+        'Explore the plans, compare features, and choose the option that fits your goals.',
         '',
-        `Apply for advisory: ${baseUrl}/apply`,
-        `Explore retainers: ${baseUrl}/packages`,
+        `Explore memberships: ${baseUrl}/packages`,
+        `Find your starting point: ${baseUrl}/apply`,
       ].join('\n'),
-      html: `<p>Private 1:1 and hybrid retainers are strictly capped to maintain uncompromising advisory rigor.</p>
-<p>If you are ready to command your physical performance this quarter:</p>
-<ul>
-  <li>Choose your retainer tier on our secure Stripe portal</li>
-  <li>Or complete the diagnostic intake quiz for Coach Gordon to review your profile</li>
-</ul>
-<p>All new members receive immediate access to the GAA native mobile apps, 3D AI postural mesh scanner, and in-gym Cadence HUD.</p>
-<p><a href="${baseUrl}/apply">Apply for advisory</a> | <a href="${baseUrl}/packages">Explore retainers</a></p>`,
+      html: `<p>Start with practical training tools and add coaching support as your needs change.</p>
+<p>Core Membership offers a 7-day free trial and starts at $19.99/month, or $149/year. Pro Athlete is $49/month. Transformation Direct is $199/month.</p>
+<p>Explore the plans, compare features, and choose the option that fits your goals.</p>
+<p><a href="${baseUrl}/packages">Explore memberships</a> | <a href="${baseUrl}/apply">Find your starting point</a></p>`,
     }),
   },
 ] as const
@@ -190,7 +183,7 @@ function getBaseUrl() {
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.MARKETING_BASE_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.NODE_ENV === 'production' ? 'https://gordonathleticadvisory.com' : 'http://127.0.0.1:3000')
+    (process.env.NODE_ENV === 'production' ? 'https://forge-athletic.app' : 'http://127.0.0.1:3000')
   )
 }
 
@@ -247,18 +240,18 @@ export function appendComplianceFooter(html: string, text: string, email: string
   const unsubUrl = getUnsubscribeUrl(email)
   const htmlFooter = `
 <div style="margin-top: 36px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 11px; color: #8899A6; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <p style="margin: 0 0 6px; font-weight: 600; color: #C5A059;">Gordon Athletic Advisory · Private Human Performance Architecture</p>
-  <p style="margin: 0 0 6px;">75 Arlington St, Ste 500, Boston, MA 02116 · Confidential Sports Science Retainers</p>
+  <p style="margin: 0 0 6px; font-weight: 600; color: #F59E0B;">Forge Athletic · Precision Science For Real Lives</p>
+  <p style="margin: 0 0 6px;">75 Arlington St, Ste 500, Boston, MA 02116 · Membership and training updates</p>
   <p style="margin: 0;">
     You received this advisory transmission because you requested protocol access.
-    <a href="${unsubUrl}" style="color: #C5A059; text-decoration: underline; margin-left: 6px;">Unsubscribe</a>
+    <a href="${unsubUrl}" style="color: #F59E0B; text-decoration: underline; margin-left: 6px;">Unsubscribe</a>
   </p>
 </div>`
 
   const textFooter = `
 
 ---
-Gordon Athletic Advisory · Private Human Performance Architecture
+Forge Athletic · Precision Science For Real Lives
 75 Arlington St, Ste 500, Boston, MA 02116
 Unsubscribe: ${unsubUrl}`
 
@@ -333,7 +326,7 @@ async function sendEmail(params: {
     console.warn(
       '[MarketingEmail] Warning: Email body contains localhost links. ' +
       'Mismatched link domains trigger spam filters and DMARC/reputation warnings in Resend. ' +
-      'Configure EMAIL_LINK_BASE_URL=https://gordonathleticadvisory.com in .env.local for clean inbox delivery.'
+      'Configure EMAIL_LINK_BASE_URL=https://forge-athletic.app in .env.local for clean inbox delivery.'
     )
   }
 
@@ -365,30 +358,30 @@ export async function sendWelcomeEmail(input: WelcomeInput) {
 
   return sendEmail({
     to: email,
-    subject: 'Welcome to Gordon Athletic Advisory | Protocol Onboarding',
-    html: `<h2>Welcome to Gordon Athletic Advisory, ${name}!</h2>
-<p>I am honored to direct your human performance architecture.</p>
-<p>Here is your 3-step protocol onboarding:</p>
+    subject: 'Welcome to Forge Athletic',
+    html: `<h2>Welcome to Forge Athletic, ${name}!</h2>
+<p>I'm glad you're here. Let's get your training foundation in place.</p>
+<p>Start with these three steps:</p>
 <ol>
-  <li><strong>Complete Biometric Onboarding &amp; PAR-Q+:</strong> calibrate your training age, orthopedic history, and available equipment.</li>
-  <li><strong>Connect Native Wearable Telemetry:</strong> download the GAA iOS/Android app to link Apple HealthKit or Android Health Connect for 24/7 HRV and recovery sync.</li>
-  <li><strong>Ingest Your 5-Phase OPT™ Macrocycle:</strong> access your individualized periodization plan with integrated in-gym Cadence Pulse HUD.</li>
+  <li><strong>Complete your onboarding and PAR-Q+:</strong> share your training experience, goals, and available equipment.</li>
+  <li><strong>Connect supported health data:</strong> link Apple HealthKit or Android Health Connect if you use them.</li>
+  <li><strong>Review your training plan:</strong> get started with the periodization and training tools in your dashboard.</li>
 </ol>
-<p><a href="${baseUrl}/dashboard/onboarding">Initiate Your Protocol Onboarding</a></p>
-<p>If you have urgent questions, reply directly to this dispatch or message me inside the Client Hub.</p>`,
+<p><a href="${baseUrl}/dashboard/onboarding">Continue to onboarding</a></p>
+<p>If you have questions, reply to this email or message your coach in the app.</p>`,
     text: [
-      `Welcome to Gordon Athletic Advisory, ${name}!`,
+      `Welcome to Forge Athletic, ${name}!`,
       '',
-      'I am honored to direct your human performance architecture.',
+      "I'm glad you're here. Let's get your training foundation in place.",
       '',
-      'Here is your 3-step protocol onboarding:',
-      '1. Complete Biometric Onboarding & PAR-Q+: calibrate your training age, orthopedic history, and available equipment.',
-      '2. Connect Native Wearable Telemetry: download the GAA iOS/Android app to link Apple HealthKit or Android Health Connect for 24/7 HRV and recovery sync.',
-      '3. Ingest Your 5-Phase OPT™ Macrocycle: access your individualized periodization plan with integrated in-gym Cadence Pulse HUD.',
+      'Start with these three steps:',
+      '1. Complete your onboarding and PAR-Q+: share your training experience, goals, and available equipment.',
+      '2. Connect supported health data: link Apple HealthKit or Android Health Connect if you use them.',
+      '3. Review your training plan: get started with the periodization and training tools in your dashboard.',
       '',
-      `Initiate Your Protocol Onboarding: ${baseUrl}/dashboard/onboarding`,
+      `Continue to onboarding: ${baseUrl}/dashboard/onboarding`,
       '',
-      'If you have urgent questions, reply directly to this dispatch or message me inside the Client Hub.',
+      'If you have questions, reply to this email or message your coach in the app.',
     ].join('\n'),
     replyTo,
   })
@@ -406,7 +399,7 @@ export async function sendPasswordResetEmail(input: PasswordResetInput) {
 
   return sendEmail({
     to: email,
-    subject: 'Reset your Gordon Athletic Advisory password',
+    subject: 'Reset your Forge Athletic password',
     html: `<h2>Password reset request</h2>
 <p>We received a request to reset your password.</p>
 <p><a href="${input.resetLink}">Reset your password</a></p>
@@ -453,16 +446,16 @@ export async function triggerLeadEmailAutomation(
 
     if (input.source === 'founding_cohort') {
       confirmation = {
-        subject: `Founding Cohort Allocation Confirmed (#${reservationNum}) | Gordon Athletic Advisory`,
+        subject: `Forge Athletic Founding Cohort Confirmed (#${reservationNum})`,
         text: [
           `Hi ${name},`,
           '',
-          'Your registration for the Gordon Athletic Advisory Founding Cohort has been officially recorded.',
+          'Your registration for the Forge Athletic Founding Cohort has been recorded.',
           '',
           `OFFICIAL ALLOCATION: RESERVATION #${reservationNum} OF 20`,
           '',
           '--- COACH GORDON BRIEFING MEMO ---',
-          "Thank you for submitting your profile. As we prepare for the official launch of private concierge advisory retainers, I am personally reviewing each applicant's training age, biomechanical background, and performance objectives.",
+          "Thank you for submitting your profile. I am reviewing each applicant's training experience, movement background, and performance goals.",
           '',
           'CREDENTIALING & METHODOLOGY UPDATE:',
           'In pursuit of unmatched sports science rigor, our advisory methodology is anchored by complete master-level accreditation across 13 NASM® disciplines—including Certified Personal Trainer (CPT), Corrective Exercise Specialist (CES), Performance Enhancement Specialist (PES), Certified Nutrition Coach (CNC), Certified Sports Nutrition Coach (CSNC), and NASM Master Trainer.',
@@ -470,88 +463,88 @@ export async function triggerLeadEmailAutomation(
           'WHAT HAPPENS NEXT:',
           '1. Intake & Biomechanical Review: Your profile answers have been logged into our triage queue.',
           '2. Priority Consultation Booking: Founding cohort members will receive 48-hour advance access to schedule their 1:1 Live Biomechanics Screen before public availability.',
-          '3. Private Retainer SLA Lock: Your reservation locks in founding-member retainer privileges and priority scheduling.',
+          '3. Membership Follow-up: We will share current membership options and next steps as your application is reviewed.',
           '',
           `Explore the 13-Point Accreditation Portfolio: ${baseUrl}/intake#accreditation-portfolio`,
-          `Review Retainer Specifications & SLAs: ${baseUrl}/packages`,
+          `Explore Forge Athletic memberships: ${baseUrl}/packages`,
           '',
           'If you have immediate questions or specific requirements, you may reply directly to this transmission.',
           '',
           'In health and athletic excellence,',
           'Scott Gordon, Founder & Performance Director',
-          'Gordon Athletic Advisory · 75 Arlington St, Boston, MA',
+          'Forge Athletic · 75 Arlington St, Boston, MA',
         ].join('\n'),
         html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #080E18; color: #E2E8F0; padding: 32px 24px; border: 1px solid rgba(197, 160, 89, 0.35); border-radius: 8px;">
   <div style="text-align: center; padding-bottom: 24px; border-bottom: 1px solid rgba(197, 160, 89, 0.2);">
-    <p style="margin: 0; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: #C5A059; font-weight: 700;">Gordon Athletic Advisory</p>
+    <p style="margin: 0; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: #F59E0B; font-weight: 700;">Forge Athletic</p>
     <p style="margin: 4px 0 0; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #94A3B8;">Private Sports Science &amp; Human Performance Architecture</p>
   </div>
 
-  <div style="margin: 24px 0; text-align: center; background: rgba(197, 160, 89, 0.08); border: 1px solid #C5A059; border-radius: 6px; padding: 14px 16px;">
-    <p style="margin: 0; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #C5A059; font-weight: 700;">Official Allocation Confirmed</p>
+  <div style="margin: 24px 0; text-align: center; background: rgba(245, 158, 11, 0.08); border: 1px solid #F59E0B; border-radius: 6px; padding: 14px 16px;">
+    <p style="margin: 0; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #F59E0B; font-weight: 700;">Official Allocation Confirmed</p>
     <p style="margin: 4px 0 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 18px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.05em;">RESERVATION #${reservationNum} OF 20</p>
   </div>
 
   <p style="font-size: 16px; line-height: 1.6; margin-bottom: 16px; color: #FFFFFF;">Hi ${name},</p>
-  <p style="font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: #CBD5E1;">Your registration for the Gordon Athletic Advisory Founding Cohort has been officially recorded. I am personally reviewing each applicant's training age, biomechanical background, and performance objectives.</p>
+  <p style="font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: #CBD5E1;">Your registration for the Forge Athletic Founding Cohort has been recorded. I am reviewing each applicant's training experience, movement background, and performance goals.</p>
 
-  <div style="background: rgba(15, 23, 42, 0.6); border-left: 3px solid #C5A059; padding: 14px 16px; margin: 20px 0;">
-    <p style="margin: 0 0 6px; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #C5A059; font-weight: 700;">Coach Gordon Briefing Memo</p>
+  <div style="background: rgba(15, 23, 42, 0.6); border-left: 3px solid #F59E0B; padding: 14px 16px; margin: 20px 0;">
+    <p style="margin: 0 0 6px; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #F59E0B; font-weight: 700;">Coach Gordon Briefing Memo</p>
     <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #E2E8F0;">In pursuit of unmatched sports science rigor, our advisory methodology is anchored by complete master-level accreditation across 13 NASM® disciplines—including CPT, CES, PES, CNC, CSNC, and NASM Master Trainer.</p>
   </div>
 
-  <h3 style="font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: #C5A059; margin: 24px 0 12px; font-weight: 700;">What Happens Next</h3>
+  <h3 style="font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: #F59E0B; margin: 24px 0 12px; font-weight: 700;">What Happens Next</h3>
   <ol style="font-size: 13px; line-height: 1.7; color: #CBD5E1; padding-left: 20px; margin-bottom: 24px;">
     <li><strong style="color: #FFFFFF;">Intake &amp; Biomechanical Review:</strong> Your profile answers have been logged into our triage queue.</li>
     <li><strong style="color: #FFFFFF;">Priority Consultation Booking:</strong> Founding cohort members receive 48-hour advance access to schedule their 1:1 Live Biomechanics Screen before public availability.</li>
-    <li><strong style="color: #FFFFFF;">Private Retainer SLA Lock:</strong> Your reservation locks in founding-member retainer privileges and priority scheduling.</li>
+    <li><strong style="color: #FFFFFF;">Membership Follow-up:</strong> We will share current membership options and next steps as your application is reviewed.</li>
   </ol>
 
   <div style="display: flex; gap: 12px; margin: 28px 0 20px; flex-wrap: wrap;">
-    <a href="${baseUrl}/intake#accreditation-portfolio" style="background: #C5A059; color: #080E18; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; padding: 12px 20px; border-radius: 4px; display: inline-block;">View Accreditation Portfolio</a>
-    <a href="${baseUrl}/packages" style="background: transparent; color: #C5A059; border: 1px solid rgba(197, 160, 89, 0.5); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; padding: 12px 20px; border-radius: 4px; display: inline-block;">Retainer Specifications &amp; SLAs</a>
+    <a href="${baseUrl}/intake#accreditation-portfolio" style="background: #F59E0B; color: #080E18; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; padding: 12px 20px; border-radius: 4px; display: inline-block;">View Accreditation Portfolio</a>
+    <a href="${baseUrl}/packages" style="background: transparent; color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.5); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; padding: 12px 20px; border-radius: 4px; display: inline-block;">Forge Athletic Memberships</a>
   </div>
 
   <p style="font-size: 13px; line-height: 1.6; margin-top: 24px; color: #94A3B8;">If you have immediate orthopedic questions or specific scheduling requirements, you may reply directly to this transmission.</p>
 
   <div style="margin-top: 28px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
     <p style="margin: 0; font-size: 13px; font-weight: 600; color: #FFFFFF;">Scott Gordon</p>
-    <p style="margin: 2px 0 0; font-size: 11px; color: #C5A059;">Founder &amp; Performance Director · Gordon Athletic Advisory</p>
+    <p style="margin: 2px 0 0; font-size: 11px; color: #F59E0B;">Founder · Forge Athletic</p>
   </div>
 </div>`,
       }
     } else if (input.source === 'apply') {
       confirmation = {
-        subject: 'Application Received | Gordon Athletic Advisory',
+        subject: 'Application Received | Forge Athletic',
         text: [
           `Hi ${name},`,
           '',
-          'Thank you for submitting your diagnostic intake with Gordon Athletic Advisory.',
-          `Recommended Advisory Pathway: ${input.recommendedTier ?? 'Performance Protocol'}.`,
-          'Coach Gordon will review your biomechanical profile and training age against active cohort capacity.',
+          'Thank you for submitting your training intake with Forge Athletic.',
+          `Recommended starting point: ${input.recommendedTier ?? 'Core Membership'}.`,
+          'Coach Scott Gordon will review your goals and training background.',
           '',
-          `In the interim, explore our clinical retainers and SLAs: ${baseUrl}/packages`,
+          `Explore Forge Athletic memberships: ${baseUrl}/packages`,
         ].join('\n'),
         html: `<p>Hi ${name},</p>
-<p>Thank you for submitting your diagnostic intake with Gordon Athletic Advisory.</p>
-<p>Recommended Advisory Pathway: <strong>${input.recommendedTier ?? 'Performance Protocol'}</strong>.</p>
-<p>Coach Gordon will review your biomechanical profile and training age against active cohort capacity.</p>
-<p><a href="${baseUrl}/packages">Explore our clinical retainers and SLAs</a></p>`,
+<p>Thank you for submitting your training intake with Forge Athletic.</p>
+<p>Recommended starting point: <strong>${input.recommendedTier ?? 'Core Membership'}</strong>.</p>
+<p>Coach Scott Gordon will review your goals and training background.</p>
+<p><a href="${baseUrl}/packages">Explore Forge Athletic memberships</a></p>`,
       }
     } else {
       confirmation = {
-        subject: 'Priority Waitlist Confirmed | Gordon Athletic Advisory',
+        subject: 'Forge Athletic Updates | You are on the list',
         text: [
           `Hi ${name},`,
           '',
-          'You are officially confirmed on the Gordon Athletic Advisory Priority Waitlist.',
-          'You will receive first notification when private retainer intake opens for the upcoming cohort.',
+          'You are on the Forge Athletic updates list.',
+          'We will share product updates, training resources, and membership news by email.',
           '',
           `Complete your diagnostic fit quiz at any time: ${baseUrl}/apply`,
         ].join('\n'),
         html: `<p>Hi ${name},</p>
-<p>You are officially confirmed on the Gordon Athletic Advisory Priority Waitlist.</p>
-<p>You will receive first notification when private retainer intake opens for the upcoming cohort.</p>
+<p>You are on the Forge Athletic updates list.</p>
+<p>We will share product updates, training resources, and membership news by email.</p>
 <p><a href="${baseUrl}/apply">Complete your diagnostic fit quiz</a></p>`,
       }
     }

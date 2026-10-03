@@ -48,12 +48,12 @@ const QUESTIONS: Question[] = [
   {
     key: 'supportLevel',
     title: 'Which advisory direction tier best matches your workflow?',
-    description: 'Choose between autonomous execution, asynchronous triage, or high-touch live video.',
+    description: 'Choose the level of training technology and coach feedback that fits you.',
     choices: [
-      { value: 'program_only', label: 'Autonomous execution with app telemetry & Cadence HUD (Digital Lab)' },
-      { value: 'program_and_messaging', label: 'Autonomous periodization + weekly Sunday triage & concierge messaging (Performance Protocol)' },
-      { value: 'hybrid_monthly_calls', label: 'Hybrid direction + monthly live WebRTC video studio & form critiques (Hybrid Concierge)' },
-      { value: 'weekly_direct_calls', label: 'Private 1:1 master direction with weekly live studio sessions & supplement prescribing (Executive 1:1)' },
+      { value: 'program_only', label: 'Self-guided training tools and performance telemetry (Core Membership)' },
+      { value: 'program_and_messaging', label: 'Training tools with voice-led cadence coaching (Pro Athlete)' },
+      { value: 'hybrid_monthly_calls', label: 'Biomechanical feedback and performance diagnostics (Pro Athlete)' },
+      { value: 'weekly_direct_calls', label: 'Personal video critiques from a coach (Transformation Direct)' },
     ],
   },
   {
@@ -79,12 +79,11 @@ const QUESTIONS: Question[] = [
   {
     key: 'budgetBand',
     title: 'What is your intended monthly advisory investment?',
-    description: 'All retainers include defined deliverables, mobile apps, and contractual response SLAs.',
+    description: 'Choose the monthly membership that fits your current training support needs.',
     choices: [
-      { value: 'under_100', label: 'Autonomous Software Access ($59/mo)' },
-      { value: '250_500', label: 'Performance Protocol ($349/mo)' },
-      { value: '200_400', label: 'Hybrid Concierge Flagship ($649/mo)' },
-      { value: '1000_plus', label: 'Executive 1:1 Master Retainer ($1,495+/mo)' },
+      { value: 'under_50', label: 'Core Membership ($19.99/mo or $149/yr)' },
+      { value: '50_150', label: 'Pro Athlete ($49/mo)' },
+      { value: '150_plus', label: 'Transformation Direct ($199/mo)' },
     ],
   },
   {
@@ -104,19 +103,19 @@ type Answers = Record<string, string>
 type Tier = 'digital_lab' | 'program_messaging' | 'hybrid' | 'premium_1_1' | 'waitlist'
 
 function recommendationFromAnswers(answers: Answers): Tier {
-  if (answers.readiness === 'just_researching' && answers.budgetBand === 'under_100') {
+  if (answers.readiness === 'just_researching' && answers.budgetBand === 'under_50') {
     return 'digital_lab'
   }
 
-  if (answers.budgetBand === 'under_100' || answers.supportLevel === 'program_only') {
+  if (answers.budgetBand === 'under_50' || answers.supportLevel === 'program_only') {
     return 'digital_lab'
   }
 
-  if (answers.supportLevel === 'weekly_direct_calls' || answers.budgetBand === '1000_plus' || answers.budgetBand === '400_plus') {
+  if (answers.supportLevel === 'weekly_direct_calls' || answers.budgetBand === '150_plus') {
     return 'premium_1_1'
   }
 
-  if (answers.supportLevel === 'hybrid_monthly_calls' || answers.budgetBand === '500_1000' || answers.budgetBand === '200_400') {
+  if (answers.supportLevel === 'hybrid_monthly_calls' || answers.supportLevel === 'program_and_messaging' || answers.budgetBand === '50_150') {
     return 'hybrid'
   }
 
@@ -126,22 +125,22 @@ function recommendationFromAnswers(answers: Answers): Tier {
 function recommendationDetails(tier: Tier) {
   if (tier === 'digital_lab') {
     return {
-      title: 'Autonomous Digital Lab',
-      price: '$59',
+      title: 'Core Membership',
+      price: '$19.99',
       cadence: '/month',
     }
   }
   if (tier === 'premium_1_1') {
     return {
-      title: 'Executive 1:1 Master Retainer',
-      price: '$1,495',
+      title: 'Transformation Direct',
+      price: '$199',
       cadence: '/month',
     }
   }
   if (tier === 'hybrid') {
     return {
-      title: 'Hybrid Concierge Flagship',
-      price: '$649',
+      title: 'Pro Athlete',
+      price: '$49',
       cadence: '/month',
     }
   }
@@ -153,18 +152,18 @@ function recommendationDetails(tier: Tier) {
     }
   }
   return {
-    title: 'Performance Protocol Retainer',
-    price: '$349',
+    title: 'Core Membership',
+    price: '$19.99',
     cadence: '/month',
   }
 }
 
 function recommendationCta(tier: Tier) {
-  if (tier === 'digital_lab') return { href: '/packages?tier=lab', label: 'Enroll in Digital Lab' }
-  if (tier === 'premium_1_1') return { href: '/packages?tier=transformation', label: 'Apply for Executive 1:1' }
-  if (tier === 'hybrid') return { href: '/packages?tier=momentum', label: 'Choose Hybrid Concierge' }
+  if (tier === 'digital_lab') return { href: '/packages?tier=forge-core', label: 'Choose Core Membership' }
+  if (tier === 'premium_1_1') return { href: '/packages?tier=forge-transformation-direct', label: 'Choose Transformation Direct' }
+  if (tier === 'hybrid') return { href: '/packages?tier=forge-pro-athlete', label: 'Choose Pro Athlete' }
   if (tier === 'waitlist') return { href: '/#waitlist-hero', label: 'Join Priority Waitlist' }
-  return { href: '/packages?tier=starter', label: 'Start Performance Protocol' }
+  return { href: '/packages?tier=forge-core', label: 'Choose Core Membership' }
 }
 
 export default function ApplyQuiz() {

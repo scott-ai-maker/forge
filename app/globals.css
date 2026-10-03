@@ -3,23 +3,28 @@
 @tailwind utilities;
 
 :root {
-  /* Obsidian & Smoked Slate Surfaces */
+  /* Forge carbon surfaces */
   --navy:     #080E14;
-  --navy-mid: #0E1724;
-  --navy-lt:  #162232;
-  --slate-700:#223246;
+  --navy-mid: #0F172A;
+  --navy-lt:  #1E293B;
+  --slate-700:#334155;
 
-  /* Brushed Champagne Gold */
-  --gold:     #C5A059;
-  --gold-lt:  #E5D0A1;
-  --gold-ambient: rgba(197, 160, 89, 0.12);
+  /* Forge flame and telemetry accents */
+  --gold:     #F59E0B;
+  --gold-lt:  #FBBF24;
+  --gold-ambient: rgba(245, 158, 11, 0.12);
+  --cyan:     #38BDF8;
 
-  /* High-Contrast Ice White & Muted Slate */
+  /* High-contrast text and telemetry */
   --white:    #F8FAFC;
-  --gray:     #94A3B8;
+  --gray:     #CBD5E1;
 
-  /* Sovereign Typography */
-  --font-serif: var(--font-cinzel), 'Cinzel', 'Playfair Display', Georgia, serif;
+  /* Forge typography */
+  --font-heading: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
+  --font-body: var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-serif: var(--font-heading);
+  --font-raleway: var(--font-body);
+  --font-sans: var(--font-body);
   --font-telemetry: 'SF Mono', 'Geist Mono', 'Roboto Mono', Menlo, Monaco, Consolas, monospace;
 
   /* Telemetry Status Tokens */
@@ -27,9 +32,17 @@
   --error:    #F87171;
 }
 
-/* 🏛️ Sovereign Luxury Utility Classes */
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./fonts/inter-latin-variable.woff2') format('woff2');
+}
+
+/* Legacy class name retained while applying the Forge heading face. */
 .font-serif {
-  font-family: var(--font-serif) !important;
+  font-family: var(--font-heading) !important;
 }
 
 .font-telemetry {
@@ -78,17 +91,13 @@ html {
   width: 100%;
   overflow-x: clip;
   position: relative;
-  background-color: #080E14;
+  background-color: var(--navy);
 }
 body {
-  background:
-    radial-gradient(ellipse at 50% 0%, rgba(197, 160, 89, 0.07) 0%, transparent 60%),
-    radial-gradient(circle at 100% 100%, rgba(14, 23, 36, 0.8) 0%, transparent 50%),
-    #080E14;
-  background-color: #080E14;
+  background: var(--navy);
   color: var(--white);
-  font-family: var(--font-raleway), 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-weight: 300;
+  font-family: var(--font-body);
+  font-weight: 400;
   overflow-x: clip;
   width: 100%;
   min-height: 100dvh;
@@ -100,6 +109,8 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
   overflow-wrap: break-word;
   word-break: break-word;
 }
@@ -2127,6 +2138,505 @@ a:focus-visible {
   }
 }
 
+.foundation-home {
+  background: var(--navy);
+  color: var(--white);
+  padding: 0 clamp(1.25rem, 5vw, 5rem);
+}
+
+.foundation-home a {
+  color: inherit;
+}
+
+.forge-home-header,
+.forge-home-brand,
+.forge-home-header nav,
+.forge-home-footer nav {
+  display: flex;
+  align-items: center;
+}
+
+.forge-home-header {
+  min-height: 78px;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.forge-home-brand {
+  gap: 0.7rem;
+  font-family: var(--font-heading);
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.forge-home-brand img,
+.site-brand-mark,
+.site-footer-mark {
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.forge-home-header nav,
+.forge-home-footer nav {
+  gap: clamp(0.8rem, 2vw, 1.5rem);
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.forge-header-cta,
+.forge-primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gold) !important;
+  border-radius: 5px;
+  background: var(--gold) !important;
+  color: #111827 !important;
+  font-weight: 700;
+}
+
+.forge-header-cta {
+  padding: 0.65rem 1rem;
+}
+
+.forge-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  align-items: center;
+  gap: clamp(1rem, 5vw, 4rem);
+  max-width: 1280px;
+  min-height: min(720px, calc(100vh - 78px));
+  margin: 0 auto;
+  padding: clamp(3rem, 7vw, 6rem) 0;
+}
+
+.forge-hero-copy {
+  max-width: 690px;
+}
+
+.forge-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+  color: var(--cyan);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.forge-eyebrow > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.55);
+}
+
+.forge-hero h1 {
+  max-width: 780px;
+  margin: 0;
+  color: var(--white);
+  font-size: clamp(3.5rem, 8vw, 7.5rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 0.91;
+  text-transform: uppercase;
+}
+
+.forge-hero-tagline {
+  margin: 1.2rem 0 0;
+  color: var(--gold-lt);
+  font-family: var(--font-heading);
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+  font-weight: 600;
+}
+
+.forge-hero-description {
+  max-width: 580px;
+  margin: 1rem 0 1.8rem;
+  color: #CBD5E1;
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  line-height: 1.75;
+}
+
+.forge-hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.forge-primary-link {
+  min-height: 48px;
+  padding: 0.8rem 1.2rem;
+}
+
+.forge-secondary-link {
+  color: var(--white) !important;
+}
+
+.forge-secondary-link span {
+  padding-left: 0.3rem;
+  color: var(--cyan);
+}
+
+.forge-hero-proof {
+  margin: 1.6rem 0 0;
+  color: #94A3B8;
+  font-size: 0.78rem;
+}
+
+.forge-hero-proof span {
+  padding: 0 0.45rem;
+  color: var(--gold);
+}
+
+.forge-hero-mark {
+  display: flex;
+  justify-content: center;
+}
+
+.forge-hero-mark img {
+  width: min(100%, 560px);
+  height: auto;
+  border: 1px solid rgba(56, 189, 248, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42), 0 0 55px rgba(56, 189, 248, 0.08);
+}
+
+.forge-feature-section,
+.forge-pricing-section,
+.forge-founder-section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(3.5rem, 7vw, 6rem) 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.forge-section-intro {
+  max-width: 660px;
+  margin-bottom: 2rem;
+}
+
+.forge-section-intro h2,
+.forge-founder-section h2 {
+  margin: 0;
+  color: var(--white);
+  font-size: clamp(2.4rem, 5vw, 4.25rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.forge-section-intro > p:last-child,
+.forge-founder-section > div:last-child > p:not(.forge-eyebrow):not(.forge-founder-signoff) {
+  color: #CBD5E1;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.forge-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2.25rem;
+}
+
+.forge-feature-card,
+.forge-plan-card {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(8, 14, 20, 0.95));
+}
+
+.forge-feature-card {
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.forge-feature-number {
+  color: var(--cyan);
+  font-family: var(--font-telemetry);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.forge-feature-card h3 {
+  margin: 1.5rem 0 0.5rem;
+  color: var(--white);
+  font-size: 1.65rem;
+}
+
+.forge-feature-card p {
+  margin: 0;
+  color: #94A3B8;
+  line-height: 1.65;
+}
+
+.forge-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.forge-plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.forge-plan-card-featured {
+  border-color: rgba(245, 158, 11, 0.75);
+  box-shadow: 0 0 34px rgba(245, 158, 11, 0.09);
+}
+
+.forge-plan-label {
+  align-self: flex-start;
+  margin-bottom: 1rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 3px;
+  background: rgba(245, 158, 11, 0.13);
+  color: var(--gold-lt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.forge-plan-card h3 {
+  margin: 0;
+  color: var(--white);
+  font-size: 1.8rem;
+}
+
+.forge-plan-price {
+  margin: 1.25rem 0 0;
+  color: var(--white);
+  font-family: var(--font-telemetry);
+  font-size: 2.5rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.forge-plan-price span {
+  color: #94A3B8;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 400;
+}
+
+.forge-plan-alternative {
+  margin: 0.45rem 0 0;
+  color: var(--gold-lt);
+  font-size: 0.9rem;
+}
+
+.forge-plan-card ul {
+  display: grid;
+  gap: 0.8rem;
+  margin: 1.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.forge-plan-card li {
+  position: relative;
+  padding-left: 1.2rem;
+  color: #CBD5E1;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.forge-plan-card li::before {
+  position: absolute;
+  left: 0;
+  color: var(--cyan);
+  content: '✓';
+}
+
+.forge-plan-actions {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: auto;
+}
+
+.forge-plan-actions button {
+  min-height: 46px !important;
+  padding: 0.7rem !important;
+  border: 1px solid rgba(245, 158, 11, 0.75) !important;
+  border-radius: 5px !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: var(--gold-lt) !important;
+  font-family: var(--font-heading) !important;
+  font-size: 1rem !important;
+  letter-spacing: 0.06em !important;
+}
+
+.forge-plan-card-featured .forge-plan-actions button:first-of-type {
+  background: var(--gold) !important;
+  color: #111827 !important;
+}
+
+.forge-plan-actions button:disabled {
+  opacity: 0.6;
+}
+
+.forge-billing-note {
+  margin: 1.5rem 0 0;
+  color: #94A3B8;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.forge-founder-section {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 720px);
+  align-items: start;
+  justify-content: center;
+  gap: clamp(1.5rem, 5vw, 4rem);
+}
+
+.forge-founder-mark {
+  display: grid;
+  width: 144px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #1E293B, #080E14 72%);
+  color: var(--gold);
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.forge-founder-section h2 {
+  margin-bottom: 1rem;
+}
+
+.forge-founder-signoff {
+  color: var(--gold-lt);
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.forge-home-footer {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.5rem 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  color: #94A3B8;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.forge-home-footer > a {
+  color: var(--white) !important;
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.forge-home-footer p {
+  margin: 0;
+}
+
+.forge-packages-intro {
+  max-width: 800px;
+  margin: 2rem auto 3rem;
+  text-align: center;
+}
+
+.forge-packages-intro .forge-eyebrow {
+  justify-content: center;
+}
+
+.forge-packages-intro h1 {
+  margin: 0;
+  color: var(--white);
+  font-size: clamp(2.7rem, 6vw, 5rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.forge-packages-intro > p:last-child {
+  color: #CBD5E1;
+  line-height: 1.7;
+}
+
+.forge-auth-content {
+  padding: 2rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.96);
+}
+
+.forge-auth-logo {
+  display: block;
+  width: 112px;
+  height: 112px;
+  margin: 0 auto 1.25rem;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+@media (max-width: 760px) {
+  .forge-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding-top: 3.5rem;
+  }
+
+  .forge-hero-mark {
+    grid-row: 1;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  .forge-feature-grid,
+  .forge-plans-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .forge-founder-section {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .forge-founder-section .forge-eyebrow {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .forge-home-header nav {
+    gap: 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  .forge-home-brand {
+    font-size: 1.2rem;
+  }
+
+  .forge-home-brand img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .forge-auth-content {
+    padding: 1.25rem;
+  }
+}
+
 .movement-card-anatomy-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2660,9 +3170,9 @@ aside.first-visit-dock,
 .foundation-home {
   min-height: 100vh;
   padding: 0 clamp(1.25rem, 5vw, 5rem);
-  background: #fff;
-  color: #1f2937;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  font-family: var(--font-body);
 }
 
 .foundation-home a {

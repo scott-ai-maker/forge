@@ -586,7 +586,7 @@ export default function WearablesDeviceStudio({
             <button
               type="button"
               onClick={() => {
-                const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://gordonathleticadvisory.com'}/api/wearables/webhook${currentUserId ? `?client_id=${currentUserId}` : ''}`
+                const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://forge-athletic.app'}/api/wearables/webhook${currentUserId ? `?client_id=${currentUserId}` : ''}`
                 navigator.clipboard.writeText(url)
                 setCopiedWebhook(true)
                 setTimeout(() => setCopiedWebhook(false), 3000)
@@ -806,4 +806,3 @@ export default function WearablesDeviceStudio({
     </div>
   )
 }
-

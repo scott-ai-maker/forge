@@ -111,7 +111,7 @@ export default function PwaInstallPrompt() {
 
   return (
     <aside
-      aria-label="Install Gordon Athletic Advisory App"
+      aria-label="Install Forge Athletic App"
       className="pwa-install-banner"
       style={{
         position: 'fixed',
@@ -222,4 +222,3 @@ export default function PwaInstallPrompt() {
     </aside>
   )
 }
-

@@ -76,7 +76,7 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
       <div
         className="glass-card-gold"
         role="dialog"
-        aria-label="What's New in Gordon Athletic Advisory"
+        aria-label="What's New in Forge Athletic"
         style={{
           position: 'relative',
           width: '100%',

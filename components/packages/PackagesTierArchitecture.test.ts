@@ -125,17 +125,18 @@ describe('Public Funnel & Architecture', () => {
   const purchaseButtonSource = fs.readFileSync(path.resolve(process.cwd(), 'components/packages/PurchaseButton.tsx'), 'utf-8')
   const masterModalSource = fs.readFileSync(path.resolve(process.cwd(), 'components/packages/MasterAllocationModal.tsx'), 'utf-8')
 
-  it('provides the clean foundation landing hero and sign-up action', () => {
-    expect(homePageSource).toContain('className="foundation-home"')
-    expect(homePageSource).toContain('A new foundation for athletic performance.')
+  it('renders Forge Athletic branding and the real-life performance promise', () => {
+    expect(homePageSource).toContain('className="foundation-home forge-marketing"')
+    expect(homePageSource).toContain('Built From The Ground Up.')
+    expect(homePageSource).toContain('Precision Science For Real Lives.')
     expect(homePageSource).toContain('href="/auth/signup"')
   })
 
-  it('lists the imported platform features and Phase 2 membership placeholders', () => {
-    expect(homePageSource).toContain('NASM 5-phase OPT periodization engines')
-    expect(homePageSource).toContain('3D AI postural and kinetic-chain screening')
-    expect(homePageSource).toContain('Foundation status')
-    expect(homePageSource).toContain('Details will be announced in Phase 2.')
+  it('lists the three Forge memberships and founder story on the public landing page', () => {
+    expect(homePageSource).toContain('ForgeMembershipPlans')
+    expect(homePageSource).toContain('Coach Scott Gordon')
+    expect(homePageSource).toContain('more than 50 pounds')
+    expect(homePageSource).toContain('/images/brand/logo-concept-1-kinetic-f.jpg')
   })
 
   it('guarantees PackagesStudioClient formats prices with monospace tabular telemetry', () => {
@@ -150,10 +151,16 @@ describe('Public Funnel & Architecture', () => {
     expect(corporatePageSource).toContain('$35,000')
   })
 
-  it('guarantees Async Coaching tier prices and add-ons use monospace tabular telemetry', () => {
-    expect(asyncCoachingSource).toContain('font-telemetry font-mono')
-    expect(asyncCoachingSource).toContain('{tier.price}')
-    expect(asyncCoachingSource).toContain('{addon.price}')
+  it('redirects the retired async-coaching catalog to current membership options', () => {
+    expect(asyncCoachingSource).toContain("redirect('/packages')")
+  })
+
+  it('sets Forge Athletic Barlow Condensed and Inter font variables', () => {
+    const layoutSource = fs.readFileSync(path.resolve(process.cwd(), 'app/layout.tsx'), 'utf-8')
+    expect(layoutSource).toContain('const barlowCondensed = localFont(')
+    expect(layoutSource).toContain("variable: '--font-barlow-condensed'")
+    expect(layoutSource).toContain('const inter = localFont(')
+    expect(layoutSource).toContain("variable: '--font-inter'")
   })
 
   it('guarantees ApplyQuiz recommendation card uses Cinzel title and monospace tabular price', () => {

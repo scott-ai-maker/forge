@@ -43,15 +43,15 @@ export default function ApplyPage() {
         </div>
 
         <p style={{ fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 8 }}>
-          Gordon Athletic Advisory · Diagnostic Onboarding
+          Forge Athletic · Training Intake
         </p>
         <h1 className="font-serif" style={{ fontSize: 'clamp(2.4rem, 6vw, 4rem)', lineHeight: 1.1, marginBottom: 14, color: '#FFFFFF', fontWeight: 700 }}>
-          Biomechanical Profiling &amp;
+          Training goals &amp;
           <br />
-          <span className="gold-gradient-text">Advisory Tier Alignment</span>
+          <span className="gold-gradient-text">membership fit</span>
         </h1>
         <p style={{ color: '#CBD5E1', fontSize: 16, lineHeight: 1.75, marginBottom: 28, maxWidth: 720 }}>
-          Complete this 2-minute diagnostic intake to evaluate your training age, orthopedic history, and required direction level. You will be matched to the ideal Gordon Athletic sports science retainer.
+          Complete this short intake to share your training goals, schedule, and preferred coaching support. We will help you find a Forge Athletic membership that fits.
         </p>
 
         <div

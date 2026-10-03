@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
         first_name: payload.fullName.trim(),
         goal: `Occupational: ${payload.occupationalVelocity.slice(0, 300)}`,
         primary_obstacle: `Orthopedic: ${payload.orthopedicHistory.slice(0, 300)}`,
-        support_level: 'Executive 1:1 Master Retainer',
+        support_level: 'Transformation Direct',
         budget_band: payload.capitalAllocated === 'yes' ? '$4500+/quarter' : 'exploring',
         readiness: payload.autonomousExecution === 'yes' ? 'autonomous_ready' : 'needs_motivation',
         recommended_tier: 'transformation',

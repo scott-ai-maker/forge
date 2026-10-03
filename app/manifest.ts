@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Gordon Athletic Companion',
-    short_name: 'GAA Helper',
-    description: 'Tactile in-gym workout execution, plate calculator, and wearable biometric telemetry helper app.',
+    name: 'Forge Athletic',
+    short_name: 'Forge',
+    description: 'Training tools, performance telemetry, and movement coaching from Forge Athletic.',
     start_url: '/dashboard/fitness?source=pwa',
     id: '/companion',
     scope: '/',

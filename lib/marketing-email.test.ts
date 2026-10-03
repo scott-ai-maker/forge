@@ -10,7 +10,7 @@ vi.mock('resend', () => ({
   },
 }))
 
-import { triggerLeadEmailAutomation } from './marketing-email'
+import { dispatchPendingSequenceEmails, triggerLeadEmailAutomation } from './marketing-email'
 
 describe('Marketing Email Subsystem (lib/marketing-email)', () => {
   beforeEach(() => {
@@ -18,12 +18,32 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     vi.stubEnv('RESEND_API_KEY', 're_test_key_12345')
     vi.stubEnv('MARKETING_FROM_EMAIL', 'advisory@gordonathleticadvisory.com')
     vi.stubEnv('MARKETING_INTERNAL_NOTIFY_EMAIL', 'internal-alerts@gordonathleticadvisory.com')
-    vi.stubEnv('APP_BASE_URL', 'https://gordonathleticadvisory.com')
-    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://gordonathleticadvisory.com')
+    vi.stubEnv('APP_BASE_URL', 'https://forge-athletic.app')
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://forge-athletic.app')
     sendMock.mockResolvedValue({ data: { id: 'msg_123' }, error: null })
   })
 
-  function createMockSupabase(suppressed = false) {
+  function createMockSupabase(
+    suppressed = false,
+    pendingRows: Array<{
+      id: string
+      email: string
+      first_name: string | null
+      template_key: string
+      source: string
+    }> = []
+  ) {
+    const updateQuery = { eq: vi.fn().mockResolvedValue({ error: null }) }
+    const queueQuery = {
+      upsert: vi.fn().mockResolvedValue({ error: null }),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: pendingRows, error: null }),
+      update: vi.fn().mockReturnValue(updateQuery),
+    }
+
     return {
       from: vi.fn((table: string) => {
         if (table === 'email_suppressions') {
@@ -37,9 +57,7 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
           }
         }
         if (table === 'marketing_email_queue') {
-          return {
-            upsert: vi.fn().mockResolvedValue({ error: null }),
-          }
+          return queueQuery
         }
         return {
           select: vi.fn().mockReturnThis(),
@@ -69,17 +87,17 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     const applicantCall = sendMock.mock.calls[0][0]
     expect(applicantCall.to).toBe('executive@acme.corp')
     expect(applicantCall.subject).toBe(
-      'Founding Cohort Allocation Confirmed (#9) | Gordon Athletic Advisory'
+      'Forge Athletic Founding Cohort Confirmed (#9)'
     )
     expect(applicantCall.text).toContain('OFFICIAL ALLOCATION: RESERVATION #9 OF 20')
     expect(applicantCall.text).toContain('COACH GORDON BRIEFING MEMO')
     expect(applicantCall.text).toContain('13 NASM® disciplines')
-    expect(applicantCall.text).toContain('https://gordonathleticadvisory.com/intake#accreditation-portfolio')
-    expect(applicantCall.text).toContain('https://gordonathleticadvisory.com/packages')
+    expect(applicantCall.text).toContain('https://forge-athletic.app/intake#accreditation-portfolio')
+    expect(applicantCall.text).toContain('https://forge-athletic.app/packages')
 
     expect(applicantCall.html).toContain('RESERVATION #9 OF 20')
     expect(applicantCall.html).toContain('Coach Gordon Briefing Memo')
-    expect(applicantCall.html).toContain('Gordon Athletic Advisory')
+    expect(applicantCall.html).toContain('Forge Athletic')
 
     // 2. Internal Team Notification Email
     const internalCall = sendMock.mock.calls[1][0]
@@ -105,7 +123,7 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(sendMock).toHaveBeenCalledTimes(2)
     const applicantCall = sendMock.mock.calls[0][0]
     expect(applicantCall.subject).toBe(
-      'Founding Cohort Allocation Confirmed (#12) | Gordon Athletic Advisory'
+      'Forge Athletic Founding Cohort Confirmed (#12)'
     )
     expect(applicantCall.text).toContain('RESERVATION #12 OF 20')
   })
@@ -123,8 +141,8 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(sendMock).toHaveBeenCalledTimes(2)
 
     const applicantCall = sendMock.mock.calls[0][0]
-    expect(applicantCall.subject).toBe('Application Received | Gordon Athletic Advisory')
-    expect(applicantCall.text).toContain('Recommended Advisory Pathway: Hybrid Concierge.')
+    expect(applicantCall.subject).toBe('Application Received | Forge Athletic')
+    expect(applicantCall.text).toContain('Recommended starting point: Hybrid Concierge.')
 
     const internalCall = sendMock.mock.calls[1][0]
     expect(internalCall.subject).toBe('[GAA] New application: athlete@olympic.org')
@@ -142,7 +160,7 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(sendMock).toHaveBeenCalledTimes(2)
 
     const applicantCall = sendMock.mock.calls[0][0]
-    expect(applicantCall.subject).toBe('Priority Waitlist Confirmed | Gordon Athletic Advisory')
+    expect(applicantCall.subject).toBe('Forge Athletic Updates | You are on the list')
 
     const internalCall = sendMock.mock.calls[1][0]
     expect(internalCall.subject).toBe('[GAA] New waitlist lead: waitlist_user@gmail.com')
@@ -174,7 +192,7 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
 
   it('respects EMAIL_LINK_BASE_URL override when configured', async () => {
     vi.stubEnv('APP_BASE_URL', 'http://localhost:3000')
-    vi.stubEnv('EMAIL_LINK_BASE_URL', 'https://staging.gordonathleticadvisory.com')
+    vi.stubEnv('EMAIL_LINK_BASE_URL', 'https://staging.forge-athletic.app')
     const supabase = createMockSupabase(false)
 
     await triggerLeadEmailAutomation(supabase, {
@@ -185,7 +203,29 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
 
     expect(sendMock).toHaveBeenCalled()
     const call = sendMock.mock.calls[0][0]
-    expect(call.text).toContain('https://staging.gordonathleticadvisory.com/apply')
+    expect(call.text).toContain('https://staging.forge-athletic.app/apply')
     expect(call.text).not.toContain('http://localhost:3000')
+  })
+
+  it('sends current membership pricing in the launch sequence', async () => {
+    const queueRow = {
+      id: 'queue_1',
+      email: 'member@example.com',
+      first_name: 'Alex',
+      template_key: 'launch_day_3',
+      source: 'launch_sequence_waitlist',
+    }
+    const supabase = createMockSupabase(false, [queueRow])
+
+    const result = await dispatchPendingSequenceEmails(supabase)
+
+    expect(result).toEqual({ processed: 1, sent: 1, failed: 0 })
+    const email = sendMock.mock.calls[0][0]
+    expect(email.subject).toBe('Choose your Forge Athletic membership')
+    expect(email.text).toContain('Core Membership: $19.99/month or $149/year')
+    expect(email.text).toContain('Pro Athlete: $49/month')
+    expect(email.text).toContain('Transformation Direct: $199/month')
+    expect(email.text).not.toContain('$1,495')
+    expect(email.text).not.toContain('retainer')
   })
 })

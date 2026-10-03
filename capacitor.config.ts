@@ -4,11 +4,11 @@ const defaultServerUrl = process.env.CAPACITOR_SERVER_URL
   ? (process.env.CAPACITOR_SERVER_URL.includes('/dashboard')
       ? process.env.CAPACITOR_SERVER_URL
       : `${process.env.CAPACITOR_SERVER_URL.replace(/\/$/, '')}/dashboard/fitness?source=native`)
-  : 'https://gordonathleticadvisory.com/dashboard/fitness?source=native'
+  : 'https://forge-athletic.app/dashboard/fitness?source=native'
 
 const config: CapacitorConfig = {
   appId: 'com.gordonathletic.app',
-  appName: 'Gordon Athletic Advisory',
+  appName: 'Forge Athletic',
   webDir: 'public',
   server: {
     androidScheme: 'https',
@@ -16,8 +16,8 @@ const config: CapacitorConfig = {
     url: defaultServerUrl,
     cleartext: true,
     allowNavigation: [
-      'gordonathleticadvisory.com',
-      '*.gordonathleticadvisory.com',
+      'forge-athletic.app',
+      '*.forge-athletic.app',
       '*.supabase.co',
       'accounts.google.com',
       '*.google.com',

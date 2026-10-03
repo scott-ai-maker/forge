@@ -339,7 +339,7 @@ export default function ClientSettingsStudio({
                   In compliance with mobile companion app guidelines, all membership retainers, add-on accelerators, invoice downloads, and credit card updates are securely managed on our website.
                 </p>
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--white)', lineHeight: 1.6 }}>
-                  To make any changes to your subscription or billing methods, please sign in to <strong style={{ color: 'var(--gold)' }}>gordonathleticadvisory.com</strong> in your desktop or mobile web browser.
+                  To make any changes to your subscription or billing methods, please sign in to <strong style={{ color: 'var(--gold)' }}>forge-athletic.app</strong> in your desktop or mobile web browser.
                 </p>
               </div>
 

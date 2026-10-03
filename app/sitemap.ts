@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://gordonathleticadvisory.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://forge-athletic.app'
   const currentDate = new Date()
 
   return [
