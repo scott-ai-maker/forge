@@ -23,7 +23,7 @@ export default function ForgeBrandMark({
   if (variant === 'raster') {
     return (
       <img
-        src="/images/brand/forge-brand-mark.png?v=2"
+        src="/images/brand/logo-concept-1-kinetic-f.jpg"
         alt="Forge Athletic Brand Mark"
         width={size}
         height={size}
@@ -31,10 +31,12 @@ export default function ForgeBrandMark({
         style={{
           width: size,
           height: size,
-          objectFit: 'contain',
+          objectFit: 'cover',
+          borderRadius: Math.round(size * 0.18),
+          border: '1.5px solid rgba(245, 158, 11, 0.45)',
           flexShrink: 0,
           filter: withGlow
-            ? `drop-shadow(0 4px ${size * 0.2}px rgba(245, 158, 11, 0.4)) drop-shadow(0 0 ${size * 0.12}px rgba(56, 189, 248, 0.3))`
+            ? `drop-shadow(0 4px ${size * 0.2}px rgba(245, 158, 11, 0.45)) drop-shadow(0 0 ${size * 0.12}px rgba(56, 189, 248, 0.3))`
             : undefined,
           ...style,
         }}

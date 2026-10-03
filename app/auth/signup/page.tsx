@@ -71,7 +71,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
             marginBottom: 20,
           }}
         >
-          <ForgeBrandMark size={84} variant="raster" />
+          <ForgeBrandMark size={100} variant="raster" />
         </div>
         <h1
           className="font-serif gold-gradient-text"
