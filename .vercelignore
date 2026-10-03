@@ -1,0 +1,10 @@
+.git
+.next
+node_modules
+.vercel
+coverage
+playwright-report
+test-results
+out
+build
+.env*
