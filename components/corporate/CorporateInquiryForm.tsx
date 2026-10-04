@@ -60,7 +60,7 @@ export default function CorporateInquiryForm() {
           PROPOSAL REQUEST RECEIVED
         </h4>
         <p style={{ color: 'var(--gray)', fontSize: 13.5, lineHeight: 1.6, margin: 0 }}>
-          Thank you, {contactName}. Coach Gordon will review {companyName}&apos;s executive specifications and prepare a custom institutional agreement within 24 business hours.
+          Thank you, {contactName}. Coach Gordon will review {companyName}&apos;s request and prepare a team wellness proposal within 24 business hours.
         </p>
       </div>
     )
@@ -100,13 +100,13 @@ export default function CorporateInquiryForm() {
 
         <div>
           <label style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 6 }}>
-            Executive Contact Name *
+            Your name *
           </label>
           <input
             required
             value={contactName}
             onChange={e => setContactName(e.target.value)}
-            placeholder="e.g. David Vance (Managing Partner)"
+            placeholder="e.g. Taylor Morgan"
             style={{
               width: '100%',
               padding: '12px 14px',
@@ -125,14 +125,14 @@ export default function CorporateInquiryForm() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
         <div>
           <label style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 6 }}>
-            Corporate Work Email *
+            Email address *
           </label>
           <input
             required
             type="email"
             value={contactEmail}
             onChange={e => setContactEmail(e.target.value)}
-            placeholder="david.vance@apexcapital.com"
+            placeholder="you@yourorganization.com"
             style={{
               width: '100%',
               padding: '12px 14px',
@@ -149,7 +149,7 @@ export default function CorporateInquiryForm() {
 
         <div>
           <label style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 6 }}>
-            Target Executive Team Size
+            Team size
           </label>
           <select
             value={teamSize}
@@ -166,22 +166,22 @@ export default function CorporateInquiryForm() {
               outline: 'none',
             }}
           >
-            <option value="5-10 executives">Standard Tier: 5–10 Executives</option>
-            <option value="11-20 executives">Extended Tier: 11–20 Executives</option>
-            <option value="20+ enterprise">Enterprise Tier: 20+ Leaders</option>
+            <option value="5-10 executives">5–10 people</option>
+            <option value="11-20 executives">11–20 people</option>
+            <option value="20+ enterprise">More than 20 people</option>
           </select>
         </div>
       </div>
 
       <div>
         <label style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 6 }}>
-          Specific Organizational Goals & Challenges
+          What would you like the program to support?
         </label>
         <textarea
           rows={3}
           value={customGoals}
           onChange={e => setCustomGoals(e.target.value)}
-          placeholder="e.g. Travel exhaustion from cross-country roadshows, desk ergonomic fatigue, executive team stamina..."
+          placeholder="e.g. More opportunities to move during the workday, support for healthy routines, or team fitness activities..."
           style={{
             width: '100%',
             padding: '12px 14px',
@@ -217,9 +217,8 @@ export default function CorporateInquiryForm() {
           boxShadow: '0 4px 15px rgba(197, 160, 89, 0.35)',
         }}
       >
-        {submitting ? 'Submitting Proposal Request...' : 'Request Custom Corporate Proposal →'}
+        {submitting ? 'Sending request...' : 'Request a team wellness proposal →'}
       </button>
     </form>
   )
 }
-

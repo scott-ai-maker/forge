@@ -24,8 +24,8 @@ interface CorporateProposalStudioProps {
 
 export default function CorporateProposalStudio({
   initialCompany = 'Apex Capital Partners',
-  initialSponsor = 'Managing Partner',
-  initialTitle = 'Executive Committee',
+  initialSponsor = 'Program contact',
+  initialTitle = 'Wellness program team',
   initialSeats = 10,
   initialCadence = 'annual',
   isStandalonePage = false,
@@ -122,7 +122,7 @@ export default function CorporateProposalStudio({
           companyName,
           contactName: `${sponsorName} (${sponsorTitle})`,
           contactEmail: sponsorEmail || `${sponsorName.toLowerCase().replace(/\s+/g, '')}@${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
-          teamSize: `${seats} executive seats (${cadence})`,
+          teamSize: `${seats} team members (${cadence})`,
           customGoals: `Pre-configured Proposal ${docRefId}: $${financials.activePrice.toLocaleString()} ${cadence}. Est. ${financials.estimatedAnnualHoursRecovered} hrs/yr recovered.`,
         }),
       })
@@ -170,7 +170,7 @@ export default function CorporateProposalStudio({
               }}
             >
               <GaaIcon name="building" size={13} tone="gold" />
-              <span>Boardroom Proposal Engine</span>
+              <span>Team Wellness Proposal Builder</span>
             </span>
             <h2
               className="font-serif"
@@ -181,7 +181,7 @@ export default function CorporateProposalStudio({
                 letterSpacing: '0.04em',
               }}
             >
-              CUSTOMIZE ENTERPRISE AGREEMENT
+              BUILD A TEAM WELLNESS PLAN
             </h2>
           </div>
 
@@ -255,7 +255,7 @@ export default function CorporateProposalStudio({
               }}
             >
               <GaaIcon name="printer" size={13} tone="inherit" />
-              <span>Export Boardroom PDF</span>
+              <span>Export proposal PDF</span>
             </button>
 
             {/* Share Link Button */}
@@ -292,7 +292,7 @@ export default function CorporateProposalStudio({
               type="text"
               value={companyName}
               onChange={e => setCompanyName(e.target.value)}
-              placeholder="e.g. Apex Capital Partners"
+              placeholder="e.g. Your organization"
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -309,13 +309,13 @@ export default function CorporateProposalStudio({
 
           <div>
             <label style={{ display: 'block', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 5 }}>
-              Executive Sponsor / Recipient
+              Program contact
             </label>
             <input
               type="text"
               value={sponsorName}
               onChange={e => setSponsorName(e.target.value)}
-              placeholder="e.g. David Vance"
+              placeholder="e.g. Taylor Morgan"
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -338,7 +338,7 @@ export default function CorporateProposalStudio({
               type="text"
               value={sponsorTitle}
               onChange={e => setSponsorTitle(e.target.value)}
-              placeholder="e.g. Managing Partner & CPO"
+              placeholder="e.g. Wellness program lead"
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -354,14 +354,14 @@ export default function CorporateProposalStudio({
           </div>
         </div>
 
-        {/* Seat Tier Selection Pills */}
+        {/* Team size options */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
             <label style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-              Executive Seat Count Tier
+              Team size
             </label>
             <span style={{ fontSize: 12, color: 'var(--gray)' }}>
-              Selected: <strong style={{ color: '#FFF' }}>{seats} Executive Seats</strong>
+              Selected: <strong style={{ color: '#FFF' }}>{seats} people</strong>
             </span>
           </div>
 
@@ -413,7 +413,7 @@ export default function CorporateProposalStudio({
           {/* Cadence Pills */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', fontWeight: 700 }}>
-              Term Agreement:
+              Billing schedule:
             </span>
             <div style={{ display: 'inline-flex', background: 'rgba(0,0,0,0.5)', padding: 3, borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)' }}>
               <button
@@ -432,7 +432,7 @@ export default function CorporateProposalStudio({
                   letterSpacing: '0.04em',
                 }}
               >
-                Annual Pass (Save ${financials.annualSavings.toLocaleString()})
+                Annual (save ${financials.annualSavings.toLocaleString()})
               </button>
               <button
                 type="button"
@@ -450,7 +450,7 @@ export default function CorporateProposalStudio({
                   letterSpacing: '0.04em',
                 }}
               >
-                Monthly Flexible
+                Monthly
               </button>
             </div>
           </div>
@@ -459,7 +459,7 @@ export default function CorporateProposalStudio({
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: 9.5, textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.08em' }}>
-                Total Retainer
+                Total program cost
               </div>
               <div className="font-telemetry font-mono" style={{ fontSize: 18, color: 'var(--gold)', fontWeight: 700 }}>
                 ${financials.activePrice.toLocaleString()}
@@ -469,17 +469,17 @@ export default function CorporateProposalStudio({
 
             <div>
               <div style={{ fontSize: 9.5, textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.08em' }}>
-                Effective Rate
+                Monthly cost per person
               </div>
               <div className="font-telemetry font-mono" style={{ fontSize: 18, color: '#FFFFFF', fontWeight: 700 }}>
                 ${financials.perSeatMonthlyEffective}
-                <span style={{ fontSize: 11, color: 'var(--gray)', fontWeight: 400 }}> /exec/mo</span>
+                <span style={{ fontSize: 11, color: 'var(--gray)', fontWeight: 400 }}> /person</span>
               </div>
             </div>
 
             <div>
               <div style={{ fontSize: 9.5, textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.08em' }}>
-                Est. Leadership ROI
+                Estimated time value
               </div>
               <div className="font-telemetry font-mono" style={{ fontSize: 18, color: '#34D399', fontWeight: 700 }}>
                 +{financials.estimatedAnnualHoursRecovered.toLocaleString()} hrs
@@ -490,7 +490,7 @@ export default function CorporateProposalStudio({
         </div>
       </div>
 
-      {/* ── THE FORMAL BOARDROOM PROPOSAL DOCUMENT (Print & Screen View) ── */}
+      {/* ── TEAM WELLNESS PROPOSAL DOCUMENT (Print & Screen View) ── */}
       <div
         className="corporate-proposal-document"
         style={{
@@ -526,10 +526,10 @@ export default function CorporateProposalStudio({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', color: '#D4A017', textTransform: 'uppercase' }}>
-                GORDON ATHLETIC ADVISORY · INSTITUTIONAL SERVICES DIVISION
+                GORDON ATHLETIC ADVISORY · TEAM WELLNESS
               </div>
               <div style={{ fontSize: 9.5, color: '#64748B', letterSpacing: '0.08em', marginTop: 2 }}>
-                CONFIDENTIAL BOARDROOM MEMORANDUM · FOR EXECUTIVE COMMITTEE REVIEW ONLY
+                TEAM WELLNESS PROPOSAL · FOR ORGANIZATION REVIEW
               </div>
             </div>
             <div style={{ textAlign: 'right', fontSize: 9.5, fontFamily: 'monospace' }}>
@@ -557,7 +557,7 @@ export default function CorporateProposalStudio({
                 }}
               >
                 <GaaIcon name="shield" size={12} tone="gold" />
-                <span>RESTRICTED · INSTITUTIONAL PROPOSAL · LEVEL-1 EXECUTIVE DISTRIBUTION</span>
+                <span>TEAM WELLNESS PROPOSAL</span>
               </div>
               <h1
                 className="font-serif"
@@ -569,10 +569,10 @@ export default function CorporateProposalStudio({
                   lineHeight: 1.18,
                 }}
               >
-                EXECUTIVE HUMAN PERFORMANCE INFRASTRUCTURE
+                TEAM WELLNESS &amp; FITNESS COACHING
               </h1>
               <div style={{ fontSize: 15, color: 'var(--gray)', marginTop: 6, fontWeight: 400 }}>
-                Tailored Turnkey Advisory Agreement for <strong style={{ color: '#FFFFFF' }}>{companyName}</strong>
+                Coaching proposal for <strong style={{ color: '#FFFFFF' }}>{companyName}</strong>
               </div>
             </div>
 
@@ -623,7 +623,7 @@ export default function CorporateProposalStudio({
 
             <div>
               <div style={{ fontSize: 9.5, textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.08em' }}>
-                Executive Sponsor
+                Program contact
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
                 {sponsorName}
@@ -632,16 +632,16 @@ export default function CorporateProposalStudio({
 
             <div>
               <div style={{ fontSize: 9.5, textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.08em' }}>
-                Governance Scope
+                Team size
               </div>
               <div className="font-telemetry font-mono" style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold-lt)', marginTop: 2 }}>
-                {seats} Principals · {cadence.toUpperCase()}
+                {seats} people · {cadence.toUpperCase()}
               </div>
             </div>
 
             <div>
               <div style={{ fontSize: 9.5, textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.08em' }}>
-                Advisory Authority
+                Coach
               </div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#FFFFFF', marginTop: 2 }}>
                 SCOTT GORDON, NASM MASTER TRAINER
@@ -653,26 +653,26 @@ export default function CorporateProposalStudio({
         {/* ── SECTION 1: EXECUTIVE PROBLEM STATEMENT & STRATEGIC RATIONALE ── */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 6 }}>
-            Section 01 // Executive Problem Statement &amp; Organizational Moat
+            Section 01 // Team wellness goals and approach
           </div>
           <h3 className="font-serif" style={{ fontSize: 20, color: '#FFFFFF', margin: '0 0 12px', letterSpacing: '0.03em' }}>
-            THE PHYSICAL CAPITAL OF THE EXECUTIVE SUITE
+            SUPPORTING HEALTH AND WELL-BEING AT WORK
           </h3>
           <p style={{ fontSize: 13.5, color: '#E2E8F0', lineHeight: 1.65, margin: '0 0 14px' }}>
-            In institutional asset management, legal partnerships, and high-growth technology, executive stamina directly dictates deal execution velocity and cognitive precision. High-performance principals sit 60+ hours weekly, endure brutal cross-country red-eye travel, and battle compounding spinal compression, erratic glucose volatility, and autonomic nervous system burnout.
+            People balance work, family, caregiving, and other responsibilities alongside their health. A workplace wellness program can make it easier to fit movement and healthy routines into the day.
           </p>
           <p style={{ fontSize: 13.5, color: '#CBD5E1', lineHeight: 1.65, margin: 0 }}>
-            <strong>Gordon Athletic Advisory (GAA)</strong> deploys turnkey, medical-grade sports science directly into your partners&apos; routines. By engineering structural spinal resilience, Tanaka Tanaka cardiovascular mitochondrial capacity, and rapid travel circadian recalibration, GAA transforms physical stamina into an unassailable firm-level competitive advantage.
+            <strong>Gordon Athletic Advisory (GAA)</strong> can bring evidence-informed training, movement coaching, and fitness resources to your team. Program options can be adapted to work routines and individual goals.
           </p>
         </div>
 
         {/* ── SECTION 2: MULTI-SEAT FINANCIAL SCHEDULE & ROI ── */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 6 }}>
-            Section 02 // Financial Agreement &amp; Multi-Seat Investment Schedule
+            Section 02 // Program costs
           </div>
           <h3 className="font-serif" style={{ fontSize: 20, color: '#FFFFFF', margin: '0 0 14px', letterSpacing: '0.03em' }}>
-            INSTITUTIONAL RETAINER COMMITMENT
+            TEAM WELLNESS PROGRAM
           </h3>
 
           <div
@@ -687,53 +687,53 @@ export default function CorporateProposalStudio({
               <thead>
                 <tr style={{ background: 'rgba(212,160,23,0.12)', borderBottom: '1px solid rgba(212,160,23,0.3)' }}>
                   <th style={{ padding: '12px 16px', color: 'var(--gold-lt)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>
-                    Schedule Parameter
+                    Program detail
                   </th>
                   <th style={{ padding: '12px 16px', color: 'var(--gold-lt)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>
-                    Prescribed Scope
+                    Included support
                   </th>
                   <th style={{ padding: '12px 16px', color: 'var(--gold-lt)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>
-                    Financial Telemetry
+                    Cost
                   </th>
                 </tr>
               </thead>
               <tbody>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <td style={{ padding: '12px 16px', fontWeight: 600, color: '#FFFFFF' }}>Prescribed Executive Seats</td>
-                  <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>Full sovereign app licenses &amp; biometrics</td>
+                  <td style={{ padding: '12px 16px', fontWeight: 600, color: '#FFFFFF' }}>Team members</td>
+                  <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>App access and individual training support</td>
                   <td className="font-telemetry font-mono" style={{ padding: '12px 16px', color: '#FFFFFF', fontWeight: 700 }}>
-                    {seats} Active Principals
+                    {seats} participants
                   </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <td style={{ padding: '12px 16px', fontWeight: 600, color: '#FFFFFF' }}>Billing Cycle &amp; Terms</td>
+                  <td style={{ padding: '12px 16px', fontWeight: 600, color: '#FFFFFF' }}>Billing schedule</td>
                   <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>
-                    {cadence === 'annual' ? '12-Month Annual Pass (Consolidated ACH / Card)' : 'Monthly Flexible Agreement (30-Day Notice)'}
+                    {cadence === 'annual' ? 'Annual billing' : 'Monthly billing (30-day notice)'}
                   </td>
                   <td className="font-telemetry font-mono" style={{ padding: '12px 16px', color: 'var(--gold-lt)', fontWeight: 700 }}>
-                    {cadence === 'annual' ? 'Annual Invoiced' : 'Monthly Recurring'}
+                    {cadence === 'annual' ? 'Billed annually' : 'Billed monthly'}
                   </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <td style={{ padding: '12px 16px', fontWeight: 600, color: '#FFFFFF' }}>Gross Annual Equivalent</td>
-                  <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>Full retail monthly value × 12 months</td>
+                  <td style={{ padding: '12px 16px', fontWeight: 600, color: '#FFFFFF' }}>Standard annual cost</td>
+                  <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>Monthly cost × 12 months</td>
                   <td className="font-telemetry font-mono" style={{ padding: '12px 16px', color: 'var(--gray)' }}>
                     ${(financials.monthlyInvestment * 12).toLocaleString()} / yr
                   </td>
                 </tr>
                 {cadence === 'annual' && (
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(52,211,153,0.06)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 600, color: '#34D399' }}>Institutional Annual Savings</td>
-                    <td style={{ padding: '12px 16px', color: '#34D399' }}>2 Months Complimentary Sponsor Credit</td>
+                    <td style={{ padding: '12px 16px', fontWeight: 600, color: '#34D399' }}>Annual savings</td>
+                    <td style={{ padding: '12px 16px', color: '#34D399' }}>Two months included</td>
                     <td className="font-telemetry font-mono" style={{ padding: '12px 16px', color: '#34D399', fontWeight: 700 }}>
-                      -${financials.annualSavings.toLocaleString()} ({financials.discountPct}% Discount)
+                      -${financials.annualSavings.toLocaleString()} ({financials.discountPct}% saved)
                     </td>
                   </tr>
                 )}
                 <tr style={{ background: 'rgba(212,160,23,0.08)' }}>
-                  <td style={{ padding: '14px 16px', fontWeight: 700, color: '#FFFFFF' }}>Net Retainer Investment</td>
+                  <td style={{ padding: '14px 16px', fontWeight: 700, color: '#FFFFFF' }}>Total program cost</td>
                   <td style={{ padding: '14px 16px', color: '#FFFFFF' }}>
-                    Effective ~<span className="font-telemetry font-mono">${financials.perSeatMonthlyEffective}</span>/executive/month
+                    Effective ~<span className="font-telemetry font-mono">${financials.perSeatMonthlyEffective}</span>/person/month
                   </td>
                   <td className="font-telemetry font-mono" style={{ padding: '14px 16px', color: 'var(--gold)', fontWeight: 800, fontSize: 17 }}>
                     ${financials.activePrice.toLocaleString()} {financials.billingIntervalText}
@@ -754,25 +754,25 @@ export default function CorporateProposalStudio({
           >
             <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 14 }}>
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)' }}>
-                Productivity &amp; Energy Hours Restored
+                Estimated time and energy benefits
               </div>
               <div className="font-telemetry font-mono" style={{ fontSize: 20, color: '#34D399', fontWeight: 700, marginTop: 4 }}>
                 ~{financials.estimatedAnnualHoursRecovered.toLocaleString()} Hours / Year
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2 }}>
-                Reduced post-lunch energy crashes &amp; cervical strain
+                Illustrative estimate; individual results will vary
               </div>
             </div>
 
             <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 14 }}>
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)' }}>
-                Projected Leadership Value Yield
+                Illustrative program value
               </div>
               <div className="font-telemetry font-mono" style={{ fontSize: 20, color: 'var(--gold-lt)', fontWeight: 700, marginTop: 4 }}>
                 ~${(financials.estimatedEnterpriseValueCreated).toLocaleString()}
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2 }}>
-                Conservative ROI modeled at $350/executive hour
+                Illustrative estimate; individual results will vary
               </div>
             </div>
           </div>
@@ -837,10 +837,10 @@ export default function CorporateProposalStudio({
         {/* ── SECTION 4: CLINICAL GOVERNANCE, LIABILITY & COMPLIANCE ── */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 6 }}>
-            Section 04 // Clinical Governance, Data Privacy &amp; Liability Shield
+            Section 04 // Training, privacy, and safety
           </div>
           <h3 className="font-serif" style={{ fontSize: 20, color: '#FFFFFF', margin: '0 0 12px', letterSpacing: '0.03em' }}>
-            ACCREDITATION &amp; INSTITUTIONAL SAFEGUARDS
+            TRAINING STANDARDS, PRIVACY &amp; SAFETY
           </h3>
 
           <div
@@ -857,10 +857,10 @@ export default function CorporateProposalStudio({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--gold-lt)', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
                 <GaaIcon name="award" size={14} tone="gold" />
-                <span>13-Point NASM® Sports Science Matrix</span>
+                <span>NASM® training approach</span>
               </div>
               <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.55, margin: 0 }}>
-                Every program adheres strictly to the peer-reviewed NASM Optimum Performance Training (OPT™) model. Led personally by Master Trainer Scott Gordon across Corrective Exercise (CES), Performance Enhancement (PES), and Sports Nutrition (CSNC).
+                Training plans use the NASM Optimum Performance Training (OPT™) model and are led by Coach Scott Gordon, a NASM-certified trainer.
               </p>
             </div>
 
@@ -870,23 +870,23 @@ export default function CorporateProposalStudio({
                 <span>Confidentiality &amp; Data Security</span>
               </div>
               <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.55, margin: 0 }}>
-                Individual executive biometric and health telemetry data is strictly siloed under enterprise encryption. Corporate HR and sponsors receive only anonymized, aggregated readiness and cohort participation telemetry.
+                Each participant&apos;s personal health and activity data stays private. Employers receive only combined, non-identifying information about program participation.
               </p>
             </div>
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#34D399', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
                 <GaaIcon name="check" size={14} tone="emerald" />
-                <span>PAR-Q+ Clinical Triage</span>
+                <span>Health and safety screening</span>
               </div>
               <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.55, margin: 0 }}>
-                Zero physical execution begins without digital PAR-Q+ risk screening, biometric intake clearance, and liability waivers, ensuring full corporate indemnification and medical diligence.
+                Participants complete a pre-activity health screening and required waivers before training. When needed, the coach can recommend seeking guidance from a healthcare professional.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── SECTION 5: SIGNATURE & BOARDROOM AUTHORIZATION BLOCK ── */}
+        {/* ── SECTION 5: REVIEW & APPROVAL ── */}
         <div
           style={{
             borderTop: '1px solid rgba(255,255,255,0.12)',
@@ -935,7 +935,7 @@ export default function CorporateProposalStudio({
             </div>
           </div>
 
-          {/* Corporate Sponsor Acceptance Signature Line */}
+          {/* Organization approval signature line */}
           <div style={{ minWidth: 260 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>
               ACCEPTED &amp; CONFIRMED FOR {companyName.toUpperCase()}
@@ -957,7 +957,7 @@ export default function CorporateProposalStudio({
             </div>
           </div>
 
-          {/* Cryptographic Sovereign Hash & Boardroom Seal */}
+          {/* Proposal verification and approval */}
           <div style={{ textAlign: 'right' }}>
             <div
               className="font-telemetry font-mono"
@@ -993,7 +993,7 @@ export default function CorporateProposalStudio({
               }}
             >
               <GaaIcon name="shield" size={11} tone="inherit" />
-              <span>Boardroom Authorized</span>
+              <span>Proposal ready for review</span>
             </div>
           </div>
         </div>

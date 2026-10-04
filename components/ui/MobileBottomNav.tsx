@@ -16,10 +16,10 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
 
   if (role === 'coach') {
     const coachTabs: Array<{ href: string; label: string; icon: GaaIconName }> = [
-      { href: '/coach', label: 'Triage', icon: 'alert-triangle' },
-      { href: '/coach#assigned-clients', label: 'Athletes', icon: 'users' },
-      { href: '/dashboard/live', label: 'Live Studio', icon: 'video-studio' },
-      { href: '/coach/settings', label: 'Operations', icon: 'gear' },
+      { href: '/coach', label: 'Review', icon: 'alert-triangle' },
+      { href: '/coach#assigned-clients', label: 'Members', icon: 'users' },
+      { href: '/dashboard/live', label: 'Live session', icon: 'video-studio' },
+      { href: '/coach/settings', label: 'Settings', icon: 'gear' },
     ]
 
     return (

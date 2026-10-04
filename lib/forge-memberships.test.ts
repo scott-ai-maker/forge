@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FORGE_MEMBERSHIPS, getForgeMembership, getForgeMembershipPrice, getMembershipsIncluding } from '@/lib/forge-memberships'
+import { FORGE_MEMBERSHIPS, getForgeMembership, getForgeMembershipPrice, getMembershipDisplayName, getMembershipsIncluding } from '@/lib/forge-memberships'
 
 describe('Forge Athletic membership catalog', () => {
   it('defines the specified memberships, prices, and features', () => {
@@ -18,11 +18,11 @@ describe('Forge Athletic membership catalog', () => {
       id: 'forge-transformation-direct',
       monthlyPriceCents: 19900,
     })
-    expect(FORGE_MEMBERSHIPS[2].features).toContain('Quarterly video reviews by Coach Scott Gordon')
-    expect(FORGE_MEMBERSHIPS[2].features).toContain('Direct access to your coach')
+    expect(FORGE_MEMBERSHIPS[2].features).toContain('Quarterly video reviews with Coach Scott Gordon')
+    expect(FORGE_MEMBERSHIPS[2].features).toContain('Direct messaging with your coach')
   })
 
-  it('provides annual billing only for Core Membership', () => {
+  it('provides annual billing only for Core', () => {
     const core = getForgeMembership('forge-core')
     const pro = getForgeMembership('forge-pro-athlete')
     expect(core).toBeDefined()
@@ -31,10 +31,21 @@ describe('Forge Athletic membership catalog', () => {
     expect(getForgeMembershipPrice(pro!, 'annual')).toBeUndefined()
   })
 
-  it('includes self-serve tools only in Pro Athlete and Transformation Direct', () => {
+  it('includes self-serve tools only in Plus and Coach Support', () => {
     expect(getForgeMembership('forge-core')!.includedFeatures).toBeUndefined()
     expect(getMembershipsIncluding('nutrition').map(m => m.id)).toEqual(['forge-pro-athlete', 'forge-transformation-direct'])
     const video = (id: string) => getForgeMembership(id)!.includedFeatures!.find(f => f.feature === 'video-review')!.uses
     expect(video('forge-transformation-direct')).toBeGreaterThan(video('forge-pro-athlete')!)
+  })
+
+  it('shows accessible membership names for older saved package names', () => {
+    expect(getMembershipDisplayName('Core Membership')).toBe('Core')
+    expect(getMembershipDisplayName('Pro Athlete')).toBe('Plus')
+    expect(getMembershipDisplayName('Transformation Direct')).toBe('Coach Support')
+    expect(getMembershipDisplayName('Executive 1:1 Master')).toBe('One-to-one coaching')
+    expect(getMembershipDisplayName('Hybrid Concierge')).toBe('Hybrid Coaching')
+    expect(getMembershipDisplayName('Autonomous Digital Lab')).toBe('Digital Training')
+    expect(getMembershipDisplayName('Corporate Executive Retainer')).toBe('Team Wellness')
+    expect(getMembershipDisplayName('Custom package')).toBe('Custom package')
   })
 })

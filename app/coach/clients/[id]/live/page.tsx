@@ -67,13 +67,13 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
   return (
     <main style={{ minHeight: '100vh', background: '#04070E' }}>
       <SiteHeader
-        badgeText="1:1 Live Studio"
+        badgeText="Live Coaching"
         links={[
-          { href: '/coach', label: 'Triage' },
-          { href: '/coach#assigned-clients', label: 'Athletes' },
-          { href: `/coach/clients/${clientId}`, label: 'Athlete Profile' },
-          { href: `/coach/clients/${clientId}/messages`, label: 'Concierge' },
-          { href: '/coach/settings', label: 'Operations' },
+          { href: '/coach', label: 'Overview' },
+          { href: '/coach#assigned-clients', label: 'Members' },
+          { href: `/coach/clients/${clientId}`, label: 'Member Profile' },
+          { href: `/coach/clients/${clientId}/messages`, label: 'Messages' },
+          { href: '/coach/settings', label: 'Settings' },
         ]}
         actions={<LogoutButton />}
       />
@@ -82,7 +82,7 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
         <LiveSessionClient
           clientId={clientId}
           coachUserId={user.id}
-          athleteName={client.full_name ?? client.email ?? 'Athlete'}
+          athleteName={client.full_name ?? client.email ?? 'Member'}
           plan={plan ?? null}
           initialSets={todaySets ?? []}
           today={today}

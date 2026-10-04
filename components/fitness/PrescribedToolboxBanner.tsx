@@ -148,11 +148,10 @@ export default function PrescribedToolboxBanner({
           </div>
 
           <div style={{ padding: '10px 14px', background: 'rgba(197,160,89,0.12)', border: '1px solid rgba(197,160,89,0.3)', color: 'var(--gold-lt)', fontSize: 13 }}>
-            <strong>Master Directive:</strong> {toolbox.executiveActionRule}
+            <strong>Coach suggestion:</strong> {toolbox.executiveActionRule}
           </div>
         </div>
       )}
     </div>
   )
 }
-

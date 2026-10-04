@@ -35,12 +35,12 @@ export default async function BookPage() {
   return (
     <main className="dashboard-book-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
       <SiteHeader
-        badgeText="Schedule Consultation"
+        badgeText="Book a session"
         links={[
-          { href: '/dashboard', label: 'Command Center' },
-          { href: '/dashboard/fitness', label: 'Fitness Lab' },
-          { href: '/dashboard/dossier', label: 'Weekly Dossier' },
-          { href: '/dashboard/book', label: 'Consultations' },
+          { href: '/dashboard', label: 'Today' },
+          { href: '/dashboard/fitness', label: 'Training & progress' },
+          { href: '/dashboard/dossier', label: 'Progress summary' },
+          { href: '/dashboard/book', label: 'Book a session' },
           { href: '/dashboard/messages', label: 'Messages' },
           { href: '/dashboard/settings', label: 'Settings' },
         ]}
@@ -54,11 +54,11 @@ export default async function BookPage() {
             className="sgf-shell-back"
             style={{ color: 'var(--gold-lt)', textDecoration: 'none', fontSize: 13, fontWeight: 700 }}
           >
-            ← Back to Command Center
+            ← Back to today
           </a>
         </div>
 
-        {/* ── Executive Consultation Header ── */}
+        {/* ── Session booking header ── */}
         <div
           style={{
             background: 'linear-gradient(135deg, rgba(16,22,38,0.95) 0%, rgba(9,13,24,0.95) 100%)',
@@ -83,7 +83,7 @@ export default async function BookPage() {
                 fontWeight: 800,
               }}
             >
-              1:1 Virtual Diagnostics & Strategy
+              One-to-one coaching session
             </span>
             <h1
               style={{
@@ -95,7 +95,7 @@ export default async function BookPage() {
                 lineHeight: 1.2,
               }}
             >
-              SCHEDULE MASTER CONSULTATION
+              Book a coaching session
             </h1>
             <p
               style={{
@@ -106,7 +106,7 @@ export default async function BookPage() {
                 margin: 0,
               }}
             >
-              Direct 60-minute live video session with Coach Gordon for kinetic screens, bar-path audits, or nutrition periodization.
+              Meet with Coach Gordon for 60 minutes by video to discuss movement, exercise form, or nutrition.
             </p>
           </div>
 
@@ -123,7 +123,7 @@ export default async function BookPage() {
               Available Session Credits
             </div>
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 28, fontWeight: 700, color: '#FFFFFF', lineHeight: 1, margin: '2px 0' }}>
-              {totalSessionsRemaining} <span style={{ fontSize: 13, fontFamily: 'Raleway, sans-serif', color: 'var(--gold-lt)' }}>Credits</span>
+              {totalSessionsRemaining} <span style={{ fontSize: 13, fontFamily: 'Raleway, sans-serif', color: 'var(--gold-lt)' }}>sessions</span>
             </div>
           </div>
         </div>
@@ -131,10 +131,10 @@ export default async function BookPage() {
         {/* ── Consultation Track Selection Pills ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
           {[
-            { icon: 'microscope' as const, title: 'Kinetic Chain Screen', desc: '5-checkpoint postural & OHSA screen' },
-            { icon: 'video-studio' as const, title: 'Biomechanical Audit', desc: 'Real-time barbell joint-angle telemetry' },
-            { icon: 'lightning' as const, title: 'Metabolic Nutrition', desc: 'Phase-matched macro & peri-workout plan' },
-            { icon: 'travel' as const, title: 'Road-Warrior Travel', desc: 'Hotel gym & travel workout architecture' },
+            { icon: 'microscope' as const, title: 'Movement check', desc: 'Review posture and movement patterns' },
+            { icon: 'video-studio' as const, title: 'Exercise form review', desc: 'Review your movement during a lift' },
+            { icon: 'lightning' as const, title: 'Nutrition support', desc: 'Build an eating plan around your training' },
+            { icon: 'travel' as const, title: 'Travel workouts', desc: 'Plan workouts for a hotel or limited equipment' },
           ].map((track, i) => (
             <div
               key={i}
@@ -176,7 +176,7 @@ export default async function BookPage() {
             >
               <GaaIcon name="calendar" size={36} tone="gold" />
               <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '12px 0 6px', letterSpacing: '0.04em' }}>
-                ZERO ACTIVE CONSULTATION CREDITS
+                No sessions available
               </h3>
               <p
                 style={{
@@ -189,7 +189,7 @@ export default async function BookPage() {
                   lineHeight: 1.6,
                 }}
               >
-                You have utilized all allocated consultation credits for your current coaching cycle. Consultation allocations and retainers are managed via our web portal.
+                You’ve used the sessions included with your current plan. Visit memberships to see options for adding more coaching.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                 <a
@@ -198,10 +198,10 @@ export default async function BookPage() {
                   style={{ padding: '12px 26px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
                 >
                   <GaaIcon name="message" size={15} tone="dark" />
-                  <span>Message Coach Gordon to Request Session</span>
+                  <span>Message Coach Gordon about another session</span>
                 </a>
                 <span style={{ fontSize: 11.5, color: 'var(--gray)' }}>
-                  Membership options can be adjusted at <strong style={{ color: 'var(--gold-lt)' }}>forge-athletic.app</strong>.
+                  View membershipss can be adjusted at <strong style={{ color: 'var(--gold-lt)' }}>forge-athletic.app</strong>.
                 </span>
               </div>
             </div>

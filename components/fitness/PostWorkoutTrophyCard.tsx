@@ -31,7 +31,7 @@ export function getTonnageEquivalence(lbs: number): { title: string; icon: strin
       title: 'Cadillac Escalade ESV',
       icon: '✦',
       iconName: 'gem',
-      description: 'You pressed and pulled the equivalent of a luxury armored SUV.',
+      description: 'You pressed and pulled the equivalent of a small car.',
     }
   } else if (lbs < 18000) {
     return {
@@ -373,4 +373,3 @@ export default function PostWorkoutTrophyCard({
     </div>
   )
 }
-

@@ -19,14 +19,14 @@ interface ExecutiveSundayDossierProps {
 export function computeDossierDocRefId(athleteName: string, weekEndingDate: string): string {
   const digits = weekEndingDate.replace(/\D/g, '')
   const dateStamp = digits.length >= 4 ? digits.slice(-4) : (digits || '2026')
-  const nameCode = athleteName.split(' ').map(n => n[0]).join('').toUpperCase() || 'EXEC'
-  return `GAA-DOSSIER-${nameCode}-${dateStamp}`
+  const nameCode = athleteName.split(' ').map(n => n[0]).join('').toUpperCase() || 'MEMBER'
+  return `FORGE-PROGRESS-${nameCode}-${dateStamp}`
 }
 
 export function computeDossierRecoveryState(recoveryIndexScore: number) {
   if (recoveryIndexScore >= 80) {
     return {
-      label: 'Optimal Supercompensation',
+      label: 'Ready to train',
       color: '#34D399',
       badgeBg: 'rgba(52, 211, 153, 0.12)',
       badgeBorder: 'rgba(52, 211, 153, 0.35)',
@@ -34,14 +34,14 @@ export function computeDossierRecoveryState(recoveryIndexScore: number) {
   }
   if (recoveryIndexScore >= 65) {
     return {
-      label: 'Allostatic Equilibrium',
+      label: 'Steady recovery',
       color: '#FBBF24',
       badgeBg: 'rgba(251, 191, 36, 0.12)',
       badgeBorder: 'rgba(251, 191, 36, 0.35)',
     }
   }
   return {
-    label: 'Restorative Deload Advised',
+    label: 'More recovery may help',
     color: '#F87171',
     badgeBg: 'rgba(248, 113, 113, 0.12)',
     badgeBorder: 'rgba(248, 113, 113, 0.35)',
@@ -52,28 +52,28 @@ export function computeAcwrZoneState(zone?: string) {
   switch (zone) {
     case 'Sweet Spot':
       return {
-        label: 'Sweet Spot (0.80–1.30)',
+        label: 'Within your usual range (0.80–1.30)',
         color: '#34D399',
         badgeBg: 'rgba(52, 211, 153, 0.12)',
         badgeBorder: 'rgba(52, 211, 153, 0.35)',
       }
     case 'Overreaching':
       return {
-        label: 'Overreaching (1.31–1.49)',
+        label: 'Higher than usual (1.31–1.49)',
         color: '#FBBF24',
         badgeBg: 'rgba(251, 191, 36, 0.12)',
         badgeBorder: 'rgba(251, 191, 36, 0.35)',
       }
     case 'Danger Zone':
       return {
-        label: 'Danger Zone (≥1.50)',
+        label: 'Much higher than usual (≥1.50)',
         color: '#F87171',
         badgeBg: 'rgba(248, 113, 113, 0.12)',
         badgeBorder: 'rgba(248, 113, 113, 0.35)',
       }
     case 'Under-training':
       return {
-        label: 'Under-training (<0.80)',
+        label: 'Lower than usual (<0.80)',
         color: '#60A5FA',
         badgeBg: 'rgba(96, 165, 250, 0.12)',
         badgeBorder: 'rgba(96, 165, 250, 0.35)',
@@ -81,7 +81,7 @@ export function computeAcwrZoneState(zone?: string) {
     case 'No Data':
     default:
       return {
-        label: 'No Data (Insufficient Volume)',
+        label: 'Not enough training data yet',
         color: '#94A3B8',
         badgeBg: 'rgba(148, 163, 184, 0.12)',
         badgeBorder: 'rgba(148, 163, 184, 0.35)',
@@ -96,7 +96,7 @@ export function buildCoachDebriefScript(params: {
   dossier: DossierMetrics
 }): string {
   const { athleteName, weekEndingDate, optPhase, dossier } = params
-  return `Good Sunday, ${athleteName}. Coach Scott Gordon here with your weekly intelligence briefing for the cycle ending ${weekEndingDate}. In ${optPhase}, your mechanical volume load reached ${dossier.totalTonnageLbs.toLocaleString()} pounds across ${dossier.totalWorkingSets} prescribed working sets, with an average session RPE of ${dossier.avgSessionRpe}. You banked ${dossier.zone2CardioMins} minutes of Zone 2 mitochondrial conditioning. Your autonomic recovery index registered at ${dossier.recoveryIndexScore} out of 100 with ${dossier.adherencePct} percent protocol adherence. Your strategic directive for next week is: ${dossier.nextWeekFocus}. Dominate the recovery, execute the protocol, and have an exceptional week.`
+  return `Hi ${athleteName}. Here is your weekly training update for the week ending ${weekEndingDate}. During ${optPhase}, you lifted a total of ${dossier.totalTonnageLbs.toLocaleString()} pounds across ${dossier.totalWorkingSets} working sets. Your average effort rating was ${dossier.avgSessionRpe} out of 10. You logged ${dossier.zone2CardioMins} minutes of steady, moderate-intensity cardio. Your recovery score was ${dossier.recoveryIndexScore} out of 100, and you completed ${dossier.adherencePct} percent of your planned sessions. For next week, focus on: ${dossier.nextWeekFocus}. Keep listening to your body and adjust as needed.`
 }
 
 export function estimateDebriefAudioDuration(script: string): number {
@@ -170,7 +170,7 @@ export default function ExecutiveSundayDossier({
   }
 
   const handleCopySummary = async () => {
-    const text = `GORDON ATHLETIC ADVISORY — EXECUTIVE INTELLIGENCE DOSSIER\nREF: ${docRefId} | Microcycle Ending: ${weekEndingDate}\nAthlete: ${athleteName} | NASM-OPT Phase: ${optPhase}\n\n• Mechanical Volume Load: ${dossier.totalTonnageLbs.toLocaleString()} lbs (${dossier.totalWorkingSets} sets, ${dossier.avgSessionRpe}/10 avg RPE)\n• Acute-to-Chronic Ratio (ACWR): ${dossier.acwrRatio !== null && dossier.acwrRatio !== undefined ? dossier.acwrRatio.toFixed(2) : 'No Data'} (${dossier.acwrZone || 'No Data'})\n• Mitochondrial Conditioning: ${dossier.zone2CardioMins} mins Zone 2 (${dossier.totalCardioMins} mins total)\n• Autonomic Recovery Index: ${dossier.recoveryIndexScore}/100\n• Protocol Adherence: ${dossier.adherencePct}% (${dossier.completedSessions}/${dossier.targetSessions} sessions)\n\nPeriodization Directive: ${dossier.nextWeekFocus}\n\nApproved: Coach Scott Gordon, CSCS, NASM-CPT\nOfficial Boardroom Verification: ${dossier.authSignature || 'GAA-VERIFIED-AUTH-2026'}`
+    const text = `FORGE ATHLETIC — WEEKLY PROGRESS SUMMARY\nREF: ${docRefId} | Week ending: ${weekEndingDate}\nName: ${athleteName} | Training phase: ${optPhase}\n\n• Training volume: ${dossier.totalTonnageLbs.toLocaleString()} lbs (${dossier.totalWorkingSets} sets, ${dossier.avgSessionRpe}/10 average effort)\n• Recent-to-usual workload ratio: ${dossier.acwrRatio !== null && dossier.acwrRatio !== undefined ? dossier.acwrRatio.toFixed(2) : 'Not enough data'} (${dossier.acwrZone || 'Not enough data'})\n• Steady cardio: ${dossier.zone2CardioMins} mins (${dossier.totalCardioMins} mins total)\n• Recovery score: ${dossier.recoveryIndexScore}/100\n• Planned sessions completed: ${dossier.adherencePct}% (${dossier.completedSessions}/${dossier.targetSessions})\n\nNext week's focus: ${dossier.nextWeekFocus}\n\nCoach: Scott Gordon, CSCS, NASM-CPT`
     await navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -285,7 +285,7 @@ export default function ExecutiveSundayDossier({
         }}
       >
         <span>Gordon Athletic Advisory · Sports Science Division</span>
-        <span>Confidential Boardroom Memorandum</span>
+        <span>Private training summary</span>
         <span>Ref: {docRefId}</span>
       </div>
 
@@ -323,7 +323,7 @@ export default function ExecutiveSundayDossier({
               color: 'var(--gold-lt)',
             }}
           >
-            RESTRICTED · LEVEL-1 EXECUTIVE DISTRIBUTION · PRIVATE ADVISORY BRIEFING
+            Your private weekly training summary
           </span>
         </div>
         <div
@@ -357,7 +357,7 @@ export default function ExecutiveSundayDossier({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.18em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-              Gordon Athletic Advisory · Sports Science Division
+              Forge Athletic · Training summary
             </span>
           </div>
           <h2
@@ -371,12 +371,12 @@ export default function ExecutiveSundayDossier({
               fontWeight: 700,
             }}
           >
-            EXECUTIVE SUNDAY INTELLIGENCE DOSSIER
+            YOUR WEEKLY TRAINING SUMMARY
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap', fontSize: 13, color: 'var(--gray)' }}>
-            <span>Athlete: <strong style={{ color: '#FFFFFF' }}>{athleteName}</strong></span>
+            <span>Name: <strong style={{ color: '#FFFFFF' }}>{athleteName}</strong></span>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-            <span>Microcycle Ending: <strong style={{ color: 'var(--gold-lt)' }}>{weekEndingDate}</strong></span>
+            <span>Week ending: <strong style={{ color: 'var(--gold-lt)' }}>{weekEndingDate}</strong></span>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
             <span
               style={{
@@ -454,7 +454,7 @@ export default function ExecutiveSundayDossier({
                 transition: 'all 0.15s ease',
               }}
             >
-              Executive Briefing
+              Progress overview
             </button>
             <button
               type="button"
@@ -473,7 +473,7 @@ export default function ExecutiveSundayDossier({
                 transition: 'all 0.15s ease',
               }}
             >
-              Clinical S.O.A.P. Record
+              Coach notes
             </button>
           </div>
 
@@ -497,7 +497,7 @@ export default function ExecutiveSundayDossier({
             }}
           >
             <GaaIcon name={copied ? 'check' : 'copy'} size={13} tone={copied ? 'gold' : 'inherit'} />
-            <span>{copied ? 'Copied Briefing' : 'Copy Briefing'}</span>
+            <span>{copied ? 'Summary copied' : 'Copy summary'}</span>
           </button>
 
           {/* Print Theme Switcher */}
@@ -505,7 +505,7 @@ export default function ExecutiveSundayDossier({
             <button
               type="button"
               onClick={() => setPrintTheme(t => t === 'obsidian' ? 'ivory' : 'obsidian')}
-              title="Toggle between dark digital PDF and ink-efficient paper print"
+              title="Choose a dark or light print layout"
               style={{
                 padding: '7px 11px',
                 borderRadius: 6,
@@ -519,7 +519,7 @@ export default function ExecutiveSundayDossier({
                 cursor: 'pointer',
               }}
             >
-              {printTheme === 'obsidian' ? 'Obsidian PDF' : 'Paper Ivory'}
+              {printTheme === 'obsidian' ? 'Dark layout' : 'Light layout'}
             </button>
           </div>
 
@@ -544,7 +544,7 @@ export default function ExecutiveSundayDossier({
             }}
           >
             <GaaIcon name="printer" size={13} tone="inherit" />
-            <span>Export Boardroom PDF</span>
+            <span>Print or save summary</span>
           </button>
 
           <a
@@ -646,7 +646,7 @@ export default function ExecutiveSundayDossier({
                   color: 'var(--gold-lt)',
                 }}
               >
-                Coach Scott Gordon · Audio Intelligence Debrief
+                Coach Scott Gordon · Audio progress summary
               </span>
               <span
                 style={{
@@ -658,7 +658,7 @@ export default function ExecutiveSundayDossier({
                   fontWeight: 600,
                 }}
               >
-                Neural Cloned Audio
+                Coach-voiced audio
               </span>
             </div>
 
@@ -716,7 +716,7 @@ export default function ExecutiveSundayDossier({
         </div>
       </div>
 
-      {/* ── Primary Executive Metrics Grid (5-Pillar Architecture) ── */}
+      {/* ── Weekly training and recovery metrics ── */}
       <div
         style={{
           display: 'grid',
@@ -743,7 +743,7 @@ export default function ExecutiveSundayDossier({
         >
           <div>
             <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800, letterSpacing: '0.1em' }}>
-              Mechanical Volume Load
+              Training volume (weight lifted)
             </div>
             <div
               className="font-telemetry font-mono"
@@ -826,12 +826,12 @@ export default function ExecutiveSundayDossier({
               />
             </div>
             <div style={{ fontSize: 11, color: 'var(--gray)' }}>
-              Corridor: <strong style={{ color: '#FFF' }}>0.80–1.30</strong> · {acwrState.label}
+              Compares this week with your recent training · {acwrState.label}
             </div>
           </div>
         </div>
 
-        {/* Mitochondrial Base (Zone 2 Cardio) */}
+        {/* Steady cardio (Zone 2) */}
         <div
           className="dossier-metric-card"
           style={{
@@ -848,7 +848,7 @@ export default function ExecutiveSundayDossier({
         >
           <div>
             <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 800, letterSpacing: '0.1em' }}>
-              Mitochondrial Base (Zone 2)
+              Steady cardio (Zone 2)
             </div>
             <div
               className="font-telemetry font-mono"
@@ -877,12 +877,12 @@ export default function ExecutiveSundayDossier({
               />
             </div>
             <div style={{ fontSize: 11, color: 'var(--gray)' }}>
-              {dossier.totalCardioMins} total cardio mins · Aerobic base
+              {dossier.totalCardioMins} total cardio minutes · steady effort
             </div>
           </div>
         </div>
 
-        {/* Autonomic Recovery Score */}
+        {/* Recovery score */}
         <div
           className="dossier-metric-card"
           style={{
@@ -899,7 +899,7 @@ export default function ExecutiveSundayDossier({
         >
           <div>
             <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 800, letterSpacing: '0.1em' }}>
-              Autonomic Recovery Index
+              Recovery score
             </div>
             <div
               className="font-telemetry font-mono"
@@ -933,7 +933,7 @@ export default function ExecutiveSundayDossier({
           </div>
         </div>
 
-        {/* Protocol Execution Adherence */}
+        {/* Planned sessions completed */}
         <div
           className="dossier-metric-card"
           style={{
@@ -950,7 +950,7 @@ export default function ExecutiveSundayDossier({
         >
           <div>
             <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 800, letterSpacing: '0.1em' }}>
-              Protocol Adherence
+              Planned sessions completed
             </div>
             <div
               className="font-telemetry font-mono"
@@ -979,13 +979,13 @@ export default function ExecutiveSundayDossier({
               />
             </div>
             <div style={{ fontSize: 11, color: 'var(--gray)' }}>
-              <strong style={{ color: '#FFF' }}>{dossier.completedSessions}</strong> of <strong style={{ color: '#FFF' }}>{dossier.targetSessions}</strong> sessions executed
+              <strong style={{ color: '#FFF' }}>{dossier.completedSessions}</strong> of <strong style={{ color: '#FFF' }}>{dossier.targetSessions}</strong> planned sessions
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── BRIEFING VIEW: Movement Distribution, PRs, Intelligence & Directives ── */}
+      {/* ── Progress overview: movement, records, and next steps ── */}
       {viewMode === 'briefing' && (
         <>
           {/* ── Kinetic Movement Pattern Distribution ── */}
@@ -1015,7 +1015,7 @@ export default function ExecutiveSundayDossier({
                   }}
                 >
                   <GaaIcon name="dna" size={14} tone="gold" />
-                  <span>Kinetic Movement Pattern Distribution (NASM 3-Plane Balance)</span>
+                  <span>Movement pattern balance</span>
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--gray)' }}>
                   Total Working Sets: <strong className="font-telemetry font-mono" style={{ color: '#FFFFFF' }}>{dossier.kineticDistribution.totalSets || dossier.totalWorkingSets}</strong>
@@ -1104,7 +1104,7 @@ export default function ExecutiveSundayDossier({
                 }}
               >
                 <GaaIcon name="trophy" size={14} tone="gold" />
-                <span>Performance Milestones &amp; 1RM Achievements</span>
+                <span>Personal bests</span>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {dossier.topPrsThisWeek.map((pr, idx) => (
@@ -1132,7 +1132,7 @@ export default function ExecutiveSundayDossier({
             </div>
           )}
 
-          {/* ── Sports Science Intelligence & Physiological Adaptation ── */}
+          {/* ── Training progress and what it means ── */}
           <div
             className="dossier-section"
             style={{
@@ -1158,7 +1158,7 @@ export default function ExecutiveSundayDossier({
               }}
             >
               <GaaIcon name="dna" size={14} tone="gold" />
-              <span>Physiological Adaptation &amp; Sports Science Intelligence</span>
+              <span>How your training is progressing</span>
             </div>
             <ul
               style={{
@@ -1198,7 +1198,7 @@ export default function ExecutiveSundayDossier({
             </ul>
           </div>
 
-          {/* ── Strategic Periodization Directive (Next Microcycle) ── */}
+          {/* ── Next week's focus ── */}
           <div
             className="dossier-section"
             style={{
@@ -1223,7 +1223,7 @@ export default function ExecutiveSundayDossier({
               }}
             >
               <GaaIcon name="target" size={14} tone="gold" />
-              <span>Next Microcycle Periodization Directive</span>
+              <span>Next week's focus</span>
             </div>
             <p
               style={{
@@ -1240,7 +1240,7 @@ export default function ExecutiveSundayDossier({
         </>
       )}
 
-      {/* ── CLINICAL S.O.A.P. ADVISORY RECORD VIEW ── */}
+      {/* ── Coach notes view ── */}
       {viewMode === 'soap' && dossier.soapRecord && (
         <div
           className="dossier-section dossier-soap-box"
@@ -1268,7 +1268,7 @@ export default function ExecutiveSundayDossier({
                   letterSpacing: '0.04em',
                 }}
               >
-                CLINICAL S.O.A.P. ADVISORY RECORD
+                COACH NOTES
               </h3>
             </div>
             <span
@@ -1281,14 +1281,14 @@ export default function ExecutiveSundayDossier({
                 letterSpacing: '0.08em',
               }}
             >
-              SPEC: NASM-OPT-CLINICAL-V2
+              Training notes
             </span>
           </div>
 
           {/* S - Subjective */}
           <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#60A5FA', marginBottom: 6 }}>
-              [S] Subjective Observation &amp; Readiness Perception
+              How you felt
             </div>
             <p style={{ margin: 0, fontSize: 13.5, color: '#E2E8F0', lineHeight: 1.6 }}>
               {dossier.soapRecord.subjective}
@@ -1298,7 +1298,7 @@ export default function ExecutiveSundayDossier({
           {/* O - Objective */}
           <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#34D399', marginBottom: 6 }}>
-              [O] Objective Telemetry &amp; Mechanical Load Data
+              Training details
             </div>
             <p style={{ margin: 0, fontSize: 13.5, color: '#E2E8F0', lineHeight: 1.6 }}>
               {dossier.soapRecord.objective}
@@ -1308,7 +1308,7 @@ export default function ExecutiveSundayDossier({
           {/* A - Assessment */}
           <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#FBBF24', marginBottom: 6 }}>
-              [A] Biomechanical Adaptation &amp; Workload Assessment
+              Coach&apos;s notes
             </div>
             <p style={{ margin: 0, fontSize: 13.5, color: '#E2E8F0', lineHeight: 1.6 }}>
               {dossier.soapRecord.assessment}
@@ -1318,7 +1318,7 @@ export default function ExecutiveSundayDossier({
           {/* P - Plan */}
           <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(212,160,23,0.3)', borderRadius: 8, padding: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', marginBottom: 6 }}>
-              [P] Strategic Plan &amp; Microcycle Modulation
+              Next steps
             </div>
             <p style={{ margin: 0, fontSize: 13.5, color: '#E2E8F0', lineHeight: 1.6 }}>
               {dossier.soapRecord.plan}
@@ -1327,7 +1327,7 @@ export default function ExecutiveSundayDossier({
         </div>
       )}
 
-      {/* ── Coach Scott Gordon Sign-Off & Boardroom Authentication ── */}
+      {/* ── Coach sign-off ── */}
       <div
         className="dossier-footer"
         style={{
@@ -1371,10 +1371,7 @@ export default function ExecutiveSundayDossier({
               textAlign: 'right',
             }}
           >
-            <div>AUTH: {dossier.authSignature || 'GAA-VERIFIED-AUTH-2026'}</div>
-            <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>
-              SPEC: NASM-OPT-2026-WK · CIP-004
-            </div>
+            <div>Report reference: {docRefId}</div>
           </div>
           <div
             style={{
@@ -1393,7 +1390,7 @@ export default function ExecutiveSundayDossier({
             }}
           >
             <GaaIcon name="shield-check" size={12} tone="inherit" />
-            <span>Boardroom Validated</span>
+            <span>Training summary</span>
           </div>
         </div>
       </div>

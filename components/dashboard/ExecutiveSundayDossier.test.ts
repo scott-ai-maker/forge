@@ -62,44 +62,44 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
   describe('computeDossierDocRefId', () => {
     it('generates pristine governance tracking IDs with athlete initials and date stamp', () => {
       const id = computeDossierDocRefId('Scott Gordon', 'Sep 8, 2026')
-      expect(id).toBe('GAA-DOSSIER-SG-2026')
+      expect(id).toBe('FORGE-PROGRESS-SG-2026')
 
       const id2 = computeDossierDocRefId('Marcus Aurelius Antoninus', 'Dec 31, 2026')
-      expect(id2).toBe('GAA-DOSSIER-MAA-2026')
+      expect(id2).toBe('FORGE-PROGRESS-MAA-2026')
     })
 
     it('gracefully handles single names or missing characters', () => {
       const id = computeDossierDocRefId('Vanguard', '2026')
-      expect(id).toBe('GAA-DOSSIER-V-2026')
+      expect(id).toBe('FORGE-PROGRESS-V-2026')
     })
   })
 
   describe('computeDossierRecoveryState', () => {
     it('returns Optimal Supercompensation for scores >= 80', () => {
       const state88 = computeDossierRecoveryState(88)
-      expect(state88.label).toBe('Optimal Supercompensation')
+      expect(state88.label).toBe('Ready to train')
       expect(state88.color).toBe('#34D399')
 
       const state80 = computeDossierRecoveryState(80)
-      expect(state80.label).toBe('Optimal Supercompensation')
+      expect(state80.label).toBe('Ready to train')
     })
 
     it('returns Allostatic Equilibrium for scores between 65 and 79', () => {
       const state72 = computeDossierRecoveryState(72)
-      expect(state72.label).toBe('Allostatic Equilibrium')
+      expect(state72.label).toBe('Steady recovery')
       expect(state72.color).toBe('#FBBF24')
 
       const state65 = computeDossierRecoveryState(65)
-      expect(state65.label).toBe('Allostatic Equilibrium')
+      expect(state65.label).toBe('Steady recovery')
     })
 
     it('returns Restorative Deload Advised for scores below 65', () => {
       const state64 = computeDossierRecoveryState(64)
-      expect(state64.label).toBe('Restorative Deload Advised')
+      expect(state64.label).toBe('More recovery may help')
       expect(state64.color).toBe('#F87171')
 
       const state45 = computeDossierRecoveryState(45)
-      expect(state45.label).toBe('Restorative Deload Advised')
+      expect(state45.label).toBe('More recovery may help')
     })
   })
 
@@ -112,16 +112,16 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
         dossier: mockDossier,
       })
 
-      expect(script).toContain('Good Sunday, David Vance.')
-      expect(script).toContain('Coach Scott Gordon here')
+      expect(script).toContain('Hi David Vance.')
+      expect(script).toContain('weekly training update')
       expect(script).toContain('Phase 1: Stabilization Endurance')
-      expect(script).toContain('64,250 pounds across 28 prescribed working sets')
-      expect(script).toContain('average session RPE of 7.8')
-      expect(script).toContain('120 minutes of Zone 2 mitochondrial conditioning')
-      expect(script).toContain('recovery index registered at 88 out of 100')
-      expect(script).toContain('100 percent protocol adherence')
+      expect(script).toContain('64,250 pounds across 28 working sets')
+      expect(script).toContain('average effort rating was 7.8 out of 10')
+      expect(script).toContain('120 minutes of steady, moderate-intensity cardio')
+      expect(script).toContain('recovery score was 88 out of 100')
+      expect(script).toContain('100 percent of your planned sessions')
       expect(script).toContain('Advance to Phase 2: Strength Endurance')
-      expect(script).toContain('Dominate the recovery, execute the protocol')
+      expect(script).toContain('Keep listening to your body and adjust as needed.')
     })
 
     it('calculates duration proportionate to cadence with a safety floor', () => {
@@ -144,31 +144,31 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
   describe('computeAcwrZoneState', () => {
     it('returns Sweet Spot styling for optimal overload (0.80–1.30)', () => {
       const state = computeAcwrZoneState('Sweet Spot')
-      expect(state.label).toContain('Sweet Spot')
+      expect(state.label).toContain('Within your usual range')
       expect(state.color).toBe('#34D399')
     })
 
     it('returns Overreaching styling for acute spikes (1.31–1.49)', () => {
       const state = computeAcwrZoneState('Overreaching')
-      expect(state.label).toContain('Overreaching')
+      expect(state.label).toContain('Higher than usual')
       expect(state.color).toBe('#FBBF24')
     })
 
     it('returns Danger Zone styling for extreme spikes (>= 1.50)', () => {
       const state = computeAcwrZoneState('Danger Zone')
-      expect(state.label).toContain('Danger Zone')
+      expect(state.label).toContain('Much higher than usual')
       expect(state.color).toBe('#F87171')
     })
 
     it('defaults to Under-training styling for sub-optimal workload (<0.80)', () => {
       const state = computeAcwrZoneState('Under-training')
-      expect(state.label).toContain('Under-training')
+      expect(state.label).toContain('Lower than usual')
       expect(state.color).toBe('#60A5FA')
     })
 
     it('returns No Data styling when insufficient volume exists', () => {
       const state = computeAcwrZoneState('No Data')
-      expect(state.label).toContain('No Data (Insufficient Volume)')
+      expect(state.label).toContain('Not enough training data yet')
       expect(state.color).toBe('#94A3B8')
     })
   })
@@ -184,10 +184,10 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
 
       expect(dossierSource).toContain('SCOTT GORDON, NASM MASTER TRAINER')
       expect(dossierSource).toContain('Founder &amp; Performance Director · NASM-CPT® · CES® · PES® · CNC™ · CSNC')
-      expect(dossierSource).toContain('Boardroom Validated')
+      expect(dossierSource).toContain('Report reference:')
     })
 
-    it('verifies Clinical Aristocracy typography and S.O.A.P. architecture in source', async () => {
+    it('verifies readable progress notes and typography in source', async () => {
       const fs = await import('fs')
       const path = await import('path')
       const dossierSource = fs.readFileSync(
@@ -195,21 +195,18 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
         'utf8'
       )
 
-      // Strict Clinical Aristocracy: font-serif (Cinzel), Raleway uppercase buttons, tabular mono numbers
       expect(dossierSource).toContain('font-serif')
       expect(dossierSource).toContain('Raleway')
       expect(dossierSource).toContain('font-telemetry font-mono')
       expect(dossierSource).not.toContain('Bebas Neue')
 
-      // S.O.A.P. clinical record architecture
-      expect(dossierSource).toContain('CLINICAL S.O.A.P. ADVISORY RECORD')
-      expect(dossierSource).toContain('[S] Subjective Observation')
-      expect(dossierSource).toContain('[O] Objective Telemetry')
-      expect(dossierSource).toContain('[A] Biomechanical Adaptation')
-      expect(dossierSource).toContain('[P] Strategic Plan')
+      expect(dossierSource).toContain('Training notes')
+      expect(dossierSource).toContain('How you felt')
+      expect(dossierSource).toContain('Training details')
+      expect(dossierSource).toContain('Next steps')
 
       // Kinetic distribution distribution planes
-      expect(dossierSource).toContain('Kinetic Movement Pattern Distribution')
+      expect(dossierSource).toContain('Movement pattern balance')
       expect(dossierSource).toContain('Push')
       expect(dossierSource).toContain('Pull')
       expect(dossierSource).toContain('Squat')

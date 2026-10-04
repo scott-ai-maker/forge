@@ -49,7 +49,7 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [{ src: '/images/icon-192.png?v=2', sizes: '192x192' }],
       },
       {
-        name: 'Concierge Messages',
+        name: 'Coach Messages',
         short_name: 'Messages',
         description: 'Direct encrypted line with Coach Gordon',
         url: '/dashboard/messages?source=pwa',

@@ -25,8 +25,8 @@ const TIMING_CONFIG: Record<
   { label: string; time: string; iconName: GaaIconName; iconTone: GaaTone; color: string; bg: string; border: string }
 > = {
   morning_with_breakfast: {
-    label: 'Morning Ignition',
-    time: '07:00 AM · With Breakfast & Healthy Fats',
+    label: 'Morning',
+    time: 'With breakfast',
     iconName: 'sun',
     iconTone: 'amber',
     color: '#F59E0B',
@@ -34,8 +34,8 @@ const TIMING_CONFIG: Record<
     border: 'rgba(245, 158, 11, 0.3)',
   },
   pre_workout_45min: {
-    label: 'Pre-Workout Drive',
-    time: '45m Prior to Training · Vasodilation & Buffering',
+    label: 'Before exercise',
+    time: 'About 45 minutes before training',
     iconName: 'lightning',
     iconTone: 'cyan',
     color: '#38BDF8',
@@ -43,8 +43,8 @@ const TIMING_CONFIG: Record<
     border: 'rgba(56, 189, 248, 0.3)',
   },
   post_workout_anabolic: {
-    label: 'Post-Workout Recovery',
-    time: 'Within 60m Post-Training · Anabolic Window',
+    label: 'After exercise',
+    time: 'Within about an hour after training',
     iconName: 'droplet',
     iconTone: 'emerald',
     color: '#10B981',
@@ -52,8 +52,8 @@ const TIMING_CONFIG: Record<
     border: 'rgba(16, 185, 129, 0.3)',
   },
   night_pre_sleep: {
-    label: 'Night Sleep Architecture',
-    time: '21:30 PM · 30m Prior to Sleep · CNS Down-Regulation',
+    label: 'Evening',
+    time: 'About 30 minutes before bed',
     iconName: 'sleep',
     iconTone: 'purple',
     color: '#818CF8',
@@ -61,7 +61,7 @@ const TIMING_CONFIG: Record<
     border: 'rgba(129, 140, 248, 0.3)',
   },
   daily_flexible: {
-    label: 'Daily Flexible Administration',
+    label: 'Any time',
     time: 'Anytime with Meal',
     iconName: 'timer',
     iconTone: 'gold',
@@ -150,7 +150,7 @@ export default function ExecutiveSupplementTimeline({
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
-      {/* Executive Stack Header & Adherence HUD */}
+      {/* Supplement plan and daily tracking */}
       <div
         style={{
           background: 'linear-gradient(135deg, rgba(8, 14, 26, 0.96) 0%, rgba(13, 22, 38, 0.98) 100%)',
@@ -182,20 +182,20 @@ export default function ExecutiveSupplementTimeline({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em' }}>
-                  DAILY EXECUTIVE ERGOGENIC STACK & CHRONO-DOSING TIMELINE
+                  Your daily supplement plan
                 </h3>
               </div>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--gray)' }}>
-                Target: <strong style={{ color: 'var(--gold-lt)' }}>{stack.clientProfile.goal.replace('_', ' ').toUpperCase()}</strong> · Athlete: <strong style={{ color: '#FFFFFF' }}>{athleteName}</strong> · Pharmacologically Shielded
+                Goal: <strong style={{ color: 'var(--gold-lt)' }}>{stack.clientProfile.goal.replace('_', ' ').toUpperCase()}</strong> · For: <strong style={{ color: '#FFFFFF' }}>{athleteName}</strong> · Includes safety checks
               </p>
             </div>
           </div>
 
-          {/* Adherence Telemetry Badge */}
+          {/* Daily progress badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 800 }}>
-                Today&apos;s Adherence:
+                Today&apos;s progress:
               </div>
               <div style={{ fontFamily: 'monospace', fontSize: 18, fontWeight: 800, color: adherencePct >= 80 ? '#10B981' : adherencePct >= 40 ? '#F59E0B' : 'var(--gold-lt)' }}>
                 {completedCount} / {totalItems} ({adherencePct}%)
@@ -244,7 +244,7 @@ export default function ExecutiveSupplementTimeline({
         </div>
       </div>
 
-      {/* Clinical Partner Dispensary Master Banner */}
+      {/* Supplement shopping options */}
       <div
         style={{
           background: 'linear-gradient(135deg, rgba(212, 160, 23, 0.15) 0%, rgba(13, 27, 42, 0.9) 100%)',
@@ -274,7 +274,7 @@ export default function ExecutiveSupplementTimeline({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/dispensary-stack.jpg"
-              alt="Clinical Dispensary Formulations"
+              alt="Supplement options"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </div>
@@ -293,7 +293,7 @@ export default function ExecutiveSupplementTimeline({
               }}
             >
               <span>✦</span>
-              <span>Pharmaceutical-Grade Dispensary Access · 15% Athlete Privilege</span>
+              <span>Shop supplement options · 15% member discount</span>
             </div>
             <h3
               style={{
@@ -305,7 +305,7 @@ export default function ExecutiveSupplementTimeline({
                 margin: '0 0 4px',
               }}
             >
-              ORDER YOUR CLINICAL-GRADE PRESCRIBED STACK
+              EXPLORE SUPPLEMENT OPTIONS
             </h3>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--gray)', lineHeight: 1.45 }}>
               Gordon Athletic Advisory athletes receive wholesale-tier access to cold-chain shipped, 100% 3rd-party lab verified (NSF for Sport / USP) formulations with zero heavy metals or fillers.
@@ -599,7 +599,7 @@ export default function ExecutiveSupplementTimeline({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <span style={{ fontSize: 10.5, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800 }}>
-                  Sports Science Clinical Dossier
+                  Supplement details
                 </span>
                 <h4 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, fontWeight: 700, color: '#FFFFFF' }}>
                   {selectedItemDetail.name}
@@ -621,12 +621,12 @@ export default function ExecutiveSupplementTimeline({
               </div>
 
               <div>
-                <strong style={{ color: 'var(--gold-lt)' }}>Clinical Evidence Summary:</strong>
+                <strong style={{ color: 'var(--gold-lt)' }}>Research summary:</strong>
                 <p style={{ margin: '3px 0 0', color: '#CBD5E1' }}>{selectedItemDetail.clinicalEvidenceSummary}</p>
               </div>
 
               <div>
-                <strong style={{ color: 'var(--gold-lt)' }}>ISSN / Clinical Citation:</strong>
+                <strong style={{ color: 'var(--gold-lt)' }}>Research references:</strong>
                 <p style={{ margin: '3px 0 0', color: '#94A3B8', fontFamily: 'monospace', fontSize: 11 }}>
                   {selectedItemDetail.issnCitation}
                 </p>
@@ -641,7 +641,7 @@ export default function ExecutiveSupplementTimeline({
                 <div style={{ padding: '12px 14px', background: 'rgba(212,160,23,0.1)', border: '1px solid rgba(212,160,23,0.35)', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                   <div>
                     <div style={{ fontSize: 10, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em' }}>
-                      Clinical Partner Dispensary Formulation
+                      Partner product
                     </div>
                     <div style={{ fontSize: 13.5, color: '#FFFFFF', fontWeight: 700 }}>
                       {selectedItemDetail.recommendedBrand}® ({selectedItemDetail.dispensarySku})
@@ -670,7 +670,7 @@ export default function ExecutiveSupplementTimeline({
                       gap: 4,
                     }}
                   >
-                    <span>Order via Dispensary</span>
+                    <span>Shop supplements</span>
                     <span>↗</span>
                   </a>
                 </div>
@@ -692,7 +692,7 @@ export default function ExecutiveSupplementTimeline({
                 cursor: 'pointer',
               }}
             >
-              Close Dossier
+              Close details
             </button>
           </div>
         </div>

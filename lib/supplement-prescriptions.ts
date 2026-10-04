@@ -644,7 +644,7 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     dailyFlexible: enrichedItems.filter(i => i.timingWindow === 'daily_flexible'),
   }
 
-  const executiveSummary = `Evidence-based, zero-fad supplementation protocol tailored for a ${age}yo ${sex} focusing on ${goal.replace(/_/g, ' ')} (${fitnessLevel.replace(/_/g, ' ')} level). Incorporates ${enrichedItems.length} clinically validated compounds matching ISSN & IOC Tier-1 guidelines with ${drugInteractions.length} active pharmacological drug-supplement safety checks.`
+  const executiveSummary = `This supplement plan is based on your age, profile, goal (${goal.replace(/_/g, ' ')}), and experience level (${fitnessLevel.replace(/_/g, ' ')}). It includes ${enrichedItems.length} evidence-informed options and ${drugInteractions.length} checks for potential interactions with medications.`
 
   const legalDisclaimer =
     'MANDATORY FDA & MEDICAL DISCLAIMER: The statements and protocols contained herein have not been evaluated by the Food and Drug Administration (FDA). These dietary supplement recommendations are designed for nutritional support and sports performance optimization only, and are NOT intended to diagnose, treat, cure, or prevent any disease. Always consult with your prescribing physician or licensed pharmacist before initiating any dietary supplementation regimen, particularly when co-administering with prescription medications.'

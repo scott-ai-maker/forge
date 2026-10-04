@@ -205,7 +205,7 @@ export default function FirstVisitLeadCapture({
         onClick={() => setIsMinimized(false)}
         role="button"
         tabIndex={0}
-        aria-label="Open Forge Athletic Protocol Access"
+        aria-label="Open Forge Athletic updates"
       >
         <span
           style={{
@@ -229,7 +229,7 @@ export default function FirstVisitLeadCapture({
             textOverflow: 'ellipsis',
           }}
         >
-          {isLive ? 'Live Studio Window' : '2026 Biomechanical Protocol'}
+          {isLive ? 'Live coaching' : 'Training and movement updates'}
         </span>
       </div>
     )
@@ -299,7 +299,7 @@ export default function FirstVisitLeadCapture({
                 textOverflow: 'ellipsis',
               }}
             >
-              {isLive ? 'Coach Gordon In Live Studio' : 'NASM OPT™ Executive Protocol'}
+              {isLive ? 'Coach Gordon in the live studio' : 'Training and movement insights'}
             </span>
           </div>
 
@@ -373,7 +373,7 @@ export default function FirstVisitLeadCapture({
               </h3>
             </div>
             <p style={{ fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, margin: '0 0 16px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-              Your 2026 Executive Movement Protocol and $97 voucher have been dispatched to{' '}
+              Your training and movement information and $97 voucher have been sent to{' '}
               <strong style={{ color: '#FFFFFF' }}>{email}</strong>.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -389,7 +389,7 @@ export default function FirstVisitLeadCapture({
                   textDecoration: 'none',
                 }}
               >
-                Review Retainers
+                View Memberships
               </Link>
               <button
                 type="button"
@@ -480,7 +480,7 @@ export default function FirstVisitLeadCapture({
                     setSuggestion(null)
                   }
                 }}
-                placeholder="Executive / Personal Email"
+                placeholder="Email address"
                 autoComplete="email"
                 required
                 className="first-visit-dock-input"
@@ -543,7 +543,7 @@ export default function FirstVisitLeadCapture({
                   ? 'Connecting...'
                   : isLive
                     ? 'Request Live Slot'
-                    : 'Claim Protocol & Voucher'}
+                    : 'Get the assessment & voucher'}
               </button>
             </form>
 

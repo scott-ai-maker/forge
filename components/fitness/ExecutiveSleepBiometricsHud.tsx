@@ -83,6 +83,12 @@ export default function ExecutiveSleepBiometricsHud({
     compromised: { border: '#FBBF24', bg: 'rgba(251, 191, 36, 0.12)', text: '#FDE047' },
     critical: { border: '#F87171', bg: 'rgba(239, 68, 68, 0.12)', text: '#FCA5A5' },
   }[analysis.sleepQualityTier]
+  const sleepQualityLabels: Record<ExecutiveSleepAnalysis['sleepQualityTier'], string> = {
+    elite: 'Excellent',
+    optimal: 'Good',
+    compromised: 'Room to improve',
+    critical: 'Rest may help',
+  }
 
   return (
     <div
@@ -123,7 +129,7 @@ export default function ExecutiveSleepBiometricsHud({
             </span>
           </div>
           <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em', margin: '4px 0 0' }}>
-            EXECUTIVE SLEEP RECOVERY MATRIX
+            SLEEP AND RECOVERY
           </h3>
         </div>
 
@@ -197,7 +203,7 @@ export default function ExecutiveSleepBiometricsHud({
             {analysis.overallSleepScore}%
           </div>
           <div style={{ fontSize: 10.5, fontWeight: 700, color: tierColors.text, textTransform: 'uppercase' }}>
-            ● {analysis.sleepQualityTier} Tier
+            ● {sleepQualityLabels[analysis.sleepQualityTier]}
           </div>
         </div>
 

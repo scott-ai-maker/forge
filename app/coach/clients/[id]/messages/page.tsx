@@ -55,13 +55,13 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
   return (
     <main className="coach-client-messages-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
       <SiteHeader
-        badgeText="Concierge Line"
+        badgeText="Messages"
         links={[
-          { href: '/coach', label: 'Triage' },
-          { href: '/coach#assigned-clients', label: 'Athletes' },
-          { href: `/coach/clients/${id}`, label: 'Athlete Profile' },
-          { href: `/coach/clients/${id}/live`, label: 'Live Studio' },
-          { href: '/coach/settings', label: 'Operations' },
+          { href: '/coach', label: 'Overview' },
+          { href: '/coach#assigned-clients', label: 'Members' },
+          { href: `/coach/clients/${id}`, label: 'Member Profile' },
+          { href: `/coach/clients/${id}/live`, label: 'Live Coaching' },
+          { href: '/coach/settings', label: 'Settings' },
         ]}
         actions={<LogoutButton />}
       />
@@ -77,7 +77,7 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
           gap: 20,
         }}
       >
-        {/* ── Executive Athlete Banner ── */}
+        {/* ── Member messaging header ── */}
         <div
           style={{
             background: 'linear-gradient(135deg, rgba(16,22,38,0.98) 0%, rgba(9,13,24,0.98) 100%)',
@@ -107,7 +107,7 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
                   border: '1px solid rgba(212,160,23,0.35)',
                 }}
               >
-                ● Athlete Advisory Console
+                ● Member Messaging
               </span>
               <span style={{ fontSize: 11, color: 'var(--gray)' }}>{client.email}</span>
             </div>
@@ -125,7 +125,7 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
               {athleteName}
             </h1>
             <p style={{ fontFamily: 'Raleway, sans-serif', color: 'var(--gray)', margin: 0, fontSize: 13 }}>
-              Direct encrypted messaging line with your assigned athlete for technical cues, periodization feedback, and voice notes.
+              Private encrypted messaging with your member for exercise guidance, progress updates, and voice notes.
             </p>
           </div>
 
@@ -150,7 +150,7 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
               }}
             >
               <GaaIcon name="user" size={14} tone="inherit" />
-              <span>Athlete Profile</span>
+              <span>Member Profile</span>
             </Link>
 
             <Link
@@ -175,7 +175,7 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
               }}
             >
               <GaaIcon name="video-studio" size={15} tone="inherit" />
-              <span>Launch Live Studio</span>
+              <span>Start Live Coaching</span>
             </Link>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
             role="coach"
             clientId={id}
             recipientName={athleteName}
-            recipientRoleTitle="Private Athlete"
+            recipientRoleTitle="Member"
           />
         </div>
       </div>

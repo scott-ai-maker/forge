@@ -55,10 +55,10 @@ export default async function AthleteLiveSessionPage() {
       <SiteHeader
         badgeText="Live Studio"
         links={[
-          { href: '/dashboard', label: 'Command Center' },
-          { href: '/dashboard/fitness', label: 'Fitness Lab' },
-          { href: '/dashboard/dossier', label: 'Weekly Dossier' },
-          { href: '/dashboard/book', label: 'Consultations' },
+          { href: '/dashboard', label: 'Today' },
+          { href: '/dashboard/fitness', label: 'Training & progress' },
+          { href: '/dashboard/dossier', label: 'Progress summary' },
+          { href: '/dashboard/book', label: 'Book a session' },
           { href: '/dashboard/messages', label: 'Messages' },
           { href: '/dashboard/settings', label: 'Settings' },
         ]}
@@ -155,7 +155,7 @@ export default async function AthleteLiveSessionPage() {
               whiteSpace: 'nowrap',
             }}
           >
-            Open Fitness Lab →
+            Open training →
           </a>
         </div>
       </div>

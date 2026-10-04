@@ -7,7 +7,7 @@ import ForgeAddons from '@/components/packages/ForgeAddons'
 
 export const metadata: Metadata = {
   title: 'Forge Athletic Memberships',
-  description: 'Choose Forge Athletic Core, Pro Athlete, or Transformation Direct, then add advanced features and private sessions with Coach Scott Gordon when you need them.',
+  description: 'Choose Core, Plus, or Coach Support, then add training tools or one-to-one sessions with Coach Scott Gordon.',
   openGraph: {
     title: 'Forge Athletic Memberships',
     description: 'Practical, science-led training memberships with clear monthly and annual pricing.',
@@ -19,9 +19,9 @@ export default function PackagesPage() {
     <main id="main-content" className="packages-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
       <SiteHeader
         links={[
-          { href: '/audit', label: '3D AI Audit' },
-          { href: '/apply', label: 'Diagnostic Quiz' },
-          { href: '/dashboard', label: 'Dashboard' },
+          { href: '/audit', label: 'Movement assessment' },
+          { href: '/apply', label: 'Find your starting point' },
+          { href: '/dashboard', label: 'Log in' },
         ]}
         actions={<MarketingLoginActions />}
       />
@@ -39,7 +39,7 @@ export default function PackagesPage() {
 
         <ForgeMembershipPlans />
         <ForgeAddons />
-        <p className="forge-billing-note">Memberships renew automatically until cancelled. Add-ons and private sessions are one-time payments. Checkout is processed securely by Stripe.</p>
+        <p className="forge-billing-note">Memberships renew automatically until cancelled. Add-ons and one-to-one sessions are one-time payments. Checkout is processed securely by Stripe.</p>
       </div>
 
       <SiteFooter />

@@ -166,7 +166,7 @@ export default function MetabolicNutritionProtocol({
                 NASM CPT-7 Ch 9 & Appendix B
               </span>
               <span style={{ color: 'var(--gray)', fontSize: 13 }}>
-                Mifflin-St Jeor BMR & Precision Macro Architecture
+                Nutrition estimates and macro breakdown
               </span>
             </div>
             <h3
@@ -178,7 +178,7 @@ export default function MetabolicNutritionProtocol({
                 color: 'var(--white)',
               }}
             >
-              PRECISION METABOLIC NUTRITION & MACRO LAB
+              NUTRITION & MEAL PLANNING
             </h3>
           </div>
 
@@ -565,11 +565,11 @@ export default function MetabolicNutritionProtocol({
         </div>
       </div>
 
-      {/* ── Executive Dining Playbook ────────────────────────────────── */}
+      {/* ── Eating out and travel ────────────────────────────────────── */}
       <div className="glass-card" style={{ padding: 24, display: 'grid', gap: 16 }}>
         <div>
           <div style={{ color: 'var(--gold)', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-            Executive Dining Playbook
+            Eating out and travel
           </div>
           <h4 style={{ margin: '4px 0 0', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, color: 'var(--white)', letterSpacing: '0.04em' }}>
             Protocol for Travel, Steakhouses & Business Dinners
@@ -631,7 +631,7 @@ export default function MetabolicNutritionProtocol({
           </div>
 
           <div style={{ padding: '10px 14px', background: 'rgba(197,160,89,0.12)', border: '1px solid rgba(197,160,89,0.3)', borderRadius: 6, color: 'var(--gold-lt)', fontSize: 13 }}>
-            <strong>Master Rule:</strong> {activeDining.executiveRule}
+            <strong>Tip:</strong> {activeDining.executiveRule}
           </div>
         </div>
       </div>

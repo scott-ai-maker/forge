@@ -4,6 +4,7 @@ import LogoutButton from '@/components/auth/LogoutButton'
 import SiteHeader from '@/components/ui/SiteHeader'
 import ClientSettingsStudio, { SettingsTab } from '@/components/settings/ClientSettingsStudio'
 import { createSignedFitnessPhotoUrl } from '@/lib/fitness-photos'
+import { getMembershipDisplayName } from '@/lib/forge-memberships'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,10 +95,10 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
       <SiteHeader
         badgeText="Settings & Hardware"
         links={[
-          { href: '/dashboard', label: 'Command Center' },
-          { href: '/dashboard/fitness', label: 'Fitness Lab' },
-          { href: '/dashboard/dossier', label: 'Weekly Dossier' },
-          { href: '/dashboard/book', label: 'Consultations' },
+          { href: '/dashboard', label: 'Today' },
+          { href: '/dashboard/fitness', label: 'Training & progress' },
+          { href: '/dashboard/dossier', label: 'Progress summary' },
+          { href: '/dashboard/book', label: 'Book a session' },
           { href: '/dashboard/messages', label: 'Messages' },
           { href: '/dashboard/settings', label: 'Settings' },
         ]}
@@ -124,7 +125,7 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
         <ClientSettingsStudio
           initialProfile={initialProfile}
           initialFitnessProfile={initialFitnessProfile}
-          activePackageName={latestPackage?.package_name || 'Hybrid Concierge'}
+          activePackageName={getMembershipDisplayName(latestPackage?.package_name || 'Plus')}
           initialTab={initialTab}
         />
       </div>

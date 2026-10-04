@@ -40,7 +40,7 @@ describe('Sunday Intelligence Dossier Engine', () => {
     expect(dossier.adherencePct).toBe(100)
     expect(dossier.recoveryIndexScore).toBeGreaterThanOrEqual(80)
     expect(dossier.executiveSummary.length).toBeGreaterThanOrEqual(3)
-    expect(dossier.nextWeekFocus).toContain('Progressive volume overload')
+    expect(dossier.nextWeekFocus).toContain('small increase (2.5–5%)')
   })
 
   it('handles empty / rest week gracefully with baseline calibration message', () => {
@@ -61,8 +61,8 @@ describe('Sunday Intelligence Dossier Engine', () => {
     expect(dossier.adherencePct).toBe(0)
     expect(dossier.acwrRatio).toBeNull()
     expect(dossier.acwrZone).toBe('No Data')
-    expect(dossier.acwrStatusMessage).toContain('Insufficient Workload Telemetry')
-    expect(dossier.executiveSummary[0]).toContain('Baseline calibration week')
+    expect(dossier.acwrStatusMessage).toContain('Not enough recent workout data')
+    expect(dossier.executiveSummary[0]).toContain('not enough workout data')
     expect(dossier.authSignature).toMatch(/^GAA-SIG-[0-9A-F]{4}-[0-9A-F]{4}$/)
     expect(dossier.soapRecord.subjective).toBeTruthy()
     expect(dossier.soapRecord.plan).toBeTruthy()
@@ -162,7 +162,7 @@ describe('Sunday Intelligence Dossier Engine', () => {
 
       expect(dossier.acwrRatio).toBe(1)
       expect(dossier.acwrZone).toBe('Sweet Spot')
-      expect(dossier.acwrStatusMessage).toContain('Optimal Adaptation Corridor')
+      expect(dossier.acwrStatusMessage).toContain('within your usual range')
     })
 
     it('flags Danger Zone (>=1.50) when acute workload spikes significantly over chronic baseline', () => {
@@ -186,7 +186,7 @@ describe('Sunday Intelligence Dossier Engine', () => {
 
       expect(dossier.acwrRatio).toBe(2)
       expect(dossier.acwrZone).toBe('Danger Zone')
-      expect(dossier.acwrStatusMessage).toContain('Acute fatigue significantly outpaces chronic tolerance')
+      expect(dossier.acwrStatusMessage).toContain('much higher than usual')
     })
 
     it('reports No Data and null ACWR ratio when no working sets are logged', () => {
@@ -204,9 +204,9 @@ describe('Sunday Intelligence Dossier Engine', () => {
 
       expect(dossier.acwrRatio).toBeNull()
       expect(dossier.acwrZone).toBe('No Data')
-      expect(dossier.acwrStatusMessage).toContain('Insufficient Workload Telemetry')
-      expect(dossier.soapRecord.objective).toContain('ACWR Ratio: No Data (insufficient volume logged)')
-      expect(dossier.soapRecord.assessment).toContain('Insufficient training volume logged')
+      expect(dossier.acwrStatusMessage).toContain('Not enough recent workout data')
+      expect(dossier.soapRecord.objective).toContain('not enough data yet')
+      expect(dossier.soapRecord.assessment).toContain('not enough training data yet')
     })
 
     it('synthesizes clinical S.O.A.P. notes integrating ACWR and recovery indices', () => {
@@ -226,9 +226,9 @@ describe('Sunday Intelligence Dossier Engine', () => {
       )
 
       expect(dossier.soapRecord.subjective).toContain('Phase 1: Stabilization Endurance')
-      expect(dossier.soapRecord.objective).toContain('mechanical volume')
-      expect(dossier.soapRecord.assessment).toContain('Neuromuscular adaptations')
-      expect(dossier.soapRecord.plan).toContain('Progressive neuromuscular challenge')
+      expect(dossier.soapRecord.objective).toContain('You lifted 1,800 pounds')
+      expect(dossier.soapRecord.assessment).toContain('within your usual range')
+      expect(dossier.soapRecord.plan).toContain('Practice each movement with control')
     })
   })
 })

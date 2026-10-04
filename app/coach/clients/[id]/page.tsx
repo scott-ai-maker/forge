@@ -68,7 +68,7 @@ const CoachAiFastTrackOnboardingStudio = dynamicImport(() => import('@/component
   loading: () => <CoachTabSkeleton label="Loading AI Fast-Track Onboarding Suite..." />,
 })
 const ExecutiveSundayDossier = dynamicImport(() => import('@/components/dashboard/ExecutiveSundayDossier'), {
-  loading: () => <CoachTabSkeleton label="Loading Executive Sunday Intelligence Dossier..." />,
+  loading: () => <CoachTabSkeleton label="Loading weekly progress report..." />,
 })
 
 import { generateSundayDossier } from '@/lib/sunday-dossier-engine'
@@ -526,7 +526,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
 
   const progressionProfile = evaluateClientOnboardingProgression({
     clientId: id,
-    clientName: client.full_name ?? 'Athlete',
+    clientName: client.full_name ?? 'Member',
     email: client.email,
     designatedCoachId: client.designated_coach_id,
     currentStatus: clientStatus,
@@ -545,7 +545,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
   })
 
   const sevenDaysAgoStr = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  const athleteClientName = client.full_name || client.email?.split('@')[0] || 'Athlete'
+  const athleteClientName = client.full_name || client.email?.split('@')[0] || 'Member'
   const athletePlanPhase = latestPlansResult.data?.[0]?.phase_name
     ? `Phase ${latestPlansResult.data[0].nasm_opt_phase}: ${latestPlansResult.data[0].phase_name}`
     : (fitnessProfileResult.data?.fitness_goal || 'Phase 1: Stabilization Endurance')
@@ -572,13 +572,13 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
   return (
     <main className="coach-client-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
       <SiteHeader
-        badgeText="Athlete Profile"
+        badgeText="Member Profile"
         links={[
-          { href: '/coach', label: 'Triage' },
-          { href: '/coach#assigned-clients', label: 'Athletes' },
-          { href: `/coach/clients/${id}/messages`, label: 'Concierge' },
-          { href: `/coach/clients/${id}/live`, label: 'Live Studio' },
-          { href: '/coach/settings', label: 'Operations' },
+          { href: '/coach', label: 'Overview' },
+          { href: '/coach#assigned-clients', label: 'Members' },
+          { href: `/coach/clients/${id}/messages`, label: 'Messages' },
+          { href: `/coach/clients/${id}/live`, label: 'Live Coaching' },
+          { href: '/coach/settings', label: 'Settings' },
         ]}
         actions={<LogoutButton />}
       />
@@ -588,7 +588,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
           href="/coach"
           className="sgf-shell-back"
         >
-          ← Back to Clients
+          ← Back to Members
         </a>
 
         <div style={{ marginBottom: 20 }}>
@@ -611,14 +611,14 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
               }}
             >
               <GaaIcon name="camera" size={15} style={{ color: '#080E14', stroke: '#080E14' }} />
-              <span>Launch Live Studio</span>
+              <span>Start Live Coaching</span>
             </Link>
 
             <a
               href={`/coach/clients/${id}/messages`}
               className="sgf-button sgf-button-secondary"
             >
-              Message Client
+              Message Member
             </a>
             <a
               href={`/coach/clients/${id}/dossier`}
@@ -638,7 +638,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
               }}
             >
               <GaaIcon name="crown" size={13} tone="inherit" />
-              <span>Sunday Dossier</span>
+              <span>Weekly Progress Report</span>
             </a>
             <CoachClientAssignmentButton clientId={id} mode="release" />
             <a
@@ -725,10 +725,10 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 20, color: 'var(--white)', margin: 0, letterSpacing: '0.04em' }}>
-                    ATHLETE ONBOARDING &amp; TESTING PROGRESSION CONTINUUM
+                    MEMBER ONBOARDING AND PROGRESS
                   </h2>
                   <p style={{ color: 'var(--gray)', fontSize: 13, margin: '4px 0 0' }}>
-                    9-stage clinical and periodization trajectory from intake liability screening to long-term athletic retention.
+                    A 9-step path from your first check-in and movement screening to steady progress.
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -758,7 +758,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
             {/* AI Fast-Track Dual-Scanner & Program Studio */}
             <CoachAiFastTrackOnboardingStudio
               clientId={id}
-              clientName={client.full_name ?? 'Athlete'}
+              clientName={client.full_name ?? 'Member'}
               age={Number(fitnessProfileResult.data?.age) || 32}
               sex={(fitnessProfileResult.data?.sex as 'male' | 'female' | 'other') || 'male'}
               heightCm={Number(fitnessProfileResult.data?.height_cm) || 178}
@@ -986,7 +986,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
             {/* Stage 3: Athlete Biometrics & Environmental Readiness Card */}
             <CoachAthleteVitalsEnvironmentalCard
               clientId={id}
-              clientName={client.full_name ?? 'Athlete'}
+              clientName={client.full_name ?? 'Member'}
               fitnessProfile={fitnessProfileResult.data}
               latestBodyComposition={bodyCompositionResult.data}
               preferredUnits={clientUnits}
@@ -1078,7 +1078,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
                 title="Progress Photo Timeline"
                 subtitle="Recent physique check-ins for coach review and AI DEXA scans."
                 clientId={id}
-                clientName={client.full_name ?? 'Athlete'}
+                clientName={client.full_name ?? 'Member'}
                 bodyFatInputs={{
                   sex: fitnessProfileResult.data?.sex,
                   heightCm: fitnessProfileResult.data?.height_cm,
@@ -1165,7 +1165,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
         {activeTab === 'program' && (
           <CoachProgramWorkspace
             clientId={id}
-            clientName={client.full_name ?? 'Athlete'}
+            clientName={client.full_name ?? 'Member'}
             latestPlan={latestPlansResult.data?.[0] ?? null}
             allPlans={latestPlansResult.data ?? []}
             latestAssessment={nasmAssessmentsResult.data?.[0] ?? null}
@@ -1316,7 +1316,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
             <ClientDetailClient
               clientId={id}
               sessions={sessions ?? []}
-              clientName={client.full_name ?? 'Athlete'}
+              clientName={client.full_name ?? 'Member'}
               packages={packages ?? []}
             />
           </>
@@ -1327,7 +1327,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
             <h2 style={sectionHeadingStyle}>Weekly Check-Ins</h2>
             <CoachCheckinReview
               clientId={id}
-              clientName={client.full_name ?? 'Athlete'}
+              clientName={client.full_name ?? 'Member'}
               initialCheckins={weeklyCheckinsResult.data ?? []}
               acwrRatio={acwrData.acwrRatio}
               acwrZone={acwrData.acwrZone}
@@ -1348,7 +1348,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
         {activeTab === 'dossier' && (
           <div style={{ display: 'grid', gap: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              <h2 style={sectionHeadingStyle}>Executive Sunday Intelligence Dossier</h2>
+              <h2 style={sectionHeadingStyle}>Weekly Progress Report</h2>
               <Link
                 href={`/coach/clients/${id}/dossier`}
                 className="tactile-btn"
@@ -1367,7 +1367,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
                 }}
               >
                 <GaaIcon name="crown" size={13} tone="inherit" />
-                <span>Open Standalone / Boardroom Print View</span>
+                <span>Open printable progress report</span>
                 <span>➔</span>
               </Link>
             </div>
@@ -1380,7 +1380,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
               />
             ) : (
               <div style={{ padding: 24, background: 'var(--navy-mid)', border: '1px solid var(--navy-lt)', borderRadius: 8, color: 'var(--gray)' }}>
-                Loading athlete telemetry dossier...
+                Loading weekly progress report...
               </div>
             )}
           </div>
