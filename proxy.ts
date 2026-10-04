@@ -38,7 +38,8 @@ export async function proxy(request: NextRequest) {
     searchParams.get('mode') === 'companion' ||
     searchParams.get('mode') === 'helper'
   const isHelperCookie = request.cookies.get('gaa_helper_mode')?.value === '1'
-  const isHelperRequest = Boolean(isCapacitorPlatform || isHelperQuery || isHelperCookie)
+  const isExplicitHelperRequest = Boolean(isCapacitorPlatform || isHelperQuery)
+  const isHelperRequest = Boolean(isExplicitHelperRequest || isHelperCookie)
 
   if (!supabaseUrl || !supabaseAnonKey || !isValidUrl) {
     // Supabase is not configured — protect routes defensively by redirecting
@@ -86,10 +87,8 @@ export async function proxy(request: NextRequest) {
     })
   }
 
-  // 1. Root route guard for helper apps:
-  // When running inside a helper app (PWA, iOS, Android), root '/' should NEVER display
-  // the marketing website. Instead route directly to workout execution or companion login.
-  if (pathname === '/' && isHelperRequest) {
+  // 1. Route explicit helper launches away from the public homepage.
+  if (pathname === '/' && isExplicitHelperRequest) {
     const url = request.nextUrl.clone()
     if (user) {
       url.pathname = '/dashboard/fitness'
