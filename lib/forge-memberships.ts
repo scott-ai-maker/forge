@@ -17,9 +17,9 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     annualPriceCents: 14900,
     trialDays: 7,
     features: [
-      'Automated NASM OPT™ periodization',
-      '1RM strength telemetry',
-      '3D AI posture audit',
+      'Personalized NASM OPT™ training plan',
+      'Workout, strength, and personal-record tracking',
+      'Movement screening and practical guidance',
     ],
   },
   {
@@ -27,9 +27,9 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     name: 'Pro Athlete',
     monthlyPriceCents: 4900,
     features: [
-      'Voice AI training cadences',
-      'Biomechanical mesh diagnostics',
-      'Weekly automated performance dossiers',
+      'Voice-guided training sessions',
+      'Movement and recovery insights',
+      'Weekly performance summaries',
     ],
   },
   {
@@ -37,9 +37,9 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     name: 'Transformation Direct',
     monthlyPriceCents: 19900,
     features: [
-      'Quarterly asynchronous video critiques',
-      'Direct review by Coach Scott Gordon',
+      'Quarterly video reviews by Coach Scott Gordon',
       'Personalized movement and technique feedback',
+      'Direct access to your coach',
     ],
   },
 ]

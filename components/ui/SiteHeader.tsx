@@ -11,6 +11,7 @@ import GaaIcon from '@/components/ui/GaaIcon'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import { createClient } from '@/lib/supabase-browser'
 import { isCompanionApp, useHelperAppMode } from '@/lib/native-companion'
+import { CLIENT_PRIMARY_NAV } from '@/components/ui/client-primary-navigation'
 
 const BRAND_LOGO = '/images/brand/logo-concept-1-kinetic-f.jpg'
 
@@ -38,8 +39,12 @@ export default function SiteHeader({
   const isPrivatePortal = isCoach || isDashboard
   const { isHelper } = useHelperAppMode()
   const isCompanion = isCompanionApp() || isHelper
+  const isCoachPreview = isDashboard && links.some(link => link.href.startsWith('/coach'))
+  const primaryLinks = isDashboard && !isCoach && !isCoachPreview
+    ? CLIENT_PRIMARY_NAV.map(({ href, label }) => ({ href, label }))
+    : links
   const displayLinks = isCompanion
-    ? links.filter(l =>
+    ? primaryLinks.filter(l =>
         l.href !== '/packages' &&
         l.href !== '/apply' &&
         l.href !== '/intake' &&
@@ -47,7 +52,7 @@ export default function SiteHeader({
         l.href !== '/audit' &&
         l.href !== '/async-coaching'
       )
-    : links
+    : primaryLinks
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(false)
