@@ -148,7 +148,7 @@ export default function PwaInstallPrompt() {
             flexShrink: 0,
           }}
         >
-          <GaaIcon name="lightning" size={18} tone="gold" />
+          <img src="/images/icon-192.png" alt="" width={36} height={36} style={{ borderRadius: 8, display: "block" }} />
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ color: '#F8FAFC', fontSize: 12.5, fontWeight: 700, fontFamily: 'Raleway, sans-serif' }}>
