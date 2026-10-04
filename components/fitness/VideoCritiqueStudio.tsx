@@ -13,6 +13,10 @@ import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/fo
 export interface VideoCritiqueStudioProps {
   initialLift?: LiftType
   initialCritique?: VideoCritiqueAnalysis | null
+  // When true each scan spends one use from the Technique Video Review Pack
+  meterUsage?: boolean
+  onUsageConsumed?: () => void
+  onUsageBlocked?: () => void
 }
 
 const COMMON_FAULTS_BY_LIFT: Record<LiftType, { id: string; label: string }[]> = {
@@ -56,7 +60,7 @@ export function inferLiftTypeFromFileName(fileName: string): LiftType | null {
   return null
 }
 
-export default function VideoCritiqueStudio({ initialLift, initialCritique }: VideoCritiqueStudioProps) {
+export default function VideoCritiqueStudio({ initialLift, initialCritique, meterUsage = false, onUsageConsumed, onUsageBlocked }: VideoCritiqueStudioProps) {
   const [selectedLift, setSelectedLift] = useState<LiftType>(initialLift ?? 'barbell_back_squat')
   const [loadLbs, setLoadLbs] = useState<string>('275')
   const [repsCount, setRepsCount] = useState<string>('5')
@@ -74,6 +78,7 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique }: Vi
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0)
   const [scanProgress, setScanProgress] = useState<{ step: number; totalSteps: number; label: string; percent: number } | null>(null)
 
+  const [usageError, setUsageError] = useState<string | null>(null)
   const [critique, setCritique] = useState<VideoCritiqueAnalysis | null>(
     initialCritique ?? analyzeLiftForm({ liftType: initialLift ?? 'barbell_back_squat', loadLbs: 275, repsCount: 5 })
   )
@@ -115,7 +120,28 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique }: Vi
     runBiomechanicalScan(targetLift, file.name)
   }
 
-  const runBiomechanicalScan = (lift: LiftType, fileNameHint?: string) => {
+  const runBiomechanicalScan = async (lift: LiftType, fileNameHint?: string) => {
+    if (meterUsage) {
+      try {
+        const res = await fetch('/api/fitness/video-critique', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lift_type: lift }),
+        })
+        if (!res.ok) {
+          if (res.status === 402) onUsageBlocked?.()
+          const data = await res.json().catch(() => null)
+          setUsageError(data?.error ?? 'Could not start the analysis. Please try again.')
+          return
+        }
+        setUsageError(null)
+        onUsageConsumed?.()
+      } catch {
+        setUsageError('Could not start the analysis. Please try again.')
+        return
+      }
+    }
+
     setAnalyzing(true)
     setScanProgress({ step: 1, totalSteps: 4, label: 'Extracting 60fps kinetic frame vectors & joint anchors...', percent: 25 })
 
@@ -215,6 +241,9 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique }: Vi
             >
               Kinetic Form Diagnostics & Correctives Studio
             </h2>
+            {usageError && (
+              <p role="alert" style={{ margin: '8px 0 0', color: 'var(--error)', fontSize: 13 }}>{usageError}</p>
+            )}
           </div>
         </div>
         <p style={{ margin: '8px 0 0', color: 'var(--gray)', fontSize: 14, lineHeight: 1.6, maxWidth: 840 }}>

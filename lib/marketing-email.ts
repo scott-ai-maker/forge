@@ -173,7 +173,7 @@ const sequenceTemplates = [
   },
 ] as const
 
-function getBaseUrl() {
+export function getBaseUrl() {
   const customEmailBase = process.env.EMAIL_LINK_BASE_URL?.trim()
   if (customEmailBase) {
     return customEmailBase.replace(/\/+$/, '')
@@ -344,6 +344,13 @@ async function sendEmail(params: {
 
   if (error) throw error
   return { skipped: false as const, id: data?.id ?? null }
+}
+
+// Transactional emails (receipts, session alerts) share the Resend setup but are governed by notification preferences, not marketing unsubscribes.
+export async function sendTransactionalEmail(params: { to: string; subject: string; html: string; text: string }) {
+  const email = normalizeEmail(params.to)
+  if (!EMAIL_REGEX.test(email)) throw new Error('Invalid notification email address')
+  return sendEmail({ ...params, to: email, disableTracking: true })
 }
 
 export async function sendWelcomeEmail(input: WelcomeInput) {

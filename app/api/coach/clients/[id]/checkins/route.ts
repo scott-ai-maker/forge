@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendPushToUser } from '@/lib/push-notifications'
+import { notifyUser } from '@/lib/notifications'
 
 export async function GET(
   req: NextRequest,
@@ -105,16 +105,12 @@ export async function PATCH(
   }
 
   if (patch.coach_feedback) {
-    void sendPushToUser({
+    void notifyUser({
       userId: clientId,
-      alert: {
-        title: 'Coach feedback posted',
-        body: patch.coach_feedback.slice(0, 140),
-      },
-      data: {
-        type: 'coach_feedback',
-        checkinId,
-      },
+      type: 'coach_feedback',
+      title: 'Coach feedback posted',
+      body: patch.coach_feedback.slice(0, 140),
+      data: { checkinId },
     }).catch(() => undefined)
   }
 

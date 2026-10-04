@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 import { POST } from './route'
 import { getRequestAuthz, requireCoachAssignedClient } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendPushToUser } from '@/lib/push-notifications'
+import { notifyUser } from '@/lib/notifications'
 
 vi.mock('@/lib/authz', () => ({
   getRequestAuthz: vi.fn(),
@@ -17,8 +17,8 @@ vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: vi.fn(),
 }))
 
-vi.mock('@/lib/push-notifications', () => ({
-  sendPushToUser: vi.fn().mockResolvedValue({ delivered: 1, skipped: false }),
+vi.mock('@/lib/notifications', () => ({
+  notifyUser: vi.fn().mockResolvedValue({ channels: ['push'] }),
 }))
 
 describe('Live Session Start Alert API', () => {
@@ -81,6 +81,6 @@ describe('Live Session Start Alert API', () => {
     const json = await res.json()
     expect(json.success).toBe(true)
     expect(json.pushSent).toBe(true)
-    expect(sendPushToUser).toHaveBeenCalled()
+    expect(notifyUser).toHaveBeenCalled()
   })
 })

@@ -169,6 +169,40 @@ describe('stripe checkout route', () => {
     })
   })
 
+  it('creates add-on and private session pack checkouts as one-time payments that grant session credits', async () => {
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ addonId: 'addon-private-session-4' }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+
+    const createArgs = createSessionMock.mock.calls[0][0]
+    expect(createArgs.mode).toBe('payment')
+    expect(createArgs.subscription_data).toBeUndefined()
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(66000)
+    expect(createArgs.line_items[0].price_data.recurring).toBeUndefined()
+    expect(createArgs.metadata).toMatchObject({
+      clientId: 'client-1',
+      packageId: 'addon-private-session-4',
+      sessionsTotal: '4',
+      source: 'forge_addon',
+    })
+    expect(createArgs.cancel_url).toBe('http://localhost/packages#add-ons')
+  })
+
+  it('rejects unknown add-ons', async () => {
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ addonId: 'addon-does-not-exist' }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(404)
+    expect(createSessionMock).not.toHaveBeenCalled()
+  })
+
   it('creates Core monthly subscriptions with a seven-day free trial', async () => {
     const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',

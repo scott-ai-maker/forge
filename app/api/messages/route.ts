@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestAuthz, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
-import { sendPushToUser } from '@/lib/push-notifications'
+import { notifyUser } from '@/lib/notifications'
 import {
   isVoiceNoteBody,
   parseVoiceNoteBody,
@@ -173,17 +173,12 @@ export async function POST(req: NextRequest) {
     alertSnippet = `Voice memo ${duration ? `(${duration}s)` : ''}`
   }
 
-  void sendPushToUser({
+  void notifyUser({
     userId: recipientUserId,
-    alert: {
-      title: authz.client.role === 'coach' ? 'New coach message' : 'New client message',
-      body: alertSnippet.slice(0, 140),
-    },
-    data: {
-      type: 'new_message',
-      clientId,
-      coachId,
-    },
+    type: 'new_message',
+    title: authz.client.role === 'coach' ? 'New coach message' : 'New client message',
+    body: alertSnippet.slice(0, 140),
+    data: { clientId, coachId },
   }).catch(() => undefined)
 
   const [enriched] = await enrichMessagesWithSignedVoiceUrls(admin, [

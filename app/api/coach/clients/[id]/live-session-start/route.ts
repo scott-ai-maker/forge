@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestAuthz, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
-import { sendPushToUser } from '@/lib/push-notifications'
+import { notifyUser } from '@/lib/notifications'
 
 export async function POST(
   req: NextRequest,
@@ -56,20 +56,14 @@ export async function POST(
   // 3. Dispatch high-priority Push Notification to athlete
   let pushSent = false
   try {
-    const res = await sendPushToUser({
+    const res = await notifyUser({
       userId: clientId,
-      alert: {
-        title: 'Coach Scott Gordon is Live!',
-        body: 'Your 1:1 Live Movement & Advisory Consultation is starting now. Tap to join.',
-      },
-      data: {
-        type: 'live_session_started',
-        url: '/dashboard/live',
-        clientId,
-        coachId: authz.user.id,
-      },
+      type: 'live_session_started',
+      title: 'Coach Scott Gordon is Live!',
+      body: 'Your 1:1 Live Movement & Advisory Consultation is starting now. Tap to join.',
+      data: { clientId, coachId: authz.user.id },
     })
-    pushSent = res.delivered > 0
+    pushSent = res.channels.length > 0
   } catch {
     pushSent = false
   }

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
+import { buildEntitlementGrant, buildMembershipEntitlementGrants } from '@/lib/addon-entitlements'
+import { getForgeAddon } from '@/lib/forge-addons'
+import { notifyUser } from '@/lib/notifications'
+import { getForgeMembership } from '@/lib/forge-memberships'
 
 type PackageGrantPayload = {
   clientId: string
@@ -235,6 +239,8 @@ export async function POST(req: NextRequest) {
         sessionsTotal,
         discountCode,
         discountAmountCents,
+        source,
+        packageId,
       } = session.metadata ?? {}
       const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : null
       const stripeCustomerId = typeof session.customer === 'string' ? session.customer : null
@@ -256,8 +262,36 @@ export async function POST(req: NextRequest) {
           )
         }
 
-        // Backward compatibility for older one-time payment checkouts.
-        if (session.mode === 'payment' && paymentIntentId) {
+        const isAddonPurchase = source === 'forge_addon'
+
+        if (isAddonPurchase && session.mode === 'payment' && session.payment_status === 'paid' && paymentIntentId) {
+          const addon = getForgeAddon(packageId ?? '')
+          const grant = addon ? buildEntitlementGrant(addon, clientId, paymentIntentId) : null
+          if (grant) {
+            // stripe_payment_id is unique, so webhook retries cannot grant the same purchase twice.
+            const { error: entitlementError } = await admin
+              .from('client_addon_entitlements')
+              .upsert(grant, { onConflict: 'stripe_payment_id', ignoreDuplicates: true })
+            if (entitlementError) {
+              throw new Error(`Failed granting add-on entitlement: ${entitlementError.message}`)
+            }
+            await notifyUser({
+              userId: clientId,
+              type: 'addon_unlocked',
+              title: `${addon!.name} is unlocked`,
+              body: 'Your purchase went through. Your new access is ready to use now.',
+              dedupeKey: `addon-unlocked:${paymentIntentId}`,
+            })
+          }
+        }
+
+        // Backward compatibility for older one-time payment checkouts. Add-ons only create a
+        // session package when they carry bookable private-session credits.
+        if (
+          session.mode === 'payment' &&
+          paymentIntentId &&
+          (!isAddonPurchase || Number.parseInt(sessionsTotal, 10) > 0)
+        ) {
           const parsedSessions = Number.parseInt(sessionsTotal, 10)
           const parsedDiscountAmount = Number.parseInt(discountAmountCents ?? '0', 10)
           const discountAmount = Number.isNaN(parsedDiscountAmount) ? 0 : Math.max(parsedDiscountAmount, 0)
@@ -270,6 +304,16 @@ export async function POST(req: NextRequest) {
             discountCode,
             discountAmountCents: discountAmount,
           })
+
+          if (grantResult.inserted && Number.parseInt(sessionsTotal, 10) > 0) {
+            await notifyUser({
+              userId: clientId,
+              type: 'session_credits_added',
+              title: 'Your session credits are ready',
+              body: `${packageName} added ${Number.parseInt(sessionsTotal, 10)} session credit(s). Book your time whenever you are ready.`,
+              dedupeKey: `session-credits:${paymentIntentId}`,
+            })
+          }
 
           if (grantResult.inserted && grantResult.normalizedDiscountCode) {
             await recordDiscountRedemption(admin, {
@@ -325,6 +369,19 @@ export async function POST(req: NextRequest) {
             discountAmountCents: discountAmount,
           })
 
+          const membership = metadata.source === 'forge_membership' ? getForgeMembership(metadata.packageId ?? '') : undefined
+          if (membership) {
+            const grants = buildMembershipEntitlementGrants(membership, clientId, invoiceId)
+            if (grants.length > 0) {
+              const { error: membershipGrantError } = await admin
+                .from('client_addon_entitlements')
+                .upsert(grants, { onConflict: 'stripe_payment_id', ignoreDuplicates: true })
+              if (membershipGrantError) {
+                throw new Error(`Failed granting membership entitlements: ${membershipGrantError.message}`)
+              }
+            }
+          }
+
           // Record redemption once on subscription creation invoice.
           if (
             grantResult.inserted &&
@@ -361,6 +418,13 @@ export async function POST(req: NextRequest) {
           'financial_hold',
           `Subscription invoice ${invoice.id} payment failed. Placed on financial hold.`
         )
+        await notifyUser({
+          userId: clientId,
+          type: 'payment_failed',
+          title: 'Your payment did not go through',
+          body: 'Update your payment method to keep your membership and coaching access active.',
+          dedupeKey: `payment-failed:${invoice.id}`,
+        })
       }
     }
 

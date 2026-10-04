@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendWeeklyCheckinNudges } from '@/lib/push-notifications'
+import { sendWeeklyCheckinNudges } from '@/lib/notifications'
 
 function isAuthorized(req: NextRequest): boolean {
   const expected = process.env.INTERNAL_CRON_SECRET?.trim()

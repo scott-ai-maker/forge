@@ -1,3 +1,5 @@
+import type { ForgeAddonFeature } from '@/lib/forge-addons'
+
 export type ForgeMembershipCadence = 'monthly' | 'annual'
 
 export interface ForgeMembership {
@@ -6,6 +8,8 @@ export interface ForgeMembership {
   monthlyPriceCents: number
   annualPriceCents?: number
   trialDays?: number
+  // Self-serve tools unlocked while the membership is paid; uses are per billing cycle (omitted = unlimited)
+  includedFeatures?: readonly { feature: ForgeAddonFeature; uses?: number }[]
   features: readonly string[]
 }
 
@@ -26,20 +30,33 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     id: 'forge-pro-athlete',
     name: 'Pro Athlete',
     monthlyPriceCents: 4900,
+    includedFeatures: [
+      { feature: 'nutrition' },
+      { feature: 'travel' },
+      { feature: 'video-review', uses: 2 },
+    ],
     features: [
       'Voice-guided training sessions',
       'Movement and recovery insights',
       'Weekly performance summaries',
+      'Nutrition planning and travel workout tools included',
+      '2 video form analyses per month',
     ],
   },
   {
     id: 'forge-transformation-direct',
     name: 'Transformation Direct',
     monthlyPriceCents: 19900,
+    includedFeatures: [
+      { feature: 'nutrition' },
+      { feature: 'travel' },
+      { feature: 'video-review', uses: 8 },
+    ],
     features: [
+      'Everything in Pro Athlete',
       'Quarterly video reviews by Coach Scott Gordon',
-      'Personalized movement and technique feedback',
       'Direct access to your coach',
+      '8 video form analyses per month',
     ],
   },
 ]
@@ -59,4 +76,8 @@ export function getForgeMembershipPrice(
   }
 
   return { amountCents: membership.monthlyPriceCents, interval: 'month' }
+}
+
+export function getMembershipsIncluding(feature: ForgeAddonFeature): ForgeMembership[] {
+  return FORGE_MEMBERSHIPS.filter(m => m.includedFeatures?.some(f => f.feature === feature))
 }

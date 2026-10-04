@@ -7,8 +7,8 @@ const { getRequestAuthzMock, requireCoachAssignedClientMock, supabaseAdminMock }
   supabaseAdminMock: vi.fn(),
 }))
 
-const { sendPushToUserMock } = vi.hoisted(() => ({
-  sendPushToUserMock: vi.fn(),
+const { notifyUserMock } = vi.hoisted(() => ({
+  notifyUserMock: vi.fn(),
 }))
 
 vi.mock('@/lib/authz', async () => {
@@ -24,8 +24,8 @@ vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: supabaseAdminMock,
 }))
 
-vi.mock('@/lib/push-notifications', () => ({
-  sendPushToUser: sendPushToUserMock,
+vi.mock('@/lib/notifications', () => ({
+  notifyUser: notifyUserMock,
 }))
 
 import { GET, POST, PATCH, DELETE } from '@/app/api/messages/route'
@@ -82,7 +82,7 @@ describe('messages route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     supabaseAdminMock.mockReturnValue(createMessagesAdmin([{ id: 'msg-1', message_body: 'hello' }]))
-    sendPushToUserMock.mockResolvedValue({ delivered: 1, skipped: false })
+    notifyUserMock.mockResolvedValue({ channels: ['push'] })
   })
 
   it('returns unauthorized when message authz fails', async () => {
@@ -192,14 +192,12 @@ describe('messages route', () => {
         deleted_at: null,
       },
     })
-    expect(sendPushToUserMock).toHaveBeenCalledWith({
+    expect(notifyUserMock).toHaveBeenCalledWith({
       userId: 'coach-1',
-      alert: {
-        title: 'New client message',
-        body: 'Need to reschedule',
-      },
+      title: 'New client message',
+      body: 'Need to reschedule',
+      type: 'new_message',
       data: {
-        type: 'new_message',
         clientId: 'client-1',
         coachId: 'coach-1',
       },
@@ -232,14 +230,12 @@ describe('messages route', () => {
         deleted_at: null,
       },
     })
-    expect(sendPushToUserMock).toHaveBeenCalledWith({
+    expect(notifyUserMock).toHaveBeenCalledWith({
       userId: 'coach-1',
-      alert: {
-        title: 'New client message',
-        body: 'Voice memo (15s)',
-      },
+      title: 'New client message',
+      body: 'Voice memo (15s)',
+      type: 'new_message',
       data: {
-        type: 'new_message',
         clientId: 'client-1',
         coachId: 'coach-1',
       },

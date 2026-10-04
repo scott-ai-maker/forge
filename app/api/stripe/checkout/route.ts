@@ -9,6 +9,7 @@ import {
   type DiscountCodeRecord,
 } from '@/lib/discount-codes'
 import { getForgeMembership, getForgeMembershipPrice } from '@/lib/forge-memberships'
+import { getForgeAddon } from '@/lib/forge-addons'
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,15 +50,17 @@ export async function POST(req: NextRequest) {
 
     const packageId = body?.packageId
     const productId = body?.productId
+    const addonId = body?.addonId
     const cadence = body?.cadence === 'twelve_week' ? 'twelve_week' : 'monthly'
     const isPif = cadence === 'twelve_week'
     const discountCodeInput = normalizeDiscountCode(typeof body?.discountCode === 'string' ? body.discountCode : '')
 
     if (
       (!packageId || typeof packageId !== 'string') &&
-      (!productId || typeof productId !== 'string')
+      (!productId || typeof productId !== 'string') &&
+      (!addonId || typeof addonId !== 'string')
     ) {
-      return NextResponse.json({ error: 'packageId or productId is required' }, { status: 400 })
+      return NextResponse.json({ error: 'packageId, productId, or addonId is required' }, { status: 400 })
     }
 
     const { stripe, PACKAGES, COACHING_ADDONS, STANDALONE_PRODUCTS } = await import('@/lib/stripe')
@@ -133,6 +136,76 @@ export async function POST(req: NextRequest) {
             basePriceCents: membershipPrice.amountCents,
             discountAmountCents: 0,
             finalPriceCents: membershipPrice.amountCents,
+            discountCode: null,
+          },
+        })
+      } catch (stripeErr) {
+        const errMsg = stripeErr instanceof Error ? stripeErr.message : 'Stripe checkout error'
+        return NextResponse.json({ error: errMsg }, { status: 400 })
+      }
+    }
+
+    if (typeof addonId === 'string') {
+      const addon = getForgeAddon(addonId)
+      if (!addon) {
+        return NextResponse.json({ error: 'Add-on not found' }, { status: 404 })
+      }
+
+      let appUrl: string
+      try {
+        appUrl = getTrustedAppBaseUrl()
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'App base URL is not configured'
+        return NextResponse.json({ error: message }, { status: 503 })
+      }
+
+      if (!process.env.STRIPE_SECRET_KEY || !stripe) {
+        return NextResponse.json({
+          error: 'Stripe payments are not currently configured. Please contact support or try again later.',
+        }, { status: 503 })
+      }
+
+      // Add-ons are one-time payments so cancelling one can never affect the client's membership subscription.
+      const metadataPayload = {
+        clientId: userId,
+        packageId: addon.id,
+        packageName: addon.name,
+        sessionsTotal: String(addon.sessions),
+        cadence: 'one_time',
+        basePriceCents: String(addon.priceCents),
+        finalPriceCents: String(addon.priceCents),
+        source: 'forge_addon',
+      }
+
+      try {
+        const session = await stripe.checkout.sessions.create({
+          mode: 'payment',
+          client_reference_id: userId,
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: addon.name,
+                  description: addon.includes.join(' · '),
+                },
+                unit_amount: addon.priceCents,
+              },
+              quantity: 1,
+            },
+          ],
+          payment_intent_data: { metadata: metadataPayload },
+          metadata: metadataPayload,
+          success_url: `${appUrl}/dashboard?success=true&addon=${encodeURIComponent(addon.id)}`,
+          cancel_url: `${appUrl}/packages#add-ons`,
+        })
+
+        return NextResponse.json({
+          url: session.url,
+          pricing: {
+            basePriceCents: addon.priceCents,
+            discountAmountCents: 0,
+            finalPriceCents: addon.priceCents,
             discountCode: null,
           },
         })

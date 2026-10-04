@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 import ReadinessRecoveryTracker from '@/components/fitness/ReadinessRecoveryTracker'
 import PeriodizationRoadmapView from '@/components/fitness/PeriodizationRoadmapView'
+import AddonUnlockCard from '@/components/packages/AddonUnlockCard'
+import { useAddonEntitlements } from '@/components/packages/useAddonEntitlements'
 import MetabolicNutritionProtocol from '@/components/fitness/MetabolicNutritionProtocol'
 import ClinicalKineticWarmupModule from '@/components/fitness/ClinicalKineticWarmupModule'
 import NasmAssessmentSummary from '@/components/fitness/NasmAssessmentSummary'
@@ -118,6 +120,8 @@ export default function FitnessLabDiagnosticsView({
   initialTab,
 }: FitnessLabDiagnosticsViewProps) {
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false)
+  const { features: addonFeatures, loading: addonsLoading, refresh: refreshAddons } = useAddonEntitlements()
+  const loadingCard = <div style={{ padding: 24, textAlign: 'center', color: 'var(--gray)', fontSize: 13 }}>Checking your add-ons...</div>
 
   const weightKg = profile?.weight_kg || 80
   const heightCm = profile?.height_cm || 178
@@ -414,10 +418,26 @@ export default function FitnessLabDiagnosticsView({
         )}
 
         {activeLabTool === 'video' && (
-          <VideoCritiqueStudio initialLift={initialLift} initialCritique={initialCritique} />
+          addonsLoading && !initialCritique ? loadingCard
+            : initialCritique || addonFeatures?.['video-review'].active ? (
+              <>
+                {addonFeatures?.['video-review'].usesRemaining != null && !initialCritique && (
+                  <p style={{ margin: '0 0 10px', color: 'var(--gold-lt)', fontSize: 12 }}>
+                    {addonFeatures['video-review'].usesRemaining} video analyses remaining
+                  </p>
+                )}
+                <VideoCritiqueStudio
+                  initialLift={initialLift}
+                  initialCritique={initialCritique}
+                  meterUsage={!initialCritique}
+                  onUsageConsumed={refreshAddons}
+                  onUsageBlocked={refreshAddons}
+                />
+              </>
+            ) : <AddonUnlockCard feature="video-review" />
         )}
 
-        {activeLabTool === 'nutrition' && (
+        {activeLabTool === 'nutrition' && (addonsLoading ? loadingCard : !addonFeatures?.nutrition.active ? <AddonUnlockCard feature="nutrition" /> : (
           <MetabolicNutritionProtocol
             bodyweightLbs={profile?.weight_kg ? Math.round(profile.weight_kg * 2.20462) : 185}
             goal={profile?.fitness_goal?.toLowerCase().includes('muscle') || profile?.fitness_goal?.toLowerCase().includes('hypertrophy') ? 'hypertrophy' : (profile?.fitness_goal?.toLowerCase().includes('power') ? 'athletic_power' : 'fat_loss')}
@@ -428,7 +448,7 @@ export default function FitnessLabDiagnosticsView({
             telemetry={telemetry}
             intake={intake}
           />
-        )}
+        ))}
 
         {activeLabTool === 'assessment' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -455,7 +475,10 @@ export default function FitnessLabDiagnosticsView({
         )}
 
         {activeLabTool === 'travel' && (
-          <ExecutiveTravelAdapterStudio plan={plan} onApplyTravelPlan={onApplyTravelPlan} />
+          addonsLoading ? loadingCard
+            : addonFeatures?.travel.active
+              ? <ExecutiveTravelAdapterStudio plan={plan} onApplyTravelPlan={onApplyTravelPlan} />
+              : <AddonUnlockCard feature="travel" />
         )}
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import GeneralSettingsForm from '@/components/settings/GeneralSettingsForm'
 import WearablesDeviceStudio from '@/components/fitness/WearablesDeviceStudio'
+import NotificationPreferencesStudio from '@/components/settings/NotificationPreferencesStudio'
 import SpotifySettingsStudio from '@/components/settings/SpotifySettingsStudio'
 import BillingPortalButton from '@/components/packages/BillingPortalButton'
 import AddonSelectionStudio from '@/components/packages/AddonSelectionStudio'
@@ -48,17 +49,6 @@ export default function ClientSettingsStudio({
   const handleTabChange = (tab: SettingsTab) => {
     setActiveTab(tab)
     router.replace(`/dashboard/settings?tab=${tab}`)
-  }
-
-  const [pushEnabled, setPushEnabled] = useState(true)
-  const [emailAlerts, setEmailAlerts] = useState(true)
-  const [smsAlerts, setSmsAlerts] = useState(true)
-  const [notifSaved, setNotifSaved] = useState(false)
-
-  const handleSaveNotifications = (e: React.FormEvent) => {
-    e.preventDefault()
-    setNotifSaved(true)
-    setTimeout(() => setNotifSaved(false), 3000)
   }
 
   return (
@@ -562,120 +552,11 @@ export default function ClientSettingsStudio({
               NOTIFICATION & ALERT PREFERENCES
             </h3>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--gray)' }}>
-              Customize how your master coach and telemetry engine alert you to check-ins, readiness flags, and workout adjustments.
+              Choose how we reach you by push, email, or text, and which updates you want.
             </p>
           </div>
 
-          {notifSaved && (
-            <div
-              style={{
-                padding: '10px 14px',
-                background: 'rgba(16,185,129,0.12)',
-                border: '1px solid rgba(16,185,129,0.4)',
-                borderRadius: 6,
-                fontSize: 12.5,
-                color: '#34D399',
-                marginBottom: 20,
-              }}
-            >
-              ✓ Notification preferences saved successfully!
-            </div>
-          )}
-
-          <form onSubmit={handleSaveNotifications} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px 16px',
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 6,
-                cursor: 'pointer',
-              }}
-            >
-              <div>
-                <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 14 }}>Push Notifications (Mobile & Lock Screen)</div>
-                <div style={{ color: 'var(--gray)', fontSize: 12 }}>Instant alerts for coach voice notes, video critiques, and workout reminders.</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={pushEnabled}
-                onChange={e => setPushEnabled(e.target.checked)}
-                style={{ width: 20, height: 20, accentColor: 'var(--gold)' }}
-              />
-            </label>
-
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px 16px',
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 6,
-                cursor: 'pointer',
-              }}
-            >
-              <div>
-                <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 14 }}>Weekly Sunday Telemetry Audit Emails</div>
-                <div style={{ color: 'var(--gray)', fontSize: 12 }}>Comprehensive breakdown of volume, cardio stage distribution, and CNS readiness.</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={emailAlerts}
-                onChange={e => setEmailAlerts(e.target.checked)}
-                style={{ width: 20, height: 20, accentColor: 'var(--gold)' }}
-              />
-            </label>
-
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px 16px',
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 6,
-                cursor: 'pointer',
-              }}
-            >
-              <div>
-                <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 14 }}>SMS Direct Check-In Reminders</div>
-                <div style={{ color: 'var(--gray)', fontSize: 12 }}>Urgent scheduling reminders and live 1:1 consult meeting links.</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={smsAlerts}
-                onChange={e => setSmsAlerts(e.target.checked)}
-                style={{ width: 20, height: 20, accentColor: 'var(--gold)' }}
-              />
-            </label>
-
-            <div style={{ marginTop: 8 }}>
-              <button
-                type="submit"
-                style={{
-                  background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
-                  color: '#0A0E18',
-                  border: 'none',
-                  padding: '10px 24px',
-                  borderRadius: 6,
-                  fontFamily: 'Raleway, sans-serif',
-                  fontWeight: 800,
-                  fontSize: 12,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                }}
-              >
-                Save Preferences
-              </button>
-            </div>
-          </form>
+          <NotificationPreferencesStudio defaultPhone={initialProfile.phone} />
         </section>
       )}
     </div>

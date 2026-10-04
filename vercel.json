@@ -8,6 +8,10 @@
     {
       "path": "/api/internal/notifications/weekly-checkin",
       "schedule": "0 14 * * 0"
+    },
+    {
+      "path": "/api/internal/notifications/access-expiring",
+      "schedule": "0 15 * * *"
     }
   ]
 }
