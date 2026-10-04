@@ -31,6 +31,16 @@ describe('proxy - In-Gym Helper App & Telemetry Decoupling', () => {
     expect(res.headers.get('location')).toBeNull()
   })
 
+  it('allows standard web requests with a helper-mode cookie to view marketing homepage', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    const req = new NextRequest('http://127.0.0.1:3000/', {
+      headers: { cookie: 'gaa_helper_mode=1' },
+    })
+    const res = await proxy(req)
+
+    expect(res.headers.get('location')).toBeNull()
+  })
+
   it('redirects helper app request (Capacitor header) at root / to companion login when unauthenticated', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } })
     const req = new NextRequest('http://127.0.0.1:3000/', {
@@ -84,4 +94,3 @@ describe('proxy - In-Gym Helper App & Telemetry Decoupling', () => {
     expect(location).toContain('mode=companion')
   })
 })
-
