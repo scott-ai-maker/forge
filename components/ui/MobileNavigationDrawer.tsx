@@ -179,7 +179,8 @@ export default function MobileNavigationDrawer({
         style={{
           position: 'relative',
           width: 'min(380px, 88vw)',
-          height: '100%',
+          height: '100dvh',
+          maxHeight: '100%',
           background: 'linear-gradient(180deg, #101626 0%, #080C16 100%)',
           borderLeft: '1px solid rgba(212,160,23,0.35)',
           display: 'flex',
@@ -402,6 +403,19 @@ export default function MobileNavigationDrawer({
             )}
           </div>
         </div>
+
+        {actions && (
+          <div
+            style={{
+              padding: '10px 18px',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+          >
+            {actions}
+          </div>
+        )}
 
         {/* Scrollable Navigation Sections */}
         <div
@@ -659,9 +673,7 @@ export default function MobileNavigationDrawer({
             gap: 12,
           }}
         >
-          <div style={{ flex: 1 }}>
-            {actions}
-          </div>
+          <div style={{ flex: 1 }} />
 
           {onOpenTutorial && (
             <button
