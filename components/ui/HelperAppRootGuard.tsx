@@ -65,7 +65,7 @@ export default function HelperAppRootGuard() {
           margin: '0 0 8px',
         }}
       >
-        Gordon Athletic Companion
+        Forge Athletic
       </h2>
       <p
         style={{

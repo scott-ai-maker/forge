@@ -129,7 +129,7 @@ export default function MobileAppPromoSection({
         >
           <img
             src="/images/mobile-apps-telemetry.jpg"
-            alt="Gordon Athletic Advisory Mobile Telemetry HUD and Smartwatch Integration"
+            alt="Forge Athletic Mobile Telemetry HUD and Smartwatch Integration"
             style={{ width: '100%', height: 'auto', maxHeight: 440, objectFit: 'cover', display: 'block' }}
           />
           <div

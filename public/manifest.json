@@ -1,6 +1,6 @@
 {
-  "name": "Gordon Athletic Companion",
-  "short_name": "GAA Helper",
+  "name": "Forge Athletic",
+  "short_name": "Forge",
   "description": "Tactile in-gym workout execution, plate calculator, and wearable biometric telemetry helper app.",
   "start_url": "/dashboard/fitness?source=pwa",
   "id": "/companion",

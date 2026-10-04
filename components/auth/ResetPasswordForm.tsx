@@ -257,7 +257,7 @@ export default function ResetPasswordForm({ forceChange = false, nextPath = '/da
             lineHeight: 1.6,
           }}
         >
-          Enter the email address associated with your Gordon Athletic Advisory account. We&apos;ll email you a secure link to reset your password.
+          Enter the email address associated with your Forge Athletic account. We&apos;ll email you a secure link to reset your password.
         </p>
 
         <div>

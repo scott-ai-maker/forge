@@ -955,7 +955,7 @@ export default function PackagesStudioClient({
                   Capability / Protocol
                 </th>
                 <th style={{ padding: '12px 16px', color: 'var(--gold)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>
-                  Gordon Athletic Advisory
+                  Forge Athletic
                 </th>
                 <th style={{ padding: '12px 16px', color: 'var(--gray)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Standard Gym / Personal Trainer

@@ -205,7 +205,7 @@ export default function FirstVisitLeadCapture({
         onClick={() => setIsMinimized(false)}
         role="button"
         tabIndex={0}
-        aria-label="Open Gordon Athletic Advisory Protocol Access"
+        aria-label="Open Forge Athletic Protocol Access"
       >
         <span
           style={{

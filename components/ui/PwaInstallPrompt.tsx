@@ -140,8 +140,8 @@ export default function PwaInstallPrompt() {
             width: 36,
             height: 36,
             borderRadius: 8,
-            background: 'radial-gradient(circle, rgba(197, 160, 89, 0.3) 0%, rgba(8, 14, 20, 0.8) 100%)',
-            border: '1px solid rgba(197, 160, 89, 0.5)',
+            background: 'radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, rgba(8, 14, 20, 0.8) 100%)',
+            border: '1px solid rgba(245, 158, 11, 0.5)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -152,7 +152,7 @@ export default function PwaInstallPrompt() {
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ color: '#F8FAFC', fontSize: 12.5, fontWeight: 700, fontFamily: 'Raleway, sans-serif' }}>
-            Gordon Athletic App
+            Forge Athletic App
           </div>
           <div style={{ color: 'var(--gray)', fontSize: 11, lineHeight: 1.3, marginTop: 1 }}>
             {isIos ? (
@@ -172,7 +172,7 @@ export default function PwaInstallPrompt() {
             type="button"
             onClick={handleInstallClick}
             style={{
-              background: 'linear-gradient(135deg, #D4A017 0%, #B38610 100%)',
+              background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
               color: '#080E14',
               border: 'none',
               borderRadius: 6,
@@ -182,7 +182,7 @@ export default function PwaInstallPrompt() {
               cursor: 'pointer',
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
-              boxShadow: '0 2px 8px rgba(212,160,23,0.35)',
+              boxShadow: '0 2px 8px rgba(245,158,11,0.35)',
             }}
           >
             Install
