@@ -13,6 +13,7 @@ import { detectExerciseEquipment } from '@/lib/nasm-equipment-detector'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
 import { parseInjuriesFromText } from '@/lib/sports-injuries'
+import { buildNutritionTargetsSnapshot, type NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 
 interface Props {
   clientId?: string
@@ -282,6 +283,7 @@ export default function RagProgramGeneratorStudio({
 
   // Active Selected Day in Tab
   const [activeDayTab, setActiveDayTab] = useState<number>(1)
+  const [nutritionTargets, setNutritionTargets] = useState<NutritionTargetsSnapshot | null>(null)
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [applyStatus, setApplyStatus] = useState<string | null>(null)
@@ -344,6 +346,7 @@ export default function RagProgramGeneratorStudio({
       const data = await res.json().catch(() => ({}))
       if (res.ok && data.plan) {
         setGeneratedPlan(data.plan)
+        setNutritionTargets(null)
         setActiveDayTab(1)
         setApplyStatus(`✓ Coach Gordon (Master NASM Head Coach) designed a custom OPT Phase ${data.plan.nasmOptPhase} macrocycle with 100% official CDN videos.`)
         setIsGenerating(false)
@@ -375,6 +378,7 @@ export default function RagProgramGeneratorStudio({
     })
 
     setGeneratedPlan(plan)
+    setNutritionTargets(null)
     setActiveDayTab(1)
     setIsGenerating(false)
   }
@@ -397,6 +401,7 @@ export default function RagProgramGeneratorStudio({
       setGeneratedPlan(data.plan)
       setActiveDayTab(1)
       const t = data.targets
+      setNutritionTargets(t ? buildNutritionTargetsSnapshot(t) : null)
       setApplyStatus(
         t
           ? `✓ Coach Gordon built a NASM weight loss program from ${clientName}'s stats: ${t.currentWeightLbs} → ${t.targetWeightLbs} lbs (~${t.weeklyLossLbs} lb/wk, ~${t.estimatedWeeks} wks), ${t.macros.targetCalories} kcal/day, ${t.macros.proteinGrams}g protein.`
@@ -468,6 +473,7 @@ export default function RagProgramGeneratorStudio({
           estimatedDurationMins: 55,
           overwrite: overwriteExisting,
           targetPlanId: overwriteExisting && existingPlan?.id ? existingPlan.id : undefined,
+          nutritionTargets: nutritionTargets ?? undefined,
           workouts: workoutsPayload,
         }),
       })

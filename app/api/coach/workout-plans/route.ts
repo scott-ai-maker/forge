@@ -8,6 +8,7 @@ import {
   type ExerciseLibraryRecord,
 } from '@/lib/coach-programs'
 import { supabaseAdmin } from '@/lib/supabase'
+import { parseNutritionTargets } from '@/lib/weight-loss-program'
 
 const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library', 'licensed_import']
 
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest) {
   const payload = parsePayload(body)
   const shouldOverwrite = Boolean(body.overwrite)
   const targetPlanId = String(body.targetPlanId ?? '').trim() || null
+  const nutritionTargets = parseNutritionTargets(body.nutritionTargets)
 
   if (!payload) {
     return NextResponse.json({ error: 'Invalid workout plan payload.' }, { status: 400 })
@@ -213,6 +215,7 @@ export async function POST(req: NextRequest) {
       ...(existingPlanJson?.periodizationPlan ? { periodizationPlan: existingPlanJson.periodizationPlan } : {}),
       ...(existingPlanJson?.embeddedCEx ? { embeddedCEx: existingPlanJson.embeddedCEx } : {}),
       ...(existingPlanJson?.clinicalRationale ? { clinicalRationale: existingPlanJson.clinicalRationale } : {}),
+      ...(nutritionTargets ? { nutritionTargets } : existingPlanJson?.nutritionTargets ? { nutritionTargets: existingPlanJson.nutritionTargets } : {}),
       ...storedPlan,
       sessions: storedPlan.workouts,
       generatedByCoachId: coachId,

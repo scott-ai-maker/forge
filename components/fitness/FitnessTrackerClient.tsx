@@ -7,6 +7,7 @@ import RestTimer from '@/components/fitness/RestTimer'
 import dynamic from 'next/dynamic'
 
 import { openCoachGordon } from '@/components/fitness/GlobalCoachGordonHost'
+import type { NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 
 const FitnessLabDiagnosticsView = dynamic(
   () => import('@/components/fitness/hub-views/FitnessLabDiagnosticsView'),
@@ -222,6 +223,7 @@ interface WorkoutPlanRecord {
     estimatedDurationMins?: number
     generatedBy?: string
     generatedByCoachId?: string
+    nutritionTargets?: NutritionTargetsSnapshot
     workouts?: WorkoutDay[]
     calendar?: Array<{
       day: number
@@ -1914,6 +1916,31 @@ export default function FitnessTrackerClient({
           </div>
         </div>
       </div>
+      {plan?.plan_json?.nutritionTargets && (
+        <section
+          aria-label="Daily nutrition targets"
+          style={{
+            border: '1px solid rgba(212,160,23,0.35)',
+            background: 'rgba(13,27,42,0.95)',
+            borderRadius: 10,
+            padding: '12px 14px',
+            marginBottom: 16,
+          }}
+        >
+          <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
+            Your Daily Nutrition Targets · from Coach Gordon
+          </div>
+          <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 22, fontWeight: 700, color: 'var(--white)', margin: '4px 0' }}>
+            {plan.plan_json.nutritionTargets.targetCalories.toLocaleString()} kcal / day
+          </div>
+          <div style={{ color: 'var(--gray)', fontSize: 13 }}>
+            Protein {plan.plan_json.nutritionTargets.proteinGrams}g · Carbs {plan.plan_json.nutritionTargets.carbGrams}g · Fat {plan.plan_json.nutritionTargets.fatGrams}g
+          </div>
+          <div style={{ color: 'var(--gray)', fontSize: 13, marginTop: 4 }}>
+            Goal: {plan.plan_json.nutritionTargets.currentWeightLbs} → {plan.plan_json.nutritionTargets.targetWeightLbs} lbs (~{plan.plan_json.nutritionTargets.weeklyLossLbs} lb/week, about {plan.plan_json.nutritionTargets.estimatedWeeks} weeks)
+          </div>
+        </section>
+      )}
       {/* ── 4 PRIMARY CLIENT HUBS NAVIGATION ── */}
       <section
         style={{

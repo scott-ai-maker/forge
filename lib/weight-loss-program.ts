@@ -118,3 +118,51 @@ export function buildWeightLossGenerationRequest(
     injuriesLimitations: stats.injuriesLimitations ?? undefined,
   }
 }
+
+export interface NutritionTargetsSnapshot {
+  currentWeightLbs: number
+  targetWeightLbs: number
+  weeklyLossLbs: number
+  estimatedWeeks: number
+  targetCalories: number
+  proteinGrams: number
+  carbGrams: number
+  fatGrams: number
+}
+
+export function buildNutritionTargetsSnapshot(targets: WeightLossTargets): NutritionTargetsSnapshot {
+  return {
+    currentWeightLbs: targets.currentWeightLbs,
+    targetWeightLbs: targets.targetWeightLbs,
+    weeklyLossLbs: targets.weeklyLossLbs,
+    estimatedWeeks: targets.estimatedWeeks,
+    targetCalories: targets.macros.targetCalories,
+    proteinGrams: targets.macros.proteinGrams,
+    carbGrams: targets.macros.carbGrams,
+    fatGrams: targets.macros.fatGrams,
+  }
+}
+
+const NUTRITION_TARGET_LIMITS: Record<keyof NutritionTargetsSnapshot, [number, number]> = {
+  currentWeightLbs: [50, 1000],
+  targetWeightLbs: [50, 1000],
+  weeklyLossLbs: [0, 5],
+  estimatedWeeks: [1, 520],
+  targetCalories: [800, 6000],
+  proteinGrams: [0, 600],
+  carbGrams: [0, 1000],
+  fatGrams: [0, 400],
+}
+
+// Validates untrusted input before it is persisted with a plan; returns null unless every field is a sane number.
+export function parseNutritionTargets(value: unknown): NutritionTargetsSnapshot | null {
+  if (!value || typeof value !== 'object') return null
+  const source = value as Record<string, unknown>
+  const result = {} as Record<string, number>
+  for (const [key, [min, max]] of Object.entries(NUTRITION_TARGET_LIMITS)) {
+    const n = Number(source[key])
+    if (!Number.isFinite(n) || n < min || n > max) return null
+    result[key] = Math.round(n * 10) / 10
+  }
+  return result as unknown as NutritionTargetsSnapshot
+}
