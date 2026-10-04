@@ -148,8 +148,8 @@ describe('Public Funnel & Architecture', () => {
 
   it('lists the three Forge memberships and founder story on the public landing page', () => {
     expect(homePageSource).toContain('ForgeMembershipPlans')
-    expect(homePageSource).toContain('Coach Scott Gordon')
-    expect(homePageSource).toContain('more than 50 pounds')
+    expect(homePageSource).toContain('NASM Master Trainer')
+    expect(homePageSource).toContain('Fitness Director')
     expect(homePageSource).toContain('/images/brand/logo-concept-1-kinetic-f.jpg')
   })
 
