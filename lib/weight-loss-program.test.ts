@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { buildWeightLossGenerationRequest, calculateWeightLossTargets } from './weight-loss-program'
+import {
+  buildNutritionTargetsSnapshot,
+  buildWeightLossGenerationRequest,
+  calculateWeightLossTargets,
+  parseNutritionTargets,
+} from './weight-loss-program'
 
 describe('weight loss program', () => {
   it('returns null targets without weight', () => {
@@ -21,5 +26,20 @@ describe('weight loss program', () => {
     expect(req.targetNasmPhase).toBe(1)
     expect(req.trainingDaysPerWeek).toBe(6)
     expect(req.coachGuidanceNotes).toContain('Weight Loss Specialization')
+  })
+})
+
+describe('nutrition targets snapshot', () => {
+  const targets = calculateWeightLossTargets({ weightKg: 113.4, targetWeightKg: 90, heightCm: 170, age: 55, sex: 'female' })!
+
+  it('round-trips through the validator', () => {
+    const snapshot = buildNutritionTargetsSnapshot(targets)
+    expect(parseNutritionTargets(snapshot)).toMatchObject({ targetCalories: targets.macros.targetCalories })
+  })
+
+  it('rejects missing or out-of-range values', () => {
+    expect(parseNutritionTargets(null)).toBeNull()
+    expect(parseNutritionTargets({ ...buildNutritionTargetsSnapshot(targets), targetCalories: 99999 })).toBeNull()
+    expect(parseNutritionTargets({ targetCalories: 2000 })).toBeNull()
   })
 })

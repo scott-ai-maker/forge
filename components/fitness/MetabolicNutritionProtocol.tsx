@@ -21,6 +21,7 @@ interface MetabolicNutritionProtocolProps {
   initialSex?: 'male' | 'female' | 'other'
   initialHeightInches?: number
   initialBodyFat?: number
+  initialActivityLevel?: ActivityLevel
   telemetry?: DailyBiometricSummary | null
   intake?: {
     parq_answers?: unknown
@@ -39,6 +40,7 @@ export default function MetabolicNutritionProtocol({
   initialSex = 'male',
   initialHeightInches = 70,
   initialBodyFat = 16,
+  initialActivityLevel = 'moderately_active',
   telemetry,
   intake,
 }: MetabolicNutritionProtocolProps) {
@@ -56,7 +58,7 @@ export default function MetabolicNutritionProtocol({
   // Interactive Athlete Profile State
   const [weight, setWeight] = useState<number>(bodyweightLbs)
   const [selectedGoal, setSelectedGoal] = useState<NutritionGoal>(goal)
-  const [activityLevel, setActivityLevel] = useState<ActivityLevel>('moderately_active')
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel>(initialActivityLevel)
   const [age] = useState<number>(initialAge)
   const [sex] = useState<'male' | 'female' | 'other'>(initialSex)
   const [heightInches] = useState<number>(initialHeightInches)
