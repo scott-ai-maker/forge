@@ -11,6 +11,10 @@ const {
   adminFromMock: vi.fn(),
 }))
 
+vi.mock('@/lib/notifications', () => ({
+  notifyUser: vi.fn().mockResolvedValue({ channels: [] }),
+}))
+
 vi.mock('@/lib/stripe', () => ({
   stripe: {
     webhooks: {
@@ -89,6 +93,45 @@ describe('POST /api/stripe/webhook', () => {
       body: payload,
     })
   }
+
+  it('grants a feature entitlement (and no session package) for a paid video review add-on', async () => {
+    const entitlementUpsert = vi.fn().mockResolvedValue({ error: null })
+    const packageInsert = vi.fn().mockResolvedValue({ error: null })
+    adminFromMock.mockImplementation((table: string) => {
+      if (table === 'client_addon_entitlements') return { upsert: entitlementUpsert }
+      if (table === 'client_packages') return { insert: packageInsert }
+      return {
+        upsert: vi.fn().mockResolvedValue({ error: null }),
+        update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'client-1', status: 'active', stripe_customer_id: 'cus_123' }, error: null }),
+          }),
+        }),
+      }
+    })
+    constructEventMock.mockReturnValue({
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_addon',
+          mode: 'payment',
+          payment_status: 'paid',
+          payment_intent: 'pi_addon',
+          customer: 'cus_123',
+          metadata: { clientId: 'client-1', packageId: 'addon-video-review-pack', packageName: 'Technique Video Review Pack', sessionsTotal: '0', source: 'forge_addon' },
+        },
+      },
+    })
+
+    const res = await POST(makeWebhookRequest())
+    expect(res.status).toBe(200)
+    expect(entitlementUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({ client_id: 'client-1', feature: 'video-review', uses_remaining: 4, stripe_payment_id: 'pi_addon' }),
+      { onConflict: 'stripe_payment_id', ignoreDuplicates: true }
+    )
+    expect(packageInsert).not.toHaveBeenCalled()
+  })
 
   it('handles checkout.session.completed for subscription: links customer and activates client', async () => {
     adminFromMock.mockImplementation((table: string) => {

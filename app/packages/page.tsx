@@ -3,10 +3,11 @@ import SiteHeader from '@/components/ui/SiteHeader'
 import SiteFooter from '@/components/ui/SiteFooter'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
 import ForgeMembershipPlans from '@/components/packages/ForgeMembershipPlans'
+import ForgeAddons from '@/components/packages/ForgeAddons'
 
 export const metadata: Metadata = {
   title: 'Forge Athletic Memberships',
-  description: 'Choose Forge Athletic Core, Pro Athlete, or Transformation Direct sports-science coaching.',
+  description: 'Choose Forge Athletic Core, Pro Athlete, or Transformation Direct, then add advanced features and private sessions with Coach Scott Gordon when you need them.',
   openGraph: {
     title: 'Forge Athletic Memberships',
     description: 'Practical, science-led training memberships with clear monthly and annual pricing.',
@@ -37,7 +38,8 @@ export default function PackagesPage() {
         </div>
 
         <ForgeMembershipPlans />
-        <p className="forge-billing-note">Recurring plans renew automatically until cancelled. Checkout is processed securely by Stripe.</p>
+        <ForgeAddons />
+        <p className="forge-billing-note">Memberships renew automatically until cancelled. Add-ons and private sessions are one-time payments. Checkout is processed securely by Stripe.</p>
       </div>
 
       <SiteFooter />

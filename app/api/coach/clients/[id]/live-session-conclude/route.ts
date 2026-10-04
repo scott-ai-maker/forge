@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestAuthz, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
-import { sendPushToUser } from '@/lib/push-notifications'
+import { notifyUser } from '@/lib/notifications'
 
 export async function POST(
   req: NextRequest,
@@ -137,17 +137,12 @@ export async function POST(
   }
 
   // 4. Send push notification to client
-  void sendPushToUser({
+  void notifyUser({
     userId: clientId,
-    alert: {
-      title: '1:1 Live Consultation Recap Ready',
-      body: 'Coach Scott Gordon has dispatched your live session metrics & recovery directive.',
-    },
-    data: {
-      type: 'live_session_recap',
-      clientId,
-      coachId: authz.user.id,
-    },
+    type: 'live_session_recap',
+    title: '1:1 Live Consultation Recap Ready',
+    body: 'Coach Scott Gordon has dispatched your live session metrics & recovery directive.',
+    data: { clientId, coachId: authz.user.id },
   }).catch(() => undefined)
 
   return NextResponse.json({

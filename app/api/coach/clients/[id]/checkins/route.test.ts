@@ -7,8 +7,8 @@ const { getRequestAuthzMock, requireCoachAssignedClientMock, supabaseAdminMock }
   supabaseAdminMock: vi.fn(),
 }))
 
-const { sendPushToUserMock } = vi.hoisted(() => ({
-  sendPushToUserMock: vi.fn(),
+const { notifyUserMock } = vi.hoisted(() => ({
+  notifyUserMock: vi.fn(),
 }))
 
 vi.mock('@/lib/authz', async () => {
@@ -24,8 +24,8 @@ vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: supabaseAdminMock,
 }))
 
-vi.mock('@/lib/push-notifications', () => ({
-  sendPushToUser: sendPushToUserMock,
+vi.mock('@/lib/notifications', () => ({
+  notifyUser: notifyUserMock,
 }))
 
 import { GET, PATCH } from '@/app/api/coach/clients/[id]/checkins/route'
@@ -95,7 +95,7 @@ function makePatchRequest(body: object, id = clientId) {
 describe('GET /api/coach/clients/[id]/checkins', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    sendPushToUserMock.mockResolvedValue({ delivered: 1, skipped: false })
+    notifyUserMock.mockResolvedValue({ channels: ['push'] })
   })
 
   it('returns 401 when unauthenticated', async () => {
@@ -127,7 +127,7 @@ describe('GET /api/coach/clients/[id]/checkins', () => {
 describe('PATCH /api/coach/clients/[id]/checkins', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    sendPushToUserMock.mockResolvedValue({ delivered: 1, skipped: false })
+    notifyUserMock.mockResolvedValue({ channels: ['push'] })
   })
 
   it('returns 401 when unauthenticated', async () => {
@@ -171,14 +171,12 @@ describe('PATCH /api/coach/clients/[id]/checkins', () => {
     const res = await PATCH(makePatchRequest({ checkin_id: 'ci-1', coach_feedback: 'Great week!' }), makeCtx())
     expect(res.status).toBe(200)
     await expect(res.json()).resolves.toMatchObject({ coach_feedback: 'Great week!' })
-    expect(sendPushToUserMock).toHaveBeenCalledWith({
+    expect(notifyUserMock).toHaveBeenCalledWith({
       userId: clientId,
-      alert: {
-        title: 'Coach feedback posted',
-        body: 'Great week!',
-      },
+      title: 'Coach feedback posted',
+      body: 'Great week!',
+      type: 'coach_feedback',
       data: {
-        type: 'coach_feedback',
         checkinId: 'ci-1',
       },
     })

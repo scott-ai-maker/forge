@@ -16,8 +16,8 @@ vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: vi.fn(),
 }))
 
-vi.mock('@/lib/push-notifications', () => ({
-  sendPushToUser: vi.fn().mockResolvedValue(true),
+vi.mock('@/lib/notifications', () => ({
+  notifyUser: vi.fn().mockResolvedValue({ channels: [] }),
 }))
 
 describe('Live Session Conclude API Route', () => {

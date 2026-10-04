@@ -5,7 +5,7 @@ const { sendWeeklyCheckinNudgesMock } = vi.hoisted(() => ({
   sendWeeklyCheckinNudgesMock: vi.fn(),
 }))
 
-vi.mock('@/lib/push-notifications', () => ({
+vi.mock('@/lib/notifications', () => ({
   sendWeeklyCheckinNudges: sendWeeklyCheckinNudgesMock,
 }))
 

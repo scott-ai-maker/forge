@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FORGE_MEMBERSHIPS, getForgeMembership, getForgeMembershipPrice } from '@/lib/forge-memberships'
+import { FORGE_MEMBERSHIPS, getForgeMembership, getForgeMembershipPrice, getMembershipsIncluding } from '@/lib/forge-memberships'
 
 describe('Forge Athletic membership catalog', () => {
   it('defines the specified memberships, prices, and features', () => {
@@ -18,8 +18,8 @@ describe('Forge Athletic membership catalog', () => {
       id: 'forge-transformation-direct',
       monthlyPriceCents: 19900,
     })
-    expect(FORGE_MEMBERSHIPS[2].features).toContain('Quarterly asynchronous video critiques')
-    expect(FORGE_MEMBERSHIPS[2].features).toContain('Direct review by Coach Scott Gordon')
+    expect(FORGE_MEMBERSHIPS[2].features).toContain('Quarterly video reviews by Coach Scott Gordon')
+    expect(FORGE_MEMBERSHIPS[2].features).toContain('Direct access to your coach')
   })
 
   it('provides annual billing only for Core Membership', () => {
@@ -29,5 +29,12 @@ describe('Forge Athletic membership catalog', () => {
     expect(pro).toBeDefined()
     expect(getForgeMembershipPrice(core!, 'annual')).toEqual({ amountCents: 14900, interval: 'year' })
     expect(getForgeMembershipPrice(pro!, 'annual')).toBeUndefined()
+  })
+
+  it('includes self-serve tools only in Pro Athlete and Transformation Direct', () => {
+    expect(getForgeMembership('forge-core')!.includedFeatures).toBeUndefined()
+    expect(getMembershipsIncluding('nutrition').map(m => m.id)).toEqual(['forge-pro-athlete', 'forge-transformation-direct'])
+    const video = (id: string) => getForgeMembership(id)!.includedFeatures!.find(f => f.feature === 'video-review')!.uses
+    expect(video('forge-transformation-direct')).toBeGreaterThan(video('forge-pro-athlete')!)
   })
 })

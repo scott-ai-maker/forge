@@ -7,6 +7,7 @@ import { isCompanionApp } from '@/lib/native-companion'
 interface PurchaseButtonProps {
   packageId?: string
   productId?: string
+  addonId?: string
   cadence?: 'monthly' | 'annual' | 'twelve_week'
   selectedAddonIds?: string[]
   buttonLabel?: string
@@ -17,6 +18,7 @@ interface PurchaseButtonProps {
 export default function PurchaseButton({
   packageId,
   productId,
+  addonId,
   cadence = 'monthly',
   selectedAddonIds = [],
   buttonLabel,
@@ -28,7 +30,7 @@ export default function PurchaseButton({
   const [discountCode, setDiscountCode] = useState('')
   const [isCompanion, setIsCompanion] = useState(false)
 
-  const targetIdentifier = productId || packageId || 'unknown'
+  const targetIdentifier = addonId || productId || packageId || 'unknown'
 
   useEffect(() => {
     setIsCompanion(isCompanionApp())
@@ -66,6 +68,7 @@ export default function PurchaseButton({
       body: JSON.stringify({
         packageId: packageId || undefined,
         productId: productId || undefined,
+        addonId: addonId || undefined,
         cadence,
         selectedAddonIds,
         discountCode: discountCode.trim() || undefined,
