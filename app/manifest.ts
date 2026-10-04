@@ -16,19 +16,19 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['fitness', 'health', 'lifestyle', 'sports'],
     icons: [
       {
-        src: '/images/icon-192.png',
+        src: '/images/icon-192.png?v=2',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/images/icon-512.png',
+        src: '/images/icon-512.png?v=2',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/apple-touch-icon.png',
+        src: '/apple-touch-icon.png?v=2',
         sizes: '192x192',
         type: 'image/png',
       },
@@ -39,21 +39,21 @@ export default function manifest(): MetadataRoute.Manifest {
         short_name: 'Workout',
         description: 'Execute active workout & set logger',
         url: '/dashboard/fitness?source=pwa&workspace=train',
-        icons: [{ src: '/images/icon-192.png', sizes: '192x192' }],
+        icons: [{ src: '/images/icon-192.png?v=2', sizes: '192x192' }],
       },
       {
         name: 'Biometrics & Readiness',
         short_name: 'Biometrics',
         description: 'View wearable telemetry & recovery',
         url: '/dashboard/fitness?source=pwa&workspace=readiness',
-        icons: [{ src: '/images/icon-192.png', sizes: '192x192' }],
+        icons: [{ src: '/images/icon-192.png?v=2', sizes: '192x192' }],
       },
       {
         name: 'Concierge Messages',
         short_name: 'Messages',
         description: 'Direct encrypted line with Coach Gordon',
         url: '/dashboard/messages?source=pwa',
-        icons: [{ src: '/images/icon-192.png', sizes: '192x192' }],
+        icons: [{ src: '/images/icon-192.png?v=2', sizes: '192x192' }],
       },
     ],
   }
