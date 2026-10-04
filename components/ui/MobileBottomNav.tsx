@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
+import { CLIENT_PRIMARY_NAV, isClientPrimaryNavItemActive } from '@/components/ui/client-primary-navigation'
 
 interface MobileBottomNavProps {
   role?: 'client' | 'coach'
@@ -11,6 +12,7 @@ interface MobileBottomNavProps {
 
 export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProps) {
   const pathname = usePathname() || ''
+  const searchParams = useSearchParams()
 
   if (role === 'coach') {
     const coachTabs: Array<{ href: string; label: string; icon: GaaIconName }> = [
@@ -103,14 +105,6 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
     )
   }
 
-  const clientTabs: Array<{ href: string; label: string; icon: GaaIconName }> = [
-    { href: '/dashboard', label: 'Home', icon: 'crown' },
-    { href: '/dashboard/fitness', label: 'Fitness Lab', icon: 'barbell' },
-    { href: '/dashboard/messages', label: 'Concierge', icon: 'message' },
-    { href: '/dashboard/live', label: 'Live Studio', icon: 'video-studio' },
-    { href: '/dashboard/settings', label: 'Settings', icon: 'gear' },
-  ]
-
   return (
     <nav
       className="mobile-bottom-dock"
@@ -132,8 +126,8 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
         boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(197, 160, 89, 0.08)',
       }}
     >
-      {clientTabs.map(tab => {
-        const isActive = pathname === tab.href || (tab.href !== '/dashboard' && pathname.startsWith(tab.href))
+      {CLIENT_PRIMARY_NAV.map(tab => {
+        const isActive = isClientPrimaryNavItemActive(tab.id, pathname, searchParams.get('workspace'))
         return (
           <Link
             key={tab.href}
@@ -193,4 +187,3 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
     </nav>
   )
 }
-

@@ -22,23 +22,32 @@ describe('MobileNavigationDrawer Structure & Unique Keys', () => {
     })
   })
 
-  it('verifies Fitness Lab and AI Voice Cardio Studio have distinct hrefs and keys', () => {
-    const trainingSection = CLIENT_DRAWER_SECTIONS.find(s => s.title === 'Training & Periodization')
-    expect(trainingSection).toBeDefined()
+  it('keeps member navigation focused on the core experience', () => {
+    const memberItems = CLIENT_DRAWER_SECTIONS.flatMap(section => section.items)
+    const performanceSection = CLIENT_DRAWER_SECTIONS.find(section => section.title === 'Your Performance')
 
-    const fitnessLab = trainingSection?.items.find(i => i.label === 'Fitness Lab')
-    const cardioStudio = trainingSection?.items.find(i => i.label === 'AI Voice Cardio Studio')
+    expect(memberItems).toHaveLength(10)
+    expect(performanceSection?.items.map(item => item.label)).toEqual([
+      'Today',
+      'Training',
+      'Progress',
+      'Fitness Lab',
+    ])
+    expect(memberItems.find(item => item.label === 'Fitness Lab')?.href).toBe('/dashboard/fitness?workspace=lab')
+    expect(memberItems.some(item => item.label === '3D Muscle Recovery Matrix')).toBe(false)
+    expect(memberItems.some(item => item.label === 'AI Voice Cardio Studio')).toBe(false)
+  })
 
-    expect(fitnessLab).toBeDefined()
-    expect(cardioStudio).toBeDefined()
+  it('retains direct access to human coaching services and account settings', () => {
+    const memberItems = CLIENT_DRAWER_SECTIONS.flatMap(section => section.items)
 
-    expect(fitnessLab?.href).toBe('/dashboard/fitness?workspace=train')
-    expect(cardioStudio?.href).toBe('/dashboard/fitness?workspace=train#cardio-studio')
-    expect(fitnessLab?.href).not.toBe(cardioStudio?.href)
-
-    const labKey = `${trainingSection?.title}-${fitnessLab?.href}-${fitnessLab?.label}`
-    const cardioKey = `${trainingSection?.title}-${cardioStudio?.href}-${cardioStudio?.label}`
-    expect(labKey).not.toBe(cardioKey)
+    expect(memberItems.map(item => item.href)).toEqual(expect.arrayContaining([
+      '/dashboard/fitness?workspace=coach',
+      '/dashboard/messages',
+      '/dashboard/live',
+      '/dashboard/book',
+      '/dashboard/settings',
+    ]))
   })
 
   it('generates completely unique keys for all client drawer items', () => {
@@ -80,4 +89,3 @@ describe('MobileNavigationDrawer Structure & Unique Keys', () => {
     })
   })
 })
-

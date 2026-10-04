@@ -32,39 +32,28 @@ export interface DrawerSection {
 
 export const CLIENT_DRAWER_SECTIONS: DrawerSection[] = [
   {
-    title: 'Clinical Prescriptions & Concierge',
+    title: 'Your Performance',
     items: [
-      { href: '#coach-gordon', label: 'Ask Coach Gordon', icon: 'message', desc: 'Interactive AI & Voice Sports Science Concierge', badge: 'Live AI' },
-      { href: '/dashboard', label: 'Command Center', icon: 'overview', desc: 'Overview, status & telemetry' },
-      { href: '/dashboard/fitness?workspace=coach', label: 'Weekly Coach Check-In', icon: 'clipboard', desc: 'Submit Sunday biofeedback, weight & fatigue notes', badge: 'Weekly' },
-      { href: '/dashboard/fitness?workspace=toolboxes', label: 'Specialized Toolboxes', icon: 'toolbox', desc: 'Desk worker, travel & low back kits' },
-      { href: '/dashboard/fitness?workspace=supplements', label: 'Supplement Prescriptions', icon: 'supplements', desc: 'Evidence-based ergogenic protocols' },
-      { href: '/dashboard/messages', label: 'Concierge Line', icon: 'message', desc: 'Direct encrypted line to Coach Gordon' },
-      { href: '/dashboard/live', label: 'Telehealth Live Studio', icon: 'video-studio', desc: '1:1 video coaching & form HUD' },
-      { href: '/dashboard/book', label: 'Book Consultation', icon: 'calendar', desc: 'Schedule 1:1 movement screen' },
-      { href: '/dashboard/fitness?workspace=progress', label: 'Progress Photos & Bodyfat', icon: 'chart', desc: 'Visual timeline & composition metrics' },
+      { href: '/dashboard', label: 'Today', icon: 'overview', desc: 'Your plan, next session, and weekly snapshot' },
+      { href: '/dashboard/fitness?workspace=train', label: 'Training', icon: 'barbell', desc: 'Personalized plan and workout tracking' },
+      { href: '/dashboard/fitness?workspace=progress', label: 'Progress', icon: 'chart', desc: 'Strength trends, personal records, and history' },
+      { href: '/dashboard/fitness?workspace=lab', label: 'Fitness Lab', icon: 'compass', desc: 'Movement, recovery, and specialist tools' },
     ],
   },
   {
-    title: 'Training & Periodization',
+    title: 'Coaching',
     items: [
-      { href: '/dashboard/fitness?workspace=train', label: 'Fitness Lab', icon: 'barbell', desc: 'Active workout execution & set logger', badge: 'Active' },
-      { href: '/dashboard/fitness?workspace=train#cardio-studio', label: 'AI Voice Cardio Studio', icon: 'headphones', desc: 'Coach Gordon in-ear voiceover cardio engine', badge: 'Voice AI' },
-      { href: '/dashboard/fitness?workspace=periodization', label: '12-Week Periodization', icon: 'periodization', desc: 'OPT™ macrocycle roadmap & deloads', badge: 'New' },
-      { href: '/dashboard/fitness?workspace=readiness&tab=3d', label: '3D Muscle Recovery Matrix', icon: 'dna', desc: 'Real-time fatigue & time-lapse simulation', badge: 'Live 3D' },
-      { href: '/dashboard/fitness?workspace=readiness', label: 'Readiness & ACWR', icon: 'lightning', desc: 'Autonomic recovery & workload ratio' },
-      { href: '/dashboard/fitness?workspace=video', label: 'AI Form Critique Studio', icon: 'camera', desc: 'Biomechanical video analysis & angles' },
-      { href: '/dashboard/fitness?workspace=assessment', label: 'Posture & Movement Radar', icon: 'movement-screen', desc: 'Kinetic chain screen & SMR routines' },
-      { href: '/dashboard/fitness?workspace=travel', label: 'Travel Hotel Adapter', icon: 'travel', desc: 'On-the-road equipment adaptation' },
+      { href: '#coach-gordon', label: 'Ask Coach Gordon', icon: 'message', desc: 'On-demand training and movement guidance', badge: 'Live AI' },
+      { href: '/dashboard/fitness?workspace=coach', label: 'Coach Hub', icon: 'clipboard', desc: 'Check-ins, advice, and session options' },
+      { href: '/dashboard/messages', label: 'Message Coach', icon: 'message', desc: 'Private communication with your coach' },
+      { href: '/dashboard/live', label: 'Live Coaching', icon: 'video-studio', desc: '1:1 video coaching and form feedback' },
+      { href: '/dashboard/book', label: 'Book a Session', icon: 'calendar', desc: 'Schedule a consultation or movement screen' },
     ],
   },
   {
-    title: 'Settings & Hardware',
+    title: 'Account',
     items: [
-      { href: '/dashboard/settings?tab=wearables', label: 'Biometric Telemetry & Apps', icon: 'radio', desc: 'Live biometrics stream & mobile sync' },
-      { href: '/dashboard/settings?tab=profile', label: 'Account & Units', icon: 'user', desc: 'Profile, avatar & display units' },
-      { href: '/dashboard/settings?tab=billing', label: 'Retainer & Account', icon: 'credit-card', desc: 'Retainer status & web billing management' },
-      { href: '/dashboard/settings?tab=security', label: 'Security & Access', icon: 'lock', desc: 'Password & credentials' },
+      { href: '/dashboard/settings', label: 'Account Settings', icon: 'gear', desc: 'Profile, connected devices, billing, and security' },
     ],
   },
 ]
@@ -382,7 +371,7 @@ export default function MobileNavigationDrawer({
           <div style={{ position: 'relative' }}>
             <input
               type="text"
-              placeholder="Search features... (e.g. '3D', 'Period')"
+              placeholder="Search destinations..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               style={{
@@ -717,4 +706,3 @@ export default function MobileNavigationDrawer({
     </div>
   )
 }
-

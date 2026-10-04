@@ -5,18 +5,18 @@ import ForgeMembershipPlans from '@/components/packages/ForgeMembershipPlans'
 const FEATURE_PILLARS = [
   {
     number: '01',
-    title: 'Train with a plan',
-    description: 'Adaptive NASM OPT™ periodization, progressive overload, and clear 1RM trends.',
+    title: 'A plan built around you',
+    description: 'Personalized NASM OPT™ training that adapts to your goals and builds strength over time.',
   },
   {
     number: '02',
-    title: 'Understand your movement',
-    description: 'Computer-vision posture and kinetic-chain screening to make movement easier to understand.',
+    title: 'Move with confidence',
+    description: 'Practical movement screening and coaching help you understand how to train well.',
   },
   {
     number: '03',
-    title: 'Connect the signals',
-    description: 'Bring workouts and wearable telemetry together to guide training and recovery.',
+    title: 'See progress that matters',
+    description: 'Bring workouts, strength trends, and available recovery signals together in one clear view.',
   },
 ]
 
@@ -71,7 +71,7 @@ export default function Home() {
         <div className="forge-section-intro">
           <p className="forge-eyebrow">The Forge system</p>
           <h2 id="forge-features-title">A stronger foundation for every rep.</h2>
-          <p>Training, movement, and recovery—connected in one practical performance system.</p>
+          <p>One focused system for better training, better movement, and measurable progress.</p>
         </div>
         <div className="forge-feature-grid">
           {FEATURE_PILLARS.map(feature => (

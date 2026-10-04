@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 import { PACKAGES, COACHING_ADDONS, STANDALONE_PRODUCTS } from '@/lib/stripe'
+import { FORGE_MEMBERSHIPS } from '@/lib/forge-memberships'
 
 describe('Commercial Retainers & Tier 3 Architecture Enforcements', () => {
   it('defines the canonical 3 sovereign pathways for public homepage presentation', () => {
@@ -45,6 +46,19 @@ describe('Commercial Retainers & Tier 3 Architecture Enforcements', () => {
 
     const slasJoined = tier3!.serviceLevels.join(' ')
     expect(slasJoined).toContain('4 business hours')
+  })
+
+  it('positions memberships around personalized training, measurable progress, and human coaching', () => {
+    const core = FORGE_MEMBERSHIPS.find(membership => membership.id === 'forge-core')
+    const pro = FORGE_MEMBERSHIPS.find(membership => membership.id === 'forge-pro-athlete')
+    const transformation = FORGE_MEMBERSHIPS.find(membership => membership.id === 'forge-transformation-direct')
+
+    expect(core?.features).toContain('Personalized NASM OPT™ training plan')
+    expect(core?.features).toContain('Workout, strength, and personal-record tracking')
+    expect(pro?.features).toContain('Voice-guided training sessions')
+    expect(pro?.features).toContain('Weekly performance summaries')
+    expect(transformation?.features).toContain('Quarterly video reviews by Coach Scott Gordon')
+    expect(transformation?.features).toContain('Direct access to your coach')
   })
 
   it('enforces gated allocation handling for Tier 3 rather than self-serve direct buy', () => {
