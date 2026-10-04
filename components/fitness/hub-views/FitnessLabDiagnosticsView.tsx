@@ -8,6 +8,7 @@ import PeriodizationRoadmapView from '@/components/fitness/PeriodizationRoadmapV
 import AddonUnlockCard from '@/components/packages/AddonUnlockCard'
 import { useAddonEntitlements } from '@/components/packages/useAddonEntitlements'
 import MetabolicNutritionProtocol from '@/components/fitness/MetabolicNutritionProtocol'
+import { normalizeActivity } from '@/lib/weight-loss-program'
 import ClinicalKineticWarmupModule from '@/components/fitness/ClinicalKineticWarmupModule'
 import NasmAssessmentSummary from '@/components/fitness/NasmAssessmentSummary'
 import PlyometricPowerStudio from '@/components/fitness/PlyometricPowerStudio'
@@ -444,7 +445,8 @@ export default function FitnessLabDiagnosticsView({
             initialAge={profile?.age ?? 35}
             initialSex={profile?.sex ?? 'male'}
             initialHeightInches={profile?.height_cm ? Math.round(profile.height_cm / 2.54) : 70}
-            initialBodyFat={Number(bodyfatState.estimated) || 16}
+            initialBodyFat={Number(bodyfatState.estimated) || 0}
+            initialActivityLevel={normalizeActivity(profile?.activity_level)}
             telemetry={telemetry}
             intake={intake}
           />

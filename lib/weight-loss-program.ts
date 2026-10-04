@@ -44,7 +44,7 @@ export interface WeightLossTargets {
 
 const ACTIVITY_LEVELS: ActivityLevel[] = ['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active']
 
-function normalizeActivity(value?: string | null): ActivityLevel {
+export function normalizeActivity(value?: string | null): ActivityLevel {
   const key = (value ?? '').toLowerCase().replace(/[\s-]+/g, '_')
   return (ACTIVITY_LEVELS as string[]).includes(key) ? (key as ActivityLevel) : 'lightly_active'
 }
