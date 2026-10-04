@@ -1186,6 +1186,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
               ? fitnessProfileResult.data.cardio_equipment_access
               : []}
             initialSessionsPerWeek={Number(fitnessProfileResult.data?.training_days_per_week ?? 0) || null}
+            clientAge={Number(fitnessProfileResult.data?.age) || null}
             preferredTrainingDays={Array.isArray(fitnessProfileResult.data?.preferred_training_days)
               ? fitnessProfileResult.data.preferred_training_days
               : []}

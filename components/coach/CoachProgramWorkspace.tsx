@@ -78,6 +78,7 @@ interface CoachProgramWorkspaceProps {
   libraryEquipmentNames?: string[]
   cardioEquipmentAccess?: string[]
   initialSessionsPerWeek?: number | null
+  clientAge?: number | null
   preferredTrainingDays?: string[]
 }
 
@@ -101,6 +102,7 @@ export default function CoachProgramWorkspace({
   medicalEvaluation,
   initialEquipmentAccess = [],
   initialSessionsPerWeek = null,
+  clientAge = null,
 }: CoachProgramWorkspaceProps) {
   const [plansList, setPlansList] = useState<LatestWorkoutPlan[]>(
     allPlans && allPlans.length > 0 ? allPlans : (latestPlan ? [latestPlan] : [])
@@ -858,6 +860,7 @@ export default function CoachProgramWorkspace({
           initialPhase={studioPhase}
           initialEquipmentAccess={initialEquipmentAccess}
           initialSessionsPerWeek={initialSessionsPerWeek}
+          initialClientAge={clientAge}
           initialCompensations={ohsaCompensations}
           existingPlan={activePlan}
           contraindicationTags={allContraTags}

@@ -9,6 +9,11 @@
  */
 
 import { calculateOneRepMax, calculateTargetTrainingLoad } from './sports-science-knowledge'
+
+// Without a recorded benchmark no load is prescribed; the coach sets it in session.
+function loadFromOneRepMax(oneRepMaxLbs: number | undefined, pct: number): number | undefined {
+  return oneRepMaxLbs === undefined ? undefined : calculateTargetTrainingLoad(oneRepMaxLbs, pct)
+}
 import { queryNasmRagLibrary } from './nasm-rag-knowledge-base'
 import { calculateCardioZones } from './nasm-cardio-stage-engine'
 import { enrichExerciseMedia } from './nasm-exercise-video-catalog'
@@ -610,9 +615,9 @@ function buildDistinctOptWorkoutDay(params: {
   const eq = parseEquipmentCapabilities(equipment)
 
   // Calculate 1RM loads
-  const rawBench1RM = benchmarks?.['Bench Press'] ? calculateOneRepMax(benchmarks['Bench Press'].weightLbs, benchmarks['Bench Press'].reps) : 225
-  const rawSquat1RM = benchmarks?.['Squat'] ? calculateOneRepMax(benchmarks['Squat'].weightLbs, benchmarks['Squat'].reps) : 315
-  const rawDeadlift1RM = benchmarks?.['Deadlift'] ? calculateOneRepMax(benchmarks['Deadlift'].weightLbs, benchmarks['Deadlift'].reps) : 385
+  const rawBench1RM = benchmarks?.['Bench Press'] ? calculateOneRepMax(benchmarks['Bench Press'].weightLbs, benchmarks['Bench Press'].reps) : undefined
+  const rawSquat1RM = benchmarks?.['Squat'] ? calculateOneRepMax(benchmarks['Squat'].weightLbs, benchmarks['Squat'].reps) : undefined
+  const rawDeadlift1RM = benchmarks?.['Deadlift'] ? calculateOneRepMax(benchmarks['Deadlift'].weightLbs, benchmarks['Deadlift'].reps) : undefined
 
   let focus = 'Total Body'
   const exercises: GeneratedExerciseItem[] = []
@@ -775,7 +780,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.65,
-          targetLoadLbs: calculateTargetTrainingLoad(rawBench1RM, 0.65),
+          targetLoadLbs: loadFromOneRepMax(rawBench1RM, 0.65),
           coachingCues: ['4-second eccentric descent, 2-second hold at bottom', 'Keep glutes bridged high'],
           nasmClinicalSource: 'CPT7_Fat_Loss1.pdf & Chapter 21',
         })
@@ -788,7 +793,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.65,
-          targetLoadLbs: calculateTargetTrainingLoad(rawBench1RM, 0.65),
+          targetLoadLbs: loadFromOneRepMax(rawBench1RM, 0.65),
           coachingCues: ['Hold bridge position for core engagement', 'Strict 4-second descent to floor tap'],
           nasmClinicalSource: 'CPT7_Fat_Loss1.pdf (Home Dumbbell Adaptation)',
         })
@@ -976,7 +981,7 @@ function buildDistinctOptWorkoutDay(params: {
         tempo: '4/2/1',
         rest: '60s',
         intensityPercentage1RM: 0.6,
-        targetLoadLbs: eq.hasDumbbells ? calculateTargetTrainingLoad(rawSquat1RM, 0.45) : undefined,
+        targetLoadLbs: eq.hasDumbbells ? loadFromOneRepMax(rawSquat1RM, 0.45) : undefined,
         coachingCues: ['Knee stays aligned over 2nd and 3rd toes', '4-second slow descent to gentle tap'],
         nasmClinicalSource: 'CPT7_Fat_Loss4.pdf & Chapter 21',
       })
@@ -1398,7 +1403,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '0s (Immediate transition to 1B)',
           intensityPercentage1RM: 0.75,
-          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? calculateTargetTrainingLoad(rawBench1RM, 0.75) : undefined,
+          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawBench1RM, 0.75) : undefined,
           supersetPairWith: chestStabilityName,
           coachingCues: ['Drive weight with explosive intent @ 75% 1RM', 'Zero rest before stability movement'],
           nasmClinicalSource: 'CPT7_Fat_Loss8.pdf & Chapter 21',
@@ -1527,7 +1532,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '0s (Immediate transition to 1B)',
           intensityPercentage1RM: 0.75,
-          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? calculateTargetTrainingLoad(rawSquat1RM, 0.75) : undefined,
+          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawSquat1RM, 0.75) : undefined,
           supersetPairWith: squatStabilityName,
           coachingCues: ['Full depth squat @ 75% 1RM', 'Zero rest before step-up balance'],
           nasmClinicalSource: 'CPT7_Fat_Loss11-1.pdf & Chapter 21',
@@ -1566,7 +1571,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '0s (Immediate transition to 2B)',
           intensityPercentage1RM: 0.75,
-          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? calculateTargetTrainingLoad(rawDeadlift1RM, 0.65) : undefined,
+          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawDeadlift1RM, 0.65) : undefined,
           supersetPairWith: deadliftStabilityName,
           coachingCues: ['Hip hinge with flat back', 'Full hamstring engagement'],
           nasmClinicalSource: 'CPT7_Fat_Loss12.pdf',
@@ -1604,7 +1609,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '75s',
           intensityPercentage1RM: 0.8,
-          targetLoadLbs: calculateTargetTrainingLoad(rawBench1RM, 0.8),
+          targetLoadLbs: loadFromOneRepMax(rawBench1RM, 0.8),
           coachingCues: ['Control eccentric lowering for 2 seconds', 'Upper clavicular stretch'],
           nasmClinicalSource: 'CPT7_Muscle_Gain1.pdf & Chapter 21',
         })
@@ -1617,7 +1622,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '75s',
           intensityPercentage1RM: 0.8,
-          targetLoadLbs: calculateTargetTrainingLoad(rawBench1RM, 0.75),
+          targetLoadLbs: loadFromOneRepMax(rawBench1RM, 0.75),
           coachingCues: ['45-degree bench angle', 'Deep horizontal adduction at top lockout'],
           nasmClinicalSource: 'CPT7_Muscle_Gain1.pdf (Home Adaptation)',
         })
@@ -1630,7 +1635,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '75s',
           intensityPercentage1RM: 0.8,
-          targetLoadLbs: calculateTargetTrainingLoad(rawBench1RM, 0.75),
+          targetLoadLbs: loadFromOneRepMax(rawBench1RM, 0.75),
           coachingCues: ['Pause triceps gently on floor each rep', 'Drive up explosively'],
           nasmClinicalSource: 'CPT7_Muscle_Gain1.pdf (Home Floor Adaptation)',
         })
@@ -1805,7 +1810,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '75s',
           intensityPercentage1RM: 0.8,
-          targetLoadLbs: calculateTargetTrainingLoad(rawDeadlift1RM, 0.6),
+          targetLoadLbs: loadFromOneRepMax(rawDeadlift1RM, 0.6),
           coachingCues: ['Torso at 45 degrees', 'Pull bar to lower sternum'],
           nasmClinicalSource: 'CPT7_Muscle_Gain5.pdf',
         })
@@ -1818,7 +1823,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '75s',
           intensityPercentage1RM: 0.8,
-          targetLoadLbs: calculateTargetTrainingLoad(rawDeadlift1RM, 0.55),
+          targetLoadLbs: loadFromOneRepMax(rawDeadlift1RM, 0.55),
           coachingCues: ['Hinge to 45 degrees with flat back', 'Row dumbbells into hip pockets'],
           nasmClinicalSource: 'CPT7_Muscle_Gain5.pdf (Home Dumbbell Adaptation)',
         })
@@ -2004,7 +2009,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '90s',
           intensityPercentage1RM: 0.8,
-          targetLoadLbs: calculateTargetTrainingLoad(rawSquat1RM, 0.8),
+          targetLoadLbs: loadFromOneRepMax(rawSquat1RM, 0.8),
           coachingCues: ['Upright torso', 'Drive knees forward in line with toes'],
           nasmClinicalSource: 'CPT7_Muscle_Gain9.pdf',
         })
@@ -2017,7 +2022,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '90s',
           intensityPercentage1RM: 0.8,
-          targetLoadLbs: calculateTargetTrainingLoad(rawSquat1RM, 0.7),
+          targetLoadLbs: loadFromOneRepMax(rawSquat1RM, 0.7),
           coachingCues: ['Rest dumbbells on anterior deltoids', 'Full depth with tall spine'],
           nasmClinicalSource: 'CPT7_Muscle_Gain9.pdf (Home Dumbbell Adaptation)',
         })
@@ -2191,7 +2196,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '90s',
           intensityPercentage1RM: 0.8,
-          targetLoadLbs: calculateTargetTrainingLoad(rawDeadlift1RM, 0.75),
+          targetLoadLbs: loadFromOneRepMax(rawDeadlift1RM, 0.75),
           coachingCues: ['Send hips back to wall', 'Maintain hamstring tension'],
           nasmClinicalSource: 'CPT7_Muscle_Gain9.pdf',
         })
@@ -2204,7 +2209,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '2/0/2',
           rest: '90s',
           intensityPercentage1RM: 0.8,
-          targetLoadLbs: calculateTargetTrainingLoad(rawDeadlift1RM, 0.65),
+          targetLoadLbs: loadFromOneRepMax(rawDeadlift1RM, 0.65),
           coachingCues: ['Keep dumbbells glued close to shins', 'Hips back with flat spine'],
           nasmClinicalSource: 'CPT7_Muscle_Gain9.pdf (Home Dumbbell Adaptation)',
         })
@@ -2337,7 +2342,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '1/1/1',
             rest: '3–5 min',
             intensityPercentage1RM: 0.88,
-            targetLoadLbs: calculateTargetTrainingLoad(rawBench1RM, 0.88),
+            targetLoadLbs: loadFromOneRepMax(rawBench1RM, 0.88),
             coachingCues: ['Maximal motor unit recruitment', 'Drive bar with maximal intent'],
             nasmClinicalSource: 'CPT7_Performance1.pdf & Chapter 21',
           },
@@ -2349,7 +2354,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '1/1/1',
             rest: '3–5 min',
             intensityPercentage1RM: 0.88,
-            targetLoadLbs: calculateTargetTrainingLoad(rawDeadlift1RM, 0.65),
+            targetLoadLbs: loadFromOneRepMax(rawDeadlift1RM, 0.65),
             coachingCues: ['Dead stop on floor every rep', 'Explosive concentric pull'],
             nasmClinicalSource: 'CPT7_Performance2.pdf',
           },
@@ -2376,7 +2381,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '1/1/1',
             rest: '3 min',
             intensityPercentage1RM: 0.85,
-            targetLoadLbs: calculateTargetTrainingLoad(rawBench1RM, 0.8),
+            targetLoadLbs: loadFromOneRepMax(rawBench1RM, 0.8),
             coachingCues: ['Heavy bilateral press', 'Maximal neural drive with tight arch'],
             nasmClinicalSource: 'CPT7_Performance1.pdf (Home Adaptation)',
           },
@@ -2388,7 +2393,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '1/1/1',
             rest: '3 min',
             intensityPercentage1RM: 0.85,
-            targetLoadLbs: calculateTargetTrainingLoad(rawDeadlift1RM, 0.6),
+            targetLoadLbs: loadFromOneRepMax(rawDeadlift1RM, 0.6),
             coachingCues: ['Heavy pulling strength', 'Brace core with hand on bench'],
             nasmClinicalSource: 'CPT7_Performance2.pdf (Home Adaptation)',
           },
@@ -2417,7 +2422,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '1/1/1',
             rest: '3–5 min',
             intensityPercentage1RM: 0.88,
-            targetLoadLbs: calculateTargetTrainingLoad(rawSquat1RM, 0.88),
+            targetLoadLbs: loadFromOneRepMax(rawSquat1RM, 0.88),
             coachingCues: ['Brace core with intra-abdominal pressure', 'Drive through midfoot'],
             nasmClinicalSource: 'CPT7_Performance4.pdf',
           },
@@ -2444,7 +2449,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '3/1/1',
             rest: '3 min',
             intensityPercentage1RM: 0.85,
-            targetLoadLbs: calculateTargetTrainingLoad(rawSquat1RM, 0.75),
+            targetLoadLbs: loadFromOneRepMax(rawSquat1RM, 0.75),
             coachingCues: ['Heavy dumbbells racked on shoulders', 'Pause 3 seconds in the hole to eliminate stretch reflex'],
             nasmClinicalSource: 'CPT7_Performance4.pdf (Home Adaptation)',
           },
@@ -2456,7 +2461,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '2/0/2',
             rest: '3 min',
             intensityPercentage1RM: 0.85,
-            targetLoadLbs: calculateTargetTrainingLoad(rawDeadlift1RM, 0.7),
+            targetLoadLbs: loadFromOneRepMax(rawDeadlift1RM, 0.7),
             coachingCues: ['Heavy hip hinge', 'Spine completely locked in neutral alignment'],
             nasmClinicalSource: 'CPT7_Performance5.pdf (Home Adaptation)',
           }
@@ -2516,7 +2521,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '1/1/1',
             rest: '3–5 min',
             intensityPercentage1RM: 0.9,
-            targetLoadLbs: calculateTargetTrainingLoad(rawDeadlift1RM, 0.9),
+            targetLoadLbs: loadFromOneRepMax(rawDeadlift1RM, 0.9),
             coachingCues: ['Pack lats tight', 'Push floor away with legs'],
             nasmClinicalSource: 'CPT7_Performance1.pdf',
           },
@@ -2528,7 +2533,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '1/1/1',
             rest: '3 min',
             intensityPercentage1RM: 0.85,
-            targetLoadLbs: calculateTargetTrainingLoad(rawSquat1RM, 0.75),
+            targetLoadLbs: loadFromOneRepMax(rawSquat1RM, 0.75),
             coachingCues: ['Elbows high', 'Solid thoracic extension'],
             nasmClinicalSource: 'CPT7_Performance2.pdf',
           }
@@ -2543,7 +2548,7 @@ function buildDistinctOptWorkoutDay(params: {
             tempo: '1/1/1',
             rest: '3 min',
             intensityPercentage1RM: 0.88,
-            targetLoadLbs: calculateTargetTrainingLoad(rawDeadlift1RM, 0.75),
+            targetLoadLbs: loadFromOneRepMax(rawDeadlift1RM, 0.75),
             coachingCues: ['Drive floor away', 'Full hip lockout with glute squeeze'],
             nasmClinicalSource: 'CPT7_Performance1.pdf (Home Adaptation)',
           },
@@ -2599,7 +2604,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '1/1/1',
           rest: '0s (Immediate transition to 1B)',
           intensityPercentage1RM: 0.88,
-          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? calculateTargetTrainingLoad(rawBench1RM, 0.88) : undefined,
+          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawBench1RM, 0.88) : undefined,
           supersetPairWith: upperPAPPowerName,
           coachingCues: ['Heavy neural primer @ 88% 1RM', 'Immediately unrack for explosive power contrast'],
           nasmClinicalSource: 'CPT7_Performance7.pdf & Chapter 18/21',
@@ -2624,7 +2629,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '1/1/1',
           rest: '0s (Immediate transition to 2B)',
           intensityPercentage1RM: 0.88,
-          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? calculateTargetTrainingLoad(rawDeadlift1RM, 0.65) : undefined,
+          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawDeadlift1RM, 0.65) : undefined,
           supersetPairWith: upperPAPRowPowerName,
           coachingCues: ['Heavy pulling primer', 'Zero rest before explosive speed throw/row'],
           nasmClinicalSource: 'CPT7_Performance8.pdf',
@@ -2674,7 +2679,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '1/1/1',
           rest: '0s (Immediate transition to 1B)',
           intensityPercentage1RM: 0.88,
-          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? calculateTargetTrainingLoad(rawSquat1RM, 0.88) : undefined,
+          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawSquat1RM, 0.88) : undefined,
           supersetPairWith: lowerPAPJumpPowerName,
           coachingCues: ['Heavy prime mover @ 88% 1RM', 'Step out immediately to jump'],
           nasmClinicalSource: 'CPT7_Performance9.pdf & Chapter 18/21',
@@ -2699,7 +2704,7 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '1/1/1',
           rest: '0s (Immediate transition to 2B)',
           intensityPercentage1RM: 0.88,
-          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? calculateTargetTrainingLoad(rawDeadlift1RM, 0.75) : undefined,
+          targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawDeadlift1RM, 0.75) : undefined,
           supersetPairWith: lowerPAPHipPowerName,
           coachingCues: ['Heavy glute/posterior chain driver'],
           nasmClinicalSource: 'CPT7_Performance10.pdf',
