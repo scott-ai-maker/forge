@@ -43,17 +43,17 @@ export default function Home() {
       <section className="forge-hero" aria-labelledby="forge-hero-title">
         <div className="forge-hero-copy">
           <p className="forge-eyebrow"><span />Performance built on science</p>
-          <h1 id="forge-hero-title">Built From The Ground Up.</h1>
-          <p className="forge-hero-tagline">Precision Science For Real Lives.</p>
+          <h1 id="forge-hero-title">Personal Training, Built Around You.</h1>
+          <p className="forge-hero-tagline">Personal trainer since 2008. NASM Master Trainer.</p>
           <p className="forge-hero-description">
-            Training that meets you where you are—with a plan, useful feedback, and progress
-            you can measure. Built for real schedules, real bodies, and the long game.
+            Whatever your goal, get a plan shaped around your starting point and schedule—with
+            practical coaching and progress you can measure.
           </p>
           <div className="forge-hero-actions">
             <Link className="forge-primary-link" href="/packages">Explore memberships</Link>
             <Link className="forge-secondary-link" href="/auth/login">Member sign in <span aria-hidden="true">→</span></Link>
           </div>
-          <p className="forge-hero-proof">Evidence-led training <span>·</span> Human coaching <span>·</span> No one-size-fits-all plans</p>
+          <p className="forge-hero-proof">Personal trainer since 2008 <span>·</span> NASM Master Trainer <span>·</span> No one-size-fits-all plans</p>
         </div>
         <div className="forge-hero-mark">
           <Image
@@ -100,12 +100,13 @@ export default function Home() {
           <p className="forge-eyebrow">A coach who gets the climb</p>
           <h2 id="forge-founder-title">Built from lived experience.</h2>
           <p>
-            Coach Scott Gordon started with humble beginnings and overcame poverty. After
-            transforming his own body by more than 50 pounds, he immersed himself in NASM
-            sports science—with a clear purpose: make thoughtful, high-level training
-            accessible to everyday people doing the work.
+            A personal trainer since 2008 and NASM Master Trainer, Scott was Fitness Director
+            at Bally Total Fitness before opening his local training business in 2011. Today,
+            he brings an AI engineer’s analytical mindset to training—and the empathy to meet
+            every client where they are. Expect kindness and understanding, not drill-sergeant
+            pressure; when your goals call for a firmer push, he can bring that too.
           </p>
-          <p className="forge-founder-signoff">The work is personal. The plan is yours.</p>
+          <p className="forge-founder-signoff">Whatever your goal, you can train for it here.</p>
         </div>
       </section>
 
