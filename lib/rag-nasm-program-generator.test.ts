@@ -65,6 +65,12 @@ describe('rag-nasm-program-generator', () => {
     expect(benchExercise?.targetLoadLbs).toBeGreaterThan(150)
   })
 
+  it('prescribes no barbell loads when no 1RM benchmarks are provided', () => {
+    const plan = generateRagNasmProgram({ goal: 'hypertrophy', targetNasmPhase: 3, trainingDaysPerWeek: 4 })
+    const loads = plan.workouts.flatMap(w => w.exercises).map(e => e.targetLoadLbs)
+    expect(loads.every(load => load === undefined)).toBe(true)
+  })
+
   it('generates a Phase 5 Power program with Post-Activation Potentiation contrast pairs', () => {
     const plan = generateRagNasmProgram({
       goal: 'performance',

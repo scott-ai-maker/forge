@@ -22,6 +22,7 @@ interface Props {
   initialPhase?: number
   initialEquipmentAccess?: string[]
   initialSessionsPerWeek?: number | null
+  initialClientAge?: number | null
   initialCompensations?: string[]
   existingPlan?: {
     id?: string | null
@@ -70,6 +71,7 @@ export default function RagProgramGeneratorStudio({
   initialPhase = 3,
   initialEquipmentAccess,
   initialSessionsPerWeek,
+  initialClientAge,
   initialCompensations = [],
   existingPlan = null,
   contraindicationTags = [],
@@ -91,7 +93,7 @@ export default function RagProgramGeneratorStudio({
   })
   const [experience, setExperience] = useState<'beginner' | 'intermediate' | 'advanced' | 'elite'>('advanced')
   const [cardioBlendStyle, setCardioBlendStyle] = useState<'integrated_finishers' | 'dedicated_conditioning' | 'minimal_flush' | 'none'>('integrated_finishers')
-  const [clientAge, setClientAge] = useState<string>('35')
+  const [clientAge, setClientAge] = useState<string>(initialClientAge ? String(initialClientAge) : '')
 
   // Resolve all contraindication tags and sports injury limitations
   const detectedInjuries = useMemo(() => parseInjuriesFromText(injuriesLimitations), [injuriesLimitations])
@@ -124,9 +126,18 @@ export default function RagProgramGeneratorStudio({
   })
 
   // 1RM Benchmarks
-  const [bench1RM, setBench1RM] = useState<string>('225')
-  const [squat1RM, setSquat1RM] = useState<string>('315')
-  const [deadlift1RM, setDeadlift1RM] = useState<string>('385')
+  const [bench1RM, setBench1RM] = useState<string>('')
+  const [squat1RM, setSquat1RM] = useState<string>('')
+  const [deadlift1RM, setDeadlift1RM] = useState<string>('')
+
+  // Only lifts the coach actually entered count as benchmarks
+  function buildBenchmarks() {
+    const entries: Array<[string, string]> = [['Bench Press', bench1RM], ['Squat', squat1RM], ['Deadlift', deadlift1RM]]
+    const filled = entries
+      .map(([lift, value]) => [lift, parseNumericInput(value, 0)] as const)
+      .filter(([, weightLbs]) => weightLbs > 0)
+    return filled.length ? Object.fromEntries(filled.map(([lift, weightLbs]) => [lift, { weightLbs, reps: 1 }])) : undefined
+  }
 
   // Kinetic Compensations from Movement Screen
   const [kneesCaveIn, setKneesCaveIn] = useState<boolean>(() =>
@@ -164,18 +175,13 @@ export default function RagProgramGeneratorStudio({
 
     return generateRagNasmProgram({
       clientName,
-      clientAge: 35,
+      clientAge: initialClientAge || undefined,
       goal: initialGoal,
       targetNasmPhase: initialPhase,
       trainingDaysPerWeek: initialDays,
       experienceLevel: 'advanced',
       equipmentAccess: eqList,
       cardioBlendStyle: 'integrated_finishers',
-      knownBenchmarks: {
-        'Bench Press': { weightLbs: 225, reps: 1 },
-        'Squat': { weightLbs: 315, reps: 1 },
-        'Deadlift': { weightLbs: 385, reps: 1 },
-      },
       kineticCompensations: compensations,
       contraindicationTags: effectiveContraindicationTags,
       injuriesLimitations: injuriesLimitations || undefined,
@@ -193,18 +199,14 @@ export default function RagProgramGeneratorStudio({
 
       const updated = generateRagNasmProgram({
         clientName,
-        clientAge: parseNumericInput(clientAge, 35),
+        clientAge: parseNumericInput(clientAge, 0) || undefined,
         goal,
         targetNasmPhase: initialPhase,
         trainingDaysPerWeek: daysPerWeek,
         experienceLevel: experience,
         equipmentAccess: equipment,
         cardioBlendStyle,
-        knownBenchmarks: {
-          'Bench Press': { weightLbs: parseNumericInput(bench1RM, 225), reps: 1 },
-          'Squat': { weightLbs: parseNumericInput(squat1RM, 315), reps: 1 },
-          'Deadlift': { weightLbs: parseNumericInput(deadlift1RM, 385), reps: 1 },
-        },
+        knownBenchmarks: buildBenchmarks(),
         kineticCompensations: compensations,
         contraindicationTags: effectiveContraindicationTags,
         injuriesLimitations: injuriesLimitations || undefined,
@@ -242,18 +244,14 @@ export default function RagProgramGeneratorStudio({
 
       const updated = generateRagNasmProgram({
         clientName,
-        clientAge: parseNumericInput(clientAge, 35),
+        clientAge: parseNumericInput(clientAge, 0) || undefined,
         goal: initialGoal,
         targetNasmPhase: phase,
         trainingDaysPerWeek: daysPerWeek,
         experienceLevel: experience,
         equipmentAccess: equipment,
         cardioBlendStyle,
-        knownBenchmarks: {
-          'Bench Press': { weightLbs: parseNumericInput(bench1RM, 225), reps: 1 },
-          'Squat': { weightLbs: parseNumericInput(squat1RM, 315), reps: 1 },
-          'Deadlift': { weightLbs: parseNumericInput(deadlift1RM, 385), reps: 1 },
-        },
+        knownBenchmarks: buildBenchmarks(),
         kineticCompensations: compensations,
         contraindicationTags: effectiveContraindicationTags,
         injuriesLimitations: injuriesLimitations || undefined,
@@ -325,18 +323,14 @@ export default function RagProgramGeneratorStudio({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           clientName,
-          clientAge: parseNumericInput(clientAge, 35),
+          clientAge: parseNumericInput(clientAge, 0) || undefined,
           goal,
           targetNasmPhase: phase,
           trainingDaysPerWeek: daysPerWeek,
           experienceLevel: experience,
           equipmentAccess: equipment,
           cardioBlendStyle,
-          knownBenchmarks: {
-            'Bench Press': { weightLbs: parseNumericInput(bench1RM, 225), reps: 1 },
-            'Squat': { weightLbs: parseNumericInput(squat1RM, 315), reps: 1 },
-            'Deadlift': { weightLbs: parseNumericInput(deadlift1RM, 385), reps: 1 },
-          },
+          knownBenchmarks: buildBenchmarks(),
           kineticCompensations: compensations,
           contraindicationTags: effectiveContraindicationTags,
           injuriesLimitations: injuriesLimitations || undefined,
@@ -360,18 +354,14 @@ export default function RagProgramGeneratorStudio({
 
     const plan = generateRagNasmProgram({
       clientName,
-      clientAge: parseNumericInput(clientAge, 35),
+      clientAge: parseNumericInput(clientAge, 0) || undefined,
       goal,
       targetNasmPhase: phase,
       trainingDaysPerWeek: daysPerWeek,
       experienceLevel: experience,
       equipmentAccess: equipment,
       cardioBlendStyle,
-      knownBenchmarks: {
-        'Bench Press': { weightLbs: parseNumericInput(bench1RM, 225), reps: 1 },
-        'Squat': { weightLbs: parseNumericInput(squat1RM, 315), reps: 1 },
-        'Deadlift': { weightLbs: parseNumericInput(deadlift1RM, 385), reps: 1 },
-      },
+      knownBenchmarks: buildBenchmarks(),
       kineticCompensations: compensations,
       contraindicationTags: effectiveContraindicationTags,
       injuriesLimitations: injuriesLimitations || undefined,
