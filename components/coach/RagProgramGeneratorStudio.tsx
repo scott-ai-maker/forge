@@ -379,6 +379,36 @@ export default function RagProgramGeneratorStudio({
     setIsGenerating(false)
   }
 
+  const handleGenerateWeightLoss = async () => {
+    if (!clientId) return
+    setIsGenerating(true)
+    setApplyStatus(null)
+    setApplyError(null)
+    try {
+      const res = await fetch(`/api/coach/clients/${clientId}/weight-loss-program`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.plan) throw new Error(data.error || 'Weight loss program generation failed.')
+      setGoal('fat_loss')
+      setPhase(Number(data.plan.nasmOptPhase) || 1)
+      setGeneratedPlan(data.plan)
+      setActiveDayTab(1)
+      const t = data.targets
+      setApplyStatus(
+        t
+          ? `✓ Coach Gordon built a NASM weight loss program from ${clientName}'s stats: ${t.currentWeightLbs} → ${t.targetWeightLbs} lbs (~${t.weeklyLossLbs} lb/wk, ~${t.estimatedWeeks} wks), ${t.macros.targetCalories} kcal/day, ${t.macros.proteinGrams}g protein.`
+          : `✓ Coach Gordon built a NASM weight loss program (client weight not on file, so nutrition targets were skipped).`
+      )
+    } catch (err: unknown) {
+      setApplyError((err as { message?: string })?.message || 'Weight loss program generation failed.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   const handleAssignPlan = async () => {
     if (!clientId) {
       setApplyStatus(`✓ Generated plan ready for review: ${generatedPlan.planTitle}`)
@@ -571,6 +601,29 @@ export default function RagProgramGeneratorStudio({
             </>
           )}
         </button>
+
+        {clientId && (
+          <button
+            type="button"
+            onClick={handleGenerateWeightLoss}
+            disabled={isGenerating}
+            style={{
+              background: 'transparent',
+              color: '#D4A017',
+              fontFamily: 'Raleway, sans-serif',
+              fontWeight: 800,
+              fontSize: 13,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              padding: '12px 24px',
+              border: '1px solid #D4A017',
+              borderRadius: 6,
+              cursor: isGenerating ? 'wait' : 'pointer',
+            }}
+          >
+            Weight Loss Program from Client Stats
+          </button>
+        )}
       </div>
 
       {/* ── Active PAR-Q Biomechanical Limitations Notice ────────────── */}
