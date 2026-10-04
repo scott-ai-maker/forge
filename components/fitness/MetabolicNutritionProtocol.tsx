@@ -10,6 +10,7 @@ import {
   NutritionGoal,
   ActivityLevel,
 } from '@/lib/metabolic-nutrition'
+import type { NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 import SupplementAdvisorWidget from '@/components/fitness/SupplementAdvisorWidget'
 
 import { DailyBiometricSummary } from '@/lib/wearables-telemetry'
@@ -23,6 +24,7 @@ interface MetabolicNutritionProtocolProps {
   initialBodyFat?: number
   initialActivityLevel?: ActivityLevel
   telemetry?: DailyBiometricSummary | null
+  savedTargets?: NutritionTargetsSnapshot
   intake?: {
     parq_answers?: unknown
     parq_any_yes?: boolean
@@ -42,6 +44,7 @@ export default function MetabolicNutritionProtocol({
   initialBodyFat = 16,
   initialActivityLevel = 'moderately_active',
   telemetry,
+  savedTargets,
   intake,
 }: MetabolicNutritionProtocolProps) {
   const [nutritionMode, setNutritionMode] = useState<'macros_dining' | 'supplements'>('macros_dining')
@@ -64,7 +67,7 @@ export default function MetabolicNutritionProtocol({
   const [heightInches] = useState<number>(initialHeightInches)
   const [bodyFat, setBodyFat] = useState<number>(initialBodyFat)
 
-  const energy = useMemo(() => calculateEnergyExpenditure({
+  const calculatedEnergy = useMemo(() => calculateEnergyExpenditure({
     weightLbs: weight,
     heightInches,
     age,
@@ -74,7 +77,7 @@ export default function MetabolicNutritionProtocol({
     goal: selectedGoal,
   }), [weight, heightInches, age, sex, bodyFat, activityLevel, selectedGoal])
 
-  const macros = useMemo(() => calculatePrecisionMacros({
+  const calculatedMacros = useMemo(() => calculatePrecisionMacros({
     weightLbs: weight,
     heightInches,
     age,
@@ -84,6 +87,34 @@ export default function MetabolicNutritionProtocol({
     goal: selectedGoal,
     phase: activePhase,
   }), [weight, heightInches, age, sex, bodyFat, activityLevel, selectedGoal, activePhase])
+  const energy = useMemo(() => savedTargets
+    ? {
+        ...calculatedEnergy,
+        targetCalories: savedTargets.targetCalories,
+        calorieDelta: savedTargets.targetCalories - calculatedEnergy.tdeeCalories,
+        goalLabel: 'Saved program nutrition target',
+      }
+    : calculatedEnergy, [calculatedEnergy, savedTargets])
+  const macros = useMemo(() => {
+    if (!savedTargets) return calculatedMacros
+    const proteinCalories = savedTargets.proteinGrams * 4
+    const carbCalories = savedTargets.carbGrams * 4
+    const fatCalories = savedTargets.fatGrams * 9
+    const totalCalories = proteinCalories + carbCalories + fatCalories
+    return {
+      ...calculatedMacros,
+      targetCalories: savedTargets.targetCalories,
+      proteinGrams: savedTargets.proteinGrams,
+      proteinCalories,
+      proteinPct: totalCalories ? Math.round((proteinCalories / totalCalories) * 100) : 0,
+      carbGrams: savedTargets.carbGrams,
+      carbCalories,
+      carbPct: totalCalories ? Math.round((carbCalories / totalCalories) * 100) : 0,
+      fatGrams: savedTargets.fatGrams,
+      fatCalories,
+      fatPct: totalCalories ? Math.round((fatCalories / totalCalories) * 100) : 0,
+    }
+  }, [calculatedMacros, savedTargets])
 
   const phases: { key: NasmOptPhase; label: string; badge: string }[] = [
     { key: 'phase1_stabilization', label: 'Phase 1: Stabilization', badge: 'Anti-Inflammatory' },
@@ -97,6 +128,22 @@ export default function MetabolicNutritionProtocol({
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
+      {savedTargets && (
+        <section
+          aria-label="Saved program nutrition targets"
+          style={{ padding: '16px 18px', border: '1px solid rgba(212,160,23,0.5)', borderRadius: 10, background: 'rgba(13,27,42,0.95)' }}
+        >
+          <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            Daily targets from your saved program
+          </div>
+          <div style={{ marginTop: 6, color: 'var(--white)', fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-telemetry, monospace)' }}>
+            {savedTargets.targetCalories.toLocaleString()} kcal / day
+          </div>
+          <div style={{ color: 'var(--gray)', fontSize: 14, marginTop: 3 }}>
+            Protein {savedTargets.proteinGrams}g · Carbs {savedTargets.carbGrams}g · Fat {savedTargets.fatGrams}g
+          </div>
+        </section>
+      )}
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="glass-card" style={{ padding: '24px 28px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
@@ -449,7 +496,7 @@ export default function MetabolicNutritionProtocol({
 
           <div style={{ background: 'rgba(8,14,20,0.6)', padding: '16px 18px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}>
             <div style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-              Protein ({macros.proteinPerLb}g/lb)
+            {savedTargets ? 'Protein' : `Protein (${macros.proteinPerLb}g/lb)`}
             </div>
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 36, fontWeight: 700, color: 'var(--white)', lineHeight: 1, marginTop: 4 }}>
               {macros.proteinGrams}g

@@ -8,7 +8,8 @@ import {
   type ExerciseLibraryRecord,
 } from '@/lib/coach-programs'
 import { supabaseAdmin } from '@/lib/supabase'
-import { parseNutritionTargets } from '@/lib/weight-loss-program'
+import { calculatePrecisionMacros, type NasmOptPhase, type NutritionGoal } from '@/lib/metabolic-nutrition'
+import { normalizeActivity, parseNutritionTargets, type NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 
 const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library', 'licensed_import']
 
@@ -36,6 +37,65 @@ function parsePayload(body: Record<string, unknown>): CoachProgramPayload | null
     startDate: String(body.startDate ?? '').trim() || null,
     templateId: String(body.templateId ?? '').trim() || null,
     workouts,
+  }
+}
+
+function getNutritionGoal(goal: string | null): NutritionGoal {
+  const normalized = (goal ?? '').toLowerCase()
+  if (normalized.includes('fat') || normalized.includes('loss') || normalized.includes('weight')) return 'fat_loss'
+  if (normalized.includes('hyper') || normalized.includes('gain') || normalized.includes('muscle')) return 'hypertrophy'
+  if (normalized.includes('power') || normalized.includes('performance') || normalized.includes('athletic')) return 'athletic_power'
+  return 'maintenance'
+}
+
+function getNasmPhase(phase: number): NasmOptPhase {
+  const phases: NasmOptPhase[] = [
+    'phase1_stabilization',
+    'phase2_strength_endurance',
+    'phase3_hypertrophy',
+    'phase4_maximal_strength',
+    'phase5_power',
+  ]
+  return phases[Math.max(0, Math.min(phases.length - 1, Math.round(phase) - 1))]
+}
+
+async function calculateProfileNutritionTargets(
+  admin: ReturnType<typeof supabaseAdmin>,
+  clientId: string,
+  goal: NutritionGoal,
+  phase: NasmOptPhase
+): Promise<NutritionTargetsSnapshot | null> {
+  const [{ data: profile, error: profileError }, { data: bodyComp, error: bodyCompError }] = await Promise.all([
+    admin.from('fitness_profiles').select('*').eq('user_id', clientId).maybeSingle(),
+    admin
+      .from('body_composition_analyses')
+      .select('estimated_bodyfat_percent')
+      .eq('user_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+  if (profileError) throw new Error(`Could not load client fitness profile: ${profileError.message}`)
+  if (bodyCompError) throw new Error(`Could not load client body composition: ${bodyCompError.message}`)
+
+  const weightKg = Number(profile?.weight_kg)
+  if (!Number.isFinite(weightKg) || weightKg <= 0) return null
+  const bodyFatPercent = Number(bodyComp?.estimated_bodyfat_percent)
+  const macros = calculatePrecisionMacros({
+    weightLbs: weightKg * 2.20462,
+    heightInches: Number(profile?.height_cm) > 0 ? Number(profile.height_cm) / 2.54 : undefined,
+    age: Number(profile?.age) > 0 ? Number(profile.age) : undefined,
+    sex: profile?.sex === 'female' || profile?.sex === 'male' || profile?.sex === 'other' ? profile.sex : undefined,
+    bodyFatPercent: Number.isFinite(bodyFatPercent) && bodyFatPercent > 0 ? bodyFatPercent : undefined,
+    activityLevel: normalizeActivity(profile?.activity_level),
+    goal,
+    phase,
+  })
+  return {
+    targetCalories: macros.targetCalories,
+    proteinGrams: macros.proteinGrams,
+    carbGrams: macros.carbGrams,
+    fatGrams: macros.fatGrams,
   }
 }
 
@@ -99,7 +159,7 @@ export async function POST(req: NextRequest) {
   const payload = parsePayload(body)
   const shouldOverwrite = Boolean(body.overwrite)
   const targetPlanId = String(body.targetPlanId ?? '').trim() || null
-  const nutritionTargets = parseNutritionTargets(body.nutritionTargets)
+  let nutritionTargets = parseNutritionTargets(body.nutritionTargets)
 
   if (!payload) {
     return NextResponse.json({ error: 'Invalid workout plan payload.' }, { status: 400 })
@@ -118,6 +178,22 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = supabaseAdmin()
+  if (!nutritionTargets) {
+    try {
+      nutritionTargets = await calculateProfileNutritionTargets(
+        admin,
+        payload.clientId,
+        getNutritionGoal(payload.goal ?? null),
+        getNasmPhase(payload.nasmOptPhase)
+      )
+    } catch (error) {
+      console.error('Could not calculate workout plan nutrition targets:', error)
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Could not calculate client nutrition targets.' },
+        { status: 500 }
+      )
+    }
+  }
 
   const exerciseIds = payload.workouts.flatMap(workout =>
     Array.isArray(workout.exercises)

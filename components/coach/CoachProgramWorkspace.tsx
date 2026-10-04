@@ -8,6 +8,7 @@ import { NASM_OPT_PHASE_STANDARDS, GeneratedMacrocyclePlan } from '@/lib/rag-nas
 import { parseInjuriesFromText } from '@/lib/sports-injuries'
 import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 import type { ParqEvaluationResult } from '@/lib/liability-shield'
+import type { NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 import type {
   CoachProgramTemplateRecord,
   EquipmentLibraryRecord,
@@ -25,6 +26,7 @@ interface LatestWorkoutPlan {
   estimated_duration_mins?: number | null
   created_at?: string | null
   plan_json?: {
+    nutritionTargets?: NutritionTargetsSnapshot
     workouts?: Array<{
       day: number
       focus: string
@@ -169,7 +171,10 @@ export default function CoachProgramWorkspace({
     }
   }
 
-  const handlePlanAssignedFromStudio = (newPlan: GeneratedMacrocyclePlan) => {
+  const handlePlanAssignedFromStudio = (
+    newPlan: GeneratedMacrocyclePlan,
+    nutritionTargets?: NutritionTargetsSnapshot
+  ) => {
     const updatedPlanRecord: LatestWorkoutPlan = {
       id: activePlan?.id || 'assigned-plan-' + Date.now(),
       name: newPlan.planTitle,
@@ -180,6 +185,7 @@ export default function CoachProgramWorkspace({
       estimated_duration_mins: 55,
       created_at: new Date().toISOString(),
       plan_json: {
+        ...(nutritionTargets ? { nutritionTargets } : {}),
         workouts: newPlan.workouts.map(w => ({
           day: w.day,
           focus: w.focus,
@@ -495,6 +501,28 @@ export default function CoachProgramWorkspace({
               </button>
             </div>
           </div>
+
+          {activePlan.plan_json?.nutritionTargets && (
+            <section
+              aria-label="Active program nutrition targets"
+              style={{
+                padding: '14px 16px',
+                border: '1px solid rgba(212,160,23,0.45)',
+                borderRadius: 9,
+                background: 'rgba(8,14,24,0.8)',
+              }}
+            >
+              <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                Daily nutrition targets · saved with this program
+              </div>
+              <div style={{ marginTop: 6, color: '#FFFFFF', fontSize: 21, fontWeight: 800, fontFamily: 'var(--font-telemetry, monospace)' }}>
+                {activePlan.plan_json.nutritionTargets.targetCalories.toLocaleString()} kcal / day
+              </div>
+              <div style={{ marginTop: 3, color: 'var(--gray)', fontSize: 14 }}>
+                Protein {activePlan.plan_json.nutritionTargets.proteinGrams}g · Carbs {activePlan.plan_json.nutritionTargets.carbGrams}g · Fat {activePlan.plan_json.nutritionTargets.fatGrams}g
+              </div>
+            </section>
+          )}
 
           {/* ── Program History & Version Switcher Drawer ─────────────── */}
           {showHistoryDrawer && (

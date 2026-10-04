@@ -27,6 +27,7 @@ export interface MetabolicProfileInput {
   activityLevel?: ActivityLevel
   goal?: NutritionGoal
   phase?: NasmOptPhase
+  calorieDeficitCalories?: number
 }
 
 export interface MetabolicEnergyAnalysis {
@@ -164,7 +165,10 @@ export function calculateEnergyExpenditure(input: MetabolicProfileInput): Metabo
   // Caloric adjustment based on goal
   let delta = 0
   let goalLabel = 'Maintenance & Metabolic Equilibrium'
-  if (goal === 'fat_loss') {
+  if (input.calorieDeficitCalories !== undefined) {
+    delta = -Math.max(0, input.calorieDeficitCalories)
+    goalLabel = `Caloric Deficit for Fat Loss (-${Math.abs(delta)} kcal)`
+  } else if (goal === 'fat_loss') {
     delta = -500 // standard 1 lb/week fat loss deficit
     goalLabel = 'Caloric Deficit for Fat Oxidation (-500 kcal)'
   } else if (goal === 'hypertrophy') {

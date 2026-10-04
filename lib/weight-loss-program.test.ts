@@ -16,7 +16,22 @@ describe('weight loss program', () => {
     expect(t.weeklyLossLbs).toBe(2)
     expect(t.lbsToLose).toBeGreaterThan(30)
     expect(t.estimatedWeeks).toBe(Math.ceil(t.lbsToLose / 2))
+    expect(t.dailyDeficitCalories).toBe(t.energy.tdeeCalories - t.energy.targetCalories)
+    expect(t.dailyDeficitCalories).toBeGreaterThan(500)
     expect(t.macros.targetCalories).toBeLessThan(t.energy.tdeeCalories)
+  })
+
+  it('uses the client weight-based pace to set the calorie deficit', () => {
+    const t = calculateWeightLossTargets({ weightKg: 70, targetWeightKg: 60, heightCm: 170, age: 35, sex: 'female' })!
+    expect(t.weeklyLossLbs).toBe(1.5)
+    expect(t.dailyDeficitCalories).toBe(t.energy.tdeeCalories - t.macros.targetCalories)
+    expect(t.macros.targetCalories).toBe(t.energy.targetCalories)
+  })
+
+  it('reports the reduced pace when the healthy calorie floor limits the deficit', () => {
+    const t = calculateWeightLossTargets({ weightKg: 55, targetWeightKg: 50, heightCm: 150, age: 80, sex: 'female', activityLevel: 'sedentary' })!
+    expect(t.macros.targetCalories).toBeGreaterThanOrEqual(1200)
+    expect(t.weeklyLossLbs).toBe(Math.round((t.dailyDeficitCalories * 7 / 3500) * 10) / 10)
   })
 
   it('builds a fat loss request starting in the right phase', () => {
