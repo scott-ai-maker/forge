@@ -38,7 +38,7 @@ export default function MasterAllocationModal({
     }
 
     if (!autonomousExecution || !capitalAllocated) {
-      setError('Please confirm both executive prerequisite questions.')
+      setError('Please answer both coaching fit questions.')
       return
     }
 
@@ -165,13 +165,13 @@ export default function MasterAllocationModal({
               <GaaIcon name="shield" size={26} tone="gold" />
             </div>
             <h3 className="font-serif" style={{ fontSize: 24, color: '#FFFFFF', margin: '0 0 12px', fontWeight: 700 }}>
-              Advisory Alignment Notice
+              Another option may suit you better
             </h3>
             <p style={{ color: 'var(--gray)', fontSize: 14.5, lineHeight: 1.7, maxWidth: 480, margin: '0 auto 24px' }}>
-              <strong>Transformation Direct ($199/mo)</strong> includes quarterly asynchronous video critiques with Coach Scott Gordon.
+              <strong>Coach Support ($199/month)</strong> includes quarterly video reviews with Coach Scott Gordon.
             </p>
             <p style={{ color: 'var(--gold-lt)', fontSize: 14, lineHeight: 1.6, maxWidth: 460, margin: '0 auto 28px' }}>
-              Start with Core Membership for automated periodization and telemetry, or choose Pro Athlete for voice cadences and biomechanical mesh diagnostics.
+              You can start with Core for a personalized training plan, or choose Plus for audio-guided sessions, recovery insights, nutrition planning, and travel workout tools.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
@@ -180,7 +180,7 @@ export default function MasterAllocationModal({
                 className="sgf-button sgf-button-primary tactile-btn"
                 style={{ padding: '12px 24px', fontSize: 13, fontWeight: 800 }}
               >
-                View Autonomous Lab Tiers
+                Explore membership options
               </button>
             </div>
           </div>
@@ -204,16 +204,16 @@ export default function MasterAllocationModal({
               <GaaIcon name="crown" size={30} tone="gold" />
             </div>
             <div className="crest-badge" style={{ marginBottom: 14 }}>
-              <span>Diagnostic Allocation Pending</span>
+              <span>Request received</span>
             </div>
             <h3 className="font-serif" style={{ fontSize: 28, color: '#FFFFFF', margin: '0 0 12px', fontWeight: 700 }}>
-              Master Dossier Initiated
+              Thanks, {fullName}
             </h3>
             <p style={{ color: '#E2E8F0', fontSize: 15, lineHeight: 1.7, maxWidth: 520, margin: '0 auto 18px' }}>
-              Your sovereign intake file for <strong>{fullName}</strong> has been routed directly to Coach Gordon&apos;s private queue.
+              Your request has been sent to Coach Gordon.
             </p>
             <p style={{ color: 'var(--gray)', fontSize: 13.5, lineHeight: 1.6, maxWidth: 480, margin: '0 auto 28px' }}>
-              Our concierge desk will review your orthopedic profile and confirm your 45-minute live WebRTC Sovereign Movement Audit &amp; OHSA screen via email or direct WhatsApp within 12 business hours.
+              Coach Gordon will review your training and movement information, then contact you by email or phone within 12 business hours to discuss next steps.
             </p>
             <button
               type="button"
@@ -230,21 +230,21 @@ export default function MasterAllocationModal({
             <div style={{ marginBottom: 20 }}>
               <div className="crest-badge" style={{ marginBottom: 12 }}>
                 <GaaIcon name="crown" size={12} tone="gold" />
-                <span>Transformation Direct · Quarterly Video Critiques</span>
+                <span>Coach Support · Quarterly video reviews</span>
               </div>
               <h2 className="font-serif" style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)', color: '#FFFFFF', margin: '0 0 8px', fontWeight: 700, lineHeight: 1.15 }}>
-                Request Master Diagnostic Allocation
+                Request coaching support
               </h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  ✦ Strictly Capped at 8 Principals
+                  ✦ Limited coaching spaces
                 </span>
                 <span style={{ fontSize: 11, color: '#34D399', fontWeight: 700, background: 'rgba(52, 211, 153, 0.1)', padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(52, 211, 153, 0.25)' }}>
-                  ● 2 Allocations Remaining
+                  ● 2 places currently open
                 </span>
               </div>
               <p style={{ fontSize: 13, color: 'var(--gray)', lineHeight: 1.5, margin: '10px 0 0' }}>
-                Admittance requires clinical verification of training discipline, orthopedic history, and capital allocation. Complete the four sovereign prerequisites below:
+                Tell us about your goals, schedule, movement history, and whether this level of coaching fits your needs and budget.
               </p>
             </div>
 
@@ -259,7 +259,7 @@ export default function MasterAllocationModal({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#E2E8F0', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                    Principal Full Name *
+                    Full name *
                   </label>
                   <input
                     type="text"
@@ -281,7 +281,7 @@ export default function MasterAllocationModal({
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#E2E8F0', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                    Executive Email *
+                    Email address *
                   </label>
                   <input
                     type="email"
@@ -306,7 +306,7 @@ export default function MasterAllocationModal({
               {/* Row 2: Phone / Direct WhatsApp */}
               <div>
                 <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#E2E8F0', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                  Direct Mobile / WhatsApp (For Concierge Scheduling)
+                  Phone (optional)
                 </label>
                 <input
                   type="tel"
@@ -326,17 +326,17 @@ export default function MasterAllocationModal({
                 />
               </div>
 
-              {/* Question 1: Occupational Velocity */}
+              {/* Question 1: Schedule and routine */}
               <div>
                 <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                  1. Occupational Velocity &amp; Flight Schedule *
+                  1. Your schedule and routine *
                 </label>
                 <textarea
                   required
                   rows={2}
                   value={occupationalVelocity}
                   onChange={e => setOccupationalVelocity(e.target.value)}
-                  placeholder="e.g., Managing Director in Private Equity, 60+ hrs/wk, bi-weekly transcontinental flights (NYC / London), frequent hotel gyms."
+                  placeholder="e.g., Shift work, school pickup, travel days, or the times that work best for training."
                   style={{
                     width: '100%',
                     padding: '11px 14px',
@@ -351,17 +351,17 @@ export default function MasterAllocationModal({
                 />
               </div>
 
-              {/* Question 2: Orthopedic History */}
+              {/* Question 2: Movement and injury history */}
               <div>
                 <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                  2. Orthopedic Compensations &amp; Surgical History *
+                  2. Injuries or movement concerns *
                 </label>
                 <textarea
                   required
                   rows={2}
                   value={orthopedicHistory}
                   onChange={e => setOrthopedicHistory(e.target.value)}
-                  placeholder="e.g., Chronic lower back tightness (L4/L5) after long flights, right rotator cuff impingement on heavy presses, no prior surgeries."
+                  placeholder="Share any current or past injuries, pain, surgeries, or movements you find difficult."
                   style={{
                     width: '100%',
                     padding: '11px 14px',
@@ -376,13 +376,13 @@ export default function MasterAllocationModal({
                 />
               </div>
 
-              {/* Question 3: Autonomy Filter */}
+              {/* Question 3: Training preferences */}
               <div>
                 <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                  3. Execution Autonomy *
+                  3. Training between check-ins *
                 </label>
                 <p style={{ fontSize: 12, color: 'var(--gray)', margin: '0 0 8px' }}>
-                  Our master advisory requires strict adherence to periodized load targets and Sunday dossier telemetry. Do you execute autonomously without cheerleading?
+                  This coaching plan is designed to be followed between check-ins. Would that work for you?
                 </p>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#FFFFFF', cursor: 'pointer' }}>
@@ -393,7 +393,7 @@ export default function MasterAllocationModal({
                       checked={autonomousExecution === 'yes'}
                       onChange={() => setAutonomousExecution('yes')}
                     />
-                    <span>Yes, I execute autonomously</span>
+                    <span>Yes, I can train independently</span>
                   </label>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#FFFFFF', cursor: 'pointer' }}>
                     <input
@@ -403,18 +403,18 @@ export default function MasterAllocationModal({
                       checked={autonomousExecution === 'no'}
                       onChange={() => setAutonomousExecution('no')}
                     />
-                    <span>No, I require daily cheerleading</span>
+                    <span>No, I would prefer more regular guidance</span>
                   </label>
                 </div>
               </div>
 
-              {/* Question 4: Capital Readiness */}
+              {/* Question 4: Monthly budget */}
               <div>
                 <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                  4. Capital Allocation Readiness *
+                  4. Monthly budget *
                 </label>
                 <p style={{ fontSize: 12, color: 'var(--gray)', margin: '0 0 8px' }}>
-                  Transformation Direct is a recurring $199/month membership with quarterly asynchronous video critiques by Coach Scott Gordon.
+                  Coach Support is $199/month and includes quarterly video reviews with Coach Scott Gordon.
                 </p>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#FFFFFF', cursor: 'pointer' }}>
@@ -425,7 +425,7 @@ export default function MasterAllocationModal({
                       checked={capitalAllocated === 'yes'}
                       onChange={() => setCapitalAllocated('yes')}
                     />
-                    <span>Yes, capital is allocated &amp; ready</span>
+                    <span>Yes, this fits my budget right now</span>
                   </label>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#FFFFFF', cursor: 'pointer' }}>
                     <input
@@ -435,7 +435,7 @@ export default function MasterAllocationModal({
                       checked={capitalAllocated === 'no'}
                       onChange={() => setCapitalAllocated('no')}
                     />
-                    <span>No, exploring other options</span>
+                    <span>Not right now—I&apos;d like to explore other options</span>
                   </label>
                 </div>
               </div>
@@ -468,7 +468,7 @@ export default function MasterAllocationModal({
                   }}
                 >
                   <GaaIcon name="crown" size={16} tone="inherit" />
-                  <span>{loading ? 'Submitting File...' : 'Submit Diagnostic Intake for Master Audit'}</span>
+                  <span>{loading ? 'Sending request...' : 'Submit Diagnostic Intake for Master Audit'}</span>
                 </button>
               </div>
             </form>

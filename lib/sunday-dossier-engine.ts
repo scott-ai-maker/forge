@@ -209,48 +209,48 @@ export function generateSundayDossier(
     Math.min(98, Math.round(82 - volumePenalty + rpeFactor + restingHrBonus + hrvBonus))
   )
 
-  // 4. Executive Summary Bullet Points
+  // 4. Weekly progress summary
   const executiveSummary: string[] = []
 
   if (totalTonnageLbs > 0) {
     executiveSummary.push(
-      `Accumulated ${totalTonnageLbs.toLocaleString()} lbs in total mechanical volume load across ${totalWorkingSets} prescribed working sets with an average exertion of ${avgSessionRpe}/10 RPE.`
+      `You lifted a total of ${totalTonnageLbs.toLocaleString()} pounds across ${totalWorkingSets} working sets. Your average effort rating was ${avgSessionRpe} out of 10.`
     )
   } else {
-    executiveSummary.push('Baseline calibration week completed; focused on kinetic chain neuromuscular activation.')
+    executiveSummary.push('There is not enough workout data for a full summary yet. Keep logging your sessions to see your progress here.')
   }
 
   if (zone2CardioMins > 0) {
     executiveSummary.push(
-      `Completed ${zone2CardioMins} minutes of targeted Zone 2 aerobic base conditioning, supporting mitochondrial biogenesis and accelerated lactate clearance.`
+      `You logged ${zone2CardioMins} minutes of steady, moderate-intensity cardio.`
     )
   }
 
   if (prs.length > 0) {
     const prDetails = prs.map(p => `${p.exercise_name} (${p.weight_lbs} lbs × ${p.reps} reps)`).join(', ')
-    executiveSummary.push(`Achieved ${prs.length} new 1RM performance milestone(s) this cycle: ${prDetails}.`)
+    executiveSummary.push(`You set ${prs.length} new personal record${prs.length === 1 ? '' : 's'}: ${prDetails}.`)
   }
 
   if (recoveryIndexScore >= 80) {
     executiveSummary.push(
-      `Autonomic recovery index is optimal (${recoveryIndexScore}/100). Parasympathetic tone and neuromuscular readiness indicate full adaptation capacity.`
+      `Your recovery score is ${recoveryIndexScore} out of 100. Keep up the habits that help you feel ready to train.`
     )
   } else {
     executiveSummary.push(
-      `Autonomic recovery index is moderate (${recoveryIndexScore}/100). Prioritize sleep architecture and post-workout nutritional timing.`
+      `Your recovery score is ${recoveryIndexScore} out of 100. Rest, sleep, and regular meals can support recovery.`
     )
   }
 
-  // 5. Next Week's Strategic Focus
+  // 5. Next week's training focus
   let nextWeekFocus = ''
   if (optPhase.toLowerCase().includes('stabilization')) {
-    nextWeekFocus = 'Progressive neuromuscular challenge: Increase time-under-tension to 4-2-1 cadence and integrate single-leg proprioceptive balance.'
+    nextWeekFocus = 'Practice each movement with control. Try a steady pace and include single-leg balance work if it feels comfortable.'
   } else if (optPhase.toLowerCase().includes('hypertrophy') || optPhase.toLowerCase().includes('muscular')) {
-    nextWeekFocus = 'Progressive volume overload: +2.5% to +5% working load increase on multi-joint compound anchors with strict 2-0-2 cadence.'
+    nextWeekFocus = 'If your recent workouts felt manageable, try a small increase (2.5–5%) on your main lifts while keeping good form.'
   } else if (optPhase.toLowerCase().includes('power')) {
-    nextWeekFocus = 'High-threshold motor unit recruitment: Maintain heavy strength complexes followed immediately by explosive plyometric supersets.'
+    nextWeekFocus = 'Keep strength exercises controlled, then add a small number of fast jumps or throws while you feel fresh.'
   } else {
-    nextWeekFocus = 'Linear progressive overload: Consolidate mechanical tonnage and maintain restorative Zone 2 aerobic recovery windows.'
+    nextWeekFocus = 'Build gradually from your recent training. Include some steady cardio and leave time for recovery.'
   }
 
   // 6. ACWR Calculation (Acute-to-Chronic Workload Ratio)
@@ -266,35 +266,35 @@ export function generateSundayDossier(
     : null
 
   let acwrZone: 'Under-training' | 'Sweet Spot' | 'Overreaching' | 'Danger Zone' | 'No Data' = 'No Data'
-  let acwrStatusMessage = 'Insufficient Workload Telemetry: No mechanical volume logged in current cycle to calculate ACWR.'
+  let acwrStatusMessage = 'Not enough recent workout data to compare your current training with your usual amount.'
 
   if (rawAcwr !== null) {
     if (rawAcwr < 0.80) {
       acwrZone = 'Under-training'
-      acwrStatusMessage = 'Below Chronic Baseline: Mild mechanical stimulus; supercompensation threshold not fully saturated.'
+      acwrStatusMessage = 'Your recent training load is lower than usual.'
     } else if (rawAcwr <= 1.30) {
       acwrZone = 'Sweet Spot'
-      acwrStatusMessage = 'Optimal Adaptation Corridor: High fitness accumulation coupled with minimized orthopedic injury risk.'
+      acwrStatusMessage = 'Your recent training load is within your usual range.'
     } else if (rawAcwr <= 1.49) {
       acwrZone = 'Overreaching'
-      acwrStatusMessage = 'Controlled Overreaching: Elevated acute fatigue accumulation. Monitor parasympathetic HRV tone closely.'
+      acwrStatusMessage = 'Your recent training load is higher than usual. Pay attention to how you feel and make room for recovery.'
     } else {
       acwrZone = 'Danger Zone'
-      acwrStatusMessage = 'Danger Spike (ACWR >= 1.50): Acute fatigue significantly outpaces chronic tolerance. Recommend restorative deload.'
+      acwrStatusMessage = 'Your recent training load is much higher than usual. Consider reducing intensity or taking more recovery time.'
     }
   }
 
   // 7. Kinetic Movement Pattern Distribution
   const kineticDistribution = computeKineticDistribution(setLogs)
 
-  // 8. Clinical S.O.A.P. Documentation Synthesis
+  // 8. Coach notes
   const soapRecord: SoapRecord = {
-    subjective: `Athlete executed microcycle in ${optPhase} with ${adherencePct}% protocol adherence across ${completedSessions} logged session(s). Average perceived session exertion was ${avgSessionRpe}/10 RPE with autonomic readiness scoring ${recoveryIndexScore}/100 (${recoveryIndexScore >= 80 ? 'Optimal Supercompensation' : recoveryIndexScore >= 65 ? 'Allostatic Equilibrium' : 'Restorative Deload Advised'}).`,
-    objective: `Total mechanical volume: ${totalTonnageLbs.toLocaleString()} lbs across ${totalWorkingSets} prescribed working sets. Aerobic base conditioning: ${zone2CardioMins} mins Zone 2 (${totalCardioMins} mins total cardio). ACWR Ratio: ${rawAcwr !== null ? `${rawAcwr.toFixed(2)} (${acwrZone})` : 'No Data (insufficient volume logged)'}. Kinetic distribution: ${kineticDistribution.pushPct}% Push (${kineticDistribution.pushSets} sets), ${kineticDistribution.pullPct}% Pull (${kineticDistribution.pullSets} sets), ${kineticDistribution.squatPct}% Squat (${kineticDistribution.squatSets} sets), ${kineticDistribution.hingePct}% Hinge (${kineticDistribution.hingeSets} sets), ${kineticDistribution.carryCorePct}% Carry/Core (${kineticDistribution.carryCoreSets} sets). Personal records: ${prs.length > 0 ? prs.map(p => `${p.exercise_name} (${p.weight_lbs} lbs × ${p.reps} reps)`).join(', ') : 'None logged this cycle'}.`,
+    subjective: `You completed ${completedSessions} session(s) during ${optPhase}, or ${adherencePct}% of your planned sessions. Your average effort rating was ${avgSessionRpe} out of 10. Your recovery score was ${recoveryIndexScore} out of 100 (${recoveryIndexScore >= 80 ? 'ready to train' : recoveryIndexScore >= 65 ? 'steady recovery' : 'more recovery may help'}).`,
+    objective: `You lifted ${totalTonnageLbs.toLocaleString()} pounds across ${totalWorkingSets} working sets. You logged ${zone2CardioMins} minutes of steady cardio (${totalCardioMins} total cardio minutes). Recent-to-usual workload ratio: ${rawAcwr !== null ? `${rawAcwr.toFixed(2)} (${acwrZone})` : 'not enough data yet'}. Movement patterns: ${kineticDistribution.pushPct}% push, ${kineticDistribution.pullPct}% pull, ${kineticDistribution.squatPct}% squat, ${kineticDistribution.hingePct}% hinge, and ${kineticDistribution.carryCorePct}% carry or core exercises. Personal records: ${prs.length > 0 ? prs.map(p => `${p.exercise_name} (${p.weight_lbs} lbs × ${p.reps} reps)`).join(', ') : 'None logged this week'}.`,
     assessment: rawAcwr !== null
-      ? `Neuromuscular adaptations demonstrate ${rawAcwr >= 0.8 && rawAcwr <= 1.3 ? 'favorable stimulus-to-fatigue ratio within the safe adaptive window' : rawAcwr > 1.49 ? 'elevated systemic fatigue requiring proactive deload throttling' : 'controlled adaptive stimulus'}. Zone 2 volume supports mitochondrial biogenesis and lactate clearance without compromising power output.`
-      : 'Insufficient training volume logged this microcycle to assess neuromuscular adaptations. Continue baseline aerobic conditioning and calibrate progressive overload on next logged cycle.',
-    plan: `${nextWeekFocus} Maintain resting heart rate tracking (baseline ${restingHr} bpm) and execute ${targetSessionsPerWeek} scheduled training sessions.`,
+      ? `Your recent training load is ${rawAcwr >= 0.8 && rawAcwr <= 1.3 ? 'within your usual range' : rawAcwr > 1.49 ? 'much higher than usual, so extra recovery may help' : 'changing'}. Steady cardio can build endurance without replacing strength training.`
+      : 'There is not enough training data yet to compare workloads. Keep logging workouts and build up gradually.',
+    plan: `${nextWeekFocus} If you track resting heart rate, compare it with your usual level. Aim for up to ${targetSessionsPerWeek} planned sessions, adjusted to fit your schedule.`,
   }
 
   // 9. Cryptographic Audit Signature

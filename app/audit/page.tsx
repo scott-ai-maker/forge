@@ -8,59 +8,59 @@ import PurchaseButton from '@/components/packages/PurchaseButton'
 import { STANDALONE_PRODUCTS } from '@/lib/stripe'
 
 export const metadata: Metadata = {
-  title: 'Clinical 3D AI Kinetic Chain & Postural Distortion Screen | Gordon Athletic Advisory',
+  title: '3D Movement and Posture Assessment | Forge Athletic',
   description:
-    'Self-guided computer-vision movement screening analyzing all 5 kinetic chain checkpoints. Detect silent injury risks, posture imbalances, and get an automated 4-phase corrective protocol.',
+    'Use your phone camera for a guided movement check, then get a clear summary and personalized exercises to support your training.',
   openGraph: {
-    title: 'Clinical 3D AI Kinetic Chain & Postural Distortion Screen | Gordon Athletic Advisory',
+    title: '3D Movement and Posture Assessment | Forge Athletic',
     description:
-      'Computer-vision biomechanical screening. Detect silent kinetic chain compensations, muscle imbalances, and get an automated corrective exercise continuum.',
+      'A guided movement check with a clear summary and practical exercises for your training.',
   },
 }
 
 const CHECKPOINTS = [
   {
     num: '01',
-    title: 'Foot & Ankle Complex',
-    subtitle: 'Ground Reaction Base',
-    cues: 'Pronation Distortion · Medial Arch Flattening · Achilles Alignment',
-    desc: 'Unaddressed foot pronation creates an immediate kinetic chain ripple effect, triggering internal tibial rotation and severe knee shear.',
+    title: 'Feet and ankles',
+    subtitle: 'Balance and support',
+    cues: 'Foot position · Arch movement · Ankle alignment',
+    desc: 'The way your feet and ankles move can affect how you balance and move through exercises.',
     overactive: 'Peroneals, Gastrocnemius, Soleus',
     underactive: 'Anterior & Posterior Tibialis',
   },
   {
     num: '02',
-    title: 'Knee & Patella Tracking',
-    subtitle: 'Valgus / Varus Q-Angle',
-    cues: 'Dynamic Knee Valgus · Femoral Adduction · Lateral Joint Strain',
-    desc: 'Medial knee collapse during squats and stair descents is the primary predictor of meniscus wear and patellofemoral pain syndrome.',
+    title: 'Knees',
+    subtitle: 'Knee movement',
+    cues: 'Knee position · Leg alignment · Side-to-side movement',
+    desc: 'A movement check can show how your knees track during activities such as squats and step-downs.',
     overactive: 'Adductor Complex, TFL, Biceps Femoris',
     underactive: 'Gluteus Medius, Gluteus Maximus, VMO',
   },
   {
     num: '03',
-    title: 'Lumbo-Pelvic-Hip Complex',
-    subtitle: 'Gravitational Core Axis',
-    cues: 'Anterior Pelvic Tilt · Excessive Forward Lean · Asymmetric Weight Shift',
-    desc: 'Prolonged sitting shortens psoas and rectus femoris, pulling the pelvis anteriorly and placing extreme shear load onto the L4-L5 lumbar spine.',
+    title: 'Hips and lower back',
+    subtitle: 'Hip and trunk movement',
+    cues: 'Hip position · Forward lean · Weight shifting',
+    desc: 'How your hips and trunk move can affect your balance and comfort during everyday activities and exercise.',
     overactive: 'Iliopsoas, Rectus Femoris, Erector Spinae',
     underactive: 'Gluteus Maximus, Transverse Abdominis, Hamstrings',
   },
   {
     num: '04',
-    title: 'Shoulders & Thorax',
-    subtitle: 'Upper Crossed Vector',
-    cues: 'Scapular Elevation · Protraction · Medial Arm Rotation',
-    desc: 'Rounded shoulders and elevated scapulae pinch the supraspinatus tendon, causing chronic shoulder impingement and power leaks in pressing lifts.',
+    title: 'Shoulders and upper back',
+    subtitle: 'Shoulder movement',
+    cues: 'Shoulder position · Arm movement · Upper-back posture',
+    desc: 'A movement check can show how your shoulders and upper back move when you reach or lift.',
     overactive: 'Upper Trapezius, Levator Scapulae, Pectoralis Minor',
     underactive: 'Middle & Lower Trapezius, Rhomboids, Serratus Anterior',
   },
   {
     num: '05',
-    title: 'Cervical Spine & Head',
-    subtitle: 'Plumb Line Alignment',
-    cues: 'Forward Head Translation · Suboccipital Compression · Cervical Extension',
-    desc: 'For every inch your head translates forward of the plumb line, your cervical spine absorbs an additional 10 lbs of static gravitational weight.',
+    title: 'Neck and head',
+    subtitle: 'Head and neck position',
+    cues: 'Head position · Neck movement · Posture',
+    desc: 'The assessment also looks at head and neck position as part of your overall movement.',
     overactive: 'Sternocleidomastoid, Suboccipitals, Upper Cervical Extensors',
     underactive: 'Deep Cervical Flexors (Longus Colli, Longus Capitis)',
   },
@@ -73,42 +73,42 @@ const DELIVERABLES: {
 }[] = [
   {
     icon: 'microscope',
-    title: 'Multi-View Computer-Vision Mesh Tracking',
-    desc: 'MediaPipe-driven landmark capture analyzing 33 anatomical joint coordinates across Anterior, Lateral, and Overhead Squat frames.',
+    title: 'Guided movement photos',
+    desc: 'Take a few guided photos so the app can review key points in your posture and movement.',
   },
   {
     icon: 'lightning',
-    title: 'Clinical Postural Syndrome Diagnostic',
-    desc: 'Automated detection of Upper Crossed, Lower Crossed, and Pronation Distortion syndromes based on NASM CPT-7 sports science criteria.',
+    title: 'Movement pattern overview',
+    desc: 'See a summary of movement patterns that may be useful to discuss with your coach.',
   },
   {
     icon: 'chart',
-    title: 'Anatomical Muscle Balance Heatmap',
-    desc: 'Exact breakdown of hyperactive/shortened muscles requiring inhibition vs. underactive/lengthened stabilizers requiring activation.',
+    title: 'Muscle movement guide',
+    desc: 'Review areas that may benefit from mobility or strengthening exercises.',
   },
   {
     icon: 'shield',
-    title: 'Bespoke 4-Phase Corrective Protocol (CEx)',
-    desc: 'Step-by-step SMR foam rolling, static stretches, isolated activation drills, and integrated kinetic movements tailored to your scan.',
+    title: 'Personalized exercise plan',
+    desc: 'Get step-by-step mobility, warm-up, and strengthening exercises based on your movement check.',
   },
 ]
 
 const FAQS = [
   {
-    q: 'How does the AI scan actually work?',
-    a: 'You securely take 4 quick guided photos in the app (Anterior, Lateral, Posterior, and Overhead Squat). Our computer vision engine maps 33 anatomical landmarks, calculates joint deviations against optimal sports science ranges, and generates an instant diagnostic report.',
+    q: 'How does the movement check work?',
+    a: 'The app guides you through four photos from different angles, including a squat. It reviews key movement points and creates a summary with exercises you can discuss with your coach.',
   },
   {
     q: 'Do I need any special equipment or cameras?',
     a: 'No. Any smartphone or laptop camera works. You just need a well-lit space where your entire body from head to bare feet is visible in frame (approx. 8–10 feet away).',
   },
   {
-    q: 'How does the $97 coaching credit voucher work?',
-    a: 'We believe diagnostics should lead directly to real physical results. When you complete your audit, 100% of your $97 investment is credited toward any Gordon Athletic 12-Week Transformation Block or Monthly Retainer.',
+    q: 'Can I use the $97 fee toward coaching?',
+    a: 'Yes. The full $97 fee can be applied toward a 12-week coaching plan or membership.',
   },
   {
     q: 'Are my photos private and secure?',
-    a: 'Yes. Your biometric data is encrypted end-to-end and is never shared, sold, or published. You have full control over your diagnostic telemetry at all times.',
+    a: 'Your assessment is stored securely and is not sold or published. You can review our privacy policy for details about your information.',
   },
 ]
 
@@ -123,8 +123,8 @@ export default function AuditLandingPage() {
         fixed
         links={[
           { href: '/packages', label: 'Memberships' },
-          { href: '/apply', label: 'Diagnostic Quiz' },
-          { href: '/dashboard', label: 'Client Lab' },
+          { href: '/apply', label: 'Find your starting point' },
+          { href: '/dashboard', label: 'Log in' },
         ]}
         actions={<MarketingLoginActions />}
       />
@@ -152,10 +152,10 @@ export default function AuditLandingPage() {
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <GaaIcon name="microscope" size={13} tone="gold" />
-              <span>Clinical Sports Science Biomechanics</span>
+              <span>Guided movement check</span>
             </span>
             <span style={{ color: 'var(--white)', opacity: 0.4 }}>|</span>
-            <span>NASM CPT-7 Engine</span>
+            <span>Science-based training</span>
           </div>
 
           <h1
@@ -168,7 +168,7 @@ export default function AuditLandingPage() {
               margin: '0 0 20px',
             }}
           >
-            REVEAL THE SILENT POSTURAL IMBALANCES SABOTAGING YOUR STRENGTH &amp; LONGEVITY
+            UNDERSTAND HOW YOU MOVE AND FIND EXERCISES THAT FIT YOUR GOALS
           </h1>
 
           <p
@@ -182,7 +182,7 @@ export default function AuditLandingPage() {
               maxWidth: 780,
             }}
           >
-            Stop guessing why your joints feel stiff or your squat hits a plateau. Get an instant, clinical-grade 3D computer-vision assessment of all 5 kinetic chain checkpoints with custom 4-phase corrective exercise protocols.
+            Get a clearer picture of how you move, then explore practical exercises that support your goals. Get an instant, clinical-grade 3D computer-vision assessment of all 5 kinetic chain checkpoints with custom 4-phase corrective exercise protocols.
           </p>
 
           {/* High-Ticket Bridge Banner */}
@@ -203,7 +203,7 @@ export default function AuditLandingPage() {
           >
             <span style={{ fontSize: 18 }}>✦</span>
             <span style={{ fontFamily: 'Raleway, sans-serif', fontSize: 13.5, color: '#FFFFFF', fontWeight: 600 }}>
-              <strong style={{ color: 'var(--gold-lt)' }}>100% Credit Guarantee:</strong> Your entire $97 audit fee is credited toward any 12-Week Transformation Block or Retainer.
+              <strong style={{ color: 'var(--gold-lt)' }}>Full $97 credit:</strong> Apply the cost of this assessment toward a 12-week coaching plan or membership.
             </span>
           </div>
 
@@ -222,7 +222,7 @@ export default function AuditLandingPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/package-audit.jpg"
-              alt="Gordon Athletic Advisory 3D AI Biomechanical & Postural Mesh Scanner"
+              alt="Forge Athletic guided movement and posture check"
               style={{ width: '100%', height: 'auto', display: 'block' }}
             />
           </div>
@@ -243,10 +243,10 @@ export default function AuditLandingPage() {
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
                 <span style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                  Self-Guided 3D Screen
+                  Guided 3D movement check
                 </span>
                 <div className="font-serif" style={{ fontSize: 22, color: '#FFFFFF', margin: '4px 0 0', letterSpacing: '0.03em', fontWeight: 600 }}>
-                  3D AI Postural Distortion Audit
+                  3D Movement and Posture Assessment
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -256,28 +256,28 @@ export default function AuditLandingPage() {
             </div>
 
             <p style={{ fontSize: 12.5, color: 'var(--gray)', margin: '0 0 16px', lineHeight: 1.5 }}>
-              Instant camera-guided upload. Complete 4-view landmark analysis and automated 4-phase corrective continuum returned in minutes.
+              Follow the camera prompts to take four photos. Get a movement summary and personalized exercises in minutes.
             </p>
 
             <PurchaseButton
               productId={auditProduct.id}
-              buttonLabel="Start 3D Postural Audit ($97)"
+              buttonLabel="Start movement assessment ($97)"
               redirectNext="/audit"
             />
           </div>
         </div>
 
-        {/* ── 2. THE 5 KINETIC CHECKPOINTS BREAKDOWN ── */}
+        {/* ── 2. Five areas covered ── */}
         <div style={{ marginBottom: 96 }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <p style={{ margin: '0 0 8px', color: 'var(--gold-lt)', fontFamily: 'Raleway, sans-serif', fontWeight: 800, fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-              Kinetic Diagnostics
+              Your movement
             </p>
             <h2 className="font-serif" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', color: '#FFFFFF', margin: 0, letterSpacing: '0.04em' }}>
-              THE 5 ANATOMICAL CHECKPOINTS
+              FIVE AREAS WE LOOK AT
             </h2>
             <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 15, color: 'var(--gray)', maxWidth: 640, margin: '8px auto 0' }}>
-              Human movement occurs through a closed kinetic chain. When one checkpoint distorts, the entire skeletal system compensates.
+              We look at how different parts of your body work together during movement.
             </p>
           </div>
 
@@ -320,11 +320,11 @@ export default function AuditLandingPage() {
 
                 <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: 11.5, display: 'grid', gap: 6 }}>
                   <div>
-                    <strong style={{ color: 'var(--gold-lt)' }}>Overactive / Short:</strong>{' '}
+                    <strong style={{ color: 'var(--gold-lt)' }}>May benefit from mobility:</strong>{' '}
                     <span style={{ color: 'var(--gray)' }}>{cp.overactive}</span>
                   </div>
                   <div>
-                    <strong style={{ color: 'var(--white)' }}>Underactive / Weak:</strong>{' '}
+                    <strong style={{ color: 'var(--white)' }}>May benefit from strengthening:</strong>{' '}
                     <span style={{ color: 'var(--gray)' }}>{cp.underactive}</span>
                   </div>
                 </div>
@@ -340,7 +340,7 @@ export default function AuditLandingPage() {
               WHAT YOUR 3D AUDIT INCLUDES
             </h2>
             <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 14.5, color: 'var(--gray)', margin: '6px 0 0' }}>
-              Comprehensive clinical biomechanics delivered straight to your secure portal.
+              A clear summary and practical exercises, available in your account.
             </p>
           </div>
 
@@ -407,19 +407,19 @@ export default function AuditLandingPage() {
             START YOUR 3D BIOMECHANICAL AUDIT TODAY
           </h2>
           <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 16, color: 'var(--gray)', maxWidth: 600, margin: '0 auto 28px', lineHeight: 1.6 }}>
-            Gain total visibility into your kinetic chain, eliminate compensation injuries, and claim your full $97 credit towards high-ticket transformation coaching.
+            See how you move and get practical exercises to support your goals. Your $97 fee can be applied toward a coaching plan or membership.
           </p>
 
           <div style={{ maxWidth: 380, margin: '0 auto' }}>
             <PurchaseButton
               productId={auditProduct.id}
-              buttonLabel="Claim 3D Audit Pass ($97)"
+              buttonLabel="Start movement assessment ($97)"
               redirectNext="/audit"
             />
           </div>
 
           <div style={{ marginTop: 20, fontSize: 12, color: 'var(--gray)' }}>
-            Instant Access · 33-Point MediaPipe Computer Vision · 100% Coaching Credit Guarantee
+            Instant access · Guided camera check · Full coaching credit
           </div>
         </div>
       </div>

@@ -23,7 +23,7 @@ export default function WhatsNewPage() {
         fixed
         links={[
           { href: '/', label: 'Home' },
-          { href: '/packages', label: 'Retainers' },
+          { href: '/packages', label: 'Memberships' },
           { href: '/apply', label: 'Apply' },
         ]}
         actions={<MarketingLoginActions />}

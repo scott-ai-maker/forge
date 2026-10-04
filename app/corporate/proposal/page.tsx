@@ -10,13 +10,13 @@ import { CorporateCadence } from '@/lib/corporate-proposal-engine'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Institutional Human Performance Proposal | Gordon Athletic Advisory',
+  title: 'Team Wellness Proposal | Gordon Athletic Advisory',
   description:
-    'Tailored multi-seat sports science infrastructure and executive health agreement for corporate leadership teams, private equity partners, and law firms.',
+    'A team wellness and fitness coaching proposal for organizations looking to support healthy routines at work.',
   openGraph: {
-    title: 'Institutional Human Performance Proposal | Gordon Athletic Advisory',
+    title: 'Team Wellness Proposal | Gordon Athletic Advisory',
     description:
-      'Confidential executive proposal modeling multi-seat human performance infrastructure, biometric telemetry, and cognitive endurance ROI.',
+      'Explore team fitness coaching, workplace wellness support, and options for your organization.',
   },
 }
 
@@ -27,9 +27,9 @@ interface CorporateProposalPageProps {
 export default async function CorporateProposalPage({ searchParams }: CorporateProposalPageProps) {
   const params = await searchParams
 
-  const companyParam = typeof params.company === 'string' ? params.company : 'Apex Capital Partners'
-  const sponsorParam = typeof params.sponsor === 'string' ? params.sponsor : 'Managing Partner'
-  const titleParam = typeof params.title === 'string' ? params.title : 'Executive Committee'
+  const companyParam = typeof params.company === 'string' ? params.company : 'Your organization'
+  const sponsorParam = typeof params.sponsor === 'string' ? params.sponsor : 'Program contact'
+  const titleParam = typeof params.title === 'string' ? params.title : 'Wellness program team'
   const seatsParam = typeof params.seats === 'string' ? parseInt(params.seats, 10) : 10
   const safeSeats = isNaN(seatsParam) || seatsParam < 1 ? 10 : seatsParam
   const cadenceParam: CorporateCadence = params.cadence === 'monthly' ? 'monthly' : 'annual'
@@ -42,9 +42,9 @@ export default async function CorporateProposalPage({ searchParams }: CorporateP
         fixed
         links={[
           { href: '/packages', label: 'Memberships' },
-          { href: '/corporate', label: 'Corporate Retainers' },
-          { href: '/audit', label: '3D AI Audit' },
-          { href: '/apply', label: 'Diagnostic Quiz' },
+          { href: '/corporate', label: 'Workplace Wellness' },
+          { href: '/audit', label: 'Movement Assessment' },
+          { href: '/apply', label: 'Find a Training Plan' },
         ]}
         actions={<MarketingLoginActions />}
       />
@@ -92,7 +92,7 @@ export default async function CorporateProposalPage({ searchParams }: CorporateP
               <span>Corporate Overview</span>
             </Link>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
-            <span style={{ color: '#E2E8F0', fontWeight: 500 }}>Institutional Boardroom Proposal</span>
+            <span style={{ color: '#E2E8F0', fontWeight: 500 }}>Team Wellness Proposal</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -113,7 +113,7 @@ export default async function CorporateProposalPage({ searchParams }: CorporateP
               }}
             >
               <GaaIcon name="building" size={10} tone="gold" />
-              Sovereign Enterprise Record
+              Organization proposal
             </span>
           </div>
         </div>

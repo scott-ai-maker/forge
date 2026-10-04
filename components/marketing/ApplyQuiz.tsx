@@ -14,86 +14,86 @@ type Question = {
 const QUESTIONS: Question[] = [
   {
     key: 'goal',
-    title: 'What is your primary athletic & physiological objective?',
-    description: 'Every protocol is engineered around your specific metabolic and neuromuscular targets.',
+    title: 'What are your main training or fitness goals?',
+    description: 'We will use your goals to suggest a plan that may work for you.',
     choices: [
-      { value: 'lose_body_fat', label: 'Executive Body Recomposition & Visceral Fat Loss' },
-      { value: 'build_muscle', label: 'Lean Muscle Hypertrophy & Structural Density' },
-      { value: 'improve_strength', label: 'Maximum 1RM Strength & Kinetic Power' },
-      { value: 'rebuild_consistency', label: 'Postural Alignment, Joint Longevity & Consistency' },
+      { value: 'lose_body_fat', label: 'Lose body fat' },
+      { value: 'build_muscle', label: 'Build strength or muscle' },
+      { value: 'improve_strength', label: 'Improve strength or power' },
+      { value: 'rebuild_consistency', label: 'Move more comfortably and build consistency' },
     ],
   },
   {
     key: 'timeline',
-    title: 'What is your required transformation timeline?',
-    description: 'Periodization macrocycles are mapped to your target milestones.',
+    title: 'What is your preferred timeline?',
+    description: 'Choose a pace that feels manageable for you.',
     choices: [
-      { value: 'asap', label: 'Immediate Acceleration (0–30 days)' },
-      { value: '1_to_3_months', label: '12-Week Transformation Macrocycle (1–3 months)' },
-      { value: '3_to_6_months', label: '6-Month Comprehensive Periodization (3–6 months)' },
-      { value: 'no_strict_timeline', label: 'Long-Term Athletic Longevity & Maintenance' },
+      { value: 'asap', label: 'I would like to get started soon' },
+      { value: '1_to_3_months', label: 'In the next 1–3 months' },
+      { value: '3_to_6_months', label: 'In the next 3–6 months' },
+      { value: 'no_strict_timeline', label: 'I do not have a set timeline' },
     ],
   },
   {
     key: 'trainingDays',
     title: 'How many days per week can you realistically train?',
-    description: 'We calibrate volume, splits, and recovery around your executive schedule.',
+    description: 'We will work around the time you have available.',
     choices: [
-      { value: '2', label: '2 days / week (High-efficiency split)' },
-      { value: '3', label: '3 days / week (Full-body or Push/Pull/Legs)' },
-      { value: '4', label: '4 days / week (Upper/Lower periodization)' },
-      { value: '5_plus', label: '5+ days / week (Advanced athletic split)' },
+      { value: '2', label: '2 days per week' },
+      { value: '3', label: '3 days per week' },
+      { value: '4', label: '4 days per week' },
+      { value: '5_plus', label: '5 or more days per week' },
     ],
   },
   {
     key: 'supportLevel',
-    title: 'Which advisory direction tier best matches your workflow?',
-    description: 'Choose the level of training technology and coach feedback that fits you.',
+    title: 'What kind of coaching support would you like?',
+    description: 'Choose the tools and coach feedback that fit your needs.',
     choices: [
-      { value: 'program_only', label: 'Self-guided training tools and performance telemetry (Core Membership)' },
-      { value: 'program_and_messaging', label: 'Training tools with voice-led cadence coaching (Pro Athlete)' },
-      { value: 'hybrid_monthly_calls', label: 'Biomechanical feedback and performance diagnostics (Pro Athlete)' },
-      { value: 'weekly_direct_calls', label: 'Personal video critiques from a coach (Transformation Direct)' },
+      { value: 'program_only', label: 'Self-guided training tools (Core)' },
+      { value: 'program_and_messaging', label: 'Training tools and audio guidance (Plus)' },
+      { value: 'hybrid_monthly_calls', label: 'Movement feedback and progress reviews (Plus)' },
+      { value: 'weekly_direct_calls', label: 'One-to-one coaching and video reviews (Coach Support)' },
     ],
   },
   {
     key: 'primaryObstacle',
-    title: 'What has been your primary performance bottleneck?',
-    description: 'Identifying structural and lifestyle constraints ensures uncompromised progression.',
+    title: 'What has made it harder to reach your goals?',
+    description: 'Your answer can help us suggest support that fits your life.',
     choices: [
-      { value: 'no_clear_plan', label: 'Lack of structured periodization & scientific progression' },
-      { value: 'inconsistent_accountability', label: 'Frequent travel, irregular schedule, and lack of objective accountability' },
-      { value: 'nutrition_habits', label: 'Metabolic nutrition, peri-workout fueling, or supplement confusion' },
-      { value: 'technique_confidence', label: 'Nagging joint aches, postural compensations, or compound lift technique doubts' },
+      { value: 'no_clear_plan', label: 'I do not have a clear training plan' },
+      { value: 'inconsistent_accountability', label: 'My schedule changes or I need help staying consistent' },
+      { value: 'nutrition_habits', label: 'I have questions about food or supplements' },
+      { value: 'technique_confidence', label: 'I want help with movement or exercise technique' },
     ],
   },
   {
     key: 'coachingHistory',
-    title: 'What is your background with professional coaching?',
+    title: 'Have you worked with a coach before?',
     choices: [
-      { value: 'yes_worked', label: 'Yes, previously achieved results with structured coaching' },
-      { value: 'yes_no_consistency', label: 'Yes, but generic templates or rigid calendar calls failed to sustain' },
-      { value: 'no_first_time', label: 'No, seeking first-time master sports science direction' },
+      { value: 'yes_worked', label: 'Yes, and I would like to continue' },
+      { value: 'yes_no_consistency', label: 'Yes, but I had trouble staying consistent' },
+      { value: 'no_first_time', label: 'No, this would be my first time' },
     ],
   },
   {
     key: 'budgetBand',
-    title: 'What is your intended monthly advisory investment?',
-    description: 'Choose the monthly membership that fits your current training support needs.',
+    title: 'What monthly membership fits your budget?',
+    description: 'Choose the level of training support that works for you.',
     choices: [
-      { value: 'under_50', label: 'Core Membership ($19.99/mo or $149/yr)' },
-      { value: '50_150', label: 'Pro Athlete ($49/mo)' },
-      { value: '150_plus', label: 'Transformation Direct ($199/mo)' },
+      { value: 'under_50', label: 'Core ($19.99/month or $149/year)' },
+      { value: '50_150', label: 'Plus ($49/month)' },
+      { value: '150_plus', label: 'Coach Support ($199/month)' },
     ],
   },
   {
     key: 'readiness',
-    title: 'When are you prepared to initiate your onboarding?',
+    title: 'When would you like to get started?',
     choices: [
-      { value: 'this_week', label: 'Immediate (Ready to begin this week)' },
-      { value: 'within_2_weeks', label: 'Within the next 14 days' },
+      { value: 'this_week', label: 'This week' },
+      { value: 'within_2_weeks', label: 'In the next two weeks' },
       { value: 'within_30_days', label: 'Within 30 days' },
-      { value: 'just_researching', label: 'Reviewing specifications and cohort availability' },
+      { value: 'just_researching', label: 'I am still exploring my options' },
     ],
   },
 ]
@@ -125,45 +125,45 @@ function recommendationFromAnswers(answers: Answers): Tier {
 function recommendationDetails(tier: Tier) {
   if (tier === 'digital_lab') {
     return {
-      title: 'Core Membership',
+      title: 'Core',
       price: '$19.99',
       cadence: '/month',
     }
   }
   if (tier === 'premium_1_1') {
     return {
-      title: 'Transformation Direct',
+      title: 'Coach Support',
       price: '$199',
       cadence: '/month',
     }
   }
   if (tier === 'hybrid') {
     return {
-      title: 'Pro Athlete',
+      title: 'Plus',
       price: '$49',
       cadence: '/month',
     }
   }
   if (tier === 'waitlist') {
     return {
-      title: 'Priority Advisory Waitlist',
+      title: 'Early Access',
       price: '',
       cadence: '',
     }
   }
   return {
-    title: 'Core Membership',
+    title: 'Core',
     price: '$19.99',
     cadence: '/month',
   }
 }
 
 function recommendationCta(tier: Tier) {
-  if (tier === 'digital_lab') return { href: '/packages?tier=forge-core', label: 'Choose Core Membership' }
-  if (tier === 'premium_1_1') return { href: '/packages?tier=forge-transformation-direct', label: 'Choose Transformation Direct' }
-  if (tier === 'hybrid') return { href: '/packages?tier=forge-pro-athlete', label: 'Choose Pro Athlete' }
-  if (tier === 'waitlist') return { href: '/#waitlist-hero', label: 'Join Priority Waitlist' }
-  return { href: '/packages?tier=forge-core', label: 'Choose Core Membership' }
+  if (tier === 'digital_lab') return { href: '/packages?tier=forge-core', label: 'Choose Core' }
+  if (tier === 'premium_1_1') return { href: '/packages?tier=forge-transformation-direct', label: 'Choose Coach Support' }
+  if (tier === 'hybrid') return { href: '/packages?tier=forge-pro-athlete', label: 'Choose Plus' }
+  if (tier === 'waitlist') return { href: '/#waitlist-hero', label: 'Join the early access list' }
+  return { href: '/packages?tier=forge-core', label: 'Choose Core' }
 }
 
 export default function ApplyQuiz() {

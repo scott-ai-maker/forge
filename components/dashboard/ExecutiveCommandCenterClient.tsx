@@ -5,6 +5,7 @@ import Link from 'next/link'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import type { DashboardWorkspace } from '@/lib/validation'
+import { getMembershipDisplayName } from '@/lib/forge-memberships'
 import PrescribedToolboxBanner from '@/components/fitness/PrescribedToolboxBanner'
 import type { DossierMetrics } from '@/lib/sunday-dossier-engine'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
@@ -163,7 +164,7 @@ export default function ExecutiveCommandCenterClient({
         </div>
       )}
 
-      {/* ── 1. Executive Athlete Hero Telemetry Ribbon ── */}
+      {/* ── 1. Member welcome and training status ── */}
       <div
         style={{
           background: 'linear-gradient(135deg, rgba(16,22,38,0.95) 0%, rgba(9,13,24,0.95) 100%)',
@@ -216,11 +217,11 @@ export default function ExecutiveCommandCenterClient({
                   border: '1px solid rgba(212,160,23,0.4)',
                 }}
               >
-                VIP Athlete
+                Member
               </span>
             </div>
             <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--gray)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {activePackage ? activePackage.package_name : 'Executive Performance Member'} · {currentPlanPhase}
+              {activePackage ? getMembershipDisplayName(activePackage.package_name) : 'Training plan'} · {currentPlanPhase}
             </p>
           </div>
         </div>
@@ -240,7 +241,7 @@ export default function ExecutiveCommandCenterClient({
                   ? `Day ${activeWorkout?.day || 1} Complete · View Lab`
                   : activeWorkout
                     ? `Start Day ${activeWorkout.day} Lifts`
-                    : 'Open Fitness Lab'}
+                    : 'Open training'}
             </span>
           </Link>
           <Link
@@ -262,7 +263,7 @@ export default function ExecutiveCommandCenterClient({
             onClick={() => triggerHaptic('tap')}
           >
             <GaaIcon name="message" size={13} tone="gold" />
-            <span>Concierge Line</span>
+            <span>Message your coach</span>
           </Link>
         </div>
       </div>
@@ -394,9 +395,9 @@ export default function ExecutiveCommandCenterClient({
         </div>
       </Link>
 
-      {/* ── 3. Executive Intelligence Grid (Dossier & Consultations) ── */}
+      {/* ── 3. Weekly progress and coaching ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: 14 }}>
-        {/* Card A: Sunday Intelligence Dossier Briefing */}
+        {/* Card A: Weekly progress summary */}
         <div
           style={{
             background: 'linear-gradient(135deg, rgba(13,27,42,0.95) 0%, rgba(9,15,26,0.98) 100%)',
@@ -413,15 +414,15 @@ export default function ExecutiveCommandCenterClient({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}>
                 <GaaIcon name="shield" size={12} tone="gold" />
-                <span>Executive Dossier</span>
+                <span>Weekly progress</span>
               </div>
-              <span style={{ fontSize: 10, color: 'var(--gray)' }}>Sovereign Record</span>
+              <span style={{ fontSize: 10, color: 'var(--gray)' }}>Weekly progress</span>
             </div>
             <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 17, color: '#FFFFFF', margin: 0, fontWeight: 700, letterSpacing: '0.03em' }}>
-              Weekly Performance Intelligence
+              Weekly progress summary
             </h3>
             <p style={{ fontSize: 12, color: '#94A3B8', margin: '4px 0 0', lineHeight: 1.4 }}>
-              ACWR acute:chronic workload protection, kinetic volume balance, and resting biometric telemetry.
+              Your recent training load, lifting volume, and recovery in one place.
             </p>
           </div>
 
@@ -458,11 +459,11 @@ export default function ExecutiveCommandCenterClient({
               gap: 4,
             }}
           >
-            Read Sovereign Sunday Dossier →
+            View weekly progress →
           </Link>
         </div>
 
-        {/* Card B: Concierge Consultations & 1:1 Live Studio */}
+        {/* Card B: Coaching and upcoming sessions */}
         <div
           style={{
             background: 'linear-gradient(135deg, rgba(13,27,42,0.95) 0%, rgba(9,15,26,0.98) 100%)',
@@ -486,7 +487,7 @@ export default function ExecutiveCommandCenterClient({
               </span>
             </div>
             <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 17, color: '#FFFFFF', margin: 0, fontWeight: 700, letterSpacing: '0.03em' }}>
-              {nextSession ? 'Upcoming Private Consultation' : 'Concierge Telehealth & Strategy'}
+              {nextSession ? 'Upcoming coaching session' : 'Book a coaching session'}
             </h3>
             <p style={{ fontSize: 12, color: '#94A3B8', margin: '4px 0 0', lineHeight: 1.4 }}>
               {nextSession
@@ -522,7 +523,7 @@ export default function ExecutiveCommandCenterClient({
                 className="sgf-button sgf-button-primary"
                 style={{ padding: '7px 14px', fontSize: 11.5, textDecoration: 'none' }}
               >
-                Book 1:1 Consultation ({totalRemaining} Left)
+                Book a session ({totalRemaining} left)
               </Link>
             ) : (
               <Link

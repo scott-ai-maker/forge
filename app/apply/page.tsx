@@ -6,11 +6,11 @@ import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
 import GaaIcon from '@/components/ui/GaaIcon'
 
 export const metadata: Metadata = {
-  title: 'Apply for Advisory & Performance Diagnostic',
-  description: 'Take the 2-minute biomechanical diagnostic intake to align your private advisory tier, periodization pathway, and concierge support level.',
+  title: 'Find a Training Plan That Fits',
+  description: 'Share your goals, schedule, and preferred coaching support to find a training plan that works for you.',
   openGraph: {
-    title: 'Apply for Advisory & Performance Diagnostic | Gordon Athletic Advisory',
-    description: 'Take the 2-minute biomechanical diagnostic intake to align your private advisory tier, periodization pathway, and concierge support level.',
+    title: 'Find a Training Plan That Fits | Gordon Athletic Advisory',
+    description: 'Share your goals, schedule, and preferred coaching support to find a training plan that works for you.',
   },
 }
 
@@ -19,8 +19,8 @@ export default function ApplyPage() {
     <main id="main-content" className="apply-page" style={{ minHeight: '100vh', background: 'var(--navy)', padding: '2rem 1rem 4rem' }}>
       <SiteHeader
         links={[
-          { href: '/packages', label: 'Retainer Tiers' },
-          { href: '/audit', label: '3D AI Audit' },
+          { href: '/packages', label: 'Memberships' },
+          { href: '/audit', label: 'Movement Assessment' },
         ]}
         actions={<MarketingLoginActions />}
       />
@@ -38,7 +38,7 @@ export default function ApplyPage() {
             className="sgf-button sgf-button-secondary tactile-btn"
             style={{ fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', fontSize: 13 }}
           >
-            Explore Retainer Tiers
+            Explore Memberships
           </Link>
         </div>
 
@@ -51,7 +51,7 @@ export default function ApplyPage() {
           <span className="gold-gradient-text">membership fit</span>
         </h1>
         <p style={{ color: '#CBD5E1', fontSize: 16, lineHeight: 1.75, marginBottom: 28, maxWidth: 720 }}>
-          Complete this short intake to share your training goals, schedule, and preferred coaching support. We will help you find a Forge Athletic membership that fits.
+          Tell us about your goals, schedule, and the support you are looking for. We will help you find a Forge Athletic membership that fits.
         </p>
 
         <div
@@ -67,7 +67,7 @@ export default function ApplyPage() {
         >
           <img
             src="/images/apply-diagnostic-hero.jpg"
-            alt="Kinetic Chain and Metabolic Diagnostic Assessment"
+            alt="A movement assessment to help understand how you move"
             style={{ width: '100%', height: 280, objectFit: 'cover', display: 'block' }}
           />
           <div
@@ -85,10 +85,10 @@ export default function ApplyPage() {
           >
             <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 600, letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <GaaIcon name="microscope" size={15} tone="gold" />
-              <span>Biomechanical Kinetic Chain &amp; Metabolic Profiling</span>
+              <span>Movement and fitness assessment</span>
             </span>
             <span style={{ fontSize: 11, color: 'var(--gold)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
-              NASM OPT™ Periodization Matching
+              Training plan recommendations
             </span>
           </div>
         </div>

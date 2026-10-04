@@ -1704,7 +1704,7 @@ export default function CoachCardioVoiceoverPlayer({
         )}
 
         {/* ═════════════════════════════════════════════════════════════════
-            STATE 1: EXECUTIVE POST-SESSION BIOENERGETIC DEBRIEF
+            STATE 1: WORKOUT SUMMARY
             ═════════════════════════════════════════════════════════════════ */}
         {sessionCompleted && executiveReport ? (
           <div
@@ -1723,7 +1723,7 @@ export default function CoachCardioVoiceoverPlayer({
                 <GaaIcon name="trophy" size={22} tone="gold" />
                 <div>
                   <span style={{ fontSize: 10, color: '#34D399', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                    Gordon Athletic Advisory &middot; Executive Debrief
+                    Forge Athletic &middot; Workout summary
                   </span>
                   <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, letterSpacing: '0.03em', margin: '2px 0 0', color: '#FFFFFF' }}>
                     SESSION ACCOMPLISHED: {session.pattern.name}
@@ -1733,7 +1733,7 @@ export default function CoachCardioVoiceoverPlayer({
 
               <div style={{ textAlign: 'right' }}>
                 <span style={{ fontSize: 10.5, color: 'var(--gold-lt)', fontWeight: 800 }}>
-                  Respiratory Compliance: {executiveReport.respiratoryComplianceScore}%
+                  Breathing consistency: {executiveReport.respiratoryComplianceScore}%
                 </span>
               </div>
             </div>
@@ -1741,7 +1741,7 @@ export default function CoachCardioVoiceoverPlayer({
             {/* Metric Cards (Duration, Distance, Steps, Burn, RPE) */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))', gap: 8, margin: '14px 0' }}>
               <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 10, textAlign: 'center' }}>
-                <div style={{ fontSize: 9.5, color: 'var(--gray)', textTransform: 'uppercase' }}>Active Duration</div>
+                <div style={{ fontSize: 9.5, color: 'var(--gray)', textTransform: 'uppercase' }}>Workout time</div>
                 <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.1, marginTop: 2 }}>
                   {executiveReport.totalDurationMins} <span style={{ fontSize: 11, color: 'var(--gray)', fontFamily: 'var(--font-sans, Raleway), sans-serif', fontWeight: 600 }}>MINS</span>
                 </div>
@@ -1776,12 +1776,12 @@ export default function CoachCardioVoiceoverPlayer({
               )}
 
               <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 10, textAlign: 'center' }}>
-                <div style={{ fontSize: 9.5, color: 'var(--gray)', textTransform: 'uppercase' }}>Total Metabolic Burn</div>
+                <div style={{ fontSize: 9.5, color: 'var(--gray)', textTransform: 'uppercase' }}>Calories burned</div>
                 <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 20, fontWeight: 700, color: '#34D399', lineHeight: 1.1, marginTop: 2 }}>
                   {executiveReport.totalCaloriesBurned} <span style={{ fontSize: 11, color: 'var(--gray)', fontFamily: 'var(--font-sans, Raleway), sans-serif', fontWeight: 600 }}>KCAL</span>
                 </div>
                 <div style={{ fontSize: 9.5, color: 'var(--gold-lt)', marginTop: 2 }}>
-                  +{executiveReport.epocAfterburnCalories} kcal EPOC Afterburn
+                  +{executiveReport.epocAfterburnCalories} kcal estimated after exercise
                 </div>
               </div>
 

@@ -23,7 +23,7 @@ export interface CoachGordonContext {
 
 /**
  * Determines whether the floating "Ask Coach Gordon" FAB should be rendered in the bottom right.
- * Only makes sense on the primary athlete command center (/dashboard) and fitness lab (/dashboard/fitness).
+ * Shown on the member home (/dashboard) and training pages (/dashboard/fitness).
  * Excluded on messages, live video studio, booking, settings, onboarding, and dossier.
  */
 export function shouldShowCoachGordonFab(pathname: string | null | undefined): boolean {
@@ -91,7 +91,7 @@ export default function GlobalCoachGordonHost() {
 
   return (
     <>
-      {/* Global Floating Concierge Trigger FAB (Rendered ONLY where it makes pedagogical sense) */}
+      {/* Global Ask Coach Gordon button */}
       {isFabVisible && !isOpen && (
         <button
           type="button"
@@ -100,8 +100,8 @@ export default function GlobalCoachGordonHost() {
             handleOpen()
           }}
           className="tactile-btn global-coach-gordon-fab"
-          aria-label="Open Coach Gordon AI Concierge"
-          title="Ask Coach Scott Gordon (AI & Voice Concierge)"
+          aria-label="Ask Coach Gordon a question"
+          title="Ask Coach Scott Gordon"
         >
           <div style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
             <Image
@@ -122,10 +122,10 @@ export default function GlobalCoachGordonHost() {
         <AskCoachGordonModal
           isOpen={isOpen}
           onClose={handleClose}
-          athleteName={context.athleteName || 'Athlete'}
+          athleteName={context.athleteName || 'Member'}
           goal={context.goal || 'general_fitness'}
           nasmOptPhase={context.nasmOptPhase || 1}
-          currentWorkoutFocus={context.currentWorkoutFocus || 'Executive Performance'}
+          currentWorkoutFocus={context.currentWorkoutFocus || 'General fitness'}
           currentExerciseName={context.currentExerciseName}
           equipmentAccess={context.equipmentAccess}
           cardioEquipmentAccess={context.cardioEquipmentAccess}
@@ -209,4 +209,3 @@ export default function GlobalCoachGordonHost() {
     </>
   )
 }
-

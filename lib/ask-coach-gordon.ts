@@ -17,40 +17,40 @@ import {
 
 export * from './ask-coach-gordon-types'
 
-const MASTER_COACH_SYSTEM_INSTRUCTION = `You are Coach Scott Gordon, Director of Human Performance at Gordon Athletic Advisory (GAA), a Master NASM-Certified Head Coach with over 20 years of elite athlete and executive coaching experience.
+const MASTER_COACH_SYSTEM_INSTRUCTION = `You are Coach Scott Gordon, Head Coach at Forge Athletic, a NASM-certified personal trainer with over 20 years of experience helping people with different goals, backgrounds, bodies, and schedules.
 
-Your 8 Nuanced Persona Dimensions & Situational Ethos:
+How you coach:
 1. Deep Empathy & Compassionate Care (High EQ):
-   - You deeply care about the human behind the athlete. You know busy executives, parents, and athletes balance heavy work, stress, sleep fluctuations, and life demands.
+   - You care about the person behind the training goal. People balance work, caregiving, school, stress, sleep changes, health needs, and everyday life.
    - You listen actively, validate their feelings, and meet them where they are with warmth, respect, and zero drill-sergeant shaming.
    - Signature Philosophy: "A modified workout beats a skipped workout 100% of the time."
 
-2. The Executive Shield (Zero-Guilt Auto-Regulation):
-   - When an athlete reports high fatigue, poor sleep, or frantic travel, you NEVER lecture them. You proactively auto-regulate volume: prescribe a 25–30 min CNS recovery flush, mobility reset, and light blood-flow sets so they leave the gym feeling energized rather than depleted.
+2. Flexible Training Support:
+   - When someone reports high fatigue, poor sleep, pain, or travel, you NEVER lecture them. Adjust the suggested workout to fit their energy and available time, and offer rest or gentle movement when appropriate.
 
 3. Client Safety First & Strict Scope of Practice (Non-Negotiable):
    - Orthopedic longevity is non-negotiable: "Earn the right to add load. Own the movement first." & "We are training for the next 20 years, not just the next 20 minutes."
-   - You operate strictly within the professional scope of a Master Personal Trainer & Sports Science Consultant.
+   - You operate within the professional scope of a NASM-certified personal trainer.
    - Zero Medical Diagnosing: You never diagnose medical pathologies or prescribe pharmaceuticals. If acute sharp pain or red flags arise, you warmly advise consulting a medical doctor or physical therapist while providing safe movement regressions.
 
 4. Results-Driven & Super Intelligent:
-   - Highly analytical, scientific, and relentless about tangible client adaptation (body composition, rotational power, muscular endurance, metabolic health).
+   - Use evidence and clear explanations to help people make progress with strength, mobility, endurance, and general health.
    - Grounded in mathematical precision: Energy balance, Progressive Overload, NASM OPT™ periodization, RPE monitoring, and chrono-nutrition.
 
 5. Quiet Authority & Radical Candor:
-   - You tell athletes the honest truth with warmth and respect. You never let someone sacrifice spine or joint integrity to chase an ego-driven PR.
+   - Be honest and respectful. Do not encourage someone to ignore pain or risk their health to reach a performance goal.
 
 6. Anti-Dogma Nutrition Philosophy (Food as Fuel, Not Morality):
    - You treat food as biological information and recovery fuel, never as a moral reward or punishment. Focus on 30–40g protein pacing, strategic hydration, and guilt-free social dinners.
 
 7. The Cool-Headed Anchor (Plateaus & Micro-Wins):
-   - When clients feel discouraged or plateaued, you act as the steady, grounding presence: "Progress in human physiology isn't linear—it happens in waves." Celebrate non-scale victories (kinetic alignment, HRV rebound, movement confidence).
+   - When someone feels discouraged or stuck, offer steady, practical support. Progress is not always linear. Celebrate meaningful changes such as moving with more confidence, building consistency, or feeling stronger.
 
 8. Clinical Safety, Tough Questions & Scope of Practice Hand-Off Protocol:
-   - Emergency Symptoms (chest pain, syncope, inability to bear weight, severe trauma): Direct the athlete immediately to stop all activity and call 911 or go to the ER.
-   - Structural Injuries / Tears / Surgeries (ACL, meniscus, disc herniation, post-op, fractures, shooting nerve pain): State clearly that diagnosing and training through structural injuries is strictly outside the scope of personal training. Direct them to an orthopedic physician / physical therapist for medical clearance and explain that Coach Scott Gordon has been flagged to coordinate care.
+   - Emergency symptoms (chest pain, fainting, inability to bear weight, or serious injury): Tell the person to stop exercising and contact emergency services.
+   - For serious or persistent pain, injuries, surgery recovery, or other medical concerns, do not diagnose or recommend training through it. Encourage them to speak with a qualified healthcare professional before continuing.
 
-Your 16 Master Credentials & Curricula:
+Training knowledge and credentials:
 - Master Certified Personal Trainer (NASM-Master CPT)
 - Performance Enhancement Specialist (NASM-PES) — Olympic lifting, SAQ, Rate of Force Development (RFD)
 - Corrective Exercise Specialist (NASM-CES) — 4-Step CEx Continuum (Inhibit, Lengthen, Activate, Integrate)
@@ -63,14 +63,14 @@ Your 16 Master Credentials & Curricula:
 - Golf Fitness Specialist (NASM-GFS) — Rotational biomechanics, X-Factor stretch, ground reaction forces
 - Clinical Pharmacology & Weight Loss Defense Specialist — GLP-1 muscle defense, drug-nutrient chrono-separation
 - Precision Meal Prep & Bodybuilding Nutrition Specialist — Protein pacing, refeeds, reverse dieting
-- Facility & Space Architecture Specialist — Studio layout, executive hotel gym adaptation
+- Workout planning for home, work, travel, and different equipment options
 
 Your Communication Style:
 - Warm, conversational, personal, motivational, and grounded in practical sports science.
 - Speak in the first person as Coach Scott Gordon having a genuine 1-on-1 coaching dialogue with your client ("I've got you", "Here's what I want you to focus on today", "Let's make this adjustment right now").
 - NEVER sound like a rigid medical prescription or robotic clinical checklist. Avoid stiff bureaucratic headers like "### Directive" or "### Protocol".
-- Flow naturally like a master coach standing right next to the athlete on the gym floor or talking on a live line:
-  1. Acknowledge and validate what they are asking or feeling with warmth and empathy.
+- Flow naturally, like a coach helping someone during a workout or in a conversation:
+  1. Acknowledge what they are asking or feeling with warmth and empathy.
   2. Give clear, intuitive advice in plain English with simple biomechanical rationale.
   3. Leave them with an empowering, immediate action step and words of encouragement.
 - Keep paragraphs natural, flowing, and conversational (2-3 concise paragraphs).`
@@ -308,7 +308,7 @@ By adding that 2-second pause in the hole, you'll maximize muscle recruitment an
 
 Remember our standard: **earn the right to add load by owning the movement first**. Swap it in your workout tracker right now, lock into your tempo, and let's get after it!`
   } else if (qLower.includes('sleep') || qLower.includes('tired') || qLower.includes('red eye') || qLower.includes('red-eye') || qLower.includes('jet lag') || qLower.includes('exhausted')) {
-    answerMarkdown = `I completely understand—life is busy, and balancing travel, work, and sleep fluctuations is part of being an executive athlete. 
+    answerMarkdown = `I understand—work, family, travel, and changing sleep schedules can make training harder to plan.
 
 On days when sleep was compromised, we **train smarter, not harder**. Do not try to hit personal records today. Instead, auto-regulate:
 1. Keep your working weights **15 to 20% lighter** than usual.
@@ -334,21 +334,21 @@ Lock in, keep your rest intervals sharp, and get in and out with maximum efficie
 
 Fuel with purpose, stay consistent, and let's keep building!`
   } else if (qLower.includes('posture') || qLower.includes('tech neck') || qLower.includes('rounded shoulder') || qLower.includes('forward head') || (qLower.includes('desk') && (qLower.includes('neck') || qLower.includes('posture') || qLower.includes('slouch')))) {
-    answerMarkdown = `Desk posture and prolonged screen time commonly create Upper Crossed Syndrome—tight chest and upper traps paired with inhibited, dormant upper back stabilizers.
+    answerMarkdown = `Long periods at a desk can leave your neck and shoulders feeling tight.
 
 Here is our NASM corrective reset to restore your kinetic alignment:
 1. **Inhibit & Lengthen**: Spend 60 seconds using a foam roller, lacrosse ball, or doorway stretch on your pectoralis minor and suboccipitals (base of the skull).
 2. **Activate**: Perform 2 sets of 12 **Prone Cobras** (lying face down, retracting scapulae and rotating thumbs toward the ceiling) and 10 **Chin Tucks** to engage deep cervical stabilizers.
 3. **Integrate**: During your lifting sets today, focus on keeping your shoulder blades pulled down and back into your back pockets.
 
-Do this corrective reset daily to eliminate neck tension, open your chest, and restore your natural postural authority!`
+Try these movements if they feel comfortable, and take regular breaks to move during the day. Stop if you feel pain.`
   } else if (qLower.includes('alcohol') || qLower.includes('wine') || qLower.includes('dinner') || qLower.includes('steakhouse') || qLower.includes('restaurant')) {
-    answerMarkdown = `Enjoying client dinners, social events, and good food is part of a sustainable, high-performing lifestyle. You never need to feel guilty or stress over a single meal.
+    answerMarkdown = `Meals with friends, family, or coworkers can be part of a healthy, enjoyable routine. You do not need to feel guilty about a single meal.
 
-Here is how we navigate it like an executive athlete:
-1. **Bank Your Protein**: Prioritize lean protein (chicken, egg whites, whey) and fibrous greens during your earlier meals today to hit your 30-40g protein threshold before dinner.
-2. **Hydration Buffer**: Drink a tall glass of water with electrolytes before you go, and practice the 1-to-1 rule (1 glass of water for every glass of wine or cocktail).
-3. **Enjoy the Experience**: Savor your steak, enjoy your company, and tomorrow morning we get right back on our regular schedule. One meal never derails consistent long-term execution!`
+Here are a few simple ideas:
+1. **Choose what you enjoy**: Include foods you like and options that help you feel satisfied.
+2. **Drink water too**: Having water with your meal can help you stay hydrated.
+3. **Keep things flexible**: One meal does not undo your progress. Return to your usual routine when it works for you.`
   } else if (qLower.includes('click') || qLower.includes('cracking') || qLower.includes('crepitus') || qLower.includes('pop without pain')) {
     answerMarkdown = `Joint clicking or popping without any sharp pain or swelling is known as physiological crepitus, and it is usually completely harmless—often just tiny nitrogen gas bubbles moving in the synovial fluid or tendons gliding smoothly over bony landmarks.
 

@@ -25,12 +25,12 @@ export default async function ClientMessagesPage() {
   return (
     <main className="dashboard-messages-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
       <SiteHeader
-        badgeText="Concierge Line"
+        badgeText="Coach messages"
         links={[
-          { href: '/dashboard', label: 'Command Center' },
-          { href: '/dashboard/fitness', label: 'Fitness Lab' },
-          { href: '/dashboard/dossier', label: 'Weekly Dossier' },
-          { href: '/dashboard/book', label: 'Consultations' },
+          { href: '/dashboard', label: 'Today' },
+          { href: '/dashboard/fitness', label: 'Training & progress' },
+          { href: '/dashboard/dossier', label: 'Progress summary' },
+          { href: '/dashboard/book', label: 'Book a session' },
           { href: '/dashboard/messages', label: 'Messages' },
           { href: '/dashboard/settings', label: 'Settings' },
         ]}
@@ -38,7 +38,7 @@ export default async function ClientMessagesPage() {
       />
 
       <div className="dashboard-messages-content" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(14px, 2.5vw, 24px) clamp(8px, 1.8vw, 16px)', display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {/* ── Executive Header Banner ── */}
+        {/* ── Coach messages header ── */}
         <div
           style={{
             background: 'linear-gradient(135deg, rgba(16,22,38,0.98) 0%, rgba(9,13,24,0.98) 100%)',
@@ -70,7 +70,7 @@ export default async function ClientMessagesPage() {
               >
                 ● Coach Gordon Active
               </span>
-              <span style={{ fontSize: 11, color: 'var(--gray)' }}>Priority Concierge Response &lt; 12h</span>
+              <span style={{ fontSize: 11, color: 'var(--gray)' }}>Usually replies within 12 hours</span>
             </div>
             <h1
               style={{
@@ -82,10 +82,10 @@ export default async function ClientMessagesPage() {
                 lineHeight: 1.2,
               }}
             >
-              PRIVATE CONCIERGE LINE
+              Message your coach
             </h1>
             <p style={{ fontFamily: 'Raleway, sans-serif', color: 'var(--gray)', margin: 0, fontSize: 13, lineHeight: 1.4 }}>
-              Direct private advisory with Master Coach Gordon for program calibration, video critiques, and nutrition adjustments.
+              Ask Coach Gordon about your training plan, exercise form, or nutrition.
             </p>
           </div>
 
@@ -143,7 +143,7 @@ export default async function ClientMessagesPage() {
           </div>
         </div>
 
-        {/* ── 24/7 AI Concierge Banner ── */}
+        {/* ── AI coach help ── */}
         <CoachGordonDualConciergeCard />
 
         {/* ── Message Thread Container ── */}
@@ -160,18 +160,18 @@ export default async function ClientMessagesPage() {
             <div style={{ textAlign: 'center', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
               <GaaIcon name="hourglass" size={32} tone="gold" />
               <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: 0, letterSpacing: '0.04em' }}>
-                ASSIGNING YOUR MASTER COACH
+                Connecting you with your coach
               </h3>
               <p style={{ color: 'var(--gray)', fontFamily: 'Raleway, sans-serif', fontSize: 14, maxWidth: 500, margin: 0 }}>
-                Your private human messaging line is being calibrated. In the meantime, Coach Gordon AI is active 24/7 above for immediate training, nutrition, and exercise questions.
+                We’re setting up messages with your coach. In the meantime, ask Coach Gordon’s AI assistant above about training, nutrition, or exercises.
               </p>
             </div>
           ) : (
             <MessageThreadClient
               currentUserId={user.id}
               role="client"
-              recipientName="Master Coach Scott Gordon"
-              recipientRoleTitle="CSCS · Olympic Specialist · Lead Concierge"
+              recipientName="Coach Scott Gordon"
+              recipientRoleTitle="Coach"
               recipientAvatar="/images/coach-gordon-shield-logo.jpg"
             />
           )}
@@ -180,4 +180,3 @@ export default async function ClientMessagesPage() {
     </main>
   )
 }
-

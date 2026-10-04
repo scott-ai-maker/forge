@@ -262,10 +262,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <main className="dashboard-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
       <SiteHeader
         links={[
-          { href: '/dashboard', label: 'Command Center' },
-          { href: '/dashboard/fitness', label: 'Fitness Lab' },
-          { href: '/dashboard/dossier', label: 'Weekly Dossier' },
-          { href: '/dashboard/book', label: 'Consultations' },
+          { href: '/dashboard', label: 'Today' },
+          { href: '/dashboard/fitness', label: 'Training & progress' },
+          { href: '/dashboard/dossier', label: 'Progress summary' },
+          { href: '/dashboard/book', label: 'Book a session' },
           { href: '/dashboard/messages', label: 'Messages' },
           { href: '/dashboard/settings', label: 'Settings' },
         ]}

@@ -33,7 +33,7 @@ export default function FoundingIntakeSplashClient() {
 
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setStatus('error')
-      setErrorMessage('Please enter a valid executive email address.')
+      setErrorMessage('Please enter a valid email address.')
       return
     }
 
@@ -68,7 +68,7 @@ export default function FoundingIntakeSplashClient() {
         setStatus('success')
       } else {
         setStatus('error')
-        setErrorMessage(data?.error || 'Unable to register allocation. Please try again.')
+        setErrorMessage(data?.error || 'Unable to register. Please try again.')
       }
     } catch {
       setStatus('error')
@@ -142,7 +142,7 @@ export default function FoundingIntakeSplashClient() {
                 GORDON ATHLETIC ADVISORY
               </span>
               <span style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 600 }}>
-                Private Sports Science &amp; Biomechanical Suite
+                Evidence-based training and coaching
               </span>
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function FoundingIntakeSplashClient() {
                 background: 'rgba(197, 160, 89, 0.08)',
               }}
             >
-              Explore Full Studio →
+              Explore the app →
             </Link>
           </div>
         </header>
@@ -213,7 +213,7 @@ export default function FoundingIntakeSplashClient() {
                 fontWeight: 700,
               }}
             >
-              Strictly Capped at 15
+              Early access · 15 places
             </span>
           </div>
         </div>
@@ -239,9 +239,8 @@ export default function FoundingIntakeSplashClient() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              Clinical Biomechanics.
-            </span>{' '}
-            Master Periodization.
+              Training that fits real life.
+            </span>
           </h1>
 
           <p
@@ -273,7 +272,7 @@ export default function FoundingIntakeSplashClient() {
           >
             <GaaIcon name="shield-check" size={20} tone="gold" />
             <div style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--gold-lt)' }}>Accreditation &amp; Facility Notice:</strong> Coach Scott Gordon is completing final NASM Sports Science board accreditations and private facility allocations. Preliminary intake is currently open to establish baseline athlete registries and lock grandfathered rates.
+              <strong style={{ color: 'var(--gold-lt)' }}>A note about our launch:</strong> Coach Scott Gordon is completing NASM credentials and preparing the training space. Join the early-access list for updates about memberships and introductory pricing.
               <div style={{ marginTop: 6 }}>
                 <a
                   href="#accreditation-portfolio"
@@ -285,7 +284,7 @@ export default function FoundingIntakeSplashClient() {
                     fontWeight: 600,
                   }}
                 >
-                  Explore the 13-Point NASM® Clinical Credential Portfolio &amp; Software Architecture ↓
+                  Learn about NASM® credentials and our training approach ↓
                 </a>
               </div>
             </div>
@@ -334,7 +333,7 @@ export default function FoundingIntakeSplashClient() {
                 color: 'var(--gold-lt)',
               }}
             >
-              Charter Allocation Benefits
+              Early-access benefits
             </span>
             <h2
               style={{
@@ -366,14 +365,14 @@ export default function FoundingIntakeSplashClient() {
               {
                 icon: 'lock' as const,
                 title: 'Clear membership choices',
-                body: 'Choose Core Membership, Pro Athlete, or Transformation Direct with straightforward monthly pricing.',
+                body: 'Choose Core, Plus, or Coach Support with straightforward monthly pricing.',
                 value: 'From $19.99/month',
               },
               {
                 icon: 'microscope' as const,
-                title: 'Complimentary 3D AI Biomechanical Audit',
-                body: 'Computer-vision movement screening helps you better understand posture and kinetic-chain patterns.',
-                value: '3D AI movement insights',
+                title: 'Movement assessment',
+                body: 'Movement screening can help you better understand how you move and where you might focus.',
+                value: 'Included with early access',
               },
             ].map((p, idx) => (
               <div
@@ -482,7 +481,7 @@ export default function FoundingIntakeSplashClient() {
                   color: 'var(--gold-lt)',
                 }}
               >
-                Official Founding Allocation Confirmed
+                You&apos;re on the early-access list
               </span>
 
               <h3
@@ -494,7 +493,7 @@ export default function FoundingIntakeSplashClient() {
                   color: '#FFFFFF',
                 }}
               >
-                Welcome to the Registry, {fullName}
+                Thanks for signing up, {fullName}
               </h3>
 
               <div
@@ -508,7 +507,7 @@ export default function FoundingIntakeSplashClient() {
                 }}
               >
                 <span style={{ fontSize: 12, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
-                  Assigned Charter Position
+                  Your request number
                 </span>
                 <span
                   style={{
@@ -523,7 +522,7 @@ export default function FoundingIntakeSplashClient() {
               </div>
 
               <p style={{ fontSize: 14, color: '#CBD5E1', lineHeight: 1.6, maxWidth: 480, margin: '0 auto 24px' }}>
-                Your preliminary intake has been archived in Coach Scott Gordon&apos;s priority queue. You will receive an encrypted intake briefing and private calendar dispatch the moment credentials and facility slots open.
+                We have received your request. We will email you when early access opens and share the next steps.
               </p>
 
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -532,7 +531,7 @@ export default function FoundingIntakeSplashClient() {
                   className="sgf-button sgf-button-gold"
                   style={{ padding: '10px 22px', fontSize: 12, fontWeight: 800 }}
                 >
-                  Claim 3D AI Biomechanical Audit →
+                  Explore the movement assessment →
                 </Link>
                 <Link
                   href="/"
@@ -565,10 +564,10 @@ export default function FoundingIntakeSplashClient() {
                     color: '#FFFFFF',
                   }}
                 >
-                  Reserve Your Founding Allocation
+                  Join the early-access list
                 </h3>
                 <p style={{ margin: '6px 0 0', fontSize: 13, color: '#94A3B8' }}>
-                  Enter your executive profile details to secure grandfathered pricing and priority diagnostic consultation.
+                  Tell us a little about your goals and preferred coaching support. We will share updates about memberships and introductory pricing.
                 </p>
               </div>
 
@@ -607,7 +606,7 @@ export default function FoundingIntakeSplashClient() {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Marcus Vance"
+                    placeholder="Your name"
                     style={inputStyle}
                   />
                 </div>
@@ -620,12 +619,12 @@ export default function FoundingIntakeSplashClient() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="mvance@enterprise.com"
+                      placeholder="you@example.com"
                       style={inputStyle}
                     />
                   </div>
                   <div>
-                    <label style={labelStyle}>Phone / WhatsApp (Optional VIP Direct)</label>
+                    <label style={labelStyle}>Phone number (optional)</label>
                     <input
                       type="tel"
                       value={phone}
@@ -638,40 +637,40 @@ export default function FoundingIntakeSplashClient() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 12 }}>
                   <div>
-                    <label style={labelStyle}>Athletic &amp; Occupational Profile</label>
+                    <label style={labelStyle}>What best describes your training?</label>
                     <select
                       value={profileType}
                       onChange={(e) => setProfileType(e.target.value)}
                       style={{ ...inputStyle, cursor: 'pointer' }}
                     >
-                      <option value="executive">Corporate Executive / Founder</option>
-                      <option value="professional">High-Volume Professional</option>
-                      <option value="athlete">Competitive / Tactical Athlete</option>
-                      <option value="longevity">Executive Seeking Joint Longevity</option>
+                      <option value="executive">Everyday fitness and performance</option>
+                      <option value="professional">Training around a busy schedule</option>
+                      <option value="athlete">Competitive sports</option>
+                      <option value="longevity">Mobility and healthy aging</option>
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}>Primary Physical Objective</label>
+                    <label style={labelStyle}>What would you like help with?</label>
                     <select
                       value={primaryGoal}
                       onChange={(e) => setPrimaryGoal(e.target.value)}
                       style={{ ...inputStyle, cursor: 'pointer' }}
                     >
-                      <option value="structural_longevity">Structural Joint Pain &amp; Kinetic Alignment</option>
-                      <option value="hypertrophy">Executive Hypertrophy &amp; Recomposition</option>
-                      <option value="power_speed">Maximal Neuromuscular Power &amp; Output</option>
-                      <option value="full_concierge">Full 1:1 Private Concierge Supervision</option>
+                      <option value="structural_longevity">Move more comfortably and support joint health</option>
+                      <option value="hypertrophy">Build strength or muscle</option>
+                      <option value="power_speed">Improve speed, power, or endurance</option>
+                      <option value="full_concierge">One-to-one coaching</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Current Training Obstacles / Injury History (Optional)</label>
+                  <label style={labelStyle}>Anything else you would like us to know? (optional)</label>
                   <textarea
                     rows={3}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Briefly describe recurring back/shoulder tightness, upcoming travel schedules, or past training plateaus..."
+                    placeholder="Share anything about your goals, schedule, or training preferences."
                     style={{ ...inputStyle, resize: 'vertical' }}
                   />
                 </div>
@@ -695,7 +694,7 @@ export default function FoundingIntakeSplashClient() {
                 </button>
 
                 <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--gray)', margin: '4px 0 0' }}>
-                  🔒 No upfront payment required. Strictly confidential. Allocation priority is granted in order of submission.
+                  No payment is required to join. We will use your details to follow up about early access.
                 </p>
               </form>
             </div>

@@ -261,7 +261,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
   // Build launcher clients list for 1:1 Live Video Studio
   const launcherClients: AssignedClientLauncherItem[] = (assignedClients ?? []).map(client => ({
     id: client.id,
-    fullName: client.full_name || client.email?.split('@')[0] || 'Athlete',
+    fullName: client.full_name || client.email?.split('@')[0] || 'Member',
     email: client.email || '',
     sessionsRemaining: remainingByClient[client.id] ?? 0,
   }))
@@ -885,14 +885,14 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
   return (
     <main className="coach-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
       <SiteHeader
-        badgeText="Coach Console"
+        badgeText="Coach Dashboard"
         links={[
-          { href: '/coach', label: 'Triage' },
-          { href: '/coach#assigned-clients', label: 'Athletes' },
-          { href: '/corporate/proposal', label: 'Corporate B2B' },
-          { href: '/dashboard/dossier', label: 'Sunday Dossier' },
-          { href: '/coach#live-studio', label: 'Live Studio' },
-          { href: '/coach/settings', label: 'Operations' },
+          { href: '/coach', label: 'Overview' },
+          { href: '/coach#assigned-clients', label: 'Members' },
+          { href: '/corporate/proposal', label: 'Team Wellness' },
+          { href: '/dashboard/dossier', label: 'Weekly Progress Report' },
+          { href: '/coach#live-studio', label: 'Live Coaching' },
+          { href: '/coach/settings', label: 'Settings' },
         ]}
         actions={<LogoutButton />}
       />
@@ -918,12 +918,12 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
         <div className="responsive-tabs-scroll" style={{ display: 'flex', gap: 8, paddingBottom: 6, marginBottom: 20 }}>
           {[
             { key: 'overview' as const, label: 'Overview', icon: null },
-            { key: 'onboarding' as const, label: 'Onboarding Progression', icon: 'clipboard' as GaaIconName },
-            { key: 'architect' as const, label: 'Master NASM AI Coach', icon: 'brain' as GaaIconName },
-            { key: 'triage' as const, label: 'Coach Triage Cockpit', icon: 'lightning' as GaaIconName },
-            { key: 'roster' as const, label: 'Assigned Roster', icon: null },
-            { key: 'intake' as const, label: 'Unassigned Intake', icon: null },
-            { key: 'pipeline' as const, label: 'Pipeline', icon: null },
+            { key: 'onboarding' as const, label: 'Member Onboarding', icon: 'clipboard' as GaaIconName },
+            { key: 'architect' as const, label: 'AI Training Assistant', icon: 'brain' as GaaIconName },
+            { key: 'triage' as const, label: 'Member Support', icon: 'lightning' as GaaIconName },
+            { key: 'roster' as const, label: 'Members', icon: null },
+            { key: 'intake' as const, label: 'New Member Requests', icon: null },
+            { key: 'pipeline' as const, label: 'Applications', icon: null },
             { key: 'analytics' as const, label: 'Analytics', icon: null },
           ].map(tab => {
             const active = activeTab === tab.key
@@ -1060,7 +1060,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
                   </span>
                 </div>
                 <p style={{ color: 'var(--gray)', fontSize: 12.5, margin: '4px 0 0', maxWidth: 700 }}>
-                  Active roster progression across PAR-Q+ liability screening, NASM movement testing (OHSA), 12-week OPT™ periodization, AI program drafting, and weekly triage.
+                  Follow each member's onboarding, movement checks, personalized training plan, and weekly progress in one place.
                 </p>
               </div>
 
@@ -1092,7 +1092,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
               </div>
             </div>
 
-            {/* ── Enterprise & Intelligence Boardroom Suite Quick Banner ── */}
+            {/* ── Team wellness and progress tools ── */}
             <div
               style={{
                 display: 'grid',
@@ -1125,7 +1125,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
                     </span>
                   </div>
                   <p style={{ color: 'var(--gray)', fontSize: 12.5, margin: '0 0 14px', lineHeight: 1.5 }}>
-                    Interactive multi-seat B2B pricing modeler (5 to 50+ executive seats), conservative cognitive ROI projections ($273k/yr), dual-mode Clean Ivory boardroom PDF export, and shareable link generation.
+                    Create team wellness plans for 5 to 50+ people, review illustrative program estimates, and export or share a proposal.
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1175,7 +1175,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
                 </div>
               </div>
 
-              {/* Card 2: Executive Sunday Intelligence Dossier */}
+              {/* Card 2: Weekly progress report */}
               <div
                 style={{
                   background: 'linear-gradient(135deg, rgba(14,24,39,0.98) 0%, rgba(9,15,26,0.98) 100%)',
@@ -1192,14 +1192,14 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <GaaIcon name="clipboard" size={20} tone="cyan" />
                     <span style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 17, color: 'var(--white)', letterSpacing: '0.04em' }}>
-                      Executive Sunday Intelligence Dossier
+                      Weekly Progress Report
                     </span>
                     <span style={{ padding: '2px 8px', borderRadius: 4, background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.4)', color: '#38BDF8', fontSize: 10, fontWeight: 800 }}>
                       v1.33.0
                     </span>
                   </div>
                   <p style={{ color: 'var(--gray)', fontSize: 12.5, margin: '0 0 14px', lineHeight: 1.5 }}>
-                    Clinical S.O.A.P. notes, acute-to-chronic workload (ACWR) telemetry, 5-plane kinetic distribution radar, and dual-mode boardroom print engine for high-touch Sunday deliverables.
+                    Review training summaries, recent workload, movement patterns, and printable progress reports.
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1222,11 +1222,11 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
                       gap: 6,
                     }}
                   >
-                    <span>Open Sunday Dossier</span>
+                    <span>Open Weekly Progress Report</span>
                     <span>➔</span>
                   </a>
                   <span style={{ fontSize: 11.5, color: 'var(--gray)' }}>
-                    Tip: Available per-athlete in Check-Ins
+                    Tip: Available for each member in Check-Ins
                   </span>
                 </div>
               </div>
@@ -1236,10 +1236,10 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
             <div style={{ marginBottom: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <span style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 800 }}>
-                  Practice Telemetry &amp; Operations
+                  Member Progress and Coaching Tools
                 </span>
                 <span style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 600 }}>
-                  Active Cycle Status
+                  Current Training Cycle
                 </span>
               </div>
 
@@ -1284,7 +1284,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
                   <span>Priority Action Required</span>
                 </span>
                 <span style={{ fontSize: 11, color: 'var(--gray)' }}>
-                  Auto-Triage Radar
+                  Follow-up Reminders
                 </span>
               </div>
 
@@ -1315,7 +1315,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
                   >
                     <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontWeight: 800, fontSize: 28, lineHeight: 1, color: item.value > 0 ? 'var(--gold)' : 'var(--gray)' }}>{item.value}</div>
                     <div style={{ fontFamily: 'Raleway, sans-serif', fontWeight: 700, fontSize: 11, color: 'var(--white)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.label}</div>
-                    <div style={{ fontFamily: 'Raleway, sans-serif', fontSize: 11, color: 'var(--gold-lt)' }}>Review clients →</div>
+                    <div style={{ fontFamily: 'Raleway, sans-serif', fontSize: 11, color: 'var(--gold-lt)' }}>View members →</div>
                   </a>
                 ))}
               </div>
@@ -1325,7 +1325,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
             <div style={{ marginBottom: 28 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 20, color: 'var(--white)', letterSpacing: '0.04em', margin: 0 }}>
-                  BIRDS-EYE FLIGHT DECK (TOP PRIORITY ATHLETES)
+                  Members Who May Need Support
                 </h2>
                 <a
                   href="/coach?tab=triage"
@@ -1340,14 +1340,14 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
                     gap: 4,
                   }}
                 >
-                  <span>Open Coach Triage Cockpit →</span>
+                  <span>Open Member Support →</span>
                 </a>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: 'rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
                 {birdsEyeRows.length === 0 ? (
                   <div style={{ background: 'var(--navy-mid)', padding: '24px', textAlign: 'center' }}>
-                    <p style={{ margin: 0, color: 'var(--gray)' }}>No assigned clients yet.</p>
+                    <p style={{ margin: 0, color: 'var(--gray)' }}>No members assigned yet.</p>
                   </div>
                 ) : (
                   birdsEyeRows.slice(0, 8).map(row => (

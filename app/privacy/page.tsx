@@ -5,8 +5,8 @@ import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
 import GaaIcon from '@/components/ui/GaaIcon'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy & Biometric Data Shield',
-  description: 'Executive privacy standards, HIPAA-aligned data governance, and cryptographic protection of biometric telemetry at Gordon Athletic Advisory.',
+  title: 'Privacy Policy',
+  description: 'How Forge Athletic protects your account, health, training, and payment information.',
 }
 
 export default function PrivacyPolicyPage() {
@@ -16,18 +16,18 @@ export default function PrivacyPolicyPage() {
         fixed
         links={[
           { href: '/', label: 'Home' },
-          { href: '/packages', label: 'Retainers' },
-          { href: '/apply', label: 'Apply' },
+          { href: '/packages', label: 'Memberships' },
+          { href: '/apply', label: 'Get started' },
         ]}
         actions={<MarketingLoginActions />}
       />
       <main id="main-content" style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(5rem, 8vw, 7rem) clamp(16px, 3vw, 24px) 4rem', fontFamily: 'Raleway, sans-serif', color: '#F5F0E8', lineHeight: 1.65, boxSizing: 'border-box' }}>
         <div style={{ borderBottom: '1px solid rgba(197, 160, 89, 0.3)', paddingBottom: '1.5rem', marginBottom: '2.5rem' }}>
         <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.18em', color: 'var(--gold-lt)' }}>
-          Executive Privacy &amp; Data Security
+          Your privacy and data security
         </span>
         <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '2.5rem', letterSpacing: '0.04em', margin: '0.5rem 0 0', color: '#FFFFFF' }}>
-          Privacy Policy &amp; Biometric Data Shield
+          Privacy Policy
         </h1>
         <p style={{ color: '#8A99AA', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
           Effective &amp; Last Updated: August 28, 2026 · Gordon Athletic Advisory LLC
@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
           1. Scope &amp; Commitment to Confidentiality
         </h2>
         <p>
-          Gordon Athletic Advisory LLC (&quot;GAA&quot;, &quot;we&quot;, &quot;us&quot;) recognizes the sensitive and highly confidential nature of executive health metrics, physical movement screenings, physique progression photographs, and biometric telemetry. We maintain the highest standards of data security, cryptographic isolation, and privacy governance.
+          Gordon Athletic Advisory LLC (&quot;GAA&quot;, &quot;we&quot;, &quot;us&quot;) understands that health and fitness information is personal. We protect your account details, health information, movement assessments, progress photos, and wearable data with strong security safeguards.
         </p>
       </section>
 

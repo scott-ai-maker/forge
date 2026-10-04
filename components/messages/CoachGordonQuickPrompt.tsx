@@ -31,7 +31,7 @@ export function CoachGordonHeaderButton() {
         boxShadow: '0 4px 16px rgba(212,160,23,0.25)',
         transition: 'transform 0.15s ease, filter 0.15s ease',
       }}
-      title="Ask Coach Scott Gordon AI"
+      title="Ask Coach Gordon"
     >
       <div style={{ position: 'relative', width: 18, height: 18, flexShrink: 0 }}>
         <Image
@@ -42,7 +42,7 @@ export function CoachGordonHeaderButton() {
           style={{ borderRadius: 3, objectFit: 'cover' }}
         />
       </div>
-      <span>Ask Coach Gordon AI</span>
+      <span>Ask Coach Gordon</span>
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e' }} />
     </button>
   )
@@ -88,7 +88,7 @@ export function CoachGordonDualConciergeCard() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)' }}>
-              Instant AI Advisory · Online 24/7
+              Training support · Online 24/7
             </span>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
           </div>
@@ -96,7 +96,7 @@ export function CoachGordonDualConciergeCard() {
             Need immediate advice on exercise swaps, nutrition, or soreness?
           </div>
           <div style={{ fontSize: 12, color: 'var(--gray)', marginTop: 1 }}>
-            Coach Gordon AI answers instantly with clinical sports science, RPE guidelines, and voice narration.
+            Get practical training, movement, and nutrition guidance with voice responses.
           </div>
         </div>
       </div>
@@ -126,7 +126,7 @@ export function CoachGordonDualConciergeCard() {
         }}
       >
         <GaaIcon name="message" tone="inherit" size={14} />
-        <span>Ask Coach Gordon Now →</span>
+        <span>Ask Coach Gordon →</span>
       </button>
     </div>
   )

@@ -89,13 +89,13 @@ export default function ExecutiveTravelAdapterStudio({
           </div>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#38BDF8', fontWeight: 800 }}>
-              Live Itinerary Module · NASM Equipment Recalibrator
+              Travel workout planner
             </div>
             <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.04em' }}>
-              Executive Travel Workout Adapter
+              Adapt your workout for travel
             </h3>
             <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--gray)' }}>
-              Automatically translates barbell and specialty loading into dumbbell, cable, and band equivalents.
+              Adjust your workout to match the equipment you have available.
             </p>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function ExecutiveTravelAdapterStudio({
           }}
         >
           <GaaIcon name="lightning" size={15} tone="cyan" />
-          <span>Deploy Travel Recalibration</span>
+          <span>Use this travel workout</span>
         </button>
       </div>
 
@@ -149,7 +149,7 @@ export default function ExecutiveTravelAdapterStudio({
       {/* ── Travel Scenario Selector Grid ── */}
       <div>
         <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 8 }}>
-          Select Available Gym Setup / Destination Scenario:
+          What equipment do you have?
         </div>
         <div
           style={{
@@ -162,7 +162,7 @@ export default function ExecutiveTravelAdapterStudio({
             const isSelected = selectedScenario === scenarioKey
             const meta = TRAVEL_SCENARIO_META[scenarioKey] || {
               label: scenarioKey,
-              description: 'Custom travel adaptation protocol.',
+              description: 'A workout matched to the equipment you have.',
               icon: 'barbell',
             }
             const iconName = SCENARIO_ICONS[scenarioKey] || 'travel'
@@ -291,7 +291,7 @@ export default function ExecutiveTravelAdapterStudio({
         )}
       </div>
 
-      {/* ── Global Travel Resilience Guidelines ── */}
+      {/* ── Travel workout and recovery tips ── */}
       <div
         style={{
           background: 'linear-gradient(135deg, rgba(212,160,23,0.08) 0%, rgba(13,27,42,0.95) 100%)',
@@ -303,7 +303,7 @@ export default function ExecutiveTravelAdapterStudio({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
           <GaaIcon name="travel" size={18} tone="gold" />
           <span style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Executive Travel Resilience Protocols
+            Travel workouts and recovery tips
           </span>
         </div>
         <div
@@ -333,7 +333,7 @@ export default function ExecutiveTravelAdapterStudio({
           <div>
             <strong style={{ color: 'var(--white)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <GaaIcon name="utensils" size={12} tone="emerald" />
-              <span>Executive Dining Protocol:</span>
+              <span>Food choices while traveling:</span>
             </strong>{' '}
             Target 40–50g lean protein first (filet, salmon, chicken breast) with steamed greens at business dinners before carbohydrate intake.
           </div>

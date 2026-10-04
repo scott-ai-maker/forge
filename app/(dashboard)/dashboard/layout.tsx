@@ -6,8 +6,8 @@ import GlobalCoachGordonHost from '@/components/fitness/GlobalCoachGordonHost'
 import GlobalWhatsNewHost from '@/components/ui/GlobalWhatsNewHost'
 
 export const metadata: Metadata = {
-  title: 'Client Dashboard',
-  description: 'Private human performance dashboard, 3D recovery telemetry, and personalized workout execution.',
+  title: 'Member Dashboard',
+  description: 'Your training plan, workouts, coaching, and progress in one place.',
 }
 
 interface DashboardLayoutProps {
@@ -26,5 +26,4 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     </>
   )
 }
-
 

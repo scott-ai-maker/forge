@@ -327,7 +327,7 @@ export default function MuscleRecoveryHeatmap3D({
                 textTransform: 'uppercase',
               }}
             >
-              Executive Tier
+              Advanced settings
             </span>
           </h3>
         </div>
@@ -1632,7 +1632,7 @@ export default function MuscleRecoveryHeatmap3D({
                   <option value="beginner">Beginner (+30% recovery time needed)</option>
                   <option value="intermediate">Intermediate (Baseline reference)</option>
                   <option value="advanced">Advanced (-15% accelerated clearance)</option>
-                  <option value="elite">Elite Master (-25% accelerated clearance)</option>
+                  <option value="elite">Advanced (-25% accelerated clearance)</option>
                 </select>
               </div>
             </div>

@@ -12,8 +12,8 @@ import { generateSundayDossier } from '@/lib/sunday-dossier-engine'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Executive Intelligence Dossier | Gordon Athletic Advisory',
-  description: 'Weekly Athletic Intelligence Briefing, ACWR Workload Telemetry, Kinetic Movement Distribution, and Clinical S.O.A.P. Record.',
+  title: 'Weekly Progress Summary | Forge Athletic',
+  description: 'A clear weekly view of training, recovery, movement, and coaching notes.',
 }
 
 type DossierPageSearchParams = Promise<{
@@ -121,7 +121,7 @@ export default async function ExecutiveSundayDossierPage({
       .maybeSingle(),
   ])
 
-  const clientName = clientRow?.full_name || user.email?.split('@')[0] || 'Executive Athlete'
+  const clientName = clientRow?.full_name || user.email?.split('@')[0] || 'Member'
   const currentPlanPhase = latestPlan?.phase_name
     ? `Phase ${latestPlan.nasm_opt_phase}: ${latestPlan.phase_name}`
     : (profile?.fitness_goal || 'Phase 1: Stabilization Endurance')
@@ -158,7 +158,7 @@ export default async function ExecutiveSundayDossierPage({
   return (
     <main style={{ minHeight: '100vh', background: 'var(--navy)' }}>
       <SiteHeader
-        badgeText={isCoachPreview ? 'Coach Intelligence' : 'Executive Intelligence'}
+        badgeText={isCoachPreview ? 'Coach view' : 'Progress summary'}
         links={
           isCoachPreview
             ? [
@@ -169,10 +169,10 @@ export default async function ExecutiveSundayDossierPage({
                 { href: '/coach/settings', label: 'Operations' },
               ]
             : [
-                { href: '/dashboard', label: 'Command Center' },
-                { href: '/dashboard/fitness', label: 'Fitness Lab' },
-                { href: '/dashboard/dossier', label: 'Weekly Dossier' },
-                { href: '/dashboard/book', label: 'Consultations' },
+                { href: '/dashboard', label: 'Today' },
+                { href: '/dashboard/fitness', label: 'Training & progress' },
+                { href: '/dashboard/dossier', label: 'Progress summary' },
+                { href: '/dashboard/book', label: 'Book a session' },
                 { href: '/dashboard/messages', label: 'Messages' },
                 { href: '/dashboard/settings', label: 'Settings' },
               ]
@@ -211,10 +211,10 @@ export default async function ExecutiveSundayDossierPage({
               <GaaIcon name="crown" size={20} tone="gold" />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--gold-lt)', letterSpacing: '0.04em' }}>
-                  COACH DOSSIER PREVIEW · ATHLETE: <span style={{ color: '#FFFFFF' }}>{clientName.toUpperCase()}</span>
+                  COACH PREVIEW · MEMBER: <span style={{ color: '#FFFFFF' }}>{clientName.toUpperCase()}</span>
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--gray)' }}>
-                  Viewing live ACWR telemetry, 28-day chronic baseline, and clinical S.O.A.P. notes.
+                  Reviewing recent training load, your 28-day baseline, and coaching notes.
                 </div>
               </div>
             </div>
@@ -236,13 +236,13 @@ export default async function ExecutiveSundayDossierPage({
                   gap: 6,
                 }}
               >
-                <span>← Back to Athlete Check-Ins</span>
+                <span>← Back to member check-ins</span>
               </Link>
             </div>
           </div>
         )}
 
-        {/* Navigation Breadcrumbs & Sovereign Context Bar */}
+        {/* Navigation breadcrumbs */}
         <div
           className="no-print"
           style={{
@@ -271,10 +271,10 @@ export default async function ExecutiveSundayDossierPage({
               }}
             >
               <span>←</span>
-              <span>Command Center</span>
+              <span>Today</span>
             </Link>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
-            <span style={{ color: '#E2E8F0', fontWeight: 500 }}>Weekly Intelligence Dossier</span>
+            <span style={{ color: '#E2E8F0', fontWeight: 500 }}>Weekly progress summary</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -295,12 +295,12 @@ export default async function ExecutiveSundayDossierPage({
               }}
             >
               <GaaIcon name="shield" size={10} tone="gold" />
-              Sovereign Boardroom Record
+              Your training record
             </span>
           </div>
         </div>
 
-        {/* Standalone Executive Sunday Intelligence Dossier Component */}
+        {/* Weekly training and progress summary */}
         <ExecutiveSundayDossier
           athleteName={clientName}
           optPhase={currentPlanPhase}

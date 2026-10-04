@@ -16,7 +16,7 @@ export interface ForgeMembership {
 export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
   {
     id: 'forge-core',
-    name: 'Core Membership',
+    name: 'Core',
     monthlyPriceCents: 1999,
     annualPriceCents: 14900,
     trialDays: 7,
@@ -28,7 +28,7 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
   },
   {
     id: 'forge-pro-athlete',
-    name: 'Pro Athlete',
+    name: 'Plus',
     monthlyPriceCents: 4900,
     includedFeatures: [
       { feature: 'nutrition' },
@@ -36,16 +36,16 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
       { feature: 'video-review', uses: 2 },
     ],
     features: [
-      'Voice-guided training sessions',
+      'Audio-guided training sessions',
       'Movement and recovery insights',
-      'Weekly performance summaries',
-      'Nutrition planning and travel workout tools included',
-      '2 video form analyses per month',
+      'Weekly progress summaries',
+      'Nutrition planning and travel workout tools',
+      '2 video form reviews per month',
     ],
   },
   {
     id: 'forge-transformation-direct',
-    name: 'Transformation Direct',
+    name: 'Coach Support',
     monthlyPriceCents: 19900,
     includedFeatures: [
       { feature: 'nutrition' },
@@ -53,13 +53,29 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
       { feature: 'video-review', uses: 8 },
     ],
     features: [
-      'Everything in Pro Athlete',
-      'Quarterly video reviews by Coach Scott Gordon',
-      'Direct access to your coach',
-      '8 video form analyses per month',
+      'Everything in Plus',
+      'Quarterly video reviews with Coach Scott Gordon',
+      'Direct messaging with your coach',
+      '8 video form reviews per month',
     ],
   },
 ]
+
+const LEGACY_MEMBERSHIP_NAMES: Readonly<Record<string, string>> = {
+  'core membership': 'Core',
+  'pro athlete': 'Plus',
+  'transformation direct': 'Coach Support',
+  'autonomous digital lab': 'Digital Training',
+  'alumni continuity retainer': 'Ongoing Training',
+  'performance protocol': 'Personalized Training',
+  'hybrid concierge': 'Hybrid Coaching',
+  'executive 1:1 master': 'One-to-one coaching',
+  'corporate executive retainer': 'Team Wellness',
+}
+
+export function getMembershipDisplayName(name: string): string {
+  return LEGACY_MEMBERSHIP_NAMES[name.trim().toLowerCase()] ?? name
+}
 
 export function getForgeMembership(id: string): ForgeMembership | undefined {
   return FORGE_MEMBERSHIPS.find(membership => membership.id === id)

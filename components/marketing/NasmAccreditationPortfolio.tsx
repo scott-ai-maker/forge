@@ -73,7 +73,7 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
     icon: 'lightning',
     status: 'Board Review Finalization',
     statusType: 'board_review',
-    summary: 'Elite athletic development, Rate of Force Development (RFD), Speed/Agility/Quickness (SAQ), and triphasic periodization.',
+    summary: 'Athletic development, speed and agility training, and plans that progress over time.',
     curriculum: [
       'Rate of Force Development (RFD) & Explosive Power',
       'Speed, Agility, and Quickness (SAQ) Mechanics',
@@ -98,9 +98,9 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
       'Macronutrient Periodization & Caloric Allocation',
       'Metabolic Expenditure Math (BMR, NEAT, TEF, EAT)',
       'Hydration Physiology & Micronutrient Sufficiency',
-      'Cognitive Eating Habit Loops & Executive Defense',
+      'Eating habits and practical nutrition choices',
     ],
-    gaaEngineIntegration: 'Drives GAA metabolic rate calculators, caloric target modulations, and executive nutrition tracking.',
+    gaaEngineIntegration: 'Supports GAA nutrition estimates, meal planning, and progress tracking.',
     keyAlgorithmicModule: 'Bioenergetic TDEE & Macro Allocation Algorithm',
   },
   {
@@ -176,9 +176,9 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
     summary: 'Neuroscience of adherence, Transtheoretical Stages of Change, motivational interviewing, and habit architecture.',
     curriculum: [
       'Transtheoretical Model (Stages of Change Dynamics)',
-      'Motivational Interviewing & Executive Reframing',
+      'Motivational interviewing and supportive coaching',
       'Habit Stacking & Implementation Intentions',
-      'Executive Decision Fatigue & Willpower Preservation',
+      'Decision-making, habit building, and consistency',
     ],
     gaaEngineIntegration: 'Calibrates AI Coach Gordon’s cognitive tone, weekly check-in responsiveness, and client barrier friction resolution.',
     keyAlgorithmicModule: 'Adherence Friction Scoring & Cognitive Coach Tone',
@@ -220,7 +220,7 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
       'Osteopenia & Sarcopenia Neuromuscular Defense',
       'Contraindicated Movement Swapping Matrix',
     ],
-    gaaEngineIntegration: 'Drives GAA’s Executive Longevity and joint-preservation tracks, auto-swapping high-shear loads for safe compound alternatives.',
+    gaaEngineIntegration: 'Supports mobility and healthy-aging tools, with exercise options adapted to a person’s needs.',
     keyAlgorithmicModule: 'Joint Preservation & Contraindication Swapper',
   },
   {
@@ -271,7 +271,7 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
     categoryLabel: 'Clinical & Biomechanics',
     badgeTone: '#EAB308',
     icon: 'crown',
-    status: 'Elite Distinction Pathway',
+    status: 'Advanced credential pathway',
     statusType: 'pinnacle',
     summary: 'The pinnacle practitioner credential awarded upon mastering the comprehensive NASM continuum across assessment, correction, performance, and nutrition.',
     curriculum: [
@@ -280,8 +280,8 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
       'Macro-to-Micro Periodization Architecture',
       'Integrated Human Performance Ecosystem Leadership',
     ],
-    gaaEngineIntegration: 'Serves as the master clinical standard governing all algorithmic decisions, diagnostic thresholds, and concierge protocols in Gordon Athletic Advisory.',
-    keyAlgorithmicModule: 'Integrated Executive Performance Protocol',
+    gaaEngineIntegration: 'Informs coaching recommendations, movement screening, and training plans across Gordon Athletic Advisory.',
+    keyAlgorithmicModule: 'Integrated Training and Performance Plan',
   },
 ]
 
@@ -794,10 +794,10 @@ export default function NasmAccreditationPortfolio() {
               color: '#FFFFFF',
             }}
           >
-            Ready to establish your clinical baseline?
+            Ready to start moving toward your goals?
           </div>
           <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
-            Reserve your position in the private Founding Cohort before the 15-seat allocation closes.
+            Join the early-access list for membership updates and introductory pricing. The first group is limited to 15 spots.
           </div>
         </div>
 
@@ -839,4 +839,3 @@ export default function NasmAccreditationPortfolio() {
     </section>
   )
 }
-

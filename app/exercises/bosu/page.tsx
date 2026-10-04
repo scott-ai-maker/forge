@@ -293,7 +293,7 @@ export default function BosuExerciseExplorerPage() {
       <SiteHeader
         links={[
           { href: '/', label: 'Home' },
-          { href: '/packages', label: 'Retainers' },
+          { href: '/packages', label: 'Memberships' },
           { href: '/apply', label: 'Apply' },
         ]}
         actions={<MarketingLoginActions />}
@@ -959,4 +959,3 @@ export default function BosuExerciseExplorerPage() {
     </div>
   )
 }
-

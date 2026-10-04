@@ -11,7 +11,7 @@ import {
 
 describe('CorporateProposalStudio & Financial Engine', () => {
   describe('computeCorporateFinancials', () => {
-    it('accurately calculates canonical 10-seat Executive Core tier financials', () => {
+    it('accurately calculates the 10-person team plan financials', () => {
       const annual = computeCorporateFinancials(10, 'annual')
       expect(annual.seats).toBe(10)
       expect(annual.monthlyInvestment).toBe(3500)
@@ -27,7 +27,7 @@ describe('CorporateProposalStudio & Financial Engine', () => {
       expect(monthly.perSeatMonthlyEffective).toBe(350)
     })
 
-    it('accurately calculates 5-seat Boutique Syndicate tier', () => {
+    it('accurately calculates the 5-person team plan', () => {
       const result = computeCorporateFinancials(5, 'annual')
       expect(result.monthlyInvestment).toBe(2000)
       expect(result.annualInvestment).toBe(20000)
@@ -35,7 +35,7 @@ describe('CorporateProposalStudio & Financial Engine', () => {
       expect(result.perSeatMonthlyEffective).toBe(333)
     })
 
-    it('accurately calculates 25-seat Partner Cohort tier', () => {
+    it('accurately calculates the 25-person team plan', () => {
       const result = computeCorporateFinancials(25, 'annual')
       expect(result.monthlyInvestment).toBe(7500)
       expect(result.annualInvestment).toBe(75000)
@@ -43,7 +43,7 @@ describe('CorporateProposalStudio & Financial Engine', () => {
       expect(result.perSeatMonthlyEffective).toBe(250)
     })
 
-    it('accurately calculates 50-seat Enterprise Division tier', () => {
+    it('accurately calculates the 50-person organization plan', () => {
       const result = computeCorporateFinancials(50, 'annual')
       expect(result.monthlyInvestment).toBe(13500)
       expect(result.annualInvestment).toBe(135000)
@@ -75,7 +75,7 @@ describe('CorporateProposalStudio & Financial Engine', () => {
   })
 
   describe('generateCorporateDocRefId', () => {
-    it('generates institutional document tracking references with firm code, seat count and year', () => {
+    it('generates proposal tracking references with organization code, team size and year', () => {
       const year = new Date().getFullYear()
       const ref1 = generateCorporateDocRefId('Apex Capital Partners', 10)
       expect(ref1).toBe(`GAA-PROP-APEX-10S-${year}`)
@@ -101,18 +101,27 @@ describe('CorporateProposalStudio & Financial Engine', () => {
   })
 
   describe('getProposalDeliverablesList', () => {
+    it('uses team-first labels for the organization plan sizes', () => {
+      expect(CORPORATE_TIER_PRESETS.map(preset => preset.name)).toEqual([
+        'Small Team',
+        'Team Plan',
+        'Growing Team',
+        'Organization Plan',
+      ])
+    })
+
     it('returns 5 core deliverables for monthly and adds annual clinic bonus for annual agreements', () => {
       const monthlyDeliverables = getProposalDeliverablesList(10, 'monthly')
       expect(monthlyDeliverables.length).toBe(5)
-      expect(monthlyDeliverables[0].title).toContain('10 Executive Multi-Seat App Licenses')
+      expect(monthlyDeliverables[0].title).toContain('10 app memberships')
 
       const annualDeliverables = getProposalDeliverablesList(10, 'annual')
       expect(annualDeliverables.length).toBe(6)
-      expect(annualDeliverables[5].title).toContain('Complimentary On-Site Postural & Ergonomic Clinic')
+      expect(annualDeliverables[5].title).toContain('On-site movement and ergonomics session')
     })
   })
 
-  describe('Boardroom Certification, Credentials & Typography Compliance', () => {
+  describe('Proposal branding, credentials, and typography', () => {
     it('verifies Coach Scott Gordon master credentials in CorporateProposalStudio.tsx', () => {
       const componentSource = fs.readFileSync(
         path.join(process.cwd(), 'components/corporate/CorporateProposalStudio.tsx'),
@@ -122,10 +131,10 @@ describe('CorporateProposalStudio & Financial Engine', () => {
       expect(componentSource).toContain('SCOTT GORDON, NASM MASTER TRAINER')
       expect(componentSource).toContain('Founder &amp; Performance Director · Gordon Athletic Advisory')
       expect(componentSource).toContain('NASM-CPT® · CES® · PES® · CNC™ · CSNC')
-      expect(componentSource).toContain('Boardroom Authorized')
+      expect(componentSource).toContain('Proposal ready for review')
     })
 
-    it('verifies Clinical Aristocracy typography standards in CorporateProposalStudio.tsx', () => {
+    it('verifies shared typography standards in CorporateProposalStudio.tsx', () => {
       const componentSource = fs.readFileSync(
         path.join(process.cwd(), 'components/corporate/CorporateProposalStudio.tsx'),
         'utf8'
@@ -151,7 +160,7 @@ describe('CorporateProposalStudio & Financial Engine', () => {
 
       expect(pageSource).toContain('CorporateProposalStudio')
       expect(pageSource).toContain('/corporate/proposal')
-      expect(pageSource).toContain('BOARDROOM PROPOSAL &amp; MULTI-SEAT ROI GENERATOR')
+      expect(pageSource).toContain('BUILD A TEAM PLAN')
     })
   })
 })

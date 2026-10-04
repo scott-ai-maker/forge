@@ -25,9 +25,9 @@ describe('Commercial Retainers & Tier 3 Architecture Enforcements', () => {
     expect(momentum.popular).toBe(true)
     expect(momentum.sessions).toBe(1)
 
-    // Tier 3: Executive 1:1 Master Retainer
+    // Tier 3: One-to-one coaching
     expect(transformation.id).toBe('transformation')
-    expect(transformation.name).toBe('Executive 1:1 Master')
+    expect(transformation.name).toBe('One-to-one Coaching')
     expect(transformation.price).toBe(149500)
     expect(transformation.pifPriceCents).toBe(389500)
     expect(transformation.sessions).toBe(4)
@@ -39,13 +39,13 @@ describe('Commercial Retainers & Tier 3 Architecture Enforcements', () => {
     expect(tier3).toBeDefined()
 
     const deliverablesJoined = tier3!.deliverables.join(' ')
-    expect(deliverablesJoined).toContain('WebRTC video studio')
-    expect(deliverablesJoined).toContain('Voice S.O.A.P. notes dictation')
-    expect(deliverablesJoined).toContain('Clinical Supplement Prescription')
-    expect(deliverablesJoined).toContain('VIP Direct Line')
+    expect(deliverablesJoined).toContain('Four 60-minute video coaching sessions')
+    expect(deliverablesJoined).toContain('Session notes and follow-up plan')
+    expect(deliverablesJoined).toContain('Evidence-based supplement review')
+    expect(deliverablesJoined).toContain('Direct coach messaging')
 
     const slasJoined = tier3!.serviceLevels.join(' ')
-    expect(slasJoined).toContain('4 business hours')
+    expect(slasJoined).toContain('four business hours')
   })
 
   it('positions memberships around personalized training, measurable progress, and human coaching', () => {
@@ -53,12 +53,15 @@ describe('Commercial Retainers & Tier 3 Architecture Enforcements', () => {
     const pro = FORGE_MEMBERSHIPS.find(membership => membership.id === 'forge-pro-athlete')
     const transformation = FORGE_MEMBERSHIPS.find(membership => membership.id === 'forge-transformation-direct')
 
+    expect(core?.name).toBe('Core')
+    expect(pro?.name).toBe('Plus')
+    expect(transformation?.name).toBe('Coach Support')
     expect(core?.features).toContain('Personalized NASM OPT™ training plan')
     expect(core?.features).toContain('Workout, strength, and personal-record tracking')
-    expect(pro?.features).toContain('Voice-guided training sessions')
-    expect(pro?.features).toContain('Weekly performance summaries')
-    expect(transformation?.features).toContain('Quarterly video reviews by Coach Scott Gordon')
-    expect(transformation?.features).toContain('Direct access to your coach')
+    expect(pro?.features).toContain('Audio-guided training sessions')
+    expect(pro?.features).toContain('Weekly progress summaries')
+    expect(transformation?.features).toContain('Quarterly video reviews with Coach Scott Gordon')
+    expect(transformation?.features).toContain('Direct messaging with your coach')
   })
 
   it('enforces gated allocation handling for Tier 3 rather than self-serve direct buy', () => {

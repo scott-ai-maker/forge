@@ -449,12 +449,12 @@ export default function MessageThreadClient({
     }
   }
 
-  const partnerDisplayName = role === 'coach' ? (recipientName || 'Athlete') : 'Master Coach Gordon'
-  const partnerRoleLabel = role === 'coach' ? (recipientRoleTitle || 'Private Client') : 'CSCS · Olympic Specialist · Lead Concierge'
+  const partnerDisplayName = role === 'coach' ? (recipientName || 'Member') : 'Coach Scott Gordon'
+  const partnerRoleLabel = role === 'coach' ? (recipientRoleTitle || 'Member') : 'Coach'
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* ── Executive Thread Header Console ── */}
+      {/* ── Message thread header ── */}
       <div
         style={{
           background: 'linear-gradient(135deg, rgba(16, 24, 38, 0.95) 0%, rgba(10, 16, 26, 0.98) 100%)',
@@ -702,7 +702,7 @@ export default function MessageThreadClient({
           <div style={{ textAlign: 'center', margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
             <GaaIcon name="hourglass" size={24} tone="gold" />
             <p style={{ margin: 0, color: 'var(--gray)', fontFamily: 'Raleway, sans-serif', fontSize: 13 }}>
-              Loading concierge thread...
+              Loading messages...
             </p>
           </div>
         )}
@@ -746,12 +746,12 @@ export default function MessageThreadClient({
             </div>
             <div>
               <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, letterSpacing: '0.04em', color: '#F8FAFC', margin: '0 0 4px 0' }}>
-                PRIVATE ADVISORY CHANNEL OPEN
+                PRIVATE MESSAGES
               </h3>
               <p style={{ color: 'var(--gray)', fontFamily: 'Raleway, sans-serif', fontSize: 13, lineHeight: 1.5, margin: 0 }}>
                 {role === 'coach'
-                  ? 'Initiate private guidance, send technical exercise cues, or record a personalized voice memo for your athlete.'
-                  : 'Direct encrypted line with Master Coach Gordon for form critique, exercise swaps, deload advice, and nutrition adjustments.'}
+                  ? 'Send exercise guidance, answer questions, or record a voice message for your member.'
+                  : 'Private encrypted messaging with your coach for exercise guidance, workout changes, recovery questions, and nutrition support.'}
               </p>
             </div>
 
@@ -955,7 +955,7 @@ export default function MessageThreadClient({
                                 fontSize: 8,
                                 fontWeight: 900,
                               }}
-                              title="Certified Advisory Master Coach"
+                              title="Coach"
                             >
                               ✓
                             </span>
@@ -1204,7 +1204,7 @@ export default function MessageThreadClient({
               value={message}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
-              placeholder={role === 'coach' ? 'Message athlete (Enter to send, Shift+Enter for new line)...' : 'Message Master Coach Gordon (Enter to send, Shift+Enter for new line)...'}
+              placeholder={role === 'coach' ? 'Message member (Enter to send, Shift+Enter for new line)...' : 'Message your coach (Enter to send, Shift+Enter for new line)...'}
               rows={1}
               style={{
                 width: '100%',

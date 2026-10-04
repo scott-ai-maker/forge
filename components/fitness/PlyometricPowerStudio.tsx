@@ -429,7 +429,7 @@ ${currentSessionProtocol.exercises
                   style={{ width: '100%', accentColor: contactTimeMs <= 150 ? '#10B981' : '#D4A017' }}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
-                  <span>80ms (Elite Recoil)</span>
+                  <span>80ms (Quick recoil)</span>
                   <span>150ms (SSC Threshold)</span>
                   <span>450ms (Slow Yielding)</span>
                 </div>

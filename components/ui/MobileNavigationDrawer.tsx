@@ -32,7 +32,7 @@ export interface DrawerSection {
 
 export const CLIENT_DRAWER_SECTIONS: DrawerSection[] = [
   {
-    title: 'Your Performance',
+    title: 'Your Training',
     items: [
       { href: '/dashboard', label: 'Today', icon: 'overview', desc: 'Your plan, next session, and weekly snapshot' },
       { href: '/dashboard/fitness?workspace=train', label: 'Training', icon: 'barbell', desc: 'Personalized plan and workout tracking' },
@@ -60,14 +60,14 @@ export const CLIENT_DRAWER_SECTIONS: DrawerSection[] = [
 
 export const COACH_DRAWER_SECTIONS: DrawerSection[] = [
   {
-    title: 'Coach Operations & Triage',
+    title: 'Coach Tools',
     items: [
-      { href: '#coach-gordon', label: 'Ask Coach Gordon AI', icon: 'message', desc: 'Sports science RAG & clinical copilot', badge: 'Live AI' },
-      { href: '/coach', label: 'Triage Cockpit', icon: 'alert-triangle', desc: 'Urgent check-ins, ACWR danger spikes & 1-click deload' },
-      { href: '/coach#assigned-clients', label: 'Assigned Athletes', icon: 'users', desc: 'Client rosters & prescription studio' },
+      { href: '#coach-gordon', label: 'Ask Coach Gordon', icon: 'message', desc: 'Training and movement guidance', badge: 'Live AI' },
+      { href: '/coach', label: 'Daily Check-ins', icon: 'alert-triangle', desc: 'Review concerns and adjust training plans' },
+      { href: '/coach#assigned-clients', label: 'Members', icon: 'users', desc: 'Member list and training plans' },
       { href: '/coach#live-studio', label: 'Live Video Studio', icon: 'video-studio', desc: 'Coach HUD, telestrator & voice copilot' },
-      { href: '/coach/settings?tab=templates', label: 'OPT Program Engine', icon: 'clipboard', desc: 'OPT periodization & template builder' },
-      { href: '/coach?tab=analytics', label: 'Executive Analytics', icon: 'chart', desc: 'Compliance metrics & Sunday Dossier' },
+      { href: '/coach/settings?tab=templates', label: 'Training Plan Builder', icon: 'clipboard', desc: 'Create and adjust training plans' },
+      { href: '/coach?tab=analytics', label: 'Progress Analytics', icon: 'chart', desc: 'Training, attendance, and progress trends' },
     ],
   },
   {
@@ -205,10 +205,10 @@ export default function MobileNavigationDrawer({
         >
           <div>
             <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-              {isCoach ? 'Lead Sports Scientist' : 'VIP Athlete Portal'}
+              {isCoach ? 'Coach' : 'Member Portal'}
             </span>
             <h3 className="font-serif" style={{ fontSize: 18, margin: '4px 0 0', color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 600 }}>
-              NAVIGATION &amp; DIRECTORY
+              MENU
             </h3>
           </div>
 
@@ -270,7 +270,7 @@ export default function MobileNavigationDrawer({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span className="status-dot-pulse" />
                   <span style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {isCoach ? 'Active Coach Session' : 'Active VIP Session'}
+                    {isCoach ? 'Signed in as coach' : 'Signed in'}
                   </span>
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -314,7 +314,7 @@ export default function MobileNavigationDrawer({
               </span>
               <span style={{ fontSize: 10, color: 'var(--gold-lt)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <GaaIcon name="lock" size={11} tone="gold" />
-                <span>Guest Visitor</span>
+                <span>Guest</span>
               </span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -338,7 +338,7 @@ export default function MobileNavigationDrawer({
                   textAlign: 'center',
                 }}
               >
-                Client Login
+                Member Login
               </Link>
               <Link
                 href="/auth/login?next=/coach"
@@ -372,7 +372,7 @@ export default function MobileNavigationDrawer({
           <div style={{ position: 'relative' }}>
             <input
               type="text"
-              placeholder="Search destinations..."
+              placeholder="Search menu..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               style={{

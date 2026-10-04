@@ -81,10 +81,10 @@ export default function PackagesStudioClient({
             <GaaIcon name="shield-check" size={28} tone="gold" />
             <div>
               <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', marginBottom: 2 }}>
-                GAA Mobile Gym Companion App
+                Forge Athletic mobile app
               </div>
               <div style={{ fontSize: 13.5, color: '#FFFFFF', fontWeight: 600 }}>
-                Memberships and billing are managed exclusively on our web portal at <strong style={{ color: 'var(--gold)' }}>forge-athletic.app</strong>.
+                Memberships and billing are available on our website at <strong style={{ color: 'var(--gold)' }}>forge-athletic.app</strong>.
               </div>
             </div>
           </div>
@@ -98,12 +98,12 @@ export default function PackagesStudioClient({
               fontWeight: 800,
             }}
           >
-            ← Return to Gym Dashboard
+            ← Back to your dashboard
           </a>
         </div>
       )}
 
-      {/* ── 1. MASTER CONCIERGE TIERS ────────────────────────────────────────── */}
+      {/* ── Membership options ────────────────────────────────────────── */}
       <div>
         {/* Cadence Selector Toggle */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
@@ -140,7 +140,7 @@ export default function PackagesStudioClient({
                 gap: 8,
               }}
             >
-              <span>12-Week Transformation Block</span>
+              <span>12-week plan</span>
               <span
                 style={{
                   background: isPif ? '#0A0E18' : 'rgba(212, 160, 23, 0.2)',
@@ -152,7 +152,7 @@ export default function PackagesStudioClient({
                   letterSpacing: '0.06em',
                 }}
               >
-                SAVE UP TO $590
+                Save up to $590
               </span>
             </button>
 
@@ -175,7 +175,7 @@ export default function PackagesStudioClient({
                 transition: 'all 0.2s ease',
               }}
             >
-              Monthly Retainer
+              Monthly
             </button>
           </div>
           <p
@@ -189,8 +189,8 @@ export default function PackagesStudioClient({
             }}
           >
             {isPif
-              ? '✦ 12-week upfront macrocycles lock in your periodization with complimentary diagnostics & zero monthly price increases.'
-              : 'Flexible month-to-month concierge membership. Cancel or adjust anytime before your next cycle.'}
+              ? 'Pay up front for 12 weeks and keep the same price throughout your plan. Movement assessment included.'
+              : 'Flexible month-to-month membership. Cancel or change your plan before your next billing date.'}
           </p>
         </div>
 
@@ -266,7 +266,7 @@ export default function PackagesStudioClient({
                     }}
                   >
                     <GaaIcon name="crown" size={12} tone="inherit" />
-                    <span>PRIVATE MASTER TIER</span>
+                    <span>COACHING OPTION</span>
                   </div>
                 ) : pkg.popular ? (
                   <div
@@ -287,7 +287,7 @@ export default function PackagesStudioClient({
                       boxShadow: '0 4px 15px rgba(212,160,23,0.4)',
                     }}
                   >
-                    FLAGSHIP CONCIERGE
+                    COACH SUPPORT
                   </div>
                 ) : null}
 
@@ -599,7 +599,7 @@ export default function PackagesStudioClient({
         </div>
       </div>
 
-      {/* ── 2. BESPOKE ADD-ONS & PERFORMANCE ACCELERATORS ───────────────────── */}
+      {/* ── Optional add-ons ───────────────────── */}
       <div
         style={{
           background: 'linear-gradient(180deg, rgba(16,22,38,0.95) 0%, rgba(9,13,24,0.95) 100%)',
@@ -621,7 +621,7 @@ export default function PackagesStudioClient({
               textTransform: 'uppercase',
             }}
           >
-            Bespoke Sports Science Accelerators
+            Optional training tools
           </p>
           <h2
             className="font-serif"
@@ -646,7 +646,7 @@ export default function PackagesStudioClient({
               lineHeight: 1.6,
             }}
           >
-            Attach specialized clinical modules to your retainer. Unlock advanced biomechanical diagnostics, metabolic nutrition cycling, and priority form telemetry.
+            Add the tools that fit your goals, including movement checks, nutrition planning, and video form reviews.
           </p>
         </div>
 
@@ -1049,12 +1049,12 @@ export default function PackagesStudioClient({
               </tr>
               <tr>
                 <td style={{ padding: '14px 16px', color: '#FFFFFF', fontSize: 13, fontWeight: 700 }}>
-                  Executive SLA &amp; S.O.A.P. Archival
+                  Coach response times and session notes
                 </td>
                 <td style={{ padding: '14px 16px', color: 'var(--gold-lt)', fontSize: 13 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <GaaIcon name="check" size={13} tone="gold" />
-                    <span>Contractual VIP 4-hour SLA queue, weekly Sunday Dossiers &amp; Voice S.O.A.P. records</span>
+                    <span>Replies within 4 business hours, weekly progress summaries, and audio coach notes</span>
                   </span>
                 </td>
                 <td style={{ padding: '14px 16px', color: 'var(--gray)', fontSize: 13 }}>

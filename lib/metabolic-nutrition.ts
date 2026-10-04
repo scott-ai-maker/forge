@@ -80,45 +80,42 @@ export interface DiningProtocol {
 export const EXECUTIVE_DINING_PLAYBOOK: DiningProtocol[] = [
   {
     venueType: 'steakhouse',
-    title: 'High-End Steakhouse Protocol',
+    title: 'Eating out',
     recommendedOrders: [
-      'Filet Mignon (6–8 oz) or Center-Cut NY Strip (Charred / No added butter basting)',
-      'Jumbo Lump Crab Cocktail or Grilled Wild Sea Bass as lean protein alternatives',
-      'Double sides: Steamed Asparagus, Sautéed Spinach (Olive oil light), and Baked Sweet Potato (Dry)',
+      'Choose a protein you enjoy, such as chicken, fish, tofu, or beans',
+      'Add sides you like, such as vegetables, potatoes, rice, or bread',
+      'Ask for sauce or dressing on the side if that works better for you',
     ],
     pitfallsToAvoid: [
-      'Creamed spinach or au gratin potatoes (contain 40g+ hidden inflammatory seed oils & heavy cream)',
-      'Truffle butter coatings (adds 300+ unaccounted empty fat calories)',
+      'There are no foods you need to avoid; choose what feels right for you',
     ],
-    executiveRule: 'Request meat prepared "dry-broiled with salt and pepper only" and dressing/sauce on the side.',
+    executiveRule: 'Choose a meal you enjoy. Ask for sauces on the side if you would like more control over how much you use.',
   },
   {
     venueType: 'airport_travel',
-    title: 'Airport & First-Class Travel Nutrition',
+    title: 'Meals while traveling',
     recommendedOrders: [
-      'Pre-pack unsalted raw almonds, single-serve whey isolate packets, and electrolyte hydration tabs',
-      'Terminal dining: Roasted salmon / chicken breast salad with olive oil & lemon juice',
-      'Hydration: 500ml water + pinch of pink Himalayan salt per 2 hours of flight time',
+      'Pack a snack you enjoy, such as fruit, nuts, or a sandwich',
+      'Choose from the options available at the airport or along the way',
+      'Drink water when you are thirsty',
     ],
     pitfallsToAvoid: [
-      'In-flight refined pasta/bread meals (causes high-altitude fluid retention and lethargy)',
-      'Airport smoothies (often blend 50g+ refined syrup sugars)',
+      'You do not need to skip meals or avoid particular foods while traveling',
     ],
-    executiveRule: 'Fast during short flights (<4 hours) or strictly consume clean whole protein + mineral water.',
+    executiveRule: 'Choose food and drinks that help you feel comfortable and energized while you travel.',
   },
   {
     venueType: 'business_dinner_alcohol',
-    title: 'Executive Dinner & Alcohol Mitigation',
+    title: 'Social meals and alcohol',
     recommendedOrders: [
-      'Tequila Blanco or Mezcal with club soda and two fresh limes (Lowest congener / glycemic index)',
-      'Dry Red Wine (Cabernet Sauvignon or Pinot Noir) — limited to 1 glass',
-      'Alternate every cocktail with 1 full glass of sparkling mineral water with lime',
+      'Choose a non-alcoholic drink if you prefer',
+      'If you drink alcohol, decide on an amount that feels right for you',
+      'Have water alongside other drinks',
     ],
     pitfallsToAvoid: [
-      'Sugary cocktail syrups, Old Fashioneds, margaritas with triple sec, and beer',
-      'Late-night carbohydrate gorging post-dinner (shuts down overnight fat oxidation and GH release)',
+      'No particular food or drink needs to be labeled as bad',
     ],
-    executiveRule: 'Cap at 2 drinks maximum. Drink 500ml water with electrolytes before sleep to protect HRV.',
+    executiveRule: 'Make choices that feel right for you. Water is a good option alongside or instead of alcohol.',
   },
 ]
 

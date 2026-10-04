@@ -24,8 +24,8 @@ export default async function OnboardingPage() {
     <main style={{ minHeight: '100vh', background: 'var(--navy)', padding: '40px 24px' }}>
       <SiteHeader
         links={[
-          { href: '/dashboard', label: 'Command Center' },
-          { href: '/dashboard/fitness', label: 'Fitness Lab' },
+          { href: '/dashboard', label: 'Today' },
+          { href: '/dashboard/fitness', label: 'Training & progress' },
           { href: '/dashboard/settings?tab=fitness', label: 'Settings' },
           { href: '/dashboard/messages', label: 'Messages' },
         ]}

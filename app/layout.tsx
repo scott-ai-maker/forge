@@ -107,8 +107,8 @@ const forgeStructuredData = {
     'Overhead Squat Biomechanical Diagnostics',
     'Closed-Loop Wearable Telemetry (Apple HealthKit & Health Connect)',
     'Tanaka Stage Cardiorespiratory Conditioning',
-    'Ergogenic Chrono-Dosing & Travel Recalibration',
-    'Executive Physique & Athletic Longevity Architecture',
+    'Supplement safety and travel workout planning',
+    'Strength, mobility, and long-term fitness',
   ],
 }
 
