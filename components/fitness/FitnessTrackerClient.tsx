@@ -1936,9 +1936,14 @@ export default function FitnessTrackerClient({
           <div style={{ color: 'var(--gray)', fontSize: 13 }}>
             Protein {plan.plan_json.nutritionTargets.proteinGrams}g · Carbs {plan.plan_json.nutritionTargets.carbGrams}g · Fat {plan.plan_json.nutritionTargets.fatGrams}g
           </div>
-          <div style={{ color: 'var(--gray)', fontSize: 13, marginTop: 4 }}>
-            Goal: {plan.plan_json.nutritionTargets.currentWeightLbs} → {plan.plan_json.nutritionTargets.targetWeightLbs} lbs (~{plan.plan_json.nutritionTargets.weeklyLossLbs} lb/week, about {plan.plan_json.nutritionTargets.estimatedWeeks} weeks)
-          </div>
+          {plan.plan_json.nutritionTargets.currentWeightLbs != null && plan.plan_json.nutritionTargets.targetWeightLbs != null && (
+            <div style={{ color: 'var(--gray)', fontSize: 13, marginTop: 4 }}>
+              Goal: {plan.plan_json.nutritionTargets.currentWeightLbs} → {plan.plan_json.nutritionTargets.targetWeightLbs} lbs
+              {plan.plan_json.nutritionTargets.weeklyLossLbs != null && ` (~${plan.plan_json.nutritionTargets.weeklyLossLbs} lb/week`}
+              {plan.plan_json.nutritionTargets.estimatedWeeks != null && `, about ${plan.plan_json.nutritionTargets.estimatedWeeks} weeks`}
+              {plan.plan_json.nutritionTargets.weeklyLossLbs != null && ')'}
+            </div>
+          )}
         </section>
       )}
       {/* ── 4 PRIMARY CLIENT HUBS NAVIGATION ── */}
@@ -6553,5 +6558,4 @@ function PostWorkoutFinishModal({
       </div>
     )
   }
-
 

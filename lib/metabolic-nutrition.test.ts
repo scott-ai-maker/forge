@@ -37,6 +37,19 @@ describe('Precision Metabolic Nutrition & Energy Balance Engine', () => {
     expect(energy.targetCalories).toBe(energy.tdeeCalories + 350) // hypertrophy surplus
   })
 
+  it('uses a caller-provided calorie deficit when a program sets a weekly pace', () => {
+    const energy = calculateEnergyExpenditure({
+      weightLbs: 160,
+      heightInches: 65,
+      age: 35,
+      sex: 'female',
+      activityLevel: 'lightly_active',
+      goal: 'fat_loss',
+      calorieDeficitCalories: 750,
+    })
+    expect(energy.targetCalories).toBe(Math.max(1200, energy.tdeeCalories - 750))
+  })
+
   it('computes exact protein, carbohydrate, fat grams, and hydration prescriptions', () => {
     const macros = calculatePrecisionMacros({
       weightLbs: 185,

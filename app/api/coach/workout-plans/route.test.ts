@@ -81,6 +81,31 @@ describe('/api/coach/workout-plans', () => {
 
       supabaseAdminMock.mockReturnValue({
         from: (table: string) => {
+          if (table === 'fitness_profiles') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({
+                    data: { weight_kg: 80, height_cm: 180, age: 35, sex: 'male', activity_level: 'moderately_active' },
+                    error: null,
+                  }),
+                }),
+              }),
+            }
+          }
+          if (table === 'body_composition_analyses') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: () => ({
+                      maybeSingle: async () => ({ data: null, error: null }),
+                    }),
+                  }),
+                }),
+              }),
+            }
+          }
           if (table === 'workout_plans') {
             return {
               select: () => ({
@@ -148,6 +173,7 @@ describe('/api/coach/workout-plans', () => {
       expect(data.success).toBe(true)
       expect(data.isOverwritten).toBe(false)
       expect(insertPayload).toBeDefined()
+      expect(data.plan.plan_json.nutritionTargets.targetCalories).toBeGreaterThan(0)
     })
 
     it('overwrites existing active workout plan in place when overwrite is true', async () => {
@@ -155,6 +181,31 @@ describe('/api/coach/workout-plans', () => {
 
       supabaseAdminMock.mockReturnValue({
         from: (table: string) => {
+          if (table === 'fitness_profiles') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({
+                    data: { weight_kg: 80, height_cm: 180, age: 35, sex: 'male', activity_level: 'moderately_active' },
+                    error: null,
+                  }),
+                }),
+              }),
+            }
+          }
+          if (table === 'body_composition_analyses') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: () => ({
+                      maybeSingle: async () => ({ data: null, error: null }),
+                    }),
+                  }),
+                }),
+              }),
+            }
+          }
           if (table === 'workout_plans') {
             return {
               select: () => ({

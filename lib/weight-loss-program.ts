@@ -36,7 +36,7 @@ export interface WeightLossTargets {
   targetWeightLbs: number
   lbsToLose: number
   weeklyLossLbs: number
-  estimatedWeeks: number
+  estimatedWeeks: number | null
   dailyDeficitCalories: number
   energy: MetabolicEnergyAnalysis
   macros: PrecisionMacroPrescription
@@ -58,10 +58,11 @@ export function calculateWeightLossTargets(stats: WeightLossClientStats): Weight
   const targetWeightLbs = Math.round((requestedTarget && requestedTarget < currentWeightLbs ? requestedTarget : currentWeightLbs * 0.9) * 10) / 10
   const lbsToLose = Math.round((currentWeightLbs - targetWeightLbs) * 10) / 10
 
-  const weeklyLossLbs = Math.max(
+  const requestedWeeklyLossLbs = Math.max(
     MIN_WEEKLY_LOSS_LBS,
     Math.min(MAX_WEEKLY_LOSS_LBS, currentWeightLbs * MAX_WEEKLY_LOSS_PCT)
   )
+  const requestedDailyDeficitCalories = Math.round((requestedWeeklyLossLbs * 3500) / 7)
 
   const profile = {
     weightLbs: currentWeightLbs,
@@ -72,16 +73,21 @@ export function calculateWeightLossTargets(stats: WeightLossClientStats): Weight
     activityLevel: normalizeActivity(stats.activityLevel),
     goal: 'fat_loss' as const,
     phase: 'phase1_stabilization' as const,
+    calorieDeficitCalories: requestedDailyDeficitCalories,
   }
+
+  const energy = calculateEnergyExpenditure(profile)
+  const dailyDeficitCalories = Math.max(0, energy.tdeeCalories - energy.targetCalories)
+  const weeklyLossLbs = Math.round((dailyDeficitCalories * 7 / 3500) * 10) / 10
 
   return {
     currentWeightLbs,
     targetWeightLbs,
     lbsToLose,
-    weeklyLossLbs: Math.round(weeklyLossLbs * 10) / 10,
-    estimatedWeeks: Math.max(1, Math.ceil(lbsToLose / weeklyLossLbs)),
-    dailyDeficitCalories: Math.round((weeklyLossLbs * 3500) / 7),
-    energy: calculateEnergyExpenditure(profile),
+    weeklyLossLbs,
+    estimatedWeeks: weeklyLossLbs > 0 ? Math.max(1, Math.ceil(lbsToLose / weeklyLossLbs)) : null,
+    dailyDeficitCalories,
+    energy,
     macros: calculatePrecisionMacros(profile),
   }
 }
@@ -96,8 +102,9 @@ export function buildWeightLossGenerationRequest(
     : 'beginner'
 
   const targetLine = targets
-    ? `Weight-loss goal: ${targets.currentWeightLbs} lbs -> ${targets.targetWeightLbs} lbs (${targets.lbsToLose} lbs, ~${targets.weeklyLossLbs} lb/week, ~${targets.estimatedWeeks} weeks). ` +
-      `Nutrition: ${targets.macros.targetCalories} kcal/day, ${targets.macros.proteinGrams}g protein. `
+    ? `Weight-loss goal: ${targets.currentWeightLbs} lbs -> ${targets.targetWeightLbs} lbs (${targets.lbsToLose} lbs, ~${targets.weeklyLossLbs} lb/week${targets.estimatedWeeks === null ? '' : `, ~${targets.estimatedWeeks} weeks`}). ` +
+      `Nutrition: ${targets.macros.targetCalories} kcal/day, ${targets.macros.proteinGrams}g protein. ` +
+      (targets.estimatedWeeks === null ? 'The calorie safety floor limits the projected weekly loss rate. ' : '')
     : ''
   const bfLine = stats.bodyFatPercent ? `Current body fat ${stats.bodyFatPercent}%` +
     (stats.targetBodyFatPercent ? `, target ${stats.targetBodyFatPercent}%. ` : '. ') : ''
@@ -120,10 +127,10 @@ export function buildWeightLossGenerationRequest(
 }
 
 export interface NutritionTargetsSnapshot {
-  currentWeightLbs: number
-  targetWeightLbs: number
-  weeklyLossLbs: number
-  estimatedWeeks: number
+  currentWeightLbs?: number
+  targetWeightLbs?: number
+  weeklyLossLbs?: number
+  estimatedWeeks?: number | null
   targetCalories: number
   proteinGrams: number
   carbGrams: number
@@ -135,7 +142,7 @@ export function buildNutritionTargetsSnapshot(targets: WeightLossTargets): Nutri
     currentWeightLbs: targets.currentWeightLbs,
     targetWeightLbs: targets.targetWeightLbs,
     weeklyLossLbs: targets.weeklyLossLbs,
-    estimatedWeeks: targets.estimatedWeeks,
+    ...(targets.estimatedWeeks !== null ? { estimatedWeeks: targets.estimatedWeeks } : {}),
     targetCalories: targets.macros.targetCalories,
     proteinGrams: targets.macros.proteinGrams,
     carbGrams: targets.macros.carbGrams,
@@ -159,10 +166,39 @@ export function parseNutritionTargets(value: unknown): NutritionTargetsSnapshot 
   if (!value || typeof value !== 'object') return null
   const source = value as Record<string, unknown>
   const result = {} as Record<string, number>
-  for (const [key, [min, max]] of Object.entries(NUTRITION_TARGET_LIMITS)) {
+  const requiredKeys: Array<keyof NutritionTargetsSnapshot> = [
+    'targetCalories',
+    'proteinGrams',
+    'carbGrams',
+    'fatGrams',
+  ]
+  for (const key of requiredKeys) {
+    const [min, max] = NUTRITION_TARGET_LIMITS[key]
     const n = Number(source[key])
     if (!Number.isFinite(n) || n < min || n > max) return null
     result[key] = Math.round(n * 10) / 10
   }
-  return result as unknown as NutritionTargetsSnapshot
+  const optionalKeys: Array<keyof NutritionTargetsSnapshot> = [
+    'currentWeightLbs',
+    'targetWeightLbs',
+    'weeklyLossLbs',
+    'estimatedWeeks',
+  ]
+  for (const key of optionalKeys) {
+    if (source[key] === undefined || source[key] === null) continue
+    const [min, max] = NUTRITION_TARGET_LIMITS[key]
+    const n = Number(source[key])
+    if (!Number.isFinite(n) || n < min || n > max) return null
+    result[key] = Math.round(n * 10) / 10
+  }
+  return {
+    targetCalories: result.targetCalories,
+    proteinGrams: result.proteinGrams,
+    carbGrams: result.carbGrams,
+    fatGrams: result.fatGrams,
+    ...(result.currentWeightLbs !== undefined ? { currentWeightLbs: result.currentWeightLbs } : {}),
+    ...(result.targetWeightLbs !== undefined ? { targetWeightLbs: result.targetWeightLbs } : {}),
+    ...(result.weeklyLossLbs !== undefined ? { weeklyLossLbs: result.weeklyLossLbs } : {}),
+    ...(result.estimatedWeeks !== undefined ? { estimatedWeeks: result.estimatedWeeks } : {}),
+  }
 }

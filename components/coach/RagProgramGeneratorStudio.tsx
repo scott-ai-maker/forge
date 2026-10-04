@@ -13,7 +13,7 @@ import { detectExerciseEquipment } from '@/lib/nasm-equipment-detector'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
 import { parseInjuriesFromText } from '@/lib/sports-injuries'
-import { buildNutritionTargetsSnapshot, type NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
+import { buildNutritionTargetsSnapshot, parseNutritionTargets, type NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 
 interface Props {
   clientId?: string
@@ -34,7 +34,7 @@ interface Props {
   contraindicationTags?: string[]
   contraindicationNotes?: string[]
   injuriesLimitations?: string | null
-  onPlanAssigned?: (plan: GeneratedMacrocyclePlan) => void
+  onPlanAssigned?: (plan: GeneratedMacrocyclePlan, nutritionTargets?: NutritionTargetsSnapshot) => void
 }
 
 const EQUIPMENT_PRESETS: Record<string, { label: string; equipment: string[] }> = {
@@ -394,7 +394,7 @@ export default function RagProgramGeneratorStudio({
       setNutritionTargets(t ? buildNutritionTargetsSnapshot(t) : null)
       setApplyStatus(
         t
-          ? `✓ Coach Gordon built a NASM weight loss program from ${clientName}'s stats: ${t.currentWeightLbs} → ${t.targetWeightLbs} lbs (~${t.weeklyLossLbs} lb/wk, ~${t.estimatedWeeks} wks), ${t.macros.targetCalories} kcal/day, ${t.macros.proteinGrams}g protein.`
+          ? `✓ Coach Gordon built a NASM weight loss program from ${clientName}'s stats: ${t.currentWeightLbs} → ${t.targetWeightLbs} lbs (~${t.weeklyLossLbs} lb/wk${t.estimatedWeeks == null ? '' : `, ~${t.estimatedWeeks} wks`}), ${t.macros.targetCalories} kcal/day, ${t.macros.proteinGrams}g protein.`
           : `✓ Coach Gordon built a NASM weight loss program (client weight not on file, so nutrition targets were skipped).`
       )
     } catch (err: unknown) {
@@ -408,7 +408,7 @@ export default function RagProgramGeneratorStudio({
     if (!clientId) {
       setApplyStatus(`✓ Generated plan ready for review: ${generatedPlan.planTitle}`)
       if (onPlanAssigned) {
-        onPlanAssigned(generatedPlan)
+        onPlanAssigned(generatedPlan, nutritionTargets ?? undefined)
       }
       return
     }
@@ -480,7 +480,8 @@ export default function RagProgramGeneratorStudio({
       }
 
       if (onPlanAssigned) {
-        onPlanAssigned(generatedPlan)
+        const savedNutritionTargets = parseNutritionTargets(data.plan?.plan_json?.nutritionTargets)
+        onPlanAssigned(generatedPlan, savedNutritionTargets ?? undefined)
       }
     } catch (err: unknown) {
       const errObj = err as { message?: string }
@@ -1085,6 +1086,23 @@ export default function RagProgramGeneratorStudio({
                 {isSaving ? 'Deploying...' : overwriteExisting ? '✓ Deploy & Overwrite Active Program' : '✓ Deploy as New Version'}
               </button>
             </div>
+
+            {nutritionTargets && (
+              <section
+                aria-label="Program nutrition targets preview"
+                style={{ marginTop: 16, padding: '13px 15px', border: '1px solid rgba(52,211,153,0.4)', borderRadius: 8, background: 'rgba(16,185,129,0.08)' }}
+              >
+                <div style={{ color: '#6EE7B7', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  Daily nutrition targets · included with this program
+                </div>
+                <div style={{ marginTop: 5, color: '#FFFFFF', fontSize: 20, fontWeight: 800, fontFamily: 'var(--font-telemetry, monospace)' }}>
+                  {nutritionTargets.targetCalories.toLocaleString()} kcal / day
+                </div>
+                <div style={{ marginTop: 3, color: 'var(--gray)', fontSize: 13 }}>
+                  Protein {nutritionTargets.proteinGrams}g · Carbs {nutritionTargets.carbGrams}g · Fat {nutritionTargets.fatGrams}g
+                </div>
+              </section>
+            )}
 
             {/* Strength / Cardio Blend Summary Bar */}
             {blendSummary && (

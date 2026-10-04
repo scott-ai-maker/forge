@@ -24,6 +24,7 @@ import type { LiftType, VideoCritiqueAnalysis } from '@/lib/video-form-analysis'
 import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 import { calculateFfmi, calculateCunninghamBmr, classifyBodyFat } from '@/lib/ai-body-composition-engine'
 import { resolveClientConditioningTier } from '@/lib/muscle-recovery-telemetry'
+import type { NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 
 export interface HubProfileData {
   full_name?: string | null
@@ -88,7 +89,7 @@ interface FitnessLabDiagnosticsViewProps {
     allergies?: string | null
     [key: string]: unknown
   } | null
-  plan: { nasm_opt_phase?: number; plan_json?: unknown } | null
+  plan: { nasm_opt_phase?: number; plan_json?: { nutritionTargets?: NutritionTargetsSnapshot } | null } | null
   latestAssessment: NasmAssessmentRecord | null
   bodyfatState: { estimated: string }
   logs?: Array<{ id?: string; session_date: string; session_title?: string; exertion_rpe?: number; created_at?: string }>
@@ -447,6 +448,7 @@ export default function FitnessLabDiagnosticsView({
             initialHeightInches={profile?.height_cm ? Math.round(profile.height_cm / 2.54) : 70}
             initialBodyFat={Number(bodyfatState.estimated) || 0}
             initialActivityLevel={normalizeActivity(profile?.activity_level)}
+            savedTargets={plan?.plan_json?.nutritionTargets}
             telemetry={telemetry}
             intake={intake}
           />
