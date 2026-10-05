@@ -37,16 +37,24 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [
-      { url: '/favicon.ico?v=2', sizes: 'any' },
-      { url: '/favicon.png?v=2', sizes: '512x512', type: 'image/png' },
-      { url: '/favicon-32.png?v=2', sizes: '32x32', type: 'image/png' },
-      { url: '/images/icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
-      { url: '/images/icon-512.png?v=2', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=3', sizes: 'any' },
+      { url: '/favicon.png?v=3', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon-32.png?v=3', sizes: '32x32', type: 'image/png' },
+      { url: '/images/icon-192.png?v=3', sizes: '192x192', type: 'image/png' },
+      { url: '/images/icon-512.png?v=3', sizes: '512x512', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico?v=2',
+    shortcut: '/favicon.ico?v=3',
     apple: [
-      { url: '/apple-touch-icon.png?v=2', sizes: '180x180', type: 'image/png' },
-      { url: '/images/icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
+      { url: '/apple-touch-icon.png?v=3', sizes: '180x180', type: 'image/png' },
+      { url: '/images/icon-192.png?v=3', sizes: '192x192', type: 'image/png' },
+    ],
+    other: [
+      {
+        rel: 'mask-icon',
+        url: '/favicon.svg',
+        color: '#C5A059',
+      },
     ],
   },
   appleWebApp: {
@@ -65,10 +73,16 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/images/brand/logo-concept-1-kinetic-f.jpg',
+        url: '/images/brand/forge-crest-mark.png',
         width: 1024,
         height: 1024,
-        alt: 'Forge Athletic kinetic F monogram',
+        alt: 'Forge Athletic kinetic shield crest monogram',
+      },
+      {
+        url: '/images/screenshots/screenshot-desktop-dashboard.jpg',
+        width: 1376,
+        height: 768,
+        alt: 'Forge Athletic Coach Gordon Athletic Advisory command center',
       },
     ],
   },
@@ -76,7 +90,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Forge Athletic | Precision Science For Real Lives',
     description: 'Built From The Ground Up. Precision Science For Real Lives.',
-    images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
+    images: ['/images/brand/forge-crest-mark.png'],
   },
 }
 
@@ -94,8 +108,8 @@ const forgeStructuredData = {
   name: 'Forge Athletic',
   description: 'Built From The Ground Up. Precision Science For Real Lives. Evidence-led training, movement screening, and coaching.',
   url: siteUrl,
-  logo: `${siteUrl}/images/icon-512.png?v=2`,
-  image: `${siteUrl}/images/brand/logo-concept-1-kinetic-f.jpg`,
+  logo: `${siteUrl}/images/icon-512.png?v=3`,
+  image: `${siteUrl}/images/brand/forge-crest-mark.png`,
   founder: {
     '@type': 'Person',
     name: 'Scott Gordon',

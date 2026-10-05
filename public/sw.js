@@ -23,9 +23,17 @@ const PRECACHE = [
   '/manifest.json',
   '/favicon.ico',
   '/favicon.png',
+  '/favicon.svg',
   '/apple-touch-icon.png',
   '/images/icon-192.png',
   '/images/icon-512.png',
+  '/images/icon-maskable-192.png',
+  '/images/icon-maskable-512.png',
+  '/images/icon-monochrome.png',
+  '/images/offline-companion-hero.jpg',
+  '/images/shortcuts/shortcut-workout.png',
+  '/images/shortcuts/shortcut-biometrics.png',
+  '/images/shortcuts/shortcut-messages.png',
   '/images/exercises/image-not-available.jpg',
 ]
 

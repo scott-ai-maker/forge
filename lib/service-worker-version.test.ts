@@ -18,6 +18,10 @@ describe('Automated Service Worker Version & Cache Sync Engine', () => {
     expect(swContent).toContain('/apple-touch-icon.png')
     expect(swContent).toContain('/images/icon-192.png')
     expect(swContent).toContain('/images/icon-512.png')
+    expect(swContent).toContain('/images/icon-maskable-512.png')
+    expect(swContent).toContain('/images/icon-monochrome.png')
+    expect(swContent).toContain('/images/offline-companion-hero.jpg')
+    expect(swContent).toContain('/images/shortcuts/shortcut-workout.png')
   })
 
   it('verifies public/sw.js cache VERSION matches package.json version exactly', () => {

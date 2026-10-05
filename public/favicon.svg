@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E6C875" />
+      <stop offset="50%" stop-color="#C5A059" />
+      <stop offset="100%" stop-color="#8C6D2D" />
+    </linearGradient>
+    <linearGradient id="silverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E2E8F0" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+    <radialGradient id="bgGlow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#142132" />
+      <stop offset="100%" stop-color="#080E14" />
+    </radialGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGlow)" />
+  <rect width="508" height="508" x="2" y="2" rx="110" fill="none" stroke="url(#shieldGrad)" stroke-width="2" stroke-opacity="0.3" />
+  
+  <!-- Outer Shield Border -->
+  <path d="M 256 70 L 396 128 C 396 280 340 376 256 442 C 172 376 116 280 116 128 Z" 
+        fill="none" 
+        stroke="url(#shieldGrad)" 
+        stroke-width="24" 
+        stroke-linejoin="round" 
+        stroke-linecap="round" />
+
+  <!-- Inner Kinetic Monogram 'F' -->
+  <path d="M 196 170 L 326 170 L 326 218 L 248 218 L 248 252 L 310 252 L 310 298 L 248 298 L 248 376 L 196 376 Z" 
+        fill="url(#shieldGrad)" />
+        
+  <!-- Subtle Silver Accent Bevel -->
+  <path d="M 256 70 L 256 442" stroke="url(#silverGrad)" stroke-width="3" stroke-opacity="0.4" />
+</svg>
