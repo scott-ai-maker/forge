@@ -16,37 +16,37 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['fitness', 'health', 'lifestyle', 'sports'],
     icons: [
       {
-        src: '/images/icon-192.png?v=3',
+        src: '/images/icon-192.png?v=5',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/images/icon-512.png?v=3',
+        src: '/images/icon-512.png?v=5',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/images/icon-maskable-192.png?v=3',
+        src: '/images/icon-maskable-192.png?v=5',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: '/images/icon-maskable-512.png?v=3',
+        src: '/images/icon-maskable-512.png?v=5',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: '/images/icon-monochrome.png?v=3',
+        src: '/images/icon-monochrome.png?v=5',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'monochrome',
       },
       {
-        src: '/apple-touch-icon.png?v=3',
+        src: '/apple-touch-icon.png?v=5',
         sizes: '180x180',
         type: 'image/png',
       },
@@ -99,3 +99,4 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
   }
 }
+

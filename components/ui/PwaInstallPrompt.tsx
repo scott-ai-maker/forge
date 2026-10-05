@@ -148,7 +148,7 @@ export default function PwaInstallPrompt() {
             flexShrink: 0,
           }}
         >
-          <img src="/images/icon-192.png?v=2" alt="" width={36} height={36} style={{ borderRadius: 8, display: "block" }} />
+          <img src="/images/icon-192.png?v=5" alt="" width={36} height={36} style={{ borderRadius: 8, display: "block" }} />
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ color: '#F8FAFC', fontSize: 12.5, fontWeight: 700, fontFamily: 'Raleway, sans-serif' }}>
