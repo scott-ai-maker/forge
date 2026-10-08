@@ -7,6 +7,11 @@ import {
   type EquipmentLibraryRecord,
   type ExerciseLibraryRecord,
 } from '@/lib/coach-programs'
+import {
+  type HandPortionNutritionPlan,
+  type DualCardioPlanSummary,
+  type StrengthCardioBlendSummary,
+} from '@/lib/rag-nasm-program-generator'
 import { supabaseAdmin } from '@/lib/supabase'
 import { calculatePrecisionMacros, type NasmOptPhase, type NutritionGoal } from '@/lib/metabolic-nutrition'
 import { normalizeActivity, parseNutritionTargets, type NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
@@ -26,6 +31,8 @@ function parsePayload(body: Record<string, unknown>): CoachProgramPayload | null
     return null
   }
 
+  const rawJson = (body.plan_json as Record<string, unknown>) || {}
+
   return {
     clientId,
     name,
@@ -37,6 +44,20 @@ function parsePayload(body: Record<string, unknown>): CoachProgramPayload | null
     startDate: String(body.startDate ?? '').trim() || null,
     templateId: String(body.templateId ?? '').trim() || null,
     workouts,
+    clinicalRationale: typeof body.clinicalRationale === 'string'
+      ? body.clinicalRationale
+      : typeof rawJson.clinicalRationale === 'string'
+        ? rawJson.clinicalRationale
+        : null,
+    handPortionPlan: (body.handPortionPlan || rawJson.handPortionPlan) as HandPortionNutritionPlan || null,
+    dualCardioPlan: (body.dualCardioPlan || rawJson.dualCardioPlan) as DualCardioPlanSummary || null,
+    periodizationWeeklyMemos: Array.isArray(body.periodizationWeeklyMemos)
+      ? body.periodizationWeeklyMemos.map(String)
+      : Array.isArray(rawJson.periodizationWeeklyMemos)
+        ? rawJson.periodizationWeeklyMemos.map(String)
+        : null,
+    periodizationPlan: (body.periodizationPlan || rawJson.periodizationPlan) as { weeklyMemos?: string[]; ragSourcesCited?: string[] } || null,
+    strengthCardioBlendSummary: (body.strengthCardioBlendSummary || rawJson.strengthCardioBlendSummary) as StrengthCardioBlendSummary || null,
   }
 }
 
@@ -178,7 +199,8 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = supabaseAdmin()
-  if (!nutritionTargets) {
+  let handPortionPlan = payload.handPortionPlan
+  if (!nutritionTargets && !handPortionPlan) {
     try {
       nutritionTargets = await calculateProfileNutritionTargets(
         admin,
@@ -192,6 +214,17 @@ export async function POST(req: NextRequest) {
         { error: error instanceof Error ? error.message : 'Could not calculate client nutrition targets.' },
         { status: 500 }
       )
+    }
+  } else if (!nutritionTargets && handPortionPlan) {
+    try {
+      nutritionTargets = await calculateProfileNutritionTargets(
+        admin,
+        payload.clientId,
+        getNutritionGoal(payload.goal ?? null),
+        getNasmPhase(payload.nasmOptPhase)
+      )
+    } catch {
+      // Gracefully bypass for hand-portion clients
     }
   }
 
@@ -279,6 +312,27 @@ export async function POST(req: NextRequest) {
     // Fallback gracefully in testing/mocking environments
   }
 
+  const clinicalRationale =
+    payload.clinicalRationale ||
+    (typeof existingPlanJson?.clinicalRationale === 'string' ? existingPlanJson.clinicalRationale : undefined)
+
+  handPortionPlan =
+    handPortionPlan ||
+    (existingPlanJson?.handPortionPlan as HandPortionNutritionPlan | undefined)
+
+  const dualCardioPlan =
+    payload.dualCardioPlan ||
+    (existingPlanJson?.dualCardioPlan as DualCardioPlanSummary | undefined)
+
+  const strengthCardioBlendSummary =
+    payload.strengthCardioBlendSummary ||
+    (existingPlanJson?.strengthCardioBlendSummary as StrengthCardioBlendSummary | undefined)
+
+  const periodizationPlan =
+    payload.periodizationPlan ||
+    (payload.periodizationWeeklyMemos ? { weeklyMemos: payload.periodizationWeeklyMemos } : undefined) ||
+    existingPlanJson?.periodizationPlan
+
   const row = {
     user_id: payload.clientId,
     name: buildPlanName(payload),
@@ -288,9 +342,12 @@ export async function POST(req: NextRequest) {
     sessions_per_week: Math.max(1, Math.min(7, Number(payload.sessionsPerWeek))),
     estimated_duration_mins: Math.max(15, Math.min(240, Number(payload.estimatedDurationMins))),
     plan_json: {
-      ...(existingPlanJson?.periodizationPlan ? { periodizationPlan: existingPlanJson.periodizationPlan } : {}),
+      ...(periodizationPlan ? { periodizationPlan } : {}),
       ...(existingPlanJson?.embeddedCEx ? { embeddedCEx: existingPlanJson.embeddedCEx } : {}),
-      ...(existingPlanJson?.clinicalRationale ? { clinicalRationale: existingPlanJson.clinicalRationale } : {}),
+      ...(clinicalRationale ? { clinicalRationale } : {}),
+      ...(handPortionPlan ? { handPortionPlan } : {}),
+      ...(dualCardioPlan ? { dualCardioPlan } : {}),
+      ...(strengthCardioBlendSummary ? { strengthCardioBlendSummary } : {}),
       ...(nutritionTargets ? { nutritionTargets } : existingPlanJson?.nutritionTargets ? { nutritionTargets: existingPlanJson.nutritionTargets } : {}),
       ...storedPlan,
       sessions: storedPlan.workouts,

@@ -282,6 +282,137 @@ describe('/api/coach/workout-plans', () => {
       expect(data.isOverwritten).toBe(true)
       expect(updatedPayload).toBeDefined()
     })
+
+    it('preserves clinicalRationale, handPortionPlan, and dualCardioPlan in plan_json when submitted', async () => {
+      let insertedPayload: Record<string, unknown> | null = null
+
+      supabaseAdminMock.mockReturnValue({
+        from: (table: string) => {
+          if (table === 'fitness_profiles') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({
+                    data: { weight_kg: 75, height_cm: 168, age: 34, sex: 'female', activity_level: 'sedentary' },
+                    error: null,
+                  }),
+                }),
+              }),
+            }
+          }
+          if (table === 'body_composition_analyses') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: () => ({
+                      maybeSingle: async () => ({ data: null, error: null }),
+                    }),
+                  }),
+                }),
+              }),
+            }
+          }
+          if (table === 'workout_plans') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: async () => ({ data: [], error: null }),
+                  }),
+                }),
+              }),
+              insert: (payload: Record<string, unknown>) => {
+                insertedPayload = payload
+                return {
+                  select: () => ({
+                    single: async () => ({ data: { id: 'plan-custom-1', ...payload }, error: null }),
+                  }),
+                }
+              },
+            }
+          }
+          if (table === 'coach_client_messages') {
+            return {
+              insert: async () => ({ error: null }),
+            }
+          }
+          if (table === 'exercise_library_entries' || table === 'equipment_library_entries') {
+            const queryBuilder: any = {
+              eq: () => queryBuilder,
+              in: () => queryBuilder,
+              limit: async () => ({ data: [], error: null }),
+              then: (resolve: (val: any) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
+            }
+            return {
+              select: () => queryBuilder,
+            }
+          }
+          return {}
+        },
+      })
+
+      const testRationale = 'COACH GORDON MASTER BRIEFING MEMO: Jennifer, welcome to your bespoke protocol!'
+      const testHandPortion = {
+        philosophy: 'precision_nutrition_hand_portion' as const,
+        title: 'Precision Nutrition Hand-Portion System',
+        mealsPerDay: 3,
+        guidelines: {
+          protein: { portionsPerMeal: '1 palm', handMeasure: 'Palm', examples: 'Chicken, fish', rationale: 'Recovery' },
+          vegetables: { portionsPerMeal: '1-2 fists', handMeasure: 'Fist', examples: 'Broccoli, spinach', rationale: 'Fiber' },
+          smartCarbs: { portionsPerMeal: '1 cupped hand', handMeasure: 'Cupped hand', examples: 'Oats, rice', rationale: 'Energy' },
+          healthyFats: { portionsPerMeal: '1 thumb', handMeasure: 'Thumb', examples: 'Olive oil', rationale: 'Joints' },
+        },
+        mindfulEatingCue: 'Hara Hachi Bu: 80% Full',
+        hydrationAnchor: '80-100 oz water',
+        summary: 'Hand-portion nutrition plan',
+      }
+      const testDualCardio = {
+        sweatyFinisher: {
+          title: 'Reebok Step Finisher',
+          durationMins: 10,
+          modality: 'Reebok Step',
+          zone: 'Zone 1-2',
+          timing: 'Post workout',
+          rationale: 'Fat flush',
+        },
+      }
+
+      const req = new NextRequest('http://localhost:3000/api/coach/workout-plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          name: 'Jennifer Rainville — Phase 2 Metabolic Protocol',
+          goal: 'fat_loss',
+          nasmOptPhase: 2,
+          phaseName: 'Strength Endurance',
+          sessionsPerWeek: 3,
+          estimatedDurationMins: 42,
+          clinicalRationale: testRationale,
+          handPortionPlan: testHandPortion,
+          dualCardioPlan: testDualCardio,
+          workouts: [
+            {
+              day: 1,
+              focus: 'Metabolic Strength & Balance',
+              exercises: [{ name: 'Single Leg Balance Reach', sets: '3', reps: '10' }],
+            },
+          ],
+        }),
+      })
+
+      const res = await POST(req)
+      expect(res.status).toBe(200)
+      const data = await res.json()
+      expect(data.success).toBe(true)
+
+      const planJson = (insertedPayload as any)?.plan_json
+      expect(planJson).toBeDefined()
+      expect(planJson.clinicalRationale).toBe(testRationale)
+      expect(planJson.handPortionPlan).toEqual(testHandPortion)
+      expect(planJson.dualCardioPlan).toEqual(testDualCardio)
+    })
   })
 
   describe('DELETE', () => {

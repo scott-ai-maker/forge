@@ -159,4 +159,102 @@ describe('Master NASM AI Head Coach Persona Engine', () => {
     expect(safeLunge).toBeDefined()
     expect(safeLunge?.name).toContain('Reverse Lunge with Torso Lean')
   })
+
+  it('synthesizes deep personalized program for Jennifer Rainville with burpees, exclusions, hand portions, and briefing memo', async () => {
+    const plan = await generateMasterNasmOptProgram({
+      clientName: 'Jennifer Rainville',
+      clientAge: 34,
+      clientSex: 'female',
+      goal: 'fat_loss',
+      targetNasmPhase: 2,
+      trainingDaysPerWeek: 3,
+      experienceLevel: 'intermediate',
+      equipmentAccess: ['Reebok Step', 'Dumbbells', 'Band or Tube', 'Foam Roller', 'Stability Ball', 'Bodyweight'],
+      lifestyleRhythm: {
+        workStyle: 'sedentary_desk',
+        dailyRhythm: 'flexible',
+        targetSessionDurationMins: 42,
+      },
+      movementSuperpowers: ['burpees'],
+      strictExclusions: ['mountain_climbers', 'running'],
+      functionalDemands: 'Helping elderly father on weekends with lifting, carrying, and household chores',
+      nutritionPhilosophy: 'precision_nutrition_hand_portion',
+      dualCardioSplit: {
+        sweatyFinisherModality: 'Reebok Step Bench Finisher',
+        freshNeatWalkingMins: 25,
+        freshNeatWalkingNotes: 'Walk to visit parents in clean fresh clothes without sweating',
+      },
+      coachGuidanceNotes: 'Custom Metabolic Strength & Step Conditioning Protocol for Jennifer Rainville.',
+    })
+
+    expect(plan.nasmOptPhase).toBe(2)
+    expect(plan.workouts.length).toBe(3)
+
+    // 1. Strict Exclusions: ZERO mountain climbers or running
+    const allExercises = plan.workouts.flatMap(w => w.exercises)
+    for (const ex of allExercises) {
+      expect(ex.name.toLowerCase()).not.toContain('mountain climber')
+      expect(ex.name.toLowerCase()).not.toContain('running')
+    }
+
+    // 2. Superpower: Burpees actively integrated
+    const hasBurpees = allExercises.some(ex => ex.name.toLowerCase().includes('burpee'))
+    expect(hasBurpees).toBe(true)
+
+    // 3. Hand-Portion Nutrition Architecture generated
+    expect(plan.handPortionPlan).toBeDefined()
+    expect(plan.handPortionPlan?.philosophy).toBe('precision_nutrition_hand_portion')
+    expect(plan.handPortionPlan?.guidelines.protein.handMeasure).toContain('Palm')
+    expect(plan.handPortionPlan?.guidelines.vegetables.handMeasure).toContain('Closed fist')
+    expect(plan.handPortionPlan?.guidelines.smartCarbs.handMeasure).toContain('Cupped hand')
+    expect(plan.handPortionPlan?.guidelines.healthyFats.handMeasure).toContain('Entire thumb')
+    expect(plan.handPortionPlan?.mindfulEatingCue).toContain('Hara Hachi Bu')
+
+    // 4. Dual-Cardio Protocol generated
+    expect(plan.dualCardioPlan).toBeDefined()
+    expect(plan.dualCardioPlan?.sweatyFinisher.title).toContain('Reebok Step')
+    expect(plan.dualCardioPlan?.freshNeatWalk?.title).toContain('Fresh Non-Sweaty Walking')
+
+    // 5. Master Coach Gordon Briefing Memo
+    expect(plan.clinicalRationale).toBeDefined()
+    expect(plan.clinicalRationale).toContain('COACH GORDON MASTER BRIEFING MEMO:')
+    expect(plan.clinicalRationale).toContain('Jennifer')
+    expect(plan.clinicalRationale).toContain('BURPEE')
+    expect(plan.clinicalRationale).toContain('MOUNTAIN CLIMBERS')
+    expect(plan.clinicalRationale).toContain('HAND-PORTION')
+    expect(plan.clinicalRationale).toContain('corner')
+  })
+
+  it('synthesizes deep personalized program for Scott Gordon with desk posture reversal, Phase 2 supersets, and blood pressure safeguards', async () => {
+    const plan = await generateMasterNasmOptProgram({
+      clientName: 'Scott Gordon',
+      clientAge: 54,
+      clientSex: 'male',
+      goal: 'fat_loss',
+      targetNasmPhase: 2,
+      trainingDaysPerWeek: 3,
+      experienceLevel: 'intermediate',
+      equipmentAccess: ['Bench', 'Dumbbells', 'Foam Roller', 'Medicine Ball', 'Stability Ball', 'Treadmill', 'Bodyweight'],
+      lifestyleRhythm: {
+        workStyle: 'sedentary_desk',
+        dailyRhythm: 'flexible',
+        targetSessionDurationMins: 40,
+      },
+      injuriesLimitations: 'Sedentary AI engineer (desk worker); prescription blood pressure medication (strict rhythmic breathing, avoid prolonged Valsalva); thoracic kyphosis and forward head posture',
+      nutritionPhilosophy: 'macro_calorie_tracking',
+      dualCardioSplit: {
+        sweatyFinisherModality: 'Incline Treadmill Walk Flush',
+        freshNeatWalkingMins: 20,
+      },
+    })
+
+    expect(plan.nasmOptPhase).toBe(2)
+    expect(plan.clinicalRationale).toBeDefined()
+    expect(plan.clinicalRationale).toContain('Scott')
+    expect(plan.clinicalRationale).toContain('DESK POSTURE')
+    expect(plan.clinicalRationale).toContain('PHASE 2')
+    expect(plan.clinicalRationale).toContain('contrast supersets')
+    expect(plan.clinicalRationale).toContain('ORTHOPEDIC SHIELD')
+  })
 })
+

@@ -103,6 +103,40 @@ export interface StrengthCardioBlendSummary {
   clinicalGuideline: string
 }
 
+export interface HandPortionNutritionPlan {
+  philosophy: 'precision_nutrition_hand_portion'
+  title: string
+  mealsPerDay: number
+  guidelines: {
+    protein: { portionsPerMeal: string; handMeasure: string; examples: string; rationale: string }
+    vegetables: { portionsPerMeal: string; handMeasure: string; examples: string; rationale: string }
+    smartCarbs: { portionsPerMeal: string; handMeasure: string; examples: string; rationale: string }
+    healthyFats: { portionsPerMeal: string; handMeasure: string; examples: string; rationale: string }
+  }
+  mindfulEatingCue: string
+  hydrationAnchor: string
+  summary: string
+}
+
+export interface DualCardioPlanSummary {
+  sweatyFinisher: {
+    title: string
+    durationMins: number
+    modality: string
+    zone: string
+    timing: string
+    rationale: string
+  }
+  freshNeatWalk?: {
+    title: string
+    durationMins: number
+    frequency: string
+    modality: string
+    timing: string
+    rationale: string
+  }
+}
+
 export interface GeneratedMacrocyclePlan {
   planTitle: string
   primaryGoal: string
@@ -114,6 +148,9 @@ export interface GeneratedMacrocyclePlan {
   strengthCardioBlendSummary: StrengthCardioBlendSummary
   workouts: GeneratedWorkoutDay[]
   periodizationWeeklyMemos: string[]
+  clinicalRationale?: string
+  handPortionPlan?: HandPortionNutritionPlan | null
+  dualCardioPlan?: DualCardioPlanSummary | null
 }
 
 import {

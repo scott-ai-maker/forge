@@ -66,4 +66,42 @@ describe('POST /api/coach/ai-architect', () => {
     expect(firstExercise.embedUrl).toBeDefined()
     expect(firstExercise.imageUrl).toBeDefined()
   })
+
+  it('successfully returns clinicalRationale, handPortionPlan, and dualCardioPlan when requested with deep personalization', async () => {
+    getRequestAuthzMock.mockResolvedValueOnce({
+      user: { id: 'coach-123' },
+      client: { role: 'coach' },
+    })
+
+    const res = await POST(
+      makePostRequest({
+        clientName: 'Jennifer Rainville',
+        clientAge: 34,
+        clientSex: 'female',
+        goal: 'fat_loss',
+        targetNasmPhase: 2,
+        trainingDaysPerWeek: 3,
+        equipmentAccess: ['Reebok Step', 'Dumbbells', 'Bodyweight'],
+        movementSuperpowers: ['burpees'],
+        strictExclusions: ['mountain_climbers', 'running'],
+        functionalDemands: 'Helping elderly father on weekends with lifting and carrying',
+        nutritionPhilosophy: 'precision_nutrition_hand_portion',
+        dualCardioSplit: {
+          sweatyFinisherModality: 'Reebok Step Finisher',
+          freshNeatWalkingMins: 25,
+        },
+      })
+    )
+
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.success).toBe(true)
+    expect(json.clinicalRationale).toBeDefined()
+    expect(json.clinicalRationale).toContain('COACH GORDON MASTER BRIEFING MEMO:')
+    expect(json.clinicalRationale).toContain('Jennifer')
+    expect(json.handPortionPlan).toBeDefined()
+    expect(json.handPortionPlan.philosophy).toBe('precision_nutrition_hand_portion')
+    expect(json.dualCardioPlan).toBeDefined()
+    expect(json.dualCardioPlan.sweatyFinisher.title).toContain('Reebok Step')
+  })
 })

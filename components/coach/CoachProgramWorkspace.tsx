@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import RagProgramGeneratorStudio from '@/components/coach/RagProgramGeneratorStudio'
+import CoachCustomPeriodizationStudio from '@/components/coach/studio/CoachCustomPeriodizationStudio'
 import CoachTravelRecalibratorModal from '@/components/coach/CoachTravelRecalibratorModal'
 import GaaIcon from '@/components/ui/GaaIcon'
-import { NASM_OPT_PHASE_STANDARDS, GeneratedMacrocyclePlan } from '@/lib/rag-nasm-program-generator'
+import { NASM_OPT_PHASE_STANDARDS, GeneratedMacrocyclePlan, type HandPortionNutritionPlan } from '@/lib/rag-nasm-program-generator'
 import { parseInjuriesFromText } from '@/lib/sports-injuries'
 import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 import type { ParqEvaluationResult } from '@/lib/liability-shield'
@@ -171,6 +172,8 @@ export default function CoachProgramWorkspace({
     }
   }
 
+  const [studioMode, setStudioMode] = useState<'custom_ai' | 'rag_classic'>('custom_ai')
+
   const handlePlanAssignedFromStudio = (
     newPlan: GeneratedMacrocyclePlan,
     nutritionTargets?: NutritionTargetsSnapshot
@@ -186,6 +189,14 @@ export default function CoachProgramWorkspace({
       created_at: new Date().toISOString(),
       plan_json: {
         ...(nutritionTargets ? { nutritionTargets } : {}),
+        clinicalRationale: newPlan.clinicalRationale,
+        handPortionPlan: newPlan.handPortionPlan,
+        dualCardioPlan: newPlan.dualCardioPlan,
+        strengthCardioBlendSummary: newPlan.strengthCardioBlendSummary,
+        periodizationPlan: {
+          weeklyMemos: newPlan.periodizationWeeklyMemos,
+          ragSourcesCited: newPlan.ragSourcesCited,
+        },
         workouts: newPlan.workouts.map(w => ({
           day: w.day,
           focus: w.focus,
@@ -501,6 +512,75 @@ export default function CoachProgramWorkspace({
               </button>
             </div>
           </div>
+
+          {typeof activePlan.plan_json?.clinicalRationale === 'string' && activePlan.plan_json.clinicalRationale && (
+            <div
+              style={{
+                padding: '14px 18px',
+                border: '1px solid rgba(212,160,23,0.35)',
+                borderRadius: 8,
+                background: 'rgba(212,160,23,0.06)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800 }}>
+                <GaaIcon name="clipboard" size={13} style={{ color: 'var(--gold-lt)' }} />
+                <span>Coach Gordon Clinical Memo</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 13, color: '#E2E8F0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                {activePlan.plan_json.clinicalRationale}
+              </p>
+            </div>
+          )}
+
+          {Boolean(activePlan.plan_json?.handPortionPlan) && (() => {
+            const hp = activePlan.plan_json?.handPortionPlan as HandPortionNutritionPlan | undefined
+            return (
+              <section
+                aria-label="Active program hand-portion nutrition plan"
+                style={{
+                  padding: '14px 16px',
+                  border: '1px solid rgba(212,160,23,0.45)',
+                  borderRadius: 9,
+                  background: 'rgba(8,14,24,0.8)',
+                  display: 'grid',
+                  gap: 10,
+                }}
+              >
+                <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  {hp?.title || 'Precision Nutrition Hand-Portion Plate (No Calorie Counting)'}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
+                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, padding: '8px 10px' }}>
+                    <div style={{ fontSize: 11, color: '#F87171', fontWeight: 800 }}>✋ Protein</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
+                      {hp?.guidelines?.protein?.portionsPerMeal}
+                    </div>
+                  </div>
+                  <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 6, padding: '8px 10px' }}>
+                    <div style={{ fontSize: 11, color: '#34D399', fontWeight: 800 }}>✊ Vegetables</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
+                      {hp?.guidelines?.vegetables?.portionsPerMeal}
+                    </div>
+                  </div>
+                  <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 6, padding: '8px 10px' }}>
+                    <div style={{ fontSize: 11, color: '#FBBF24', fontWeight: 800 }}>🤲 Smart Carbs</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
+                      {hp?.guidelines?.smartCarbs?.portionsPerMeal}
+                    </div>
+                  </div>
+                  <div style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 6, padding: '8px 10px' }}>
+                    <div style={{ fontSize: 11, color: '#38BDF8', fontWeight: 800 }}>👍 Healthy Fats</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
+                      {hp?.guidelines?.healthyFats?.portionsPerMeal}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )
+          })()}
 
           {activePlan.plan_json?.nutritionTargets && (
             <section
@@ -879,23 +959,97 @@ export default function CoachProgramWorkspace({
         </div>
       )}
 
-      {/* ── RAG NASM OPT™ Program Generator Studio ────────────────────── */}
-      <div id="rag-studio-section">
-        <RagProgramGeneratorStudio
-          clientId={clientId}
-          clientName={clientName}
-          initialGoal={studioGoal}
-          initialPhase={studioPhase}
-          initialEquipmentAccess={initialEquipmentAccess}
-          initialSessionsPerWeek={initialSessionsPerWeek}
-          initialClientAge={clientAge}
-          initialCompensations={ohsaCompensations}
-          existingPlan={activePlan}
-          contraindicationTags={allContraTags}
-          contraindicationNotes={contraindicationNotes}
-          injuriesLimitations={injuriesLimitations}
-          onPlanAssigned={handlePlanAssignedFromStudio}
-        />
+      {/* ── Periodization Engine Studio ────────────────────────────── */}
+      <div id="rag-studio-section" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Studio Mode Selector */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'rgba(10,14,24,0.85)',
+            border: '1px solid rgba(212,160,23,0.3)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            flexWrap: 'wrap',
+            gap: 10,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800 }}>
+              Periodization Engine:
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => setStudioMode('custom_ai')}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                border: studioMode === 'custom_ai' ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)',
+                background: studioMode === 'custom_ai' ? 'rgba(212,160,23,0.2)' : 'rgba(255,255,255,0.03)',
+                color: studioMode === 'custom_ai' ? 'var(--gold-lt)' : '#94A3B8',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              ⭐ Coach Gordon AI Custom Studio (Gemini 3.8 Flash)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStudioMode('rag_classic')}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                border: studioMode === 'rag_classic' ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)',
+                background: studioMode === 'rag_classic' ? 'rgba(212,160,23,0.2)' : 'rgba(255,255,255,0.03)',
+                color: studioMode === 'rag_classic' ? 'var(--gold-lt)' : '#94A3B8',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Classic NASM Catalog Studio
+            </button>
+          </div>
+        </div>
+
+        {studioMode === 'custom_ai' ? (
+          <CoachCustomPeriodizationStudio
+            clientId={clientId}
+            clientName={clientName}
+            clientAge={clientAge}
+            initialGoal={studioGoal}
+            initialPhase={studioPhase}
+            initialEquipmentAccess={initialEquipmentAccess}
+            initialSessionsPerWeek={initialSessionsPerWeek || 3}
+            contraindicationTags={allContraTags}
+            contraindicationNotes={contraindicationNotes}
+            injuriesLimitations={injuriesLimitations}
+            existingPlan={activePlan}
+            onPlanAssigned={handlePlanAssignedFromStudio}
+          />
+        ) : (
+          <RagProgramGeneratorStudio
+            clientId={clientId}
+            clientName={clientName}
+            initialGoal={studioGoal}
+            initialPhase={studioPhase}
+            initialEquipmentAccess={initialEquipmentAccess}
+            initialSessionsPerWeek={initialSessionsPerWeek}
+            initialClientAge={clientAge}
+            initialCompensations={ohsaCompensations}
+            existingPlan={activePlan}
+            contraindicationTags={allContraTags}
+            contraindicationNotes={contraindicationNotes}
+            injuriesLimitations={injuriesLimitations}
+            onPlanAssigned={handlePlanAssignedFromStudio}
+          />
+        )}
       </div>
 
       {isTravelModalOpen && (

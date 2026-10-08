@@ -2,7 +2,12 @@ import { detectExerciseEquipment } from './nasm-equipment-detector'
 import { resolveExerciseVideoEmbed, extractYouTubeVideoId } from './nasm-exercise-video-catalog'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from './nasm-generated-images'
 import { parseExerciseStepInstructions } from './nasm-clinical-movement-cards'
-import type { IntegratedCardioPrescription } from './rag-nasm-program-generator'
+import {
+  type IntegratedCardioPrescription,
+  type HandPortionNutritionPlan,
+  type DualCardioPlanSummary,
+  type StrengthCardioBlendSummary,
+} from './rag-nasm-program-generator'
 import { calculateEstimatedWorkoutDuration } from './workout-duration-engine'
 
 export interface ExerciseLibraryRecord {
@@ -94,6 +99,15 @@ export interface CoachProgramPayload {
   startDate?: string | null
   templateId?: string | null
   workouts: CoachProgramWorkoutInput[]
+  clinicalRationale?: string | null
+  handPortionPlan?: HandPortionNutritionPlan | null
+  dualCardioPlan?: DualCardioPlanSummary | null
+  periodizationWeeklyMemos?: string[] | null
+  periodizationPlan?: {
+    weeklyMemos?: string[]
+    ragSourcesCited?: string[]
+  } | null
+  strengthCardioBlendSummary?: StrengthCardioBlendSummary | null
 }
 
 export interface CoachProgramDraft {
