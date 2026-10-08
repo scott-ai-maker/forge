@@ -305,7 +305,21 @@ export function buildStoredProgramPlan(
           scheduledDate,
           notes,
           exercises: sanitizedExercises,
-          cardioProtocol: workout.cardioProtocol ?? null,
+          cardioProtocol: workout.cardioProtocol
+            ? {
+                ...workout.cardioProtocol,
+                recommendedModalities: Array.isArray(workout.cardioProtocol.recommendedModalities)
+                  ? workout.cardioProtocol.recommendedModalities.map(String)
+                  : typeof workout.cardioProtocol.recommendedModalities === 'string' && (workout.cardioProtocol.recommendedModalities as string).trim()
+                    ? [(workout.cardioProtocol.recommendedModalities as string).trim()]
+                    : [],
+                coachingCues: Array.isArray(workout.cardioProtocol.coachingCues)
+                  ? workout.cardioProtocol.coachingCues.map(String)
+                  : typeof workout.cardioProtocol.coachingCues === 'string' && (workout.cardioProtocol.coachingCues as string).trim()
+                    ? [(workout.cardioProtocol.coachingCues as string).trim()]
+                    : [],
+              }
+            : null,
         } satisfies ProgramWorkoutSnapshot
     })
     .filter(Boolean) as ProgramWorkoutSnapshot[]

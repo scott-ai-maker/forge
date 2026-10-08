@@ -390,7 +390,7 @@ function todayDateOnly() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function resolveWorkoutCardioProtocol(
+export function resolveWorkoutCardioProtocol(
   workout: { notes?: string | null; day: number; focus?: string; cardioProtocol?: IntegratedCardioPrescription | null },
   profile?: FitnessProfile | null,
   plan?: WorkoutPlanRecord | null
@@ -427,10 +427,28 @@ function resolveWorkoutCardioProtocol(
   )
 
   if (workout.cardioProtocol) {
+    const rawModalities = (workout.cardioProtocol as unknown as Record<string, unknown>).recommendedModalities
+    const normalizedModalities: string[] = Array.isArray(rawModalities)
+      ? (rawModalities as string[]).map(String)
+      : typeof rawModalities === 'string' && (rawModalities as string).trim().length > 0
+        ? [(rawModalities as string).trim()]
+        : []
+    const rawCues = (workout.cardioProtocol as unknown as Record<string, unknown>).coachingCues
+    const normalizedCues: string[] = Array.isArray(rawCues)
+      ? (rawCues as string[]).map(String)
+      : typeof rawCues === 'string' && (rawCues as string).trim().length > 0
+        ? [(rawCues as string).trim()]
+        : []
+
     const filteredModalities = buildRecommendedCardioModalities(workout.cardioProtocol.stage, goal, cardioCaps)
+    const effectiveModalities = filteredModalities.length > 0
+      ? filteredModalities
+      : (normalizedModalities.length > 0 ? normalizedModalities : ['Treadmill Incline Walk'])
+
     return {
       ...workout.cardioProtocol,
-      recommendedModalities: filteredModalities,
+      recommendedModalities: effectiveModalities,
+      coachingCues: normalizedCues,
     }
   }
 
@@ -482,11 +500,22 @@ export interface InWorkoutCardioDraft {
   notes: string
 }
 
+function getFirstCardioModality(cardio?: IntegratedCardioPrescription | null, fallback = 'Treadmill Incline Walk'): string {
+  if (!cardio) return fallback
+  if (Array.isArray(cardio.recommendedModalities) && cardio.recommendedModalities.length > 0) {
+    return cardio.recommendedModalities[0] || fallback
+  }
+  if (typeof cardio.recommendedModalities === 'string' && (cardio.recommendedModalities as string).trim()) {
+    return (cardio.recommendedModalities as string).trim()
+  }
+  return fallback
+}
+
 function defaultCardioDraft(
   cardio: IntegratedCardioPrescription
 ): InWorkoutCardioDraft {
   return {
-    modality: cardio.recommendedModalities[0] || 'Outdoor Brisk Walk / Run',
+    modality: getFirstCardioModality(cardio, 'Outdoor Brisk Walk / Run'),
     durationMins: String(cardio.durationMins || 20),
     distance: '',
     avgHeartRate: '',
@@ -1626,7 +1655,7 @@ export default function FitnessTrackerClient({
     const cardioDraft = cardioDraftsByDay[workout.day]
     const cardioPayload = cardio ? {
       stage: cardio.stage,
-      modality: cardioDraft?.modality || cardio.recommendedModalities[0] || 'Cardio',
+      modality: cardioDraft?.modality || getFirstCardioModality(cardio, 'Cardio'),
       durationMins: Number(cardioDraft?.durationMins) || cardio.durationMins || 20,
       distanceKm: cardioDraft?.distance ? (units === 'imperial' ? Number(cardioDraft.distance) * 1.60934 : Number(cardioDraft.distance)) : null,
       avgHeartRate: cardioDraft?.avgHeartRate ? Number(cardioDraft.avgHeartRate) : null,
@@ -1709,7 +1738,7 @@ export default function FitnessTrackerClient({
     setStatus(null)
 
     try {
-      const rawModality = (draft.modality || cardio.recommendedModalities[0] || '').toLowerCase()
+      const rawModality = (draft.modality || getFirstCardioModality(cardio, '')).toLowerCase()
       let activityType = 'treadmill'
       if (rawModality.includes('row')) activityType = 'rowing-machine'
       else if (rawModality.includes('airbike') || rawModality.includes('assault') || rawModality.includes('echo')) activityType = 'assault-bike'
@@ -1777,7 +1806,7 @@ export default function FitnessTrackerClient({
 
       void syncActivityToAppleHealth({
         type: 'cardio',
-        modality: draft.modality || cardio.recommendedModalities[0] || 'Cardio',
+        modality: draft.modality || getFirstCardioModality(cardio, 'Cardio'),
         durationMinutes: durationMins,
         calories: calories || undefined,
         distanceMiles: distMiles,
@@ -4994,7 +5023,7 @@ export default function FitnessTrackerClient({
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const modality = cardio?.recommendedModalities[0] || 'Treadmill Incline Walk'
+                                      const modality = getFirstCardioModality(cardio, 'Treadmill Incline Walk')
                                       handleStartCardioSession(workout.day, modality, false)
                                       const patId: CardioPatternId =
                                         cardio?.stage === 3
@@ -5122,7 +5151,11 @@ export default function FitnessTrackerClient({
                                         style={inputStyle}
                                         aria-label="Cardio modality"
                                       >
-                                        {(cardio.recommendedModalities || ['Incline Walking', 'Rower', 'Airdyne Bike', 'Stair Climber']).map(m => (
+                                        {(Array.isArray(cardio.recommendedModalities) && cardio.recommendedModalities.length > 0
+                                          ? cardio.recommendedModalities
+                                          : typeof cardio.recommendedModalities === 'string' && (cardio.recommendedModalities as string).trim()
+                                            ? [(cardio.recommendedModalities as string).trim()]
+                                            : ['Incline Walking', 'Rower', 'Airdyne Bike', 'Stair Climber']).map(m => (
                                           <option key={m} value={m}>{m}</option>
                                         ))}
                                       </select>
@@ -5312,19 +5345,27 @@ export default function FitnessTrackerClient({
                                 </form>
 
                                 {/* Coaching Cues */}
-                                {cardio.coachingCues && cardio.coachingCues.length > 0 && (
-                                  <div style={{ marginTop: 12, background: 'rgba(212,160,23,0.04)', border: '1px solid rgba(212,160,23,0.15)', borderRadius: 6, padding: '8px 12px' }}>
-                                    <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gold)', fontWeight: 800, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
-                                      <GaaIcon name="sparkles" size={12} tone="gold" />
-                                      <span>Cardiorespiratory Coaching Cues</span>
+                                {(() => {
+                                  const cues: string[] = Array.isArray(cardio.coachingCues)
+                                    ? (cardio.coachingCues as string[])
+                                    : typeof cardio.coachingCues === 'string' && (cardio.coachingCues as string).trim().length > 0
+                                      ? [(cardio.coachingCues as string).trim()]
+                                      : []
+                                  if (cues.length === 0) return null
+                                  return (
+                                    <div style={{ marginTop: 12, background: 'rgba(212,160,23,0.04)', border: '1px solid rgba(212,160,23,0.15)', borderRadius: 6, padding: '8px 12px' }}>
+                                      <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gold)', fontWeight: 800, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
+                                        <GaaIcon name="sparkles" size={12} tone="gold" />
+                                        <span>Cardiorespiratory Coaching Cues</span>
+                                      </div>
+                                      <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: 'rgba(255,255,255,0.85)', lineHeight: 1.45 }}>
+                                        {cues.map((cue: string, idx: number) => (
+                                          <li key={idx} style={{ marginBottom: 2 }}>{cue}</li>
+                                        ))}
+                                      </ul>
                                     </div>
-                                    <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: 'rgba(255,255,255,0.85)', lineHeight: 1.45 }}>
-                                      {cardio.coachingCues.map((cue: string, idx: number) => (
-                                        <li key={idx} style={{ marginBottom: 2 }}>{cue}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                                  )
+                                })()}
                               </>
                             )}
                           </div>
@@ -5585,7 +5626,7 @@ export default function FitnessTrackerClient({
             const targetWorkout = completeModal
             void handleCompleteWorkoutDay(targetWorkout, rpe)
             const cardio = resolveWorkoutCardioProtocol(targetWorkout, profile, plan)
-            const modality = cardio?.recommendedModalities[0] || 'Treadmill Incline Walk'
+            const modality = getFirstCardioModality(cardio, 'Treadmill Incline Walk')
             const patId: CardioPatternId =
               cardio?.stage === 3
                 ? 'tabata_micro_bursts'
@@ -5737,7 +5778,7 @@ export default function FitnessTrackerClient({
             setActiveMindfulSession(null)
             const fallbackWorkout = completeModal || planWorkouts[0]
             const cardio = fallbackWorkout ? resolveWorkoutCardioProtocol(fallbackWorkout, profile, plan) : null
-            const modality = cardio?.recommendedModalities[0] || 'Treadmill Incline Walk'
+            const modality = getFirstCardioModality(cardio, 'Treadmill Incline Walk')
             const patId: CardioPatternId =
               cardio?.stage === 3
                 ? 'tabata_micro_bursts'
@@ -5785,7 +5826,7 @@ export default function FitnessTrackerClient({
             const activeWorkout = planWorkouts.find((w: WorkoutDay) => w.day === activeWorkoutSessionDay)
             if (activeWorkout) {
               const cardio = resolveWorkoutCardioProtocol(activeWorkout, profile, plan)
-              const modality = cardio?.recommendedModalities[0] || 'Treadmill Incline Walk'
+              const modality = getFirstCardioModality(cardio, 'Treadmill Incline Walk')
               handleStartCardioSession(activeWorkout.day, modality, false)
               const patId: CardioPatternId =
                 cardio?.stage === 3

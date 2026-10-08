@@ -161,7 +161,13 @@ Client Stats & Context:
           primaryEquipment: detectExerciseEquipment(ex.name, ex.nasmClinicalSource),
         }
       }),
-      cardioProtocol: w.cardioProtocol ?? null,
+      cardioProtocol: w.cardioProtocol
+        ? {
+            ...w.cardioProtocol,
+            recommendedModalities: toArr(w.cardioProtocol.recommendedModalities),
+            coachingCues: toArr(w.cardioProtocol.coachingCues),
+          }
+        : null,
     }
   })
 
