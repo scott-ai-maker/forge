@@ -216,7 +216,7 @@ describe('stripe checkout route', () => {
     expect(createArgs.line_items[0].price_data.unit_amount).toBe(1999)
     expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'month' })
     expect(createArgs.subscription_data.trial_period_days).toBe(7)
-    expect(createArgs.metadata.packageName).toBe('Core Membership')
+    expect(createArgs.metadata.packageName).toBe('Core')
   })
 
   it('bills Core annually at $149 with the same seven-day trial', async () => {

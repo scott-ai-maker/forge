@@ -1,7 +1,7 @@
 /**
  * @file workout-duration-engine.ts
  * @description Biomechanically and physiologically accurate workout duration estimation
- * for Gordon Athletic Advisory & NASM OPT™ periodization models.
+ * for Forge Athletic & NASM OPT™ periodization models.
  *
  * Properly accounts for:
  * 1. Time under tension (work duration per set based on reps, hold times, and tempo).

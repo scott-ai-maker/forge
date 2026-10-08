@@ -494,7 +494,7 @@ async function main() {
         client_id: athleteId,
         coach_id: coachId,
         sender_id: coachId,
-        message: 'Welcome to Gordon Athletic Advisory, Alexander! Your Phase 2 Strength Endurance protocol is live. Let me know once you complete your dynamic warmup.',
+        message: 'Welcome to Forge Athletic, Alexander! Your Phase 2 Strength Endurance protocol is live. Let me know once you complete your dynamic warmup.',
       })
     }
   } catch {

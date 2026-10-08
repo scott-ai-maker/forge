@@ -89,7 +89,7 @@ export default function PlyometricPowerStudio({
   }
 
   function handleCopyProtocol() {
-    const text = `GORDON ATHLETIC ADVISORY — ${currentSessionProtocol.tierTitle}
+    const text = `FORGE ATHLETIC — ${currentSessionProtocol.tierTitle}
 Overview: ${currentSessionProtocol.sessionOverview}
 Rest Between Drills: ${currentSessionProtocol.restBetweenExercisesSec}s
 
@@ -145,7 +145,7 @@ ${currentSessionProtocol.exercises
               marginBottom: 4,
             }}
           >
-            Gordon Athletic Advisory · NASM Reactive Power Standards
+            Forge Athletic · NASM Reactive Power Standards
           </div>
           <h3
             style={{

@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Official NASM Clinical Movement Cards & Visual Reference Engine
+ * Forge Athletic — Official NASM Clinical Movement Cards & Visual Reference Engine
  * Integrated with the 320+ verified NASM Edge and Official NASM Movement Libraries.
  * Strictly presents verified official NASM media; if no exact match exists, explicitly displays "Media Not Available".
  */

@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — In-Gym Helper & Telemetry Companion Platform Utilities
+ * Forge Athletic — In-Gym Helper & Telemetry Companion Platform Utilities
  * 
  * Provides unified platform detection across PWA, iOS, and Android helper apps,
  * companion mode enforcement, in-gym telemetry focus, and zero-purchase compliance

@@ -95,7 +95,7 @@ ${recommendedProgression}
 
 ${coachCustomNotes ? `\n**Coach Special Note:**\n_${coachCustomNotes}_\n` : ''}
 ---
-*Gordon Athletic Advisory · NASM OPT™ Sports Science Protocol*`
+*Forge Athletic · NASM OPT™ Sports Science Protocol*`
 
   return {
     id: `memo-${Date.now()}`,

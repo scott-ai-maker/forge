@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Rest Timer Audio Metronome & Heart Rate Zone Dynamic Adaptation Engine
+ * Forge Athletic — Rest Timer Audio Metronome & Heart Rate Zone Dynamic Adaptation Engine
  * 
  * Clinical sports science & bioenergetics engine providing:
  * 1. 5-Tier Heart Rate Zone Classification (Tanaka formula HRmax, Karvonen autonomic recovery curves)

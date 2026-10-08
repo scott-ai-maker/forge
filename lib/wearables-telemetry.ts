@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master Wearables & Biometric Telemetry Engine
+ * Forge Athletic — Master Wearables & Biometric Telemetry Engine
  * Standardizes biometric ingest from Apple Health, Google Health Connect, Whoop, Garmin, Oura, Polar,
  * and live in-gym Web Bluetooth Heart Rate monitors.
  */

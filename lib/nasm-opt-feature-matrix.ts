@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — NASM OPT™ Phase Feature Matrix & Deterministic Rules Engine
+ * Forge Athletic — NASM OPT™ Phase Feature Matrix & Deterministic Rules Engine
  * 
  * Implements master-level NASM Optimum Performance Training (OPT™) sports science rules
  * governing which training features are offered, recommended, or set to default for each phase:

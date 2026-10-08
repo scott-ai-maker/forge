@@ -8,7 +8,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Gordon Athletic Advisory Architecture & Video Pipeline Rules
+# Forge Athletic Architecture & Video Pipeline Rules
 
 ## Live Coach Virtual Background Segmentation Mask (ALWAYS INVERTED)
 - In `components/coach/LiveVirtualBackgroundStage.tsx`, the MediaPipe selfie segmenter confidence mask output **MUST ALWAYS BE INVERTED** (`const conf = 1 - rawConf`).
@@ -17,7 +17,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Virtual Background True Optical Orientation (NEVER MIRROR BACKGROUND IMAGES)
 - In `components/coach/LiveVirtualBackgroundStage.tsx`, the `<canvas>` element must **NEVER** have CSS `transform: scaleX(-1)`.
-- Virtual background images containing brand marks, typography ("GORDON ATHLETIC ADVISORY"), and logos must always be rendered in true optical orientation so text reads from left to right.
+- Virtual background images containing brand marks, typography ("FORGE ATHLETIC"), and logos must always be rendered in true optical orientation so text reads from left to right.
 - Only the coach foreground subject (`offscreen` canvas) is mirrored when `isMirrored` is true (front selfie camera) to maintain natural mirror intuition without reversing the background.
 
 

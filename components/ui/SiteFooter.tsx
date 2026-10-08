@@ -131,10 +131,10 @@ export default function SiteFooter() {
         </div>
 
         <p style={{ fontSize: '0.72rem', color: '#64748B', margin: 0, lineHeight: 1.55, maxWidth: 960, marginInline: 'auto' }}>
-          <strong>Trademark &amp; Certification Non-Affiliation Notice:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Gordon Athletic Advisory LLC and Scott Gordon Fitness are independent private entities and are not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. References to the Optimum Performance Training (OPT™) framework are made for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
+          <strong>Trademark &amp; Certification Non-Affiliation Notice:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Forge Athletic LLC and Scott Gordon Fitness are independent private entities and are not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. References to the Optimum Performance Training (OPT™) framework are made for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
         </p>
         <p style={{ fontSize: '0.78rem', color: 'var(--gray)', margin: 0, letterSpacing: '0.04em' }}>
-          © {new Date().getFullYear()} Gordon Athletic Advisory LLC. All Rights Reserved. Protected under U.S. and International Intellectual Property and Copyright Laws. Patents Pending.
+          © {new Date().getFullYear()} Forge Athletic LLC. All Rights Reserved. Protected under U.S. and International Intellectual Property and Copyright Laws. Patents Pending.
         </p>
       </div>
     </footer>

@@ -77,7 +77,7 @@ export interface PrescribedSupplementItem {
 }
 
 export const DISPENSARY_PARTNER_CONFIG = {
-  partnerName: 'Gordon Athletic Clinical Dispensary',
+  partnerName: 'Forge Athletic Clinical Dispensary',
   platform: 'Fullscript & Thorne Partner Dispensaries',
   discountPercentage: 15,
   defaultFullscriptUrl: process.env.NEXT_PUBLIC_FULLSCRIPT_DISPENSARY_URL || 'https://us.fullscript.com/welcome/gordonathletic',
@@ -650,7 +650,7 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     'MANDATORY FDA & MEDICAL DISCLAIMER: The statements and protocols contained herein have not been evaluated by the Food and Drug Administration (FDA). These dietary supplement recommendations are designed for nutritional support and sports performance optimization only, and are NOT intended to diagnose, treat, cure, or prevent any disease. Always consult with your prescribing physician or licensed pharmacist before initiating any dietary supplementation regimen, particularly when co-administering with prescription medications.'
 
   const thirdPartyQualityStandards =
-    'GOLD STANDARD QUALITY ENFORCEMENT: Gordon Athletic Advisory strictly mandates that all purchased supplements carry independent third-party laboratory verification: NSF Certified for Sport®, Informed Choice / Informed Sport®, or USP Verified®. These certifications guarantee label accuracy and verify the absence of heavy metals, adulterants, microbials, and WADA-banned substances.'
+    'GOLD STANDARD QUALITY ENFORCEMENT: Forge Athletic strictly mandates that all purchased supplements carry independent third-party laboratory verification: NSF Certified for Sport®, Informed Choice / Informed Sport®, or USP Verified®. These certifications guarantee label accuracy and verify the absence of heavy metals, adulterants, microbials, and WADA-banned substances.'
 
   return {
     clientProfile: profile,

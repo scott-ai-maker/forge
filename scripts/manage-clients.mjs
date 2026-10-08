@@ -209,8 +209,8 @@ async function sendWelcomeEmails(admin) {
   for (const recipient of recipients) {
     const firstName = String(recipient.full_name ?? '').trim() || 'there'
     const welcomeEmail = {
-      subject: 'Welcome to Gordon Athletic Advisory! Start here',
-      html: `<h2>Welcome to Gordon Athletic Advisory, ${firstName}!</h2>
+      subject: 'Welcome to Forge Athletic! Start here',
+      html: `<h2>Welcome to Forge Athletic, ${firstName}!</h2>
 <p>I&apos;m excited to work with you.</p>
 <p>Here&apos;s the fastest way to get moving:</p>
 <ol>
@@ -221,7 +221,7 @@ async function sendWelcomeEmails(admin) {
 <p><a href="${baseUrl}/dashboard/onboarding">Complete your onboarding</a></p>
 <p>If you have questions, reply to this email or message me in the dashboard.</p>`,
       text: [
-        `Welcome to Gordon Athletic Advisory, ${firstName}!`,
+        `Welcome to Forge Athletic, ${firstName}!`,
         '',
         'I am excited to work with you.',
         '',

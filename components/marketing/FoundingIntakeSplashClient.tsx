@@ -139,7 +139,7 @@ export default function FoundingIntakeSplashClient() {
                   display: 'block',
                 }}
               >
-                GORDON ATHLETIC ADVISORY
+                FORGE ATHLETIC
               </span>
               <span style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 600 }}>
                 Evidence-based training and coaching

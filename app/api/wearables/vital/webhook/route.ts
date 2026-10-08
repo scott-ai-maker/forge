@@ -4,7 +4,7 @@ import { normalizeVitalDailyPayload } from '@/lib/vital-health-bridge'
 export async function GET() {
   return NextResponse.json({
     ok: true,
-    service: 'Gordon Athletic Advisory Vital Health Ingestion Webhook',
+    service: 'Forge Athletic Vital Health Ingestion Webhook',
     status: 'listening',
   })
 }

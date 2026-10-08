@@ -32,7 +32,7 @@ const args = process.argv.slice(2)
 const probeTarget = args.find((a, i) => args[i - 1] === '--probe' || a.startsWith('--probe='))?.replace(/^--probe=/, '')
 
 console.log('\n=============================================================')
-console.log(' GORDON ATHLETIC ADVISORY — EMAIL INFRASTRUCTURE DIAGNOSTIC')
+console.log(' FORGE ATHLETIC — EMAIL INFRASTRUCTURE DIAGNOSTIC')
 console.log('=============================================================\n')
 
 let passes = 0
@@ -296,7 +296,7 @@ if (probeTarget) {
       const probeResult = await resend.emails.send({
         from: fromEmail,
         to: probeTarget,
-        subject: '[Probe] Gordon Athletic Advisory Deliverability Audit',
+        subject: '[Probe] Forge Athletic Deliverability Audit',
         html: testCompliance.html,
         text: testCompliance.text,
         headers: {

@@ -152,7 +152,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(request).catch(async () => {
         const offlineFallback = await caches.match(OFFLINE_URL)
-        return offlineFallback || new Response('Offline - Gordon Athletic Advisory', {
+        return offlineFallback || new Response('Offline - Forge Athletic', {
           headers: { 'Content-Type': 'text/html' },
         })
       })

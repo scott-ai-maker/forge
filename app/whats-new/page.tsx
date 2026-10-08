@@ -12,8 +12,8 @@ import {
 } from '@/lib/app-version'
 
 export const metadata: Metadata = {
-  title: `What's New · v${APP_VERSION} | Gordon Athletic Advisory`,
-  description: `Latest updates, features, and sports science intelligence releases for Gordon Athletic Advisory (v${APP_VERSION} - ${APP_RELEASE_CODENAME}).`,
+  title: `What's New · v${APP_VERSION} | Forge Athletic`,
+  description: `Latest updates, features, and sports science intelligence releases for Forge Athletic (v${APP_VERSION} - ${APP_RELEASE_CODENAME}).`,
 }
 
 export default function WhatsNewPage() {
@@ -64,7 +64,7 @@ export default function WhatsNewPage() {
               lineHeight: 1.7,
             }}
           >
-            Track the continuous evolution of the Gordon Athletic Advisory platform. Every release adheres strictly to <a href="https://semver.org/spec/v2.0.0.html" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Semantic Versioning 2.0.0</a> (<code>MAJOR.MINOR.PATCH</code>).
+            Track the continuous evolution of the Forge Athletic platform. Every release adheres strictly to <a href="https://semver.org/spec/v2.0.0.html" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Semantic Versioning 2.0.0</a> (<code>MAJOR.MINOR.PATCH</code>).
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>

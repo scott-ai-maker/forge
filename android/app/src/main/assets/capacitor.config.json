@@ -1,15 +1,15 @@
 {
 	"appId": "com.gordonathletic.app",
-	"appName": "Gordon Athletic Advisory",
+	"appName": "Forge Athletic",
 	"webDir": "public",
 	"server": {
 		"androidScheme": "https",
 		"iosScheme": "https",
-		"url": "https://gordonathleticadvisory.com",
+		"url": "https://forge-athletic.app/dashboard/fitness?source=native",
 		"cleartext": true,
 		"allowNavigation": [
-			"gordonathleticadvisory.com",
-			"*.gordonathleticadvisory.com",
+			"forge-athletic.app",
+			"*.forge-athletic.app",
 			"*.supabase.co",
 			"accounts.google.com",
 			"*.google.com",

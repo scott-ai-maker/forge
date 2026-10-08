@@ -526,7 +526,7 @@ export default function CorporateProposalStudio({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', color: '#D4A017', textTransform: 'uppercase' }}>
-                GORDON ATHLETIC ADVISORY · TEAM WELLNESS
+                FORGE ATHLETIC · TEAM WELLNESS
               </div>
               <div style={{ fontSize: 9.5, color: '#64748B', letterSpacing: '0.08em', marginTop: 2 }}>
                 TEAM WELLNESS PROPOSAL · FOR ORGANIZATION REVIEW
@@ -662,7 +662,7 @@ export default function CorporateProposalStudio({
             People balance work, family, caregiving, and other responsibilities alongside their health. A workplace wellness program can make it easier to fit movement and healthy routines into the day.
           </p>
           <p style={{ fontSize: 13.5, color: '#CBD5E1', lineHeight: 1.65, margin: 0 }}>
-            <strong>Gordon Athletic Advisory (GAA)</strong> can bring evidence-informed training, movement coaching, and fitness resources to your team. Program options can be adapted to work routines and individual goals.
+            <strong>Forge Athletic</strong> can bring evidence-informed training, movement coaching, and fitness resources to your team. Program options can be adapted to work routines and individual goals.
           </p>
         </div>
 
@@ -914,7 +914,7 @@ export default function CorporateProposalStudio({
               SCOTT GORDON, NASM MASTER TRAINER
             </div>
             <div style={{ fontSize: 11, color: 'var(--gray)', marginTop: 2 }}>
-              Founder &amp; Performance Director · Gordon Athletic Advisory
+              Founder &amp; Performance Director · Forge Athletic
             </div>
             <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>
               NASM-CPT® · CES® · PES® · CNC™ · CSNC · Master Credentialed

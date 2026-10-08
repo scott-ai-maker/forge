@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master NASM 7th Edition RAG Knowledge Base & Program Design Index
+ * Forge Athletic — Master NASM 7th Edition RAG Knowledge Base & Program Design Index
  * Catalogs and indexes all 76 sports science documents from `data/rag-resources/`:
  * - 23 Clinical Textbook Chapters (Bioenergetics, Kinesiology, OPT™ Model, Special Populations)
  * - 36 Pre-Engineered Periodized Workouts (12 Fat Loss, 12 Muscle Gain, 12 Sports Performance)

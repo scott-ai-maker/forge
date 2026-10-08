@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — AI Coach Gordon Voiceover Cardio Engine
+ * Forge Athletic — AI Coach Gordon Voiceover Cardio Engine
  * 
  * Core cardiorespiratory conditioning engine delivering:
  * - Modality-agnostic coaching (neutral to treadmill, bike, rower, stairmaster, outdoor, etc.)

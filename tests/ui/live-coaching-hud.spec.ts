@@ -35,7 +35,7 @@ test.describe('1:1 Coaching & Movement HUD UI & Regression Suite', () => {
         await expect(page).toHaveURL(/\/dashboard\/live$/)
 
         // Branding & Studio Header
-        await expect(page.getByText(/Gordon Athletic Advisory · Live Telehealth Studio/i)).toBeVisible()
+        await expect(page.getByText(/Forge Athletic · Live Telehealth Studio/i)).toBeVisible()
         await expect(page.getByRole('heading', { name: /1:1 LIVE COACHING & MOVEMENT HUD/i })).toBeVisible()
         await expect(page.getByText(/Direct interactive video feed with/i)).toBeVisible()
 

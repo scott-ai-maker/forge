@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Volume & Progressive Overload Science Engine
+ * Forge Athletic — Volume & Progressive Overload Science Engine
  * 
  * Computes live session mechanical volume (tonnage), historical overload deltas,
  * set-by-set fatigue degradation curves, and evaluates official NASM 2-for-2 progression criteria.

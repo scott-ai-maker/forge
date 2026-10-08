@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Client Lifecycle & Anti-Duplicity Audit Engine
+ * Forge Athletic — Client Lifecycle & Anti-Duplicity Audit Engine
  * 
  * Provides private wellness studio best practices for:
  * - Client status lifecycle management (Active, Inactive, Paused, Archived).

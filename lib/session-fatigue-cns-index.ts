@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Session Fatigue & CNS Readiness Index Engine
+ * Forge Athletic — Session Fatigue & CNS Readiness Index Engine
  * 
  * Provides comprehensive post-workout bioenergetic and neuromuscular analysis:
  * 1. Foster Session-RPE (sRPE × Duration) Systemic Training Load

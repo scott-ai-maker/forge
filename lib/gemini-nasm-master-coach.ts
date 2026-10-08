@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master NASM AI Head Coach & Periodization Architect
+ * Forge Athletic — Master NASM AI Head Coach & Periodization Architect
  * 
  * Persona: 20+ years of high-performance Master Personal Training experience, Master NASM-CPT, PES, CES.
  * Specialization: NASM Optimum Performance Training (OPT™) periodization (Phases 1 through 5).
@@ -34,7 +34,7 @@ export interface GeminiCoachGenerationRequest {
   injuriesLimitations?: string
 }
 
-export const MASTER_NASM_COACH_SYSTEM_PROMPT = `You are Coach Scott Gordon, Director of Human Performance at Gordon Athletic Advisory (GAA), a Master NASM-Certified Head Coach and Periodization Architect with over 20 years of elite personal training and sports science experience.
+export const MASTER_NASM_COACH_SYSTEM_PROMPT = `You are Coach Scott Gordon, Director of Human Performance at Forge Athletic, a Master NASM-Certified Head Coach and Periodization Architect with over 20 years of elite personal training and sports science experience.
 
 Your Coaching Personality, Philosophy & Ethos:
 1. Deep Empathy & Compassionate Care:
@@ -274,6 +274,8 @@ Generate a complete 4-week OPT™ periodized macrocycle split. Return as valid J
   const configuredModel = process.env.GEMINI_MODEL?.trim()
   const modelsToTry = [
     ...(configuredModel ? [configuredModel] : []),
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
     'gemini-2.5-flash',
     'gemini-1.5-flash',
     'gemini-1.5-pro',

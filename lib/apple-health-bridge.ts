@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Apple Health & Wearables Inbound Telemetry Bridge
+ * Forge Athletic — Apple Health & Wearables Inbound Telemetry Bridge
  * 
  * Standardizes inbound synchronization for:
  * 1. Autonomic Biometrics: Resting Heart Rate (RHR), HRV rMSSD, Respiratory Rate, SpO2, VO2 Max.

@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Cross-Platform Universal WAV Audio Engine
+ * Forge Athletic — Cross-Platform Universal WAV Audio Engine
  * 
  * Records crystal-clear mono PCM audio and encodes it into standard 16-bit WAV format.
  * Works flawlessly across iOS Safari, iOS Chrome, Android, macOS, and Windows with zero

@@ -42,7 +42,7 @@ describe('Coach Virtual Background Catalog', () => {
     expect(blurPreset?.category).toBe('Blur')
   })
 
-  it('embeds the official Gordon Athletic Advisory logo mark across all package presets', () => {
+  it('embeds the official Forge Athletic logo mark across all package presets', () => {
     const presetsWithImages = COACH_BACKGROUND_PRESETS.filter(p => !p.isBlur)
     expect(presetsWithImages.length).toBe(5)
 

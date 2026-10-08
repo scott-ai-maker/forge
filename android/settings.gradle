@@ -1,5 +1,5 @@
 include ':app'
-rootProject.name = 'Gordon Athletic Advisory'
+rootProject.name = 'Forge Athletic'
 
 apply from: 'capacitor.settings.gradle'
 

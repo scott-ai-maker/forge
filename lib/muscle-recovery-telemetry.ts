@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — 3D Muscle Recovery & Biomechanical Telemetry Engine
+ * Forge Athletic — 3D Muscle Recovery & Biomechanical Telemetry Engine
  *
  * Computes localized muscle group recovery velocity, hours remaining, and color-coded
  * heatmap metrics incorporating biological sex, chronological age, conditioning level,

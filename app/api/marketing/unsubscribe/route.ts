@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       renderUnsubscribeHtml({
         success: true,
         email,
-        message: 'You have been successfully removed from Gordon Athletic Advisory communications.',
+        message: 'You have been successfully removed from Forge Athletic communications.',
       }),
       {
         status: 200,
@@ -80,7 +80,7 @@ function renderUnsubscribeHtml(params: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${params.success ? 'Unsubscribed' : 'Error'} | Gordon Athletic Advisory</title>
+  <title>${params.success ? 'Unsubscribed' : 'Error'} | Forge Athletic</title>
   <style>
     body {
       margin: 0;
@@ -149,12 +149,12 @@ function renderUnsubscribeHtml(params: {
 </head>
 <body>
   <div class="card">
-    <div class="brand-title">Gordon Athletic Advisory</div>
+    <div class="brand-title">Forge Athletic</div>
     <div class="status-badge">${params.success ? 'Confirmed' : 'Error'}</div>
     <h1>${params.success ? 'Unsubscribe Confirmed' : 'Request Error'}</h1>
     <p>${params.message}</p>
     ${params.email ? `<p style="font-size: 13px; color: #64748B;">Account: <strong>${params.email}</strong></p>` : ''}
-    <a href="/" class="btn">Return to Advisory Home</a>
+    <a href="/" class="btn">Return to Forge Athletic Home</a>
   </div>
 </body>
 </html>`

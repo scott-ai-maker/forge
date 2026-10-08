@@ -303,7 +303,7 @@ export default function StabilityBallPage() {
         {/* Breadcrumb Navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <Link href="/" style={{ color: 'var(--gold-lt)', fontSize: 11, textDecoration: 'none', fontFamily: 'var(--font-serif)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            Gordon Athletic Advisory
+            Forge Athletic
           </Link>
           <span style={{ color: 'var(--gray)', fontSize: 11 }}>/</span>
           <span style={{ color: 'var(--gray)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase' }}>

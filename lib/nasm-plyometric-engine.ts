@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — NASM CPT-7 Chapter 18: Plyometric (Reactive) Power Engine
+ * Forge Athletic — NASM CPT-7 Chapter 18: Plyometric (Reactive) Power Engine
  * Ingested from official NASM 7th Edition sports science reference manual:
  * 1. Stretch-Shortening Cycle (SSC) Mechanics: Eccentric (Loading) -> Amortization (<150ms) -> Concentric (Unloading).
  * 2. 3-Tier OPT™ Plyometric Continuum:

@@ -83,7 +83,7 @@ export default async function AthleteLiveSessionPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                Gordon Athletic Advisory · Live Telehealth Studio
+                Forge Athletic · Live Telehealth Studio
               </span>
             </div>
             <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 26, letterSpacing: '0.04em', margin: '2px 0 0', color: 'var(--white)' }}>

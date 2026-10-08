@@ -1529,7 +1529,7 @@ export default function NasmAssessmentSuite({
         <div style={{ borderBottom: '2px solid #0D1B2A', paddingBottom: 12, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#0D1B2A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Gordon Athletic Advisory
+              Forge Athletic
             </h1>
             <p style={{ margin: '2px 0 0', fontSize: 13, color: '#555' }}>
               NASM Kinetic Chain Movement Assessment & Corrective Exercise Prescription
@@ -1652,7 +1652,7 @@ export default function NasmAssessmentSuite({
         )}
 
         <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#777', borderTop: '1px solid #eee', paddingTop: 8 }}>
-          <div>Gordon Athletic Advisory · private human performance advisory</div>
+          <div>Forge Athletic · private human performance advisory</div>
           <div>Page 1 of 1</div>
         </div>
       </div>

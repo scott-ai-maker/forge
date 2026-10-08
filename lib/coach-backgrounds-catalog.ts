@@ -17,7 +17,7 @@ export const COACH_BACKGROUND_PRESETS: CoachBackgroundPreset[] = [
   {
     id: 'olympic-facility',
     name: 'Olympic Performance Facility',
-    tagline: 'Calibrated gold plates, custom power racks & Gordon Athletic Advisory wall crest',
+    tagline: 'Calibrated gold plates, custom power racks & Forge Athletic wall crest',
     category: 'Facility',
     imageUrl: '/images/backgrounds/coach-olympic-facility-gaa.jpg',
     badge: 'Autonomous & Performance',

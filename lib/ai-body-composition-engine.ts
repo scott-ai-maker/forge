@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master AI DEXA-Vision Body Composition Engine
+ * Forge Athletic — Master AI DEXA-Vision Body Composition Engine
  *
  * State-of-the-Art Image-Based Body Composition Estimation:
  * 1. Multi-View Spatial Anthropometry (Anterior, Lateral, Posterior)
@@ -582,7 +582,7 @@ export async function analyzeBodyCompositionFromImages(
       }
 
       if (imagesParts.length > 0) {
-        const promptText = `You are Coach Scott Gordon, Director of Human Performance at Gordon Athletic Advisory, Master NASM-CPT, Sports Science Biomechanist, and clinical DEXA body composition analyst.
+        const promptText = `You are Coach Scott Gordon, Director of Human Performance at Forge Athletic, Master NASM-CPT, Sports Science Biomechanist, and clinical DEXA body composition analyst.
 You are evaluating body composition from athlete photo(s) using clinical sports-science standards (calibrated against 4-Compartment DEXA / Hydrostatic weighing scans).
 
 ATHLETE CLINICAL PROFILE:

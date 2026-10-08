@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Audio & Blob Utilities for Cross-Platform Playback
+ * Forge Athletic — Audio & Blob Utilities for Cross-Platform Playback
  * 
  * iOS WebKit (Safari & Chrome on iPhone) has a known limitation where native <audio>
  * elements fail to play data: URLs directly. Converting data: URLs to memory Blobs

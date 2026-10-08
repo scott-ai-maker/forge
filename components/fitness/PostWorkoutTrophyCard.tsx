@@ -119,7 +119,7 @@ export default function PostWorkoutTrophyCard({
       ctx.font = '700 24px sans-serif'
       ctx.textAlign = 'center'
       ctx.letterSpacing = '6px'
-      ctx.fillText('GORDON ATHLETIC ADVISORY', 540, 130)
+      ctx.fillText('FORGE ATHLETIC', 540, 130)
 
       ctx.fillStyle = '#94A3B8'
       ctx.font = '400 16px sans-serif'

@@ -24,7 +24,7 @@ describe('MobileNavigationDrawer Structure & Unique Keys', () => {
 
   it('keeps member navigation focused on the core experience', () => {
     const memberItems = CLIENT_DRAWER_SECTIONS.flatMap(section => section.items)
-    const performanceSection = CLIENT_DRAWER_SECTIONS.find(section => section.title === 'Your Performance')
+    const performanceSection = CLIENT_DRAWER_SECTIONS.find(section => section.title === 'Your Training')
 
     expect(memberItems).toHaveLength(10)
     expect(performanceSection?.items.map(item => item.label)).toEqual([

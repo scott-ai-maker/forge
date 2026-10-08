@@ -160,7 +160,7 @@ export default function FitnessLabDiagnosticsView({
           </div>
           <div>
             <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.04em', fontSize: 22, fontWeight: 700, color: '#FFFFFF' }}>
-              Gordon Athletic Advisory · Sports Science &amp; Fitness Lab
+              Forge Athletic · Sports Science &amp; Fitness Lab
             </h2>
             <p style={{ margin: '2px 0 0', color: '#93C5FD', fontSize: 12 }}>
               Clinical recovery matrix, AI DEXA body composition, periodization roadmap, and sports performance diagnostic tools.

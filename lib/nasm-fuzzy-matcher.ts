@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — NASM Heuristic Media & Movement Search Engine
+ * Forge Athletic — NASM Heuristic Media & Movement Search Engine
  * Cross-references the 350+ verified official NASM and licensed exercise catalog.
  * Uses exact canonical name matching to strictly prevent incorrect video/image pairing.
  */

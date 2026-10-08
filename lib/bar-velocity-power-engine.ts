@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Real-Time Bar Velocity & Kinetic Power Output Engine
+ * Forge Athletic — Real-Time Bar Velocity & Kinetic Power Output Engine
  * 
  * Velocity-Based Training (VBT) and biomechanical power tracking:
  * 1. Range of Motion (ROM) modeling per exercise mechanics

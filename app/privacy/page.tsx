@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
           Privacy Policy
         </h1>
         <p style={{ color: '#8A99AA', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
-          Effective &amp; Last Updated: August 28, 2026 · Gordon Athletic Advisory LLC
+          Effective &amp; Last Updated: October 8, 2026 · Forge Athletic LLC
         </p>
       </div>
 
@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
           1. Scope &amp; Commitment to Confidentiality
         </h2>
         <p>
-          Gordon Athletic Advisory LLC (&quot;GAA&quot;, &quot;we&quot;, &quot;us&quot;) understands that health and fitness information is personal. We protect your account details, health information, movement assessments, progress photos, and wearable data with strong security safeguards.
+          Forge Athletic LLC (&quot;Forge Athletic&quot;, &quot;we&quot;, &quot;us&quot;) understands that health and fitness information is personal. We protect your account details, health information, movement assessments, progress photos, and wearable data with strong security safeguards.
         </p>
       </section>
 
@@ -107,9 +107,9 @@ export default function PrivacyPolicyPage() {
           For inquiries regarding your biometric data or privacy protections, contact:
         </p>
         <p style={{ margin: '0.4rem 0 0', fontSize: '0.95rem', color: 'var(--gold-lt)' }}>
-          <strong>Gordon Athletic Advisory LLC</strong><br />
+          <strong>Forge Athletic LLC</strong><br />
           Data Protection &amp; Privacy Office<br />
-          Email: <a href="mailto:scott@gordonathleticadvisory.com" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@gordonathleticadvisory.com</a>
+          Email: <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a>
         </p>
       </section>
     </main>

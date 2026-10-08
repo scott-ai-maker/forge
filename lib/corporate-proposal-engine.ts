@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory (GAA) - Institutional Corporate Proposal & Financial Engine
+ * Forge Athletic - Institutional Corporate Proposal & Financial Engine
  * Multi-seat tier modeling, executive ROI projection, and cryptographic proposal authentication.
  */
 

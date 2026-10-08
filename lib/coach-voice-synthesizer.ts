@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master Coach Voice Synthesis Engine
+ * Forge Athletic — Master Coach Voice Synthesis Engine
  * 
  * Configures authoritative, natural, and resonant voice prompts for tempo metronomes,
  * in-gym set logging, rest intervals, and daily executive briefings.

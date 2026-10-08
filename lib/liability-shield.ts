@@ -208,7 +208,7 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
   const uniqueTags = Array.from(new Set(contraindicationTags))
 
   const legalDisclaimer =
-    'By engaging in training with Gordon Athletic Advisory, client acknowledges that all exercise carries inherent physical risk. This digital PAR-Q+ assessment establishes baseline safety and does not constitute medical diagnosis. Consultation with a licensed physician is mandatory prior to initiating high-intensity physical exertion if cardiovascular or orthopedic risk factors are present.'
+    'By engaging in training with Forge Athletic, client acknowledges that all exercise carries inherent physical risk. This digital PAR-Q+ assessment establishes baseline safety and does not constitute medical diagnosis. Consultation with a licensed physician is mandatory prior to initiating high-intensity physical exertion if cardiovascular or orthopedic risk factors are present.'
 
   return {
     clearanceStatus,

@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Still Camera & Auto-Zoom Prevention Engine
+ * Forge Athletic — Still Camera & Auto-Zoom Prevention Engine
  *
  * Provides programmatic W3C PTZ / digital zoom locking to 1.0x (unzoomed, static wide),
  * platform detection (iOS vs. Android), step-by-step guidance metadata for disabling

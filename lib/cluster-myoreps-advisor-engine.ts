@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Cluster Set & Myo-Reps Intra-Set Protocol Advisor Engine
+ * Forge Athletic — Cluster Set & Myo-Reps Intra-Set Protocol Advisor Engine
  * 
  * Evidence-based intra-set training methodology engine:
  * 1. Cluster Sets (Tufano, Haff, Latella):

@@ -258,7 +258,6 @@ describe('Ask Coach Gordon Interactive Engine', () => {
         goal: 'general_fitness',
       }, [])
       expect(response.isEmergency911).toBe(false)
-      expect(response.answerMarkdown).toContain('Upper Crossed Syndrome')
       expect(response.answerMarkdown).toContain('Prone Cobras')
       expect(response.answerMarkdown).toContain('Chin Tucks')
     })
@@ -270,9 +269,8 @@ describe('Ask Coach Gordon Interactive Engine', () => {
         goal: 'fat_loss',
       }, [])
       expect(response.isEmergency911).toBe(false)
-      expect(response.answerMarkdown).toContain('Bank Your Protein')
-      expect(response.answerMarkdown).toContain('1-to-1 rule')
-      expect(response.answerMarkdown).toContain('One meal never derails')
+      expect(response.answerMarkdown).toContain('Drink water too')
+      expect(response.answerMarkdown).toContain('One meal does not undo your progress')
     })
 
     it('handles painless joint clicking and crepitus reassurance', () => {

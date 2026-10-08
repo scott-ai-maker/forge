@@ -132,7 +132,7 @@ describe('GAA Native HealthKit & Health Connect Bridge', () => {
       const res = await requestNativeHealthKitPermissions()
       expect(res.success).toBe(false)
       expect(res.authorized).toBe(false)
-      expect(res.error).toContain('only available when running inside the Gordon Athletic Advisory mobile app')
+      expect(res.error).toContain('only available when running inside the Forge Athletic mobile app')
     })
 
     it('retrieves authorization status on native mobile', async () => {

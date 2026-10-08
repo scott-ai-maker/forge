@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Find a Training Plan That Fits',
   description: 'Share your goals, schedule, and preferred coaching support to find a training plan that works for you.',
   openGraph: {
-    title: 'Find a Training Plan That Fits | Gordon Athletic Advisory',
+    title: 'Find a Training Plan That Fits | Forge Athletic',
     description: 'Share your goals, schedule, and preferred coaching support to find a training plan that works for you.',
   },
 }

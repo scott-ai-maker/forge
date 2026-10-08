@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Single Source of Truth Wearable Webhook Engine
+ * Forge Athletic — Single Source of Truth Wearable Webhook Engine
  *
  * Provides cryptographic webhook token verification and normalized telemetry
  * ingestion for Apple Health (iOS / Apple Watch) and Google Health Connect (Android / Wear OS).

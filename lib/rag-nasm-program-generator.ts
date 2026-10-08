@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master RAG NASM Program Generation Engine
+ * Forge Athletic — Master RAG NASM Program Generation Engine
  * Synthesizes all 76 ingested sports science documents and 36 periodized workout suites:
  * - 12 Fat Loss / Metabolic Stabilization Routines (Phases 1 & 2)
  * - 12 Hypertrophy / Muscular Development Routines (Phase 3)

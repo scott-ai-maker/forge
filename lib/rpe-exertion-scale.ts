@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — RPE & RIR Exertion Science Engine
+ * Forge Athletic — RPE & RIR Exertion Science Engine
  * 
  * Based on NASM Resistance Training Concepts, Borg CR10 Scale,
  * and Modern Reps-In-Reserve (RIR) / RPE Velocity Science (Zourdos et al., Helms et al.).

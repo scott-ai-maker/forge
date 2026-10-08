@@ -1478,7 +1478,7 @@ export default function UnifiedLiveStudioHud({
               />
               <div>
                 <div className="font-serif" style={{ fontSize: 18, letterSpacing: '0.08em', color: 'var(--gold-lt)', lineHeight: 1, fontWeight: 700 }}>
-                  GORDON ATHLETIC ADVISORY
+                  FORGE ATHLETIC
                 </div>
                 <div style={{ fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#34D399', fontWeight: 800, marginTop: 2 }}>
                   ● SOVEREIGN BIOMECHANICAL SUITE

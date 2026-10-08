@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Client Onboarding & Progression Engine
+ * Forge Athletic — Client Onboarding & Progression Engine
  * 
  * Implements master-trainer and clinical best practices for tracking an athlete
  * through the complete 9-stage onboarding and development continuum:

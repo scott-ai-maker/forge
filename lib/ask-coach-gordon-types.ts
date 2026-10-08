@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master Coach Gordon Types & Client-Safe Helpers
+ * Forge Athletic — Master Coach Gordon Types & Client-Safe Helpers
  * 
  * Lightweight client-safe definitions and pure telemetry formatters.
  * Contains ZERO imports of heavy server knowledge bases or databases.

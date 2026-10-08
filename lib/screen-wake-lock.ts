@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Screen Wake Lock Utility
+ * Forge Athletic — Screen Wake Lock Utility
  * 
  * Manages W3C Screen Wake Lock API to prevent devices from auto-dimming
  * and sleeping during workouts, cardio runs, and live athletic sessions.

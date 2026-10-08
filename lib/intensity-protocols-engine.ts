@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Advanced Hypertrophy & Intensity Protocols Engine
+ * Forge Athletic — Advanced Hypertrophy & Intensity Protocols Engine
  * 
  * Implements evidence-based advanced training methodologies:
  * - Drop Sets: Stripping load 15-30% across multiple stages to maximize motor unit recruitment past volitional failure.

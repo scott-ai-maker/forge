@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Dynamic Autoregulation & Session RPE Deload Advisor Engine
+ * Forge Athletic — Dynamic Autoregulation & Session RPE Deload Advisor Engine
  * 
  * Based on modern Velocity-Loss & RIR Autoregulation Science (Zourdos, Helms, Tuchscherer)
  * and Foster Session-RPE (sRPE) Training Load models:

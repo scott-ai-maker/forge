@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Cardio Distance, Pace & Inertial Pedometer Engine
+ * Forge Athletic — Cardio Distance, Pace & Inertial Pedometer Engine
  * 
  * Delivers precision telemetry for non-stationary cardio (outdoor run, walk, cycling, trail):
  * - Geodesic Haversine spherical distance calculation

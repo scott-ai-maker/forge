@@ -129,7 +129,7 @@ describe('CorporateProposalStudio & Financial Engine', () => {
       )
 
       expect(componentSource).toContain('SCOTT GORDON, NASM MASTER TRAINER')
-      expect(componentSource).toContain('Founder &amp; Performance Director · Gordon Athletic Advisory')
+      expect(componentSource).toContain('Founder &amp; Performance Director · Forge Athletic')
       expect(componentSource).toContain('NASM-CPT® · CES® · PES® · CNC™ · CSNC')
       expect(componentSource).toContain('Proposal ready for review')
     })

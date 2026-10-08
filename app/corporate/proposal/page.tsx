@@ -10,11 +10,11 @@ import { CorporateCadence } from '@/lib/corporate-proposal-engine'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Team Wellness Proposal | Gordon Athletic Advisory',
+  title: 'Team Wellness Proposal | Forge Athletic',
   description:
     'A team wellness and fitness coaching proposal for organizations looking to support healthy routines at work.',
   openGraph: {
-    title: 'Team Wellness Proposal | Gordon Athletic Advisory',
+    title: 'Team Wellness Proposal | Forge Athletic',
     description:
       'Explore team fitness coaching, workplace wellness support, and options for your organization.',
   },

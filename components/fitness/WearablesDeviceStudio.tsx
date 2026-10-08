@@ -192,7 +192,7 @@ export default function WearablesDeviceStudio({
     try {
       if (!isNativeMobile()) {
         setStatusNotice(
-          'Native HealthKit requires the Gordon Athletic Advisory iOS app. In Safari / PWA, use the Apple Shortcuts Webhook option below to sync your iPhone.'
+          'Native HealthKit requires the Forge Athletic iOS app. In Safari / PWA, use the Apple Shortcuts Webhook option below to sync your iPhone.'
         )
         return
       }
@@ -352,7 +352,7 @@ export default function WearablesDeviceStudio({
 
           <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--gray)', maxWidth: 760, lineHeight: 1.5 }}>
             {isAndroid
-              ? 'Direct native Android Health Connect integration with background synchronization. Your resting heart rate, HRV, sleep metrics, active energy burned, and training sessions are ingested to power Gordon Athletic Advisory intelligence.'
+              ? 'Direct native Android Health Connect integration with background synchronization. Your resting heart rate, HRV, sleep metrics, active energy burned, and training sessions are ingested to power Forge Athletic intelligence.'
               : 'Direct native Apple HealthKit integration with automatic 24/7 background delivery. Your resting heart rate, morning HRV rMSSD, sleep architecture, active calories, dietary nutrition, and workouts are seamlessly ingested to calculate live CNS Readiness and training volume.'}
           </p>
         </div>

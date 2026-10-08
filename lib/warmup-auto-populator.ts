@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Warm-Up to Working Set Weight Auto-Populator Engine
+ * Forge Athletic — Warm-Up to Working Set Weight Auto-Populator Engine
  * 
  * Automatically transitions the athlete from kinetic warm-up ramp-up sets to their
  * primary working sets. Upon logging the final warm-up ramp stage (or via 1-tap manual trigger),

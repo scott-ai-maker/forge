@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Sports Science Clinical Knowledge & Calculation Engine
+ * Forge Athletic — Sports Science Clinical Knowledge & Calculation Engine
  * Ingested from official NASM 7th Edition sports science reference matrices:
  * 1. One Repetition Maximum (1RM) Conversion Table (2-10 reps, 5-1,000 lbs)
  * 2. Body Composition Assessment Protocols (Circumference, Waist-to-Hip, Skinfolds)

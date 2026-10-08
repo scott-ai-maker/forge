@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — AI Coach Onboarding & Synthesis Orchestrator
+ * Forge Athletic — AI Coach Onboarding & Synthesis Orchestrator
  * 
  * Clinical & Athletic Synthesis Engine:
  * Ingests data exclusively from:

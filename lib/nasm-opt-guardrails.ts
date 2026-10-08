@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Deterministic AI/RAG Validation Guardrail Engine
+ * Forge Athletic — Deterministic AI/RAG Validation Guardrail Engine
  * 
  * Enforces rigorous sports science invariants on all AI-generated workout plans:
  * 1. Strict NASM OPT™ Phase Constraints (Tempos, Rep Ranges, Rest Intervals, Supersets)

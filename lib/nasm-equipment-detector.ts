@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Biomechanical Equipment & Modality Detector
+ * Forge Athletic — Biomechanical Equipment & Modality Detector
  * Accurately classifies required training equipment and environmental tools from exercise names and instructions.
  * Dissects modifiers like Dumbbell, Barbell, Stability/Yoga Ball, Cable, Bands, Kettlebell, Foam Roller, etc.
  */

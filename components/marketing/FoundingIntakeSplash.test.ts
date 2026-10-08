@@ -43,7 +43,7 @@ describe('Founding Principal Intake Splash & Video Engine', () => {
     expect(reservedPosition).toBeGreaterThan(0)
   })
 
-  it('validates the complete 13-point NASM credential matrix for Gordon Athletic Advisory', async () => {
+  it('validates the complete 13-point NASM credential matrix for Forge Athletic', async () => {
     const { NASM_CREDENTIALS_DATA } = await import('./NasmAccreditationPortfolio')
     expect(NASM_CREDENTIALS_DATA).toHaveLength(13)
 

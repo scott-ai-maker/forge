@@ -109,7 +109,7 @@ export function generateLongitudinalAuditSeal(params: LongitudinalAuditSealParam
 }
 
 /**
- * Validates whether a given string is a valid Gordon Athletic Advisory cryptographic verification seal.
+ * Validates whether a given string is a valid Forge Athletic cryptographic verification seal.
  */
 export function verifyCryptographicSeal(seal: string): boolean {
   if (!seal || typeof seal !== 'string') return false

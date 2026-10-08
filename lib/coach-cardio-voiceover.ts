@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Coach Gordon Cardio Voiceover Audio Coordinator
+ * Forge Athletic — Coach Gordon Cardio Voiceover Audio Coordinator
  * 
  * Manages zero-latency audio playback, ElevenLabs streaming & pre-fetching,
  * lock-screen MediaSession updates, and Web Speech API fallbacks for live cardio sessions.
@@ -348,7 +348,7 @@ export function updateCardioMediaSession(params: {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: `${params.patternName} (RPE ${params.targetRpe})`,
       artist: `Coach Gordon in Your Ear · ${params.segmentTitle}`,
-      album: `Gordon Athletic Advisory (${mm}:${ss})`,
+      album: `Forge Athletic (${mm}:${ss})`,
       artwork: [
         { src: '/brand/gaa-crest-gold.png', sizes: '512x512', type: 'image/png' },
       ],

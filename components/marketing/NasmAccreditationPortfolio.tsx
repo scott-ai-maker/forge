@@ -14,7 +14,7 @@ export interface NasmCredential {
   badgeTone: string
   icon: GaaIconName
   status: string
-  statusType: 'board_review' | 'candidate' | 'specialization' | 'pinnacle'
+  statusType: 'board_review' | 'candidate' | 'specialization' | 'pinnacle' | 'certified'
   summary: string
   curriculum: string[]
   gaaEngineIntegration: string
@@ -30,8 +30,8 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
     categoryLabel: 'Clinical & Biomechanics',
     badgeTone: '#C5A059',
     icon: 'award',
-    status: 'Board Review Finalization',
-    statusType: 'board_review',
+    status: 'Certified & Active',
+    statusType: 'certified',
     summary: 'Core foundation of the Optimum Performance Training (OPT™) model spanning 5 physiological periodization phases.',
     curriculum: [
       '5-Phase OPT™ Periodization Architecture',
@@ -280,7 +280,7 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
       'Macro-to-Micro Periodization Architecture',
       'Integrated Human Performance Ecosystem Leadership',
     ],
-    gaaEngineIntegration: 'Informs coaching recommendations, movement screening, and training plans across Gordon Athletic Advisory.',
+    gaaEngineIntegration: 'Informs coaching recommendations, movement screening, and training plans across Forge Athletic.',
     keyAlgorithmicModule: 'Integrated Training and Performance Plan',
   },
 ]
@@ -379,7 +379,7 @@ export default function NasmAccreditationPortfolio() {
             lineHeight: 1.6,
           }}
         >
-          Every algorithmic periodization model, kinetic movement screen, and corrective protocol inside Gordon Athletic Advisory is anchored to the following National Academy of Sports Medicine accreditations currently concluding formal board completion.
+          Every algorithmic periodization model, kinetic movement screen, and corrective protocol inside Forge Athletic is anchored to the following National Academy of Sports Medicine accreditations.
         </p>
       </div>
 
@@ -535,6 +535,7 @@ export default function NasmAccreditationPortfolio() {
         {filteredCredentials.map((cred) => {
           const isExpanded = expandedId === cred.id
           const isPinnacle = cred.statusType === 'pinnacle'
+          const isCertified = cred.statusType === 'certified'
 
           return (
             <div
@@ -621,9 +622,15 @@ export default function NasmAccreditationPortfolio() {
                     fontWeight: 700,
                     padding: '2px 7px',
                     borderRadius: 4,
-                    background: isPinnacle ? 'rgba(234, 179, 8, 0.2)' : 'rgba(255, 255, 255, 0.08)',
-                    color: isPinnacle ? '#FEF08A' : '#94A3B8',
-                    border: isPinnacle
+                    background: isCertified
+                      ? 'rgba(52, 211, 153, 0.18)'
+                      : isPinnacle
+                      ? 'rgba(234, 179, 8, 0.2)'
+                      : 'rgba(255, 255, 255, 0.08)',
+                    color: isCertified ? '#34D399' : isPinnacle ? '#FEF08A' : '#94A3B8',
+                    border: isCertified
+                      ? '1px solid rgba(52, 211, 153, 0.45)'
+                      : isPinnacle
                       ? '1px solid rgba(234, 179, 8, 0.5)'
                       : '1px solid rgba(255, 255, 255, 0.12)',
                     whiteSpace: 'nowrap',
@@ -834,7 +841,7 @@ export default function NasmAccreditationPortfolio() {
           fontFamily: 'Raleway, sans-serif',
         }}
       >
-        <strong style={{ color: '#94A3B8' }}>Legal Non-Affiliation &amp; Nominative Fair Use:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Gordon Athletic Advisory LLC and Scott Gordon Fitness are independent private entities and are not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. All references to NASM credentials and the OPT™ model are made strictly for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
+        <strong style={{ color: '#94A3B8' }}>Legal Non-Affiliation &amp; Nominative Fair Use:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Forge Athletic LLC and Scott Gordon Fitness are independent private entities and are not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. All references to NASM credentials and the OPT™ model are made strictly for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
       </div>
     </section>
   )

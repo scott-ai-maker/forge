@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Native HealthKit & Health Connect Capacitor Bridge
+ * Forge Athletic — Native HealthKit & Health Connect Capacitor Bridge
  * 
  * Direct TypeScript interface communicating with the native iOS HealthKit plugin
  * and Android Health Connect plugin (GAAHealthKit) supporting real-time background
@@ -137,7 +137,7 @@ export async function requestNativeHealthKitPermissions(): Promise<{
     return {
       success: false,
       authorized: false,
-      error: 'Native Health integration is only available when running inside the Gordon Athletic Advisory mobile app.',
+      error: 'Native Health integration is only available when running inside the Forge Athletic mobile app.',
     }
   }
 

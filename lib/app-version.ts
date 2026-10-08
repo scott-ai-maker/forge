@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory (GAA) - Application Version & Semantic Release Engine
+ * Forge Athletic - Application Version & Semantic Release Engine
  * Adheres strictly to Semantic Versioning 2.0.0 (MAJOR.MINOR.PATCH)
  * https://semver.org/spec/v2.0.0.html
  */

@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Mobile App Store & Promotional Configuration
+ * Forge Athletic — Mobile App Store & Promotional Configuration
  * 
  * Centralized configuration for Apple App Store and Google Play Store metadata,
  * marketing highlights, and download links. Easily customizable or overridable
@@ -39,9 +39,9 @@ export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
   ios: {
     platform: 'ios',
     storeName: 'Apple App Store',
-    name: 'Gordon Athletic Advisory for iOS',
+    name: 'Forge Athletic for iOS',
     bundleId: 'com.gordonathletic.app',
-    url: process.env.NEXT_PUBLIC_APP_STORE_URL || 'https://apps.apple.com/app/gordon-athletic-advisory/id0000000000',
+    url: process.env.NEXT_PUBLIC_APP_STORE_URL || 'https://apps.apple.com/app/forge-athletic/id0000000000',
     minVersion: 'iOS 16.0+',
     badgeText: 'Download on the App Store',
     tagline: 'Native HealthKit Background Delivery & Apple Watch Sync',
@@ -55,7 +55,7 @@ export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
   android: {
     platform: 'android',
     storeName: 'Google Play Store',
-    name: 'Gordon Athletic Advisory for Android',
+    name: 'Forge Athletic for Android',
     bundleId: 'com.gordonathletic.app',
     url: process.env.NEXT_PUBLIC_PLAY_STORE_URL || 'https://play.google.com/store/apps/details?id=com.gordonathletic.app',
     minVersion: 'Android 10.0+ (Health Connect)',

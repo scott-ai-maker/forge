@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Active Rest Cardio Pacer & Heart Rate Recovery Engine
+ * Forge Athletic — Active Rest Cardio Pacer & Heart Rate Recovery Engine
  * 
  * Clinical sports science & bioenergetics engine providing:
  * 1. Real-Time Heart Rate Recovery (HRR) Tracking (1-minute vagal reactivation drop & recovery rate)

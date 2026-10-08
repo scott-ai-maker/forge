@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Executive Sleep & Autonomic Biometrics Engine
+ * Forge Athletic — Executive Sleep & Autonomic Biometrics Engine
  * 
  * Clinical sports science analysis of sleep architecture, autonomic nervous system balance (HRV rMSSD),
  * nocturnal resting heart rate dip %, and recovery-informed training recommendations.

@@ -299,7 +299,7 @@ export default function MuscleRecoveryHeatmap3D({
               marginBottom: 4,
             }}
           >
-            Gordon Athletic Advisory · Biomechanical Supercompensation
+            Forge Athletic · Biomechanical Supercompensation
           </div>
           <h3
             style={{

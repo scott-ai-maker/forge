@@ -284,7 +284,7 @@ export default function ExecutiveSundayDossier({
           fontFamily: 'var(--font-telemetry, monospace)',
         }}
       >
-        <span>Gordon Athletic Advisory · Sports Science Division</span>
+        <span>Forge Athletic · Sports Science Division</span>
         <span>Private training summary</span>
         <span>Ref: {docRefId}</span>
       </div>

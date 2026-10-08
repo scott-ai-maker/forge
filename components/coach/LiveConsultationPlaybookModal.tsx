@@ -259,7 +259,7 @@ export default function LiveConsultationPlaybookModal({
                   color: 'var(--gold-lt)',
                 }}
               >
-                Gordon Athletic Advisory · Clinical Consultation Playbook
+                Forge Athletic · Clinical Consultation Playbook
               </span>
             </div>
             <h2

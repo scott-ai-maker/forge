@@ -110,7 +110,7 @@ async function main() {
 
   if (options.help) {
     console.log(`
-Gordon Athletic Advisory — Test Client Provisioning Tool
+Forge Athletic — Test Client Provisioning Tool
 
 Usage:
   node --env-file=.env.local scripts/create-test-client.mjs [options]
@@ -493,7 +493,7 @@ Options:
         client_id: clientId,
         coach_id: coachId,
         sender_id: coachId,
-        message: `Welcome to Gordon Athletic Advisory, ${options.name.split(' ')[0]}! Your custom Phase 2 training plan is now loaded in your dashboard. Feel free to message me anytime if you have any questions before our upcoming session.`,
+        message: `Welcome to Forge Athletic, ${options.name.split(' ')[0]}! Your custom Phase 2 training plan is now loaded in your dashboard. Feel free to message me anytime if you have any questions before our upcoming session.`,
       })
     } catch {
       // non-blocking

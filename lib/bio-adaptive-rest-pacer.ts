@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Bio-Adaptive Rest Timer Pacer Engine
+ * Forge Athletic — Bio-Adaptive Rest Timer Pacer Engine
  * 
  * Dynamically scales upcoming rest intervals based on real-time set RPE / RIR exertion,
  * NASM OPT phase metabolic targets, and compound vs isolation movement kinematics:

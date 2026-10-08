@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   return NextResponse.json({
-    name: 'Gordon Athletic Advisory',
+    name: 'Forge Athletic',
     version: APP_VERSION,
     releaseDate: APP_RELEASE_DATE,
     codename: APP_RELEASE_CODENAME,

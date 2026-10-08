@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master Coach Gordon Interactive AI Engine
+ * Forge Athletic — Master Coach Gordon Interactive AI Engine
  * 
  * Ingests athlete questions with real-time biometric and workout context,
  * performs semantic RAG retrieval across the 16 sports science curriculums,
@@ -188,7 +188,14 @@ Provide Coach Scott Gordon's warm, conversational response formatted naturally w
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
 
   if (apiKey) {
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+    const modelsToTry = [
+      ...(process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : []),
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-2.5-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+    ]
     for (const model of modelsToTry) {
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`

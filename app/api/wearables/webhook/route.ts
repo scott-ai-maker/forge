@@ -14,7 +14,7 @@ import { normalizeWearableWorkout } from '@/lib/wearables-telemetry'
 export async function GET() {
   return NextResponse.json({
     ok: true,
-    message: 'Gordon Athletic Advisory Single Source of Truth Webhook Engine Active (Apple Health & Google Health Connect)',
+    message: 'Forge Athletic Single Source of Truth Webhook Engine Active (Apple Health & Google Health Connect)',
     supportedProviders: ['apple_health', 'google_fit'],
   })
 }

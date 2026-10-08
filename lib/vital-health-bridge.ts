@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Vital Health API Bridge
+ * Forge Athletic — Vital Health API Bridge
  * Turnkey 1-tap Apple Health & Google Health Connect Aggregator Engine
  * Handles user creation, Link Token generation, and normalized webhook ingestion.
  */

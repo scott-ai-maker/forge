@@ -374,7 +374,7 @@ export default function NasmAssessmentSummary({ assessment }: NasmAssessmentSumm
       {/* Client Printable Corrective Handout */}
       <div className="cex-print-sheet" style={{ display: 'none' }}>
         <div style={{ borderBottom: '2px solid #0D1B2A', paddingBottom: 10, marginBottom: 14 }}>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>Gordon Athletic Advisory · Corrective Mobility Plan</h1>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>Forge Athletic · Corrective Mobility Plan</h1>
           <p style={{ margin: '2px 0 0', fontSize: 12, color: '#555' }}>
             NASM Corrective Exercise Continuum · Assessed: {new Date(assessment.assessment_date).toLocaleDateString()}
           </p>

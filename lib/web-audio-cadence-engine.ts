@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Ultra-Low Latency Web Audio Engine & Cadence Scheduler
+ * Forge Athletic — Ultra-Low Latency Web Audio Engine & Cadence Scheduler
  * 
  * High-precision audio scheduling utilizing the Web Audio API hardware clock (AudioContext.currentTime).
  * Provides lookahead event scheduling, smooth anti-popping gain envelopes, biomechanically designed

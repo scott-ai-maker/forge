@@ -33,7 +33,7 @@ test.describe('Packages, Corporate Architecture & Marketing Feature Suite', () =
     await expect(page.getByRole('heading', { name: /WHAT'S NEW & SYSTEM RELEASES/i })).toBeVisible()
 
     await page.goto('/audit')
-    await expect(page.getByText(/Gordon Athletic Advisory/i).first()).toBeVisible()
+    await expect(page.getByText(/Forge Athletic/i).first()).toBeVisible()
   })
 
   test('renders Forge Athletic early access inquiry form', async ({ page }) => {

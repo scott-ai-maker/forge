@@ -18,7 +18,7 @@ describe('coach-consultant-memo', () => {
     expect(memo.performanceReview).toContain('335 lbs')
     expect(memo.recommendedProgression).toContain('NASM 2-for-2 Progression Trigger')
     expect(memo.fullMemoMarkdown).toContain('Scott Gordon')
-    expect(memo.fullMemoMarkdown).toContain('Gordon Athletic Advisory')
+    expect(memo.fullMemoMarkdown).toContain('Forge Athletic')
   })
 
   it('triggers recovery modulation when client readiness indicates fatigue', () => {

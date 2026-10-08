@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master NASM Edge Exercise Video Catalog & Embed Resolver
+ * Forge Athletic — Master NASM Edge Exercise Video Catalog & Embed Resolver
  * 100% Official NASM Edge Video Demonstrations exclusively.
  * Matches client brand standards with verified clinical NASM instructor video productions.
  */

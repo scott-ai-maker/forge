@@ -93,7 +93,7 @@ export default function SportsScienceCalculator() {
               marginBottom: 4,
             }}
           >
-            Gordon Athletic Advisory · Sports Science Knowledge Matrix
+            Forge Athletic · Sports Science Knowledge Matrix
           </div>
           <h3
             style={{

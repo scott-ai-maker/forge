@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Google Health Connect & Android Inbound Telemetry Bridge
+ * Forge Athletic — Google Health Connect & Android Inbound Telemetry Bridge
  *
  * Standardizes inbound synchronization for Android & Wear OS devices:
  * 1. Autonomic Biometrics: Resting Heart Rate (RHR), HRV rMSSD, Respiratory Rate, VO2 Max.

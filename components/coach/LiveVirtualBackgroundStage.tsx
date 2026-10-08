@@ -607,7 +607,7 @@ export default function LiveVirtualBackgroundStage({
               lineHeight: 1,
             }}
           >
-            GORDON ATHLETIC ADVISORY
+            FORGE ATHLETIC
           </span>
           <span
             style={{

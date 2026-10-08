@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory — Master Sports Injuries & Orthopedic Biomechanics Registry
+ * Forge Athletic — Master Sports Injuries & Orthopedic Biomechanics Registry
  * 
  * Curated specifically for personal trainers, strength & conditioning coaches,
  * and NASM Corrective Exercise Specialists (CES).

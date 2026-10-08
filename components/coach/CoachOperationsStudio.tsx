@@ -132,7 +132,7 @@ export default function CoachOperationsStudio({
               </span>
             </div>
             <p style={{ margin: '3px 0 0', fontSize: 13, color: 'var(--gray)' }}>
-              Gordon Athletic Advisory · Head Coach Operations
+              Forge Athletic · Head Coach Operations
             </p>
           </div>
         </div>

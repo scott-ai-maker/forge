@@ -308,7 +308,7 @@ export default function ExecutiveSupplementTimeline({
               EXPLORE SUPPLEMENT OPTIONS
             </h3>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--gray)', lineHeight: 1.45 }}>
-              Gordon Athletic Advisory athletes receive wholesale-tier access to cold-chain shipped, 100% 3rd-party lab verified (NSF for Sport / USP) formulations with zero heavy metals or fillers.
+              Forge Athletic athletes receive wholesale-tier access to cold-chain shipped, 100% 3rd-party lab verified (NSF for Sport / USP) formulations with zero heavy metals or fillers.
             </p>
           </div>
         </div>
