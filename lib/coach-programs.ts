@@ -350,6 +350,7 @@ export function buildStoredProgramPlan(
     calendar: workouts.map(workout => {
       const workoutDuration = calculateEstimatedWorkoutDuration({
         workout,
+        cardio: workout.cardioProtocol,
         optPhase: payload.nasmOptPhase,
       }).totalDurationMins
 

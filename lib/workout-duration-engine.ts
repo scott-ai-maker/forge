@@ -261,9 +261,17 @@ export function calculateEstimatedWorkoutDuration({
   const allExercises = workout?.exercises || []
 
   // Classify exercises into blocks
-  const warmupExercises = allExercises.filter(ex => ex.block === 'warm-up')
-  const cooldownExercises = allExercises.filter(ex => ex.block === 'cool-down')
-  const workingExercises = allExercises.filter(ex => ex.block !== 'warm-up' && ex.block !== 'cool-down')
+  const isWarmupBlock = (b?: string | null) => {
+    const clean = String(b ?? '').toLowerCase().trim()
+    return clean === 'warm-up' || clean === 'warmup'
+  }
+  const isCooldownBlock = (b?: string | null) => {
+    const clean = String(b ?? '').toLowerCase().trim()
+    return clean === 'cool-down' || clean === 'cooldown'
+  }
+  const warmupExercises = allExercises.filter(ex => isWarmupBlock(ex.block))
+  const cooldownExercises = allExercises.filter(ex => isCooldownBlock(ex.block))
+  const workingExercises = allExercises.filter(ex => !isWarmupBlock(ex.block) && !isCooldownBlock(ex.block))
 
   const phase = options.optPhase ?? optPhase ?? 1
   const transitionSec = options.interExerciseTransitionSeconds ?? 120 // 2.0 mins between distinct exercises
