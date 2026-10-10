@@ -98,7 +98,7 @@ export default function CredentialsPage() {
           name: 'Amazon Web Services Training and Certification',
         },
         validFrom: '2022-08-22',
-        url: 'https://www.credly.com/org/amazon-web-services/badge/aws-certified-solutions-architect-associate',
+        url: 'https://www.credly.com/badges/3a6271d0-0814-42b9-8a22-cf56c1637c24',
       },
       {
         '@type': 'EducationalOccupationalCredential',
@@ -109,7 +109,7 @@ export default function CredentialsPage() {
           name: 'IBM & Coursera',
         },
         validFrom: '2025-12-26',
-        url: 'https://www.credly.com/org/coursera/badge/ibm-ai-developer-professional-certificate',
+        url: 'https://www.credly.com/badges/9e43c958-0355-4212-a7e5-d008bfda3e56',
       },
     ],
   }

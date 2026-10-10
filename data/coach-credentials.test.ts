@@ -91,6 +91,13 @@ describe('data/coach-credentials.ts', () => {
     expect(azure).toBeDefined()
     expect(azure?.issuerShort).toBe('Microsoft')
     expect(azure?.badgeImage).toBe('https://images.credly.com/images/be8fcaeb-c769-4858-b567-ffaaa73ce8cf/image.png')
+    expect(azure?.verificationUrl).toBe('https://www.credly.com/badges/140ad9f8-3ca0-47d5-a7d7-23ba6f89ecf3')
+
+    // Ensure all engineering credentials link to Scott Gordon's live earner badge URLs (never 404 template URLs)
+    const engCreds = COACH_CREDENTIALS.filter((c) => c.category === 'engineering')
+    for (const c of engCreds) {
+      expect(c.verificationUrl).toMatch(/^https:\/\/www\.credly\.com\/badges\/[a-f0-9-]+$/)
+    }
   })
 
   it('computes accurate category counts and stats including Credly portfolio', () => {
