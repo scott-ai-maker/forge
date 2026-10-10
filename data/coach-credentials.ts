@@ -113,6 +113,15 @@ export const FEATURED_CREDLY_BADGES: CredlyBadgeItem[] = [
     credlyUrl: 'https://www.credly.com/org/microsoft-certification/badge/mta-software-development-fundamentals-certified-2020',
     skills: ['Core Programming', 'Databases', 'OOP', 'Software Development'],
   },
+  {
+    id: '140ad9f8-3ca0-47d5-a7d7-23ba6f89ecf3',
+    name: 'Microsoft Certified: Azure Fundamentals',
+    issuer: 'Microsoft',
+    issuedDate: '2020-06-09',
+    imageUrl: 'https://images.credly.com/images/be8fcaeb-c769-4858-b567-ffaaa73ce8cf/image.png',
+    credlyUrl: 'https://www.credly.com/org/microsoft-certification/badge/microsoft-certified-azure-fundamentals',
+    skills: ['Azure', 'Cloud Security', 'Cloud Services', 'Virtualization'],
+  },
 ]
 
 export type CredentialStatus =
@@ -429,7 +438,7 @@ export const COACH_CREDENTIALS: CoachCredential[] = [
     statusLabel: 'Verified Credly · Issued Jun 2020',
     issueDate: 'June 9, 2020',
     verificationUrl: 'https://www.credly.com/org/microsoft-certification/badge/microsoft-certified-azure-fundamentals',
-    badgeImage: 'https://images.credly.com/images/336eebfc-0ac3-4553-94ef-b595166f3807/azure-fundamentals-600x600.png',
+    badgeImage: 'https://images.credly.com/images/be8fcaeb-c769-4858-b567-ffaaa73ce8cf/image.png',
     badgeTone: '#0EA5E9',
     icon: 'shield-check',
     featured: false,

@@ -86,6 +86,11 @@ describe('data/coach-credentials.ts', () => {
     expect(ibmMl).toBeDefined()
     expect(ibmMl?.issuerShort).toBe('IBM')
     expect(ibmMl?.issueDate).toBe('October 9, 2026')
+
+    const azure = getCredentialById('microsoft-azure-fundamentals')
+    expect(azure).toBeDefined()
+    expect(azure?.issuerShort).toBe('Microsoft')
+    expect(azure?.badgeImage).toBe('https://images.credly.com/images/be8fcaeb-c769-4858-b567-ffaaa73ce8cf/image.png')
   })
 
   it('computes accurate category counts and stats including Credly portfolio', () => {
