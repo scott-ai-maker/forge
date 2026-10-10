@@ -11,6 +11,7 @@ import IntensityProtocolDrawer from './IntensityProtocolDrawer'
 import OneRepMaxPercentageMatrix from './OneRepMaxPercentageMatrix'
 import AutoregulationDeloadAdvisor from './AutoregulationDeloadAdvisor'
 import WarmUpRampDrawer from './WarmUpRampDrawer'
+import WorkoutToolBottomSheet, { type WorkoutToolTab } from './WorkoutToolBottomSheet'
 import { resolveGaaExerciseImage } from '@/lib/nasm-generated-images'
 import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
@@ -55,7 +56,7 @@ export default function SupersetPairCard({
   triggerHaptic,
 }: SupersetPairCardProps) {
   const [activeSub, setActiveSub] = useState<'A' | 'B'>('A')
-  const [openRamp, setOpenRamp] = useState(false)
+  const [activeTool, setActiveTool] = useState<WorkoutToolTab | null>(null)
 
   const defaultRepsA = parseInt(String(pair.exerciseA.reps || '10').replace(/[^0-9]/g, ''), 10) || 10
   const defaultRepsB = parseInt(String(pair.exerciseB.reps || '10').replace(/[^0-9]/g, ''), 10) || 10
@@ -363,64 +364,6 @@ export default function SupersetPairCard({
         triggerHaptic={triggerHaptic}
       />
 
-      {/* ── Progressive Warm-Up Ramp-Up Wizard for Active Sub-Exercise ── */}
-      <WarmUpRampDrawer
-        exerciseKey={`ss-${pair.id}-${activeSub}`}
-        exerciseName={currentEx.name}
-        draftWeight={currentDraft.weight}
-        oneRmLbs={activeHistoricalMax1RmLbs > 0 ? activeHistoricalMax1RmLbs : undefined}
-        units={units}
-        isOpen={openRamp}
-        onToggle={() => setOpenRamp(prev => !prev)}
-        prescribedReps={currentEx.reps}
-        onPopulateWorkingWeight={(workingWeight, targetReps) => {
-          triggerHaptic?.('success')
-          setDrafts(prev => ({
-            ...prev,
-            [activeSub]: {
-              ...prev[activeSub],
-              weight: workingWeight,
-              reps: targetReps || parsePrescribedWorkingReps(currentEx.reps),
-              isWarmup: false,
-              setNumber: '1',
-              notes: '',
-            },
-          }))
-        }}
-        onLogWarmupStage={(stageWeight, reps, restSecs, stageNum, totalStages, stageTitle) => {
-          const stageTag = totalStages && stageTitle
-            ? `[Superset WarmUp ${stageNum}/${totalStages}: ${stageTitle}]`
-            : `[Superset Warm-up Stage ${stageNum}]`
-          const isFinalStage = Boolean(totalStages && stageNum >= totalStages)
-
-          onLogSet(currentEx, {
-            ...currentDraft,
-            weight: stageWeight,
-            reps: String(reps),
-            restSeconds: restSecs,
-            isWarmup: true,
-            notes: stageTag,
-          })
-
-          if (isFinalStage) {
-            setTimeout(() => {
-              setDrafts(prev => ({
-                ...prev,
-                [activeSub]: {
-                  ...prev[activeSub],
-                  weight: currentDraft.weight,
-                  reps: parsePrescribedWorkingReps(currentEx.reps),
-                  isWarmup: false,
-                  setNumber: '1',
-                  notes: '',
-                },
-              }))
-            }, 100)
-          }
-        }}
-        triggerHaptic={triggerHaptic}
-      />
-
       {/* ── Inline Set Inputs: Reps, Weight & Steppers ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
         {/* Reps */}
@@ -526,155 +469,6 @@ export default function SupersetPairCard({
         triggerHaptic={triggerHaptic}
       />
 
-      {/* ── Interactive RPE & RIR Exertion Selector for Active Sub-Exercise ── */}
-      <RpeRirExertionSelector
-        exerciseName={currentEx.name}
-        currentRpe={currentDraft.rpe}
-        currentRir={currentDraft.rir}
-        onChangeRpe={rpeVal => {
-          setDrafts(prev => ({ ...prev, [activeSub]: { ...prev[activeSub], rpe: rpeVal } }))
-        }}
-        onChangeRir={rirVal => {
-          setDrafts(prev => ({ ...prev, [activeSub]: { ...prev[activeSub], rir: rirVal } }))
-        }}
-        triggerHaptic={triggerHaptic}
-      />
-
-      {/* ── Interactive Rep Cadence & Tempo Metronome for Active Sub-Exercise ── */}
-      <RepCadenceMetronome
-        tempo={currentDraft.tempo || currentEx.tempo || '2/0/2'}
-        targetReps={currentDraft.reps || currentEx.reps || 8}
-        exerciseName={currentEx.name}
-        weightKg={
-          units === 'imperial'
-            ? (parseFloat(currentDraft.weight) || 0) * 0.453592
-            : (parseFloat(currentDraft.weight) || 0)
-        }
-        units={units}
-        nasmOptPhase={nasmOptPhase}
-        onCompleteReps={completedReps => {
-          setDrafts(prev => ({
-            ...prev,
-            [activeSub]: { ...prev[activeSub], reps: String(completedReps) },
-          }))
-        }}
-        triggerHaptic={triggerHaptic}
-      />
-
-      {/* ── Advanced Intensity Protocols (Drop Sets & Rest-Pause) for Active Sub-Exercise ── */}
-      <IntensityProtocolDrawer
-        exerciseName={currentEx.name}
-        currentWeight={currentDraft.weight}
-        currentReps={currentDraft.reps}
-        units={units}
-        nasmOptPhase={nasmOptPhase}
-        onLogIntensitySet={protocolData => {
-          const primaryWeight = units === 'imperial'
-            ? String(protocolData.initialWeightLbs)
-            : String(Math.round((protocolData.initialWeightLbs / 2.20462) * 10) / 10)
-          const updatedDraft = {
-            ...currentDraft,
-            weight: primaryWeight,
-            reps: String(protocolData.totalReps),
-            notes: protocolData.notes || '',
-            restSeconds: activeSub === 'A' ? pair.transitionRestSeconds : pair.compoundRestSeconds,
-          }
-          onLogSet(currentEx, updatedDraft)
-          if (activeSub === 'A') {
-            setActiveSub('B')
-          } else {
-            setActiveSub('A')
-            setDrafts(prev => ({
-              A: { ...prev.A, setNumber: String(Number(prev.A.setNumber) + 1) },
-              B: { ...prev.B, setNumber: String(Number(prev.B.setNumber) + 1) },
-            }))
-          }
-        }}
-        triggerHaptic={triggerHaptic}
-      />
-
-      {/* ── Interactive 1RM Percentage & Target Load Matrix for Active Sub-Exercise ── */}
-      <OneRepMaxPercentageMatrix
-        exerciseName={currentEx.name}
-        currentWeight={currentDraft.weight}
-        currentReps={currentDraft.reps}
-        historicalMax1RmLbs={activeHistoricalMax1RmLbs > 0 ? activeHistoricalMax1RmLbs : undefined}
-        units={units}
-        isWarmup={currentDraft.isWarmup}
-        onApplyLoad={(appliedWeight, appliedReps) => {
-          setDrafts(prev => ({
-            ...prev,
-            [activeSub]: {
-              ...prev[activeSub],
-              weight: appliedWeight,
-              reps: appliedReps,
-            },
-          }))
-        }}
-        triggerHaptic={triggerHaptic}
-      />
-
-      {/* ── Dynamic Autoregulation & Deload Advisor for Active Sub-Exercise ── */}
-      <AutoregulationDeloadAdvisor
-        exerciseName={currentEx.name}
-        currentDraftWeight={currentDraft.weight}
-        currentDraftReps={currentDraft.reps}
-        targetReps={currentEx.reps}
-        completedSets={currentLoggedSets.map((s, idx) => ({
-          setNumber: typeof s.set_number === 'number' ? s.set_number : idx + 1,
-          weightLbs: (s.weight_kg ?? 0) * 2.20462,
-          weightKg: s.weight_kg ?? undefined,
-          reps: Number(s.reps) || 0,
-          rpe: s.rpe,
-          rir: s.rir,
-          isWarmup: s.is_warmup,
-          sessionDate: s.session_date,
-        }))}
-        units={units}
-        onApplyDeloadWeight={newWeight => {
-          setDrafts(prev => ({
-            ...prev,
-            [activeSub]: { ...prev[activeSub], weight: newWeight },
-          }))
-        }}
-        onApplyRepCap={newReps => {
-          setDrafts(prev => ({
-            ...prev,
-            [activeSub]: { ...prev[activeSub], reps: newReps },
-          }))
-        }}
-        onOpenDropSet={stages => {
-          if (!stages?.length) return
-          const firstWeight = units === 'imperial' ? String(stages[0].weightLbs) : String(Math.round(stages[0].weightLbs / 2.20462))
-          setDrafts(prev => ({
-            ...prev,
-            [activeSub]: {
-              ...prev[activeSub],
-              weight: firstWeight,
-            },
-          }))
-        }}
-        onApplyClusterSet={clusterPlan => {
-          setDrafts(prev => ({
-            ...prev,
-            [activeSub]: {
-              ...prev[activeSub],
-              reps: String(clusterPlan.repsPerCluster),
-            },
-          }))
-        }}
-        onApplyMyoReps={myoPlan => {
-          setDrafts(prev => ({
-            ...prev,
-            [activeSub]: {
-              ...prev[activeSub],
-              reps: String(myoPlan.activationReps),
-            },
-          }))
-        }}
-        triggerHaptic={triggerHaptic}
-      />
-
       {/* ── 1-Tap Log Set & Auto-Advance Button ── */}
       <div style={{ marginTop: 12 }}>
         <button
@@ -728,6 +522,372 @@ export default function SupersetPairCard({
           </button>
         </div>
       )}
+
+      {/* ── Segmented Assist Chips Bar for Modal Bottom Sheet Tools ── */}
+      <div
+        data-testid="superset-tool-strip"
+        style={{
+          marginTop: 10,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 4,
+          background: 'rgba(7, 11, 20, 0.75)',
+          padding: 3,
+          borderRadius: 6,
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        <button
+          type="button"
+          data-testid="superset-toggle-warmup-btn"
+          aria-expanded={activeTool === 'warmup'}
+          onClick={() => {
+            triggerHaptic?.('tap')
+            setActiveTool(prev => prev === 'warmup' ? null : 'warmup')
+          }}
+          style={{
+            padding: '5px 2px',
+            background: activeTool === 'warmup' ? 'rgba(212,160,23,0.22)' : 'transparent',
+            border: activeTool === 'warmup' ? '1px solid var(--gold)' : '1px solid transparent',
+            color: activeTool === 'warmup' ? 'var(--gold-lt)' : 'var(--gray)',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontSize: 10.5,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <GaaIcon name="sparkles" size={11} tone={activeTool === 'warmup' ? 'gold' : 'slate'} />
+          <span>Warmup</span>
+        </button>
+
+        <button
+          type="button"
+          data-testid="superset-toggle-intensity-btn"
+          aria-expanded={activeTool === 'intensity'}
+          onClick={() => {
+            triggerHaptic?.('tap')
+            setActiveTool(prev => prev === 'intensity' ? null : 'intensity')
+          }}
+          style={{
+            padding: '5px 2px',
+            background: activeTool === 'intensity' ? 'rgba(212,160,23,0.22)' : 'transparent',
+            border: activeTool === 'intensity' ? '1px solid var(--gold)' : '1px solid transparent',
+            color: activeTool === 'intensity' ? 'var(--gold-lt)' : 'var(--gray)',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontSize: 10.5,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <GaaIcon name="lightning" size={11} tone={activeTool === 'intensity' ? 'gold' : 'slate'} />
+          <span>Intensity</span>
+        </button>
+
+        <button
+          type="button"
+          data-testid="superset-toggle-science-btn"
+          aria-expanded={activeTool === 'science'}
+          onClick={() => {
+            triggerHaptic?.('tap')
+            setActiveTool(prev => prev === 'science' ? null : 'science')
+          }}
+          style={{
+            padding: '5px 2px',
+            background: activeTool === 'science' ? 'rgba(212,160,23,0.22)' : 'transparent',
+            border: activeTool === 'science' ? '1px solid var(--gold)' : '1px solid transparent',
+            color: activeTool === 'science' ? 'var(--gold-lt)' : 'var(--gray)',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontSize: 10.5,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <GaaIcon name="award" size={11} tone={activeTool === 'science' ? 'gold' : 'slate'} />
+          <span>Science</span>
+        </button>
+
+        <button
+          type="button"
+          data-testid="superset-toggle-telemetry-btn"
+          aria-expanded={activeTool === 'telemetry'}
+          onClick={() => {
+            triggerHaptic?.('tap')
+            setActiveTool(prev => prev === 'telemetry' ? null : 'telemetry')
+          }}
+          style={{
+            padding: '5px 2px',
+            background: activeTool === 'telemetry' ? 'rgba(212,160,23,0.22)' : 'transparent',
+            border: activeTool === 'telemetry' ? '1px solid var(--gold)' : '1px solid transparent',
+            color: activeTool === 'telemetry' ? 'var(--gold-lt)' : 'var(--gray)',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontSize: 10.5,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <GaaIcon name="settings" size={11} tone={activeTool === 'telemetry' ? 'gold' : 'slate'} />
+          <span>Telemetry</span>
+        </button>
+      </div>
+
+      {/* ── Modern PWA / Mobile Modal Bottom Sheet for Superset Tools ── */}
+      <WorkoutToolBottomSheet
+        isOpen={Boolean(activeTool)}
+        onClose={() => {
+          triggerHaptic?.('tap')
+          setActiveTool(null)
+        }}
+        activeTool={activeTool || 'warmup'}
+        onSelectTool={tab => {
+          triggerHaptic?.('tap')
+          setActiveTool(tab)
+        }}
+        exerciseName={`${currentEx.name} (${activeSub === 'A' ? '1A' : '1B'})`}
+        availableTools={['warmup', 'intensity', 'science', 'telemetry']}
+        triggerHaptic={triggerHaptic}
+      >
+        {/* Tool: WarmUp Ramp-Up Wizard */}
+        {activeTool === 'warmup' && (
+          <div data-testid="superset-warmup-tools-container" style={{ display: 'grid', gap: 12 }}>
+            <WarmUpRampDrawer
+              exerciseKey={`ss-${pair.id}-${activeSub}`}
+              exerciseName={currentEx.name}
+              draftWeight={currentDraft.weight}
+              oneRmLbs={activeHistoricalMax1RmLbs > 0 ? activeHistoricalMax1RmLbs : undefined}
+              units={units}
+              isOpen={true}
+              onToggle={() => {}}
+              prescribedReps={currentEx.reps}
+              onPopulateWorkingWeight={(workingWeight, targetReps) => {
+                triggerHaptic?.('success')
+                setDrafts(prev => ({
+                  ...prev,
+                  [activeSub]: {
+                    ...prev[activeSub],
+                    weight: workingWeight,
+                    reps: targetReps || parsePrescribedWorkingReps(currentEx.reps),
+                    isWarmup: false,
+                    setNumber: '1',
+                    notes: '',
+                  },
+                }))
+              }}
+              onLogWarmupStage={(stageWeight, reps, restSecs, stageNum, totalStages, stageTitle) => {
+                const stageTag = totalStages && stageTitle
+                  ? `[Superset WarmUp ${stageNum}/${totalStages}: ${stageTitle}]`
+                  : `[Superset Warm-up Stage ${stageNum}]`
+                const isFinalStage = Boolean(totalStages && stageNum >= totalStages)
+
+                onLogSet(currentEx, {
+                  ...currentDraft,
+                  weight: stageWeight,
+                  reps: String(reps),
+                  restSeconds: restSecs,
+                  isWarmup: true,
+                  notes: stageTag,
+                })
+
+                if (isFinalStage) {
+                  setTimeout(() => {
+                    setDrafts(prev => ({
+                      ...prev,
+                      [activeSub]: {
+                        ...prev[activeSub],
+                        weight: currentDraft.weight,
+                        reps: parsePrescribedWorkingReps(currentEx.reps),
+                        isWarmup: false,
+                        setNumber: '1',
+                        notes: '',
+                      },
+                    }))
+                  }, 100)
+                }
+              }}
+              triggerHaptic={triggerHaptic}
+            />
+          </div>
+        )}
+
+        {/* Tool: Advanced Intensity Protocols (Drop Sets & Rest-Pause) */}
+        {activeTool === 'intensity' && (
+          <div data-testid="superset-intensity-tools-container">
+            <IntensityProtocolDrawer
+              exerciseName={currentEx.name}
+              currentWeight={currentDraft.weight}
+              currentReps={currentDraft.reps}
+              units={units}
+              nasmOptPhase={nasmOptPhase}
+              defaultOpen={true}
+              onLogIntensitySet={protocolData => {
+                const primaryWeight = units === 'imperial'
+                  ? String(protocolData.initialWeightLbs)
+                  : String(Math.round((protocolData.initialWeightLbs / 2.20462) * 10) / 10)
+                const updatedDraft = {
+                  ...currentDraft,
+                  weight: primaryWeight,
+                  reps: String(protocolData.totalReps),
+                  notes: protocolData.notes || '',
+                  restSeconds: activeSub === 'A' ? pair.transitionRestSeconds : pair.compoundRestSeconds,
+                }
+                onLogSet(currentEx, updatedDraft)
+                if (activeSub === 'A') {
+                  setActiveSub('B')
+                } else {
+                  setActiveSub('A')
+                  setDrafts(prev => ({
+                    A: { ...prev.A, setNumber: String(Number(prev.A.setNumber) + 1) },
+                    B: { ...prev.B, setNumber: String(Number(prev.B.setNumber) + 1) },
+                  }))
+                }
+              }}
+              triggerHaptic={triggerHaptic}
+            />
+          </div>
+        )}
+
+        {/* Tool: Dynamic Autoregulation & Deload Advisor */}
+        {activeTool === 'science' && (
+          <div data-testid="superset-science-tools-container">
+            <AutoregulationDeloadAdvisor
+              exerciseName={currentEx.name}
+              currentDraftWeight={currentDraft.weight}
+              currentDraftReps={currentDraft.reps}
+              targetReps={currentEx.reps}
+              completedSets={currentLoggedSets.map((s, idx) => ({
+                setNumber: typeof s.set_number === 'number' ? s.set_number : idx + 1,
+                weightLbs: (s.weight_kg ?? 0) * 2.20462,
+                weightKg: s.weight_kg ?? undefined,
+                reps: Number(s.reps) || 0,
+                rpe: s.rpe,
+                rir: s.rir,
+                isWarmup: s.is_warmup,
+                sessionDate: s.session_date,
+              }))}
+              units={units}
+              onApplyDeloadWeight={newWeight => {
+                setDrafts(prev => ({
+                  ...prev,
+                  [activeSub]: { ...prev[activeSub], weight: newWeight },
+                }))
+              }}
+              onApplyRepCap={newReps => {
+                setDrafts(prev => ({
+                  ...prev,
+                  [activeSub]: { ...prev[activeSub], reps: newReps },
+                }))
+              }}
+              onOpenDropSet={stages => {
+                if (!stages?.length) return
+                const firstWeight = units === 'imperial' ? String(stages[0].weightLbs) : String(Math.round(stages[0].weightLbs / 2.20462))
+                setDrafts(prev => ({
+                  ...prev,
+                  [activeSub]: {
+                    ...prev[activeSub],
+                    weight: firstWeight,
+                  },
+                }))
+              }}
+              onApplyClusterSet={clusterPlan => {
+                setDrafts(prev => ({
+                  ...prev,
+                  [activeSub]: {
+                    ...prev[activeSub],
+                    reps: String(clusterPlan.repsPerCluster),
+                  },
+                }))
+              }}
+              onApplyMyoReps={myoPlan => {
+                setDrafts(prev => ({
+                  ...prev,
+                  [activeSub]: {
+                    ...prev[activeSub],
+                    reps: String(myoPlan.activationReps),
+                  },
+                }))
+              }}
+              triggerHaptic={triggerHaptic}
+            />
+          </div>
+        )}
+
+        {/* Tool: Exertion Telemetry, Cadence Metronome & 1RM Percentage Matrix */}
+        {activeTool === 'telemetry' && (
+          <div data-testid="superset-advanced-telemetry-container" style={{ display: 'grid', gap: 12 }}>
+            <RpeRirExertionSelector
+              exerciseName={currentEx.name}
+              currentRpe={currentDraft.rpe}
+              currentRir={currentDraft.rir}
+              onChangeRpe={rpeVal => {
+                setDrafts(prev => ({ ...prev, [activeSub]: { ...prev[activeSub], rpe: rpeVal } }))
+              }}
+              onChangeRir={rirVal => {
+                setDrafts(prev => ({ ...prev, [activeSub]: { ...prev[activeSub], rir: rirVal } }))
+              }}
+              triggerHaptic={triggerHaptic}
+            />
+
+            <RepCadenceMetronome
+              tempo={currentDraft.tempo || currentEx.tempo || '2/0/2'}
+              targetReps={currentDraft.reps || currentEx.reps || 8}
+              exerciseName={currentEx.name}
+              weightKg={
+                units === 'imperial'
+                  ? (parseFloat(currentDraft.weight) || 0) * 0.453592
+                  : (parseFloat(currentDraft.weight) || 0)
+              }
+              units={units}
+              nasmOptPhase={nasmOptPhase}
+              onCompleteReps={completedReps => {
+                setDrafts(prev => ({
+                  ...prev,
+                  [activeSub]: { ...prev[activeSub], reps: String(completedReps) },
+                }))
+              }}
+              triggerHaptic={triggerHaptic}
+            />
+
+            <OneRepMaxPercentageMatrix
+              exerciseName={currentEx.name}
+              currentWeight={currentDraft.weight}
+              currentReps={currentDraft.reps}
+              historicalMax1RmLbs={activeHistoricalMax1RmLbs > 0 ? activeHistoricalMax1RmLbs : undefined}
+              units={units}
+              isWarmup={currentDraft.isWarmup}
+              onApplyLoad={(appliedWeight, appliedReps) => {
+                setDrafts(prev => ({
+                  ...prev,
+                  [activeSub]: {
+                    ...prev[activeSub],
+                    weight: appliedWeight,
+                    reps: appliedReps,
+                  },
+                }))
+              }}
+              triggerHaptic={triggerHaptic}
+            />
+          </div>
+        )}
+      </WorkoutToolBottomSheet>
     </div>
   )
 }

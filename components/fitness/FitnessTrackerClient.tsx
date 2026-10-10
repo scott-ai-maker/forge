@@ -65,6 +65,7 @@ import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import SetProgressionMatrix from '@/components/fitness/tracker/SetProgressionMatrix'
 import WarmUpRampDrawer from '@/components/fitness/tracker/WarmUpRampDrawer'
 import IntensityProtocolDrawer from '@/components/fitness/tracker/IntensityProtocolDrawer'
+import WorkoutToolBottomSheet, { type WorkoutToolTab } from '@/components/fitness/tracker/WorkoutToolBottomSheet'
 import PlateAdjustmentPresets from '@/components/fitness/tracker/PlateAdjustmentPresets'
 import RpeRirExertionSelector from '@/components/fitness/tracker/RpeRirExertionSelector'
 import VolumeOverloadMiniHud from '@/components/fitness/tracker/VolumeOverloadMiniHud'
@@ -1045,7 +1046,7 @@ export default function FitnessTrackerClient({
   const [plateCalculatorTargetLbs, setPlateCalculatorTargetLbs] = useState<number | null>(null)
   const [openFormGuides, setOpenFormGuides] = useState<Record<string, boolean>>({})
   const [openAdvancedMetrics, setOpenAdvancedMetrics] = useState<Record<string, boolean>>({})
-  const [activeExerciseToolTabs, setActiveExerciseToolTabs] = useState<Record<string, 'form' | 'warmup' | 'science' | 'telemetry' | null>>({})
+  const [activeExerciseToolTabs, setActiveExerciseToolTabs] = useState<Record<string, WorkoutToolTab | null>>({})
 
   const getWorkoutDayCompletion = useCallback((day: number) => {
     const res = resolveWorkoutDayCompletion({
@@ -4134,9 +4135,9 @@ export default function FitnessTrackerClient({
 
                             {/* ── Unified 4-Tool Strip: [ Form ] [ Warmup ] [ Science ] [ Telemetry ] ── */}
                             {(() => {
-                              const activeTool = activeExerciseToolTabs[exerciseKey] ?? (openFormGuides[exerciseKey] ? 'form' : openAdvancedMetrics[exerciseKey] ? 'telemetry' : null)
+                              const activeTool = (activeExerciseToolTabs[exerciseKey] ?? (openFormGuides[exerciseKey] ? 'form' : openAdvancedMetrics[exerciseKey] ? 'telemetry' : null)) as WorkoutToolTab | null
 
-                              const toggleTool = (tab: 'form' | 'warmup' | 'science' | 'telemetry') => {
+                              const toggleTool = (tab: WorkoutToolTab) => {
                                 triggerHaptic('tap')
                                 const next = activeTool === tab ? null : tab
                                 setActiveExerciseToolTabs(prev => ({ ...prev, [exerciseKey]: next }))
@@ -4295,8 +4296,32 @@ export default function FitnessTrackerClient({
                                     </button>
                                   </div>
 
-                                  {/* Tool 1: Form & Video Guide Panel */}
-                                  {activeTool === 'form' && (
+                                  {/* ── Modern PWA / Mobile Modal Bottom Sheet for In-Workout Tools ── */}
+                                  <WorkoutToolBottomSheet
+                                    isOpen={Boolean(activeTool)}
+                                    onClose={() => {
+                                      triggerHaptic('tap')
+                                      setActiveExerciseToolTabs(prev => ({ ...prev, [exerciseKey]: null }))
+                                      setOpenFormGuides(prev => ({ ...prev, [exerciseKey]: false }))
+                                      setOpenAdvancedMetrics(prev => ({ ...prev, [exerciseKey]: false }))
+                                    }}
+                                    activeTool={(activeTool as WorkoutToolTab) || 'warmup'}
+                                    onSelectTool={tab => {
+                                      triggerHaptic('tap')
+                                      setActiveExerciseToolTabs(prev => ({ ...prev, [exerciseKey]: tab }))
+                                      setOpenFormGuides(prev => ({ ...prev, [exerciseKey]: tab === 'form' }))
+                                      setOpenAdvancedMetrics(prev => ({ ...prev, [exerciseKey]: tab === 'telemetry' }))
+                                    }}
+                                    exerciseName={ex.name}
+                                    availableTools={
+                                      !isTimed && isStrength && isIntensityProtocolOfferedForPhase(plan?.nasm_opt_phase)
+                                        ? ['form', 'warmup', 'intensity', 'science', 'telemetry']
+                                        : ['form', 'warmup', 'science', 'telemetry']
+                                    }
+                                    triggerHaptic={triggerHaptic}
+                                  >
+                                    {/* Tool 1: Form & Video Guide Panel */}
+                                    {activeTool === 'form' && (
                                     <div
                                       data-testid="form-guide-container"
                                       style={{
@@ -4472,34 +4497,30 @@ export default function FitnessTrackerClient({
                                   )}
 
                                   {/* Tool 2: Warmup & Intensity Protocols Panel */}
-                                  {activeTool === 'warmup' && (
+                                  {(activeTool === 'warmup' || activeTool === 'intensity') && (
                                     <div
                                       data-testid="warmup-tools-container"
                                       style={{
-                                        marginTop: 8,
-                                        borderRadius: 6,
-                                        background: 'rgba(255,255,255,0.02)',
-                                        border: '1px solid rgba(255,255,255,0.08)',
-                                        padding: 8,
                                         display: 'grid',
-                                        gap: 8,
+                                        gap: 12,
                                       }}
                                     >
-                                      <WarmUpRampDrawer
-                                        exerciseKey={exerciseKey}
-                                        exerciseName={ex.name}
-                                        draftWeight={draft.weight}
-                                        oneRmLbs={histMax1RmLbs > 0 ? histMax1RmLbs : undefined}
-                                        units={units}
-                                        isTimed={isTimed}
-                                        isBand={isBand}
-                                        isOpen={Boolean(openWarmupRamps[`ramp-${exerciseKey}`])}
-                                        onToggle={() =>
-                                          setOpenWarmupRamps(prev => ({
-                                            ...prev,
-                                            [`ramp-${exerciseKey}`]: !prev[`ramp-${exerciseKey}`],
-                                          }))
-                                        }
+                                      {(activeTool === 'warmup' || !isIntensityProtocolOfferedForPhase(plan?.nasm_opt_phase)) && (
+                                        <WarmUpRampDrawer
+                                          exerciseKey={exerciseKey}
+                                          exerciseName={ex.name}
+                                          draftWeight={draft.weight}
+                                          oneRmLbs={histMax1RmLbs > 0 ? histMax1RmLbs : undefined}
+                                          units={units}
+                                          isTimed={isTimed}
+                                          isBand={isBand}
+                                          isOpen={Boolean(openWarmupRamps[`ramp-${exerciseKey}`] ?? true)}
+                                          onToggle={() =>
+                                            setOpenWarmupRamps(prev => ({
+                                              ...prev,
+                                              [`ramp-${exerciseKey}`]: !(prev[`ramp-${exerciseKey}`] ?? true),
+                                            }))
+                                          }
                                         prescribedReps={ex.reps}
                                         onPopulateWorkingWeight={(workingWeight, targetReps) => {
                                           triggerHaptic('success')
@@ -4579,8 +4600,10 @@ export default function FitnessTrackerClient({
                                         }}
                                         triggerHaptic={triggerHaptic}
                                       />
+                                    )}
 
-                                      {!isTimed && isStrength && isIntensityProtocolOfferedForPhase(plan?.nasm_opt_phase) && (
+                                    {!isTimed && isStrength && isIntensityProtocolOfferedForPhase(plan?.nasm_opt_phase) && (
+                                      <div data-testid="intensity-tools-container">
                                         <IntensityProtocolDrawer
                                           exerciseName={ex.name}
                                           currentWeight={draft.weight}
@@ -4607,10 +4630,12 @@ export default function FitnessTrackerClient({
                                             }, 50)
                                           }}
                                           triggerHaptic={triggerHaptic}
+                                          defaultOpen={activeTool === 'intensity'}
                                         />
-                                      )}
-                                    </div>
-                                  )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
 
                                   {/* Tool 3: Sports Science & Autoregulation Panel */}
                                   {activeTool === 'science' && (
@@ -4978,6 +5003,7 @@ export default function FitnessTrackerClient({
                                       )}
                                     </div>
                                   )}
+                                  </WorkoutToolBottomSheet>
                                 </div>
                               )
                             })()}

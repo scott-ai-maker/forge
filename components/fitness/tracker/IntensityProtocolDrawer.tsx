@@ -23,6 +23,7 @@ export interface IntensityProtocolDrawerProps {
   nasmOptPhase?: number
   onLogIntensitySet: (protocolData: IntensityProtocolData) => void
   triggerHaptic?: (type: 'tap' | 'heavy' | 'success') => void
+  defaultOpen?: boolean
 }
 
 export default function IntensityProtocolDrawer({
@@ -34,8 +35,9 @@ export default function IntensityProtocolDrawer({
   nasmOptPhase,
   onLogIntensitySet,
   triggerHaptic,
+  defaultOpen = false,
 }: IntensityProtocolDrawerProps) {
-  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const [isOpen, setIsOpen] = useState<boolean>(defaultOpen)
   const [protocolType, setProtocolType] = useState<IntensityProtocolType>('drop_set')
 
   const baseWeightNum = Number(currentWeight) || (units === 'imperial' ? 135 : 60)
