@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0
 
       - name: TruffleHog OSS Credential Scanner
-        uses: trufflesecurity/trufflehog@v3.97.5
+        uses: trufflesecurity/trufflehog@v3.99.0
         with:
           extra_args: --only-verified
 
