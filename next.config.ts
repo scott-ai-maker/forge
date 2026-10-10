@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.credly.com',
+      },
+    ],
+  },
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },

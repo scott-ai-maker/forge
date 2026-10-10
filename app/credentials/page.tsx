@@ -5,13 +5,13 @@ import CoachCredentialsShowcase from '@/components/credentials/CoachCredentialsS
 import GaaIcon from '@/components/ui/GaaIcon'
 
 export const metadata: Metadata = {
-  title: 'Coach Scott Gordon | Verified Credentials & Accreditations | Forge Athletic',
+  title: 'Coach Scott Gordon, B.S., NASM-CPT | Verified Credentials & Accreditations | Forge Athletic',
   description:
-    'Explore Coach Scott Gordon’s verified NASM credentials, NCCA-accredited Certified Personal Trainer (NASM-CPT) certification, ASTI CPR/AED credentials, and digital badges.',
+    'Explore Coach Scott Gordon’s verified credentials: B.S. in Information Technology (University of Phoenix, 3.72 GPA), NCCA-accredited Certified Personal Trainer (NASM-CPT), ASTI CPR/AED, and 34 verified Credly badges in AWS Cloud Architecture, IBM AI Engineering & DevOps.',
   openGraph: {
-    title: 'Coach Scott Gordon · Verified Credentials | Forge Athletic',
+    title: 'Coach Scott Gordon, B.S., NASM-CPT · Verified Credentials | Forge Athletic',
     description:
-      'Official credentials, verifiable digital badges, and sports science accreditations for Coach Scott Gordon.',
+      'Official credentials, academic transcripts, verifiable digital badges, and sports science accreditations for Coach Scott Gordon.',
     url: 'https://forge-athletic.app/credentials',
     siteName: 'Forge Athletic',
     images: [
@@ -35,7 +35,32 @@ export default function CredentialsPage() {
       '@type': 'Organization',
       name: 'Forge Athletic',
     },
+    alumniOf: {
+      '@type': 'CollegeOrUniversity',
+      name: 'University of Phoenix',
+      sameAs: 'https://www.phoenix.edu',
+    },
+    sameAs: [
+      'https://www.credly.com/users/scott-gordon.1dfe2f10/badges/credly',
+      'https://www.credential.net/07f48168-fa30-4a54-bd43-ae0f8a66677b',
+    ],
     hasCredential: [
+      {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'Bachelor of Science in Information Technology (BSIT)',
+        credentialCategory: 'degree',
+        educationalLevel: "Bachelor's Degree",
+        recognizedBy: {
+          '@type': 'Organization',
+          name: 'Higher Learning Commission (HLC)',
+        },
+        issuedBy: {
+          '@type': 'CollegeOrUniversity',
+          name: 'University of Phoenix',
+          sameAs: 'https://www.phoenix.edu',
+        },
+        validFrom: '2020-09-14',
+      },
       {
         '@type': 'EducationalOccupationalCredential',
         name: 'Certified Personal Trainer (NASM-CPT)',
@@ -63,6 +88,28 @@ export default function CredentialsPage() {
         validFrom: '2026-10-07',
         validUntil: '2028-10-07',
         url: 'https://www.AmericanSTI.org',
+      },
+      {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'AWS Certified Solutions Architect – Associate',
+        credentialCategory: 'certification',
+        issuedBy: {
+          '@type': 'Organization',
+          name: 'Amazon Web Services Training and Certification',
+        },
+        validFrom: '2022-08-22',
+        url: 'https://www.credly.com/org/amazon-web-services/badge/aws-certified-solutions-architect-associate',
+      },
+      {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'IBM AI Developer Professional Certificate',
+        credentialCategory: 'certification',
+        issuedBy: {
+          '@type': 'Organization',
+          name: 'IBM & Coursera',
+        },
+        validFrom: '2025-12-26',
+        url: 'https://www.credly.com/org/coursera/badge/ibm-ai-developer-professional-certificate',
       },
     ],
   }
@@ -163,6 +210,8 @@ export default function CredentialsPage() {
         >
           {[
             { label: 'Primary Credential', val: 'NASM-CPT® #1261890687', tone: 'gold' },
+            { label: 'Higher Education', val: 'B.S. Information Technology · 3.72 GPA', tone: 'blue' },
+            { label: 'Cloud & AI Badges', val: '34 Verified Credly Badges (AWS, IBM, LF, MSFT)', tone: 'cyan' },
             { label: 'Accreditation', val: 'NCCA Accredited by ICE', tone: 'green' },
             { label: 'Emergency Safety', val: 'ASTI CPR/AED Certified #1261890193', tone: 'red' },
             { label: 'Pathway', val: 'NASM Master Trainer Candidate', tone: 'gold' },
@@ -274,6 +323,44 @@ export default function CredentialsPage() {
             </h3>
             <p style={{ color: '#94A3B8', fontSize: 14, lineHeight: 1.65, margin: 0 }}>
               Active dual certification with the American Safety Training Institute (ASTI) ensures current compliance in Adult, Child, and Infant CPR/AED protocols, sudden cardiac arrest emergency response, and cardiovascular risk screening.
+            </p>
+          </article>
+
+          <article
+            style={{
+              background: 'rgba(14, 23, 36, 0.75)',
+              border: '1px solid rgba(59, 130, 246, 0.35)',
+              borderRadius: 12,
+              padding: '24px 26px',
+            }}
+          >
+            <div style={{ color: '#60A5FA', marginBottom: 12 }}>
+              <GaaIcon name="brain" size={24} tone="cyan" />
+            </div>
+            <h3 style={{ color: '#FFFFFF', fontFamily: 'var(--font-heading)', fontSize: '1.35rem', margin: '0 0 8px' }}>
+              Academic Foundations &amp; Systems Rigor
+            </h3>
+            <p style={{ color: '#94A3B8', fontSize: 14, lineHeight: 1.65, margin: 0 }}>
+              With a Bachelor of Science in Information Technology (3.72 GPA), Coach Scott Gordon bridges human biomechanics with software engineering—translating sports science into algorithmic periodization, real-time biometrics, and low-latency computer vision.
+            </p>
+          </article>
+
+          <article
+            style={{
+              background: 'rgba(14, 23, 36, 0.75)',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              borderRadius: 12,
+              padding: '24px 26px',
+            }}
+          >
+            <div style={{ color: '#38BDF8', marginBottom: 12 }}>
+              <GaaIcon name="shield-check" size={24} tone="cyan" />
+            </div>
+            <h3 style={{ color: '#FFFFFF', fontFamily: 'var(--font-heading)', fontSize: '1.35rem', margin: '0 0 8px' }}>
+              Cryptographic Verification &amp; Credly Portfolio
+            </h3>
+            <p style={{ color: '#94A3B8', fontSize: 14, lineHeight: 1.65, margin: 0 }}>
+              Backed by 34 cryptographically signed digital credentials from AWS, IBM, The Linux Foundation, Microsoft, and O&apos;Reilly Media, Coach Gordon&apos;s cloud architecture and AI engineering competencies are publicly auditable and verifiable in real-time.
             </p>
           </article>
         </div>

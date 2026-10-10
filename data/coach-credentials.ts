@@ -1,17 +1,132 @@
 import type { GaaIconName } from '@/components/ui/GaaIcon'
 
 export type CredentialCategory =
+  | 'academic'
+  | 'engineering'
   | 'clinical'
   | 'performance'
   | 'metabolic'
   | 'specialized'
   | 'safety'
 
+export interface CredlyBadgeItem {
+  id: string
+  name: string
+  issuer: string
+  issuedDate: string
+  imageUrl: string
+  credlyUrl: string
+  skills: string[]
+}
+
+export const CREDLY_PROFILE_URL = 'https://www.credly.com/users/scott-gordon.1dfe2f10/badges/credly'
+export const CREDLY_BADGES_TOTAL = 34
+
+export const FEATURED_CREDLY_BADGES: CredlyBadgeItem[] = [
+  {
+    id: '3a6271d0-0814-42b9-8a22-cf56c1637c24',
+    name: 'AWS Certified Solutions Architect – Associate',
+    issuer: 'Amazon Web Services Training and Certification',
+    issuedDate: '2022-08-22',
+    imageUrl: 'https://images.credly.com/images/0e284c3f-5164-4b21-8660-0d84737941bc/image.png',
+    credlyUrl: 'https://www.credly.com/org/amazon-web-services/badge/aws-certified-solutions-architect-associate',
+    skills: ['Cloud Architecture', 'AWS', 'AWS Cloud', 'High Availability'],
+  },
+  {
+    id: '9e43c958-0355-4212-a7e5-d008bfda3e56',
+    name: 'IBM AI Developer Professional Certificate',
+    issuer: 'Coursera & IBM',
+    issuedDate: '2025-12-26',
+    imageUrl: 'https://images.credly.com/images/70675aed-31be-4c30-add7-b99905a34005/image.png',
+    credlyUrl: 'https://www.credly.com/org/coursera/badge/ibm-ai-developer-professional-certificate',
+    skills: ['Artificial Intelligence', 'LLMs', 'Generative AI', 'Deep Learning'],
+  },
+  {
+    id: '3c6c1f91-1ab9-47d4-af32-73c8db0ab61f',
+    name: 'Machine Learning with Python (V2)',
+    issuer: 'Coursera & IBM',
+    issuedDate: '2026-10-09',
+    imageUrl: 'https://images.credly.com/images/56c60565-e945-4bcd-b8a6-9b2f43e1b0d9/Coursera_20Machine_20Learning_20with_20Python_20V2.png',
+    credlyUrl: 'https://www.credly.com/org/coursera/badge/machine-learning-with-python-v2',
+    skills: ['Machine Learning', 'Classification', 'Clustering', 'DBSCAN'],
+  },
+  {
+    id: '5c546d2d-1819-4181-bd44-efe53051ac13',
+    name: 'Building Generative AI-Powered Applications with Python',
+    issuer: 'Coursera & IBM',
+    issuedDate: '2025-12-26',
+    imageUrl: 'https://images.credly.com/images/e462102c-b2ee-4208-aca0-b58f53331266/image.png',
+    credlyUrl: 'https://www.credly.com/org/coursera/badge/building-generative-ai-powered-applications-with-py',
+    skills: ['Generative AI', 'Chatbots', 'Python', 'AI Applications'],
+  },
+  {
+    id: '61217c47-463f-4d78-b62e-dc92c59efefe',
+    name: 'Containers for Developers and Quality Assurance (LFD254)',
+    issuer: 'The Linux Foundation',
+    issuedDate: '2024-02-06',
+    imageUrl: 'https://images.credly.com/images/cdfff820-b8fb-41c6-b9d9-0835f07cfbb6/blob',
+    credlyUrl: 'https://www.credly.com/org/the-linux-foundation/badge/lfd254-containers-for-developers-and-quality-assurance.1',
+    skills: ['CI/CD', 'Container Images', 'ArgoCD', 'Quality Assurance'],
+  },
+  {
+    id: '1959a789-d4b2-4cdb-ba63-90ffcf5159b0',
+    name: 'AWS Certified Cloud Practitioner',
+    issuer: 'Amazon Web Services Training and Certification',
+    issuedDate: '2022-06-13',
+    imageUrl: 'https://images.credly.com/images/00634f82-b07f-4bbd-a6bb-53de397fc3a6/image.png',
+    credlyUrl: 'https://www.credly.com/org/amazon-web-services/badge/aws-certified-cloud-practitioner',
+    skills: ['AWS Cloud', 'Cloud Security', 'Billing & Economics', 'Global Infrastructure'],
+  },
+  {
+    id: '6072f249-a2ee-44f2-92e0-e1dee67c4de6',
+    name: 'Generative AI: Prompt Engineering',
+    issuer: 'Coursera & IBM',
+    issuedDate: '2025-12-10',
+    imageUrl: 'https://images.credly.com/images/7fd5a03e-823f-4449-af43-59afe528f4ee/image.png',
+    credlyUrl: 'https://www.credly.com/org/coursera/badge/generative-ai-prompt-engineering',
+    skills: ['Prompt Engineering', 'Generative AI', 'LLM', 'Context Formatting'],
+  },
+  {
+    id: 'afc6387a-3f3c-411e-8dbe-69f97c622371',
+    name: 'ML vs Foundation Models',
+    issuer: "O'Reilly Media",
+    issuedDate: '2026-08-20',
+    imageUrl: 'https://images.credly.com/images/2e606315-6646-4aaf-a044-55951dbd056b/410208aa-f1e6-4499-8858-4b064131f768.png',
+    credlyUrl: 'https://www.credly.com/org/o-reilly-media/badge/ml-vs-foundation-models',
+    skills: ['MLOps', 'MLflow', 'Foundation Models', 'Model Architecture'],
+  },
+  {
+    id: 'fce89a67-cde5-44bb-85a7-6fda4684f120',
+    name: 'DevOps and SRE Fundamentals (LFS261)',
+    issuer: 'The Linux Foundation',
+    issuedDate: '2023-12-09',
+    imageUrl: 'https://images.credly.com/images/77796674-2a4e-4a35-823e-9e55e7ee159e/blob',
+    credlyUrl: 'https://www.credly.com/org/the-linux-foundation/badge/lfs261-devops-and-sre-fundamentals-implementing-continuous-delivery',
+    skills: ['DevOps', 'Continuous Delivery', 'SRE', 'Automated Testing'],
+  },
+  {
+    id: '7f2c3ea6-8b48-4b95-b1a8-c58a77fc808f',
+    name: 'MTA: Software Development Fundamentals',
+    issuer: 'Microsoft',
+    issuedDate: '2020-06-23',
+    imageUrl: 'https://images.credly.com/images/4338e594-1e04-4fc4-b71e-3a6d0293e326/MTA-Software_Development_Fundamentals.png',
+    credlyUrl: 'https://www.credly.com/org/microsoft-certification/badge/mta-software-development-fundamentals-certified-2020',
+    skills: ['Core Programming', 'Databases', 'OOP', 'Software Development'],
+  },
+]
+
 export type CredentialStatus =
   | 'active'
   | 'completed'
   | 'in_progress'
   | 'pinnacle'
+
+export interface CourseworkRecord {
+  courseId: string
+  title: string
+  grade: string
+  credits: number
+}
 
 export interface CoachCredential {
   id: string
@@ -28,6 +143,10 @@ export interface CoachCredential {
   issueDate?: string
   expirationDate?: string
   completionDate?: string
+  conferredDate?: string
+  gpa?: string
+  creditsEarned?: number
+  coursework?: CourseworkRecord[]
   verificationUrl?: string
   badgeImage?: string
   certificatePdf?: string
@@ -41,6 +160,56 @@ export interface CoachCredential {
 }
 
 export const COACH_CREDENTIALS: CoachCredential[] = [
+  // ── 1. HIGHER EDUCATION & ACADEMIC DEGREE ──────────────────────────────────
+  {
+    id: 'uop-bsit',
+    code: 'BSIT · B.S.',
+    title: 'Bachelor of Science in Information Technology',
+    issuer: 'University of Phoenix (HLC Regionally Accredited)',
+    issuerShort: 'UOPX',
+    category: 'academic',
+    categoryLabel: 'Academic & Technology Foundations',
+    status: 'completed',
+    statusLabel: 'Conferred September 2020 · 3.72 GPA',
+    completionDate: 'September 14, 2020',
+    conferredDate: 'September 2020',
+    gpa: '3.72',
+    creditsEarned: 128,
+    verificationUrl: 'https://www.phoenix.edu',
+    badgeTone: '#3B82F6',
+    icon: 'brain',
+    featured: true,
+    summary:
+      'Accredited Bachelor of Science in Information Technology specializing in Advanced Software Development (ASD), conferred with a 3.72 Cumulative GPA. Rigorous multi-year university curriculum in algorithmic logic, object-oriented software engineering (Java, C++, .NET), advanced database architecture, cryptography, cybersecurity, and enterprise computing.',
+    curriculum: [
+      'Advanced Software Development & Algorithmic Logic (Java I & II, C++, .NET)',
+      'Data Structures for Problem Solving & Computational Complexity',
+      'Advanced Relational Database Architecture & Systems Integration',
+      'Cyber Domain, Information Assurance & Cryptography (SSCP Framework)',
+      'Network Architecture, Infrastructure Administration & Cloud Fundamentals',
+      'BSIT Capstone: Scalable Systems Design & Architecture Implementation',
+    ],
+    coursework: [
+      { courseId: 'PRG/211', title: 'Algorithms and Logic for Computer Programming', grade: 'A', credits: 3 },
+      { courseId: 'DAT/305', title: 'Data Structures for Problem Solving', grade: 'A-', credits: 3 },
+      { courseId: 'PRG/420', title: 'Java Programming I', grade: 'A', credits: 3 },
+      { courseId: 'PRG/421', title: 'Java Programming II', grade: 'A', credits: 3 },
+      { courseId: 'PRG/410', title: 'C++ Programming I', grade: 'B', credits: 3 },
+      { courseId: 'POS/408', title: '.NET Architecture I', grade: 'A', credits: 3 },
+      { courseId: 'POS/409', title: '.NET Architecture II', grade: 'A-', credits: 3 },
+      { courseId: 'DBM/380', title: 'Database Concepts', grade: 'A', credits: 3 },
+      { courseId: 'DAT/380', title: 'Advanced Database Architecture', grade: 'B+', credits: 3 },
+      { courseId: 'DAT/390', title: 'Database Integration with Other Systems', grade: 'A', credits: 3 },
+      { courseId: 'DAT/210', title: 'Data Programming Languages', grade: 'A', credits: 3 },
+      { courseId: 'CMGT/432', title: 'Introduction to Cryptography', grade: 'A-', credits: 3 },
+      { courseId: 'CMGT/400', title: 'Intro to Information Assurance & Security', grade: 'A-', credits: 3 },
+      { courseId: 'CYB/100', title: 'Cyber Domain', grade: 'A-', credits: 3 },
+      { courseId: 'NTC/362', title: 'Fundamentals of Networking', grade: 'A', credits: 3 },
+      { courseId: 'BSA/425', title: 'BSIT Capstone Engineering', grade: 'B+', credits: 3 },
+    ],
+    gaaEngineIntegration:
+      'Provides the formal systems architecture, computational modeling, and database engineering behind Forge Athletic’s proprietary periodization algorithms, real-time biometric telemetry pipelines, and low-latency computer vision platforms.',
+  },
   // ── 1. NCCA ACCREDITED ACTIVE PRIMARY CREDENTIAL ─────────────────────────────
   {
     id: 'nasm-cpt',
@@ -139,7 +308,144 @@ export const COACH_CREDENTIALS: CoachCredential[] = [
       'Anchors platform documentation to official NASM terminology and professional code of ethics compliance.',
   },
 
-  // ── 4. MASTER TRAINER PATHWAY: SPECIALIZATIONS IN PROGRESS ─────────────────
+  // ── 4. VERIFIED CLOUD, AI & SYSTEMS ARCHITECTURE (CREDLY) ─────────────────
+  {
+    id: 'aws-solutions-architect',
+    code: 'AWS SAA',
+    title: 'AWS Certified Solutions Architect – Associate',
+    issuer: 'Amazon Web Services Training and Certification',
+    issuerShort: 'AWS',
+    category: 'engineering',
+    categoryLabel: 'AI & Cloud Architecture',
+    status: 'active',
+    statusLabel: 'Verified Credly · Issued Aug 2022',
+    issueDate: 'August 22, 2022',
+    verificationUrl: 'https://www.credly.com/org/amazon-web-services/badge/aws-certified-solutions-architect-associate',
+    badgeImage: 'https://images.credly.com/images/0e284c3f-5164-4b21-8660-0d84737941bc/image.png',
+    badgeTone: '#F59E0B',
+    icon: 'shield-check',
+    featured: true,
+    summary:
+      'Rigorous industry accreditation validating comprehensive technical expertise in architecting secure, resilient, high-performing, and cost-optimized distributed systems on Amazon Web Services.',
+    curriculum: [
+      'Multi-Tier Cloud Architecture & High-Availability Infrastructure',
+      'Secure IAM Access Control & Virtual Private Cloud (VPC) Routing',
+      'Event-Driven Microservices & Real-Time Media Ingestion Pipelines',
+      'Automated Disaster Recovery, Failover & Cloud Cost Optimization',
+    ],
+    gaaEngineIntegration:
+      'Underpins Forge Athletic’s scalable cloud architecture, real-time WebRTC media relays, and high-availability athlete biometrics storage.',
+  },
+  {
+    id: 'ibm-ai-developer',
+    code: 'IBM AI Dev',
+    title: 'IBM AI Developer Professional Certificate',
+    issuer: 'Coursera & IBM',
+    issuerShort: 'IBM',
+    category: 'engineering',
+    categoryLabel: 'AI & Cloud Architecture',
+    status: 'completed',
+    statusLabel: 'Verified Credly · Issued Dec 2025',
+    issueDate: 'December 26, 2025',
+    verificationUrl: 'https://www.credly.com/org/coursera/badge/ibm-ai-developer-professional-certificate',
+    badgeImage: 'https://images.credly.com/images/70675aed-31be-4c30-add7-b99905a34005/image.png',
+    badgeTone: '#3B82F6',
+    icon: 'brain',
+    featured: true,
+    summary:
+      'Professional multi-course specialization in full-stack AI application engineering, deep learning neural networks, Large Language Model (LLM) orchestration, conversational AI agents, and production Python AI architectures.',
+    curriculum: [
+      'Large Language Model (LLM) Prompt Engineering & RAG Architecture',
+      'Deep Learning & Neural Network Computational Graphs',
+      'Production Python AI Engineering & RESTful Inference Endpoints',
+      'Conversational AI Agents, Autonomous Copilots & Voice Synthesis',
+    ],
+    gaaEngineIntegration:
+      'Powers the core intelligence of AI Coach Gordon, authentic ElevenLabs neural voice cloning, and clinical RAG retrieval for real-time form cues.',
+  },
+  {
+    id: 'ibm-machine-learning',
+    code: 'IBM ML (V2)',
+    title: 'Machine Learning with Python (V2)',
+    issuer: 'Coursera & IBM',
+    issuerShort: 'IBM',
+    category: 'engineering',
+    categoryLabel: 'AI & Cloud Architecture',
+    status: 'completed',
+    statusLabel: 'Verified Credly · Issued Oct 2026',
+    issueDate: 'October 9, 2026',
+    verificationUrl: 'https://www.credly.com/org/coursera/badge/machine-learning-with-python-v2',
+    badgeImage: 'https://images.credly.com/images/56c60565-e945-4bcd-b8a6-9b2f43e1b0d9/Coursera_20Machine_20Learning_20with_20Python_20V2.png',
+    badgeTone: '#10B981',
+    icon: 'activity',
+    featured: true,
+    summary:
+      'Advanced machine learning certification in supervised and unsupervised learning, regression algorithms, classification models, clustering, and predictive data pipelines using Python (NumPy, Pandas, Scikit-learn).',
+    curriculum: [
+      'Predictive Statistical Modeling & Biometric Polynomial Regression',
+      'Clustering & Movement Pattern Recognition (DBSCAN, K-Means)',
+      'Classification Algorithms, Decision Trees & Ensemble Methods',
+      'Model Validation, ROC-AUC Scoring & Overfitting Prevention',
+    ],
+    gaaEngineIntegration:
+      'Drives Forge’s biometric predictive fatigue indices, bar velocity power regression, and autonomic nervous system readiness modeling.',
+  },
+  {
+    id: 'linux-foundation-containers',
+    code: 'LF Containers',
+    title: 'Containers for Developers and Quality Assurance (LFD254)',
+    issuer: 'The Linux Foundation',
+    issuerShort: 'Linux Foundation',
+    category: 'engineering',
+    categoryLabel: 'AI & Cloud Architecture',
+    status: 'completed',
+    statusLabel: 'Verified Credly · Issued Feb 2024',
+    issueDate: 'February 6, 2024',
+    verificationUrl: 'https://www.credly.com/org/the-linux-foundation/badge/lfd254-containers-for-developers-and-quality-assurance.1',
+    badgeImage: 'https://images.credly.com/images/cdfff820-b8fb-41c6-b9d9-0835f07cfbb6/blob',
+    badgeTone: '#6366F1',
+    icon: 'toolbox',
+    featured: false,
+    summary:
+      'Enterprise container orchestration, OCI container standards, multi-stage Docker/Podman packaging, container registry security, and CI/CD quality assurance pipelines.',
+    curriculum: [
+      'OCI Container Standard Architecture & Runtime Isolation',
+      'Automated CI/CD Integration with ArgoCD & Continuous Delivery',
+      'Container Image Security, Attestation & Vulnerability Scanning',
+      'Microservice Container Isolation, Health Checks & Orchestration',
+    ],
+    gaaEngineIntegration:
+      'Ensures Forge Athletic’s background services, headless video processors, and automated sync daemons run in isolated, secure containers.',
+  },
+  {
+    id: 'microsoft-azure-fundamentals',
+    code: 'Azure Fund.',
+    title: 'Microsoft Certified: Azure Fundamentals',
+    issuer: 'Microsoft',
+    issuerShort: 'Microsoft',
+    category: 'engineering',
+    categoryLabel: 'AI & Cloud Architecture',
+    status: 'completed',
+    statusLabel: 'Verified Credly · Issued Jun 2020',
+    issueDate: 'June 9, 2020',
+    verificationUrl: 'https://www.credly.com/org/microsoft-certification/badge/microsoft-certified-azure-fundamentals',
+    badgeImage: 'https://images.credly.com/images/336eebfc-0ac3-4553-94ef-b595166f3807/azure-fundamentals-600x600.png',
+    badgeTone: '#0EA5E9',
+    icon: 'shield-check',
+    featured: false,
+    summary:
+      'Foundational cloud computing certification demonstrating mastery of Azure architectural services, multi-cloud networking, cloud security, privacy, and compliance management.',
+    curriculum: [
+      'Core Azure Cloud Architectural Components & High-Availability Sets',
+      'Security, Privacy, Compliance & Trust Governance Protocols',
+      'Azure Pricing, Service Level Agreements (SLAs) & Cost Planning',
+      'Cloud Resource Monitoring, Metrics & Reliability Standards',
+    ],
+    gaaEngineIntegration:
+      'Multi-cloud resilience and enterprise security compliance for client health record privacy and HIPAA-aligned data isolation.',
+  },
+
+  // ── 5. MASTER TRAINER PATHWAY: SPECIALIZATIONS IN PROGRESS ─────────────────
   {
     id: 'ces',
     code: 'NASM-CES®',
@@ -450,6 +756,8 @@ export function getCredentialCategories(): { key: CredentialCategory | 'all' | '
     { key: 'all', label: 'All Accreditations', count: COACH_CREDENTIALS.length },
     { key: 'verified', label: 'Verified Active', count: COACH_CREDENTIALS.filter((c) => c.status === 'active').length },
     { key: 'clinical', label: 'Clinical & Biomechanics', count: COACH_CREDENTIALS.filter((c) => c.category === 'clinical').length },
+    { key: 'engineering', label: 'AI, Cloud & DevOps', count: COACH_CREDENTIALS.filter((c) => c.category === 'engineering').length },
+    { key: 'academic', label: 'Higher Education', count: COACH_CREDENTIALS.filter((c) => c.category === 'academic').length },
     { key: 'performance', label: 'Athletic Performance', count: COACH_CREDENTIALS.filter((c) => c.category === 'performance').length },
     { key: 'metabolic', label: 'Metabolic & Nutrition', count: COACH_CREDENTIALS.filter((c) => c.category === 'metabolic').length },
     { key: 'specialized', label: 'Lifespan & Specialized', count: COACH_CREDENTIALS.filter((c) => c.category === 'specialized').length },
@@ -461,11 +769,17 @@ export function getCredentialStats() {
   const verifiedCount = COACH_CREDENTIALS.filter((c) => c.status === 'active').length
   const nccaAccredited = COACH_CREDENTIALS.filter((c) => c.isNccaAccredited).length
   const specializationsTotal = COACH_CREDENTIALS.filter((c) => c.issuerShort === 'NASM').length
+  const engineeringCount = COACH_CREDENTIALS.filter((c) => c.category === 'engineering').length
   return {
     verifiedCount,
     nccaAccredited,
     specializationsTotal,
+    engineeringCount,
+    credlyTotalCount: CREDLY_BADGES_TOTAL,
     primaryCredential: COACH_CREDENTIALS.find((c) => c.id === 'nasm-cpt'),
     safetyCredential: COACH_CREDENTIALS.find((c) => c.id === 'asti-cpr-aed'),
+    academicDegree: COACH_CREDENTIALS.find((c) => c.id === 'uop-bsit'),
+    flagshipCloudCredential: COACH_CREDENTIALS.find((c) => c.id === 'aws-solutions-architect'),
+    flagshipAiCredential: COACH_CREDENTIALS.find((c) => c.id === 'ibm-ai-developer'),
   }
 }

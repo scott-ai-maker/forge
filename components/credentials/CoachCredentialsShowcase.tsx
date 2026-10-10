@@ -6,8 +6,11 @@ import GaaIcon from '@/components/ui/GaaIcon'
 import {
   COACH_CREDENTIALS,
   getCredentialCategories,
+  getCredentialStats,
+  CREDLY_PROFILE_URL,
+  CREDLY_BADGES_TOTAL,
+  FEATURED_CREDLY_BADGES,
   type CoachCredential,
-  type CredentialCategory,
 } from '@/data/coach-credentials'
 
 export default function CoachCredentialsShowcase() {
@@ -18,6 +21,7 @@ export default function CoachCredentialsShowcase() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const categories = useMemo(() => getCredentialCategories(), [])
+  const stats = useMemo(() => getCredentialStats(), [])
 
   const filteredCredentials = useMemo(() => {
     return COACH_CREDENTIALS.filter((cred) => {
@@ -39,7 +43,8 @@ export default function CoachCredentialsShowcase() {
         cred.summary.toLowerCase().includes(query) ||
         cred.issuer.toLowerCase().includes(query) ||
         (cred.certificateNumber && cred.certificateNumber.toLowerCase().includes(query)) ||
-        cred.curriculum.some((item) => item.toLowerCase().includes(query))
+        cred.curriculum.some((item) => item.toLowerCase().includes(query)) ||
+        (cred.gaaEngineIntegration && cred.gaaEngineIntegration.toLowerCase().includes(query))
 
       return matchesFilter && matchesQuery
     })
@@ -63,15 +68,16 @@ export default function CoachCredentialsShowcase() {
   }
 
   const primaryCpt = COACH_CREDENTIALS.find((c) => c.id === 'nasm-cpt')!
+  const academicDegree = COACH_CREDENTIALS.find((c) => c.id === 'uop-bsit')
   const safetyCpr = COACH_CREDENTIALS.find((c) => c.id === 'asti-cpr-aed')!
 
   return (
     <div className="credentials-showcase-container" style={{ width: '100%', maxWidth: 1240, margin: '0 auto' }}>
-      {/* ── TOP HERO HIGHLIGHT: VERIFIED ACTIVE CREDENTIALS ── */}
+      {/* ── TOP HERO HIGHLIGHT: TRIAD OF VERIFIED ACCREDITATIONS ── */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
           gap: 20,
           marginBottom: 36,
         }}
@@ -277,6 +283,200 @@ export default function CoachCredentialsShowcase() {
             </div>
           </div>
         </div>
+
+        {/* BSIT Academic Foundations Card */}
+        {academicDegree && (
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(16, 26, 46, 0.95) 0%, rgba(10, 18, 30, 0.98) 100%)',
+              border: '1.5px solid rgba(59, 130, 246, 0.5)',
+              borderRadius: 16,
+              padding: 'clamp(20px, 3.5vw, 28px)',
+              boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Sapphire Blue Glow */}
+            <div
+              style={{
+                position: 'absolute',
+                top: -60,
+                right: -60,
+                width: 180,
+                height: 180,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%)',
+                pointerEvents: 'none',
+              }}
+            />
+
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
+              {/* Crest / Shield Icon */}
+              <div
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 12,
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  border: '1.5px solid rgba(59, 130, 246, 0.4)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  color: '#60A5FA',
+                }}
+              >
+                <GaaIcon name="brain" size={36} tone="cyan" />
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontFamily: 'var(--font-heading)',
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    marginTop: 4,
+                    color: '#93C5FD',
+                  }}
+                >
+                  B.S. · BSIT
+                </span>
+              </div>
+
+              <div style={{ flex: 1, minWidth: 240 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '3px 10px',
+                      borderRadius: 9999,
+                      background: 'rgba(59, 130, 246, 0.18)',
+                      border: '1px solid rgba(59, 130, 246, 0.4)',
+                      color: '#93C5FD',
+                      fontSize: 11,
+                      fontFamily: 'var(--font-heading)',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    <GaaIcon name="shield-check" size={13} tone="cyan" />
+                    HLC Accredited · 3.72 GPA
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: '#94A3B8',
+                      fontFamily: 'var(--font-telemetry)',
+                    }}
+                  >
+                    Conferred: {academicDegree.conferredDate || 'September 2020'}
+                  </span>
+                </div>
+
+                <h2
+                  style={{
+                    color: '#FFFFFF',
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 'clamp(1.4rem, 2.8vw, 1.85rem)',
+                    lineHeight: 1.15,
+                    margin: '0 0 4px',
+                    letterSpacing: '0.01em',
+                  }}
+                >
+                  Bachelor of Science in Information Technology
+                </h2>
+
+                <p style={{ color: '#93C5FD', fontSize: 13, margin: '0 0 12px', fontWeight: 600 }}>
+                  University of Phoenix · Advanced Software Development Track
+                </p>
+
+                {/* Track Details & GPA */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    marginBottom: 16,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <span style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Program GPA:
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-telemetry)', color: '#60A5FA', fontSize: 13, fontWeight: 700 }}>
+                    3.72
+                  </span>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>|</span>
+                  <span style={{ fontSize: 11, color: '#CBD5E1' }}>
+                    128 Total Credits (87 UOPX · 41 Transfer)
+                  </span>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <a
+                    href="https://www.phoenix.edu"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 16px',
+                      borderRadius: 8,
+                      background: 'rgba(59, 130, 246, 0.22)',
+                      border: '1px solid rgba(59, 130, 246, 0.5)',
+                      color: '#BFDBFE',
+                      fontWeight: 700,
+                      fontSize: 12,
+                      fontFamily: 'var(--font-heading)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <GaaIcon name="award" size={14} tone="cyan" />
+                    University Profile
+                    <span aria-hidden="true" style={{ fontSize: 14 }}>↗</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveModalCredential(academicDegree)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 16px',
+                      borderRadius: 8,
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#F8FAFC',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      fontFamily: 'var(--font-heading)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <GaaIcon name="clipboard" size={14} tone="gold" />
+                    View Coursework &amp; Transcript
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ASTI CPR / AED Safety Card */}
         <div
@@ -488,6 +688,317 @@ export default function CoachCredentialsShowcase() {
           </div>
         </div>
       </div>
+
+      {/* ── DEDICATED CREDLY VERIFIED BADGES PORTFOLIO ── */}
+      <section
+        aria-label="Credly Verified Digital Credentials"
+        style={{
+          background: 'linear-gradient(135deg, rgba(14, 22, 38, 0.95) 0%, rgba(8, 14, 24, 0.98) 100%)',
+          border: '1.5px solid rgba(56, 189, 248, 0.4)',
+          borderRadius: 16,
+          padding: 'clamp(20px, 3.5vw, 28px)',
+          marginBottom: 36,
+          boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Cyan / Electric blue ambient glow */}
+        <div
+          style={{
+            position: 'absolute',
+            top: -80,
+            right: -80,
+            width: 240,
+            height: 240,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Header row with Credly Badge counter & Live CTA */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 16,
+            marginBottom: 20,
+            paddingBottom: 16,
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '3px 10px',
+                  borderRadius: 9999,
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  color: '#38BDF8',
+                  fontSize: 11,
+                  fontFamily: 'var(--font-heading)',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                <GaaIcon name="shield-check" size={13} tone="cyan" />
+                Credly by Pearson · Cryptographically Verified
+              </span>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '3px 10px',
+                  borderRadius: 9999,
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  color: 'var(--gold-lt)',
+                  fontSize: 11,
+                  fontFamily: 'var(--font-telemetry)',
+                  fontWeight: 700,
+                }}
+              >
+                {CREDLY_BADGES_TOTAL} Total Badges Conferred
+              </span>
+            </div>
+
+            <h3
+              style={{
+                color: '#FFFFFF',
+                fontFamily: 'var(--font-heading)',
+                fontSize: 'clamp(1.3rem, 2.5vw, 1.7rem)',
+                lineHeight: 1.2,
+                margin: '0 0 6px',
+              }}
+            >
+              Verified Engineering Portfolio: Cloud, AI &amp; DevOps
+            </h3>
+
+            <p style={{ color: '#94A3B8', fontSize: 13, lineHeight: 1.6, margin: 0, maxWidth: 760 }}>
+              Official industry-standard accreditations conferred by <strong>Amazon Web Services</strong>, <strong>IBM</strong>, <strong>The Linux Foundation</strong>, <strong>Microsoft</strong>, and <strong>O&apos;Reilly Media</strong>. Every badge is cryptographically signed, issued with verifiable metadata, and publicly auditable.
+            </p>
+          </div>
+
+          {/* Direct CTAs */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={() => setSelectedFilter('engineering')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '8px 14px',
+                borderRadius: 8,
+                background: selectedFilter === 'engineering' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.06)',
+                border: selectedFilter === 'engineering' ? '1px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.15)',
+                color: selectedFilter === 'engineering' ? '#38BDF8' : '#E2E8F0',
+                fontSize: 12,
+                fontFamily: 'var(--font-heading)',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <GaaIcon name="brain" size={13} tone="cyan" />
+              Filter AI &amp; Cloud ({stats.engineeringCount})
+            </button>
+
+            <a
+              href={CREDLY_PROFILE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 16px',
+                borderRadius: 8,
+                background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                color: '#FFFFFF',
+                fontWeight: 700,
+                fontSize: 12,
+                fontFamily: 'var(--font-heading)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <GaaIcon name="award" size={14} tone="white" />
+              Verify All 34 on Credly.com
+              <span aria-hidden="true" style={{ fontSize: 14 }}>↗</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Issuing Authorities Row */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 12,
+            marginBottom: 20,
+            alignItems: 'center',
+            padding: '8px 14px',
+            borderRadius: 8,
+            background: 'rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            fontSize: 11,
+            color: '#94A3B8',
+          }}
+        >
+          <span style={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, color: '#64748B' }}>
+            Issuing Authorities:
+          </span>
+          <span style={{ color: '#F59E0B', fontWeight: 600 }}>• Amazon Web Services (AWS)</span>
+          <span style={{ color: '#38BDF8', fontWeight: 600 }}>• IBM &amp; Coursera</span>
+          <span style={{ color: '#34D399', fontWeight: 600 }}>• The Linux Foundation</span>
+          <span style={{ color: '#60A5FA', fontWeight: 600 }}>• Microsoft Certification</span>
+          <span style={{ color: '#F87171', fontWeight: 600 }}>• O&apos;Reilly Media</span>
+        </div>
+
+        {/* Flagship Featured Credly Badges Grid */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))',
+            gap: 14,
+          }}
+        >
+          {FEATURED_CREDLY_BADGES.map((badge) => (
+            <div
+              key={badge.id}
+              style={{
+                background: 'rgba(10, 18, 30, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 12,
+                padding: '14px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      flexShrink: 0,
+                      position: 'relative',
+                      filter: 'drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5))',
+                    }}
+                  >
+                    <Image
+                      src={badge.imageUrl}
+                      alt={badge.name}
+                      width={56}
+                      height={56}
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: '#38BDF8',
+                        fontFamily: 'var(--font-heading)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        fontWeight: 700,
+                        marginBottom: 2,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {badge.issuer}
+                    </div>
+                    <h4
+                      style={{
+                        color: '#FFFFFF',
+                        fontFamily: 'var(--font-heading)',
+                        fontSize: 13,
+                        lineHeight: 1.3,
+                        margin: 0,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {badge.name}
+                    </h4>
+                  </div>
+                </div>
+
+                {/* Skills pills */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
+                  {badge.skills.slice(0, 3).map((skill, sIdx) => (
+                    <span
+                      key={sIdx}
+                      style={{
+                        fontSize: 10,
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        color: '#CBD5E1',
+                        fontFamily: 'var(--font-telemetry)',
+                      }}
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingTop: 8,
+                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                  fontSize: 11,
+                }}
+              >
+                <span style={{ color: '#64748B', fontFamily: 'var(--font-telemetry)' }}>
+                  Issued {badge.issuedDate}
+                </span>
+                <a
+                  href={badge.credlyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: '#38BDF8',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                  }}
+                >
+                  <span>Verify</span>
+                  <span aria-hidden="true" style={{ fontSize: 11 }}>↗</span>
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* ── FILTER TABS & SEARCH BAR ── */}
       <div
@@ -874,11 +1385,11 @@ export default function CoachCredentialsShowcase() {
                 </button>
 
                 <div style={{ display: 'flex', gap: 6 }}>
-                  {cred.certificatePreviewImage && (
+                  {(cred.certificatePreviewImage || cred.badgeImage) && (
                     <button
                       type="button"
                       onClick={() => setActiveModalCredential(cred)}
-                      title="View Certificate"
+                      title={cred.certificatePreviewImage ? 'View Certificate' : 'View Verified Badge'}
                       style={{
                         padding: '4px 10px',
                         borderRadius: 6,
@@ -891,7 +1402,7 @@ export default function CoachCredentialsShowcase() {
                         cursor: 'pointer',
                       }}
                     >
-                      Certificate
+                      {cred.certificatePreviewImage ? 'Certificate' : 'Badge'}
                     </button>
                   )}
 
@@ -1043,6 +1554,196 @@ export default function CoachCredentialsShowcase() {
               </div>
             )}
 
+            {/* Digital Badge Image Preview (Credly / Acclaim) */}
+            {!activeModalCredential.certificatePreviewImage && activeModalCredential.badgeImage && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '36px 20px',
+                  background: 'radial-gradient(circle at center, rgba(30, 41, 59, 0.8) 0%, rgba(10, 18, 30, 0.95) 100%)',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.5)',
+                  marginBottom: 20,
+                  textAlign: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    width: 140,
+                    height: 140,
+                    position: 'relative',
+                    filter: 'drop-shadow(0 16px 28px rgba(0, 0, 0, 0.6))',
+                    marginBottom: 16,
+                  }}
+                >
+                  <Image
+                    src={activeModalCredential.badgeImage}
+                    alt={`Verified Digital Badge for ${activeModalCredential.title}`}
+                    width={140}
+                    height={140}
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '4px 12px',
+                    borderRadius: 9999,
+                    background: 'rgba(52, 211, 153, 0.15)',
+                    border: '1px solid rgba(52, 211, 153, 0.4)',
+                    color: '#34D399',
+                    fontSize: 11,
+                    fontFamily: 'var(--font-heading)',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  <GaaIcon name="shield-check" size={13} tone="emerald" />
+                  Verified Digital Credential · Credly by Pearson
+                </div>
+              </div>
+            )}
+
+            {/* Academic Coursework & Transcript Breakdown */}
+            {activeModalCredential.coursework && activeModalCredential.coursework.length > 0 && (
+              <div
+                style={{
+                  background: 'rgba(10, 18, 30, 0.95)',
+                  border: '1px solid rgba(59, 130, 246, 0.35)',
+                  borderRadius: 12,
+                  padding: 'clamp(16px, 2.5vw, 24px)',
+                  marginBottom: 20,
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
+                }}
+              >
+                {/* Academic Highlights Header */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+                    gap: 12,
+                    marginBottom: 20,
+                    paddingBottom: 16,
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}
+                >
+                  <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: 8 }}>
+                    <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Program Track</div>
+                    <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 13, marginTop: 2 }}>Advanced Software Dev (ASD)</div>
+                  </div>
+                  <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: 8 }}>
+                    <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cumulative GPA</div>
+                    <div style={{ color: '#60A5FA', fontWeight: 800, fontSize: 16, marginTop: 2 }}>3.72 Program GPA</div>
+                  </div>
+                  <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: 8 }}>
+                    <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Degree Conferred</div>
+                    <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 13, marginTop: 2 }}>September 2020</div>
+                  </div>
+                  <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: 8 }}>
+                    <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Credits</div>
+                    <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 13, marginTop: 2 }}>128 (87 UOPX + 41 Transfer)</div>
+                  </div>
+                </div>
+
+                {/* Coursework Table */}
+                <h4
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'var(--font-heading)',
+                    color: '#93C5FD',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    margin: '0 0 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <GaaIcon name="brain" size={14} tone="cyan" />
+                  Official Coursework &amp; Academic Performance Transcript
+                </h4>
+
+                <div style={{ overflowX: 'auto', maxHeight: 320, overflowY: 'auto', borderRadius: 6, border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', textAlign: 'left', color: '#94A3B8', background: 'rgba(0, 0, 0, 0.4)' }}>
+                        <th style={{ padding: '8px 12px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Course ID</th>
+                        <th style={{ padding: '8px 12px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Curriculum Title</th>
+                        <th style={{ padding: '8px 12px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Credits</th>
+                        <th style={{ padding: '8px 12px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeModalCredential.coursework.map((course, idx) => (
+                        <tr
+                          key={idx}
+                          style={{
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                            background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
+                          }}
+                        >
+                          <td style={{ padding: '8px 12px', fontFamily: 'var(--font-telemetry)', color: '#60A5FA', fontWeight: 700 }}>
+                            {course.courseId}
+                          </td>
+                          <td style={{ padding: '8px 12px', color: '#E2E8F0', fontWeight: 500 }}>
+                            {course.title}
+                          </td>
+                          <td style={{ padding: '8px 12px', textAlign: 'center', color: '#94A3B8' }}>
+                            {course.credits}.00
+                          </td>
+                          <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '2px 8px',
+                                borderRadius: 4,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                fontFamily: 'var(--font-telemetry)',
+                                background: course.grade.startsWith('A')
+                                  ? 'rgba(52, 211, 153, 0.15)'
+                                  : 'rgba(96, 165, 250, 0.15)',
+                                color: course.grade.startsWith('A') ? '#34D399' : '#93C5FD',
+                                border: `1px solid ${course.grade.startsWith('A') ? 'rgba(52, 211, 153, 0.3)' : 'rgba(96, 165, 250, 0.3)'}`,
+                              }}
+                            >
+                              {course.grade}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 14,
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    fontSize: 11,
+                    color: '#94A3B8',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                  }}
+                >
+                  <span>Prior Transfer Credits: <strong>Fitchburg State University (12.00) · Mount Wachusett Community College (29.00)</strong></span>
+                  <span>Institutional Accreditation: <strong>Higher Learning Commission (HLC)</strong></span>
+                </div>
+              </div>
+            )}
+
             {/* Modal Actions */}
             <div
               style={{
@@ -1058,6 +1759,12 @@ export default function CoachCredentialsShowcase() {
               <div style={{ fontSize: 12, color: '#94A3B8' }}>
                 {activeModalCredential.isNccaAccredited && (
                   <span>National Commission for Certifying Agencies (NCCA) Accredited</span>
+                )}
+                {activeModalCredential.category === 'academic' && (
+                  <span>Higher Learning Commission (HLC) Regionally Accredited University Degree</span>
+                )}
+                {activeModalCredential.category === 'engineering' && (
+                  <span>Cryptographically Signed &amp; Publicly Audited via Credly by Pearson</span>
                 )}
               </div>
 
