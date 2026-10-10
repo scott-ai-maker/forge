@@ -7,8 +7,21 @@
  */
 
 import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core'
-import type { RawAppleHealthIngestPayload } from './apple-health-bridge'
-import type { RawGoogleHealthIngestPayload } from './google-health-bridge'
+import {
+  normalizeAppleHealthIngestPayload,
+  formatAppleHealthTelemetryToBiometricSummary,
+  type RawAppleHealthIngestPayload,
+} from './apple-health-bridge'
+import {
+  normalizeGoogleHealthIngestPayload,
+  formatGoogleHealthTelemetryToBiometricSummary,
+  type RawGoogleHealthIngestPayload,
+} from './google-health-bridge'
+import {
+  computeWearableCnsScore,
+  type DailyBiometricSummary,
+  type WearableProvider,
+} from './wearables-telemetry'
 
 export type RawMobileHealthPayload = RawAppleHealthIngestPayload | RawGoogleHealthIngestPayload
 
@@ -45,6 +58,16 @@ export interface GAAHealthKitPluginInterface {
     durationMinutes: number
     completedAt?: string
   }): Promise<{ success: boolean }>
+  getTelemetryDiagnostics?(): Promise<{
+    platform: string
+    healthKitAvailable: boolean
+    authorizationStatus: string
+    backgroundDeliveryEnabled: boolean
+    backgroundSyncIntervalMinutes: number
+    backendUrl: string
+    lastSyncTimestamp?: string
+    telemetryReady: boolean
+  }>
   addListener(
     eventName: 'onTelemetryUpdate',
     listenerFunc: (telemetry: RawMobileHealthPayload) => void
@@ -256,6 +279,119 @@ export async function getNativeCurrentHeartRate(): Promise<{
   } catch (err) {
     console.warn('[GAAHealthKitBridge] getNativeCurrentHeartRate notice:', err)
     return { heartRate: null }
+  }
+}
+
+/**
+ * Queries native HealthKit / Health Connect diagnostic metrics directly from the native plugin.
+ */
+export async function getNativeTelemetryDiagnostics(): Promise<{
+  platform: string
+  healthKitAvailable: boolean
+  authorizationStatus: string
+  backgroundDeliveryEnabled: boolean
+  backgroundSyncIntervalMinutes: number
+  backendUrl: string
+  lastSyncTimestamp?: string
+  telemetryReady: boolean
+} | null> {
+  if (!isNativeMobile()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    if (plugin.getTelemetryDiagnostics) {
+      return await plugin.getTelemetryDiagnostics()
+    }
+    const isAvail = await isNativeHealthKitAvailable()
+    const status = await getNativeHealthKitStatus()
+    return {
+      platform: getNativePlatform(),
+      healthKitAvailable: isAvail,
+      authorizationStatus: status.status,
+      backgroundDeliveryEnabled: status.authorized,
+      backgroundSyncIntervalMinutes: 60,
+      backendUrl: resolveSyncEndpoint('/api/wearables/sync'),
+      telemetryReady: isAvail && status.authorized,
+    }
+  } catch (err) {
+    console.warn('[GAAHealthKitBridge] Diagnostics query error:', err)
+    return null
+  }
+}
+
+/**
+ * Normalizes raw ingested telemetry from either iOS HealthKit or Android Health Connect
+ * into a standardized DailyBiometricSummary with computed CNS stress score.
+ */
+export function normalizeNativeMobileTelemetry(raw: RawMobileHealthPayload): {
+  summary: DailyBiometricSummary
+  provider: WearableProvider
+  cnsScore: number | null
+} {
+  const isAndroid =
+    isNativeAndroid() ||
+    (raw as Record<string, unknown>)?.provider === 'google_fit' ||
+    (raw as Record<string, unknown>)?.provider === 'health_connect'
+
+  if (isAndroid) {
+    const googleNorm = normalizeGoogleHealthIngestPayload(raw as RawGoogleHealthIngestPayload)
+    const cns = computeWearableCnsScore(googleNorm.hrvRmssdMs, googleNorm.restingHeartRateBpm)
+    const formatted = formatGoogleHealthTelemetryToBiometricSummary(googleNorm, cns)
+    const liveHr =
+      (raw as Record<string, unknown>)?.heart_rate as number | undefined ??
+      (raw as Record<string, unknown>)?.heartRate as number | undefined ??
+      null
+
+    return {
+      summary: {
+        date: formatted.date,
+        provider: 'google_fit',
+        currentHeartRate: typeof liveHr === 'number' ? liveHr : null,
+        restingHeartRate: formatted.restingHeartRate,
+        hrvRmssdMs: formatted.hrvRmssdMs,
+        cnsStressScore: formatted.cnsStressScore,
+        sleepHours: formatted.sleepHours,
+        deepSleepHours: formatted.deepSleepHours,
+        bedtime: googleNorm.sleep.bedtime || null,
+        wakeTime: googleNorm.sleep.wakeTime || null,
+        stepsCount: formatted.stepsCount,
+        activeCaloriesKcal: formatted.activeCaloriesKcal,
+        nutrition: formatted.nutrition,
+        updatedAt: formatted.updatedAt,
+      },
+      provider: 'google_fit',
+      cnsScore: cns,
+    }
+  }
+
+  // iOS / Apple Health
+  const appleNorm = normalizeAppleHealthIngestPayload(raw as RawAppleHealthIngestPayload)
+  const cns = computeWearableCnsScore(appleNorm.hrvRmssdMs, appleNorm.restingHeartRateBpm)
+  const formatted = formatAppleHealthTelemetryToBiometricSummary(appleNorm, cns)
+  const liveHr =
+    appleNorm.currentHeartRateBpm ??
+    (raw as Record<string, unknown>)?.heart_rate as number | undefined ??
+    (raw as Record<string, unknown>)?.heartRate as number | undefined ??
+    null
+
+  return {
+    summary: {
+      date: formatted.date,
+      provider: 'apple_health',
+      currentHeartRate: liveHr,
+      restingHeartRate: formatted.restingHeartRate,
+      hrvRmssdMs: formatted.hrvRmssdMs,
+      cnsStressScore: formatted.cnsStressScore,
+      sleepHours: formatted.sleepHours,
+      deepSleepHours: formatted.deepSleepHours,
+      bedtime: formatted.bedtime ?? null,
+      wakeTime: formatted.wakeTime ?? null,
+      stepsCount: formatted.stepsCount,
+      activeCaloriesKcal: formatted.activeCaloriesKcal,
+      nutrition: formatted.nutrition,
+      updatedAt: formatted.updatedAt,
+    },
+    provider: 'apple_health',
+    cnsScore: cns,
   }
 }
 

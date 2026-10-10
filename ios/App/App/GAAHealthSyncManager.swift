@@ -21,8 +21,8 @@ import UIKit
     private let kAuthTokenKey = "GAA_HealthKit_AuthToken"
     private let kUserIdKey = "GAA_HealthKit_UserId"
     
-    public static let defaultBaseUrl = "https://gordonathleticadvisory.com"
-    public static let defaultEndpoint = "https://gordonathleticadvisory.com/api/wearables/sync"
+    public static let defaultBaseUrl = "https://forge-athletic.app"
+    public static let defaultEndpoint = "https://forge-athletic.app/api/wearables/sync"
 
     // Configuration
     public var backendUrl: String = GAAHealthSyncManager.defaultEndpoint
@@ -971,6 +971,8 @@ import UIKit
             }
 
             if let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) {
+                let nowIso = ISO8601DateFormatter().string(from: Date())
+                self.defaults.set(nowIso, forKey: "GAA_HealthKit_LastSyncTimestamp")
                 print("[GAA HealthKit] Background sync succeeded with status \(httpResponse.statusCode)")
                 completion(true)
             } else {
@@ -980,5 +982,26 @@ import UIKit
             }
         }
         task.resume()
+    }
+
+    // MARK: - Diagnostics
+
+    public func getTelemetryDiagnostics(completion: @escaping ([String: Any]) -> Void) {
+        let isAuth = defaults.bool(forKey: "GAA_HealthKit_AuthorizedOnce") ||
+            (healthStore.authorizationStatus(for: HKObjectType.workoutType()) == .sharingAuthorized)
+        let lastSync = defaults.string(forKey: "GAA_HealthKit_LastSyncTimestamp") ?? ""
+        let bgEnabled = isBackgroundDeliveryEnabled
+
+        let diag: [String: Any] = [
+            "platform": "ios",
+            "healthKitAvailable": isHealthDataAvailable(),
+            "authorizationStatus": isAuth ? "authorized" : "notDetermined",
+            "backgroundDeliveryEnabled": bgEnabled,
+            "backgroundSyncIntervalMinutes": 60,
+            "backendUrl": backendUrl,
+            "lastSyncTimestamp": lastSync,
+            "telemetryReady": true
+        ]
+        completion(diag)
     }
 }

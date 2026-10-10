@@ -146,19 +146,67 @@ public class GAAHealthKitPlugin extends Plugin {
         Double calories = call.getDouble("calories");
         Double durationMinutes = call.getDouble("durationMinutes");
         Double distanceMiles = call.getDouble("distanceMiles");
+        Double avgHeartRate = call.getDouble("avgHeartRate");
+        String completedAt = call.getString("completedAt");
 
         if (activityType == null || calories == null || durationMinutes == null) {
             call.reject("Missing required workout parameters (activityType, calories, durationMinutes).");
             return;
         }
 
-        syncManager.saveWorkout(activityType, calories, durationMinutes, distanceMiles, (success, data, error) -> {
+        syncManager.saveWorkout(activityType, calories, durationMinutes, distanceMiles, avgHeartRate, completedAt, (success, data, error) -> {
             if (success) {
                 JSObject ret = new JSObject();
                 ret.put("success", true);
                 call.resolve(ret);
             } else {
                 call.reject("Failed saving workout to Android health: " + error);
+            }
+        });
+    }
+
+    @PluginMethod
+    public void writeMindfulSession(PluginCall call) {
+        Double durationMinutes = call.getDouble("durationMinutes");
+        String completedAt = call.getString("completedAt");
+
+        if (durationMinutes == null) {
+            call.reject("Missing required durationMinutes.");
+            return;
+        }
+
+        syncManager.saveMindfulSession(durationMinutes, completedAt, (success, data, error) -> {
+            if (success) {
+                JSObject ret = new JSObject();
+                ret.put("success", true);
+                call.resolve(ret);
+            } else {
+                call.reject("Failed saving mindful session to Android health: " + error);
+            }
+        });
+    }
+
+    @PluginMethod
+    public void getCurrentHeartRate(PluginCall call) {
+        syncManager.getCurrentHeartRate((success, data, error) -> {
+            if (success && data != null) {
+                call.resolve(data);
+            } else {
+                JSObject ret = new JSObject();
+                ret.put("heartRate", null);
+                ret.put("timestamp", null);
+                call.resolve(ret);
+            }
+        });
+    }
+
+    @PluginMethod
+    public void getTelemetryDiagnostics(PluginCall call) {
+        syncManager.getTelemetryDiagnostics((success, data, error) -> {
+            if (success && data != null) {
+                call.resolve(data);
+            } else {
+                call.reject("Unable to retrieve Android telemetry diagnostics: " + error);
             }
         });
     }

@@ -12,5 +12,6 @@ CAP_PLUGIN(GAAHealthKitPlugin, "GAAHealthKit",
     CAP_PLUGIN_METHOD(writeWorkout, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(writeMindfulSession, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(getCurrentHeartRate, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(getTelemetryDiagnostics, CAPPluginReturnPromise);
 )
 

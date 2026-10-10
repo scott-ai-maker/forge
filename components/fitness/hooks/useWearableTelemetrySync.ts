@@ -9,13 +9,10 @@ import {
 import {
   isNativeMobile,
   autoInitializeNativeHealthKit,
+  normalizeNativeMobileTelemetry,
   resolveSyncEndpoint,
 } from '@/lib/native-healthkit-bridge'
-import {
-  normalizeAppleHealthIngestPayload,
-  formatAppleHealthTelemetryToBiometricSummary,
-  type RawAppleHealthIngestPayload,
-} from '@/lib/apple-health-bridge'
+import { onAppResume } from '@/lib/native-capabilities'
 
 export interface UseWearableTelemetrySyncResult {
   wearableTelemetry: DailyBiometricSummary | null
@@ -44,26 +41,7 @@ export function useWearableTelemetrySync(): UseWearableTelemetrySyncResult {
       if (isNativeMobile()) {
         const initRes = await autoInitializeNativeHealthKit()
         if (initRes.telemetry) {
-          const raw = initRes.telemetry
-          const normalized = normalizeAppleHealthIngestPayload(raw as RawAppleHealthIngestPayload)
-          const cns = computeWearableCnsScore(normalized.hrvRmssdMs, normalized.restingHeartRateBpm)
-          const liveHr = normalized.currentHeartRateBpm ?? (raw as Record<string, unknown>)?.heart_rate as number | undefined ?? (raw as Record<string, unknown>)?.heartRate as number | undefined ?? null
-          const summary: DailyBiometricSummary = {
-            date: normalized.date,
-            provider: 'apple_health',
-            currentHeartRate: liveHr,
-            restingHeartRate: normalized.restingHeartRateBpm,
-            hrvRmssdMs: normalized.hrvRmssdMs,
-            cnsStressScore: cns,
-            sleepHours: normalized.sleep.totalHours,
-            deepSleepHours: normalized.sleep.deepHours,
-            bedtime: normalized.sleep.bedtime || null,
-            wakeTime: normalized.sleep.wakeTime || null,
-            stepsCount: normalized.stepCount,
-            activeCaloriesKcal: normalized.activeEnergyBurnedKcal,
-            nutrition: normalized.nutrition,
-            updatedAt: new Date().toISOString(),
-          }
+          const { summary, provider } = normalizeNativeMobileTelemetry(initRes.telemetry)
           setWearableTelemetry(summary)
 
           // Persist to backend with Authorization header
@@ -83,15 +61,20 @@ export function useWearableTelemetrySync(): UseWearableTelemetrySyncResult {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
-                  provider: 'apple_health',
-                  resting_heart_rate: normalized.restingHeartRateBpm,
-                  hrv_rmssd: normalized.hrvRmssdMs,
-                  sleep: normalized.sleep,
-                  active_calories: normalized.activeEnergyBurnedKcal,
-                  steps: normalized.stepCount,
-                  nutrition: normalized.nutrition,
-                  water_oz: normalized.nutrition.waterOz,
-                  date: normalized.date,
+                  provider,
+                  resting_heart_rate: summary.restingHeartRate,
+                  hrv_rmssd: summary.hrvRmssdMs,
+                  sleep: {
+                    total_hours: summary.sleepHours,
+                    deep_hours: summary.deepSleepHours,
+                    bedtime: summary.bedtime,
+                    wakeTime: summary.wakeTime,
+                  },
+                  active_calories: summary.activeCaloriesKcal,
+                  steps: summary.stepsCount,
+                  nutrition: summary.nutrition,
+                  water_oz: summary.nutrition?.waterOz,
+                  date: summary.date,
                   synced_at: new Date().toISOString(),
                 }),
               })
@@ -158,6 +141,11 @@ export function useWearableTelemetrySync(): UseWearableTelemetrySyncResult {
       document.addEventListener('visibilitychange', handleVisibilityChange)
     }
 
+    // Listen for native app resume on iOS & Android
+    const unsubscribeResume = onAppResume(() => {
+      void runSync()
+    })
+
     // Periodic 5-minute background refresh
     const interval = setInterval(() => {
       void runSync()
@@ -165,6 +153,7 @@ export function useWearableTelemetrySync(): UseWearableTelemetrySyncResult {
 
     return () => {
       isMounted = false
+      unsubscribeResume()
       if (typeof window !== 'undefined') {
         window.removeEventListener('focus', runSync)
         document.removeEventListener('visibilitychange', handleVisibilityChange)

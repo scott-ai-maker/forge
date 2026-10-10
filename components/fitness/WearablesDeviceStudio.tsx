@@ -15,13 +15,13 @@ import {
   syncNativeHealthKitData,
   subscribeToNativeHealthKitUpdates,
   autoInitializeNativeHealthKit,
+  normalizeNativeMobileTelemetry,
   resolveSyncEndpoint,
 } from '@/lib/native-healthkit-bridge'
 import {
-  normalizeAppleHealthIngestPayload,
-  formatAppleHealthTelemetryToBiometricSummary,
-  type RawAppleHealthIngestPayload,
-} from '@/lib/apple-health-bridge'
+  checkNativeTelemetryReadiness,
+  type NativeTelemetryReadinessReport,
+} from '@/lib/native-capabilities'
 import {
   AppleLogo,
   AppleHealthIcon,
@@ -48,6 +48,7 @@ export default function WearablesDeviceStudio({
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [copiedWebhook, setCopiedWebhook] = useState<boolean>(false)
   const [isIosWeb, setIsIosWeb] = useState<boolean>(false)
+  const [nativeReport, setNativeReport] = useState<NativeTelemetryReadinessReport | null>(null)
 
   const onTelemetryUpdateRef = useRef(onTelemetryUpdate)
   onTelemetryUpdateRef.current = onTelemetryUpdate
@@ -57,9 +58,7 @@ export default function WearablesDeviceStudio({
       if (isNativeMobile()) {
         const init = await autoInitializeNativeHealthKit()
         if (init.telemetry) {
-          const normalized = normalizeAppleHealthIngestPayload(init.telemetry as RawAppleHealthIngestPayload)
-          const cns = computeWearableCnsScore(normalized.hrvRmssdMs, normalized.restingHeartRateBpm)
-          const summary = formatAppleHealthTelemetryToBiometricSummary(normalized, cns)
+          const { summary } = normalizeNativeMobileTelemetry(init.telemetry)
           setTelemetry(summary)
           setAuthStatus('authorized')
           if (onTelemetryUpdateRef.current) onTelemetryUpdateRef.current(summary)
@@ -159,6 +158,9 @@ export default function WearablesDeviceStudio({
     }
 
     checkHealthStatus()
+    void checkNativeTelemetryReadiness().then(rep => {
+      if (isMounted) setNativeReport(rep)
+    })
 
     // Subscribe to real-time telemetry broadcasts
     let subHandle: { remove: () => void } | null = null
@@ -166,9 +168,7 @@ export default function WearablesDeviceStudio({
       void subscribeToNativeHealthKitUpdates(raw => {
         if (!isMounted || !raw) return
         try {
-          const normalized = normalizeAppleHealthIngestPayload(raw as RawAppleHealthIngestPayload)
-          const cns = computeWearableCnsScore(normalized.hrvRmssdMs, normalized.restingHeartRateBpm)
-          const summary = formatAppleHealthTelemetryToBiometricSummary(normalized, cns)
+          const { summary } = normalizeNativeMobileTelemetry(raw)
           setTelemetry(summary)
           setAuthStatus('authorized')
           if (onTelemetryUpdateRef.current) onTelemetryUpdateRef.current(summary)
@@ -265,10 +265,7 @@ export default function WearablesDeviceStudio({
       if (isNativeMobile()) {
         const syncRes = await syncNativeHealthKitData()
         if (syncRes.telemetry) {
-          const raw = syncRes.telemetry as RawAppleHealthIngestPayload
-          const normalized = normalizeAppleHealthIngestPayload(raw)
-          const cns = computeWearableCnsScore(normalized.hrvRmssdMs, normalized.restingHeartRateBpm)
-          const summary = formatAppleHealthTelemetryToBiometricSummary(normalized, cns)
+          const { summary } = normalizeNativeMobileTelemetry(syncRes.telemetry)
           setTelemetry(summary)
           setAuthStatus('authorized')
           if (onTelemetryUpdateRef.current) onTelemetryUpdateRef.current(summary)
@@ -406,6 +403,50 @@ export default function WearablesDeviceStudio({
           </div>
         </div>
       </div>
+
+      {/* ── Native Capabilities & Telemetry Diagnostic HUD ── */}
+      {isNativeMobile() && nativeReport && (
+        <div
+          style={{
+            background: 'rgba(8,14,20,0.85)',
+            border: '1px solid rgba(56,189,248,0.25)',
+            borderRadius: 8,
+            padding: '12px 16px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            fontSize: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ color: '#38BDF8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              ⚡ Native {nativeReport.platform.toUpperCase()} Telemetry Link:
+            </span>
+            <span style={{ color: nativeReport.telemetryReady ? '#34D399' : '#FBBF24', fontWeight: 700 }}>
+              {nativeReport.telemetryReady ? '● Ready & Armed' : '○ Awaiting Authorization'}
+            </span>
+            <span style={{ color: 'var(--gray)', fontSize: 11 }}>
+              {nativeReport.device.model} ({nativeReport.device.osVersion})
+            </span>
+            {nativeReport.battery.levelPercent !== null && (
+              <span style={{ color: 'var(--gray)', fontSize: 11 }}>
+                🔋 {nativeReport.battery.levelPercent}% {nativeReport.battery.isCharging ? '⚡ Charging' : ''}
+              </span>
+            )}
+            <span style={{ color: 'var(--gray)', fontSize: 11 }}>
+              📶 {nativeReport.network.connectionType.toUpperCase()} ({nativeReport.network.connected ? 'Online' : 'Offline'})
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--gray)' }}>
+            <span>Auto-Sync: {nativeReport.backgroundSyncIntervalMinutes}m</span>
+            <span>·</span>
+            <span>Endpoint: Active</span>
+          </div>
+        </div>
+      )}
 
       {statusNotice && (
         <div

@@ -20,7 +20,8 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setSyncConfiguration", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "writeWorkout", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "writeMindfulSession", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getCurrentHeartRate", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getCurrentHeartRate", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getTelemetryDiagnostics", returnType: CAPPluginReturnPromise)
     ]
 
     override public func load() {
@@ -250,6 +251,12 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
             } else {
                 call.resolve(["success": success])
             }
+        }
+    }
+
+    @objc public func getTelemetryDiagnostics(_ call: CAPPluginCall) {
+        GAAHealthSyncManager.shared.getTelemetryDiagnostics { diag in
+            call.resolve(diag)
         }
     }
 }

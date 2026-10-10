@@ -5,7 +5,8 @@
  * Taptic Engine haptics via Capacitor.
  */
 
-import { Capacitor, registerPlugin } from '@capacitor/core'
+import { Capacitor } from '@capacitor/core'
+import { Haptics } from '@capacitor/haptics'
 
 export type HapticImpactStyle = 'heavy' | 'medium' | 'light'
 export type HapticNotificationType = 'SUCCESS' | 'WARNING' | 'ERROR'
@@ -20,7 +21,7 @@ export interface HapticsPluginInterface {
 }
 
 // Capacitor Haptics native plugin interface
-export const NativeHaptics = registerPlugin<HapticsPluginInterface>('Haptics')
+export const NativeHaptics = Haptics as unknown as HapticsPluginInterface
 
 export function isNativePlatform(): boolean {
   try {

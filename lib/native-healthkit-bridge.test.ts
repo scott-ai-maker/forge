@@ -16,6 +16,8 @@ import {
   syncActivityToAppleHealth,
   subscribeToNativeHealthKitUpdates,
   getNativeCurrentHeartRate,
+  getNativeTelemetryDiagnostics,
+  normalizeNativeMobileTelemetry,
   GAAHealthKitNative,
   resolveSyncEndpoint,
 } from './native-healthkit-bridge'
@@ -470,6 +472,89 @@ describe('GAA Native HealthKit & Health Connect Bridge', () => {
       const hrRes = await getNativeCurrentHeartRate()
       expect(hrRes.heartRate).toBe(138)
       expect(hrRes.timestamp).toBe('2026-09-14T16:00:00Z')
+    })
+
+    it('queries native telemetry diagnostics for iOS and Android', async () => {
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
+      vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+      GAAHealthKitNative.getTelemetryDiagnostics = vi.fn().mockResolvedValue({
+        platform: 'ios',
+        healthKitAvailable: true,
+        authorizationStatus: 'authorized',
+        backgroundDeliveryEnabled: true,
+        backgroundSyncIntervalMinutes: 60,
+        backendUrl: 'https://forge-athletic.app/api/wearables/sync',
+        lastSyncTimestamp: '2026-10-10T10:30:00Z',
+        telemetryReady: true,
+      })
+
+      const diag = await getNativeTelemetryDiagnostics()
+      expect(diag?.platform).toBe('ios')
+      expect(diag?.telemetryReady).toBe(true)
+      expect(diag?.backendUrl).toBe('https://forge-athletic.app/api/wearables/sync')
+      expect(diag?.backgroundSyncIntervalMinutes).toBe(60)
+    })
+
+    it('normalizes Android Health Connect payload into unified DailyBiometricSummary', () => {
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
+      vi.mocked(Capacitor.getPlatform).mockReturnValue('android')
+
+      const rawAndroid = {
+        provider: 'health_connect' as const,
+        date: '2026-10-10',
+        resting_heart_rate: 52,
+        hrv_rmssd: 76,
+        steps: 10250,
+        active_calories: 610,
+        sleep: {
+          total_hours: 8.0,
+          deep_hours: 2.2,
+          bedtime: '22:30',
+          wakeTime: '06:30',
+        },
+      }
+
+      const { summary, provider, cnsScore } = normalizeNativeMobileTelemetry(rawAndroid as any)
+      expect(provider).toBe('google_fit')
+      expect(summary.provider).toBe('google_fit')
+      expect(summary.restingHeartRate).toBe(52)
+      expect(summary.hrvRmssdMs).toBe(76)
+      expect(summary.stepsCount).toBe(10250)
+      expect(summary.activeCaloriesKcal).toBe(610)
+      expect(summary.sleepHours).toBe(8.0)
+      expect(typeof cnsScore).toBe('number')
+      expect(summary.cnsStressScore).toBe(cnsScore)
+    })
+
+    it('normalizes iOS Apple HealthKit payload into unified DailyBiometricSummary', () => {
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
+      vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+
+      const rawApple = {
+        provider: 'apple_health' as const,
+        date: '2026-10-10',
+        resting_heart_rate: 50,
+        hrv_rmssd: 82,
+        step_count: 11400,
+        active_energy_burned_kcal: 680,
+        sleep: {
+          total_hours: 8.2,
+          deep_hours: 2.4,
+          bedtime: '22:15',
+          wake_time: '06:30',
+        },
+      }
+
+      const { summary, provider, cnsScore } = normalizeNativeMobileTelemetry(rawApple as any)
+      expect(provider).toBe('apple_health')
+      expect(summary.provider).toBe('apple_health')
+      expect(summary.restingHeartRate).toBe(50)
+      expect(summary.hrvRmssdMs).toBe(82)
+      expect(summary.stepsCount).toBe(11400)
+      expect(summary.activeCaloriesKcal).toBe(680)
+      expect(summary.sleepHours).toBe(8.2)
+      expect(typeof cnsScore).toBe('number')
+      expect(summary.cnsStressScore).toBe(cnsScore)
     })
   })
 })
