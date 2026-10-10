@@ -46,6 +46,7 @@ export default function SiteFooter() {
         <nav className="site-footer-nav" aria-label="Training and coaching" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.88rem' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)' }}>Training</span>
           <Link href="/packages" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Memberships</Link>
+          <Link href="/credentials" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Credentials &amp; Badges</Link>
           <Link href="/audit" style={{ color: '#CBD5E1', textDecoration: 'none' }}>AI Posture Audit</Link>
           <Link href="/apply" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Find your starting point</Link>
           <Link href="/whats-new" style={{ color: 'var(--gold-lt)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>

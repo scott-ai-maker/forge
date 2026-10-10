@@ -35,6 +35,7 @@ export default function Home() {
           <span>Forge Athletic</span>
         </Link>
         <nav aria-label="Account">
+          <Link href="/credentials">Credentials</Link>
           <Link href="/auth/login">Log in</Link>
           <Link className="forge-header-cta" href="/auth/signup">Get started</Link>
         </nav>
@@ -106,6 +107,82 @@ export default function Home() {
             every client where they are. Expect kindness and understanding, not drill-sergeant
             pressure; when your goals call for a firmer push, he can bring that too.
           </p>
+
+          {/* Verified Credentials & Digital Badges Spotlight */}
+          <div
+            style={{
+              margin: '1.5rem 0',
+              padding: '1.25rem 1.5rem',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, rgba(20, 30, 48, 0.85) 0%, rgba(10, 18, 30, 0.95) 100%)',
+              border: '1px solid rgba(197, 160, 89, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.15rem' }}>
+              <Image
+                src="/images/badges/nasm-cpt-badge.png"
+                alt="Official NASM Certified Personal Trainer Digital Badge"
+                width={56}
+                height={56}
+                style={{ objectFit: 'contain', flexShrink: 0 }}
+              />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontFamily: 'var(--font-heading)',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: '#34D399',
+                      background: 'rgba(52, 211, 153, 0.15)',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid rgba(52, 211, 153, 0.35)',
+                    }}
+                  >
+                    Verified NCCA Accredited
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: '#94A3B8', fontFamily: 'var(--font-telemetry)' }}>
+                    Cert #1261890687
+                  </span>
+                </div>
+                <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: '1.05rem' }}>
+                  NASM-CPT® &amp; ASTI CPR/AED Certified
+                </div>
+              </div>
+            </div>
+
+            <Link
+              href="/credentials"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.55rem 1.15rem',
+                borderRadius: '8px',
+                background: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid var(--gold)',
+                color: 'var(--gold-lt)',
+                fontFamily: 'var(--font-heading)',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+              }}
+            >
+              <span>View Badges &amp; Credentials</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+
           <p className="forge-founder-signoff">Whatever your goal, you can train for it here.</p>
         </div>
       </section>
@@ -115,6 +192,7 @@ export default function Home() {
         <p>Built From The Ground Up. Precision Science For Real Lives.</p>
         <nav aria-label="Footer">
           <Link href="/packages">Memberships</Link>
+          <Link href="/credentials">Credentials</Link>
           <Link href="/auth/login">Log in</Link>
           <Link href="/auth/signup">Create account</Link>
           <Link href="/privacy">Privacy</Link>

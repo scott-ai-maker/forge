@@ -11,6 +11,7 @@ describe('app/sitemap.ts', () => {
     const urls = entries.map(e => e.url)
     expect(urls).toContain('https://forge-athletic.app/')
     expect(urls).toContain('https://forge-athletic.app/packages')
+    expect(urls).toContain('https://forge-athletic.app/credentials')
     expect(urls).toContain('https://forge-athletic.app/async-coaching')
     expect(urls).toContain('https://forge-athletic.app/apply')
     expect(urls).toContain('https://forge-athletic.app/whats-new')
