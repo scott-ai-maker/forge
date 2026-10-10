@@ -14,7 +14,7 @@ import CoachInviteLinkCard from '@/components/coach/CoachInviteLinkCard'
 import CoachClientPipeline from '@/components/coach/CoachClientPipeline'
 import CoachAnalyticsDashboard from '@/components/coach/CoachAnalyticsDashboard'
 import CoachTriageCockpit from '@/components/coach/CoachTriageCockpit'
-import RagProgramGeneratorStudio from '@/components/coach/RagProgramGeneratorStudio'
+import CoachDashboardPeriodizationStudio, { type ClientSummaryOption } from '@/components/coach/CoachDashboardPeriodizationStudio'
 import { evaluateClientTriage, calculateAcwrFromWorkoutLogs } from '@/lib/coach-triage'
 import { evaluateClientOnboardingProgression, type ClientProgressionProfile } from '@/lib/coach-onboarding-progression'
 import { type ClientStatus } from '@/lib/client-lifecycle'
@@ -882,6 +882,38 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
     })
   })
 
+  const periodizationClients: ClientSummaryOption[] = (assignedClients ?? []).map(client => {
+    const profile = (fitnessProfiles ?? []).find(p => p.user_id === client.id)
+    const latestPlan = (latestPlans ?? []).find(p => p.user_id === client.id)
+    const intake = (clientIntakes ?? []).find(i => i.user_id === client.id)
+    const assessment = (clientAssessments ?? []).find(a => a.client_id === client.id)
+
+    return {
+      id: client.id,
+      fullName: client.full_name || client.email.split('@')[0],
+      email: client.email,
+      goal: profile?.fitness_goal || latestPlan?.name || null,
+      phase: latestPlan?.nasm_opt_phase || 1,
+      phaseName: latestPlan?.phase_name || 'Phase 1: Stabilization Endurance',
+      equipmentAccess: Array.isArray(profile?.equipment_access) ? profile.equipment_access : ['dumbbell', 'band', 'bodyweight'],
+      sessionsPerWeek: profile?.training_days_per_week || 3,
+      age: 32,
+      medicalConditions: intake?.medical_conditions || null,
+      contraindications: intake?.parq_any_yes ? ['PAR-Q Clearance Required'] : [],
+      ohsaCompensations: Array.isArray(assessment?.ohsa_findings)
+        ? assessment.ohsa_findings.map((f: unknown) => (typeof f === 'string' ? f : (f as { compensation?: string })?.compensation || ''))
+        : [],
+      existingPlan: latestPlan ? {
+        id: latestPlan.id,
+        name: latestPlan.name,
+        goal: profile?.fitness_goal,
+        nasm_opt_phase: latestPlan.nasm_opt_phase,
+        phase_name: latestPlan.phase_name,
+        plan_json: latestPlan.plan_json as Record<string, unknown> | null,
+      } : null,
+    }
+  })
+
   return (
     <main className="coach-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
       <SiteHeader
@@ -919,7 +951,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
           {[
             { key: 'overview' as const, label: 'Overview', icon: null },
             { key: 'onboarding' as const, label: 'Member Onboarding', icon: 'clipboard' as GaaIconName },
-            { key: 'architect' as const, label: 'AI Training Assistant', icon: 'brain' as GaaIconName },
+            { key: 'architect' as const, label: 'AI Periodization Studio', icon: 'brain' as GaaIconName },
             { key: 'triage' as const, label: 'Member Support', icon: 'lightning' as GaaIconName },
             { key: 'roster' as const, label: 'Members', icon: null },
             { key: 'intake' as const, label: 'New Member Requests', icon: null },
@@ -966,7 +998,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
 
         {activeTab === 'architect' && (
           <div style={{ marginBottom: 40 }}>
-            <RagProgramGeneratorStudio clientName="Coach Program Studio" />
+            <CoachDashboardPeriodizationStudio clients={periodizationClients} />
           </div>
         )}
 

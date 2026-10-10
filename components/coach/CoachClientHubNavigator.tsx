@@ -32,8 +32,8 @@ const PILLARS: HubPillar[] = [
     tone: 'gold',
     tabs: [
       { key: 'overview', label: 'Client Overview', icon: 'overview', tone: 'gold', desc: 'Biometric telemetry, adherence & triage' },
-      { key: 'program', label: 'Program Workspace', icon: 'program', tone: 'gold', desc: 'Prescribed workouts, exercise sets & tempos' },
-      { key: 'periodization', label: 'OPT™ Periodization', icon: 'periodization', tone: 'gold', desc: '12-week macrocycle, deloads & setback modulation', badge: 'Architect' },
+      { key: 'program', label: 'Program & Periodization Studio', icon: 'program', tone: 'gold', desc: 'Coach Gordon AI periodization, workouts & tempos', badge: 'AI Studio' },
+      { key: 'periodization', label: 'OPT™ Macrocycle Engine', icon: 'periodization', tone: 'gold', desc: 'Mesocycle synthesis, weekly memos & deloads' },
     ],
   },
   {

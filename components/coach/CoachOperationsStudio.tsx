@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import GeneralSettingsForm from '@/components/settings/GeneralSettingsForm'
-import RagProgramGeneratorStudio from '@/components/coach/RagProgramGeneratorStudio'
+import CoachCustomPeriodizationStudio from '@/components/coach/studio/CoachCustomPeriodizationStudio'
 import { GaaIcon, type GaaIconName } from '@/components/ui/GaaIcon'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 
@@ -322,7 +322,13 @@ export default function CoachOperationsStudio({
       {/* ── 2. Tab: OPT Program Templates ── */}
       {activeTab === 'templates' && (
         <section style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <RagProgramGeneratorStudio />
+          <CoachCustomPeriodizationStudio
+            clientId="template-library"
+            clientName="Master Template Library"
+            initialGoal="fat_loss"
+            initialPhase={1}
+            initialSessionsPerWeek={3}
+          />
         </section>
       )}
 

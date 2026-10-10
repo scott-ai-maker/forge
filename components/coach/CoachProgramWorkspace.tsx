@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import RagProgramGeneratorStudio from '@/components/coach/RagProgramGeneratorStudio'
+import { useState, useEffect } from 'react'
 import CoachCustomPeriodizationStudio from '@/components/coach/studio/CoachCustomPeriodizationStudio'
 import CoachTravelRecalibratorModal from '@/components/coach/CoachTravelRecalibratorModal'
 import GaaIcon from '@/components/ui/GaaIcon'
@@ -172,7 +171,14 @@ export default function CoachProgramWorkspace({
     }
   }
 
-  const [studioMode, setStudioMode] = useState<'custom_ai' | 'rag_classic'>('custom_ai')
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('tab=periodization')) {
+      const el = document.getElementById('rag-studio-section')
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+  }, [])
 
   const handlePlanAssignedFromStudio = (
     newPlan: GeneratedMacrocyclePlan,
@@ -961,95 +967,21 @@ export default function CoachProgramWorkspace({
 
       {/* ── Periodization Engine Studio ────────────────────────────── */}
       <div id="rag-studio-section" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {/* Studio Mode Selector */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'rgba(10,14,24,0.85)',
-            border: '1px solid rgba(212,160,23,0.3)',
-            borderRadius: 8,
-            padding: '10px 14px',
-            flexWrap: 'wrap',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800 }}>
-              Periodization Engine:
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              type="button"
-              onClick={() => setStudioMode('custom_ai')}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 6,
-                border: studioMode === 'custom_ai' ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)',
-                background: studioMode === 'custom_ai' ? 'rgba(212,160,23,0.2)' : 'rgba(255,255,255,0.03)',
-                color: studioMode === 'custom_ai' ? 'var(--gold-lt)' : '#94A3B8',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              ⭐ Coach Gordon AI Custom Studio (Gemini 3.8 Flash)
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setStudioMode('rag_classic')}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 6,
-                border: studioMode === 'rag_classic' ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)',
-                background: studioMode === 'rag_classic' ? 'rgba(212,160,23,0.2)' : 'rgba(255,255,255,0.03)',
-                color: studioMode === 'rag_classic' ? 'var(--gold-lt)' : '#94A3B8',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              Classic NASM Catalog Studio
-            </button>
-          </div>
-        </div>
-
-        {studioMode === 'custom_ai' ? (
-          <CoachCustomPeriodizationStudio
-            clientId={clientId}
-            clientName={clientName}
-            clientAge={clientAge}
-            initialGoal={studioGoal}
-            initialPhase={studioPhase}
-            initialEquipmentAccess={initialEquipmentAccess}
-            initialSessionsPerWeek={initialSessionsPerWeek || 3}
-            contraindicationTags={allContraTags}
-            contraindicationNotes={contraindicationNotes}
-            injuriesLimitations={injuriesLimitations}
-            existingPlan={activePlan}
-            onPlanAssigned={handlePlanAssignedFromStudio}
-          />
-        ) : (
-          <RagProgramGeneratorStudio
-            clientId={clientId}
-            clientName={clientName}
-            initialGoal={studioGoal}
-            initialPhase={studioPhase}
-            initialEquipmentAccess={initialEquipmentAccess}
-            initialSessionsPerWeek={initialSessionsPerWeek}
-            initialClientAge={clientAge}
-            initialCompensations={ohsaCompensations}
-            existingPlan={activePlan}
-            contraindicationTags={allContraTags}
-            contraindicationNotes={contraindicationNotes}
-            injuriesLimitations={injuriesLimitations}
-            onPlanAssigned={handlePlanAssignedFromStudio}
-          />
-        )}
+        <CoachCustomPeriodizationStudio
+          clientId={clientId}
+          clientName={clientName}
+          clientAge={clientAge}
+          initialGoal={studioGoal}
+          initialPhase={studioPhase}
+          initialEquipmentAccess={initialEquipmentAccess}
+          initialSessionsPerWeek={initialSessionsPerWeek || 3}
+          initialCompensations={ohsaCompensations}
+          contraindicationTags={allContraTags}
+          contraindicationNotes={contraindicationNotes}
+          injuriesLimitations={injuriesLimitations}
+          existingPlan={activePlan}
+          onPlanAssigned={handlePlanAssignedFromStudio}
+        />
       </div>
 
       {isTravelModalOpen && (

@@ -1162,7 +1162,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
           </>
         )}
 
-        {activeTab === 'program' && (
+        {(activeTab === 'program' || activeTab === 'periodization') && (
           <CoachProgramWorkspace
             clientId={id}
             clientName={client.full_name ?? 'Member'}
