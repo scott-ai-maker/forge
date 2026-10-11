@@ -66,7 +66,7 @@ export const COACH_DRAWER_SECTIONS: DrawerSection[] = [
       { href: '/coach', label: 'Review Queue', icon: 'alert-triangle', desc: 'Check-ins, concerns, and plan adjustments' },
       { href: '/coach?tab=roster#assigned-clients', label: 'Members', icon: 'users', desc: 'Member list and training plans' },
       { href: '/coach#live-studio', label: 'Live Video Studio', icon: 'video-studio', desc: 'Coach HUD, telestrator & voice copilot' },
-      { href: '/coach/settings?tab=templates', label: 'Training Plan Builder', icon: 'clipboard', desc: 'Create and adjust training plans' },
+      { href: '/coach?tab=architect', label: 'Program Builder', icon: 'clipboard', desc: 'OPT plans for members or reusable templates' },
       { href: '/coach?tab=analytics', label: 'Progress Analytics', icon: 'chart', desc: 'Training, attendance, and progress trends' },
     ],
   },

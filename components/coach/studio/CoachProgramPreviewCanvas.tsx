@@ -8,6 +8,7 @@ import type {
 } from '@/lib/rag-nasm-program-generator'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
 import { GaaIcon } from '@/components/ui/GaaIcon'
+import { COACH_DISPLAY_NAME, buildCoachPersonalNote } from '@/lib/program-personalization'
 
 export interface CoachProgramPreviewCanvasProps {
   plan: GeneratedMacrocyclePlan
@@ -25,6 +26,7 @@ export interface CoachProgramPreviewCanvasProps {
 
 export default function CoachProgramPreviewCanvas({
   plan,
+  clientId,
   clientName,
   isDeploying,
   deploySuccessMessage,
@@ -39,6 +41,9 @@ export default function CoachProgramPreviewCanvas({
   const [isEditingMemo, setIsEditingMemo] = useState<boolean>(false)
   const [overwriteExisting, setOverwriteExisting] = useState<boolean>(true)
   const [activeTab, setActiveTab] = useState<'memo' | 'nutrition' | 'cardio' | 'matrix'>('matrix')
+  const isSandbox = clientId === 'sandbox-athlete'
+  const firstName = isSandbox ? 'your athlete' : (clientName.trim().split(/\s+/)[0] || clientName)
+  const personalNote = plan.coachPersonalNote ?? ''
 
   const currentDayIndex = plan.workouts.findIndex(w => w.day === activeDayNumber)
   const activeWorkout: GeneratedWorkoutDay =
@@ -101,6 +106,7 @@ export default function CoachProgramPreviewCanvas({
         rest: '60s',
         coachingCues: ['Focus on controlled tempo and kinetic alignment.'],
         nasmClinicalSource: 'Coach Custom Movement Addition',
+        whyForYou: 'I added this one for you personally — ask me about it at our next session.',
       },
     ]
     updatedWorkouts[safeDayIndex] = {
@@ -174,7 +180,7 @@ export default function CoachProgramPreviewCanvas({
             {plan.planTitle}
           </h1>
           <p style={{ margin: 0, fontSize: 13, color: '#CBD5E1' }}>
-            Tailored bespoke program for <strong>{clientName}</strong> · Primary Focus: <strong>{plan.primaryGoal}</strong>
+            Built by {COACH_DISPLAY_NAME} for <strong>{isSandbox ? 'a template athlete' : clientName}</strong> · Focus: <strong>{plan.primaryGoal.replace(/_/g, ' ')}</strong>
           </p>
         </div>
 
@@ -198,7 +204,7 @@ export default function CoachProgramPreviewCanvas({
             }}
           >
             <GaaIcon name="target" size={14} style={{ color: 'var(--gold-lt)' }} />
-            Edit Intake Nuance
+            Refine intake
           </button>
 
           <button
@@ -235,12 +241,12 @@ export default function CoachProgramPreviewCanvas({
                     animation: 'spin 0.8s linear infinite',
                   }}
                 />
-                Deploying...
+                Sending…
               </>
             ) : (
               <>
                 <GaaIcon name="shield-check" size={16} style={{ color: '#FFFFFF' }} />
-                Approve & Deploy to Athlete
+                {isSandbox ? 'Approve & save' : `Approve & send to ${firstName}`}
               </>
             )}
           </button>
@@ -287,6 +293,40 @@ export default function CoachProgramPreviewCanvas({
           {deployErrorMessage}
         </div>
       )}
+
+      {/* ── Personal note — the first thing the athlete reads ─────────── */}
+      <section className="coach-builder-note" aria-label={`Personal note to ${firstName}`}>
+        <div className="coach-builder-note-head">
+          <div className="coach-builder-note-avatar" aria-hidden="true">G</div>
+          <div>
+            <label htmlFor="coach-personal-note" className="coach-builder-note-title">
+              Personal note to {firstName}
+            </label>
+            <p className="coach-builder-note-hint">
+              {isSandbox ? 'Your athlete' : firstName} sees this first when they open Training. Make it sound like you.
+            </p>
+          </div>
+          {!isSandbox && personalNote.trim().length === 0 && (
+            <button
+              type="button"
+              className="coach-builder-btn coach-builder-btn-ghost coach-builder-btn-sm"
+              onClick={() => onUpdatePlan({ ...plan, coachPersonalNote: buildCoachPersonalNote({ clientName, goal: plan.primaryGoal, targetPhase: plan.nasmOptPhase }) })}
+            >
+              Draft one for me
+            </button>
+          )}
+        </div>
+        <textarea
+          id="coach-personal-note"
+          className="coach-builder-note-input"
+          value={personalNote}
+          maxLength={4000}
+          rows={5}
+          placeholder={`Hey ${isSandbox ? 'there' : firstName} — here's why I built this program the way I did…`}
+          onChange={e => onUpdatePlan({ ...plan, coachPersonalNote: e.target.value })}
+        />
+        <div className="coach-builder-note-meta">{personalNote.length}/4000</div>
+      </section>
 
       {/* ── Sub-Navigation Tabs ───────────────────────────────────────── */}
       <div
@@ -337,7 +377,7 @@ export default function CoachProgramPreviewCanvas({
           }}
         >
           <GaaIcon name="clipboard" size={14} style={{ color: activeTab === 'memo' ? 'var(--gold-lt)' : '#94A3B8' }} />
-          Master Coach Memo
+          Coach&apos;s rationale
         </button>
 
         {plan.handPortionPlan && (
@@ -1199,6 +1239,24 @@ export default function CoachProgramPreviewCanvas({
                         }}
                       />
                     </div>
+
+                    {/* Personal "why" — shown to the athlete */}
+                    <div className="coach-builder-why">
+                      <label htmlFor={`why-${safeDayIndex}-${exIndex}`} className="coach-builder-why-label">
+                        <GaaIcon name="message" size={11} tone="gold" />
+                        Why this is in {isSandbox ? 'their' : `${firstName}'s`} plan
+                        <span className="coach-builder-why-badge">Athlete sees this</span>
+                      </label>
+                      <input
+                        id={`why-${safeDayIndex}-${exIndex}`}
+                        type="text"
+                        className="coach-builder-why-input"
+                        value={ex.whyForYou ?? ''}
+                        maxLength={280}
+                        onChange={e => handleExerciseChange(exIndex, 'whyForYou', e.target.value)}
+                        placeholder="e.g. Builds the hip strength you need to keep your knees tracking over your toes."
+                      />
+                    </div>
                   </div>
                 )
               })}
@@ -1234,7 +1292,7 @@ export default function CoachProgramPreviewCanvas({
             style={{ width: 16, height: 16 }}
           />
           <span style={{ fontSize: 12, color: '#E2E8F0' }}>
-            Set as {clientName}&apos;s primary active workout program (overwrites active plan)
+            Make this {isSandbox ? 'the' : `${firstName}'s`} active program (replaces the current one)
           </span>
         </label>
 
@@ -1253,7 +1311,7 @@ export default function CoachProgramPreviewCanvas({
               cursor: 'pointer',
             }}
           >
-            ← Modify Intake
+            Refine intake
           </button>
 
           <button
@@ -1277,7 +1335,7 @@ export default function CoachProgramPreviewCanvas({
               boxShadow: '0 4px 16px rgba(16,185,129,0.3)',
             }}
           >
-            {isDeploying ? 'Deploying Program...' : '✓ Approve & Deploy Plan'}
+            {isDeploying ? 'Sending…' : isSandbox ? 'Approve & save' : `Approve & send to ${firstName}`}
           </button>
         </div>
       </div>

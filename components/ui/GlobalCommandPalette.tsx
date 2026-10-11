@@ -225,12 +225,12 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
   },
   {
     id: 'coach-templates',
-    title: 'Training Plan Builder',
-    subtitle: 'Build and adapt training plans with the exercise library',
+    title: 'Program Builder',
+    subtitle: 'Build OPT plans for a member or as a reusable template',
     category: 'Coach Operations',
     icon: 'clipboard',
-    href: '/coach/settings?tab=templates',
-    keywords: ['templates', 'program generator', 'rag', 'exercise library', 'nasm', 'builder'],
+    href: '/coach?tab=architect',
+    keywords: ['templates', 'program generator', 'opt', 'periodization', 'exercise library', 'nasm', 'builder'],
     badge: 'Coach',
   },
   {

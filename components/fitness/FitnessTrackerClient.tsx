@@ -179,6 +179,7 @@ interface WorkoutExercise {
   imageUrl?: string | null
   videoUrl?: string | null
   block?: string | null
+  personalReason?: string | null
 }
 
 interface WorkoutDay {
@@ -210,6 +211,7 @@ interface WorkoutPlanRecord {
     generatedByCoachId?: string
     nutritionTargets?: NutritionTargetsSnapshot
     clinicalRationale?: string | null
+    coachPersonalNote?: string | null
     handPortionPlan?: HandPortionNutritionPlan | null
     dualCardioPlan?: DualCardioPlanSummary | null
     workouts?: WorkoutDay[]
@@ -1916,6 +1918,20 @@ export default function FitnessTrackerClient({
           </div>
         </div>
       </div>
+      {/* ── Personal note from the coach (open by default) ── */}
+      {plan?.plan_json?.coachPersonalNote?.trim() && (
+        <section className="client-coach-note" aria-label="A personal note from Coach Gordon">
+          <div className="client-coach-note-head">
+            <span className="client-coach-note-avatar" aria-hidden="true">G</span>
+            <div>
+              <div className="client-coach-note-kicker">A personal note from Coach Gordon</div>
+              <div className="client-coach-note-sub">Why your program looks the way it does</div>
+            </div>
+          </div>
+          <p className="client-coach-note-body">{plan.plan_json.coachPersonalNote}</p>
+        </section>
+      )}
+
       {/* ── Coach Gordon Clinical Briefing Memo ── */}
       {plan?.plan_json?.clinicalRationale && (
         <details
@@ -1948,7 +1964,7 @@ export default function FitnessTrackerClient({
               G
             </span>
             <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
-              Master Coach Briefing Memo · From Coach Gordon
+              {plan?.plan_json?.coachPersonalNote?.trim() ? "Coach's technical rationale" : 'Master Coach Briefing Memo · From Coach Gordon'}
             </div>
           </summary>
           <p
@@ -3396,6 +3412,12 @@ export default function FitnessTrackerClient({
                           </summary>
                           {(isExpanded || activeRestTimerKey === exerciseKey) && (
                           <div style={{ padding: '6px 4px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                        {ex.personalReason?.trim() && (
+                          <p className="client-exercise-why">
+                            <span className="client-exercise-why-label">Why this is in your plan</span>
+                            {ex.personalReason}
+                          </p>
+                        )}
                         <form onSubmit={event => handleInlineSetLog(event, workout, ex)} style={{ border: '1px solid rgba(255,255,255,0.08)', padding: '8px 8px', background: 'rgba(13,27,42,0.55)', borderRadius: 6, marginTop: 0 }}>
                             <SetProgressionMatrix
                               targetSets={ex.sets}

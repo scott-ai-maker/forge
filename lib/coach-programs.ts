@@ -72,6 +72,7 @@ export interface CoachProgramExerciseInput {
   rest?: string | null
   notes?: string | null
   description?: string | null
+  personalReason?: string | null
   instructions?: string[] | null
   coachingCues?: string[] | null
   primaryEquipment?: string[] | null
@@ -100,6 +101,7 @@ export interface CoachProgramPayload {
   templateId?: string | null
   workouts: CoachProgramWorkoutInput[]
   clinicalRationale?: string | null
+  coachPersonalNote?: string | null
   handPortionPlan?: HandPortionNutritionPlan | null
   dualCardioPlan?: DualCardioPlanSummary | null
   periodizationWeeklyMemos?: string[] | null
@@ -136,6 +138,7 @@ export interface ProgramExerciseSnapshot {
   rest: string | null
   notes: string | null
   description: string | null
+  personalReason?: string | null
   instructions?: string[]
   coachingCues: string[]
   primaryEquipment: string[]
@@ -296,6 +299,7 @@ export function buildStoredProgramPlan(
             rest: normalizeOptionalText(exercise.rest),
             notes: normalizeOptionalText(exercise.notes),
             description: resolvedDescription,
+            personalReason: normalizeOptionalText(exercise.personalReason),
             instructions: resolvedInstructions.length > 0 ? resolvedInstructions : undefined,
             coachingCues: [],
             primaryEquipment: normalizeTextArray(

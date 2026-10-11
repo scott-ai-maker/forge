@@ -2,10 +2,12 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SiteHeader from '@/components/ui/SiteHeader'
-import CoachOperationsStudio, { CoachSettingsTab } from '@/components/coach/CoachOperationsStudio'
+import CoachOperationsStudio, { type CoachSettingsTab } from '@/components/coach/CoachOperationsStudio'
 import { createSignedFitnessPhotoUrl } from '@/lib/fitness-photos'
 
 export const dynamic = 'force-dynamic'
+
+const COACH_SETTINGS_TABS: readonly CoachSettingsTab[] = ['promotions', 'profile', 'security']
 
 interface CoachSettingsPageProps {
   searchParams: Promise<{
@@ -48,7 +50,12 @@ export default async function CoachSettingsPage({ searchParams }: CoachSettingsP
     ? resolvedSearchParams.tab[0]
     : resolvedSearchParams.tab
 
-  const initialTab = (tabParam as CoachSettingsTab) || 'promotions'
+  // The program engine moved to the coach dashboard; keep old bookmarks working.
+  if (tabParam === 'templates') redirect('/coach?tab=architect')
+
+  const initialTab: CoachSettingsTab = COACH_SETTINGS_TABS.includes(tabParam as CoachSettingsTab)
+    ? (tabParam as CoachSettingsTab)
+    : 'promotions'
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--navy)' }}>

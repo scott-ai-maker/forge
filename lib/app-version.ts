@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.37.1'
+export const APP_VERSION = '1.38.0'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Menu & Navigation Cleanup'
+export const APP_RELEASE_CODENAME = 'Personal Program Builder'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,25 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.37.1',
+    version: '1.38.0',
     date: '2026-10-11',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Coach-Led Builder · Personal Note · Why-This-Exercise · Athlete Profile',
+    title: 'Putting the "Personal" Back in Personal Training',
+    summary: 'The coach Program Builder now starts with the person, not a template — and every program a client receives comes with a note from their coach and a reason behind each exercise.',
+    highlights: [
+      'Program Builder moved out of Settings into the Coach workspace, with the intake as a centered modal that no longer auto-opens.',
+      'A "Who you\'re building for" profile card shows age, goal, phase, sessions, movement screen, limitations and equipment up front.',
+      'Coaches write (or refine an AI draft of) a personal note that clients see first when they open Training.',
+      'Every exercise carries an editable "Why this is in your plan" line that clients see on their workout.',
+      'Coach-led copy throughout — AI is the assistant; programs are approved and sent by the coach.',
+    ],
+  },
+  {
+    version: '1.37.1',
+    date: '2026-10-11',
+    codename: 'Menu & Navigation Cleanup',
     category: 'fix',
     badge: 'One Menu · Accurate Highlighting · Coach Members Fix',
     title: 'Simpler Phone & Tablet Navigation',

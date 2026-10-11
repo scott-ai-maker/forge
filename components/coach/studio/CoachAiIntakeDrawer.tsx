@@ -225,7 +225,21 @@ export default function CoachAiIntakeDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, isSynthesizing, onClose])
 
+  useEffect(() => {
+    if (!isOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
+
+  const draftFirstName = clientName.trim().split(/\s+/)[0] ?? ''
+  const draftTarget = !draftFirstName || /^(new|template|athlete)$/i.test(draftFirstName)
+    ? 'the program'
+    : `${draftFirstName}'s program`
 
   const toggleSuperpower = (item: string) => {
     setSuperpowers(prev =>
@@ -294,6 +308,7 @@ export default function CoachAiIntakeDrawer({
       role="dialog"
       aria-modal="true"
       aria-labelledby="intake-drawer-title"
+      className="coach-intake-overlay"
       style={{
         position: 'fixed',
         inset: 0,
@@ -301,20 +316,32 @@ export default function CoachAiIntakeDrawer({
         background: 'rgba(3, 7, 18, 0.85)',
         backdropFilter: 'blur(10px)',
         display: 'flex',
-        justifyContent: 'flex-end',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
       onClick={e => {
         if (e.target === e.currentTarget && !isSynthesizing) onClose()
       }}
     >
+      <style>{`
+        .coach-intake-overlay { padding: clamp(12px, 3vw, 32px); }
+        .coach-intake-panel {
+          width: 100%;
+          max-width: 920px;
+          max-height: min(92vh, 1100px);
+          border: 1px solid rgba(212, 160, 23, 0.4);
+          border-radius: 14px;
+        }
+        @media (max-width: 640px) {
+          .coach-intake-overlay { padding: 0; }
+          .coach-intake-panel { max-width: none; height: 100dvh; max-height: none; border: 0; border-radius: 0; }
+        }
+      `}</style>
       <div
+        className="coach-intake-panel"
         style={{
-          width: '100%',
-          maxWidth: 780,
-          height: '100%',
           background: 'linear-gradient(180deg, #0B132B 0%, #060A14 100%)',
-          borderLeft: '1px solid rgba(212, 160, 23, 0.4)',
-          boxShadow: '-10px 0 50px rgba(0, 0, 0, 0.8)',
+          boxShadow: '0 24px 70px rgba(0, 0, 0, 0.8)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -391,8 +418,9 @@ export default function CoachAiIntakeDrawer({
             borderBottom: '1px solid rgba(212, 160, 23, 0.15)',
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
-            overflowX: 'auto',
+            gap: 8,
+            flexWrap: 'wrap',
+            flexShrink: 0,
           }}
         >
           <span style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--gold-lt, #F5D061)', fontWeight: 800, whiteSpace: 'nowrap' }}>
@@ -1224,12 +1252,12 @@ export default function CoachAiIntakeDrawer({
                       animation: 'spin 0.8s linear infinite',
                     }}
                   />
-                  Synthesizing Master NASM OPT™ Program...
+                  Drafting {draftTarget}…
                 </>
               ) : (
                 <>
                   <GaaIcon name="lightning" size={15} style={{ color: '#0A0E18' }} />
-                  Synthesize with Gemini 3.8 Flash
+                  Draft {draftTarget} with AI
                 </>
               )}
             </button>

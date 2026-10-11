@@ -15,12 +15,16 @@ import type {
   StrengthCardioBlendSummary,
 } from '@/lib/rag-nasm-program-generator'
 import { GaaIcon } from '@/components/ui/GaaIcon'
+import { COACH_DISPLAY_NAME } from '@/lib/program-personalization'
 
 export interface CoachCustomPeriodizationStudioProps {
   clientId: string
   clientName: string
   clientAge?: number | null
-  clientSex?: 'male' | 'female'
+  clientSex?: string | null
+  clientGoalLabel?: string | null
+  clientPhaseName?: string | null
+  clientExperienceLevel?: string | null
   initialGoal?: 'fat_loss' | 'hypertrophy' | 'performance' | 'general_fitness'
   initialPhase?: number
   initialEquipmentAccess?: string[]
@@ -46,19 +50,61 @@ export default function CoachCustomPeriodizationStudio({
   clientId,
   clientName,
   clientAge,
-  clientSex = 'female',
+  clientSex,
+  clientGoalLabel,
+  clientPhaseName,
+  clientExperienceLevel,
   initialGoal = 'fat_loss',
   initialPhase = 1,
   initialEquipmentAccess = ['dumbbell', 'band', 'reebok step', 'stability ball', 'bodyweight'],
   initialSessionsPerWeek = 3,
+  initialCompensations = [],
   contraindicationTags = [],
+  contraindicationNotes = [],
   injuriesLimitations = null,
   existingPlan,
   onPlanAssigned,
   onClose,
 }: CoachCustomPeriodizationStudioProps) {
+  const isSandbox = clientId === 'sandbox-athlete'
+  const clientFirstName = isSandbox ? 'this athlete' : (clientName.trim().split(/\s+/)[0] || clientName)
+  const compensations = initialCompensations.map(c => c.trim()).filter(Boolean)
+  const limitationsText = Array.from(
+    new Set(
+      [injuriesLimitations, ...contraindicationNotes]
+        .map(value => (typeof value === 'string' ? value.trim() : ''))
+        .filter(Boolean)
+    )
+  ).join(' · ')
+  const initials = clientName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase() ?? '')
+    .join('')
+  const sexLabel = clientSex ? clientSex.charAt(0).toUpperCase() + clientSex.slice(1).toLowerCase() : null
+  const profileFacts: Array<{ label: string; value: string }> = [
+    { label: sexLabel ? 'Age · Sex' : 'Age', value: [clientAge ? String(clientAge) : null, sexLabel].filter(Boolean).join(' · ') || 'Not set' },
+    { label: 'Goal', value: clientGoalLabel?.trim() || initialGoal.replace(/_/g, ' ') },
+    { label: 'Phase', value: clientPhaseName?.trim() || `Phase ${initialPhase}` },
+    { label: 'Sessions / week', value: String(initialSessionsPerWeek || 3) },
+    { label: 'Experience', value: clientExperienceLevel?.trim() || 'Not set' },
+    ...(existingPlan?.name ? [{ label: 'Current plan', value: existingPlan.name }] : []),
+  ]
+  const normalizedSex: 'male' | 'female' | undefined =
+    clientSex?.toLowerCase() === 'male' ? 'male' : clientSex?.toLowerCase() === 'female' ? 'female' : undefined
+  const normalizedExperience = (['beginner', 'intermediate', 'advanced', 'elite'] as const).find(
+    level => level === clientExperienceLevel?.toLowerCase()
+  )
+  const intakeGuidancePrefill = [
+    compensations.length ? `Movement screen: ${compensations.join(', ')}.` : '',
+    limitationsText ? `Limitations: ${limitationsText}.` : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   // Modal states
-  const [isIntakeDrawerOpen, setIsIntakeDrawerOpen] = useState<boolean>(!existingPlan?.plan_json?.workouts)
+  const [isIntakeDrawerOpen, setIsIntakeDrawerOpen] = useState<boolean>(false)
   const [isSynthesizing, setIsSynthesizing] = useState<boolean>(false)
   const [synthesisError, setSynthesisError] = useState<string | null>(null)
 
@@ -133,6 +179,7 @@ export default function CoachCustomPeriodizationStudio({
                 rest: String(ex.rest || '60s'),
                 coachingCues: ex.notes ? [String(ex.notes)] : ['Focus on kinetic alignment and core bracing.'],
                 nasmClinicalSource: String(ex.description || 'NASM Edge Catalog'),
+                whyForYou: typeof ex.personalReason === 'string' ? ex.personalReason : undefined,
               }
             }),
             dailyPeriodizationMemo: String(w.notes || 'Prioritize form and neuromuscular control.'),
@@ -140,6 +187,7 @@ export default function CoachCustomPeriodizationStudio({
         }),
         periodizationWeeklyMemos: periodizationPlan?.weeklyMemos || [],
         clinicalRationale: typeof planJson.clinicalRationale === 'string' ? planJson.clinicalRationale : '',
+        coachPersonalNote: typeof planJson.coachPersonalNote === 'string' ? planJson.coachPersonalNote : undefined,
         handPortionPlan,
         dualCardioPlan,
       }
@@ -184,7 +232,8 @@ export default function CoachCustomPeriodizationStudio({
           dualCardioSplit: formData.dualCardioSplit,
           coachGuidanceNotes: formData.coachGuidanceNotes,
           contraindicationTags,
-          injuriesLimitations: injuriesLimitations || undefined,
+          injuriesLimitations: limitationsText || undefined,
+          kineticCompensations: compensations.length > 0 ? compensations : undefined,
         }),
       })
 
@@ -223,6 +272,9 @@ export default function CoachCustomPeriodizationStudio({
       nasmClinicalSource: substitution.reasoning
         ? `Substitute for ${swapTarget.exerciseName}: ${substitution.reasoning}`
         : existingEx.nasmClinicalSource,
+      whyForYou: substitution.reasoning
+        ? `Swapped in for ${swapTarget.exerciseName}: ${substitution.reasoning}`
+        : existingEx.whyForYou,
     }
 
     targetWorkout.exercises = updatedExercises
@@ -266,6 +318,7 @@ export default function CoachCustomPeriodizationStudio({
           rest: ex.rest,
           notes: ex.coachingCues?.join(' | ') || undefined,
           description: ex.nasmClinicalSource,
+          personalReason: ex.whyForYou?.trim() || undefined,
           block: ex.block,
         })),
       }))
@@ -285,6 +338,7 @@ export default function CoachCustomPeriodizationStudio({
           targetPlanId: overwrite && existingPlan?.id ? existingPlan.id : undefined,
           workouts: workoutsPayload,
           clinicalRationale: currentPlan.clinicalRationale,
+          coachPersonalNote: currentPlan.coachPersonalNote?.trim() || undefined,
           handPortionPlan: currentPlan.handPortionPlan,
           dualCardioPlan: currentPlan.dualCardioPlan,
           strengthCardioBlendSummary: currentPlan.strengthCardioBlendSummary,
@@ -300,7 +354,9 @@ export default function CoachCustomPeriodizationStudio({
         throw new Error(data.error || `Deployment failed (status ${res.status}).`)
       }
 
-      setDeploySuccessMessage(`✓ Successfully assigned "${currentPlan.planTitle}" to ${clientName}!`)
+      setDeploySuccessMessage(
+        `Sent to ${clientFirstName}. They'll see "${currentPlan.planTitle}"${currentPlan.coachPersonalNote?.trim() ? ' with your personal note' : ''} next time they open Training.`
+      )
 
       if (onPlanAssigned) {
         onPlanAssigned(currentPlan)
@@ -328,94 +384,101 @@ export default function CoachCustomPeriodizationStudio({
         boxSizing: 'border-box',
       }}
     >
-      {/* Studio Header Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 12,
-          borderBottom: '1px solid rgba(212,160,23,0.2)',
-          paddingBottom: 16,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 8,
-              background: 'linear-gradient(135deg, #D4A017 0%, #B8860B 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(212,160,23,0.4)',
-            }}
-          >
-            <GaaIcon name="target" size={20} style={{ color: '#0A0E18' }} />
+      {/* Studio Header — coach-led, AI as assistant */}
+      <header className="coach-builder-header">
+        <div className="coach-builder-header-text">
+          <div className="coach-builder-eyebrow">
+            Program Builder
+            <span className="coach-builder-ai-chip">
+              <GaaIcon name="sparkles" size={11} tone="gold" />
+              AI-assisted
+            </span>
           </div>
-
-          <div>
-            <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--gold-lt, #F5D061)', fontWeight: 800 }}>
-              Master Periodization Studio · Gemini 3.8 Flash
-            </div>
-            <h2
-              style={{
-                fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-                fontSize: 22,
-                color: '#FFFFFF',
-                margin: 0,
-                letterSpacing: '0.03em',
-              }}
-            >
-              Coach Gordon AI Custom Program Studio
-            </h2>
-          </div>
+          <h2 className="coach-builder-title">
+            {isSandbox ? 'New athlete template' : `${clientFirstName}'s program`}
+          </h2>
+          <p className="coach-builder-subtitle">
+            Built by {COACH_DISPLAY_NAME} · every exercise explained to {isSandbox ? 'your athlete' : clientFirstName}
+          </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div className="coach-builder-header-actions">
           <button
             type="button"
+            className="coach-builder-btn coach-builder-btn-primary"
             onClick={() => setIsIntakeDrawerOpen(true)}
-            style={{
-              background: 'linear-gradient(135deg, #D4A017 0%, #B8860B 100%)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: '#0A0E18',
-              borderRadius: 6,
-              padding: '8px 16px',
-              fontSize: 12,
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
           >
-            <GaaIcon name="target" size={14} style={{ color: '#0A0E18' }} />
-            {currentPlan ? 'Modify Intake / Re-Synthesize' : 'Open AI Intake Form'}
+            <GaaIcon name="edit" size={14} tone="dark" />
+            {currentPlan ? 'Refine intake' : 'Start personal intake'}
           </button>
 
           {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#FFFFFF',
-                borderRadius: 6,
-                padding: '8px 14px',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              ✕ Exit Studio
+            <button type="button" className="coach-builder-btn coach-builder-btn-ghost" onClick={onClose}>
+              Close
             </button>
           )}
         </div>
-      </div>
+      </header>
+
+      {/* Athlete profile — who this program is for */}
+      <section className="coach-builder-profile" aria-label={`Who you're building for`}>
+        <div className="coach-builder-profile-head">
+          <div className="coach-builder-avatar" aria-hidden="true">
+            {isSandbox ? <GaaIcon name="user" size={18} tone="gold" /> : initials}
+          </div>
+          <div>
+            <div className="coach-builder-profile-kicker">Who you&apos;re building for</div>
+            <div className="coach-builder-profile-name">{isSandbox ? 'Template athlete' : clientName}</div>
+          </div>
+        </div>
+
+        <dl className="coach-builder-profile-grid">
+          {profileFacts.map(fact => (
+            <div key={fact.label} className="coach-builder-fact">
+              <dt>{fact.label}</dt>
+              <dd>{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="coach-builder-profile-tags">
+          <div className="coach-builder-tag-group">
+            <span className="coach-builder-tag-label">Movement screen</span>
+            {compensations.length > 0 ? (
+              <div className="coach-builder-chip-row">
+                {compensations.map(c => (
+                  <span key={c} className="coach-builder-chip coach-builder-chip-warn">{c}</span>
+                ))}
+              </div>
+            ) : (
+              <span className="coach-builder-muted">No screen yet</span>
+            )}
+          </div>
+          <div className="coach-builder-tag-group">
+            <span className="coach-builder-tag-label">Limitations &amp; injuries</span>
+            {limitationsText || contraindicationTags.length > 0 ? (
+              <div className="coach-builder-chip-row">
+                {limitationsText && <span className="coach-builder-chip coach-builder-chip-alert">{limitationsText}</span>}
+                {contraindicationTags.map(tag => (
+                  <span key={tag} className="coach-builder-chip coach-builder-chip-alert">{tag.replace(/_/g, ' ')}</span>
+                ))}
+              </div>
+            ) : (
+              <span className="coach-builder-muted">None reported</span>
+            )}
+          </div>
+          {initialEquipmentAccess.length > 0 && (
+            <div className="coach-builder-tag-group">
+              <span className="coach-builder-tag-label">Equipment</span>
+              <div className="coach-builder-chip-row">
+                {initialEquipmentAccess.map(eq => (
+                  <span key={eq} className="coach-builder-chip">{eq}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Synthesis Error Display */}
       {synthesisError && (
@@ -439,72 +502,27 @@ export default function CoachCustomPeriodizationStudio({
         </div>
       )}
 
-      {/* Empty State Banner if no plan is generated yet */}
+      {/* Empty state — invite the coach to start with the person */}
       {!currentPlan && !isSynthesizing && (
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.02)',
-            border: '1px dashed rgba(212,160,23,0.3)',
-            borderRadius: 10,
-            padding: '40px 24px',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              background: 'rgba(212,160,23,0.1)',
-              border: '1px solid var(--gold)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <GaaIcon name="clipboard" size={28} style={{ color: 'var(--gold-lt)' }} />
+        <div className="coach-builder-empty">
+          <div className="coach-builder-empty-icon" aria-hidden="true">
+            <GaaIcon name="handshake" size={26} tone="gold" />
           </div>
-
-          <h3
-            style={{
-              fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-              fontSize: 19,
-              color: '#FFFFFF',
-              margin: 0,
-            }}
-          >
-            Ready to Generate {clientName}&apos;s Custom NASM OPT™ Program
+          <h3 className="coach-builder-empty-title">
+            {isSandbox ? 'Build a reusable template' : `Let's build ${clientFirstName}'s first program`}
           </h3>
-
-          <p style={{ margin: 0, fontSize: 13, color: '#94A3B8', maxWidth: 540, lineHeight: 1.5 }}>
-            Open the AI Personalization Intake to capture {clientName}&apos;s lifestyle rhythms, movement superpowers, strict exclusions, home gym quirks, and nutrition mindset.
+          <p className="coach-builder-empty-copy">
+            {isSandbox
+              ? 'Capture goals, schedule, equipment and preferences. AI drafts the program; you review every exercise before it goes anywhere.'
+              : `Start with ${clientFirstName}'s story — schedule, favorite movements, what to avoid, and life outside the gym. AI drafts the program, you shape it, and ${clientFirstName} sees why each exercise is there.`}
           </p>
-
           <button
             type="button"
+            className="coach-builder-btn coach-builder-btn-primary coach-builder-btn-lg"
             onClick={() => setIsIntakeDrawerOpen(true)}
-            style={{
-              marginTop: 6,
-              background: 'linear-gradient(135deg, #D4A017 0%, #B8860B 100%)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: '#0A0E18',
-              borderRadius: 8,
-              padding: '12px 28px',
-              fontSize: 14,
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              boxShadow: '0 4px 16px rgba(212,160,23,0.3)',
-            }}
           >
-            <GaaIcon name="target" size={16} style={{ color: '#0A0E18' }} />
-            Open Deep Personalization Intake
+            <GaaIcon name="edit" size={16} tone="dark" />
+            Start personal intake
           </button>
         </div>
       )}
@@ -540,7 +558,9 @@ export default function CoachCustomPeriodizationStudio({
         clientId={clientId}
         initialData={{
           clientAge: clientAge ?? undefined,
-          clientSex,
+          clientSex: normalizedSex,
+          experienceLevel: normalizedExperience,
+          coachGuidanceNotes: intakeGuidancePrefill || undefined,
           goal: initialGoal,
           targetNasmPhase: initialPhase,
           trainingDaysPerWeek: initialSessionsPerWeek || 3,

@@ -21,6 +21,7 @@ import { calculateCardioZones } from './nasm-cardio-stage-engine'
 import { validateAndEnforceNasmOptGuardrails, substituteMissingEquipment } from './nasm-opt-guardrails'
 import { checkExerciseContraindications } from './liability-shield'
 import { parseInjuriesFromText } from './sports-injuries'
+import { personalizePlan, type PersonalizationContext } from './program-personalization'
 
 export interface GeminiCoachLifestyleRhythm {
   workStyle?: 'sedentary_desk' | 'active_standing' | 'traveling' | 'heavy_labor' | string
@@ -485,6 +486,16 @@ export async function generateMasterNasmOptProgram(
     goal: ragGoal,
     nasmOptPhase: targetPhase,
   })
+  const personalizationCtx: PersonalizationContext = {
+    clientName: request.clientName,
+    goal: request.goal,
+    targetPhase,
+    kineticCompensations: request.kineticCompensations,
+    injuriesLimitations: request.injuriesLimitations,
+    contraindicationTags: request.contraindicationTags,
+    movementSuperpowers: request.movementSuperpowers,
+    functionalDemands: request.functionalDemands,
+  }
 
   // If no Gemini API key is configured, execute deterministic RAG generation with equipment validation, exclusions, & CDN enrichment
   if (!apiKey) {
@@ -526,7 +537,7 @@ export async function generateMasterNasmOptProgram(
       validated.dualCardioPlan = buildDeterministicDualCardioPlan(request, cardioZones)
     }
 
-    return enrichPlanWithNasmCdnMedia(validated)
+    return personalizePlan(enrichPlanWithNasmCdnMedia(validated), personalizationCtx)
   }
 
   // 1. Filter allowed NASM Edge exercises strictly by available client equipment and strict exclusions
@@ -580,8 +591,9 @@ Generate a complete 4-week OPT™ periodized macrocycle split. Return as valid J
 - sessionsPerWeek (number: ${request.trainingDaysPerWeek || 4})
 - ragSourcesCited (string[])
 - strengthCardioBlendSummary (object with goal, blendRatio, strengthPct, cardioPct, weeklyStrengthSessions, weeklyCardioMinutes, primaryCardioStages, interferenceShieldStrategy, clinicalGuideline)
-- workouts (array of GeneratedWorkoutDay objects each with day, dayName, focus, nasmOptPhase, phaseName, estimatedDurationMins, warmupProtocol { inhibitSmr, lengthenStaticStretch, activateDynamic }, exercises [ { block, name, sets, reps, tempo, rest, coachingCues, nasmClinicalSource } ], cardioProtocol, dailyPeriodizationMemo)
+- workouts (array of GeneratedWorkoutDay objects each with day, dayName, focus, nasmOptPhase, phaseName, estimatedDurationMins, warmupProtocol { inhibitSmr, lengthenStaticStretch, activateDynamic }, exercises [ { block, name, sets, reps, tempo, rest, coachingCues, nasmClinicalSource, whyForYou (one plain-language sentence written directly to the client explaining why THIS exercise is in THEIR plan, referencing their compensations, limitations, or goal) } ], cardioProtocol, dailyPeriodizationMemo)
 - periodizationWeeklyMemos (string[4])
+- coachPersonalNote (string: 3-5 warm sentences in first person from Coach Gordon to the client by first name — what this plan is built around for them and encouragement; no jargon, no bullet points)
 - clinicalRationale (string: Empathetic, high-EQ Master Coach Gordon Briefing Memo written to the client addressing them by name, covering lifestyle context, superpowers, exclusions, orthopedic safeguards, phase tempo, cardio split, and nutrition)
 ${request.nutritionPhilosophy === 'precision_nutrition_hand_portion' ? '- handPortionPlan (object with philosophy: "precision_nutrition_hand_portion", title, mealsPerDay, guidelines { protein, vegetables, smartCarbs, healthyFats }, mindfulEatingCue, hydrationAnchor, summary)\n' : ''}${request.dualCardioSplit ? '- dualCardioPlan (object with sweatyFinisher { title, durationMins, modality, zone, timing, rationale }, freshNeatWalk { title, durationMins, frequency, modality, timing, rationale })\n' : ''}`
 
@@ -666,7 +678,7 @@ ${request.nutritionPhilosophy === 'precision_nutrition_hand_portion' ? '- handPo
     }
 
     // 3. Media enrichment: attach 100% official NASM CDN video URLs, embeds, and thumbnails
-    return enrichPlanWithNasmCdnMedia(validated)
+    return personalizePlan(enrichPlanWithNasmCdnMedia(validated), personalizationCtx)
   } catch (error) {
     console.error('Error in Master NASM Coach Gemini generation, falling back to deterministic RAG:', error)
     const fallbackPlan = generateRagNasmProgram({
@@ -706,6 +718,6 @@ ${request.nutritionPhilosophy === 'precision_nutrition_hand_portion' ? '- handPo
       validatedFallback.dualCardioPlan = buildDeterministicDualCardioPlan(request, cardioZones)
     }
 
-    return enrichPlanWithNasmCdnMedia(validatedFallback)
+    return personalizePlan(enrichPlanWithNasmCdnMedia(validatedFallback), personalizationCtx)
   }
 }

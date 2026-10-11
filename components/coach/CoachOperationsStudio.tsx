@@ -4,11 +4,12 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import GeneralSettingsForm from '@/components/settings/GeneralSettingsForm'
-import CoachCustomPeriodizationStudio from '@/components/coach/studio/CoachCustomPeriodizationStudio'
 import { GaaIcon, type GaaIconName } from '@/components/ui/GaaIcon'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 
-export type CoachSettingsTab = 'promotions' | 'templates' | 'profile' | 'security'
+export type CoachSettingsTab = 'promotions' | 'profile' | 'security'
+
+const COACH_SETTINGS_TABS: readonly CoachSettingsTab[] = ['promotions', 'profile', 'security']
 
 interface CoachProfile {
   email: string
@@ -30,7 +31,8 @@ export default function CoachOperationsStudio({
 }: CoachOperationsStudioProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const currentTabQuery = (searchParams.get('tab') as CoachSettingsTab) || initialTab
+  const tabQuery = searchParams.get('tab') as CoachSettingsTab | null
+  const currentTabQuery = tabQuery && COACH_SETTINGS_TABS.includes(tabQuery) ? tabQuery : initialTab
   const [activeTab, setActiveTab] = useState<CoachSettingsTab>(currentTabQuery)
 
   const handleTabChange = (tab: CoachSettingsTab) => {
@@ -160,7 +162,6 @@ export default function CoachOperationsStudio({
       >
         {[
           { key: 'promotions' as const, label: 'Promotions & Discounts', icon: 'credit-card' as GaaIconName, badge: 'Active' },
-          { key: 'templates' as const, label: 'OPT Program Engine', icon: 'program' as GaaIconName, badge: 'OPT AI' },
           { key: 'profile' as const, label: 'Coach Profile', icon: 'user' as GaaIconName },
           { key: 'security' as const, label: 'Security & Access', icon: 'lock' as GaaIconName },
         ].map(tab => {
@@ -319,20 +320,7 @@ export default function CoachOperationsStudio({
         </section>
       )}
 
-      {/* ── 2. Tab: OPT Program Templates ── */}
-      {activeTab === 'templates' && (
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <CoachCustomPeriodizationStudio
-            clientId="template-library"
-            clientName="Master Template Library"
-            initialGoal="fat_loss"
-            initialPhase={1}
-            initialSessionsPerWeek={3}
-          />
-        </section>
-      )}
-
-      {/* ── 3. Tab: Coach Profile ── */}
+      {/* ── 2. Tab: Coach Profile ── */}
       {activeTab === 'profile' && (
         <section
           style={{
@@ -354,7 +342,7 @@ export default function CoachOperationsStudio({
         </section>
       )}
 
-      {/* ── 4. Tab: Security & Access ── */}
+      {/* ── 3. Tab: Security & Access ── */}
       {activeTab === 'security' && (
         <section
           style={{

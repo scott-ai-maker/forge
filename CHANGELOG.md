@@ -3,6 +3,19 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.38.0] - 2026-10-11
+
+### Added
+- Coach Program Builder "Who you're building for" athlete profile card (age, goal, phase, sessions/week, experience, movement screen, limitations, equipment).
+- Editable personal note from the coach, pre-drafted by AI and shown to the client at the top of Training.
+- Per-exercise "Why this is in your plan" reason, editable by the coach and shown to the client under each exercise.
+- `lib/program-personalization.ts` with unit tests for reason and note generation.
+
+### Changed
+- Moved the OPT program engine out of Settings into `/coach?tab=architect` ("Program Builder"); the old Settings templates tab redirects there.
+- Intake opens as a centered modal on demand instead of auto-opening.
+- Coach-centric copy: "{Name}'s program", "Start personal intake", "Draft {Name}'s program with AI", "Approve & send to {Name}".
+
 ## [1.37.1] - 2026-10-11
 
 ### Changed

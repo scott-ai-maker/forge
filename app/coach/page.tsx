@@ -196,7 +196,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
           .limit(1000),
         admin
           .from('fitness_profiles')
-          .select('user_id, onboarding_completed_at, height_cm, weight_kg, fitness_goal, equipment_access, training_days_per_week')
+          .select('user_id, onboarding_completed_at, height_cm, weight_kg, fitness_goal, equipment_access, training_days_per_week, age, sex, experience_level, injuries_limitations')
           .in('user_id', assignedClientIds),
         admin
           .from('workout_logs')
@@ -897,8 +897,13 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
       phaseName: latestPlan?.phase_name || 'Phase 1: Stabilization Endurance',
       equipmentAccess: Array.isArray(profile?.equipment_access) ? profile.equipment_access : ['dumbbell', 'band', 'bodyweight'],
       sessionsPerWeek: profile?.training_days_per_week || 3,
-      age: 32,
-      medicalConditions: intake?.medical_conditions || null,
+      age: typeof profile?.age === 'number' ? profile.age : null,
+      sex: profile?.sex || null,
+      experienceLevel: profile?.experience_level || null,
+      medicalConditions: [intake?.medical_conditions, profile?.injuries_limitations]
+        .map(value => (typeof value === 'string' ? value.trim() : ''))
+        .filter(Boolean)
+        .join(' · ') || null,
       contraindications: intake?.parq_any_yes ? ['PAR-Q Clearance Required'] : [],
       ohsaCompensations: Array.isArray(assessment?.ohsa_findings)
         ? assessment.ohsa_findings.map((f: unknown) => (typeof f === 'string' ? f : (f as { compensation?: string })?.compensation || ''))
@@ -951,7 +956,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
           {[
             { key: 'overview' as const, label: 'Overview', icon: null },
             { key: 'onboarding' as const, label: 'Member Onboarding', icon: 'clipboard' as GaaIconName },
-            { key: 'architect' as const, label: 'AI Periodization Studio', icon: 'brain' as GaaIconName },
+            { key: 'architect' as const, label: 'Program Builder', icon: 'brain' as GaaIconName },
             { key: 'triage' as const, label: 'Member Support', icon: 'lightning' as GaaIconName },
             { key: 'roster' as const, label: 'Members', icon: null },
             { key: 'intake' as const, label: 'New Member Requests', icon: null },

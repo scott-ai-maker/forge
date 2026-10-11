@@ -51,6 +51,8 @@ export interface GeneratedExerciseItem {
   supersetPairWith?: string
   coachingCues: string[]
   nasmClinicalSource: string
+  /** Client-facing, plain-language reason this movement is in this athlete's plan. */
+  whyForYou?: string
   imageUrl?: string | null
   videoUrl?: string | null
   embedUrl?: string | null
@@ -149,6 +151,8 @@ export interface GeneratedMacrocyclePlan {
   workouts: GeneratedWorkoutDay[]
   periodizationWeeklyMemos: string[]
   clinicalRationale?: string
+  /** Short, personal note from the coach, delivered to the client with the plan. */
+  coachPersonalNote?: string
   handPortionPlan?: HandPortionNutritionPlan | null
   dualCardioPlan?: DualCardioPlanSummary | null
 }

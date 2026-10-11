@@ -49,6 +49,11 @@ function parsePayload(body: Record<string, unknown>): CoachProgramPayload | null
       : typeof rawJson.clinicalRationale === 'string'
         ? rawJson.clinicalRationale
         : null,
+    coachPersonalNote: typeof body.coachPersonalNote === 'string'
+      ? body.coachPersonalNote.trim().slice(0, 4000) || null
+      : typeof rawJson.coachPersonalNote === 'string'
+        ? rawJson.coachPersonalNote
+        : null,
     handPortionPlan: (body.handPortionPlan || rawJson.handPortionPlan) as HandPortionNutritionPlan || null,
     dualCardioPlan: (body.dualCardioPlan || rawJson.dualCardioPlan) as DualCardioPlanSummary || null,
     periodizationWeeklyMemos: Array.isArray(body.periodizationWeeklyMemos)
@@ -315,6 +320,9 @@ export async function POST(req: NextRequest) {
   const clinicalRationale =
     payload.clinicalRationale ||
     (typeof existingPlanJson?.clinicalRationale === 'string' ? existingPlanJson.clinicalRationale : undefined)
+  const coachPersonalNote =
+    payload.coachPersonalNote ||
+    (typeof existingPlanJson?.coachPersonalNote === 'string' ? existingPlanJson.coachPersonalNote : undefined)
 
   handPortionPlan =
     handPortionPlan ||
@@ -345,6 +353,7 @@ export async function POST(req: NextRequest) {
       ...(periodizationPlan ? { periodizationPlan } : {}),
       ...(existingPlanJson?.embeddedCEx ? { embeddedCEx: existingPlanJson.embeddedCEx } : {}),
       ...(clinicalRationale ? { clinicalRationale } : {}),
+      ...(coachPersonalNote ? { coachPersonalNote } : {}),
       ...(handPortionPlan ? { handPortionPlan } : {}),
       ...(dualCardioPlan ? { dualCardioPlan } : {}),
       ...(strengthCardioBlendSummary ? { strengthCardioBlendSummary } : {}),
