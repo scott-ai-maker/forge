@@ -2739,10 +2739,11 @@ export default function FitnessTrackerClient({
                                   background: 'linear-gradient(135deg, rgba(212,160,23,0.2) 0%, rgba(212,160,23,0.08) 100%)',
                                   border: '1px solid rgba(212,160,23,0.5)',
                                   color: '#FFFFFF',
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: 800,
-                                  padding: '4px 10px',
-                                  borderRadius: 4,
+                                  minHeight: 44,
+                                  padding: '8px 12px',
+                                  borderRadius: 6,
                                   cursor: 'pointer',
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -2764,10 +2765,11 @@ export default function FitnessTrackerClient({
                                   background: 'rgba(212,160,23,0.15)',
                                   border: '1px solid rgba(212,160,23,0.4)',
                                   color: 'var(--gold-lt)',
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: 700,
-                                  padding: '4px 10px',
-                                  borderRadius: 4,
+                                  minHeight: 44,
+                                  padding: '8px 12px',
+                                  borderRadius: 6,
                                   cursor: 'pointer',
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -4771,6 +4773,7 @@ export default function FitnessTrackerClient({
                                 fontSize: 13.5,
                                 letterSpacing: '0.08em',
                                 fontWeight: 700,
+                                minHeight: 44,
                                 padding: '11px 26px',
                                 borderRadius: 6,
                                 cursor: 'pointer',
@@ -5301,7 +5304,8 @@ function PostWorkoutFinishModal({
           <button
             type="button"
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--gray)', fontSize: 18, cursor: 'pointer' }}
+            aria-label="Close end workout dialog"
+            style={{ background: 'transparent', border: 'none', color: 'var(--gray)', fontSize: 18, cursor: 'pointer', minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
             ✕
           </button>

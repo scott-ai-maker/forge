@@ -45,6 +45,11 @@ export default function PersonalRecordsBoard({ units = 'imperial' }: PersonalRec
     setError(null)
     try {
       const res = await fetch('/api/fitness/personal-records')
+      if (res.status === 401) {
+        console.warn('Personal records require sign-in.')
+        setError('Sign in to view your personal records.')
+        return
+      }
       if (!res.ok) throw new Error('Failed to load')
       const json = await res.json() as { records: PersonalRecord[] }
       setRecords(json.records ?? [])

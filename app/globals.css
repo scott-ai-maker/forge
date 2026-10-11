@@ -3044,9 +3044,33 @@ a:focus-visible {
   }
 
   .sgf-auth-crest {
-    width: 76px !important;
-    height: 76px !important;
-    margin-bottom: 10px !important;
+    width: 56px !important;
+    height: 56px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .sgf-auth-lede {
+    font-size: 13px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .sgf-auth-panel {
+    padding: 16px !important;
+  }
+
+  .sgf-auth-content.forge-auth-content {
+    padding: 12px;
+  }
+
+  .sgf-auth-fast-pass a {
+    min-height: 44px;
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    letter-spacing: 0.01em !important;
+  }
+
+  .sgf-auth-fast-pass > div:last-child {
+    margin: 12px 0 4px !important;
   }
 
   .sgf-auth-card {
@@ -3708,5 +3732,53 @@ aside.first-visit-dock,
 
   .foundation-home-tier-list {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile touch targets for the client training workspace (WCAG 2.5.5 / Apple HIG 44pt). */
+@media (max-width: 768px) {
+  .dashboard-fitness-content button,
+  .dashboard-fitness-content summary,
+  .dashboard-fitness-content select,
+  .dashboard-fitness-content input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']) {
+    min-height: 44px;
+  }
+}
+
+/* Mobile touch targets (WCAG 2.5.5 / Apple HIG 44pt) for public chrome and scoped components */
+@media (max-width: 768px) {
+  .mobile-touch-scope button,
+  .mobile-touch-scope summary,
+  .mobile-touch-scope select,
+  .mobile-touch-scope [role='button'],
+  .mobile-touch-scope input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']) {
+    min-height: 44px;
+  }
+
+  .mobile-hamburger-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .mobile-touch-scope a[target='_blank'],
+  .mobile-touch-scope a.sgf-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .site-footer-brand,
+  .site-footer-nav a,
+  .forge-home-header nav a,
+  .forge-home-brand,
+  .forge-home-footer a,
+  .forge-secondary-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .site-footer-nav {
+    gap: 0 !important;
   }
 }

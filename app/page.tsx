@@ -163,6 +163,7 @@ export default function Home() {
               href="/credentials"
               style={{
                 display: 'inline-flex',
+                minHeight: 44,
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.55rem 1.15rem',

@@ -72,7 +72,7 @@ export default function CoachCredentialsShowcase() {
   const safetyCpr = COACH_CREDENTIALS.find((c) => c.id === 'asti-cpr-aed')!
 
   return (
-    <div className="credentials-showcase-container" style={{ width: '100%', maxWidth: 1240, margin: '0 auto' }}>
+    <div className="credentials-showcase-container mobile-touch-scope" style={{ width: '100%', maxWidth: 1240, margin: '0 auto' }}>
       {/* ── TOP HERO HIGHLIGHT: TRIAD OF VERIFIED ACCREDITATIONS ── */}
       <div
         style={{

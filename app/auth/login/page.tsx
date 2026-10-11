@@ -111,6 +111,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           {surface.eyebrow}
         </p>
         <p
+          className="sgf-auth-lede"
           style={{
             fontFamily: 'Raleway, sans-serif',
             fontSize: 14,
@@ -137,6 +138,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             href={isCompanionMode ? "/auth/login?mode=companion&next=/dashboard/fitness" : "/auth/login"}
             style={{
               flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 44,
               textAlign: 'center',
               padding: '8px 12px',
               fontFamily: 'Raleway, sans-serif',
@@ -157,6 +162,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             href={isCompanionMode ? "/auth/login?mode=companion&next=/coach" : "/auth/login?next=/coach"}
             style={{
               flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 44,
               textAlign: 'center',
               padding: '8px 12px',
               fontFamily: 'Raleway, sans-serif',
@@ -176,6 +185,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
 
         <div
+          className="sgf-auth-panel"
           style={{
             background: 'rgba(18, 35, 54, 0.9)',
             padding: 32,
@@ -295,8 +305,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 rel="noreferrer"
                 aria-label={name}
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 44,
+                  height: 44,
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',

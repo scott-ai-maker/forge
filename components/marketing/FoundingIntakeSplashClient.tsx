@@ -78,6 +78,7 @@ export default function FoundingIntakeSplashClient() {
 
   return (
     <div
+      className="mobile-touch-scope"
       style={{
         minHeight: '100vh',
         background: 'radial-gradient(ellipse at 50% 0%, rgba(197, 160, 89, 0.12) 0%, rgba(8, 14, 24, 0.98) 60%), #080E18',
@@ -159,6 +160,9 @@ export default function FoundingIntakeSplashClient() {
                 color: 'var(--gold-lt)',
                 textDecoration: 'none',
                 padding: '6px 14px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                minHeight: 44,
                 borderRadius: 4,
                 border: '1px solid rgba(197, 160, 89, 0.3)',
                 background: 'rgba(197, 160, 89, 0.08)',

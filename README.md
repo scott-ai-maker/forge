@@ -51,6 +51,11 @@ Check-in failures offer retry without enabling a blank form that could overwrite
 Save failures retain entries and release the submit control. Blank optional values remain null.
 Use `tests/ui/coach-mobile.spec.ts` for mobile layout, keyboard, units, and request-failure checks.
 
+Mobile screens keep tap targets at 44px or larger and avoid horizontal overflow at 320px.
+Settings and progress panels show sign-in guidance instead of crashing when a request returns 401.
+Run `tests/ui/mobile-full-eval.spec.ts` for the cross-app mobile checks on training, settings,
+and public pages.
+
 Run the whitebox test suite with:
 
 ```bash

@@ -48,6 +48,7 @@ export default function BillingPortalButton() {
           background: 'rgba(255,255,255,0.06)',
           border: '1px solid rgba(212,160,23,0.4)',
           color: 'var(--gold-lt)',
+          minHeight: 44,
           padding: '10px 18px',
           borderRadius: 6,
           fontFamily: 'Raleway, sans-serif',

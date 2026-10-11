@@ -318,6 +318,7 @@ export default function NasmAccreditationPortfolio() {
   return (
     <section
       id="accreditation-portfolio"
+      className="mobile-touch-scope"
       style={{
         marginBottom: 56,
         padding: 'clamp(20px, 4vw, 36px)',

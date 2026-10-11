@@ -167,11 +167,14 @@ export default function WhatsNewPage() {
                   </span>
                   {release.relatedLinks.map(link => (
                     <Link
-                      key={link.href}
+                      key={`${link.href}-${link.label}`}
                       href={link.href}
                       className="tactile-btn"
                       style={{
                         padding: '6px 12px',
+                        minHeight: 44,
+                        display: 'inline-flex',
+                        alignItems: 'center',
                         borderRadius: 4,
                         background: 'rgba(197, 160, 89, 0.12)',
                         border: '1px solid rgba(197, 160, 89, 0.4)',

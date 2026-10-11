@@ -88,8 +88,8 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
               rel="noreferrer"
               aria-label={name}
               style={{
-                width: 32,
-                height: 32,
+                width: 44,
+                height: 44,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',

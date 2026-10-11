@@ -110,7 +110,7 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   } : MOCK_PLAN
   return (
     <main style={{ minHeight: "100vh", background: "#0D1B2A", overflowX: "hidden" }}>
-      <div style={{ maxWidth: 1440, margin: "0 auto", width: "100%", minWidth: 0, overflowX: "hidden", boxSizing: "border-box" }}>
+      <div className="dashboard-fitness-content" style={{ maxWidth: 1440, margin: "0 auto", width: "100%", minWidth: 0, overflowX: "hidden", boxSizing: "border-box" }}>
         <Suspense fallback={<div style={{ color: '#E2E8F0', padding: 20 }}>Loading test harness...</div>}>
           {params.view === 'settings' ? (
             <ClientSettingsStudio

@@ -119,6 +119,7 @@ export default function CinematicVideoPlayer({
   return (
     <div
       ref={containerRef}
+      className="mobile-touch-scope"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setIsControlsVisible(false)}
       style={{
@@ -407,10 +408,10 @@ export default function CinematicVideoPlayer({
             onChange={handleSeek}
             style={{
               flex: 1,
-              height: 4,
+              height: 24,
               borderRadius: 2,
               appearance: 'none',
-              background: `linear-gradient(to right, var(--gold) ${(currentTime / (duration || 1)) * 100}%, rgba(255,255,255,0.2) ${(currentTime / (duration || 1)) * 100}%)`,
+              background: `linear-gradient(to right, var(--gold) ${(currentTime / (duration || 1)) * 100}%, rgba(255,255,255,0.2) ${(currentTime / (duration || 1)) * 100}%) center / 100% 4px no-repeat`,
               cursor: 'pointer',
               outline: 'none',
             }}

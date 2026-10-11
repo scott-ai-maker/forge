@@ -394,7 +394,7 @@ export default function ApplyQuiz() {
 
   return (
     <section
-      className="apply-quiz-card glass-card"
+      className="apply-quiz-card glass-card mobile-touch-scope"
       data-hydrated={mounted ? 'true' : 'false'}
       style={{
         padding: 'clamp(20px, 4vw, 36px)',

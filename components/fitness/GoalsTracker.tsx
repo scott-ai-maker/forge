@@ -110,6 +110,11 @@ export default function GoalsTracker() {
     setError(null)
     try {
       const res = await fetch('/api/fitness/goals')
+      if (res.status === 401) {
+        console.warn('Goals require sign-in.')
+        setError('Sign in to view your goals.')
+        return
+      }
       if (!res.ok) throw new Error('Failed')
       const json = await res.json() as { goals: ClientGoal[] }
       setGoals(json.goals ?? [])

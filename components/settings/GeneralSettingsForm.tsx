@@ -828,7 +828,7 @@ export default function GeneralSettingsForm({ initialProfile, settingsPath, mode
             </button>
             <a
               href="/auth/login"
-              style={{ color: 'var(--gray)', textDecoration: 'none', fontFamily: 'Raleway, sans-serif', fontSize: 13 }}
+              style={{ color: 'var(--gray)', textDecoration: 'none', fontFamily: 'Raleway, sans-serif', fontSize: 13, display: 'inline-flex', alignItems: 'center', minHeight: 44 }}
             >
               For forgotten passwords, use Forgot Password from login.
             </a>

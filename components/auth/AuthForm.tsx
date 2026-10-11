@@ -404,7 +404,7 @@ export default function AuthForm({
   }
 
   return (
-    <div className="sgf-auth-form-shell" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="sgf-auth-form-shell mobile-touch-scope" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* ── OAuth 1-Click Fast Pass (Google & Apple) ── */}
       {mode !== 'reset' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

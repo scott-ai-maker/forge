@@ -231,7 +231,7 @@ const monthButtonStyle: React.CSSProperties = {
   background: 'transparent',
   color: 'var(--white)',
   padding: '7px 10px',
-  minHeight: 40,
+  minHeight: 44,
   minWidth: 68,
   fontSize: 12,
   letterSpacing: '0.08em',

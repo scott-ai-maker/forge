@@ -30,19 +30,43 @@ export default function NotificationPreferencesStudio({ defaultPhone = '' }: { d
   useEffect(() => {
     let active = true
     fetch('/api/account/notification-preferences')
-      .then((res) => res.json())
-      .then((data: Prefs) => {
-        if (!active) return
-        setPrefs({ ...data, smsPhone: data.smsPhone || defaultPhone })
-        setConsent(data.smsEnabled)
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(res.status === 401 ? 'unauthorized' : `status ${res.status}`)
+        }
+        return (await res.json()) as Partial<Prefs>
       })
-      .catch(() => active && setStatus({ kind: 'error', text: 'Could not load notification settings.' }))
+      .then((data) => {
+        if (!active) return
+        setPrefs({
+          emailEnabled: data.emailEnabled !== false,
+          smsEnabled: Boolean(data.smsEnabled),
+          pushEnabled: data.pushEnabled !== false,
+          smsPhone: data.smsPhone || defaultPhone,
+          mutedCategories: Array.isArray(data.mutedCategories) ? data.mutedCategories : [],
+        })
+        setConsent(Boolean(data.smsEnabled))
+      })
+      .catch((error: unknown) => {
+        if (!active) return
+        const unauthorized = error instanceof Error && error.message === 'unauthorized'
+        setStatus({
+          kind: 'error',
+          text: unauthorized ? 'Sign in to manage notification settings.' : 'Could not load notification settings.',
+        })
+      })
     return () => {
       active = false
     }
   }, [defaultPhone])
 
-  if (!prefs) return <p style={{ color: 'var(--gray)', fontSize: 14 }}>Loading notification settings…</p>
+  if (!prefs) {
+    return (
+      <p role={status ? 'alert' : undefined} style={{ color: status ? '#F87171' : 'var(--gray)', fontSize: 14 }}>
+        {status ? status.text : 'Loading notification settings…'}
+      </p>
+    )
+  }
 
   const update = (patch: Partial<Prefs>) => setPrefs({ ...prefs, ...patch })
   const toggleCategory = (id: string) =>

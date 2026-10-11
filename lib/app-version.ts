@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.36.5'
+export const APP_VERSION = '1.36.6'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Mobile Workout Varieties & Forge Media Fallback'
+export const APP_RELEASE_CODENAME = 'Full Mobile UI Repair'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.36.6',
+    date: '2026-10-11',
+    codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'Mobile Touch Targets · Settings · Sign-In',
+    title: 'Full Mobile UI Repair',
+    summary: 'Enlarge touch controls across training, settings, and public pages, keep settings in place, handle signed-out requests gracefully, and keep sign-in visible on phones.',
+    highlights: [
+      'Training, settings, sign-in, footer, quiz, and video controls meet the 44px touch target size.',
+      'Settings tabs switch in place, show one billing tab, and display sign-in guidance instead of crashing.',
+      'Goals and personal records show clear guidance when the session has expired.',
+      'The login page fits Sign In on screen for iPhone 15 Pro, and public pages avoid horizontal scrolling at 320px.',
+    ],
+  },
   {
     version: '1.36.5',
     date: '2026-10-11',

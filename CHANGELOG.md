@@ -3,6 +3,24 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.6] - 2026-10-11
+
+### Fixed
+- Keep Settings tabs in place, show one billing tab, and show sign-in guidance
+  when notification settings cannot load.
+- Show sign-in guidance in Goals and personal records after a 401 response.
+- Keep the login Sign In button on screen at 393x852.
+
+### Enhanced
+- Enlarge training, calendar, billing, settings, navigation, footer, auth, quiz,
+  credentials, waitlist, and video controls to 44px touch targets.
+- Prevent horizontal overflow on public pages at 320px.
+
+### Validation
+- Added `tests/ui/mobile-full-eval.spec.ts`; 79 mobile browser checks passed,
+  plus TypeScript and scoped lint checks.
+- Updated stale apply-quiz copy in the mobile banner spec.
+
 ## [1.36.5] - 2026-10-11
 
 ### Fixed

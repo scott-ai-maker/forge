@@ -86,8 +86,8 @@ export default function SiteFooter() {
                 aria-label={name}
                 className="site-social-link tactile-btn"
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 44,
+                  height: 44,
                   borderRadius: 6,
                   background: 'rgba(255, 255, 255, 0.05)',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -112,6 +112,7 @@ export default function SiteFooter() {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
+              minHeight: 44,
               gap: 6,
               padding: '4px 10px',
               borderRadius: 4,

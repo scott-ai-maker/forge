@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import GeneralSettingsForm from '@/components/settings/GeneralSettingsForm'
 import WearablesDeviceStudio from '@/components/fitness/WearablesDeviceStudio'
 import NotificationPreferencesStudio from '@/components/settings/NotificationPreferencesStudio'
@@ -44,6 +44,7 @@ export default function ClientSettingsStudio({
   workoutSchedule = [],
 }: ClientSettingsStudioProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const isCompanion = isCompanionApp()
   const currentTabQuery = (searchParams.get('tab') as SettingsTab) || initialTab
@@ -51,7 +52,9 @@ export default function ClientSettingsStudio({
 
   const handleTabChange = (tab: SettingsTab) => {
     setActiveTab(tab)
-    router.replace(`/dashboard/settings?tab=${tab}`)
+    const nextParams = new URLSearchParams(searchParams.toString())
+    nextParams.set('tab', tab)
+    router.replace(`${pathname || '/dashboard/settings'}?${nextParams.toString()}`, { scroll: false })
   }
 
   return (
@@ -153,7 +156,6 @@ export default function ClientSettingsStudio({
                 badge: 'HealthKit',
               },
           { key: 'spotify' as const, label: 'Spotify & Music', icon: 'music' as GaaIconName, badge: 'Soundtracks' },
-          { key: 'billing' as const, label: 'Retainer & Add-Ons', icon: 'credit-card' as GaaIconName, badge: 'Active' },
           {
             key: 'billing' as const,
             label: isCompanion ? 'Retainer & Membership' : 'Retainer & Add-Ons',
@@ -172,7 +174,9 @@ export default function ClientSettingsStudio({
               key={tab.key}
               type="button"
               onClick={() => handleTabChange(tab.key)}
+              aria-pressed={isSelected}
               style={{
+                minHeight: 44,
                 background: isSelected ? 'rgba(212,160,23,0.12)' : 'rgba(255,255,255,0.02)',
                 border: isSelected ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.08)',
                 borderRadius: 8,
@@ -472,6 +476,7 @@ export default function ClientSettingsStudio({
                     borderRadius: 6,
                     textDecoration: 'none',
                     display: 'inline-flex',
+                    minHeight: 44,
                     alignItems: 'center',
                     gap: 8,
                     whiteSpace: 'nowrap',

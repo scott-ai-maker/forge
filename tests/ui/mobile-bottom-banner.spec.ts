@@ -51,10 +51,10 @@ test.describe('Mobile Viewport Bottom Banner & Button Clearance Suite', () => {
       await expect(page).toHaveURL(/\/apply$/)
 
       // Verify initial question
-      await expect(page.getByRole('heading', { name: /What is your primary athletic & physiological objective\?/i })).toBeVisible()
+      await expect(page.getByRole('heading', { name: /What are your main training or fitness goals\?/i })).toBeVisible()
 
       // Select an option
-      const choiceBtn = page.getByRole('button', { name: /Lean Muscle Hypertrophy/i })
+      const choiceBtn = page.getByRole('button', { name: /Build strength or muscle/i })
       await choiceBtn.click()
 
       // Bottom "Continue →" button must be visible, in viewport, and enabled
@@ -69,13 +69,13 @@ test.describe('Mobile Viewport Bottom Banner & Button Clearance Suite', () => {
 
       // Click Continue and verify advance to next step
       await continueBtn.click()
-      await expect(page.getByRole('heading', { name: /What is your required transformation timeline\?/i })).toBeVisible()
+      await expect(page.getByRole('heading', { name: /What is your preferred timeline\?/i })).toBeVisible()
 
       // Verify "← Back" button is also unobstructed and clickable
       const backBtn = page.getByRole('button', { name: /back/i })
       await expect(backBtn).toBeVisible()
       await backBtn.click()
-      await expect(page.getByRole('heading', { name: /What is your primary athletic & physiological objective\?/i })).toBeVisible()
+      await expect(page.getByRole('heading', { name: /What are your main training or fitness goals\?/i })).toBeVisible()
     })
 
     test('login page on phone displays sign-in controls without bottom obstruction', async ({ page }) => {
