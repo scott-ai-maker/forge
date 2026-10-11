@@ -61,6 +61,7 @@ Training knowledge and credentials:
 - Cardiorespiratory Conditioning Specialist (NASM-CATM) — Tanaka HR zones, Stage 1–3 intervals, EPOC
 - Combat Sports & MMA Conditioning Specialist (NASM-MMACS) — Energy systems, rotational power, neck armor
 - Golf Fitness Specialist (NASM-GFS) — Rotational biomechanics, X-Factor stretch, ground reaction forces
+- Virtual Coaching Specialist (NASM-VCS) — Remote camera framing, studio lighting, biometric wearable telemetry, synchronous & asynchronous coaching protocols
 - Clinical Pharmacology & Weight Loss Defense Specialist — GLP-1 muscle defense, drug-nutrient chrono-separation
 - Precision Meal Prep & Bodybuilding Nutrition Specialist — Protein pacing, refeeds, reverse dieting
 - Workout planning for home, work, travel, and different equipment options
@@ -92,6 +93,7 @@ export function retrieveRelevantRagCurricula(question: string, goal?: string, op
   if (qLower.includes('hypertrophy') || qLower.includes('muscle') || qLower.includes('pump') || qLower.includes('bodybuilding') || qLower.includes('rpe')) keywords.push('hypertrophy', 'muscular development', 'volume')
   if (qLower.includes('glp-1') || qLower.includes('glp1') || qLower.includes('semaglutide') || qLower.includes('tirzepatide') || qLower.includes('ozempic') || qLower.includes('medication')) keywords.push('pharmacology', 'glp-1', 'lean mass')
   if (qLower.includes('supplement') || qLower.includes('creatine') || qLower.includes('caffeine') || qLower.includes('whey') || qLower.includes('magnesium')) keywords.push('supplementation', 'chrono-nutrition')
+  if (qLower.includes('virtual') || qLower.includes('remote') || qLower.includes('telehealth') || qLower.includes('camera') || qLower.includes('lighting') || qLower.includes('angle') || qLower.includes('consultation') || qLower.includes('wearable') || qLower.includes('onboarding')) keywords.push('virtual', 'telehealth', 'remote', 'wearable', 'onboarding')
 
   let results: RagDocumentMetadata[] = []
 

@@ -104,11 +104,18 @@ export default function OnboardingForm() {
     emergencyContactPhone: '',
     primaryPhysicianName: '',
     primaryPhysicianPhone: '',
+    workoutStreetAddress: '',
+    workoutUnitOrGateCode: '',
+    workoutCity: '',
+    workoutState: '',
+    workoutPostalCode: '',
+    localEmergencyDispatchPhone: '',
     legalConsentLiability: false,
     legalConsentInformed: false,
     legalConsentPrivacy: false,
     legalConsentCoaching: false,
     legalConsentEmergency: false,
+    legalConsentVirtualTelehealth: false,
     legalSignatureName: '',
   })
 
@@ -298,11 +305,18 @@ export default function OnboardingForm() {
           emergencyContactPhone: intake?.emergency_contact_phone || prev.emergencyContactPhone,
           primaryPhysicianName: intake?.primary_physician_name || prev.primaryPhysicianName,
           primaryPhysicianPhone: intake?.primary_physician_phone || prev.primaryPhysicianPhone,
+          workoutStreetAddress: (parqAnswers as any)?.erap?.workoutStreetAddress || (intake as any)?.workout_street_address || prev.workoutStreetAddress,
+          workoutUnitOrGateCode: (parqAnswers as any)?.erap?.workoutUnitOrGateCode || (intake as any)?.workout_unit || prev.workoutUnitOrGateCode,
+          workoutCity: (parqAnswers as any)?.erap?.workoutCity || (intake as any)?.workout_city || prev.workoutCity,
+          workoutState: (parqAnswers as any)?.erap?.workoutState || (intake as any)?.workout_state || prev.workoutState,
+          workoutPostalCode: (parqAnswers as any)?.erap?.workoutPostalCode || (intake as any)?.workout_postal_code || prev.workoutPostalCode,
+          localEmergencyDispatchPhone: (parqAnswers as any)?.erap?.localEmergencyDispatchPhone || (intake as any)?.local_emergency_dispatch_phone || prev.localEmergencyDispatchPhone,
           legalConsentLiability: intake?.consent_liability_waiver ?? prev.legalConsentLiability,
           legalConsentInformed: intake?.consent_informed_consent ?? prev.legalConsentInformed,
           legalConsentPrivacy: intake?.consent_privacy_practices ?? prev.legalConsentPrivacy,
           legalConsentCoaching: intake?.consent_coaching_agreement ?? prev.legalConsentCoaching,
           legalConsentEmergency: intake?.consent_emergency_care ?? prev.legalConsentEmergency,
+          legalConsentVirtualTelehealth: (parqAnswers as any)?.erap?.virtualTelehealthConsent ?? (intake?.consent_liability_waiver ?? prev.legalConsentVirtualTelehealth),
           legalSignatureName: intake?.consent_signature_name || prev.legalSignatureName,
         }
 
@@ -500,6 +514,22 @@ export default function OnboardingForm() {
         emergencyContactPhone: form.emergencyContactPhone,
         primaryPhysicianName: form.primaryPhysicianName,
         primaryPhysicianPhone: form.primaryPhysicianPhone,
+        workoutStreetAddress: form.workoutStreetAddress,
+        workoutUnitOrGateCode: form.workoutUnitOrGateCode,
+        workoutCity: form.workoutCity,
+        workoutState: form.workoutState,
+        workoutPostalCode: form.workoutPostalCode,
+        localEmergencyDispatchPhone: form.localEmergencyDispatchPhone,
+        virtualTelehealth: form.legalConsentVirtualTelehealth,
+        erap: {
+          workoutStreetAddress: form.workoutStreetAddress,
+          workoutUnitOrGateCode: form.workoutUnitOrGateCode,
+          workoutCity: form.workoutCity,
+          workoutState: form.workoutState,
+          workoutPostalCode: form.workoutPostalCode,
+          localEmergencyDispatchPhone: form.localEmergencyDispatchPhone,
+          virtualTelehealthConsent: form.legalConsentVirtualTelehealth,
+        },
         liabilityWaiver: form.legalConsentLiability,
         informedConsent: form.legalConsentInformed,
         privacyPractices: form.legalConsentPrivacy,
@@ -751,12 +781,44 @@ export default function OnboardingForm() {
           <label className="sgf-form-label">Physician Phone (optional)</label>
           <input value={form.primaryPhysicianPhone} onChange={e => updateField('primaryPhysicianPhone', e.target.value)} className="sgf-form-input" />
         </div>
+
+        {/* ── NASM-VCS Emergency Remote Action Plan (ERAP) Card ── */}
+        <div style={{ border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)', padding: '14px', borderRadius: '6px', gridColumn: '1 / -1' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <span style={{ fontSize: '16px' }}>🚨</span>
+            <label className="sgf-form-label" style={{ margin: 0, color: '#FCA5A5', fontWeight: 800 }}>
+              NASM Emergency Remote Action Plan (ERAP) — Physical Workout Location
+            </label>
+          </div>
+          <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#E5E7EB', lineHeight: '1.4' }}>
+            Because coaching is delivered virtually, calling 911 from Coach Scott Gordon&apos;s console connects to his local dispatch. Your physical workout address and local municipal dispatch number enable immediate emergency dispatch to your home or gym if syncope or acute trauma occurs.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px' }}>
+            <div>
+              <label className="sgf-form-label">Physical Workout Street Address</label>
+              <input value={form.workoutStreetAddress} onChange={e => updateField('workoutStreetAddress', e.target.value)} className="sgf-form-input" placeholder="e.g. 123 Main St" />
+            </div>
+            <div>
+              <label className="sgf-form-label">Apt / Suite / Gate Access Code</label>
+              <input value={form.workoutUnitOrGateCode} onChange={e => updateField('workoutUnitOrGateCode', e.target.value)} className="sgf-form-input" placeholder="e.g. Apt 4B / Gate #402" />
+            </div>
+            <div>
+              <label className="sgf-form-label">City, State & Postal Code</label>
+              <input value={form.workoutCity ? `${form.workoutCity}${form.workoutState ? `, ${form.workoutState}` : ''} ${form.workoutPostalCode || ''}`.trim() : ''} onChange={e => updateField('workoutCity', e.target.value)} className="sgf-form-input" placeholder="e.g. Austin, TX 78701" />
+            </div>
+            <div>
+              <label className="sgf-form-label">Local Municipal Police / EMS Dispatch Phone</label>
+              <input value={form.localEmergencyDispatchPhone} onChange={e => updateField('localEmergencyDispatchPhone', e.target.value)} className="sgf-form-input" placeholder="e.g. 512-974-0845 (Local Non-Emergency/EMS)" />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: '12px' }}>
         <label className="sgf-form-label">Legal Consents</label>
         <div style={{ display: 'grid', gap: 8 }}>
           <label htmlFor="legal-consent-liability"><input id="legal-consent-liability" type="checkbox" checked={form.legalConsentLiability} onChange={e => updateBooleanField('legalConsentLiability', e.target.checked)} /> I acknowledge and accept liability waiver terms for exercise participation.</label>
+          <label htmlFor="legal-consent-telehealth"><input id="legal-consent-telehealth" type="checkbox" checked={form.legalConsentVirtualTelehealth} onChange={e => updateBooleanField('legalConsentVirtualTelehealth', e.target.checked)} /> <strong>NASM Virtual Coaching Telehealth Agreement:</strong> I acknowledge that training sessions and assessments are delivered remotely. The coach cannot physically spot lifts. I agree to maintain an 8x8 ft clear perimeter, verify non-slip flooring, and safely rack weights immediately if video drops. I consent to video transmission for biomechanical form analysis.</label>
           <label htmlFor="legal-consent-informed"><input id="legal-consent-informed" type="checkbox" checked={form.legalConsentInformed} onChange={e => updateBooleanField('legalConsentInformed', e.target.checked)} /> I provide informed consent for exercise coaching and programming.</label>
           <label htmlFor="legal-consent-privacy"><input id="legal-consent-privacy" type="checkbox" checked={form.legalConsentPrivacy} onChange={e => updateBooleanField('legalConsentPrivacy', e.target.checked)} /> I acknowledge privacy and data handling notices for sensitive health information.</label>
           <label htmlFor="legal-consent-coaching"><input id="legal-consent-coaching" type="checkbox" checked={form.legalConsentCoaching} onChange={e => updateBooleanField('legalConsentCoaching', e.target.checked)} /> I agree to coaching terms, expectations, and communication standards.</label>

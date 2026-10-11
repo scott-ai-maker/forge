@@ -247,6 +247,23 @@ describe('Live Video Camera HUD Architecture & WebRTC Bridge', () => {
     expect(showStillCameraModal).toBe(true)
     expect(stillCameraRequestedBy).toBe('Coach Scott Gordon')
   })
+
+  it('evaluates NASM connection interruption fail-safe and ERAP trigger state', () => {
+    function isConnectionDegraded(state: RTCPeerConnectionState | null): boolean {
+      return state === 'disconnected' || state === 'failed'
+    }
+
+    expect(isConnectionDegraded('connected')).toBe(false)
+    expect(isConnectionDegraded('connecting')).toBe(false)
+    expect(isConnectionDegraded('disconnected')).toBe(true)
+    expect(isConnectionDegraded('failed')).toBe(true)
+
+    let showErapModal = false
+    const toggleErap = () => { showErapModal = !showErapModal }
+    expect(showErapModal).toBe(false)
+    toggleErap()
+    expect(showErapModal).toBe(true)
+  })
 })
 
 

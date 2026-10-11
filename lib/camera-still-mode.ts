@@ -66,6 +66,58 @@ export const ANDROID_STILL_CAMERA_STEPS: StillCameraGuideStep[] = [
   },
 ]
 
+export interface VirtualAssessmentEnvironmentCheckItem {
+  id: string
+  number: number
+  title: string
+  standard: string
+  nasmRationale: string
+  iconName: string
+}
+
+export const NASM_VIRTUAL_ASSESSMENT_CHECKLIST: VirtualAssessmentEnvironmentCheckItem[] = [
+  {
+    id: 'bare_feet',
+    number: 1,
+    title: 'Bare Feet (Shoes & Socks Removed)',
+    standard: 'Barefoot on flat, level surface',
+    nasmRationale: 'Essential for unobstructed visual inspection of the subtalar joint, arch flattening/pronation, and calcaneal eversion during squats.',
+    iconName: 'footprints',
+  },
+  {
+    id: 'contrasting_attire',
+    number: 2,
+    title: 'Form-Fitting Contrasting Attire',
+    standard: 'Snug athletic clothing contrasting with background wall',
+    nasmRationale: 'Prevents silhouette blending. Loose clothing conceals knee valgus/varus, anterior pelvic tilt, and asymmetric weight shifts.',
+    iconName: 'user',
+  },
+  {
+    id: 'camera_distance_angle',
+    number: 3,
+    title: '8–12 Ft Distance at Waist/Hip Height',
+    standard: 'Device mounted at waist height, 8–12 feet away',
+    nasmRationale: 'Captures full kinetic chain from overhead extended fingertips down to feet without perspective distortion or excess dead space.',
+    iconName: 'camera',
+  },
+  {
+    id: 'frontal_lighting',
+    number: 4,
+    title: 'Frontal Illumination (No Rear Backlight)',
+    standard: 'Light source facing athlete; shades closed behind',
+    nasmRationale: 'Prevents backlit silhouettes from rear windows, ensuring joint landmarks and muscle contours remain razor-sharp.',
+    iconName: 'sun',
+  },
+  {
+    id: 'space_traction',
+    number: 5,
+    title: '8x8 Ft Clear Perimeter & Floor Traction',
+    standard: 'Clear 8x8 ft space, non-slip surface verified',
+    nasmRationale: 'Eliminates tripping hazards and prevents slipping on slick hardwood/tile during multi-planar assessments and loaded exercises.',
+    iconName: 'shield',
+  },
+]
+
 /**
  * Detects whether the current device is iOS (iPhone/iPad/iPod), Android, or Desktop.
  */

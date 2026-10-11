@@ -44,6 +44,8 @@ android/capacitor-cordova-android-plugins/
 # misc
 .DS_Store
 *.pem
+*.auth-state.json
+scripts/.nasm-auth-state.json
 
 # debug
 npm-debug.log*

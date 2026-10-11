@@ -5,6 +5,7 @@ import {
   IOS_STILL_CAMERA_STEPS,
   ANDROID_STILL_CAMERA_STEPS,
   STILL_CAMERA_REQUEST_EVENT,
+  NASM_VIRTUAL_ASSESSMENT_CHECKLIST,
 } from './camera-still-mode'
 
 describe('Still Camera Mode & Auto-Zoom Prevention Engine', () => {
@@ -76,6 +77,14 @@ describe('Still Camera Mode & Auto-Zoom Prevention Engine', () => {
     expect(ANDROID_STILL_CAMERA_STEPS[1].instruction).toContain('Auto-framing')
 
     expect(STILL_CAMERA_REQUEST_EVENT).toBe('still_camera_request')
+  })
+
+  it('provides the 5-point NASM virtual assessment environment checklist', () => {
+    expect(NASM_VIRTUAL_ASSESSMENT_CHECKLIST).toHaveLength(5)
+    expect(NASM_VIRTUAL_ASSESSMENT_CHECKLIST[0].id).toBe('bare_feet')
+    expect(NASM_VIRTUAL_ASSESSMENT_CHECKLIST[0].nasmRationale).toContain('subtalar joint')
+    expect(NASM_VIRTUAL_ASSESSMENT_CHECKLIST[2].standard).toContain('8–12 feet')
+    expect(NASM_VIRTUAL_ASSESSMENT_CHECKLIST[4].title).toContain('8x8 Ft')
   })
 })
 

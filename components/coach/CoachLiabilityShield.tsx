@@ -23,6 +23,7 @@ export default function CoachLiabilityShield({
     maxAllowedOptPhase: 5,
     contraindicationTags: [],
     legalDisclaimer: 'Standard liability waiver signed.',
+    virtualTelehealthDisclaimer: 'NASM Virtual Coaching Telehealth & Remote Exercise Agreement on file.',
   },
   clientName = 'Client',
   signedWaiverName = 'Verified on file',
@@ -154,6 +155,61 @@ export default function CoachLiabilityShield({
             </a>
           )}
         </div>
+      </div>
+
+      {/* NASM Virtual Telehealth & Emergency Remote Action Plan (ERAP) Card */}
+      <div
+        style={{
+          background: 'rgba(10, 16, 28, 0.6)',
+          border: '1px solid rgba(59, 130, 246, 0.25)',
+          borderRadius: 8,
+          padding: '14px 18px',
+          display: 'grid',
+          gap: 10,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <GaaIcon name="video-studio" size={14} tone="inherit" />
+            <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#93C5FD' }}>
+              NASM Virtual Telehealth &amp; Remote Safety Plan (ERAP)
+            </span>
+          </div>
+          <span
+            style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: 4,
+              background: evaluation?.erapRecord?.isErapComplete ? 'rgba(52, 211, 153, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+              color: evaluation?.erapRecord?.isErapComplete ? '#34D399' : '#FCD34D',
+              border: `1px solid ${evaluation?.erapRecord?.isErapComplete ? 'rgba(52, 211, 153, 0.4)' : 'rgba(245, 158, 11, 0.4)'}`,
+            }}
+          >
+            {evaluation?.erapRecord?.isErapComplete ? '✓ ERAP Location Verified' : '⚠️ Incomplete ERAP Location'}
+          </span>
+        </div>
+
+        <div style={{ fontSize: 12, color: '#D1D5DB', lineHeight: 1.5 }}>
+          <div>
+            <strong>Workout Location:</strong>{' '}
+            <span style={{ color: evaluation?.erapRecord?.workoutLocationSummary ? '#FFF' : '#FCD34D' }}>
+              {evaluation?.erapRecord?.workoutLocationSummary || 'Physical workout address not provided in intake'}
+            </span>
+          </div>
+          <div style={{ marginTop: 4 }}>
+            <strong>Local Emergency Services Dispatch:</strong>{' '}
+            <span style={{ color: '#F87171', fontWeight: 700 }}>
+              {evaluation?.erapRecord?.localEmergencyDispatchPhone || '911 (Local PSAP)'}
+            </span>
+          </div>
+        </div>
+
+        {evaluation?.virtualTelehealthDisclaimer && (
+          <div style={{ fontSize: 11, color: '#9CA3AF', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8, lineHeight: 1.4 }}>
+            <strong>Telehealth Rider:</strong> Remote coaching agreement active. No physical spotting available; athlete maintains clear 8x8 ft zone and adheres to immediate rack protocol on connection interruption.
+          </div>
+        )}
       </div>
 
       {/* Flagged Medical Symptoms */}

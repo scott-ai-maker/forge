@@ -3,6 +3,17 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.37.0] - 2026-10-11
+
+### Added
+- **NASM VCS Master Curriculum RAG Ingestion**: Scraped and compiled all 9 chapters of the NASM Virtual Coaching Specialization into high-resolution formatted PDFs, manifest metadata, and markdown under `data/rag-resources/vcs/`.
+- **Emergency Remote Action Plan (ERAP)**: Captured remote workout physical address, unit/gate code, and local municipal police/EMS dispatch phone in onboarding (`components/fitness/OnboardingForm.tsx`) with zero-downtime persistence in `client_intake_forms.parq_answers jsonb`.
+- **Live Studio ERAP Quick-View Modal**: Built `components/coach/LiveErapSafetyModal.tsx` and wired it into both `UnifiedLiveStudioHud.tsx` and `LiveVideoCameraHud.tsx` with 1-click local dispatch dialing, address copy, and NASM 4-step acute incident protocols.
+- **5-Point Virtual Assessment Environment Protocol**: Integrated NASM VCS Chapter 5 environmental checklist (bare feet, form-fitting contrasting clothing, 8-12ft distance, frontal lighting, 8x8ft perimeter) into `LiveStillCameraGuidanceModal.tsx`.
+- **NASM Virtual Telehealth Agreement & No-Spotter Shield**: Implemented remote coaching legal disclaimers, no-spotter clauses, home workout perimeter maintenance, and video recording consent in `lib/liability-shield.ts`.
+- **WebRTC Disconnection Immediate Rack Fail-Safe**: Added instant safety alerts prompting athletes to safely rack weights if peer video stream is lost during compound loading.
+- **Asynchronous Office Hours & Concierge SLA**: Surfaced Coach Gordon daily office hours (6:00 AM – 6:00 PM EST) and 12-hour review turnaround SLA in `AskCoachGordonModal.tsx` and `MessageThreadClient.tsx`.
+
 ## [1.36.7] - 2026-10-11
 
 ### Fixed

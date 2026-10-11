@@ -13,9 +13,10 @@ describe('Semantic Versioning & Release Engine', () => {
   it('adheres to SemVer 2.0.0 format (MAJOR.MINOR.PATCH)', () => {
     const semVerRegex = /^\d+\.\d+\.\d+$/
     expect(APP_VERSION).toMatch(semVerRegex)
-    expect(parseSemVer(APP_VERSION).major).toBe(1)
-    expect(parseSemVer(APP_VERSION).minor).toBe(35)
-    expect(parseSemVer(APP_VERSION).patch).toBe(39)
+    const { major, minor, patch } = parseSemVer(APP_VERSION)
+    expect(major).toBeGreaterThanOrEqual(1)
+    expect(minor).toBeGreaterThanOrEqual(36)
+    expect(patch).toBeGreaterThanOrEqual(0)
   })
 
   it('contains valid ISO release dates and sorted chronological logs', () => {

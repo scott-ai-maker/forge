@@ -640,10 +640,15 @@ export const COACH_CREDENTIALS: CoachCredential[] = [
     summary:
       'Remote coaching workflows, asynchronous biomechanical video review, digital studio ergonomics, and telehealth delivery.',
     curriculum: [
-      'Asynchronous Video Movement Analysis & Feedback',
-      'Remote Biomechanical Cues & Voice Telemetry',
-      'WebRTC Studio Lighting, Framing & Optical Truth',
-      'Digital Telehealth Client Onboarding Protocols',
+      'Ch 1: Introduction to Virtual Coaching & Scope of Practice',
+      'Ch 2: Building a Business & Hybrid Coaching Models',
+      'Ch 3: Technology Considerations, Camera Optics & Studio Ergonomics',
+      'Ch 4: Virtual Communication & Remote Motivational Interviewing',
+      'Ch 5: Administering Virtual Assessments (Remote OHSA & PAR-Q+)',
+      'Ch 6: Implementing Coaching Sessions & Real-Time Biomechanical Cuing',
+      'Ch 7: Integrating Wearables, Telemetry & Biometric Autoregulation',
+      'Ch 8: Selling Virtual Coaching & Frictionless Onboarding',
+      'Ch 9: Marketing Virtual Coaching & Digital Brand Authority',
     ],
     gaaEngineIntegration:
       'Standardizes the 1:1 Live WebRTC Consultation Studio and asynchronous video movement review pipelines.',

@@ -15,6 +15,14 @@ export interface ParqAnswers {
   reportedConditionsNotes?: string
   signedWaiverName?: string
   signedAt?: string
+  // NASM-VCS Emergency Remote Action Plan (ERAP) Fields
+  workoutStreetAddress?: string
+  workoutUnitOrGateCode?: string
+  workoutCity?: string
+  workoutState?: string
+  workoutPostalCode?: string
+  localEmergencyDispatchPhone?: string
+  hasAcceptedVirtualTelehealthConsent?: boolean
 }
 
 export type MedicalClearanceStatus =
@@ -30,6 +38,18 @@ export interface ParqEvaluationResult {
   maxAllowedOptPhase: number // 1 (Stabilization) through 5 (Power)
   contraindicationTags: string[]
   legalDisclaimer: string
+  virtualTelehealthDisclaimer: string
+  erapRecord?: {
+    workoutLocationSummary: string
+    workoutStreetAddress?: string
+    workoutUnitOrGateCode?: string
+    workoutCity?: string
+    workoutState?: string
+    workoutPostalCode?: string
+    localEmergencyDispatchPhone: string
+    hasAcceptedVirtualTelehealthConsent: boolean
+    isErapComplete: boolean
+  }
 }
 
 export interface ContraindicationRule {
@@ -210,6 +230,17 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
   const legalDisclaimer =
     'By engaging in training with Forge Athletic, client acknowledges that all exercise carries inherent physical risk. This digital PAR-Q+ assessment establishes baseline safety and does not constitute medical diagnosis. Consultation with a licensed physician is mandatory prior to initiating high-intensity physical exertion if cardiovascular or orthopedic risk factors are present.'
 
+  const virtualTelehealthDisclaimer =
+    'NASM VIRTUAL COACHING & REMOTE TELEHEALTH AGREEMENT: Client acknowledges that coaching sessions, form critiques, and kinetic assessments are delivered remotely. The coach is not physically co-located and cannot physically spot, catch, or physically assist during any movement. Client assumes full personal responsibility for maintaining a clear 8x8 ft perimeter, non-slip flooring, and inspecting equipment prior to each workout. If digital audio/video latency occurs or communication disconnects during a loaded lift, client agrees to immediately and safely rack all weights. Client consents to secure video transmission and recording strictly for biomechanical movement analysis. In the event of an acute medical emergency during a session, client explicitly authorizes Forge Athletic to initiate local emergency dispatch and notify their designated emergency contact.'
+
+  const hasAddress = Boolean(answers.workoutStreetAddress?.trim() && answers.workoutCity?.trim())
+  const hasDispatch = Boolean(answers.localEmergencyDispatchPhone?.trim())
+  const isErapComplete = hasAddress && hasDispatch
+
+  const workoutLocationSummary = hasAddress
+    ? `${answers.workoutStreetAddress}${answers.workoutUnitOrGateCode ? ` (${answers.workoutUnitOrGateCode})` : ''}, ${answers.workoutCity}, ${answers.workoutState || ''} ${answers.workoutPostalCode || ''}`.trim()
+    : 'No physical workout address on file'
+
   return {
     clearanceStatus,
     riskTier,
@@ -218,6 +249,18 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
     maxAllowedOptPhase,
     contraindicationTags: uniqueTags,
     legalDisclaimer,
+    virtualTelehealthDisclaimer,
+    erapRecord: {
+      workoutLocationSummary,
+      workoutStreetAddress: answers.workoutStreetAddress?.trim() || undefined,
+      workoutUnitOrGateCode: answers.workoutUnitOrGateCode?.trim() || undefined,
+      workoutCity: answers.workoutCity?.trim() || undefined,
+      workoutState: answers.workoutState?.trim() || undefined,
+      workoutPostalCode: answers.workoutPostalCode?.trim() || undefined,
+      localEmergencyDispatchPhone: answers.localEmergencyDispatchPhone?.trim() || '911 (Default Local PSAP)',
+      hasAcceptedVirtualTelehealthConsent: Boolean(answers.hasAcceptedVirtualTelehealthConsent),
+      isErapComplete,
+    },
   }
 }
 

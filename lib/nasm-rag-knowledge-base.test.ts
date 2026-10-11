@@ -194,5 +194,17 @@ describe('nasm-rag-knowledge-base', () => {
 
     const plateauMatches = queryNasmRagLibrary({ keyword: 'Plateau' })
     expect(plateauMatches.length).toBeGreaterThan(0)
+
+    // Virtual Coaching Specialist (VCS) queries
+    const vcsDocs = queryNasmRagLibrary({ goal: 'virtual_coaching' })
+    expect(vcsDocs.length).toBe(10)
+
+    const virtualCoachingMatches = queryNasmRagLibrary({ keyword: 'Virtual Coaching' })
+    expect(virtualCoachingMatches.length).toBeGreaterThan(0)
+    expect(virtualCoachingMatches.some(d => d.id === 'vcs_master_curriculum')).toBe(true)
+    expect(virtualCoachingMatches.some(d => d.id === 'vcs_ch01')).toBe(true)
+
+    const wearableMatches = queryNasmRagLibrary({ keyword: 'Wearable' })
+    expect(wearableMatches.length).toBeGreaterThan(0)
   })
 })

@@ -122,6 +122,7 @@ export async function POST(req: NextRequest) {
     privacyPractices: Boolean(intake.privacyPractices),
     coachingAgreement: Boolean(intake.coachingAgreement),
     emergencyCare: Boolean(intake.emergencyCare),
+    virtualTelehealth: Boolean(intake.virtualTelehealth ?? intake.liabilityWaiver),
   }
 
   if (!isDraft && !Object.values(consents).every(Boolean)) {
@@ -140,6 +141,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Emergency contact name and phone are required.' }, { status: 400 })
   }
 
+  const rawErap = (intake.erap || {}) as Record<string, unknown>
+  const erap = {
+    workoutStreetAddress: String(intake.workoutStreetAddress ?? rawErap.workoutStreetAddress ?? '').trim(),
+    workoutUnitOrGateCode: String(intake.workoutUnitOrGateCode ?? rawErap.workoutUnitOrGateCode ?? '').trim(),
+    workoutCity: String(intake.workoutCity ?? rawErap.workoutCity ?? '').trim(),
+    workoutState: String(intake.workoutState ?? rawErap.workoutState ?? '').trim(),
+    workoutPostalCode: String(intake.workoutPostalCode ?? rawErap.workoutPostalCode ?? '').trim(),
+    localEmergencyDispatchPhone: String(intake.localEmergencyDispatchPhone ?? rawErap.localEmergencyDispatchPhone ?? '').trim(),
+    virtualTelehealthConsent: Boolean(intake.virtualTelehealth ?? consents.liabilityWaiver),
+  }
+
   const parqAnswers = {
     q1: Boolean(parq.q1),
     q2: Boolean(parq.q2),
@@ -148,9 +160,18 @@ export async function POST(req: NextRequest) {
     q5: Boolean(parq.q5),
     q6: Boolean(parq.q6),
     q7: Boolean(parq.q7),
+    erap,
   }
 
-  const parqAnyYes = Object.values(parqAnswers).some(Boolean)
+  const parqAnyYes = [
+    parqAnswers.q1,
+    parqAnswers.q2,
+    parqAnswers.q3,
+    parqAnswers.q4,
+    parqAnswers.q5,
+    parqAnswers.q6,
+    parqAnswers.q7,
+  ].some(Boolean)
   const rawEquipment = Array.isArray(body.equipmentAccess) ? body.equipmentAccess : []
   const equipmentAccess = rawEquipment
     .map((item: unknown) => String(item).trim())

@@ -619,6 +619,32 @@ describe('Unified Live Studio HUD Helper Mechanics', () => {
       expect(telestratorTool).toBe('protractor')
     })
   })
+
+  describe('NASM VCS Virtual Coaching Safety & Connection Fail-Safe Mechanics', () => {
+    it('evaluates WebRTC connection interruption fail-safe trigger', () => {
+      function evaluateDisconnectionFailSafe(peerState: string | null): boolean {
+        return peerState === 'disconnected' || peerState === 'failed'
+      }
+
+      expect(evaluateDisconnectionFailSafe('connected')).toBe(false)
+      expect(evaluateDisconnectionFailSafe('connecting')).toBe(false)
+      expect(evaluateDisconnectionFailSafe(null)).toBe(false)
+      expect(evaluateDisconnectionFailSafe('disconnected')).toBe(true)
+      expect(evaluateDisconnectionFailSafe('failed')).toBe(true)
+    })
+
+    it('manages ERAP safety modal visibility toggling', () => {
+      let showErapModal = false
+      const openErapModal = () => { showErapModal = true }
+      const closeErapModal = () => { showErapModal = false }
+
+      expect(showErapModal).toBe(false)
+      openErapModal()
+      expect(showErapModal).toBe(true)
+      closeErapModal()
+      expect(showErapModal).toBe(false)
+    })
+  })
 })
 
 

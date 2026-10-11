@@ -21,6 +21,31 @@ describe('liability-shield', () => {
     expect(res.riskTier).toBe('Low Risk')
     expect(res.maxAllowedOptPhase).toBe(5)
     expect(res.flaggedQuestionsCount).toBe(0)
+    expect(res.virtualTelehealthDisclaimer).toContain('NASM VIRTUAL COACHING & REMOTE TELEHEALTH AGREEMENT')
+    expect(res.virtualTelehealthDisclaimer).toContain('cannot physically spot')
+    expect(res.erapRecord?.isErapComplete).toBe(false)
+  })
+
+  it('evaluates complete ERAP record when workout address and local dispatch phone are provided', () => {
+    const res = evaluateMedicalParq({
+      hasHeartCondition: false,
+      experiencesChestPain: false,
+      experiencesDizzinessOrSyncope: false,
+      hasBoneOrJointProblem: false,
+      takesBloodPressureOrHeartMedication: false,
+      hasChronicSpinalOrDiscCondition: false,
+      hasRecentSurgeryOrInjury: false,
+      workoutStreetAddress: '742 Evergreen Terrace',
+      workoutUnitOrGateCode: 'Gate #402',
+      workoutCity: 'Springfield',
+      workoutState: 'OR',
+      workoutPostalCode: '97477',
+      localEmergencyDispatchPhone: '541-555-0911',
+    })
+
+    expect(res.erapRecord?.isErapComplete).toBe(true)
+    expect(res.erapRecord?.workoutLocationSummary).toContain('742 Evergreen Terrace (Gate #402), Springfield, OR 97477')
+    expect(res.erapRecord?.localEmergencyDispatchPhone).toBe('541-555-0911')
   })
 
   it('triggers physician clearance required and locks Phase 4/5 for chest pain or dizziness', () => {

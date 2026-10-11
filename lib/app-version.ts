@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.36.7'
+export const APP_VERSION = '1.37.0'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Tablet & Desktop UI Repair'
+export const APP_RELEASE_CODENAME = 'NASM Virtual Coaching Specialization & Telehealth Safety Architecture'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,43 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.37.0',
+    date: '2026-10-11',
+    codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'NASM VCS Telehealth · ERAP Emergency Plan · 5-Point Setup · Disconnection Fail-Safe',
+    title: 'NASM Virtual Coaching Specialization & Clinical Telehealth Architecture',
+    summary:
+      'Ingested the complete official NASM Virtual Coaching Specialization (VCS) curriculum into the Sports Science RAG architecture. Implemented the Emergency Remote Action Plan (ERAP) with local municipal dispatch phone capture and 1-click live studio dispatch modal, 5-point virtual assessment setup checklist, virtual telehealth legal agreement with no-spotter shield, concierge office hours SLA badges, and WebRTC video disconnection immediate rack fail-safe alerts.',
+    highlights: [
+      'NASM VCS Master Curriculum Ingestion: Scraped and converted all 9 chapters of the NASM Virtual Coaching Specialization into high-resolution indexed PDFs, manifest metadata, and markdown in data/rag-resources/vcs/.',
+      'Emergency Remote Action Plan (ERAP): Captured remote workout street address, unit/gate code, and local municipal police/EMS dispatch phone in onboarding and persisted inside client_intake_forms.parq_answers.',
+      '1-Click Live Studio ERAP Modal: Built LiveErapSafetyModal with click-to-call local dispatch, address copy, emergency contact links, and NASM 4-step acute remote incident protocol in UnifiedLiveStudioHud and LiveVideoCameraHud.',
+      '5-Point Virtual Assessment Protocol: Added bare feet, contrasting attire, 8–12 ft waist-height camera placement, frontal lighting, and 8x8 ft clear floor perimeter standards to LiveStillCameraGuidanceModal.',
+      'Virtual Telehealth Legal Shield: Added no-spotter liability waivers, home perimeter maintenance, immediate rack on latency protocols, and biometric video recording consent.',
+      'WebRTC Disconnection Fail-Safe: Added instant high-visibility safety alert prompting athlete to safely rack weights if remote video or peer connection drops during heavy working sets.',
+      'Concierge SLA & Office Hours Badge: Surfaced Coach Gordon daily office hours (6:00 AM – 6:00 PM EST) and 12-hour asynchronous voice/video critique SLA in AskCoachGordonModal and MessageThreadClient.',
+    ],
+    detailedSections: [
+      {
+        title: 'Emergency Remote Action Plan & Telehealth API',
+        items: [
+          'Engineered app/api/coach/clients/[id]/erap/route.ts returning client emergency contacts, local dispatch phone, and physical address.',
+          'Updated evaluateMedicalParq in lib/liability-shield.ts to extract and structure erapRecord.',
+          'Updated app/api/fitness/profile/route.ts to embed erap in client_intake_forms.parq_answers jsonb column with full backwards compatibility.',
+        ],
+      },
+      {
+        title: 'Live Studio Telehealth & Optical Guidance',
+        items: [
+          'Added ERAP Safety action buttons to UnifiedLiveStudioHud and LiveVideoCameraHud toolbar docks.',
+          'Expanded LiveStillCameraGuidanceModal into a 3-tab experience including the 5-point assessment setup checklist.',
+          'Implemented peer connection failure listener rendering prominent immediate-rack safety banners across remote video feeds.',
+        ],
+      },
+    ],
+  },
   {
     version: '1.36.7',
     date: '2026-10-11',

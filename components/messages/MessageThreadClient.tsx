@@ -546,10 +546,10 @@ export default function MessageThreadClient({
                 <span>Active Line</span>
               </span>
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span>{partnerRoleLabel}</span>
               <span>·</span>
-              <span style={{ color: 'var(--gold-lt)' }}>Response &lt; 12h</span>
+              <span style={{ color: 'var(--gold-lt)' }}>Hours: 6am–6pm EST · Video &amp; Voice Response &lt; 12h</span>
             </div>
           </div>
         </div>

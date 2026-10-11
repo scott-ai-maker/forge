@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { WebRtcPeerBridge, type LobbyParticipant } from '@/lib/webrtc-peer-bridge'
 import LiveRemoteVideoFeed from './LiveRemoteVideoFeed'
 import LiveStillCameraGuidanceModal from './LiveStillCameraGuidanceModal'
+import LiveErapSafetyModal from './LiveErapSafetyModal'
 import {
   applyStillCameraConstraints,
   STILL_CAMERA_REQUEST_EVENT,
@@ -28,6 +29,7 @@ export type VideoHudLayout = 'split' | 'pip' | 'focus'
 interface LiveVideoCameraHudProps {
   clientName?: string
   coachName?: string
+  clientId?: string
   exerciseName?: string
   optPhase?: string
   currentTempo?: string
@@ -120,6 +122,7 @@ function BiomechanicalPlumbLine() {
 export default function LiveVideoCameraHud({
   clientName = 'Athlete',
   coachName = 'Coach Gordon',
+  clientId,
   exerciseName = 'Overhead Squat Assessment',
   optPhase = 'Phase 2: Strength Endurance',
   currentTempo = '2-0-2',
@@ -146,6 +149,7 @@ export default function LiveVideoCameraHud({
   const [activeRemoteStream, setActiveRemoteStream] = useState<MediaStream | null>(remoteStream ?? null)
   const [peerConnectionState, setPeerConnectionState] = useState<RTCPeerConnectionState | null>(null)
   const [coachInStudio, setCoachInStudio] = useState<LobbyParticipant | null>(null)
+  const [showErapModal, setShowErapModal] = useState(false)
   const [peerLatencyMs, setPeerLatencyMs] = useState<number | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null)
 
@@ -1287,6 +1291,36 @@ export default function LiveVideoCameraHud({
                 </span>
               </div>
 
+              {/* NASM VCS Disconnection / Immediate Rack Fail-Safe Notice */}
+              {(peerConnectionState === 'disconnected' || peerConnectionState === 'failed') && (
+                <div
+                  data-testid="nasm-connection-failsafe-banner-client"
+                  style={{
+                    position: 'absolute',
+                    bottom: 12,
+                    left: 12,
+                    right: 12,
+                    background: 'rgba(239, 68, 68, 0.94)',
+                    border: '1px solid #FCA5A5',
+                    borderRadius: 6,
+                    padding: '8px 12px',
+                    color: '#FFFFFF',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    zIndex: 25,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  <GaaIcon name="alert-triangle" size={16} tone="inherit" />
+                  <span>
+                    <strong>NASM Fail-Safe:</strong> Video stream interrupted. Safely rack weights immediately. Do not attempt unmonitored working reps.
+                  </span>
+                </div>
+              )}
+
               {/* 1-Click Swap Button in PiP */}
               {layout === 'pip' && (
                 <button
@@ -1775,6 +1809,36 @@ export default function LiveVideoCameraHud({
                   : '(Standby)'}
               </span>
             </div>
+
+            {/* NASM VCS Disconnection / Immediate Rack Fail-Safe Notice */}
+            {(peerConnectionState === 'disconnected' || peerConnectionState === 'failed') && (
+              <div
+                data-testid="nasm-connection-failsafe-banner-swapped"
+                style={{
+                  position: 'absolute',
+                  bottom: 12,
+                  left: 12,
+                  right: 12,
+                  background: 'rgba(239, 68, 68, 0.94)',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: 6,
+                  padding: '8px 12px',
+                  color: '#FFFFFF',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  zIndex: 25,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                }}
+              >
+                <GaaIcon name="alert-triangle" size={16} tone="inherit" />
+                <span>
+                  <strong>NASM Fail-Safe:</strong> Video stream interrupted. Safely rack weights immediately. Do not attempt unmonitored working reps.
+                </span>
+              </div>
+            )}
 
             {/* Swap Stage Return Button */}
             <button
@@ -2645,6 +2709,32 @@ export default function LiveVideoCameraHud({
             <GaaIcon name="grid" size={13} tone={showPlumbLine ? 'gold' : 'inherit'} />
             <span>{showPlumbLine ? 'Plumb ON' : 'Plumb Grid'}</span>
           </button>
+
+          {/* NASM VCS Emergency Remote Action Plan (ERAP) Button */}
+          {isCoach && clientId && (
+            <button
+              type="button"
+              data-testid="live-erap-safety-button-hud"
+              onClick={() => setShowErapModal(true)}
+              title="NASM Emergency Remote Action Plan (ERAP)"
+              style={{
+                padding: '6px 12px',
+                background: 'rgba(239,68,68,0.18)',
+                border: '1px solid rgba(239,68,68,0.5)',
+                color: '#F87171',
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <GaaIcon name="shield-alert" size={13} tone="inherit" />
+              <span>ERAP Safety</span>
+            </button>
+          )}
         </div>
 
         {/* Dock 3: Pacing & Tactical Load (when handlers provided) */}
@@ -2815,6 +2905,16 @@ export default function LiveVideoCameraHud({
         onClose={() => setShowStillCameraModal(false)}
         requestedByCoachName={stillCameraRequestedBy}
       />
+
+      {/* ── NASM VCS Emergency Remote Action Plan (ERAP) Modal ── */}
+      {clientId && (
+        <LiveErapSafetyModal
+          isOpen={showErapModal}
+          onClose={() => setShowErapModal(false)}
+          clientId={clientId}
+          athleteName={clientName}
+        />
+      )}
 
       {/* ── Official NASM Edge Video Demo Modal ── */}
       {demoVideoModal?.isOpen && demoVideoModal.embedUrl && (

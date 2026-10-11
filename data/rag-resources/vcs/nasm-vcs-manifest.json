@@ -1,0 +1,163 @@
+[
+  {
+    "id": "vcs_master_curriculum",
+    "filename": "vcs/NASM-VCS-Master-Curriculum-Comprehensive.pdf",
+    "title": "NASM Virtual Coaching Specialization: Master Curriculum Comprehensive",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 0,
+    "pageCount": 264,
+    "summary": "Complete evidence-based curriculum for virtual coaching, digital client onboarding, telehealth communication, remote movement assessments, and wearable integration.",
+    "keyConcepts": [
+      "Virtual Coaching Architecture",
+      "Remote Biomechanical Assessments",
+      "Telehealth Consultation Standards",
+      "Wearable Telemetry Integration",
+      "Virtual Client Retention"
+    ]
+  },
+  {
+    "id": "vcs_ch01",
+    "filename": "vcs/NASM-VCS-Ch01-Introduction-to-Virtual-Coaching.pdf",
+    "title": "VCS Chapter 1: Introduction to Virtual Coaching",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 1,
+    "pageCount": 16,
+    "summary": "NASM Virtual Coaching Specialization curriculum covering introduction to virtual coaching, remote delivery, and digital sports science practices.",
+    "keyConcepts": [
+      "Virtual Coaching",
+      "Remote Telehealth",
+      "Introduction to Virtual Coaching",
+      "Client Retention"
+    ]
+  },
+  {
+    "id": "vcs_ch02",
+    "filename": "vcs/NASM-VCS-Ch02-Building-a-Business.pdf",
+    "title": "VCS Chapter 2: Building a Business",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 2,
+    "pageCount": 41,
+    "summary": "NASM Virtual Coaching Specialization curriculum covering building a business, remote delivery, and digital sports science practices.",
+    "keyConcepts": [
+      "Virtual Coaching",
+      "Remote Telehealth",
+      "Building a Business",
+      "Client Retention"
+    ]
+  },
+  {
+    "id": "vcs_ch03",
+    "filename": "vcs/NASM-VCS-Ch03-Technology-Considerations.pdf",
+    "title": "VCS Chapter 3: Technology Considerations",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 3,
+    "pageCount": 25,
+    "summary": "NASM Virtual Coaching Specialization curriculum covering technology considerations, remote delivery, and digital sports science practices.",
+    "keyConcepts": [
+      "Virtual Coaching",
+      "Remote Telehealth",
+      "Technology Considerations",
+      "Client Retention"
+    ]
+  },
+  {
+    "id": "vcs_ch04",
+    "filename": "vcs/NASM-VCS-Ch04-Communication-and-Coaching-Strategies.pdf",
+    "title": "VCS Chapter 4: Communication and Coaching Strategies",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 4,
+    "pageCount": 30,
+    "summary": "NASM Virtual Coaching Specialization curriculum covering communication and coaching strategies, remote delivery, and digital sports science practices.",
+    "keyConcepts": [
+      "Virtual Coaching",
+      "Remote Telehealth",
+      "Communication and Coaching Strategies",
+      "Client Retention"
+    ]
+  },
+  {
+    "id": "vcs_ch05",
+    "filename": "vcs/NASM-VCS-Ch05-Administering-Virtual-Assessments.pdf",
+    "title": "VCS Chapter 5: Administering Virtual Assessments",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 5,
+    "pageCount": 35,
+    "summary": "NASM Virtual Coaching Specialization curriculum covering administering virtual assessments, remote delivery, and digital sports science practices.",
+    "keyConcepts": [
+      "Virtual Coaching",
+      "Remote Telehealth",
+      "Administering Virtual Assessments",
+      "Client Retention"
+    ]
+  },
+  {
+    "id": "vcs_ch06",
+    "filename": "vcs/NASM-VCS-Ch06-Implementing-Coaching-Sessions.pdf",
+    "title": "VCS Chapter 6: Implementing Coaching Sessions",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 6,
+    "pageCount": 37,
+    "summary": "NASM Virtual Coaching Specialization curriculum covering implementing coaching sessions, remote delivery, and digital sports science practices.",
+    "keyConcepts": [
+      "Virtual Coaching",
+      "Remote Telehealth",
+      "Implementing Coaching Sessions",
+      "Client Retention"
+    ]
+  },
+  {
+    "id": "vcs_ch07",
+    "filename": "vcs/NASM-VCS-Ch07-Integrating-Wearables-Into-Virtual-Coaching.pdf",
+    "title": "VCS Chapter 7: Integrating Wearables Into Virtual Coaching",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 7,
+    "pageCount": 26,
+    "summary": "NASM Virtual Coaching Specialization curriculum covering integrating wearables into virtual coaching, remote delivery, and digital sports science practices.",
+    "keyConcepts": [
+      "Virtual Coaching",
+      "Remote Telehealth",
+      "Integrating Wearables Into Virtual Coaching",
+      "Client Retention"
+    ]
+  },
+  {
+    "id": "vcs_ch08",
+    "filename": "vcs/NASM-VCS-Ch08-Selling-Virtual-Coaching.pdf",
+    "title": "VCS Chapter 8: Selling Virtual Coaching",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 8,
+    "pageCount": 35,
+    "summary": "NASM Virtual Coaching Specialization curriculum covering selling virtual coaching, remote delivery, and digital sports science practices.",
+    "keyConcepts": [
+      "Virtual Coaching",
+      "Remote Telehealth",
+      "Selling Virtual Coaching",
+      "Client Retention"
+    ]
+  },
+  {
+    "id": "vcs_ch09",
+    "filename": "vcs/NASM-VCS-Ch09-Marketing-Virtual-Coaching.pdf",
+    "title": "VCS Chapter 9: Marketing Virtual Coaching",
+    "category": "Virtual Coaching Protocol",
+    "goalCategory": "Virtual Coaching & Remote Telehealth",
+    "chapterNumber": 9,
+    "pageCount": 19,
+    "summary": "NASM Virtual Coaching Specialization curriculum covering marketing virtual coaching, remote delivery, and digital sports science practices.",
+    "keyConcepts": [
+      "Virtual Coaching",
+      "Remote Telehealth",
+      "Marketing Virtual Coaching",
+      "Client Retention"
+    ]
+  }
+]

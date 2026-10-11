@@ -250,6 +250,17 @@ export function parseParqAnswers(
     reportedConditionsNotes: String(intake?.medical_conditions ?? rawParq.reportedConditionsNotes ?? '').trim(),
     signedWaiverName: String(intake?.consent_signature_name ?? rawParq.signedWaiverName ?? '').trim(),
     signedAt: intake?.consent_signed_at || (rawParq.signedAt as string | undefined) || undefined,
+    workoutStreetAddress: String(rawParq.workoutStreetAddress ?? (rawParq.erap as Record<string, unknown>)?.workoutStreetAddress ?? '').trim() || undefined,
+    workoutUnitOrGateCode: String(rawParq.workoutUnitOrGateCode ?? (rawParq.erap as Record<string, unknown>)?.workoutUnitOrGateCode ?? '').trim() || undefined,
+    workoutCity: String(rawParq.workoutCity ?? (rawParq.erap as Record<string, unknown>)?.workoutCity ?? '').trim() || undefined,
+    workoutState: String(rawParq.workoutState ?? (rawParq.erap as Record<string, unknown>)?.workoutState ?? '').trim() || undefined,
+    workoutPostalCode: String(rawParq.workoutPostalCode ?? (rawParq.erap as Record<string, unknown>)?.workoutPostalCode ?? '').trim() || undefined,
+    localEmergencyDispatchPhone: String(rawParq.localEmergencyDispatchPhone ?? (rawParq.erap as Record<string, unknown>)?.localEmergencyDispatchPhone ?? '').trim() || undefined,
+    hasAcceptedVirtualTelehealthConsent: Boolean(
+      rawParq.hasAcceptedVirtualTelehealthConsent ??
+      (rawParq.erap as Record<string, unknown>)?.hasAcceptedVirtualTelehealthConsent ??
+      false
+    ),
   }
 }
 

@@ -11,9 +11,9 @@ export interface RagDocumentMetadata {
   id: string
   filename: string
   title: string
-  category: 'Textbook Chapter' | 'Workout Template' | 'Study Guide' | 'Clinical Assessment' | 'Nutrition & Coaching Protocol' | 'Corrective Exercise Protocol' | 'Sports Performance Protocol' | 'Behavior Change Protocol' | 'MMA Conditioning Protocol' | 'Golf Fitness Protocol' | 'Facility & Equipment Design' | 'Social Media & Digital Strategy' | 'Pharmacology & Weight Loss Protocol' | 'Advanced Cardio Protocol' | 'Bodybuilding & Meal Prep Protocol' | 'Podcasting & Media Production' | 'Physique & Bodybuilding Protocol' | 'Weight Loss & Metabolic Specialization'
+  category: 'Textbook Chapter' | 'Workout Template' | 'Study Guide' | 'Clinical Assessment' | 'Nutrition & Coaching Protocol' | 'Corrective Exercise Protocol' | 'Sports Performance Protocol' | 'Behavior Change Protocol' | 'MMA Conditioning Protocol' | 'Golf Fitness Protocol' | 'Facility & Equipment Design' | 'Social Media & Digital Strategy' | 'Pharmacology & Weight Loss Protocol' | 'Advanced Cardio Protocol' | 'Bodybuilding & Meal Prep Protocol' | 'Podcasting & Media Production' | 'Physique & Bodybuilding Protocol' | 'Weight Loss & Metabolic Specialization' | 'Virtual Coaching Protocol'
   nasmOptPhase?: number | number[]
-  goalCategory?: 'Fat Loss / Stabilization' | 'Hypertrophy / Muscular Development' | 'Maximal Strength & Athletic Performance' | 'Clinical Assessment' | 'Sports Science Foundation' | 'Nutrition Coaching & Client Retention' | 'Corrective Exercise & Injury Prevention' | 'Behavior Change & Adherence Coaching' | 'Combat Sports & MMA Conditioning' | 'Golf Fitness & Rotational Power' | 'Home Gym Design & Space Architecture' | 'Social Media & Brand Authority' | 'Weight Loss Medications & Lean Mass Defense' | 'Cardiorespiratory Conditioning & Metabolic Conditioning' | 'Bodybuilding Nutrition & Meal Prep Optimization' | 'Fitness Podcasting & Media Authority' | 'Physique Architecture & Contest Prep Coaching' | 'Sustainable Weight Loss & Metabolic Health'
+  goalCategory?: 'Fat Loss / Stabilization' | 'Hypertrophy / Muscular Development' | 'Maximal Strength & Athletic Performance' | 'Clinical Assessment' | 'Sports Science Foundation' | 'Nutrition Coaching & Client Retention' | 'Corrective Exercise & Injury Prevention' | 'Behavior Change & Adherence Coaching' | 'Combat Sports & MMA Conditioning' | 'Golf Fitness & Rotational Power' | 'Home Gym Design & Space Architecture' | 'Social Media & Brand Authority' | 'Weight Loss Medications & Lean Mass Defense' | 'Cardiorespiratory Conditioning & Metabolic Conditioning' | 'Bodybuilding Nutrition & Meal Prep Optimization' | 'Fitness Podcasting & Media Authority' | 'Physique Architecture & Contest Prep Coaching' | 'Sustainable Weight Loss & Metabolic Health' | 'Virtual Coaching & Remote Telehealth'
   summary: string
   keyConcepts: string[]
 }
@@ -5041,6 +5041,167 @@ export const NASM_RAG_LIBRARY: RagDocumentMetadata[] = [
     summary: 'Systematic workflow for re-engaging past or paused athletes: non-judgmental outreach scripts, goal recalibration, and friction-free re-onboarding.',
     keyConcepts: ['Re-Engagement Scripts', 'Lapsed Athlete Recalibration', 'Friction-Free Re-Onboarding', 'Client Relationship Longevity'],
   },
+  // ── 17. NASM VIRTUAL COACHING SPECIALIST (VCS) SUITE (10 DOCUMENTS) ──────────
+  {
+    id: 'vcs_master_curriculum',
+    filename: 'vcs/NASM-VCS-Master-Curriculum-Comprehensive.pdf',
+    title: 'NASM Virtual Coaching Specialization: Master Curriculum Comprehensive',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Complete evidence-based curriculum for virtual coaching, digital client onboarding, telehealth communication, remote movement assessments, and wearable integration.',
+    keyConcepts: [
+      'Virtual Coaching Architecture',
+      'Remote Biomechanical Assessments',
+      'Telehealth Consultation Standards',
+      'Wearable Telemetry Integration',
+      'Virtual Client Retention',
+    ],
+  },
+  {
+    id: 'vcs_ch01',
+    filename: 'vcs/NASM-VCS-Ch01-Introduction-to-Virtual-Coaching.pdf',
+    title: 'VCS Chapter 1: Introduction to Virtual Coaching',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Scope of practice, virtual coaching character traits, digital trends, credentials, client safety considerations, and remote coaching boundaries.',
+    keyConcepts: [
+      'Virtual Scope of Practice',
+      'Client Safety Protocols',
+      'Digital Coaching Trends',
+      'Remote Coach Character Traits',
+      'Professional Credentials',
+    ],
+  },
+  {
+    id: 'vcs_ch02',
+    filename: 'vcs/NASM-VCS-Ch02-Building-a-Business.pdf',
+    title: 'VCS Chapter 2: Building a Business',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Virtual coaching business models (canned programs, live 1-on-1, hybrid models), market and competitive analysis, target audience definition, and business planning.',
+    keyConcepts: [
+      'Live 1-on-1 Coaching Model',
+      'Hybrid Coaching Architecture',
+      'Predesigned Programming',
+      'Competitive Market Analysis',
+      'Target Audience Profiling',
+    ],
+  },
+  {
+    id: 'vcs_ch03',
+    filename: 'vcs/NASM-VCS-Ch03-Technology-Considerations.pdf',
+    title: 'VCS Chapter 3: Technology Considerations',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Hardware requirements, software systems, video conferencing platforms, camera optics, peripheral microphones, and fitness programming software options.',
+    keyConcepts: [
+      'Video Studio Ergonomics',
+      'Audio Telemetry & Microphones',
+      'Optical Framing & Camera Angles',
+      'Programming Software Architecture',
+      'Telehealth Hardware Specs',
+    ],
+  },
+  {
+    id: 'vcs_ch04',
+    filename: 'vcs/NASM-VCS-Ch04-Communication-and-Coaching-Strategies.pdf',
+    title: 'VCS Chapter 4: Communication and Coaching Strategies',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Virtual coaching communication frameworks, remote accountability strategies, virtual motivational interviewing, and asynchronous check-in cadences.',
+    keyConcepts: [
+      'Virtual Motivational Interviewing',
+      'Remote Accountability Cadence',
+      'Active Listening via Video',
+      'Check-In Responsiveness',
+      'Asynchronous Video Feedback',
+    ],
+  },
+  {
+    id: 'vcs_ch05',
+    filename: 'vcs/NASM-VCS-Ch05-Administering-Virtual-Assessments.pdf',
+    title: 'VCS Chapter 5: Administering Virtual Assessments',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Virtual pre-participation health screening (PAR-Q+), virtual physiological assessments, remote movement & mobility assessments (Overhead Squat), and muscular endurance testing.',
+    keyConcepts: [
+      'Virtual Movement Assessment',
+      'Overhead Squat Video Calibration',
+      'Remote PAR-Q+ Screening',
+      'Virtual Physiological Metrics',
+      'Mobility Testing Camera Angles',
+    ],
+  },
+  {
+    id: 'vcs_ch06',
+    filename: 'vcs/NASM-VCS-Ch06-Implementing-Coaching-Sessions.pdf',
+    title: 'VCS Chapter 6: Implementing Coaching Sessions',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Session preparation, physical training environment setup, real-time client instruction and verbal/visual cuing, and small/large group virtual coaching.',
+    keyConcepts: [
+      'Real-Time Visual Cuing',
+      'Virtual Environment Setup',
+      'Live Session Preparation',
+      'Kinesthetic Verbal Prompts',
+      'Group Virtual Dynamics',
+    ],
+  },
+  {
+    id: 'vcs_ch07',
+    filename: 'vcs/NASM-VCS-Ch07-Integrating-Wearables-Into-Virtual-Coaching.pdf',
+    title: 'VCS Chapter 7: Integrating Wearables Into Virtual Coaching',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Biometric education, heart rate telemetry, HRV recovery scores, wearable data integration, and building autoregulated programs based on client readiness.',
+    keyConcepts: [
+      'Wearable Telemetry Integration',
+      'Heart Rate Variability (HRV)',
+      'Daily Readiness Scores',
+      'Biometric Autoregulation',
+      'Continuous Health Monitoring',
+    ],
+  },
+  {
+    id: 'vcs_ch08',
+    filename: 'vcs/NASM-VCS-Ch08-Selling-Virtual-Coaching.pdf',
+    title: 'VCS Chapter 8: Selling Virtual Coaching',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Pricing, packaging, sales goals, customized sales consultation processes, frictionless onboarding workflows, and billing/payment collection.',
+    keyConcepts: [
+      'Tiered Virtual Packaging',
+      'Frictionless Client Onboarding',
+      'Sales Consultation Flow',
+      'Automated Recurring Billing',
+      'Value-Based Pricing',
+    ],
+  },
+  {
+    id: 'vcs_ch09',
+    filename: 'vcs/NASM-VCS-Ch09-Marketing-Virtual-Coaching.pdf',
+    title: 'VCS Chapter 9: Marketing Virtual Coaching',
+    category: 'Virtual Coaching Protocol',
+    goalCategory: 'Virtual Coaching & Remote Telehealth',
+    summary:
+      'Online marketing vehicles, social media authority, digital lead generation, organic content strategies, and measuring marketing return on investment.',
+    keyConcepts: [
+      'Digital Authority Building',
+      'Virtual Lead Generation',
+      'Client Case Studies & Social Proof',
+      'Organic Content Funnels',
+      'Marketing ROI Tracking',
+    ],
+  },
 ]
 
 /**
@@ -5048,7 +5209,7 @@ export const NASM_RAG_LIBRARY: RagDocumentMetadata[] = [
  */
 export function queryNasmRagLibrary(query: {
   keyword?: string
-  goal?: 'fat_loss' | 'hypertrophy' | 'performance' | 'assessment' | 'nutrition' | 'coaching' | 'corrective' | 'sports_performance' | 'behavior_change' | 'mma' | 'golf' | 'home_gym' | 'social_media' | 'glp1' | 'cardio' | 'meal_prep' | 'podcasting' | 'physique' | 'weight_loss'
+  goal?: 'fat_loss' | 'hypertrophy' | 'performance' | 'assessment' | 'nutrition' | 'coaching' | 'corrective' | 'sports_performance' | 'behavior_change' | 'mma' | 'golf' | 'home_gym' | 'social_media' | 'glp1' | 'cardio' | 'meal_prep' | 'podcasting' | 'physique' | 'weight_loss' | 'virtual_coaching'
   nasmOptPhase?: number
 }): RagDocumentMetadata[] {
   return NASM_RAG_LIBRARY.filter(doc => {
@@ -5079,6 +5240,7 @@ export function queryNasmRagLibrary(query: {
       if (query.goal === 'podcasting' && doc.category !== 'Podcasting & Media Production') return false
       if (query.goal === 'physique' && doc.category !== 'Physique & Bodybuilding Protocol') return false
       if (query.goal === 'weight_loss' && doc.category !== 'Weight Loss & Metabolic Specialization') return false
+      if (query.goal === 'virtual_coaching' && doc.category !== 'Virtual Coaching Protocol') return false
     }
 
     if (query.keyword) {

@@ -830,6 +830,34 @@ export default function AskCoachGordonModal({
           </span>
         </div>
 
+        {/* NASM VCS Asynchronous Office Hours & Concierge SLA Badge */}
+        <div
+          data-testid="coach-concierge-sla-badge"
+          style={{
+            padding: '7px 16px',
+            backgroundColor: 'rgba(212, 160, 23, 0.06)',
+            borderBottom: '1px solid rgba(212, 160, 23, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            fontSize: '11px',
+            color: '#D1D5DB',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <GaaIcon name="clock" size={13} tone="gold" />
+            <span>
+              <strong style={{ color: 'var(--gold-lt, #FDE047)' }}>Concierge Office Hours:</strong> Active Daily 6:00 AM – 6:00 PM EST
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#9CA3AF' }}>
+            <GaaIcon name="shield-check" size={13} tone="inherit" />
+            <span>Asynchronous voice &amp; video critique dispatched within <strong>12 hours</strong></span>
+          </div>
+        </div>
+
         {/* Message Stream */}
         <div
           style={{

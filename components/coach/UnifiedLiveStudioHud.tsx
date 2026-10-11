@@ -25,6 +25,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { WebRtcPeerBridge, type LobbyParticipant } from '@/lib/webrtc-peer-bridge'
 import LiveRemoteVideoFeed from './LiveRemoteVideoFeed'
 import LiveStillCameraGuidanceModal from './LiveStillCameraGuidanceModal'
+import LiveErapSafetyModal from './LiveErapSafetyModal'
 import {
   applyStillCameraConstraints,
   STILL_CAMERA_REQUEST_EVENT,
@@ -547,6 +548,7 @@ export default function UnifiedLiveStudioHud({
   const audioCtxRef = useRef<AudioContext | null>(null)
   const signalingChannelRef = useRef<RealtimeChannel | null>(null)
   const [showStillCameraModal, setShowStillCameraModal] = useState(false)
+  const [showErapModal, setShowErapModal] = useState(false)
   const [stillCameraRequestedBy, setStillCameraRequestedBy] = useState('Coach Scott Gordon')
 
   // Luxury 2-Tone Athlete Lobby Arrival Chime (E5 -> G#5)
@@ -2170,6 +2172,36 @@ export default function UnifiedLiveStudioHud({
                   </span>
                 </div>
 
+                {/* NASM VCS Disconnection / Immediate Rack Fail-Safe Notice */}
+                {(peerConnectionState === 'disconnected' || peerConnectionState === 'failed') && (
+                  <div
+                    data-testid="nasm-connection-failsafe-banner"
+                    style={{
+                      position: 'absolute',
+                      bottom: 12,
+                      left: 12,
+                      right: 12,
+                      background: 'rgba(239, 68, 68, 0.94)',
+                      border: '1px solid #FCA5A5',
+                      borderRadius: 6,
+                      padding: '8px 12px',
+                      color: '#FFFFFF',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      zIndex: 25,
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    <GaaIcon name="alert-triangle" size={16} tone="inherit" />
+                    <span>
+                      <strong>NASM Fail-Safe:</strong> Video link interrupted. Instruct athlete to safely rack weights immediately. Do not perform working sets unmonitored.
+                    </span>
+                  </div>
+                )}
+
                 {/* Biomechanical Plumb Line Grid (Strictly Athlete's Video only — never overlays coach's video) */}
                 {showPlumbLine && (
                   <div
@@ -2644,6 +2676,36 @@ export default function UnifiedLiveStudioHud({
                       : '(Standby)'}
                   </span>
                 </div>
+
+                {/* NASM VCS Disconnection / Immediate Rack Fail-Safe Notice */}
+                {(peerConnectionState === 'disconnected' || peerConnectionState === 'failed') && (
+                  <div
+                    data-testid="nasm-connection-failsafe-banner-dual"
+                    style={{
+                      position: 'absolute',
+                      bottom: 12,
+                      left: 12,
+                      right: 12,
+                      background: 'rgba(239, 68, 68, 0.94)',
+                      border: '1px solid #FCA5A5',
+                      borderRadius: 6,
+                      padding: '8px 12px',
+                      color: '#FFFFFF',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      zIndex: 25,
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    <GaaIcon name="alert-triangle" size={16} tone="inherit" />
+                    <span>
+                      <strong>NASM Fail-Safe:</strong> Video link interrupted. Instruct athlete to safely rack weights immediately. Do not perform working sets unmonitored.
+                    </span>
+                  </div>
+                )}
 
                 {/* Biomechanical Plumb Line Grid (Strictly Athlete's Video only — never overlays coach's video) */}
                 {showPlumbLine && (
@@ -3868,6 +3930,29 @@ export default function UnifiedLiveStudioHud({
                 <GaaIcon name="clipboard" size={11} tone="inherit" />
                 <span>NASM Suite</span>
               </button>
+
+              <button
+                type="button"
+                data-testid="live-erap-safety-button-top"
+                onClick={() => setShowErapModal(true)}
+                title="NASM Emergency Remote Action Plan (ERAP)"
+                style={{
+                  padding: '5px 9px',
+                  background: 'rgba(239,68,68,0.15)',
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  color: '#F87171',
+                  borderRadius: 4,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <GaaIcon name="shield-alert" size={11} tone="inherit" />
+                <span>ERAP Safety</span>
+              </button>
             </div>
           </div>
         </div>
@@ -4639,6 +4724,29 @@ export default function UnifiedLiveStudioHud({
                 <GaaIcon name="clipboard" size={12} tone="inherit" />
                 <span>NASM Suite</span>
               </button>
+
+              <button
+                type="button"
+                data-testid="live-erap-safety-button-panel"
+                onClick={() => setShowErapModal(true)}
+                title="NASM Emergency Remote Action Plan (ERAP)"
+                style={{
+                  padding: '7px 8px',
+                  background: 'rgba(239,68,68,0.15)',
+                  border: '1px solid rgba(239,68,68,0.5)',
+                  borderRadius: 4,
+                  color: '#F87171',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                }}
+              >
+                <GaaIcon name="shield-alert" size={12} tone="inherit" />
+                <span>ERAP Safety</span>
+              </button>
             </div>
           </div>
 
@@ -4681,6 +4789,14 @@ export default function UnifiedLiveStudioHud({
         isOpen={showStillCameraModal}
         onClose={() => setShowStillCameraModal(false)}
         requestedByCoachName={stillCameraRequestedBy}
+      />
+
+      {/* ── NASM VCS Emergency Remote Action Plan (ERAP) Modal ── */}
+      <LiveErapSafetyModal
+        isOpen={showErapModal}
+        onClose={() => setShowErapModal(false)}
+        clientId={clientId}
+        athleteName={athleteName}
       />
 
       {/* ── Official NASM Edge Video Demo Modal ── */}
