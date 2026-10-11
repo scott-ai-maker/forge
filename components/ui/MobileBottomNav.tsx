@@ -15,11 +15,12 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
   const searchParams = useSearchParams()
 
   if (role === 'coach') {
-    const coachTabs: Array<{ href: string; label: string; icon: GaaIconName }> = [
-      { href: '/coach', label: 'Review', icon: 'alert-triangle' },
-      { href: '/coach#assigned-clients', label: 'Members', icon: 'users' },
-      { href: '/dashboard/live', label: 'Live session', icon: 'video-studio' },
-      { href: '/coach/settings', label: 'Settings', icon: 'gear' },
+    const coachTab = searchParams.get('tab')
+    const coachTabs: Array<{ href: string; label: string; icon: GaaIconName; isActive: boolean }> = [
+      { href: '/coach', label: 'Review', icon: 'alert-triangle', isActive: pathname === '/coach' && coachTab !== 'roster' },
+      { href: '/coach?tab=roster#assigned-clients', label: 'Members', icon: 'users', isActive: pathname === '/coach' && coachTab === 'roster' },
+      { href: '/dashboard/live', label: 'Live session', icon: 'video-studio', isActive: pathname.startsWith('/dashboard/live') },
+      { href: '/coach/settings', label: 'Settings', icon: 'gear', isActive: pathname.startsWith('/coach/settings') },
     ]
 
     return (
@@ -44,11 +45,12 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
         }}
       >
         {coachTabs.map(tab => {
-          const isActive = pathname === tab.href || (tab.href !== '/coach' && pathname.startsWith(tab.href.split('#')[0]))
+          const { isActive } = tab
           return (
             <Link
               key={tab.href}
               href={tab.href}
+              aria-current={isActive ? 'page' : undefined}
               onClick={() => triggerHaptic('tap')}
               className="tactile-btn"
               style={{
@@ -132,6 +134,7 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
           <Link
             key={tab.href}
             href={tab.href}
+            aria-current={isActive ? 'page' : undefined}
             onClick={() => triggerHaptic('tap')}
             className="tactile-btn"
             style={{

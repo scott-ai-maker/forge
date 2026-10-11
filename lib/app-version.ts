@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.37.0'
+export const APP_VERSION = '1.37.1'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'NASM Virtual Coaching Specialization & Telehealth Safety Architecture'
+export const APP_RELEASE_CODENAME = 'Menu & Navigation Cleanup'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,25 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.37.0',
+    version: '1.37.1',
     date: '2026-10-11',
     codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'One Menu · Accurate Highlighting · Coach Members Fix',
+    title: 'Simpler Phone & Tablet Navigation',
+    summary: 'The header search is gone on phones and tablets — MENU is now the single, larger entry point, and the menu itself is trimmed to what you actually use.',
+    highlights: [
+      'Removed the phone/tablet header search and the in-menu search box; MENU is a 44px touch target.',
+      'Removed duplicate menu items: the Dashboard pill, extra Close button, and repeated login toggle.',
+      'App Guide and What\'s New now share one compact footer row.',
+      'The menu highlights only the page you are on instead of every training tab at once.',
+      'Coach Members now opens the roster from both the menu and the bottom bar.',
+    ],
+  },
+  {
+    version: '1.37.0',
+    date: '2026-10-11',
+    codename: 'NASM Virtual Coaching Specialization & Telehealth Safety Architecture',
     category: 'feature',
     badge: 'NASM VCS Telehealth · ERAP Emergency Plan · 5-Point Setup · Disconnection Fail-Safe',
     title: 'NASM Virtual Coaching Specialization & Clinical Telehealth Architecture',

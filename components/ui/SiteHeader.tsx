@@ -220,32 +220,8 @@ export default function SiteHeader({
               </div>
             )}
 
-            {/* Mobile Header Controls: Search trigger & Hamburger menu */}
+            {/* Mobile Header Controls: single MENU entry point (feature search lives on desktop via Cmd/Ctrl+K) */}
             <div className="mobile-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {isPrivatePortal && (
-                <button
-                  type="button"
-                  onClick={() => setPaletteOpen(true)}
-                  className="mobile-header-search-btn tactile-btn"
-                  aria-label="Search Features"
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 6,
-                    background: 'rgba(212, 160, 23, 0.12)',
-                    border: '1px solid rgba(212, 160, 23, 0.4)',
-                    color: 'var(--gold)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                  }}
-                >
-                  <GaaIcon name="search" size={15} tone="gold" />
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={handleOpenDrawer}
@@ -255,9 +231,9 @@ export default function SiteHeader({
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 5,
-                  height: 36,
-                  padding: '0 9px',
+                  gap: 6,
+                  height: 40,
+                  padding: '0 12px',
                   borderRadius: 6,
                   background: 'rgba(212, 160, 23, 0.15)',
                   border: '1px solid rgba(212, 160, 23, 0.5)',

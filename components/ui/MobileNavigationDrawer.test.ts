@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   CLIENT_DRAWER_SECTIONS,
   COACH_DRAWER_SECTIONS,
+  isDrawerItemActive,
   type DrawerSection,
 } from './MobileNavigationDrawer'
 
@@ -87,5 +88,35 @@ describe('MobileNavigationDrawer Structure & Unique Keys', () => {
         expect(item.icon.trim().length).toBeGreaterThan(0)
       })
     })
+  })
+})
+
+describe('MobileNavigationDrawer coach links & active state', () => {
+  it('routes coach Members to the roster tab where the assigned-clients anchor renders', () => {
+    const members = COACH_DRAWER_SECTIONS.flatMap(s => s.items).find(i => i.label === 'Members')
+    expect(members?.href).toBe('/coach?tab=roster#assigned-clients')
+  })
+
+  it('highlights exactly one Your Training item per fitness workspace', () => {
+    const items = CLIENT_DRAWER_SECTIONS.flatMap(s => s.items)
+    const activeFor = (path: string, search: string) =>
+      items.filter(i => isDrawerItemActive(i.href, path, search)).map(i => i.label)
+
+    expect(activeFor('/dashboard/fitness', '')).toEqual(['Training'])
+    expect(activeFor('/dashboard/fitness', '?workspace=train')).toEqual(['Training'])
+    expect(activeFor('/dashboard/fitness', '?workspace=progress')).toEqual(['Progress'])
+    expect(activeFor('/dashboard/fitness', '?workspace=lab')).toEqual(['Fitness Lab'])
+    expect(activeFor('/dashboard', '')).toEqual(['Today'])
+  })
+
+  it('highlights only the matching coach view and never pure section anchors', () => {
+    const items = COACH_DRAWER_SECTIONS.flatMap(s => s.items)
+    const activeFor = (search: string) =>
+      items.filter(i => isDrawerItemActive(i.href, '/coach', search)).map(i => i.href)
+
+    expect(activeFor('')).toEqual(['/coach'])
+    expect(activeFor('?tab=roster')).toEqual(['/coach?tab=roster#assigned-clients'])
+    expect(activeFor('?tab=analytics')).toEqual(['/coach?tab=analytics'])
+    expect(isDrawerItemActive('/coach#live-studio', '/coach', '')).toBe(false)
   })
 })

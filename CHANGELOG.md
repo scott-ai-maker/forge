@@ -3,6 +3,18 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.37.1] - 2026-10-11
+
+### Changed
+- Removed the phone/tablet header search button; MENU is the single navigation entry point and is 44px tall on touch screens. Cmd/Ctrl+K search remains on desktop.
+- Removed the in-menu search box, the "Dashboard →" pill, the duplicate footer Close button, and the repeated guest login toggle.
+- Combined App Guide and What's New into one compact footer row; signed-in Log out now sits beside the account email.
+- Renamed the coach menu item "Daily Check-ins" to "Review Queue" to match the bottom bar.
+
+### Fixed
+- Menu now highlights only the current page/workspace instead of every fitness tab at once.
+- Coach "Members" in the menu and bottom bar now opens the roster tab (`/coach?tab=roster#assigned-clients`).
+
 ## [1.37.0] - 2026-10-11
 
 ### Added

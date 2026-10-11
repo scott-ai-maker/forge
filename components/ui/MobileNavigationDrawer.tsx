@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
@@ -63,8 +63,8 @@ export const COACH_DRAWER_SECTIONS: DrawerSection[] = [
     title: 'Coach Tools',
     items: [
       { href: '#coach-gordon', label: 'Ask Coach Gordon', icon: 'message', desc: 'Training and movement guidance', badge: 'Live AI' },
-      { href: '/coach', label: 'Daily Check-ins', icon: 'alert-triangle', desc: 'Review concerns and adjust training plans' },
-      { href: '/coach#assigned-clients', label: 'Members', icon: 'users', desc: 'Member list and training plans' },
+      { href: '/coach', label: 'Review Queue', icon: 'alert-triangle', desc: 'Check-ins, concerns, and plan adjustments' },
+      { href: '/coach?tab=roster#assigned-clients', label: 'Members', icon: 'users', desc: 'Member list and training plans' },
       { href: '/coach#live-studio', label: 'Live Video Studio', icon: 'video-studio', desc: 'Coach HUD, telestrator & voice copilot' },
       { href: '/coach/settings?tab=templates', label: 'Training Plan Builder', icon: 'clipboard', desc: 'Create and adjust training plans' },
       { href: '/coach?tab=analytics', label: 'Progress Analytics', icon: 'chart', desc: 'Training, attendance, and progress trends' },
@@ -80,6 +80,29 @@ export const COACH_DRAWER_SECTIONS: DrawerSection[] = [
   },
 ]
 
+const DEFAULT_QUERY_BY_PATH: Record<string, Record<string, string>> = {
+  '/dashboard/fitness': { workspace: 'train' },
+  '/coach': { tab: 'overview' },
+}
+
+/**
+ * A menu row is active when its path matches and its `workspace`/`tab` view matches the
+ * current one (missing values fall back to the page default). Pure section anchors such as
+ * `/coach#live-studio` never claim the active state from the page they live on.
+ */
+export function isDrawerItemActive(href: string, pathname: string, currentSearch: string): boolean {
+  if (href.startsWith('#')) return false
+  const target = new URL(href, 'http://menu.local')
+  if (target.pathname !== pathname) return false
+  if (target.hash && !target.search) return false
+  const current = new URLSearchParams(currentSearch)
+  const defaults = DEFAULT_QUERY_BY_PATH[pathname] ?? {}
+  return ['workspace', 'tab'].every(key => {
+    const fallback = defaults[key] ?? ''
+    return (target.searchParams.get(key) ?? fallback) === (current.get(key) ?? fallback)
+  })
+}
+
 export default function MobileNavigationDrawer({
   isOpen,
   onClose,
@@ -90,7 +113,6 @@ export default function MobileNavigationDrawer({
 }: MobileNavigationDrawerProps) {
   const pathname = usePathname()
   const prevPathnameRef = useRef(pathname)
-  const [searchQuery, setSearchQuery] = useState('')
 
   // Close only when the user actually navigates to a different route
   useEffect(() => {
@@ -103,7 +125,6 @@ export default function MobileNavigationDrawer({
   // Prevent background body scrolling when open on iOS
   useEffect(() => {
     if (isOpen) {
-      setSearchQuery('')
       const originalOverflow = document.body.style.overflow
       const originalTouchAction = document.body.style.touchAction
       document.body.style.overflow = 'hidden'
@@ -129,26 +150,12 @@ export default function MobileNavigationDrawer({
   }, [isOpen, onClose])
 
   const isCoach = role === 'coach'
-  const baseSections = isCoach ? COACH_DRAWER_SECTIONS : CLIENT_DRAWER_SECTIONS
-
-  // Filter sections by search query
-  const sections = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return baseSections
-    return baseSections
-      .map(section => ({
-        ...section,
-        items: section.items.filter(
-          item =>
-            item.label.toLowerCase().includes(q) ||
-            item.desc.toLowerCase().includes(q) ||
-            item.href.toLowerCase().includes(q)
-        ),
-      }))
-      .filter(section => section.items.length > 0)
-  }, [baseSections, searchQuery])
+  const sections = isCoach ? COACH_DRAWER_SECTIONS : CLIENT_DRAWER_SECTIONS
 
   if (!isOpen) return null
+
+  // The drawer only renders after a client-side tap, so reading the live query string is hydration-safe.
+  const currentSearch = typeof window !== 'undefined' ? window.location.search : ''
 
   return (
     <div
@@ -217,9 +224,9 @@ export default function MobileNavigationDrawer({
             onClick={onClose}
             aria-label="Close navigation"
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
               background: 'rgba(255,255,255,0.08)',
               border: '1px solid rgba(255,255,255,0.18)',
               color: '#FFFFFF',
@@ -278,24 +285,7 @@ export default function MobileNavigationDrawer({
                 </div>
               </div>
             </div>
-            <Link
-              href={isCoach ? '/coach' : '/dashboard'}
-              onClick={onClose}
-              className="tactile-btn"
-              style={{
-                padding: '5px 10px',
-                borderRadius: 4,
-                background: 'var(--gold)',
-                color: '#080E14',
-                fontSize: 11,
-                fontWeight: 800,
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-              }}
-            >
-              Dashboard →
-            </Link>
+            {actions && <div style={{ flexShrink: 0 }}>{actions}</div>}
           </div>
         ) : (
           <div
@@ -367,56 +357,6 @@ export default function MobileNavigationDrawer({
           </div>
         )}
 
-        {/* Live Filter Search Input */}
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.15)' }}>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Search menu..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '9px 12px 9px 32px',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(212,160,23,0.3)',
-                borderRadius: 8,
-                color: '#FFFFFF',
-                fontSize: 13,
-                outline: 'none',
-                boxSizing: 'border-box',
-                fontFamily: 'inherit',
-              }}
-            />
-            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', opacity: 0.8 }}>
-              <GaaIcon name="search" size={14} tone="gold" />
-            </span>
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear search"
-                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              >
-                <GaaIcon name="close" size={12} tone="slate" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {actions && (
-          <div
-            style={{
-              padding: '10px 18px',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}
-          >
-            {actions}
-          </div>
-        )}
-
         {/* Scrollable Navigation Sections */}
         <div
           style={{
@@ -446,8 +386,7 @@ export default function MobileNavigationDrawer({
               </div>
 
               {section.items.map(link => {
-                const targetBase = link.href.split('?')[0].split('#')[0]
-                const isActive = pathname === targetBase
+                const isActive = isDrawerItemActive(link.href, pathname ?? '', currentSearch)
                 const isCoachGordonAction = link.href === '#coach-gordon'
                 const itemKey = `${section.title}-${link.href}-${link.label}`
 
@@ -543,6 +482,7 @@ export default function MobileNavigationDrawer({
                     key={itemKey}
                     href={link.href}
                     onClick={onClose}
+                    aria-current={isActive ? 'page' : undefined}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -629,92 +569,59 @@ export default function MobileNavigationDrawer({
           ))}
         </div>
 
-        {/* Release Notes & Version Strip */}
-        <button
-          type="button"
-          onClick={() => {
-            onClose()
-            openWhatsNew()
-          }}
-          className="tactile-btn"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 14px',
-            margin: '0 14px 10px',
-            background: 'rgba(197, 160, 89, 0.08)',
-            border: '1px solid rgba(197, 160, 89, 0.3)',
-            borderRadius: 6,
-            color: 'var(--gold-lt)',
-            fontSize: 11,
-            fontFamily: 'Raleway, sans-serif',
-            fontWeight: 700,
-            cursor: 'pointer',
-            textAlign: 'left',
-          }}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span className="status-dot-pulse" />
-            <span>GAA v{APP_VERSION} Release Notes</span>
-          </span>
-          <span style={{ color: 'var(--gold)', fontWeight: 800 }}>What&apos;s New →</span>
-        </button>
-
-        {/* Drawer Footer Actions */}
+        {/* Help footer: app guide + release notes */}
         <div
           style={{
-            padding: '16px 18px',
+            padding: '12px 14px',
             borderTop: '1px solid rgba(255,255,255,0.08)',
             background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
+            display: 'grid',
+            gridTemplateColumns: onOpenTutorial ? '1fr 1fr' : '1fr',
+            gap: 8,
           }}
         >
-          <div style={{ flex: 1 }} />
-
           {onOpenTutorial && (
             <button
               type="button"
-              onClick={() => { onClose(); onOpenTutorial(); }}
-              className="tactile-btn"
-              style={{
-                padding: '6px 10px',
-                borderRadius: 4,
-                background: 'rgba(197, 160, 89, 0.15)',
-                border: '1px solid var(--gold)',
-                color: 'var(--gold-lt)',
-                fontSize: 11.5,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
+              onClick={() => { onClose(); onOpenTutorial() }}
+              className="tactile-btn mobile-drawer-footer-btn"
+              style={footerButtonStyle}
             >
-              <GaaIcon name="lightbulb" tone="gold" size={13} />
-              <span>Guide</span>
+              <GaaIcon name="lightbulb" tone="gold" size={14} />
+              <span>App Guide</span>
             </button>
           )}
-
           <button
             type="button"
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--gray)',
-              fontSize: 12,
-              cursor: 'pointer',
-              padding: '6px 10px',
-            }}
+            onClick={() => { onClose(); openWhatsNew() }}
+            className="tactile-btn mobile-drawer-footer-btn"
+            aria-label={`What's new in version ${APP_VERSION}`}
+            style={footerButtonStyle}
           >
-            Close
+            <span className="status-dot-pulse" />
+            <span>What&apos;s New</span>
+            <span style={{ color: 'var(--gray)', fontWeight: 600 }}>v{APP_VERSION}</span>
           </button>
         </div>
       </aside>
     </div>
   )
+}
+
+const footerButtonStyle: React.CSSProperties = {
+  minHeight: 44,
+  padding: '0 12px',
+  borderRadius: 8,
+  background: 'rgba(197, 160, 89, 0.1)',
+  border: '1px solid rgba(197, 160, 89, 0.35)',
+  color: 'var(--gold-lt)',
+  fontFamily: 'Raleway, sans-serif',
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 6,
+  whiteSpace: 'nowrap',
 }
