@@ -170,6 +170,8 @@ per-side/per-leg instructions; band selection is a collapsed optional control,
 and warm-up completion works from either the checkbox or Mark Done button.
 Exercises without media use the current Forge Athletic logo at the legacy
 fallback image URL, keeping previously saved program links valid.
+The program briefing memo starts collapsed and can be expanded or collapsed
+by touch or keyboard without hiding or truncating its full text.
 
 These checks use test harnesses, not real client accounts. The complete resistance
 flow uses mocked set-save responses and verifies all prescribed working sets are

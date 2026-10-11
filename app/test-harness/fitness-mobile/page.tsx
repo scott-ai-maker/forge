@@ -14,6 +14,7 @@ const MOCK_PLAN = {
   estimated_duration_mins: 55,
   created_at: new Date().toISOString(),
   plan_json: {
+    clinicalRationale: 'Follow the prescribed tempo and prioritize controlled movement throughout your training session.',
     workouts: [
       {
         day: 1,

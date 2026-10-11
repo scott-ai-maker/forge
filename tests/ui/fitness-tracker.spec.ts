@@ -1,6 +1,24 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Feature Suite', () => {
+  test('briefing memo starts collapsed and toggles with touch and keyboard', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 850 })
+    await page.goto('/test-harness/fitness-mobile')
+    const memo = page.getByRole('group', { name: 'Coach Gordon briefing memo', exact: true })
+    const summary = memo.locator('summary')
+    const text = memo.getByText('Follow the prescribed tempo and prioritize controlled movement throughout your training session.', { exact: true })
+    await expect(summary).toBeVisible()
+    await expect(text).not.toBeVisible()
+    expect((await summary.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    await summary.click()
+    await expect(text).toBeVisible()
+    await summary.focus()
+    await page.keyboard.press('Enter')
+    await expect(text).not.toBeVisible()
+    await page.keyboard.press('Space')
+    await expect(text).toBeVisible()
+  })
+
   test('failed saves retain a pending set and successful retry reconciles it', async ({ page }) => {
     let fail = true
     await page.route('**/api/workouts/log-set', async route => {

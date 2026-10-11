@@ -1918,18 +1918,19 @@ export default function FitnessTrackerClient({
       </div>
       {/* ── Coach Gordon Clinical Briefing Memo ── */}
       {plan?.plan_json?.clinicalRationale && (
-        <section
+        <details
+          className="fitness-card-disclosure"
           aria-label="Coach Gordon briefing memo"
           style={{
             border: '1px solid rgba(212,160,23,0.4)',
             background: 'linear-gradient(135deg, rgba(13,27,42,0.98) 0%, rgba(8,16,28,0.98) 100%)',
             borderRadius: 10,
-            padding: '16px 18px',
+            padding: '0 14px',
             marginBottom: 16,
             boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <summary style={{ gap: 8 }}>
             <span
               style={{
                 width: 24,
@@ -1949,10 +1950,10 @@ export default function FitnessTrackerClient({
             <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
               Master Coach Briefing Memo · From Coach Gordon
             </div>
-          </div>
+          </summary>
           <p
             style={{
-              margin: 0,
+              margin: '0 0 14px',
               fontSize: 13,
               color: '#E2E8F0',
               lineHeight: 1.6,
@@ -1961,7 +1962,7 @@ export default function FitnessTrackerClient({
           >
             {plan.plan_json.clinicalRationale}
           </p>
-        </section>
+        </details>
       )}
 
       {/* ── Precision Nutrition Hand-Portion Architecture ── */}
