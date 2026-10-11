@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, useRef } from 'react'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 
 export type WorkoutToolTab = 'form' | 'warmup' | 'intensity' | 'science' | 'telemetry'
@@ -72,6 +72,39 @@ export default function WorkoutToolBottomSheet({
   triggerHaptic,
   children,
 }: WorkoutToolBottomSheetProps) {
+  const surfaceRef = useRef<HTMLDivElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    closeButtonRef.current?.focus()
+
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return
+      const controls = Array.from(surfaceRef.current?.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]'
+      ) ?? []).filter(control => control.getClientRects().length > 0)
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (!first || !last) return
+      const active = document.activeElement
+      if (event.shiftKey && (active === first || !surfaceRef.current?.contains(active))) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && (active === last || !surfaceRef.current?.contains(active))) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    window.addEventListener('keydown', trapFocus)
+    return () => {
+      window.removeEventListener('keydown', trapFocus)
+      if (opener?.isConnected) opener.focus()
+    }
+  }, [isOpen])
+
   // Handle escape key to close
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -137,6 +170,7 @@ export default function WorkoutToolBottomSheet({
 
       {/* ── Native-Style Modal Bottom Sheet Surface ── */}
       <div
+        ref={surfaceRef}
         data-testid="bottom-sheet-surface"
         style={{
           position: 'relative',
@@ -241,6 +275,7 @@ export default function WorkoutToolBottomSheet({
 
           {/* Tactile Close Button */}
           <button
+            ref={closeButtonRef}
             type="button"
             data-testid="bottom-sheet-close-btn"
             onClick={() => {
@@ -250,8 +285,8 @@ export default function WorkoutToolBottomSheet({
             className="tactile-btn"
             aria-label="Close tools sheet"
             style={{
-              width: 32,
-              height: 32,
+              width: 44,
+              height: 44,
               borderRadius: 8,
               background: 'rgba(255, 255, 255, 0.07)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -289,6 +324,7 @@ export default function WorkoutToolBottomSheet({
               <button
                 key={toolKey}
                 type="button"
+                aria-pressed={isActive}
                 data-testid={`sheet-tab-${toolKey}`}
                 onClick={() => {
                   triggerHaptic?.('tap')
@@ -297,6 +333,7 @@ export default function WorkoutToolBottomSheet({
                 className="tactile-btn"
                 style={{
                   padding: '5px 10px',
+                  minHeight: 44,
                   borderRadius: 6,
                   border: isActive ? `1.5px solid ${meta.accentColor}` : '1px solid rgba(255, 255, 255, 0.1)',
                   background: isActive ? 'rgba(212, 160, 23, 0.18)' : 'rgba(255, 255, 255, 0.03)',

@@ -3,6 +3,23 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.2] - 2026-10-10
+
+### Fixed
+- Require all prescribed resistance working sets before offering cardio advancement.
+- Keep completed exercises collapsed after the final resistance exercise.
+
+### Enhanced
+- Condense client training navigation, stage views, coach notes, and exercise previews.
+- Keep reps and weight fields side-by-side on mobile with 44px touch controls.
+- Add keyboard focus trapping, Escape dismissal, and focus restoration to workout tools.
+
+### Validation
+- Passed 11 workout, cardio, and mobile browser acceptance checks and 47 targeted unit/API tests.
+- Passed TypeScript, targeted lint-error, and diff whitespace checks.
+- Browser checks use test harnesses and mocked set-save responses; live authenticated
+  persistence and native-device certification remain separate acceptance steps.
+
 ## [1.35.39] - 2026-09-22
 
 ### Added & Enhanced

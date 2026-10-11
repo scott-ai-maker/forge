@@ -783,7 +783,7 @@ export default function FitnessTrackerClient({
     description?: string | null
     primaryEquipment?: string[] | null
   } | null>(null)
-  const [activeStepFilter, setActiveStepFilter] = useState<'all' | 'warmup' | 'resistance' | 'cardio' | 'cooldown'>('all')
+  const [activeStepFilter, setActiveStepFilter] = useState<'all' | 'warmup' | 'resistance' | 'cardio' | 'cooldown'>('resistance')
   const [swapModalExercise, setSwapModalExercise] = useState<{
     workoutDay: number
     exercise: WorkoutExercise
@@ -1379,7 +1379,7 @@ export default function FitnessTrackerClient({
         setStatus(`✓ All ${targetSets} working sets completed for ${exercise.name}! Switched to ${nextExercise.name}. Rest timer running (${restSecsToSave}s)...`)
       } else {
         // Last exercise in workout completed
-        setExpandedExerciseKey(null)
+        setExpandedExerciseKey('none')
         setStatus(`All resistance exercises finished for Day ${workout.day}! Rest timer running (${restSecsToSave}s). Ready for Cool-Down or completion!`)
       }
     } else if (!draft.isWarmup) {
@@ -2147,6 +2147,8 @@ export default function FitnessTrackerClient({
       )}
       {/* ── 4 PRIMARY CLIENT HUBS NAVIGATION ── */}
       <section
+        className="fitness-hub-navigation"
+        aria-label="Training and progress sections"
         style={{
           border: '1px solid rgba(212,160,23,0.35)',
           background: 'linear-gradient(180deg, rgba(13,27,42,0.95) 0%, rgba(8,16,28,0.98) 100%)',
@@ -2198,6 +2200,7 @@ export default function FitnessTrackerClient({
               <button
                 key={tab.key}
                 type="button"
+                aria-pressed={active}
                 onClick={() => handleHubChange(tab.key)}
                 className="tactile-btn touch-target"
                 style={{
@@ -2237,6 +2240,7 @@ export default function FitnessTrackerClient({
                   {tab.label}
                 </div>
                 <div
+                  className="fitness-hub-subtitle"
                   style={{
                     color: active ? 'var(--gold-lt)' : 'var(--gray)',
                     fontSize: 9.5,
@@ -2694,7 +2698,11 @@ export default function FitnessTrackerClient({
                         {!isSessionActive ? (
                           <button
                             type="button"
-                            onClick={() => handleStartWorkoutSession(workout.day)}
+                            onClick={() => {
+                              handleStartWorkoutSession(workout.day)
+                              setActiveStepFilter('warmup')
+                              setCollapsedStages(prev => ({ ...prev, [`${workout.day}-warmup`]: false }))
+                            }}
                             className="tactile-btn"
                             style={{
                               background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
@@ -2707,6 +2715,7 @@ export default function FitnessTrackerClient({
                               fontWeight: 800,
                               textTransform: 'uppercase',
                               padding: '6px 14px',
+                              minHeight: 44,
                               borderRadius: 5,
                               cursor: 'pointer',
                               display: 'inline-flex',
@@ -2771,6 +2780,8 @@ export default function FitnessTrackerClient({
                   {/* ── Sticky Luxury Workout Stage Switcher Bar ── */}
                   <div
                     className="luxury-segmented-bar"
+                    aria-label="Workout stages"
+                    role="group"
                     style={{
                       position: 'sticky',
                       top: 0,
@@ -2783,8 +2794,8 @@ export default function FitnessTrackerClient({
                     }}
                   >
                     {[
-                      { id: 'resistance', label: `2. Lifts (${workout.exercises.length} ex)`, icon: 'dumbbell' as GaaIconName },
                       { id: 'warmup', label: '1. Warm-Up', icon: 'flame' as GaaIconName },
+                      { id: 'resistance', label: '2. Lifts', icon: 'dumbbell' as GaaIconName },
                       { id: 'cardio', label: '3. Cardio', icon: 'runner' as GaaIconName },
                       { id: 'cooldown', label: '4. Cool-Down', icon: 'snowflake' as GaaIconName },
                       { id: 'all', label: 'All Steps', icon: 'eye' as GaaIconName },
@@ -2794,6 +2805,8 @@ export default function FitnessTrackerClient({
                         <button
                           key={step.id}
                           type="button"
+                          aria-pressed={isSelected}
+                          style={{ minHeight: 44 }}
                           onClick={() => {
                             triggerHaptic('tap')
                             setActiveStepFilter(step.id as 'all' | 'warmup' | 'resistance' | 'cardio' | 'cooldown')
@@ -2818,9 +2831,7 @@ export default function FitnessTrackerClient({
                   <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8, maxWidth: '100%', minWidth: 0 }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       <span style={workoutStatBadgeStyle}>Sets: {workoutProgress.loggedSets}/{workoutProgress.targetSets || '-'}</span>
-                      <span style={workoutStatBadgeStyle}>Reps: {workoutProgress.totalReps}</span>
                       <span style={workoutStatBadgeStyle}>Volume: {formatWeight(workoutProgress.totalVolumeKg, units)}</span>
-                      <span style={workoutStatBadgeStyle}>Completion: {Math.round(completionRatio * 100)}%</span>
                     </div>
                     {workout.scheduledDate && (
                       <span style={{ color: 'var(--gold-lt)', fontSize: 11.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -2880,20 +2891,20 @@ export default function FitnessTrackerClient({
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexWrap: 'wrap' }}>
                             <GaaIcon name="crown" size={15} tone="gold" />
                             <span style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                              Coach Scott Gordon · Daily Briefing
+                              Coach notes
                             </span>
                             <span style={{ fontSize: 11, color: 'var(--gold-lt)', background: 'rgba(212,160,23,0.18)', border: '1px solid rgba(212,160,23,0.4)', borderRadius: 12, padding: '1px 8px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                               <GaaIcon name="timer" size={11} tone="gold" />
                               <span>~{durationBreakdown.summaryLabel}</span>
                             </span>
                             <span style={{ fontSize: 12, color: 'var(--white)', fontWeight: 600 }}>
-                              · {workout.focus || `Day ${workout.day} Focus`}
+                              {bullets.length} training tips
                             </span>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span style={{ fontSize: 11, color: 'var(--gold-lt)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '3px 8px', borderRadius: 4, fontWeight: 700 }}>
-                              Daily Gameplan ▾
+                              View ▾
                             </span>
                           </div>
                         </summary>
@@ -3117,6 +3128,7 @@ export default function FitnessTrackerClient({
                           onOpenExerciseModal={(exercise) => setActiveVideoExercise(exercise)}
                           onWarmupCompleted={(day) => {
                             setStatus(`✓ Day ${day} Pre-Lift Mobility Warmup Completed! Ready for resistance sets.`)
+                            setActiveStepFilter('resistance')
                             setCollapsedStages(prev => ({
                               ...prev,
                               [`${day}-warmup`]: true,
@@ -3557,19 +3569,21 @@ export default function FitnessTrackerClient({
                           {(isExpanded || activeRestTimerKey === exerciseKey) && (
                           <div style={{ padding: '6px 4px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                         <form onSubmit={event => handleInlineSetLog(event, workout, ex)} style={{ border: '1px solid rgba(255,255,255,0.08)', padding: '8px 8px', background: 'rgba(13,27,42,0.55)', borderRadius: 6, marginTop: 0 }}>
-                          {/* ── 16:9 Movement Demonstration Banner (Tap for 1:1 Video & NASM Form Guide) ── */}
+                          {/* Compact preview opens the full form demonstration on demand. */}
                           {(() => {
                             const gaaImage = resolveGaaExerciseImage(ex.name, false)
                             const heroImg = gaaImage || movementCard.imageUrl || movementCard.fallbackImageUrl || '/images/exercises/image-not-available.jpg'
                             const hasVideo = Boolean(movementCard.embedUrl || movementCard.videoUrl)
                             return (
-                              <div
+                              <button
+                                type="button"
+                                aria-label={`Watch form demonstration for ${ex.name}`}
                                 onClick={() => setActiveVideoExercise(ex)}
                                 style={{
                                   position: 'relative',
                                   width: '100%',
-                                  aspectRatio: '16 / 9',
-                                  maxHeight: 'clamp(160px, 28vh, 240px)',
+                                  height: 80,
+                                  padding: 0,
                                   borderRadius: 6,
                                   overflow: 'hidden',
                                   backgroundColor: '#070B14',
@@ -3620,7 +3634,7 @@ export default function FitnessTrackerClient({
                                     Tap to inspect ↗
                                   </span>
                                 </div>
-                              </div>
+                              </button>
                             )
                           })()}
 
@@ -3791,7 +3805,7 @@ export default function FitnessTrackerClient({
                             )}
 
                             {/* Primary Set Logging: Reps / Duration & Weight / Load */}
-                            <div className="fitness-set-input-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
+                            <div className="fitness-set-input-grid fitness-primary-set-inputs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
                               {/* Left Input: Duration (for Timed Stretch/Foam Roll) or Reps Completed */}
                               {isTimed ? (
                                 <div>
@@ -4185,6 +4199,7 @@ export default function FitnessTrackerClient({
                                   {/* Segmented 4-Tool Bar */}
                                   <div
                                     data-testid="unified-exercise-tool-strip"
+                                    className="fitness-exercise-tools"
                                     style={{
                                       display: 'grid',
                                       gridTemplateColumns: 'repeat(4, 1fr)',
@@ -4292,7 +4307,7 @@ export default function FitnessTrackerClient({
                                       }}
                                     >
                                       <GaaIcon name="settings" size={11} tone={activeTool === 'telemetry' ? 'gold' : 'slate'} />
-                                      <span>Telemetry</span>
+                                      <span>Set details</span>
                                     </button>
                                   </div>
 
@@ -5049,9 +5064,16 @@ export default function FitnessTrackerClient({
               {(() => {
                 const exercises = workout.exercises || []
                 const hasExercises = exercises.length > 0
-                const loggedCount = exercises.filter(ex =>
-                  activeSetLogs.some(set => extractWorkoutDayTag(set.notes) === workout.day && set.exercise_name?.toLowerCase() === ex.name?.toLowerCase())
-                ).length
+                const loggedCount = exercises.filter(ex => {
+                  const target = parseSetTarget(ex.sets)
+                  const workingSets = activeSetLogs.filter(set =>
+                    !set.is_warmup &&
+                    extractWorkoutDayTag(set.notes) === workout.day &&
+                    normalizeExerciseName(set.exercise_name) === normalizeExerciseName(ex.name) &&
+                    (!workout.scheduledDate || set.session_date === workout.scheduledDate)
+                  )
+                  return target > 0 && workingSets.length >= target
+                }).length
                 const allResistanceLogged = hasExercises && loggedCount === exercises.length
                 const cardio = resolveWorkoutCardioProtocol(workout, profile, plan)
                 const isCardioLogged = localCardioLogs.some(log => log.notes?.includes(`[Day ${workout.day}`) || (workout.scheduledDate && log.session_date === workout.scheduledDate))
@@ -6184,10 +6206,10 @@ const stepperButtonStyle: React.CSSProperties = {
   color: 'var(--white)',
   fontSize: 15,
   fontWeight: 700,
-  width: 36,
-  minWidth: 36,
-  height: 38,
-  minHeight: 38,
+  width: 44,
+  minWidth: 44,
+  height: 44,
+  minHeight: 44,
   borderRadius: 4,
   display: 'flex',
   alignItems: 'center',
@@ -6794,4 +6816,3 @@ function PostWorkoutFinishModal({
       </div>
     )
   }
-

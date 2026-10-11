@@ -133,9 +133,9 @@ test.describe("AI Voice Cardio Studio & In-Ear Biomechanical Coaching Suite", ()
 
     // Verify Executive Debrief metrics
     await expect(page.getByText(/SESSION ACCOMPLISHED/i)).toBeVisible()
-    await expect(page.getByText(/Active Duration/i)).toBeVisible()
-    await expect(page.getByText(/Total Metabolic Burn/i)).toBeVisible()
-    await expect(page.getByText(/Respiratory Compliance/i)).toBeVisible()
+    await expect(page.getByText('Workout time', { exact: true })).toBeVisible()
+    await expect(page.getByText('Calories burned', { exact: true })).toBeVisible()
+    await expect(page.getByText(/Breathing consistency: \d+%/i)).toBeVisible()
 
     // Click Flow to Cool-Down
     const coolDownBtn = page.getByRole("button", { name: /Flow to Cool-Down/i })

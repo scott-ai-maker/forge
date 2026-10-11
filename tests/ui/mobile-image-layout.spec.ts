@@ -10,7 +10,7 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     })
 
-    test("renders exercise thumbnails in collapsed summary rows and 16:9 banner when expanded", async ({ page }) => {
+    test("renders compact accessible form previews and opens the full demonstration on demand", async ({ page }) => {
       await page.goto("/test-harness/fitness-mobile")
 
       // 1. Verify collapsed summary row displays thumbnail image on mobile
@@ -31,7 +31,7 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
       expect(imgBox!.height).toBeGreaterThanOrEqual(40)
 
       // 2. The first active exercise is expanded by default — verify 16:9 HD Movement Banner is rendered
-      const banner = benchItem.locator("div[title*='NASM Clinical Form & Demonstration']")
+      const banner = benchItem.getByRole("button", { name: "Watch form demonstration for Barbell Flat Bench Press" })
       await expect(banner).toBeVisible()
 
       const bannerImg = banner.locator("img")
@@ -42,6 +42,7 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
       expect(bannerBox).not.toBeNull()
       // Full width banner on mobile screen (> 300px)
       expect(bannerBox!.width).toBeGreaterThan(300)
+      expect(bannerBox!.height).toBeLessThanOrEqual(80)
 
       // 3. Open NASM Video & Form Modal by tapping the demonstration banner
       await banner.click()
@@ -81,7 +82,7 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
       await inclineSummary.click()
       await page.waitForTimeout(300)
 
-      const inclineBanner = inclineItem.locator("div[title*='NASM Clinical Form & Demonstration']")
+      const inclineBanner = inclineItem.getByRole("button", { name: "Watch form demonstration for Incline Dumbbell Bench Press" })
       await expect(inclineBanner).toBeVisible()
       const inclineBannerImg = inclineBanner.locator("img")
       await expect(inclineBannerImg).toBeVisible()
@@ -112,6 +113,20 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
       const benchBox = await benchItem.boundingBox()
       expect(benchBox).not.toBeNull()
       expect(benchBox!.width).toBeLessThanOrEqual(375)
+
+      const reps = benchItem.getByRole("textbox", { name: "Number of reps" })
+      const weight = benchItem.getByRole("textbox", { name: "Weight in pounds" })
+      const repsBox = await reps.boundingBox()
+      const weightBox = await weight.boundingBox()
+      expect(repsBox).not.toBeNull()
+      expect(weightBox).not.toBeNull()
+      expect(Math.abs(repsBox!.y - weightBox!.y)).toBeLessThan(2)
+      const increment = await benchItem.getByRole("button", { name: "Increase weight" }).boundingBox()
+      expect(increment?.width).toBeGreaterThanOrEqual(44)
+      expect(increment?.height).toBeGreaterThanOrEqual(44)
+      await weight.fill("95")
+      await reps.fill("8")
+      await expect(benchItem.getByRole("button", { name: /Log Set 1/i })).toContainText("95 lb × 8 reps")
     })
   })
 })

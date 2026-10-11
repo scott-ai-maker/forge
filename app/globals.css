@@ -2063,6 +2063,32 @@ a:focus-visible {
   .fitness-set-input-grid {
     grid-template-columns: 1fr !important;
   }
+
+  .fitness-primary-set-inputs {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+
+  .fitness-primary-set-inputs input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+.fitness-exercise-tools button {
+  min-height: 44px;
+}
+
+.fitness-hub-navigation button {
+  min-height: 48px;
+  flex-direction: row !important;
+}
+
+.fitness-hub-navigation .fitness-hub-subtitle {
+  display: none;
+}
+
+.fitness-primary-set-inputs input {
+  min-height: 44px;
 }
 
 @media (max-width: 420px) {

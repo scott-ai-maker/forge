@@ -120,6 +120,24 @@ Notes:
 - Override the target URL with `PLAYWRIGHT_BASE_URL`.
 - The config reuses an existing local dev server when available.
 
+### Client workout acceptance checks
+
+Run the focused workout, mobile layout, and cardio checks against the Forge development server:
+
+```bash
+PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test tests/ui/fitness-tracker.spec.ts tests/ui/mobile-image-layout.spec.ts tests/ui/cardio-studio.spec.ts --workers=1
+```
+
+The training screen shows lifts by default. Starting a session opens warm-up; completing
+warm-up returns to lifts. Stage controls keep cardio and cool-down available without
+rendering every stage at once. Form previews open full demonstrations on demand, and
+advanced tools remain in a keyboard-accessible sheet.
+
+These checks use test harnesses, not real client accounts. The complete resistance
+flow uses mocked set-save responses and verifies all prescribed working sets are
+complete before offering cardio. Live authenticated persistence and native device
+features still require testing with a dedicated test client.
+
 ## Homepage Launch Mode
 
 The homepage supports a launch switch controlled by one environment variable:
