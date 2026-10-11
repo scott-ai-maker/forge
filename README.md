@@ -159,6 +159,17 @@ when the current weight or reps differ from the previous set.
 Coach notes appear in a compact collapsed row immediately below the workout title,
 before stage navigation. Duration and tip-count badges are removed from the row;
 the full briefing remains available on expansion.
+Superset cards stack their exercise selectors on narrow mobile screens and constrain
+reps/weight controls to their columns. Rep-range defaults use the lower bound
+(8-10 starts at 8), not concatenated digits. Superset acceptance checks cover
+320px, 375px, and tablet widths plus alternating round logging.
+Workout-variety acceptance checks also cover timed holds/SMR, resistance bands,
+circuit-labelled exercises, unilateral rep prescriptions, Phases 3–5, and
+warm-up/cool-down/cardio controls at 320px and 393px. Timed summaries retain
+per-side/per-leg instructions; band selection is a collapsed optional control,
+and warm-up completion works from either the checkbox or Mark Done button.
+Exercises without media use the current Forge Athletic logo at the legacy
+fallback image URL, keeping previously saved program links valid.
 
 These checks use test harnesses, not real client accounts. The complete resistance
 flow uses mocked set-save responses and verifies all prescribed working sets are

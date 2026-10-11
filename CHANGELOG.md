@@ -3,6 +3,28 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.5] - 2026-10-11
+
+### Fixed
+- Constrain superset cards and inputs on mobile; keep both exercise names visible.
+- Parse rep-range defaults correctly instead of concatenating digits.
+- Restore the warm-up Mark Done button and retain per-side/per-leg timed instructions.
+- Replace the old missing-exercise image with the current Forge Athletic logo,
+  preserving existing saved URLs and refreshing the offline cache.
+
+### Enhanced
+- Collapse optional band selection and expose accessible selected states.
+- Enlarge timed, band, warm-up, cool-down, and cardio touch controls.
+- Add narrow-screen coverage for circuit-labelled, unilateral, timed, band,
+  hypertrophy, maximal-strength, and power exercise variants.
+
+### Validation
+- Inventory all five saved client programs and five phase templates read-only.
+- Passed 34 browser acceptance checks and 46 focused unit tests, plus TypeScript
+  and scoped lint checks.
+- Browser persistence uses mocks; authenticated and native-device acceptance
+  remain separate checks.
+
 ## [1.36.4] - 2026-10-10
 
 ### Enhanced

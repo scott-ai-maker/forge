@@ -225,15 +225,17 @@ export function formatExerciseTargetDisplay(exercise: {
   const isFoam = isFoamRollerExercise(exercise.name)
 
   const restText = exercise.rest ? ` · Rest ${exercise.rest}` : ''
+  const sideMatch = String(exercise.reps).match(/(?:per\s+|\/\s*)(side|leg|arm)\b/i)
+  const sideText = sideMatch ? ` per ${sideMatch[1].toLowerCase()}` : ''
 
   if (isStretch) {
     const holdSec = parseHoldDurationSeconds(exercise.reps, 30)
-    return `${exercise.sets} sets × ${holdSec}s hold${restText}`
+    return `${exercise.sets} sets × ${holdSec}s hold${sideText}${restText}`
   }
 
   if (isFoam) {
     const holdSec = parseHoldDurationSeconds(exercise.reps, 30)
-    return `${exercise.sets} sets × ${holdSec}s SMR roll${restText}`
+    return `${exercise.sets} sets × ${holdSec}s SMR roll${sideText}${restText}`
   }
 
   return `${exercise.sets} sets × ${exercise.reps}${restText}`
@@ -313,4 +315,3 @@ export function findBandByWeight(weight: number, units: 'imperial' | 'metric' = 
   if (weightLbs <= 85) return BAND_COLOR_SPECTRUM[4] // Black
   return BAND_COLOR_SPECTRUM[5] // Purple
 }
-

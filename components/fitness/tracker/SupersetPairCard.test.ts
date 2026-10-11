@@ -7,7 +7,7 @@ import { detectAndGroupSupersets, isAntagonistPair } from '@/lib/superset-pairin
 describe('SupersetPairCard Logic Integration', () => {
   it('renders exertion inline without metronome, drawer, or velocity tools', () => {
     const groups = detectAndGroupSupersets([
-      { name: 'Barbell Bench Press', sets: '3', reps: '10' },
+      { name: 'Barbell Bench Press', sets: '3', reps: '8-10' },
       { name: 'Bent-Over Barbell Row', sets: '3', reps: '10' },
     ], 2)
     const group = groups[0]
@@ -29,6 +29,8 @@ describe('SupersetPairCard Logic Integration', () => {
     expect(markup).toContain('placeholder="—"')
     expect(markup).not.toContain('value="135"')
     expect(markup).toContain('0 = no added load')
+    expect(markup).toContain('value="8"')
+    expect(markup).not.toContain('value="810"')
     expect(markup.lastIndexOf('Log set &amp; start rest')).toBeGreaterThan(markup.lastIndexOf('Reps in reserve (0-6)'))
   })
   it('correctly detects paired exercises and builds valid SupersetPair structure', () => {

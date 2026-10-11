@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.35.39'
-export const APP_RELEASE_DATE = '2026-09-22'
-export const APP_RELEASE_CODENAME = 'In-Gym Helper App Decoupling & Unified Companion Architecture'
+export const APP_VERSION = '1.36.5'
+export const APP_RELEASE_DATE = '2026-10-11'
+export const APP_RELEASE_CODENAME = 'Mobile Workout Varieties & Forge Media Fallback'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.36.5',
+    date: '2026-10-11',
+    codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'Mobile Supersets · Workout Varieties · Forge Branding',
+    title: 'Mobile Workout Varieties & Forge Media Fallback',
+    summary: 'Repair mobile superset sizing and rep-range defaults, improve timed and band exercise controls, restore warm-up completion, and update missing exercise media to the current Forge Athletic logo.',
+    highlights: [
+      'Superset exercise selectors and load controls fit narrow mobile screens while preserving independent A/B loads and alternating rounds.',
+      'Timed prescriptions retain per-side and per-leg instructions; optional band controls stay collapsed with accessible selection.',
+      'Warm-up Mark Done works, and warm-up, cool-down, timer, and cardio actions have larger touch targets.',
+      'Existing missing-media links now display the current Forge Athletic logo, with refreshed offline caches.',
+    ],
+  },
   {
     version: '1.35.39',
     date: '2026-09-22',

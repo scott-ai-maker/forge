@@ -301,7 +301,7 @@ export const VERIFIED_GAA_EXERCISE_IMAGES: Record<string, string> = {
 }
 
 /**
- * Official luxury GAA brand fallback image when no exercise photo is available.
+ * Current Forge Athletic logo when no exercise photo is available.
  */
 export const BRAND_LOGO_FALLBACK_IMAGE = '/images/exercises/image-not-available.jpg'
 

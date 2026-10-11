@@ -77,6 +77,14 @@ describe('exercise-logging-helpers', () => {
   })
 
   describe('parseHoldDurationSeconds & formatExerciseTargetDisplay', () => {
+    it('preserves unilateral instructions on timed holds and foam rolling', () => {
+      expect(formatExerciseTargetDisplay({
+        name: 'Standing Hip Flexor Static Stretch', sets: 1, reps: '30s hold per leg',
+      })).toBe('1 sets × 30s hold per leg')
+      expect(formatExerciseTargetDisplay({
+        name: 'Foam Roll Calves', sets: 1, reps: '45s / side',
+      })).toBe('1 sets × 45s SMR roll per side')
+    })
     it('parses duration strings into seconds', () => {
       expect(parseHoldDurationSeconds('30s', 30)).toBe(30)
       expect(parseHoldDurationSeconds('30-60s', 30)).toBe(30)
@@ -156,4 +164,3 @@ describe('exercise-logging-helpers', () => {
     })
   })
 })
-

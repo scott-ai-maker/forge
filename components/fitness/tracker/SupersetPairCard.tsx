@@ -8,6 +8,7 @@ import { resolveGaaExerciseImage } from '@/lib/nasm-generated-images'
 import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import { calculateBioAdaptiveRestInterval } from '@/lib/bio-adaptive-rest-pacer'
+import { parsePrescribedWorkingReps } from '@/lib/warmup-auto-populator'
 
 export interface SupersetDraftState {
   weight: string
@@ -45,8 +46,8 @@ export default function SupersetPairCard({
   const [activeSub, setActiveSub] = useState<'A' | 'B'>('A')
   const [weightError, setWeightError] = useState('')
 
-  const defaultRepsA = parseInt(String(pair.exerciseA.reps || '10').replace(/[^0-9]/g, ''), 10) || 10
-  const defaultRepsB = parseInt(String(pair.exerciseB.reps || '10').replace(/[^0-9]/g, ''), 10) || 10
+  const defaultRepsA = parsePrescribedWorkingReps(pair.exerciseA.reps || '10')
+  const defaultRepsB = parsePrescribedWorkingReps(pair.exerciseB.reps || '10')
 
   const [drafts, setDrafts] = useState<Record<'A' | 'B', SupersetDraftState>>({
     A: {
@@ -129,12 +130,17 @@ export default function SupersetPairCard({
 
   return (
     <div
+      className="fitness-superset-card"
+      data-testid="superset-pair-card"
       style={{
         marginBottom: 16,
         background: 'linear-gradient(135deg, rgba(20, 26, 42, 0.95) 0%, rgba(10, 15, 26, 0.98) 100%)',
         border: '1.5px solid rgba(56, 189, 248, 0.4)',
         borderRadius: 10,
         padding: '14px 16px',
+        minWidth: 0,
+        maxWidth: '100%',
+        boxSizing: 'border-box',
         boxShadow: '0 8px 24px rgba(0,0,0,0.6), 0 0 16px rgba(56, 189, 248, 0.12)',
       }}
       aria-label={`Superset Pair: ${pair.pairLabel}`}
@@ -151,7 +157,7 @@ export default function SupersetPairCard({
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span
               style={{
                 fontSize: 10,
@@ -175,13 +181,14 @@ export default function SupersetPairCard({
               {pair.categoryTitle}
             </span>
           </div>
-          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3 }}>
-            {pair.rationale}
-          </div>
+          <details className="fitness-card-disclosure">
+            <summary>Why this pairing</summary>
+            <p style={{ fontSize: 12, color: '#94A3B8', margin: '0 0 6px' }}>{pair.rationale}</p>
+          </details>
         </div>
 
         {/* Transition Rest vs Compound Rest Badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span
             className="font-telemetry"
             style={{
@@ -220,7 +227,7 @@ export default function SupersetPairCard({
       </div>
 
       {/* ── Sub-Exercise Switcher Tabs (1A vs 1B) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+      <div className="fitness-superset-switcher" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginBottom: 12 }}>
         {/* Tab 1A */}
         <button
           type="button"
@@ -229,6 +236,7 @@ export default function SupersetPairCard({
             setActiveSub('A')
           }}
           className="tactile-btn"
+          aria-pressed={activeSub === 'A'}
           style={{
             padding: '8px 10px',
             borderRadius: 6,
@@ -240,6 +248,8 @@ export default function SupersetPairCard({
             display: 'flex',
             alignItems: 'center',
             gap: 8,
+            minWidth: 0,
+            minHeight: 44,
           }}
         >
           <img
@@ -256,13 +266,13 @@ export default function SupersetPairCard({
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 9.5, fontWeight: 900, color: activeSub === 'A' ? '#38BDF8' : '#64748B', textTransform: 'uppercase' }}>
-                Exercise 1A
+                Exercise A
               </span>
               {activeSub !== 'A' && <span style={{ fontSize: 9.5, color: completedSetsA >= targetSetsA ? '#34D399' : 'var(--gray)', fontWeight: 700 }}>
                 {completedSetsA}/{targetSetsA}
               </span>}
             </div>
-            <div style={{ fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 12, fontWeight: 800, overflowWrap: 'anywhere' }}>
               {pair.exerciseA.name}
             </div>
           </div>
@@ -276,6 +286,7 @@ export default function SupersetPairCard({
             setActiveSub('B')
           }}
           className="tactile-btn"
+          aria-pressed={activeSub === 'B'}
           style={{
             padding: '8px 10px',
             borderRadius: 6,
@@ -287,6 +298,8 @@ export default function SupersetPairCard({
             display: 'flex',
             alignItems: 'center',
             gap: 8,
+            minWidth: 0,
+            minHeight: 44,
           }}
         >
           <img
@@ -303,19 +316,22 @@ export default function SupersetPairCard({
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 9.5, fontWeight: 900, color: activeSub === 'B' ? '#38BDF8' : '#64748B', textTransform: 'uppercase' }}>
-                Exercise 1B
+                Exercise B
               </span>
               {activeSub !== 'B' && <span style={{ fontSize: 9.5, color: completedSetsB >= targetSetsB ? '#34D399' : 'var(--gray)', fontWeight: 700 }}>
                 {completedSetsB}/{targetSetsB}
               </span>}
             </div>
-            <div style={{ fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 12, fontWeight: 800, overflowWrap: 'anywhere' }}>
               {pair.exerciseB.name}
             </div>
           </div>
         </button>
       </div>
 
+      <div style={{ fontSize: 12, color: 'var(--gray)', marginBottom: 6 }}>
+        {currentEx.sets} sets × {currentEx.reps} · Tempo {currentDraft.tempo}
+      </div>
       {/* ── Active Sub-Exercise Set Progression Matrix ── */}
       <SetProgressionMatrix
         targetSets={currentEx.sets || 3}
@@ -347,11 +363,11 @@ export default function SupersetPairCard({
       />
 
       {/* ── Inline Set Inputs: Reps, Weight & Steppers ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+      <div className="fitness-superset-load-inputs fitness-primary-set-inputs" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginTop: 8 }}>
         {/* Reps */}
         <div>
           <label style={{ fontSize: 10.5, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 4, display: 'block' }}>
-            Reps ({activeSub === 'A' ? '1A' : '1B'})
+            Reps ({activeSub})
           </label>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <button
@@ -368,6 +384,7 @@ export default function SupersetPairCard({
             </button>
             <input
               type="text"
+              aria-label="Number of reps"
               inputMode="numeric"
               onFocus={selectOnFocus}
               value={currentDraft.reps}
@@ -451,6 +468,7 @@ export default function SupersetPairCard({
           <button
             type="button"
             onClick={() => onOpenVideoModal(currentEx.name)}
+            aria-label={`Watch demonstration for ${currentEx.name}`}
             style={{
               background: 'none',
               border: 'none',
@@ -461,10 +479,11 @@ export default function SupersetPairCard({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
+              minHeight: 44,
             }}
           >
             <GaaIcon name="play" size={11} tone="gold" />
-            <span>Watch NASM Demonstration for {currentEx.name}</span>
+            <span>Watch demonstration</span>
           </button>
         </div>
       )}
@@ -502,6 +521,7 @@ export default function SupersetPairCard({
           className="tactile-btn"
           style={{
             width: '100%',
+            minHeight: 44,
             background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
             border: '1px solid #38BDF8',
             color: '#FFFFFF',

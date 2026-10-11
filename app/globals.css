@@ -2068,6 +2068,49 @@ a:focus-visible {
   min-height: 44px;
 }
 
+.fitness-superset-card input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 16px !important;
+}
+
+.fitness-superset-load-inputs > div > div:first-of-type {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fitness-superset-load-inputs input {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.fitness-superset-load-inputs button {
+  width: 100% !important;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+[aria-label="Pre-Lift Kinetic Warmup"] button,
+[aria-label="Post-Workout Clinical Cool-Down"] button,
+.fitness-cardio-log-form button {
+  min-height: 44px;
+}
+
+@media (max-width: 480px) {
+  .fitness-timed-set-inputs {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .fitness-superset-switcher {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .fitness-superset-card {
+    padding: 10px !important;
+  }
+}
+
 @media (max-width: 420px) {
   .coach-client-content,
   .dashboard-fitness-content {

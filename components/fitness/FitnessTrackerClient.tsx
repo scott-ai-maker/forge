@@ -3506,14 +3506,9 @@ export default function FitnessTrackerClient({
 
                             {/* Resistance Band Spectrum & Weight Representation Selector */}
                             {isBand && (
-                              <div style={{ marginBottom: 10, background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.3)', borderRadius: 6, padding: '10px 12px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
-                                  <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gold)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}>
-                                    <GaaIcon name="sparkles" size={12} tone="gold" />
-                                    <span>Band Color & Resistance Rating:</span>
-                                  </span>
-                                </div>
-                                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              <details className="fitness-card-disclosure fitness-band-options" style={{ marginBottom: 10, background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.3)', borderRadius: 6, padding: '0 10px' }}>
+                                <summary>Band color &amp; resistance</summary>
+                                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingBottom: 8 }}>
                                   {BAND_COLOR_SPECTRUM.map(band => {
                                     const bandTargetWeight = units === 'imperial' ? band.weightLbsAvg : band.weightKgAvg
                                     const isSelected = Number(draft.weight) === bandTargetWeight || (draft.notes && draft.notes.includes(band.colorName))
@@ -3535,6 +3530,7 @@ export default function FitnessTrackerClient({
                                           }))
                                         }}
                                         className="tactile-btn"
+                                        aria-pressed={Boolean(isSelected)}
                                         style={{
                                           background: isSelected ? 'rgba(212,160,23,0.3)' : 'rgba(255,255,255,0.06)',
                                           border: isSelected ? '1.5px solid var(--gold)' : '1px solid rgba(255,255,255,0.15)',
@@ -3542,6 +3538,7 @@ export default function FitnessTrackerClient({
                                           fontSize: 11,
                                           fontWeight: 700,
                                           padding: '5px 10px',
+                                          minHeight: 44,
                                           borderRadius: 4,
                                           cursor: 'pointer',
                                           display: 'inline-flex',
@@ -3556,11 +3553,11 @@ export default function FitnessTrackerClient({
                                     )
                                   })}
                                 </div>
-                              </div>
+                              </details>
                             )}
 
                             {/* Primary Set Logging: Reps / Duration & Weight / Load */}
-                            <div className="fitness-set-input-grid fitness-primary-set-inputs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
+                            <div className={`fitness-set-input-grid fitness-primary-set-inputs${isTimed ? ' fitness-timed-set-inputs' : ''}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
                               {/* Left Input: Duration (for Timed Stretch/Foam Roll) or Reps Completed */}
                               {isTimed ? (
                                 <div>
@@ -3629,6 +3626,8 @@ export default function FitnessTrackerClient({
                                           fontSize: 10,
                                           fontWeight: 700,
                                           padding: '2px 7px',
+                                          minHeight: 44,
+                                          minWidth: 44,
                                           borderRadius: 3,
                                           cursor: 'pointer',
                                         }}
@@ -3662,6 +3661,7 @@ export default function FitnessTrackerClient({
                                     className="tactile-btn"
                                     style={{
                                       marginTop: 6,
+                                      minHeight: 44,
                                       background: activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning
                                         ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
                                         : 'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(5,150,105,0.3) 100%)',
@@ -4365,6 +4365,7 @@ export default function FitnessTrackerClient({
 
                                 {/* In-Workout Cardio Logging Form */}
                                 <form
+                                  className="fitness-cardio-log-form"
                                   onSubmit={e => {
                                     e.preventDefault()
                                     handleSaveWorkoutCardio(workout, cardio, draft)

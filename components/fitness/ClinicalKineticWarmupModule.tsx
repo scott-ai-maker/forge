@@ -984,6 +984,7 @@ export default function ClinicalKineticWarmupModule({
                       
                       <button
                         type="button"
+                        onClick={() => toggleItem(item.id)}
                         className="tactile-btn"
                         style={{
                           background: isDone ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.04)',
