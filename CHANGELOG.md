@@ -3,6 +3,18 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.7] - 2026-10-11
+
+### Fixed
+- Wrap Settings tabs from 600px up so no tab is hidden off screen.
+- Give touch tablets 44px tap targets by sizing for `(pointer: coarse)`.
+- Enlarge video controls, Fitness Lab time-lapse buttons, header, footer, auth,
+  and apply quiz links on tablet and desktop.
+- Cap long lines on What's New, the footer notice, and Credentials.
+
+### Added
+- `tests/ui/desktop-tablet-eval.spec.ts` checks 768px, 1024px, and 1440px layouts.
+
 ## [1.36.6] - 2026-10-11
 
 ### Fixed

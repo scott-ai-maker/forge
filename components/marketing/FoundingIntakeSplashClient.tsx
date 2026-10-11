@@ -281,6 +281,9 @@ export default function FoundingIntakeSplashClient() {
                 <a
                   href="#accreditation-portfolio"
                   style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    minHeight: 44,
                     fontSize: 12,
                     color: 'var(--gold-lt)',
                     textDecoration: 'underline',

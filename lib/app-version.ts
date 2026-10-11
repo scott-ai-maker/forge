@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.36.6'
+export const APP_VERSION = '1.36.7'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Full Mobile UI Repair'
+export const APP_RELEASE_CODENAME = 'Tablet & Desktop UI Repair'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,25 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.36.6',
+    version: '1.36.7',
     date: '2026-10-11',
     codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'Tablet · Desktop · Touch Targets',
+    title: 'Tablet and desktop layouts are easier to use',
+    summary:
+      'Settings tabs wrap instead of hiding, touch tablets get full-size tap targets, and long text stays readable on wide screens.',
+    highlights: [
+      'Every Settings tab stays visible on tablet and desktop.',
+      'Touch tablets get 44px tap targets; mouse users get at least 24px.',
+      'Video, Fitness Lab, navigation, and footer controls are easier to hit.',
+      'Long paragraphs keep a readable line length on wide screens.',
+    ],
+  },
+  {
+    version: '1.36.6',
+    date: '2026-10-11',
+    codename: 'Full Mobile UI Repair',
     category: 'fix',
     badge: 'Mobile Touch Targets · Settings · Sign-In',
     title: 'Full Mobile UI Repair',

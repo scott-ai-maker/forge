@@ -1531,6 +1531,7 @@ export default function MuscleRecoveryHeatmap3D({
                     onClick={() => setTimeLapseHoursOffset(offset)}
                     style={{
                       padding: '3px 8px',
+                      minWidth: 44,
                       fontSize: 10.5,
                       fontWeight: 700,
                       borderRadius: 4,

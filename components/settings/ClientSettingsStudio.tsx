@@ -132,6 +132,9 @@ export default function ClientSettingsStudio({
 
       {/* ── Best-Practice Tabbed Workspace Navigation ── */}
       <div
+        className="settings-tab-strip"
+        role="group"
+        aria-label="Settings sections"
         style={{
           display: 'flex',
           gap: 8,

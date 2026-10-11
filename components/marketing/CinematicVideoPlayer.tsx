@@ -423,6 +423,7 @@ export default function CinematicVideoPlayer({
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               type="button"
+              className="video-ctrl-btn"
               onClick={togglePlay}
               aria-label={isPlaying ? 'Pause' : 'Play'}
               style={{
@@ -449,6 +450,7 @@ export default function CinematicVideoPlayer({
 
             <button
               type="button"
+              className="video-ctrl-btn"
               onClick={toggleMute}
               aria-label={isMuted ? 'Unmute' : 'Mute'}
               style={{
@@ -490,6 +492,7 @@ export default function CinematicVideoPlayer({
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               type="button"
+              className="video-ctrl-btn"
               onClick={toggleLoop}
               style={{
                 background: 'transparent',
@@ -512,6 +515,7 @@ export default function CinematicVideoPlayer({
 
             <button
               type="button"
+              className="video-ctrl-btn"
               onClick={toggleFullscreen}
               aria-label="Toggle Fullscreen"
               style={{

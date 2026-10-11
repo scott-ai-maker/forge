@@ -3735,8 +3735,8 @@ aside.first-visit-dock,
   }
 }
 
-/* Mobile touch targets for the client training workspace (WCAG 2.5.5 / Apple HIG 44pt). */
-@media (max-width: 768px) {
+/* Touch targets for the client training workspace (WCAG 2.5.5 / Apple HIG 44pt) on phones and touch tablets. */
+@media (max-width: 768px), (pointer: coarse) {
   .dashboard-fitness-content button,
   .dashboard-fitness-content summary,
   .dashboard-fitness-content select,
@@ -3745,8 +3745,27 @@ aside.first-visit-dock,
   }
 }
 
-/* Mobile touch targets (WCAG 2.5.5 / Apple HIG 44pt) for public chrome and scoped components */
-@media (max-width: 768px) {
+/* Touch targets (WCAG 2.5.5 / Apple HIG 44pt) for public chrome and scoped components on phones and touch tablets */
+@media (max-width: 768px), (pointer: coarse) {
+  .site-header-links a,
+  .site-header-auth-link,
+  .apply-quiz-nav button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .video-ctrl-btn {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .settings-tab-strip button {
+    min-height: 44px;
+  }
+
   .mobile-touch-scope button,
   .mobile-touch-scope summary,
   .mobile-touch-scope select,
@@ -3775,10 +3794,54 @@ aside.first-visit-dock,
   .forge-secondary-link {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-width: 44px;
     min-height: 44px;
   }
 
   .site-footer-nav {
     gap: 0 !important;
+  }
+}
+
+/* Pointer (mouse/trackpad) minimum target size — WCAG 2.5.8 (24×24 CSS px). */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .forge-home-header nav a,
+  .forge-home-footer nav a,
+  .forge-home-footer > a,
+  .forge-secondary-link,
+  .site-footer-nav a,
+  .site-footer-brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+  }
+
+  .mobile-touch-scope button,
+  .mobile-touch-scope [role='button'],
+  .mobile-touch-scope a[target='_blank'] {
+    min-height: 24px;
+  }
+
+  .video-ctrl-btn {
+    min-width: 32px;
+    min-height: 32px;
+    justify-content: center;
+  }
+}
+
+/* Tablet & desktop: keep every Settings section visible instead of hiding tabs off-screen. */
+@media (min-width: 600px) {
+  .settings-tab-strip {
+    flex-wrap: wrap;
+    overflow-x: visible !important;
+  }
+}
+
+/* Comfortable reading measure on wide screens. */
+@media (min-width: 769px) {
+  .readable-measure p,
+  p.readable-measure {
+    max-width: 72ch;
   }
 }

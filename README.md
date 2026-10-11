@@ -56,6 +56,10 @@ Settings and progress panels show sign-in guidance instead of crashing when a re
 Run `tests/ui/mobile-full-eval.spec.ts` for the cross-app mobile checks on training, settings,
 and public pages.
 
+Touch tablets get the same 44px targets, because they use `(pointer: coarse)`. Mouse users on
+desktop get at least 24px. From 600px up, the Settings tabs wrap so every tab stays visible.
+Run `tests/ui/desktop-tablet-eval.spec.ts` for the checks at 768px, 1024px and 1440px.
+
 Run the whitebox test suite with:
 
 ```bash

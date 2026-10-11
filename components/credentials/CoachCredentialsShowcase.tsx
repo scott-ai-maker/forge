@@ -783,7 +783,7 @@ export default function CoachCredentialsShowcase() {
               Verified Engineering Portfolio: Cloud, AI &amp; DevOps
             </h3>
 
-            <p style={{ color: '#94A3B8', fontSize: 13, lineHeight: 1.6, margin: 0, maxWidth: 760 }}>
+            <p style={{ color: '#94A3B8', fontSize: 13, lineHeight: 1.6, margin: 0, maxWidth: '72ch' }}>
               Official industry-standard accreditations conferred by <strong>Amazon Web Services</strong>, <strong>IBM</strong>, <strong>The Linux Foundation</strong>, <strong>Microsoft</strong>, and <strong>O&apos;Reilly Media</strong>. Every badge is cryptographically signed, issued with verifiable metadata, and publicly auditable.
             </p>
           </div>
