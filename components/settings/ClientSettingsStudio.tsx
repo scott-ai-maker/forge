@@ -13,8 +13,9 @@ import BaselineFitnessSettingsStudio, { BaselineFitnessProfileData } from '@/com
 import { isNativeAndroid } from '@/lib/native-healthkit-bridge'
 import { isCompanionApp } from '@/lib/native-companion'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
+import WorkoutCalendarView, { WorkoutCalendarEntry } from '@/components/fitness/WorkoutCalendarView'
 
-export type SettingsTab = 'wearables' | 'spotify' | 'billing' | 'fitness' | 'medical' | 'profile' | 'security' | 'notifications'
+export type SettingsTab = 'schedule' | 'wearables' | 'spotify' | 'billing' | 'fitness' | 'medical' | 'profile' | 'security' | 'notifications'
 
 interface GeneralSettingsProfile {
   email: string
@@ -32,6 +33,7 @@ interface ClientSettingsStudioProps {
   initialFitnessProfile?: BaselineFitnessProfileData
   activePackageName?: string
   initialTab?: SettingsTab
+  workoutSchedule?: WorkoutCalendarEntry[]
 }
 
 export default function ClientSettingsStudio({
@@ -39,6 +41,7 @@ export default function ClientSettingsStudio({
   initialFitnessProfile,
   activePackageName = 'Hybrid Concierge',
   initialTab = 'wearables',
+  workoutSchedule = [],
 }: ClientSettingsStudioProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -135,6 +138,7 @@ export default function ClientSettingsStudio({
         }}
       >
         {[
+          { key: 'schedule' as const, label: 'Workout Schedule', icon: 'calendar' as GaaIconName },
           isNativeAndroid()
             ? {
                 key: 'wearables' as const,
@@ -207,6 +211,21 @@ export default function ClientSettingsStudio({
           )
         })}
       </div>
+
+      {activeTab === 'schedule' && (
+        <WorkoutCalendarView
+          entries={workoutSchedule}
+          title="Workout Schedule"
+          subtitle={workoutSchedule.length
+            ? 'Your current program. Select a scheduled session to open it in Training.'
+            : 'No scheduled workouts yet. Your schedule will appear here when your coach assigns a dated program.'}
+          onSelectEntry={entry => {
+            if (entry.workoutDay !== undefined) {
+              router.push(`/dashboard/fitness?workspace=train&day=${entry.workoutDay}`)
+            }
+          }}
+        />
+      )}
 
       {/* ── 1. Tab: Connected Wearables & Biometrics ── */}
       {activeTab === 'wearables' && (

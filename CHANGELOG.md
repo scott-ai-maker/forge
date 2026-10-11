@@ -3,6 +3,31 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.4] - 2026-10-10
+
+### Enhanced
+- Simplify mobile exercise cards with numbered set selection, inline RPE/RIR,
+  manual weight entry, and a compact final Log Set action.
+- Remove the exercise tools drawer, cadence/velocity tools, weight preset pills,
+  exercise jump rail, and workout Plates and Coach shortcuts.
+- Collapse set overrides, client notes, exercise options, and logged history inline.
+- Move workout schedule access into Settings with direct workout-day navigation.
+- Place a compact Coach notes disclosure below the workout title, before stages.
+- Retain one bottom rest timer and hide redundant Match Set actions.
+
+### Fixed
+- Require explicit weight entry or intentional zero added load.
+- Leave optional effort ratings blank for each new working set.
+- Distinguish saving, synced, and pending sets; reconcile offline retries using
+  the original optimistic ID.
+- Preserve warm-up separation and sparse working-set selection.
+
+### Validation
+- Verify workout, mobile layout, cardio, schedule navigation, and offline retry flows
+  using browser harnesses and mocked persistence.
+- Passed 17 browser acceptance checks, 21 focused unit tests, and TypeScript.
+- Live authenticated persistence and native-device acceptance remain separate checks.
+
 ## [1.36.3] - 2026-10-10
 
 ### Security

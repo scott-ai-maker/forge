@@ -1,5 +1,7 @@
 import { Suspense } from 'react'
 import FitnessTrackerClient from "@/components/fitness/FitnessTrackerClient"
+import ClientSettingsStudio from '@/components/settings/ClientSettingsStudio'
+import { buildWorkoutSchedule } from '@/lib/workout-schedule'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,24 +50,49 @@ const MOCK_PLAN = {
   },
 }
 
-export default function FitnessMobileTestHarnessPage() {
+export default async function FitnessMobileTestHarnessPage({ searchParams }: {
+  searchParams: Promise<{ view?: string; scenario?: string }>
+}) {
+  const params = await searchParams
+  const plan = params.scenario === 'schedule' ? {
+    ...MOCK_PLAN,
+    plan_json: {
+      workouts: [
+        ...MOCK_PLAN.plan_json.workouts,
+        { ...MOCK_PLAN.plan_json.workouts[0], day: 2, focus: 'Schedule navigation check' },
+      ],
+    },
+  } : MOCK_PLAN
   return (
     <main style={{ minHeight: "100vh", background: "#0D1B2A", overflowX: "hidden" }}>
       <div style={{ maxWidth: 1440, margin: "0 auto", width: "100%", minWidth: 0, overflowX: "hidden", boxSizing: "border-box" }}>
         <Suspense fallback={<div style={{ color: '#E2E8F0', padding: 20 }}>Loading test harness...</div>}>
-          <FitnessTrackerClient
+          {params.view === 'settings' ? (
+            <ClientSettingsStudio
+              initialProfile={{
+                email: 'uat@example.com',
+                fullName: 'UAT Athlete',
+                phone: '',
+                role: 'client',
+                avatarUrl: null,
+                pendingEmail: null,
+              }}
+              initialTab="schedule"
+              workoutSchedule={buildWorkoutSchedule(plan.plan_json)}
+            />
+          ) : <FitnessTrackerClient
             profile={{
               full_name: "Scott Gordon",
               preferred_units: "imperial",
               fitness_goal: "Athletic Hypertrophy",
             }}
-            latestPlan={MOCK_PLAN as any}
-            allPlans={[MOCK_PLAN as any]}
+            latestPlan={plan}
+            allPlans={[plan]}
             logs={[]}
             setLogs={[]}
             latestAnalysis={null}
             initialWorkspace="train"
-          />
+          />}
         </Suspense>
       </div>
     </main>

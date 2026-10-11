@@ -164,9 +164,10 @@ function saveQueuedOfflineSets(queue: QueuedSetLogPayload[]): void {
  * Enqueue a set log to the offline storage queue.
  */
 export function enqueueOfflineSet(
-  payload: Omit<QueuedSetLogPayload, 'tempId' | 'queuedAt' | 'status' | 'retryCount'>
+  payload: Omit<QueuedSetLogPayload, 'tempId' | 'queuedAt' | 'status' | 'retryCount'>,
+  existingTempId?: string
 ): QueuedSetLogPayload {
-  const tempId = `temp_set_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+  const tempId = existingTempId ?? `temp_set_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
   const queuedItem: QueuedSetLogPayload = {
     ...payload,
     tempId,

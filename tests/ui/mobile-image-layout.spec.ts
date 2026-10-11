@@ -17,7 +17,7 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
       const benchItem = page.locator("#exercise-item-1-0")
       await expect(benchItem).toBeVisible({ timeout: 15000 })
 
-      const summary = benchItem.locator("summary")
+      const summary = benchItem.locator("summary").first()
       await expect(summary).toBeVisible()
 
       // The 44x44 thumbnail inside summary
@@ -30,7 +30,7 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
       expect(imgBox!.width).toBeGreaterThanOrEqual(40)
       expect(imgBox!.height).toBeGreaterThanOrEqual(40)
 
-      // 2. The first active exercise is expanded by default — verify 16:9 HD Movement Banner is rendered
+      // The header thumbnail opens the full demonstration without a second preview.
       const banner = benchItem.getByRole("button", { name: "Watch form demonstration for Barbell Flat Bench Press" })
       await expect(banner).toBeVisible()
 
@@ -40,9 +40,8 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
 
       const bannerBox = await banner.boundingBox()
       expect(bannerBox).not.toBeNull()
-      // Full width banner on mobile screen (> 300px)
-      expect(bannerBox!.width).toBeGreaterThan(300)
-      expect(bannerBox!.height).toBeLessThanOrEqual(80)
+      expect(bannerBox!.width).toBe(44)
+      expect(bannerBox!.height).toBe(44)
 
       // 3. Open NASM Video & Form Modal by tapping the demonstration banner
       await banner.click()
@@ -78,7 +77,7 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
       // 4. Test expanding exercise 2 (Incline Dumbbell Bench Press)
       const inclineItem = page.locator("#exercise-item-1-1")
       await expect(inclineItem).toBeVisible()
-      const inclineSummary = inclineItem.locator("summary")
+      const inclineSummary = inclineItem.locator("summary").first()
       await inclineSummary.click()
       await page.waitForTimeout(300)
 
@@ -126,7 +125,9 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
       expect(increment?.height).toBeGreaterThanOrEqual(44)
       await weight.fill("95")
       await reps.fill("8")
-      await expect(benchItem.getByRole("button", { name: /Log Set 1/i })).toContainText("95 lb × 8 reps")
+      await expect(benchItem.getByRole("button", { name: "Log set & start rest", exact: true })).toBeVisible()
+      await expect(weight).toHaveValue("95")
+      await expect(reps).toHaveValue("8")
     })
   })
 })

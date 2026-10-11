@@ -74,6 +74,17 @@ describe('offline-sync-queue', () => {
     expect(remaining[0].tempId).toBe(item2.tempId)
   })
 
+  it('preserves the optimistic set ID for reconciliation after retry', () => {
+    const item = enqueueOfflineSet({
+      sessionDate: '2026-10-10',
+      exerciseName: 'Bench Press',
+      setNumber: 1,
+      reps: 10,
+    }, 'temp_set_existing')
+    expect(item.tempId).toBe('temp_set_existing')
+    expect(getQueuedOfflineSets()[0].tempId).toBe('temp_set_existing')
+  })
+
   it('flushes pending queue successfully on fetch 200', async () => {
     enqueueOfflineSet({
       sessionDate: '2026-08-26',

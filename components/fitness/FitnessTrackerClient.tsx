@@ -2,8 +2,6 @@
 
 import { useMemo, useState, useCallback, useEffect } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import WorkoutCalendarView from '@/components/fitness/WorkoutCalendarView'
-import RestTimer from '@/components/fitness/RestTimer'
 import dynamic from 'next/dynamic'
 
 import { openCoachGordon } from '@/components/fitness/GlobalCoachGordonHost'
@@ -38,10 +36,6 @@ const MindfulMomentModal = dynamic(
   () => import('@/components/fitness/MindfulMomentModal'),
   { ssr: false }
 )
-const BarbellPlateCalculator = dynamic(
-  () => import('@/components/fitness/BarbellPlateCalculator'),
-  { ssr: false }
-)
 const ExerciseVideoModal = dynamic(
   () => import('@/components/fitness/ExerciseVideoModal'),
   { ssr: false }
@@ -63,26 +57,15 @@ import { isExerciseAppropriateForInjuries } from '@/lib/nasm-opt-exercise-select
 
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import SetProgressionMatrix from '@/components/fitness/tracker/SetProgressionMatrix'
-import WarmUpRampDrawer from '@/components/fitness/tracker/WarmUpRampDrawer'
-import IntensityProtocolDrawer from '@/components/fitness/tracker/IntensityProtocolDrawer'
-import WorkoutToolBottomSheet, { type WorkoutToolTab } from '@/components/fitness/tracker/WorkoutToolBottomSheet'
-import PlateAdjustmentPresets from '@/components/fitness/tracker/PlateAdjustmentPresets'
-import RpeRirExertionSelector from '@/components/fitness/tracker/RpeRirExertionSelector'
-import VolumeOverloadMiniHud from '@/components/fitness/tracker/VolumeOverloadMiniHud'
-import AutoregulationDeloadAdvisor from '@/components/fitness/tracker/AutoregulationDeloadAdvisor'
-import RepCadenceMetronome from '@/components/fitness/tracker/RepCadenceMetronome'
-import OneRepMaxPercentageMatrix from '@/components/fitness/tracker/OneRepMaxPercentageMatrix'
 import SupersetPairCard, { type SupersetDraftState } from '@/components/fitness/tracker/SupersetPairCard'
 import { detectAndGroupSupersets, type GroupedExerciseEntry } from '@/lib/superset-pairing-engine'
 import {
   getNasmOptPhaseFeatureRules,
   isSupersetOfferedForPhase,
-  isIntensityProtocolOfferedForPhase,
   getDefaultNasmOptTempo,
 } from '@/lib/nasm-opt-feature-matrix'
 import { calculateBioAdaptiveRestInterval } from '@/lib/bio-adaptive-rest-pacer'
 import { detectAcuteFatigueDrop } from '@/lib/autoregulation-advisor-engine'
-import { calculateWorkingSetPrePopulateLoad, parsePrescribedWorkingReps } from '@/lib/warmup-auto-populator'
 import SessionFatigueCnsSummaryModal from '@/components/fitness/tracker/SessionFatigueCnsSummaryModal'
 import { calculateSessionFatigueCnsIndex } from '@/lib/session-fatigue-cns-index'
 import FloatingRestTimerDock from '@/components/fitness/tracker/FloatingRestTimerDock'
@@ -255,6 +238,7 @@ interface BodyAnalysisRecord {
 }
 
 interface WorkoutSetLogRecord {
+  syncStatus?: 'saving' | 'pending' | 'saved'
   id: string
   session_date: string
   exercise_name: string
@@ -566,7 +550,6 @@ function defaultInlineSetDraft(
   const tempoDefault = isStrength
     ? (prescribedTempo ? String(prescribedTempo).trim() : (phase === 1 ? '4/2/1' : phase === 4 ? '1/1/1' : phase === 5 ? 'X/0/X' : '2/0/2'))
     : ''
-  const rirDefault = isStrength ? '2' : ''
 
   return {
     sessionDate,
@@ -575,8 +558,8 @@ function defaultInlineSetDraft(
     weight: isTimed ? '0' : '',
     tempo: tempoDefault,
     restSeconds: String(restDefault),
-    rpe: '7',
-    rir: rirDefault,
+    rpe: '',
+    rir: '',
     isWarmup: false,
     notes: '',
   }
@@ -775,7 +758,6 @@ export default function FitnessTrackerClient({
   const initialUnits: 'metric' | 'imperial' = profile?.preferred_units === 'metric' ? 'metric' : 'imperial'
   const [units] = useState<'metric' | 'imperial'>(initialUnits)
   const [activeWorkoutDay, setActiveWorkoutDay] = useState<number | null>(null)
-  const [showCalendarModal, setShowCalendarModal] = useState<boolean>(false)
   const [activeVideoExercise, setActiveVideoExercise] = useState<{
     name: string
     videoUrl?: string | null
@@ -1043,10 +1025,6 @@ export default function FitnessTrackerClient({
     } catch {}
   }, [plan, localSetLogs])
 
-  const [plateCalculatorTargetLbs, setPlateCalculatorTargetLbs] = useState<number | null>(null)
-  const [openFormGuides, setOpenFormGuides] = useState<Record<string, boolean>>({})
-  const [openAdvancedMetrics, setOpenAdvancedMetrics] = useState<Record<string, boolean>>({})
-  const [activeExerciseToolTabs, setActiveExerciseToolTabs] = useState<Record<string, WorkoutToolTab | null>>({})
 
   const getWorkoutDayCompletion = useCallback((day: number) => {
     const res = resolveWorkoutDayCompletion({
@@ -1093,29 +1071,6 @@ export default function FitnessTrackerClient({
     return null
   }, [expandedExerciseKey, effectiveActiveWorkoutDay, planWorkouts, activeSetLogs])
 
-  const planCalendarEntries = useMemo(() => {
-    const explicitCalendar = plan?.plan_json?.calendar ?? []
-
-    if (explicitCalendar.length > 0) {
-      return explicitCalendar
-        .filter(item => item.scheduledDate)
-        .map(item => ({
-          date: String(item.scheduledDate),
-          title: `Day ${item.day}: ${item.focus}`,
-          subtitle: `${item.exerciseCount} exercise${item.exerciseCount === 1 ? '' : 's'} • ${item.durationMins} mins`,
-          workoutDay: item.day,
-        }))
-    }
-
-    return planWorkouts
-      .filter(workout => workout.scheduledDate)
-      .map(workout => ({
-        date: String(workout.scheduledDate),
-        title: `Day ${workout.day}: ${workout.focus}`,
-        subtitle: `${workout.exercises.length} exercise${workout.exercises.length === 1 ? '' : 's'}`,
-        workoutDay: workout.day,
-      }))
-  }, [plan, planWorkouts])
 
   // Synchronize active hub and lab tool whenever searchParams or initialWorkspace changes
   useEffect(() => {
@@ -1219,11 +1174,14 @@ export default function FitnessTrackerClient({
     }, 40)
   }, [])
 
-  const handleCalendarEntrySelect = useCallback((entry: { workoutDay?: number }) => {
-    if (!entry.workoutDay) return
-    handleWorkspaceChange('train')
-    jumpToWorkoutDay(entry.workoutDay)
-  }, [handleWorkspaceChange, jumpToWorkoutDay])
+  useEffect(() => {
+    const rawDay = searchParams.get('day')
+    if (!rawDay) return
+    const day = Number(rawDay)
+    if (Number.isInteger(day) && planWorkouts.some(workout => workout.day === day)) {
+      jumpToWorkoutDay(day)
+    }
+  }, [searchParams, planWorkouts, jumpToWorkoutDay])
 
 
 
@@ -1234,6 +1192,10 @@ export default function FitnessTrackerClient({
     const effectiveTempo = isStrength ? (exercise.tempo || movementCard.tempo || getDefaultNasmOptTempo(plan?.nasm_opt_phase, exercise.name).tempo) : ''
 
     const weightValue = Number(draft.weight)
+    if (isStrength && (!draft.weight.trim() || !Number.isFinite(weightValue) || weightValue < 0)) {
+      setStatus('Enter the weight used, or enter 0 for bodyweight / no added load.')
+      return
+    }
     const weightKg = Number.isFinite(weightValue) && weightValue > 0
       ? (units === 'imperial' ? weightValue * 0.45359237 : weightValue)
       : undefined
@@ -1294,6 +1256,7 @@ export default function FitnessTrackerClient({
     // 3. OPTIMISTIC UI: Append set immediately (<1ms) so gym-floor flow is instantaneous
     const optimisticTempId = `temp_set_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
     const optimisticRecord: WorkoutSetLogRecord = {
+      syncStatus: 'saving',
       id: optimisticTempId,
       session_date: draft.sessionDate,
       exercise_name: exercise.name,
@@ -1389,6 +1352,8 @@ export default function FitnessTrackerClient({
         [key]: {
           ...draft,
           setNumber: String(totalWorkingSetsNow + 1),
+          rpe: '',
+          rir: '',
           notes: '',
         },
       }))
@@ -1438,7 +1403,7 @@ export default function FitnessTrackerClient({
           weightKg,
           tempo: tempoToSave,
           restSeconds: restSecsToSave,
-          rpe: Number(draft.rpe),
+          rpe: rpeToSave,
           rir: rirToSave,
           isWarmup: draft.isWarmup,
           notes: `${workoutDayTag(workout.day)} ${workoutWeekTag(microcycleProgress.currentWeek)} ${draft.notes}`.trim(),
@@ -1462,11 +1427,13 @@ export default function FitnessTrackerClient({
           weightKg,
           tempo: tempoToSave,
           restSeconds: restSecsToSave,
-          rpe: Number(draft.rpe),
+          rpe: rpeToSave,
           rir: rirToSave,
           isWarmup: draft.isWarmup,
           notes: `${workoutDayTag(workout.day)} ${workoutWeekTag(microcycleProgress.currentWeek)} ${draft.notes}`.trim(),
-        })
+        }, optimisticTempId)
+        setLocalSetLogs(prev => prev.map(log => log.id === optimisticTempId ? { ...log, syncStatus: 'pending' } : log))
+        setStatus('Saved on device — sync pending. Your set will retry automatically.')
         setPendingSyncCount(getPendingQueueCount())
       }
     } catch {
@@ -1481,11 +1448,13 @@ export default function FitnessTrackerClient({
         weightKg,
         tempo: tempoToSave,
         restSeconds: restSecsToSave,
-        rpe: Number(draft.rpe),
+        rpe: rpeToSave,
         rir: rirToSave,
         isWarmup: draft.isWarmup,
         notes: `${workoutDayTag(workout.day)} ${workoutWeekTag(microcycleProgress.currentWeek)} ${draft.notes}`.trim(),
-      })
+      }, optimisticTempId)
+      setLocalSetLogs(prev => prev.map(log => log.id === optimisticTempId ? { ...log, syncStatus: 'pending' } : log))
+      setStatus('Saved on device — sync pending. Your set will retry automatically.')
       setPendingSyncCount(getPendingQueueCount())
     }
   }
@@ -1548,9 +1517,6 @@ export default function FitnessTrackerClient({
     setStatus(`Skipped ${exercise.name}.`)
   }
 
-  const handleTimerDone = useCallback(() => {
-    setActiveRestTimerKey(null)
-  }, [])
 
   async function handleCompleteWorkoutDay(workout: WorkoutDay, exertionRpe?: number) {
     const busyKey = `log-day:${String(workout.day)}`
@@ -2321,6 +2287,7 @@ export default function FitnessTrackerClient({
           {/* Executive Plan Header & Consolidated Utilities */}
           <div
             className="fitness-section-header"
+            data-testid="workout-program-header"
             style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -2390,76 +2357,6 @@ export default function FitnessTrackerClient({
                 </select>
               )}
 
-              {planCalendarEntries.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowCalendarModal(prev => !prev)}
-                  className="tactile-btn"
-                  style={{
-                    padding: '5px 9px',
-                    borderRadius: 4,
-                    background: showCalendarModal ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.06)',
-                    border: showCalendarModal ? '1px solid #D4AF37' : '1px solid rgba(255,255,255,0.15)',
-                    color: showCalendarModal ? '#D4AF37' : '#F8FAFC',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                  title="View schedule calendar"
-                >
-                  <GaaIcon name="calendar" size={12} tone={showCalendarModal ? 'gold' : 'white'} />
-                  <span>Schedule</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setPlateCalculatorTargetLbs(225)}
-                className="tactile-btn"
-                style={{
-                  padding: '5px 9px',
-                  borderRadius: 4,
-                  background: 'rgba(212,175,55,0.12)',
-                  border: '1px solid rgba(212,175,55,0.4)',
-                  color: '#D4AF37',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-                title="Open 3D Barbell Plate Calculator"
-              >
-                <GaaIcon name="barbell" size={12} tone="gold" />
-                <span>Plates</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => openCoachGordon()}
-                className="tactile-btn"
-                style={{
-                  padding: '5px 9px',
-                  borderRadius: 4,
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  color: '#F8FAFC',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-                title="Message Coach Gordon"
-              >
-                <GaaIcon name="message" size={12} tone="gold" />
-                <span>Coach</span>
-              </button>
             </div>
           </div>
 
@@ -2777,72 +2674,6 @@ export default function FitnessTrackerClient({
                 })()}
 
                 <div style={{ padding: 'clamp(4px, 1.5vw, 16px)', maxWidth: '100%', width: '100%', minWidth: 0, boxSizing: 'border-box', overflowX: 'hidden' }}>
-                  {/* ── Sticky Luxury Workout Stage Switcher Bar ── */}
-                  <div
-                    className="luxury-segmented-bar"
-                    aria-label="Workout stages"
-                    role="group"
-                    style={{
-                      position: 'sticky',
-                      top: 0,
-                      zIndex: 25,
-                      marginBottom: 14,
-                      backdropFilter: 'blur(16px)',
-                      background: 'rgba(9, 14, 26, 0.95)',
-                      border: '1px solid rgba(212,160,23,0.35)',
-                      boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
-                    }}
-                  >
-                    {[
-                      { id: 'warmup', label: '1. Warm-Up', icon: 'flame' as GaaIconName },
-                      { id: 'resistance', label: '2. Lifts', icon: 'dumbbell' as GaaIconName },
-                      { id: 'cardio', label: '3. Cardio', icon: 'runner' as GaaIconName },
-                      { id: 'cooldown', label: '4. Cool-Down', icon: 'snowflake' as GaaIconName },
-                      { id: 'all', label: 'All Steps', icon: 'eye' as GaaIconName },
-                    ].map(step => {
-                      const isSelected = activeStepFilter === step.id
-                      return (
-                        <button
-                          key={step.id}
-                          type="button"
-                          aria-pressed={isSelected}
-                          style={{ minHeight: 44 }}
-                          onClick={() => {
-                            triggerHaptic('tap')
-                            setActiveStepFilter(step.id as 'all' | 'warmup' | 'resistance' | 'cardio' | 'cooldown')
-                            if (step.id !== 'all') {
-                              setCollapsedStages(prev => ({
-                                ...prev,
-                                [`${workout.day}-${step.id}`]: false,
-                              }))
-                            }
-                          }}
-                          className={`luxury-segment-btn ${isSelected ? 'active' : ''}`}
-                        >
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                            <GaaIcon name={step.icon} size={12} tone={isSelected ? 'dark' : 'gold'} />
-                            {step.label}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8, maxWidth: '100%', minWidth: 0 }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      <span style={workoutStatBadgeStyle}>Sets: {workoutProgress.loggedSets}/{workoutProgress.targetSets || '-'}</span>
-                      <span style={workoutStatBadgeStyle}>Volume: {formatWeight(workoutProgress.totalVolumeKg, units)}</span>
-                    </div>
-                    {workout.scheduledDate && (
-                      <span style={{ color: 'var(--gold-lt)', fontSize: 11.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <GaaIcon name="calendar" size={12} tone="gold" /> Scheduled: {new Date(`${workout.scheduledDate}T12:00:00Z`).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ height: 6, width: '100%', maxWidth: '100%', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', marginBottom: 14 }}>
-                    <div style={{ height: '100%', width: `${Math.round(completionRatio * 100)}%`, background: 'var(--gold)' }} />
-                  </div>
-
                   {/* ── Coach Briefing & Daily Gameplan (Compact Collapsible Strip) ── */}
                   {(() => {
                     const cardio = resolveWorkoutCardioProtocol(workout, profile, plan)
@@ -2862,8 +2693,10 @@ export default function FitnessTrackerClient({
 
                     return (
                       <details
+                        className="fitness-card-disclosure"
+                        data-testid="workout-coach-notes"
                         style={{
-                          marginBottom: 16,
+                          marginBottom: 8,
                           background: 'linear-gradient(135deg, rgba(212,160,23,0.08) 0%, rgba(13,27,42,0.95) 100%)',
                           border: '1px solid rgba(212,160,23,0.3)',
                           borderRadius: 8,
@@ -2875,39 +2708,7 @@ export default function FitnessTrackerClient({
                           overflow: 'hidden',
                         }}
                       >
-                        <summary
-                          style={{
-                            padding: '10px 14px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 8,
-                            flexWrap: 'wrap',
-                            userSelect: 'none',
-                            listStyle: 'none',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexWrap: 'wrap' }}>
-                            <GaaIcon name="crown" size={15} tone="gold" />
-                            <span style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                              Coach notes
-                            </span>
-                            <span style={{ fontSize: 11, color: 'var(--gold-lt)', background: 'rgba(212,160,23,0.18)', border: '1px solid rgba(212,160,23,0.4)', borderRadius: 12, padding: '1px 8px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                              <GaaIcon name="timer" size={11} tone="gold" />
-                              <span>~{durationBreakdown.summaryLabel}</span>
-                            </span>
-                            <span style={{ fontSize: 12, color: 'var(--white)', fontWeight: 600 }}>
-                              {bullets.length} training tips
-                            </span>
-                          </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 11, color: 'var(--gold-lt)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '3px 8px', borderRadius: 4, fontWeight: 700 }}>
-                              View ▾
-                            </span>
-                          </div>
-                        </summary>
+                        <summary style={{ padding: '8px 12px' }}>Coach notes</summary>
 
                         <div style={{ padding: '12px 14px 14px', borderTop: '1px solid rgba(255,255,255,0.08)', minWidth: 0 }}>
                           {/* Audio Voice Briefing & Focus */}
@@ -3048,8 +2849,69 @@ export default function FitnessTrackerClient({
                     )
                   })()}
 
-
-
+                  <div
+                    className="luxury-segmented-bar"
+                    aria-label="Workout stages"
+                    role="group"
+                    style={{
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 25,
+                      marginBottom: 14,
+                      backdropFilter: 'blur(16px)',
+                      background: 'rgba(9, 14, 26, 0.95)',
+                      border: '1px solid rgba(212,160,23,0.35)',
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    {[
+                      { id: 'warmup', label: '1. Warm-Up', icon: 'flame' as GaaIconName },
+                      { id: 'resistance', label: '2. Lifts', icon: 'dumbbell' as GaaIconName },
+                      { id: 'cardio', label: '3. Cardio', icon: 'runner' as GaaIconName },
+                      { id: 'cooldown', label: '4. Cool-Down', icon: 'snowflake' as GaaIconName },
+                      { id: 'all', label: 'All Steps', icon: 'eye' as GaaIconName },
+                    ].map(step => {
+                      const isSelected = activeStepFilter === step.id
+                      return (
+                        <button
+                          key={step.id}
+                          type="button"
+                          aria-pressed={isSelected}
+                          style={{ minHeight: 44 }}
+                          onClick={() => {
+                            triggerHaptic('tap')
+                            setActiveStepFilter(step.id as 'all' | 'warmup' | 'resistance' | 'cardio' | 'cooldown')
+                            if (step.id !== 'all') {
+                              setCollapsedStages(prev => ({
+                                ...prev,
+                                [`${workout.day}-${step.id}`]: false,
+                              }))
+                            }
+                          }}
+                          className={`luxury-segment-btn ${isSelected ? 'active' : ''}`}
+                        >
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <GaaIcon name={step.icon} size={12} tone={isSelected ? 'dark' : 'gold'} />
+                            {step.label}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8, maxWidth: '100%', minWidth: 0 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      <span style={workoutStatBadgeStyle}>Sets: {workoutProgress.loggedSets}/{workoutProgress.targetSets || '-'}</span>
+                      <span style={workoutStatBadgeStyle}>Volume: {formatWeight(workoutProgress.totalVolumeKg, units)}</span>
+                    </div>
+                    {workout.scheduledDate && (
+                      <span style={{ color: 'var(--gold-lt)', fontSize: 11.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <GaaIcon name="calendar" size={12} tone="gold" /> Scheduled: {new Date(`${workout.scheduledDate}T12:00:00Z`).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ height: 6, width: '100%', maxWidth: '100%', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', marginBottom: 14 }}>
+                    <div style={{ height: '100%', width: `${Math.round(completionRatio * 100)}%`, background: 'var(--gold)' }} />
+                  </div>
                   {/* ── Executive Workout Layout (Full Width, No Right Bars) ── */}
                   <div style={{ minWidth: 0, maxWidth: '100%', width: '100%', overflowX: 'hidden' }}>
                       {/* Active Orthopedic Protection Shield (Sports Injuries & Biomechanical Limitations) */}
@@ -3228,114 +3090,64 @@ export default function FitnessTrackerClient({
                       const seenSections = new Set<string>()
                       return (
                         <>
-                          {/* ── In-Workout Exercise Quick Jump Rail (Horizontal Scrollable Rail) ── */}
-                          {currentExercises.length > 1 && (
-                            <div style={{ marginBottom: 12 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, flexWrap: 'wrap', gap: 6 }}>
-                                <span style={{ fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                  <GaaIcon name="lightning" size={11} tone="gold" />
-                                  <span>Exercise Quick-Jump Rail</span>
-                                </span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  {(() => {
-                                    const phaseRules = getNasmOptPhaseFeatureRules(plan?.nasm_opt_phase)
-                                    if (!phaseRules.isSupersetOffered) {
-                                      return (
-                                        <div
-                                          style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: 5,
-                                            background: 'rgba(255,255,255,0.03)',
-                                            border: '1px solid rgba(255,255,255,0.08)',
-                                            borderRadius: 4,
-                                            padding: '3px 8px',
-                                            color: 'var(--gray)',
-                                            fontSize: 9.5,
-                                            fontWeight: 700,
-                                          }}
-                                          title={phaseRules.supersetTooltip}
-                                        >
-                                          <GaaIcon name="lightning" size={10} tone="slate" />
-                                          <span>{phaseRules.supersetBadgeLabel}</span>
-                                        </div>
-                                      )
-                                    }
+                          <div style={{ marginBottom: 6 }}>
+                            {(() => {
+                              const phaseRules = getNasmOptPhaseFeatureRules(plan?.nasm_opt_phase)
+                              if (!phaseRules.isSupersetOffered) {
+                                return (
+                                  <div
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                      background: 'rgba(255,255,255,0.03)',
+                                      border: '1px solid rgba(255,255,255,0.08)',
+                                      borderRadius: 4,
+                                      padding: '3px 8px',
+                                      color: 'var(--gray)',
+                                      fontSize: 9.5,
+                                      fontWeight: 700,
+                                    }}
+                                    title={phaseRules.supersetTooltip}
+                                  >
+                                    <GaaIcon name="lightning" size={10} tone="slate" />
+                                    <span>{phaseRules.supersetBadgeLabel}</span>
+                                  </div>
+                                )
+                              }
 
-                                    return (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          triggerHaptic('tap')
-                                          toggleSupersets()
-                                        }}
-                                        className="tactile-btn"
-                                        style={{
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          gap: 5,
-                                          background: enableSupersets ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255,255,255,0.05)',
-                                          border: `1px solid ${enableSupersets ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255,255,255,0.1)'}`,
-                                          borderRadius: 4,
-                                          padding: '3px 8px',
-                                          color: enableSupersets ? '#38BDF8' : 'var(--gray)',
-                                          fontSize: 10,
-                                          fontWeight: 700,
-                                          cursor: 'pointer',
-                                        }}
-                                        title={phaseRules.supersetTooltip}
-                                      >
-                                        <GaaIcon name="lightning" size={10} tone={enableSupersets ? 'cyan' : 'slate'} />
-                                        <span>Supersets: {enableSupersets ? 'ON' : 'OFF'}</span>
-                                        <span style={{ fontSize: 8.5, opacity: 0.8, background: 'rgba(255,255,255,0.08)', padding: '1px 4px', borderRadius: 3 }}>
-                                          {phaseRules.supersetBadgeLabel}
-                                        </span>
-                                      </button>
-                                    )
-                                  })()}
-                                  <span style={{ fontSize: 9.5, color: 'var(--gold-lt)', fontWeight: 600 }}>
-                                    Tap to focus
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    triggerHaptic('tap')
+                                    toggleSupersets()
+                                  }}
+                                  className="tactile-btn"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                    background: enableSupersets ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255,255,255,0.05)',
+                                    border: `1px solid ${enableSupersets ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255,255,255,0.1)'}`,
+                                    borderRadius: 4,
+                                    padding: '3px 8px',
+                                    color: enableSupersets ? '#38BDF8' : 'var(--gray)',
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                  title={phaseRules.supersetTooltip}
+                                >
+                                  <GaaIcon name="lightning" size={10} tone={enableSupersets ? 'cyan' : 'slate'} />
+                                  <span>Supersets: {enableSupersets ? 'ON' : 'OFF'}</span>
+                                  <span style={{ fontSize: 8.5, opacity: 0.8, background: 'rgba(255,255,255,0.08)', padding: '1px 4px', borderRadius: 3 }}>
+                                    {phaseRules.supersetBadgeLabel}
                                   </span>
-                                </div>
-                              </div>
-                              <div className="in-workout-jump-rail">
-                                {currentExercises.map((jumpEx, jumpIdx) => {
-                                  const isFutureWorkout = workout.scheduledDate ? workout.scheduledDate > todayDateOnly() : false
-                                  const jumpLogged = isFutureWorkout ? 0 : (setLogsByExercise.get(normalizeExerciseName(jumpEx.name)) ?? [])
-                                    .filter(row => extractWorkoutDayTag(row.notes) === workout.day && !row.is_warmup).length
-                                  const jumpTarget = parseSetTarget(jumpEx.sets) || 3
-                                  const jumpIsDone = jumpLogged >= jumpTarget
-                                  const jumpItemKey = `${workout.day}-${jumpEx.name}`
-                                  const jumpIsActive = effectiveOpenExerciseKey === jumpItemKey
-
-                                  return (
-                                    <button
-                                      key={`jump-${jumpIdx}-${jumpEx.name}`}
-                                      type="button"
-                                      onClick={() => {
-                                        triggerHaptic('tap')
-                                        setExpandedExerciseKey(jumpItemKey)
-                                        const el = document.getElementById(`exercise-item-${workout.day}-${jumpIdx}`)
-                                        if (el) {
-                                          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-                                        }
-                                      }}
-                                      className={`jump-pill-btn ${jumpIsDone ? 'completed' : jumpIsActive ? 'active' : ''}`}
-                                      title={`${jumpEx.name} (${jumpLogged}/${jumpTarget} sets)`}
-                                    >
-                                      <span>{jumpIsDone ? '✓' : `${jumpIdx + 1}.`}</span>
-                                      <span style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {jumpEx.name}
-                                      </span>
-                                      <span style={{ opacity: 0.7, fontSize: 9.5 }}>
-                                        ({jumpLogged}/{jumpTarget})
-                                      </span>
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )}
+                                </button>
+                              )
+                            })()}
+                          </div>
 
                           {(() => {
                             const groupedEntries: GroupedExerciseEntry[] = groupWorkoutExercises(currentExercises)
@@ -3381,7 +3193,6 @@ export default function FitnessTrackerClient({
                                       onLogSet={(exToLog, draft) => {
                                         handleSupersetSetLog(workout, exToLog as WorkoutExercise, draft)
                                       }}
-                                      onOpenPlateCalculator={weightLbs => setPlateCalculatorTargetLbs(weightLbs)}
                                       onOpenVideoModal={exName => {
                                         const exObj = currentExercises.find(e => normalizeExerciseName(e.name) === normalizeExerciseName(exName))
                                         setActiveVideoExercise({
@@ -3480,7 +3291,21 @@ export default function FitnessTrackerClient({
                                 const isDone = exLoggedSets >= exTargetSets && exTargetSets > 0
                                 return (
                                   <div
-                                    aria-hidden="true"
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label={`Watch form demonstration for ${ex.name}`}
+                                    onClick={event => {
+                                      event.preventDefault()
+                                      event.stopPropagation()
+                                      setActiveVideoExercise(ex)
+                                    }}
+                                    onKeyDown={event => {
+                                      if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault()
+                                        event.stopPropagation()
+                                        setActiveVideoExercise(ex)
+                                      }
+                                    }}
                                     style={{
                                       position: 'relative',
                                       width: 44,
@@ -3557,7 +3382,7 @@ export default function FitnessTrackerClient({
                                 </div>
                                 <div style={{ color: exLoggedSets >= exTargetSets && exTargetSets > 0 ? 'var(--gold)' : 'var(--gray)', fontSize: 12, marginTop: 2 }}>
                                   {formatExerciseTargetDisplay(ex)}
-                                  {exTargetSets > 0 && (
+                                  {!isExpanded && exTargetSets > 0 && (
                                     <span style={{ marginLeft: 8, padding: '1px 7px', border: `1px solid ${exLoggedSets >= exTargetSets ? 'rgba(212,160,23,0.5)' : 'rgba(255,255,255,0.15)'}`, background: exLoggedSets >= exTargetSets ? 'rgba(212,160,23,0.15)' : 'rgba(255,255,255,0.05)', color: exLoggedSets >= exTargetSets ? 'var(--gold)' : 'var(--gray)', borderRadius: 2 }}>
                                       {exLoggedSets}/{exTargetSets} sets
                                     </span>
@@ -3569,76 +3394,6 @@ export default function FitnessTrackerClient({
                           {(isExpanded || activeRestTimerKey === exerciseKey) && (
                           <div style={{ padding: '6px 4px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                         <form onSubmit={event => handleInlineSetLog(event, workout, ex)} style={{ border: '1px solid rgba(255,255,255,0.08)', padding: '8px 8px', background: 'rgba(13,27,42,0.55)', borderRadius: 6, marginTop: 0 }}>
-                          {/* Compact preview opens the full form demonstration on demand. */}
-                          {(() => {
-                            const gaaImage = resolveGaaExerciseImage(ex.name, false)
-                            const heroImg = gaaImage || movementCard.imageUrl || movementCard.fallbackImageUrl || '/images/exercises/image-not-available.jpg'
-                            const hasVideo = Boolean(movementCard.embedUrl || movementCard.videoUrl)
-                            return (
-                              <button
-                                type="button"
-                                aria-label={`Watch form demonstration for ${ex.name}`}
-                                onClick={() => setActiveVideoExercise(ex)}
-                                style={{
-                                  position: 'relative',
-                                  width: '100%',
-                                  height: 80,
-                                  padding: 0,
-                                  borderRadius: 6,
-                                  overflow: 'hidden',
-                                  backgroundColor: '#070B14',
-                                  border: '1px solid rgba(212,160,23,0.35)',
-                                  cursor: 'pointer',
-                                  boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
-                                  marginBottom: 10,
-                                }}
-                                title={`View NASM Clinical Form & Demonstration for ${ex.name}`}
-                              >
-                                <img
-                                  src={heroImg}
-                                  alt={ex.name}
-                                  loading="lazy"
-                                  decoding="async"
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).src = '/images/exercises/image-not-available.jpg'
-                                  }}
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    objectPosition: 'center',
-                                    display: 'block',
-                                  }}
-                                />
-                                <div
-                                  style={{
-                                    position: 'absolute',
-                                    bottom: 8,
-                                    left: 8,
-                                    right: 8,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    background: 'rgba(8,14,20,0.85)',
-                                    backdropFilter: 'blur(6px)',
-                                    padding: '4px 10px',
-                                    borderRadius: 4,
-                                    border: '1px solid rgba(212,160,23,0.3)',
-                                  }}
-                                >
-                                  <span style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                                    <GaaIcon name="video-studio" size={12} tone="gold" />
-                                    <span>NASM Clinical Form {hasVideo ? '· 1:1 Video' : ''}</span>
-                                  </span>
-                                  <span style={{ fontSize: 10, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                    Tap to inspect ↗
-                                  </span>
-                                </div>
-                              </button>
-                            )
-                          })()}
-
-                          {/* ── Visual Set Progression Matrix (Set 1, Set 2, Set 3, + Add Set) ── */}
                             <SetProgressionMatrix
                               targetSets={ex.sets}
                               sessionDate={draft.sessionDate}
@@ -3651,7 +3406,7 @@ export default function FitnessTrackerClient({
                                   [exerciseKey]: {
                                     ...draft,
                                     setNumber: String(setNumber),
-                                    weight: prefillWeight !== undefined ? prefillWeight : (draft.weight || '95'),
+                                    weight: prefillWeight !== undefined ? prefillWeight : draft.weight,
                                     reps: prefillReps !== undefined ? prefillReps : draft.reps,
                                   },
                                 }))
@@ -3691,6 +3446,8 @@ export default function FitnessTrackerClient({
                               const candidateWeight = candidateSet.weight_kg != null
                                 ? (units === 'imperial' ? Math.round(candidateSet.weight_kg * 2.20462) : candidateSet.weight_kg)
                                 : null
+                              if (hasLoggedToday && Number(draft.reps) === Number(candidateSet.reps) &&
+                                (isTimed || (draft.weight.trim() !== '' && Number(draft.weight) === (candidateWeight ?? 0)))) return null
 
                               const candidateSetNum = candidateSet.set_number || todayLoggedSets.length
 
@@ -3719,8 +3476,6 @@ export default function FitnessTrackerClient({
                                           weight: isTimed ? '0' : String(candidateWeight ?? draft.weight),
                                           reps: String(candidateSet.reps ?? draft.reps),
                                           tempo: draft.tempo || '2/0/2',
-                                          rpe: candidateSet.rpe ? String(candidateSet.rpe) : draft.rpe,
-                                          rir: candidateSet.rir ? String(candidateSet.rir) : draft.rir,
                                         },
                                       }))
                                     }}
@@ -4027,7 +3782,11 @@ export default function FitnessTrackerClient({
                                         setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, weight: value } }))
                                       }}
                                       style={{ ...inputStyle, textAlign: 'center' }}
-                                      placeholder={isBand ? (units === 'imperial' ? '20' : '9') : (units === 'imperial' ? '95' : '42.5')}
+                                      placeholder="—"
+                                      required
+                                      pattern="[0-9]+([.][0-9]+)?"
+                                      title="Enter the weight used, or 0 for bodyweight / no added load."
+                                      aria-describedby={`weight-help-${workout.day}-${exIdx}`}
                                       aria-label={`Weight in ${units === 'imperial' ? 'pounds' : 'kilograms'}`}
                                     />
                                     <button
@@ -4044,75 +3803,15 @@ export default function FitnessTrackerClient({
                                       +
                                     </button>
                                   </div>
-
-                                  {/* ── Plate Loading & Weight Adjustment Presets Strip ── */}
-                                  <PlateAdjustmentPresets
-                                    exerciseName={ex.name}
-                                    currentWeight={draft.weight}
-                                    units={units}
-                                    isTimed={isTimed}
-                                    isBand={isBand}
-                                    onChangeWeight={(newWeight) => {
-                                      setInlineSetDrafts(prev => ({
-                                        ...prev,
-                                        [exerciseKey]: { ...draft, weight: newWeight },
-                                      }))
-                                    }}
-                                    onOpenPlateCalculator={(weightLbs) => setPlateCalculatorTargetLbs(weightLbs)}
-                                    triggerHaptic={triggerHaptic}
-                                  />
+                                  <div id={`weight-help-${workout.day}-${exIdx}`} style={{ fontSize: 10.5, color: 'var(--gray)', marginTop: 3 }}>
+                                    0 = no added load
+                                  </div>
                                 </div>
                               )}
                             </div>
 
-                            {/* Primary Gold Quick Log Set Button */}
-                            <button
-                              type="submit"
-                              disabled={busy === `set-log:${exerciseKey}`}
-                              className="tactile-btn"
-                              style={{
-                                ...buttonStyle,
-                                marginTop: 10,
-                                background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
-                                border: '1px solid #D4AF37',
-                                color: '#0A0E18',
-                                fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                                textTransform: 'uppercase',
-                                fontSize: 13,
-                                letterSpacing: '0.08em',
-                                fontWeight: 700,
-                                padding: '10px 16px',
-                                borderRadius: 6,
-                                boxShadow: '0 4px 14px rgba(212,160,23,0.35)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 8,
-                                cursor: 'pointer',
-                                width: '100%',
-                              }}
-                            >
-                              <GaaIcon name="check" size={14} tone="dark" />
-                              <span>
-                                {busy === `set-log:${exerciseKey}`
-                                  ? 'Saving Set...'
-                                  : isTimed
-                                    ? `Log Set ${draft.setNumber || '1'} (${draft.reps || '30'}s hold) & Rest (${draft.restSeconds || '30'}s)`
-                                    : isBand
-                                      ? `Log Set ${draft.setNumber || '1'} (${draft.weight || '0'} ${units === 'imperial' ? 'lb' : 'kg'} Band × ${draft.reps || '8'} reps) & Rest (${draft.restSeconds || '60'}s)`
-                                      : `Log Set ${draft.setNumber || '1'} (${draft.weight || '0'} ${units === 'imperial' ? 'lb' : 'kg'} × ${draft.reps || '8'} reps) & Rest (${draft.restSeconds || '60'}s)`
-                                }
-                              </span>
-                            </button>
-
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                              {activeRestTimerKey === exerciseKey && (
-                                <RestTimer
-                                  defaultSeconds={draft.restSeconds ? Number(draft.restSeconds) : (parseInt(String(ex.rest || '60').replace(/\D/g, ''), 10) || 60)}
-                                  autoStart={true}
-                                  onDone={handleTimerDone}
-                                />
-                              )}
+                              <details className="fitness-card-disclosure"><summary>Exercise options</summary>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                                 <button
                                   type="button"
@@ -4145,884 +3844,175 @@ export default function FitnessTrackerClient({
                                   Skip Exercise
                                 </button>
                               </div>
+                              </details>
                             </div>
 
-                            {/* ── Unified 4-Tool Strip: [ Form ] [ Warmup ] [ Science ] [ Telemetry ] ── */}
-                            {(() => {
-                              const activeTool = (activeExerciseToolTabs[exerciseKey] ?? (openFormGuides[exerciseKey] ? 'form' : openAdvancedMetrics[exerciseKey] ? 'telemetry' : null)) as WorkoutToolTab | null
+                            <div
+                              data-testid="exercise-set-details"
+                              className="fitness-inline-set-controls"
+                              style={{
+                                marginTop: 4,
+                                display: 'grid',
+                                gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                                gap: 8,
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                              <div style={{ color: 'var(--gray)', fontSize: 12 }}>
+                                {isStrength && `Tempo ${draft.tempo || effectiveTempo} · `}Rest {draft.restSeconds || '60'}s
+                              </div>                                <div>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--gray)', fontSize: 12, minHeight: 44 }}>
+                                    <input
+                                      type="checkbox"
+                                      style={{ width: 16, height: 16, minWidth: 16, minHeight: 16, margin: 0, padding: 0, flexShrink: 0 }}
+                                      checked={draft.isWarmup}
+                                      onChange={event => {
+                                        const checked = event.target.checked
+                                        setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, isWarmup: checked } }))
+                                      }}
+                                      aria-label="Mark as warm-up set"
+                                    />
+                                    Warm-up
+                                  </label>
+                                </div>
 
-                              const toggleTool = (tab: WorkoutToolTab) => {
-                                triggerHaptic('tap')
-                                const next = activeTool === tab ? null : tab
-                                setActiveExerciseToolTabs(prev => ({ ...prev, [exerciseKey]: next }))
-                                setOpenFormGuides(prev => ({ ...prev, [exerciseKey]: next === 'form' }))
-                                setOpenAdvancedMetrics(prev => ({ ...prev, [exerciseKey]: next === 'telemetry' }))
-                              }
+                              </div>
 
-                              const badgeItems = equipmentBadges(ex.primaryEquipment, ex.name, ex.description)
-                              const histLogs = (allSetLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
-                              const histMax1RmLbs = histLogs.reduce((max, log) => {
-                                const w = (log.weight_kg ?? 0) * 2.20462
-                                const r = log.reps ?? 0
-                                if (w <= 0 || r <= 0 || log.is_warmup) return max
-                                const calc = calculate1Rm(w, r)
-                                return Math.max(max, calc.average1RmLbs)
-                              }, 0)
-
-                              const activeExLogs = (setLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
-                              const exerciseLogs = activeExLogs
-                                .filter(s => !s.session_date || s.session_date === draft.sessionDate)
-                                .map((s, idx) => ({
-                                  setNumber: typeof s.set_number === 'number' ? s.set_number : idx + 1,
-                                  weightLbs: (s.weight_kg ?? 0) * 2.20462,
-                                  weightKg: s.weight_kg ?? undefined,
-                                  reps: Number(s.reps) || 0,
-                                  rpe: s.rpe,
-                                  rir: s.rir,
-                                  isWarmup: s.is_warmup,
-                                }))
-
-                              const allSessionLogsFormatted = activeSetLogs
-                                .filter(s => !s.session_date || s.session_date === draft.sessionDate)
-                                .map((s, idx) => ({
-                                  setNumber: typeof s.set_number === 'number' ? s.set_number : idx + 1,
-                                  weightLbs: (s.weight_kg ?? 0) * 2.20462,
-                                  weightKg: s.weight_kg ?? undefined,
-                                  reps: Number(s.reps) || 0,
-                                  rpe: s.rpe,
-                                  rir: s.rir,
-                                  isWarmup: s.is_warmup,
-                                }))
-
-                              return (
-                                <div style={{ marginTop: 8 }}>
-                                  {/* Segmented 4-Tool Bar */}
-                                  <div
-                                    data-testid="unified-exercise-tool-strip"
-                                    className="fitness-exercise-tools"
-                                    style={{
-                                      display: 'grid',
-                                      gridTemplateColumns: 'repeat(4, 1fr)',
-                                      gap: 4,
-                                      background: 'rgba(7, 11, 20, 0.75)',
-                                      padding: 3,
-                                      borderRadius: 6,
-                                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                              <div className="fitness-primary-set-inputs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                <div>
+                                  <label style={setFieldLabelStyle}>RPE</label>
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    autoComplete="off"
+                                    onFocus={selectOnFocus}
+                                    value={draft.rpe}
+                                    onChange={event => {
+                                      const value = sanitizeNumericInput(event.target.value)
+                                      setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, rpe: value } }))
                                     }}
-                                  >
-                                    <button
-                                      type="button"
-                                      data-testid="toggle-form-guide-btn"
-                                      aria-expanded={activeTool === 'form'}
-                                      onClick={() => toggleTool('form')}
-                                      style={{
-                                        padding: '5px 2px',
-                                        background: activeTool === 'form' ? 'rgba(212,160,23,0.22)' : 'transparent',
-                                        border: activeTool === 'form' ? '1px solid var(--gold)' : '1px solid transparent',
-                                        color: activeTool === 'form' ? 'var(--gold-lt)' : 'var(--gray)',
-                                        borderRadius: 4,
-                                        cursor: 'pointer',
-                                        fontSize: 10.5,
-                                        fontWeight: 700,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 3,
-                                        transition: 'all 0.15s ease',
+                                    style={inputStyle}
+                                    placeholder="Optional"
+                                    title="RPE: how hard this set felt, from 1 (easy) to 10 (maximum effort)."
+                                    aria-label="Rate of perceived exertion (1-10)"
+                                  />
+                                </div>
+                                {isStrength && (
+                                  <div>
+                                    <label style={setFieldLabelStyle}>RIR</label>
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      autoComplete="off"
+                                      onFocus={selectOnFocus}
+                                      value={draft.rir}
+                                      onChange={event => {
+                                        const value = sanitizeNumericInput(event.target.value)
+                                        setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, rir: value } }))
                                       }}
-                                    >
-                                      <GaaIcon name="book" size={11} tone={activeTool === 'form' ? 'gold' : 'slate'} />
-                                      <span>Form</span>
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      data-testid="toggle-warmup-tools-btn"
-                                      aria-expanded={activeTool === 'warmup'}
-                                      onClick={() => toggleTool('warmup')}
-                                      style={{
-                                        padding: '5px 2px',
-                                        background: activeTool === 'warmup' ? 'rgba(212,160,23,0.22)' : 'transparent',
-                                        border: activeTool === 'warmup' ? '1px solid var(--gold)' : '1px solid transparent',
-                                        color: activeTool === 'warmup' ? 'var(--gold-lt)' : 'var(--gray)',
-                                        borderRadius: 4,
-                                        cursor: 'pointer',
-                                        fontSize: 10.5,
-                                        fontWeight: 700,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 3,
-                                        transition: 'all 0.15s ease',
-                                      }}
-                                    >
-                                      <GaaIcon name="sparkles" size={11} tone={activeTool === 'warmup' ? 'gold' : 'slate'} />
-                                      <span>Warmup</span>
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      data-testid="toggle-science-tools-btn"
-                                      aria-expanded={activeTool === 'science'}
-                                      onClick={() => toggleTool('science')}
-                                      style={{
-                                        padding: '5px 2px',
-                                        background: activeTool === 'science' ? 'rgba(212,160,23,0.22)' : 'transparent',
-                                        border: activeTool === 'science' ? '1px solid var(--gold)' : '1px solid transparent',
-                                        color: activeTool === 'science' ? 'var(--gold-lt)' : 'var(--gray)',
-                                        borderRadius: 4,
-                                        cursor: 'pointer',
-                                        fontSize: 10.5,
-                                        fontWeight: 700,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 3,
-                                        transition: 'all 0.15s ease',
-                                      }}
-                                    >
-                                      <GaaIcon name="award" size={11} tone={activeTool === 'science' ? 'gold' : 'slate'} />
-                                      <span>Science</span>
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      data-testid="toggle-advanced-telemetry-btn"
-                                      aria-expanded={activeTool === 'telemetry'}
-                                      onClick={() => toggleTool('telemetry')}
-                                      style={{
-                                        padding: '5px 2px',
-                                        background: activeTool === 'telemetry' ? 'rgba(212,160,23,0.22)' : 'transparent',
-                                        border: activeTool === 'telemetry' ? '1px solid var(--gold)' : '1px solid transparent',
-                                        color: activeTool === 'telemetry' ? 'var(--gold-lt)' : 'var(--gray)',
-                                        borderRadius: 4,
-                                        cursor: 'pointer',
-                                        fontSize: 10.5,
-                                        fontWeight: 700,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 3,
-                                        transition: 'all 0.15s ease',
-                                      }}
-                                    >
-                                      <GaaIcon name="settings" size={11} tone={activeTool === 'telemetry' ? 'gold' : 'slate'} />
-                                      <span>Set details</span>
-                                    </button>
-                                  </div>
-
-                                  {/* ── Modern PWA / Mobile Modal Bottom Sheet for In-Workout Tools ── */}
-                                  <WorkoutToolBottomSheet
-                                    isOpen={Boolean(activeTool)}
-                                    onClose={() => {
-                                      triggerHaptic('tap')
-                                      setActiveExerciseToolTabs(prev => ({ ...prev, [exerciseKey]: null }))
-                                      setOpenFormGuides(prev => ({ ...prev, [exerciseKey]: false }))
-                                      setOpenAdvancedMetrics(prev => ({ ...prev, [exerciseKey]: false }))
-                                    }}
-                                    activeTool={(activeTool as WorkoutToolTab) || 'warmup'}
-                                    onSelectTool={tab => {
-                                      triggerHaptic('tap')
-                                      setActiveExerciseToolTabs(prev => ({ ...prev, [exerciseKey]: tab }))
-                                      setOpenFormGuides(prev => ({ ...prev, [exerciseKey]: tab === 'form' }))
-                                      setOpenAdvancedMetrics(prev => ({ ...prev, [exerciseKey]: tab === 'telemetry' }))
-                                    }}
-                                    exerciseName={ex.name}
-                                    availableTools={
-                                      !isTimed && isStrength && isIntensityProtocolOfferedForPhase(plan?.nasm_opt_phase)
-                                        ? ['form', 'warmup', 'intensity', 'science', 'telemetry']
-                                        : ['form', 'warmup', 'science', 'telemetry']
-                                    }
-                                    triggerHaptic={triggerHaptic}
-                                  >
-                                    {/* Tool 1: Form & Video Guide Panel */}
-                                    {activeTool === 'form' && (
-                                    <div
-                                      data-testid="form-guide-container"
-                                      style={{
-                                        marginTop: 8,
-                                        borderRadius: 6,
-                                        background: 'rgba(212,160,23,0.06)',
-                                        border: '1px solid rgba(212,160,23,0.25)',
-                                        padding: 10,
-                                        display: 'grid',
-                                        gap: 8,
-                                      }}
-                                    >
-                                      {/* Visual Movement Demonstration Banner */}
-                                      {(() => {
-                                        const gaaImage = resolveGaaExerciseImage(ex.name, false)
-                                        const heroImg = gaaImage || movementCard.imageUrl || movementCard.fallbackImageUrl || '/images/exercises/image-not-available.jpg'
-                                        const hasVideo = Boolean(movementCard.embedUrl || movementCard.videoUrl)
-                                        return (
-                                          <div
-                                            onClick={() => setActiveVideoExercise(ex)}
-                                            style={{
-                                              position: 'relative',
-                                              width: '100%',
-                                              aspectRatio: '16 / 9',
-                                              maxHeight: 'clamp(180px, 32vh, 260px)',
-                                              borderRadius: 6,
-                                              overflow: 'hidden',
-                                              backgroundColor: '#070B14',
-                                              border: '1px solid rgba(212,160,23,0.35)',
-                                              cursor: 'pointer',
-                                              boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
-                                            }}
-                                            title={`View NASM Clinical Form & Demonstration for ${ex.name}`}
-                                          >
-                                            <img
-                                              src={heroImg}
-                                              alt={ex.name}
-                                              loading="lazy"
-                                              decoding="async"
-                                              onError={(e) => {
-                                                (e.currentTarget as HTMLImageElement).src = '/images/exercises/image-not-available.jpg'
-                                              }}
-                                              style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                objectFit: 'cover',
-                                                objectPosition: 'center',
-                                                display: 'block',
-                                              }}
-                                            />
-                                            <div
-                                              style={{
-                                                position: 'absolute',
-                                                bottom: 8,
-                                                right: 8,
-                                                background: 'rgba(0,0,0,0.85)',
-                                                border: '1px solid rgba(212,160,23,0.55)',
-                                                color: 'var(--gold-lt)',
-                                                borderRadius: 5,
-                                                padding: '4px 8px',
-                                                fontSize: 11,
-                                                fontWeight: 700,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 5,
-                                                backdropFilter: 'blur(4px)',
-                                              }}
-                                            >
-                                              <GaaIcon name={hasVideo ? "play" : "book"} size={11} tone="gold" />
-                                              <span>{hasVideo ? "Watch Video" : "Form Standards"}</span>
-                                            </div>
-                                            <div
-                                              style={{
-                                                position: 'absolute',
-                                                top: 8,
-                                                left: 8,
-                                                background: 'rgba(7,11,20,0.85)',
-                                                border: '1px solid rgba(255,255,255,0.15)',
-                                                color: '#E2E8F0',
-                                                borderRadius: 4,
-                                                padding: '3px 8px',
-                                                fontSize: 10,
-                                                fontWeight: 800,
-                                                textTransform: 'uppercase',
-                                              }}
-                                            >
-                                              {movementCard.category} · {movementCard.optPhase.split('·')[0].trim()}
-                                            </div>
-                                          </div>
-                                        )
-                                      })()}
-
-                                      {/* Numbered Step-by-Step Technique Instructions */}
-                                      <div
-                                        style={{
-                                          background: 'rgba(0,0,0,0.35)',
-                                          borderLeft: '2px solid var(--gold)',
-                                          borderRadius: '0 4px 4px 0',
-                                          padding: '8px 10px',
-                                          fontSize: 11.5,
-                                          lineHeight: 1.45,
-                                          color: '#E2E8F0',
-                                        }}
-                                      >
-                                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 4 }}>
-                                          How to perform this exercise:
-                                        </div>
-                                        <div style={{ display: 'grid', gap: 3 }}>
-                                          {movementCard.howToSteps.map((stepText, stIdx) => (
-                                            <div key={stIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
-                                              <span style={{ color: 'var(--gold-lt)', fontWeight: 800, flexShrink: 0 }}>{stIdx + 1}.</span>
-                                              <span>{stepText.replace(/^\d+\.\s*/, '')}</span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-
-                                      {/* Badges and Video Button */}
-                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
-                                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                                          {badgeItems.map(item => (
-                                            <span
-                                              key={item}
-                                              style={{
-                                                border: '1px solid rgba(212,160,23,0.22)',
-                                                background: 'rgba(212,160,23,0.12)',
-                                                color: 'var(--gold)',
-                                                padding: '2px 6px',
-                                                fontSize: 9.5,
-                                                fontWeight: 600,
-                                                letterSpacing: '0.04em',
-                                                textTransform: 'uppercase',
-                                                borderRadius: 3,
-                                              }}
-                                            >
-                                              {item}
-                                            </span>
-                                          ))}
-                                        </div>
-
-                                        <button
-                                          type="button"
-                                          onClick={() => setActiveVideoExercise(ex)}
-                                          className="tactile-btn"
-                                          style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: 5,
-                                            background: 'rgba(212,160,23,0.15)',
-                                            border: '1px solid rgba(212,160,23,0.4)',
-                                            color: 'var(--gold-lt)',
-                                            fontSize: 11,
-                                            fontWeight: 700,
-                                            padding: '4px 10px',
-                                            borderRadius: 4,
-                                            cursor: 'pointer',
-                                          }}
-                                        >
-                                          <GaaIcon name="book" size={11} tone="gold" />
-                                          <span>NASM Video & Form ↗</span>
-                                        </button>
-                                      </div>
-
-                                      {ex.notes && (
-                                        <div style={{ fontSize: 11.5, color: 'var(--gold-lt)', background: 'rgba(212,160,23,0.06)', border: '1px solid rgba(212,160,23,0.2)', padding: '5px 8px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
-                                          <GaaIcon name="sparkles" size={11} tone="gold" />
-                                          <div>
-                                            <strong>Coach Form Cue:</strong> {ex.notes}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  {/* Tool 2: Warmup & Intensity Protocols Panel */}
-                                  {(activeTool === 'warmup' || activeTool === 'intensity') && (
-                                    <div
-                                      data-testid="warmup-tools-container"
-                                      style={{
-                                        display: 'grid',
-                                        gap: 12,
-                                      }}
-                                    >
-                                      {(activeTool === 'warmup' || !isIntensityProtocolOfferedForPhase(plan?.nasm_opt_phase)) && (
-                                        <WarmUpRampDrawer
-                                          exerciseKey={exerciseKey}
-                                          exerciseName={ex.name}
-                                          draftWeight={draft.weight}
-                                          oneRmLbs={histMax1RmLbs > 0 ? histMax1RmLbs : undefined}
-                                          units={units}
-                                          isTimed={isTimed}
-                                          isBand={isBand}
-                                          isOpen={Boolean(openWarmupRamps[`ramp-${exerciseKey}`] ?? true)}
-                                          onToggle={() =>
-                                            setOpenWarmupRamps(prev => ({
-                                              ...prev,
-                                              [`ramp-${exerciseKey}`]: !(prev[`ramp-${exerciseKey}`] ?? true),
-                                            }))
-                                          }
-                                        prescribedReps={ex.reps}
-                                        onPopulateWorkingWeight={(workingWeight, targetReps) => {
-                                          triggerHaptic('success')
-                                          const finalReps = targetReps || parsePrescribedWorkingReps(ex.reps)
-                                          const popResult = calculateWorkingSetPrePopulateLoad({
-                                            exerciseName: ex.name,
-                                            targetWorkingWeightLbs: units === 'imperial' ? Number(workingWeight) : Number(workingWeight) * 2.20462,
-                                            units,
-                                            completedStageNumber: 4,
-                                            totalStages: 4,
-                                            prescribedReps: ex.reps,
-                                          })
-
-                                          setInlineSetDrafts(prev => ({
-                                            ...prev,
-                                            [exerciseKey]: {
-                                              ...draft,
-                                              weight: workingWeight,
-                                              reps: finalReps,
-                                              setNumber: '1',
-                                              isWarmup: false,
-                                              notes: '',
-                                            },
-                                          }))
-
-                                          playCoachChime(783.99, 0.25, 'triangle')
-                                          speakCoachVoiceCue(popResult.coachVoiceCue)
-                                          setStatus(popResult.bannerNotice)
-                                        }}
-                                        onLogWarmupStage={(stageWeight, reps, restSeconds, stageNumber, totalStages, stageTitle) => {
-                                          const stageTag = totalStages && stageTitle
-                                            ? `[WarmUp ${stageNumber}/${totalStages}: ${stageTitle}]`
-                                            : `[Warm-up Ramp Stage ${stageNumber}]`
-                                          const isFinalStage = Boolean(totalStages && stageNumber >= totalStages)
-
-                                          setInlineSetDrafts(prev => ({
-                                            ...prev,
-                                            [exerciseKey]: {
-                                              ...draft,
-                                              weight: stageWeight,
-                                              reps: String(reps),
-                                              restSeconds: String(restSeconds),
-                                              isWarmup: true,
-                                              notes: stageTag,
-                                            },
-                                          }))
-
-                                          setTimeout(() => {
-                                            const syntheticEvent = { preventDefault: () => {} } as React.FormEvent
-                                            handleInlineSetLog(syntheticEvent, workout, ex)
-
-                                            if (isFinalStage && totalStages) {
-                                              setTimeout(() => {
-                                                const popResult = calculateWorkingSetPrePopulateLoad({
-                                                  exerciseName: ex.name,
-                                                  targetWorkingWeightLbs: (Number(draft.weight) || 135) * (units === 'imperial' ? 1 : 2.20462),
-                                                  units,
-                                                  completedStageNumber: totalStages,
-                                                  totalStages,
-                                                  prescribedReps: ex.reps,
-                                                })
-                                                setInlineSetDrafts(prev => ({
-                                                  ...prev,
-                                                  [exerciseKey]: {
-                                                    ...draft,
-                                                    weight: popResult.workingWeight,
-                                                    reps: popResult.workingReps,
-                                                    setNumber: '1',
-                                                    isWarmup: false,
-                                                    notes: '',
-                                                  },
-                                                }))
-                                                speakCoachVoiceCue(popResult.coachVoiceCue)
-                                              }, 350)
-                                            }
-                                          }, 50)
-                                        }}
-                                        triggerHaptic={triggerHaptic}
-                                      />
-                                    )}
-
-                                    {!isTimed && isStrength && isIntensityProtocolOfferedForPhase(plan?.nasm_opt_phase) && (
-                                      <div data-testid="intensity-tools-container">
-                                        <IntensityProtocolDrawer
-                                          exerciseName={ex.name}
-                                          currentWeight={draft.weight}
-                                          currentReps={draft.reps}
-                                          units={units}
-                                          isTimed={isTimed}
-                                          nasmOptPhase={plan?.nasm_opt_phase}
-                                          onLogIntensitySet={protocolData => {
-                                            const primaryWeight = units === 'imperial'
-                                              ? String(protocolData.initialWeightLbs)
-                                              : String(Math.round((protocolData.initialWeightLbs / 2.20462) * 10) / 10)
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: {
-                                                ...draft,
-                                                weight: primaryWeight,
-                                                reps: String(protocolData.totalReps),
-                                                notes: protocolData.notes || '',
-                                              },
-                                            }))
-                                            setTimeout(() => {
-                                              const syntheticEvent = { preventDefault: () => {} } as React.FormEvent
-                                              handleInlineSetLog(syntheticEvent, workout, ex)
-                                            }, 50)
-                                          }}
-                                          triggerHaptic={triggerHaptic}
-                                          defaultOpen={activeTool === 'intensity'}
-                                        />
-                                      </div>
-                                    )}
+                                      style={inputStyle}
+                                      placeholder="Optional"
+                                      title="RIR: how many more reps you could perform, from 0 to 6."
+                                      aria-label="Reps in reserve (0-6)"
+                                    />
                                   </div>
                                 )}
-
-                                  {/* Tool 3: Sports Science & Autoregulation Panel */}
-                                  {activeTool === 'science' && (
-                                    <div
-                                      data-testid="science-tools-container"
-                                      style={{
-                                        marginTop: 8,
-                                        borderRadius: 6,
-                                        background: 'rgba(255,255,255,0.02)',
-                                        border: '1px solid rgba(255,255,255,0.08)',
-                                        padding: 8,
-                                        display: 'grid',
-                                        gap: 8,
-                                      }}
-                                    >
-                                      {!isTimed && (
-                                        <DynamicLoadPrescriptionPill
-                                          exerciseName={ex.name}
-                                          nasmOptPhase={plan?.nasm_opt_phase}
-                                          targetRepsText={ex.reps}
-                                          historicalSets={histLogs.map(l => ({
-                                            weightKg: l.weight_kg,
-                                            weightLbs: l.weight_kg ? l.weight_kg * 2.20462 : undefined,
-                                            reps: Number(l.reps) || 0,
-                                            rpe: l.rpe ? Number(l.rpe) : undefined,
-                                            sessionDate: l.session_date,
-                                            isWarmup: l.is_warmup,
-                                          }))}
-                                          dailyReadinessScore={liveReadinessScore}
-                                          acwrRatio={acwrTelemetry.acwrRatio}
-                                          preferredUnits={units}
-                                          onApplyRecommendation={load => {
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: {
-                                                ...draft,
-                                                weight: load.weight,
-                                                reps: load.reps,
-                                                rpe: load.rpe,
-                                                rir: load.rir,
-                                                tempo: load.tempo,
-                                              },
-                                            }))
-                                          }}
-                                        />
-                                      )}
-
-                                      {!isTimed && (
-                                        <VolumeOverloadMiniHud
-                                          exerciseName={ex.name}
-                                          targetRepsText={ex.reps}
-                                          currentSessionDate={draft.sessionDate}
-                                          allExerciseLogs={histLogs}
-                                          preferredUnits={units}
-                                          isTimed={isTimed}
-                                          triggerHaptic={triggerHaptic}
-                                        />
-                                      )}
-
-                                      {!isTimed && (
-                                        <AutoregulationDeloadAdvisor
-                                          exerciseName={ex.name}
-                                          currentDraftWeight={draft.weight}
-                                          currentDraftReps={draft.reps}
-                                          targetReps={ex.reps}
-                                          completedSets={exerciseLogs}
-                                          allSessionSets={allSessionLogsFormatted}
-                                          units={units}
-                                          isTimed={isTimed}
-                                          sessionDurationMinutes={Math.max(5, Math.floor(elapsedWorkoutSeconds / 60))}
-                                          onApplyDeloadWeight={newWeight => {
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: {
-                                                ...draft,
-                                                weight: newWeight,
-                                              },
-                                            }))
-                                          }}
-                                          onApplyRepCap={newReps => {
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: {
-                                                ...draft,
-                                                reps: newReps,
-                                              },
-                                            }))
-                                          }}
-                                          onOpenDropSet={stages => {
-                                            if (!stages?.length) return
-                                            const stageDesc = stages
-                                              .map(s => {
-                                                const weightDisplay = units === 'imperial' ? `${s.weightLbs}lbs` : `${Math.round(s.weightLbs / 2.20462)}kg`
-                                                return `${weightDisplay} (${s.reps} reps)`
-                                              })
-                                              .join(' ➔ ')
-                                            const firstWeight = units === 'imperial' ? String(stages[0].weightLbs) : String(Math.round(stages[0].weightLbs / 2.20462))
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: {
-                                                ...draft,
-                                                weight: firstWeight,
-                                                notes: draft.notes ? `${draft.notes} | Drop-Set: ${stageDesc}` : `Drop-Set: ${stageDesc}`,
-                                              },
-                                            }))
-                                          }}
-                                          onApplyClusterSet={clusterPlan => {
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: {
-                                                ...draft,
-                                                reps: String(clusterPlan.repsPerCluster),
-                                                notes: draft.notes ? `${draft.notes} | ${clusterPlan.notesTag}` : clusterPlan.notesTag,
-                                              },
-                                            }))
-                                          }}
-                                          onApplyMyoReps={myoPlan => {
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: {
-                                                ...draft,
-                                                reps: String(myoPlan.activationReps),
-                                                notes: draft.notes ? `${draft.notes} | ${myoPlan.notesTag}` : myoPlan.notesTag,
-                                              },
-                                            }))
-                                          }}
-                                          onExtendRestTimer={additionalSecs => {
-                                            setActiveRestState(prev =>
-                                              prev
-                                                ? {
-                                                    ...prev,
-                                                    remainingSeconds: prev.remainingSeconds + additionalSecs,
-                                                    restSeconds: prev.restSeconds + additionalSecs,
-                                                  }
-                                                : null
-                                            )
-                                          }}
-                                          triggerHaptic={triggerHaptic}
-                                        />
-                                      )}
-                                    </div>
-                                  )}
-
-                                  {/* Tool 4: Advanced Telemetry Panel */}
-                                  {activeTool === 'telemetry' && (
-                                    <div
-                                      data-testid="advanced-telemetry-container"
-                                      style={{
-                                        marginTop: 8,
-                                        borderRadius: 6,
-                                        background: 'rgba(255,255,255,0.02)',
-                                        border: '1px solid rgba(255,255,255,0.08)',
-                                        padding: 10,
-                                        display: 'grid',
-                                        gap: 8,
-                                      }}
-                                    >
-                                      {/* Workout Date & Set Number Override */}
-                                      <div className="fitness-set-input-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                        <div>
-                                          <label style={setFieldLabelStyle}>Workout Date</label>
-                                          <input
-                                            type="date"
-                                            value={draft.sessionDate}
-                                            onChange={event => {
-                                              const value = event.target.value
-                                              setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, sessionDate: value } }))
-                                            }}
-                                            style={inputStyle}
-                                            required
-                                            aria-label="Session date"
-                                          />
-                                        </div>
-                                        <div>
-                                          <label style={setFieldLabelStyle}>Set Number</label>
-                                          <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            autoComplete="off"
-                                            onFocus={selectOnFocus}
-                                            value={draft.setNumber}
-                                            onChange={event => {
-                                              const value = sanitizeNumericInput(event.target.value)
-                                              setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, setNumber: value } }))
-                                            }}
-                                            style={inputStyle}
-                                            placeholder="1"
-                                            aria-label="Set number"
-                                          />
-                                        </div>
-                                      </div>
-
-                                      {/* Secondary fields: Tempo, Rest, RPE, RIR, Warm-up */}
-                                      <div className="fitness-set-input-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(88px, 1fr))', gap: 8 }}>
-                                        {isStrength && (
-                                          <div>
-                                            <label style={setFieldLabelStyle}>Tempo</label>
-                                            <input
-                                              type="text"
-                                              value={draft.tempo || ''}
-                                              onChange={event => {
-                                                const value = event.target.value
-                                                setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, tempo: value } }))
-                                              }}
-                                              style={inputStyle}
-                                              placeholder="2/0/2"
-                                              aria-label="Movement tempo (e.g. 4/2/1 or 2/0/2)"
-                                            />
-                                          </div>
-                                        )}
-                                        <div>
-                                          <label style={setFieldLabelStyle}>Rest (sec)</label>
-                                          <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            autoComplete="off"
-                                            onFocus={selectOnFocus}
-                                            value={draft.restSeconds}
-                                            onChange={event => {
-                                              const value = sanitizeNumericInput(event.target.value)
-                                              setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, restSeconds: value } }))
-                                            }}
-                                            style={inputStyle}
-                                            placeholder={isTimed ? '0' : '60'}
-                                            aria-label="Rest time in seconds"
-                                          />
-                                        </div>
-                                        <div>
-                                          <label style={setFieldLabelStyle}>RPE (1-10)</label>
-                                          <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            autoComplete="off"
-                                            onFocus={selectOnFocus}
-                                            value={draft.rpe}
-                                            onChange={event => {
-                                              const value = sanitizeNumericInput(event.target.value)
-                                              setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, rpe: value } }))
-                                            }}
-                                            style={inputStyle}
-                                            placeholder="7"
-                                            aria-label="Rate of perceived exertion (1-10)"
-                                            title="Rate of Perceived Exertion (1-10)"
-                                          />
-                                        </div>
-                                        {isStrength && (
-                                          <div>
-                                            <label style={setFieldLabelStyle}>RIR (0-6)</label>
-                                            <input
-                                              type="text"
-                                              inputMode="decimal"
-                                              autoComplete="off"
-                                              onFocus={selectOnFocus}
-                                              value={draft.rir}
-                                              onChange={event => {
-                                                const value = sanitizeNumericInput(event.target.value)
-                                                setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, rir: value } }))
-                                              }}
-                                              style={inputStyle}
-                                              placeholder="2"
-                                              aria-label="Reps in reserve (0-6)"
-                                              title="Reps in Reserve (0-6)"
-                                            />
-                                          </div>
-                                        )}
-                                        <div>
-                                          <label style={setFieldLabelStyle}>Set Type</label>
-                                          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--gray)', fontSize: 12, border: '1px solid var(--navy-lt)', minHeight: 44, borderRadius: 2 }}>
-                                            <input
-                                              type="checkbox"
-                                              checked={draft.isWarmup}
-                                              onChange={event => {
-                                                const checked = event.target.checked
-                                                setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, isWarmup: checked } }))
-                                              }}
-                                              aria-label="Mark as warm-up set"
-                                            />
-                                            Warm-up
-                                          </label>
-                                        </div>
-                                      </div>
-
-                                      {/* Interactive RPE & RIR Exertion Selector */}
-                                      {!isTimed && (
-                                        <RpeRirExertionSelector
-                                          exerciseName={ex.name}
-                                          currentRpe={draft.rpe}
-                                          currentRir={draft.rir}
-                                          isStrength={isStrength}
-                                          onChangeRpe={rpeVal => {
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: { ...draft, rpe: rpeVal },
-                                            }))
-                                          }}
-                                          onChangeRir={rirVal => {
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: { ...draft, rir: rirVal },
-                                            }))
-                                          }}
-                                          triggerHaptic={triggerHaptic}
-                                        />
-                                      )}
-
-                                      {/* Interactive Rep Cadence & Tempo Metronome */}
-                                      {!isTimed && isStrength && (
-                                        <RepCadenceMetronome
-                                          tempo={draft.tempo || effectiveTempo || '2/0/2'}
-                                          targetReps={draft.reps || ex.reps || 8}
-                                          exerciseName={ex.name}
-                                          weightKg={
-                                            units === 'imperial'
-                                              ? (parseFloat(draft.weight) || 0) * 0.453592
-                                              : (parseFloat(draft.weight) || 0)
-                                          }
-                                          units={units}
-                                          nasmOptPhase={plan?.nasm_opt_phase}
-                                          onCompleteReps={completedReps => {
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: { ...draft, reps: String(completedReps) },
-                                            }))
-                                          }}
-                                          triggerHaptic={triggerHaptic}
-                                        />
-                                      )}
-
-                                      {/* Set Notes */}
-                                      <div>
-                                        <label style={setFieldLabelStyle}>Set Notes (optional)</label>
-                                        <textarea
-                                          value={draft.notes}
-                                          onChange={event => {
-                                            const value = event.target.value
-                                            setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, notes: value } }))
-                                          }}
-                                          style={{ ...inputStyle, minHeight: 48 }}
-                                          placeholder="Form cues, band tension, or notes"
-                                        />
-                                      </div>
-
-                                      {/* 1RM Percentage & Target Load Matrix */}
-                                      {!isTimed && (
-                                        <OneRepMaxPercentageMatrix
-                                          exerciseName={ex.name}
-                                          currentWeight={draft.weight}
-                                          currentReps={draft.reps}
-                                          historicalMax1RmLbs={histMax1RmLbs > 0 ? histMax1RmLbs : undefined}
-                                          units={units}
-                                          isWarmup={draft.isWarmup}
-                                          isTimed={isTimed}
-                                          onApplyLoad={(appliedWeight, appliedReps) => {
-                                            setInlineSetDrafts(prev => ({
-                                              ...prev,
-                                              [exerciseKey]: {
-                                                ...draft,
-                                                weight: appliedWeight,
-                                                reps: appliedReps,
-                                              },
-                                            }))
-                                          }}
-                                          triggerHaptic={triggerHaptic}
-                                        />
-                                      )}
-                                    </div>
-                                  )}
-                                  </WorkoutToolBottomSheet>
+                              </div>
+                              <details className="fitness-card-disclosure">
+                                <summary>Edit set details</summary>
+                              {/* Workout Date & Set Number Override */}
+                              <div className="fitness-set-input-grid fitness-primary-set-inputs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                <div>
+                                  <label style={setFieldLabelStyle}>Workout Date</label>
+                                  <input
+                                    type="date"
+                                    value={draft.sessionDate}
+                                    onChange={event => {
+                                      const value = event.target.value
+                                      setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, sessionDate: value } }))
+                                    }}
+                                    style={inputStyle}
+                                    required
+                                    aria-label="Session date"
+                                  />
                                 </div>
-                              )
-                            })()}
+                                <div>
+                                  <label style={setFieldLabelStyle}>Set Number</label>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    onFocus={selectOnFocus}
+                                    value={draft.setNumber}
+                                    onChange={event => {
+                                      const value = sanitizeNumericInput(event.target.value)
+                                      setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, setNumber: value } }))
+                                    }}
+                                    style={inputStyle}
+                                    placeholder="1"
+                                    aria-label="Set number"
+                                  />
+                                </div>
+                              </div>
 
+                              {/* Prescription overrides */}
+                              <div className="fitness-set-input-grid fitness-primary-set-inputs" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(88px, 1fr))', gap: 8 }}>
+                                {isStrength && (
+                                  <div>
+                                    <label style={setFieldLabelStyle}>Tempo</label>
+                                    <input
+                                      type="text"
+                                      value={draft.tempo || ''}
+                                      onChange={event => {
+                                        const value = event.target.value
+                                        setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, tempo: value } }))
+                                      }}
+                                      style={inputStyle}
+                                      placeholder="2/0/2"
+                                      aria-label="Movement tempo (e.g. 4/2/1 or 2/0/2)"
+                                    />
+                                  </div>
+                                )}
+                                <div>
+                                  <label style={setFieldLabelStyle}>Rest (sec)</label>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    onFocus={selectOnFocus}
+                                    value={draft.restSeconds}
+                                    onChange={event => {
+                                      const value = sanitizeNumericInput(event.target.value)
+                                      setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, restSeconds: value } }))
+                                    }}
+                                    style={inputStyle}
+                                    placeholder={isTimed ? '0' : '60'}
+                                    aria-label="Rest time in seconds"
+                                  />
+                                </div>
+                              </div>
+
+                              </details>
+                              <details className="fitness-card-disclosure">
+                                <summary>Add note{draft.notes ? ' (saved in draft)' : ''}</summary>
+                              <div>
+                                <label style={setFieldLabelStyle}>Set Notes (optional)</label>
+                                <textarea
+                                  value={draft.notes}
+                                  onChange={event => {
+                                    const value = event.target.value
+                                    setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, notes: value } }))
+                                  }}
+                                  style={{ ...inputStyle, minHeight: 48 }}
+                                  placeholder="Form cues, band tension, or notes"
+                                />
+                              </div>
+                              </details>
+                            </div>
+
+                            {exerciseRecentLogs.length > 0 && (
+                              <details className="fitness-card-disclosure">
+                                <summary>Logged sets ({exerciseRecentLogs.length}) · View history</summary>
                             {/* ── Horizontal Sets Carousel (Today's Completed Sets) ── */}
                             <HorizontalSetsCarousel
                               logs={exerciseRecentLogs}
@@ -5046,6 +4036,45 @@ export default function FitnessTrackerClient({
                                 }))
                               }}
                             />
+
+                              </details>
+                            )}
+                            {/* Primary Gold Quick Log Set Button */}
+                            <button
+                              type="submit"
+                              disabled={busy === `set-log:${exerciseKey}`}
+                              className="tactile-btn"
+                              style={{
+                                ...buttonStyle,
+                                marginTop: 10,
+                                background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
+                                border: '1px solid #D4AF37',
+                                color: '#0A0E18',
+                                fontFamily: 'var(--font-sans, Raleway), sans-serif',
+                                textTransform: 'uppercase',
+                                fontSize: 13,
+                                letterSpacing: '0.08em',
+                                fontWeight: 700,
+                                padding: '10px 16px',
+                                borderRadius: 6,
+                                boxShadow: '0 4px 14px rgba(212,160,23,0.35)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 8,
+                                cursor: 'pointer',
+                                width: '100%',
+                              }}
+                            >
+                              <GaaIcon name="check" size={14} tone="dark" />
+                              <span>
+                                {busy === `set-log:${exerciseKey}`
+                                  ? 'Saving Set...'
+                                  : 'Log set & start rest'
+                                }
+                              </span>
+                            </button>
+
                           </form>
                           </div>
                           )}
@@ -6070,85 +5099,6 @@ export default function FitnessTrackerClient({
         />
       )}
 
-      {/* ── Tactical In-Gym Barbell Plate Calculator Modal ── */}
-      {plateCalculatorTargetLbs !== null && (
-        <BarbellPlateCalculator
-          isModal={true}
-          initialWeightLbs={plateCalculatorTargetLbs || 225}
-          onClose={() => setPlateCalculatorTargetLbs(null)}
-        />
-      )}
-
-      {/* ── Interactive Program Schedule & Calendar Modal ── */}
-      {showCalendarModal && planCalendarEntries.length > 0 && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.85)',
-            zIndex: 100000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-            backdropFilter: 'blur(10px)',
-          }}
-          onClick={() => setShowCalendarModal(false)}
-        >
-          <div
-            style={{
-              background: '#0A0F1E',
-              border: '1.5px solid #D4AF37',
-              borderRadius: 12,
-              padding: '20px 24px',
-              maxWidth: 520,
-              width: '100%',
-              maxHeight: '85vh',
-              overflowY: 'auto',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.9), 0 0 35px rgba(212,175,55,0.3)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <GaaIcon name="calendar" size={16} tone="gold" />
-                <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, color: '#F8FAFC', fontWeight: 700 }}>
-                  Program Schedule
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCalendarModal(false)}
-                className="tactile-btn"
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  color: '#94A3B8',
-                  borderRadius: 4,
-                  width: 28,
-                  height: 28,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
-                aria-label="Close schedule modal"
-              >
-                <GaaIcon name="close" size={13} tone="white" />
-              </button>
-            </div>
-            <WorkoutCalendarView
-              entries={planCalendarEntries}
-              title="Mesocycle Calendar"
-              subtitle="Select a scheduled session to jump directly to that workout day."
-              onSelectEntry={(entry) => {
-                handleCalendarEntrySelect(entry)
-                setShowCalendarModal(false)
-              }}
-            />
-          </div>
-        </div>
-      )}
 
     </>
   )

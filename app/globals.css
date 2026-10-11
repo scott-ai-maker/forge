@@ -400,57 +400,6 @@ a:focus-visible {
   box-shadow: 0 0 16px rgba(197, 160, 89, 0.2);
 }
 
-/* ── In-Workout Exercise Quick Jump Rail ── */
-.in-workout-jump-rail {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 4px 2px 8px;
-  margin-bottom: 12px;
-  scrollbar-width: none;
-}
-.in-workout-jump-rail::-webkit-scrollbar {
-  display: none;
-}
-
-.jump-pill-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 11px;
-  border-radius: 6px;
-  font-family: 'Raleway', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #CBD5E1;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-.jump-pill-btn:hover {
-  background: rgba(197, 160, 89, 0.15);
-  border-color: rgba(197, 160, 89, 0.4);
-  color: var(--gold-lt);
-}
-
-.jump-pill-btn.completed {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(52, 211, 153, 0.4);
-  color: #34D399;
-}
-
-.jump-pill-btn.active {
-  background: linear-gradient(135deg, rgba(212, 160, 23, 0.3) 0%, rgba(212, 160, 23, 0.1) 100%);
-  border-color: var(--gold);
-  color: var(--gold-lt);
-  box-shadow: 0 0 12px rgba(197, 160, 89, 0.3);
-}
-
 .site-header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   padding: 0;
@@ -2074,7 +2023,35 @@ a:focus-visible {
   }
 }
 
-.fitness-exercise-tools button {
+.fitness-inline-set-controls button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.fitness-card-disclosure > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--gold-lt);
+  font-size: 12px;
+}
+
+.fitness-card-disclosure > summary::before {
+  content: '+';
+}
+
+.fitness-card-disclosure[open] > summary::before {
+  content: '-';
+}
+
+.fitness-inline-set-controls > :not(details),
+.fitness-inline-set-controls > details[open] {
+  grid-column: 1 / -1;
+}
+
+.fitness-inline-set-controls input:not([type="checkbox"]) {
   min-height: 44px;
 }
 
@@ -2962,7 +2939,6 @@ body:has(.posture-scanner-backdrop) .global-coach-gordon-fab {
   .responsive-tabs-scroll,
   .luxury-snap-rail,
   .luxury-segmented-bar,
-  .in-workout-jump-rail,
   [data-scroll-rail] {
     max-width: 100% !important;
     width: 100% !important;

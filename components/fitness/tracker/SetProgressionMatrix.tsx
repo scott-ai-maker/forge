@@ -12,6 +12,7 @@ export interface LoggedSetData {
   rir?: string | number | null
   session_date?: string
   is_warmup?: boolean
+  syncStatus?: 'saving' | 'pending' | 'saved'
 }
 
 export interface SetProgressionMatrixProps {
@@ -37,16 +38,13 @@ export default function SetProgressionMatrix({
 }: SetProgressionMatrixProps) {
   const targetSetCount = typeof targetSets === 'number' ? targetSets : (parseInt(String(targetSets), 10) || 3)
   const sessionLoggedSets = loggedSets.filter(l => !l.session_date || l.session_date === sessionDate)
-  const maxDisplaySets = Math.max(targetSetCount, sessionLoggedSets.length + 1)
+  const workingSets = sessionLoggedSets.filter(set => !set.is_warmup)
+  const maxDisplaySets = Math.max(targetSetCount, currentSetNumber, ...workingSets.map(set => Number(set.set_number) || 0))
 
   return (
     <div
       style={{
-        marginBottom: 12,
-        background: 'rgba(0,0,0,0.4)',
-        border: '1px solid rgba(212,160,23,0.3)',
-        borderRadius: 6,
-        padding: '10px 12px',
+        marginBottom: 6,
       }}
     >
       <div
@@ -54,7 +52,7 @@ export default function SetProgressionMatrix({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: 8,
+          marginBottom: 2,
           flexWrap: 'wrap',
           gap: 6,
         }}
@@ -71,18 +69,18 @@ export default function SetProgressionMatrix({
             gap: 5,
           }}
         >
-          <GaaIcon name="bar-chart" size={13} tone="gold" /> Set Progression Matrix ({sessionLoggedSets.length}/{targetSetCount} sets completed)
+          <GaaIcon name="bar-chart" size={13} tone="gold" /> Sets
         </span>
         <span
           style={{
             fontSize: 10.5,
-            color: sessionLoggedSets.length >= targetSetCount ? '#34D399' : 'var(--gray)',
+            color: workingSets.length >= targetSetCount ? '#34D399' : 'var(--gray)',
             fontWeight: 700,
           }}
         >
-          {sessionLoggedSets.length >= targetSetCount
+          {workingSets.length >= targetSetCount
             ? '✓ Target Met'
-            : `${Math.max(0, targetSetCount - sessionLoggedSets.length)} sets remaining`}
+            : `${workingSets.length}/${targetSetCount} completed`}
         </span>
       </div>
 
@@ -90,7 +88,7 @@ export default function SetProgressionMatrix({
         {Array.from({ length: maxDisplaySets }).map((_, idx) => {
           const setIndex = idx + 1
           const loggedSet =
-            sessionLoggedSets.find(s => Number(s.set_number) === setIndex) || sessionLoggedSets[idx]
+            workingSets.find(s => Number(s.set_number) === setIndex)
           const isCurrent = currentSetNumber === setIndex
           const isDone = Boolean(loggedSet)
 
@@ -106,6 +104,8 @@ export default function SetProgressionMatrix({
             <button
               key={setIndex}
               type="button"
+              aria-label={`Set ${setIndex}${loggedSet ? `: ${loggedWeight} ${units === 'imperial' ? 'lb' : 'kg'} × ${loggedSet.reps}${loggedSet.syncStatus === 'pending' ? ', saved on device, sync pending' : loggedSet.syncStatus === 'saving' ? ', saving' : ', saved to account'}` : ': not logged'}`}
+              aria-pressed={isCurrent}
               onClick={() => {
                 triggerHaptic?.('tap')
                 onSelectSet(
@@ -120,9 +120,10 @@ export default function SetProgressionMatrix({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '6px 10px',
+                padding: 4,
                 borderRadius: 5,
-                minWidth: 64,
+                minWidth: 44,
+                minHeight: 44,
                 cursor: 'pointer',
                 background: isDone
                   ? 'rgba(16,185,129,0.15)'
@@ -138,22 +139,11 @@ export default function SetProgressionMatrix({
               }}
             >
               <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase' }}>
-                {isDone ? (loggedSet.is_warmup ? '✓ (W)' : '✓ ') : ''}Set {setIndex}
+                {isDone ? '✓ ' : ''}{setIndex}
               </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  marginTop: 2,
-                  color: isDone ? '#FFFFFF' : isCurrent ? 'var(--gold-lt)' : 'var(--gray)',
-                }}
-              >
-                {isDone
-                  ? `${loggedWeight}${units === 'imperial' ? 'lb' : 'kg'} × ${loggedSet.reps}`
-                  : isCurrent
-                    ? 'Active ➔'
-                    : 'Pending'}
-              </span>
+              {loggedSet && <span style={{ fontSize: 9 }}>
+                {loggedSet.syncStatus === 'saving' ? 'Saving' : loggedSet.syncStatus === 'pending' ? 'Pending' : 'Saved'}
+              </span>}
             </button>
           )
         })}
@@ -167,6 +157,7 @@ export default function SetProgressionMatrix({
           className="tactile-btn"
           style={{
             padding: '6px 10px',
+            minHeight: 44,
             borderRadius: 5,
             background: 'rgba(255,255,255,0.06)',
             border: '1px dashed rgba(255,255,255,0.25)',

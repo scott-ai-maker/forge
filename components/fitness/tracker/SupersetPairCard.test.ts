@@ -1,7 +1,36 @@
 import { describe, it, expect, vi } from 'vitest'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import SupersetPairCard from './SupersetPairCard'
 import { detectAndGroupSupersets, isAntagonistPair } from '@/lib/superset-pairing-engine'
 
 describe('SupersetPairCard Logic Integration', () => {
+  it('renders exertion inline without metronome, drawer, or velocity tools', () => {
+    const groups = detectAndGroupSupersets([
+      { name: 'Barbell Bench Press', sets: '3', reps: '10' },
+      { name: 'Bent-Over Barbell Row', sets: '3', reps: '10' },
+    ], 2)
+    const group = groups[0]
+    if (!group.isSuperset) throw new Error('Expected a superset fixture')
+    const markup = renderToStaticMarkup(createElement(SupersetPairCard, {
+      pair: group.pair,
+      sessionDate: '2026-10-10',
+      units: 'imperial',
+      setLogsA: [],
+      setLogsB: [],
+      nasmOptPhase: 2,
+      onLogSet: vi.fn(),
+    }))
+    expect(markup).toContain('superset-set-details')
+    expect(markup).toContain('Rate of perceived exertion (1-10)')
+    expect(markup).toContain('Reps in reserve (0-6)')
+    expect(markup).not.toMatch(/Cadence Metronome|workout-tool-bottom-sheet|superset-tool-strip|Bar Velocity|Kinetic Power/)
+    expect(markup).not.toContain('Plate Loading and Weight Presets')
+    expect(markup).toContain('placeholder="—"')
+    expect(markup).not.toContain('value="135"')
+    expect(markup).toContain('0 = no added load')
+    expect(markup.lastIndexOf('Log set &amp; start rest')).toBeGreaterThan(markup.lastIndexOf('Reps in reserve (0-6)'))
+  })
   it('correctly detects paired exercises and builds valid SupersetPair structure', () => {
     const exercises = [
       { name: 'Barbell Bench Press', sets: '3', reps: '10' },

@@ -1,23 +1,17 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   parseMovementTempo,
   PrecisionCadenceScheduler,
   CadencePhase,
 } from '@/lib/web-audio-cadence-engine'
-import { calculateRepVelocityAndPower } from '@/lib/bar-velocity-power-engine'
-import { isVbtOfferedForPhase, getNasmOptPhaseFeatureRules } from '@/lib/nasm-opt-feature-matrix'
-import BarVelocityPowerTrackerTray from './BarVelocityPowerTrackerTray'
 
 export interface RepCadenceMetronomeProps {
   tempo: string
   targetReps: number | string
   exerciseName: string
-  weightKg?: number
-  units?: 'imperial' | 'metric'
-  nasmOptPhase?: number
   onCompleteReps?: (completedReps: number) => void
   triggerHaptic?: (type: 'tap' | 'heavy' | 'success') => void
 }
@@ -26,9 +20,6 @@ export default function RepCadenceMetronome({
   tempo,
   targetReps,
   exerciseName,
-  weightKg,
-  units = 'imperial',
-  nasmOptPhase,
   onCompleteReps,
   triggerHaptic,
 }: RepCadenceMetronomeProps) {
@@ -43,19 +34,6 @@ export default function RepCadenceMetronome({
   const [secondsRemaining, setSecondsRemaining] = useState<number>(0)
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true)
   const [preCountSec, setPreCountSec] = useState<number>(3)
-  const [showVelocityTray, setShowVelocityTray] = useState<boolean>(false)
-
-  const effectiveLoadKg = weightKg && weightKg > 0 ? weightKg : 50
-  const instantaneousVelocity = useMemo(() => {
-    return calculateRepVelocityAndPower({
-      exerciseName,
-      loadKg: effectiveLoadKg,
-      concentricSec: parsedTempo.concentricSec || 1.2,
-      eccentricSec: parsedTempo.eccentricSec || 2.0,
-      repNumber: currentRep || 1,
-    })
-  }, [exerciseName, effectiveLoadKg, parsedTempo.concentricSec, parsedTempo.eccentricSec, currentRep])
-
   const schedulerRef = useRef<PrecisionCadenceScheduler | null>(null)
 
   // Cleanup scheduler on unmount
@@ -219,6 +197,7 @@ export default function RepCadenceMetronome({
       >
         <button
           type="button"
+          aria-expanded={isExpanded}
           onClick={() => {
             triggerHaptic?.('tap')
             setIsExpanded(prev => !prev)
@@ -230,9 +209,11 @@ export default function RepCadenceMetronome({
             padding: 0,
             cursor: 'pointer',
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
             gap: 6,
             color: 'var(--gold-lt)',
+            textAlign: 'left',
             fontSize: 11,
             fontWeight: 800,
             letterSpacing: '0.06em',
@@ -241,45 +222,16 @@ export default function RepCadenceMetronome({
         >
           <GaaIcon name="timer" size={12} tone="gold" />
           <span>Cadence Metronome: {parsedTempo.raw}</span>
-          <span style={{ fontSize: 9.5, color: 'var(--gray)', fontWeight: 600 }}>
+          <span style={{ fontSize: 9.5, color: 'var(--gray)', fontWeight: 600, whiteSpace: 'nowrap' }}>
             ({parsedTempo.repDurationSec}s / rep)
           </span>
-          <span style={{ fontSize: 9.5, color: 'var(--gray)', marginLeft: 4, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+          <span style={{ fontSize: 9.5, color: 'var(--gray)', marginLeft: 4, display: 'inline-flex', alignItems: 'center', gap: 2, whiteSpace: 'nowrap' }}>
             <GaaIcon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={10} tone="inherit" />
             <span>{isExpanded ? 'Hide' : 'Expand'}</span>
           </span>
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic?.('tap')
-              setShowVelocityTray(prev => !prev)
-              if (!isExpanded && !showVelocityTray) {
-                setIsExpanded(true)
-              }
-            }}
-            className="tactile-btn"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              background: showVelocityTray ? 'rgba(56, 189, 248, 0.25)' : 'rgba(56, 189, 248, 0.1)',
-              border: `1px solid ${showVelocityTray ? '#38BDF8' : 'rgba(56, 189, 248, 0.35)'}`,
-              color: '#38BDF8',
-              fontSize: 10,
-              fontWeight: 700,
-              padding: '3px 8px',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
-            title="Toggle Bar Velocity & Kinetic Power Output Tracker"
-          >
-            <span>⚡</span>
-            <span>{showVelocityTray ? 'VBT Active' : 'Bar Velocity'}</span>
-          </button>
-
           {!isExpanded && !isRunning && (
             <button
               type="button"
@@ -365,22 +317,6 @@ export default function RepCadenceMetronome({
                 <span style={{ fontSize: 11, fontWeight: 800, color: phaseStyle.color, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                   {phaseStyle.title}
                 </span>
-                {currentPhase === 'concentric' && (
-                  <span
-                    style={{
-                      fontSize: 9.5,
-                      fontWeight: 800,
-                      padding: '2px 6px',
-                      borderRadius: 3,
-                      background: 'rgba(16, 185, 129, 0.2)',
-                      border: '1px solid #10B981',
-                      color: '#6EE7B7',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    ⚡ {instantaneousVelocity.meanConcentricVelocity.toFixed(2)} m/s · {Math.round(instantaneousVelocity.meanPowerWatts)}W
-                  </span>
-                )}
               </div>
 
               {/* Sound & Mute Toggle */}
@@ -579,66 +515,6 @@ export default function RepCadenceMetronome({
               </>
             )}
           </div>
-
-          {/* ── Velocity-Based Training (VBT) & Kinetic Power Drawer ── */}
-          {(nasmOptPhase === undefined || isVbtOfferedForPhase(nasmOptPhase)) && (
-            <div style={{ marginTop: 10 }}>
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic?.('tap')
-                  setShowVelocityTray(prev => !prev)
-                }}
-                className="tactile-btn"
-                style={{
-                  width: '100%',
-                  padding: '7px 10px',
-                  background: showVelocityTray ? 'rgba(56, 189, 248, 0.2)' : 'rgba(56, 189, 248, 0.08)',
-                  border: `1px solid ${showVelocityTray ? '#38BDF8' : 'rgba(56, 189, 248, 0.3)'}`,
-                  borderRadius: 6,
-                  color: '#38BDF8',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>⚡</span>
-                  <span>Bar Velocity &amp; Kinetic Power Output (VBT)</span>
-                  {(nasmOptPhase === 4 || nasmOptPhase === 5) && (
-                    <span style={{ fontSize: 8.5, background: 'rgba(56, 189, 248, 0.2)', color: '#38BDF8', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: 3, padding: '1px 4px', textTransform: 'uppercase' }}>
-                      P{nasmOptPhase} Focus
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 10, color: '#E2E8F0', fontFamily: 'var(--font-telemetry, monospace)' }}>
-                    {instantaneousVelocity.meanConcentricVelocity.toFixed(2)} m/s · {Math.round(instantaneousVelocity.meanPowerWatts)}W
-                  </span>
-                  <span>{showVelocityTray ? '▲' : '▼'}</span>
-                </div>
-              </button>
-
-            {showVelocityTray && (
-              <div style={{ marginTop: 8 }}>
-                <BarVelocityPowerTrackerTray
-                  exerciseName={exerciseName}
-                  weightKg={effectiveLoadKg}
-                  units={units}
-                  currentPhase={currentPhase}
-                  currentRep={currentRep}
-                  concentricDurationSec={parsedTempo.concentricSec}
-                  eccentricDurationSec={parsedTempo.eccentricSec}
-                  onClose={() => setShowVelocityTray(false)}
-                  triggerHaptic={triggerHaptic}
-                />
-              </div>
-            )}
-          </div>
-        )}
 
           {/* Pre-Exercise Setup Interval Setting */}
           {!isRunning && (

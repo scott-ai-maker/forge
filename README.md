@@ -131,7 +131,34 @@ PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test tests/ui/fitness-t
 The training screen shows lifts by default. Starting a session opens warm-up; completing
 warm-up returns to lifts. Stage controls keep cardio and cool-down available without
 rendering every stage at once. Form previews open full demonstrations on demand, and
-advanced tools remain in a keyboard-accessible sheet.
+set details and RPE/RIR are available directly on exercise
+cards. Exercise tools no longer open a bottom drawer. The former Form, Warm-up ramp,
+Science, Intensity, and 1RM panels, cadence metronome, and bar-velocity controls are removed from this
+flow; full exercise demonstrations and workout-level stages remain available.
+Clients enter weight directly without preset pills. Log Set is the final action
+on each exercise card, and the compact warm-up checkbox retains a tappable label.
+The header thumbnail opens the demonstration. Set selection uses compact numbered
+controls; date, set-number, tempo, and rest overrides stay under Edit set details.
+Notes, exercise options, and logged-set history expand inline when needed, while
+RPE/RIR and the current prescription remain visible.
+Exercise cards provide navigation without a separate jump rail. Phase-aware
+superset controls and automatic exercise progression remain available.
+Weight fields start empty rather than suggesting an arbitrary load; clients must
+enter their weight or explicitly enter 0 for bodyweight / no added load.
+The final action reads "Log set & start rest", and expanded cards show a single
+set-progress summary without repeating it in the exercise header.
+The workout toolbar no longer includes Schedule, Plates, or Coach shortcuts.
+The current program calendar is available under Settings > Workout Schedule;
+selecting a session opens that workout day in Training. Exercise guidance and
+cardio coaching remain available.
+Set controls distinguish saving, saved, and sync-pending records. Offline retries
+retain each optimistic record's ID so successful sync replaces it rather than
+leaving a pending duplicate. Optional RPE/RIR start blank for each new working set.
+The bottom rest timer is the sole rest-timer control, and Match Set appears only
+when the current weight or reps differ from the previous set.
+Coach notes appear in a compact collapsed row immediately below the workout title,
+before stage navigation. Duration and tip-count badges are removed from the row;
+the full briefing remains available on expansion.
 
 These checks use test harnesses, not real client accounts. The complete resistance
 flow uses mocked set-save responses and verifies all prescribed working sets are

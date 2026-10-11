@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
 import { parseMovementTempo, PrecisionCadenceScheduler } from '@/lib/web-audio-cadence-engine'
-import { calculateRepVelocityAndPower } from '@/lib/bar-velocity-power-engine'
 
 describe('RepCadenceMetronome Logic & Guardrails', () => {
   it('correctly parses NASM tempo schemes into discrete contraction seconds', () => {
@@ -71,17 +70,23 @@ describe('RepCadenceMetronome Logic & Guardrails', () => {
     expect(/\b(hammer curl)\b/i.test('Hammer Curl To Lateral Raise')).toBe(true)
   })
 
-  it('computes real-time concentric velocity and wattage for metronome tempo', () => {
-    const rep = calculateRepVelocityAndPower({
-      exerciseName: 'Barbell Bench Press',
-      loadKg: 90,
-      concentricSec: 1.0,
-      eccentricSec: 2.0,
-      repNumber: 1,
+  it('stops the cadence without firing a completed-set callback', () => {
+    vi.useFakeTimers()
+    const onComplete = vi.fn()
+    const scheduler = new PrecisionCadenceScheduler({
+      eccentricSec: 2,
+      isometricSec: 0,
+      concentricSec: 2,
+      preCountSec: 2,
+      totalReps: 10,
+      soundEnabled: false,
+      onPhaseChange: vi.fn(),
+      onComplete,
     })
-
-    expect(rep.meanConcentricVelocity).toBe(0.38)
-    expect(rep.meanPowerWatts).toBeGreaterThan(300)
-    expect(rep.velocityZone).toBe('accelerative_strength')
+    scheduler.start()
+    scheduler.stop()
+    vi.advanceTimersByTime(60_000)
+    expect(onComplete).not.toHaveBeenCalled()
+    vi.useRealTimers()
   })
 })

@@ -5,6 +5,7 @@ import SiteHeader from '@/components/ui/SiteHeader'
 import ClientSettingsStudio, { SettingsTab } from '@/components/settings/ClientSettingsStudio'
 import { createSignedFitnessPhotoUrl } from '@/lib/fitness-photos'
 import { getMembershipDisplayName } from '@/lib/forge-memberships'
+import { buildWorkoutSchedule } from '@/lib/workout-schedule'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +24,7 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
 
   if (!user) redirect('/auth/login')
 
-  const [{ data: profile }, { data: latestPackage }, { data: fitnessProfile }] = await Promise.all([
+  const [{ data: profile }, { data: latestPackage }, { data: fitnessProfile }, { data: workoutPlan, error: workoutPlanError }] = await Promise.all([
     supabase
       .from('clients')
       .select('email, full_name, phone, role, avatar_path')
@@ -41,8 +42,17 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle(),
+    supabase
+      .from('workout_plans')
+      .select('plan_json')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
+  if (workoutPlanError) throw new Error(`Could not load workout schedule: ${workoutPlanError.message}`)
+  const workoutSchedule = buildWorkoutSchedule(workoutPlan?.plan_json)
   const avatarUrl = await createSignedFitnessPhotoUrl(supabase, profile?.avatar_path)
 
   const initialProfile = {
@@ -127,6 +137,7 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
           initialFitnessProfile={initialFitnessProfile}
           activePackageName={getMembershipDisplayName(latestPackage?.package_name || 'Plus')}
           initialTab={initialTab}
+          workoutSchedule={workoutSchedule}
         />
       </div>
     </main>
