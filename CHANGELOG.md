@@ -3,6 +3,21 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.3] - 2026-10-10
+
+### Security
+- Patch sharp to 0.35.5 for GHSA-wq5f-xc86-pv6w (librsvg vulnerability).
+- Patch source-map-js to 1.2.2 for CVE-2026-93749 (source-map denial of service).
+- Override xcode's uuid dependency to CommonJS-compatible 11.1.1 for CVE-2026-41907
+  (buffer bounds validation), with project parsing, writing, and UUID smoke checks.
+- Production dependency audit is clean. The separate development-only braces
+  advisory CVE-2026-93687 remains unresolved because no patched release is published.
+  Avoid forcing the audit-suggested eslint-config-next downgrade to Next 14.
+
+### Validation
+- Passed TypeScript, all 1,565 unit tests, and 11 training browser checks.
+- Passed sharp image and source-map round-trip smoke checks.
+
 ## [1.36.2] - 2026-10-10
 
 ### Fixed
