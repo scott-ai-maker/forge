@@ -5,6 +5,7 @@ test.describe('Mobile superset workout', () => {
     test(`keeps both exercises and load controls visible at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 850 })
       await page.goto('/test-harness/fitness-mobile?scenario=superset')
+      await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
       await page.getByRole('button', { name: /Supersets: OFF/ }).click()
       const card = page.getByTestId('superset-pair-card')
       await expect(card).toBeVisible()
@@ -58,6 +59,7 @@ test.describe('Mobile superset workout', () => {
     })
     await page.setViewportSize({ width: 375, height: 850 })
     await page.goto('/test-harness/fitness-mobile?scenario=superset')
+    await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
     await page.getByRole('button', { name: /Supersets: OFF/ }).click()
     const card = page.getByTestId('superset-pair-card')
     const log = card.getByRole('button', { name: 'Log set & start rest', exact: true })

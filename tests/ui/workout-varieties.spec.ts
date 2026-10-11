@@ -5,6 +5,7 @@ for (const width of [320, 393]) {
     test(`${scenario} workout controls fit at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 850 })
       await page.goto(`/test-harness/fitness-mobile?scenario=${scenario}`)
+      await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
       if (scenario === 'power' || scenario === 'hypertrophy') {
         await page.getByRole('button', { name: /Supersets: OFF/ }).click()
       }

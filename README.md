@@ -172,6 +172,8 @@ Exercises without media use the current Forge Athletic logo at the legacy
 fallback image URL, keeping previously saved program links valid.
 The program briefing memo starts collapsed and can be expanded or collapsed
 by touch or keyboard without hiding or truncating its full text.
+Training opens on Step 1: Warm-Up; completing the warm-up advances to Step 2:
+Lifts. Athletes can still select another stage manually.
 
 These checks use test harnesses, not real client accounts. The complete resistance
 flow uses mocked set-save responses and verifies all prescribed working sets are

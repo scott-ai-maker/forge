@@ -35,6 +35,7 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
     })
     await page.goto('/test-harness/fitness-mobile')
     const card = page.locator('#exercise-item-1-0')
+    await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
     await card.getByRole('textbox', { name: 'Weight in pounds' }).fill('95')
     await card.getByRole('button', { name: 'Log set & start rest', exact: true }).click()
     await expect(card.getByRole('button', { name: /Set 1:.*saved on device, sync pending/ })).toBeVisible()
@@ -65,6 +66,7 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/test-harness/fitness-mobile')
     const card = page.locator('#exercise-item-1-0')
+    await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
     const weight = card.getByRole('textbox', { name: /Weight in pounds/i })
     const log = card.getByRole('button', { name: 'Log set & start rest', exact: true })
     await expect(weight).toHaveValue('')
@@ -87,6 +89,7 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
 
   test('renders workout day, exercise cards, and movement standard banners', async ({ page }) => {
     await page.goto('/test-harness/fitness-mobile')
+    await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
 
     // Verify workout day focus header
     await expect(page.getByText(/Day 1: Chest, Back & Core Stabilization/i)).toBeVisible()
@@ -138,6 +141,7 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
     await page.goto('/test-harness/fitness-mobile')
 
     const benchItem = page.locator('#exercise-item-1-0')
+    await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
     await expect(benchItem).toBeVisible()
 
     // Find weight and rep inputs for this exercise using exact ARIA labels
@@ -193,10 +197,14 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
 
   test('keeps Phase 1 single-set rules and exposes one workout stage at a time', async ({ page }) => {
     await page.goto('/test-harness/fitness-mobile')
+    const stages = page.getByRole('group', { name: 'Workout stages' })
+    await expect(stages.getByRole('button', { name: '1. Warm-Up', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('region', { name: 'Pre-Lift Kinetic Warmup', exact: true })).toBeVisible()
+    await expect(page.locator('#exercise-item-1-0')).not.toBeVisible()
+    await page.getByRole('button', { name: /Mark All Done/i }).click()
     await expect(page.getByText('Single Sets Only', { exact: true })).toBeVisible()
     await expect(page.locator('.in-workout-jump-rail')).toHaveCount(0)
     await expect(page.getByRole('button', { name: /Supersets/i })).toHaveCount(0)
-    const stages = page.getByRole('group', { name: 'Workout stages' })
     await expect(stages.getByRole('button', { name: '2. Lifts', exact: true })).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByText('Quick Cardio Log', { exact: true })).not.toBeVisible()
     await stages.getByRole('button', { name: '3. Cardio', exact: true }).click()
@@ -206,8 +214,6 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
     await expect(page.locator('#exercise-item-1-0')).toBeVisible()
     await page.getByRole('button', { name: 'Start Session', exact: true }).click()
     await expect(stages.getByRole('button', { name: '1. Warm-Up', exact: true })).toHaveAttribute('aria-pressed', 'true')
-    await page.getByRole('button', { name: /Mark All Done/i }).click()
-    await expect(stages.getByRole('button', { name: '2. Lifts', exact: true })).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('coach notes sit before stages in a compact keyboard-accessible disclosure', async ({ page }) => {
@@ -233,6 +239,7 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/test-harness/fitness-mobile')
     const card = page.locator('#exercise-item-1-0')
+    await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
     await expect(card.getByTestId('exercise-set-details')).toBeVisible()
     const compactBox = await card.boundingBox()
     expect(compactBox?.height).toBeLessThanOrEqual(560)
@@ -288,6 +295,7 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
     })
     await page.goto('/test-harness/fitness-mobile')
     const benchItem = page.locator('#exercise-item-1-0')
+    await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
     await expect(benchItem).toBeVisible()
     await benchItem.getByRole('textbox', { name: /Weight in pounds/i }).fill('95')
     await benchItem.getByRole('textbox', { name: 'Rate of perceived exertion (1-10)' }).fill('8')
@@ -328,6 +336,8 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
   test('a schedule deep link opens the requested workout day', async ({ page }) => {
     await page.goto('/test-harness/fitness-mobile?scenario=schedule&workspace=train&day=2')
     await expect(page.getByText('Day 2: Schedule navigation check', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: '1. Warm-Up', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
     await expect(page.locator('#exercise-item-2-0')).toBeVisible()
   })
 })

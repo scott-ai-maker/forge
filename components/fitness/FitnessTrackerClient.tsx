@@ -765,7 +765,7 @@ export default function FitnessTrackerClient({
     description?: string | null
     primaryEquipment?: string[] | null
   } | null>(null)
-  const [activeStepFilter, setActiveStepFilter] = useState<'all' | 'warmup' | 'resistance' | 'cardio' | 'cooldown'>('resistance')
+  const [activeStepFilter, setActiveStepFilter] = useState<'all' | 'warmup' | 'resistance' | 'cardio' | 'cooldown'>('warmup')
   const [swapModalExercise, setSwapModalExercise] = useState<{
     workoutDay: number
     exercise: WorkoutExercise

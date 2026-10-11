@@ -12,6 +12,7 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
 
     test("renders compact accessible form previews and opens the full demonstration on demand", async ({ page }) => {
       await page.goto("/test-harness/fitness-mobile")
+      await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
 
       // 1. Verify collapsed summary row displays thumbnail image on mobile
       const benchItem = page.locator("#exercise-item-1-0")
@@ -100,6 +101,7 @@ test.describe("Mobile iPhone Exercise Image Layout Suite", () => {
 
     test("renders compact 44x44 thumbnails without horizontal overflow on iPhone SE", async ({ page }) => {
       await page.goto("/test-harness/fitness-mobile")
+      await page.getByRole('button', { name: '2. Lifts', exact: true }).click()
 
       const benchItem = page.locator("#exercise-item-1-0")
       await expect(benchItem).toBeVisible({ timeout: 15000 })
