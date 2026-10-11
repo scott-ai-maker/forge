@@ -122,7 +122,7 @@ export default function ReadinessRecoveryTracker({
       <div className="glass-card" style={{ padding: 'clamp(14px, 3vw, 24px) clamp(10px, 2.5vw, 24px)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span
                 style={{
                   fontFamily: 'Raleway, sans-serif',
@@ -137,10 +137,10 @@ export default function ReadinessRecoveryTracker({
                   borderRadius: 4,
                 }}
               >
-                NASM CPT-7 Ch 21 &amp; Wearable Ingestion
+                Recovery check
               </span>
               <span style={{ color: 'var(--gray)', fontSize: 13 }}>
-                Autonomic Readiness Gate &amp; Real ACWR Workload Engine
+                Wearable data and your own check-in
               </span>
             </div>
             <h3
@@ -153,7 +153,7 @@ export default function ReadinessRecoveryTracker({
                 color: 'var(--white)',
               }}
             >
-              AUTONOMIC CNS READINESS &amp; PERIODIZED DELOAD ENGINE
+              Recovery &amp; readiness
             </h3>
           </div>
 
@@ -196,7 +196,7 @@ export default function ReadinessRecoveryTracker({
               }}
             >
               <GaaIcon name="settings" size={13} tone="white" />
-              <span>Telemetry Settings</span>
+              <span>Wearable settings</span>
             </a>
           </div>
         </div>
@@ -204,24 +204,25 @@ export default function ReadinessRecoveryTracker({
         {/* Workspace Navigation Tabs */}
         <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
           {[
-            { id: 'heatmap', icon: 'dna' as const, label: '3D Muscle Supercompensation Matrix' },
+            { id: 'heatmap', icon: 'dna' as const, label: 'Muscle recovery' },
             {
               id: 'gate',
               icon: 'target' as const,
-              label: evaluation.gate === 'NO_DATA' ? 'Daily Gate (No Data)' : `Daily Gate (${evaluation.gate})`,
+              label: evaluation.gate === 'NO_DATA' ? 'Daily check-in' : `Daily check-in (${evaluation.gate})`,
             },
             {
               id: 'acwr',
               icon: 'periodization' as const,
               label: realAcwr.hasData && realAcwr.acwrRatio !== null
-                ? `ACWR Workload (${realAcwr.acwrRatio.toFixed(2)})`
-                : 'ACWR Workload (No Data)',
+                ? `Workload (${realAcwr.acwrRatio.toFixed(2)})`
+                : 'Workload',
             },
-            { id: 'deload', icon: 'shield' as const, label: '1-Week Deload Protocol' },
+            { id: 'deload', icon: 'shield' as const, label: 'Recovery week' },
           ].map(tab => (
             <button
               key={tab.id}
               type="button"
+              aria-pressed={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id as 'heatmap' | 'gate' | 'acwr' | 'deload')}
               style={{
                 background: activeTab === tab.id ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
@@ -252,7 +253,7 @@ export default function ReadinessRecoveryTracker({
           <div
             className="glass-card-gold"
             style={{
-              padding: '28px 32px',
+              padding: 'clamp(12px, 3vw, 24px)',
               borderLeft: `4px solid ${evaluation.color}`,
               display: 'flex',
               justifyContent: 'space-between',
@@ -310,7 +311,8 @@ export default function ReadinessRecoveryTracker({
             </div>
 
             {/* Intra-Workout Throttler Controls */}
-            <div style={{ background: 'rgba(8,14,20,0.7)', padding: '16px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', minWidth: 260 }}>
+            <details className="fitness-card-disclosure fitness-lab-panel" style={{ background: 'rgba(8,14,20,0.7)', width: '100%' }}>
+              <summary>Suggested workout adjustments</summary>
               <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
                 <GaaIcon name="lightning" size={12} tone="gold" />
                 <span>Intra-Workout Throttler</span>
@@ -335,17 +337,19 @@ export default function ReadinessRecoveryTracker({
                   </strong>
                 </div>
               </div>
-            </div>
+            </details>
           </div>
 
           {/* Biological Input Sliders */}
-          <div className="glass-card" style={{ padding: '24px 28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <details className="glass-card fitness-card-disclosure fitness-lab-panel">
+            <summary>Daily check-in inputs</summary>
+            <p style={{ fontSize: 12, color: 'var(--gray)' }}>Adjust these inputs to explore your readiness. Changes here are not saved to your profile or wearable data.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
               <h4 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, letterSpacing: '0.04em', color: 'var(--white)' }}>
                 Active Biological &amp; Autonomic Metrics
               </h4>
               <span style={{ fontSize: 11, color: '#34D399', fontWeight: 700 }}>
-                ● Auto-Ingested from Synced Wearables
+                {telemetry?.updatedAt ? 'Wearable data with manual adjustments' : 'Manual check-in'}
               </span>
             </div>
 
@@ -356,6 +360,7 @@ export default function ReadinessRecoveryTracker({
                   <strong className="tabular-nums" style={{ color: 'var(--gold-lt)' }}>{sleepHours !== null ? `${sleepHours} hrs` : '-- hrs'}</strong>
                 </div>
                 <input
+                  aria-label="Sleep duration"
                   type="range"
                   min={4}
                   max={10}
@@ -372,6 +377,7 @@ export default function ReadinessRecoveryTracker({
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{sleepQuality !== null ? `${sleepQuality}/10` : '--/10'}</strong>
                 </div>
                 <input
+                  aria-label="Sleep quality"
                   type="range"
                   min={1}
                   max={10}
@@ -387,6 +393,7 @@ export default function ReadinessRecoveryTracker({
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{restingHeartRate !== null ? `${restingHeartRate} BPM` : '-- BPM'}</strong>
                 </div>
                 <input
+                  aria-label="Resting heart rate"
                   type="range"
                   min={40}
                   max={90}
@@ -402,6 +409,7 @@ export default function ReadinessRecoveryTracker({
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{baselineRhr} BPM</strong>
                 </div>
                 <input
+                  aria-label="Baseline resting heart rate"
                   type="range"
                   min={40}
                   max={80}
@@ -417,6 +425,7 @@ export default function ReadinessRecoveryTracker({
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{sorenessLevel !== null ? `${sorenessLevel}/10` : '--/10'}</strong>
                 </div>
                 <input
+                  aria-label="Soreness level"
                   type="range"
                   min={1}
                   max={10}
@@ -432,6 +441,7 @@ export default function ReadinessRecoveryTracker({
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{stressLevel !== null ? `${stressLevel}/10` : '--/10'}</strong>
                 </div>
                 <input
+                  aria-label="Stress level"
                   type="range"
                   min={1}
                   max={10}
@@ -441,7 +451,7 @@ export default function ReadinessRecoveryTracker({
                 />
               </div>
             </div>
-          </div>
+          </details>
         </div>
       )}
 

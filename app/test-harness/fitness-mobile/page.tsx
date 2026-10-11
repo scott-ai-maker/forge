@@ -130,12 +130,28 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
               full_name: "Scott Gordon",
               preferred_units: "imperial",
               fitness_goal: "Athletic Hypertrophy",
+              ...(params.scenario === 'lab-bodycomp' ? { weight_kg: 80, height_cm: 180, sex: 'male' as const, preferred_units: 'metric' as const } : {}),
             }}
             latestPlan={plan}
             allPlans={[plan]}
-            logs={[]}
-            setLogs={[]}
-            latestAnalysis={null}
+            logs={params.scenario === 'progress' ? Array.from({ length: 12 }, (_, index) => ({
+              id: `progress-session-${index}`,
+              session_title: `Workout ${index + 1}`,
+              session_date: `2026-10-${String(index + 1).padStart(2, '0')}`,
+              completed: true,
+              workout_plan_id: plan.id,
+              exertion_rpe: 7,
+            })) : []}
+            setLogs={params.scenario === 'progress' ? Array.from({ length: 24 }, (_, index) => ({
+              id: `progress-set-${index}`,
+              exercise_name: index === 23 ? 'Standing Hip Flexor Static Stretch' : 'Barbell Flat Bench Press',
+              session_date: `2026-10-${String(Math.floor(index / 2) + 1).padStart(2, '0')}`,
+              reps: index === 23 ? 30 : 10,
+              weight_kg: index === 23 ? 0 : 40 + index,
+              set_number: index % 2 + 1,
+              rpe: index < 2 ? undefined : 7,
+            })) : []}
+            latestAnalysis={params.scenario === 'lab-bodycomp' ? { estimated_bodyfat_percent: 20 } : null}
             initialWorkspace="train"
           />}
         </Suspense>

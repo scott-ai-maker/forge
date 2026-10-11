@@ -71,22 +71,22 @@ export default function ProgressPhotoTimeline({
     body.append('taken_at', form.takenAt)
     body.append('notes', form.notes)
 
-    const res = await fetch('/api/fitness/progress-photos', {
-      method: 'POST',
-      body,
-    })
-
-    const payload = await res.json()
-    setUploading(false)
-
-    if (!res.ok) {
-      setStatus(payload.error ?? 'Could not upload progress photo')
-      return
+    try {
+      const res = await fetch('/api/fitness/progress-photos', {
+        method: 'POST',
+        body,
+      })
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload.error ?? 'Could not upload progress photo')
+      setPhotos(prev => [payload.photo as ProgressPhoto, ...prev])
+      setForm({ takenAt: new Date().toISOString().slice(0, 10), notes: '', file: null })
+      setStatus('Progress photo saved.')
+    } catch (error) {
+      console.error('Progress photo upload failed:', error)
+      setStatus(error instanceof Error ? error.message : 'Could not upload progress photo. Please try again.')
+    } finally {
+      setUploading(false)
     }
-
-    setPhotos(prev => [payload.photo as ProgressPhoto, ...prev])
-    setForm({ takenAt: new Date().toISOString().slice(0, 10), notes: '', file: null })
-    setStatus('Progress photo saved.')
   }
 
   async function handleEstimateBodyFat() {
@@ -95,48 +95,51 @@ export default function ProgressPhotoTimeline({
     setEstimating(true)
     setBodyFatStatus(null)
 
-    let photoDataUrl: string | undefined
-    if (form.file) {
-      photoDataUrl = await fileToDataUrl(form.file)
+    try {
+      let photoDataUrl: string | undefined
+      if (form.file) {
+        photoDataUrl = await fileToDataUrl(form.file)
+      }
+
+      const res = await fetch('/api/fitness/bodyfat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sex: bodyFatInputs.sex,
+          heightCm: bodyFatInputs.heightCm,
+          weightKg: bodyFatInputs.weightKg,
+          waistCm: bodyFatInputs.waistCm,
+          neckCm: bodyFatInputs.neckCm,
+          hipCm: bodyFatInputs.hipCm,
+          age: bodyFatInputs.age,
+          photoDataUrl,
+        }),
+      })
+
+      const payload = await res.json()
+
+      if (!res.ok) throw new Error(payload.error ?? 'Could not estimate body fat')
+
+      const estimated = Number(payload.analysis?.estimated_bodyfat_percent)
+      const scanRes = payload.scanResult as BodyCompositionScanResult | undefined
+
+      if (scanRes) {
+        setLatestScanResult(scanRes)
+      }
+
+      if (Number.isFinite(estimated)) {
+        onEstimatedBodyfat?.(estimated)
+        setBodyFatStatus(`Estimated body fat: ${estimated}% (${scanRes?.classification || 'Calculated'})`)
+        return
+      }
+
+      setBodyFatStatus('Body-fat estimate returned, but value was invalid.')
+    } catch (error) {
+      console.error('Body-fat estimate failed:', error)
+      setBodyFatStatus(error instanceof Error ? error.message : 'Could not estimate body fat. Please try again.')
+    } finally {
+      setEstimating(false)
     }
-
-    const res = await fetch('/api/fitness/bodyfat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sex: bodyFatInputs.sex,
-        heightCm: bodyFatInputs.heightCm,
-        weightKg: bodyFatInputs.weightKg,
-        waistCm: bodyFatInputs.waistCm,
-        neckCm: bodyFatInputs.neckCm,
-        hipCm: bodyFatInputs.hipCm,
-        age: bodyFatInputs.age,
-        photoDataUrl,
-      }),
-    })
-
-    const payload = await res.json()
-    setEstimating(false)
-
-    if (!res.ok) {
-      setBodyFatStatus(payload.error ?? 'Could not estimate body fat')
-      return
-    }
-
-    const estimated = Number(payload.analysis?.estimated_bodyfat_percent)
-    const scanRes = payload.scanResult as BodyCompositionScanResult | undefined
-
-    if (scanRes) {
-      setLatestScanResult(scanRes)
-    }
-
-    if (Number.isFinite(estimated)) {
-      onEstimatedBodyfat?.(estimated)
-      setBodyFatStatus(`DEXA-Calibrated Estimate: ${estimated}% body fat (${scanRes?.classification || 'Calculated'})`)
-      return
-    }
-
-    setBodyFatStatus('Body-fat estimate returned, but value was invalid.')
   }
 
   return (
@@ -189,11 +192,12 @@ export default function ProgressPhotoTimeline({
 
       {canUpload && (
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 10, marginBottom: 16, border: '1px solid rgba(255,255,255,0.08)', padding: 14, background: 'rgba(13,27,42,0.55)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="fitness-progress-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
             <div>
               <label style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Select Photo</label>
               <input
                 type="file"
+                aria-label="Select progress photo"
                 accept="image/png,image/jpeg,image/webp"
                 onChange={event => setForm(prev => ({ ...prev, file: event.target.files?.[0] ?? null }))}
                 style={{ color: 'var(--white)', fontSize: 13 }}
@@ -203,6 +207,7 @@ export default function ProgressPhotoTimeline({
               <label style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Date Taken</label>
               <input
                 type="date"
+                aria-label="Progress photo date"
                 value={form.takenAt}
                 onChange={event => setForm(prev => ({ ...prev, takenAt: event.target.value }))}
                 style={inputStyle}
@@ -212,6 +217,7 @@ export default function ProgressPhotoTimeline({
           </div>
 
           <textarea
+            aria-label="Progress photo notes"
             value={form.notes}
             onChange={event => setForm(prev => ({ ...prev, notes: event.target.value }))}
             rows={2}
@@ -263,7 +269,7 @@ export default function ProgressPhotoTimeline({
         </form>
       )}
 
-      {status && <p style={{ margin: '0 0 12px', color: status.toLowerCase().includes('could') || status.toLowerCase().includes('select') ? 'var(--error)' : 'var(--success)' }}>{status}</p>}
+      {status && <p role="status" style={{ margin: '0 0 12px', color: status === 'Progress photo saved.' ? 'var(--success)' : 'var(--error)' }}>{status}</p>}
 
       {photos.length === 0 ? (
         <p style={{ margin: 0, color: 'var(--gray)' }}>No progress photos saved yet.</p>

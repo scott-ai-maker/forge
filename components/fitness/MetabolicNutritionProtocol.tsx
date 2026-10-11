@@ -245,7 +245,8 @@ export default function MetabolicNutritionProtocol({
       ) : (
       <>
       {/* ── Interactive Energy Balance & BMR Telemetry Bar ──────────── */}
-      <div
+      <details
+        className="fitness-card-disclosure"
         style={{
           background: 'rgba(8,14,20,0.85)',
           border: '1px solid rgba(212,160,23,0.3)',
@@ -255,6 +256,8 @@ export default function MetabolicNutritionProtocol({
           gap: 16,
         }}
       >
+        <summary>Nutrition inputs &amp; energy breakdown</summary>
+        <p style={{ color: 'var(--gray)', fontSize: 12 }}>Adjust these inputs to explore targets. These changes do not update your saved program.</p>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <span style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
             <GaaIcon name="lightning" size={13} tone="gold" />
@@ -273,6 +276,7 @@ export default function MetabolicNutritionProtocol({
               <strong style={{ color: 'var(--gold-lt)' }}>{weight} lbs ({energy.weightKg} kg)</strong>
             </div>
             <input
+              aria-label="Nutrition body weight in pounds"
               type="range"
               min={100}
               max={320}
@@ -288,6 +292,7 @@ export default function MetabolicNutritionProtocol({
               <strong style={{ color: 'var(--gold-lt)' }}>{selectedGoal.replace('_', ' ').toUpperCase()}</strong>
             </div>
             <select
+              aria-label="Nutrition goal"
               value={selectedGoal}
               onChange={e => setSelectedGoal(e.target.value as NutritionGoal)}
               style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '6px 8px', borderRadius: 4, marginTop: 4 }}
@@ -305,6 +310,7 @@ export default function MetabolicNutritionProtocol({
               <strong style={{ color: 'var(--gold-lt)' }}>{energy.activityMultiplier}x</strong>
             </div>
             <select
+              aria-label="Nutrition activity level"
               value={activityLevel}
               onChange={e => setActivityLevel(e.target.value as ActivityLevel)}
               style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '6px 8px', borderRadius: 4, marginTop: 4 }}
@@ -323,6 +329,7 @@ export default function MetabolicNutritionProtocol({
               <strong style={{ color: 'var(--gold-lt)' }}>{bodyFat > 0 ? `${bodyFat}%` : 'Standard'}</strong>
             </div>
             <input
+              aria-label="Nutrition body fat percent"
               type="range"
               min={6}
               max={40}
@@ -356,7 +363,7 @@ export default function MetabolicNutritionProtocol({
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: 'var(--gold)' }}>{energy.targetCalories} kcal</div>
           </div>
         </div>
-      </div>
+      </details>
 
       {/* ── Phase Selector Tabs ─────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -366,6 +373,7 @@ export default function MetabolicNutritionProtocol({
             <button
               key={p.key}
               type="button"
+              aria-pressed={active}
               onClick={() => setActivePhase(p.key)}
               className="tactile-btn"
               style={{

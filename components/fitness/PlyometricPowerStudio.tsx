@@ -156,7 +156,7 @@ ${currentSessionProtocol.exercises
               color: '#FFFFFF',
             }}
           >
-            Dynamic Plyometric & Reactive Power Matrix Studio
+            Power training
           </h3>
           <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
             Stretch-Shortening Cycle (SSC) Mechanics · Amortization Phase Optimization · 3-Tier OPT™ Reactive Continuum
@@ -176,6 +176,7 @@ ${currentSessionProtocol.exercises
               <button
                 key={tab.key}
                 type="button"
+                aria-pressed={active}
                 onClick={() => setActiveTab(tab.key as StudioTab)}
                 className="tactile-btn"
                 style={{

@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
+import GaaIcon from '@/components/ui/GaaIcon'
 import ReadinessRecoveryTracker from '@/components/fitness/ReadinessRecoveryTracker'
 import PeriodizationRoadmapView from '@/components/fitness/PeriodizationRoadmapView'
 import AddonUnlockCard from '@/components/packages/AddonUnlockCard'
@@ -76,6 +76,19 @@ export type FitnessLabTool =
   | 'travel'
   | 'bodycomp'
 
+const LAB_TOOLS: { id: FitnessLabTool; title: string; description: string }[] = [
+  { id: 'readiness', title: 'Recovery & readiness', description: 'Check recovery, workload, and muscle readiness.' },
+  { id: 'bodycomp', title: 'Body composition', description: 'Review estimates or start a body-composition scan.' },
+  { id: 'video', title: 'Form review', description: 'Review exercise technique and corrective cues.' },
+  { id: 'roadmap', title: 'Training roadmap', description: 'Explore your training phases and weekly plan.' },
+  { id: 'nutrition', title: 'Nutrition', description: 'Review calorie targets, macros, and meal guidance.' },
+  { id: 'travel', title: 'Travel workouts', description: 'Adapt your workout to the equipment available.' },
+  { id: 'assessment', title: 'Movement assessment', description: 'Review your movement screen and warm-up guidance.' },
+  { id: 'sleep', title: 'Sleep & recovery', description: 'Explore sleep metrics and recovery guidance.' },
+  { id: 'performance', title: 'Athletic performance', description: 'Explore power training and performance tests.' },
+  { id: 'calculator', title: 'Fitness calculators', description: 'Estimate lifting loads, cardio fitness, and body composition.' },
+]
+
 interface FitnessLabDiagnosticsViewProps {
   activeLabTool: FitnessLabTool
   onSelectTool: (tool: FitnessLabTool) => void
@@ -122,13 +135,27 @@ export default function FitnessLabDiagnosticsView({
   initialTab,
 }: FitnessLabDiagnosticsViewProps) {
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false)
-  const { features: addonFeatures, loading: addonsLoading, refresh: refreshAddons } = useAddonEntitlements()
-  const loadingCard = <div style={{ padding: 24, textAlign: 'center', color: 'var(--gray)', fontSize: 13 }}>Checking your add-ons...</div>
+  const [isToolPickerOpen, setIsToolPickerOpen] = useState(false)
+  const toolPickerTrigger = useRef<HTMLButtonElement>(null)
+  const requiresAddonAccess = activeLabTool === 'nutrition' || activeLabTool === 'travel'
+    || (activeLabTool === 'video' && !initialCritique)
+  const { features: addonFeatures, loading: addonsLoading, error: addonsError, refresh: refreshAddons } = useAddonEntitlements(requiresAddonAccess)
+  const loadingCard = addonsError ? (
+    <div role="alert" className="fitness-lab-panel">
+      <p>{addonsError}</p>
+      <button type="button" onClick={() => void refreshAddons()}>Retry access check</button>
+    </div>
+  ) : <div role="status" style={{ padding: 24, textAlign: 'center', color: 'var(--gray)', fontSize: 13 }}>Checking your add-ons...</div>
 
-  const weightKg = profile?.weight_kg || 80
-  const heightCm = profile?.height_cm || 178
+  const weightKg = profile?.weight_kg ?? 0
+  const heightCm = profile?.height_cm ?? 0
   const sex = profile?.sex || 'male'
-  const currentBf = Number(bodyfatState.estimated) || 15.0
+  const currentBf = Number(bodyfatState.estimated)
+  const hasBodyCompositionData = Number.isFinite(weightKg) && weightKg > 0
+    && Number.isFinite(heightCm) && heightCm > 0
+    && Number.isFinite(currentBf) && currentBf > 0 && currentBf < 100
+  const isMetric = profile?.preferred_units === 'metric'
+  const activeTool = LAB_TOOLS.find(tool => tool.id === activeLabTool)!
 
   const fatMassKg = Math.round(weightKg * (currentBf / 100) * 10) / 10
   const leanMassKg = Math.round((weightKg - fatMassKg) * 10) / 10
@@ -139,7 +166,7 @@ export default function FitnessLabDiagnosticsView({
   const classification = classifyBodyFat(currentBf, sex)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+    <div className="fitness-lab-view" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12, minWidth: 0 }}>
       {/* Lab Header */}
       <div style={{ background: 'linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(13,27,42,0.95) 100%)', border: '1px solid rgba(56,189,248,0.35)', borderRadius: 8, padding: '14px 18px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -160,79 +187,60 @@ export default function FitnessLabDiagnosticsView({
           </div>
           <div>
             <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.04em', fontSize: 22, fontWeight: 700, color: '#FFFFFF' }}>
-              Forge Athletic · Sports Science &amp; Fitness Lab
+              Fitness Lab
             </h2>
             <p style={{ margin: '2px 0 0', color: '#93C5FD', fontSize: 12 }}>
-              Clinical recovery matrix, AI DEXA body composition, periodization roadmap, and sports performance diagnostic tools.
+              Recovery, assessments, and tools to support your training.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Lab Sub-Tool Selector Snap Rail (Sticky for Zero-Scroll Switching) */}
-      <div
-        className="luxury-snap-rail luxury-snap-rail-responsive"
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 30,
-          background: 'rgba(8, 14, 20, 0.94)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          padding: '8px 4px',
-          borderRadius: 8,
-          border: '1px solid rgba(56,189,248,0.25)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-        }}
-      >
-        {[
-          { id: 'bodycomp' as const, icon: 'dna' as GaaIconName, title: 'AI DEXA Body Comp', desc: '4C Vision & FFMI', highlight: true },
-          { id: 'readiness' as const, icon: 'dna' as GaaIconName, title: '3D Recovery Matrix', desc: 'CNS & Muscle Heatmap' },
-          { id: 'video' as const, icon: 'camera' as GaaIconName, title: 'Form & Correctives', desc: 'Kinetic Faults & CEx' },
-          { id: 'roadmap' as const, icon: 'periodization' as GaaIconName, title: '12-Wk Periodization', desc: 'OPT™ Phase Roadmap' },
-          { id: 'nutrition' as const, icon: 'supplements' as GaaIconName, title: 'OPT™ Nutrition', desc: 'Macros & Dining Out' },
-          { id: 'travel' as const, icon: 'travel' as GaaIconName, title: 'Hotel Gym Adapter', desc: 'On-the-Road Equipment' },
-          { id: 'assessment' as const, icon: 'movement-screen' as GaaIconName, title: 'Mobility Radar', desc: 'Overhead Squat Screen' },
-        ].map(tool => {
-          const isSelected = activeLabTool === tool.id
-          return (
+      <div className="fitness-lab-selector" onBlur={event => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setIsToolPickerOpen(false)
+      }} onKeyDown={event => {
+        if (event.key === 'Escape' && isToolPickerOpen) {
+          event.preventDefault()
+          setIsToolPickerOpen(false)
+          toolPickerTrigger.current?.focus()
+        }
+      }}>
+        <span className="fitness-lab-selector-label">Choose a tool</span>
+        <button
+          ref={toolPickerTrigger}
+          type="button"
+          className="fitness-lab-picker-trigger"
+          aria-label={`Choose a tool: ${activeTool.title}`}
+          aria-expanded={isToolPickerOpen}
+          aria-controls="fitness-lab-tools"
+          aria-describedby="fitness-lab-tool-description"
+          onClick={() => setIsToolPickerOpen(open => !open)}
+        >
+          <span>{activeTool.title}</span>
+          <span aria-hidden="true">{isToolPickerOpen ? '-' : '+'}</span>
+        </button>
+        <div id="fitness-lab-tools" role="group" aria-label="Fitness Lab tools" className="fitness-lab-picker-options" hidden={!isToolPickerOpen}>
+          {LAB_TOOLS.map(tool => (
             <button
               key={tool.id}
               type="button"
-              onClick={() => onSelectTool(tool.id)}
-              className={`tactile-btn ${isSelected ? '' : 'luxury-snap-item'}`}
-              style={{
-                background: isSelected
-                  ? 'linear-gradient(135deg, rgba(56,189,248,0.25) 0%, rgba(56,189,248,0.08) 100%)'
-                  : (tool.highlight ? 'rgba(212,160,23,0.08)' : 'rgba(255,255,255,0.03)'),
-                border: isSelected
-                  ? '1px solid #38BDF8'
-                  : (tool.highlight ? '1px solid rgba(212,160,23,0.3)' : '1px solid rgba(255,255,255,0.08)'),
-                borderRadius: 6,
-                padding: '8px 10px',
-                textAlign: 'left',
-                cursor: 'pointer',
-                color: isSelected ? '#38BDF8' : (tool.highlight ? 'var(--gold-lt)' : '#FFFFFF'),
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 3,
-                minWidth: 150,
-                boxShadow: isSelected ? '0 0 12px rgba(56,189,248,0.3)' : 'none',
+              data-tool={tool.id}
+              aria-pressed={tool.id === activeLabTool}
+              onClick={() => {
+                onSelectTool(tool.id)
+                setIsToolPickerOpen(false)
+                toolPickerTrigger.current?.focus()
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <GaaIcon name={tool.icon} tone={isSelected ? 'cyan' : (tool.highlight ? 'gold' : 'slate')} size={14} />
-                <span style={{ fontFamily: 'var(--font-sans, Raleway), sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.1 }}>{tool.title}</span>
-              </div>
-              <div style={{ fontSize: 9.5, color: isSelected ? '#BAE6FD' : 'var(--gray)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tool.desc}</div>
+              {tool.title}
             </button>
-          )
-        })}
+          ))}
+        </div>
+        <p id="fitness-lab-tool-description">{activeTool.description}</p>
       </div>
 
       {/* Active Lab Tool Container */}
-      <div style={{ marginTop: 4 }}>
+      <div className="fitness-lab-tool-content" key={activeLabTool} style={{ marginTop: 4, minWidth: 0 }}>
         {/* ── AI DEXA BODY COMPOSITION STUDIO ── */}
         {activeLabTool === 'bodycomp' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -252,10 +260,10 @@ export default function FitnessLabDiagnosticsView({
                     Sports Science Diagnostic Suite
                   </div>
                   <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', margin: '4px 0 0' }}>
-                    AI DEXA-Vision Body Composition &amp; Recomposition Engine
+                    Body composition
                   </h3>
                   <p style={{ margin: '4px 0 0', color: 'var(--gray)', fontSize: 13 }}>
-                    Multi-view spatial anthropometry, anatomical computer vision definition analysis, and Cunningham Lean Mass metabolism.
+                    Estimates support tracking and are not a clinical DEXA scan or diagnosis.
                   </p>
                 </div>
 
@@ -281,24 +289,27 @@ export default function FitnessLabDiagnosticsView({
                   }}
                 >
                   <GaaIcon name="camera" size={18} />
-                  <span>Launch Live DEXA Vision Scanner</span>
+                  <span>Start body composition scan</span>
                 </button>
               </div>
 
               {/* Current Status Cockpit Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
+              {!hasBodyCompositionData && (
+                <p role="status" style={{ color: 'var(--gray)' }}>Add height and weight in your profile and a body-fat estimate to see your composition summary. No measurements are assumed.</p>
+              )}
+              {hasBodyCompositionData && <div className="fitness-lab-stats" style={{ display: 'grid', gap: 12, marginBottom: 16 }}>
                 <div style={{ background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.3)', borderRadius: 8, padding: 14 }}>
                   <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 700 }}>Body Fat %</div>
                   <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 30, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.1, marginTop: 4 }}>
                     {currentBf}%
                   </div>
-                  <div style={{ fontSize: 11, color: '#10B981', fontWeight: 600 }}>{classification} · {fatMassLbs} lbs fat</div>
+                  <div style={{ fontSize: 11, color: '#10B981', fontWeight: 600 }}>{profile?.sex && profile.sex !== 'other' ? classification : 'Estimate'} · {isMetric ? `${fatMassKg} kg` : `${fatMassLbs} lb`} fat</div>
                 </div>
 
                 <div style={{ background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 8, padding: 14 }}>
                   <div style={{ fontSize: 11, color: '#93C5FD', textTransform: 'uppercase', fontWeight: 700 }}>Lean Body Mass</div>
                   <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 30, fontWeight: 700, color: '#38BDF8', lineHeight: 1.1, marginTop: 4 }}>
-                    {leanMassLbs} <span style={{ fontSize: 16, fontFamily: 'var(--font-sans, Raleway), sans-serif', fontWeight: 600 }}>lbs</span>
+                    {isMetric ? leanMassKg : leanMassLbs} <span style={{ fontSize: 16, fontFamily: 'var(--font-sans, Raleway), sans-serif', fontWeight: 600 }}>{isMetric ? 'kg' : 'lb'}</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--gray)' }}>{leanMassKg} kg LBM</div>
                 </div>
@@ -318,14 +329,15 @@ export default function FitnessLabDiagnosticsView({
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--gray)' }}>TDEE: ~{Math.round(cunninghamBmr * 1.55)} kcal</div>
                 </div>
-              </div>
+              </div>}
 
               {/* Protocol Highlights */}
-              <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 14 }}>
+              <details className="fitness-card-disclosure fitness-lab-panel">
+                <summary>How these estimates work</summary>
                 <h4 style={{ margin: '0 0 8px', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 16, fontWeight: 700, color: '#D4A017', letterSpacing: '0.04em' }}>
-                  Clinical DEXA Standards &amp; Computer Vision Architecture
+                  Estimation methods
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12, fontSize: 12, color: 'var(--gray)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 12, fontSize: 12, color: 'var(--gray)' }}>
                   <div>
                     <strong style={{ color: '#FFF' }}>1. 3D Spatial Anthropometry:</strong> Multi-view fusion (Anterior, Lateral, Posterior) eliminates sagittal depth distortion and accounts for abdominal lordosis vs true adipose.
                   </div>
@@ -336,7 +348,7 @@ export default function FitnessLabDiagnosticsView({
                     <strong style={{ color: '#FFF' }}>3. Cunningham LBM Metabolism:</strong> Calculates basal metabolic needs from lean muscle mass (BMR = 370 + 21.6 × LBM kg) rather than generic total weight formulas.
                   </div>
                 </div>
-              </div>
+              </details>
             </div>
 
             <AiBodyCompositionScannerModal
@@ -375,7 +387,7 @@ export default function FitnessLabDiagnosticsView({
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <GaaIcon name="radio" size={16} tone="gold" />
                 <span style={{ fontSize: 12, color: 'var(--white)', fontWeight: 600 }}>
-                  Biometric Telemetry &amp; Autonomous Modulations
+                  Recovery inputs
                 </span>
               </div>
               <a
@@ -390,7 +402,7 @@ export default function FitnessLabDiagnosticsView({
                   gap: 4,
                 }}
               >
-                Configure Wearable Bridges →
+                Connect wearables →
               </a>
             </div>
             <ReadinessRecoveryTracker
@@ -456,21 +468,30 @@ export default function FitnessLabDiagnosticsView({
 
         {activeLabTool === 'assessment' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <ClinicalKineticWarmupModule latestAssessment={latestAssessment} />
             <NasmAssessmentSummary assessment={latestAssessment ?? null} />
+            <details className="fitness-card-disclosure fitness-lab-panel">
+              <summary>Warm-up &amp; corrective exercises</summary>
+              <ClinicalKineticWarmupModule latestAssessment={latestAssessment} />
+            </details>
           </div>
         )}
 
         {activeLabTool === 'performance' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <PlyometricPowerStudio
-              initialOptPhase={plan?.nasm_opt_phase ?? 1}
-              athleteBodyweightLbs={profile?.weight_kg ? Math.round(profile.weight_kg * 2.20462) : 185}
-            />
-            <AthleticPerformanceStudio
-              initialSex={profile?.sex ?? 'male'}
-              initialAge={profile?.age ?? 30}
-            />
+            <details className="fitness-card-disclosure fitness-lab-panel">
+              <summary>Power training</summary>
+              <PlyometricPowerStudio
+                initialOptPhase={plan?.nasm_opt_phase ?? 1}
+                athleteBodyweightLbs={profile?.weight_kg ? Math.round(profile.weight_kg * 2.20462) : 185}
+              />
+            </details>
+            <details className="fitness-card-disclosure fitness-lab-panel">
+              <summary>Performance tests</summary>
+              <AthleticPerformanceStudio
+                initialSex={profile?.sex ?? 'male'}
+                initialAge={profile?.age ?? 30}
+              />
+            </details>
           </div>
         )}
 
@@ -481,7 +502,7 @@ export default function FitnessLabDiagnosticsView({
         {activeLabTool === 'travel' && (
           addonsLoading ? loadingCard
             : addonFeatures?.travel.active
-              ? <ExecutiveTravelAdapterStudio plan={plan} onApplyTravelPlan={onApplyTravelPlan} />
+              ? <ExecutiveTravelAdapterStudio plan={plan?.plan_json} onApplyTravelPlan={onApplyTravelPlan} />
               : <AddonUnlockCard feature="travel" />
         )}
       </div>

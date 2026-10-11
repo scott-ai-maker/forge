@@ -14,6 +14,7 @@ interface WorkoutStreakCardProps {
   optPhase?: number | string
   athleteId?: string
   totalVolumeKg?: number
+  sessionsPerWeek?: number
 }
 
 export function calcStreak(dates: Set<string>): number {
@@ -89,6 +90,7 @@ export default function WorkoutStreakCard({
   optPhase = 1,
   athleteId = 'GAA-EXEC-CLIENT',
   totalVolumeKg = 0,
+  sessionsPerWeek = 4,
 }: WorkoutStreakCardProps) {
   const completedDates = useMemo(() => {
     const s = new Set<string>()
@@ -108,11 +110,11 @@ export default function WorkoutStreakCard({
   }, [])
 
   const last28Count = useMemo(() => {
-    return Array.from(completedDates).filter((d) => d >= last28Start).length
+    const today = new Date().toISOString().slice(0, 10)
+    return Array.from(completedDates).filter((d) => d >= last28Start && d <= today).length
   }, [completedDates, last28Start])
 
-  // Institutional standard: 16 sessions / 28-day mesocycle target (4 sessions/wk)
-  const compliancePct = Math.min(Math.round((last28Count / 16) * 100), 100)
+  const compliancePct = Math.min(Math.round((last28Count / (sessionsPerWeek * 4)) * 100), 100)
 
   // Deterministic Cryptographic Seal of Executive Workload Integrity
   const verificationHash = useMemo(() => {
@@ -192,7 +194,7 @@ export default function WorkoutStreakCard({
                 textTransform: 'uppercase',
               }}
             >
-              Longitudinal Workload &amp; Execution Integrity
+              Training consistency
             </h2>
             <div
               style={{
@@ -202,7 +204,7 @@ export default function WorkoutStreakCard({
                 marginTop: 2,
               }}
             >
-              NASM OPT™ Mesocycle Governance · Cryptographic Audit Verification
+              Logged training days over the last 28 days
             </div>
           </div>
         </div>
@@ -272,27 +274,27 @@ export default function WorkoutStreakCard({
       >
         {[
           {
-            label: 'Longitudinal Integrity',
+            label: 'Training-day target',
             value: last28Count > 0 ? `${compliancePct}%` : '—',
-            sub: compliancePct >= 85 ? 'Target Met (≥85%)' : 'Acute Stimulus Active',
+            sub: `${sessionsPerWeek * 4} days / 28 days`,
             accent: compliancePct >= 85 ? '#D4AF37' : '#F8FAFC',
           },
           {
-            label: '28-Day Mesocycle',
-            value: `${last28Count} SESS`,
-            sub: '4×/Wk Benchmark Target',
+            label: 'Last 28 days',
+            value: `${last28Count} DAYS`,
+            sub: `${sessionsPerWeek} planned sessions / week`,
             accent: '#F8FAFC',
           },
           {
-            label: 'NASM OPT™ Clearance',
+            label: 'Program phase',
             value: phaseMeta.code,
             sub: phaseMeta.label,
             accent: '#D4AF37',
           },
           {
-            label: 'Protocol Continuity',
-            value: streak > 0 ? `${streak} DAYS` : 'ACTIVE',
-            sub: streak > 0 ? 'Zero Delinquency' : 'Scheduled Cycle',
+            label: 'Daily streak',
+            value: `${streak} DAYS`,
+            sub: 'Rest days are part of training',
             accent: streak >= 3 ? '#D4AF37' : '#F8FAFC',
           },
         ].map((metric) => (
@@ -374,7 +376,7 @@ export default function WorkoutStreakCard({
               textTransform: 'uppercase',
             }}
           >
-            12-Week Longitudinal Training Density Matrix
+            Training calendar
           </span>
           <span
             style={{
@@ -384,7 +386,7 @@ export default function WorkoutStreakCard({
               color: '#64748B',
             }}
           >
-            84-DAY AUDIT
+            12 WEEKS
           </span>
         </div>
 

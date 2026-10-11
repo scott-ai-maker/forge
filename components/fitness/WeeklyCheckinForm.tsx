@@ -47,9 +47,9 @@ function RatingInput({
 
   return (
     <div>
-      <label htmlFor={inputId} style={{ display: 'block', fontFamily: 'Raleway, sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: 6 }}>
+      <span id={inputId} style={{ display: 'block', fontFamily: 'Raleway, sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: 6 }}>
         {label} (1-5)
-      </label>
+      </span>
       <p style={{ margin: '0 0 8px', color: 'var(--gray)', fontSize: 12 }}>{hint}</p>
       <div style={{ display: 'flex', gap: 8 }} role="group" aria-labelledby={inputId}>
         {options.map(opt => (
@@ -89,6 +89,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
     sleep_quality: '',
@@ -100,9 +101,18 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
   })
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/fitness/checkin')
-    const payload = await res.json().catch(() => ({}))
-    if (res.ok && Array.isArray(payload.checkins)) {
+    setLoaded(false)
+    setLoadError(null)
+    try {
+      const res = await fetch('/api/fitness/checkin')
+      if (res.status === 401) {
+        console.warn('Weekly check-in requires a signed-in session.')
+        setLoadError('Please sign in to load your check-in, then retry.')
+        return
+      }
+      if (!res.ok) throw new Error('Could not load your check-in. Please retry.')
+      const payload = await res.json()
+      if (!Array.isArray(payload.checkins)) throw new Error('Check-in response was invalid. Please retry.')
       const thisWeekCheckin = payload.checkins.find((c: WeeklyCheckin) => c.week_start === thisWeek)
       if (thisWeekCheckin) {
         setExisting(thisWeekCheckin)
@@ -119,8 +129,12 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
           notes: thisWeekCheckin.notes ?? '',
         })
       }
+    } catch (error) {
+      console.error('Weekly check-in load failed:', error)
+      setLoadError(error instanceof Error ? error.message : 'Could not load your check-in. Please retry.')
+    } finally {
+      setLoaded(true)
     }
-    setLoaded(true)
   }, [thisWeek, preferredUnits])
 
   useEffect(() => {
@@ -133,9 +147,13 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setSaved(false)
+    if (form.weight && (!Number.isFinite(Number(form.weight)) || Number(form.weight) <= 0)) {
+      setError('Enter a positive weight or leave it blank.')
+      return
+    }
     setSaving(true)
     setError(null)
-    setSaved(false)
 
     const weightKg = form.weight
       ? preferredUnits === 'imperial'
@@ -143,33 +161,50 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
         : Number(form.weight)
       : undefined
 
-    const res = await fetch('/api/fitness/checkin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        week_start: thisWeek,
-        sleep_quality: form.sleep_quality ? Number(form.sleep_quality) : null,
-        stress_level: form.stress_level ? Number(form.stress_level) : null,
-        soreness_level: form.soreness_level ? Number(form.soreness_level) : null,
-        energy_level: form.energy_level ? Number(form.energy_level) : null,
-        weight_kg: weightKg ?? null,
-        notes: form.notes || null,
-      }),
-    })
+    try {
+      const res = await fetch('/api/fitness/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          week_start: thisWeek,
+          sleep_quality: form.sleep_quality ? Number(form.sleep_quality) : null,
+          stress_level: form.stress_level ? Number(form.stress_level) : null,
+          soreness_level: form.soreness_level ? Number(form.soreness_level) : null,
+          energy_level: form.energy_level ? Number(form.energy_level) : null,
+          weight_kg: weightKg ?? null,
+          notes: form.notes || null,
+        }),
+      })
 
-    if (!res.ok) {
+      if (res.status === 401) {
+        console.warn('Weekly check-in save requires a signed-in session.')
+        setError('Please sign in to save your check-in. Your entries are still here.')
+        return
+      }
       const data = await res.json()
-      setError(data.error ?? 'Failed to save check-in')
-    } else {
+      if (!res.ok) throw new Error(data.error ?? 'Failed to save check-in')
+      if (!data.id) throw new Error('Could not confirm your saved check-in. Please retry.')
       setSaved(true)
-      const data = await res.json()
-      setExisting(data)
+      setExisting(previous => ({ ...previous, ...data }))
+    } catch (error) {
+      console.error('Weekly check-in save failed:', error)
+      setError(error instanceof Error ? error.message : 'Failed to save check-in. Please retry.')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   if (!loaded) {
-    return <p style={{ color: 'var(--gray)', fontSize: 14 }}>Loading...</p>
+    return <p role="status" style={{ color: 'var(--gray)', fontSize: 14 }}>Loading your check-in...</p>
+  }
+
+  if (loadError) {
+    return (
+      <div role="alert" className="fitness-coach-checkin">
+        <p>{loadError}</p>
+        <button type="button" onClick={() => void load()}>Retry check-in</button>
+      </div>
+    )
   }
 
   const sleepDescriptions: Record<string, string> = {
@@ -207,7 +242,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
   const weekLabel = new Date(`${thisWeek}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
   return (
-    <div style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: 18 }}>
+    <div className="fitness-coach-checkin" style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: 14, borderRadius: 8 }}>
       <h3 style={{ margin: '0 0 4px', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--gold)' }}>
         Weekly Check-In
       </h3>
@@ -233,12 +268,14 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
 
       <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>
         <p style={{ margin: '-4px 0 0', color: 'var(--gray)', fontSize: 12, lineHeight: 1.45 }}>
-          If you already submitted this week, your previous values are pre-filled below. Update each number to reflect how this week feels now.
+          Choose how you feel this week. Tap a selected rating again to clear it.
         </p>
-        <RatingInput label="Sleep Quality" hint="1 = poor sleep, 5 = excellent sleep" descriptions={sleepDescriptions} value={form.sleep_quality} onChange={v => setForm(p => ({ ...p, sleep_quality: v }))} />
-        <RatingInput label="Stress Level" hint="1 = very high stress, 5 = very low stress" descriptions={stressDescriptions} value={form.stress_level} onChange={v => setForm(p => ({ ...p, stress_level: v }))} />
-        <RatingInput label="Soreness" hint="1 = very sore, 5 = fresh" descriptions={sorenessDescriptions} value={form.soreness_level} onChange={v => setForm(p => ({ ...p, soreness_level: v }))} />
-        <RatingInput label="Energy Level" hint="1 = low energy, 5 = high energy" descriptions={energyDescriptions} value={form.energy_level} onChange={v => setForm(p => ({ ...p, energy_level: v }))} />
+        <div className="fitness-coach-rating-grid">
+          <RatingInput label="Sleep Quality" hint="1 = poor sleep, 5 = excellent sleep" descriptions={sleepDescriptions} value={form.sleep_quality} onChange={v => setForm(p => ({ ...p, sleep_quality: v }))} />
+          <RatingInput label="Stress Level" hint="1 = very high stress, 5 = very low stress" descriptions={stressDescriptions} value={form.stress_level} onChange={v => setForm(p => ({ ...p, stress_level: v }))} />
+          <RatingInput label="Soreness" hint="1 = very sore, 5 = fresh" descriptions={sorenessDescriptions} value={form.soreness_level} onChange={v => setForm(p => ({ ...p, soreness_level: v }))} />
+          <RatingInput label="Energy Level" hint="1 = low energy, 5 = high energy" descriptions={energyDescriptions} value={form.energy_level} onChange={v => setForm(p => ({ ...p, energy_level: v }))} />
+        </div>
 
         <div>
           <label htmlFor="weight-input" style={{ display: 'block', fontFamily: 'Raleway, sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: 6 }}>
@@ -263,7 +300,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
 
         <div>
           <label htmlFor="notes-input" style={{ display: 'block', fontFamily: 'Raleway, sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: 6 }}>
-            Coach Notes &amp; Status Updates — optional
+            Notes for your coach — optional
           </label>
           <textarea
             id="notes-input"
@@ -284,7 +321,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
 
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || !loaded || Boolean(loadError)}
           aria-label={existing ? 'Update check-in' : 'Submit check-in'}
           aria-busy={saving}
           style={{

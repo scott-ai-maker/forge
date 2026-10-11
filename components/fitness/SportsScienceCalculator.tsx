@@ -12,6 +12,10 @@ import {
 } from '@/lib/sports-science-knowledge'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
 
+function hasPositiveInputs(...values: string[]) {
+  return values.every(value => value.trim() !== '' && Number.isFinite(Number(value)) && Number(value) > 0)
+}
+
 export default function SportsScienceCalculator() {
   const [activeTab, setActiveTab] = useState<'1rm' | 'cardio' | 'body_comp'>('1rm')
 
@@ -37,6 +41,11 @@ export default function SportsScienceCalculator() {
   const [site1Mm, setSite1Mm] = useState<string>('12')
   const [site2Mm, setSite2Mm] = useState<string>('16')
   const [site3Mm, setSite3Mm] = useState<string>('14')
+  const hasCardioInputs = cardioMode === 'run' ? hasPositiveInputs(runTimeMins)
+    : cardioMode === 'ymca' ? hasPositiveInputs(cardioAge, ymcaRecoveryHr)
+    : hasPositiveInputs(cardioAge, rockportWeightLbs, rockportTimeMins, rockportPostHr)
+  const hasWaistHipInputs = hasPositiveInputs(waistInches, hipsInches)
+  const hasSkinfoldInputs = hasPositiveInputs(skinfoldAge, site1Mm, site2Mm, site3Mm)
 
   // Calculations
   const calculated1RM = calculateOneRepMax(weightLifted, repsPerformed)
@@ -106,7 +115,7 @@ export default function SportsScienceCalculator() {
               gap: 10,
             }}
           >
-            Clinical Assessment & 1RM Load Prescriber
+            Fitness calculators
             <span
               style={{
                 fontSize: 11,
@@ -132,6 +141,8 @@ export default function SportsScienceCalculator() {
           ].map(tab => (
             <button
               key={tab.id}
+              type="button"
+              aria-pressed={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               style={{
                 background: activeTab === tab.id ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
@@ -152,6 +163,7 @@ export default function SportsScienceCalculator() {
           ))}
         </div>
       </div>
+      <p style={{ fontSize: 12, color: 'var(--gray)' }}>Starting values are examples. Enter your own measurements to estimate results. Calculator changes are not saved.</p>
 
       {/* ── TAB 1: 1RM PREDICTOR & NASM OPT LOADS ───────────────────────── */}
       {activeTab === '1rm' && (
@@ -168,6 +180,7 @@ export default function SportsScienceCalculator() {
                   <strong className="tabular-nums" style={{ color: '#FFFFFF', fontFamily: 'var(--font-telemetry, monospace)' }}>{weightLifted} lbs</strong>
                 </div>
                 <input
+                  aria-label="Weight lifted in pounds"
                   type="range"
                   min={20}
                   max={600}
@@ -184,6 +197,7 @@ export default function SportsScienceCalculator() {
                   <strong className="tabular-nums" style={{ color: '#FFFFFF', fontFamily: 'var(--font-telemetry, monospace)' }}>{repsPerformed} Reps</strong>
                 </div>
                 <input
+                  aria-label="Reps completed"
                   type="range"
                   min={1}
                   max={15}
@@ -217,7 +231,8 @@ export default function SportsScienceCalculator() {
           </div>
 
           {/* Prescribed OPT™ Phase Loading Table */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 20 }}>
+          <details className="fitness-card-disclosure fitness-lab-panel">
+            <summary>Training loads by phase</summary>
             <div style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
               Prescribed OPT™ Phase Working Loads
             </div>
@@ -258,7 +273,7 @@ export default function SportsScienceCalculator() {
                 )
               })}
             </div>
-          </div>
+          </details>
         </div>
       )}
 
@@ -267,7 +282,7 @@ export default function SportsScienceCalculator() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 20 }}>
           {/* Test Selector & Inputs */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 20 }}>
-            <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
               {[
                 { key: 'ymca' as const, label: 'YMCA 3-Min Step' },
                 { key: 'rockport' as const, label: 'Rockport 1-Mile' },
@@ -276,6 +291,7 @@ export default function SportsScienceCalculator() {
                 <button
                   key={mode.key}
                   type="button"
+                  aria-pressed={cardioMode === mode.key}
                   onClick={() => setCardioMode(mode.key)}
                   style={{
                     flex: 1,
@@ -295,10 +311,11 @@ export default function SportsScienceCalculator() {
             </div>
 
             <div style={{ display: 'grid', gap: 14 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="fitness-lab-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
                 <div>
                   <label style={{ fontSize: 11, color: 'var(--gray)' }}>Client Age</label>
                   <input
+                    aria-label="Cardio test age"
                     type="text"
                     inputMode="numeric"
                     autoComplete="off"
@@ -311,6 +328,7 @@ export default function SportsScienceCalculator() {
                 <div>
                   <label style={{ fontSize: 11, color: 'var(--gray)' }}>Sex</label>
                   <select
+                    aria-label="Cardio test sex"
                     value={cardioSex}
                     onChange={e => setCardioSex(e.target.value as 'male' | 'female')}
                     style={{ width: '100%', background: '#0A0F1D', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', padding: '6px 8px', borderRadius: 4 }}
@@ -325,6 +343,7 @@ export default function SportsScienceCalculator() {
                 <div>
                   <label style={{ fontSize: 11, color: 'var(--gray)' }}>60-Second Recovery Heart Rate (bpm)</label>
                   <input
+                    aria-label="Recovery heart rate in bpm"
                     type="text"
                     inputMode="numeric"
                     autoComplete="off"
@@ -341,6 +360,7 @@ export default function SportsScienceCalculator() {
                   <div>
                     <label style={{ fontSize: 11, color: 'var(--gray)' }}>Body Weight (lbs)</label>
                     <input
+                      aria-label="Body weight in pounds"
                       type="text"
                       inputMode="decimal"
                       autoComplete="off"
@@ -353,6 +373,7 @@ export default function SportsScienceCalculator() {
                   <div>
                     <label style={{ fontSize: 11, color: 'var(--gray)' }}>1-Mile Walk Time (minutes, e.g. 14.5)</label>
                     <input
+                      aria-label="One-mile walk time in minutes"
                       type="text"
                       inputMode="decimal"
                       autoComplete="off"
@@ -365,6 +386,7 @@ export default function SportsScienceCalculator() {
                   <div>
                     <label style={{ fontSize: 11, color: 'var(--gray)' }}>Immediate Post-Walk HR (bpm)</label>
                     <input
+                      aria-label="Post-walk heart rate in bpm"
                       type="text"
                       inputMode="numeric"
                       autoComplete="off"
@@ -381,6 +403,7 @@ export default function SportsScienceCalculator() {
                 <div>
                   <label style={{ fontSize: 11, color: 'var(--gray)' }}>1.5-Mile Run Time (minutes, e.g. 11.5)</label>
                   <input
+                    aria-label="Run time in minutes"
                     type="text"
                     inputMode="decimal"
                     autoComplete="off"
@@ -400,7 +423,8 @@ export default function SportsScienceCalculator() {
               Cardiorespiratory Diagnostics & Target Zones
             </div>
 
-            {cardioMode === 'ymca' && (
+            {!hasCardioInputs && <p role="status">Enter positive values in every test field to see your estimate.</p>}
+            {hasCardioInputs && cardioMode === 'ymca' && (
               <div style={{ display: 'grid', gap: 12 }}>
                 <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>YMCA Fitness Rating</div>
@@ -419,7 +443,7 @@ export default function SportsScienceCalculator() {
               </div>
             )}
 
-            {cardioMode === 'rockport' && (
+            {hasCardioInputs && cardioMode === 'rockport' && (
               <div style={{ display: 'grid', gap: 12 }}>
                 <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Estimated VO₂ Max</div>
@@ -431,7 +455,7 @@ export default function SportsScienceCalculator() {
               </div>
             )}
 
-            {cardioMode === 'run' && (
+            {hasCardioInputs && cardioMode === 'run' && (
               <div style={{ display: 'grid', gap: 12 }}>
                 <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Calculated VO₂ Max (1.5-Mile)</div>
@@ -457,6 +481,7 @@ export default function SportsScienceCalculator() {
               <div>
                 <label style={{ fontSize: 11, color: 'var(--gray)' }}>Biological Sex</label>
                 <select
+                  aria-label="Body composition sex"
                   value={bodySex}
                   onChange={e => setBodySex(e.target.value as 'male' | 'female')}
                   style={{ width: '100%', background: '#0A0F1D', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', padding: '6px 8px', borderRadius: 4 }}
@@ -466,10 +491,11 @@ export default function SportsScienceCalculator() {
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="fitness-lab-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
                 <div>
                   <label style={{ fontSize: 11, color: 'var(--gray)' }}>Waist Circumference (in)</label>
                   <input
+                    aria-label="Waist circumference in inches"
                     type="text"
                     inputMode="decimal"
                     autoComplete="off"
@@ -482,6 +508,7 @@ export default function SportsScienceCalculator() {
                 <div>
                   <label style={{ fontSize: 11, color: 'var(--gray)' }}>Hips Circumference (in)</label>
                   <input
+                    aria-label="Hip circumference in inches"
                     type="text"
                     inputMode="decimal"
                     autoComplete="off"
@@ -493,13 +520,14 @@ export default function SportsScienceCalculator() {
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)', marginTop: 8 }}>
+              {!hasWaistHipInputs && <p role="status">Enter positive waist and hip measurements to see your ratio.</p>}
+              {hasWaistHipInputs && <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)', marginTop: 8 }}>
                 <div style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Waist-to-Hip Ratio</div>
                 <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 26, fontWeight: 700, color: whrResult.riskCategory === 'Low Risk' ? '#10B981' : '#DC2626', marginTop: 4 }}>
                   {whrResult.ratio} <span style={{ fontSize: 14, fontFamily: 'var(--font-sans, Raleway), sans-serif', fontWeight: 600, letterSpacing: '0.04em' }}>({whrResult.riskCategory})</span>
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--gray)', marginTop: 4 }}>{whrResult.clinicalStandard}</div>
-              </div>
+              </div>}
             </div>
           </div>
 
@@ -512,6 +540,7 @@ export default function SportsScienceCalculator() {
               <div>
                 <label style={{ fontSize: 11, color: 'var(--gray)' }}>Athlete Age (years)</label>
                 <input
+                  aria-label="Skinfold test age"
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
@@ -522,10 +551,11 @@ export default function SportsScienceCalculator() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <div className="fitness-lab-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}>
                 <div>
                   <label style={{ fontSize: 10, color: 'var(--gray)' }}>{bodySex === 'male' ? 'Chest (mm)' : 'Triceps (mm)'}</label>
                   <input
+                    aria-label={bodySex === 'male' ? 'Chest skinfold in mm' : 'Triceps skinfold in mm'}
                     type="text"
                     inputMode="decimal"
                     autoComplete="off"
@@ -538,6 +568,7 @@ export default function SportsScienceCalculator() {
                 <div>
                   <label style={{ fontSize: 10, color: 'var(--gray)' }}>{bodySex === 'male' ? 'Abdomen (mm)' : 'Suprailiac (mm)'}</label>
                   <input
+                    aria-label={bodySex === 'male' ? 'Abdomen skinfold in mm' : 'Suprailiac skinfold in mm'}
                     type="text"
                     inputMode="decimal"
                     autoComplete="off"
@@ -550,6 +581,7 @@ export default function SportsScienceCalculator() {
                 <div>
                   <label style={{ fontSize: 10, color: 'var(--gray)' }}>Thigh (mm)</label>
                   <input
+                    aria-label="Thigh skinfold in mm"
                     type="text"
                     inputMode="decimal"
                     autoComplete="off"
@@ -561,13 +593,14 @@ export default function SportsScienceCalculator() {
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)', marginTop: 8 }}>
+              {!hasSkinfoldInputs && <p role="status">Enter a positive age and all three skinfold measurements to see your estimate.</p>}
+              {hasSkinfoldInputs && <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)', marginTop: 8 }}>
                 <div style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Calculated Body Fat (Siri Formula)</div>
                 <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 28, fontWeight: 700, color: 'var(--gold-lt)', marginTop: 4 }}>
                   {skinfoldResult.bodyFatPercent}% Body Fat
                 </div>
                 <div style={{ fontSize: 12, color: '#10B981', fontWeight: 600 }}>Classification: {skinfoldResult.classification}</div>
-              </div>
+              </div>}
             </div>
           </div>
         </div>

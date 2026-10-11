@@ -71,7 +71,7 @@ export default function CoachAdvisoryView({
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 16 }}>
+    <div className="fitness-coach-view" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
       {/* Coach Header Banner */}
       <div
         style={{
@@ -99,10 +99,10 @@ export default function CoachAdvisoryView({
                 color: '#FFFFFF',
               }}
             >
-              Coach Scott Gordon · Advisory &amp; Check-In Hub
+              Your coach
             </h2>
             <p style={{ margin: '2px 0 0', color: 'var(--gold-lt)', fontSize: 12.5 }}>
-              Weekly accountability check-in, performance biofeedback, and direct advisory consultations.
+              Check in with Coach Gordon, share updates, or book a session.
             </p>
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function CoachAdvisoryView({
             }}
           >
             <GaaIcon name="message-square" size={13} tone="gold" />
-            Message Coach Gordon
+            Message coach
           </a>
           <a
             href="/dashboard/book"
@@ -144,13 +144,16 @@ export default function CoachAdvisoryView({
             }}
           >
             <GaaIcon name="calendar" size={13} tone="dark" />
-            Book 1-on-1 Session
+            Book a session
           </a>
         </div>
       </div>
 
+      <WeeklyCheckinForm preferredUnits={units} />
+
       {/* ── ATHLETE PROFILE & CLINICAL SAFEGUARDS CARD ── */}
-      <section
+      <details
+        className="fitness-card-disclosure fitness-coach-health"
         style={{
           border: '1px solid rgba(212,160,23,0.3)',
           background: 'rgba(13,27,42,0.85)',
@@ -161,6 +164,7 @@ export default function CoachAdvisoryView({
           gap: 14,
         }}
       >
+        <summary>Health &amp; training details on file</summary>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <GaaIcon name="shield-check" size={20} tone="gold" />
@@ -174,7 +178,7 @@ export default function CoachAdvisoryView({
                 color: '#FFFFFF',
               }}
             >
-              Athlete Baseline &amp; Clinical Safeguards On File
+              Your intake summary
             </h3>
           </div>
           <a
@@ -194,14 +198,14 @@ export default function CoachAdvisoryView({
         </div>
 
         <p style={{ margin: 0, color: 'var(--gray)', fontSize: 13, lineHeight: 1.5 }}>
-          Coach Scott Gordon cross-examines your active medications, joint limitations, and clinical intake prior to adjusting your weekly training split, working set volume, and exercise mechanics.
+          Review the information you shared with your coach. Update your intake when your health or training needs change. This summary is not medical clearance.
         </p>
 
         {/* Safeguard Indicators Grid */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
             gap: 12,
           }}
         >
@@ -222,10 +226,10 @@ export default function CoachAdvisoryView({
               <span>Active Goal &amp; Macrocycle</span>
             </div>
             <div style={{ color: '#FFFFFF', fontSize: 13.5, fontWeight: 700 }}>
-              {profile?.fitness_goal || 'Body Recomposition & Power'}
+              {profile?.fitness_goal || 'Goal not recorded'}
             </div>
             <div style={{ color: 'var(--gray)', fontSize: 12 }}>
-              {plan?.nasm_opt_phase ? `NASM OPT™ Phase ${plan.nasm_opt_phase}` : 'Active Periodization Split'} · {profile?.training_days_per_week ? `${profile.training_days_per_week} Days / Wk` : '3–4 Sessions / Wk'}
+              {plan?.nasm_opt_phase ? `NASM OPT™ Phase ${plan.nasm_opt_phase}` : 'Phase not recorded'} · {profile?.training_days_per_week ? `${profile.training_days_per_week} Days / Wk` : 'Frequency not recorded'}
             </div>
           </div>
 
@@ -248,7 +252,7 @@ export default function CoachAdvisoryView({
               </div>
               {hasMedications && (
                 <span style={{ fontSize: 10, padding: '2px 6px', background: 'rgba(52,211,153,0.15)', color: '#34D399', borderRadius: 4, fontWeight: 700 }}>
-                  Shield Active
+                  Reported
                 </span>
               )}
             </div>
@@ -260,7 +264,7 @@ export default function CoachAdvisoryView({
             </div>
             <div style={{ color: hasMedications ? 'var(--gold-lt)' : 'var(--gray)', fontSize: 11.5 }}>
               {hasMedications
-                ? 'Monitored for hydration, BP, and supplement interaction safety'
+                ? 'Discuss medication-related training questions with your clinician and coach'
                 : 'No prescription medications currently recorded'}
             </div>
           </div>
@@ -284,7 +288,7 @@ export default function CoachAdvisoryView({
               </div>
               {hasInjuriesOrLimitations && (
                 <span style={{ fontSize: 10, padding: '2px 6px', background: 'rgba(245,158,11,0.15)', color: '#F59E0B', borderRadius: 4, fontWeight: 700 }}>
-                  Adapted
+                  Reported
                 </span>
               )}
             </div>
@@ -295,8 +299,8 @@ export default function CoachAdvisoryView({
             </div>
             <div style={{ color: hasInjuriesOrLimitations ? 'var(--gold-lt)' : 'var(--gray)', fontSize: 11.5 }}>
               {hasInjuriesOrLimitations
-                ? 'Exercise loading patterns tailored to joint tolerance'
-                : 'Full kinetic chain range of motion cleared'}
+                ? 'Tell your coach about changes in pain or movement tolerance'
+                : 'Update your intake if pain or limitations develop'}
             </div>
           </div>
 
@@ -318,7 +322,7 @@ export default function CoachAdvisoryView({
             </div>
             <div style={{ color: '#FFFFFF', fontSize: 13, lineHeight: 1.4, wordBreak: 'break-word' }}>
               {intake?.medical_conditions?.trim() ||
-                (intake?.parq_any_yes ? 'PAR-Q Medical Consultation Flagged' : 'Cleared for Unrestricted Exercise')}
+                (intake?.parq_any_yes ? 'PAR-Q Medical Consultation Flagged' : 'No medical conditions recorded')}
             </div>
             <div style={{ color: 'var(--gray)', fontSize: 11.5 }}>
               {intake?.allergies?.trim() ? `Allergies: ${intake.allergies.trim()}` : 'No food or contact allergies on file'}
@@ -341,18 +345,14 @@ export default function CoachAdvisoryView({
         >
           <GaaIcon name="message-square" size={14} tone="gold" />
           <span>
-            Have any of your medications, physical symptoms, or recovery needs changed? Report updates in your weekly check-in notes below so Coach Gordon can adjust your program immediately.
+            Report changes to medications, symptoms, or recovery in your check-in notes. For urgent health concerns, contact a medical professional.
           </span>
         </div>
-      </section>
-
-      {/* Weekly Check-In Form */}
-      <section style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: 'clamp(14px, 2.5vw, 20px)', borderRadius: 8 }}>
-        <WeeklyCheckinForm preferredUnits={units} />
-      </section>
+      </details>
 
       {/* Body Composition & Progress Photos */}
-      <div style={{ marginTop: 2 }}>
+      <details className="fitness-card-disclosure fitness-progress-panel">
+        <summary>Progress photos &amp; body composition</summary>
         <ProgressPhotoTimeline
           initialPhotos={progressPhotos}
           canUpload
@@ -371,8 +371,7 @@ export default function CoachAdvisoryView({
             setStatus(`Approximate body-fat estimate: ${value}%`)
           }}
         />
-      </div>
+      </details>
     </div>
   )
 }
-

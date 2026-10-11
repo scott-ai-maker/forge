@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { getRequestAuthzMock, supabaseAdminMock } = vi.hoisted(() => ({
+const { getRequestAuthzMock, supabaseAdminMock, upsertMock } = vi.hoisted(() => ({
   getRequestAuthzMock: vi.fn(),
   supabaseAdminMock: vi.fn(),
+  upsertMock: vi.fn(),
 }))
 
 vi.mock('@/lib/authz', async () => {
@@ -37,7 +38,8 @@ function makeAdmin(upsertReturn: unknown = null, listReturn: unknown[] = []) {
             },
           }
         },
-        upsert() {
+        upsert(payload: unknown) {
+          upsertMock(payload)
           return {
             select() {
               return {
@@ -113,9 +115,9 @@ describe('POST /api/fitness/checkin', () => {
 
   it('upserts a check-in with valid payload', async () => {
     getRequestAuthzMock.mockResolvedValue(authedUser)
-    const record = { id: 'ci-1', week_start: '2026-04-14', sleep_quality: 8 }
+    const record = { id: 'ci-1', week_start: '2026-04-14', sleep_quality: 4 }
     supabaseAdminMock.mockReturnValue(makeAdmin(record))
-    const res = await POST(makeRequest({ week_start: '2026-04-14', sleep_quality: 8, stress_level: 4 }))
+    const res = await POST(makeRequest({ week_start: '2026-04-14', sleep_quality: 4, stress_level: 4 }))
     expect(res.status).toBe(200)
     await expect(res.json()).resolves.toMatchObject(record)
   })
@@ -126,4 +128,27 @@ describe('POST /api/fitness/checkin', () => {
     const res = await POST(makeRequest({ week_start: '2026-04-14' }))
     expect(res.status).toBe(500)
   })
+
+  it('preserves blank ratings, weight and notes as null rather than zero or text', async () => {
+    getRequestAuthzMock.mockResolvedValue(authedUser)
+    supabaseAdminMock.mockReturnValue(makeAdmin({ id: 'ci-1' }))
+    const res = await POST(makeRequest({
+      week_start: '2026-04-14', sleep_quality: null, weight_kg: null, notes: null,
+    }))
+    expect(res.status).toBe(200)
+    expect(upsertMock).toHaveBeenCalledWith(expect.objectContaining({
+      sleep_quality: null, stress_level: null, soreness_level: null, energy_level: null,
+      weight_kg: null, waist_cm: null, hip_cm: null, neck_cm: null, notes: null,
+    }))
+  })
+
+  it.each([{ sleep_quality: 6 }, { stress_level: 0 }, { energy_level: 2.5 }, { weight_kg: 0 }, { neck_cm: 'invalid' }])(
+    'rejects invalid check-in values %j',
+    async fields => {
+      getRequestAuthzMock.mockResolvedValue(authedUser)
+      const res = await POST(makeRequest({ week_start: '2026-04-14', ...fields }))
+      expect(res.status).toBe(400)
+      expect(upsertMock).not.toHaveBeenCalled()
+    },
+  )
 })

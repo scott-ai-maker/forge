@@ -47,7 +47,8 @@ function calcProgress(goal: ClientGoal): number | null {
   }
   const range = Math.abs(goal.target_value - goal.baseline_value)
   if (range === 0) return 100
-  const progress = Math.abs(goal.current_value - goal.baseline_value)
+  const direction = goal.target_value >= goal.baseline_value ? 1 : -1
+  const progress = (goal.current_value - goal.baseline_value) * direction
   return Math.min(Math.max(Math.round((progress / range) * 100), 0), 100)
 }
 
@@ -112,7 +113,8 @@ export default function GoalsTracker() {
       if (!res.ok) throw new Error('Failed')
       const json = await res.json() as { goals: ClientGoal[] }
       setGoals(json.goals ?? [])
-    } catch {
+    } catch (error) {
+      console.error('Goals load failed:', error)
       setError('Could not load goals.')
     } finally {
       setLoading(false)
@@ -165,6 +167,7 @@ export default function GoalsTracker() {
   )
 
   const handleToggleAchieved = useCallback(async (goal: ClientGoal) => {
+    setError(null)
     setUpdatingId(goal.id)
     try {
       const res = await fetch(`/api/fitness/goals/${goal.id}`, {
@@ -175,6 +178,9 @@ export default function GoalsTracker() {
       if (!res.ok) throw new Error('Failed')
       const j = await res.json() as { goal: ClientGoal }
       setGoals((prev) => prev.map((g) => (g.id === goal.id ? j.goal : g)))
+    } catch (error) {
+      console.error('Goal status update failed:', error)
+      setError('Could not update goal status. Please try again.')
     } finally {
       setUpdatingId(null)
     }
@@ -182,7 +188,11 @@ export default function GoalsTracker() {
 
   const handleUpdateCurrent = useCallback(
     async (goal: ClientGoal, newValue: string) => {
-      if (newValue === '') return
+      if (newValue.trim() === '' || !Number.isFinite(Number(newValue))) {
+        setError('Enter a valid current value.')
+        return
+      }
+      setError(null)
       setUpdatingId(goal.id)
       try {
         const res = await fetch(`/api/fitness/goals/${goal.id}`, {
@@ -195,6 +205,9 @@ export default function GoalsTracker() {
         setGoals((prev) => prev.map((g) => (g.id === goal.id ? j.goal : g)))
         setEditingGoal(null)
         setEditCurrentValue('')
+      } catch (error) {
+        console.error('Goal value update failed:', error)
+        setError('Could not update the current value. Please try again.')
       } finally {
         setUpdatingId(null)
       }
@@ -204,10 +217,15 @@ export default function GoalsTracker() {
 
   const handleDelete = useCallback(async (goalId: string) => {
     if (!confirm('Delete this goal?')) return
+    setError(null)
     setUpdatingId(goalId)
     try {
-      await fetch(`/api/fitness/goals/${goalId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/fitness/goals/${goalId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`Delete failed (${res.status})`)
       setGoals((prev) => prev.filter((g) => g.id !== goalId))
+    } catch (error) {
+      console.error('Goal delete failed:', error)
+      setError('Could not delete goal. Please try again.')
     } finally {
       setUpdatingId(null)
     }
@@ -296,7 +314,7 @@ export default function GoalsTracker() {
             />
           </FormField>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="fitness-progress-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
             <FormField label="Category">
               <select
                 value={form.category}
@@ -319,7 +337,7 @@ export default function GoalsTracker() {
             </FormField>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 }}>
+          <div className="fitness-progress-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
             <FormField label="Baseline">
               <input
                 type="text"
@@ -407,7 +425,7 @@ export default function GoalsTracker() {
       )}
 
       {loading && <p style={{ color: 'var(--gray)', fontSize: 13 }}>Loading goals…</p>}
-      {error && <p style={{ color: 'var(--error)', fontSize: 13 }}>{error}</p>}
+      {error && <div role="alert"><p style={{ color: 'var(--error)', fontSize: 13 }}>{error}</p><button type="button" onClick={() => void load()}>Retry goals</button></div>}
 
       {!loading && !error && goals.length === 0 && (
         <div
@@ -614,8 +632,9 @@ function GoalCard({
 
           {/* Update current value inline */}
           {isEditing && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <input
+                aria-label="Current goal value"
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
@@ -657,7 +676,7 @@ function GoalCard({
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        <div className="fitness-goal-actions" style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           {!goal.is_achieved && goal.target_value != null && (
             <button
               type="button"
@@ -746,8 +765,8 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
         }}
       >
         {label}
+        {children}
       </label>
-      {children}
     </div>
   )
 }
@@ -760,7 +779,7 @@ const inputStyle: React.CSSProperties = {
   fontFamily: 'Raleway, sans-serif',
   fontSize: 14,
   padding: '8px 10px',
-  outline: 'none',
+  boxSizing: 'border-box',
 }
 
 const ghostBtn: React.CSSProperties = {
@@ -771,4 +790,6 @@ const ghostBtn: React.CSSProperties = {
   fontSize: 14,
   padding: '4px 8px',
   lineHeight: 1,
+  minWidth: 44,
+  minHeight: 44,
 }

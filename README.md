@@ -26,6 +26,31 @@ The interface uses Barlow Condensed for headings and Inter for body text through
 
 ## Testing
 
+The client Progress tab starts with training totals and one selectable volume, sets, or effort trend.
+Personal records, goals, consistency, workout/set history, and photos/body composition are
+expandable sections. History starts with the latest 10 entries and offers "Show more" without
+discarding older records. Totals cover all loaded history; timed exercise seconds are included
+in the recorded reps/seconds total. Effort charts omit dates with no recorded RPE.
+Goals support increasing and decreasing targets and retain records when a save/delete fails.
+Use `tests/ui/progress-mobile.spec.ts` for focused mobile, keyboard, and failure-state checks.
+
+Fitness Lab uses a compact in-app selector for all ten tools, with a bounded scrollable list,
+keyboard-accessible buttons, and Escape to dismiss. Technical explanations, daily check-in
+inputs, nutrition inputs, phase summaries, and performance tools are expandable. Mobile controls
+have 44px touch targets. Body-composition summaries require real profile measurements and an
+estimate; missing measurements are not substituted. Sleep examples are explicitly identified,
+and the recovery map labels model estimates and collapses exploratory simulation inputs.
+Exploratory check-in/nutrition adjustments are not presented as saved changes.
+Access-check and roadmap failures offer retries. Travel previews use the current program's first
+workout day. Add-on access checks run only for gated tools; expired sessions show sign-in guidance.
+Run `tests/ui/fitness-lab-mobile.spec.ts` for focused Lab UAT.
+
+The client Coach tab puts messaging, booking, and the weekly check-in first. Health/intake
+details and progress photos are collapsed by default; closing photo details preserves drafts.
+Check-in failures offer retry without enabling a blank form that could overwrite existing entries.
+Save failures retain entries and release the submit control. Blank optional values remain null.
+Use `tests/ui/coach-mobile.spec.ts` for mobile layout, keyboard, units, and request-failure checks.
+
 Run the whitebox test suite with:
 
 ```bash

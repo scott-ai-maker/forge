@@ -125,7 +125,7 @@ export default function AthleticPerformanceStudio({
               color: '#FFFFFF',
             }}
           >
-            ATHLETIC AGILITY & NEUROMUSCULAR PERFORMANCE LAB
+            Performance tests
           </h3>
         </div>
 
@@ -141,6 +141,7 @@ export default function AthleticPerformanceStudio({
             <button
               key={tab.id}
               type="button"
+              aria-pressed={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id as 'overview' | 'davies' | 'shark' | 'shuttle' | 'pushups')}
               style={{
                 background: activeTab === tab.id ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
@@ -187,7 +188,7 @@ export default function AthleticPerformanceStudio({
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 11, color: 'var(--gray)' }}>Normative Table Calibration:</span>
           <span style={{ fontSize: 11, background: 'rgba(212,160,23,0.15)', color: 'var(--gold-lt)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
             NASM Table 13.1 - 13.4 Active

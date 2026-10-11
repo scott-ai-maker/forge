@@ -223,7 +223,7 @@ export default function MuscleRecoveryHeatmap3D({
       const diffMs = Date.now() - new Date(liveExtraction.lastWorkoutDate).getTime()
       return Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)))
     }
-    return 4 // Fully rested baseline
+    return null
   }, [liveExtraction.lastWorkoutDate])
 
   const toggleSupplement = (key: RecoverySupplementKey) => {
@@ -310,9 +310,10 @@ export default function MuscleRecoveryHeatmap3D({
               display: 'flex',
               alignItems: 'center',
               gap: 12,
+              flexWrap: 'wrap',
             }}
           >
-            3D Anatomical Muscle Recovery Matrix
+            Muscle recovery map
             <span
               style={{
                 fontSize: 11,
@@ -327,9 +328,12 @@ export default function MuscleRecoveryHeatmap3D({
                 textTransform: 'uppercase',
               }}
             >
-              Advanced settings
+              Model estimate
             </span>
           </h3>
+          <p style={{ fontSize: 12, color: 'var(--gray)', marginBottom: 0 }}>
+            Estimated from logged workouts, not measured muscle recovery.
+          </p>
         </div>
 
         {/* Global System Readiness Score Badge */}
@@ -361,7 +365,7 @@ export default function MuscleRecoveryHeatmap3D({
                     : '#DC2626',
               }}
             >
-              {telemetry.overallBodyReadinessScore}%
+              {liveExtraction.totalSetsAnalyzed > 0 ? `${telemetry.overallBodyReadinessScore}%` : 'No data'}
             </div>
           </div>
           <div
@@ -403,7 +407,6 @@ export default function MuscleRecoveryHeatmap3D({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            minHeight: 660,
             overflow: 'hidden',
             boxShadow: 'inset 0 0 50px rgba(0,0,0,0.85), 0 15px 35px rgba(0,0,0,0.6)',
           }}
@@ -423,6 +426,7 @@ export default function MuscleRecoveryHeatmap3D({
           >
             <button
               type="button"
+              aria-pressed={perspective === 'anterior'}
               onClick={() => setPerspective('anterior')}
               style={{
                 flex: 1,
@@ -441,6 +445,7 @@ export default function MuscleRecoveryHeatmap3D({
             </button>
             <button
               type="button"
+              aria-pressed={perspective === 'posterior'}
               onClick={() => setPerspective('posterior')}
               style={{
                 flex: 1,
@@ -472,7 +477,7 @@ export default function MuscleRecoveryHeatmap3D({
           >
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 30, fontWeight: 700, lineHeight: 1, color: '#FFFFFF' }}>
-                {daysSinceLastWorkout}
+                {daysSinceLastWorkout ?? '--'}
               </div>
               <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', maxWidth: 100, marginTop: 4 }}>
                 Days Since Last Lift
@@ -481,7 +486,7 @@ export default function MuscleRecoveryHeatmap3D({
 
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 30, fontWeight: 700, lineHeight: 1, color: '#10B981' }}>
-                {freshCount}
+                {liveExtraction.totalSetsAnalyzed > 0 ? freshCount : '--'}
               </div>
               <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', maxWidth: 100, marginTop: 4 }}>
                 Fresh Muscle Groups
@@ -1461,7 +1466,8 @@ export default function MuscleRecoveryHeatmap3D({
           )}
 
           {/* ── Multi-Factor Recovery Simulator & Dynamic Time-Lapse ─────────────────────────── */}
-          <div
+          <details
+            className="fitness-card-disclosure"
             style={{
               background: 'rgba(10,16,28,0.6)',
               border: '1px solid rgba(255,255,255,0.08)',
@@ -1469,6 +1475,8 @@ export default function MuscleRecoveryHeatmap3D({
               padding: '22px',
             }}
           >
+            <summary>Recovery simulation &amp; advanced inputs</summary>
+            <p style={{ color: 'var(--gray)', fontSize: 12 }}>Model estimates, not measured recovery. Adjustments are exploratory and are not saved.</p>
             <div
               style={{
                 fontSize: 11,
@@ -1503,6 +1511,7 @@ export default function MuscleRecoveryHeatmap3D({
               </div>
 
               <input
+                aria-label="Recovery simulation hours ahead"
                 type="range"
                 min={0}
                 max={72}
@@ -1518,6 +1527,7 @@ export default function MuscleRecoveryHeatmap3D({
                   <button
                     key={offset}
                     type="button"
+                    aria-pressed={timeLapseHoursOffset === offset}
                     onClick={() => setTimeLapseHoursOffset(offset)}
                     style={{
                       padding: '3px 8px',
@@ -1552,18 +1562,18 @@ export default function MuscleRecoveryHeatmap3D({
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 10px #10B981' }} />
                 <span style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 600 }}>
-                  Live Client Telemetry Active
+                  Logged workout inputs
                 </span>
               </div>
               <span style={{ fontSize: 11, color: 'var(--gray)' }}>
                 {liveExtraction.totalSetsAnalyzed > 0
                   ? `${liveExtraction.totalSetsAnalyzed} Sets / ${liveExtraction.workoutCount} Workouts Ingested`
-                  : 'Fully Supercompensated & Rested'}
+                  : 'No logged training data'}
               </span>
             </div>
 
             {/* Age & Conditioning Sliders (Auto-Chosen for Client) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <div className="fitness-lab-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, marginBottom: 16 }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, marginBottom: 4 }}>
                   <span style={{ color: 'var(--gray)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
@@ -1734,7 +1744,7 @@ export default function MuscleRecoveryHeatmap3D({
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))',
                   gap: 8,
                 }}
               >
@@ -1804,7 +1814,7 @@ export default function MuscleRecoveryHeatmap3D({
                 )}
               </div>
             </div>
-          </div>
+          </details>
         </div>
       </div>
     </div>

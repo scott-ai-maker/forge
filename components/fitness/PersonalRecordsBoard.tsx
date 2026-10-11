@@ -48,8 +48,9 @@ export default function PersonalRecordsBoard({ units = 'imperial' }: PersonalRec
       if (!res.ok) throw new Error('Failed to load')
       const json = await res.json() as { records: PersonalRecord[] }
       setRecords(json.records ?? [])
-    } catch {
-      setError('Could not load personal records. Log some weighted sets first.')
+    } catch (error) {
+      console.error('Personal records load failed:', error)
+      setError('Could not load personal records. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -80,7 +81,7 @@ export default function PersonalRecordsBoard({ units = 'imperial' }: PersonalRec
             margin: 0,
           }}
         >
-          PERSONAL RECORDS & 1RM LAB
+          Personal records
         </h2>
         <span
           style={{
@@ -106,6 +107,8 @@ export default function PersonalRecordsBoard({ units = 'imperial' }: PersonalRec
         aria-label="Search personal records"
         style={{
           width: '100%',
+          minWidth: 0,
+          boxSizing: 'border-box',
           background: 'var(--navy-mid)',
           border: '1px solid var(--navy-lt)',
           color: 'var(--white)',
@@ -114,7 +117,6 @@ export default function PersonalRecordsBoard({ units = 'imperial' }: PersonalRec
           padding: '10px 14px',
           marginBottom: 14,
           borderRadius: 6,
-          outline: 'none',
         }}
       />
 
@@ -123,7 +125,10 @@ export default function PersonalRecordsBoard({ units = 'imperial' }: PersonalRec
       )}
 
       {error && (
-        <p style={{ color: 'var(--gray)', fontSize: 13 }}>{error}</p>
+        <div role="alert">
+          <p style={{ color: 'var(--gray)', fontSize: 13 }}>{error}</p>
+          <button type="button" onClick={() => void load()}>Retry personal records</button>
+        </div>
       )}
 
       {!loading && !error && filtered.length === 0 && (
@@ -170,6 +175,7 @@ export default function PersonalRecordsBoard({ units = 'imperial' }: PersonalRec
                 }}
               >
                 <button
+                  className="fitness-pr-summary"
                   type="button"
                   onClick={() => setExpanded(isExpanded ? null : rec.exerciseName)}
                   aria-expanded={isExpanded}

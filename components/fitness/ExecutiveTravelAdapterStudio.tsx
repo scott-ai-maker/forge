@@ -52,7 +52,7 @@ export default function ExecutiveTravelAdapterStudio({
     if (onApplyTravelPlan) {
       onApplyTravelPlan(selectedScenario, adaptedExercises)
     }
-    setDeployedStatus(`Deployed ${currentMeta.label} protocol across your training split!`)
+    setDeployedStatus(`Applied ${currentMeta.label} to your first workout day.`)
     setTimeout(() => setDeployedStatus(null), 4000)
   }
 
@@ -154,7 +154,7 @@ export default function ExecutiveTravelAdapterStudio({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
             gap: 10,
           }}
         >
@@ -171,6 +171,7 @@ export default function ExecutiveTravelAdapterStudio({
               <button
                 key={scenarioKey}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedScenario(scenarioKey)}
                 className="tactile-btn"
                 style={{

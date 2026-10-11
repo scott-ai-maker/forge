@@ -177,12 +177,18 @@ export default function ExecutiveSleepBiometricsHud({
             }}
           >
             <GaaIcon name={isEditing ? 'check' : 'edit'} size={12} tone="inherit" />
-            <span>{isEditing ? 'Save Adjustment' : 'Manual Adjust'}</span>
+            <span>{isEditing ? 'Done adjusting' : 'Explore adjustments'}</span>
           </button>
         </div>
       </div>
 
 
+      <p role="status" style={{ margin: 0, color: 'var(--gray)', fontSize: 12 }}>
+        {initialRecord ? 'Showing your supplied sleep record.'
+          : telemetry?.sleepHours ? 'Sleep duration comes from your wearable. Missing sleep stages and other metrics use illustrative values, so the score is an estimate.'
+          : 'Example sleep data, not your measured results. Connect a wearable to view your sleep duration.'}
+        {' '}Adjustments here are not saved.
+      </p>
       {/* ── Main Score & Stage Overview Strip ───────────────────────── */}
       <div
         style={{
@@ -282,7 +288,7 @@ export default function ExecutiveSleepBiometricsHud({
           <div style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 10 }}>
             Manual Sleep Stage Adjustments
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 12 }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--gray)' }}>
                 <span>Total Duration:</span>

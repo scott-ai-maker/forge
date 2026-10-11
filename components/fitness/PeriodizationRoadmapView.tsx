@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 import {
   generate12WeekMacrocycle,
@@ -63,30 +63,41 @@ export default function PeriodizationRoadmapView({
   })
   const [selectedWeekNum, setSelectedWeekNum] = useState<number>(() => roadmap.currentWeek || currentWeek)
   const [completedCount, setCompletedCount] = useState<number | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  // Fetch live calibrated plan from API if not provided
-  useEffect(() => {
-    if (!initialPlan) {
-      fetch('/api/fitness/periodization')
-        .then(res => res.json())
-        .then(data => {
-          if (data.ok && data.plan) {
-            setRoadmap(data.plan)
-            setSelectedWeekNum(data.plan.currentWeek || 1)
-            if (typeof data.completedWorkoutsCount === 'number') {
-              setCompletedCount(data.completedWorkoutsCount)
-            }
-          }
-        })
-        .catch(err => console.error('Failed to fetch periodization roadmap', err))
+  const loadRoadmap = useCallback(async () => {
+    setLoadError(null)
+    try {
+      const res = await fetch('/api/fitness/periodization')
+      if (res.status === 401) {
+        console.warn('Training roadmap requires a signed-in session.')
+        setLoadError('Please sign in to load your roadmap, then retry. The preview below is a general training example.')
+        return
+      }
+      if (!res.ok) throw new Error(`Roadmap request failed (${res.status})`)
+      const data = await res.json()
+      if (!data.ok || !data.plan) throw new Error('Roadmap response did not include a plan')
+      setRoadmap(data.plan)
+      setSelectedWeekNum(data.plan.currentWeek || 1)
+      if (typeof data.completedWorkoutsCount === 'number') {
+        setCompletedCount(data.completedWorkoutsCount)
+      }
+    } catch (error) {
+      console.error('Failed to fetch periodization roadmap', error)
+      setLoadError('Could not load your roadmap. The preview below is a general training example.')
     }
-  }, [initialPlan])
+  }, [])
+
+  useEffect(() => {
+    if (!initialPlan) void loadRoadmap()
+  }, [initialPlan, loadRoadmap])
 
   const activeWeek = roadmap.weeks.find(w => w.weekNumber === selectedWeekNum) ?? roadmap.weeks[0]
   const velocityInfo = VELOCITY_CONFIG[roadmap.adaptationVelocity] || VELOCITY_CONFIG.standard
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
+      {loadError && <div role="alert" className="fitness-lab-panel"><p>{loadError}</p><button type="button" onClick={() => void loadRoadmap()}>Retry roadmap</button></div>}
       {/* Header */}
       <div className="glass-card" style={{ padding: '24px 28px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
@@ -177,7 +188,9 @@ export default function PeriodizationRoadmapView({
       </div>
 
       {/* Phase Blocks Banner */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 12 }}>
+      <details className="fitness-card-disclosure fitness-lab-panel">
+        <summary>Training phase overview</summary>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 12 }}>
         {roadmap.phases.map(ph => (
           <div
             key={ph.phaseNumber}
@@ -201,7 +214,8 @@ export default function PeriodizationRoadmapView({
             </p>
           </div>
         ))}
-      </div>
+        </div>
+      </details>
 
       {/* 12-Week Interactive Timeline Grid */}
       <div className="glass-card" style={{ padding: 24, display: 'grid', gap: 16 }}>
@@ -231,6 +245,7 @@ export default function PeriodizationRoadmapView({
               <button
                 key={w.weekNumber}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedWeekNum(w.weekNumber)}
                 className="tactile-btn tabular-nums"
                 style={{
@@ -401,5 +416,3 @@ export default function PeriodizationRoadmapView({
     </div>
   )
 }
-
-

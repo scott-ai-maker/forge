@@ -48,15 +48,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'week_start must be a date string (YYYY-MM-DD)' }, { status: 400 })
   }
 
-  const sleepQuality = body.sleep_quality !== undefined ? Number(body.sleep_quality) : null
-  const stressLevel = body.stress_level !== undefined ? Number(body.stress_level) : null
-  const sorenessLevel = body.soreness_level !== undefined ? Number(body.soreness_level) : null
-  const energyLevel = body.energy_level !== undefined ? Number(body.energy_level) : null
-  const weightKg = body.weight_kg !== undefined && body.weight_kg !== '' ? Number(body.weight_kg) : null
-  const waistCm = body.waist_cm !== undefined && body.waist_cm !== '' ? Number(body.waist_cm) : null
-  const hipCm = body.hip_cm !== undefined && body.hip_cm !== '' ? Number(body.hip_cm) : null
-  const neckCm = body.neck_cm !== undefined && body.neck_cm !== '' ? Number(body.neck_cm) : null
-  const notes = body.notes !== undefined ? String(body.notes).trim() : null
+  const optionalNumber = (value: unknown) => value == null || value === '' ? null : Number(value)
+  const sleepQuality = optionalNumber(body.sleep_quality)
+  const stressLevel = optionalNumber(body.stress_level)
+  const sorenessLevel = optionalNumber(body.soreness_level)
+  const energyLevel = optionalNumber(body.energy_level)
+  const weightKg = optionalNumber(body.weight_kg)
+  const waistCm = optionalNumber(body.waist_cm)
+  const hipCm = optionalNumber(body.hip_cm)
+  const neckCm = optionalNumber(body.neck_cm)
+  const notes = body.notes == null ? null : String(body.notes).trim() || null
+
+  if ([sleepQuality, stressLevel, sorenessLevel, energyLevel].some(value =>
+    value !== null && (!Number.isInteger(value) || value < 1 || value > 5)
+  )) {
+    return NextResponse.json({ error: 'Ratings must be whole numbers from 1 to 5, or left blank' }, { status: 400 })
+  }
+  if ([weightKg, waistCm, hipCm, neckCm].some(value => value !== null && (!Number.isFinite(value) || value <= 0))) {
+    return NextResponse.json({ error: 'Measurements must be positive numbers, or left blank' }, { status: 400 })
+  }
 
   const payload = {
     user_id: userId,

@@ -4802,6 +4802,8 @@ export default function FitnessTrackerClient({
       {/* ── PROGRESS & PRS HUB ── */}
       {primaryHub === 'progress' && (
         <ProgressAnalyticsView
+          sessionsPerWeek={sessionsPerWeek}
+          optPhase={plan?.nasm_opt_phase}
           localWorkoutLogs={localWorkoutLogs}
           localSetLogs={localSetLogs}
           units={units}
@@ -4818,6 +4820,7 @@ export default function FitnessTrackerClient({
       {/* ── FITNESS LAB & DIAGNOSTICS HUB ── */}
       {primaryHub === 'lab' && (
         <FitnessLabDiagnosticsView
+          onUpdateBodyfat={value => setBodyfatState({ estimated: String(value) })}
           activeLabTool={activeLabTool}
           onSelectTool={handleLabToolChange}
           profile={profile}
@@ -4838,7 +4841,7 @@ export default function FitnessTrackerClient({
                 ...prev,
                 [planWorkouts[0].day]: adapted,
               }))
-              setStatus(`Activated ${scenario.replace(/_/g, ' ')} travel protocol across your training split.`)
+              setStatus(`Activated ${scenario.replace(/_/g, ' ')} travel workout for day ${planWorkouts[0].day}.`)
             }
           }}
         />
