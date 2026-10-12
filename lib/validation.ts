@@ -13,6 +13,31 @@ export function normalizeDashboardWorkspace(value: string | string[] | undefined
   }
 }
 
+// Settings tab validation
+export const SettingsTabSchema = z.enum([
+  'schedule',
+  'wearables',
+  'apps',
+  'spotify',
+  'billing',
+  'fitness',
+  'medical',
+  'profile',
+  'security',
+  'notifications',
+])
+export type SettingsTabType = z.infer<typeof SettingsTabSchema>
+
+export function normalizeSettingsTab(value: string | string[] | undefined): SettingsTabType {
+  try {
+    const raw = Array.isArray(value) ? value[0] : value
+    return SettingsTabSchema.parse(raw)
+  } catch {
+    return 'wearables'
+  }
+}
+
+
 // Fitness workspace validation (4 Primary Hubs + Deep-Link Identifiers)
 export const FitnessWorkspaceSchema = z.enum([
   'train',

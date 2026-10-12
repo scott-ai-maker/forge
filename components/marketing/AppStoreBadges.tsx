@@ -1,8 +1,13 @@
 'use client'
 
-import React from 'react'
-import { MOBILE_APPS_CONFIG } from '@/lib/mobile-apps-config'
+import React, { useState } from 'react'
+import {
+  MOBILE_APPS_CONFIG,
+  isPlaceholderAppStoreUrl,
+  isPlaceholderPlayStoreUrl,
+} from '@/lib/mobile-apps-config'
 import TrackedCtaLink from './TrackedCtaLink'
+import AppStorePlaceholderModal, { PlaceholderPlatform } from './AppStorePlaceholderModal'
 
 interface AppStoreBadgesProps {
   variant?: 'solid' | 'glass' | 'outline' | 'official'
@@ -11,6 +16,8 @@ interface AppStoreBadgesProps {
   className?: string
   style?: React.CSSProperties
   sourceEventPrefix?: string
+  showPwaBadge?: boolean
+  interceptPlaceholders?: boolean
 }
 
 /**
@@ -134,6 +141,60 @@ export function GooglePlayBadgeSvg({ width = 140, height = 42 }: { width?: numbe
 }
 
 /**
+ * Official Progressive Web App (PWA) Vector Badge
+ */
+export function PwaAppBadgeSvg({ width = 140, height = 42 }: { width?: number; height?: number }) {
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox="0 0 140 42"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'block', maxWidth: '100%', height: 'auto' }}
+      aria-hidden="true"
+    >
+      <rect width="140" height="42" rx="7" fill="#000000" />
+      <rect x="0.5" y="0.5" width="139" height="41" rx="6.5" stroke="#C5A059" strokeWidth="1" />
+
+      {/* PWA Emblem Icon */}
+      <g transform="translate(10, 8.5)">
+        <rect x="0.5" y="0.5" width="22" height="15" rx="2.5" stroke="#C5A059" strokeWidth="1.5" fill="none" />
+        <line x1="6" y1="20" x2="17" y2="20" stroke="#C5A059" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="11.5" y1="16" x2="11.5" y2="20" stroke="#C5A059" strokeWidth="1.5" />
+        <circle cx="11.5" cy="8" r="3.2" fill="#C5A059" />
+      </g>
+
+      {/* Text: INSTALL AS */}
+      <text
+        x="39"
+        y="14.5"
+        fill="#C5A059"
+        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontSize="7.5"
+        fontWeight="700"
+        letterSpacing="0.8px"
+      >
+        INSTALL AS
+      </text>
+
+      {/* Text: Web App (PWA) */}
+      <text
+        x="39"
+        y="30"
+        fill="#FFFFFF"
+        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontSize="14.5"
+        fontWeight="600"
+        letterSpacing="-0.2px"
+      >
+        Web App (PWA)
+      </text>
+    </svg>
+  )
+}
+
+/**
  * Official Apple Monochrome Logo SVG
  */
 export function AppleLogoIcon({ size = 24, color = '#FFFFFF' }: { size?: number; color?: string }) {
@@ -171,9 +232,17 @@ export default function AppStoreBadges({
   className = '',
   style = {},
   sourceEventPrefix = 'marketing',
+  showPwaBadge = false,
+  interceptPlaceholders = true,
 }: AppStoreBadgesProps) {
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalPlatform, setModalPlatform] = useState<PlaceholderPlatform>('ios')
+
   const badgeWidth = size === 'sm' ? 125 : size === 'lg' ? 165 : 145
   const badgeHeight = size === 'sm' ? 38 : size === 'lg' ? 48 : 42
+
+  const isIosPlaceholder = isPlaceholderAppStoreUrl(MOBILE_APPS_CONFIG.ios.url)
+  const isAndroidPlaceholder = isPlaceholderPlayStoreUrl(MOBILE_APPS_CONFIG.android.url)
 
   const justifyMap: Record<string, string> = {
     left: 'flex-start',
@@ -181,61 +250,122 @@ export default function AppStoreBadges({
     right: 'flex-end',
   }
 
-  return (
-    <div
-      className={`app-store-badges-group ${className}`}
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: size === 'sm' ? 10 : 14,
-        alignItems: 'center',
-        justifyContent: justifyMap[align] || 'flex-start',
-        ...style,
-      }}
-    >
-      {/* ── Official Apple App Store Badge ── */}
-      <TrackedCtaLink
-        href={MOBILE_APPS_CONFIG.ios.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        eventName={`${sourceEventPrefix}_app_store_click`}
-        eventPayload={{ platform: 'ios', bundleId: MOBILE_APPS_CONFIG.ios.bundleId }}
-        className="tactile-btn official-app-store-badge"
-        aria-label="Download on the App Store"
-        style={{
-          display: 'inline-block',
-          textDecoration: 'none',
-          lineHeight: 0,
-          transition: 'transform 0.15s ease, filter 0.15s ease',
-          borderRadius: 7,
-          overflow: 'hidden',
-          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.6)',
-        }}
-      >
-        <AppleAppStoreBadgeSvg width={badgeWidth} height={badgeHeight} />
-      </TrackedCtaLink>
+  const handleAppStoreClick = (e: React.MouseEvent) => {
+    if (interceptPlaceholders && isIosPlaceholder) {
+      e.preventDefault()
+      setModalPlatform('ios')
+      setModalOpen(true)
+    }
+  }
 
-      {/* ── Official Google Play Badge ── */}
-      <TrackedCtaLink
-        href={MOBILE_APPS_CONFIG.android.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        eventName={`${sourceEventPrefix}_play_store_click`}
-        eventPayload={{ platform: 'android', bundleId: MOBILE_APPS_CONFIG.android.bundleId }}
-        className="tactile-btn official-google-play-badge"
-        aria-label="Get it on Google Play"
+  const handlePlayStoreClick = (e: React.MouseEvent) => {
+    if (interceptPlaceholders && isAndroidPlaceholder) {
+      e.preventDefault()
+      setModalPlatform('android')
+      setModalOpen(true)
+    }
+  }
+
+  const handlePwaClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setModalPlatform('pwa')
+    setModalOpen(true)
+  }
+
+  return (
+    <>
+      <div
+        className={`app-store-badges-group ${className}`}
         style={{
-          display: 'inline-block',
-          textDecoration: 'none',
-          lineHeight: 0,
-          transition: 'transform 0.15s ease, filter 0.15s ease',
-          borderRadius: 7,
-          overflow: 'hidden',
-          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: size === 'sm' ? 10 : 14,
+          alignItems: 'center',
+          justifyContent: justifyMap[align] || 'flex-start',
+          ...style,
         }}
       >
-        <GooglePlayBadgeSvg width={badgeWidth} height={badgeHeight} />
-      </TrackedCtaLink>
-    </div>
+        {/* ── Official Apple App Store Badge ── */}
+        <TrackedCtaLink
+          href={MOBILE_APPS_CONFIG.ios.url}
+          target={isIosPlaceholder ? '_self' : '_blank'}
+          rel="noopener noreferrer"
+          onClick={handleAppStoreClick}
+          eventName={`${sourceEventPrefix}_app_store_click`}
+          eventPayload={{ platform: 'ios', bundleId: MOBILE_APPS_CONFIG.ios.bundleId, isPlaceholder: isIosPlaceholder }}
+          className="tactile-btn official-app-store-badge"
+          aria-label="Download on the App Store"
+          style={{
+            display: 'inline-block',
+            textDecoration: 'none',
+            lineHeight: 0,
+            transition: 'transform 0.15s ease, filter 0.15s ease',
+            borderRadius: 7,
+            overflow: 'hidden',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.6)',
+            cursor: 'pointer',
+          }}
+        >
+          <AppleAppStoreBadgeSvg width={badgeWidth} height={badgeHeight} />
+        </TrackedCtaLink>
+
+        {/* ── Official Google Play Badge ── */}
+        <TrackedCtaLink
+          href={MOBILE_APPS_CONFIG.android.url}
+          target={isAndroidPlaceholder ? '_self' : '_blank'}
+          rel="noopener noreferrer"
+          onClick={handlePlayStoreClick}
+          eventName={`${sourceEventPrefix}_play_store_click`}
+          eventPayload={{ platform: 'android', bundleId: MOBILE_APPS_CONFIG.android.bundleId, isPlaceholder: isAndroidPlaceholder }}
+          className="tactile-btn official-google-play-badge"
+          aria-label="Get it on Google Play"
+          style={{
+            display: 'inline-block',
+            textDecoration: 'none',
+            lineHeight: 0,
+            transition: 'transform 0.15s ease, filter 0.15s ease',
+            borderRadius: 7,
+            overflow: 'hidden',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.6)',
+            cursor: 'pointer',
+          }}
+        >
+          <GooglePlayBadgeSvg width={badgeWidth} height={badgeHeight} />
+        </TrackedCtaLink>
+
+        {/* ── Optional PWA Badge ── */}
+        {showPwaBadge && (
+          <TrackedCtaLink
+            href={MOBILE_APPS_CONFIG.pwa.url}
+            onClick={handlePwaClick}
+            eventName={`${sourceEventPrefix}_pwa_badge_click`}
+            eventPayload={{ platform: 'pwa' }}
+            className="tactile-btn official-pwa-badge"
+            aria-label="Install as Web App (PWA)"
+            style={{
+              display: 'inline-block',
+              textDecoration: 'none',
+              lineHeight: 0,
+              transition: 'transform 0.15s ease, filter 0.15s ease',
+              borderRadius: 7,
+              overflow: 'hidden',
+              boxShadow: '0 4px 14px rgba(197, 160, 89, 0.25)',
+              cursor: 'pointer',
+            }}
+          >
+            <PwaAppBadgeSvg width={badgeWidth} height={badgeHeight} />
+          </TrackedCtaLink>
+        )}
+      </div>
+
+      {/* Interactive Placeholder / TestFlight / PWA Modal */}
+      <AppStorePlaceholderModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        initialPlatform={modalPlatform}
+        sourceContext={sourceEventPrefix}
+      />
+    </>
   )
 }
+

@@ -6,6 +6,8 @@ import {
   CoachFocusFilterSchema,
   normalizeCoachClientTab,
   CoachClientTabSchema,
+  normalizeSettingsTab,
+  SettingsTabSchema,
 } from '@/lib/validation'
 
 describe('validation schema & normalizers', () => {
@@ -86,4 +88,21 @@ describe('validation schema & normalizers', () => {
       expect(normalizeCoachClientTab(undefined)).toBe('overview')
     })
   })
+
+  describe('normalizeSettingsTab', () => {
+    it('normalizes valid settings tabs including apps and wearables', () => {
+      expect(normalizeSettingsTab('wearables')).toBe('wearables')
+      expect(normalizeSettingsTab('apps')).toBe('apps')
+      expect(normalizeSettingsTab('schedule')).toBe('schedule')
+      expect(normalizeSettingsTab('billing')).toBe('billing')
+      expect(normalizeSettingsTab('notifications')).toBe('notifications')
+    })
+
+    it('handles arrays and defaults unknown values to wearables', () => {
+      expect(normalizeSettingsTab(['apps'])).toBe('apps')
+      expect(normalizeSettingsTab(undefined)).toBe('wearables')
+      expect(normalizeSettingsTab('unknown-tab')).toBe('wearables')
+    })
+  })
 })
+

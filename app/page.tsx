@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import ForgeMembershipPlans from '@/components/packages/ForgeMembershipPlans'
+import MobileAppPromoSection from '@/components/marketing/MobileAppPromoSection'
 
 const FEATURE_PILLARS = [
   {
@@ -304,12 +305,17 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Official Mobile Apps, iOS & PWA Companion Section */}
+      <MobileAppPromoSection />
+
       <footer className="forge-home-footer">
         <Link href="/" aria-label="Forge Athletic home">Forge Athletic</Link>
         <p>Built From The Ground Up. Precision Science For Real Lives.</p>
         <nav aria-label="Footer">
           <Link href="/packages">Memberships</Link>
           <Link href="/credentials">Credentials</Link>
+          <Link href="/apps">Mobile Apps &amp; PWA</Link>
+          <Link href="/#mobile-apps">iOS &amp; Android</Link>
           <Link href="/auth/login">Log in</Link>
           <Link href="/auth/signup">Create account</Link>
           <Link href="/privacy">Privacy</Link>

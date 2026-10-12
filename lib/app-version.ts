@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.3'
+export const APP_VERSION = '1.39.4'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Pre-Launch Hardening & Production Security Sign-Off'
+export const APP_RELEASE_CODENAME = 'PWA, iOS & Apple Store Apps Placeholders & Interactive Companion Hub'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,27 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.39.4',
+    date: '2026-10-11',
+    codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'App Store Placeholders · Interactive PWA Hub · iOS TestFlight Beta · /apps Route',
+    title: 'PWA, iOS & Apple Store Apps Placeholders & Interactive Companion Hub',
+    summary: 'Wired in comprehensive placeholder and installation architecture for Apple App Store (iOS), Google Play (Android), and Progressive Web App (PWA). Deployed interactive placeholder dialogs, official PWA vector badges, home screen install walkthroughs, dedicated /apps route, and homepage showcase integration.',
+    highlights: [
+      'Interactive App Store Placeholder Modal: Engineered AppStorePlaceholderModal to intercept clicks on mock Apple App Store (id0000000000) and Google Play links, offering instant TestFlight beta signup and 3-step iPhone Safari PWA install instructions.',
+      'Homepage Mobile Section Integration: Embedded MobileAppPromoSection and unified SiteFooter into app/page.tsx, activating the /#mobile-apps scroll target and displaying Apple Watch telemetry showcases.',
+      'Dedicated Apps & Companion Hub (/apps): Created dedicated /apps landing page featuring Apple iOS (HealthKit), Android (Health Connect), and PWA architecture with deep-link anchors and reader-app compliance disclosures.',
+      'PWA Vector Badge & Centralized Metadata: Added PwaAppBadgeSvg and pwa metadata to lib/mobile-apps-config.ts, providing 1-tap PWA launcher and install triggers across all marketing and dashboard interfaces.',
+      'Client Settings & Hardware Studio Upgrades: Added dedicated "Mobile Apps & PWA" tab to ClientSettingsStudio.tsx and early access companion triggers to WearablesDeviceStudio.tsx.',
+    ],
+    relatedLinks: [
+      { label: 'Mobile Apps Hub', href: '/apps' },
+      { label: 'Homepage Mobile Section', href: '/#mobile-apps' },
+      { label: 'Dashboard Apps Settings', href: '/dashboard/settings?tab=apps' },
+    ],
+  },
   {
     version: '1.39.3',
     date: '2026-10-11',

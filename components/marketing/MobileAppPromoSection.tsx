@@ -1,9 +1,17 @@
-import React from 'react'
+'use client'
+
+import React, { useState } from 'react'
+import Link from 'next/link'
 import GaaIcon from '@/components/ui/GaaIcon'
 import GaaMasterWatermarkSeal from '@/components/ui/GaaMasterWatermarkSeal'
 import AppStoreBadges, { AppleLogoIcon, AndroidLogoIcon, AppleAppStoreBadgeSvg, GooglePlayBadgeSvg } from './AppStoreBadges'
 import TrackedCtaLink from './TrackedCtaLink'
-import { MOBILE_APPS_CONFIG } from '@/lib/mobile-apps-config'
+import AppStorePlaceholderModal, { PlaceholderPlatform } from './AppStorePlaceholderModal'
+import {
+  MOBILE_APPS_CONFIG,
+  isPlaceholderAppStoreUrl,
+  isPlaceholderPlayStoreUrl,
+} from '@/lib/mobile-apps-config'
 
 interface MobileAppPromoSectionProps {
   className?: string
@@ -14,6 +22,16 @@ export default function MobileAppPromoSection({
   className = '',
   style = {},
 }: MobileAppPromoSectionProps) {
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalPlatform, setModalPlatform] = useState<PlaceholderPlatform>('ios')
+  const isIosPlaceholder = isPlaceholderAppStoreUrl(MOBILE_APPS_CONFIG.ios.url)
+  const isAndroidPlaceholder = isPlaceholderPlayStoreUrl(MOBILE_APPS_CONFIG.android.url)
+
+  const handleOpenPlaceholder = (platform: PlaceholderPlatform, e?: React.MouseEvent) => {
+    if (e) e.preventDefault()
+    setModalPlatform(platform)
+    setModalOpen(true)
+  }
   return (
     <section
       id="mobile-apps"
@@ -112,7 +130,7 @@ export default function MobileAppPromoSection({
           </p>
 
           {/* Top Badges Row */}
-          <AppStoreBadges align="center" size="lg" sourceEventPrefix="promo_section" />
+          <AppStoreBadges align="center" size="lg" sourceEventPrefix="promo_section" showPwaBadge={true} />
         </div>
 
         {/* Device Telemetry Showcase Visual */}
@@ -247,19 +265,43 @@ export default function MobileAppPromoSection({
               </div>
             </div>
 
-            <div style={{ position: 'relative', zIndex: 1, paddingTop: 10 }}>
+            <div style={{ position: 'relative', zIndex: 1, paddingTop: 10, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <TrackedCtaLink
                 href={MOBILE_APPS_CONFIG.ios.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={(e: React.MouseEvent) => isIosPlaceholder && handleOpenPlaceholder('ios', e)}
                 eventName="ios_card_app_store_click"
-                eventPayload={{ platform: 'ios', bundleId: MOBILE_APPS_CONFIG.ios.bundleId }}
+                eventPayload={{ platform: 'ios', bundleId: MOBILE_APPS_CONFIG.ios.bundleId, isPlaceholder: isIosPlaceholder }}
                 className="tactile-btn"
                 aria-label="Download on the App Store"
-                style={{ display: 'inline-block', lineHeight: 0, borderRadius: 7, overflow: 'hidden' }}
+                style={{ display: 'inline-block', lineHeight: 0, borderRadius: 7, overflow: 'hidden', cursor: 'pointer' }}
               >
                 <AppleAppStoreBadgeSvg width={150} height={46} />
               </TrackedCtaLink>
+
+              <button
+                type="button"
+                onClick={() => handleOpenPlaceholder('ios')}
+                className="tactile-btn"
+                style={{
+                  minHeight: 44,
+                  padding: '8px 14px',
+                  borderRadius: 6,
+                  background: 'rgba(212,160,23,0.12)',
+                  border: '1px solid var(--gold)',
+                  color: 'var(--gold-lt)',
+                  fontSize: 11.5,
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>TestFlight &amp; PWA Guide</span>
+                <span aria-hidden="true">→</span>
+              </button>
             </div>
           </div>
 
@@ -343,19 +385,43 @@ export default function MobileAppPromoSection({
               </div>
             </div>
 
-            <div style={{ position: 'relative', zIndex: 1, paddingTop: 10 }}>
+            <div style={{ position: 'relative', zIndex: 1, paddingTop: 10, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <TrackedCtaLink
                 href={MOBILE_APPS_CONFIG.android.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={(e: React.MouseEvent) => isAndroidPlaceholder && handleOpenPlaceholder('android', e)}
                 eventName="android_card_play_store_click"
-                eventPayload={{ platform: 'android', bundleId: MOBILE_APPS_CONFIG.android.bundleId }}
+                eventPayload={{ platform: 'android', bundleId: MOBILE_APPS_CONFIG.android.bundleId, isPlaceholder: isAndroidPlaceholder }}
                 className="tactile-btn"
                 aria-label="Get it on Google Play"
-                style={{ display: 'inline-block', lineHeight: 0, borderRadius: 7, overflow: 'hidden' }}
+                style={{ display: 'inline-block', lineHeight: 0, borderRadius: 7, overflow: 'hidden', cursor: 'pointer' }}
               >
                 <GooglePlayBadgeSvg width={150} height={46} />
               </TrackedCtaLink>
+
+              <button
+                type="button"
+                onClick={() => handleOpenPlaceholder('android')}
+                className="tactile-btn"
+                style={{
+                  minHeight: 44,
+                  padding: '8px 14px',
+                  borderRadius: 6,
+                  background: 'rgba(56,189,248,0.12)',
+                  border: '1px solid rgba(56,189,248,0.4)',
+                  color: '#38BDF8',
+                  fontSize: 11.5,
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>APK &amp; PWA Guide</span>
+                <span aria-hidden="true">→</span>
+              </button>
             </div>
           </div>
         </div>
@@ -422,13 +488,64 @@ export default function MobileAppPromoSection({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 700, letterSpacing: '0.04em' }}>
-              Web Readable · Native Sync
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => handleOpenPlaceholder('pwa')}
+              className="tactile-btn"
+              style={{
+                minHeight: 38,
+                padding: '6px 14px',
+                borderRadius: 6,
+                background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
+                color: '#0A0E18',
+                border: 'none',
+                fontWeight: 800,
+                fontSize: 11.5,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>Install PWA On Device</span>
+              <span aria-hidden="true">→</span>
+            </button>
+
+            <Link
+              href="/dashboard/fitness?source=pwa"
+              className="tactile-btn"
+              style={{
+                minHeight: 38,
+                padding: '6px 14px',
+                borderRadius: 6,
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(197, 160, 89, 0.3)',
+                color: 'var(--gold-lt)',
+                fontWeight: 700,
+                fontSize: 11.5,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>Launch Gym Hub</span>
+              <span aria-hidden="true">↗</span>
+            </Link>
           </div>
         </div>
       </div>
+
+      {/* Interactive Placeholder / TestFlight / PWA Modal */}
+      <AppStorePlaceholderModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        initialPlatform={modalPlatform}
+        sourceContext="mobile_promo_section"
+      />
     </section>
   )
 }

@@ -31,6 +31,7 @@ import {
   HealthConnectBadge,
 } from './HealthLogos'
 import BluetoothHeartRateMonitor from './BluetoothHeartRateMonitor'
+import AppStorePlaceholderModal, { PlaceholderPlatform } from '@/components/marketing/AppStorePlaceholderModal'
 
 interface WearablesDeviceStudioProps {
   onTelemetryUpdate?: (telemetry: DailyBiometricSummary | null) => void
@@ -48,6 +49,8 @@ export default function WearablesDeviceStudio({
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [copiedWebhook, setCopiedWebhook] = useState<boolean>(false)
   const [isIosWeb, setIsIosWeb] = useState<boolean>(false)
+  const [showAppModal, setShowAppModal] = useState<boolean>(false)
+  const [appModalPlatform, setAppModalPlatform] = useState<PlaceholderPlatform>('ios')
   const [nativeReport, setNativeReport] = useState<NativeTelemetryReadinessReport | null>(null)
 
   const onTelemetryUpdateRef = useRef(onTelemetryUpdate)
@@ -194,6 +197,8 @@ export default function WearablesDeviceStudio({
         setStatusNotice(
           'Native HealthKit requires the Forge Athletic iOS app. In Safari / PWA, use the Apple Shortcuts Webhook option below to sync your iPhone.'
         )
+        setAppModalPlatform('ios')
+        setShowAppModal(true)
         return
       }
 
@@ -230,7 +235,9 @@ export default function WearablesDeviceStudio({
 
     try {
       if (!isNativeMobile()) {
-        setStatusNotice('Health Connect integration is only active inside the native Android app container.')
+        setStatusNotice('Health Connect integration requires the Forge Athletic Android companion. In Chrome / PWA, install the web app below.')
+        setAppModalPlatform('android')
+        setShowAppModal(true)
         return
       }
 
@@ -564,6 +571,34 @@ export default function WearablesDeviceStudio({
               <GaaIcon name="rotate-ccw" size={14} />
               <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
             </button>
+
+            {!isNativeMobile() && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAppModalPlatform(isAndroid ? 'android' : 'ios')
+                  setShowAppModal(true)
+                }}
+                className="tactile-btn"
+                style={{
+                  padding: '12px 18px',
+                  background: 'rgba(212,160,23,0.12)',
+                  border: '1px solid var(--gold)',
+                  color: 'var(--gold-lt)',
+                  borderRadius: 8,
+                  fontFamily: 'Raleway, sans-serif',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                {isAndroid ? <AndroidLogo size={14} /> : <AppleLogo size={14} />}
+                <span>Get Companion App &amp; PWA</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -597,6 +632,100 @@ export default function WearablesDeviceStudio({
           </div>
         </div>
       </div>
+
+      {/* ── Native Companion & PWA Status Card ── */}
+      {(!isNativeMobile() || isIosWeb) && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, rgba(20, 30, 48, 0.85) 0%, rgba(10, 16, 26, 0.95) 100%)',
+            border: '1px solid rgba(197, 160, 89, 0.35)',
+            borderRadius: 10,
+            padding: '18px 22px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 16,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 10,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(197,160,89,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {isAndroid ? <AndroidLogo size={20} /> : <AppleLogo size={20} />}
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 16, letterSpacing: '0.03em', color: '#FFFFFF', margin: 0 }}>
+                  FORGE ATHLETIC MOBILE &amp; PWA COMPANION
+                </h4>
+                <span style={{ fontSize: 9.5, padding: '2px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.15)', color: '#FBBF24', border: '1px solid rgba(245,158,11,0.35)', fontWeight: 800, textTransform: 'uppercase' }}>
+                  {isAndroid ? 'Play Store Verification' : 'TestFlight Beta'}
+                </span>
+                <span style={{ fontSize: 9.5, padding: '2px 6px', borderRadius: 4, background: 'rgba(52,211,153,0.15)', color: '#34D399', border: '1px solid rgba(52,211,153,0.35)', fontWeight: 800, textTransform: 'uppercase' }}>
+                  PWA 100% Live
+                </span>
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
+                For automatic 24/7 background telemetry sync, join our private mobile beta or install the PWA immediately on your home screen for full offline gym tracking.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setAppModalPlatform(isAndroid ? 'android' : 'ios')
+                setShowAppModal(true)
+              }}
+              className="tactile-btn"
+              style={{
+                padding: '8px 14px',
+                background: 'rgba(212,160,23,0.15)',
+                border: '1px solid var(--gold)',
+                borderRadius: 6,
+                color: 'var(--gold-lt)',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+              }}
+            >
+              {isAndroid ? 'Android APK / Beta →' : 'TestFlight Beta →'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAppModalPlatform('pwa')
+                setShowAppModal(true)
+              }}
+              className="tactile-btn"
+              style={{
+                padding: '8px 14px',
+                background: 'rgba(34, 197, 94, 0.15)',
+                border: '1px solid rgba(34, 197, 94, 0.4)',
+                borderRadius: 6,
+                color: '#4ADE80',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+              }}
+            >
+              Install PWA ⚡
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Webhook / Apple Shortcuts Card (For iPhone Safari/PWA & Direct Webhook Integration) ── */}
       {(!isNativeMobile() || isIosWeb) && (
@@ -844,6 +973,14 @@ export default function WearablesDeviceStudio({
           }}
         />
       </div>
+
+      {/* Interactive App Store / PWA / TestFlight Modal */}
+      <AppStorePlaceholderModal
+        isOpen={showAppModal}
+        onClose={() => setShowAppModal(false)}
+        initialPlatform={appModalPlatform}
+        sourceContext="wearables_device_studio"
+      />
     </div>
   )
 }

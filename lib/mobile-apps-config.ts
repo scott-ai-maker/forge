@@ -7,7 +7,7 @@
  */
 
 export interface MobileAppInfo {
-  platform: 'ios' | 'android'
+  platform: 'ios' | 'android' | 'pwa'
   storeName: string
   name: string
   bundleId: string
@@ -16,6 +16,7 @@ export interface MobileAppInfo {
   badgeText: string
   tagline: string
   keyFeatures: string[]
+  isPlaceholder?: boolean
 }
 
 export interface MobileMarketingConfig {
@@ -24,6 +25,7 @@ export interface MobileMarketingConfig {
   description: string
   ios: MobileAppInfo
   android: MobileAppInfo
+  pwa: MobileAppInfo
   highlights: Array<{
     icon: string
     title: string
@@ -33,7 +35,7 @@ export interface MobileMarketingConfig {
 
 export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
   headline: 'CONTINUOUS BIOMETRIC TELEMETRY & IN-GYM EXECUTION',
-  subheadline: 'Available on iOS and Android',
+  subheadline: 'Available on iOS, Android & Progressive Web App',
   description:
     'Experience seamless 24/7 background biometric telemetry synchronization with Apple Health and Android Health Connect, real-time auditory cadence pacing, offline workout tracking, and 1:1 telestrator consultation studios on your mobile device.',
   ios: {
@@ -45,6 +47,7 @@ export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
     minVersion: 'iOS 16.0+',
     badgeText: 'Download on the App Store',
     tagline: 'Native HealthKit Background Delivery & Apple Watch Sync',
+    isPlaceholder: true,
     keyFeatures: [
       '24/7 Native Apple HealthKit background delivery',
       'Apple Watch heart rate and HRV rMSSD synchronization',
@@ -61,11 +64,29 @@ export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
     minVersion: 'Android 10.0+ (Health Connect)',
     badgeText: 'Get it on Google Play',
     tagline: 'Android Health Connect & Wear OS Telemetry Stream',
+    isPlaceholder: true,
     keyFeatures: [
       'Automated Android Health Connect background sync',
       'Wear OS and Samsung Galaxy Watch telemetry ingestion',
       'Offline in-gym set logging with instant cloud catchup',
       '3D AI movement scanner & live WebRTC video consultation studio',
+    ],
+  },
+  pwa: {
+    platform: 'pwa',
+    storeName: 'Progressive Web App',
+    name: 'Forge Athletic Web Companion',
+    bundleId: 'app.forge-athletic.pwa',
+    url: '/dashboard/fitness?source=pwa',
+    minVersion: 'Any Modern Browser (Safari, Chrome, Edge)',
+    badgeText: 'Install Web App',
+    tagline: 'Instant Zero-Download In-Gym Workout Companion',
+    isPlaceholder: false,
+    keyFeatures: [
+      'Instant Home Screen installation on iOS Safari & Android Chrome',
+      'Full offline set, rep, weight, and RPE tracking with auto-sync',
+      'Tactile Barbell Plate Calculator & floating rest timer dock',
+      'Real-time visual & auditory NASM OPT™ tempo cadence HUD',
     ],
   },
   highlights: [
@@ -97,14 +118,38 @@ export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
 }
 
 /**
- * Returns active store URLs for iOS and Android
+ * Checks if an Apple App Store URL is a placeholder/mock URL
+ */
+export function isPlaceholderAppStoreUrl(url?: string): boolean {
+  if (!url) return true
+  return url.includes('id0000000000') || url.includes('id000000000') || url.includes('id000000') || url === '#'
+}
+
+/**
+ * Checks if a Google Play Store URL is a placeholder/mock URL
+ */
+export function isPlaceholderPlayStoreUrl(url?: string): boolean {
+  if (!url) return true
+  return (
+    (url.includes('com.gordonathletic.app') && !process.env.NEXT_PUBLIC_PLAY_STORE_LIVE) ||
+    url === '#'
+  )
+}
+
+/**
+ * Returns active store URLs for iOS, Android, and PWA along with placeholder flags
  */
 export function getMobileAppStoreLinks() {
   return {
     ios: MOBILE_APPS_CONFIG.ios.url,
     android: MOBILE_APPS_CONFIG.android.url,
+    pwa: MOBILE_APPS_CONFIG.pwa.url,
     iosBadge: MOBILE_APPS_CONFIG.ios.badgeText,
     androidBadge: MOBILE_APPS_CONFIG.android.badgeText,
+    pwaBadge: MOBILE_APPS_CONFIG.pwa.badgeText,
+    isIosPlaceholder: isPlaceholderAppStoreUrl(MOBILE_APPS_CONFIG.ios.url),
+    isAndroidPlaceholder: isPlaceholderPlayStoreUrl(MOBILE_APPS_CONFIG.android.url),
   }
 }
+
 

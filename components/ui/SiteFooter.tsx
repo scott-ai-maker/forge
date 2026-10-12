@@ -57,15 +57,21 @@ export default function SiteFooter() {
 
         <nav className="site-footer-nav" aria-label="Mobile Apps" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.88rem' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)' }}>Mobile Apps</span>
-          <Link href="/#mobile-apps" style={{ color: '#CBD5E1', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Link href="/apps#ios" style={{ color: '#CBD5E1', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <AppleLogoIcon size={14} color="#CBD5E1" />
             <span>Apple iOS (HealthKit)</span>
           </Link>
-          <Link href="/#mobile-apps" style={{ color: '#CBD5E1', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Link href="/apps#android" style={{ color: '#CBD5E1', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <AndroidLogoIcon size={14} color="#3DDC84" />
             <span>Android (Health Connect)</span>
           </Link>
-          <Link href="/dashboard/settings?tab=wearables" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Biometric Telemetry</Link>
+          <Link href="/apps#pwa" style={{ color: '#CBD5E1', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, lineHeight: 1 }}>⚡</span>
+            <span>Progressive Web App (PWA)</span>
+          </Link>
+          <Link href="/apps" style={{ color: 'var(--gold-lt)', textDecoration: 'none', fontWeight: 700, fontSize: '0.82rem', marginTop: 2 }}>
+            <span>All Apps &amp; Companion Setup →</span>
+          </Link>
         </nav>
 
         <nav className="site-footer-nav" aria-label="Legal" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.88rem' }}>

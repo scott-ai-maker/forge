@@ -14,6 +14,7 @@ type TrackedCtaLinkProps = {
   'aria-label'?: string
   target?: string
   rel?: string
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void
 }
 
 export default function TrackedCtaLink({
@@ -27,6 +28,7 @@ export default function TrackedCtaLink({
   'aria-label': ariaLabelAttr,
   target,
   rel,
+  onClick,
 }: TrackedCtaLinkProps) {
   return (
     <Link
@@ -36,7 +38,10 @@ export default function TrackedCtaLink({
       target={target}
       rel={rel}
       aria-label={ariaLabel || ariaLabelAttr}
-      onClick={() => trackMarketingEvent(eventName, eventPayload)}
+      onClick={e => {
+        trackMarketingEvent(eventName, eventPayload)
+        if (onClick) onClick(e)
+      }}
     >
       {children}
     </Link>
