@@ -2,6 +2,14 @@
 
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.39.7] - 2026-10-12
+
+### Fixed
+- **Exercise Library CDN & Media CSP Restoration ([`next.config.ts`](file:///Users/scottgordon/Repos/forge/next.config.ts))**: Whitelisted `https://img.youtube.com`, `https://i.ytimg.com`, and `https://*.ytimg.com` in `img-src` and `images.remotePatterns`, and `https://www.youtube-nocookie.com`, `https://www.youtube.com`, and `https://open.spotify.com` in `frame-src`. Fixed root-cause regression where defense-in-depth CSP blocked YouTube CDN media, triggering image `onError` fallbacks that erroneously substituted exercise photos and videos with the fallback brand logo.
+- **Supabase Storage Media Source ([`next.config.ts`](file:///Users/scottgordon/Repos/forge/next.config.ts))**: Added `https://*.supabase.co` to `media-src` and `images.remotePatterns` for secure audio/video playback and progress photos.
+- **Static Images Cache Revalidation ([`next.config.ts`](file:///Users/scottgordon/Repos/forge/next.config.ts))**: Relaxed `/images/:path*` Cache-Control from 1-year `immutable` to 24-hour max-age with `stale-while-revalidate`, preventing browsers from permanently caching stale brand fallback graphics.
+- **Service Worker Cache Rotation ([`public/sw.js`](file:///Users/scottgordon/Repos/forge/public/sw.js), [`scripts/sync-sw-version.mjs`](file:///Users/scottgordon/Repos/forge/scripts/sync-sw-version.mjs))**: Updated cache version to `forge-v1.39.7` with automated cache purging of legacy GAA-prefixed caches upon activation.
+
 ## [1.39.3] - 2026-10-11
 
 ### Security

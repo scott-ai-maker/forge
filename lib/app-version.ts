@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.6'
-export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'In-App Mobile Companion & Daylight Studio Visual Alignment'
+export const APP_VERSION = '1.39.7'
+export const APP_RELEASE_DATE = '2026-10-12'
+export const APP_RELEASE_CODENAME = 'Exercise Library CDN & Media CSP Restoration'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,26 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.39.7',
+    date: '2026-10-12',
+    codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'Exercise Library CDN Restored · CSP Image & Frame Whitelisting · Zero Fallback Logo Flash · SW Cache Purge',
+    title: 'Exercise Library CDN & Media CSP Restoration',
+    summary: 'Restored immediate access to official NASM Edge exercise video demonstrations and high-definition exercise thumbnails across all client training dashboards, coach workspaces, and modals by whitelisting YouTube CDN and embed origins in Content-Security-Policy and Next.js remotePatterns. Eliminated erroneous fallback to legacy logo placeholders caused by browser CSP blocking.',
+    highlights: [
+      'CSP Media Whitelisting: Expanded next.config.ts Content-Security-Policy to allow img-src from img.youtube.com and i.ytimg.com, frame-src from www.youtube-nocookie.com, www.youtube.com, and Spotify, and media-src for Supabase storage.',
+      'Next.js Remote Patterns: Added img.youtube.com, i.ytimg.com, and *.supabase.co to images.remotePatterns for optimized image rendering.',
+      'Eliminated Erroneous Fallback Logo Flash: Fixed issue where blocked YouTube CDN image requests triggered onError handlers that substituted exercise photos and videos with the fallback brand logo.',
+      'Static Images Cache Revalidation: Changed /images/:path* Cache-Control header from immutable 1-year cache to 24-hour max-age with stale-while-revalidate, preventing browsers from holding stale legacy GAA logo placeholders.',
+      'Service Worker Cache Rotation: Synchronized PWA cache version to forge-v1.39.7 to automatically flush legacy GAA-prefixed cache buckets upon activation.',
+    ],
+    relatedLinks: [
+      { label: 'Client Training Portal', href: '/dashboard/fitness' },
+      { label: 'Exercise Modalities', href: '/exercises/stability-ball' },
+    ],
+  },
   {
     version: '1.39.6',
     date: '2026-10-11',
