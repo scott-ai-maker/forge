@@ -3,6 +3,17 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.39.2] - 2026-10-11
+
+### Fixed
+- **Standalone Movement Assessment Fulfillment ([`app/(dashboard)/dashboard/fitness/page.tsx`](file:///Users/scottgordon/Repos/forge/app/(dashboard)/dashboard/fitness/page.tsx), [`components/fitness/FitnessTrackerClient.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/FitnessTrackerClient.tsx), [`components/fitness/hub-views/FitnessLabDiagnosticsView.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/hub-views/FitnessLabDiagnosticsView.tsx))**: Routed query parameters `openScanner=true` and `auditSuccess=true` to automatically select the `bodycomp` workspace, present a payment confirmation banner, and trigger the 3D Biomechanical & Postural Distortion Scanner modal upon checkout return.
+- **Corporate Team Plan Checkout ([`app/api/stripe/checkout/route.ts`](file:///Users/scottgordon/Repos/forge/app/api/stripe/checkout/route.ts))**: Excluded `corporate` from legacy individual coaching tier 410 retirement checks, enabling seamless $3,500/month recurring team subscriptions and $35,000 annual PIF purchases with accurate cancel redirect URLs (`/corporate#pricing`).
+- **Client Settings Packages & Add-on Studio ([`components/packages/AddonSelectionStudio.tsx`](file:///Users/scottgordon/Repos/forge/components/packages/AddonSelectionStudio.tsx), [`components/settings/ClientSettingsStudio.tsx`](file:///Users/scottgordon/Repos/forge/components/settings/ClientSettingsStudio.tsx))**: Modernized add-on purchase flow to directly bind to active Forge add-ons and private session credits via one-time payments, replacing legacy plan dependencies and alumni tier links.
+- **Annual Membership Entitlement Grants ([`lib/addon-entitlements.ts`](file:///Users/scottgordon/Repos/forge/lib/addon-entitlements.ts), [`app/api/stripe/webhook/route.ts`](file:///Users/scottgordon/Repos/forge/app/api/stripe/webhook/route.ts))**: Parameterized entitlement grant cycle duration so annual memberships receive 365 days of active access (+ 5 grace days) and annualized metered feature uses.
+
+### Changed
+- **Service Worker Cache**: Synchronized `public/sw.js` offline cache keys to `gaa-v1.39.2`.
+
 ## [1.39.1] - 2026-10-11
 
 ### Fixed

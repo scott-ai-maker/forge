@@ -371,7 +371,8 @@ export async function POST(req: NextRequest) {
 
           const membership = metadata.source === 'forge_membership' ? getForgeMembership(metadata.packageId ?? '') : undefined
           if (membership) {
-            const grants = buildMembershipEntitlementGrants(membership, clientId, invoiceId)
+            const cycleDays = metadata.cadence === 'annual' ? 365 : 30
+            const grants = buildMembershipEntitlementGrants(membership, clientId, invoiceId, new Date(), cycleDays)
             if (grants.length > 0) {
               const { error: membershipGrantError } = await admin
                 .from('client_addon_entitlements')

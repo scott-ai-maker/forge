@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.1'
+export const APP_VERSION = '1.39.2'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Official Forge Brand Emblem & Tier Card Asset Repair'
+export const APP_RELEASE_CODENAME = 'Payment, Checkout & Enrollment Fulfillment Hardening'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,24 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.39.1',
+    version: '1.39.2',
     date: '2026-10-11',
     codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'Payment Integrity · 3D Posture Audit · Corporate Checkout · Annual Entitlements',
+    title: 'Payment, Checkout & Enrollment Funnel Audit & Fulfillment Hardening',
+    summary: 'Conducted an exhaustive end-to-end payment and enrollment audit across all memberships, add-ons, corporate team packages, and standalone diagnostics. Resolved 4 fulfillment blockers to guarantee 100% entitlement precision before live Stripe wiring.',
+    highlights: [
+      '3D Movement Assessment Fulfillment: Configured automatic routing to the Body Composition lab workspace with instant scanner modal launching and payment confirmation banner upon returning from $97 audit checkout.',
+      'Corporate Team Plan Checkout: Permitted corporate team packages through Stripe checkout with accurate $3,500/mo subscription or $35,000 annual PIF line items and dedicated /corporate#pricing cancel URLs.',
+      'Client Settings Add-on Modernization: Upgraded AddonSelectionStudio to showcase live Forge add-ons and private session credits with direct one-time checkout and membership upgrade links.',
+      'Annual Membership Entitlements: Scaled entitlement cycle duration to 365 days (+ 5 grace days) and annualized metered feature uses (24/yr for Plus, 96/yr for Coach Support).',
+    ],
+  },
+  {
+    version: '1.39.1',
+    date: '2026-10-11',
+    codename: 'Official Forge Brand Emblem & Tier Card Asset Repair',
     category: 'fix',
     badge: 'Official Forge Logo · Coach Support Image Fix · Brand Cohesion',
     title: 'Official Forge Logo Embroidery & Membership Visual Repair',

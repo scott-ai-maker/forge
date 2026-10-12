@@ -418,7 +418,7 @@ export default function ClientSettingsStudio({
                 <BillingPortalButton />
               </div>
 
-              {/* Alumni Continuity & Maintenance Transition Card */}
+              {/* Membership Plans Transition Card */}
               <div
                 style={{
                   background: 'linear-gradient(135deg, rgba(212,160,23,0.1) 0%, rgba(13,27,42,0.85) 100%)',
@@ -446,7 +446,7 @@ export default function ClientSettingsStudio({
                       gap: 6,
                     }}
                   >
-                    <span>✦</span> Post-Transformation Continuity
+                    <span>✦</span> Forge Athletic Memberships
                   </span>
                   <h3
                     style={{
@@ -457,15 +457,15 @@ export default function ClientSettingsStudio({
                       letterSpacing: '0.04em',
                     }}
                   >
-                    ALUMNI CONTINUITY RETAINER ($149/MO)
+                    UPGRADE OR MODIFY YOUR MEMBERSHIP
                   </h3>
                   <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--gray)', lineHeight: 1.5 }}>
-                    Graduating from live coaching? Preserve your progress, app history, monthly 3D AI scans, and receive 1 monthly Master Coach Sunday telemetry audit for $149/mo (or $1,295/yr upfront).
+                    Looking to upgrade to Coach Support for live video sessions and direct messaging, or explore other tiers? Review all available Forge Athletic memberships.
                   </p>
                 </div>
 
                 <a
-                  href="/packages?tier=alumni"
+                  href="/packages"
                   className="tactile-btn"
                   style={{
                     background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
@@ -486,12 +486,12 @@ export default function ClientSettingsStudio({
                     boxShadow: '0 4px 15px rgba(197, 160, 89, 0.35)',
                   }}
                 >
-                  Switch to Alumni Retainer →
+                  Explore Memberships →
                 </a>
               </div>
 
               {/* Add-On Accelerators Suite */}
-              <AddonSelectionStudio currentPlanId="momentum" />
+              <AddonSelectionStudio />
             </>
           )}
         </section>

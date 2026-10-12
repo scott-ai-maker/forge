@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import GaaIcon from '@/components/ui/GaaIcon'
 import ReadinessRecoveryTracker from '@/components/fitness/ReadinessRecoveryTracker'
@@ -114,6 +114,7 @@ interface FitnessLabDiagnosticsViewProps {
   initialCritique?: VideoCritiqueAnalysis | null
   onUpdateBodyfat?: (newVal: number) => void
   initialTab?: 'heatmap' | 'gate' | 'acwr' | 'deload' | '3d'
+  initialOpenScanner?: boolean
 }
 
 export default function FitnessLabDiagnosticsView({
@@ -133,8 +134,15 @@ export default function FitnessLabDiagnosticsView({
   initialCritique,
   onUpdateBodyfat,
   initialTab,
+  initialOpenScanner,
 }: FitnessLabDiagnosticsViewProps) {
-  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false)
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(Boolean(initialOpenScanner))
+
+  useEffect(() => {
+    if (initialOpenScanner) {
+      setIsScannerModalOpen(true)
+    }
+  }, [initialOpenScanner])
   const [isToolPickerOpen, setIsToolPickerOpen] = useState(false)
   const toolPickerTrigger = useRef<HTMLButtonElement>(null)
   const requiresAddonAccess = activeLabTool === 'nutrition' || activeLabTool === 'travel'

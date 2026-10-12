@@ -123,7 +123,7 @@ describe('stripe checkout route', () => {
   })
 
   it('retires the old private coaching packages from new checkout', async () => {
-    for (const packageId of ['lab', 'alumni', 'starter', 'momentum', 'transformation', 'corporate']) {
+    for (const packageId of ['lab', 'alumni', 'starter', 'momentum', 'transformation']) {
       const req = new NextRequest('http://localhost/api/stripe/checkout', {
         method: 'POST',
         body: JSON.stringify({ packageId, cadence: 'monthly' }),
@@ -136,6 +136,42 @@ describe('stripe checkout route', () => {
       })
     }
     expect(createSessionMock).not.toHaveBeenCalled()
+  })
+
+  it('allows corporate team plan monthly checkout with proper recurring interval and cancel_url', async () => {
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ packageId: 'corporate', cadence: 'monthly' }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+
+    expect(createSessionMock).toHaveBeenCalledTimes(1)
+    const createArgs = createSessionMock.mock.calls[0][0]
+    expect(createArgs.mode).toBe('subscription')
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(350000)
+    expect(createArgs.line_items[0].price_data.recurring.interval).toBe('month')
+    expect(createArgs.cancel_url).toBe('http://localhost/corporate#pricing')
+    expect(createArgs.metadata.packageId).toBe('corporate')
+  })
+
+  it('allows corporate team plan annual checkout in payment mode with 35,000 upfront', async () => {
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ packageId: 'corporate', cadence: 'twelve_week' }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+
+    expect(createSessionMock).toHaveBeenCalledTimes(1)
+    const createArgs = createSessionMock.mock.calls[0][0]
+    expect(createArgs.mode).toBe('payment')
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(3500000)
+    expect(createArgs.line_items[0].price_data.product_data.name).toContain('Annual Team Plan')
+    expect(createArgs.cancel_url).toBe('http://localhost/corporate#pricing')
+    expect(createArgs.metadata.packageName).toContain('(Annual)')
   })
 
   it('handles standalone product checkout (e.g. ai-postural-audit) in payment mode', async () => {

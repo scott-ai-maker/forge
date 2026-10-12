@@ -284,7 +284,8 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    if (typeof packageId === 'string' && PACKAGES.some(pkg => pkg.id === packageId)) {
+    const RETIRED_LEGACY_PACKAGES = ['lab', 'alumni', 'starter', 'momentum', 'transformation']
+    if (typeof packageId === 'string' && RETIRED_LEGACY_PACKAGES.includes(packageId)) {
       return NextResponse.json(
         { error: 'This legacy plan is no longer available. Choose a current Forge Athletic membership.' },
         { status: 410 }
@@ -298,7 +299,9 @@ export async function POST(req: NextRequest) {
 
     const basePriceCents = isPif ? (pkg.pifPriceCents ?? pkg.price * 3) : pkg.price
     const packageSessions = isPif ? (pkg.pifSessions ?? pkg.sessions * 3) : pkg.sessions
-    const packageNameWithCadence = isPif ? `${pkg.name} (12-Week Block)` : pkg.name
+    const packageNameWithCadence = isPif
+      ? (pkg.id === 'corporate' ? `${pkg.name} (Annual)` : `${pkg.name} (12-Week Block)`)
+      : pkg.name
 
     const rawAddonIds: string[] = Array.isArray(body?.selectedAddonIds) ? body.selectedAddonIds : []
     const validAddons = (COACHING_ADDONS || []).filter(a => rawAddonIds.includes(a.id))
@@ -435,9 +438,13 @@ export async function POST(req: NextRequest) {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: isPif ? `${pkg.name} · 12-Week Transformation Block` : pkg.name,
+            name: isPif
+              ? (pkg.id === 'corporate' ? `${pkg.name} · Annual Team Plan` : `${pkg.name} · 12-Week Transformation Block`)
+              : pkg.name,
             description: isPif
-              ? (pkg.pifBonusDescription ? `12-week upfront commitment. ${pkg.pifBonusDescription}` : '12-week macrocycle periodization block.')
+              ? (pkg.id === 'corporate'
+                  ? '12-month team wellness plan for up to 10 members. Includes 12 live coaching workshops.'
+                  : (pkg.pifBonusDescription ? `12-week upfront commitment. ${pkg.pifBonusDescription}` : '12-week macrocycle periodization block.'))
               : pkg.description,
           },
           ...(isPif ? {} : { recurring: { interval: 'month' as const } }),
@@ -506,7 +513,7 @@ export async function POST(req: NextRequest) {
             }),
         metadata: metadataPayload,
         success_url: `${appUrl}/dashboard?success=true`,
-        cancel_url: `${appUrl}/packages`,
+        cancel_url: pkg.id === 'corporate' ? `${appUrl}/corporate#pricing` : `${appUrl}/packages`,
       })
     } catch (stripeErr) {
       const errMsg = stripeErr instanceof Error ? stripeErr.message : 'Stripe checkout error'

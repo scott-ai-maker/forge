@@ -33,14 +33,20 @@ const MEMBERSHIP_GRACE_DAYS = 5
 const MEMBERSHIP_CYCLE_DAYS = 30
 
 // One grant per included feature per paid invoice; access runs through the paid cycle plus a short grace window.
-export function buildMembershipEntitlementGrants(membership: ForgeMembership, clientId: string, invoiceId: string, now = new Date()) {
-  const expiresAt = new Date(now.getTime() + (MEMBERSHIP_CYCLE_DAYS + MEMBERSHIP_GRACE_DAYS) * 86_400_000).toISOString()
+export function buildMembershipEntitlementGrants(
+  membership: ForgeMembership,
+  clientId: string,
+  invoiceId: string,
+  now = new Date(),
+  cycleDays = MEMBERSHIP_CYCLE_DAYS
+) {
+  const expiresAt = new Date(now.getTime() + (cycleDays + MEMBERSHIP_GRACE_DAYS) * 86_400_000).toISOString()
   return (membership.includedFeatures ?? []).map(({ feature, uses }) => ({
     client_id: clientId,
     addon_id: membership.id,
     feature,
-    uses_total: uses ?? null,
-    uses_remaining: uses ?? null,
+    uses_total: uses ? (cycleDays >= 365 ? uses * 12 : uses) : null,
+    uses_remaining: uses ? (cycleDays >= 365 ? uses * 12 : uses) : null,
     stripe_payment_id: `${invoiceId}:${feature}`,
     granted_at: now.toISOString(),
     expires_at: expiresAt,

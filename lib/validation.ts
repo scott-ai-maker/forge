@@ -34,12 +34,15 @@ export const FitnessWorkspaceSchema = z.enum([
   'toolboxes',
   'supplements',
   'travel',
+  'bodycomp',
 ])
 export type FitnessWorkspace = z.infer<typeof FitnessWorkspaceSchema>
 
 export function normalizeFitnessWorkspace(value: string | string[] | undefined): FitnessWorkspace {
   try {
-    const parsed = FitnessWorkspaceSchema.parse(Array.isArray(value) ? value[0] : value)
+    const raw = Array.isArray(value) ? value[0] : value
+    if (raw === 'scanner' || raw === 'audit') return 'bodycomp'
+    const parsed = FitnessWorkspaceSchema.parse(raw)
     if (parsed === 'workouts') return 'train'
     return parsed
   } catch {

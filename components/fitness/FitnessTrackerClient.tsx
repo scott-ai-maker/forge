@@ -287,6 +287,8 @@ interface FitnessTrackerClientProps {
   progressPhotos?: ProgressPhotoEntry[]
   initialWorkspace?: FitnessWorkspace
   initialTab?: 'heatmap' | 'gate' | 'acwr' | 'deload' | '3d'
+  initialOpenScanner?: boolean
+  auditSuccess?: boolean
 }
 
 interface CardioLogEntry {
@@ -694,10 +696,22 @@ export default function FitnessTrackerClient({
   progressPhotos = [],
   initialWorkspace = 'train',
   initialTab,
+  initialOpenScanner = false,
+  auditSuccess = false,
 }: FitnessTrackerClientProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const isScannerRequested = Boolean(
+    initialOpenScanner ||
+    searchParams?.get('openScanner') === 'true' ||
+    searchParams?.get('scanner') === 'true'
+  )
+  const isAuditSuccess = Boolean(
+    auditSuccess ||
+    searchParams?.get('auditSuccess') === 'true'
+  )
+  const [showAuditBanner, setShowAuditBanner] = useState(isAuditSuccess)
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(
     latestPlan?.id ?? (allPlans[0]?.id ?? null)
   )
@@ -1077,7 +1091,8 @@ export default function FitnessTrackerClient({
   // Synchronize active hub and lab tool whenever searchParams or initialWorkspace changes
   useEffect(() => {
     const wsParam = searchParams.get('workspace') as FitnessWorkspace | null
-    const currentWs = wsParam || initialWorkspace
+    const openScannerParam = searchParams.get('openScanner') === 'true' || searchParams.get('scanner') === 'true' || searchParams.get('auditSuccess') === 'true'
+    const currentWs = openScannerParam ? 'bodycomp' : (wsParam || initialWorkspace)
     if (currentWs) {
       const resolved = resolveInitialHubState(currentWs)
       setPrimaryHub(resolved.hub)
@@ -1808,6 +1823,52 @@ export default function FitnessTrackerClient({
 
   return (
     <>
+      {showAuditBanner && (
+        <div
+          role="status"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            background: 'linear-gradient(90deg, rgba(20,80,50,0.92) 0%, rgba(12,40,25,0.96) 100%)',
+            border: '1px solid rgba(46, 213, 115, 0.45)',
+            borderRadius: 8,
+            padding: '12px 18px',
+            marginBottom: 16,
+            color: '#FFFFFF',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 20, color: '#2ed573' }}>✓</span>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#2ed573' }}>
+                Payment Confirmed · 3D Movement Assessment Unlocked
+              </div>
+              <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
+                Your assessment entitlement is active. Complete your front and side scans below to generate your personalized biomechanical audit.
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAuditBanner(false)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'rgba(255,255,255,0.6)',
+              fontSize: 18,
+              cursor: 'pointer',
+              padding: '4px 8px',
+            }}
+            aria-label="Dismiss banner"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* ── Athlete Metric Strip (Compact 1-Row / 3-Cell Strip for Mobile & Desktop) ── */}
       <div
         className="athlete-telemetry-strip"
@@ -4860,6 +4921,7 @@ export default function FitnessTrackerClient({
           initialLift={labInitialLift}
           initialCritique={labInitialCritique}
           initialTab={initialTab || (searchParams?.get('tab') as 'heatmap' | 'gate' | 'acwr' | 'deload' | '3d' | null) || undefined}
+          initialOpenScanner={isScannerRequested}
           onApplyTravelPlan={(scenario, adapted) => {
             if (planWorkouts.length > 0) {
               setAdaptedExercisesByDay(prev => ({

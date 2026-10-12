@@ -41,6 +41,12 @@ describe('validation schema & normalizers', () => {
       expect(normalizeFitnessWorkspace('lab')).toBe('lab')
       expect(normalizeFitnessWorkspace('coach')).toBe('coach')
       expect(normalizeFitnessWorkspace('readiness')).toBe('readiness')
+      expect(normalizeFitnessWorkspace('bodycomp')).toBe('bodycomp')
+    })
+
+    it('maps scanner and audit aliases to bodycomp', () => {
+      expect(normalizeFitnessWorkspace('scanner')).toBe('bodycomp')
+      expect(normalizeFitnessWorkspace('audit')).toBe('bodycomp')
     })
 
     it('defaults unknown to train', () => {

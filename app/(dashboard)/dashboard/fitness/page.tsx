@@ -90,7 +90,9 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
   const params = await searchParams
   const rawParam = params.workspace || params.hub || params.view || params.tab
   const normalizedParam = rawParam === 'advisory' ? 'coach' : rawParam
-  const workspace = normalizeFitnessWorkspace(normalizedParam)
+  const openScanner = params.openScanner === 'true' || params.scanner === 'true'
+  const auditSuccess = params.auditSuccess === 'true'
+  const workspace = (openScanner || auditSuccess) ? 'bodycomp' : normalizeFitnessWorkspace(normalizedParam)
 
   const beforePhotoPath = normalizePhotoPath(
     safeProfile.before_photo_path ?? extractPhotoPathFromLegacyUrl(safeProfile.before_photo_url)
@@ -159,6 +161,8 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
           progressPhotos={signedProgressPhotos}
           initialWorkspace={workspace}
           initialTab={typeof params.tab === 'string' ? (params.tab as 'heatmap' | 'gate' | 'acwr' | 'deload' | '3d') : undefined}
+          initialOpenScanner={openScanner}
+          auditSuccess={auditSuccess}
         />
       </div>
     </main>
