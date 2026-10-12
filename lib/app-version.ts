@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.5'
+export const APP_VERSION = '1.39.6'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Hyperrealistic Mobile App Brand Visual System'
+export const APP_RELEASE_CODENAME = 'In-App Mobile Companion & Daylight Studio Visual Alignment'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,28 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.39.5',
+    version: '1.39.6',
     date: '2026-10-11',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'In-App UI Mirroring · Natural Daylight Studio · Zero Legacy Gold Strip Lighting · Apple Watch Sync',
+    title: 'In-App Mobile Companion & Daylight Studio Visual Alignment',
+    summary: 'Refined the primary mobile app showcase visual to precisely mirror the production in-gym workout tracking interface (cyan 142 BPM telemetry, Barbell Back Squat plate calculator, circular rest timer) set in a sunlit private training facility that seamlessly matches all core brand photography.',
+    highlights: [
+      'Exact In-App UI Mirror: Replaced generic telemetry graphs with the authentic Forge Athletic workout companion interface (Zone 3 cyan pulse badge, 01:15 rest timer, 225 lb barbell plate visualizer, set logs, and Complete Set action).',
+      'Daylight Studio Environmental Cohesion: Aligned gym background with our primary brand photography, featuring natural morning sunlight from floor-to-ceiling windows, natural oak paneling, and neat urethane dumbbells.',
+      'Eliminated Legacy Gold Ambient Lighting: Fully removed the dark cave aesthetic and yellow LED wall strip accents from the prior brand style.',
+      'Apple Watch Ultra Biometric Sync: Features synchronized cyan heart rate telemetry reading 142 BPM on the athlete\'s wrist.',
+    ],
+    relatedLinks: [
+      { label: 'Mobile Apps Hub', href: '/apps' },
+      { label: 'Homepage Mobile Section', href: '/#mobile-apps' },
+    ],
+  },
+  {
+    version: '1.39.5',
+    date: '2026-10-11',
+    codename: 'Hyperrealistic Mobile App Brand Visual System',
     category: 'feature',
     badge: 'Mobile App Imagery · Official Brand Crest · Biometric Telemetry · Smartwatch Sync',
     title: 'Hyperrealistic Mobile App Brand Visual System',

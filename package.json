@@ -1,6 +1,6 @@
 {
   "name": "forge-athletic",
-  "version": "1.39.5",
+  "version": "1.39.6",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
