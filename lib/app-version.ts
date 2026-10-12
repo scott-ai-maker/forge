@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.0'
+export const APP_VERSION = '1.39.1'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Hyper-Realistic Brand Imagery & Recomposition Visual System'
+export const APP_RELEASE_CODENAME = 'Official Forge Brand Emblem & Tier Card Asset Repair'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,20 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.39.1',
+    date: '2026-10-11',
+    codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'Official Forge Logo · Coach Support Image Fix · Brand Cohesion',
+    title: 'Official Forge Logo Embroidery & Membership Visual Repair',
+    summary: 'Updated all coach apparel imagery across the platform to feature the official Forge Athletic geometric anvil emblem and typography, and resolved the broken Coach Support image on the membership packages page.',
+    highlights: [
+      'Embroidered official Forge Athletic anvil mark and typography onto Coach Scott Gordon’s polo across all portrait, action, and workshop photography.',
+      'Fixed missing Coach Support tier visual on /packages by provisioning coach-client-plan.jpg and mapping to high-resolution consultation photography.',
+      'Synchronized all coach visual assets across homepage, /apply, /audit, /corporate, and /credentials with unified Forge branding.',
+    ],
+  },
   {
     version: '1.39.0',
     date: '2026-10-11',

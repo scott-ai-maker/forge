@@ -3,6 +3,15 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.39.1] - 2026-10-11
+
+### Fixed
+- **Coach Support Membership Tier Visual ([`components/packages/ForgeMembershipPlans.tsx`](file:///Users/scottgordon/Repos/forge/components/packages/ForgeMembershipPlans.tsx))**: Fixed missing visual asset for the Coach Support tier (`forge-transformation-direct`) by provisioning `public/images/coach-client-plan.jpg` and mapping to the high-resolution 1:1 consultation photography.
+
+### Changed
+- **Official Forge Athletic Logo on Coach Gordon**: Replaced all previous GAA shield logos on Coach Gordon's athletic polo shirts with the official Forge Athletic geometric anvil emblem and typography across portrait, hero training, pillar consultations, movement screening, and corporate workshop photography.
+- **Service Worker Cache**: Synchronized `public/sw.js` and iOS offline service worker cache keys to `gaa-v1.39.1`.
+
 ## [1.39.0] - 2026-10-11
 
 ### Added
