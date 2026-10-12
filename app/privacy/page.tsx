@@ -99,9 +99,18 @@ export default function PrivacyPolicyPage() {
         </p>
       </section>
 
+      <section style={{ marginBottom: '2.5rem' }}>
+        <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.4rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
+          6. Children&apos;s Privacy &amp; COPPA Compliance
+        </h2>
+        <p style={{ fontSize: '0.95rem' }}>
+          Forge Athletic is strictly designed for adults and young adults aged 13 and older under adult supervision. In compliance with the <strong>Children&apos;s Online Privacy Protection Act (COPPA)</strong>, we do not knowingly solicit, collect, or retain personal information, movement videos, or biometric telemetry from children under 13 years of age. If we discover that an individual under the age of 13 has submitted personal information, we will immediately delete the account and purge all associated records from our servers.
+        </p>
+      </section>
+
       <section style={{ borderTop: '1px solid rgba(197, 160, 89, 0.3)', paddingTop: '1.5rem' }}>
         <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.3rem', color: 'var(--gold-lt)', marginBottom: '0.5rem', letterSpacing: '0.04em' }}>
-          6. Privacy Inquiries &amp; Data Protection Officer
+          7. Privacy Inquiries &amp; Data Protection Officer
         </h2>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>
           For inquiries regarding your biometric data or privacy protections, contact:

@@ -231,7 +231,7 @@ export default function CorporateRetainersPage() {
             >
               <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <GaaIcon name="award" size={15} tone="gold" />
-                <span>Monthly live team sessions led by NASM Master Trainer Scott Gordon</span>
+                <span>Monthly live team sessions led by Coach Scott Gordon, NASM-CPT</span>
               </span>
               <span style={{ fontSize: 11, color: 'var(--gold-lt)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
                 On-site or virtual

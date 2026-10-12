@@ -67,7 +67,11 @@ export interface PrecisionMacroPrescription {
   hydrationTargetLiters: number
   hydrationTargetOz: number
   sweatRateGuideline: string
+  safeHarborNotice?: string
 }
+
+export const NUTRITION_SAFE_HARBOR_NOTICE =
+  'Florida Non-Medical Nutrition Safe Harbor (Fla. Stat. § 468): All metabolic expenditure calculations, macronutrient targets, and nutrient-timing recommendations are provided strictly for educational and athletic conditioning support in apparently healthy individuals. They do not constitute Medical Nutrition Therapy (MNT), medical dietary prescriptions, or treatment for clinical metabolic or eating disorders.'
 
 export interface DiningProtocol {
   venueType: string
@@ -299,6 +303,7 @@ export function calculatePrecisionMacros(input: MetabolicProfileInput): Precisio
     hydrationTargetLiters,
     hydrationTargetOz,
     sweatRateGuideline: `Weigh in pre- and post-workout. Drink 16–24 oz (500–750 mL) of water/electrolyte solution for every pound of bodyweight lost during training.`,
+    safeHarborNotice: NUTRITION_SAFE_HARBOR_NOTICE,
   }
 }
 

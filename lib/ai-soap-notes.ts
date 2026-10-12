@@ -1,7 +1,7 @@
 /**
- * GAA AI Clinical S.O.A.P. Session Notes Engine
+ * Forge Athletic AI Clinical S.O.A.P. Session Notes Engine
  * Synthesizes raw speech-to-text dictation, voice notes, or coach bullet points
- * into structured, auditable NASM / CSCS clinical session documentation.
+ * into structured, auditable NASM OPT™ clinical session documentation.
  */
 
 export type SoapNotesMode = 'clinical_soap' | 'executive_summary' | 'action_directives'

@@ -42,6 +42,12 @@ export default function TermsOfServicePage() {
         <p>
           By accessing, browsing, creating an account on, subscribing to, or utilizing any website, software application, live video consultation studio, or digital advisory service provided by <strong>Forge Athletic LLC</strong> (&quot;Forge Athletic&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), you (&quot;Client&quot;, &quot;Athlete&quot;, &quot;Coach&quot;, or &quot;User&quot;) agree to be legally bound by these Terms of Service, our Privacy Policy, and all incorporated proprietary agreements. If you do not unconditionally agree to these terms, you are strictly prohibited from using the platform and must discontinue access immediately.
         </p>
+        <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.15rem', color: '#FFFFFF', margin: '1.25rem 0 0.5rem', letterSpacing: '0.03em' }}>
+          1.1 Eligibility, Age Requirements &amp; Minors
+        </h3>
+        <p style={{ fontSize: '0.95rem' }}>
+          You must be at least 18 years of age (or the legal age of majority in your jurisdiction) to create an account, purchase memberships, or execute liability waivers. Individuals aged 13 to 17 may access training modules strictly with the express consent and direct supervision of a parent or legal guardian who agrees to be bound by these Terms and executes all informed consent documents on the minor&apos;s behalf. The platform is strictly prohibited for anyone under 13 years of age.
+        </p>
       </section>
 
       <section style={{ marginBottom: '2.5rem' }}>
@@ -118,6 +124,9 @@ export default function TermsOfServicePage() {
           <strong>Scope of Practice &amp; Professional Qualifications:</strong> Coaching is led by Certified Personal Trainers credentialed through the National Academy of Sports Medicine (NASM-CPT®, NCCA-accredited). Coaches operate strictly within the NASM-CPT Scope of Practice. Coaches do not diagnose medical conditions, treat injuries, prescribe medical diets, or prescribe pharmaceuticals or therapeutic substances. All dietary supplement guides and timing schedules are educational sports nutrition models based on peer-reviewed literature.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
+          <strong>Florida Non-Medical Nutrition &amp; Dietetics Safe Harbor (Fla. Stat. § 468):</strong> All nutritional information, bioenergetic expenditure estimates, macronutrient targets, and dietary supplement educational guides provided by Forge Athletic are intended exclusively for general wellness, educational purposes, and athletic conditioning in apparently healthy individuals. Forge Athletic coaches are not licensed medical dietitians and do not provide Medical Nutrition Therapy (MNT). Our services are not intended to diagnose, treat, or manage clinical conditions, metabolic disorders, renal pathology, or eating disorders. Clients with clinical medical diagnoses must seek nutritional guidance from a licensed physician or registered dietitian.
+        </p>
+        <p style={{ fontSize: '0.95rem' }}>
           <strong>Physician Clearance Requirement:</strong> You must consult your physician or qualified medical doctor prior to beginning any exercise program, physical activity readiness questionnaire (PAR-Q+), movement screen, or dietary supplementation regimen. You affirm that you are in good physical condition, have obtained all necessary medical clearances, and have disclosed all known cardiovascular symptoms, injuries, or contraindications.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
@@ -133,10 +142,24 @@ export default function TermsOfServicePage() {
 
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.4rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
-          4. Membership Payments &amp; Subscriptions
+          4. Membership Payments, Auto-Renewal &amp; Cancellation Rights
         </h2>
         <p style={{ fontSize: '0.95rem' }}>
-          Memberships are billed monthly or annually as displayed at checkout and renew automatically until cancelled through your account. Core Membership includes a seven-day free trial before the selected recurring billing begins. Payments are processed securely by Stripe. All sales are final unless otherwise provided in writing.
+          Memberships are billed on a recurring monthly or annual basis as displayed at checkout and automatically renew at the end of each billing cycle unless cancelled prior to the renewal date. Core Membership includes a seven-day free trial; upon conclusion of the trial period, your designated payment method will be charged the recurring subscription fee unless cancelled prior to the trial expiration. Payments are processed securely via Stripe.
+        </p>
+        <p style={{ fontSize: '0.95rem' }}>
+          <strong>FTC &amp; State Auto-Renewal Cancellation Procedure:</strong> In full compliance with Federal Trade Commission (FTC) negative option rules and applicable state automatic renewal laws (including California, New York, and Florida), you may cancel your recurring membership at any time with <strong>zero cancellation fees</strong> through either of the following straightforward methods:
+        </p>
+        <ul style={{ paddingLeft: '1.25rem', margin: '0.5rem 0 1rem', fontSize: '0.92rem' }}>
+          <li style={{ marginBottom: '0.4rem' }}>
+            <strong>Online 1-Click Cancellation:</strong> Navigate to <em>Account Settings &gt; Billing</em> within the authenticated client portal and select &quot;Cancel Membership&quot;; or
+          </li>
+          <li style={{ marginBottom: '0.4rem' }}>
+            <strong>Email Notice:</strong> Send a written cancellation notice to <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a> from your registered account email at least 24 hours prior to your scheduled billing renewal date.
+          </li>
+        </ul>
+        <p style={{ fontSize: '0.95rem' }}>
+          Upon cancellation, your subscription will not renew, and you will continue to have full access to your membership features through the conclusion of your current paid billing period. All sales are final and non-refundable once billed, except where required by law.
         </p>
       </section>
 
@@ -183,10 +206,19 @@ export default function TermsOfServicePage() {
 
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.4rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
-          7. Governing Law &amp; Dispute Resolution
+          7. Governing Law, Binding Individual Arbitration &amp; Class Action Waiver
         </h2>
         <p style={{ fontSize: '0.95rem' }}>
-          These Terms and any dispute arising from your use of the platform shall be governed by and construed in accordance with the laws of the State of Florida, without regard to its conflict of law principles. Any legal suit, action, or proceeding shall be instituted exclusively in the federal or state courts located in Florida, and you irrevocably submit to the exclusive personal jurisdiction of such courts.
+          These Terms and any dispute, controversy, or claim arising out of or relating to your use of the platform shall be governed by and construed in accordance with the laws of the State of Florida, without regard to its conflict of law principles.
+        </p>
+        <p style={{ fontSize: '0.95rem' }}>
+          <strong>Mandatory Binding Individual Arbitration:</strong> Except for small claims court actions or claims seeking emergency preliminary injunctive relief regarding intellectual property infringement, you and Forge Athletic LLC agree that any dispute, claim, or controversy arising out of or relating to these Terms, your membership, personal training advice, or platform usage shall be settled by confidential, binding individual arbitration administered by the <strong>American Arbitration Association (AAA)</strong> in accordance with its Consumer Arbitration Rules. The arbitration shall be conducted in Florida or via secure teleconference, before a single neutral arbitrator. The arbitrator&apos;s decision shall be final and binding, and judgment on the award rendered by the arbitrator may be entered in any court having jurisdiction thereof.
+        </p>
+        <p style={{ fontSize: '0.95rem' }}>
+          <strong>Class Action &amp; Representative Action Waiver:</strong> YOU AND FORGE ATHLETIC LLC EXPLICITLY AGREE THAT ALL CLAIMS MUST BE BROUGHT SOLELY IN YOUR INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF, CLASS REPRESENTATIVE, OR CLASS MEMBER IN ANY PURPORTED CLASS, CONSOLIDATED, OR REPRESENTATIVE PROCEEDING. THE ARBITRATOR MAY NOT CONSOLIDATE MORE THAN ONE PERSON&apos;S CLAIMS AND MAY NOT PRESIDE OVER ANY FORM OF A REPRESENTATIVE OR CLASS PROCEEDING.
+        </p>
+        <p style={{ fontSize: '0.95rem' }}>
+          <strong>30-Day Arbitration Opt-Out Right:</strong> You have the right to opt out of this mandatory arbitration agreement by sending written notice of your decision to <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a> within thirty (30) days of your initial account registration or subscription date. The notice must include your full legal name, email address, and an unambiguous statement that you wish to opt out of arbitration. If you opt out, all other provisions of these Terms remain in full force and effect.
         </p>
       </section>
 

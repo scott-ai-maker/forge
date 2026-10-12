@@ -83,7 +83,7 @@ export default function Home() {
         <div className="forge-hero-copy">
           <p className="forge-eyebrow"><span />Performance built on science</p>
           <h1 id="forge-hero-title">Personal Training, Built Around You.</h1>
-          <p className="forge-hero-tagline">Personal trainer since 2008. NASM Master Trainer.</p>
+          <p className="forge-hero-tagline">Personal trainer since 2008. NASM-CPT · NASM Master Trainer Candidate.</p>
           <p className="forge-hero-description">
             Whatever your goal, get a plan shaped around your starting point and schedule—with
             practical coaching and progress you can measure.
@@ -92,7 +92,7 @@ export default function Home() {
             <Link className="forge-primary-link" href="/packages">Explore memberships</Link>
             <Link className="forge-secondary-link" href="/auth/login">Member sign in <span aria-hidden="true">→</span></Link>
           </div>
-          <p className="forge-hero-proof">Personal trainer since 2008 <span>·</span> NASM Master Trainer <span>·</span> No one-size-fits-all plans</p>
+          <p className="forge-hero-proof">Personal trainer since 2008 <span>·</span> NASM-CPT® Certified <span>·</span> No one-size-fits-all plans</p>
         </div>
         <div className="forge-hero-showcase">
           <div className="forge-hero-image-wrapper">
@@ -116,7 +116,7 @@ export default function Home() {
                 />
                 <div>
                   <strong>Coach Scott Gordon</strong>
-                  <span>NASM Master Trainer · Since 2008</span>
+                  <span>NASM-CPT® · Since 2008</span>
                 </div>
               </div>
               <div className="forge-hero-badge-tag">
@@ -202,7 +202,7 @@ export default function Home() {
         <div className="forge-founder-photo-wrap">
           <Image
             src="/images/coach-scott-gordon.jpg"
-            alt="Coach Scott Gordon, NASM Master Trainer and Founder of Forge Athletic"
+            alt="Coach Scott Gordon, NASM-CPT and Founder of Forge Athletic"
             width={440}
             height={550}
             loading="lazy"
@@ -218,7 +218,7 @@ export default function Home() {
           <p className="forge-eyebrow">A coach who gets the climb</p>
           <h2 id="forge-founder-title">Built from lived experience.</h2>
           <p>
-            A personal trainer since 2008 and NASM Master Trainer, Scott was Fitness Director
+            A personal trainer since 2008 and NASM Master Trainer candidate (active NASM-CPT), Scott was Fitness Director
             at Bally Total Fitness before opening his local training business in 2011. Today,
             he brings an AI engineer’s analytical mindset to training—and the empathy to meet
             every client where they are. Expect kindness and understanding, not drill-sergeant
