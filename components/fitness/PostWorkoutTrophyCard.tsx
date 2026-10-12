@@ -205,7 +205,7 @@ export default function PostWorkoutTrophyCard({
 
       ctx.fillStyle = '#94A3B8'
       ctx.font = '400 16px sans-serif'
-      ctx.fillText(`Verified by GAA Telemetry Engine · ${new Date().toLocaleDateString()}`, 540, 1015)
+      ctx.fillText(`Verified by Forge Athletic Telemetry Engine · ${new Date().toLocaleDateString()}`, 540, 1015)
 
       // 8. Footer Credential
       ctx.fillStyle = '#C5A059'
@@ -214,12 +214,12 @@ export default function PostWorkoutTrophyCard({
 
       ctx.fillStyle = '#64748B'
       ctx.font = '400 14px sans-serif'
-      ctx.fillText('SCOTTGORDONFITNESS.COM · APPLE HEALTHKIT VERIFIED', 540, 1255)
+      ctx.fillText('FORGE-ATHLETIC.APP · APPLE HEALTHKIT VERIFIED', 540, 1255)
 
       // Download
       const dataUrl = canvas.toDataURL('image/png')
       const link = document.createElement('a')
-      link.download = `GAA-Day${data.dayNumber}-Trophy-Card.png`
+      link.download = `Forge-Day${data.dayNumber}-Trophy-Card.png`
       link.href = dataUrl
       link.click()
     } finally {

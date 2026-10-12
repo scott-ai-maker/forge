@@ -87,7 +87,7 @@ export default function SpotifySettingsStudio() {
         </div>
 
         <p style={{ fontSize: 13, lineHeight: 1.5, color: '#CBD5E1', margin: '8px 0 16px', maxWidth: 720 }}>
-          Calibrate your in-gym atmosphere with Coach Gordon&apos;s curated high-drive Spotify soundscapes. 1-tap launching streams full master-quality audio continuously in the background on your phone, AirPods Pro, and Apple Watch while GAA logs sets and announces voice cadence over your music.
+          Calibrate your in-gym atmosphere with Coach Gordon&apos;s curated high-drive Spotify soundscapes. 1-tap launching streams full master-quality audio continuously in the background on your phone, AirPods Pro, and Apple Watch while Forge Athletic logs sets and announces voice cadence over your music.
         </p>
 
         {/* 3 Pillars Banner */}

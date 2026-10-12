@@ -625,7 +625,7 @@ export default function GeneralSettingsForm({ initialProfile, settingsPath, mode
               Interactive Feature Walkthroughs & Refreshers
             </h2>
             <p style={{ margin: 0, color: 'var(--gray)', fontSize: 13, maxWidth: 620, lineHeight: 1.5 }}>
-              Take an interactive guided tour of all GAA platform tools. Walkthroughs can be launched or replayed at any time for either athlete or coach workflows.
+              Take an interactive guided tour of all Forge Athletic platform tools. Walkthroughs can be launched or replayed at any time for either athlete or coach workflows.
             </p>
           </div>
         </div>

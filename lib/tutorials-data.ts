@@ -138,7 +138,7 @@ export const COACH_TUTORIAL_STEPS: TutorialStep[] = [
     features: [
       'Pillar 1 (Training): Client Overview, Program Workspace, OPT™ Periodization Architect.',
       'Pillar 2 (Movement): NASM Movement Screen, OHSA Biomechanics, Video Critique.',
-      'Pillar 3 (Safety): Medical Liability Shield, Prescription Toolboxes, Ergogenic Supplements.',
+      'Pillar 3 (Safety): Medical Liability Shield, Protocols & Toolkits, Ergogenic Supplements.',
       'Pillar 4 (Operations): Appointments Schedule, Weekly Check-Ins, Commerce & Audit Trail.',
     ],
     proTip: 'Use the quick search filter in the navigator header to jump directly to any sub-tool in 1 keystroke.',

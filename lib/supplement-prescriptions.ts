@@ -1,7 +1,7 @@
 /**
- * Evidence-Based Sports Science Supplementation Prescription Engine & Pharmacological Interaction Shield
- * Strictly governed by ISSN, ACSM, IOC consensus, and clinical pharmacokinetics standards.
- * Features automated prescription drug-supplement interaction screening and zero-liability FDA protection.
+ * Evidence-Based Sports Science Supplementation Advisory Engine & Medication Safety Screening
+ * Governed strictly by ISSN, ACSM, IOC consensus, and peer-reviewed sports nutrition science.
+ * Provides educational performance guidance, third-party quality screening, and mandatory clinical referral warnings.
  */
 
 export type SupplementGoal =
@@ -67,6 +67,7 @@ export interface PrescribedSupplementItem {
   nsfCertifiedForSportRecommended: boolean
   isConditionalOrMastersOnly?: boolean
   isBeneficialCoPrescription?: boolean
+  isAdjunctSupport?: boolean
   chronoSeparationNote?: string
   warningNote?: string
   recommendedBrand?: string
@@ -76,8 +77,10 @@ export interface PrescribedSupplementItem {
   clientDiscountPrice?: string
 }
 
+export type RecommendedSupplementItem = PrescribedSupplementItem
+
 export const DISPENSARY_PARTNER_CONFIG = {
-  partnerName: 'Forge Athletic Clinical Dispensary',
+  partnerName: 'Forge Athletic Partner Dispensary',
   platform: 'Fullscript & Thorne Partner Dispensaries',
   discountPercentage: 15,
   defaultFullscriptUrl: process.env.NEXT_PUBLIC_FULLSCRIPT_DISPENSARY_URL || 'https://us.fullscript.com/welcome/gordonathletic',
@@ -87,6 +90,8 @@ export const DISPENSARY_PARTNER_CONFIG = {
     'Cold-Chain Temperature Controlled Warehousing & Direct Manufacturer Shipping',
     'Zero Artificial Sweeteners, Fillers, or Heavy Metal Contaminants',
   ],
+  affiliateDisclosure:
+    'Forge Athletic is an authorized partner of Fullscript and Thorne professional dispensaries. We provide access to third-party lab-verified supplements (NSF Certified for Sport® / USP Verified®) with an exclusive 15% client courtesy discount. Forge Athletic and Coach Scott Gordon may receive an affiliate commission on qualifying purchases made through these links.',
 }
 
 export function getDispensaryPartnerInfo() {
@@ -139,6 +144,8 @@ export interface SupplementStackResult {
   chronoSeparationRules: string[]
   executiveSummary: string
   legalDisclaimer: string
+  scopeOfPracticeNotice: string
+  ftcAffiliateDisclosure: string
   thirdPartyQualityStandards: string
 }
 
@@ -644,10 +651,16 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     dailyFlexible: enrichedItems.filter(i => i.timingWindow === 'daily_flexible'),
   }
 
-  const executiveSummary = `This supplement plan is based on your age, profile, goal (${goal.replace(/_/g, ' ')}), and experience level (${fitnessLevel.replace(/_/g, ' ')}). It includes ${enrichedItems.length} evidence-informed options and ${drugInteractions.length} checks for potential interactions with medications.`
+  const executiveSummary = `This sports science supplement guide is formulated from your age, profile, athletic goal (${goal.replace(/_/g, ' ')}), and experience level (${fitnessLevel.replace(/_/g, ' ')}). It includes ${enrichedItems.length} evidence-informed options and ${drugInteractions.length} clinical safety checks for potential medication interactions.`
 
   const legalDisclaimer =
-    'MANDATORY FDA & MEDICAL DISCLAIMER: The statements and protocols contained herein have not been evaluated by the Food and Drug Administration (FDA). These dietary supplement recommendations are designed for nutritional support and sports performance optimization only, and are NOT intended to diagnose, treat, cure, or prevent any disease. Always consult with your prescribing physician or licensed pharmacist before initiating any dietary supplementation regimen, particularly when co-administering with prescription medications.'
+    'MANDATORY FDA & MEDICAL DISCLAIMER: The statements, protocols, and educational materials contained herein have not been evaluated by the Food and Drug Administration (FDA). These dietary supplement recommendations are designed for nutritional support and sports performance optimization only, and are NOT intended to diagnose, treat, cure, or prevent any disease. Forge Athletic coaches are not licensed medical providers and do not prescribe medical treatments. Always consult with your prescribing physician or licensed pharmacist before initiating any dietary supplementation regimen, particularly when co-administering with prescription medications.'
+
+  const scopeOfPracticeNotice =
+    'PROFESSIONAL SCOPE OF PRACTICE NOTICE: Coach Scott Gordon is a Certified Personal Trainer (NASM-CPT®) and Sports Science Consultant. Coach Gordon is not a licensed physician, pharmacist, or registered dietitian. This supplement and nutrient-timing protocol is formulated strictly for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC). It does not constitute medical advice, medical nutrition therapy, or prescription medicine.'
+
+  const ftcAffiliateDisclosure =
+    'COMMERCIAL & AFFILIATE DISCLOSURE: Forge Athletic partners with Fullscript and Thorne dispensaries to provide athletes with access to third-party verified (NSF for Sport / USP) products at an exclusive 15% discount. Forge Athletic and Coach Scott Gordon may earn an affiliate commission on products purchased through these dispensary links.'
 
   const thirdPartyQualityStandards =
     'GOLD STANDARD QUALITY ENFORCEMENT: Forge Athletic strictly mandates that all purchased supplements carry independent third-party laboratory verification: NSF Certified for Sport®, Informed Choice / Informed Sport®, or USP Verified®. These certifications guarantee label accuracy and verify the absence of heavy metals, adulterants, microbials, and WADA-banned substances.'
@@ -663,6 +676,8 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     chronoSeparationRules,
     executiveSummary,
     legalDisclaimer,
+    scopeOfPracticeNotice,
+    ftcAffiliateDisclosure,
     thirdPartyQualityStandards,
   }
 }

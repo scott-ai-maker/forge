@@ -1,5 +1,5 @@
 /**
- * Gordon Athletic Advisory - Sovereign Cryptographic Verification Engine
+ * Forge Athletic - Sovereign Cryptographic Verification Engine
  * 
  * Provides deterministic audit verification hashes for institutional
  * execution tracking, personal record milestones, and mesocycle compliance.

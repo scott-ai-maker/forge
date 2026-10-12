@@ -38,7 +38,7 @@ export const COACH_BACKGROUND_PRESETS: CoachBackgroundPreset[] = [
   {
     id: 'diagnostic-lab',
     name: 'Biomechanics Diagnostic Lab',
-    tagline: 'Dual 3D kinetic wireframe telemetry displays, force plates & illuminated GAA crest',
+    tagline: 'Dual 3D kinetic wireframe telemetry displays, force plates & illuminated Forge Athletic crest',
     category: 'Diagnostic Lab',
     imageUrl: '/images/backgrounds/coach-diagnostic-lab.jpg',
     badge: 'Kinetic Movement Diagnostic',
@@ -59,7 +59,7 @@ export const COACH_BACKGROUND_PRESETS: CoachBackgroundPreset[] = [
   {
     id: 'hybrid-concierge',
     name: 'Hybrid Concierge Sanctuary',
-    tagline: 'Walnut wood acoustic slats, brass collar weights, skyline vista & backlit GAA crest',
+    tagline: 'Walnut wood acoustic slats, brass collar weights, skyline vista & backlit Forge Athletic crest',
     category: 'Facility',
     imageUrl: '/images/backgrounds/coach-hybrid-concierge.jpg',
     badge: 'Hybrid Concierge',
@@ -80,7 +80,7 @@ export const COACH_BACKGROUND_PRESETS: CoachBackgroundPreset[] = [
   {
     id: 'executive-suite',
     name: 'Executive 1:1 Master Suite',
-    tagline: 'Nero Marquina marble, bespoke power cage, cognac leather lounger & gold GAA crest',
+    tagline: 'Nero Marquina marble, bespoke power cage, cognac leather lounger & gold Forge Athletic crest',
     category: 'Executive Suite',
     imageUrl: '/images/backgrounds/coach-executive-suite.jpg',
     badge: 'Executive 1:1 Master',
@@ -101,7 +101,7 @@ export const COACH_BACKGROUND_PRESETS: CoachBackgroundPreset[] = [
   {
     id: 'corporate-lounge',
     name: 'Corporate Performance Lounge',
-    tagline: 'Fluted stone, executive resilience telemetry screens, dusk skyline & illuminated GAA crest',
+    tagline: 'Fluted stone, executive resilience telemetry screens, dusk skyline & illuminated Forge Athletic crest',
     category: 'Executive Suite',
     imageUrl: '/images/backgrounds/coach-corporate-lounge.jpg',
     badge: 'Corporate Executive',

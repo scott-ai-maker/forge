@@ -1693,7 +1693,7 @@ export default function FitnessTrackerClient({
       }
 
       playCoachChime(1046.5, 0.4, 'sine')
-      speakCoachVoiceCue(`Session completed and saved to your GAA profile!`)
+      speakCoachVoiceCue(`Session completed and saved to your Forge Athletic profile!`)
 
       const estimatedCals = cardioPayload?.calories
         ? cardioPayload.calories + Math.round(totalVolumeKg * 0.04 + 150)

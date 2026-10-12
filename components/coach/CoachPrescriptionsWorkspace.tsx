@@ -52,7 +52,7 @@ export default function CoachPrescriptionsWorkspace({
                 color: '#34D399',
               }}
             >
-              Prescriptions &amp; Clinical Toolkits
+              Athlete Protocols &amp; Toolkits
             </span>
             <span
               style={{
@@ -65,7 +65,7 @@ export default function CoachPrescriptionsWorkspace({
                 border: '1px solid rgba(52, 211, 153, 0.3)',
               }}
             >
-              Rx Workspace
+              Protocols Workspace
             </span>
           </div>
           <h2
@@ -78,10 +78,10 @@ export default function CoachPrescriptionsWorkspace({
               color: 'var(--white)',
             }}
           >
-            ATHLETE PRESCRIPTION &amp; TOOLBOX PROTOCOLS
+            ATHLETE PROTOCOLS &amp; RECOVERY TOOLKITS
           </h2>
           <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--gray)' }}>
-            Prescribe targeted movement relief toolkits and evidence-based clinical ergogenic supplement regimens.
+            Configure targeted movement relief toolkits, AI cardio conditioning, and evidence-based sports supplement guides.
           </p>
         </div>
 
@@ -145,7 +145,7 @@ export default function CoachPrescriptionsWorkspace({
             }}
           >
             <GaaIcon name="supplements" size={14} tone={activeSubtab === 'supplements' ? 'emerald' : 'slate'} />
-            <span>Clinical Supplements</span>
+            <span>Sports Supplements</span>
           </button>
 
           <button

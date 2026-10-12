@@ -887,7 +887,7 @@ export function extractMuscleStrainsFromWorkoutLogs(options: {
 // ── Biometric & Clinical PAR-Q Integration Engine ────────────────────────────
 
 /**
- * Automatically chooses the client's conditioning tier from their GAA fitness profile,
+ * Automatically chooses the client's conditioning tier from their Forge Athletic fitness profile,
  * periodization plan (NASM OPT phase), and logged training history.
  */
 export function resolveClientConditioningTier(

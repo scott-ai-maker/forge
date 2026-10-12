@@ -310,6 +310,9 @@ export default function ExecutiveSupplementTimeline({
             <p style={{ margin: 0, fontSize: 12, color: 'var(--gray)', lineHeight: 1.45 }}>
               Forge Athletic athletes receive wholesale-tier access to cold-chain shipped, 100% 3rd-party lab verified (NSF for Sport / USP) formulations with zero heavy metals or fillers.
             </p>
+            <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
+              Partner Notice: Forge Athletic partners with Fullscript and Thorne to offer third-party verified formulations at a 15% courtesy discount. Forge Athletic may receive an affiliate commission on qualifying purchases.
+            </div>
           </div>
         </div>
 
@@ -367,11 +370,11 @@ export default function ExecutiveSupplementTimeline({
         </div>
       </div>
 
-      {/* Interaction Shield Alerts Banner if any */}
+      {/* Medication Safety Screening & Clinical Precautions Banner */}
       {stack.drugInteractions && stack.drugInteractions.length > 0 && (
         <div
           style={{
-            padding: '12px 16px',
+            padding: '14px 18px',
             background: 'rgba(239, 68, 68, 0.12)',
             border: '1.5px solid #EF4444',
             borderRadius: 8,
@@ -381,7 +384,10 @@ export default function ExecutiveSupplementTimeline({
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#FCA5A5', fontWeight: 800, fontSize: 12, textTransform: 'uppercase' }}>
             <GaaIcon name="shield" size={14} tone="amber" />
-            <span>Pharmacological Interaction Shield Active ({stack.drugInteractions.length} screened)</span>
+            <span>Medication Safety Flags &amp; Clinical Precautions ({stack.drugInteractions.length} screened)</span>
+          </div>
+          <div style={{ fontSize: 11, color: '#FECACA', fontStyle: 'italic' }}>
+            Important: Coaches do not modify medical treatment plans. Please share these research safety flags with your prescribing physician or pharmacist for clinical clearance before taking any supplements.
           </div>
           {stack.drugInteractions.map((alert, idx) => (
             <div key={idx} style={{ fontSize: 11.5, color: '#FECACA', lineHeight: 1.4 }}>
@@ -568,6 +574,32 @@ export default function ExecutiveSupplementTimeline({
         })}
       </div>
 
+      {/* Scope of Practice & Mandatory FDA Disclaimer Footer */}
+      <div style={{ display: 'grid', gap: 10, marginTop: 8 }}>
+        <div style={{ background: 'rgba(8, 14, 24, 0.7)', border: '1px solid rgba(197, 160, 89, 0.25)', borderRadius: 8, padding: 14 }}>
+          <div style={{ color: 'var(--gold-lt)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <GaaIcon name="shield-check" size={13} tone="gold" />
+            <span>Professional Scope of Practice (NASM-CPT®)</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 11.5, color: 'var(--gray)', lineHeight: 1.5 }}>
+            {stack.scopeOfPracticeNotice || 'This supplement guide is provided for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC). Coach Scott Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, treatment, or medical nutrition therapy. Always review dietary supplements with your prescribing healthcare provider.'}
+          </p>
+        </div>
+
+        <div style={{ background: 'rgba(8, 14, 24, 0.7)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 8, padding: 14 }}>
+          <div style={{ color: 'var(--gray)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <GaaIcon name="scale" size={12} tone="slate" />
+            <span>Mandatory FDA &amp; Prescription Medication Disclaimer</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 11, color: 'rgba(255, 255, 255, 0.6)', lineHeight: 1.5 }}>
+            {stack.legalDisclaimer}
+          </p>
+          <p style={{ margin: '8px 0 0', fontSize: 10.5, color: 'rgba(255, 255, 255, 0.45)', lineHeight: 1.4 }}>
+            {stack.ftcAffiliateDisclosure || 'Partner Notice: Forge Athletic partners with Fullscript and Thorne dispensaries to provide athletes with access to third-party verified products at a 15% discount. Forge Athletic may receive an affiliate commission on qualifying purchases.'}
+          </p>
+        </div>
+      </div>
+
       {/* Science Rationale & ISSN Citations Detail Modal */}
       {selectedItemDetail && (
         <div
@@ -649,6 +681,9 @@ export default function ExecutiveSupplementTimeline({
                     <div style={{ fontSize: 11.5, color: 'var(--gold-lt)', marginTop: 2 }}>
                       Client Privilege Price: <strong>{selectedItemDetail.clientDiscountPrice}</strong>{' '}
                       <span style={{ textDecoration: 'line-through', color: 'var(--gray)', fontSize: 10.5 }}>{selectedItemDetail.retailPriceEstimate}</span>
+                    </div>
+                    <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.4)', marginTop: 3 }}>
+                      15% courtesy discount · Partner dispensary (affiliate link)
                     </div>
                   </div>
                   <a

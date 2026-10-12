@@ -1024,7 +1024,7 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
     category: 'fix',
     badge: 'iPhone & Apple HIG Optimization',
     title: 'iOS Native Architecture, Apple HIG Compliance & Usability Hardening',
-    summary: 'Hardens the Gordon Athletic Advisory iPhone application for App Store distribution and in-gym training ergonomics. Configures comprehensive Apple privacy usage descriptions in Info.plist, ensures high-contrast light-mode status bar legibility in WKWebView, eliminates the iOS Safari 16px input auto-zoom disruption, allows landscape video rotation for exercise form checks and live telehealth consultations, and suppresses extraneous PWA installation prompts within the native Capacitor shell.',
+    summary: 'Hardens the Forge Athletic iPhone application for App Store distribution and in-gym training ergonomics. Configures comprehensive Apple privacy usage descriptions in Info.plist, ensures high-contrast light-mode status bar legibility in WKWebView, eliminates the iOS Safari 16px input auto-zoom disruption, allows landscape video rotation for exercise form checks and live telehealth consultations, and suppresses extraneous PWA installation prompts within the native Capacitor shell.',
     highlights: [
       'App Store Review Privacy Compliance: Added bespoke institutional usage descriptions to Info.plist for NSCameraUsageDescription, NSMicrophoneUsageDescription, NSPhotoLibraryUsageDescription, and NSPhotoLibraryAddUsageDescription, eliminating crash vectors and ensuring Guideline 5.1.1 compliance during live studio consultations, 3D posture mesh scanning, and form check recording.',
       'Light & Dark Mode Status Bar Legibility: Overrode preferredStatusBarStyle in MainViewController.swift to guarantee high-contrast white text and system telemetry regardless of whether iOS is in light or dark mode.',
@@ -1538,7 +1538,7 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
     summary: 'Substantially enlarged the master brand crest across the site header (54px), mobile header (48px), footer (52px), live studio HUD (56px), and auth portals (100px). Completely regenerated all 16 Apple PWA splash screens, iOS native LaunchScreen assets, and Android 12+ splash mipmaps with enlarged, uncropped logos and smooth #080E14 obsidian vignettes.',
     highlights: [
       'Prominently Enlarged Site-Wide Logos: Scaled up the official GAA monogram mark in SiteHeader (38px -> 54px desktop, 36px -> 48px mobile), SiteFooter (36px -> 52px), and Auth portals (80px -> 100px) with 2px gold borders and 20px radiant glows.',
-      '16 High-Resolution Apple PWA Splash Screens: Completely regenerated public/splash/ with enlarged logos (~70% viewport width) featuring full uncropped "GORDON ATHLETIC ADVISORY" typography.',
+      '16 High-Resolution Apple PWA Splash Screens: Completely regenerated public/splash/ with enlarged logos (~70% viewport width) featuring full uncropped "FORGE ATHLETIC" typography.',
       'Seamless Obsidian Vignette Blending: Engineered radial feathering in sharp so the dark logo background blends perfectly into #080E14 with zero square borders or artifact seams.',
       'iOS Native LaunchScreen Assets: Regenerated splash-1x, 2x, 3x, and 2732x2732 assets in Assets.xcassets with enlarged brand crests.',
       'Android 12+ Splash Drawables & Mipmaps: Regenerated mdpi through xxxhdpi splash icons and layer-list drawables.',
@@ -1595,7 +1595,7 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
     category: 'major',
     badge: '️ 6 High-Margin Revenue Streams & Complete Visual Brand Reimagining',
     title: 'Multi-Channel High-Margin Monetization Engine & Bespoke Luxury Visual Branding',
-    summary: 'Engineered and deployed 6 high-margin revenue streams maximizing upfront cash flow, liquidating customer acquisition costs, and unlocking institutional B2B contracts. Reimagined all visual brand assets using Google\'s latest image generation engine to reflect Gordon Athletic Advisory\'s luxury obsidian, brushed liquid gold, and clinical sports science aesthetic.',
+    summary: 'Engineered and deployed 6 high-margin revenue streams maximizing upfront cash flow, liquidating customer acquisition costs, and unlocking institutional B2B contracts. Reimagined all visual brand assets using Google\'s latest image generation engine to reflect Forge Athletic\'s luxury obsidian, brushed liquid gold, and clinical sports science aesthetic.',
     highlights: [
       '12-Week Paid-In-Full (PIF) Transformation Blocks: Swapped month-to-month churn for upfront 12-week cash velocity ($895, $1,695, $3,895) with recurring add-ons multiplied across the block and up to $590 in savings.',
       '$97 Front-End Self-Liquidating 3D AI Biomechanical Audit (SLO): Built dedicated conversion landing page (/audit) offering computer-vision kinetic chain audits with a 100% voucher credit toward coaching retainers.',
@@ -2052,7 +2052,7 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
     category: 'feature',
     badge: 'iOS App & Native HealthKit Background Delivery',
     title: 'Native iOS Capacitor App Packaging, HealthKit Background Delivery, Launch Observer Re-Registration & Cross-Platform Telemetry Bridge',
-    summary: 'Packed Gordon Athletic Advisory into a high-performance native iOS application using Capacitor with native HealthKit background delivery (HKObserverQuery & HKHealthStore.enableBackgroundDelivery), delivering 24/7 background telemetry sync for RHR, HRV rMSSD, active energy, sleep architecture, workouts, and dietary nutrition.',
+    summary: 'Packed Forge Athletic into a high-performance native iOS application using Capacitor with native HealthKit background delivery (HKObserverQuery & HKHealthStore.enableBackgroundDelivery), delivering 24/7 background telemetry sync for RHR, HRV rMSSD, active energy, sleep architecture, workouts, and dietary nutrition.',
     highlights: [
       'Native iOS Capacitor App Shell: Full iOS 16.0+ deployment target with dark obsidian luxury theme (#0A0E18), custom Gold app icon assets (#D4AF37), and automatic safe-area insets.',
       'Native HealthKit Background Delivery Engine: Custom GAAHealthKitPlugin.swift and GAAHealthSyncManager.swift registering background observer queries (HKObserverQuery) and immediate background delivery for resting heart rate, HRV rMSSD, active calories, steps, sleep stages, and workouts.',
@@ -2092,7 +2092,7 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
     category: 'feature',
     badge: 'Android App & Native Health Background Delivery',
     title: 'Native Android Capacitor App Packaging, Health Connect Background Delivery, WorkManager Task Scheduling & Unified Cross-Platform Health Bridge',
-    summary: 'Packed Gordon Athletic Advisory into a high-performance native Android application using Capacitor with native background telemetry delivery powered by Android Health Connect and Android WorkManager, providing 100% feature parity with iOS Apple HealthKit.',
+    summary: 'Packed Forge Athletic into a high-performance native Android application using Capacitor with native background telemetry delivery powered by Android Health Connect and Android WorkManager, providing 100% feature parity with iOS Apple HealthKit.',
     highlights: [
       'Native Android Capacitor App Shell: Full Android 15 (API 35) target SDK and Android 8.0+ support with dark obsidian luxury theme (#0A0E18), custom Gold launcher assets (#D4AF37), and optimized system navigation bars.',
       'Native Android Health Connect & WorkManager Engine: Background delivery subsystem executing scheduled biometrics ingest (RHR, HRV, steps, active calories, sleep stages, dietary macros, workouts) and direct backend synchronization even when the app is closed.',
@@ -2624,7 +2624,7 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
     category: 'major',
     badge: 'Production Master Launch',
     title: 'Master Sports Science Intelligence & Mobile Luxury Architecture',
-    summary: 'The milestone production launch of Gordon Athletic Advisory, featuring a comprehensive 16-curriculum sports science intelligence engine (500+ evidence-based clinical performance handbooks), luxury vector iconography, mobile viewport containment, and real-time session telemetry.',
+    summary: 'The milestone production launch of Forge Athletic, featuring a comprehensive 16-curriculum sports science intelligence engine (500+ evidence-based clinical performance handbooks), luxury vector iconography, mobile viewport containment, and real-time session telemetry.',
     highlights: [
       'Sports Science Intelligence Engine: Over 500+ proprietary clinical performance handbooks and protocols across 16 master specialization domains (CPT, PES, CES, PBC, CNC, BCS, GFS, MMACS, WLS, GLP-1 Clinical Defense, CATM).',
       'Luxury Vector Iconography: Standardized champagne gold and brushed titanium vector icons across all navigation, drawer, and command palette surfaces.',

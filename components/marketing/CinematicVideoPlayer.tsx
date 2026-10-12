@@ -216,7 +216,7 @@ export default function CinematicVideoPlayer({
             color: 'var(--gold-lt)',
           }}
         >
-          GAA Clinical Labs · 4K Motion Reel
+          Forge Athletic Clinical Labs · 4K Motion Reel
         </span>
       </div>
 

@@ -510,7 +510,7 @@ export default function ClientSettingsStudio({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                     <span className="status-dot-pulse" />
                     <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                      GAA Mobile Gym Companion
+                      Forge Athletic Mobile Companion
                     </span>
                   </div>
                   <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 22, margin: '2px 0 0', color: '#FFFFFF', letterSpacing: '0.04em' }}>

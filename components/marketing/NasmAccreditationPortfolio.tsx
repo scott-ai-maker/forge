@@ -100,7 +100,7 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
       'Hydration Physiology & Micronutrient Sufficiency',
       'Eating habits and practical nutrition choices',
     ],
-    gaaEngineIntegration: 'Supports GAA nutrition estimates, meal planning, and progress tracking.',
+    gaaEngineIntegration: 'Supports Forge Athletic nutrition estimates, meal planning, and progress tracking.',
     keyAlgorithmicModule: 'Bioenergetic TDEE & Macro Allocation Algorithm',
   },
   {
@@ -741,7 +741,7 @@ export default function NasmAccreditationPortfolio() {
                         marginBottom: 4,
                       }}
                     >
-                      GAA Engine &amp; Advisory Integration
+                      Forge Athletic Engine &amp; Advisory Integration
                     </span>
                     <p
                       style={{
@@ -842,7 +842,7 @@ export default function NasmAccreditationPortfolio() {
           fontFamily: 'Raleway, sans-serif',
         }}
       >
-        <strong style={{ color: '#94A3B8' }}>Legal Non-Affiliation &amp; Nominative Fair Use:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Forge Athletic LLC and Scott Gordon Fitness are independent private entities and are not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. All references to NASM credentials and the OPT™ model are made strictly for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
+        <strong style={{ color: '#94A3B8' }}>Legal Non-Affiliation &amp; Nominative Fair Use:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Forge Athletic LLC is an independent private entity and is not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. All references to NASM credentials and the OPT™ model are made strictly for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
       </div>
     </section>
   )

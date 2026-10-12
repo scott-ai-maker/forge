@@ -303,7 +303,7 @@ export default function FoundingIntakeSplashClient() {
           <CinematicVideoPlayer
             src="/videos/gaa-founding-manifesto.mp4"
             poster="/images/backgrounds/coach-olympic-facility-gaa.jpg"
-            title="GAA Laboratory & Kinetic Architecture Manifesto"
+            title="Forge Athletic Laboratory & Kinetic Architecture Manifesto"
             autoPlay={true}
             loop={true}
             allowCustomUrl={true}

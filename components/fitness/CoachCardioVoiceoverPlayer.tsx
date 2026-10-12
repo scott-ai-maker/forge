@@ -1548,7 +1548,7 @@ export default function CoachCardioVoiceoverPlayer({
               alignItems: 'center',
               gap: 4,
             }}
-            title="Launch GAA Curated 124–128 BPM Zone 2 Cadence Music (With Auto-Ducking)"
+            title="Launch Forge Athletic Curated 124–128 BPM Zone 2 Cadence Music (With Auto-Ducking)"
           >
             <GaaIcon name="music" size={12} tone="emerald" />
             <span>126 BPM</span>

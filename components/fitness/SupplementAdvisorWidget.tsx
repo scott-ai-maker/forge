@@ -122,10 +122,10 @@ export default function SupplementAdvisorWidget({
                   border: '1px solid rgba(197,160,89,0.4)',
                 }}
               >
-                ISSN & IOC Tier A/B Gold Standard
+                ISSN &amp; IOC Tier A/B Gold Standard
               </span>
               <span style={{ color: 'var(--gray)', fontSize: 13 }}>
-                Pharmacological Drug-Nutrient Safety Shield
+                Educational Medication Screening &amp; Safety Advisory
               </span>
             </div>
             <h3
@@ -138,7 +138,7 @@ export default function SupplementAdvisorWidget({
                 color: 'var(--white)',
               }}
             >
-              Precision Supplementation Protocol
+              Precision Performance Supplementation Guide
             </h3>
           </div>
 
@@ -160,7 +160,7 @@ export default function SupplementAdvisorWidget({
         </div>
 
         <p style={{ margin: '10px 0 0', color: 'var(--gray)', fontSize: 13, lineHeight: 1.5, maxWidth: 850 }}>
-          Formulated strictly from randomized controlled trials (ISSN, ACSM, IOC consensus) and cross-examined against your prescription medications to prevent drug-nutrient interactions, nutrient depletions, and adverse side effects.
+          Formulated strictly from randomized controlled trials (ISSN, ACSM, IOC consensus) and cross-examined against reported medications to identify potential interactions, nutrient depletions, and safety precautions. Provided for educational sports performance support only; not medical treatment.
         </p>
       </div>
 
@@ -287,7 +287,7 @@ export default function SupplementAdvisorWidget({
             >
               <GaaIcon name="shield-check" size={18} tone="emerald" />
               <div style={{ fontSize: 12, color: 'var(--white)' }}>
-                <strong style={{ color: '#34D399' }}>Synced from GAA Health Profile:</strong> Active prescription medications detected{' '}
+                <strong style={{ color: '#34D399' }}>Synced from Forge Athletic Health Profile:</strong> Active prescription medications detected{' '}
                 <span style={{ color: 'var(--gold-lt)', fontFamily: 'var(--font-telemetry, monospace)' }}>
                   ({parsedMedications.rawMedicationsText || parsedMedications.detectedMedicationCategories.join(', ')})
                 </span>
@@ -416,10 +416,10 @@ export default function SupplementAdvisorWidget({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
             <div style={{ color: 'var(--gold-lt)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 6 }}>
               <GaaIcon name="shield-check" size={14} tone="gold" />
-              Active Pharmacological Drug-Supplement Safety Analysis ({stack.drugInteractions.length} Interacting Categories)
+              Medication Safety Flags &amp; Clinical Precautions ({stack.drugInteractions.length} Categories Screened)
             </div>
             <span style={{ fontSize: 11, padding: '2px 8px', background: 'rgba(197,160,89,0.2)', color: 'var(--gold-lt)', border: '1px solid var(--gold)' }}>
-              Clinical Pharmacokinetics Verified
+              Physician Clearance Advised
             </span>
           </div>
 
@@ -457,7 +457,7 @@ export default function SupplementAdvisorWidget({
 
                   <div style={{ fontSize: 12, color: isCrit ? '#ff8787' : isChrono ? 'var(--gold-lt)' : 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                     <GaaIcon name="chevron-right" size={12} tone={isCrit ? 'ruby' : isChrono ? 'gold' : 'emerald'} />
-                    Action Taken: {interaction.actionDirective}
+                    Precautionary Action: {interaction.actionDirective}
                   </div>
                 </div>
               )
@@ -606,11 +606,14 @@ export default function SupplementAdvisorWidget({
               {item.recommendedBrand && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, background: 'rgba(212,160,23,0.08)', padding: '10px 14px', border: '1px solid rgba(212,160,23,0.3)', borderRadius: 6 }}>
                   <div>
-                    <span style={{ fontSize: 10, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800 }}>Clinical Partner Formulation</span>
+                    <span style={{ fontSize: 10, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800 }}>Partner Dispensary Formulation</span>
                     <div style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 700 }}>{item.recommendedBrand}® ({item.dispensarySku})</div>
                     <div style={{ fontSize: 11, color: 'var(--gold-lt)', marginTop: 2 }}>
                       Client Price: <strong>{item.clientDiscountPrice}</strong>{' '}
                       <span style={{ textDecoration: 'line-through', color: 'var(--gray)', fontSize: 10 }}>{item.retailPriceEstimate}</span>
+                    </div>
+                    <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.4)', marginTop: 3 }}>
+                      15% courtesy discount · Partner dispensary (affiliate link)
                     </div>
                   </div>
                   <a
@@ -645,8 +648,17 @@ export default function SupplementAdvisorWidget({
         </div>
       </div>
 
-      {/* Quality Enforcement & Mandatory FDA Disclaimer */}
+      {/* Scope of Practice & Mandatory Disclaimers */}
       <div style={{ display: 'grid', gap: 10 }}>
+        <div style={{ background: 'rgba(8,14,20,0.7)', border: '1px solid rgba(197,160,89,0.3)', padding: 16 }}>
+          <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <GaaIcon name="shield-check" size={13} tone="gold" /> Professional Scope of Practice (NASM-CPT®)
+          </div>
+          <p style={{ margin: 0, fontSize: 12, color: 'var(--gray)', lineHeight: 1.5 }}>
+            {stack.scopeOfPracticeNotice || 'This supplement guide is provided for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC). Coach Scott Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, treatment, or medical nutrition therapy. Always review dietary supplements with your prescribing healthcare provider.'}
+          </p>
+        </div>
+
         <div style={{ background: 'rgba(8,14,20,0.7)', border: '1px solid rgba(197,160,89,0.3)', padding: 16 }}>
           <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
             <GaaIcon name="shield-check" size={13} tone="gold" /> {stack.thirdPartyQualityStandards.split(':')[0]}
@@ -658,10 +670,13 @@ export default function SupplementAdvisorWidget({
 
         <div style={{ background: 'rgba(8,14,20,0.7)', border: '1px solid rgba(255,255,255,0.08)', padding: 16 }}>
           <div style={{ color: 'var(--gray)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <GaaIcon name="scale" size={12} tone="slate" /> Mandatory FDA & Prescription Drug Interaction Disclaimer
+            <GaaIcon name="scale" size={12} tone="slate" /> Mandatory FDA &amp; Prescription Drug Interaction Disclaimer
           </div>
           <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
             {stack.legalDisclaimer}
+          </p>
+          <p style={{ margin: '8px 0 0', fontSize: 10.5, color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>
+            {stack.ftcAffiliateDisclosure}
           </p>
         </div>
       </div>

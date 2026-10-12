@@ -210,7 +210,7 @@ export interface FatigueSafetyNotice {
 
 /**
  * Evaluates athlete fatigue and produces clinical safety guidance.
- * Applies GAA Biomechanical Guardrails for hammer curls (neutral grip, zero supination).
+ * Applies Forge Athletic Biomechanical Guardrails for hammer curls (neutral grip, zero supination).
  */
 export function getFatigueSafetyNotice(
   exerciseName: string,

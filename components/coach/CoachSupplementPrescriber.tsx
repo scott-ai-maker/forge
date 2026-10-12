@@ -132,10 +132,10 @@ export default function CoachSupplementPrescriber({
                 border: '1px solid rgba(197,160,89,0.4)',
               }}
             >
-              Sports Nutrition Consultant Portal
+              Sports Nutrition Advisory Portal
             </span>
             <span style={{ color: 'var(--gray)', fontSize: 13 }}>
-              Pharmacological Interaction Shield
+              Evidence-Based Nutrient Timing &amp; Safety Screening
             </span>
           </div>
           <h3
@@ -148,7 +148,7 @@ export default function CoachSupplementPrescriber({
               color: 'var(--white)',
             }}
           >
-            Prescribe Supplement Protocol: {clientName}
+            Configure Supplement Guide: {clientName}
           </h3>
         </div>
 
@@ -175,13 +175,13 @@ export default function CoachSupplementPrescriber({
           }}
         >
           <GaaIcon name="supplements" size={16} style={{ color: '#080E14', stroke: '#080E14' }} />
-          <span>{isPrescribing ? 'Deploying Protocol...' : 'Deploy Protocol & Concierge Alert'}</span>
+          <span>{isPrescribing ? 'Publishing Guide...' : 'Publish Guide & Concierge Update'}</span>
         </button>
       </div>
 
       {prescribedSuccess && (
         <div style={{ padding: '12px 16px', background: 'rgba(52,211,153,0.15)', border: '1px solid var(--success)', color: 'var(--white)', fontSize: 14, borderRadius: 6 }}>
-          ✓ Precision Sports Science Supplementation Protocol successfully published to {clientName}&apos;s client portal and dispatched to their Concierge Chat.
+          ✓ Precision Sports Science Supplement Guide successfully published to {clientName}&apos;s client portal and dispatched to their Concierge Chat.
         </div>
       )}
 
@@ -302,7 +302,7 @@ export default function CoachSupplementPrescriber({
         <div style={{ background: 'rgba(14,23,36,0.85)', border: '1px solid var(--gold)', padding: 14, display: 'grid', gap: 6 }}>
           <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
             <GaaIcon name="shield" size={13} tone="gold" />
-            <span>Pharmacological Safety Interventions ({stack.drugInteractions.length})</span>
+            <span>Medication Safety Flags &amp; Clinical Precautions ({stack.drugInteractions.length})</span>
           </div>
           {stack.drugInteractions.map((diag, idx) => (
             <div key={idx} style={{ fontSize: 12, color: 'var(--white)', lineHeight: 1.4 }}>
@@ -315,7 +315,7 @@ export default function CoachSupplementPrescriber({
       {/* Protocol Summary Card */}
       <div className="glass-card-gold" style={{ padding: 18, display: 'grid', gap: 12 }}>
         <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Generated Protocol Preview ({stack.prescribedItems.length} Evidence-Based Compounds)
+          Generated Supplement Guide Preview ({stack.prescribedItems.length} Evidence-Based Compounds)
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
@@ -324,7 +324,7 @@ export default function CoachSupplementPrescriber({
               <div style={{ fontWeight: 700, color: 'var(--white)', fontSize: 13, display: 'flex', justifyContent: 'space-between' }}>
                 <span>{item.name}</span>
                 {item.isBeneficialCoPrescription && (
-                  <span style={{ fontSize: 9, color: 'var(--success)', border: '1px solid var(--success)', padding: '1px 4px' }}>CO-RX</span>
+                  <span style={{ fontSize: 9, color: 'var(--success)', border: '1px solid var(--success)', padding: '1px 4px' }}>ADJUNCT</span>
                 )}
               </div>
               <div style={{ fontSize: 11, color: 'var(--gold-lt)' }}>{item.optimalDosage} · {item.timingLabel.split(' ')[0]}</div>
@@ -343,7 +343,7 @@ export default function CoachSupplementPrescriber({
       {/* Coach Custom Directive */}
       <div>
         <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
-          Coach Special Instructions / Brand Recommendation (Optional)
+          Coach Special Directives / Brand Guidance (Optional)
         </label>
         <input
           type="text"
@@ -352,6 +352,17 @@ export default function CoachSupplementPrescriber({
           placeholder="e.g. Ensure Thorne or Momentous brand is purchased for third-party NSF verification."
           style={{ width: '100%', padding: '10px 12px', background: 'rgba(8,14,20,0.8)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--white)', fontSize: 13, borderRadius: 4 }}
         />
+      </div>
+
+      {/* Scope of Practice & Non-Prescriptive Advisory Notice */}
+      <div style={{ background: 'rgba(8,14,20,0.7)', border: '1px solid rgba(255,255,255,0.08)', padding: 14, borderRadius: 6, display: 'grid', gap: 4 }}>
+        <div style={{ color: 'var(--gray-lt)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <GaaIcon name="shield-check" size={13} tone="gold" />
+          <span>Professional Scope of Practice &amp; Legal Boundary (NASM-CPT®)</span>
+        </div>
+        <p style={{ margin: 0, fontSize: 11.5, color: 'var(--gray)', lineHeight: 1.5 }}>
+          Sports nutrition guides configured here are strictly educational ergogenic recommendations derived from peer-reviewed sports science research (ISSN, ACSM, IOC consensus). Certified personal trainers do not diagnose deficiency, prescribe medications, or provide medical nutrition therapy. Clients must obtain physician clearance before starting any supplement routine, particularly when managing medical conditions or taking prescription medications.
+        </p>
       </div>
 
       {/* Live Chrono-Dosing Timeline Preview */}

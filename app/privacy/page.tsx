@@ -76,7 +76,7 @@ export default function PrivacyPolicyPage() {
             <strong>Media &amp; Video Streams:</strong> Form check videos, live session telestrator recordings, posture screen images, and check-in photos stored securely in private Supabase Storage buckets with Row-Level Security (RLS) enforcement.
           </li>
           <li style={{ marginBottom: '0.4rem' }}>
-            <strong>Payment Data:</strong> Payment details are processed directly via Stripe; GAA never stores your credit card numbers or raw billing credentials on our servers.
+            <strong>Payment Data:</strong> Payment details are processed directly via Stripe; Forge Athletic never stores your credit card numbers or raw billing credentials on our servers.
           </li>
         </ul>
       </section>

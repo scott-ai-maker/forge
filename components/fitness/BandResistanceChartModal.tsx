@@ -69,7 +69,7 @@ export default function BandResistanceChartModal({
               <span>Resistance Band Matrix &amp; Weight Equivalent</span>
             </h3>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--gray)' }}>
-              Standard GAA elastic resistance spectrum for accurate progressive overload logging
+              Standard Forge Athletic elastic resistance spectrum for accurate progressive overload logging
             </p>
           </div>
           <button

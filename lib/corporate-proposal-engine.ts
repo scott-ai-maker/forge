@@ -188,7 +188,7 @@ export function getProposalDeliverablesList(seats: number, cadence: CorporateCad
       number: '01',
       title: `${seats} app memberships`,
       headline: 'Training plans and health tools',
-      details: 'Each participant can use the GAA app for personalized NASM OPT™ training plans, workout tracking, cardio tools, and movement resources.',
+      details: 'Each participant can use the Forge Athletic app for personalized NASM OPT™ training plans, workout tracking, cardio tools, and movement resources.',
       cadence: 'Continuous Access',
     },
     {

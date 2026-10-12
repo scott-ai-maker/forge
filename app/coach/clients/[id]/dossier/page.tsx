@@ -12,7 +12,7 @@ import { generateSundayDossier } from '@/lib/sunday-dossier-engine'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Athlete Sunday Dossier | Coach Console | GAA',
+  title: 'Athlete Sunday Dossier | Coach Console | Forge Athletic',
   description: 'Coach view of client weekly athletic intelligence briefing, ACWR workload telemetry, kinetic movement distribution, and clinical S.O.A.P. record.',
 }
 

@@ -111,14 +111,23 @@ export default function TermsOfServicePage() {
             <span>Educational Performance Advisory · Not Medical Treatment</span>
           </p>
           <p style={{ margin: 0, fontSize: '0.92rem', color: '#E2E8F0' }}>
-            Forge Athletic provides high-performance athletic conditioning, movement analysis, and nutritional supplementation education. Forge Athletic is <strong>not</strong> a medical healthcare provider, physical therapy clinic, or emergency medical facility. No communication, assessment, or AI synthesis constitutes medical diagnosis, physical therapy prescription, or pharmacological medical advice.
+            Forge Athletic provides high-performance athletic conditioning, movement analysis, and nutritional supplementation education. Forge Athletic is <strong>not</strong> a medical healthcare provider, physical therapy clinic, or emergency medical facility. No communication, assessment, or AI synthesis constitutes medical diagnosis, physical therapy prescription, medical nutrition therapy, or pharmacological medical advice.
           </p>
         </div>
         <p style={{ fontSize: '0.95rem' }}>
-          <strong>Physician Clearance Requirement:</strong> You must consult your physician or qualified medical doctor prior to beginning any exercise program, physical activity readiness questionnaire (PAR-Q), movement screen, or dietary supplementation regimen. You affirm that you are in good physical condition and have disclosed all known injuries, cardiovascular symptoms, or medical contraindications.
+          <strong>Scope of Practice &amp; Professional Qualifications:</strong> Coaching is led by Certified Personal Trainers credentialed through the National Academy of Sports Medicine (NASM-CPT®, NCCA-accredited). Coaches operate strictly within the NASM-CPT Scope of Practice. Coaches do not diagnose medical conditions, treat injuries, prescribe medical diets, or prescribe pharmaceuticals or therapeutic substances. All dietary supplement guides and timing schedules are educational sports nutrition models based on peer-reviewed literature.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
-          <strong>Voluntary Assumption of Risk:</strong> You acknowledge that intense physical exercise, weightlifting, cardiovascular training, and biomechanical screening involve inherent risks of physical injury, cardiac events, or property damage. You voluntarily assume all known and unknown risks associated with your participation.
+          <strong>Physician Clearance Requirement:</strong> You must consult your physician or qualified medical doctor prior to beginning any exercise program, physical activity readiness questionnaire (PAR-Q+), movement screen, or dietary supplementation regimen. You affirm that you are in good physical condition, have obtained all necessary medical clearances, and have disclosed all known cardiovascular symptoms, injuries, or contraindications.
+        </p>
+        <p style={{ fontSize: '0.95rem' }}>
+          <strong>Remote &amp; Virtual Coaching Safety:</strong> Coaching sessions, video reviews, and algorithmic plans are delivered virtually. You acknowledge that your coach is not physically co-located and cannot physically spot, catch, or physically assist you during any lift. You assume full personal responsibility for maintaining a safe, clear 8x8 ft perimeter, ensuring non-slip flooring, using collar clips on loaded barbells, and inspecting all equipment prior to every workout.
+        </p>
+        <p style={{ fontSize: '0.95rem' }}>
+          <strong>Emergency Protocol:</strong> If at any time during physical training you experience dizziness, lightheadedness, nausea, shortness of breath, abnormal palpitations, or chest discomfort, you must immediately stop all exertion and seek emergency medical assistance (call 911 or your local emergency dispatch service).
+        </p>
+        <p style={{ fontSize: '0.95rem' }}>
+          <strong>Voluntary Assumption of Risk:</strong> You acknowledge that intense physical exercise, weightlifting, cardiovascular conditioning, and biomechanical screening involve inherent risks of injury (including sprains, strains, fractures, rhabdomyolysis, or cardiovascular events) or property damage. You voluntarily and knowingly assume all known and unknown risks associated with your participation.
         </p>
       </section>
 
@@ -159,10 +168,13 @@ export default function TermsOfServicePage() {
 
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.4rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
-          6. Limitation of Liability &amp; Indemnification
+          6. Limitation of Liability, Release of Claims &amp; Indemnification
         </h2>
         <p style={{ fontSize: '0.95rem' }}>
-          To the maximum extent permitted by applicable law, in no event shall Forge Athletic LLC, its founders, coaches, officers, employees, or technology providers be liable for any indirect, punitive, incidental, special, consequential, or exemplary damages, including without limitation damages for loss of profits, bodily injury, goodwill, data, or other intangible losses.
+          To the maximum extent permitted by applicable law, in no event shall Forge Athletic LLC, its managers, coaches, officers, employees, or technology providers be liable for any indirect, punitive, incidental, special, consequential, or exemplary damages, including without limitation damages for loss of profits, bodily injury, goodwill, data, or other intangible losses.
+        </p>
+        <p style={{ fontSize: '0.95rem' }}>
+          <strong>Comprehensive Release &amp; Waiver:</strong> You expressly release, waive, and forever discharge Forge Athletic LLC, its owners, coaches, agents, and affiliates from any and all liabilities, claims, demands, or causes of action arising out of negligence, personal injury, illness, or property damage resulting from your participation in any training program, movement screen, or advice provided by Forge Athletic. You covenant not to initiate any lawsuit or legal proceeding against Forge Athletic LLC regarding such matters.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
           You agree to defend, indemnify, and hold harmless Forge Athletic LLC from and against any and all claims, damages, obligations, losses, liabilities, costs, or debt arising from your violation of these Terms, misuse of the platform, or breach of any third-party intellectual property or privacy rights.
@@ -187,7 +199,7 @@ export default function TermsOfServicePage() {
             <strong>Trademark Ownership Acknowledgement:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks owned exclusively by the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC.
           </p>
           <p style={{ margin: 0, fontSize: '0.92rem', color: '#CBD5E1', lineHeight: 1.6 }}>
-            <strong>Independent Status &amp; Nominative Fair Use:</strong> Forge Athletic LLC and Scott Gordon Fitness are independent private organizations and are <strong>not affiliated with, sponsored by, authorized by, or endorsed by</strong> NASM or Ascend Learning, LLC. All references throughout the application, user interfaces, educational documentation, and algorithms to the Optimum Performance Training (OPT™) framework, phase categorizations (Stabilization, Strength, Power), and kinetic screening protocols are made strictly for educational, methodological compatibility, and scientific periodization reference under the <em>Nominative Fair Use Doctrine</em> (15 U.S.C. § 1125).
+            <strong>Independent Status &amp; Nominative Fair Use:</strong> Forge Athletic LLC is an independent private organization and is <strong>not affiliated with, sponsored by, authorized by, or endorsed by</strong> NASM or Ascend Learning, LLC. All references throughout the application, user interfaces, educational documentation, and algorithms to the Optimum Performance Training (OPT™) framework, phase categorizations (Stabilization, Strength, Power), and kinetic screening protocols are made strictly for educational, methodological compatibility, and scientific periodization reference under the <em>Nominative Fair Use Doctrine</em> (15 U.S.C. § 1125).
           </p>
         </div>
         <p style={{ fontSize: '0.92rem', color: '#94A3B8' }}>

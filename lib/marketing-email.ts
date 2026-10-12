@@ -577,8 +577,8 @@ export async function triggerLeadEmailAutomation(
     if (internalTo) {
       const subject =
         input.source === 'founding_cohort'
-          ? `[GAA] Founding Cohort Intake (#${reservationNum}): ${email}`
-          : `[GAA] New ${input.source === 'apply' ? 'application' : 'waitlist lead'}: ${email}`
+          ? `[Forge Athletic] Founding Cohort Intake (#${reservationNum}): ${email}`
+          : `[Forge Athletic] New ${input.source === 'apply' ? 'application' : 'waitlist lead'}: ${email}`
 
       await sendEmail({
         to: internalTo,

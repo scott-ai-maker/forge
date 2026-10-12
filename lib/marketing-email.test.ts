@@ -103,7 +103,7 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     const internalCall = sendMock.mock.calls[1][0]
     expect(internalCall.to).toBe('internal-alerts@gordonathleticadvisory.com')
     expect(internalCall.subject).toBe(
-      '[GAA] Founding Cohort Intake (#9): executive@acme.corp'
+      '[Forge Athletic] Founding Cohort Intake (#9): executive@acme.corp'
     )
     expect(internalCall.text).toContain('Reservation #: 9')
     expect(internalCall.text).toContain('Phone: +1 617 555 0199')
@@ -128,7 +128,7 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(applicantCall.text).toContain('RESERVATION #12 OF 20')
   })
 
-  it('sends application received confirmation for apply source with [GAA] notification', async () => {
+  it('sends application received confirmation for apply source with [Forge Athletic] notification', async () => {
     const supabase = createMockSupabase(false)
 
     await triggerLeadEmailAutomation(supabase, {
@@ -145,10 +145,10 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(applicantCall.text).toContain('Recommended starting point: Hybrid Concierge.')
 
     const internalCall = sendMock.mock.calls[1][0]
-    expect(internalCall.subject).toBe('[GAA] New application: athlete@olympic.org')
+    expect(internalCall.subject).toBe('[Forge Athletic] New application: athlete@olympic.org')
   })
 
-  it('sends waitlist confirmation for standard waitlist source with [GAA] notification', async () => {
+  it('sends waitlist confirmation for standard waitlist source with [Forge Athletic] notification', async () => {
     const supabase = createMockSupabase(false)
 
     await triggerLeadEmailAutomation(supabase, {
@@ -163,7 +163,7 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(applicantCall.subject).toBe('Forge Athletic Updates | You are on the list')
 
     const internalCall = sendMock.mock.calls[1][0]
-    expect(internalCall.subject).toBe('[GAA] New waitlist lead: waitlist_user@gmail.com')
+    expect(internalCall.subject).toBe('[Forge Athletic] New waitlist lead: waitlist_user@gmail.com')
   })
 
   it('skips email dispatch if recipient is suppressed', async () => {

@@ -47,14 +47,14 @@ const PILLARS: HubPillar[] = [
     ],
   },
   {
-    title: 'Prescriptions & Safety',
+    title: 'Protocols & Safety',
     icon: 'shield',
     image: '/images/pillar-safety-crest.jpg',
     color: '#34D399',
     tone: 'emerald',
     tabs: [
       { key: 'shield', label: 'Liability Shield & PAR-Q', icon: 'shield', tone: 'emerald', desc: 'Medical clearance & liability status', badge: 'Clinical' },
-      { key: 'prescriptions', label: 'Prescriptions & AI Cardio', icon: 'toolbox', tone: 'emerald', desc: 'AI Voice Cardio, specialized toolboxes & supplements', badge: 'Rx' },
+      { key: 'prescriptions', label: 'Toolkits, Cardio & Supplements', icon: 'toolbox', tone: 'emerald', desc: 'AI Voice Cardio, specialized toolboxes & supplement guides', badge: 'Protocols' },
     ],
   },
   {
