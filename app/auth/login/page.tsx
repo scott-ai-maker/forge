@@ -193,78 +193,80 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             backdropFilter: 'blur(2px)',
           }}
         >
-          {/* ── 1-Click Coach Fast Pass (Always available for Coach Scott Gordon) ── */}
-          <div className="sgf-auth-fast-pass" style={{ marginBottom: 20 }}>
-            <a
-              href="/api/auth/demo?role=coach"
-              style={{
-                width: '100%',
-                padding: '13px 16px',
-                background: 'linear-gradient(135deg, rgba(212,160,23,0.25) 0%, rgba(197,160,89,0.38) 100%)',
-                border: '1.5px solid var(--gold)',
-                borderRadius: 4,
-                color: 'var(--gold-lt)',
-                fontFamily: 'Raleway, sans-serif',
-                fontWeight: 700,
-                fontSize: 13.5,
-                letterSpacing: '0.04em',
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                boxSizing: 'border-box',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
-              }}
-            >
-              <span>⚡</span>
-              <span>1-Click Coach Fast Pass (Scott Gordon)</span>
-            </a>
+          {/* ── 1-Click Fast Pass (Available only when demo mode is enabled in dev/preview) ── */}
+          {isDemoEnabled && (
+            <div className="sgf-auth-fast-pass" style={{ marginBottom: 20 }}>
+              <a
+                href="/api/auth/demo?role=coach"
+                style={{
+                  width: '100%',
+                  padding: '13px 16px',
+                  background: 'linear-gradient(135deg, rgba(212,160,23,0.25) 0%, rgba(197,160,89,0.38) 100%)',
+                  border: '1.5px solid var(--gold)',
+                  borderRadius: 4,
+                  color: 'var(--gold-lt)',
+                  fontFamily: 'Raleway, sans-serif',
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  letterSpacing: '0.04em',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  boxSizing: 'border-box',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
+                }}
+              >
+                <span>⚡</span>
+                <span>1-Click Coach Fast Pass (Scott Gordon)</span>
+              </a>
 
-            {/* Athlete Demo Pass when demo mode is enabled */}
-            {isDemoEnabled && !isCoachSurface && (
-              <div style={{ marginTop: 10 }}>
-                <a
-                  href="/api/auth/demo"
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    background: 'rgba(13, 27, 42, 0.65)',
-                    border: '1px solid rgba(197, 160, 89, 0.4)',
-                    borderRadius: 4,
-                    color: 'var(--gray)',
-                    fontFamily: 'Raleway, sans-serif',
-                    fontWeight: 600,
-                    fontSize: 12,
-                    letterSpacing: '0.03em',
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <span>⚡ Athlete Demo Fast Pass (Alexander Vance)</span>
-                </a>
+              {/* Athlete Demo Pass when demo mode is enabled */}
+              {!isCoachSurface && (
+                <div style={{ marginTop: 10 }}>
+                  <a
+                    href="/api/auth/demo"
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'rgba(13, 27, 42, 0.65)',
+                      border: '1px solid rgba(197, 160, 89, 0.4)',
+                      borderRadius: 4,
+                      color: 'var(--gray)',
+                      fontFamily: 'Raleway, sans-serif',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      letterSpacing: '0.03em',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <span>⚡ Athlete Demo Fast Pass (Alexander Vance)</span>
+                  </a>
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  margin: '18px 0 6px',
+                }}
+              >
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+                <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  {isCoachSurface ? 'or sign in with coach credentials' : 'or enter credentials'}
+                </span>
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
               </div>
-            )}
-
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                margin: '18px 0 6px',
-              }}
-            >
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
-              <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                {isCoachSurface ? 'or sign in with coach credentials' : 'or enter credentials'}
-              </span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
             </div>
-          </div>
+          )}
           <AuthForm mode="login" redirectPath={nextPath} initialError={initialError} />
         </div>
         {isCompanionMode && (

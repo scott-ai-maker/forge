@@ -2,6 +2,17 @@
 
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.39.3] - 2026-10-11
+
+### Security
+- **Authentication & Demo Bypass Guard ([`app/api/auth/demo/route.ts`](file:///Users/scottgordon/Repos/forge/app/api/auth/demo/route.ts), [`app/api/auth/demo/route.test.ts`](file:///Users/scottgordon/Repos/forge/app/api/auth/demo/route.test.ts))**: Enforced strict production environment gating on demo auth endpoints so that unauthenticated administrative coach credentials cannot be created in production environments without explicit `ENABLE_DEMO_LOGIN=true`.
+- **Public Login Shielding ([`app/auth/login/page.tsx`](file:///Users/scottgordon/Repos/forge/app/auth/login/page.tsx))**: Dynamically hide 1-click Fast Pass and Demo Pass bypass buttons from public production visitors unless demo mode is explicitly enabled.
+- **Content Security Policy Headers ([`next.config.ts`](file:///Users/scottgordon/Repos/forge/next.config.ts))**: Injected comprehensive defense-in-depth CSP covering Next.js scripts, MediaPipe WASM (`'wasm-unsafe-eval'`), Stripe JS, and Supabase WebSockets.
+- **Android Network Security ([`android/app/src/main/res/xml/network_security_config.xml`](file:///Users/scottgordon/Repos/forge/android/app/src/main/res/xml/network_security_config.xml), [`android/app/src/main/AndroidManifest.xml`](file:///Users/scottgordon/Repos/forge/android/app/src/main/AndroidManifest.xml))**: Replaced permissive `android:usesCleartextTraffic="true"` with scoped network security configuration that restricts cleartext HTTP exclusively to local development emulators.
+
+### Changed
+- **E2E & Acceptance Testing ([`tests/ui/funnel.spec.ts`](file:///Users/scottgordon/Repos/forge/tests/ui/funnel.spec.ts), [`tests/ui/packages-and-marketing.spec.ts`](file:///Users/scottgordon/Repos/forge/tests/ui/packages-and-marketing.spec.ts))**: Synchronized Playwright test assertions with active membership tiers (*Core*, *Plus*, *Coach Support*) and onboarding questionnaire copy.
+- **Service Worker Cache**: Synchronized `public/sw.js` and iOS offline service worker cache keys to `gaa-v1.39.3`.
 
 ## [1.39.2] - 2026-10-11
 

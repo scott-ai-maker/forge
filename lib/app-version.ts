@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.2'
+export const APP_VERSION = '1.39.3'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Payment, Checkout & Enrollment Fulfillment Hardening'
+export const APP_RELEASE_CODENAME = 'Pre-Launch Hardening & Production Security Sign-Off'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,25 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.39.2',
+    version: '1.39.3',
     date: '2026-10-11',
     codename: APP_RELEASE_CODENAME,
+    category: 'security',
+    badge: 'Security Hardening · Auth Gating · CSP Headers · Android Security · E2E Verified',
+    title: 'Pre-Launch Hardening, Security Hardening & Production Sign-Off',
+    summary: 'Completed comprehensive pre-launch security and quality hardening across authentication, network security policies, Android native clearance, Content Security Policy directives, and full E2E test suites.',
+    highlights: [
+      'Authentication Demo Gating: Sealed /api/auth/demo in production to strictly forbid unauthenticated coach session generation, requiring explicit ENABLE_DEMO_LOGIN=true or local development.',
+      'Public Login Shielding: Dynamically hidden 1-click Coach Fast Pass and Athlete Demo Pass buttons from /auth/login for public production visitors.',
+      'Content Security Policy (CSP): Injected comprehensive security headers in next.config.ts supporting MediaPipe WASM (wasm-unsafe-eval), Stripe JS, and Supabase WebSockets.',
+      'Android Network Security Config: Scoped cleartext HTTP exclusively to local emulators in network_security_config.xml, enforcing HTTPS across all native mobile traffic.',
+      'Test Suite Alignment: Synchronized Playwright E2E suites for marketing packages and intake funnel with live membership pricing and question copy (1,598/1,598 unit tests passing).',
+    ],
+  },
+  {
+    version: '1.39.2',
+    date: '2026-10-11',
+    codename: 'Payment, Checkout & Enrollment Fulfillment Hardening',
     category: 'fix',
     badge: 'Payment Integrity · 3D Posture Audit · Corporate Checkout · Annual Entitlements',
     title: 'Payment, Checkout & Enrollment Funnel Audit & Fulfillment Hardening',

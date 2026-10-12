@@ -86,9 +86,23 @@ describe('GET /api/auth/demo', () => {
     vi.unstubAllEnvs()
   })
 
-  it('allows coach demo login when role=coach is requested even in production without ENABLE_DEMO_LOGIN', async () => {
+  it('blocks coach demo login in production when ENABLE_DEMO_LOGIN is not enabled', async () => {
     vi.stubEnv('NODE_ENV', 'production')
     delete process.env.ENABLE_DEMO_LOGIN
+
+    const req = new NextRequest('http://localhost:3000/api/auth/demo?role=coach')
+    const res = await GET(req)
+
+    expect(res.status).toBe(403)
+    const data = await res.json()
+    expect(data.error).toContain('disabled in this environment')
+
+    vi.unstubAllEnvs()
+  })
+
+  it('allows coach demo login when ENABLE_DEMO_LOGIN=true', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('ENABLE_DEMO_LOGIN', 'true')
 
     listUsersMock.mockResolvedValueOnce({
       data: { users: [{ id: 'coach-demo-1', email: 'scott.gordon72@outlook.com' }] },

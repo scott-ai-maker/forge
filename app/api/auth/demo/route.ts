@@ -190,9 +190,7 @@ export async function GET(request: NextRequest) {
   const isCoach = searchParams.get('role') === 'coach' || searchParams.get('as') === 'coach'
 
   const allowDemo = process.env.ENABLE_DEMO_LOGIN === 'true' || process.env.NODE_ENV === 'development'
-  // Master Coach Fast Pass is always authorized for Coach Scott Gordon across production and dev
-  const isAuthorized = isCoach || allowDemo
-  if (!isAuthorized) {
+  if (!allowDemo) {
     return NextResponse.json(
       { error: 'Demo authentication is disabled in this environment.' },
       { status: 403 }
