@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.4'
+export const APP_VERSION = '1.39.5'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'PWA, iOS & Apple Store Apps Placeholders & Interactive Companion Hub'
+export const APP_RELEASE_CODENAME = 'Hyperrealistic Mobile App Brand Visual System'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,28 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.39.4',
+    version: '1.39.5',
     date: '2026-10-11',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Mobile App Imagery · Official Brand Crest · Biometric Telemetry · Smartwatch Sync',
+    title: 'Hyperrealistic Mobile App Brand Visual System',
+    summary: 'Generated and deployed a commercial hyperrealistic visual asset for the Forge Athletic mobile app and smartwatch telemetry companion, aligning the visual showcase across the homepage, /apps landing, and social previews directly with our official brand anvil-flame crest and precision telemetry HUD.',
+    highlights: [
+      'Official Brand Crest Integration: Prominently renders the official Forge Athletic geometric anvil and kinetic "F" flame crest directly on the dark-mode mobile screen interface.',
+      'Synchronized Biometric Telemetry: Showcases high-contrast dark carbon HUD displaying 172 BPM, RPE 8.5, dynamic 1RM velocity curve, and active deadlift set logging matching in-app tracking engines.',
+      'Wearable & Smartwatch Sync: Features a rugged athletic smartwatch with synchronized amber heart rate display representing our Apple HealthKit and Android Health Connect telemetry pipeline.',
+      'Commercial Atmospheric Gym Setting: First-person athlete perspective with chalk-dusted hands, Olympic barbells, power racks, and ambient golden lighting in high-resolution 16:9 format (1376x768).',
+    ],
+    relatedLinks: [
+      { label: 'Mobile Apps Hub', href: '/apps' },
+      { label: 'Homepage Mobile Section', href: '/#mobile-apps' },
+    ],
+  },
+  {
+    version: '1.39.4',
+    date: '2026-10-11',
+    codename: 'PWA, iOS & Apple Store Apps Placeholders & Interactive Companion Hub',
     category: 'feature',
     badge: 'App Store Placeholders · Interactive PWA Hub · iOS TestFlight Beta · /apps Route',
     title: 'PWA, iOS & Apple Store Apps Placeholders & Interactive Companion Hub',

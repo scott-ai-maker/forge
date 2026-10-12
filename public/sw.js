@@ -14,7 +14,7 @@ if (
   })
 }
 
-const VERSION = 'gaa-v1.39.4'
+const VERSION = 'gaa-v1.39.5'
 const OFFLINE_URL = '/offline.html'
 
 const PRECACHE = [
