@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SiteFooter from '@/components/ui/SiteFooter'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
@@ -207,24 +208,51 @@ export default function AuditLandingPage() {
             </span>
           </div>
 
-          {/* 3D Biomechanical Mesh Visual */}
+          {/* Guided Movement Scan Phone Tripod Visual */}
           <div
             style={{
               maxWidth: 820,
               margin: '0 auto 36px',
-              borderRadius: 12,
+              borderRadius: 14,
               overflow: 'hidden',
               border: '1.5px solid rgba(212,160,23,0.4)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(212,160,23,0.15)',
+              boxShadow: '0 24px 70px rgba(0,0,0,0.85), 0 0 35px rgba(212,160,23,0.15)',
               background: '#04070D',
+              position: 'relative',
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/package-audit.jpg"
-              alt="Forge Athletic guided movement and posture check"
+            <Image
+              src="/images/movement-screening-tripod.jpg"
+              alt="Athlete performing guided overhead squat movement check in front of smartphone camera on tripod with alignment guidelines"
+              width={820}
+              height={615}
+              priority
+              sizes="(max-width: 820px) 100vw, 820px"
               style={{ width: '100%', height: 'auto', display: 'block' }}
             />
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: '14px 20px',
+                background: 'linear-gradient(180deg, rgba(8,14,20,0) 0%, rgba(8,14,20,0.92) 80%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <GaaIcon name="camera" size={15} tone="gold" />
+                <span>3-Minute Guided Phone Camera Scan · 33 Kinetic Checkpoints</span>
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--gold-lt)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
+                NASM Movement Science
+              </span>
+            </div>
           </div>
 
           {/* Primary Action Card */}
@@ -356,6 +384,70 @@ export default function AuditLandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Visual Showcase: Coach Review & Diagnostic Mesh */}
+          <div
+            style={{
+              marginTop: 40,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+              gap: 20,
+            }}
+          >
+            <div
+              style={{
+                borderRadius: 10,
+                overflow: 'hidden',
+                border: '1px solid rgba(212,160,23,0.3)',
+                background: '#04070D',
+              }}
+            >
+              <Image
+                src="/images/pillar-move-confidence.jpg"
+                alt="Coach Scott Gordon reviewing movement mechanics and joint alignment"
+                width={560}
+                height={420}
+                loading="lazy"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+              />
+              <div style={{ padding: '12px 16px', background: 'rgba(8,14,20,0.92)' }}>
+                <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 600 }}>
+                  Personalized Movement Coaching &amp; Form Analysis
+                </span>
+                <p style={{ fontSize: 12, color: 'var(--gray)', margin: '4px 0 0' }}>
+                  Identifies movement compensations to prevent injury and improve squat depth.
+                </p>
+              </div>
+            </div>
+
+            <div
+              style={{
+                borderRadius: 10,
+                overflow: 'hidden',
+                border: '1px solid rgba(212,160,23,0.3)',
+                background: '#04070D',
+              }}
+            >
+              <Image
+                src="/images/package-audit.jpg"
+                alt="Forge Athletic 3D movement assessment telemetry and joint angles"
+                width={560}
+                height={420}
+                loading="lazy"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+              />
+              <div style={{ padding: '12px 16px', background: 'rgba(8,14,20,0.92)' }}>
+                <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 600 }}>
+                  Comprehensive Biomechanical Report
+                </span>
+                <p style={{ fontSize: 12, color: 'var(--gray)', margin: '4px 0 0' }}>
+                  Joint angles, balance symmetry, and personalized corrective exercise routines.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

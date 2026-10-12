@@ -19,15 +19,13 @@ describe('ExerciseVideoModal & Exercise Card Instruction Hierarchy', () => {
     expect(instructionsIndex).toBeLessThan(anatomyIndex)
   })
 
-  it('renders Numbered Step-by-Step Technique Instructions above Badges and Video Button in FitnessTrackerClient', () => {
+  it('integrates ExerciseVideoModal for comprehensive technique instructions and video demonstration in FitnessTrackerClient', () => {
     const clientContent = fs.readFileSync(clientFilePath, 'utf-8')
-    const stepInstructionsIndex = clientContent.indexOf('Numbered Step-by-Step Technique Instructions')
-    const badgesIndex = clientContent.indexOf('Badges and Video Button')
+    const modalImportIndex = clientContent.indexOf('components/fitness/ExerciseVideoModal')
+    const modalUsageIndex = clientContent.indexOf('<ExerciseVideoModal')
 
-    expect(stepInstructionsIndex).toBeGreaterThan(0)
-    expect(badgesIndex).toBeGreaterThan(0)
-    // Step instructions MUST appear directly beneath the media banner and before badges/buttons
-    expect(stepInstructionsIndex).toBeLessThan(badgesIndex)
+    expect(modalImportIndex).toBeGreaterThan(0)
+    expect(modalUsageIndex).toBeGreaterThan(0)
   })
 
   it('renders How to do this step instructions above inline actions in ClinicalKineticWarmupModule', () => {

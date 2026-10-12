@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import ApplyQuiz from '@/components/marketing/ApplyQuiz'
 import SiteHeader from '@/components/ui/SiteHeader'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
@@ -62,19 +63,24 @@ export default function ApplyPage() {
             border: '1px solid rgba(197, 160, 89, 0.35)',
             boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
             position: 'relative',
-            maxHeight: 280,
+            maxHeight: 340,
+            background: '#080E14',
           }}
         >
-          <img
-            src="/images/apply-diagnostic-hero.jpg"
-            alt="A movement assessment to help understand how you move"
-            style={{ width: '100%', height: 280, objectFit: 'cover', display: 'block' }}
+          <Image
+            src="/images/pillar-plan-personalized.jpg"
+            alt="Coach Scott Gordon reviewing training goals and plan recommendations on a tablet with a client"
+            width={1200}
+            height={680}
+            priority
+            sizes="(max-width: 1200px) 100vw, 1200px"
+            style={{ width: '100%', height: 340, objectFit: 'cover', objectPosition: 'center 35%', display: 'block' }}
           />
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'linear-gradient(180deg, rgba(8,14,20,0.2) 0%, rgba(8,14,20,0.85) 100%)',
+              background: 'linear-gradient(180deg, rgba(8,14,20,0.15) 0%, rgba(8,14,20,0.88) 100%)',
               display: 'flex',
               alignItems: 'flex-end',
               padding: '16px 20px',
@@ -84,11 +90,11 @@ export default function ApplyPage() {
             }}
           >
             <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 600, letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <GaaIcon name="microscope" size={15} tone="gold" />
-              <span>Movement and fitness assessment</span>
+              <GaaIcon name="award" size={15} tone="gold" />
+              <span>Personalized Consultation &amp; Plan Matching</span>
             </span>
             <span style={{ fontSize: 11, color: 'var(--gold)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
-              Training plan recommendations
+              Tailored To Your Schedule &amp; Goals
             </span>
           </div>
         </div>

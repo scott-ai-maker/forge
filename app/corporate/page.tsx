@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SiteFooter from '@/components/ui/SiteFooter'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
@@ -191,24 +192,51 @@ export default function CorporateRetainersPage() {
             </a>
           </div>
 
-          {/* Corporate Leadership Team Hero Visual */}
+          {/* Corporate Team Active Workshop Hero Visual */}
           <div
             style={{
               maxWidth: 960,
               margin: '44px auto 0',
-              borderRadius: 12,
+              borderRadius: 14,
               overflow: 'hidden',
               border: '1.5px solid rgba(212,160,23,0.4)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(212,160,23,0.15)',
+              boxShadow: '0 24px 70px rgba(0,0,0,0.85), 0 0 40px rgba(212,160,23,0.15)',
               background: '#04070D',
+              position: 'relative',
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/package-corporate.jpg"
-              alt="Forge Athletic workplace wellness coaching"
+            <Image
+              src="/images/corporate-wellness-workshop.jpg"
+              alt="Coach Scott Gordon leading a corporate wellness and mobility workshop with resistance bands for a diverse team of professionals"
+              width={960}
+              height={540}
+              priority
+              sizes="(max-width: 960px) 100vw, 960px"
               style={{ width: '100%', height: 'auto', display: 'block' }}
             />
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: '16px 24px',
+                background: 'linear-gradient(180deg, rgba(8,14,20,0) 0%, rgba(8,14,20,0.92) 80%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <GaaIcon name="award" size={15} tone="gold" />
+                <span>Monthly live team sessions led by NASM Master Trainer Scott Gordon</span>
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--gold-lt)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
+                On-site or virtual
+              </span>
+            </div>
           </div>
         </div>
 
@@ -272,6 +300,47 @@ export default function CorporateRetainersPage() {
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Executive Overview Visual */}
+          <div
+            style={{
+              marginTop: 40,
+              borderRadius: 10,
+              overflow: 'hidden',
+              border: '1px solid rgba(212,160,23,0.3)',
+              boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
+              position: 'relative',
+            }}
+          >
+            <Image
+              src="/images/package-corporate.jpg"
+              alt="Forge Athletic executive team vitality and progress review"
+              width={960}
+              height={540}
+              loading="lazy"
+              sizes="(max-width: 960px) 100vw, 960px"
+              style={{ width: '100%', height: 'auto', display: 'block' }}
+            />
+            <div
+              style={{
+                padding: '12px 18px',
+                background: 'rgba(8,14,20,0.92)',
+                borderTop: '1px solid rgba(212,160,23,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 13, color: '#CBD5E1', fontWeight: 500 }}>
+                Quarterly executive progress reviews and team engagement reporting.
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Quantified Team Vitality
+              </span>
+            </div>
           </div>
         </div>
 

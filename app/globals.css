@@ -2622,7 +2622,100 @@ a:focus-visible {
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42), 0 0 55px rgba(56, 189, 248, 0.08);
 }
 
+.forge-hero-showcase {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.forge-hero-image-wrapper {
+  position: relative;
+  width: min(100%, 580px);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.65), 0 0 45px rgba(245, 158, 11, 0.12);
+  background: #080E14;
+}
+
+.forge-hero-main-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.forge-hero-image-wrapper:hover .forge-hero-main-img {
+  transform: scale(1.02);
+}
+
+.forge-hero-badge-overlay {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(8, 14, 20, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.forge-hero-badge-coach {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.forge-hero-badge-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.forge-hero-badge-coach strong {
+  display: block;
+  color: #FFFFFF;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.forge-hero-badge-coach span {
+  display: block;
+  color: var(--gold-lt);
+  font-size: 0.72rem;
+  font-family: var(--font-telemetry);
+  letter-spacing: 0.04em;
+}
+
+.forge-hero-badge-tag {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: #34D399;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .forge-feature-section,
+.forge-personas-section,
 .forge-pricing-section,
 .forge-founder-section {
   max-width: 1280px;
@@ -2656,26 +2749,178 @@ a:focus-visible {
 .forge-feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
   margin-top: 2.25rem;
 }
 
 .forge-feature-card,
 .forge-plan-card {
   border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 8px;
+  border-radius: 12px;
   background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(8, 14, 20, 0.95));
 }
 
 .forge-feature-card {
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.forge-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45), 0 0 25px rgba(245, 158, 11, 0.08);
+}
+
+.forge-feature-image-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #04070D;
+}
+
+.forge-feature-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.forge-feature-card:hover .forge-feature-img {
+  transform: scale(1.04);
 }
 
 .forge-feature-number {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(8, 14, 20, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 3px 8px;
+  border-radius: 4px;
   color: var(--cyan);
   font-family: var(--font-telemetry);
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.forge-feature-body {
+  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.forge-feature-body h3 {
+  margin: 0 0 0.5rem;
+  color: var(--white);
+  font-size: 1.5rem;
+}
+
+.forge-feature-body p {
+  margin: 0;
+  color: #94A3B8;
+  line-height: 1.65;
+  font-size: 0.95rem;
+}
+
+/* Personas / Who We Train Showcase */
+.forge-personas-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 2.25rem;
+}
+
+@media (max-width: 1080px) {
+  .forge-personas-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .forge-personas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.forge-persona-card {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(8, 14, 20, 0.95));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.forge-persona-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(245, 158, 11, 0.1);
+}
+
+.forge-persona-img-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #04070D;
+}
+
+.forge-persona-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.forge-persona-card:hover .forge-persona-img {
+  transform: scale(1.05);
+}
+
+.forge-persona-tag {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(8, 14, 20, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: var(--gold-lt);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.forge-persona-body {
+  padding: 1.25rem 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.forge-persona-body h3 {
+  margin: 0 0 0.5rem;
+  color: var(--white);
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+
+.forge-persona-body p {
+  margin: 0;
+  color: #94A3B8;
+  font-size: 0.88rem;
+  line-height: 1.6;
 }
 
 .forge-feature-card h3 {
@@ -2862,10 +3107,56 @@ a:focus-visible {
 
 .forge-founder-section {
   display: grid;
-  grid-template-columns: 150px minmax(0, 720px);
+  grid-template-columns: 220px minmax(0, 720px);
   align-items: start;
   justify-content: center;
   gap: clamp(1.5rem, 5vw, 4rem);
+}
+
+.forge-founder-photo-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(245, 158, 11, 0.12);
+  background: #080E14;
+}
+
+.forge-founder-photo {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.forge-founder-experience-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 10px;
+  background: linear-gradient(180deg, rgba(8, 14, 20, 0) 0%, rgba(8, 14, 20, 0.95) 80%);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+
+.forge-founder-badge-num {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--gold-lt);
+  font-family: var(--font-telemetry);
+}
+
+.forge-founder-badge-lbl {
+  font-size: 0.72rem;
+  color: #E2E8F0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
 }
 
 .forge-founder-mark {

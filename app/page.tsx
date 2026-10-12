@@ -7,16 +7,53 @@ const FEATURE_PILLARS = [
     number: '01',
     title: 'A plan built around you',
     description: 'Personalized NASM OPT™ training that adapts to your goals and builds strength over time.',
+    image: '/images/pillar-plan-personalized.jpg',
+    imageAlt: 'Coach Scott Gordon reviewing an individualized training plan on a tablet with an everyday client',
   },
   {
     number: '02',
     title: 'Move with confidence',
     description: 'Practical movement screening and coaching help you understand how to train well.',
+    image: '/images/pillar-move-confidence.jpg',
+    imageAlt: 'Coach Scott Gordon observing squat depth and knee alignment in a private studio',
   },
   {
     number: '03',
     title: 'See progress that matters',
     description: 'Bring workouts, strength trends, and available recovery signals together in one clear view.',
+    image: '/images/pillar-progress-telemetry.jpg',
+    imageAlt: 'Active client smiling and checking workout progress telemetry on her smartwatch',
+  },
+]
+
+const AUDIENCE_PERSONAS = [
+  {
+    tag: 'Posture & Energy',
+    title: 'Busy Professionals & Desk Workers',
+    description: 'Reverse the stiffness of long desk hours. Build core stability, open tight hips, and gain steady physical stamina that powers your workday.',
+    image: '/images/personas/executive-strength.jpg',
+    imageAlt: 'Professional woman performing controlled dumbbell Romanian deadlift with focused alignment',
+  },
+  {
+    tag: 'Joint Health & Vitality',
+    title: 'Longevity & Master Lifters (40s–60s+)',
+    description: 'Protect knees, shoulders, and spine while preserving bone density. Progressive, safe strength training designed to keep you moving pain-free for decades.',
+    image: '/images/personas/longevity-vitality-male.jpg',
+    imageAlt: 'Active mature 58-year-old man performing controlled kettlebell deadlift with excellent posture',
+  },
+  {
+    tag: 'Power & Stamina',
+    title: 'Athletic Conditioning & Hybrid Strength',
+    description: 'Train with collegiate-grade periodization across NASM’s 5 phases—building rotational power, speed, work capacity, and resilient athletic conditioning.',
+    image: '/images/personas/athletic-conditioning.jpg',
+    imageAlt: 'Athletic trainee holding front-rack kettlebell in a high-performance gym facility',
+  },
+  {
+    tag: 'Train Anywhere',
+    title: 'Hybrid & Remote Video Coaching',
+    description: 'Train at home, apartment gyms, or on the road with clear video guidance, asynchronous form reviews, and direct coaching access whenever you need it.',
+    image: '/images/remote-virtual-coaching.jpg',
+    imageAlt: 'Client training in a home gym guided by Coach Scott Gordon on a live tablet video consultation',
   },
 ]
 
@@ -56,15 +93,36 @@ export default function Home() {
           </div>
           <p className="forge-hero-proof">Personal trainer since 2008 <span>·</span> NASM Master Trainer <span>·</span> No one-size-fits-all plans</p>
         </div>
-        <div className="forge-hero-mark">
-          <Image
-            src="/images/brand/logo-concept-1-kinetic-f.jpg"
-            alt="Forge Athletic kinetic F, grounded anvil, and upward flame-shard logo"
-            width={560}
-            height={560}
-            priority
-            sizes="(max-width: 760px) 78vw, 42vw"
-          />
+        <div className="forge-hero-showcase">
+          <div className="forge-hero-image-wrapper">
+            <Image
+              src="/images/hero-personal-coaching.jpg"
+              alt="Coach Scott Gordon coaching an everyday client through dumbbell goblet squat form in a boutique personal training studio"
+              width={680}
+              height={510}
+              priority
+              sizes="(max-width: 760px) 92vw, 45vw"
+              className="forge-hero-main-img"
+            />
+            <div className="forge-hero-badge-overlay">
+              <div className="forge-hero-badge-coach">
+                <Image
+                  src="/images/coach-scott-gordon.jpg"
+                  alt="Coach Scott Gordon"
+                  width={40}
+                  height={40}
+                  className="forge-hero-badge-avatar"
+                />
+                <div>
+                  <strong>Coach Scott Gordon</strong>
+                  <span>NASM Master Trainer · Since 2008</span>
+                </div>
+              </div>
+              <div className="forge-hero-badge-tag">
+                <span>✓ Form Checked</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -77,9 +135,53 @@ export default function Home() {
         <div className="forge-feature-grid">
           {FEATURE_PILLARS.map(feature => (
             <article className="forge-feature-card" key={feature.number}>
-              <span className="forge-feature-number">{feature.number}</span>
-              <h3>{feature.title}</h3>
-              <p>{feature.description}</p>
+              <div className="forge-feature-image-box">
+                <Image
+                  src={feature.image}
+                  alt={feature.imageAlt}
+                  width={640}
+                  height={420}
+                  loading="lazy"
+                  sizes="(max-width: 768px) 94vw, 32vw"
+                  className="forge-feature-img"
+                />
+                <span className="forge-feature-number">{feature.number}</span>
+              </div>
+              <div className="forge-feature-body">
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Audience Showcase: Who We Train */}
+      <section className="forge-personas-section" aria-labelledby="forge-personas-title">
+        <div className="forge-section-intro">
+          <p className="forge-eyebrow">Who We Train</p>
+          <h2 id="forge-personas-title">Built for your starting point, age, and ambition.</h2>
+          <p>Whether you are reversing desk strain, building long-term joint resilience, or elevating athletic performance, your training is calibrated specifically for you.</p>
+        </div>
+        <div className="forge-personas-grid">
+          {AUDIENCE_PERSONAS.map((persona, index) => (
+            <article className="forge-persona-card" key={index}>
+              <div className="forge-persona-img-box">
+                <Image
+                  src={persona.image}
+                  alt={persona.imageAlt}
+                  width={600}
+                  height={450}
+                  loading="lazy"
+                  sizes="(max-width: 640px) 94vw, (max-width: 1080px) 46vw, 23vw"
+                  className="forge-persona-img"
+                />
+                <span className="forge-persona-tag">{persona.tag}</span>
+              </div>
+              <div className="forge-persona-body">
+                <h3>{persona.title}</h3>
+                <p>{persona.description}</p>
+              </div>
             </article>
           ))}
         </div>
@@ -96,7 +198,21 @@ export default function Home() {
       </section>
 
       <section className="forge-founder-section" aria-labelledby="forge-founder-title">
-        <div className="forge-founder-mark" aria-hidden="true">SG</div>
+        <div className="forge-founder-photo-wrap">
+          <Image
+            src="/images/coach-scott-gordon.jpg"
+            alt="Coach Scott Gordon, NASM Master Trainer and Founder of Forge Athletic"
+            width={440}
+            height={550}
+            loading="lazy"
+            sizes="(max-width: 760px) 200px, 220px"
+            className="forge-founder-photo"
+          />
+          <div className="forge-founder-experience-badge">
+            <span className="forge-founder-badge-num">18+</span>
+            <span className="forge-founder-badge-lbl">Years Coaching</span>
+          </div>
+        </div>
         <div>
           <p className="forge-eyebrow">A coach who gets the climb</p>
           <h2 id="forge-founder-title">Built from lived experience.</h2>

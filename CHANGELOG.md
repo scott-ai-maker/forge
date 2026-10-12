@@ -3,6 +3,23 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.39.0] - 2026-10-11
+
+### Added
+- **Hyper-Realistic Visual Brand System**: High-fidelity photographic imagery deployed across the marketing website and client portal, showcasing real-world boutique personal training, movement screening, and telemetry.
+- **Coach Scott Gordon 45-Week Goal Physique Imagery**: Reimagined coach portraits and hero action visuals reflecting Coach Gordon's 45-week recomposition milestone (240 lbs, ~12% body fat, chiseled athletic build, built upon a 225 lb lean mass foundation).
+- **Interactive Homepage Hero Personal Coaching Showcase**: High-impact training showcase of Coach Gordon actively coaching a goblet squat with live form-check telemetry badge.
+- **Three Forge System Pillars Visuals**: Photorealistic cards for Plan Design (in-person tablet review), Movement Screening (biomechanical squat analysis), and Progress Telemetry (smartwatch metrics & lift analytics).
+- **"Who We Train" Client Archetype Grid**: Dedicated 4-card demographic showcase targeting Busy Executives & Professionals, Longevity & Master Lifters (40s–60s+), Athletic Conditioning athletes, and Hybrid Remote clients.
+- **Corporate Retainers Visual Showcase**: Added corporate wellness & band mobility workshop imagery on `/corporate`.
+- **3D Movement Assessment Real-World Visuals**: Added smartphone tripod screening and dual analytical report showcase on `/audit`.
+- **Coach Credentials Spotlight**: Added verified coach portrait spotlight card on `/credentials`.
+- **Visual Membership Tier Headers**: Visual category headers for Core, Plus, and Coach Support tiers on `/packages`.
+
+### Changed
+- Replaced abstract and placeholder graphics with responsive, optimized images with high-priority LCP loading and explicit aspect ratios.
+- Synchronized `public/sw.js` and iOS offline service worker cache keys to `gaa-v1.39.0`.
+
 ## [1.38.0] - 2026-10-11
 
 ### Added

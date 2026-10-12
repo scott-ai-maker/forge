@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.38.0'
+export const APP_VERSION = '1.39.0'
 export const APP_RELEASE_DATE = '2026-10-11'
-export const APP_RELEASE_CODENAME = 'Personal Program Builder'
+export const APP_RELEASE_CODENAME = 'Hyper-Realistic Brand Imagery & Recomposition Visual System'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,28 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.38.0',
+    version: '1.39.0',
     date: '2026-10-11',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Hyper-Realistic Imagery · Reimagined Coach Physique · Audience Personas',
+    title: 'Visual Brand Excellence & Reimagined Coach Transformation',
+    summary: 'Integrated high-fidelity photographic imagery across the entire app and website, featuring Coach Scott Gordon’s reimagined 45-week goal physique (240 lbs, 12% body fat), responsive picture standards, and inclusive audience personas.',
+    highlights: [
+      'Reimagined Coach Scott Gordon personal and coaching imagery reflecting his 45-week body recomposition goal (240 lbs, 12% body fat, 225 lbs lean mass foundation).',
+      'Hero personal coaching showcase on the homepage featuring Coach Gordon actively guiding a client through goblet squat form with live form-check badge.',
+      'Photorealistic illustrations for all 3 Forge System Pillars: Plan Design, Movement Screening, and Telemetry/Progress Tracking.',
+      'New "Who We Train" showcase featuring 4 diverse client archetypes: Busy Professionals, Longevity & Master Lifters (40s-60s+), Athletic Conditioning, and Hybrid Remote Coaching.',
+      'Corporate Retainers page enhanced with active workplace wellness & band mobility workshop imagery.',
+      '3D Movement Assessment page updated with real-life smartphone tripod screening and dual analytical report showcase.',
+      'Credentials page hero updated with Coach Scott Gordon verified portrait spotlight card.',
+      'Membership tier cards on /packages enhanced with visual category headers.',
+    ],
+  },
+  {
+    version: '1.38.0',
+    date: '2026-10-11',
+    codename: 'Personal Program Builder',
     category: 'feature',
     badge: 'Coach-Led Builder · Personal Note · Why-This-Exercise · Athlete Profile',
     title: 'Putting the "Personal" Back in Personal Training',

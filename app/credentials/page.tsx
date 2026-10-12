@@ -192,11 +192,76 @@ export default function CredentialsPage() {
             fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
             lineHeight: 1.7,
             maxWidth: 780,
-            margin: '0 auto 32px',
+            margin: '0 auto 28px',
           }}
         >
           Every training microcycle, dynamic movement screen, and corrective protocol prescribed at Forge Athletic is guided by official, verified certifications from the National Academy of Sports Medicine (NASM) and emergency medical standards.
         </p>
+
+        {/* Coach Gordon Verified Bio Spotlight Card */}
+        <div
+          style={{
+            maxWidth: 780,
+            margin: '0 auto 32px',
+            padding: '1.25rem 1.5rem',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, rgba(20, 30, 48, 0.75) 0%, rgba(10, 18, 30, 0.9) 100%)',
+            border: '1px solid rgba(197, 160, 89, 0.35)',
+            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.5rem',
+            flexWrap: 'wrap',
+            textAlign: 'left',
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              width: 88,
+              height: 110,
+              borderRadius: 10,
+              overflow: 'hidden',
+              flexShrink: 0,
+              border: '1.5px solid var(--gold)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              background: '#04070D',
+            }}
+          >
+            <Image
+              src="/images/coach-scott-gordon.jpg"
+              alt="Coach Scott Gordon, B.S., NASM-CPT"
+              width={180}
+              height={220}
+              priority
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+              <span style={{ fontSize: '1.2rem', color: '#FFFFFF', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+                Scott Gordon, B.S., NASM-CPT®
+              </span>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  color: '#34D399',
+                  background: 'rgba(52, 211, 153, 0.15)',
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  border: '1px solid rgba(52, 211, 153, 0.35)',
+                }}
+              >
+                Verified Active
+              </span>
+            </div>
+            <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              Head Coach &amp; Performance Director. 18+ years of practical coaching experience, former Bally Total Fitness Director, BSIT graduate (3.72 GPA), and holder of 34 verified technical &amp; sports science credentials.
+            </p>
+          </div>
+        </div>
 
         {/* Quick summary stats pills */}
         <div
