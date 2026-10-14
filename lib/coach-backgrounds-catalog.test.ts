@@ -2,8 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { COACH_BACKGROUND_PRESETS } from './coach-backgrounds-catalog'
 
 describe('Coach Virtual Background Catalog', () => {
-  it('contains all 5 package-appropriate backgrounds and DSLR Portrait Bokeh Blur', () => {
-    expect(COACH_BACKGROUND_PRESETS.length).toBe(6)
+  it('contains all 6 package-appropriate backgrounds and DSLR Portrait Bokeh Blur', () => {
+    expect(COACH_BACKGROUND_PRESETS.length).toBe(7)
+
+    // 0. Forge Athletic Sanctuary (Flagship Brand Native)
+    const sanctuary = COACH_BACKGROUND_PRESETS.find(p => p.id === 'forge-athletic-sanctuary')
+    expect(sanctuary).toBeDefined()
+    expect(sanctuary?.imageUrl).toContain('/images/backgrounds/coach-forge-athletic-sanctuary.jpg')
+    expect(sanctuary?.category).toBe('Facility')
+    expect(sanctuary?.badge).toContain('Brand Native')
 
     // 1. Olympic Performance Facility (Autonomous / Performance Protocol)
     const olympic = COACH_BACKGROUND_PRESETS.find(p => p.id === 'olympic-facility')
@@ -44,7 +51,7 @@ describe('Coach Virtual Background Catalog', () => {
 
   it('embeds the official Forge Athletic logo mark across all package presets', () => {
     const presetsWithImages = COACH_BACKGROUND_PRESETS.filter(p => !p.isBlur)
-    expect(presetsWithImages.length).toBe(5)
+    expect(presetsWithImages.length).toBe(6)
 
     for (const preset of presetsWithImages) {
       const thumbStyleStr = JSON.stringify(preset.thumbnailStyle)

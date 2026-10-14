@@ -324,6 +324,31 @@ export async function POST(req: NextRequest) {
             })
           }
         }
+
+        // Dispatch internal notification to coach about new purchase
+        const internalNotify = process.env.MARKETING_INTERNAL_NOTIFY_EMAIL
+        if (internalNotify) {
+          try {
+            const { sendTransactionalEmail } = await import('@/lib/marketing-email')
+            const itemLabel = packageName || 'Membership / Add-on'
+            const totalAmount = session.amount_total ? `$${(session.amount_total / 100).toFixed(2)}` : 'N/A'
+            await sendTransactionalEmail({
+              to: internalNotify,
+              subject: `[Forge Athletic] New Purchase: ${itemLabel} (${totalAmount})`,
+              html: `<p><strong>A new purchase was completed on Forge Athletic!</strong></p>
+<ul>
+  <li><strong>Item:</strong> ${itemLabel}</li>
+  <li><strong>Customer Email:</strong> ${checkoutEmail ?? 'N/A'}</li>
+  <li><strong>Client ID:</strong> ${clientId}</li>
+  <li><strong>Amount:</strong> ${totalAmount}</li>
+  <li><strong>Payment Mode:</strong> ${session.mode}</li>
+</ul>`,
+              text: `A new purchase was completed on Forge Athletic!\n\nItem: ${itemLabel}\nCustomer Email: ${checkoutEmail ?? 'N/A'}\nClient ID: ${clientId}\nAmount: ${totalAmount}\nPayment Mode: ${session.mode}`,
+            })
+          } catch (err) {
+            console.warn('[stripe:webhook] Failed to dispatch internal purchase alert:', err)
+          }
+        }
       }
     }
 

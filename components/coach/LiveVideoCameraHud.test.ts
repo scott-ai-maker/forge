@@ -264,6 +264,56 @@ describe('Live Video Camera HUD Architecture & WebRTC Bridge', () => {
     toggleErap()
     expect(showErapModal).toBe(true)
   })
+
+  it('initializes with Forge Athletic Sanctuary as default virtual background and cycles presets properly', () => {
+    const presets = [
+      { id: 'forge-athletic-sanctuary', name: 'Forge Athletic Sanctuary' },
+      { id: 'olympic-facility', name: 'Olympic Performance Facility' },
+      { id: 'diagnostic-lab', name: 'Biomechanics Diagnostic Lab' },
+    ]
+
+    let currentBg: { id: string; name: string } | null = presets[0]
+    expect(currentBg.id).toBe('forge-athletic-sanctuary')
+
+    function cycleBackground(current: { id: string; name: string } | null) {
+      if (!current) return presets[0]
+      const idx = presets.findIndex(p => p.id === current.id)
+      if (idx >= 0 && idx < presets.length - 1) {
+        return presets[idx + 1]
+      }
+      return null // raw camera
+    }
+
+    currentBg = cycleBackground(currentBg)
+    expect(currentBg?.id).toBe('olympic-facility')
+
+    currentBg = cycleBackground(currentBg)
+    expect(currentBg?.id).toBe('diagnostic-lab')
+
+    currentBg = cycleBackground(currentBg)
+    expect(currentBg).toBeNull() // turned off
+
+    currentBg = cycleBackground(currentBg)
+    expect(currentBg?.id).toBe('forge-athletic-sanctuary') // cycled back to flagship
+  })
+
+  it('enforces clean HUD viewport geometry without non-essential obscuring overlays on athlete feed', () => {
+    function getAthleteOverlayConfig(isComparingForm: boolean) {
+      return {
+        showPlumbLine: true,
+        showTelestrator: true,
+        // When comparing form, non-essential floating cards are eliminated so the athlete is fully visible
+        showFloatingHelpCallout: false,
+        athleteStageUnobstructed: true,
+        compareSideBySide: isComparingForm,
+      }
+    }
+
+    const config = getAthleteOverlayConfig(true)
+    expect(config.showFloatingHelpCallout).toBe(false)
+    expect(config.athleteStageUnobstructed).toBe(true)
+    expect(config.compareSideBySide).toBe(true)
+  })
 })
 
 

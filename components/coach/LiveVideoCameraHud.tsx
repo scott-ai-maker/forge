@@ -7,6 +7,8 @@ import LiveSlowMoReplayModal from './LiveSlowMoReplayModal'
 import { createClient } from '@/lib/supabase-browser'
 import { WebRtcPeerBridge, type LobbyParticipant } from '@/lib/webrtc-peer-bridge'
 import LiveRemoteVideoFeed from './LiveRemoteVideoFeed'
+import LiveVirtualBackgroundStage from './LiveVirtualBackgroundStage'
+import { COACH_BACKGROUND_PRESETS, type CoachBackgroundPreset } from '@/lib/coach-backgrounds-catalog'
 import LiveStillCameraGuidanceModal from './LiveStillCameraGuidanceModal'
 import LiveErapSafetyModal from './LiveErapSafetyModal'
 import {
@@ -173,6 +175,26 @@ export default function LiveVideoCameraHud({
       setHudToast(curr => (curr?.message === message ? null : curr))
     }, 3500)
   }, [])
+
+  const [selectedBackground, setSelectedBackground] = useState<CoachBackgroundPreset | null>(COACH_BACKGROUND_PRESETS[0])
+
+  const handleCycleBackground = useCallback(() => {
+    setSelectedBackground((prev) => {
+      if (!prev) {
+        const next = COACH_BACKGROUND_PRESETS[0]
+        showHudToast(`Virtual BG: ${next.name}`, 'gold')
+        return next
+      }
+      const currIdx = COACH_BACKGROUND_PRESETS.findIndex((p) => p.id === prev.id)
+      if (currIdx >= 0 && currIdx < COACH_BACKGROUND_PRESETS.length - 1) {
+        const next = COACH_BACKGROUND_PRESETS[currIdx + 1]
+        showHudToast(`Virtual BG: ${next.name}`, 'gold')
+        return next
+      }
+      showHudToast('Virtual BG: Off (Raw Camera)', 'info')
+      return null
+    })
+  }, [showHudToast])
 
   // ── Still Camera & Auto-Zoom Guidance State ──
   const [showStillCameraModal, setShowStillCameraModal] = useState(false)
@@ -753,9 +775,11 @@ export default function LiveVideoCameraHud({
               width: 26,
               height: 26,
               borderRadius: 5,
-              backgroundImage: "url('/images/gaa-brand-crest.jpg')",
-              backgroundSize: 'cover',
+              backgroundImage: "url('/images/brand/forge-crest-mark.png')",
+              backgroundSize: 'contain',
               backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              backgroundColor: '#060A14',
               border: '1px solid var(--gold)',
               boxShadow: '0 0 8px rgba(197,160,89,0.4)',
               flexShrink: 0,
@@ -1208,24 +1232,34 @@ export default function LiveVideoCameraHud({
               {isCoach ? (
                 /* When Coach is viewing HUD, coach's self-view is local webcam */
                 isCameraActive ? (
-                  <video
-                    ref={el => {
-                      localVideoRef.current = el
-                      if (el && mediaStream && el.srcObject !== mediaStream) {
-                        el.srcObject = mediaStream
-                        el.play().catch(() => {})
-                      }
-                    }}
-                    autoPlay
-                    playsInline
-                    muted
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
-                    }}
-                  />
+                  selectedBackground ? (
+                    <LiveVirtualBackgroundStage
+                      stream={mediaStream}
+                      isActive={isCameraActive}
+                      isMirrored={facingMode === 'user'}
+                      selectedBackground={selectedBackground}
+                      coachName={coachName}
+                    />
+                  ) : (
+                    <video
+                      ref={el => {
+                        localVideoRef.current = el
+                        if (el && mediaStream && el.srcObject !== mediaStream) {
+                          el.srcObject = mediaStream
+                          el.play().catch(() => {})
+                        }
+                      }}
+                      autoPlay
+                      playsInline
+                      muted
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+                      }}
+                    />
+                  )
                 ) : (
                   <div style={{ textAlign: 'center', padding: 12, color: 'var(--gray)', fontSize: 11 }}>Camera Off</div>
                 )
@@ -1728,24 +1762,34 @@ export default function LiveVideoCameraHud({
           >
             {isCoach ? (
               isCameraActive ? (
-                <video
-                  ref={el => {
-                    localVideoRef.current = el
-                    if (el && mediaStream && el.srcObject !== mediaStream) {
-                      el.srcObject = mediaStream
-                      el.play().catch(() => {})
-                    }
-                  }}
-                  autoPlay
-                  playsInline
-                  muted
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
-                  }}
-                />
+                selectedBackground ? (
+                  <LiveVirtualBackgroundStage
+                    stream={mediaStream}
+                    isActive={isCameraActive}
+                    isMirrored={facingMode === 'user'}
+                    selectedBackground={selectedBackground}
+                    coachName={coachName}
+                  />
+                ) : (
+                  <video
+                    ref={el => {
+                      localVideoRef.current = el
+                      if (el && mediaStream && el.srcObject !== mediaStream) {
+                        el.srcObject = mediaStream
+                        el.play().catch(() => {})
+                      }
+                    }}
+                    autoPlay
+                    playsInline
+                    muted
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+                    }}
+                  />
+                )
               ) : (
                 <div style={{ textAlign: 'center', padding: 20 }}>Camera Off</div>
               )
@@ -2622,6 +2666,31 @@ export default function LiveVideoCameraHud({
             border: '1px solid rgba(255,255,255,0.06)',
           }}
         >
+          {/* Virtual Background Preset Cycler */}
+          <button
+            type="button"
+            onClick={handleCycleBackground}
+            data-testid="virtual-background-btn"
+            title={selectedBackground ? `Active: ${selectedBackground.name} (Click to cycle)` : 'Virtual Background: Off'}
+            style={{
+              padding: '6px 12px',
+              background: selectedBackground ? 'rgba(212,160,23,0.22)' : 'rgba(255,255,255,0.08)',
+              border: `1px solid ${selectedBackground ? 'var(--gold)' : 'rgba(255,255,255,0.15)'}`,
+              color: selectedBackground ? 'var(--gold-lt)' : '#FFFFFF',
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <GaaIcon name="camera" size={13} tone={selectedBackground ? 'gold' : 'inherit'} />
+            <span>{selectedBackground ? selectedBackground.name.replace('Forge Athletic ', '') : 'Virtual BG: OFF'}</span>
+          </button>
+
           {/* Telestrator Pen Button */}
           <button
             type="button"

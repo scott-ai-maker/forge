@@ -15,6 +15,27 @@ const BRAND_LOGO = '/images/gaa-brand-crest.jpg'
 
 export const COACH_BACKGROUND_PRESETS: CoachBackgroundPreset[] = [
   {
+    id: 'forge-athletic-sanctuary',
+    name: 'Forge Athletic Sanctuary',
+    tagline: 'Acoustic walnut slats, calibrated gold plates, power cage & illuminated Forge Athletic crest',
+    category: 'Facility',
+    imageUrl: '/images/backgrounds/coach-forge-athletic-sanctuary.jpg',
+    badge: 'Flagship · Brand Native',
+    logoPosition: 'center-plaque',
+    thumbnailStyle: {
+      backgroundImage: `url('${BRAND_LOGO}'), url(/images/backgrounds/coach-forge-athletic-sanctuary.jpg)`,
+      backgroundSize: '42px 42px, cover',
+      backgroundRepeat: 'no-repeat, no-repeat',
+      backgroundPosition: 'center 38%, center',
+    },
+    backgroundStyle: {
+      backgroundImage: `url(/images/backgrounds/coach-forge-athletic-sanctuary.jpg)`,
+      backgroundSize: 'cover',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center, center',
+    },
+  },
+  {
     id: 'olympic-facility',
     name: 'Olympic Performance Facility',
     tagline: 'Calibrated gold plates, custom power racks & Forge Athletic wall crest',

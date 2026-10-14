@@ -64,6 +64,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please provide a valid corporate email address.' }, { status: 400 })
     }
 
+    // Dispatch internal notification to coach for corporate inquiry
+    const internalNotify = process.env.MARKETING_INTERNAL_NOTIFY_EMAIL
+    if (internalNotify) {
+      try {
+        const { sendTransactionalEmail } = await import('@/lib/marketing-email')
+        await sendTransactionalEmail({
+          to: internalNotify,
+          subject: `[Forge Athletic] Corporate Inquiry: ${payload.companyName?.trim()}`,
+          html: `<h3>New Corporate Wellness Inquiry</h3>
+<ul>
+  <li><strong>Company:</strong> ${payload.companyName?.trim()}</li>
+  <li><strong>Contact Name:</strong> ${payload.contactName?.trim()}</li>
+  <li><strong>Contact Email:</strong> ${email}</li>
+  <li><strong>Team Size:</strong> ${payload.teamSize?.trim() || 'Up to 10 executives'}</li>
+  <li><strong>Goals:</strong> ${payload.customGoals?.trim() || 'General executive performance'}</li>
+  <li><strong>Timeline:</strong> ${payload.budgetTimeline?.trim() || 'N/A'}</li>
+</ul>`,
+          text: `New Corporate Wellness Inquiry\n\nCompany: ${payload.companyName?.trim()}\nContact: ${payload.contactName?.trim()}\nEmail: ${email}\nTeam Size: ${payload.teamSize?.trim() || 'Up to 10 executives'}\nGoals: ${payload.customGoals?.trim() || 'General executive performance'}\nTimeline: ${payload.budgetTimeline?.trim() || 'N/A'}`,
+        })
+      } catch (mailErr) {
+        console.warn('Corporate inquiry email dispatch failed:', mailErr)
+      }
+    }
+
     // Inquiry received successfully
     return NextResponse.json({
       ok: true,

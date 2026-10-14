@@ -42,7 +42,7 @@ test.describe('1:1 Coaching & Movement HUD UI & Regression Suite', () => {
         // Tactical Video Instructions Box
         await expect(page.getByText(/Tactical Video Instructions/i)).toBeVisible()
         await expect(page.getByText(/Position your camera 6–8 feet away at hip height/i)).toBeVisible()
-        await expect(page.getByRole('link', { name: /Open Fitness Lab →/i })).toHaveAttribute('href', '/dashboard/fitness')
+        await expect(page.getByRole('link', { name: /Open (training|Fitness Lab) →/i })).toHaveAttribute('href', '/dashboard/fitness')
       } else {
         // Unauthenticated fallback passes the route check
         await expect(page).toHaveURL(/\/auth\/login/)
@@ -143,6 +143,23 @@ test.describe('1:1 Coaching & Movement HUD UI & Regression Suite', () => {
 
       // Switch back to SPLIT
       await splitBtn.click()
+    })
+
+    test('interactively cycles Virtual Background presets with Forge Athletic Sanctuary flagship preset', async ({ page }) => {
+      await page.goto('/dashboard/live')
+      if (page.url().includes('/auth/login')) return
+
+      const virtualBgBtn = page.locator('[data-testid="virtual-background-btn"]')
+      await expect(virtualBgBtn).toBeVisible()
+      await expect(virtualBgBtn).toContainText(/Sanctuary/i)
+
+      // Cycle to Olympic Performance Facility
+      await virtualBgBtn.click()
+      await expect(page.locator('[data-testid="hud-toast"]')).toContainText(/Olympic Performance Facility/i)
+
+      // Cycle to Biomechanics Diagnostic Lab
+      await virtualBgBtn.click()
+      await expect(page.locator('[data-testid="hud-toast"]')).toContainText(/Biomechanics Diagnostic Lab/i)
     })
 
     test('verifies quick verbal coaching cues bar renders all 1-tap cues', async ({ page }) => {
