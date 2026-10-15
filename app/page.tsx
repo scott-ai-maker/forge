@@ -1,7 +1,22 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import ForgeMembershipPlans from '@/components/packages/ForgeMembershipPlans'
 import MobileAppPromoSection from '@/components/marketing/MobileAppPromoSection'
+import HolidayUnmaskingSplash from '@/components/marketing/HolidayUnmaskingSplash'
+import { isSiteUnmasked } from '@/lib/launch-config'
+
+export const metadata: Metadata = {
+  title: 'Forge Athletic | The Holiday Pre-Launch Unmasking',
+  description:
+    'Parked pre-launch founding access. Don’t wait for January to repair what November broke. Evidence-led training, NASM OPT™ periodization, and AI movement telemetry unmasking Friday, November 20, 2026.',
+  openGraph: {
+    title: 'The Unmasking | Forge Athletic Holiday Pre-Launch',
+    description:
+      'Don’t wait for January to repair what November broke. Unmasking Friday, November 20, 2026.',
+    images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
+  },
+}
 
 const FEATURE_PILLARS = [
   {
@@ -58,9 +73,29 @@ const AUDIENCE_PERSONAS = [
   },
 ]
 
-export default function Home() {
+/**
+ * Full unmasked marketing experience. Rendered when site unmasking is active,
+ * when in staff preview mode, or after the target go-live date is reached.
+ */
+function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
   return (
     <main className="foundation-home forge-marketing" id="main-content">
+      {isPreview && (
+        <div
+          style={{
+            background: 'rgba(245, 158, 11, 0.15)',
+            borderBottom: '1px solid rgba(245, 158, 11, 0.4)',
+            color: '#FBBF24',
+            padding: '10px 16px',
+            fontSize: '13px',
+            textAlign: 'center',
+            fontFamily: 'var(--font-telemetry)',
+          }}
+        >
+          <strong>INTERNAL PREVIEW:</strong> Viewing full unmasked site. Public visitors currently see the Holiday Pre-Launch Splash Page.
+        </div>
+      )}
+
       <header className="forge-home-header">
         <Link className="forge-home-brand" href="/" aria-label="Forge Athletic home">
           <Image
@@ -322,6 +357,33 @@ export default function Home() {
           <Link href="/terms">Terms</Link>
         </nav>
       </footer>
+    </main>
+  )
+}
+
+interface HomePageProps {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function Home({ searchParams }: HomePageProps) {
+  const resolvedParams = searchParams ? await searchParams : {}
+  const rawPreview = resolvedParams.preview || resolvedParams.unmask || resolvedParams.unmasked
+  const previewParam =
+    typeof rawPreview === 'string'
+      ? rawPreview
+      : Array.isArray(rawPreview)
+        ? rawPreview[0]
+        : null
+
+  const unmasked = isSiteUnmasked(previewParam)
+
+  if (unmasked) {
+    return <UnmaskedLandingMarkup isPreview={Boolean(previewParam)} />
+  }
+
+  return (
+    <main id="main-content">
+      <HolidayUnmaskingSplash previewMode={Boolean(previewParam)} />
     </main>
   )
 }

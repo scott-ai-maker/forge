@@ -451,7 +451,7 @@ export const COACH_CREDENTIALS: CoachCredential[] = [
       'Cloud Resource Monitoring, Metrics & Reliability Standards',
     ],
     gaaEngineIntegration:
-      'Multi-cloud resilience and enterprise security compliance for client health record privacy and HIPAA-aligned data isolation.',
+      'Multi-cloud resilience and enterprise security compliance for client health record privacy and secure Row-Level Security (RLS) data isolation.',
   },
 
   // ── 5. MASTER TRAINER PATHWAY: SPECIALIZATIONS IN PROGRESS ─────────────────

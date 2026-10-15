@@ -20,5 +20,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Virtual background images containing brand marks, typography ("FORGE ATHLETIC"), and logos must always be rendered in true optical orientation so text reads from left to right.
 - Only the coach foreground subject (`offscreen` canvas) is mirrored when `isMirrored` is true (front selfie camera) to maintain natural mirror intuition without reversing the background.
 
+## Brand Identity & Nomenclature (STRICT: Forge Athletic, NEVER "GAA")
+- The company, platform, and brand identity is **Forge Athletic** (or "Forge").
+- **NEVER** refer to the brand, company, or platform as "GAA", "Gordon Athletic", or "Gordon Athletic Advisory" in any user communications, notes, summaries, or new code.
+- Legacy codebase references (e.g. historical file names or service worker cache tokens) must be treated strictly as legacy internal plumbing, while all current and future architectural notes, UI copy, and agent communications must consistently and exclusively use **Forge Athletic**.
+
 
 

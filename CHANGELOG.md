@@ -1,7 +1,26 @@
 # Changelog
 
-All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
+All notable changes to Forge Athletic will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.40.0] - 2026-10-15
+
+### Added & Improved
+- **Holiday Pre-Launch Unmasking Engine ([`components/marketing/HolidayUnmaskingSplash.tsx`](file:///Users/scottgordon/Repos/forge/components/marketing/HolidayUnmaskingSplash.tsx), [`lib/launch-config.ts`](file:///Users/scottgordon/Repos/forge/lib/launch-config.ts))**:
+  - Parked public website with a luxury unmasking teaser experience counting down in real time to **Friday, November 20, 2026 at 06:00:00 EST** (front-running Black Friday to capture pre-holiday motivation).
+  - Built an interactive 3D Holographic Founding Member Pass generator that mints dynamic credentials (e.g. `FORGE-HOLIDAY-2026-XXXX`) with 1-click clipboard copy.
+  - Interactive Classified Sneak Peek Radar featuring 4 technical modules: Biomechanical OPT™ Engine, Gordon AI Movement Telemetry, Metabolic Health & Sleep Recovery, and Private Coach Gordon Live Studio.
+  - Synthesized native mechanical lock clicks and harmonic chimes via the Web Audio API with zero external audio dependencies.
+  - Added internal staff preview route ([`app/preview/page.tsx`](file:///Users/scottgordon/Repos/forge/app/preview/page.tsx)) allowing immediate inspection of the full unmasked site.
+- **Brand Positioning & Vernacular Democratization**:
+  - Purged elitist "executive" terminology across marketing components and automated email sequences, repositioning Forge Athletic as an accessible, high-performance coaching platform for real people, busy parents, and desk workers.
+  - Replaced academic "cohort" terminology with friendly, plain language (*"First 50 Founding Members"*, *"12 of 50 Spots Left"*).
+  - Replaced inaccurate HIPAA claims in footer copy with verified AES-256 encryption and PostgreSQL Row-Level Security guarantees.
+- **Brand Rule Hardening ([`AGENTS.md`](file:///Users/scottgordon/Repos/forge/AGENTS.md), [`components/ui/ForgeIcon.tsx`](file:///Users/scottgordon/Repos/forge/components/ui/ForgeIcon.tsx))**:
+  - Added strict brand guidelines enforcing exclusive use of **Forge Athletic** across all future communications and architecture.
+  - Created `ForgeIcon` alias for brand-aligned icon imports.
+- **Service Worker Cache Sync ([`public/sw.js`](file:///Users/scottgordon/Repos/forge/public/sw.js))**:
+  - Synchronized PWA and iOS native web asset caches to `gaa-v1.40.0`.
 
 ## [1.39.9] - 2026-10-14
 

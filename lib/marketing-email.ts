@@ -77,7 +77,7 @@ const sequenceTemplates = [
       text: [
         'Before adding heavy load, we must verify structural alignment.',
         '',
-        'Prolonged sitting and executive travel trigger silent kinetic distortions: anterior pelvic tilt, medial knee collapse, and forward head translation. In our platform, we screen all 5 kinetic chain checkpoints:',
+        'Prolonged sitting, long commutes, and desk work trigger silent kinetic distortions: anterior pelvic tilt, medial knee collapse, and forward head translation. In our platform, we screen all 5 kinetic chain checkpoints:',
         '- Foot & Ankle complex (pronation distortion)',
         '- Knee & Patella tracking (dynamic valgus)',
         '- Lumbo-Pelvic-Hip Complex (LPHC shear & pelvic tilt)',
@@ -89,7 +89,7 @@ const sequenceTemplates = [
         `Explore the 3D AI Movement Audit: ${baseUrl}/audit`,
       ].join('\n'),
       html: `<p>Before adding heavy load, we must verify structural alignment.</p>
-<p>Prolonged sitting and executive travel trigger silent kinetic distortions: anterior pelvic tilt, medial knee collapse, and forward head translation. In our platform, we screen all 5 kinetic chain checkpoints:</p>
+<p>Prolonged sitting, long commutes, and desk work trigger silent kinetic distortions: anterior pelvic tilt, medial knee collapse, and forward head translation. In our platform, we screen all 5 kinetic chain checkpoints:</p>
 <ul>
   <li>Foot & Ankle complex (pronation distortion)</li>
   <li>Knee & Patella tracking (dynamic valgus)</li>
@@ -128,10 +128,10 @@ const sequenceTemplates = [
   },
   {
     key: 'launch_day_4',
-    subject: 'Executive Travel Resilience & Objective Telemetry',
+    subject: 'Travel Resilience & Practical Schedule Telemetry',
     body: (_name: string, baseUrl: string) => ({
       text: [
-        'High-performing executives cannot afford to lose momentum during cross-country travel or redeye flights.',
+        'Active people, parents, and busy professionals cannot afford to lose momentum during travel or hectic weeks.',
         '',
         'Forge Athletic helps you keep training when your routine changes:',
         '- Adapt your workouts to the equipment available while keeping your plan on track.',
@@ -140,7 +140,7 @@ const sequenceTemplates = [
         '',
         `Take the 2-minute diagnostic fit quiz: ${baseUrl}/apply`,
       ].join('\n'),
-      html: `<p>High-performing executives cannot afford to lose momentum during cross-country travel or redeye flights.</p>
+      html: `<p>Active people, parents, and busy professionals cannot afford to lose momentum during travel or hectic weeks.</p>
 <p>Forge Athletic helps you keep training when your routine changes:</p>
 <ul>
   <li>Adapt your workouts to the equipment available while keeping your plan on track.</li>

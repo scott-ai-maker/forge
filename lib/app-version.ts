@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.10'
+export const APP_VERSION = '1.40.0'
 export const APP_RELEASE_DATE = '2026-10-15'
-export const APP_RELEASE_CODENAME = 'Multi-Tier AI Safety & Legal Liability Shield'
+export const APP_RELEASE_CODENAME = 'Holiday Pre-Launch Unmasking Engine & Founding Member Portal'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,31 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.40.0',
+    date: '2026-10-15',
+    codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Parked Pre-Launch Engine · Live Unmasking Countdown · 3D Holographic Founding Pass · Democratized Positioning',
+    title: 'Holiday Pre-Launch Unmasking Engine & Founding Member Portal',
+    summary: 'Parked the public website ahead of the holiday rush and deployed an interactive VIP pre-launch experience with a live countdown ticking down to November 20, 2026. Democratized marketing vernacular to emphasize every-person accessibility, built an interactive 3D holographic Founding Member pass generator, integrated sneak peek radar architecture, and purged inaccurate compliance claims.',
+    highlights: [
+      'Holiday Pre-Launch Unmasking Architecture: Deployed a luxury parked holding experience on the public homepage with automated unmasking scheduled for Friday, November 20, 2026 at 06:00:00 EST (front-running Black Friday and capturing pre-holiday urgency).',
+      '3D Holographic Founding Member Pass Generator: Interactive registration module minting custom digital Founding Member passes with verified serials (e.g. FORGE-HOLIDAY-2026-XXXX) and 1-click clipboard credential copy.',
+      'Democratized Brand & Marketing Vernacular: Removed elitist/affluent "executive" jargon across the splash page and automated lead email sequences, repositioning Forge Athletic as an accessible, high-performance coaching platform for real people, busy parents, and desk workers.',
+      'Plain Language Founding Member Allocation: Replaced academic "cohort" terminology with friendly, plain language ("First 50 Founding Members", "12 of 50 Spots Left").',
+      'Classified Sneak Peek Radar: 4 interactive tabs previewing the Biomechanical OPT™ Engine, Gordon AI Movement Telemetry, Metabolic Health & Sleep Recovery, and Private Coach Gordon Live Studio.',
+      'Tactile Web Audio Feedback: Synthesized native mechanical lock clicks and harmonic chimes via the Web Audio API with zero external media files.',
+      'Regulatory & Privacy Truth Hardening: Removed inaccurate HIPAA claims from footer copy, aligning guarantees with verified AES-256 encryption at rest, TLS 1.3 in transit, and PostgreSQL Row-Level Security.',
+      'Internal Staff Preview Route: Added /preview route allowing staff to inspect the complete unmasked marketing experience at any time.',
+    ],
+    relatedLinks: [
+      { label: 'Unmasking Splash', href: '/' },
+      { label: 'Staff Preview', href: '/preview' },
+      { label: 'Member Sign In', href: '/auth/login' },
+      { label: 'Coach Console', href: '/coach' },
+    ],
+  },
   {
     version: '1.39.10',
     date: '2026-10-15',
