@@ -34,6 +34,9 @@ const MALE_COACH_NAMES = [
   'thomas', 'gordon', 'guy', 'ryan', 'david', 'george', 'rishi', 'james',
 ]
 
+let activeAudioElement: HTMLAudioElement | null = null
+let activeUtterances: SpeechSynthesisUtterance[] = []
+
 /**
  * Stops all currently active neural and Web Speech coach audio playback immediately.
  */
@@ -51,13 +54,12 @@ export function stopCoachVoiceCue(): void {
   if ('speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel()
+      activeUtterances = []
     } catch {
       // Ignore speech synthesis cancel errors
     }
   }
 }
-
-let activeAudioElement: HTMLAudioElement | null = null
 
 /**
  * Sanitizes speech text to remove emojis, symbols, and formatting that synthesizers
@@ -255,6 +257,47 @@ export async function prefetchCoachVoiceCue(text: string, voiceId: string = COAC
 }
 
 /**
+ * Splits text into conversational sentence chunks (under maxChunkLength) to eliminate
+ * the 15-second browser speech synthesis truncation bug in Chrome, Safari, and iOS WebKit.
+ */
+export function chunkTextIntoSpeechSentences(text: string, maxChunkLength = 160): string[] {
+  if (!text) return []
+  const rawParts = text.match(/[^.!?\n;]+[.!?\n;]+|[^.!?\n;]+$/g) || [text]
+  const chunks: string[] = []
+  let currentChunk = ''
+
+  for (const part of rawParts) {
+    const trimmed = part.trim()
+    if (!trimmed) continue
+
+    if ((currentChunk ? `${currentChunk} ${trimmed}` : trimmed).length <= maxChunkLength) {
+      currentChunk = currentChunk ? `${currentChunk} ${trimmed}` : trimmed
+    } else {
+      if (currentChunk) chunks.push(currentChunk)
+
+      if (trimmed.length > maxChunkLength) {
+        const words = trimmed.split(' ')
+        let wordChunk = ''
+        for (const w of words) {
+          if ((wordChunk ? `${wordChunk} ${w}` : w).length <= maxChunkLength) {
+            wordChunk = wordChunk ? `${wordChunk} ${w}` : w
+          } else {
+            if (wordChunk) chunks.push(wordChunk)
+            wordChunk = w
+          }
+        }
+        currentChunk = wordChunk
+      } else {
+        currentChunk = trimmed
+      }
+    }
+  }
+
+  if (currentChunk) chunks.push(currentChunk)
+  return chunks
+}
+
+/**
  * Plays hyper-realistic studio neural voice audio powered by Coach Scott Gordon's authentic
  * cloned voice model (UPezm4CtrvcD6aNXjeU1) via the server-side /api/coach/tts route.
  * Uses client-side blob caching and synchronous audio initialization to maintain user activation
@@ -282,40 +325,62 @@ export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceO
 
     const targetVoiceId = options.voiceId || COACH_GORDON_VOICE_ID
     const cacheKey = `${targetVoiceId}_${cleanText}`
-    const cachedBlobUrl = preloadedAudioBlobUrls.get(cacheKey)
+    let audioUrl = preloadedAudioBlobUrls.get(cacheKey)
 
-    const audioUrl =
-      cachedBlobUrl ||
-      `/api/coach/tts?text=${encodeURIComponent(cleanText)}&voiceId=${encodeURIComponent(targetVoiceId)}`
+    if (!audioUrl) {
+      try {
+        const res = await fetch('/api/coach/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: cleanText,
+            voiceId: targetVoiceId,
+          }),
+        })
 
-    const audio = new Audio(audioUrl)
-    audio.volume = options.volume ?? 1.0
-    activeAudioElement = audio
-
-    audio.onplay = () => {
-      if (options.onStart) options.onStart()
+        if (res.ok) {
+          const contentType = res.headers.get('content-type') || ''
+          if (contentType.includes('audio/')) {
+            const blob = await res.blob()
+            audioUrl = URL.createObjectURL(blob)
+            preloadedAudioBlobUrls.set(cacheKey, audioUrl)
+          }
+        }
+      } catch {
+        // Fetch failed; fallback below
+      }
     }
 
-    audio.onerror = () => {
-      if (activeAudioElement === audio) activeAudioElement = null
-      speakWebSpeechCoachVoiceCue(cleanText, options)
-    }
+    if (audioUrl) {
+      const audio = new Audio(audioUrl)
+      audio.volume = options.volume ?? 1.0
+      activeAudioElement = audio
 
-    audio.onended = () => {
-      if (activeAudioElement === audio) activeAudioElement = null
-      if (options.onEnded) options.onEnded()
-    }
+      audio.onplay = () => {
+        if (options.onStart) options.onStart()
+      }
 
-    const playPromise = audio.play()
-    if (playPromise !== undefined) {
-      await playPromise
-      return true
+      audio.onerror = () => {
+        if (activeAudioElement === audio) activeAudioElement = null
+        speakWebSpeechCoachVoiceCue(cleanText, options)
+      }
+
+      audio.onended = () => {
+        if (activeAudioElement === audio) activeAudioElement = null
+        if (options.onEnded) options.onEnded()
+      }
+
+      const playPromise = audio.play()
+      if (playPromise !== undefined) {
+        await playPromise
+        return true
+      }
     }
   } catch {
     // Fallback if browser audio element execution threw
   }
 
-  // Seamless fallback to client Web Speech API
+  // Seamless fallback to client Web Speech API with sentence chunking
   speakWebSpeechCoachVoiceCue(cleanText, options)
   return false
 }
@@ -323,7 +388,7 @@ export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceO
 /**
  * Executes a commanding, clear, coach-style vocal cue using client-side Web Speech API.
  * Sanitizes emojis/symbols, sets authoritative baritone pitch (0.92) and punchy tempo (1.08).
- * Used as high-fidelity zero-latency fallback when neural audio keys are unavailable or client is offline.
+ * Uses chunked sentence queuing to completely prevent the browser 15-second cutoff bug.
  */
 export function speakWebSpeechCoachVoiceCue(text: string, options: CoachVoiceOptions = {}): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
@@ -346,33 +411,48 @@ export function speakWebSpeechCoachVoiceCue(text: string, options: CoachVoiceOpt
 
     if (options.interrupPrevious !== false) {
       window.speechSynthesis.cancel()
+      activeUtterances = []
     }
     window.speechSynthesis.resume()
 
-    const utterance = new SpeechSynthesisUtterance(cleanText)
-    utterance.pitch = options.pitch ?? 0.92 // Authoritative, grounded athletic baritone
-    utterance.rate = options.rate ?? 1.08 // Decisive, crisp cadence
-    utterance.volume = options.volume ?? 1.0
-
-    utterance.onstart = () => {
-      if (options.onStart) options.onStart()
-    }
-
-    utterance.onend = () => {
-      if (options.onEnded) options.onEnded()
-    }
-
-    utterance.onerror = () => {
-      if (options.onEnded) options.onEnded()
-    }
+    const chunks = chunkTextIntoSpeechSentences(cleanText)
+    if (chunks.length === 0) return
 
     const coachVoice = getAuthoritativeCoachVoice()
-    if (coachVoice) {
-      utterance.voice = coachVoice
-    }
+    activeUtterances = []
 
-    window.speechSynthesis.speak(utterance)
+    chunks.forEach((chunk, index) => {
+      const isFirst = index === 0
+      const isLast = index === chunks.length - 1
+
+      const utterance = new SpeechSynthesisUtterance(chunk)
+      utterance.pitch = options.pitch ?? 0.92 // Authoritative, grounded athletic baritone
+      utterance.rate = options.rate ?? 1.08 // Decisive, crisp cadence
+      utterance.volume = options.volume ?? 1.0
+      if (coachVoice) {
+        utterance.voice = coachVoice
+      }
+
+      if (isFirst && options.onStart) {
+        utterance.onstart = () => options.onStart!()
+      }
+
+      if (isLast) {
+        utterance.onend = () => {
+          activeUtterances = []
+          if (options.onEnded) options.onEnded()
+        }
+        utterance.onerror = () => {
+          activeUtterances = []
+          if (options.onEnded) options.onEnded()
+        }
+      }
+
+      activeUtterances.push(utterance)
+      window.speechSynthesis.speak(utterance)
+    })
   } catch {
+    activeUtterances = []
     if (options.onEnded) options.onEnded()
   }
 }

@@ -75,4 +75,24 @@ describe('coach-voice-synthesizer', () => {
       expect(() => speakCoachVoiceCue('Rest complete! Let\'s get this set.')).not.toThrow()
     })
   })
+
+  describe('chunkTextIntoSpeechSentences', () => {
+    it('splits long coach dialogue into manageable sentence chunks under 160 characters', async () => {
+      const { chunkTextIntoSpeechSentences } = await import('./coach-voice-synthesizer')
+      const longText = 'Hey Alexander! Coach Gordon right here with you. Today we are focusing strictly on Phase 2 Strength Endurance supersets. Make sure you hit your 30 to 40 grams of high quality protein after this session to rebuild muscle tissue and keep your recovery on schedule. What exercise are you starting with today?'
+      const chunks = chunkTextIntoSpeechSentences(longText, 160)
+
+      expect(chunks.length).toBeGreaterThan(1)
+      for (const chunk of chunks) {
+        expect(chunk.length).toBeLessThanOrEqual(160)
+      }
+      expect(chunks.join(' ')).toContain('Hey Alexander!')
+      expect(chunks.join(' ')).toContain('What exercise are you starting with today?')
+    })
+
+    it('handles empty text gracefully', async () => {
+      const { chunkTextIntoSpeechSentences } = await import('./coach-voice-synthesizer')
+      expect(chunkTextIntoSpeechSentences('')).toEqual([])
+    })
+  })
 })

@@ -249,7 +249,7 @@ Respond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon.
     }
 
     const currentParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [
-      { text: `${athleteContext}${ragContext}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going.` },
+      { text: `${athleteContext}${ragContext}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going, and ensure every sentence and thought is fully completed without trailing off.` },
     ]
 
     if (attachedImage?.data) {
@@ -279,7 +279,7 @@ Respond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon.
             contents,
             generationConfig: {
               temperature: 0.35,
-              maxOutputTokens: 1000,
+              maxOutputTokens: 3000,
             },
           }),
         })
