@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.9'
-export const APP_RELEASE_DATE = '2026-10-14'
-export const APP_RELEASE_CODENAME = 'Coach Gordon AI Multimodal Vision & Workout Co-Pilot'
+export const APP_VERSION = '1.39.10'
+export const APP_RELEASE_DATE = '2026-10-15'
+export const APP_RELEASE_CODENAME = 'Multi-Tier AI Safety & Legal Liability Shield'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,29 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
+    version: '1.39.10',
+    date: '2026-10-15',
+    codename: APP_RELEASE_CODENAME,
+    category: 'security',
+    badge: 'Multi-Tier AI Safety Shield · Orthopedic Contraindication Interception · Real-Time Resend Coach Alerts · Digital Waiver Safeguards',
+    title: 'Multi-Tier AI Safety & Legal Liability Shield',
+    summary: 'Architected and deployed a multi-tier liability and safety shield across Coach Gordon AI and the Forge Athletic training continuum. Enforces hard orthopedic contraindication blacklists, automated real-time coach escalation alerts via Resend for medical/surgical inquiries, comprehensive digital AI coaching assumption-of-risk waivers, and persistent in-app legal disclaimers.',
+    highlights: [
+      'Biomechanical Contraindication Interception: Auto-injects client PAR-Q+ orthopedic tags into Coach Gordon AI engine, actively blacklisting dangerous exercises (open-chain leg extensions for runner knee, Jefferson curls for disc herniations, behind-the-neck press for shoulder impingement) and offering instant biomechanically safe substitutions.',
+      'Real-Time Resend Coach Escalation Alerts: Integrated automated email alerts to Coach Scott Gordon (scott.gordon72@outlook.com) whenever emergency symptoms or clinical triage triggers fire, delivering full athlete telemetry, question context, and AI output.',
+      'Digital AI Coaching Assumption-of-Risk Waiver: Appended explicit legal exculpatory clauses governing automated fitness recommendations and algorithmic coaching into the master liability shield.',
+      'Persistent In-App Shield Banner: Added sleek, persistent legal disclaimers to AskCoachGordonModal clarifying that AI feedback is educational sports science guidance aligned with the NASM OPT™ model, not medical treatment or diagnosis.',
+      'Structured Safety Audit Logging: Implemented JSON-structured audit logging in server runtime capturing all triage events and coach pings for operational accountability.',
+    ],
+    relatedLinks: [
+      { label: 'Ask Coach Gordon', href: '/dashboard/fitness' },
+      { label: 'Coach Console', href: '/coach' },
+    ],
+  },
+  {
     version: '1.39.9',
     date: '2026-10-14',
-    codename: APP_RELEASE_CODENAME,
+    codename: 'Coach Gordon AI Multimodal Vision & Workout Co-Pilot',
     category: 'intelligence',
     badge: 'Coach Gordon AI Multimodal Vision · Live In-Gym Action Execution · Video Demo Overlays · Telemetry Auto-Hydration',
     title: 'Coach Gordon AI Multimodal Vision & Workout Co-Pilot',

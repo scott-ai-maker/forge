@@ -25,6 +25,7 @@ export interface CoachGordonContext {
     exerciseName?: string
   }
   todayWorkoutExercises?: string[]
+  contraindicationTags?: string[]
   isCoachUser?: boolean
 }
 
@@ -104,6 +105,37 @@ export default function GlobalCoachGordonHost() {
               }))
             }
           }
+        }
+
+        // Hydrate PAR-Q medical contraindication tags if available in local storage
+        try {
+          const cachedParq = localStorage.getItem('gaa_parq_answers')
+          if (cachedParq && isMounted) {
+            const parsed = JSON.parse(cachedParq)
+            const tags: string[] = []
+            if (
+              parsed.hasHeartCondition ||
+              parsed.experiencesChestPain ||
+              parsed.experiencesDizzinessOrSyncope ||
+              parsed.takesBloodPressureOrHeartMedication
+            ) {
+              tags.push('cardiovascular_hypertension')
+            }
+            if (parsed.hasBoneOrJointProblem) {
+              tags.push('knee_patellofemoral', 'shoulder_impingement')
+            }
+            if (parsed.hasChronicSpinalOrDiscCondition) {
+              tags.push('lumbar_disc_condition')
+            }
+            if (tags.length > 0) {
+              setContext(prev => ({
+                ...prev,
+                contraindicationTags: prev.contraindicationTags || Array.from(new Set(tags)),
+              }))
+            }
+          }
+        } catch {
+          // Ignore storage read errors
         }
       } catch {
         // Graceful fallback in environments without Supabase
@@ -221,6 +253,7 @@ export default function GlobalCoachGordonHost() {
           recentRpe={context.recentRpe}
           lastLoggedSet={context.lastLoggedSet}
           todayWorkoutExercises={context.todayWorkoutExercises}
+          contraindicationTags={context.contraindicationTags}
           isCoachUser={context.isCoachUser}
           onApplyExerciseSwap={handleApplyExerciseSwap}
           onStartRestTimer={handleStartRestTimer}

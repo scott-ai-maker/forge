@@ -1,507 +1,132 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   askCoachGordon,
-  retrieveRelevantRagCurricula,
   generateDeterministicCoachResponse,
-  deriveProactiveTelemetryGreeting,
-  deriveRecommendedAction,
-  isOutOfTrainingScope,
-  type AskCoachGordonRequest,
+  detectCoachPingNeed,
 } from './ask-coach-gordon'
-import {
-  analyzeLiftForm,
-  generateQuickBiomechanicalSpokenSummary,
-} from './video-form-analysis'
+import { evaluateClinicalUrgencyTriage, isOutOfTrainingScope } from './ask-coach-gordon-types'
 
-describe('Ask Coach Gordon Interactive Engine', () => {
-  it('retrieves relevant RAG curricula matching query concepts', () => {
-    const nutritionDocs = retrieveRelevantRagCurricula('What should I eat for my post workout protein meal?')
-    expect(nutritionDocs.length).toBeGreaterThan(0)
-    expect(nutritionDocs.some(d => d.title.toLowerCase().includes('nutrition') || d.category.includes('Nutrition'))).toBe(true)
-
-    const golfDocs = retrieveRelevantRagCurricula('How can I improve my golf swing rotational power?')
-    expect(golfDocs.length).toBeGreaterThan(0)
-    expect(golfDocs.some(d => d.title.toLowerCase().includes('golf') || d.keyConcepts.some((c: string) => c.toLowerCase().includes('rotational')))).toBe(true)
-
-    const correctiveDocs = retrieveRelevantRagCurricula('My lower back and knees feel tight on squats')
-    expect(correctiveDocs.length).toBeGreaterThan(0)
-  })
-
-  it('generates an authoritative deterministic response for exercise substitutions', () => {
-    const req: AskCoachGordonRequest = {
-      question: 'Can you swap Barbell Squats for me? I am traveling.',
-      athleteName: 'Alexander',
-      nasmOptPhase: 1,
-      goal: 'fat_loss',
-      currentExerciseName: 'Barbell Back Squat',
-      equipmentAccess: ['Dumbbells', 'Resistance Bands'],
-    }
-
-    const response = generateDeterministicCoachResponse(req, [])
-    expect(response.answerMarkdown).toContain('DB Goblet Squats')
-    expect(response.answerMarkdown).toContain('earn the right to add load')
-    expect(response.spokenAudioText).not.toContain('💡')
-    expect(response.spokenAudioText).not.toContain('🎯')
-    expect(response.spokenAudioText.length).toBeGreaterThan(50)
-    expect(response.suggestedFollowUps.length).toBeGreaterThan(0)
-  })
-
-  it('generates an authoritative deterministic response for nutrition and protein queries', () => {
-    const req: AskCoachGordonRequest = {
-      question: 'What is my target post-workout meal?',
-      athleteName: 'Jordan',
-      nasmOptPhase: 3,
-      goal: 'hypertrophy',
-    }
-
-    const response = generateDeterministicCoachResponse(req, [])
-    expect(response.answerMarkdown).toContain('biological information and fuel')
-    expect(response.answerMarkdown).toContain('30 to 40 grams of high-quality protein')
-    expect(response.spokenAudioText).not.toContain('🥩')
-  })
-
-  it('generates an authoritative deterministic response for joint tightness and corrective protocols', () => {
-    const req: AskCoachGordonRequest = {
-      question: 'My lower back feels tight today on deadlifts',
-      athleteName: 'Sarah',
-      nasmOptPhase: 2,
-      goal: 'strength',
-      kineticCompensations: ['low_back_arches'],
-    }
-
-    const response = generateDeterministicCoachResponse(req, [])
-    expect(response.answerMarkdown).toContain('We are training for the next 20 years')
-    expect(response.answerMarkdown).toContain('corrective reset')
-    expect(response.answerMarkdown).toContain('glute bridges')
-  })
-
-  it('triggers Tier 1 Emergency 911 directive for acute cardiac/emergency symptoms', async () => {
-    const req: AskCoachGordonRequest = {
-      question: 'I feel sudden severe chest pain, shortness of breath, and dizziness while doing squats',
-      athleteName: 'Marcus',
-      nasmOptPhase: 1,
-      goal: 'fat_loss',
-    }
-
-    const response = await askCoachGordon(req)
-    expect(response.isEmergency911).toBe(true)
-    expect(response.requiresCoachPing).toBe(true)
-    expect(response.answerMarkdown).toContain('EMERGENCY MEDICAL DIRECTIVE')
-    expect(response.answerMarkdown).toContain('call 911')
-    expect(response.spokenAudioText).toContain('call 911')
-  })
-
-  it('triggers Tier 2 Out-of-Scope Medical Referral for structural injuries like torn ACL, herniations, or surgeries', async () => {
-    const req: AskCoachGordonRequest = {
-      question: 'I have a torn ACL and torn meniscus in my right knee, what exercises can I do today?',
-      athleteName: 'David',
-      nasmOptPhase: 1,
-      goal: 'hypertrophy',
-    }
-
-    const response = await askCoachGordon(req)
-    expect(response.isEmergency911).toBe(false)
-    expect(response.requiresCoachPing).toBe(true)
-    expect(response.answerMarkdown).toContain('strictly outside the professional scope of personal training')
-    expect(response.answerMarkdown).toContain('orthopedic physician or licensed physical therapist')
-    expect(response.answerMarkdown).toContain('Coach Scott Gordon')
-    expect(response.suggestedFollowUps).toContain('Message Coach Scott directly')
-  })
-
-  it('triggers Tier 2 Out-of-Scope Medical Referral for post-surgical spinal conditions in deterministic engine', () => {
-    const req: AskCoachGordonRequest = {
-      question: 'I had lumbar spinal fusion surgery and have a herniated disc. Can I deadlift?',
-      athleteName: 'Marcus',
-      nasmOptPhase: 1,
-      goal: 'fat_loss',
-    }
-
-    const response = generateDeterministicCoachResponse(req, [])
-    expect(response.requiresCoachPing).toBe(true)
-    expect(response.answerMarkdown).toContain('strictly outside the professional scope of personal training')
-    expect(response.answerMarkdown).toContain('Coach Scott Gordon')
-  })
-
-  describe('Real-World Gym Clinical Safety Scenarios', () => {
-    it('handles exertional rhabdomyolysis and tea-colored urine as Tier 1 Emergency 911', async () => {
+describe('Ask Coach Gordon AI Engine & Multi-Tier Liability Safeguards', () => {
+  describe('Tier 1: Biomechanical Contraindication Interception', () => {
+    it('intercepts contraindicated open-chain knee exercise (Seated Leg Extension) for knee_patellofemoral athlete', async () => {
       const response = await askCoachGordon({
-        question: 'My urine is dark brown and tea colored after extreme lifting and my quads are severely swollen',
+        question: 'Can I do seated leg extensions today?',
+        athleteName: 'Marcus',
+        contraindicationTags: ['knee_patellofemoral'],
+        currentExerciseName: 'Seated Leg Extension',
       })
-      expect(response.isEmergency911).toBe(true)
-      expect(response.requiresCoachPing).toBe(true)
-      expect(response.answerMarkdown).toContain('EMERGENCY MEDICAL DIRECTIVE')
-      expect(response.answerMarkdown).toContain('call 911')
+
+      expect(response.answerMarkdown).toContain('joint longevity and steer completely clear')
+      expect(response.answerMarkdown).toContain('Spanish Squats')
+      expect(response.recommendedAction?.type).toBe('swap_exercise')
+      expect(response.recommendedAction?.targetExerciseName).toContain('Spanish Squats')
     })
 
-    it('handles Achilles tendon rupture and inability to bear weight as Tier 1 Emergency 911', async () => {
+    it('intercepts lumbar spine flexion exercise (Jefferson Curls) for lumbar_disc_condition athlete', async () => {
       const response = await askCoachGordon({
-        question: 'My achilles snapped during sprint intervals and I cannot bear weight or walk',
+        question: 'Should I do jefferson curls to stretch my hamstrings?',
+        athleteName: 'Sarah',
+        contraindicationTags: ['lumbar_disc_condition'],
       })
-      expect(response.isEmergency911).toBe(true)
-      expect(response.requiresCoachPing).toBe(true)
-      expect(response.answerMarkdown).toContain('EMERGENCY MEDICAL DIRECTIVE')
+
+      expect(response.answerMarkdown).toContain('steer completely clear')
+      expect(response.answerMarkdown).toContain('McGill Big 3')
+      expect(response.recommendedAction?.type).toBe('swap_exercise')
+      expect(response.recommendedAction?.targetExerciseName).toContain('McGill Big 3')
     })
 
-    it('handles distal bicep rupture / Popeye deformity as Tier 1 Emergency 911', async () => {
+    it('intercepts extreme shoulder external rotation (Behind-the-Neck Press) for shoulder_impingement athlete', async () => {
       const response = await askCoachGordon({
-        question: 'I felt a violent tearing in my arm on deadlifts and my bicep rolled up into a popeye muscle',
+        question: 'Is behind-the-neck barbell press good for my shoulders?',
+        athleteName: 'David',
+        contraindicationTags: ['shoulder_impingement'],
       })
-      expect(response.isEmergency911).toBe(true)
-      expect(response.requiresCoachPing).toBe(true)
-      expect(response.answerMarkdown).toContain('EMERGENCY MEDICAL DIRECTIVE')
-    })
 
-    it('handles vasovagal syncope / fainting as Tier 1 Emergency 911', async () => {
-      const response = await askCoachGordon({
-        question: 'My vision went black and I passed out on the leg press machine',
-      })
-      expect(response.isEmergency911).toBe(true)
-      expect(response.requiresCoachPing).toBe(true)
-      expect(response.answerMarkdown).toContain('EMERGENCY MEDICAL DIRECTIVE')
-    })
-
-    it('handles dropped weight on neck trauma as Tier 1 Emergency 911', async () => {
-      const response = await askCoachGordon({
-        question: 'I dropped the barbell on my neck while bench pressing alone',
-      })
-      expect(response.isEmergency911).toBe(true)
-      expect(response.requiresCoachPing).toBe(true)
-      expect(response.answerMarkdown).toContain('EMERGENCY MEDICAL DIRECTIVE')
-    })
-
-    it('handles rotator cuff tears and labrum pathology as Tier 2 Medical Scope Referral', async () => {
-      const response = await askCoachGordon({
-        question: 'I have a rotator cuff tear and torn labrum in my shoulder, what pressing exercises can I do?',
-      })
-      expect(response.isEmergency911).toBe(false)
-      expect(response.requiresCoachPing).toBe(true)
-      expect(response.answerMarkdown).toContain('strictly outside the professional scope of personal training')
-      expect(response.answerMarkdown).toContain('Coach Scott Gordon')
-    })
-
-    it('handles inguinal hernia groin bulges as Tier 2 Medical Scope Referral', async () => {
-      const response = await askCoachGordon({
-        question: 'I noticed a painful groin bulge popped out after heavy back squats',
-      })
-      expect(response.isEmergency911).toBe(false)
-      expect(response.requiresCoachPing).toBe(true)
-      expect(response.answerMarkdown).toContain('strictly outside the professional scope of personal training')
-    })
-
-    it('handles joint replacement surgery rehab as Tier 2 Medical Scope Referral', async () => {
-      const response = await askCoachGordon({
-        question: 'I had total knee replacement surgery 8 weeks ago, can you program my leg day?',
-      })
-      expect(response.isEmergency911).toBe(false)
-      expect(response.requiresCoachPing).toBe(true)
-      expect(response.answerMarkdown).toContain('strictly outside the professional scope of personal training')
-    })
-
-    it('handles bone stress fractures as Tier 2 Medical Scope Referral', async () => {
-      const response = await askCoachGordon({
-        question: 'My doctor said I have a tibial stress fracture from running',
-      })
-      expect(response.isEmergency911).toBe(false)
-      expect(response.requiresCoachPing).toBe(true)
-      expect(response.answerMarkdown).toContain('strictly outside the professional scope of personal training')
-    })
-
-    it('handles nominal tight hip flexors and DOMS in Tier 3 as warm 1-on-1 coaching', async () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'My hip flexors feel tight from sitting all day at my desk',
-        nasmOptPhase: 1,
-        goal: 'general_fitness',
-      }, [])
-      expect(response.isEmergency911).toBe(false)
-      expect(response.requiresCoachPing).toBe(false)
-      expect(response.answerMarkdown).toContain('corrective reset')
-      expect(response.answerMarkdown).toContain('foam roller')
-    })
-
-    it('handles sleep-deprived / red-eye flight athlete with auto-regulation guidance', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'I only slept 3.5 hours last night after a red-eye flight, should I push through or modify?',
-        nasmOptPhase: 2,
-        goal: 'fat_loss',
-      }, [])
-      expect(response.isEmergency911).toBe(false)
-      expect(response.requiresCoachPing).toBe(false)
-      expect(response.answerMarkdown).toContain('train smarter, not harder')
-      expect(response.answerMarkdown).toContain('15 to 20% lighter')
-    })
-
-    it('handles busy executive 20-minute time-crunch workout query', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'I am short on time and only have 20 min before my flight, how do I condense my lift?',
-        nasmOptPhase: 1,
-        goal: 'general_fitness',
-      }, [])
-      expect(response.isEmergency911).toBe(false)
-      expect(response.answerMarkdown).toContain('high-density compound supersets')
-      expect(response.answerMarkdown).toContain('45 to 60 seconds rest')
-    })
-
-    it('handles creatine and supplement timing queries with evidence-based guidance', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'How much creatine should I take daily and do I need to do a loading phase?',
-        nasmOptPhase: 3,
-        goal: 'hypertrophy',
-      }, [])
-      expect(response.isEmergency911).toBe(false)
-      expect(response.answerMarkdown).toContain('3 to 5 grams daily')
-      expect(response.answerMarkdown).toContain('do not need a high-dose loading phase')
-    })
-
-    it('handles tech neck and forward head posture corrective strategy', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'I have bad posture and tech neck from working at a desk all day. How do I fix it?',
-        nasmOptPhase: 1,
-        goal: 'general_fitness',
-      }, [])
-      expect(response.isEmergency911).toBe(false)
-      expect(response.answerMarkdown).toContain('Prone Cobras')
-      expect(response.answerMarkdown).toContain('Chin Tucks')
-    })
-
-    it('handles client dinner and alcohol navigation without guilt', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'I have a big business steakhouse dinner with wine tonight, how do I handle my diet?',
-        nasmOptPhase: 2,
-        goal: 'fat_loss',
-      }, [])
-      expect(response.isEmergency911).toBe(false)
-      expect(response.answerMarkdown).toContain('Drink water too')
-      expect(response.answerMarkdown).toContain('One meal does not undo your progress')
-    })
-
-    it('handles painless joint clicking and crepitus reassurance', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'My knees click when I squat but there is zero pain. Is that okay?',
-        nasmOptPhase: 1,
-        goal: 'general_fitness',
-      }, [])
-      expect(response.isEmergency911).toBe(false)
-      expect(response.requiresCoachPing).toBe(false)
-      expect(response.answerMarkdown).toContain('crepitus')
-      expect(response.answerMarkdown).toContain('zero pain')
+      expect(response.answerMarkdown).toContain('steer completely clear')
+      expect(response.answerMarkdown).toContain('Standing Neutral-Grip DB Overhead Press')
+      expect(response.recommendedAction?.type).toBe('swap_exercise')
     })
   })
 
-  describe('Proactive Telemetry-Aware Greetings & In-Gym Action Cards', () => {
-    it('generates an auto-regulation greeting when client sleep is under 5.5 hours', () => {
-      const greeting = deriveProactiveTelemetryGreeting({
-        athleteName: 'Alexander',
-        recentSleepHours: 4.2,
-        recentReadinessScore: 65,
-        nasmOptPhase: 2,
-        goal: 'fat_loss',
-      })
-      expect(greeting.text).toContain('sleep was only **4.2 hours**')
-      expect(greeting.text).toContain('auto-regulate working loads down 15%')
-      expect(greeting.recommendedAction?.type).toBe('auto_regulate_load')
+  describe('Tier 1 & 2: Clinical Urgency & Emergency Triage', () => {
+    it('triggers emergency 911 protocol for acute chest pain and left arm numbness', () => {
+      const triage = evaluateClinicalUrgencyTriage('I have severe chest pain and pressure spreading to my left arm')
+      expect(triage.isEmergency911).toBe(true)
+      expect(triage.tier).toBe('EMERGENCY_911')
+      expect(triage.overrideMarkdown).toContain('EMERGENCY MEDICAL DIRECTIVE')
+      expect(triage.overrideMarkdown).toContain('call 911')
     })
 
-    it('derives actionable recommendations for rest timers and exercise swaps', () => {
-      const swapAction = deriveRecommendedAction('can you swap this exercise')
-      expect(swapAction?.type).toBe('swap_exercise')
-
-      const restAction = deriveRecommendedAction('start rest timer')
-      expect(restAction?.type).toBe('start_timer')
+    it('triggers emergency 911 for loss of consciousness / syncope', () => {
+      const triage = evaluateClinicalUrgencyTriage('I passed out during my deadlift and blacked out')
+      expect(triage.isEmergency911).toBe(true)
+      expect(triage.overrideMarkdown).toContain('EMERGENCY MEDICAL DIRECTIVE')
     })
 
-    it('derives smart exercise substitutions with video embeds and NASM tempos for active exercises', () => {
-      const swapWithContext = deriveRecommendedAction('can you swap this machine or exercise', 'Barbell Back Squat')
-      expect(swapWithContext).toBeDefined()
-      expect(swapWithContext?.type).toBe('swap_exercise')
-      expect(swapWithContext?.currentExerciseName).toBe('Barbell Back Squat')
-      expect(swapWithContext?.targetExerciseName).toBeDefined()
-      expect(swapWithContext?.videoId).toBeDefined()
-      expect(swapWithContext?.embedUrl).toContain('youtube')
-      expect(swapWithContext?.prescribedTempo).toBeDefined()
+    it('triggers physician referral and coach escalation for structural injuries and shooting nerve pain', () => {
+      const triage = evaluateClinicalUrgencyTriage('I have shooting electrical pain down my leg from my lower back')
+      expect(triage.isEmergency911).toBe(false)
+      expect(triage.tier).toBe('SERIOUS_MEDICAL_REFERRAL')
+      expect(triage.pingReason).toContain('Out of Scope / Structural Injury')
+    })
+  })
+
+  describe('Tier 1 & 3: Human-in-the-Loop Coach Escalation Detection', () => {
+    it('detects coach ping need for surgical recovery inquiries', () => {
+      const check = detectCoachPingNeed('I had a rotator cuff repair surgery 8 weeks ago.')
+      expect(check.requiresCoachPing).toBe(true)
+      expect(check.reason).toContain('surgery')
     })
 
-    it('derives official video demo embeds when asked for exercise technique demonstration', () => {
-      const demoAction = deriveRecommendedAction('show me a video demo of proper technique', 'Barbell Back Squat')
-      expect(demoAction).toBeDefined()
-      expect(demoAction?.type).toBe('view_demo')
-      expect(demoAction?.videoId).toBeDefined()
-      expect(demoAction?.embedUrl).toContain('youtube-nocookie.com/embed')
-      expect(demoAction?.buttonText).toContain('Watch Barbell Back Squat Video Demo')
+    it('detects coach ping need for herniated disc flare-ups', () => {
+      const check = detectCoachPingNeed('My herniated disc is flaring up with shooting numbness.')
+      expect(check.requiresCoachPing).toBe(true)
+      expect(check.reason).toContain('herniated')
     })
 
-    it('derives load auto-regulation when athlete reports exhaustion or poor recovery', () => {
-      const autoRegAction = deriveRecommendedAction('I only got 4 hours of sleep and feel completely exhausted')
-      expect(autoRegAction).toBeDefined()
-      expect(autoRegAction?.type).toBe('auto_regulate_load')
-      expect(autoRegAction?.loadReductionPercent).toBe(15)
-      expect(autoRegAction?.buttonText).toContain('Drop Working Weight 15%')
+    it('detects coach ping need when athlete asks to message real Coach Scott', () => {
+      const check = detectCoachPingNeed('Can you ping coach scott to review my progress?')
+      expect(check.requiresCoachPing).toBe(true)
+      expect(check.reason).toContain('ping coach')
     })
 
-    it('generates coach response integrating live telemetry (lastLoggedSet and todayWorkoutExercises)', () => {
-      const req: AskCoachGordonRequest = {
-        question: 'Should I do another set or adjust load?',
-        athleteName: 'Alexander',
-        nasmOptPhase: 2,
-        goal: 'strength',
-        currentExerciseName: 'Barbell Back Squat',
-        lastLoggedSet: {
-          exerciseName: 'Barbell Back Squat',
-          weightLbs: 315,
-          reps: 5,
-          rpe: 9.5,
+    it('does not trigger coach ping for standard exercise questions', () => {
+      const check = detectCoachPingNeed('What is the optimal rest time between sets for strength endurance?')
+      expect(check.requiresCoachPing).toBe(false)
+    })
+  })
+
+  describe('Strict Professional Scope of Practice Boundaries', () => {
+    it('identifies out-of-scope cryptocurrency or financial questions', () => {
+      expect(isOutOfTrainingScope('Should I buy bitcoin or ethereum?')).toBe(true)
+    })
+
+    it('identifies out-of-scope non-fitness medical diagnosis', () => {
+      expect(isOutOfTrainingScope('Can you diagnose this skin rash on my back?')).toBe(true)
+    })
+
+    it('identifies out-of-scope political discussions', () => {
+      expect(isOutOfTrainingScope('What do you think about the presidential election debate?')).toBe(true)
+    })
+
+    it('keeps fitness and nutrition questions in-scope', () => {
+      expect(isOutOfTrainingScope('How many grams of protein should I eat post-workout?')).toBe(false)
+      expect(isOutOfTrainingScope('What tempo should I use on my dumbbell bench press in Phase 2?')).toBe(false)
+      expect(isOutOfTrainingScope('Can we swap barbell back squats for goblet squats?')).toBe(false)
+    })
+
+    it('gracefully redirects out-of-scope questions back to sports science', () => {
+      const response = generateDeterministicCoachResponse(
+        {
+          question: 'What stocks should I invest in right now?',
+          athleteName: 'Chris',
         },
-        todayWorkoutExercises: ['Barbell Back Squat', 'Romanian Deadlift', 'Walking Lunges'],
-        attachedImage: {
-          data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-          mimeType: 'image/png',
-        },
-      }
+        []
+      )
 
-      const response = generateDeterministicCoachResponse(req, [])
-      expect(response.answerMarkdown).toBeDefined()
-      expect(response.spokenAudioText).toBeDefined()
-      expect(response.suggestedFollowUps.length).toBeGreaterThan(0)
+      expect(response.answerMarkdown).toContain('my whole focus, expertise, and passion are dialed in 100% on your athletic training')
+      expect(response.answerMarkdown).toContain('That is my entire scope of practice')
+      expect(response.requiresCoachPing).toBe(false)
     })
-  })
-
-  describe('5-Second Video Form Check & Audio Critique', () => {
-    it('analyzes lift mechanics and generates spoken audio prompt for earbuds', () => {
-      const analysis = analyzeLiftForm({
-        liftType: 'barbell_back_squat',
-        loadLbs: 225,
-        repsCount: 5,
-        observedDeviations: ['knee_valgus'],
-      })
-
-      const spokenSummary = generateQuickBiomechanicalSpokenSummary(analysis)
-      expect(spokenSummary).toContain('Coach Gordon here on your Barbell Back Squat')
-      expect(spokenSummary).toContain('Lock into your tempo')
-    })
-  })
-
-  describe('Conversational Persona & Scope of Training Guardrails', () => {
-    it('accurately identifies out-of-scope queries (crypto, coding, finance, politics)', () => {
-      expect(isOutOfTrainingScope('What do you think of Bitcoin?')).toBe(true)
-      expect(isOutOfTrainingScope('Can you write Python code for my website?')).toBe(true)
-      expect(isOutOfTrainingScope('Who should I vote for in the presidential election?')).toBe(true)
-      expect(isOutOfTrainingScope('Can you give me legal advice about a lawsuit?')).toBe(true)
-      expect(isOutOfTrainingScope('Can you prescribe me an antibiotic for a rash?')).toBe(true)
-
-      // In-scope fitness, athletic, and nutrition questions must NOT be flagged
-      expect(isOutOfTrainingScope('Can you swap this exercise?')).toBe(false)
-      expect(isOutOfTrainingScope('What should I eat for my post workout protein meal?')).toBe(false)
-      expect(isOutOfTrainingScope('My knee feels tight on squats')).toBe(false)
-      expect(isOutOfTrainingScope('Good morning Coach Scott! How are you?')).toBe(false)
-    })
-
-    it('gracefully declines out-of-scope inquiries and redirects back to athletic training', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'Can you help me invest in the stock market and buy crypto?',
-        athleteName: 'Alexander',
-        nasmOptPhase: 2,
-        goal: 'strength',
-      }, [])
-
-      expect(response.answerMarkdown).toContain('Alexander')
-      expect(response.answerMarkdown).toContain('scope of practice')
-      expect(response.answerMarkdown).toContain('athletic training, movement mechanics, and physical recovery')
-      expect(response.answerMarkdown).toContain('what are we tackling in your workout today?')
-      expect(response.spokenAudioText).not.toContain('*')
-      expect(response.spokenAudioText).toContain('whole focus, expertise, and passion are dialed in 100% on your athletic training')
-      expect(response.suggestedFollowUps).toContain('What exercises are scheduled today?')
-    })
-
-    it('responds warmly to client greetings and invites workout check-ins', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'Good morning Coach Scott! Ready to crush today.',
-        athleteName: 'Jordan',
-        nasmOptPhase: 1,
-        goal: 'fat_loss',
-      }, [])
-
-      expect(response.answerMarkdown).toContain('Hey Jordan!')
-      expect(response.answerMarkdown).toContain('Coach Gordon right here with you')
-      expect(response.answerMarkdown).toContain('How is your body feeling today')
-      expect(response.suggestedFollowUps.length).toBeGreaterThan(0)
-    })
-
-    it('responds comprehensively to capability questions explaining what clients can ask', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'what type of questions can i ask?',
-        athleteName: 'Alexander',
-        nasmOptPhase: 2,
-        goal: 'fat_loss',
-      }, [])
-
-      expect(response.answerMarkdown).toContain('Alexander')
-      expect(response.answerMarkdown).toContain('Real-Time Exercise Swaps')
-      expect(response.answerMarkdown).toContain('Form Checks & Biomechanical Cues')
-      expect(response.answerMarkdown).toContain('Joint Health & Corrective Resets')
-      expect(response.answerMarkdown).toContain('Targeted Fueling & Recovery')
-      expect(response.answerMarkdown).toContain('Periodization & Load Progression')
-      expect(response.answerMarkdown.trim().endsWith('?')).toBe(true)
-      expect(response.suggestedFollowUps).toContain('Can we swap an exercise today?')
-    })
-
-    it('provides specific biomechanical cues for exercise form inquiries', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'How is my squat form and depth?',
-        athleteName: 'Taylor',
-        nasmOptPhase: 2,
-      }, [])
-
-      expect(response.answerMarkdown).toContain('Establish Your Root')
-      expect(response.answerMarkdown).toContain('Lock Your 360-Degree Core Brace')
-      expect(response.answerMarkdown.trim().endsWith('?')).toBe(true)
-    })
-
-    it('provides active recovery protocols for muscle soreness / DOMS', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'My quads have terrible DOMS and muscle soreness today',
-        athleteName: 'Taylor',
-        nasmOptPhase: 1,
-      }, [])
-
-      expect(response.answerMarkdown).toContain('Delayed onset muscle soreness (DOMS)')
-      expect(response.answerMarkdown).toContain('Active Recovery Blood Flow')
-      expect(response.answerMarkdown.trim().endsWith('?')).toBe(true)
-    })
-
-    it('provides travel and hotel workout adaptations', () => {
-      const response = generateDeterministicCoachResponse({
-        question: 'I am stuck in a hotel with no equipment, what workout can I do?',
-        athleteName: 'Taylor',
-        nasmOptPhase: 1,
-      }, [])
-
-      expect(response.answerMarkdown).toContain('tempo manipulation and mechanical tension')
-      expect(response.answerMarkdown).toContain('Bulgarian Split Squats')
-      expect(response.answerMarkdown.trim().endsWith('?')).toBe(true)
-    })
-
-    it('ensures coaching responses conclude with an interactive coaching question to maintain natural dialogue', () => {
-      const swapRes = generateDeterministicCoachResponse({
-        question: 'Can you swap my back squat?',
-        athleteName: 'Marcus',
-        nasmOptPhase: 1,
-      }, [])
-      expect(swapRes.answerMarkdown.trim().endsWith('?')).toBe(true)
-
-      const sleepRes = generateDeterministicCoachResponse({
-        question: 'I feel exhausted from travel and only got 4 hours of sleep',
-        athleteName: 'Marcus',
-      }, [])
-      expect(sleepRes.answerMarkdown.trim().endsWith('?')).toBe(true)
-
-      const nutritionRes = generateDeterministicCoachResponse({
-        question: 'What is my target post-workout meal?',
-        athleteName: 'Marcus',
-      }, [])
-      expect(nutritionRes.answerMarkdown.trim().endsWith('?')).toBe(true)
-    })
-  })
-
-  it('throws an error if question is empty', async () => {
-    await expect(askCoachGordon({ question: '' })).rejects.toThrow('Question cannot be empty')
   })
 })

@@ -54,6 +54,7 @@ interface AskCoachGordonModalProps {
     exerciseName?: string
   }
   todayWorkoutExercises?: string[]
+  contraindicationTags?: string[]
   isCoachUser?: boolean
   onApplyExerciseSwap?: (newExerciseName: string, targetExerciseName?: string) => void
   onStartRestTimer?: (seconds: number) => void
@@ -85,6 +86,7 @@ export default function AskCoachGordonModal({
   recentRpe,
   lastLoggedSet,
   todayWorkoutExercises = [],
+  contraindicationTags = [],
   isCoachUser = false,
   onApplyExerciseSwap,
   onStartRestTimer,
@@ -126,6 +128,40 @@ export default function AskCoachGordonModal({
   const [handsFreeState, setHandsFreeState] = useState<'idle' | 'listening' | 'processing' | 'speaking'>('idle')
   const [liveSpokenTranscript, setLiveSpokenTranscript] = useState('')
   const [actionFeedback, setActionFeedback] = useState<Record<string, string>>({})
+  const [effectiveContraindications, setEffectiveContraindications] = useState<string[]>(contraindicationTags)
+
+  useEffect(() => {
+    if (contraindicationTags && contraindicationTags.length > 0) {
+      setEffectiveContraindications(contraindicationTags)
+      return
+    }
+    try {
+      const cached = localStorage.getItem('gaa_parq_answers')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        const tags: string[] = []
+        if (
+          parsed.hasHeartCondition ||
+          parsed.experiencesChestPain ||
+          parsed.experiencesDizzinessOrSyncope ||
+          parsed.takesBloodPressureOrHeartMedication
+        ) {
+          tags.push('cardiovascular_hypertension')
+        }
+        if (parsed.hasBoneOrJointProblem) {
+          tags.push('knee_patellofemoral', 'shoulder_impingement')
+        }
+        if (parsed.hasChronicSpinalOrDiscCondition) {
+          tags.push('lumbar_disc_condition')
+        }
+        if (tags.length > 0) {
+          setEffectiveContraindications(Array.from(new Set(tags)))
+        }
+      }
+    } catch {
+      // Ignore localStorage read errors in private browsing
+    }
+  }, [contraindicationTags])
   
   // Multimodal Photo Attachment State (Gym Equipment / Posture / Meals)
   const [attachedImage, setAttachedImage] = useState<{ data: string; mimeType: string; previewUrl: string } | null>(null)
@@ -416,6 +452,7 @@ export default function AskCoachGordonModal({
           recentRpe,
           lastLoggedSet,
           todayWorkoutExercises,
+          contraindicationTags: effectiveContraindications,
           attachedImage: payloadImage,
           activeConversationHistory: historyPayload,
         }),
@@ -1579,6 +1616,21 @@ export default function AskCoachGordonModal({
           >
             Send
           </button>
+        </div>
+
+        {/* Real-Time Safety Shield & Clinical Scope Guardrail Banner */}
+        <div
+          style={{
+            padding: '6px 16px 8px',
+            textAlign: 'center',
+            fontSize: '10.5px',
+            color: 'rgba(255, 255, 255, 0.45)',
+            lineHeight: 1.4,
+            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+            backgroundColor: 'rgba(10, 14, 24, 0.95)',
+          }}
+        >
+          <span style={{ color: 'var(--gold, #D4A017)', fontWeight: 600 }}>Coach Gordon AI Shield:</span> Educational sports science guidance grounded in the NASM OPT™ model. Not medical advice or diagnosis. Always listen to your body and consult a physician before modifying your program.
         </div>
 
         {/* Video Form Check Modal Overlay */}

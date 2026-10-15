@@ -41,6 +41,7 @@ export interface AskCoachGordonRequest {
     exerciseName?: string
   }
   todayWorkoutExercises?: string[]
+  contraindicationTags?: string[]
   attachedImage?: {
     data: string
     mimeType: string
@@ -150,7 +151,7 @@ export function evaluateClinicalUrgencyTriage(question: string): ClinicalTriageE
     has('cauda equina', 'numbness in groin', 'numb groin', 'lost bowel control', 'lost bladder control') ||
     (has('legs') && has('gave out', 'give out', 'can\'t feel', 'cant feel')) ||
     // Acute Traumatic Trauma / Dropped Loads
-    (has('neck') && has('barbell', 'bar', 'weight', 'dropped', 'pinned')) ||
+    (has('neck') && has('barbell', 'bar', 'weight') && has('dropped', 'pinned', 'fell on', 'landed on', 'crushed', 'trapped')) ||
     (has('dropped') && (has('plate', 'dumbbell') && has('foot', 'head', 'face', 'neck', 'chest'))) ||
     has('bone sticking out', 'bone broke through', 'compound fracture', 'open fracture', 'crushed throat') ||
     (has('dislocated') && has('shoulder', 'joint', 'elbow', 'hip', 'knee', 'can\'t move', 'cant move')) ||
@@ -236,16 +237,16 @@ export function isOutOfTrainingScope(question: string): boolean {
     'python', 'javascript', 'typescript', 'write code', 'debug code', 'programming',
     'react component', 'css selector', 'html tag', 'sql query',
     // Finance & Legal
-    'stock market', 'invest in stocks', 'buy shares', 'roth ira', '401k portfolio',
+    'stock', 'stocks', 'invest', 'investing', 'buy shares', 'roth ira', '401k',
     'legal advice', 'sue them', 'lawyer', 'attorney', 'lawsuit',
     // Politics & Government
-    'presidential election', 'democrat or republican', 'who should i vote for', 'congress bill', 'political candidate',
+    'presidential election', 'democrat', 'republican', 'who should i vote for', 'congress bill', 'political debate',
     // Auto & Trade
     'car repair', 'mechanic', 'fix my car', 'transmission fluid', 'spark plug', 'brake pads',
     // Relationship & Dating
     'relationship advice', 'dating advice', 'should i break up', 'marriage counseling',
     // Non-Fitness Medical & Pharmacological Prescriptions
-    'antibiotic for', 'diagnose my rash', 'prescribe me', 'skin infection',
+    'antibiotic', 'diagnose', 'skin rash', 'rash', 'dermatology', 'skin infection', 'prescribe me',
   ]
 
   return outOfScopePatterns.some(pattern => q.includes(pattern))

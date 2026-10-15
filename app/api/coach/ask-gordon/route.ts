@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { askCoachGordon, type AskCoachGordonRequest } from '@/lib/ask-coach-gordon'
+import { dispatchCoachSafetyAlert } from '@/lib/coach-safety-alerts'
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
       equipmentAccess: Array.isArray(body.equipmentAccess) ? body.equipmentAccess : undefined,
       cardioEquipmentAccess: Array.isArray(body.cardioEquipmentAccess) ? body.cardioEquipmentAccess : undefined,
       kineticCompensations: Array.isArray(body.kineticCompensations) ? body.kineticCompensations : undefined,
+      contraindicationTags: Array.isArray(body.contraindicationTags) ? body.contraindicationTags : undefined,
       recentReadinessScore: typeof body.recentReadinessScore === 'number' ? body.recentReadinessScore : undefined,
       recentSleepHours: typeof body.recentSleepHours === 'number' ? body.recentSleepHours : undefined,
       recentRpe: typeof body.recentRpe === 'number' ? body.recentRpe : undefined,
@@ -43,6 +45,16 @@ export async function POST(req: NextRequest) {
     }
 
     const response = await askCoachGordon(payload)
+
+    // Asynchronous Real-Time Safety & Liability Escalation
+    if (response.requiresCoachPing || response.isEmergency911) {
+      dispatchCoachSafetyAlert({
+        request: payload,
+        response,
+      }).catch(err => {
+        console.error('[AskCoachGordon API] Background safety alert dispatch failed:', err)
+      })
+    }
 
     return NextResponse.json({
       success: true,

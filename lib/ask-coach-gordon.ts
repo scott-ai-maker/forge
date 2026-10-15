@@ -10,6 +10,7 @@ import { queryNasmRagLibrary, type RagDocumentMetadata } from './nasm-rag-knowle
 import { sanitizeCoachSpeechText } from './coach-voice-synthesizer'
 import { getSmartSubstitutions } from './nasm-exercise-substitution'
 import { resolveExerciseVideoEmbed } from './nasm-exercise-video-catalog'
+import { CONTRAINDICATION_RULES, checkExerciseContraindications } from './liability-shield'
 import {
   type AskCoachGordonRequest,
   type AskCoachGordonResponse,
@@ -149,6 +150,7 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
     equipmentAccess = [],
     cardioEquipmentAccess = [],
     kineticCompensations = [],
+    contraindicationTags = [],
     recentReadinessScore = 80,
     recentSleepHours,
     recentRpe,
@@ -185,6 +187,29 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
     ? `\nRelevant Evidence-Based RAG Sources:\n${relevantDocs.map(d => `- [${d.category}] ${d.title}: ${d.summary} (Key concepts: ${d.keyConcepts.join(', ')})`).join('\n')}`
     : ''
 
+  let contraindicationsClause = ''
+  if (contraindicationTags && contraindicationTags.length > 0) {
+    const matchedRules = contraindicationTags
+      .map(tag => CONTRAINDICATION_RULES[tag])
+      .filter(Boolean)
+
+    if (matchedRules.length > 0) {
+      const summaries = matchedRules.map(r => {
+        const subs = Object.entries(r.prescribedSubstitutions)
+          .map(([orig, s]) => `${orig} -> substitute with ${s.replacement} (${s.rationale})`)
+          .join('; ')
+        return `- [${r.label}] Blacklisted Movements: ${r.blacklistedExercises.join(', ')}. Prescribed Substitutions: ${subs}. Guideline: ${r.generalGuideline}`
+      }).join('\n')
+
+      contraindicationsClause = `\n\nCRITICAL ORTHOPEDIC CONTRAINDICATIONS & BLACKLISTED MOVEMENTS (NON-NEGOTIABLE):
+The athlete has documented medical/orthopedic contraindications:
+${summaries}
+STRICT SAFETY MANDATE:
+- You must NEVER prescribe, cue, or endorse any blacklisted exercise under any circumstance.
+- If the athlete asks about performing a blacklisted exercise or an exercise that risks aggravating these conditions, immediately explain the joint risk, warn against performing it, and provide the exact prescribed substitution with biomechanical cues.`
+    }
+  }
+
   const lastSetClause = lastLoggedSet
     ? `\n- Last Logged Set: ${lastLoggedSet.exerciseName || currentExerciseName || 'Exercise'}: ${lastLoggedSet.weightLbs ? `${lastLoggedSet.weightLbs} lbs x ` : ''}${lastLoggedSet.reps ? `${lastLoggedSet.reps} reps` : ''}${lastLoggedSet.rpe !== undefined ? ` @ RPE ${lastLoggedSet.rpe}` : ''}`
     : ''
@@ -203,6 +228,7 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
 - Available Resistance Equipment: ${equipmentAccess.length > 0 ? equipmentAccess.join(', ') : 'Full Equipment Suite'}
 - Available Cardio Equipment: ${cardioEquipmentAccess.length > 0 ? cardioEquipmentAccess.join(', ') : 'Treadmill, Bike, Outdoor Walking/Running'}
 - Known Kinetic Compensations: ${kineticCompensations.length > 0 ? kineticCompensations.join(', ') : 'None Detected (Optimal Alignment)'}
+- Documented Contraindications: ${contraindicationTags.length > 0 ? contraindicationTags.join(', ') : 'None On File'}
 - CNS Readiness Score: ${recentReadinessScore}% (${recentReadinessScore >= 75 ? 'Green Light (High Output)' : 'Moderate / Manage Volume'})`
 
   const isOutOfScope = isOutOfTrainingScope(question)
@@ -215,7 +241,7 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
     ? `\nRecent Conversation History:\n${activeConversationHistory.slice(-8).map(h => `${h.role === 'user' ? 'Athlete' : 'Coach Gordon'}: ${h.text}`).join('\n')}`
     : ''
 
-  const fullPrompt = `${athleteContext}${ragContext}${scopeBoundaryDirective}${conversationHistoryContext}
+  const fullPrompt = `${athleteContext}${ragContext}${contraindicationsClause}${scopeBoundaryDirective}${conversationHistoryContext}
 
 Athlete's Question:
 "${question.trim()}"
@@ -249,7 +275,7 @@ Respond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon.
     }
 
     const currentParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [
-      { text: `${athleteContext}${ragContext}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going, and ensure every sentence and thought is fully completed without trailing off.` },
+      { text: `${athleteContext}${ragContext}${contraindicationsClause}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going, and ensure every sentence and thought is fully completed without trailing off.` },
     ]
 
     if (attachedImage?.data) {
@@ -359,7 +385,7 @@ export function generateDeterministicCoachResponse(
   request: AskCoachGordonRequest,
   docs: RagDocumentMetadata[]
 ): AskCoachGordonResponse {
-  const { question, goal = 'fat_loss', nasmOptPhase = 1, currentExerciseName } = request
+  const { question, goal = 'fat_loss', nasmOptPhase = 1, currentExerciseName, contraindicationTags = [] } = request
   const qLower = question.toLowerCase()
 
   // 1. Clinical Urgency & Scope of Practice Triage FIRST
@@ -381,6 +407,48 @@ export function generateDeterministicCoachResponse(
   let answerMarkdown = ''
   let spokenAudioText = ''
   const athleteGreeting = request.athleteName && request.athleteName !== 'Athlete' ? request.athleteName : 'team'
+
+  // 2. Biomechanical & Orthopedic Contraindication Interception
+  if (contraindicationTags.length > 0) {
+    let contraCheck = checkExerciseContraindications(question, contraindicationTags)
+    if (!contraCheck.isContraindicated && currentExerciseName) {
+      contraCheck = checkExerciseContraindications(currentExerciseName, contraindicationTags)
+    }
+
+    if (contraCheck.isContraindicated) {
+      const cleanReplacement = contraCheck.replacement?.split('(')[0].trim() || 'Safe Alternative'
+      answerMarkdown = `Hey ${athleteGreeting}, because you have a documented history or joint sensitivity with **${contraCheck.ruleLabel || 'this movement'}**, we need to protect your joint longevity and steer completely clear of that exercise right now.
+
+Our golden rule is always: **earn the right to add load by owning pain-free movement first**. We are substituting immediately with **${contraCheck.replacement}**.
+
+**Biomechanical Rationale:** ${contraCheck.rationale || 'This eliminates destructive joint shear forces while stimulating target muscle motor units safely.'}
+
+**Coaching Cue:** ${contraCheck.coachingCue || 'Control your tempo, brace your core, and maintain strict alignment.'}
+
+How does that feel on your body, and are you ready to lock into this safe movement alternative?`
+      spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
+
+      return {
+        answerMarkdown,
+        spokenAudioText,
+        relevantCurriculums: ['Corrective Exercise & Joint Longevity', 'Biomechanical Exercise Substitutions'],
+        recommendedAction: {
+          type: 'swap_exercise',
+          buttonText: `Swap to ${cleanReplacement}`,
+          targetExerciseName: cleanReplacement,
+          currentExerciseName: currentExerciseName || question,
+          reasoning: contraCheck.rationale,
+        },
+        suggestedFollowUps: [
+          `How to perform ${cleanReplacement}`,
+          'What equipment do I need for this swap?',
+          'Message Coach Scott Gordon directly',
+        ],
+        requiresCoachPing: false,
+        isEmergency911: false,
+      }
+    }
+  }
 
   // Out-of-Scope Detection (Strict Training Scope & RAG Boundary)
   if (isOutOfTrainingScope(question)) {
