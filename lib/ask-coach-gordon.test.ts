@@ -425,6 +425,60 @@ describe('Ask Coach Gordon Interactive Engine', () => {
       expect(response.suggestedFollowUps.length).toBeGreaterThan(0)
     })
 
+    it('responds comprehensively to capability questions explaining what clients can ask', () => {
+      const response = generateDeterministicCoachResponse({
+        question: 'what type of questions can i ask?',
+        athleteName: 'Alexander',
+        nasmOptPhase: 2,
+        goal: 'fat_loss',
+      }, [])
+
+      expect(response.answerMarkdown).toContain('Alexander')
+      expect(response.answerMarkdown).toContain('Real-Time Exercise Swaps')
+      expect(response.answerMarkdown).toContain('Form Checks & Biomechanical Cues')
+      expect(response.answerMarkdown).toContain('Joint Health & Corrective Resets')
+      expect(response.answerMarkdown).toContain('Targeted Fueling & Recovery')
+      expect(response.answerMarkdown).toContain('Periodization & Load Progression')
+      expect(response.answerMarkdown.trim().endsWith('?')).toBe(true)
+      expect(response.suggestedFollowUps).toContain('Can we swap an exercise today?')
+    })
+
+    it('provides specific biomechanical cues for exercise form inquiries', () => {
+      const response = generateDeterministicCoachResponse({
+        question: 'How is my squat form and depth?',
+        athleteName: 'Taylor',
+        nasmOptPhase: 2,
+      }, [])
+
+      expect(response.answerMarkdown).toContain('Establish Your Root')
+      expect(response.answerMarkdown).toContain('Lock Your 360-Degree Core Brace')
+      expect(response.answerMarkdown.trim().endsWith('?')).toBe(true)
+    })
+
+    it('provides active recovery protocols for muscle soreness / DOMS', () => {
+      const response = generateDeterministicCoachResponse({
+        question: 'My quads have terrible DOMS and muscle soreness today',
+        athleteName: 'Taylor',
+        nasmOptPhase: 1,
+      }, [])
+
+      expect(response.answerMarkdown).toContain('Delayed onset muscle soreness (DOMS)')
+      expect(response.answerMarkdown).toContain('Active Recovery Blood Flow')
+      expect(response.answerMarkdown.trim().endsWith('?')).toBe(true)
+    })
+
+    it('provides travel and hotel workout adaptations', () => {
+      const response = generateDeterministicCoachResponse({
+        question: 'I am stuck in a hotel with no equipment, what workout can I do?',
+        athleteName: 'Taylor',
+        nasmOptPhase: 1,
+      }, [])
+
+      expect(response.answerMarkdown).toContain('tempo manipulation and mechanical tension')
+      expect(response.answerMarkdown).toContain('Bulgarian Split Squats')
+      expect(response.answerMarkdown.trim().endsWith('?')).toBe(true)
+    })
+
     it('ensures coaching responses conclude with an interactive coaching question to maintain natural dialogue', () => {
       const swapRes = generateDeterministicCoachResponse({
         question: 'Can you swap my back squat?',

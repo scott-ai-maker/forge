@@ -227,12 +227,10 @@ Respond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon.
   if (apiKey) {
     const modelsToTry = [
       ...(process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : []),
-      'gemini-2.5-flash',
-      'gemini-2.5-pro',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro',
       'gemini-3.8-flash',
-      'gemini-3.7-flash',
+      'gemini-flash-latest',
+      'gemini-3.1-pro-preview',
+      'gemini-pro-latest',
     ]
 
     // Construct multi-turn message payload with optional multimodal image attachment
@@ -303,6 +301,9 @@ Respond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon.
               coachPingReason: pingCheck.reason,
             }
           }
+        } else {
+          const errBody = await res.text().catch(() => '')
+          console.warn(`[AskCoachGordon] Model ${model} returned HTTP ${res.status}:`, errBody.slice(0, 200))
         }
       } catch (err) {
         console.warn(`[AskCoachGordon] Model ${model} failed, attempting next model...`, err)
@@ -419,6 +420,47 @@ How is your body feeling today, and what are we focusing on for today's session?
     }
   }
 
+  // Questions regarding Coach Gordon capabilities, scope, and what can be asked
+  const isCapabilityInquiry =
+    qLower.includes('what type of question') ||
+    qLower.includes('what kind of question') ||
+    qLower.includes('what can i ask') ||
+    qLower.includes('what can you do') ||
+    qLower.includes('what do you do') ||
+    qLower.includes('how can you help') ||
+    qLower.includes('what are your capabilities') ||
+    qLower.includes('what do you help with') ||
+    qLower.includes('what should i ask') ||
+    qLower.includes('what can you help') ||
+    qLower.includes('help me with') ||
+    qLower.includes('what questions') ||
+    qLower.trim() === 'help' ||
+    qLower.trim() === 'capabilities' ||
+    qLower.trim() === 'scope'
+
+  if (isCapabilityInquiry) {
+    answerMarkdown = `I love that question, ${athleteGreeting}! Think of me as your dedicated personal trainer standing right beside you on the gym floor or talking right through your AirPods between sets. My entire focus and expertise are dialed 100% into evidence-based athletic training, biomechanics, exercise nutrition, and workout recovery.
+
+Here is what you can ask me anytime during your training:
+1. **Real-Time Exercise Swaps**: Gym busy or a movement feels awkward on your joints? Ask me for an instant dumbbell, cable, or bodyweight alternative tailored to your current phase.
+2. **Form Checks & Biomechanical Cues**: Wondering about bar path, knee tracking, squat depth, elbow flare, or tempo control? I'll give you crisp, actionable cues in plain English.
+3. **Joint Health & Corrective Resets**: Feeling tightness in your hips, lower back, or shoulders? We'll run a quick 3-minute mobility and activation reset so you can train pain-free.
+4. **Targeted Fueling & Recovery**: Ask about 30–40g protein pacing, pre-workout energy, post-workout recovery meals, hydration, and sleep hygiene.
+5. **Periodization & Load Progression**: Know when you've earned the right to add load and how to structure your sets, reps, and RPE.
+
+What are we working on in the gym today—do you need a quick form check, an exercise substitution, or a look at your post-workout fueling?`
+    spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
+
+    return {
+      answerMarkdown,
+      spokenAudioText,
+      relevantCurriculums: ['Scope of Practice & Athletic Training Curriculum', 'NASM OPT™ Integrated Training Model'],
+      suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
+      requiresCoachPing: false,
+      isEmergency911: false,
+    }
+  }
+
   if (qLower.includes('swap') || qLower.includes('replace') || qLower.includes('substitute')) {
     answerMarkdown = `Hey, no problem at all! When equipment is limited or you need to switch things up, we don't let it slow your momentum down. If you can't do **${currentExerciseName || 'your current exercise'}** today, grab a set of dumbbells or even a resistance band and let's substitute with **DB Goblet Squats with a 2-second pause at the bottom**.
 
@@ -484,6 +526,15 @@ Stay mindful of your form, own your tempo, and let's get after it! How does the 
 Right now after your workout, your muscles are primed for recovery. I want you to aim for **30 to 40 grams of high-quality protein**—chicken breast, wild salmon, egg whites, or a clean whey isolate shake—paired with some complex carbohydrates like sweet potatoes, jasmine rice, or oatmeal to replenish your glycogen stores.
 
 Drink a tall 16 to 24 ounce glass of water with some electrolytes as well to restore intra-cellular hydration. Fuel your body well, enjoy your meal, and let's keep stacking these wins! What are you planning on having for your post-workout meal today?`
+  } else if (qLower.includes('doms') || qLower.includes('soreness') || qLower.includes('delayed onset') || (qLower.includes('sore') && !qLower.includes('throat') && !qLower.includes('back') && !qLower.includes('knee') && !qLower.includes('shoulder'))) {
+    answerMarkdown = `Delayed onset muscle soreness (DOMS) is completely normal when introducing new training stimuli or eccentric overload—it simply reflects microscopic muscular remodeling, not tissue damage.
+
+Here is your optimal recovery protocol:
+1. **Active Recovery Blood Flow**: Take a 20-minute brisk walk or light spin on the bike. Getting fresh, oxygenated blood into the tissue clears metabolic byproducts twice as fast as sitting still.
+2. **Protein & Intra-Cellular Hydration**: Hit **30 to 40 grams of high-quality protein** every 3 to 4 hours and drink 20 ounces of water with electrolytes to restore fluid balance.
+3. **Contrast Shower or Gentle Foam Rolling**: Spend 60 seconds gently rolling the sore muscle bellies without aggressively mashing tight trigger points.
+
+As long as it's muscular soreness rather than sharp joint pain, you are safe to move. How are your energy levels today—are we doing active recovery or a scheduled training session?`
   } else if (qLower.includes('back') || qLower.includes('knee') || qLower.includes('shoulder') || qLower.includes('tight') || qLower.includes('pain') || qLower.includes('sore')) {
     answerMarkdown = `I'm glad you brought this up. We are training for the next 20 years, not just the next 20 minutes, so we never force a lift or sacrifice joint health for ego.
 
@@ -505,6 +556,52 @@ Stay tall, keep your posture upright, and log your duration when you finish. You
 Try hitting standing cable woodchops or rotational medicine ball scoop tosses. Focus on pushing hard into the ground through your back leg, pivoting your trail foot, and transferring that ground force right through your core.
 
 Give me 3 crisp sets of 8 reps per side with explosive intent, and let's build that rotational power! Do you have a cable stack or medicine balls available in your gym right now?`
+  } else if (qLower.includes('form') || qLower.includes('cue') || qLower.includes('technique') || qLower.includes('bar path') || qLower.includes('depth') || (qLower.includes('squat') && !qLower.includes('swap')) || (qLower.includes('deadlift') && !qLower.includes('swap')) || qLower.includes('bench press') || qLower.includes('overhead press')) {
+    answerMarkdown = `When dialing in your lifting technique, quality always precedes load.
+
+Here are the master biomechanical cues to lock in right now:
+1. **Establish Your Root**: Drive three points of contact through your feet (heel, base of big toe, base of pinky toe) to create an unshakeable ground foundation.
+2. **Lock Your 360-Degree Core Brace**: Inhale diaphragmatically into your ribs and lock your core as if bracing for a light punch—protect your lumbar spine from start to finish.
+3. **Control Your Descent**: Own the eccentric phase with a deliberate **${nasmOptPhase === 1 ? '4-second descent' : '2-second descent'}**. Never dive-bomb into the bottom of a lift.
+4. **Complete The Rep Without Hyperextension**: Finish tall at the top by squeezing your glutes and quads, without arching or leaning backward.
+
+Earn the right to add weight by making every single repetition look identical. How did that last set feel through your joints?`
+  } else if (qLower.includes('warmup') || qLower.includes('warm up') || qLower.includes('mobility') || qLower.includes('foam roll') || qLower.includes('stretch')) {
+    answerMarkdown = `A smart warmup isn't just about breaking a sweat—it prepares your nervous system and primes joint mechanics for maximum output.
+
+Here is our NASM 3-Step Dynamic Prep:
+1. **Inhibit (1-2 mins)**: Use a foam roller on overactive areas like your calves, lats, and hip flexors for 30 to 60 seconds per spot.
+2. **Lengthen (2 mins)**: Perform dynamic mobility like the World's Greatest Stretch, kneeling hip flexor stretches, and cat-camels.
+3. **Activate (2 mins)**: Wake up your stabilizing muscles with 10 bodyweight glute bridges, band pull-aparts, and prone cobras to lock your alignment before touching a barbell.
+
+Once your core temperature is up and your joints glide smoothly, you are primed to lift. What is the first exercise on your schedule today?`
+  } else if (qLower.includes('hotel') || qLower.includes('travel') || qLower.includes('home workout') || qLower.includes('no gym') || qLower.includes('bands') || qLower.includes('bodyweight') || qLower.includes('no equipment')) {
+    answerMarkdown = `Traveling or away from your home gym? We don't skip a beat. The secret to keeping your gains on the road is **tempo manipulation and mechanical tension**.
+
+Here is how we match your Phase ${nasmOptPhase} stimulus with zero equipment or hotel dumbbells:
+1. **Slow Eccentrics (4 seconds down)**: Take 4 seconds to lower on bodyweight pushups, squats, and lunges. This triples the time-under-tension and matches the muscle recruitment of heavy weights.
+2. **1.5-Rep Bulgarian Split Squats**: Drop down, come halfway up, drop back to the bottom, and drive to the top. Your quads and glutes will be fully fatigued with bodyweight alone.
+3. **Antagonistic Pairing**: Alternate an upper-body push (tempo pushups) with a lower-body movement (glute bridges or split squats) to keep your heart rate elevated and burn maximum calories.
+
+Stay consistent, stay hydrated, and let's get this travel session logged! What equipment do you have access to in your hotel or room?`
+  } else if (qLower.includes('plateau') || qLower.includes('stuck') || qLower.includes('progression') || qLower.includes('heavier') || qLower.includes('overload') || qLower.includes('add weight') || qLower.includes('increase weight')) {
+    answerMarkdown = `Hitting a plateau is a natural signal from your body that it has adapted to your current training variables—it just means it's time to apply smart sports science!
+
+Here is our progressive overload checklist:
+1. **The 2-For-2 Rule**: If you can complete 2 extra repetitions on your final set for 2 consecutive workouts with immaculate technique, you've earned the right to increase load by 2.5% to 5%.
+2. **Progress Tempo Before Load**: Before jumping up in weight, try slowing down your eccentric phase (e.g. going from a 2-second to a 4-second descent) or adding a 1-second pause at the bottom.
+3. **Check Your Recovery & Fueling**: Are you hitting at least 7.5 hours of sleep and 30–40g of protein per meal? You cannot out-train under-recovery.
+
+Tell me which lift feels stuck—is it your squat, bench press, deadlift, or something else?`
+  } else if (qLower.includes('core') || qLower.includes('abs') || qLower.includes('brace') || qLower.includes('bracing') || qLower.includes('breathing') || qLower.includes('valsalva')) {
+    answerMarkdown = `Your core is the power-transfer bridge between your lower body and upper body. If your core leaks energy, your lifts suffer and your lumbar spine takes unnecessary shear stress.
+
+Here is how we lock down a true 360-degree canister brace:
+1. **The Navel Draw-In**: Gently draw your belly button inward toward your spine to engage the deep transverse abdominis.
+2. **The 360-Degree Expansion**: Inhale diaphragmatically into your lower abdomen, flanks, and lower back—think of expanding an inner tube around your waist.
+3. **Brace Down**: Contract your external obliques and rectus abdominis as if preparing to take a light jab to the stomach. Keep your ribcage pinned down over your pelvis.
+
+Lock this canister brace in before every single repetition, own your spinal alignment, and let me know: do you feel this brace holding strong throughout your sets?`
   } else {
     answerMarkdown = `I'm right here in your corner. In **Phase ${nasmOptPhase} (${goal.replace('_', ' ')})**, our main focus is dialing in movement quality and progressive adaptation.
 
@@ -628,6 +725,47 @@ function deriveSuggestedFollowUps(question: string, goal: string, optPhase: numb
       'What exercises are scheduled today?',
       'How should we adjust today’s workout?',
       'Can you check my recovery score?',
+    ]
+  }
+
+  if (
+    qLower.includes('what type of question') ||
+    qLower.includes('what kind of question') ||
+    qLower.includes('what can i ask') ||
+    qLower.includes('what can you do') ||
+    qLower.includes('what do you do') ||
+    qLower.includes('how can you help') ||
+    qLower.includes('capabilities') ||
+    qLower.includes('what do you help with')
+  ) {
+    return [
+      'Can we swap an exercise today?',
+      'How do I dial in my lifting tempo?',
+      'What should I eat after my workout?',
+    ]
+  }
+
+  if (qLower.includes('form') || qLower.includes('cue') || qLower.includes('technique') || qLower.includes('squat')) {
+    return [
+      'What should my tempo be on this lift?',
+      'How do I keep my knees tracking over my toes?',
+      'Can we review my core bracing cues?',
+    ]
+  }
+
+  if (qLower.includes('sore') || qLower.includes('doms') || qLower.includes('recovery')) {
+    return [
+      'Should I do active recovery or rest today?',
+      'What dynamic stretches help sore muscles?',
+      'What should I eat to speed up recovery?',
+    ]
+  }
+
+  if (qLower.includes('hotel') || qLower.includes('travel') || qLower.includes('home')) {
+    return [
+      'Show me a 20-minute bodyweight express workout',
+      'How do I swap dumbbell exercises with resistance bands?',
+      'What dynamic warmup can I do in a hotel room?',
     ]
   }
 
