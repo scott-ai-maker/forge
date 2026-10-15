@@ -1146,7 +1146,7 @@ export default function FitnessTrackerClient({
           {
             name: newExerciseName,
             category: detectMovementPattern(newExerciseName),
-            reasoning: reasoning || 'Recommended by Coach Scott Gordon AI for optimal biomechanics',
+            reasoning: reasoning || 'Recommended by Coach Gordon AI for optimal biomechanics',
             benefitTag: 'Machine / Cable Swap',
             prescribedTempo: prescribedTempo || '2-0-2-0',
             equipmentRequired: 'Dumbbells / Cables / Bodyweight',
@@ -2051,7 +2051,7 @@ export default function FitnessTrackerClient({
                 </span>
               </div>
               <div style={{ fontSize: 12.5, color: '#E2E8F0', marginTop: 2 }}>
-                {plan?.plan_json?.certifiedBy || 'Coach Scott Gordon (NASM Master Trainer)'} certified this program for biomechanical safety, volume tolerance, and kinetic chain alignment.
+                {plan?.plan_json?.certifiedBy || 'Coach Gordon (NASM Master Trainer)'} certified this program for biomechanical safety, volume tolerance, and kinetic chain alignment.
               </div>
             </div>
           </div>
@@ -2093,7 +2093,7 @@ export default function FitnessTrackerClient({
                 </span>
               </div>
               <div style={{ fontSize: 12.5, color: '#E2E8F0', marginTop: 2 }}>
-                Coach Scott Gordon is reviewing this program in his evening advisory window to certify exercise selection, kinetic chain safety, and load progression before full clearance.
+                Coach Gordon is reviewing this program in his evening advisory window to certify exercise selection, kinetic chain safety, and load progression before full clearance.
               </div>
             </div>
           </div>
@@ -2784,8 +2784,8 @@ export default function FitnessTrackerClient({
                   }}
                 >
                   {!profile?.onboarding_completed_at
-                    ? 'Before Coach Scott Gordon designs your individualized training protocol, please complete your PAR-Q health questionnaire, physical measurements, and equipment clearance.'
-                    : 'Your PAR-Q and intake assessment are on file. Coach Scott Gordon is preparing your periodized NASM OPT™ training macrocycle. You will be notified as soon as your protocol is deployed.'}
+                    ? 'Before Coach Gordon designs your individualized training protocol, please complete your PAR-Q health questionnaire, physical measurements, and equipment clearance.'
+                    : 'Your PAR-Q and intake assessment are on file. Coach Gordon is preparing your periodized NASM OPT™ training macrocycle. You will be notified as soon as your protocol is deployed.'}
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 6 }}>

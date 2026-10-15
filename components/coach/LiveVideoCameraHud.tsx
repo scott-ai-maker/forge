@@ -200,7 +200,7 @@ export default function LiveVideoCameraHud({
 
   // ── Still Camera & Auto-Zoom Guidance State ──
   const [showStillCameraModal, setShowStillCameraModal] = useState(false)
-  const [stillCameraRequestedBy, setStillCameraRequestedBy] = useState('Coach Scott Gordon')
+  const [stillCameraRequestedBy, setStillCameraRequestedBy] = useState('Coach Gordon')
   const signalingChannelRef = useRef<RealtimeChannel | null>(null)
 
   // ── Reference Technique Model Comparison & Visual Guide ──
@@ -470,7 +470,7 @@ export default function LiveVideoCameraHud({
       })
       .on('broadcast', { event: STILL_CAMERA_REQUEST_EVENT }, ({ payload }) => {
         const req = payload as StillCameraRequestPayload
-        setStillCameraRequestedBy(req?.coachName || 'Coach Scott Gordon')
+        setStillCameraRequestedBy(req?.coachName || 'Coach Gordon')
         setShowStillCameraModal(true)
       })
       .subscribe(async status => {
@@ -690,7 +690,7 @@ export default function LiveVideoCameraHud({
         type: 'broadcast',
         event: STILL_CAMERA_REQUEST_EVENT,
         payload: {
-          coachName: coachName || 'Coach Scott Gordon',
+          coachName: coachName || 'Coach Gordon',
           timestamp: Date.now(),
           reason: 'Fixed frame required for kinetic alignment and NASM movement analysis',
         } as StillCameraRequestPayload,

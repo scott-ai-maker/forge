@@ -110,7 +110,7 @@ const sequenceTemplates = [
         '',
         'Core Membership: $19.99/month or $149/year, with a 7-day free trial. Includes automated periodization, 1RM telemetry, and a 3D AI posture audit.',
         'Pro Athlete: $49/month. Includes Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.',
-        'Transformation Direct: $199/month. Includes quarterly asynchronous video critiques with Coach Scott Gordon.',
+        'Transformation Direct: $199/month. Includes quarterly asynchronous video critiques with Coach Gordon.',
         '',
         'Memberships renew automatically until cancelled.',
         '',
@@ -120,7 +120,7 @@ const sequenceTemplates = [
 <ol>
   <li><strong>Core Membership — $19.99/month or $149/year:</strong> 7-day free trial, automated periodization, 1RM telemetry, and a 3D AI posture audit.</li>
   <li><strong>Pro Athlete — $49/month:</strong> Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.</li>
-  <li><strong>Transformation Direct — $199/month:</strong> Quarterly asynchronous video critiques with Coach Scott Gordon.</li>
+  <li><strong>Transformation Direct — $199/month:</strong> Quarterly asynchronous video critiques with Coach Gordon.</li>
 </ol>
 <p>Memberships renew automatically until cancelled.</p>
 <p><a href="${baseUrl}/packages">Compare memberships</a></p>`,
@@ -478,7 +478,7 @@ export async function triggerLeadEmailAutomation(
           'If you have immediate questions or specific requirements, you may reply directly to this transmission.',
           '',
           'In health and athletic excellence,',
-          'Scott Gordon, Founder & Performance Director',
+          'Coach Gordon, Head Coach & Founder',
           'Forge Athletic · 75 Arlington St, Boston, MA',
         ].join('\n'),
         html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #080E18; color: #E2E8F0; padding: 32px 24px; border: 1px solid rgba(197, 160, 89, 0.35); border-radius: 8px;">
@@ -515,7 +515,7 @@ export async function triggerLeadEmailAutomation(
   <p style="font-size: 13px; line-height: 1.6; margin-top: 24px; color: #94A3B8;">If you have immediate orthopedic questions or specific scheduling requirements, you may reply directly to this transmission.</p>
 
   <div style="margin-top: 28px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-    <p style="margin: 0; font-size: 13px; font-weight: 600; color: #FFFFFF;">Scott Gordon</p>
+    <p style="margin: 0; font-size: 13px; font-weight: 600; color: #FFFFFF;">Coach Gordon</p>
     <p style="margin: 2px 0 0; font-size: 11px; color: #F59E0B;">Founder · Forge Athletic</p>
   </div>
 </div>`,
@@ -528,14 +528,14 @@ export async function triggerLeadEmailAutomation(
           '',
           'Thank you for submitting your training intake with Forge Athletic.',
           `Recommended starting point: ${input.recommendedTier ?? 'Core Membership'}.`,
-          'Coach Scott Gordon will review your goals and training background.',
+          'Coach Gordon will review your goals and training background.',
           '',
           `Explore Forge Athletic memberships: ${baseUrl}/packages`,
         ].join('\n'),
         html: `<p>Hi ${name},</p>
 <p>Thank you for submitting your training intake with Forge Athletic.</p>
 <p>Recommended starting point: <strong>${input.recommendedTier ?? 'Core Membership'}</strong>.</p>
-<p>Coach Scott Gordon will review your goals and training background.</p>
+<p>Coach Gordon will review your goals and training background.</p>
 <p><a href="${baseUrl}/packages">Explore Forge Athletic memberships</a></p>`,
       }
     } else {

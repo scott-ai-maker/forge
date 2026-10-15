@@ -195,7 +195,7 @@ export function getProposalDeliverablesList(seats: number, cadence: CorporateCad
       number: '02',
       title: 'Monthly live team workshop',
       headline: 'Movement, ergonomics, and stress management',
-      details: 'Coach Scott Gordon, a NASM-certified trainer, leads a 60-minute virtual or on-site workshop on movement, desk ergonomics, and recovery.',
+      details: 'Coach Gordon, a NASM-certified trainer, leads a 60-minute virtual or on-site workshop on movement, desk ergonomics, and recovery.',
       cadence: 'Monthly',
     },
     {

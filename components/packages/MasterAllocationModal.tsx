@@ -168,7 +168,7 @@ export default function MasterAllocationModal({
               Another option may suit you better
             </h3>
             <p style={{ color: 'var(--gray)', fontSize: 14.5, lineHeight: 1.7, maxWidth: 480, margin: '0 auto 24px' }}>
-              <strong>Coach Support ($199/month)</strong> includes quarterly video reviews with Coach Scott Gordon.
+              <strong>Coach Support ($199/month)</strong> includes quarterly video reviews with Coach Gordon.
             </p>
             <p style={{ color: 'var(--gold-lt)', fontSize: 14, lineHeight: 1.6, maxWidth: 460, margin: '0 auto 28px' }}>
               You can start with Core for a personalized training plan, or choose Plus for audio-guided sessions, recovery insights, nutrition planning, and travel workout tools.
@@ -414,7 +414,7 @@ export default function MasterAllocationModal({
                   4. Monthly budget *
                 </label>
                 <p style={{ fontSize: 12, color: 'var(--gray)', margin: '0 0 8px' }}>
-                  Coach Support is $199/month and includes quarterly video reviews with Coach Scott Gordon.
+                  Coach Support is $199/month and includes quarterly video reviews with Coach Gordon.
                 </p>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#FFFFFF', cursor: 'pointer' }}>

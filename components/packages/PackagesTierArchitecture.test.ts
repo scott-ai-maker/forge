@@ -60,7 +60,7 @@ describe('Commercial Retainers & Tier 3 Architecture Enforcements', () => {
     expect(core?.features).toContain('Workout, strength, and personal-record tracking')
     expect(pro?.features).toContain('Audio-guided training sessions')
     expect(pro?.features).toContain('Weekly progress summaries')
-    expect(transformation?.features).toContain('Quarterly video reviews with Coach Scott Gordon')
+    expect(transformation?.features).toContain('Quarterly video reviews with Coach Gordon')
     expect(transformation?.features).toContain('Direct messaging with your coach')
   })
 

@@ -267,7 +267,7 @@ export default function CoachAiFastTrackOnboardingStudio({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-              AI Coach Scott Gordon • Rapid Onboarding Engine
+              AI Coach Gordon • Rapid Onboarding Engine
             </span>
             <span style={{ padding: '2px 8px', borderRadius: 4, background: 'rgba(212,160,23,0.2)', border: '1px solid var(--gold)', color: 'var(--gold-lt)', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <GaaIcon name="lightning" size={10} tone="gold" />
@@ -278,7 +278,7 @@ export default function CoachAiFastTrackOnboardingStudio({
             AI SCANNERS ➔ PERIODIZATION ➔ PROGRAM DESIGN CONTINUUM
           </h2>
           <p style={{ color: 'var(--gray)', fontSize: 13, margin: '6px 0 0', maxWidth: 880, lineHeight: 1.5 }}>
-            Exclusive dual-scanner flow: AI Posture &amp; OHSA Scanner + AI DEXA Body Comp Scanner. AI Coach Scott Gordon synthesizes both scans to recommend 12-week OPT™ periodization and generate bespoke programs with integrated 4-phase CEx warmups in seconds.
+            Exclusive dual-scanner flow: AI Posture &amp; OHSA Scanner + AI DEXA Body Comp Scanner. AI Coach Gordon synthesizes both scans to recommend 12-week OPT™ periodization and generate bespoke programs with integrated 4-phase CEx warmups in seconds.
           </p>
         </div>
 
@@ -615,7 +615,7 @@ export default function CoachAiFastTrackOnboardingStudio({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <span style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800, letterSpacing: '0.08em' }}>
-                AI Coach Scott Gordon • Dual-Diagnostic Synthesis
+                AI Coach Gordon • Dual-Diagnostic Synthesis
               </span>
               <span style={{ fontSize: 11, color: 'var(--gray)', fontWeight: 700 }}>
                 Target: {synthesis.periodizationRecommendation.targetPhaseName}

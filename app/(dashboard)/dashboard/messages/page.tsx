@@ -170,7 +170,7 @@ export default async function ClientMessagesPage() {
             <MessageThreadClient
               currentUserId={user.id}
               role="client"
-              recipientName="Coach Scott Gordon"
+              recipientName="Coach Gordon"
               recipientRoleTitle="Coach"
               recipientAvatar="/images/coach-gordon-shield-logo.jpg"
             />

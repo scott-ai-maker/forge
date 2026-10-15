@@ -232,7 +232,7 @@ export default function CorporateRetainersPage() {
           >
             <Image
               src="/images/corporate-wellness-workshop.jpg"
-              alt="Coach Scott Gordon leading a corporate wellness and mobility workshop with resistance bands for a diverse team of professionals"
+              alt="Coach Gordon leading a corporate wellness and mobility workshop with resistance bands for a diverse team of professionals"
               width={960}
               height={540}
               priority
@@ -256,7 +256,7 @@ export default function CorporateRetainersPage() {
             >
               <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <GaaIcon name="award" size={15} tone="gold" />
-                <span>Monthly live team sessions led by Coach Scott Gordon, NASM-CPT</span>
+                <span>Monthly live team sessions led by Coach Gordon, NASM-CPT</span>
               </span>
               <span style={{ fontSize: 11, color: 'var(--gold-lt)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
                 On-site or virtual

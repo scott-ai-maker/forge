@@ -644,7 +644,7 @@ export default function CorporateProposalStudio({
                 Coach
               </div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#FFFFFF', marginTop: 2 }}>
-                SCOTT GORDON, NASM MASTER TRAINER
+                COACH GORDON, NASM MASTER TRAINER
               </div>
             </div>
           </div>
@@ -860,7 +860,7 @@ export default function CorporateProposalStudio({
                 <span>NASM® training approach</span>
               </div>
               <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.55, margin: 0 }}>
-                Training plans use the NASM Optimum Performance Training (OPT™) model and are led by Coach Scott Gordon, a NASM-certified trainer.
+                Training plans use the NASM Optimum Performance Training (OPT™) model and are led by Coach Gordon, a NASM-certified trainer.
               </p>
             </div>
 
@@ -911,7 +911,7 @@ export default function CorporateProposalStudio({
                 fontWeight: 700,
               }}
             >
-              SCOTT GORDON, NASM MASTER TRAINER
+              COACH GORDON, NASM MASTER TRAINER
             </div>
             <div style={{ fontSize: 11, color: 'var(--gray)', marginTop: 2 }}>
               Founder &amp; Performance Director · Forge Athletic
@@ -931,7 +931,7 @@ export default function CorporateProposalStudio({
                 color: 'var(--gold)',
               }}
             >
-              Scott Gordon (Authorized Master Desk)
+              Coach Gordon (Authorized Master Desk)
             </div>
           </div>
 

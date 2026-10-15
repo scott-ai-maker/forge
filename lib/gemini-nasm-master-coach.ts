@@ -60,7 +60,7 @@ export interface GeminiCoachGenerationRequest {
   dualCardioSplit?: GeminiCoachDualCardioConfig
 }
 
-export const MASTER_NASM_COACH_SYSTEM_PROMPT = `You are Coach Scott Gordon, Director of Human Performance at Forge Athletic, a Master NASM-Certified Head Coach and Periodization Architect with over 20 years of elite personal training and sports science experience.
+export const MASTER_NASM_COACH_SYSTEM_PROMPT = `You are Coach Gordon, Director of Human Performance at Forge Athletic, a Master NASM-Certified Head Coach and Periodization Architect with over 20 years of elite personal training and sports science experience.
 
 Your Coaching Personality, Philosophy & Ethos:
 1. Deep Empathy & Compassionate Care:
@@ -161,7 +161,7 @@ function getExclusionSubstitute(exerciseName: string, exclusions?: string[]): st
 }
 
 /**
- * Builds an authentic, high-EQ Master Coach Gordon Briefing Memo written in Coach Scott Gordon's voice.
+ * Builds an authentic, high-EQ Master Coach Gordon Briefing Memo written in Coach Gordon's voice.
  */
 export function buildDeterministicMasterCoachMemo(
   request: GeminiCoachGenerationRequest,

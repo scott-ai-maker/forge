@@ -26,8 +26,8 @@ describe('LiveStillCameraGuidanceModal Architecture', () => {
       return `${coachName} needs a static wide-angle view. Phone auto-zoom / auto-follow (Center Stage) disrupts kinetic chain tracking.`
     }
 
-    expect(formatCoachRequest('Coach Scott Gordon')).toContain('Coach Scott Gordon')
-    expect(formatCoachRequest('Coach Scott Gordon')).toContain('Center Stage')
+    expect(formatCoachRequest('Coach Gordon')).toContain('Coach Gordon')
+    expect(formatCoachRequest('Coach Gordon')).toContain('Center Stage')
   })
 })
 

@@ -5,13 +5,23 @@ import CoachCredentialsShowcase from '@/components/credentials/CoachCredentialsS
 import GaaIcon from '@/components/ui/GaaIcon'
 
 export const metadata: Metadata = {
-  title: 'Coach Scott Gordon, B.S., NASM-CPT | Verified Credentials & Accreditations | Forge Athletic',
+  title: 'Coach Gordon, B.S., NASM-CPT | Verified Credentials & Accreditations | Forge Athletic',
   description:
-    'Explore Coach Scott Gordon’s verified credentials: B.S. in Information Technology (University of Phoenix, 3.72 GPA), NCCA-accredited Certified Personal Trainer (NASM-CPT), ASTI CPR/AED, and 34 verified Credly badges in AWS Cloud Architecture, IBM AI Engineering & DevOps.',
+    'Explore Coach Gordon’s verified credentials: B.S. in Information Technology (3.72 GPA), NCCA-accredited Certified Personal Trainer (NASM-CPT), ASTI CPR/AED, and 34 verified technical credentials in Cloud Architecture, AI Engineering & DevOps.',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
   openGraph: {
-    title: 'Coach Scott Gordon, B.S., NASM-CPT · Verified Credentials | Forge Athletic',
+    title: 'Coach Gordon, B.S., NASM-CPT · Verified Credentials | Forge Athletic',
     description:
-      'Official credentials, academic transcripts, verifiable digital badges, and sports science accreditations for Coach Scott Gordon.',
+      'Official credentials, verifiable digital badges, and sports science accreditations for Coach Gordon.',
     url: 'https://forge-athletic.app/credentials',
     siteName: 'Forge Athletic',
     images: [
@@ -19,7 +29,7 @@ export const metadata: Metadata = {
         url: '/images/badges/nasm-cpt-badge.png',
         width: 400,
         height: 400,
-        alt: 'NASM Certified Personal Trainer Digital Badge · Coach Scott Gordon',
+        alt: 'NASM Certified Personal Trainer Digital Badge · Coach Gordon',
       },
     ],
   },
@@ -29,21 +39,12 @@ export default function CredentialsPage() {
   const credentialsStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'Person',
-    name: 'Scott Gordon',
+    name: 'Coach Gordon',
     jobTitle: 'Head Coach & Performance Director',
     worksFor: {
       '@type': 'Organization',
       name: 'Forge Athletic',
     },
-    alumniOf: {
-      '@type': 'CollegeOrUniversity',
-      name: 'University of Phoenix',
-      sameAs: 'https://www.phoenix.edu',
-    },
-    sameAs: [
-      'https://www.credly.com/users/scott-gordon.1dfe2f10/badges/credly',
-      'https://www.credential.net/07f48168-fa30-4a54-bd43-ae0f8a66677b',
-    ],
     hasCredential: [
       {
         '@type': 'EducationalOccupationalCredential',
@@ -229,8 +230,8 @@ export default function CredentialsPage() {
             }}
           >
             <Image
-              src="/images/coach-scott-gordon.jpg"
-              alt="Coach Scott Gordon, B.S., NASM-CPT"
+              src="/images/hero-personal-coaching-45wk-goal.jpg"
+              alt="Coach Gordon, B.S., NASM-CPT"
               width={180}
               height={220}
               priority
@@ -240,7 +241,7 @@ export default function CredentialsPage() {
           <div style={{ flex: 1, minWidth: 260 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
               <span style={{ fontSize: '1.2rem', color: '#FFFFFF', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                Scott Gordon, B.S., NASM-CPT®
+                Coach Gordon, B.S., NASM-CPT®
               </span>
               <span
                 style={{
@@ -406,7 +407,7 @@ export default function CredentialsPage() {
               Academic Foundations &amp; Systems Rigor
             </h3>
             <p style={{ color: '#94A3B8', fontSize: 14, lineHeight: 1.65, margin: 0 }}>
-              With a Bachelor of Science in Information Technology (3.72 GPA), Coach Scott Gordon bridges human biomechanics with software engineering—translating sports science into algorithmic periodization, real-time biometrics, and low-latency computer vision.
+              With a Bachelor of Science in Information Technology (3.72 GPA), Coach Gordon bridges human biomechanics with software engineering—translating sports science into algorithmic periodization, real-time biometrics, and low-latency computer vision.
             </p>
           </article>
 

@@ -10,12 +10,12 @@ describe('Credentials Page Architecture', () => {
   const showcaseSource = fs.readFileSync(showcaseComponentPath, 'utf8')
   const dataSource = fs.readFileSync(dataPath, 'utf8')
 
-  it('renders metadata and JSON-LD structured data for Coach Scott Gordon', () => {
-    expect(pageSource).toContain('Coach Scott Gordon, B.S., NASM-CPT | Verified Credentials')
+  it('renders metadata and JSON-LD structured data for Coach Gordon with search engine privacy protection', () => {
+    expect(pageSource).toContain('Coach Gordon, B.S., NASM-CPT | Verified Credentials')
+    expect(pageSource).toContain('index: false')
+    expect(pageSource).toContain('follow: false')
     expect(pageSource).toContain('hasCredential')
     expect(pageSource).toContain('EducationalOccupationalCredential')
-    expect(pageSource).toContain('alumniOf')
-    expect(pageSource).toContain('University of Phoenix')
     expect(pageSource).toContain('Bachelor of Science in Information Technology')
     expect(pageSource).toContain('1261890687')
     expect(pageSource).toContain('https://www.credential.net/07f48168-fa30-4a54-bd43-ae0f8a66677b')
@@ -38,7 +38,7 @@ describe('Credentials Page Architecture', () => {
   })
 
   it('integrates Credly verified digital badge portfolio and structured data', () => {
-    expect(pageSource).toContain('https://www.credly.com/users/scott-gordon.1dfe2f10/badges/credly')
+    expect(dataSource).toContain('https://www.credly.com/users/scott-gordon.1dfe2f10/badges/credly')
     expect(pageSource).toContain('AWS Certified Solutions Architect – Associate')
     expect(pageSource).toContain('IBM AI Developer Professional Certificate')
     expect(pageSource).toContain('Cryptographic Verification &amp; Credly Portfolio')

@@ -72,7 +72,7 @@ const SNEAK_PEEKS: Array<{
     bullets: [
       'Dual-camera multi-angle form validation with instantaneous slow-motion replays',
       'Live heart rate zone HUD synced directly with Apple Watch, Garmin, and Polar',
-      'Immediate movement cue corrections from Coach Scott Gordon (NASM-CPT since 2008)',
+      'Immediate movement cue corrections from Coach Gordon (NASM-CPT since 2008)',
     ],
     metric: '1-ON-1',
     metricLabel: 'Direct Coach Access',
@@ -88,7 +88,7 @@ const FOUNDING_PERKS = [
   {
     icon: 'assessment' as ForgeIconName,
     title: 'Pre-Holiday 1-on-1 Screening',
-    description: 'Guaranteed 60-minute movement diagnostic and structural audit with Coach Scott Gordon before Thanksgiving.',
+    description: 'Guaranteed 60-minute movement diagnostic and structural audit with Coach Gordon before Thanksgiving.',
   },
   {
     icon: 'zap' as ForgeIconName,
@@ -938,7 +938,7 @@ export default function HolidayUnmaskingSplash({
                     margin: '0 0 24px',
                   }}
                 >
-                  Lock in early access built around your schedule and starting point. Receive a guaranteed pre-holiday movement screening with Coach Scott Gordon and permanent Founding Member pricing.
+                  Lock in early access built around your schedule and starting point. Receive a guaranteed pre-holiday movement screening with Coach Gordon and permanent Founding Member pricing.
                 </p>
 
                 <form onSubmit={handleSubmit} noValidate>
@@ -1590,7 +1590,7 @@ export default function HolidayUnmaskingSplash({
               })()}
             </div>
 
-            {/* Coach Scott Gordon Anchor */}
+            {/* Coach Gordon Anchor */}
             <div
               style={{
                 marginTop: 28,
@@ -1613,8 +1613,8 @@ export default function HolidayUnmaskingSplash({
                 }}
               >
                 <Image
-                  src="/images/coach-scott-gordon.jpg"
-                  alt="Coach Scott Gordon"
+                  src="/images/hero-personal-coaching-45wk-goal.jpg"
+                  alt="Coach Gordon"
                   fill
                   sizes="48px"
                   style={{ objectFit: 'cover' }}
@@ -1628,7 +1628,7 @@ export default function HolidayUnmaskingSplash({
                     color: '#F8FAFC',
                   }}
                 >
-                  Directly Led by Coach Scott Gordon
+                  Directly Led by Coach Gordon
                 </div>
                 <div
                   style={{

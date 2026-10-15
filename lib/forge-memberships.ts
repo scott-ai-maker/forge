@@ -59,8 +59,8 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     ],
     features: [
       'Everything in Plus',
-      'Master Coach Safety Gate: Plans certified by Coach Scott Gordon',
-      'Quarterly video reviews with Coach Scott Gordon',
+      'Master Coach Safety Gate: Plans certified by Coach Gordon',
+      'Quarterly video reviews with Coach Gordon',
       'Direct messaging with your coach',
       'Evening advisory review window (within 1 business day)',
       '8 video form reviews per month in Form Lab',

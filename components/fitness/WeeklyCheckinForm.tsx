@@ -254,7 +254,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
         <div style={{ padding: '12px 16px', border: '1px solid rgba(212,160,23,0.4)', background: 'rgba(212,160,23,0.08)', borderRadius: 6, marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
             <span style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', fontWeight: 800 }}>
-              Coach Scott Gordon · Direct Feedback
+              Coach Gordon · Direct Feedback
             </span>
             {existing.coach_rating_adjustment !== null && existing.coach_rating_adjustment !== undefined && (
               <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: existing.coach_rating_adjustment > 0 ? 'rgba(52,211,153,0.2)' : existing.coach_rating_adjustment < 0 ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.08)', color: existing.coach_rating_adjustment > 0 ? '#34D399' : existing.coach_rating_adjustment < 0 ? '#38BDF8' : 'var(--white)', fontWeight: 700 }}>

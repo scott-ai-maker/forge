@@ -42,7 +42,7 @@ describe('Coach Safety Alerts Subsystem (lib/coach-safety-alerts)', () => {
     expect(sendMock).not.toHaveBeenCalled()
   })
 
-  it('dispatches alert to Coach Scott Gordon when requiresCoachPing is true', async () => {
+  it('dispatches alert to Coach Gordon when requiresCoachPing is true', async () => {
     const result = await dispatchCoachSafetyAlert({
       request: {
         question: 'I had lumbar fusion surgery 4 months ago and feel a twinge.',
@@ -54,9 +54,9 @@ describe('Coach Safety Alerts Subsystem (lib/coach-safety-alerts)', () => {
         answerMarkdown: 'Stop and consult your physician immediately.',
         spokenAudioText: 'Stop and consult your physician.',
         relevantCurriculums: ['Scope of Practice'],
-        suggestedFollowUps: ['Contact Coach Scott'],
+        suggestedFollowUps: ['Contact Coach Gordon'],
         requiresCoachPing: true,
-        coachPingReason: 'Complex situation detected (surgery) requiring direct review by Coach Scott Gordon.',
+        coachPingReason: 'Complex situation detected (surgery) requiring direct review by Coach Gordon.',
       },
     })
 

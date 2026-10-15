@@ -276,7 +276,7 @@ export default function FoundingIntakeSplashClient() {
           >
             <GaaIcon name="shield-check" size={20} tone="gold" />
             <div style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--gold-lt)' }}>A note about our launch:</strong> Coach Scott Gordon is completing NASM credentials and preparing the training space. Join the early-access list for updates about memberships and introductory pricing.
+              <strong style={{ color: 'var(--gold-lt)' }}>A note about our launch:</strong> Coach Gordon is completing NASM credentials and preparing the training space. Join the early-access list for updates about memberships and introductory pricing.
               <div style={{ marginTop: 6 }}>
                 <a
                   href="#accreditation-portfolio"

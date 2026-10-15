@@ -210,7 +210,7 @@ export default function PostWorkoutTrophyCard({
       // 8. Footer Credential
       ctx.fillStyle = '#C5A059'
       ctx.font = '800 18px sans-serif'
-      ctx.fillText('SCOTT GORDON · NASM MASTER PERFORMANCE DIRECTOR', 540, 1220)
+      ctx.fillText('COACH GORDON · NASM MASTER PERFORMANCE DIRECTOR', 540, 1220)
 
       ctx.fillStyle = '#64748B'
       ctx.font = '400 14px sans-serif'

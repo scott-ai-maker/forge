@@ -86,7 +86,7 @@ export default function PrivacyPolicyPage() {
           4. Cryptographic Security &amp; Database Architecture
         </h2>
         <p style={{ fontSize: '0.95rem' }}>
-          We employ military-grade AES-256 encryption at rest and TLS 1.3 encryption in transit. Our database architecture utilizes PostgreSQL Row-Level Security (RLS) policies, ensuring that your biometric records and private messages are accessible only by you and your designated lead sports scientist (Coach Scott Gordon).
+          We employ military-grade AES-256 encryption at rest and TLS 1.3 encryption in transit. Our database architecture utilizes PostgreSQL Row-Level Security (RLS) policies, ensuring that your biometric records and private messages are accessible only by you and your designated lead sports scientist (Coach Gordon).
         </p>
       </section>
 

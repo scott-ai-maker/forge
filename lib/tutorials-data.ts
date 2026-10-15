@@ -98,7 +98,7 @@ export const CLIENT_TUTORIAL_STEPS: TutorialStep[] = [
       'Every Sunday, review your executive performance memo summarizing weekly tonnage moved, Zone 2 cardiovascular volume, recovery index, and upcoming macrocycle priorities.',
     features: [
       'Complete your quick weekly check-in with bodyweight, resting HR, and physique progression photos.',
-      'Receive personalized video memos and strategic workout adjustments from Coach Scott Gordon.',
+      'Receive personalized video memos and strategic workout adjustments from Coach Gordon.',
       'One-tap copyable executive summary for your personal fitness journal.',
     ],
     proTip: 'Submit your check-in photos by Sunday afternoon to receive your calibrated program updates before Monday morning.',

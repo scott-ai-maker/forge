@@ -154,7 +154,7 @@ export default function CoachTriageCockpit({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           clientId,
-          message_body: `Coach Scott Gordon Direct Directive: ${customDirectiveText.trim()}`,
+          message_body: `Coach Gordon Direct Directive: ${customDirectiveText.trim()}`,
         }),
       })
       const data = await res.json()
@@ -799,7 +799,7 @@ export default function CoachTriageCockpit({
                   </div>
                 )}
 
-                {/* Inline 1-Tap Coach Scott Directive Dispatcher */}
+                {/* Inline 1-Tap Coach Gordon Directive Dispatcher */}
                 {selectedDirectiveClientId === client.clientId && (
                   <div
                     style={{
@@ -814,7 +814,7 @@ export default function CoachTriageCockpit({
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold-lt, #fef08a)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <GaaIcon name="lightning" size={13} tone="gold" />
-                        <span>1-Tap Coach Scott Gordon Direct Intervention</span>
+                        <span>1-Tap Coach Gordon Direct Intervention</span>
                       </span>
                       <button
                         type="button"

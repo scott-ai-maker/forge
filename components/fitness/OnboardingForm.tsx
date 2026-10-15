@@ -791,7 +791,7 @@ export default function OnboardingForm() {
             </label>
           </div>
           <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#E5E7EB', lineHeight: '1.4' }}>
-            Because coaching is delivered virtually, calling 911 from Coach Scott Gordon&apos;s console connects to his local dispatch. Your physical workout address and local municipal dispatch number enable immediate emergency dispatch to your home or gym if syncope or acute trauma occurs.
+            Because coaching is delivered virtually, calling 911 from Coach Gordon&apos;s console connects to his local dispatch. Your physical workout address and local municipal dispatch number enable immediate emergency dispatch to your home or gym if syncope or acute trauma occurs.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px' }}>
             <div>

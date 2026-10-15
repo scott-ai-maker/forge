@@ -17,7 +17,7 @@ describe('app/robots.ts', () => {
 
     expect(allow).toContain('/')
     expect(allow).toContain('/packages')
-    expect(allow).toContain('/credentials')
+    expect(allow).not.toContain('/credentials')
     expect(allow).toContain('/audit')
     expect(allow).toContain('/corporate')
     expect(allow).toContain('/apps')
@@ -31,5 +31,7 @@ describe('app/robots.ts', () => {
     expect(disallow).toContain('/dashboard/')
     expect(disallow).toContain('/api/')
     expect(disallow).toContain('/preview/')
+    expect(disallow).toContain('/credentials')
+    expect(disallow).toContain('/documents/')
   })
 })

@@ -6,7 +6,7 @@
  * 1. AI Posture & OHSA Movement Scanner (Kinetic compensations, distortion syndromes, 4-phase CEx)
  * 2. AI DEXA Body Comp Scanner (4C body fat %, LBM, FFMI, Cunningham BMR, recomposition trajectory)
  * 
- * From these 2 diagnostics, AI Coach Scott Gordon automatically recommends:
+ * From these 2 diagnostics, AI Coach Gordon automatically recommends:
  * 1. 12-Week OPT™ Periodization Architecture (Phase 1-5 trajectory, mesocycles, deloads, adaptation velocity)
  * 2. Bespoke Program Design with 4-Phase CEx Warmups embedded on every workout day
  * 
@@ -234,7 +234,7 @@ function buildClinicalRationale(
     ? 'Tanaka Stage 1 & 2 Interval Conditioning: 2-3 sessions/week (20-30 min) targeting fat oxidation and mitochondrial biogenesis without neuromuscular interference.'
     : 'Tanaka Stage 2 Lactate Threshold Conditioning: 2 sessions/week (15-20 min) with integrated high-density finishers.'
 
-  const summary = `Master Coach Scott Gordon: Synthesized dual diagnostic evaluation for ${name}. Body composition and postural screen align on ${targetPhase === 1 ? 'Phase 1 Stabilization' : targetPhase === 2 ? 'Phase 2 Strength Endurance' : 'Phase 3 Muscular Development'} with custom 4-phase CEx warmups.`
+  const summary = `Master Coach Gordon: Synthesized dual diagnostic evaluation for ${name}. Body composition and postural screen align on ${targetPhase === 1 ? 'Phase 1 Stabilization' : targetPhase === 2 ? 'Phase 2 Strength Endurance' : 'Phase 3 Muscular Development'} with custom 4-phase CEx warmups.`
 
   return {
     summary,

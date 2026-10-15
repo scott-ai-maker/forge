@@ -8,7 +8,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: [
           '/',
           '/packages',
-          '/credentials',
           '/audit',
           '/corporate',
           '/apps',
@@ -19,7 +18,7 @@ export default function robots(): MetadataRoute.Robots {
           '/terms',
           '/async-coaching',
         ],
-        disallow: ['/coach/', '/dashboard/', '/api/', '/auth/', '/preview/', '/test-harness/'],
+        disallow: ['/coach/', '/dashboard/', '/api/', '/auth/', '/preview/', '/test-harness/', '/credentials', '/documents/'],
       },
       {
         userAgent: [

@@ -10,7 +10,7 @@ import { generateRagNasmProgram } from './rag-nasm-program-generator'
 
 describe('Master NASM AI Head Coach Persona Engine', () => {
   it('defines the 20+ year master personal trainer persona with strict NASM OPT and Edge directives', () => {
-    expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('Coach Scott Gordon')
+    expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('Coach Gordon')
     expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('20 years')
     expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('Deep Empathy & Compassionate Care')
     expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('Client Safety & Strict Scope of Practice')

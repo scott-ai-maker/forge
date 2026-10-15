@@ -21,7 +21,7 @@ import {
 
 export * from './ask-coach-gordon-types'
 
-const MASTER_COACH_SYSTEM_INSTRUCTION = `You are Coach Scott Gordon, Head Coach at Forge Athletic, a Master NASM-certified personal trainer with over 20 years of real-world coaching experience.
+const MASTER_COACH_SYSTEM_INSTRUCTION = `You are Coach Gordon, Head Coach at Forge Athletic, a Master NASM-certified personal trainer with over 20 years of real-world coaching experience.
 
 Core Coaching Identity & Conversational Dialogue:
 - You are having a genuine 1-on-1 spoken conversation with your client—talking to them directly on the gym floor, between sets, or right through their AirPods.
@@ -135,7 +135,7 @@ export function retrieveRelevantRagCurricula(question: string, goal?: string, op
 }
 
 /**
- * Executes a live interactive consultation query with Coach Scott Gordon.
+ * Executes a live interactive consultation query with Coach Gordon.
  */
 export async function askCoachGordon(request: AskCoachGordonRequest): Promise<AskCoachGordonResponse> {
   const {
@@ -246,7 +246,7 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
 Athlete's Question:
 "${question.trim()}"
 
-Respond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going.`
+Respond conversationally in your warm 1-on-1 spoken voice as Coach Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going.`
 
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
 
@@ -275,7 +275,7 @@ Respond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon.
     }
 
     const currentParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [
-      { text: `${athleteContext}${ragContext}${contraindicationsClause}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going, and ensure every sentence and thought is fully completed without trailing off.` },
+      { text: `${athleteContext}${ragContext}${contraindicationsClause}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going, and ensure every sentence and thought is fully completed without trailing off.` },
     ]
 
     if (attachedImage?.data) {
@@ -363,15 +363,15 @@ export function detectCoachPingNeed(question: string, answerText?: string): { re
     if (qLower.includes(kw)) {
       return {
         requiresCoachPing: true,
-        reason: `Complex situation detected (${kw}) requiring direct review by Coach Scott Gordon.`,
+        reason: `Complex situation detected (${kw}) requiring direct review by Coach Gordon.`,
       }
     }
   }
 
-  if (aLower.includes('pinged scott') || aLower.includes('flagged this') || aLower.includes('real coach scott gordon')) {
+  if (aLower.includes('pinged coach') || aLower.includes('pinged gordon') || aLower.includes('pinged scott') || aLower.includes('flagged this') || aLower.includes('real coach')) {
     return {
       requiresCoachPing: true,
-      reason: 'Flagged for direct review by Coach Scott Gordon.',
+      reason: 'Flagged for direct review by Coach Gordon.',
     }
   }
 
@@ -397,7 +397,7 @@ export function generateDeterministicCoachResponse(
       relevantCurriculums: ['Scope of Practice & Clinical Liability Protection', 'Orthopedic Referral Protocols'],
       suggestedFollowUps: triage.isEmergency911
         ? ['Call 911 immediately', 'Locate Nearest Hospital', 'Notify Emergency Contacts']
-        : ['What should I ask my doctor/PT?', 'Message Coach Scott directly', 'How will my program be modified?'],
+        : ['What should I ask my doctor/PT?', 'Message Coach Gordon directly', 'How will my program be modified?'],
       requiresCoachPing: true,
       coachPingReason: triage.pingReason,
       isEmergency911: triage.isEmergency911,
@@ -442,7 +442,7 @@ How does that feel on your body, and are you ready to lock into this safe moveme
         suggestedFollowUps: [
           `How to perform ${cleanReplacement}`,
           'What equipment do I need for this swap?',
-          'Message Coach Scott Gordon directly',
+          'Message Coach Gordon directly',
         ],
         requiresCoachPing: false,
         isEmergency911: false,

@@ -62,7 +62,7 @@ export function computeLiveSessionSummary(data: LiveSessionWrapUpData): Computed
 • **Volume Load**: ${workingSets} working sets across ${uniqueExercises.size} movements
 ${heaviestLift ? `• **Peak Load Anchor**: ${heaviestLift.exercise} (${heaviestLift.weightLbs} lbs × ${heaviestLift.reps} reps)` : ''}
 
-**Coach Scott Gordon Form & Tactical Cues**:
+**Coach Gordon Form & Tactical Cues**:
 ${coachNotesText}
 
 **Next 48-Hour Recovery Directive**:

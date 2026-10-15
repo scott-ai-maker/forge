@@ -36,7 +36,7 @@ export default async function AthleteLiveSessionPage() {
   }
 
   // Resolve assigned coach name dynamically
-  let coachName = 'Coach Scott Gordon'
+  let coachName = 'Coach Gordon'
   if (client?.designated_coach_id) {
     const { data: coachProfile } = await admin
       .from('clients')

@@ -119,7 +119,7 @@ export function sanitizeCoachSpeechText(raw: string): string {
 }
 
 /**
- * Scores how suitable a voice is for Coach Scott Gordon's authoritative athletic presence.
+ * Scores how suitable a voice is for Coach Gordon's authoritative athletic presence.
  * Returns a score where higher is better, and negative indicates an unsuitable (e.g. female) voice.
  */
 function scoreCoachVoice(v: SpeechSynthesisVoice): number {
@@ -298,7 +298,7 @@ export function chunkTextIntoSpeechSentences(text: string, maxChunkLength = 160)
 }
 
 /**
- * Plays hyper-realistic studio neural voice audio powered by Coach Scott Gordon's authentic
+ * Plays hyper-realistic studio neural voice audio powered by Coach Gordon's authentic
  * cloned voice model (UPezm4CtrvcD6aNXjeU1) via the server-side /api/coach/tts route.
  * Uses client-side blob caching and synchronous audio initialization to maintain user activation
  * gestures on iOS Safari / WebKit, with graceful fallback to Web Speech API.
@@ -459,7 +459,7 @@ export function speakWebSpeechCoachVoiceCue(text: string, options: CoachVoiceOpt
 
 /**
  * Executes an AI Coach Gordon vocal cue across the entire application.
- * Consistently powers cues with Coach Scott Gordon's cloned neural voice model (ElevenLabs UPezm4CtrvcD6aNXjeU1)
+ * Consistently powers cues with Coach Gordon's cloned neural voice model (ElevenLabs UPezm4CtrvcD6aNXjeU1)
  * matching the cardio training engine. Seamlessly falls back to local Web Speech API if offline or rate limited.
  */
 export function speakCoachVoiceCue(text: string, options: CoachVoiceOptions = {}): void {

@@ -18,7 +18,7 @@ describe('Forge Athletic membership catalog', () => {
       id: 'forge-transformation-direct',
       monthlyPriceCents: 19900,
     })
-    expect(FORGE_MEMBERSHIPS[2].features).toContain('Quarterly video reviews with Coach Scott Gordon')
+    expect(FORGE_MEMBERSHIPS[2].features).toContain('Quarterly video reviews with Coach Gordon')
     expect(FORGE_MEMBERSHIPS[2].features).toContain('Direct messaging with your coach')
   })
 

@@ -48,10 +48,10 @@ const homeFaqStructuredData = {
     },
     {
       '@type': 'Question',
-      name: 'What credentials does Head Coach Scott Gordon have?',
+      name: 'What credentials does Coach Gordon have?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Coach Scott Gordon holds a Bachelor of Science in Information Technology (University of Phoenix, 3.72 GPA), an NCCA-accredited Certified Personal Trainer certification through the National Academy of Sports Medicine (NASM-CPT), ASTI CPR/AED credentials, and 34 verified Credly technical certifications in AI and systems architecture.',
+        text: 'Coach Gordon holds a Bachelor of Science in Information Technology (3.72 GPA), an NCCA-accredited Certified Personal Trainer certification through the National Academy of Sports Medicine (NASM-CPT), ASTI CPR/AED credentials, and 34 verified professional certifications in AI and systems architecture.',
       },
     },
     {
@@ -71,14 +71,14 @@ const FEATURE_PILLARS = [
     title: 'A plan built around you',
     description: 'Personalized NASM OPT™ training that adapts to your goals and builds strength over time.',
     image: '/images/pillar-plan-personalized.jpg',
-    imageAlt: 'Coach Scott Gordon reviewing an individualized training plan on a tablet with an everyday client',
+    imageAlt: 'Coach Gordon reviewing an individualized training plan on a tablet with an everyday client',
   },
   {
     number: '02',
     title: 'Move with confidence',
     description: 'Practical movement screening and coaching help you understand how to train well.',
     image: '/images/pillar-move-confidence.jpg',
-    imageAlt: 'Coach Scott Gordon observing squat depth and knee alignment in a private studio',
+    imageAlt: 'Coach Gordon observing squat depth and knee alignment in a private studio',
   },
   {
     number: '03',
@@ -116,7 +116,7 @@ const AUDIENCE_PERSONAS = [
     title: 'Hybrid & Remote Video Coaching',
     description: 'Train at home, apartment gyms, or on the road with clear video guidance, asynchronous form reviews, and direct coaching access whenever you need it.',
     image: '/images/remote-virtual-coaching.jpg',
-    imageAlt: 'Client training in a home gym guided by Coach Scott Gordon on a live tablet video consultation',
+    imageAlt: 'Client training in a home gym guided by Coach Gordon on a live tablet video consultation',
   },
 ]
 
@@ -180,7 +180,7 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           <div className="forge-hero-image-wrapper">
             <Image
               src="/images/hero-personal-coaching.jpg"
-              alt="Coach Scott Gordon coaching an everyday client through dumbbell goblet squat form in a boutique personal training studio"
+              alt="Coach Gordon coaching an everyday client through dumbbell goblet squat form in a boutique personal training studio"
               width={680}
               height={510}
               priority
@@ -190,14 +190,14 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
             <div className="forge-hero-badge-overlay">
               <div className="forge-hero-badge-coach">
                 <Image
-                  src="/images/coach-scott-gordon.jpg"
-                  alt="Coach Scott Gordon"
+                  src="/images/hero-personal-coaching-45wk-goal.jpg"
+                  alt="Coach Gordon"
                   width={40}
                   height={40}
                   className="forge-hero-badge-avatar"
                 />
                 <div>
-                  <strong>Coach Scott Gordon</strong>
+                  <strong>Coach Gordon</strong>
                   <span>NASM-CPT® · Since 2008</span>
                 </div>
               </div>
@@ -283,8 +283,8 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
       <section className="forge-founder-section" aria-labelledby="forge-founder-title">
         <div className="forge-founder-photo-wrap">
           <Image
-            src="/images/coach-scott-gordon.jpg"
-            alt="Coach Scott Gordon, NASM-CPT and Founder of Forge Athletic"
+            src="/images/hero-personal-coaching-45wk-goal.jpg"
+            alt="Coach Gordon, NASM-CPT and Founder of Forge Athletic"
             width={440}
             height={550}
             loading="lazy"
@@ -300,7 +300,7 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           <p className="forge-eyebrow">A coach who gets the climb</p>
           <h2 id="forge-founder-title">Built from lived experience.</h2>
           <p>
-            A personal trainer since 2008 and NASM Master Trainer candidate (active NASM-CPT), Scott was Fitness Director
+            A personal trainer since 2008 and NASM Master Trainer candidate (active NASM-CPT), Coach Gordon was Fitness Director
             at Bally Total Fitness before opening his local training business in 2011. Today,
             he brings an AI engineer’s analytical mindset to training—and the empathy to meet
             every client where they are. Expect kindness and understanding, not drill-sergeant

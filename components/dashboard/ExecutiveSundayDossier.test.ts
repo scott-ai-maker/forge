@@ -56,13 +56,13 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
     },
     authSignature: 'GAA-SIG-E3A9-7B14',
     authTimestamp: '2026-09-06T20:00:00.000Z',
-    auditorCredential: 'SCOTT GORDON, NASM MASTER TRAINER · GAA SOVEREIGN DESK',
+    auditorCredential: 'COACH GORDON, NASM MASTER TRAINER · FORGE ATHLETIC',
   }
 
   describe('computeDossierDocRefId', () => {
     it('generates pristine governance tracking IDs with athlete initials and date stamp', () => {
-      const id = computeDossierDocRefId('Scott Gordon', 'Sep 8, 2026')
-      expect(id).toBe('FORGE-PROGRESS-SG-2026')
+      const id = computeDossierDocRefId('Alexander Vance', 'Sep 8, 2026')
+      expect(id).toBe('FORGE-PROGRESS-AV-2026')
 
       const id2 = computeDossierDocRefId('Marcus Aurelius Antoninus', 'Dec 31, 2026')
       expect(id2).toBe('FORGE-PROGRESS-MAA-2026')
@@ -174,7 +174,7 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
   })
 
   describe('Boardroom Certification & Credentials', () => {
-    it('verifies Coach Scott Gordon master credential and disciplines in dossier footer', async () => {
+    it('verifies Coach Gordon master credential and disciplines in dossier footer', async () => {
       const fs = await import('fs')
       const path = await import('path')
       const dossierSource = fs.readFileSync(
@@ -182,7 +182,7 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
         'utf8'
       )
 
-      expect(dossierSource).toContain('SCOTT GORDON, NASM MASTER TRAINER')
+      expect(dossierSource).toContain('COACH GORDON, NASM MASTER TRAINER')
       expect(dossierSource).toContain('Founder &amp; Performance Director · NASM-CPT® · CES® · PES® · CNC™ · CSNC')
       expect(dossierSource).toContain('Report reference:')
     })

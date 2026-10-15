@@ -449,7 +449,7 @@ export default function MessageThreadClient({
     }
   }
 
-  const partnerDisplayName = role === 'coach' ? (recipientName || 'Member') : 'Coach Scott Gordon'
+  const partnerDisplayName = role === 'coach' ? (recipientName || 'Member') : 'Coach Gordon'
   const partnerRoleLabel = role === 'coach' ? (recipientRoleTitle || 'Member') : 'Coach'
 
   return (

@@ -95,7 +95,7 @@ export default function VirtualBackgroundHarnessPage() {
       ctx.roundRect(900, 420, 260, 300, 30)
       ctx.fill()
 
-      // 3. Human Coach Subject (Real Coach Scott Gordon Portrait)
+      // 3. Human Coach Subject (Real Coach Gordon Portrait)
       const centerX = 640 + headXOffset
       if (coachImg.complete && coachImg.naturalWidth > 0) {
         const aspect = coachImg.naturalWidth / coachImg.naturalHeight
@@ -356,7 +356,7 @@ export default function VirtualBackgroundHarnessPage() {
           isActive={true}
           isMirrored={false}
           selectedBackground={selectedBg}
-          coachName="Coach Scott Gordon"
+          coachName="Coach Gordon"
         />
       </div>
 

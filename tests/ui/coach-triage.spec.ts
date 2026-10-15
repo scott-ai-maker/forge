@@ -77,7 +77,7 @@ test.describe('Master Coach Daily Triage Cockpit & Executive Memo Feature Suite'
     expect(initialText).toContain('Executive Weekly Briefing')
     expect(initialText).toContain('Performance & Volume Synthesis')
     expect(initialText).toContain('Biomechanical & Recovery Health')
-    expect(initialText).toContain('Director of Human Performance: Scott Gordon')
+    expect(initialText).toContain('Director of Human Performance: Coach Gordon')
 
     // Add custom coach directive note
     const customInput = modal.getByPlaceholder(/Dial in 4\/2\/1 tempo on goblet squats/i)

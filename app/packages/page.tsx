@@ -62,7 +62,7 @@ const packagesStructuredData = {
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: 'Direct messaging with Coach Scott Gordon, weekly form reviews, and monthly 1-on-1 strategy call.',
+        description: 'Direct messaging with Coach Gordon, weekly form reviews, and monthly 1-on-1 strategy call.',
       },
     ],
   },

@@ -550,7 +550,7 @@ export default function UnifiedLiveStudioHud({
   const signalingChannelRef = useRef<RealtimeChannel | null>(null)
   const [showStillCameraModal, setShowStillCameraModal] = useState(false)
   const [showErapModal, setShowErapModal] = useState(false)
-  const [stillCameraRequestedBy, setStillCameraRequestedBy] = useState('Coach Scott Gordon')
+  const [stillCameraRequestedBy, setStillCameraRequestedBy] = useState('Coach Gordon')
 
   // Luxury 2-Tone Athlete Lobby Arrival Chime (E5 -> G#5)
   const playLobbyChime = useCallback(() => {
@@ -721,7 +721,7 @@ export default function UnifiedLiveStudioHud({
       })
       .on('broadcast', { event: STILL_CAMERA_REQUEST_EVENT }, ({ payload }) => {
         const req = payload as StillCameraRequestPayload
-        setStillCameraRequestedBy(req?.coachName || 'Coach Scott Gordon')
+        setStillCameraRequestedBy(req?.coachName || 'Coach Gordon')
         setShowStillCameraModal(true)
       })
       .subscribe(async status => {
@@ -899,7 +899,7 @@ export default function UnifiedLiveStudioHud({
         type: 'broadcast',
         event: STILL_CAMERA_REQUEST_EVENT,
         payload: {
-          coachName: coachName || 'Coach Scott Gordon',
+          coachName: coachName || 'Coach Gordon',
           timestamp: Date.now(),
           reason: 'Fixed camera required for kinetic chain and joint angle diagnostics',
         } as StillCameraRequestPayload,

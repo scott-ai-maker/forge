@@ -214,7 +214,7 @@ export default function LiveSessionWrapUpModal({
             <div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 4 }}>
                 <GaaIcon name="target" size={12} tone="gold" />
-                <span>Coach Scott Gordon Tactical Form Cues</span>
+                <span>Coach Gordon Tactical Form Cues</span>
               </label>
               <textarea
                 value={coachNotes}

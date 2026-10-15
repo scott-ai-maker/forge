@@ -1523,7 +1523,7 @@ export default function CoachCredentialsShowcase() {
                 {activeModalCredential.title}
               </h3>
               <p style={{ color: '#94A3B8', fontSize: 13, margin: 0 }}>
-                Conferred to <strong>Scott Gordon</strong> by {activeModalCredential.issuer}
+                Conferred to <strong>Coach Gordon</strong> by {activeModalCredential.issuer}
                 {activeModalCredential.certificateNumber && (
                   <span> · Cert ID: <strong>{activeModalCredential.certificateNumber}</strong></span>
                 )}

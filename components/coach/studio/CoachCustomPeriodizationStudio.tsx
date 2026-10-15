@@ -348,7 +348,7 @@ export default function CoachCustomPeriodizationStudio({
           },
           isCertifiedByCoach: true,
           coachCertifiedAt: new Date().toISOString(),
-          certifiedBy: 'Coach Scott Gordon (NASM Master Trainer)',
+          certifiedBy: 'Coach Gordon (NASM Master Trainer)',
           safetyGateCertified: true,
         }),
       })

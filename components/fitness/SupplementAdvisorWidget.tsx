@@ -655,7 +655,7 @@ export default function SupplementAdvisorWidget({
             <GaaIcon name="shield-check" size={13} tone="gold" /> Professional Scope of Practice (NASM-CPT®)
           </div>
           <p style={{ margin: 0, fontSize: 12, color: 'var(--gray)', lineHeight: 1.5 }}>
-            {stack.scopeOfPracticeNotice || 'This supplement guide is provided for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC). Coach Scott Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, treatment, or medical nutrition therapy. Always review dietary supplements with your prescribing healthcare provider.'}
+            {stack.scopeOfPracticeNotice || 'This supplement guide is provided for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC). Coach Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, treatment, or medical nutrition therapy. Always review dietary supplements with your prescribing healthcare provider.'}
           </p>
         </div>
 

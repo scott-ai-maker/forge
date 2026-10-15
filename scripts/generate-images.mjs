@@ -2,7 +2,7 @@
 /**
  * SGF — Leonardo AI Image Generation Script
  *
- * Generates every image needed for scottgordonfitness.com and saves
+ * Generates every image needed for forge-athletic.app and saves
  * them to public/images/. Re-running skips already-completed files.
  *
  * Usage:
@@ -594,7 +594,7 @@ async function main() {
   const force = ['1', 'true', 'yes'].includes((process.env.LEONARDO_FORCE ?? '').toLowerCase())
 
   const totalImages = generationQueue.length
-  console.log(`\n🏋  Scott Gordon Fitness — Image Generation`)
+  console.log(`\n🏋  Forge Athletic — Image Generation`)
   console.log(`   Generating ${totalImages} images → public/images/`)
   console.log(`   Estimated credits: ~${totalImages * 8}–${totalImages * 12}\n`)
 

@@ -17,7 +17,7 @@ describe('coach-consultant-memo', () => {
     expect(memo.recoveryTone).toBe('Optimal (Green Light)')
     expect(memo.performanceReview).toContain('335 lbs')
     expect(memo.recommendedProgression).toContain('NASM 2-for-2 Progression Trigger')
-    expect(memo.fullMemoMarkdown).toContain('Scott Gordon')
+    expect(memo.fullMemoMarkdown).toContain('Coach Gordon')
     expect(memo.fullMemoMarkdown).toContain('Forge Athletic')
   })
 

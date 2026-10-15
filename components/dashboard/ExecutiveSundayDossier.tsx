@@ -170,7 +170,7 @@ export default function ExecutiveSundayDossier({
   }
 
   const handleCopySummary = async () => {
-    const text = `FORGE ATHLETIC — WEEKLY PROGRESS SUMMARY\nREF: ${docRefId} | Week ending: ${weekEndingDate}\nName: ${athleteName} | Training phase: ${optPhase}\n\n• Training volume: ${dossier.totalTonnageLbs.toLocaleString()} lbs (${dossier.totalWorkingSets} sets, ${dossier.avgSessionRpe}/10 average effort)\n• Recent-to-usual workload ratio: ${dossier.acwrRatio !== null && dossier.acwrRatio !== undefined ? dossier.acwrRatio.toFixed(2) : 'Not enough data'} (${dossier.acwrZone || 'Not enough data'})\n• Steady cardio: ${dossier.zone2CardioMins} mins (${dossier.totalCardioMins} mins total)\n• Recovery score: ${dossier.recoveryIndexScore}/100\n• Planned sessions completed: ${dossier.adherencePct}% (${dossier.completedSessions}/${dossier.targetSessions})\n\nNext week's focus: ${dossier.nextWeekFocus}\n\nCoach: Scott Gordon, NASM-CPT®`
+    const text = `FORGE ATHLETIC — WEEKLY PROGRESS SUMMARY\nREF: ${docRefId} | Week ending: ${weekEndingDate}\nName: ${athleteName} | Training phase: ${optPhase}\n\n• Training volume: ${dossier.totalTonnageLbs.toLocaleString()} lbs (${dossier.totalWorkingSets} sets, ${dossier.avgSessionRpe}/10 average effort)\n• Recent-to-usual workload ratio: ${dossier.acwrRatio !== null && dossier.acwrRatio !== undefined ? dossier.acwrRatio.toFixed(2) : 'Not enough data'} (${dossier.acwrZone || 'Not enough data'})\n• Steady cardio: ${dossier.zone2CardioMins} mins (${dossier.totalCardioMins} mins total)\n• Recovery score: ${dossier.recoveryIndexScore}/100\n• Planned sessions completed: ${dossier.adherencePct}% (${dossier.completedSessions}/${dossier.targetSessions})\n\nNext week's focus: ${dossier.nextWeekFocus}\n\nCoach: Coach Gordon, NASM-CPT®`
     await navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -593,7 +593,7 @@ export default function ExecutiveSundayDossier({
         </div>
       </div>
 
-      {/* ── Coach Scott Gordon Voice Debrief Bar ── */}
+      {/* ── Coach Gordon Voice Debrief Bar ── */}
       <div
         className="dossier-audio-bar no-print"
         style={{
@@ -646,7 +646,7 @@ export default function ExecutiveSundayDossier({
                   color: 'var(--gold-lt)',
                 }}
               >
-                Coach Scott Gordon · Audio progress summary
+                Coach Gordon · Audio progress summary
               </span>
               <span
                 style={{
@@ -1352,7 +1352,7 @@ export default function ExecutiveSundayDossier({
               fontWeight: 700,
             }}
           >
-            SCOTT GORDON, NASM MASTER TRAINER
+            COACH GORDON, NASM MASTER TRAINER
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2 }}>
             Founder &amp; Performance Director · NASM-CPT® · CES® · PES® · CNC™ · CSNC

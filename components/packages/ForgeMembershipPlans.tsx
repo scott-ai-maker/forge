@@ -15,7 +15,7 @@ const PLAN_VISUALS: Record<string, { src: string; alt: string }> = {
   },
   'forge-transformation-direct': {
     src: '/images/coach-client-plan.jpg',
-    alt: 'Coach Scott Gordon providing 1:1 program design and consultation',
+    alt: 'Coach Gordon providing 1:1 program design and consultation',
   },
 }
 

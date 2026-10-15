@@ -82,7 +82,7 @@ export function generateConsultantMemo(input: WeeklyTelemetryInput): GeneratedCo
 
   // Full Formatted Markdown Memo
   const fullMemoMarkdown = `### ${headline}
-*Director of Human Performance: Scott Gordon*
+*Director of Human Performance: Coach Gordon*
 
 **1. Performance & Volume Synthesis**
 ${performanceReview}

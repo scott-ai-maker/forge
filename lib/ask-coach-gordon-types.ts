@@ -99,8 +99,8 @@ export function deriveProactiveTelemetryGreeting(params: {
   const focusClause = currentWorkoutFocus ? ` focusing on **${currentWorkoutFocus}**` : ''
 
   if (recentSleepHours !== undefined && recentSleepHours < 5.5) {
-    const text = `**Coach Scott Gordon here.** I'm dialed into your live telemetry, ${athleteName}.${focusClause ? ` For today's session${focusClause},` : ''} I noticed your sleep was only **${recentSleepHours} hours** last night and readiness is **${recentReadinessScore}%**. \n\nWe train for the next 20 years, not just 20 minutes. I recommend we **auto-regulate working loads down 15%** today and lock into Phase ${nasmOptPhase} tempo control to protect your nervous system. How is your energy feeling right now on the floor?`
-    const audioText = `Coach Scott Gordon here. I noticed your sleep was ${recentSleepHours} hours last night. Let us auto-regulate working loads down 15% today to protect your recovery. How is your energy feeling right now on the gym floor?`
+    const text = `**Coach Gordon here.** I'm dialed into your live telemetry, ${athleteName}.${focusClause ? ` For today's session${focusClause},` : ''} I noticed your sleep was only **${recentSleepHours} hours** last night and readiness is **${recentReadinessScore}%**. \n\nWe train for the next 20 years, not just 20 minutes. I recommend we **auto-regulate working loads down 15%** today and lock into Phase ${nasmOptPhase} tempo control to protect your nervous system. How is your energy feeling right now on the floor?`
+    const audioText = `Coach Gordon here. I noticed your sleep was ${recentSleepHours} hours last night. Let us auto-regulate working loads down 15% today to protect your recovery. How is your energy feeling right now on the gym floor?`
     return {
       text,
       audioText,
@@ -113,8 +113,8 @@ export function deriveProactiveTelemetryGreeting(params: {
   }
 
   if (recentRpe !== undefined && recentRpe >= 9) {
-    const text = `**Coach Scott Gordon here.** I see you just logged an **RPE ${recentRpe}** on ${currentExerciseName || 'your last set'}, ${athleteName}. Outstanding intensity! \n\nSince that set was near muscular failure, let's take a full **90 to 120-second rest** before your next set to restore intracellular ATP and prevent form breakdown. Need an exercise calibration or rest timer?`
-    const audioText = `Coach Scott Gordon here. I see your last set was an RPE ${recentRpe}. Let us take a full 90 to 120-second rest before your next set to restore ATP and protect your spine.`
+    const text = `**Coach Gordon here.** I see you just logged an **RPE ${recentRpe}** on ${currentExerciseName || 'your last set'}, ${athleteName}. Outstanding intensity! \n\nSince that set was near muscular failure, let's take a full **90 to 120-second rest** before your next set to restore intracellular ATP and prevent form breakdown. Need an exercise calibration or rest timer?`
+    const audioText = `Coach Gordon here. I see your last set was an RPE ${recentRpe}. Let us take a full 90 to 120-second rest before your next set to restore ATP and protect your spine.`
     return {
       text,
       audioText,
@@ -126,8 +126,8 @@ export function deriveProactiveTelemetryGreeting(params: {
     }
   }
 
-  const text = `**Coach Scott Gordon here.** I'm dialed into your live telemetry, ${athleteName} (Phase ${nasmOptPhase} · ${cleanGoal}${currentWorkoutFocus ? ` · ${currentWorkoutFocus}` : ''} · Readiness ${recentReadinessScore}%). \n\nHow can I calibrate your training, form cues, nutrition, or recovery right now on the gym floor?`
-  const audioText = `Coach Scott Gordon here. I am dialed into your live telemetry. How can I calibrate your training, form cues, nutrition, or recovery right now?`
+  const text = `**Coach Gordon here.** I'm dialed into your live telemetry, ${athleteName} (Phase ${nasmOptPhase} · ${cleanGoal}${currentWorkoutFocus ? ` · ${currentWorkoutFocus}` : ''} · Readiness ${recentReadinessScore}%). \n\nHow can I calibrate your training, form cues, nutrition, or recovery right now on the gym floor?`
+  const audioText = `Coach Gordon here. I am dialed into your live telemetry. How can I calibrate your training, form cues, nutrition, or recovery right now?`
 
   return { text, audioText }
 }
@@ -173,7 +173,7 @@ Based on the acute symptoms you described, **please stop all physical activity i
 
 Do not attempt to stretch, foam roll, or continue training. Cardiac symptoms, sudden loss of motor control, acute neurovascular disruption, exertional rhabdomyolysis, tendon ruptures, or traumatic fractures require immediate emergency medical care.
 
-*Your health and safety are the absolute top priority. I have triggered an urgent critical notification to Coach Scott Gordon.*`
+*Your health and safety are the absolute top priority. I have triggered an urgent critical notification to Coach Gordon.*`
 
     const overrideAudioText = `Stop all activity immediately. Based on your symptoms, this requires urgent medical attention. Please call 911 or proceed to the nearest emergency room immediately. Do not attempt to stretch or continue lifting. Your safety is our absolute top priority.`
 
@@ -203,15 +203,15 @@ Do not attempt to stretch, foam roll, or continue training. Cardiac symptoms, su
 
 We never take risks with your spine or structural joints. Please schedule an evaluation with an orthopedic physician or licensed physical therapist for clinical diagnostic imaging (MRI/X-ray) and formal medical clearance before continuing any loaded training.
 
-I have flagged your training log and pinged Coach Scott Gordon directly on his private concierge line. Once your medical doctor evaluates and clears you, Scott and your physical therapist will coordinate directly to design a customized, safe adaptation protocol.`
+I have flagged your training log and pinged Coach Gordon directly on his private concierge line. Once your medical doctor evaluates and clears you, Coach Gordon and your physical therapist will coordinate directly to design a customized, safe adaptation protocol.`
 
-    const overrideAudioText = `I need you to stop this workout right now. Diagnosing or training through acute structural injuries, tears, or post-surgical joints is strictly outside the scope of personal training. Please consult an orthopedic physician or physical therapist for clinical evaluation and imaging. I have flagged this and pinged Coach Scott Gordon on his private line so we can coordinate your modified programming once you are medically cleared.`
+    const overrideAudioText = `I need you to stop this workout right now. Diagnosing or training through acute structural injuries, tears, or post-surgical joints is strictly outside the scope of personal training. Please consult an orthopedic physician or physical therapist for clinical evaluation and imaging. I have flagged this and pinged Coach Gordon on his private line so we can coordinate your modified programming once you are medically cleared.`
 
     return {
       tier: 'SERIOUS_MEDICAL_REFERRAL',
       isEmergency911: false,
       requiresCoachPing: true,
-      pingReason: `Out of Scope / Structural Injury: Client referred to physician/PT; Coach Scott Gordon notified for 1-on-1 coordination.`,
+      pingReason: `Out of Scope / Structural Injury: Client referred to physician/PT; Coach Gordon notified for 1-on-1 coordination.`,
       overrideMarkdown,
       overrideAudioText,
     }

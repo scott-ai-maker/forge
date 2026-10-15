@@ -232,7 +232,7 @@ describe('Live Video Camera HUD Architecture & WebRTC Bridge', () => {
 
   it('orchestrates still camera request broadcast and guidance modal state', () => {
     let showStillCameraModal = false
-    let stillCameraRequestedBy = 'Coach Scott Gordon'
+    let stillCameraRequestedBy = 'Coach Gordon'
 
     function handleStillCameraSignal(payload: { coachName: string; timestamp: number }) {
       stillCameraRequestedBy = payload.coachName
@@ -240,12 +240,12 @@ describe('Live Video Camera HUD Architecture & WebRTC Bridge', () => {
     }
 
     handleStillCameraSignal({
-      coachName: 'Coach Scott Gordon',
+      coachName: 'Coach Gordon',
       timestamp: Date.now(),
     })
 
     expect(showStillCameraModal).toBe(true)
-    expect(stillCameraRequestedBy).toBe('Coach Scott Gordon')
+    expect(stillCameraRequestedBy).toBe('Coach Gordon')
   })
 
   it('evaluates NASM connection interruption fail-safe and ERAP trigger state', () => {

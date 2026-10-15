@@ -492,7 +492,7 @@ export default function ExecutiveCommandCenterClient({
             <p style={{ fontSize: 12, color: '#94A3B8', margin: '4px 0 0', lineHeight: 1.4 }}>
               {nextSession
                 ? `${new Date(nextSession.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(nextSession.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-                : '1:1 biomechanics audit, lift technique verification, and periodization strategy with Coach Scott Gordon.'
+                : '1:1 biomechanics audit, lift technique verification, and periodization strategy with Coach Gordon.'
               }
             </p>
           </div>

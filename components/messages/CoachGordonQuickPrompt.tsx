@@ -79,7 +79,7 @@ export function CoachGordonDualConciergeCard() {
         >
           <Image
             src="/images/coach-gordon-shield-logo.jpg"
-            alt="Coach Scott Gordon"
+            alt="Coach Gordon"
             fill
             sizes="44px"
             style={{ objectFit: 'cover' }}

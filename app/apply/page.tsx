@@ -69,7 +69,7 @@ export default function ApplyPage() {
         >
           <Image
             src="/images/pillar-plan-personalized.jpg"
-            alt="Coach Scott Gordon reviewing training goals and plan recommendations on a tablet with a client"
+            alt="Coach Gordon reviewing training goals and plan recommendations on a tablet with a client"
             width={1200}
             height={680}
             priority

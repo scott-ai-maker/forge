@@ -582,7 +582,7 @@ export default function ExecutiveSupplementTimeline({
             <span>Professional Scope of Practice (NASM-CPT®)</span>
           </div>
           <p style={{ margin: 0, fontSize: 11.5, color: 'var(--gray)', lineHeight: 1.5 }}>
-            {stack.scopeOfPracticeNotice || 'This supplement guide is provided for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC). Coach Scott Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, treatment, or medical nutrition therapy. Always review dietary supplements with your prescribing healthcare provider.'}
+            {stack.scopeOfPracticeNotice || 'This supplement guide is provided for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC). Coach Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, treatment, or medical nutrition therapy. Always review dietary supplements with your prescribing healthcare provider.'}
           </p>
         </div>
 

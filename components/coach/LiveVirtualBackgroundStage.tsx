@@ -34,7 +34,7 @@ export default function LiveVirtualBackgroundStage({
   isActive,
   isMirrored = true,
   selectedBackground,
-  coachName = 'Coach Scott Gordon',
+  coachName = 'Coach Gordon',
   onOpenPicker,
 }: LiveVirtualBackgroundStageProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)

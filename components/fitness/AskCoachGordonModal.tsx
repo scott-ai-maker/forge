@@ -67,7 +67,7 @@ const PRESET_TOPIC_CHIPS: Array<{ iconName: GaaIconName; label: string; prompt: 
   { iconName: 'nutrition', label: 'Post-workout meal', prompt: 'What should I eat for my post-workout meal to maximize protein synthesis and recovery?' },
   { iconName: 'lightning', label: 'Joint tightness / soreness', prompt: 'My joints and muscles feel tight today. What corrective warmup or foam rolling should I do?' },
   { iconName: 'heart-rate', label: 'Cardio interval pacing', prompt: 'How should I pace my cardio session and intervals today?' },
-  { iconName: 'message', label: 'Message Coach Scott 1-on-1', prompt: 'I have a sensitive medical / rehab question and would like Coach Scott Gordon to review my training file directly.' },
+  { iconName: 'message', label: 'Message Coach Gordon 1-on-1', prompt: 'I have a sensitive medical / rehab question and would like Coach Gordon to review my training file directly.' },
 ]
 
 export default function AskCoachGordonModal({
@@ -239,8 +239,8 @@ export default function AskCoachGordonModal({
     })
     chips.push({
       iconName: 'message',
-      label: 'Message Coach Scott 1-on-1',
-      prompt: 'I have a sensitive medical / rehab question and would like Coach Scott Gordon to review my training file directly.',
+      label: 'Message Coach Gordon 1-on-1',
+      prompt: 'I have a sensitive medical / rehab question and would like Coach Gordon to review my training file directly.',
     })
 
     return chips
@@ -376,7 +376,7 @@ export default function AskCoachGordonModal({
         followUps: [
           'What tempo should I use on set 2?',
           'Show me banded monster walks demo',
-          'Message Coach Scott about knee tracking',
+          'Message Coach Gordon about knee tracking',
         ],
       }
 
@@ -734,7 +734,7 @@ export default function AskCoachGordonModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
             <Image
               src="/images/coach-gordon-shield-logo.jpg"
-              alt="Coach Scott Gordon"
+              alt="Coach Gordon"
               width={38}
               height={38}
               style={{
@@ -748,7 +748,7 @@ export default function AskCoachGordonModal({
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '14px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-                  Ask Coach Scott Gordon
+                  Ask Coach Gordon
                 </span>
                 <span
                   style={{
@@ -888,7 +888,7 @@ export default function AskCoachGordonModal({
                   {handsFreeState === 'speaking' ? (
                     <>
                       <GaaIcon name="volume" size={12} tone="gold" />
-                      <span>Coach Scott Speaking into Earbuds...</span>
+                      <span>Coach Gordon Speaking into Earbuds...</span>
                     </>
                   ) : handsFreeState === 'processing' ? (
                     <>
@@ -1285,7 +1285,7 @@ export default function AskCoachGordonModal({
                               </div>
                             </div>
                           ) : msg.requiresCoachPing ? (
-                            /* Tier 2: Coach Scott Gordon Escalation & Hand-Off Card */
+                            /* Tier 2: Coach Gordon Escalation & Hand-Off Card */
                             <div
                               style={{
                                 marginTop: '12px',
@@ -1305,7 +1305,7 @@ export default function AskCoachGordonModal({
                                 </span>
                               </div>
                               <p style={{ margin: 0, fontSize: '11px', color: '#d1d5db', lineHeight: 1.4 }}>
-                                {msg.coachPingReason || 'This scenario involves potential structural injury or surgical rehabilitation. Coach Scott Gordon has been notified to review your training memo directly.'}
+                                {msg.coachPingReason || 'This scenario involves potential structural injury or surgical rehabilitation. Coach Gordon has been notified to review your training memo directly.'}
                               </p>
                               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
                                 <a
@@ -1325,7 +1325,7 @@ export default function AskCoachGordonModal({
                                   }}
                                 >
                                   <GaaIcon name="message" size={12} tone="inherit" />
-                                  <span>Open Direct Line with Coach Scott</span>
+                                  <span>Open Direct Line with Coach Gordon</span>
                                 </a>
                               </div>
                             </div>

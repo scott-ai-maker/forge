@@ -91,7 +91,7 @@ export const DISPENSARY_PARTNER_CONFIG = {
     'Zero Artificial Sweeteners, Fillers, or Heavy Metal Contaminants',
   ],
   affiliateDisclosure:
-    'Forge Athletic is an authorized partner of Fullscript and Thorne professional dispensaries. We provide access to third-party lab-verified supplements (NSF Certified for Sport® / USP Verified®) with an exclusive 15% client courtesy discount. Forge Athletic and Coach Scott Gordon may receive an affiliate commission on qualifying purchases made through these links.',
+    'Forge Athletic is an authorized partner of Fullscript and Thorne professional dispensaries. We provide access to third-party lab-verified supplements (NSF Certified for Sport® / USP Verified®) with an exclusive 15% client courtesy discount. Forge Athletic and Coach Gordon may receive an affiliate commission on qualifying purchases made through these links.',
 }
 
 export function getDispensaryPartnerInfo() {
@@ -657,10 +657,10 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     'MANDATORY FDA & MEDICAL DISCLAIMER: The statements, protocols, and educational materials contained herein have not been evaluated by the Food and Drug Administration (FDA). These dietary supplement recommendations are designed for nutritional support and sports performance optimization only, and are NOT intended to diagnose, treat, cure, or prevent any disease. Forge Athletic coaches are not licensed medical providers and do not prescribe medical treatments. Always consult with your prescribing physician or licensed pharmacist before initiating any dietary supplementation regimen, particularly when co-administering with prescription medications.'
 
   const scopeOfPracticeNotice =
-    'PROFESSIONAL SCOPE OF PRACTICE NOTICE: Coach Scott Gordon is a Certified Personal Trainer (NASM-CPT®) and Sports Science Consultant. Coach Gordon is not a licensed physician, pharmacist, or registered dietitian. This supplement and nutrient-timing protocol is formulated strictly for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC) for apparently healthy individuals, and does not constitute medical advice, medical nutrition therapy under Massachusetts law (M.G.L. c. 112, §§ 196-208), or prescription medicine.'
+    'PROFESSIONAL SCOPE OF PRACTICE NOTICE: Coach Gordon is a Certified Personal Trainer (NASM-CPT®) and Sports Science Consultant. Coach Gordon is not a licensed physician, pharmacist, or registered dietitian. This supplement and nutrient-timing protocol is formulated strictly for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC) for apparently healthy individuals, and does not constitute medical advice, medical nutrition therapy under Massachusetts law (M.G.L. c. 112, §§ 196-208), or prescription medicine.'
 
   const ftcAffiliateDisclosure =
-    'COMMERCIAL & AFFILIATE DISCLOSURE: Forge Athletic partners with Fullscript and Thorne dispensaries to provide athletes with access to third-party verified (NSF for Sport / USP) products at an exclusive 15% discount. Forge Athletic and Coach Scott Gordon may earn an affiliate commission on products purchased through these dispensary links.'
+    'COMMERCIAL & AFFILIATE DISCLOSURE: Forge Athletic partners with Fullscript and Thorne dispensaries to provide athletes with access to third-party verified (NSF for Sport / USP) products at an exclusive 15% discount. Forge Athletic and Coach Gordon may earn an affiliate commission on products purchased through these dispensary links.'
 
   const thirdPartyQualityStandards =
     'GOLD STANDARD QUALITY ENFORCEMENT: Forge Athletic strictly mandates that all purchased supplements carry independent third-party laboratory verification: NSF Certified for Sport®, Informed Choice / Informed Sport®, or USP Verified®. These certifications guarantee label accuracy and verify the absence of heavy metals, adulterants, microbials, and WADA-banned substances.'

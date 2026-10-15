@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 }
 
 const SOCIAL_LINKS = [
-  { name: 'Instagram', href: 'https://instagram.com/scottgordonfitness', Icon: Camera },
-  { name: 'YouTube', href: 'https://youtube.com/@scottgordonfitness', Icon: CirclePlay },
-  { name: 'Facebook', href: 'https://facebook.com/scottgordonfitness', Icon: Users },
-  { name: 'LinkedIn', href: 'https://linkedin.com/company/scottgordonfitness', Icon: BriefcaseBusiness },
+  { name: 'Instagram', href: 'https://instagram.com/forgeathletic', Icon: Camera },
+  { name: 'YouTube', href: 'https://youtube.com/@forgeathletic', Icon: CirclePlay },
+  { name: 'Facebook', href: 'https://facebook.com/forgeathletic', Icon: Users },
+  { name: 'LinkedIn', href: 'https://linkedin.com/company/forgeathletic', Icon: BriefcaseBusiness },
 ]
 
 export const dynamic = 'force-dynamic'
@@ -219,7 +219,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 }}
               >
                 <span>⚡</span>
-                <span>1-Click Coach Fast Pass (Scott Gordon)</span>
+                <span>1-Click Coach Fast Pass (Coach Gordon)</span>
               </a>
 
               {/* Athlete Demo Pass when demo mode is enabled */}

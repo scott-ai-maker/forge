@@ -20,7 +20,7 @@ interface LiveStillCameraGuidanceModalProps {
 export default function LiveStillCameraGuidanceModal({
   isOpen,
   onClose,
-  requestedByCoachName = 'Coach Scott Gordon',
+  requestedByCoachName = 'Coach Gordon',
   initialTab = 'checklist',
 }: LiveStillCameraGuidanceModalProps) {
   const initialPlatform = detectStillCameraPlatform()

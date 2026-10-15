@@ -219,7 +219,7 @@ export default function GlobalCoachGordonHost() {
           }}
           className="tactile-btn global-coach-gordon-fab"
           aria-label="Ask Coach Gordon a question"
-          title="Ask Coach Scott Gordon"
+          title="Ask Coach Gordon"
         >
           <div style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
             <Image

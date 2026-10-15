@@ -16,7 +16,7 @@ export interface SafetyAlertDispatchResult {
 }
 
 /**
- * Dispatches an automated real-time safety alert to Coach Scott Gordon
+ * Dispatches an automated real-time safety alert to Coach Gordon
  * when an athlete's consultation triggers clinical escalation, emergency 911 protocols,
  * or orthopedic contraindication red flags.
  */

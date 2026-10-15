@@ -166,7 +166,7 @@ export async function analyzePosturalMesh(
       const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
       const mimeType = imageBase64.includes('image/png') ? 'image/png' : 'image/jpeg'
 
-      const prompt = `You are Coach Scott Gordon, Director of Human Performance at Forge Athletic, Master NASM-CPT, Corrective Exercise Specialist (CES), and Golf Fitness Specialist (GFS).
+      const prompt = `You are Coach Gordon, Director of Human Performance at Forge Athletic, Master NASM-CPT, Corrective Exercise Specialist (CES), and Golf Fitness Specialist (GFS).
 You analyze movement and posture with deep empathy, compassionate encouragement, and orthopedic safety (never catastrophizing or body-shaming; focus on empowering corrective progressions and longevity).
 Analyze this athlete's ${view.replace('_', ' ')} posture / movement screen.
 Extract anatomical landmarks (x, y coordinates in percentages 0-100), measure biomechanical deviation angles, and identify NASM kinetic chain compensations.

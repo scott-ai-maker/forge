@@ -130,14 +130,8 @@ const forgeStructuredData = {
       image: `${siteUrl}/images/brand/logo-concept-1-kinetic-f.jpg`,
       founder: {
         '@type': 'Person',
-        '@id': `${siteUrl}/credentials/#coach-scott-gordon`,
-        name: 'Scott Gordon',
+        name: 'Coach Gordon',
         jobTitle: 'Head Coach & Founder',
-        url: `${siteUrl}/credentials`,
-        sameAs: [
-          'https://www.credly.com/users/scott-gordon.1dfe2f10/badges/credly',
-          'https://www.credential.net/07f48168-fa30-4a54-bd43-ae0f8a66677b',
-        ],
       },
       areaServed: {
         '@type': 'Country',

@@ -300,7 +300,7 @@ export function generateSundayDossier(
   // 9. Cryptographic Audit Signature
   const authSignature = generateCryptographicDossierSignature(athleteName, totalTonnageLbs, completedSessions)
   const authTimestamp = new Date().toISOString()
-  const auditorCredential = 'Scott Gordon, NASM-CPT® #1261890687 · Performance Director'
+  const auditorCredential = 'Coach Gordon, NASM-CPT® · Performance Director'
 
   return {
     totalTonnageLbs,

@@ -88,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Hyper-Realistic Visual Brand System**: High-fidelity photographic imagery deployed across the marketing website and client portal, showcasing real-world boutique personal training, movement screening, and telemetry.
-- **Coach Scott Gordon 45-Week Goal Physique Imagery**: Reimagined coach portraits and hero action visuals reflecting Coach Gordon's 45-week recomposition milestone (240 lbs, ~12% body fat, chiseled athletic build, built upon a 225 lb lean mass foundation).
+- **Coach Gordon 45-Week Goal Physique Imagery**: Reimagined coach portraits and hero action visuals reflecting Coach Gordon's 45-week recomposition milestone (240 lbs, ~12% body fat, chiseled athletic build, built upon a 225 lb lean mass foundation).
 - **Interactive Homepage Hero Personal Coaching Showcase**: High-impact training showcase of Coach Gordon actively coaching a goblet squat with live form-check telemetry badge.
 - **Three Forge System Pillars Visuals**: Photorealistic cards for Plan Design (in-person tablet review), Movement Screening (biomechanical squat analysis), and Progress Telemetry (smartwatch metrics & lift analytics).
 - **"Who We Train" Client Archetype Grid**: Dedicated 4-card demographic showcase targeting Busy Executives & Professionals, Longevity & Master Lifters (40s–60s+), Athletic Conditioning athletes, and Hybrid Remote clients.
@@ -261,7 +261,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Intercepts root `/` requests originating from helper apps via edge middleware: automatically routes authenticated athletes directly to `/dashboard/fitness?source=helper` and unauthenticated users to the helper login gateway.
     - Added client-side `HelperAppRootGuard` preventing cached standalone tabs from displaying marketing blocks.
   - **Dedicated Companion Sign-In Gateway ([`app/auth/login/page.tsx`](file:///Users/scottgordon/Repos/gaa-app/app/auth/login/page.tsx))**:
-    - Engineered a dedicated **"GAA Helper Access"** (*"Athlete In-Gym Companion"*) login console featuring 1-click Fast Pass (Scott Gordon coach pass, Alexander Vance athlete pass), credentials sign-in, and a compliant notice that memberships and retainers are managed exclusively on the web portal.
+    - Engineered a dedicated **"Forge Helper Access"** (*"Athlete In-Gym Companion"*) login console featuring 1-click Fast Pass (Coach Gordon coach pass, Alexander Vance athlete pass), credentials sign-in, and a compliant notice that memberships and retainers are managed exclusively on the web portal.
   - **Marketing Artifact Suppression & Zero-Purchase Compliance**:
     - Filtered public marketing links from [`components/ui/SiteHeader.tsx`](file:///Users/scottgordon/Repos/gaa-app/components/ui/SiteHeader.tsx) and routed brand logo taps back to the active workout hub.
     - Suppressed [`components/ui/SiteFooter.tsx`](file:///Users/scottgordon/Repos/gaa-app/components/ui/SiteFooter.tsx), [`components/marketing/FirstVisitLeadCapture.tsx`](file:///Users/scottgordon/Repos/gaa-app/components/marketing/FirstVisitLeadCapture.tsx), and [`components/ui/PwaInstallPrompt.tsx`](file:///Users/scottgordon/Repos/gaa-app/components/ui/PwaInstallPrompt.tsx) in helper app mode to optimize screen real estate for workouts and telemetry.
@@ -372,10 +372,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - Leg Press / Hack Squat missing machine: `Dumbbell Goblet Squat` / `Resistance Band Squat` / `Bodyweight Squat`.
       - Machine rows / Lat pulldowns: `Dumbbell Bent-Over Row` / `Resistance Band Lat Pulldown` / `Pull Up`.
   - **Athlete Active Plan Patched in Supabase**:
-    - Patched Scott Gordon's active 4-day Phase 1 plan (`a31c72a7-6dbf-4d1f-9462-99d46373b857`):
+    - Patched Coach Gordon's active 4-day Phase 1 plan (`a31c72a7-6dbf-4d1f-9462-99d46373b857`):
       - Day 2 Exercise 5: Replaced commercial `Lying Leg Curl` with authentic `Stability Ball Hamstring Curl`.
       - Day 4 Exercise 3: Replaced `Kettlebell Renegade Row` with `Dumbbell Renegade Row To Push Up`.
-      - Plan now achieves 100% equipment fidelity with Scott's home gym setup.
+      - Plan now achieves 100% equipment fidelity with home gym setup.
 
 ## [1.35.33] - 2026-09-12
 
@@ -912,11 +912,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed & Enhanced
 - **🔐 Master Coach Role Elevation & 1-Click Fast Pass Hotfix**:
   - **Master Coach Self-Healing Elevation ([`lib/authz.ts`](file:///Users/scottgordon/Repos/gaa-app/lib/authz.ts), [`app/coach/page.tsx`](file:///Users/scottgordon/Repos/gaa-app/app/coach/page.tsx), [`app/auth/callback/route.ts`](file:///Users/scottgordon/Repos/gaa-app/app/auth/callback/route.ts))**:
-    - Enforced automatic master coach elevation and proactive database self-healing for `scott.gordon72@outlook.com`.
+    - Enforced automatic master coach elevation and proactive database self-healing for the master coach account.
     - Guarantees that the master coach account can never be demoted, locked out, or redirected to client surfaces due to external test harness runs or profile desynchronization.
   - **1-Click Coach Fast Pass ([`app/api/auth/demo/route.ts`](file:///Users/scottgordon/Repos/gaa-app/app/api/auth/demo/route.ts), [`app/auth/login/page.tsx`](file:///Users/scottgordon/Repos/gaa-app/app/auth/login/page.tsx))**:
     - Added coach demo authentication support via `/api/auth/demo?role=coach` ensuring instant 1-tap authenticated session establishment and direct redirection to `/coach`.
-    - Integrated a prominent gold **⚡ 1-Click Coach Fast Pass (Scott Gordon)** action on the Coach Login portal (`/auth/login?next=/coach`) during dev/demo mode.
+    - Integrated a prominent gold **⚡ 1-Click Coach Fast Pass (Coach Gordon)** action on the Coach Login portal (`/auth/login?next=/coach`) during dev/demo mode.
   - **Credential Synchronization & Verification**:
     - Re-aligned master coach credentials and verified active standing with full OPT periodization, client triage, and live studio access.
 
@@ -1046,7 +1046,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Dynamic sliding-scale engine for custom seat volumes with automatic annual savings calculations ($7,000+ complimentary credit).
     - Conservative leadership productivity telemetry modeling ~6.5 hours/month recovered per executive (~780 hrs/yr for 10 seats) and ~$273,000/yr in cognitive capital value.
   - **Boardroom Proposal Studio Component ([`components/corporate/CorporateProposalStudio.tsx`](file:///Users/scottgordon/Repos/gaa-app/components/corporate/CorporateProposalStudio.tsx))**:
-    - Institutional memorandum layout detailing the Executive Physical Bottleneck, scope of services, financial agreement, 13-point NASM governance, and Master Coach Scott Gordon's signature credentials.
+    - Institutional memorandum layout detailing the Executive Physical Bottleneck, scope of services, financial agreement, 13-point NASM governance, and Master Coach Gordon's signature credentials.
     - Deterministic cryptographic sovereign proposal signature hash (`GAA-SIG-XXXX-XXXX`) and document reference IDs (`GAA-PROP-XXXX-XXS-YEAR`).
     - Integrated proposal sharing with pre-populated query parameters and 1-click inquiry dispatch.
   - **Dual-Mode Boardroom Print & PDF Stylesheet ([`app/globals.css`](file:///Users/scottgordon/Repos/gaa-app/app/globals.css))**:
@@ -1078,7 +1078,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Synthesizes medical-grade **Subjective**, **Objective**, **Assessment**, and **Plan** documentation alongside the Executive Briefing.
     - Integrated uppercase mode toggle (`[BRIEFING VIEW]` vs `[CLINICAL S.O.A.P. RECORD]`) allowing athletes and boardroom advisors to alternate perspectives seamlessly.
   - **Cryptographic Sovereign Authentication**:
-    - Deterministic audit signature hash (`GAA-SIG-XXXX-XXXX`), ISO timestamp, and `SCOTT GORDON, NASM MASTER TRAINER` boardroom credentials in the dossier footer.
+    - Deterministic audit signature hash (`GAA-SIG-XXXX-XXXX`), ISO timestamp, and `COACH GORDON, NASM MASTER TRAINER` boardroom credentials in the dossier footer.
   - **Dual-Mode Boardroom PDF & Print Stylesheet Engine ([`app/globals.css`](file:///Users/scottgordon/Repos/gaa-app/app/globals.css))**:
     - Added print theme selector pill (`Digital Obsidian` vs `Clean Ivory / Boardroom Paper`).
     - The Clean Ivory mode (`.print-theme-ivory`) renders a stark, ink-efficient white background with dark typography, charcoal borders, and pure gold accents for luxury physical binder presentations.
@@ -1176,7 +1176,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **🎥 Coach Live Studio Resilience & Unassigned Client Auto-Assignment**:
   - In [`app/coach/clients/[id]/live/page.tsx`](file:///Users/scottgordon/Repos/gaa-app/app/coach/clients/[id]/live/page.tsx), [`app/coach/clients/[id]/page.tsx`](file:///Users/scottgordon/Repos/gaa-app/app/coach/clients/[id]/page.tsx), and [`app/coach/clients/[id]/messages/page.tsx`](file:///Users/scottgordon/Repos/gaa-app/app/coach/clients/[id]/messages/page.tsx), replaced strict `.single()` lookups with `.maybeSingle()` and eliminated hard `notFound()` 404 traps when clients have `designated_coach_id: null`.
   - Automatically assigns unassigned athlete records to the active coach on-the-fly in Supabase, enabling seamless instant launch of live sessions, program design, and communication.
-  - Added Master Coach role elevation (`scott.gordon72@outlook.com` or `surface_role: 'coach'`), ensuring full supervisory and override access to any client across live sessions and telemetry.
+  - Added Master Coach role elevation (`surface_role: 'coach'`), ensuring full supervisory and override access to any client across live sessions and telemetry.
 - **🛡️ Coach Error Boundary Recovery**:
   - In [`app/coach/error.tsx`](file:///Users/scottgordon/Repos/gaa-app/app/coach/error.tsx), added a tactile "Coach Hub" quick navigation action allowing coaches to instantly return to the command center if unexpected network or routing exceptions occur.
 
@@ -1217,7 +1217,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Built [`scripts/composite-studio-backgrounds.mjs`](file:///Users/scottgordon/Repos/gaa-app/scripts/composite-studio-backgrounds.mjs) to composite embossed circular 2-A gold medallions into all 5 virtual studio plates (`coach-olympic-facility-gaa.jpg`, `coach-diagnostic-lab.jpg`, etc.).
   - Adhered strictly to `AGENTS.md` optical orientation guardrail (never mirroring background images).
 - **📜 Executive Sunday Dossier Boardroom Elevation**:
-  - Updated Coach Scott Gordon signature credentials to **`SCOTT GORDON, NASM MASTER TRAINER`** and listed active disciplines (`NASM-CPT® · CES® · PES® · CNC™ · CSNC`) with Boardroom Validated authentication.
+  - Updated Coach Gordon signature credentials to **`COACH GORDON, NASM MASTER TRAINER`** and listed active disciplines (`NASM-CPT® · CES® · PES® · CNC™ · CSNC`) with Boardroom Validated authentication.
 
 ## [1.28.5] - 2026-09-08
 
@@ -1348,7 +1348,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added & Enhanced
 - **🎙️ Unified AI Coach Gordon Cloned Voice Architecture**:
-  - Standardized AI Coach Gordon's vocal identity across the entire application to consistently use Coach Scott Gordon's authentic ElevenLabs cloned neural voice model (`UPezm4CtrvcD6aNXjeU1`), matching the voice used in the AI Cardio Studio sessions.
+  - Standardized AI Coach Gordon's vocal identity across the entire application to consistently use Coach Gordon's authentic ElevenLabs cloned neural voice model (`UPezm4CtrvcD6aNXjeU1`), matching the voice used in the AI Cardio Studio sessions.
   - Replaced legacy hardcoded voice IDs (`pNInz6obpgDQGcFmaJgB` / Adam) across daily briefings and Ask Coach Gordon audio responses.
   - Updated [`app/api/coach/tts/route.ts`](file:///Users/scottgordon/Repos/gaa-app/app/api/coach/tts/route.ts) default fallback to `COACH_GORDON_ELEVENLABS_VOICE_ID` (`UPezm4CtrvcD6aNXjeU1`) and updated provider header to `elevenlabs-coach-gordon`.
 - **⚡ Client-Side In-Memory Audio Blob Caching**:
@@ -1380,7 +1380,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added & Enhanced
 - **🎙️ AI Coach Gordon Voiceover Cardio Training Engine ("Personal Trainer in Your Ear")**:
-  - Engineered high-end AI voiceover audio coordination in [`lib/coach-cardio-voiceover.ts`](file:///Users/scottgordon/Repos/gaa-app/lib/coach-cardio-voiceover.ts) powered by Coach Scott Gordon's authentic ElevenLabs neural voice model (`COACH_GORDON_ELEVENLABS_VOICE_ID`).
+  - Engineered high-end AI voiceover audio coordination in [`lib/coach-cardio-voiceover.ts`](file:///Users/scottgordon/Repos/gaa-app/lib/coach-cardio-voiceover.ts) powered by Coach Gordon's authentic ElevenLabs neural voice model (`COACH_GORDON_ELEVENLABS_VOICE_ID`).
   - Added background prefetching of upcoming interval audio blobs and client-side LRU audio caching to guarantee zero-lag audio transitions.
   - Implemented lock-screen and wearable controls via `navigator.mediaSession` with live interval metadata, play/pause, and skip capabilities.
   - Added Web Audio transition chimes (`playIntervalTransitionPip`) and start bells (`playIntervalBell`).

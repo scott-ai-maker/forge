@@ -452,7 +452,7 @@ export default function AuditLandingPage() {
             >
               <Image
                 src="/images/pillar-move-confidence.jpg"
-                alt="Coach Scott Gordon reviewing movement mechanics and joint alignment"
+                alt="Coach Gordon reviewing movement mechanics and joint alignment"
                 width={560}
                 height={420}
                 loading="lazy"
