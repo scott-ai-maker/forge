@@ -9,13 +9,16 @@ import PurchaseButton from '@/components/packages/PurchaseButton'
 import { STANDALONE_PRODUCTS } from '@/lib/stripe'
 
 export const metadata: Metadata = {
-  title: '3D Movement and Posture Assessment | Forge Athletic',
+  title: 'Online 3D Movement & Posture Screening | Overhead Squat Biomechanics | Forge Athletic',
   description:
-    'Use your phone camera for a guided movement check, then get a clear summary and personalized exercises to support your training.',
+    'Precision computer-vision kinetic chain assessment. Analyze 33 joint checkpoints, detect muscle compensations, and receive personalized NASM corrective exercises from your smartphone.',
   openGraph: {
-    title: '3D Movement and Posture Assessment | Forge Athletic',
+    title: 'Online 3D Movement & Posture Screening | Forge Athletic',
     description:
-      'A guided movement check with a clear summary and practical exercises for your training.',
+      'Smartphone-guided movement assessment analyzing 33 kinetic chain landmarks with instant corrective exercise programming.',
+    url: 'https://forge-athletic.app/audit',
+    siteName: 'Forge Athletic',
+    images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
   },
 }
 
@@ -113,11 +116,55 @@ const FAQS = [
   },
 ]
 
+const auditStructuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Service',
+      name: '3D Movement and Posture Screening Diagnostic',
+      serviceType: 'Biomechanical Movement Assessment',
+      provider: {
+        '@type': 'Organization',
+        name: 'Forge Athletic',
+        url: 'https://forge-athletic.app',
+      },
+      description:
+        'Smartphone-guided 3D movement screening analyzing 33 kinetic chain landmarks across feet, knees, hips, and shoulders during overhead squats, providing instant corrective exercise prescriptions.',
+      offers: {
+        '@type': 'Offer',
+        price: '97.00',
+        priceCurrency: 'USD',
+        availability: 'https://schema.org/InStock',
+        url: 'https://forge-athletic.app/audit',
+      },
+      areaServed: {
+        '@type': 'Country',
+        name: 'United States',
+      },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: FAQS.map(faq => ({
+        '@type': 'Question',
+        name: faq.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.a,
+        },
+      })),
+    },
+  ],
+}
+
 export default function AuditLandingPage() {
   const auditProduct = STANDALONE_PRODUCTS[0]
 
   return (
     <main id="main-content" style={{ minHeight: '100vh', background: 'var(--navy)', position: 'relative' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(auditStructuredData) }}
+      />
       <div style={{ height: 3, background: 'linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%)' }} />
 
       <SiteHeader

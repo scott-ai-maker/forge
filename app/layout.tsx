@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import './globals.css'
 import MobilePortraitLock from '@/components/ui/MobilePortraitLock'
 import ServiceWorkerRegistrar from '@/components/ui/ServiceWorkerRegistrar'
@@ -29,11 +30,25 @@ const siteUrl =
 
 export const metadata: Metadata = {
   title: {
-    default: 'Forge Athletic | Precision Science For Real Lives',
+    default: 'Forge Athletic | Online Personal Training & 3D Movement Screening',
     template: '%s | Forge Athletic',
   },
-  description: 'Built From The Ground Up. Precision Science For Real Lives. Evidence-led training, movement screening, and coaching.',
+  description: 'Precision sports science and online personal training for real lives. Evidence-based NASM OPT™ 5-phase periodization, computer-vision 3D movement screening, and biometric telemetry.',
   metadataBase: new URL(siteUrl),
+  alternates: {
+    canonical: './',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [
@@ -58,10 +73,11 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'Forge Athletic | Precision Science For Real Lives',
+    title: 'Forge Athletic | Online Personal Training & 3D Movement Screening',
     description: 'Built From The Ground Up. Precision Science For Real Lives. Evidence-led training for real schedules and real lives.',
-    url: '/',
+    url: siteUrl,
     siteName: 'Forge Athletic',
+    locale: 'en_US',
     type: 'website',
     images: [
       {
@@ -74,9 +90,16 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Forge Athletic | Precision Science For Real Lives',
+    title: 'Forge Athletic | Online Personal Training & 3D Movement Screening',
     description: 'Built From The Ground Up. Precision Science For Real Lives.',
     images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
+  other: {
+    'geo.region': 'US',
+    'geo.placename': 'United States',
   },
 }
 
@@ -90,31 +113,83 @@ export const viewport: Viewport = {
 
 const forgeStructuredData = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'Forge Athletic',
-  description: 'Built From The Ground Up. Precision Science For Real Lives. Evidence-led training, movement screening, and coaching.',
-  url: siteUrl,
-  logo: `${siteUrl}/images/icon-512.png?v=2`,
-  image: `${siteUrl}/images/brand/logo-concept-1-kinetic-f.jpg`,
-  founder: {
-    '@type': 'Person',
-    name: 'Scott Gordon',
-    jobTitle: 'Head Coach & Founder',
-  },
-  knowsAbout: [
-    'NASM OPT 5-Phase Periodization',
-    'MediaPipe 33-Point 3D Postural & Kinetic Chain Screening',
-    'Overhead Squat Biomechanical Diagnostics',
-    'Closed-Loop Wearable Telemetry (Apple HealthKit & Health Connect)',
-    'Tanaka Stage Cardiorespiratory Conditioning',
-    'Ergogenic Chrono-Dosing & Travel Recalibration',
-    'Executive Physique & Athletic Longevity Architecture',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${siteUrl}/#organization`,
+      name: 'Forge Athletic',
+      alternateName: ['Forge', 'Forge Athletic Coaching'],
+      description: 'Built From The Ground Up. Precision Science For Real Lives. Evidence-led training, movement screening, and coaching.',
+      url: siteUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/images/icon-512.png?v=2`,
+        width: 512,
+        height: 512,
+      },
+      image: `${siteUrl}/images/brand/logo-concept-1-kinetic-f.jpg`,
+      founder: {
+        '@type': 'Person',
+        '@id': `${siteUrl}/credentials/#coach-scott-gordon`,
+        name: 'Scott Gordon',
+        jobTitle: 'Head Coach & Founder',
+        url: `${siteUrl}/credentials`,
+        sameAs: [
+          'https://www.credly.com/users/scott-gordon.1dfe2f10/badges/credly',
+          'https://www.credential.net/07f48168-fa30-4a54-bd43-ae0f8a66677b',
+        ],
+      },
+      areaServed: {
+        '@type': 'Country',
+        name: 'United States',
+      },
+      knowsAbout: [
+        'NASM OPT 5-Phase Periodization',
+        'MediaPipe 33-Point 3D Postural & Kinetic Chain Screening',
+        'Overhead Squat Biomechanical Diagnostics',
+        'Closed-Loop Wearable Telemetry (Apple HealthKit & Health Connect)',
+        'Tanaka Stage Cardiorespiratory Conditioning',
+        'Ergogenic Chrono-Dosing & Travel Recalibration',
+        'Executive Physique & Athletic Longevity Architecture',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${siteUrl}/#website`,
+      url: siteUrl,
+      name: 'Forge Athletic',
+      description: 'Precision Science For Real Lives · Online Personal Training & Movement Screening',
+      publisher: {
+        '@id': `${siteUrl}/#organization`,
+      },
+      inLanguage: 'en-US',
+    },
+    {
+      '@type': ['ProfessionalService', 'SportsActivityLocation'],
+      '@id': `${siteUrl}/#service`,
+      name: 'Forge Athletic',
+      url: siteUrl,
+      image: `${siteUrl}/images/brand/logo-concept-1-kinetic-f.jpg`,
+      priceRange: '$$',
+      currenciesAccepted: 'USD',
+      paymentAccepted: 'Credit Card, Apple Pay, Google Pay, Stripe',
+      areaServed: {
+        '@type': 'Country',
+        name: 'United States',
+      },
+      address: {
+        '@type': 'PostalAddress',
+        addressCountry: 'US',
+      },
+    },
   ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+
   return (
-    <html lang="en" className={`${barlowCondensed.variable} ${inter.variable}`}>
+    <html lang="en-US" className={`${barlowCondensed.variable} ${inter.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -151,6 +226,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegistrar />
         <PwaInstallPrompt />
         {children}
+        {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
   )

@@ -27,9 +27,33 @@ export const metadata: Metadata = {
   },
 }
 
+const appsStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Forge Athletic Gym Companion',
+  operatingSystem: 'iOS, Android, Web',
+  applicationCategory: 'HealthApplication',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  description:
+    'Tactical training companion with offline set logging, barbell plate calculators, Tanaka heart rate pacing, and biometric telemetry for Forge Athletic members.',
+  publisher: {
+    '@type': 'Organization',
+    name: 'Forge Athletic',
+    url: 'https://forge-athletic.app',
+  },
+}
+
 export default function AppsPage() {
   return (
     <main style={{ minHeight: '100vh', background: '#080E14' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(appsStructuredData) }}
+      />
       <SiteHeader
         badgeText="Mobile Apps &amp; Companions"
         links={[

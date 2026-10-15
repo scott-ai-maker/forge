@@ -11,13 +11,34 @@ import CorporateInquiryForm from '@/components/corporate/CorporateInquiryForm'
 import CorporateProposalStudio from '@/components/corporate/CorporateProposalStudio'
 
 export const metadata: Metadata = {
-  title: 'Workplace Wellness Plans | Forge Athletic',
+  title: 'Corporate Wellness & Workplace Fitness Programs | Forge Athletic',
   description:
-    'Practical fitness and wellness support for teams, with training plans, coaching, and progress reviews.',
+    'Evidence-based executive fitness, posture screening, and workplace wellness programs for high-performance teams. Custom NASM periodization and live coaching sessions.',
   openGraph: {
-    title: 'Workplace Wellness Plans | Forge Athletic',
+    title: 'Corporate Wellness & Workplace Fitness Programs | Forge Athletic',
     description:
-      'Bring practical fitness and wellness support to your team.',
+      'Executive fitness, posture screening, and workplace wellness for high-performance teams across the United States.',
+    url: 'https://forge-athletic.app/corporate',
+    siteName: 'Forge Athletic',
+    images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
+  },
+}
+
+const corporateStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: 'Corporate Wellness & Workplace Fitness Retainer',
+  serviceType: 'Corporate Health & Wellness Program',
+  provider: {
+    '@type': 'Organization',
+    name: 'Forge Athletic',
+    url: 'https://forge-athletic.app',
+  },
+  description:
+    'Workplace fitness, ergonomics, movement screening, and executive wellness for companies and distributed teams across the United States.',
+  areaServed: {
+    '@type': 'Country',
+    name: 'United States',
   },
 }
 
@@ -62,6 +83,10 @@ const CHALLENGES = [
 export default function CorporateRetainersPage() {
   return (
     <main id="main-content" style={{ minHeight: '100vh', background: 'var(--navy)', position: 'relative' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(corporateStructuredData) }}
+      />
       <div style={{ height: 3, background: 'linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%)' }} />
 
       <SiteHeader

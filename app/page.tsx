@@ -7,15 +7,62 @@ import HolidayUnmaskingSplash from '@/components/marketing/HolidayUnmaskingSplas
 import { isSiteUnmasked } from '@/lib/launch-config'
 
 export const metadata: Metadata = {
-  title: 'Forge Athletic | The Holiday Pre-Launch Unmasking',
+  title: 'Forge Athletic | Online Personal Training, NASM Periodization & 3D Movement Screening',
   description:
-    'Parked pre-launch founding access. Don’t wait for January to repair what November broke. Evidence-led training, NASM OPT™ periodization, and AI movement telemetry unmasking Friday, November 20, 2026.',
+    'Evidence-led online personal training, 3D movement screening, and NASM OPT™ periodization tailored for real schedules. Don’t wait for January to repair what November broke.',
   openGraph: {
-    title: 'The Unmasking | Forge Athletic Holiday Pre-Launch',
+    title: 'Forge Athletic | Online Personal Training & 3D Movement Screening',
     description:
-      'Don’t wait for January to repair what November broke. Unmasking Friday, November 20, 2026.',
+      'Evidence-led online personal training, 3D movement screening, and NASM OPT™ periodization tailored for real schedules.',
     images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
   },
+}
+
+const homeFaqStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What makes Forge Athletic personal training methodology unique?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Forge Athletic pairs evidence-based NASM 5-phase Optimum Performance Training (OPT™) periodization with computer-vision 3D movement screening and wearable biometric telemetry. Every training plan adapts dynamically to your real schedule, joint health, and recovery data rather than rigid cookie-cutter routines.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Is Forge Athletic coaching remote, hybrid, or in-person?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Forge Athletic provides nationwide remote and hybrid coaching across the United States. Athletes receive tailored training routines, video form analysis, live virtual coaching sessions, and mobile workout tracking across Apple iOS, Android, and Progressive Web Apps.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Who is Forge Athletic designed for?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Forge Athletic is engineered for busy professionals seeking posture restoration and energy, longevity lifters (40s–60s+) protecting joint integrity and bone density, and everyday athletes wanting collegiate-grade strength and conditioning without wasting hours in the gym.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What credentials does Head Coach Scott Gordon have?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Coach Scott Gordon holds a Bachelor of Science in Information Technology (University of Phoenix, 3.72 GPA), an NCCA-accredited Certified Personal Trainer certification through the National Academy of Sports Medicine (NASM-CPT), ASTI CPR/AED credentials, and 34 verified Credly technical certifications in AI and systems architecture.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does the 3D movement and posture screening work?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Using standard smartphone video and computer vision algorithms, Forge Athletic evaluates 33 kinetic chain anatomical landmarks during an overhead squat assessment, identifying overactive and underactive muscle compensations to formulate targeted corrective exercises.',
+      },
+    },
+  ],
 }
 
 const FEATURE_PILLARS = [
@@ -377,13 +424,19 @@ export default async function Home({ searchParams }: HomePageProps) {
 
   const unmasked = isSiteUnmasked(previewParam)
 
-  if (unmasked) {
-    return <UnmaskedLandingMarkup isPreview={Boolean(previewParam)} />
-  }
-
   return (
-    <main id="main-content">
-      <HolidayUnmaskingSplash previewMode={Boolean(previewParam)} />
-    </main>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqStructuredData) }}
+      />
+      {unmasked ? (
+        <UnmaskedLandingMarkup isPreview={Boolean(previewParam)} />
+      ) : (
+        <main id="main-content">
+          <HolidayUnmaskingSplash previewMode={Boolean(previewParam)} />
+        </main>
+      )}
+    </>
   )
 }
