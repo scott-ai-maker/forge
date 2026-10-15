@@ -26,6 +26,7 @@ interface ChatMessage {
   recommendedAction?: CoachActionRecommendation
   videoCritique?: VideoCritiqueAnalysis
   followUps?: string[]
+  attachedImageUrl?: string
   timestamp: string
   requiresCoachPing?: boolean
   coachPingReason?: string
@@ -46,8 +47,15 @@ interface AskCoachGordonModalProps {
   recentReadinessScore?: number
   recentSleepHours?: number
   recentRpe?: number
+  lastLoggedSet?: {
+    weightLbs?: number
+    reps?: number
+    rpe?: number
+    exerciseName?: string
+  }
+  todayWorkoutExercises?: string[]
   isCoachUser?: boolean
-  onApplyExerciseSwap?: (newExerciseName: string) => void
+  onApplyExerciseSwap?: (newExerciseName: string, targetExerciseName?: string) => void
   onStartRestTimer?: (seconds: number) => void
   onAutoRegulateLoad?: (reductionPercent: number) => void
 }
@@ -75,6 +83,8 @@ export default function AskCoachGordonModal({
   recentReadinessScore = 82,
   recentSleepHours,
   recentRpe,
+  lastLoggedSet,
+  todayWorkoutExercises = [],
   isCoachUser = false,
   onApplyExerciseSwap,
   onStartRestTimer,
@@ -117,10 +127,88 @@ export default function AskCoachGordonModal({
   const [liveSpokenTranscript, setLiveSpokenTranscript] = useState('')
   const [actionFeedback, setActionFeedback] = useState<Record<string, string>>({})
   
+  // Multimodal Photo Attachment State (Gym Equipment / Posture / Meals)
+  const [attachedImage, setAttachedImage] = useState<{ data: string; mimeType: string; previewUrl: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Official NASM Video Demo Modal State
+  const [activeDemoVideo, setActiveDemoVideo] = useState<{ title: string; embedUrl?: string; videoId?: string } | null>(null)
+
   // Quick 5-Second Video Form Check State
   const [showVideoModal, setShowVideoModal] = useState(false)
   const [selectedLiftType, setSelectedLiftType] = useState<LiftType>('barbell_back_squat')
   const [isAnalyzingVideo, setIsAnalyzingVideo] = useState(false)
+
+  // Dynamic Context-Aware In-Gym Topic Chips
+  const dynamicTopicChips = React.useMemo(() => {
+    const chips: Array<{ iconName: GaaIconName; label: string; prompt: string }> = []
+
+    if (currentExerciseName) {
+      chips.push({
+        iconName: 'refresh',
+        label: `Swap ${currentExerciseName}`,
+        prompt: `Can you recommend an evidence-based Phase ${nasmOptPhase} alternative for ${currentExerciseName} based on my available equipment?`,
+      })
+      chips.push({
+        iconName: 'lightning',
+        label: 'Machine is taken',
+        prompt: `The equipment for ${currentExerciseName} is busy right now. What dumbbell or cable substitution can I do immediately?`,
+      })
+      chips.push({
+        iconName: 'camera',
+        label: `Form check: ${currentExerciseName}`,
+        prompt: `What are the key biomechanical checkpoints and common compensations I should watch out for on ${currentExerciseName}?`,
+      })
+    }
+
+    if (recentSleepHours !== undefined && recentSleepHours < 5.5) {
+      chips.push({
+        iconName: 'shield',
+        label: `Low sleep (${recentSleepHours}h) reset`,
+        prompt: `I only got ${recentSleepHours} hours of sleep last night and readiness is ${recentReadinessScore}%. How should we auto-regulate volume and intensity today?`,
+      })
+    }
+
+    if (recentRpe !== undefined && recentRpe >= 9) {
+      chips.push({
+        iconName: 'clock',
+        label: `Rest after RPE ${recentRpe}`,
+        prompt: `I just pushed my last set to an RPE ${recentRpe}. How long should I rest before the next set to restore ATP?`,
+      })
+    }
+
+    if (kineticCompensations && kineticCompensations.length > 0) {
+      const injuryName = kineticCompensations[0].replace(/_/g, ' ')
+      chips.push({
+        iconName: 'shield',
+        label: `Joint safeguard (${injuryName})`,
+        prompt: `I have sensitivity in my ${injuryName}. What 3-minute SMR or activation drill will protect this joint before heavy sets?`,
+      })
+    }
+
+    chips.push({
+      iconName: 'camera',
+      label: '5-Second Form Check',
+      prompt: 'Can you check my squat form and bar path depth?',
+    })
+    chips.push({
+      iconName: 'nutrition',
+      label: 'Post-workout meal',
+      prompt: 'What should I eat for my post-workout meal to maximize protein synthesis and recovery?',
+    })
+    chips.push({
+      iconName: 'heart-rate',
+      label: 'Cardio interval pacing',
+      prompt: `How should I pace my cardio session and intervals today for my ${goal.replace('_', ' ')} goal?`,
+    })
+    chips.push({
+      iconName: 'message',
+      label: 'Message Coach Scott 1-on-1',
+      prompt: 'I have a sensitive medical / rehab question and would like Coach Scott Gordon to review my training file directly.',
+    })
+
+    return chips
+  }, [currentExerciseName, nasmOptPhase, recentSleepHours, recentReadinessScore, recentRpe, kineticCompensations, goal])
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<{ abort: () => void; start: () => void } | null>(null)
@@ -159,17 +247,36 @@ export default function AskCoachGordonModal({
 
     if (action.type === 'swap_exercise' && action.targetExerciseName) {
       if (onApplyExerciseSwap) {
-        onApplyExerciseSwap(action.targetExerciseName)
+        onApplyExerciseSwap(action.targetExerciseName, action.currentExerciseName || currentExerciseName)
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('forge-apply-exercise-swap', {
+            detail: {
+              newExerciseName: action.targetExerciseName,
+              targetExerciseName: action.currentExerciseName || currentExerciseName,
+              reasoning: action.reasoning,
+              prescribedTempo: action.prescribedTempo,
+            },
+          })
+        )
       }
       setActionFeedback(prev => ({
         ...prev,
-        [msgId]: `✓ Swapped to ${action.targetExerciseName} in active session`,
+        [msgId]: `✓ Swapped to ${action.targetExerciseName} in active workout`,
       }))
-      speakCoachVoiceCue(`Swapped to ${action.targetExerciseName}. Lock into your 2-second pause!`)
+      speakCoachVoiceCue(`Swapped to ${action.targetExerciseName}. Lock into your tempo and own the movement!`)
     } else if (action.type === 'start_timer') {
       const secs = action.restSeconds || 90
       if (onStartRestTimer) {
         onStartRestTimer(secs)
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('forge-start-rest-timer', {
+            detail: { seconds: secs, exerciseName: action.currentExerciseName || currentExerciseName },
+          })
+        )
       }
       setActionFeedback(prev => ({
         ...prev,
@@ -181,13 +288,28 @@ export default function AskCoachGordonModal({
       if (onAutoRegulateLoad) {
         onAutoRegulateLoad(reduction)
       }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('forge-auto-regulate-load', {
+            detail: { reductionPercent: reduction },
+          })
+        )
+      }
       setActionFeedback(prev => ({
         ...prev,
-        [msgId]: `Working weights reduced by ${reduction}%`,
+        [msgId]: `✓ Working weights reduced by ${reduction}%`,
       }))
       speakCoachVoiceCue(`Working load reduced ${reduction} percent. Focus purely on tempo and joint control.`)
     } else if (action.type === 'form_critique') {
       setShowVideoModal(true)
+    } else if (action.type === 'view_demo') {
+      if (action.videoId || action.embedUrl) {
+        setActiveDemoVideo({
+          title: action.targetExerciseName || 'Exercise Demonstration',
+          videoId: action.videoId,
+          embedUrl: action.embedUrl,
+        })
+      }
     }
   }
 
@@ -260,11 +382,15 @@ export default function AskCoachGordonModal({
       id: `user_${Date.now()}`,
       role: 'user',
       text: query,
+      attachedImageUrl: attachedImage ? attachedImage.previewUrl : undefined,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
 
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
+
+    const payloadImage = attachedImage ? { data: attachedImage.data, mimeType: attachedImage.mimeType } : undefined
+    setAttachedImage(null)
 
     try {
       const historyPayload = messages.slice(-4).map(m => ({
@@ -288,6 +414,9 @@ export default function AskCoachGordonModal({
           recentReadinessScore,
           recentSleepHours,
           recentRpe,
+          lastLoggedSet,
+          todayWorkoutExercises,
+          attachedImage: payloadImage,
           activeConversationHistory: historyPayload,
         }),
       })
@@ -896,6 +1025,15 @@ export default function AskCoachGordonModal({
                     boxShadow: isCoach ? '0 4px 15px rgba(0, 0, 0, 0.3)' : '0 4px 15px rgba(212, 160, 23, 0.1)',
                   }}
                 >
+                  {msg.attachedImageUrl && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <img
+                        src={msg.attachedImageUrl}
+                        alt="Uploaded gym asset"
+                        style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(212,160,23,0.5)' }}
+                      />
+                    </div>
+                  )}
                   <div style={{ whiteSpace: 'pre-line' }}>{msg.text}</div>
 
                     {/* Audio Playback & Methodology Accordion */}
@@ -998,38 +1136,69 @@ export default function AskCoachGordonModal({
                                     ? `Rest Interval: ${msg.recommendedAction.restSeconds}s`
                                     : msg.recommendedAction.type === 'auto_regulate_load'
                                     ? `Auto-Regulate: -${msg.recommendedAction.loadReductionPercent}% Load`
+                                    : msg.recommendedAction.type === 'view_demo'
+                                    ? `Video Demo: ${msg.recommendedAction.targetExerciseName}`
                                     : 'Biomechanical Video Form Check'
                                 )}
                               </div>
 
-                              {!actionFeedback[msg.id] ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleExecuteAction(msg.id, msg.recommendedAction!)}
-                                  style={{
-                                    background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
-                                    color: '#0A0E18',
-                                    fontSize: '11px',
-                                    fontWeight: 800,
-                                    padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 10px rgba(212,160,23,0.3)',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '5px',
-                                  }}
-                                >
-                                  <GaaIcon name="lightning" size={12} tone="inherit" />
-                                  <span>{msg.recommendedAction.buttonText}</span>
-                                </button>
-                              ) : (
-                                <span style={{ fontSize: '11px', color: '#4ade80', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                  <GaaIcon name="check" size={12} tone="emerald" />
-                                  <span>Applied to Session</span>
-                                </span>
-                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                {msg.recommendedAction.videoId && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveDemoVideo({
+                                      title: msg.recommendedAction?.targetExerciseName || 'Exercise Demo',
+                                      videoId: msg.recommendedAction?.videoId,
+                                      embedUrl: msg.recommendedAction?.embedUrl,
+                                    })}
+                                    style={{
+                                      background: 'rgba(59, 130, 246, 0.18)',
+                                      border: '1px solid rgba(59, 130, 246, 0.45)',
+                                      color: '#93c5fd',
+                                      fontSize: '11px',
+                                      fontWeight: 700,
+                                      padding: '5px 10px',
+                                      borderRadius: '6px',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                    }}
+                                  >
+                                    <GaaIcon name="play" size={12} tone="cyan" />
+                                    <span>Demo</span>
+                                  </button>
+                                )}
+
+                                {!actionFeedback[msg.id] ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleExecuteAction(msg.id, msg.recommendedAction!)}
+                                    style={{
+                                      background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
+                                      color: '#0A0E18',
+                                      fontSize: '11px',
+                                      fontWeight: 800,
+                                      padding: '6px 12px',
+                                      borderRadius: '6px',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      boxShadow: '0 2px 10px rgba(212,160,23,0.3)',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                    }}
+                                  >
+                                    <GaaIcon name="lightning" size={12} tone="inherit" />
+                                    <span>{msg.recommendedAction.buttonText}</span>
+                                  </button>
+                                ) : (
+                                  <span style={{ fontSize: '11px', color: '#4ade80', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                    <GaaIcon name="check" size={12} tone="emerald" />
+                                    <span>Applied to Active Session</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           )}
 
@@ -1179,7 +1348,7 @@ export default function AskCoachGordonModal({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Preset Topic Chips */}
+        {/* Preset Contextual Topic Chips */}
         <div
           style={{
             padding: '10px 20px',
@@ -1191,7 +1360,7 @@ export default function AskCoachGordonModal({
             whiteSpace: 'nowrap',
           }}
         >
-          {PRESET_TOPIC_CHIPS.map((chip, i) => (
+          {dynamicTopicChips.map((chip, i) => (
             <button
               key={i}
               type="button"
@@ -1224,6 +1393,39 @@ export default function AskCoachGordonModal({
           ))}
         </div>
 
+        {/* Attached Photo Preview */}
+        {attachedImage && (
+          <div
+            style={{
+              padding: '6px 14px',
+              backgroundColor: 'rgba(20, 25, 36, 0.98)',
+              borderTop: '1px solid rgba(212, 160, 23, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <img
+                src={attachedImage.previewUrl}
+                alt="Selected"
+                style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', border: '1px solid var(--gold)' }}
+              />
+              <span style={{ fontSize: '11px', color: 'var(--gold-lt, #fef08a)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                Photo attached · Gemini Vision will audit machine setup, form, or nutrition
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAttachedImage(null)}
+              style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: 13 }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Input Bar */}
         <div
           style={{
@@ -1235,17 +1437,41 @@ export default function AskCoachGordonModal({
             gap: '8px',
           }}
         >
-          {/* Form Check Camera Button */}
+          {/* Hidden File Input for Gym Photo Upload */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const reader = new FileReader()
+              reader.onload = () => {
+                const res = reader.result as string
+                const base64 = res.split(',')[1]
+                setAttachedImage({
+                  data: base64,
+                  mimeType: file.type || 'image/jpeg',
+                  previewUrl: res,
+                })
+              }
+              reader.readAsDataURL(file)
+            }}
+          />
+
+          {/* Photo / Camera Upload Button */}
           <button
             type="button"
-            onClick={() => setShowVideoModal(true)}
+            onClick={() => fileInputRef.current?.click()}
             style={{
               width: '36px',
               height: '36px',
               borderRadius: '50%',
-              background: 'rgba(59, 130, 246, 0.15)',
-              border: '1px solid rgba(59, 130, 246, 0.4)',
-              color: '#93c5fd',
+              background: attachedImage ? 'rgba(34, 197, 94, 0.25)' : 'rgba(255, 255, 255, 0.06)',
+              border: attachedImage ? '1.5px solid #22c55e' : '1px solid rgba(255, 255, 255, 0.15)',
+              color: attachedImage ? '#4ade80' : '#d1d5db',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1253,9 +1479,9 @@ export default function AskCoachGordonModal({
               flexShrink: 0,
               transition: 'all 0.2s ease',
             }}
-            title="5-Second Video Form Check (Gemini Multimodal Vision)"
+            title="Attach Photo (Gym Machine, Posture, or Meal Plate for Gemini Vision)"
           >
-            <GaaIcon name="camera" size={16} tone="cyan" />
+            <GaaIcon name="camera" size={16} tone={attachedImage ? 'emerald' : 'inherit'} />
           </button>
 
           {/* Hands-Free Mic Button */}
@@ -1488,6 +1714,47 @@ export default function AskCoachGordonModal({
                   Cancel
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Official NASM Edge Video Demo Modal Overlay */}
+        {activeDemoVideo && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: 'rgba(5, 8, 15, 0.95)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 120,
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '20px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <GaaIcon name="play" size={18} tone="gold" />
+                <h4 style={{ margin: 0, color: '#FFFFFF', fontSize: '15px', fontWeight: 800 }}>
+                  {activeDemoVideo.title} — Official NASM Demonstration
+                </h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveDemoVideo(null)}
+                style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 4 }}
+              >
+                <GaaIcon name="close" size={16} tone="slate" />
+              </button>
+            </div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <iframe
+                src={activeDemoVideo.embedUrl || `https://www.youtube-nocookie.com/embed/${activeDemoVideo.videoId}?autoplay=1`}
+                title={activeDemoVideo.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ width: '100%', height: '100%', maxHeight: '420px', borderRadius: '12px', border: '1px solid rgba(212,160,23,0.4)' }}
+              />
             </div>
           </div>
         )}

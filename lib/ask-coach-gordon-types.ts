@@ -6,12 +6,17 @@
  */
 
 export interface CoachActionRecommendation {
-  type: 'swap_exercise' | 'start_timer' | 'form_critique' | 'auto_regulate_load'
+  type: 'swap_exercise' | 'start_timer' | 'form_critique' | 'auto_regulate_load' | 'view_demo'
   targetExerciseName?: string
+  currentExerciseName?: string
   restSeconds?: number
   loadReductionPercent?: number
   cueTitle?: string
   buttonText: string
+  videoId?: string
+  embedUrl?: string
+  prescribedTempo?: string
+  reasoning?: string
 }
 
 export interface AskCoachGordonRequest {
@@ -29,6 +34,17 @@ export interface AskCoachGordonRequest {
   recentReadinessScore?: number
   recentSleepHours?: number
   recentRpe?: number
+  lastLoggedSet?: {
+    weightLbs?: number
+    reps?: number
+    rpe?: number
+    exerciseName?: string
+  }
+  todayWorkoutExercises?: string[]
+  attachedImage?: {
+    data: string
+    mimeType: string
+  }
   activeConversationHistory?: Array<{ role: 'user' | 'assistant'; text: string }>
 }
 

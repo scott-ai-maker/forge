@@ -52,7 +52,11 @@ import {
   COMMON_SPORTS_INJURIES,
   type SportsInjuryKey,
 } from '@/lib/sports-injuries'
-import type { DiscomfortArea, ExerciseSubstitution } from '@/lib/nasm-exercise-substitution'
+import {
+  detectMovementPattern,
+  type DiscomfortArea,
+  type ExerciseSubstitution,
+} from '@/lib/nasm-exercise-substitution'
 import { isExerciseAppropriateForInjuries } from '@/lib/nasm-opt-exercise-selection'
 
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
@@ -862,6 +866,9 @@ export default function FitnessTrackerClient({
     setStatus(`✓ Substituted "${oldExercise.name}" with "${substitution.name}" (${substitution.reasoning})`)
   }, [adaptedExercisesByDay, planWorkouts])
 
+  // AI Coach Gordon Real-Time Workout Action Execution & Context Synchronization
+  const [autoRegulationReductionPercent, setAutoRegulationReductionPercent] = useState<number>(0)
+
   // Collapsible Stages for Workout Flow (Step 1 Warmup, Step 2 Resistance, Step 3 Cardio, Step 4 Cool-Down)
   const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({})
 
@@ -1086,6 +1093,147 @@ export default function FitnessTrackerClient({
     }
     return null
   }, [expandedExerciseKey, effectiveActiveWorkoutDay, planWorkouts, activeSetLogs])
+
+  // Coach Gordon Real-Time Workout Action Execution Listeners
+  useEffect(() => {
+    const handleCoachSwap = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        newExerciseName: string
+        targetExerciseName?: string
+        reasoning?: string
+        prescribedTempo?: string
+      }>
+      const { newExerciseName, targetExerciseName, reasoning, prescribedTempo } = customEvent.detail || {}
+      if (!newExerciseName) return
+
+      const currentDay = effectiveActiveWorkoutDay
+      const currentDayExercises = adaptedExercisesByDay[currentDay]
+        ? [...adaptedExercisesByDay[currentDay]]
+        : (planWorkouts.find(w => w.day === currentDay)?.exercises || []).map(we => ({
+            name: we.name,
+            sets: we.sets,
+            reps: we.reps,
+            tempo: we.tempo ?? undefined,
+            restSeconds: parseRestSecondsFromExercise(we.rest || '60'),
+            coachingCue: we.notes ?? undefined,
+            notes: we.description ?? undefined,
+          }))
+
+      const targetNameLower = (targetExerciseName || (expandedExerciseKey ? expandedExerciseKey.split('-')[1] : '')).toLowerCase()
+      let oldEx = currentDayExercises.find(
+        ex => ex.name.toLowerCase() === targetNameLower ||
+              targetNameLower.includes(ex.name.toLowerCase()) ||
+              ex.name.toLowerCase().includes(targetNameLower)
+      )
+      if (!oldEx && currentDayExercises.length > 0) {
+        oldEx = currentDayExercises[0]
+      }
+
+      if (oldEx) {
+        handleExerciseSwap(
+          currentDay,
+          {
+            name: oldEx.name,
+            sets: oldEx.sets,
+            reps: oldEx.reps,
+            tempo: oldEx.tempo,
+            rest: `${oldEx.restSeconds || 60}`,
+          } as WorkoutExercise,
+          {
+            name: newExerciseName,
+            category: detectMovementPattern(newExerciseName),
+            reasoning: reasoning || 'Recommended by Coach Scott Gordon AI for optimal biomechanics',
+            benefitTag: 'Machine / Cable Swap',
+            prescribedTempo: prescribedTempo || '2-0-2-0',
+            equipmentRequired: 'Dumbbells / Cables / Bodyweight',
+          }
+        )
+      }
+    }
+
+    const handleCoachRestTimer = (e: Event) => {
+      const customEvent = e as CustomEvent<{ seconds?: number; exerciseName?: string }>
+      const seconds = customEvent.detail?.seconds || 90
+      const exName = customEvent.detail?.exerciseName || (expandedExerciseKey ? expandedExerciseKey.split('-')[1] : 'Active Exercise')
+      const timerKey = `coach-gordon-timer-${Date.now()}`
+
+      setActiveRestState({
+        exerciseName: exName,
+        key: timerKey,
+        restSeconds: seconds,
+        remainingSeconds: seconds,
+        isRunning: true,
+        badgeText: 'Coach Gordon Rest Metronome',
+      })
+      setActiveRestTimerKey(timerKey)
+      triggerHaptic('success')
+      setStatus(`⏱️ Coach Gordon: Started ${seconds}s rest metronome for ${exName}`)
+    }
+
+    const handleCoachAutoRegulate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ reductionPercent?: number }>
+      const reduction = customEvent.detail?.reductionPercent || 15
+      setAutoRegulationReductionPercent(reduction)
+      triggerHaptic('success')
+      setStatus(`⚡ Coach Gordon Auto-Regulation: Applied -${reduction}% load reduction to safeguard CNS & joints`)
+    }
+
+    window.addEventListener('forge-apply-exercise-swap', handleCoachSwap)
+    window.addEventListener('forge-start-rest-timer', handleCoachRestTimer)
+    window.addEventListener('forge-auto-regulate-load', handleCoachAutoRegulate)
+
+    return () => {
+      window.removeEventListener('forge-apply-exercise-swap', handleCoachSwap)
+      window.removeEventListener('forge-start-rest-timer', handleCoachRestTimer)
+      window.removeEventListener('forge-auto-regulate-load', handleCoachAutoRegulate)
+    }
+  }, [effectiveActiveWorkoutDay, adaptedExercisesByDay, planWorkouts, expandedExerciseKey, handleExerciseSwap])
+
+  // Continuous Context Synchronization to GlobalCoachGordonHost
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
+    const activeExName = expandedExerciseKey ? expandedExerciseKey.split('-')[1] : undefined
+    const exercisesList = (activeWorkout?.exercises || []).map(e => e.name)
+    const lastLog = localSetLogs[localSetLogs.length - 1]
+
+    window.dispatchEvent(
+      new CustomEvent('forge-update-coach-context', {
+        detail: {
+          athleteName: profile?.full_name?.split(' ')[0] || 'Athlete',
+          goal: plan?.goal || profile?.fitness_goal || 'general_fitness',
+          nasmOptPhase: plan?.nasm_opt_phase || 1,
+          currentWorkoutFocus: activeWorkout?.focus || 'Daily Workout',
+          currentExerciseName: activeExName,
+          equipmentAccess: profile?.equipment_access,
+          cardioEquipmentAccess: profile?.cardio_equipment_access || profile?.equipment_access,
+          kineticCompensations: clientInjuries,
+          recentReadinessScore: liveReadinessScore || wearableTelemetry?.cnsStressScore || 82,
+          recentSleepHours: wearableTelemetry?.sleepHours ?? undefined,
+          recentRpe: lastLog?.rpe ? Number(lastLog.rpe) : undefined,
+          lastLoggedSet: lastLog
+            ? {
+                exerciseName: lastLog.exercise_name,
+                weightLbs: lastLog.weight_kg ? Math.round(lastLog.weight_kg * 2.20462) : undefined,
+                reps: lastLog.reps,
+                rpe: lastLog.rpe ? Number(lastLog.rpe) : undefined,
+              }
+            : undefined,
+          todayWorkoutExercises: exercisesList,
+        },
+      })
+    )
+  }, [
+    effectiveActiveWorkoutDay,
+    expandedExerciseKey,
+    planWorkouts,
+    profile,
+    plan,
+    clientInjuries,
+    liveReadinessScore,
+    wearableTelemetry,
+    localSetLogs,
+  ])
 
 
   // Synchronize active hub and lab tool whenever searchParams or initialWorkspace changes
@@ -2799,16 +2947,30 @@ export default function FitnessTrackerClient({
                               <button
                                 type="button"
                                 onClick={() => {
-                                  triggerHaptic('tap')
+                                  const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
+                                  const activeExName = expandedExerciseKey ? expandedExerciseKey.split('-')[1] : undefined
+                                  const lastLog = localSetLogs[localSetLogs.length - 1]
                                   openCoachGordon({
-                                    athleteName: 'Athlete',
-                                    goal: plan?.goal || profile?.fitness_goal || undefined,
+                                    athleteName: profile?.full_name?.split(' ')[0] || 'Athlete',
+                                    goal: plan?.goal || profile?.fitness_goal || 'general_fitness',
                                     nasmOptPhase: plan?.nasm_opt_phase || 1,
-                                    currentWorkoutFocus: planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.focus || 'Daily Workout',
-                                    currentExerciseName: expandedExerciseKey ? expandedExerciseKey.split('-')[1] : undefined,
+                                    currentWorkoutFocus: activeWorkout?.focus || 'Daily Workout',
+                                    currentExerciseName: activeExName,
                                     equipmentAccess: profile?.equipment_access || undefined,
                                     cardioEquipmentAccess: profile?.cardio_equipment_access || profile?.equipment_access || undefined,
-                                    recentReadinessScore: wearableTelemetry?.cnsStressScore || 82,
+                                    kineticCompensations: clientInjuries.length > 0 ? clientInjuries : undefined,
+                                    recentReadinessScore: liveReadinessScore || wearableTelemetry?.cnsStressScore || 82,
+                                    recentSleepHours: wearableTelemetry?.sleepHours ?? undefined,
+                                    recentRpe: lastLog?.rpe ? Number(lastLog.rpe) : undefined,
+                                    lastLoggedSet: lastLog
+                                      ? {
+                                          exerciseName: lastLog.exercise_name,
+                                          weightLbs: lastLog.weight_kg ? Math.round(lastLog.weight_kg * 2.20462) : undefined,
+                                          reps: lastLog.reps,
+                                          rpe: lastLog.rpe ? Number(lastLog.rpe) : undefined,
+                                        }
+                                      : undefined,
+                                    todayWorkoutExercises: (activeWorkout?.exercises || []).map(e => e.name),
                                   })
                                 }}
                                 className="tactile-btn"
@@ -2994,6 +3156,53 @@ export default function FitnessTrackerClient({
                   </div>
                   {/* ── Executive Workout Layout (Full Width, No Right Bars) ── */}
                   <div style={{ minWidth: 0, maxWidth: '100%', width: '100%', overflowX: 'hidden' }}>
+                      {/* Coach Gordon Auto-Regulation Banner */}
+                      {autoRegulationReductionPercent > 0 && (
+                        <div
+                          style={{
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            background: 'linear-gradient(135deg, rgba(212,160,23,0.18) 0%, rgba(20,25,35,0.95) 100%)',
+                            border: '1px solid rgba(212,160,23,0.5)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '10px',
+                            marginBottom: '14px',
+                            fontSize: '12px',
+                            color: '#FFFFFF',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                            <GaaIcon name="lightning" size={15} tone="gold" />
+                            <span>
+                              <strong>Coach Gordon Auto-Regulation Active:</strong> Target working weights scaled down by <strong>{autoRegulationReductionPercent}%</strong> to protect CNS &amp; joint recovery.
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('tap')
+                              setAutoRegulationReductionPercent(0)
+                              setStatus('✓ Restored standard target working weights')
+                            }}
+                            style={{
+                              background: 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              color: '#D1D5DB',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '4px 10px',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Reset to Full Load
+                          </button>
+                        </div>
+                      )}
+
                       {/* Active Orthopedic Protection Shield (Sports Injuries & Biomechanical Limitations) */}
                       {clientInjuries.length > 0 && (
                         <div

@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.39.8'
+export const APP_VERSION = '1.39.9'
 export const APP_RELEASE_DATE = '2026-10-14'
-export const APP_RELEASE_CODENAME = 'Pre-Launch Full System Hardening & A+ Certification'
+export const APP_RELEASE_CODENAME = 'Coach Gordon AI Multimodal Vision & Workout Co-Pilot'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,30 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.39.8',
+    version: '1.39.9',
     date: '2026-10-14',
     codename: APP_RELEASE_CODENAME,
+    category: 'intelligence',
+    badge: 'Coach Gordon AI Multimodal Vision · Live In-Gym Action Execution · Video Demo Overlays · Telemetry Auto-Hydration',
+    title: 'Coach Gordon AI Multimodal Vision & Workout Co-Pilot',
+    summary: 'Upgraded Ask Coach Gordon AI from a passive advice chatbot into an active, context-aware training partner. Integrated live telemetry auto-hydration, multimodal gym photo auditing (equipment recognition, posture checks, meal analysis), 1-click in-workout action execution (instant exercise swaps, rest metronomes, autonomic load auto-regulation), official NASM video demo overlays, and dynamic in-gym prompt chips.',
+    highlights: [
+      'Live Telemetry Auto-Hydration: FitnessTrackerClient continuously synchronizes active workout day, current exercise, last logged set (load, reps, RPE), and autonomic readiness (sleep hours, CNS stress) to Coach Gordon.',
+      '1-Click In-Gym Action Execution: Action recommendations now execute live changes in the active session—swapping unavailable gym equipment with biomechanically matched alternatives, launching floating rest metronomes, or auto-regulating working loads down 15%.',
+      'Multimodal Gym Vision: Athletes can capture or upload photos of gym equipment, posture setups, or recovery meals for instant multimodal analysis powered by Gemini Vision.',
+      'Official NASM Edge Video Overlays: Integrated verified YouTube CDN video demos directly in-modal, enabling athletes to verify form without leaving their workout screen.',
+      'Dynamic Contextual In-Gym Chips: Smart chips adapt in real-time to active exercise swaps, low sleep (<5.5h) recovery alerts, high RPE set adjustments, and joint sensitivity protocols.',
+      'System Instruction & Model Cascading: Upgraded Gemini backend with top-level system instructions, multi-turn history preservation, model cascading, and expanded sports science movement indexing.',
+    ],
+    relatedLinks: [
+      { label: 'Workout Tracker', href: '/dashboard/fitness' },
+      { label: 'Coach Console', href: '/coach' },
+    ],
+  },
+  {
+    version: '1.39.8',
+    date: '2026-10-14',
+    codename: 'Pre-Launch Full System Hardening & A+ Certification',
     category: 'security',
     badge: 'Pre-Launch A+ Certification · COOP Popup Isolation · Resilient Coach Recovery · Capacitor Network Hardened · Multi-Role Billing Portal',
     title: 'Pre-Launch Full System Hardening & A+ Certification',

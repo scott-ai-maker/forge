@@ -3,6 +3,20 @@
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.39.9] - 2026-10-14
+
+### Added & Improved
+- **Coach Gordon Multimodal Vision & Workout Co-Pilot ([`components/fitness/AskCoachGordonModal.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/AskCoachGordonModal.tsx), [`lib/ask-coach-gordon.ts`](file:///Users/scottgordon/Repos/forge/lib/ask-coach-gordon.ts))**:
+  - Integrated Gemini Vision photo auditing for gym equipment identification, posture/setup evaluations, and pre/post-workout meal reviews.
+  - Added live 1-click in-gym action execution for biomechanical exercise substitutions, spoken rest metronomes, and autonomic load reductions.
+  - Added official NASM Edge video demo modal overlays directly within the conversation window.
+  - Dynamic in-gym topic chips that automatically reflect current exercise, sleep deficits (<5.5h), and high RPE sets.
+- **Real-Time Workout Telemetry Synchronization ([`components/fitness/FitnessTrackerClient.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/FitnessTrackerClient.tsx), [`components/fitness/GlobalCoachGordonHost.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/GlobalCoachGordonHost.tsx))**:
+  - Continuous bidirectional event streaming via `forge-update-coach-context` ensuring Coach Gordon always holds live workout state, last logged set metrics, and wearable recovery scores.
+  - Added real-time auto-regulation HUD banner with 1-click full load reset.
+- **Service Worker Cache Sync ([`public/sw.js`](file:///Users/scottgordon/Repos/forge/public/sw.js))**:
+  - Synchronized PWA and iOS native web asset caches to `gaa-v1.39.9`.
+
 ## [1.39.8] - 2026-10-14
 
 ### Security & Hardening

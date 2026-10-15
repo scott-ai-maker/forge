@@ -18,6 +18,13 @@ export interface CoachGordonContext {
   recentReadinessScore?: number
   recentSleepHours?: number
   recentRpe?: number
+  lastLoggedSet?: {
+    weightLbs?: number
+    reps?: number
+    rpe?: number
+    exerciseName?: string
+  }
+  todayWorkoutExercises?: string[]
   isCoachUser?: boolean
 }
 
@@ -71,6 +78,41 @@ export default function GlobalCoachGordonHost() {
     setIsOpen(false)
   }, [])
 
+  // Auto-hydrate profile if opening on /dashboard without prior context
+  useEffect(() => {
+    let isMounted = true
+    async function hydrateUserProfile() {
+      try {
+        const { createClient } = await import('@/lib/supabase-browser')
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user && isMounted) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, full_name, fitness_goal, equipment_access, cardio_equipment_access')
+            .eq('id', user.id)
+            .maybeSingle()
+          if (profile && isMounted) {
+            const name = profile.first_name || profile.full_name?.split(' ')[0] || user.user_metadata?.first_name
+            if (name) {
+              setContext(prev => ({
+                ...prev,
+                athleteName: prev.athleteName || name,
+                goal: prev.goal || profile.fitness_goal || undefined,
+                equipmentAccess: prev.equipmentAccess || profile.equipment_access || undefined,
+                cardioEquipmentAccess: prev.cardioEquipmentAccess || profile.cardio_equipment_access || undefined,
+              }))
+            }
+          }
+        }
+      } catch {
+        // Graceful fallback in environments without Supabase
+      }
+    }
+    hydrateUserProfile()
+    return () => { isMounted = false }
+  }, [])
+
   useEffect(() => {
     const handleOpenEvent = (event: Event) => {
       const customEvent = event as CustomEvent<CoachGordonContext>
@@ -79,15 +121,59 @@ export default function GlobalCoachGordonHost() {
     const handleCloseEvent = () => {
       handleClose()
     }
+    const handleContextUpdateEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<CoachGordonContext>
+      if (customEvent.detail) {
+        setContext(prev => ({ ...prev, ...customEvent.detail }))
+      }
+    }
 
     window.addEventListener('open-coach-gordon', handleOpenEvent)
     window.addEventListener('close-coach-gordon', handleCloseEvent)
+    window.addEventListener('forge-update-coach-context', handleContextUpdateEvent)
 
     return () => {
       window.removeEventListener('open-coach-gordon', handleOpenEvent)
       window.removeEventListener('close-coach-gordon', handleCloseEvent)
+      window.removeEventListener('forge-update-coach-context', handleContextUpdateEvent)
     }
   }, [handleOpen, handleClose])
+
+  const handleApplyExerciseSwap = useCallback((newExerciseName: string, targetExerciseName?: string) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('forge-apply-exercise-swap', {
+          detail: {
+            newExerciseName,
+            targetExerciseName: targetExerciseName || context.currentExerciseName,
+          },
+        })
+      )
+    }
+  }, [context.currentExerciseName])
+
+  const handleStartRestTimer = useCallback((seconds: number) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('forge-start-rest-timer', {
+          detail: {
+            seconds,
+            exerciseName: context.currentExerciseName,
+          },
+        })
+      )
+    }
+  }, [context.currentExerciseName])
+
+  const handleAutoRegulateLoad = useCallback((reductionPercent: number) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('forge-auto-regulate-load', {
+          detail: { reductionPercent },
+        })
+      )
+    }
+  }, [])
 
   return (
     <>
@@ -133,7 +219,12 @@ export default function GlobalCoachGordonHost() {
           recentReadinessScore={context.recentReadinessScore || 82}
           recentSleepHours={context.recentSleepHours}
           recentRpe={context.recentRpe}
+          lastLoggedSet={context.lastLoggedSet}
+          todayWorkoutExercises={context.todayWorkoutExercises}
           isCoachUser={context.isCoachUser}
+          onApplyExerciseSwap={handleApplyExerciseSwap}
+          onStartRestTimer={handleStartRestTimer}
+          onAutoRegulateLoad={handleAutoRegulateLoad}
         />
       )}
 

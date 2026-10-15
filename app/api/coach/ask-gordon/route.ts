@@ -36,6 +36,9 @@ export async function POST(req: NextRequest) {
       recentReadinessScore: typeof body.recentReadinessScore === 'number' ? body.recentReadinessScore : undefined,
       recentSleepHours: typeof body.recentSleepHours === 'number' ? body.recentSleepHours : undefined,
       recentRpe: typeof body.recentRpe === 'number' ? body.recentRpe : undefined,
+      lastLoggedSet: body.lastLoggedSet && typeof body.lastLoggedSet === 'object' ? body.lastLoggedSet : undefined,
+      todayWorkoutExercises: Array.isArray(body.todayWorkoutExercises) ? body.todayWorkoutExercises : undefined,
+      attachedImage: body.attachedImage && typeof body.attachedImage.data === 'string' ? body.attachedImage : undefined,
       activeConversationHistory: Array.isArray(body.activeConversationHistory) ? body.activeConversationHistory : undefined,
     }
 

@@ -8,6 +8,8 @@
 
 import { queryNasmRagLibrary, type RagDocumentMetadata } from './nasm-rag-knowledge-base'
 import { sanitizeCoachSpeechText } from './coach-voice-synthesizer'
+import { getSmartSubstitutions } from './nasm-exercise-substitution'
+import { resolveExerciseVideoEmbed } from './nasm-exercise-video-catalog'
 import {
   type AskCoachGordonRequest,
   type AskCoachGordonResponse,
@@ -82,18 +84,26 @@ Your Communication Style:
 export function retrieveRelevantRagCurricula(question: string, goal?: string, optPhase?: number): RagDocumentMetadata[] {
   const qLower = question.toLowerCase()
 
-  // Match specific keywords
+  // Match specific keywords across all sports science domains
   const keywords: string[] = []
-  if (qLower.includes('swap') || qLower.includes('replace') || qLower.includes('substitute')) keywords.push('substitution', 'exercise')
+  if (qLower.includes('swap') || qLower.includes('replace') || qLower.includes('substitute') || qLower.includes('alternative')) keywords.push('substitution', 'exercise')
   if (qLower.includes('eat') || qLower.includes('meal') || qLower.includes('food') || qLower.includes('protein') || qLower.includes('macro') || qLower.includes('diet') || qLower.includes('nutrition')) keywords.push('nutrition', 'protein', 'meal')
   if (qLower.includes('back') || qLower.includes('knee') || qLower.includes('shoulder') || qLower.includes('hip') || qLower.includes('pain') || qLower.includes('tight') || qLower.includes('sore') || qLower.includes('posture')) keywords.push('corrective', 'compensation', 'inhibit', 'stretch')
   if (qLower.includes('cardio') || qLower.includes('treadmill') || qLower.includes('bike') || qLower.includes('interval') || qLower.includes('zone') || qLower.includes('bpm') || qLower.includes('rpe')) keywords.push('cardiorespiratory', 'stage', 'interval')
   if (qLower.includes('golf') || qLower.includes('swing') || qLower.includes('rotation') || qLower.includes('clubhead') || qLower.includes('drive')) keywords.push('golf', 'rotational')
   if (qLower.includes('mma') || qLower.includes('combat') || qLower.includes('boxing') || qLower.includes('strike')) keywords.push('combat', 'mma')
-  if (qLower.includes('hypertrophy') || qLower.includes('muscle') || qLower.includes('pump') || qLower.includes('bodybuilding') || qLower.includes('rpe')) keywords.push('hypertrophy', 'muscular development', 'volume')
+  if (qLower.includes('hypertrophy') || qLower.includes('muscle') || qLower.includes('pump') || qLower.includes('bodybuilding') || qLower.includes('volume') || qLower.includes('mass')) keywords.push('hypertrophy', 'muscular development', 'volume')
   if (qLower.includes('glp-1') || qLower.includes('glp1') || qLower.includes('semaglutide') || qLower.includes('tirzepatide') || qLower.includes('ozempic') || qLower.includes('medication')) keywords.push('pharmacology', 'glp-1', 'lean mass')
   if (qLower.includes('supplement') || qLower.includes('creatine') || qLower.includes('caffeine') || qLower.includes('whey') || qLower.includes('magnesium')) keywords.push('supplementation', 'chrono-nutrition')
   if (qLower.includes('virtual') || qLower.includes('remote') || qLower.includes('telehealth') || qLower.includes('camera') || qLower.includes('lighting') || qLower.includes('angle') || qLower.includes('consultation') || qLower.includes('wearable') || qLower.includes('onboarding')) keywords.push('virtual', 'telehealth', 'remote', 'wearable', 'onboarding')
+  if (qLower.includes('squat') || qLower.includes('lunge') || qLower.includes('leg') || qLower.includes('quad')) keywords.push('squat', 'stabilization', 'force')
+  if (qLower.includes('deadlift') || qLower.includes('hinge') || qLower.includes('rdl') || qLower.includes('hamstring') || qLower.includes('glute')) keywords.push('hinge', 'posterior chain', 'force')
+  if (qLower.includes('bench') || qLower.includes('press') || qLower.includes('chest') || qLower.includes('push')) keywords.push('push', 'horizontal push', 'force')
+  if (qLower.includes('row') || qLower.includes('pull') || qLower.includes('lat')) keywords.push('pull', 'horizontal row', 'force')
+  if (qLower.includes('core') || qLower.includes('abs') || qLower.includes('brace') || qLower.includes('stability')) keywords.push('core', 'balance', 'stabilization')
+  if (qLower.includes('warmup') || qLower.includes('smr') || qLower.includes('foam roll') || qLower.includes('activation')) keywords.push('warmup', 'inhibit', 'activate')
+  if (qLower.includes('busy') || qLower.includes('taken') || qLower.includes('crowded') || qLower.includes('machine')) keywords.push('substitution', 'facility', 'equipment')
+  if (qLower.includes('fatigue') || qLower.includes('tired') || qLower.includes('recovery') || qLower.includes('sleep') || qLower.includes('cns') || qLower.includes('deload')) keywords.push('recovery', 'periodization', 'bioenergetics')
 
   let results: RagDocumentMetadata[] = []
 
@@ -135,6 +145,11 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
     cardioEquipmentAccess = [],
     kineticCompensations = [],
     recentReadinessScore = 80,
+    recentSleepHours,
+    recentRpe,
+    lastLoggedSet,
+    todayWorkoutExercises = [],
+    attachedImage,
     activeConversationHistory = [],
   } = request
 
@@ -165,12 +180,21 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
     ? `\nRelevant Evidence-Based RAG Sources:\n${relevantDocs.map(d => `- [${d.category}] ${d.title}: ${d.summary} (Key concepts: ${d.keyConcepts.join(', ')})`).join('\n')}`
     : ''
 
+  const lastSetClause = lastLoggedSet
+    ? `\n- Last Logged Set: ${lastLoggedSet.exerciseName || currentExerciseName || 'Exercise'}: ${lastLoggedSet.weightLbs ? `${lastLoggedSet.weightLbs} lbs x ` : ''}${lastLoggedSet.reps ? `${lastLoggedSet.reps} reps` : ''}${lastLoggedSet.rpe !== undefined ? ` @ RPE ${lastLoggedSet.rpe}` : ''}`
+    : ''
+  const todayExercisesClause = todayWorkoutExercises.length > 0
+    ? `\n- Scheduled Exercises Today: ${todayWorkoutExercises.join(', ')}`
+    : ''
+  const sleepClause = recentSleepHours !== undefined ? `\n- Recent Sleep: ${recentSleepHours} hours` : ''
+  const rpeClause = recentRpe !== undefined ? `\n- Recent Intensity: RPE ${recentRpe}` : ''
+
   const athleteContext = `\nAthlete Live Telemetry & Profile:
 - Name: ${athleteName}, Age: ${clientAge}, Sex: ${clientSex}
 - Primary Goal: ${goal}
 - Current OPT™ Phase: Phase ${nasmOptPhase}
 - Active Session Focus: ${currentWorkoutFocus || 'Scheduled Daily Workout'}
-- Current Movement: ${currentExerciseName || 'Active Training Block'}
+- Current Movement: ${currentExerciseName || 'Active Training Block'}${todayExercisesClause}${lastSetClause}${sleepClause}${rpeClause}
 - Available Resistance Equipment: ${equipmentAccess.length > 0 ? equipmentAccess.join(', ') : 'Full Equipment Suite'}
 - Available Cardio Equipment: ${cardioEquipmentAccess.length > 0 ? cardioEquipmentAccess.join(', ') : 'Treadmill, Bike, Outdoor Walking/Running'}
 - Known Kinetic Compensations: ${kineticCompensations.length > 0 ? kineticCompensations.join(', ') : 'None Detected (Optimal Alignment)'}
@@ -185,19 +209,54 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
 Athlete's Question:
 "${question.trim()}"
 
-Provide Coach Scott Gordon's warm, conversational response formatted naturally with markdown emphasis where helpful.`
+Provide Coach Scott Gordon's warm, conversational response formatted naturally with markdown emphasis where helpful. If recommending an exercise swap, rest timer, or load adjustment, give clear actionable instruction.`
 
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
 
   if (apiKey) {
     const modelsToTry = [
       ...(process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : []),
-      'gemini-3.8-flash',
-      'gemini-3.7-flash',
       'gemini-2.5-flash',
+      'gemini-2.5-pro',
       'gemini-1.5-flash',
       'gemini-1.5-pro',
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
     ]
+
+    // Construct multi-turn message payload with optional multimodal image attachment
+    const contents: Array<{
+      role: 'user' | 'model'
+      parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>
+    }> = []
+
+    if (activeConversationHistory.length > 0) {
+      for (const h of activeConversationHistory.slice(-4)) {
+        contents.push({
+          role: h.role === 'user' ? 'user' : 'model',
+          parts: [{ text: h.text }],
+        })
+      }
+    }
+
+    const currentParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [
+      { text: `${athleteContext}${ragContext}\n\nAthlete's Question:\n"${question.trim()}"\n\nProvide Coach Scott Gordon's warm, conversational response formatted naturally with markdown emphasis where helpful.` },
+    ]
+
+    if (attachedImage?.data) {
+      currentParts.push({
+        inlineData: {
+          mimeType: attachedImage.mimeType || 'image/jpeg',
+          data: attachedImage.data,
+        },
+      })
+    }
+
+    contents.push({
+      role: 'user',
+      parts: currentParts,
+    })
+
     for (const model of modelsToTry) {
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
@@ -205,12 +264,10 @@ Provide Coach Scott Gordon's warm, conversational response formatted naturally w
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [{ text: `${MASTER_COACH_SYSTEM_INSTRUCTION}\n\n${fullPrompt}` }],
-              },
-            ],
+            systemInstruction: {
+              parts: [{ text: MASTER_COACH_SYSTEM_INSTRUCTION }],
+            },
+            contents,
             generationConfig: {
               temperature: 0.35,
               maxOutputTokens: 1000,
@@ -224,10 +281,12 @@ Provide Coach Scott Gordon's warm, conversational response formatted naturally w
           if (rawText) {
             const spokenAudioText = sanitizeCoachSpeechText(rawText)
             const pingCheck = detectCoachPingNeed(question, rawText)
+            const recommendedAction = deriveRecommendedAction(question.toLowerCase(), currentExerciseName, rawText, nasmOptPhase)
             return {
               answerMarkdown: rawText,
               spokenAudioText,
               relevantCurriculums: curriculumTitles,
+              recommendedAction,
               suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
               requiresCoachPing: pingCheck.requiresCoachPing,
               coachPingReason: pingCheck.reason,
@@ -421,36 +480,88 @@ Make sure you hydrate post-workout and prioritize high-quality sleep tonight. Yo
 /**
  * Derives actionable interactive buttons for chat messages (e.g. 1-tap exercise swap, rest timer).
  */
-export function deriveRecommendedAction(qLower: string, currentExerciseName?: string): CoachActionRecommendation | undefined {
-  if (qLower.includes('swap') || qLower.includes('replace') || qLower.includes('substitute')) {
-    const target = currentExerciseName ? `an alternative to ${currentExerciseName}` : 'DB Goblet Squats'
+export function deriveRecommendedAction(
+  qLower: string,
+  currentExerciseName?: string,
+  answerText?: string,
+  nasmOptPhase: number = 1
+): CoachActionRecommendation | undefined {
+  const aLower = (answerText || '').toLowerCase()
+  const combined = `${qLower} ${aLower}`
+
+  if (combined.includes('swap') || combined.includes('replace') || combined.includes('substitute') || combined.includes('busy') || combined.includes('taken')) {
+    if (currentExerciseName) {
+      const smartSubs = getSmartSubstitutions(currentExerciseName, `Phase ${nasmOptPhase}`)
+      if (smartSubs && smartSubs.length > 0) {
+        const topSub = smartSubs[0]
+        const video = resolveExerciseVideoEmbed(topSub.name)
+        return {
+          type: 'swap_exercise',
+          targetExerciseName: topSub.name,
+          currentExerciseName,
+          buttonText: `Swap to ${topSub.name} in Workout`,
+          prescribedTempo: topSub.prescribedTempo,
+          reasoning: topSub.reasoning,
+          videoId: video.videoId || undefined,
+          embedUrl: video.embedUrl || undefined,
+        }
+      }
+      return {
+        type: 'swap_exercise',
+        targetExerciseName: `an alternative to ${currentExerciseName}`,
+        currentExerciseName,
+        buttonText: `Swap to an alternative to ${currentExerciseName} in Workout`,
+      }
+    }
     return {
       type: 'swap_exercise',
-      targetExerciseName: target,
-      buttonText: `Swap to ${target} in Workout`,
+      targetExerciseName: 'DB Goblet Squats',
+      buttonText: 'Swap to DB Goblet Squats in Workout',
     }
   }
-  if (qLower.includes('rest') || qLower.includes('timer') || qLower.includes('interval') || qLower.includes('heavy set')) {
+
+  if (combined.includes('rest') || combined.includes('timer') || combined.includes('interval') || combined.includes('heavy set')) {
+    let restSecs = 90
+    if (combined.includes('60s') || combined.includes('60 second') || combined.includes('1 minute') || combined.includes('60 sec')) restSecs = 60
+    else if (combined.includes('120s') || combined.includes('120 second') || combined.includes('2 minute')) restSecs = 120
+    else if (combined.includes('180s') || combined.includes('3 minute')) restSecs = 180
+
     return {
       type: 'start_timer',
-      restSeconds: 90,
-      buttonText: 'Start 90s Rest Timer (Spoken in Earbuds)',
+      restSeconds: restSecs,
+      buttonText: `Start ${restSecs}s Rest Timer (Spoken in Earbuds)`,
     }
   }
-  if (qLower.includes('sleep') || qLower.includes('tired') || qLower.includes('red eye') || qLower.includes('jet lag')) {
+
+  if (combined.includes('sleep') || combined.includes('tired') || combined.includes('red eye') || combined.includes('jet lag') || combined.includes('auto-regulate') || combined.includes('exhausted')) {
     return {
       type: 'auto_regulate_load',
       loadReductionPercent: 15,
       buttonText: 'Auto-Regulate: Drop Working Weight 15%',
     }
   }
-  if (qLower.includes('form') || qLower.includes('video') || qLower.includes('check my') || qLower.includes('depth')) {
+
+  if (currentExerciseName && (combined.includes('demo') || combined.includes('how to') || combined.includes('how do i') || combined.includes('technique') || combined.includes('video cue') || combined.includes('watch'))) {
+    const video = resolveExerciseVideoEmbed(currentExerciseName)
+    if (video && video.videoId) {
+      return {
+        type: 'view_demo',
+        targetExerciseName: currentExerciseName,
+        buttonText: `Watch ${currentExerciseName} Video Demo`,
+        videoId: video.videoId,
+        embedUrl: video.embedUrl,
+      }
+    }
+  }
+
+  if (combined.includes('form') || combined.includes('critique') || combined.includes('check my') || combined.includes('depth') || combined.includes('film my')) {
     return {
       type: 'form_critique',
       cueTitle: '5-Second Video Form Check',
       buttonText: 'Launch Quick Form Check',
     }
   }
+
   return undefined
 }
 

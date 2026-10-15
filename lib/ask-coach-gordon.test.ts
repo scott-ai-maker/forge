@@ -307,6 +307,60 @@ describe('Ask Coach Gordon Interactive Engine', () => {
       const restAction = deriveRecommendedAction('start rest timer')
       expect(restAction?.type).toBe('start_timer')
     })
+
+    it('derives smart exercise substitutions with video embeds and NASM tempos for active exercises', () => {
+      const swapWithContext = deriveRecommendedAction('can you swap this machine or exercise', 'Barbell Back Squat')
+      expect(swapWithContext).toBeDefined()
+      expect(swapWithContext?.type).toBe('swap_exercise')
+      expect(swapWithContext?.currentExerciseName).toBe('Barbell Back Squat')
+      expect(swapWithContext?.targetExerciseName).toBeDefined()
+      expect(swapWithContext?.videoId).toBeDefined()
+      expect(swapWithContext?.embedUrl).toContain('youtube')
+      expect(swapWithContext?.prescribedTempo).toBeDefined()
+    })
+
+    it('derives official video demo embeds when asked for exercise technique demonstration', () => {
+      const demoAction = deriveRecommendedAction('show me a video demo of proper technique', 'Barbell Back Squat')
+      expect(demoAction).toBeDefined()
+      expect(demoAction?.type).toBe('view_demo')
+      expect(demoAction?.videoId).toBeDefined()
+      expect(demoAction?.embedUrl).toContain('youtube-nocookie.com/embed')
+      expect(demoAction?.buttonText).toContain('Watch Barbell Back Squat Video Demo')
+    })
+
+    it('derives load auto-regulation when athlete reports exhaustion or poor recovery', () => {
+      const autoRegAction = deriveRecommendedAction('I only got 4 hours of sleep and feel completely exhausted')
+      expect(autoRegAction).toBeDefined()
+      expect(autoRegAction?.type).toBe('auto_regulate_load')
+      expect(autoRegAction?.loadReductionPercent).toBe(15)
+      expect(autoRegAction?.buttonText).toContain('Drop Working Weight 15%')
+    })
+
+    it('generates coach response integrating live telemetry (lastLoggedSet and todayWorkoutExercises)', () => {
+      const req: AskCoachGordonRequest = {
+        question: 'Should I do another set or adjust load?',
+        athleteName: 'Alexander',
+        nasmOptPhase: 2,
+        goal: 'strength',
+        currentExerciseName: 'Barbell Back Squat',
+        lastLoggedSet: {
+          exerciseName: 'Barbell Back Squat',
+          weightLbs: 315,
+          reps: 5,
+          rpe: 9.5,
+        },
+        todayWorkoutExercises: ['Barbell Back Squat', 'Romanian Deadlift', 'Walking Lunges'],
+        attachedImage: {
+          data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+          mimeType: 'image/png',
+        },
+      }
+
+      const response = generateDeterministicCoachResponse(req, [])
+      expect(response.answerMarkdown).toBeDefined()
+      expect(response.spokenAudioText).toBeDefined()
+      expect(response.suggestedFollowUps.length).toBeGreaterThan(0)
+    })
   })
 
   describe('5-Second Video Form Check & Audio Critique', () => {
