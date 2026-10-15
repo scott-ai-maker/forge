@@ -8,6 +8,7 @@ export type PeriodizationAutoTriageAction =
   | 'setback_protocol'
   | 'accelerate_phase'
   | 'extend_phase'
+  | 'certify_safety_gate'
   | null
 
 export interface ClientTriageSummary {
@@ -23,6 +24,7 @@ export interface ClientTriageSummary {
   hasPendingVideoCritique: boolean
   hasMedicalRedFlag: boolean
   hasReportedPain: boolean
+  hasPendingSafetyCertification?: boolean
   currentOptPhase: number
   recommendedAction: string
   acwrRatio?: number | null
@@ -44,6 +46,7 @@ export interface ClientRawTelemetry {
   hasPendingVideoCritique?: boolean
   hasMedicalRedFlag?: boolean
   reportedPainInLogs?: boolean
+  hasPendingSafetyCertification?: boolean
   currentOptPhase?: number
   acwrRatio?: number | null
   acuteWorkloadUnits?: number
@@ -176,6 +179,7 @@ export function evaluateClientTriage(raw: ClientRawTelemetry): ClientTriageSumma
     hasPendingVideoCritique = false,
     hasMedicalRedFlag = false,
     reportedPainInLogs = false,
+    hasPendingSafetyCertification = false,
     currentOptPhase = 1,
     acwrRatio = null,
     acuteWorkloadUnits,
@@ -223,7 +227,13 @@ export function evaluateClientTriage(raw: ClientRawTelemetry): ClientTriageSumma
     suggestedActionLabel = '1-Click Recovery Protocol'
   }
   // 2. AMBER / OVERREACHING / ATTENTION
-  else if (hasPendingVideoCritique) {
+  else if (hasPendingSafetyCertification) {
+    priority = 'amber'
+    primaryReason = 'New exercise recommendations awaiting Master Coach Safety Gate certification.'
+    recommendedAction = 'Verify exercise prescription and 1-click certify.'
+    suggestedPeriodizationAction = 'certify_safety_gate'
+    suggestedActionLabel = '1-Click Certify Safety Gate'
+  } else if (hasPendingVideoCritique) {
     priority = 'amber'
     primaryReason = 'Video lift critique submitted and awaiting coach verification.'
     recommendedAction = 'Review AI joint telemetry and publish coach cues.'
@@ -254,7 +264,7 @@ export function evaluateClientTriage(raw: ClientRawTelemetry): ClientTriageSumma
   let acwrZone: 'Under-training' | 'Sweet Spot' | 'Overreaching' | 'Danger Zone' | 'No Data' = 'No Data'
   if (hasAcwr) {
     if (acwrRatio! < 0.8) acwrZone = 'Under-training'
-    else if (acwrRatio! <= 1.30) acwrZone = 'Sweet Spot'
+    else if (acwrRatio! <= 1.3) acwrZone = 'Sweet Spot'
     else if (acwrRatio! <= 1.49) acwrZone = 'Overreaching'
     else acwrZone = 'Danger Zone'
   }
@@ -272,6 +282,7 @@ export function evaluateClientTriage(raw: ClientRawTelemetry): ClientTriageSumma
     hasPendingVideoCritique,
     hasMedicalRedFlag,
     hasReportedPain: reportedPainInLogs,
+    hasPendingSafetyCertification,
     currentOptPhase,
     recommendedAction,
     acwrRatio,

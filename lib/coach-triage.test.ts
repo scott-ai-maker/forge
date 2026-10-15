@@ -206,6 +206,22 @@ describe('coach-triage', () => {
     expect(res.acwrZone).toBe('Sweet Spot')
     expect(res.acuteWorkloadUnits).toBe(res.chronicWorkloadUnits)
   })
+
+  it('triggers AMBER priority and 1-Click Certify Safety Gate when athlete has uncertified plan', () => {
+    const res = evaluateClientTriage({
+      clientId: 'c_pending_cert',
+      clientName: 'New Athlete Awaiting Plan Approval',
+      email: 'newathlete@example.com',
+      daysSinceLastCheckin: 1,
+      hasPendingSafetyCertification: true,
+    })
+
+    expect(res.priority).toBe('amber')
+    expect(res.hasPendingSafetyCertification).toBe(true)
+    expect(res.primaryReason).toContain('Master Coach Safety Gate certification')
+    expect(res.suggestedPeriodizationAction).toBe('certify_safety_gate')
+    expect(res.suggestedActionLabel).toContain('1-Click Certify Safety Gate')
+  })
 })
 
 

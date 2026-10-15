@@ -857,6 +857,16 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
 
     const hasPendingVideoCritique = Boolean(unreadMessageClientIds.has(client.id))
 
+    const latestPlan = latestPlanByClient[client.id]
+    const planJson = (latestPlan?.plan_json ?? {}) as Record<string, unknown>
+    const isPlanCertified = Boolean(
+      planJson.isCertifiedByCoach ||
+      planJson.coachCertifiedAt ||
+      planJson.safetyGateCertified ||
+      (latestPlan as Record<string, unknown>)?.is_certified
+    )
+    const hasPendingSafetyCertification = Boolean(latestPlan && !isPlanCertified)
+
     const clientWearable = latestWearableByClient[client.id]
     const athleteReadinessScore = typeof clientWearable?.readiness_score === 'number' && Number.isFinite(clientWearable.readiness_score)
       ? clientWearable.readiness_score
@@ -874,6 +884,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
       hasMedicalRedFlag,
       reportedPainInLogs,
       hasPendingVideoCritique,
+      hasPendingSafetyCertification,
       currentOptPhase: optPhase,
       acwrRatio: acwrData.acwrRatio,
       acuteWorkloadUnits: acwrData.acuteWorkloadUnits,

@@ -31,7 +31,7 @@ export const FORGE_ADDON_CATEGORIES: readonly { id: ForgeAddonCategory; title: s
   {
     id: 'private-session',
     title: 'Private sessions with Coach Scott Gordon',
-    blurb: 'Live 1:1 video sessions, bought as credits you book when it suits you.',
+    blurb: 'Live 1:1 video sessions scheduled during dedicated evening and Saturday advisory windows (48h advance notice).',
   },
 ]
 
@@ -99,11 +99,12 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
     id: 'addon-private-session-single',
     category: 'private-session',
     name: 'Private Session',
-    tagline: 'One live 1:1 session, whenever you need it.',
+    tagline: 'One live 1:1 session (evenings & Saturday mornings).',
     priceCents: 18000,
     sessions: 1,
     includes: [
       '60-minute live video session with Coach Scott Gordon',
+      'Dedicated off-hours booking (evenings & Saturday mornings, 48h advance notice)',
       'Technique, programming, or goal-setting focus—your choice',
     ],
   },
@@ -111,13 +112,14 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
     id: 'addon-private-session-4',
     category: 'private-session',
     name: '4-Session Private Pack',
-    tagline: 'A month of consistent 1:1 coaching.',
+    tagline: 'Four 1:1 coaching sessions across your training cycle.',
     priceCents: 66000,
     sessions: 4,
     listPriceCents: 72000,
     popular: true,
     includes: [
       'Four 60-minute live sessions with Coach Scott Gordon',
+      'Dedicated off-hours booking (evenings & Saturdays, 48h advance notice)',
       'Plan adjusted after each session',
     ],
   },
@@ -131,6 +133,7 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
     listPriceCents: 144000,
     includes: [
       'Eight 60-minute live sessions with Coach Scott Gordon',
+      'Dedicated off-hours booking (evenings & Saturdays, 48h advance notice)',
       'Plan adjusted after each session',
     ],
   },

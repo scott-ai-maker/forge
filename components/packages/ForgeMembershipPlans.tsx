@@ -56,6 +56,18 @@ export default function ForgeMembershipPlans() {
             </div>
           )}
           {index === 0 && <span className="forge-plan-label">7-day free trial</span>}
+          {membership.seatCapLabel && (
+            <span
+              className="forge-plan-label"
+              style={{
+                background: 'rgba(212, 175, 55, 0.15)',
+                color: '#D4AF37',
+                border: '1px solid rgba(212, 175, 55, 0.35)',
+              }}
+            >
+              {membership.seatCapLabel}
+            </span>
+          )}
           <h3>{membership.name}</h3>
           {membership.annualPriceCents !== undefined ? (
             <>

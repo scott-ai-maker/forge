@@ -34,7 +34,7 @@ export default function PackagesPage() {
           >
             Train with a plan that fits your life.
           </h1>
-          <p>Clear pricing. Practical sports science. Coaching support when you need it.</p>
+          <p>Clear pricing. Practical sports science. Self-run training labs and limited-seat coach-certified programs.</p>
         </div>
 
         <ForgeMembershipPlans />

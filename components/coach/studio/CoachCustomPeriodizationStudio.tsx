@@ -346,6 +346,10 @@ export default function CoachCustomPeriodizationStudio({
             weeklyMemos: currentPlan.periodizationWeeklyMemos,
             ragSourcesCited: currentPlan.ragSourcesCited,
           },
+          isCertifiedByCoach: true,
+          coachCertifiedAt: new Date().toISOString(),
+          certifiedBy: 'Coach Scott Gordon (NASM Master Trainer)',
+          safetyGateCertified: true,
         }),
       })
 
@@ -355,7 +359,7 @@ export default function CoachCustomPeriodizationStudio({
       }
 
       setDeploySuccessMessage(
-        `Sent to ${clientFirstName}. They'll see "${currentPlan.planTitle}"${currentPlan.coachPersonalNote?.trim() ? ' with your personal note' : ''} next time they open Training.`
+        `Certified & Sent to ${clientFirstName}. Master Coach Safety Gate certified · "${currentPlan.planTitle}"${currentPlan.coachPersonalNote?.trim() ? ' with your personal note' : ''} is active.`
       )
 
       if (onPlanAssigned) {

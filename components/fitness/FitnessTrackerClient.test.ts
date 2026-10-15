@@ -88,3 +88,29 @@ describe('FitnessTrackerClient - Cardio Protocol Robustness', () => {
     expect(resolved?.recommendedModalities.length).toBeGreaterThan(0)
   })
 })
+
+describe('FitnessTrackerClient - Master Coach Safety Gate Certification Badge', () => {
+  it('renders Master Coach Safety Gate certified badge when plan is certified', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const clientFilePath = path.resolve(process.cwd(), 'components/fitness/FitnessTrackerClient.tsx')
+    const clientContent = fs.readFileSync(clientFilePath, 'utf-8')
+
+    expect(clientContent).toContain('Master Coach Safety Gate Certified')
+    expect(clientContent).toContain('safety-gate-certified-badge')
+    expect(clientContent).toContain('plan?.plan_json?.isCertifiedByCoach || plan?.plan_json?.safetyGateCertified')
+    expect(clientContent).toContain('Coach Scott Gordon (NASM Master Trainer)')
+  })
+
+  it('renders Safety Gate Pending Review banner when plan is awaiting coach certification', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const clientFilePath = path.resolve(process.cwd(), 'components/fitness/FitnessTrackerClient.tsx')
+    const clientContent = fs.readFileSync(clientFilePath, 'utf-8')
+
+    expect(clientContent).toContain('safety-gate-pending-badge')
+    expect(clientContent).toContain('In Master Coach Safety Gate Queue')
+    expect(clientContent).toContain('Awaiting Coach Release')
+  })
+})
+

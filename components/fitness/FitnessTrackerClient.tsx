@@ -213,6 +213,10 @@ interface WorkoutPlanRecord {
     estimatedDurationMins?: number
     generatedBy?: string
     generatedByCoachId?: string
+    isCertifiedByCoach?: boolean
+    coachCertifiedAt?: string
+    certifiedBy?: string
+    safetyGateCertified?: boolean
     nutritionTargets?: NutritionTargetsSnapshot
     clinicalRationale?: string | null
     coachPersonalNote?: string | null
@@ -2014,6 +2018,85 @@ export default function FitnessTrackerClient({
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* ── Master Coach Safety Gate Certification Badge ── */}
+      {(plan?.plan_json?.isCertifiedByCoach || plan?.plan_json?.safetyGateCertified) && (
+        <div
+          role="status"
+          aria-label="Master Coach Safety Gate Certified"
+          data-testid="safety-gate-certified-badge"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(13, 27, 42, 0.95) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.45)',
+            borderRadius: 8,
+            padding: '10px 16px',
+            marginBottom: 14,
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }} aria-hidden="true">🛡️</span>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#34D399', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>Master Coach Safety Gate Certified</span>
+                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(52, 211, 153, 0.2)', border: '1px solid rgba(52, 211, 153, 0.35)' }}>
+                  NASM Verified
+                </span>
+              </div>
+              <div style={{ fontSize: 12.5, color: '#E2E8F0', marginTop: 2 }}>
+                {plan?.plan_json?.certifiedBy || 'Coach Scott Gordon (NASM Master Trainer)'} certified this program for biomechanical safety, volume tolerance, and kinetic chain alignment.
+              </div>
+            </div>
+          </div>
+          {plan?.plan_json?.coachCertifiedAt && (
+            <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'var(--font-telemetry, monospace)' }}>
+              Verified {new Date(plan.plan_json.coachCertifiedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Safety Gate Pending Coach Release Banner ── */}
+      {plan && !(plan?.plan_json?.isCertifiedByCoach || plan?.plan_json?.safetyGateCertified) && (
+        <div
+          role="status"
+          aria-label="Master Coach Safety Gate Pending Review"
+          data-testid="safety-gate-pending-badge"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+            background: 'linear-gradient(135deg, rgba(212, 160, 23, 0.12) 0%, rgba(13, 27, 42, 0.95) 100%)',
+            border: '1px solid rgba(212, 160, 23, 0.45)',
+            borderRadius: 8,
+            padding: '10px 16px',
+            marginBottom: 14,
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }} aria-hidden="true">⏳</span>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold, #D4A017)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>In Master Coach Safety Gate Queue</span>
+                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(212, 160, 23, 0.2)', border: '1px solid rgba(212, 160, 23, 0.35)' }}>
+                  Awaiting Coach Release
+                </span>
+              </div>
+              <div style={{ fontSize: 12.5, color: '#E2E8F0', marginTop: 2 }}>
+                Coach Scott Gordon is reviewing this program in his evening advisory window to certify exercise selection, kinetic chain safety, and load progression before full clearance.
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

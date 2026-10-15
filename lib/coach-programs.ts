@@ -110,6 +110,10 @@ export interface CoachProgramPayload {
     ragSourcesCited?: string[]
   } | null
   strengthCardioBlendSummary?: StrengthCardioBlendSummary | null
+  isCertifiedByCoach?: boolean | null
+  coachCertifiedAt?: string | null
+  certifiedBy?: string | null
+  safetyGateCertified?: boolean | null
 }
 
 export interface CoachProgramDraft {

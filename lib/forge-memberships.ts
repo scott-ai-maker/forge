@@ -8,6 +8,8 @@ export interface ForgeMembership {
   monthlyPriceCents: number
   annualPriceCents?: number
   trialDays?: number
+  seatCap?: number
+  seatCapLabel?: string
   // Self-serve tools unlocked while the membership is paid; uses are per billing cycle (omitted = unlimited)
   includedFeatures?: readonly { feature: ForgeAddonFeature; uses?: number }[]
   features: readonly string[]
@@ -24,6 +26,7 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
       'Personalized NASM OPT™ training plan',
       'Workout, strength, and personal-record tracking',
       'Movement screening and practical guidance',
+      'Instant exercise cues & 24/7 automated pacing',
     ],
   },
   {
@@ -47,6 +50,8 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     id: 'forge-transformation-direct',
     name: 'Coach Support',
     monthlyPriceCents: 19900,
+    seatCap: 25,
+    seatCapLabel: 'Strictly limited to 25 active athletes',
     includedFeatures: [
       { feature: 'nutrition' },
       { feature: 'travel' },
@@ -54,9 +59,12 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     ],
     features: [
       'Everything in Plus',
+      'Master Coach Safety Gate: Plans certified by Coach Scott Gordon',
       'Quarterly video reviews with Coach Scott Gordon',
       'Direct messaging with your coach',
-      '8 video form reviews per month',
+      'Evening advisory review window (within 1 business day)',
+      '8 video form reviews per month in Form Lab',
+      'Strictly limited to 25 active athletes to protect coach focus',
     ],
   },
 ]

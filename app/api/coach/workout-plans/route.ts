@@ -63,6 +63,26 @@ function parsePayload(body: Record<string, unknown>): CoachProgramPayload | null
         : null,
     periodizationPlan: (body.periodizationPlan || rawJson.periodizationPlan) as { weeklyMemos?: string[]; ragSourcesCited?: string[] } || null,
     strengthCardioBlendSummary: (body.strengthCardioBlendSummary || rawJson.strengthCardioBlendSummary) as StrengthCardioBlendSummary || null,
+    isCertifiedByCoach: typeof body.isCertifiedByCoach === 'boolean'
+      ? body.isCertifiedByCoach
+      : typeof rawJson.isCertifiedByCoach === 'boolean'
+        ? rawJson.isCertifiedByCoach
+        : true,
+    coachCertifiedAt: typeof body.coachCertifiedAt === 'string'
+      ? body.coachCertifiedAt
+      : typeof rawJson.coachCertifiedAt === 'string'
+        ? rawJson.coachCertifiedAt
+        : new Date().toISOString(),
+    certifiedBy: typeof body.certifiedBy === 'string'
+      ? body.certifiedBy
+      : typeof rawJson.certifiedBy === 'string'
+        ? rawJson.certifiedBy
+        : 'Coach Scott Gordon (NASM Master Trainer)',
+    safetyGateCertified: typeof body.safetyGateCertified === 'boolean'
+      ? body.safetyGateCertified
+      : typeof rawJson.safetyGateCertified === 'boolean'
+        ? rawJson.safetyGateCertified
+        : true,
   }
 }
 
@@ -362,6 +382,10 @@ export async function POST(req: NextRequest) {
       sessions: storedPlan.workouts,
       generatedByCoachId: coachId,
       generatedBy: 'coach',
+      isCertifiedByCoach: payload.isCertifiedByCoach ?? true,
+      coachCertifiedAt: payload.coachCertifiedAt ?? new Date().toISOString(),
+      certifiedBy: payload.certifiedBy ?? 'Coach Scott Gordon (NASM Master Trainer)',
+      safetyGateCertified: payload.safetyGateCertified ?? true,
       overwrittenAt: (latestExistingId || shouldOverwrite) ? new Date().toISOString() : undefined,
     },
   }

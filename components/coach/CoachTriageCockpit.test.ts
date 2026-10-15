@@ -88,5 +88,21 @@ describe('CoachTriageCockpit Architecture & Diagnostic Integration', () => {
     expect(medicalClient.priority).toBe('red')
     expect(medicalClient.primaryReason).toContain('High-risk medical symptom')
   })
+
+  it('identifies clients requiring Master Coach Safety Gate clearance with 1-click action', () => {
+    const uncertifiedClient = evaluateClientTriage({
+      clientId: 'safety-1',
+      clientName: 'Safety Gate Athlete',
+      email: 'safety@example.com',
+      daysSinceLastCheckin: 1,
+      hasPendingSafetyCertification: true,
+    })
+
+    expect(uncertifiedClient.priority).toBe('amber')
+    expect(uncertifiedClient.hasPendingSafetyCertification).toBe(true)
+    expect(uncertifiedClient.suggestedPeriodizationAction).toBe('certify_safety_gate')
+    expect(uncertifiedClient.suggestedActionLabel).toBe('1-Click Certify Safety Gate')
+    expect(uncertifiedClient.primaryReason).toContain('Master Coach Safety Gate certification')
+  })
 })
 

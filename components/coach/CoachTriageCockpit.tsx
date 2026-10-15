@@ -24,7 +24,7 @@ export default function CoachTriageCockpit({
     setIsHydrated(true)
   }, [])
 
-  const [filterPriority, setFilterPriority] = useState<'all' | 'red' | 'amber' | 'green' | 'fatigue_triage'>('all')
+  const [filterPriority, setFilterPriority] = useState<'all' | 'red' | 'amber' | 'green' | 'fatigue_triage' | 'safety_gate'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedDetailsClientId, setExpandedDetailsClientId] = useState<string | null>(null)
   const [executingClientId, setExecutingClientId] = useState<string | null>(null)
@@ -42,15 +42,20 @@ export default function CoachTriageCockpit({
   const fatigueTriageCount = sorted.filter(
     c => c.daysSinceLastCheckin <= 2 || (typeof c.readinessScore === 'number' && c.readinessScore > 0 && c.readinessScore < 60) || c.hasReportedPain || c.acwrZone === 'Danger Zone'
   ).length
+  const safetyGateCount = sorted.filter(
+    c => c.hasMedicalRedFlag || c.hasReportedPain || c.hasPendingVideoCritique || Boolean(c.hasPendingSafetyCertification)
+  ).length
 
   const filteredClients = useMemo(() => {
     return sorted.filter(c => {
       const matchesPriority =
         filterPriority === 'all'
           ? true
-          : filterPriority === 'fatigue_triage'
-            ? (c.daysSinceLastCheckin <= 2 || (typeof c.readinessScore === 'number' && c.readinessScore > 0 && c.readinessScore < 60) || c.hasReportedPain || c.acwrZone === 'Danger Zone')
-            : c.priority === filterPriority
+          : filterPriority === 'safety_gate'
+            ? (c.hasMedicalRedFlag || c.hasReportedPain || c.hasPendingVideoCritique || Boolean(c.hasPendingSafetyCertification))
+            : filterPriority === 'fatigue_triage'
+              ? (c.daysSinceLastCheckin <= 2 || (typeof c.readinessScore === 'number' && c.readinessScore > 0 && c.readinessScore < 60) || c.hasReportedPain || c.acwrZone === 'Danger Zone')
+              : c.priority === filterPriority
       if (!matchesPriority) return false
 
       const query = searchQuery.trim().toLowerCase()
@@ -216,8 +221,33 @@ export default function CoachTriageCockpit({
         </p>
       </div>
 
-      {/* 4 Triage Metric Pill Cards */}
+      {/* Triage Metric Pill Cards */}
       <div className="coach-triage-pills-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 12 }}>
+        <button
+          type="button"
+          onClick={() => setFilterPriority(filterPriority === 'safety_gate' ? 'all' : 'safety_gate')}
+          className="tactile-btn tabular-nums coach-triage-pill"
+          style={{
+            padding: '16px 20px',
+            textAlign: 'left',
+            background: filterPriority === 'safety_gate' ? 'rgba(16,185,129,0.22)' : 'rgba(8,14,20,0.6)',
+            border: filterPriority === 'safety_gate' ? '2px solid #10B981' : '1px solid rgba(16,185,129,0.35)',
+            cursor: 'pointer',
+            display: 'grid',
+            gap: 2,
+            borderRadius: 8,
+          }}
+        >
+          <div style={{ color: '#10B981', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <GaaIcon name="shield" size={12} tone="emerald" />
+            <span>Safety Gate Queue</span>
+          </div>
+          <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontWeight: 800, fontSize: 32, color: 'var(--white)', lineHeight: 1 }}>
+            {safetyGateCount} <span style={{ fontSize: 13, fontFamily: 'Raleway, sans-serif', fontWeight: 600, color: 'var(--gray)' }}>Items</span>
+          </div>
+          <div className="coach-triage-pill-hint" style={{ fontSize: 11, color: 'var(--gray)' }}>Pending plan approvals, pain alerts, form reviews</div>
+        </button>
+
         <button
           type="button"
           onClick={() => setFilterPriority(filterPriority === 'red' ? 'all' : 'red')}
@@ -412,6 +442,29 @@ export default function CoachTriageCockpit({
                         OPT Phase {client.currentOptPhase}
                       </span>
 
+                      {client.hasPendingSafetyCertification && (
+                        <span
+                          style={{
+                            padding: '2px 8px',
+                            background: 'rgba(16,185,129,0.18)',
+                            border: '1px solid #10B981',
+                            color: '#34D399',
+                            fontFamily: 'Raleway, sans-serif',
+                            fontWeight: 700,
+                            fontSize: 10,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            borderRadius: 4,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          <GaaIcon name="shield" size={10} tone="emerald" />
+                          <span>Safety Gate Pending</span>
+                        </span>
+                      )}
+
                       {/* ACWR Telemetry Badge */}
                       {client.acwrRatio !== undefined && client.acwrRatio !== null ? (
                         <span
@@ -522,9 +575,34 @@ export default function CoachTriageCockpit({
                             gap: 6,
                           }}
                         >
-                          <GaaIcon name="lightning" size={13} tone="inherit" />
-                          <span>{isExecuting ? 'Calibrating...' : client.suggestedActionLabel || '1-Click Calibrate'}</span>
+                          <GaaIcon name={client.suggestedPeriodizationAction === 'certify_safety_gate' ? 'shield-check' : 'lightning'} size={13} tone="inherit" />
+                          <span>{isExecuting ? 'Certifying...' : client.suggestedActionLabel || '1-Click Calibrate'}</span>
                         </button>
+                      )}
+
+                      {/* Review Exercises Workspace Link when Safety Gate is Pending */}
+                      {client.hasPendingSafetyCertification && (
+                        <Link
+                          href={`/coach/clients/${client.clientId}?tab=program#workspace-tab-content`}
+                          className="tactile-btn"
+                          style={{
+                            padding: '8px 14px',
+                            background: 'rgba(16,185,129,0.12)',
+                            border: '1px solid rgba(16,185,129,0.4)',
+                            color: '#34d399',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            borderRadius: 4,
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}
+                          title="Open program builder to review or modify exercises before certifying"
+                        >
+                          <GaaIcon name="shield" size={13} tone="emerald" />
+                          <span>Review Exercises</span>
+                        </Link>
                       )}
 
                       {successMsg && (

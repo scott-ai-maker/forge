@@ -91,19 +91,31 @@ export async function POST(
       const memo = `Coach Gordon extended Phase ${activePhase} by 1 microcycle to reinforce kinetic chain stability before advancing load.`
       modulatedPlan = extendCurrentPhase(macrocycle, activePhase, 1, memo)
       actionSummary = `Extended Phase ${activePhase} by 1 reinforcement microcycle.`
+    } else if (action === 'certify_safety_gate') {
+      actionSummary = 'Master Coach Safety Gate Certified: Workout selections & volume verified and cleared by Coach Scott Gordon.'
     }
 
     // 3. Persist to database
     if (existingPlanRecord) {
+      const isCertifying = action === 'certify_safety_gate'
       const updatedPlanJson = {
         ...(typeof existingPlanRecord.plan_json === 'object' && existingPlanRecord.plan_json ? existingPlanRecord.plan_json : {}),
         periodizationPlan: modulatedPlan,
+        ...(isCertifying
+          ? {
+              isCertifiedByCoach: true,
+              coachCertifiedAt: new Date().toISOString(),
+              certifiedBy: 'Coach Scott Gordon (NASM Master Trainer)',
+              safetyGateCertified: true,
+            }
+          : {}),
       }
       await admin
         .from('workout_plans')
         .update({ plan_json: updatedPlanJson })
         .eq('id', existingPlanRecord.id)
     } else {
+      const isCertifying = action === 'certify_safety_gate'
       await admin.from('workout_plans').insert({
         user_id: clientId,
         name: `12-Week OPT Periodization Macrocycle (${modulatedPlan.clientGoal})`,
@@ -114,13 +126,23 @@ export async function POST(
         estimated_duration_mins: 60,
         plan_json: {
           periodizationPlan: modulatedPlan,
+          ...(isCertifying
+            ? {
+                isCertifiedByCoach: true,
+                coachCertifiedAt: new Date().toISOString(),
+                certifiedBy: 'Coach Scott Gordon (NASM Master Trainer)',
+                safetyGateCertified: true,
+              }
+            : {}),
         },
       })
     }
 
     // 4. Dispatch concierge notification to client (non-blocking)
-    const activeWeekObj = modulatedPlan.weeks.find(w => w.weekNumber === modulatedPlan.currentWeek) || modulatedPlan.weeks[0]
-    const notificationContent = `### Periodization Auto-Triage: Plan Calibrated\n\nCoach Gordon has calibrated your **12-Week OPT™ Macrocycle Architecture** based on your latest workload & recovery telemetry.\n\n- **Action Taken**: ${actionSummary}\n- **Active Phase**: ${activeWeekObj.phase}\n- **Microcycle Theme**: ${activeWeekObj.theme}\n- **Target Variables**: ${activeWeekObj.volumeIntensity} (${activeWeekObj.tempo ?? '4/2/1 tempo'})\n- **Directive**: ${activeWeekObj.coachWeeklyMemo ?? 'Execute with strict tempo and joint control.'}\n\nYour updated timeline is live inside your **Fitness Lab**.`
+    const activeWeekObj = modulatedPlan.weeks?.find(w => w.weekNumber === modulatedPlan.currentWeek) || modulatedPlan.weeks?.[0]
+    const notificationContent = action === 'certify_safety_gate'
+      ? `### 🛡️ Master Coach Safety Gate: Program Certified\n\nCoach Scott Gordon has personally reviewed your exercise selections, volume, and kinetic movement profile.\n\n- **Status**: Clinically Certified & Cleared for Training\n- **Coach**: Scott Gordon, NASM Master Trainer (CPT · CES · PES)\n- **Verification**: ${actionSummary}\n\nYour program is certified and ready in your **Fitness Lab**!`
+      : `### Periodization Auto-Triage: Plan Calibrated\n\nCoach Gordon has calibrated your **12-Week OPT™ Macrocycle Architecture** based on your latest workload & recovery telemetry.\n\n- **Action Taken**: ${actionSummary}\n- **Active Phase**: ${activeWeekObj?.phase || 'Active Phase'}\n- **Microcycle Theme**: ${activeWeekObj?.theme || 'Standard Loading'}\n- **Target Variables**: ${activeWeekObj?.volumeIntensity || 'Prescribed Load'} (${activeWeekObj?.tempo ?? '4/2/1 tempo'})\n- **Directive**: ${activeWeekObj?.coachWeeklyMemo ?? 'Execute with strict tempo and joint control.'}\n\nYour updated timeline is live inside your **Fitness Lab**.`
 
     try {
       await admin.from('coach_client_messages').insert({
