@@ -24,7 +24,7 @@ describe('liability-shield', () => {
     expect(res.virtualTelehealthDisclaimer).toContain('NASM VIRTUAL COACHING & REMOTE TELEHEALTH AGREEMENT')
     expect(res.virtualTelehealthDisclaimer).toContain('cannot physically spot')
     expect(res.legalDisclaimer).toContain('AI DIGITAL COACHING & AUTOMATED PERFORMANCE GUIDANCE')
-    expect(res.legalDisclaimer).toContain('Forge Athletic LLC or Coach Scott Gordon')
+    expect(res.legalDisclaimer).toContain('Forge Athletic Performance LLC or Coach Scott Gordon')
     expect(res.erapRecord?.isErapComplete).toBe(false)
   })
 

@@ -71,7 +71,7 @@ export interface PrecisionMacroPrescription {
 }
 
 export const NUTRITION_SAFE_HARBOR_NOTICE =
-  'Florida Non-Medical Nutrition Safe Harbor (Fla. Stat. § 468): All metabolic expenditure calculations, macronutrient targets, and nutrient-timing recommendations are provided strictly for educational and athletic conditioning support in apparently healthy individuals. They do not constitute Medical Nutrition Therapy (MNT), medical dietary prescriptions, or treatment for clinical metabolic or eating disorders.'
+  'Massachusetts Non-Medical Nutrition & Dietetics Safe Harbor (M.G.L. c. 112, §§ 196-208): All metabolic expenditure calculations, macronutrient targets, and nutrient-timing recommendations are provided strictly for educational and athletic conditioning support in apparently healthy individuals. They do not constitute Medical Nutrition Therapy (MNT), medical dietary prescriptions, or treatment for clinical metabolic or eating disorders.'
 
 export interface DiningProtocol {
   venueType: string

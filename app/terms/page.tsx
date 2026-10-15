@@ -31,7 +31,7 @@ export default function TermsOfServicePage() {
           Terms of Service &amp; Proprietary Rights
         </h1>
         <p style={{ color: '#8A99AA', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
-          Effective &amp; Last Updated: October 8, 2026 · Forge Athletic LLC
+          Effective &amp; Last Updated: October 8, 2026 · Forge Athletic Performance LLC
         </p>
       </div>
 
@@ -40,7 +40,7 @@ export default function TermsOfServicePage() {
           1. Acceptance of Terms &amp; Binding Agreement
         </h2>
         <p>
-          By accessing, browsing, creating an account on, subscribing to, or utilizing any website, software application, live video consultation studio, or digital advisory service provided by <strong>Forge Athletic LLC</strong> (&quot;Forge Athletic&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), you (&quot;Client&quot;, &quot;Athlete&quot;, &quot;Coach&quot;, or &quot;User&quot;) agree to be legally bound by these Terms of Service, our Privacy Policy, and all incorporated proprietary agreements. If you do not unconditionally agree to these terms, you are strictly prohibited from using the platform and must discontinue access immediately.
+          By accessing, browsing, creating an account on, subscribing to, or utilizing any website, software application, live video consultation studio, or digital advisory service provided by <strong>Forge Athletic Performance LLC d/b/a Forge Athletic</strong> (&quot;Forge Athletic&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), you (&quot;Client&quot;, &quot;Athlete&quot;, &quot;Coach&quot;, or &quot;User&quot;) agree to be legally bound by these Terms of Service, our Privacy Policy, and all incorporated proprietary agreements. If you do not unconditionally agree to these terms, you are strictly prohibited from using the platform and must discontinue access immediately.
         </p>
         <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.15rem', color: '#FFFFFF', margin: '1.25rem 0 0.5rem', letterSpacing: '0.03em' }}>
           1.1 Eligibility, Age Requirements &amp; Minors
@@ -60,7 +60,7 @@ export default function TermsOfServicePage() {
             <span>Exclusive Ownership of Proprietary Software, Algorithms &amp; Methodologies</span>
           </p>
           <p style={{ margin: 0, fontSize: '0.92rem', color: '#CBD5E1' }}>
-            The Forge Athletic digital platform, including without limitation its software source code, object code, system architecture, database schemas, proprietary algorithms (including the <strong>Gordon Adaptive Training Engine™</strong>, <strong>OPT™ Periodization Architect™</strong>, <strong>AI Postural Distortion Mesh Scanner™</strong>, <strong>Chrono-Dosing Ergogenic Protocol™</strong>, <strong>Live Kinetic Telestrator HUD™</strong>, and <strong>Executive Sunday Intelligence Dossier™</strong>), RAG knowledge bases, prompt engineering pipelines, visual interfaces, UI design components, 3D badges, video analytics, audio cadences, and clinical protocols (collectively, the &quot;Proprietary IP&quot;), are the exclusive property of Forge Athletic LLC.
+            The Forge Athletic digital platform, including without limitation its software source code, object code, system architecture, database schemas, proprietary algorithms (including the <strong>Gordon Adaptive Training Engine™</strong>, <strong>OPT™ Periodization Architect™</strong>, <strong>AI Postural Distortion Mesh Scanner™</strong>, <strong>Chrono-Dosing Ergogenic Protocol™</strong>, <strong>Live Kinetic Telestrator HUD™</strong>, and <strong>Executive Sunday Intelligence Dossier™</strong>), RAG knowledge bases, prompt engineering pipelines, visual interfaces, UI design components, 3D badges, video analytics, audio cadences, and clinical protocols (collectively, the &quot;Proprietary IP&quot;), are the exclusive property of Forge Athletic Performance LLC.
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export default function TermsOfServicePage() {
           2.1 Trademarks &amp; Service Marks
         </h3>
         <p style={{ fontSize: '0.95rem' }}>
-          &quot;Forge Athletic&quot;, &quot;Forge&quot;, &quot;GATE&quot;, &quot;Executive Sunday Dossier&quot;, the Forge Architectural Swiss Monogram, and all associated logos, product names, and brand badges are proprietary trademarks and service marks of Forge Athletic LLC. All Rights Reserved. NASM and OPT™ are registered marks of the National Academy of Sports Medicine used under license and standard educational citation.
+          &quot;Forge Athletic&quot;, &quot;Forge&quot;, &quot;GATE&quot;, &quot;Executive Sunday Dossier&quot;, the Forge Architectural Swiss Monogram, and all associated logos, product names, and brand badges are proprietary trademarks and service marks of Forge Athletic Performance LLC. All Rights Reserved. NASM and OPT™ are registered marks of the National Academy of Sports Medicine used under license and standard educational citation.
         </p>
 
         <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.15rem', color: '#FFFFFF', margin: '1.25rem 0 0.5rem', letterSpacing: '0.03em' }}>
@@ -103,7 +103,7 @@ export default function TermsOfServicePage() {
           2.4 Legal Remedies &amp; Injunctive Relief
         </h3>
         <p style={{ fontSize: '0.95rem' }}>
-          You acknowledge that any breach of these Intellectual Property provisions will cause irreparable and immediate harm to Forge Athletic LLC for which monetary damages alone would be inadequate. Accordingly, in addition to all other available legal remedies, Forge Athletic shall be entitled to seek immediate preliminary and permanent injunctive relief against any actual or threatened infringement without the necessity of posting a bond.
+          You acknowledge that any breach of these Intellectual Property provisions will cause irreparable and immediate harm to Forge Athletic Performance LLC for which monetary damages alone would be inadequate. Accordingly, in addition to all other available legal remedies, Forge Athletic shall be entitled to seek immediate preliminary and permanent injunctive relief against any actual or threatened infringement without the necessity of posting a bond.
         </p>
       </section>
 
@@ -124,7 +124,7 @@ export default function TermsOfServicePage() {
           <strong>Scope of Practice &amp; Professional Qualifications:</strong> Coaching is led by Certified Personal Trainers credentialed through the National Academy of Sports Medicine (NASM-CPT®, NCCA-accredited). Coaches operate strictly within the NASM-CPT Scope of Practice. Coaches do not diagnose medical conditions, treat injuries, prescribe medical diets, or prescribe pharmaceuticals or therapeutic substances. All dietary supplement guides and timing schedules are educational sports nutrition models based on peer-reviewed literature.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
-          <strong>Florida Non-Medical Nutrition &amp; Dietetics Safe Harbor (Fla. Stat. § 468):</strong> All nutritional information, bioenergetic expenditure estimates, macronutrient targets, and dietary supplement educational guides provided by Forge Athletic are intended exclusively for general wellness, educational purposes, and athletic conditioning in apparently healthy individuals. Forge Athletic coaches are not licensed medical dietitians and do not provide Medical Nutrition Therapy (MNT). Our services are not intended to diagnose, treat, or manage clinical conditions, metabolic disorders, renal pathology, or eating disorders. Clients with clinical medical diagnoses must seek nutritional guidance from a licensed physician or registered dietitian.
+          <strong>Massachusetts Non-Medical Nutrition &amp; Dietetics Safe Harbor (M.G.L. c. 112, §§ 196-208):</strong> All nutritional information, bioenergetic expenditure estimates, macronutrient targets, and dietary supplement educational guides provided by Forge Athletic are intended exclusively for general wellness, educational purposes, and athletic conditioning in apparently healthy individuals. Forge Athletic coaches are not licensed medical dietitians and do not provide Medical Nutrition Therapy (MNT). Our services are not intended to diagnose, treat, or manage clinical conditions, metabolic disorders, renal pathology, or eating disorders. Clients with clinical medical diagnoses must seek nutritional guidance from a licensed physician or registered dietitian.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
           <strong>Physician Clearance Requirement:</strong> You must consult your physician or qualified medical doctor prior to beginning any exercise program, physical activity readiness questionnaire (PAR-Q+), movement screen, or dietary supplementation regimen. You affirm that you are in good physical condition, have obtained all necessary medical clearances, and have disclosed all known cardiovascular symptoms, injuries, or contraindications.
@@ -148,7 +148,7 @@ export default function TermsOfServicePage() {
           Memberships are billed on a recurring monthly or annual basis as displayed at checkout and automatically renew at the end of each billing cycle unless cancelled prior to the renewal date. Core Membership includes a seven-day free trial; upon conclusion of the trial period, your designated payment method will be charged the recurring subscription fee unless cancelled prior to the trial expiration. Payments are processed securely via Stripe.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
-          <strong>FTC &amp; State Auto-Renewal Cancellation Procedure:</strong> In full compliance with Federal Trade Commission (FTC) negative option rules and applicable state automatic renewal laws (including California, New York, and Florida), you may cancel your recurring membership at any time with <strong>zero cancellation fees</strong> through either of the following straightforward methods:
+          <strong>FTC &amp; State Auto-Renewal Cancellation Procedure:</strong> In full compliance with Federal Trade Commission (FTC) negative option rules and applicable state automatic renewal laws (including Massachusetts, California, and New York), you may cancel your recurring membership at any time with <strong>zero cancellation fees</strong> through either of the following straightforward methods:
         </p>
         <ul style={{ paddingLeft: '1.25rem', margin: '0.5rem 0 1rem', fontSize: '0.92rem' }}>
           <li style={{ marginBottom: '0.4rem' }}>
@@ -194,13 +194,13 @@ export default function TermsOfServicePage() {
           6. Limitation of Liability, Release of Claims &amp; Indemnification
         </h2>
         <p style={{ fontSize: '0.95rem' }}>
-          To the maximum extent permitted by applicable law, in no event shall Forge Athletic LLC, its managers, coaches, officers, employees, or technology providers be liable for any indirect, punitive, incidental, special, consequential, or exemplary damages, including without limitation damages for loss of profits, bodily injury, goodwill, data, or other intangible losses.
+          To the maximum extent permitted by applicable law, in no event shall Forge Athletic Performance LLC, its managers, coaches, officers, employees, or technology providers be liable for any indirect, punitive, incidental, special, consequential, or exemplary damages, including without limitation damages for loss of profits, bodily injury, goodwill, data, or other intangible losses.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
-          <strong>Comprehensive Release &amp; Waiver:</strong> You expressly release, waive, and forever discharge Forge Athletic LLC, its owners, coaches, agents, and affiliates from any and all liabilities, claims, demands, or causes of action arising out of negligence, personal injury, illness, or property damage resulting from your participation in any training program, movement screen, or advice provided by Forge Athletic. You covenant not to initiate any lawsuit or legal proceeding against Forge Athletic LLC regarding such matters.
+          <strong>Comprehensive Release &amp; Waiver:</strong> You expressly release, waive, and forever discharge Forge Athletic Performance LLC, its owners, coaches, agents, and affiliates from any and all liabilities, claims, demands, or causes of action arising out of negligence, personal injury, illness, or property damage resulting from your participation in any training program, movement screen, or advice provided by Forge Athletic. You covenant not to initiate any lawsuit or legal proceeding against Forge Athletic Performance LLC regarding such matters.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
-          You agree to defend, indemnify, and hold harmless Forge Athletic LLC from and against any and all claims, damages, obligations, losses, liabilities, costs, or debt arising from your violation of these Terms, misuse of the platform, or breach of any third-party intellectual property or privacy rights.
+          You agree to defend, indemnify, and hold harmless Forge Athletic Performance LLC from and against any and all claims, damages, obligations, losses, liabilities, costs, or debt arising from your violation of these Terms, misuse of the platform, or breach of any third-party intellectual property or privacy rights.
         </p>
       </section>
 
@@ -209,13 +209,13 @@ export default function TermsOfServicePage() {
           7. Governing Law, Binding Individual Arbitration &amp; Class Action Waiver
         </h2>
         <p style={{ fontSize: '0.95rem' }}>
-          These Terms and any dispute, controversy, or claim arising out of or relating to your use of the platform shall be governed by and construed in accordance with the laws of the State of Florida, without regard to its conflict of law principles.
+          These Terms and any dispute, controversy, or claim arising out of or relating to your use of the platform shall be governed by and construed in accordance with the laws of the Commonwealth of Massachusetts (including M.G.L. c. 156C), without regard to its conflict of law principles.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
-          <strong>Mandatory Binding Individual Arbitration:</strong> Except for small claims court actions or claims seeking emergency preliminary injunctive relief regarding intellectual property infringement, you and Forge Athletic LLC agree that any dispute, claim, or controversy arising out of or relating to these Terms, your membership, personal training advice, or platform usage shall be settled by confidential, binding individual arbitration administered by the <strong>American Arbitration Association (AAA)</strong> in accordance with its Consumer Arbitration Rules. The arbitration shall be conducted in Florida or via secure teleconference, before a single neutral arbitrator. The arbitrator&apos;s decision shall be final and binding, and judgment on the award rendered by the arbitrator may be entered in any court having jurisdiction thereof.
+          <strong>Mandatory Binding Individual Arbitration:</strong> Except for small claims court actions or claims seeking emergency preliminary injunctive relief regarding intellectual property infringement, you and Forge Athletic Performance LLC agree that any dispute, claim, or controversy arising out of or relating to these Terms, your membership, personal training advice, or platform usage shall be settled by confidential, binding individual arbitration administered by the <strong>American Arbitration Association (AAA)</strong> in accordance with its Consumer Arbitration Rules. The arbitration shall be conducted in the Commonwealth of Massachusetts or via secure teleconference, before a single neutral arbitrator. The arbitrator&apos;s decision shall be final and binding, and judgment on the award rendered by the arbitrator may be entered in any court having jurisdiction thereof.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
-          <strong>Class Action &amp; Representative Action Waiver:</strong> YOU AND FORGE ATHLETIC LLC EXPLICITLY AGREE THAT ALL CLAIMS MUST BE BROUGHT SOLELY IN YOUR INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF, CLASS REPRESENTATIVE, OR CLASS MEMBER IN ANY PURPORTED CLASS, CONSOLIDATED, OR REPRESENTATIVE PROCEEDING. THE ARBITRATOR MAY NOT CONSOLIDATE MORE THAN ONE PERSON&apos;S CLAIMS AND MAY NOT PRESIDE OVER ANY FORM OF A REPRESENTATIVE OR CLASS PROCEEDING.
+          <strong>Class Action &amp; Representative Action Waiver:</strong> YOU AND FORGE ATHLETIC PERFORMANCE LLC EXPLICITLY AGREE THAT ALL CLAIMS MUST BE BROUGHT SOLELY IN YOUR INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF, CLASS REPRESENTATIVE, OR CLASS MEMBER IN ANY PURPORTED CLASS, CONSOLIDATED, OR REPRESENTATIVE PROCEEDING. THE ARBITRATOR MAY NOT CONSOLIDATE MORE THAN ONE PERSON&apos;S CLAIMS AND MAY NOT PRESIDE OVER ANY FORM OF A REPRESENTATIVE OR CLASS PROCEEDING.
         </p>
         <p style={{ fontSize: '0.95rem' }}>
           <strong>30-Day Arbitration Opt-Out Right:</strong> You have the right to opt out of this mandatory arbitration agreement by sending written notice of your decision to <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a> within thirty (30) days of your initial account registration or subscription date. The notice must include your full legal name, email address, and an unambiguous statement that you wish to opt out of arbitration. If you opt out, all other provisions of these Terms remain in full force and effect.
@@ -231,7 +231,7 @@ export default function TermsOfServicePage() {
             <strong>Trademark Ownership Acknowledgement:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks owned exclusively by the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC.
           </p>
           <p style={{ margin: 0, fontSize: '0.92rem', color: '#CBD5E1', lineHeight: 1.6 }}>
-            <strong>Independent Status &amp; Nominative Fair Use:</strong> Forge Athletic LLC is an independent private organization and is <strong>not affiliated with, sponsored by, authorized by, or endorsed by</strong> NASM or Ascend Learning, LLC. All references throughout the application, user interfaces, educational documentation, and algorithms to the Optimum Performance Training (OPT™) framework, phase categorizations (Stabilization, Strength, Power), and kinetic screening protocols are made strictly for educational, methodological compatibility, and scientific periodization reference under the <em>Nominative Fair Use Doctrine</em> (15 U.S.C. § 1125).
+            <strong>Independent Status &amp; Nominative Fair Use:</strong> Forge Athletic Performance LLC is an independent private organization and is <strong>not affiliated with, sponsored by, authorized by, or endorsed by</strong> NASM or Ascend Learning, LLC. All references throughout the application, user interfaces, educational documentation, and algorithms to the Optimum Performance Training (OPT™) framework, phase categorizations (Stabilization, Strength, Power), and kinetic screening protocols are made strictly for educational, methodological compatibility, and scientific periodization reference under the <em>Nominative Fair Use Doctrine</em> (15 U.S.C. § 1125).
           </p>
         </div>
         <p style={{ fontSize: '0.92rem', color: '#94A3B8' }}>
@@ -247,7 +247,7 @@ export default function TermsOfServicePage() {
           For inquiries regarding intellectual property licensing, trademark permissions, or legal notices, contact:
         </p>
         <p style={{ margin: '0.4rem 0 0', fontSize: '0.95rem', color: 'var(--gold-lt)' }}>
-          <strong>Forge Athletic LLC</strong><br />
+          <strong>Forge Athletic Performance LLC</strong><br />
           Legal &amp; Intellectual Property Department<br />
           Email: <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a>
         </p>
