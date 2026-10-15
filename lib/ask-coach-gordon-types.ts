@@ -223,3 +223,32 @@ I have flagged your training log and pinged Coach Scott Gordon directly on his p
   }
 }
 
+/**
+ * Checks whether an inquiry is completely outside the sports science, athletic training,
+ * exercise nutrition, and workout recovery scope of practice.
+ */
+export function isOutOfTrainingScope(question: string): boolean {
+  const q = question.toLowerCase()
+
+  const outOfScopePatterns = [
+    // Tech & Coding
+    'bitcoin', 'crypto', 'blockchain', 'ethereum', 'dogecoin', 'nft',
+    'python', 'javascript', 'typescript', 'write code', 'debug code', 'programming',
+    'react component', 'css selector', 'html tag', 'sql query',
+    // Finance & Legal
+    'stock market', 'invest in stocks', 'buy shares', 'roth ira', '401k portfolio',
+    'legal advice', 'sue them', 'lawyer', 'attorney', 'lawsuit',
+    // Politics & Government
+    'presidential election', 'democrat or republican', 'who should i vote for', 'congress bill', 'political candidate',
+    // Auto & Trade
+    'car repair', 'mechanic', 'fix my car', 'transmission fluid', 'spark plug', 'brake pads',
+    // Relationship & Dating
+    'relationship advice', 'dating advice', 'should i break up', 'marriage counseling',
+    // Non-Fitness Medical & Pharmacological Prescriptions
+    'antibiotic for', 'diagnose my rash', 'prescribe me', 'skin infection',
+  ]
+
+  return outOfScopePatterns.some(pattern => q.includes(pattern))
+}
+
+

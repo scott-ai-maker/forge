@@ -111,9 +111,9 @@ export default function AskCoachGordonModal({
       recommendedAction: initialGreeting.recommendedAction,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       followUps: [
-        'Swap this exercise',
-        'Form check this lift',
-        'Target post-workout meal',
+        'Can we swap this exercise?',
+        'How does my form look?',
+        'What should I eat after this workout?',
       ],
     },
   ])
@@ -393,7 +393,7 @@ export default function AskCoachGordonModal({
     setAttachedImage(null)
 
     try {
-      const historyPayload = messages.slice(-4).map(m => ({
+      const historyPayload = messages.slice(-8).map(m => ({
         role: m.role,
         text: m.text,
       }))
@@ -1543,7 +1543,7 @@ export default function AskCoachGordonModal({
                   : 'Earbud Mode Active: Speak anytime in the gym...'
                 : isListening
                 ? 'Listening to your voice...'
-                : 'Ask Coach Gordon anything (exercise swaps, nutrition, soreness)...'
+                : 'Talk to Coach Gordon (swaps, form cues, nutrition, recovery)...'
             }
             disabled={isLoading}
             style={{

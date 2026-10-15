@@ -5,6 +5,7 @@ import {
   generateDeterministicCoachResponse,
   deriveProactiveTelemetryGreeting,
   deriveRecommendedAction,
+  isOutOfTrainingScope,
   type AskCoachGordonRequest,
 } from './ask-coach-gordon'
 import {
@@ -375,6 +376,74 @@ describe('Ask Coach Gordon Interactive Engine', () => {
       const spokenSummary = generateQuickBiomechanicalSpokenSummary(analysis)
       expect(spokenSummary).toContain('Coach Gordon here on your Barbell Back Squat')
       expect(spokenSummary).toContain('Lock into your tempo')
+    })
+  })
+
+  describe('Conversational Persona & Scope of Training Guardrails', () => {
+    it('accurately identifies out-of-scope queries (crypto, coding, finance, politics)', () => {
+      expect(isOutOfTrainingScope('What do you think of Bitcoin?')).toBe(true)
+      expect(isOutOfTrainingScope('Can you write Python code for my website?')).toBe(true)
+      expect(isOutOfTrainingScope('Who should I vote for in the presidential election?')).toBe(true)
+      expect(isOutOfTrainingScope('Can you give me legal advice about a lawsuit?')).toBe(true)
+      expect(isOutOfTrainingScope('Can you prescribe me an antibiotic for a rash?')).toBe(true)
+
+      // In-scope fitness, athletic, and nutrition questions must NOT be flagged
+      expect(isOutOfTrainingScope('Can you swap this exercise?')).toBe(false)
+      expect(isOutOfTrainingScope('What should I eat for my post workout protein meal?')).toBe(false)
+      expect(isOutOfTrainingScope('My knee feels tight on squats')).toBe(false)
+      expect(isOutOfTrainingScope('Good morning Coach Scott! How are you?')).toBe(false)
+    })
+
+    it('gracefully declines out-of-scope inquiries and redirects back to athletic training', () => {
+      const response = generateDeterministicCoachResponse({
+        question: 'Can you help me invest in the stock market and buy crypto?',
+        athleteName: 'Alexander',
+        nasmOptPhase: 2,
+        goal: 'strength',
+      }, [])
+
+      expect(response.answerMarkdown).toContain('Alexander')
+      expect(response.answerMarkdown).toContain('scope of practice')
+      expect(response.answerMarkdown).toContain('athletic training, movement mechanics, and physical recovery')
+      expect(response.answerMarkdown).toContain('what are we tackling in your workout today?')
+      expect(response.spokenAudioText).not.toContain('*')
+      expect(response.spokenAudioText).toContain('whole focus, expertise, and passion are dialed in 100% on your athletic training')
+      expect(response.suggestedFollowUps).toContain('What exercises are scheduled today?')
+    })
+
+    it('responds warmly to client greetings and invites workout check-ins', () => {
+      const response = generateDeterministicCoachResponse({
+        question: 'Good morning Coach Scott! Ready to crush today.',
+        athleteName: 'Jordan',
+        nasmOptPhase: 1,
+        goal: 'fat_loss',
+      }, [])
+
+      expect(response.answerMarkdown).toContain('Hey Jordan!')
+      expect(response.answerMarkdown).toContain('Coach Gordon right here with you')
+      expect(response.answerMarkdown).toContain('How is your body feeling today')
+      expect(response.suggestedFollowUps.length).toBeGreaterThan(0)
+    })
+
+    it('ensures coaching responses conclude with an interactive coaching question to maintain natural dialogue', () => {
+      const swapRes = generateDeterministicCoachResponse({
+        question: 'Can you swap my back squat?',
+        athleteName: 'Marcus',
+        nasmOptPhase: 1,
+      }, [])
+      expect(swapRes.answerMarkdown.trim().endsWith('?')).toBe(true)
+
+      const sleepRes = generateDeterministicCoachResponse({
+        question: 'I feel exhausted from travel and only got 4 hours of sleep',
+        athleteName: 'Marcus',
+      }, [])
+      expect(sleepRes.answerMarkdown.trim().endsWith('?')).toBe(true)
+
+      const nutritionRes = generateDeterministicCoachResponse({
+        question: 'What is my target post-workout meal?',
+        athleteName: 'Marcus',
+      }, [])
+      expect(nutritionRes.answerMarkdown.trim().endsWith('?')).toBe(true)
     })
   })
 

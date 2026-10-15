@@ -15,42 +15,53 @@ import {
   type AskCoachGordonResponse,
   type CoachActionRecommendation,
   evaluateClinicalUrgencyTriage,
+  isOutOfTrainingScope,
 } from './ask-coach-gordon-types'
 
 export * from './ask-coach-gordon-types'
 
-const MASTER_COACH_SYSTEM_INSTRUCTION = `You are Coach Scott Gordon, Head Coach at Forge Athletic, a NASM-certified personal trainer with over 20 years of experience helping people with different goals, backgrounds, bodies, and schedules.
+const MASTER_COACH_SYSTEM_INSTRUCTION = `You are Coach Scott Gordon, Head Coach at Forge Athletic, a Master NASM-certified personal trainer with over 20 years of real-world coaching experience.
+
+Core Coaching Identity & Conversational Dialogue:
+- You are having a genuine 1-on-1 spoken conversation with your client—talking to them directly on the gym floor, between sets, or right through their AirPods.
+- Talk like an authentic, attentive, charismatic personal trainer: warm, encouraging, grounded, and collaborative. Never sound like a sterile textbook or bureaucratic checklist.
+- Speak in the first person ("I've got you", "Here's what we're going to do", "Let's make this adjustment right now", "I'm right here in your corner").
+- Validate how they are feeling first (acknowledge their fatigue, tight muscles, busy gym, travel schedule, or excitement).
+- Give solid, practical, evidence-based sports science advice in crisp plain English with simple biomechanical rationale ("We do this because...").
+- Avoid rigid bullet-point checklists or sterile manuals. Use natural, flowing conversational prose (2 to 3 concise spoken paragraphs).
+- Bold key actionable cues (**2-0-2-0 tempo**, **Phase 2**, **35g protein**, **DB Goblet Squats**) so they are instantly scannable between sets.
+- ALWAYS conclude your response with an open, collaborative coaching check-in question to keep the dialogue flowing (e.g. asking how a joint feels right now, checking what equipment they see open nearby, or checking their readiness for the next set).
+
+Strict Scope of Training & Entire RAG Boundary (Non-Negotiable):
+- Your professional scope of practice is strictly bounded by your athletic sports science training curriculum (your entire RAG library):
+  1. Resistance training, movement mechanics, exercise technique, tempo, kinetic chain checkpoints, progressions, and equipment substitutions.
+  2. The NASM Optimum Performance Training (OPT™) Model across all 5 phases (Stabilization, Strength Endurance, Muscular Development, Maximal Strength, Power).
+  3. Cardiorespiratory and energy system conditioning (Tanaka HR zones, Stage 1–3 intervals, work capacity).
+  4. Athletic nutrition, protein pacing (30–40g), pre/post workout fueling, hydration, and evidence-based supplements (creatine monohydrate 3–5g).
+  5. Corrective exercise continuum (inhibit, lengthen, activate, integrate) for non-acute postural tightness and kinetic compensations.
+  6. Recovery, sleep hygiene for CNS restoration, and autonomic load regulation.
+- NEVER LEAVE YOUR SCOPE OF TRAINING.
+- If a client asks about anything OUTSIDE your athletic training and sports science scope (e.g. non-fitness medical diagnosis, drug prescriptions, cryptocurrency, financial advice, political debates, legal matters, computer programming, pop culture, or unrelated life trivia):
+  - Do NOT provide off-topic answers or speculate.
+  - Politely, warmly, and with good humor, clarify that as their dedicated fitness coach, your entire focus is 100% locked on their physical training, movement, and athletic performance.
+  - Gracefully redirect the conversation back to their workout, daily activity, or athletic goals.
+  - Example: "Hey, I'll be straight with you—as your coach, my whole focus and expertise is 100% dialed in on your athletic training, movement mechanics, and physical recovery. That is my entire scope. I leave [topic] to the folks in that field so I can give you my absolute best on the gym floor. Let's redirect that energy to your workout—how are you feeling for today's session?"
+- Zero Medical Diagnosing: You are a personal trainer, not a physician or physical therapist. You never diagnose medical pathologies or prescribe pharmaceuticals. If acute sharp pain or red flags arise, warmly advise consulting a medical doctor or physical therapist while providing safe movement regressions.
 
 How you coach:
 1. Deep Empathy & Compassionate Care (High EQ):
    - You care about the person behind the training goal. People balance work, caregiving, school, stress, sleep changes, health needs, and everyday life.
    - You listen actively, validate their feelings, and meet them where they are with warmth, respect, and zero drill-sergeant shaming.
    - Signature Philosophy: "A modified workout beats a skipped workout 100% of the time."
-
 2. Flexible Training Support:
    - When someone reports high fatigue, poor sleep, pain, or travel, you NEVER lecture them. Adjust the suggested workout to fit their energy and available time, and offer rest or gentle movement when appropriate.
-
 3. Client Safety First & Strict Scope of Practice (Non-Negotiable):
    - Orthopedic longevity is non-negotiable: "Earn the right to add load. Own the movement first." & "We are training for the next 20 years, not just the next 20 minutes."
-   - You operate within the professional scope of a NASM-certified personal trainer.
-   - Zero Medical Diagnosing: You never diagnose medical pathologies or prescribe pharmaceuticals. If acute sharp pain or red flags arise, you warmly advise consulting a medical doctor or physical therapist while providing safe movement regressions.
-
-4. Results-Driven & Super Intelligent:
-   - Use evidence and clear explanations to help people make progress with strength, mobility, endurance, and general health.
-   - Grounded in mathematical precision: Energy balance, Progressive Overload, NASM OPT™ periodization, RPE monitoring, and chrono-nutrition.
-
-5. Quiet Authority & Radical Candor:
-   - Be honest and respectful. Do not encourage someone to ignore pain or risk their health to reach a performance goal.
-
-6. Anti-Dogma Nutrition Philosophy (Food as Fuel, Not Morality):
+4. Anti-Dogma Nutrition Philosophy (Food as Fuel, Not Morality):
    - You treat food as biological information and recovery fuel, never as a moral reward or punishment. Focus on 30–40g protein pacing, strategic hydration, and guilt-free social dinners.
-
-7. The Cool-Headed Anchor (Plateaus & Micro-Wins):
-   - When someone feels discouraged or stuck, offer steady, practical support. Progress is not always linear. Celebrate meaningful changes such as moving with more confidence, building consistency, or feeling stronger.
-
-8. Clinical Safety, Tough Questions & Scope of Practice Hand-Off Protocol:
-   - Emergency symptoms (chest pain, fainting, inability to bear weight, or serious injury): Tell the person to stop exercising and contact emergency services.
-   - For serious or persistent pain, injuries, surgery recovery, or other medical concerns, do not diagnose or recommend training through it. Encourage them to speak with a qualified healthcare professional before continuing.
+5. Clinical Safety & Scope Hand-Off Protocol:
+   - Emergency symptoms: Tell the person to stop exercising immediately and contact emergency services.
+   - For serious or persistent pain, injuries, or surgery recovery, encourage them to speak with a healthcare professional before continuing.
 
 Training knowledge and credentials:
 - Master Certified Personal Trainer (NASM-Master CPT)
@@ -66,23 +77,17 @@ Training knowledge and credentials:
 - Virtual Coaching Specialist (NASM-VCS) — Remote camera framing, studio lighting, biometric wearable telemetry, synchronous & asynchronous coaching protocols
 - Clinical Pharmacology & Weight Loss Defense Specialist — GLP-1 muscle defense, drug-nutrient chrono-separation
 - Precision Meal Prep & Bodybuilding Nutrition Specialist — Protein pacing, refeeds, reverse dieting
-- Workout planning for home, work, travel, and different equipment options
-
-Your Communication Style:
-- Warm, conversational, personal, motivational, and grounded in practical sports science.
-- Speak in the first person as Coach Scott Gordon having a genuine 1-on-1 coaching dialogue with your client ("I've got you", "Here's what I want you to focus on today", "Let's make this adjustment right now").
-- NEVER sound like a rigid medical prescription or robotic clinical checklist. Avoid stiff bureaucratic headers like "### Directive" or "### Protocol".
-- Flow naturally, like a coach helping someone during a workout or in a conversation:
-  1. Acknowledge what they are asking or feeling with warmth and empathy.
-  2. Give clear, intuitive advice in plain English with simple biomechanical rationale.
-  3. Leave them with an empowering, immediate action step and words of encouragement.
-- Keep paragraphs natural, flowing, and conversational (2-3 concise paragraphs).`
+- Workout planning for home, work, travel, and different equipment options`
 
 /**
  * Searches the RAG library for the most relevant documents matching the question.
  */
 export function retrieveRelevantRagCurricula(question: string, goal?: string, optPhase?: number): RagDocumentMetadata[] {
   const qLower = question.toLowerCase()
+
+  if (isOutOfTrainingScope(question)) {
+    return queryNasmRagLibrary({ keyword: 'scope of practice' })
+  }
 
   // Match specific keywords across all sports science domains
   const keywords: string[] = []
@@ -200,16 +205,22 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
 - Known Kinetic Compensations: ${kineticCompensations.length > 0 ? kineticCompensations.join(', ') : 'None Detected (Optimal Alignment)'}
 - CNS Readiness Score: ${recentReadinessScore}% (${recentReadinessScore >= 75 ? 'Green Light (High Output)' : 'Moderate / Manage Volume'})`
 
-  const conversationHistoryContext = activeConversationHistory.length > 0
-    ? `\nRecent Conversation History:\n${activeConversationHistory.slice(-4).map(h => `${h.role === 'user' ? 'Athlete' : 'Coach Gordon'}: ${h.text}`).join('\n')}`
+  const isOutOfScope = isOutOfTrainingScope(question)
+  const scopeBoundaryDirective = isOutOfScope
+    ? `\n\nCRITICAL PROFESSIONAL SCOPE BOUNDARY:
+This inquiry is OUTSIDE your scope of athletic training and sports science. In accordance with your scope of practice, warmly, politely, and conversationally state that your entire focus, expertise, and passion are 100% dedicated to their athletic training, physical performance, and recovery. Explain that this is your entire professional scope (your RAG knowledge base). Do not speculate or answer off-topic questions. Gracefully redirect the conversation back to their physical workout, energy, or athletic goals with a supportive check-in question.`
     : ''
 
-  const fullPrompt = `${athleteContext}${ragContext}${conversationHistoryContext}
+  const conversationHistoryContext = activeConversationHistory.length > 0
+    ? `\nRecent Conversation History:\n${activeConversationHistory.slice(-8).map(h => `${h.role === 'user' ? 'Athlete' : 'Coach Gordon'}: ${h.text}`).join('\n')}`
+    : ''
+
+  const fullPrompt = `${athleteContext}${ragContext}${scopeBoundaryDirective}${conversationHistoryContext}
 
 Athlete's Question:
 "${question.trim()}"
 
-Provide Coach Scott Gordon's warm, conversational response formatted naturally with markdown emphasis where helpful. If recommending an exercise swap, rest timer, or load adjustment, give clear actionable instruction.`
+Respond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going.`
 
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
 
@@ -231,7 +242,7 @@ Provide Coach Scott Gordon's warm, conversational response formatted naturally w
     }> = []
 
     if (activeConversationHistory.length > 0) {
-      for (const h of activeConversationHistory.slice(-4)) {
+      for (const h of activeConversationHistory.slice(-8)) {
         contents.push({
           role: h.role === 'user' ? 'user' : 'model',
           parts: [{ text: h.text }],
@@ -240,7 +251,7 @@ Provide Coach Scott Gordon's warm, conversational response formatted naturally w
     }
 
     const currentParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [
-      { text: `${athleteContext}${ragContext}\n\nAthlete's Question:\n"${question.trim()}"\n\nProvide Coach Scott Gordon's warm, conversational response formatted naturally with markdown emphasis where helpful.` },
+      { text: `${athleteContext}${ragContext}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Scott Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going.` },
     ]
 
     if (attachedImage?.data) {
@@ -368,13 +379,52 @@ export function generateDeterministicCoachResponse(
 
   let answerMarkdown = ''
   let spokenAudioText = ''
+  const athleteGreeting = request.athleteName && request.athleteName !== 'Athlete' ? request.athleteName : 'team'
+
+  // Out-of-Scope Detection (Strict Training Scope & RAG Boundary)
+  if (isOutOfTrainingScope(question)) {
+    answerMarkdown = `Hey ${athleteGreeting}, I'll be completely straight with you—as your coach, my whole focus, expertise, and passion are dialed in 100% on your athletic training, movement mechanics, and physical recovery. That is my entire scope of practice, grounded directly in our sports science curriculum.
+
+I leave outside subjects to the specialists in those fields so I can be the absolute best coach in your corner for your body, your performance, and your long-term health.
+
+Let's redirect that energy right back to your training and your goals. How is your energy feeling right now, and what are we tackling in your workout today?`
+    spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
+
+    return {
+      answerMarkdown,
+      spokenAudioText,
+      relevantCurriculums: ['Scope of Practice & Professional Standards', 'NASM Code of Conduct'],
+      suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
+      requiresCoachPing: false,
+      isEmergency911: false,
+    }
+  }
+
+  // Friendly Conversational Greetings & Rapport Check-ins
+  if (qLower.includes('hello') || qLower.includes('good morning') || qLower.includes('good afternoon') || qLower.includes('how are you') || qLower.includes('hey coach') || qLower.includes('ready to crush')) {
+    answerMarkdown = `Hey ${athleteGreeting}! Coach Gordon right here with you, and I love that energy. I'm locked in and ready to help you execute today.
+
+Whether you need to swap an exercise, adjust loads based on how your joints feel, check tempo cues, or dial in your post-workout fueling, I've got your back.
+
+How is your body feeling today, and what are we focusing on for today's session?`
+    spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
+
+    return {
+      answerMarkdown,
+      spokenAudioText,
+      relevantCurriculums: ['Behavior Change & Client Rapport', 'Program Design & Periodization'],
+      suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
+      requiresCoachPing: false,
+      isEmergency911: false,
+    }
+  }
 
   if (qLower.includes('swap') || qLower.includes('replace') || qLower.includes('substitute')) {
     answerMarkdown = `Hey, no problem at all! When equipment is limited or you need to switch things up, we don't let it slow your momentum down. If you can't do **${currentExerciseName || 'your current exercise'}** today, grab a set of dumbbells or even a resistance band and let's substitute with **DB Goblet Squats with a 2-second pause at the bottom**.
 
 By adding that 2-second pause in the hole, you'll maximize muscle recruitment and get a tremendous training stimulus without needing a heavy barbell. Focus on keeping your chest proud, setting your core brace, and controlling your descent with a steady **${nasmOptPhase === 1 ? '4-second eccentric tempo' : '2-second tempo'}**.
 
-Remember our standard: **earn the right to add load by owning the movement first**. Swap it in your workout tracker right now, lock into your tempo, and let's get after it!`
+Remember our standard: **earn the right to add load by owning the movement first**. Swap it in your workout tracker right now, lock into your tempo, and let's get after it! Do you have a set of dumbbells nearby, or would you rather use a cable station today?`
   } else if (qLower.includes('sleep') || qLower.includes('tired') || qLower.includes('red eye') || qLower.includes('red-eye') || qLower.includes('jet lag') || qLower.includes('exhausted')) {
     answerMarkdown = `I understand—work, family, travel, and changing sleep schedules can make training harder to plan.
 
@@ -383,7 +433,7 @@ On days when sleep was compromised, we **train smarter, not harder**. Do not try
 2. Focus strictly on Phase 1 stabilization, tempo control, and clean movement patterns.
 3. Drink 20 ounces of water with electrolytes right now to rehydrate your central nervous system.
 
-You still get the win by showing up, protecting your joints, and stimulating blood flow without crushing your adrenal system. Own your tempo and let's have a crisp, safe session!`
+You still get the win by showing up, protecting your joints, and stimulating blood flow without crushing your adrenal system. We are training for the next 20 years, not just the next 20 minutes. Own your tempo and let's have a crisp, safe session! How is your energy feeling right now on the gym floor—are you ready to start with a light warm-up?`
   } else if (qLower.includes('short on time') || qLower.includes('20 min') || qLower.includes('25 min') || qLower.includes('30 min') || qLower.includes('hurry') || qLower.includes('rush') || qLower.includes('condense')) {
     answerMarkdown = `Let's make every single minute count! When you're in a time crunch, we focus on **high-density compound supersets** and trim out the auxiliary isolation work.
 
@@ -392,7 +442,7 @@ Here is your 20-minute express execution plan:
 2. Pair your primary lower-body movement with an upper-body pull in an antagonistic superset (e.g. Goblet Squats immediately into Dumbbell Rows).
 3. Take 45 to 60 seconds rest between rounds for 3 to 4 working sets.
 
-Lock in, keep your rest intervals sharp, and get in and out with maximum efficiency. Let's execute!`
+Lock in, keep your rest intervals sharp, and get in and out with maximum efficiency. Let's execute! What equipment do you have right in front of you so we can pair your first two movements?`
   } else if (qLower.includes('creatine') || qLower.includes('supplement') || qLower.includes('pre-workout') || qLower.includes('pre workout') || qLower.includes('caffeine')) {
     answerMarkdown = `When it comes to supplements, we only focus on evidence-based fundamentals that genuinely support your physiology:
 
@@ -400,7 +450,7 @@ Lock in, keep your rest intervals sharp, and get in and out with maximum efficie
 2. **Hydration & Electrolytes**: Aim for 16 to 24 ounces of water with sodium, potassium, and magnesium around your training window to prevent cramping and maintain intracellular volume.
 3. **Pre-Workout Caffeine**: If using caffeine, keep it to 100 to 200mg taken 30 to 45 minutes before lifting, and avoid it within 8 hours of bedtime to safeguard your deep REM sleep.
 
-Fuel with purpose, stay consistent, and let's keep building!`
+Fuel with purpose, stay consistent, and let's keep building! Do you prefer taking your creatine with a post-workout shake, or do you have it with water in the morning?`
   } else if (qLower.includes('posture') || qLower.includes('tech neck') || qLower.includes('rounded shoulder') || qLower.includes('forward head') || (qLower.includes('desk') && (qLower.includes('neck') || qLower.includes('posture') || qLower.includes('slouch')))) {
     answerMarkdown = `Long periods at a desk can leave your neck and shoulders feeling tight.
 
@@ -409,14 +459,16 @@ Here is our NASM corrective reset to restore your kinetic alignment:
 2. **Activate**: Perform 2 sets of 12 **Prone Cobras** (lying face down, retracting scapulae and rotating thumbs toward the ceiling) and 10 **Chin Tucks** to engage deep cervical stabilizers.
 3. **Integrate**: During your lifting sets today, focus on keeping your shoulder blades pulled down and back into your back pockets.
 
-Try these movements if they feel comfortable, and take regular breaks to move during the day. Stop if you feel pain.`
+Try these movements if they feel comfortable, and take regular breaks to move during the day. Stop if you feel pain. How does that neck and shoulder tension feel once you try those first few chin tucks?`
   } else if (qLower.includes('alcohol') || qLower.includes('wine') || qLower.includes('dinner') || qLower.includes('steakhouse') || qLower.includes('restaurant')) {
     answerMarkdown = `Meals with friends, family, or coworkers can be part of a healthy, enjoyable routine. You do not need to feel guilty about a single meal.
 
 Here are a few simple ideas:
 1. **Choose what you enjoy**: Include foods you like and options that help you feel satisfied.
 2. **Drink water too**: Having water with your meal can help you stay hydrated.
-3. **Keep things flexible**: One meal does not undo your progress. Return to your usual routine when it works for you.`
+3. **Keep things flexible**: One meal does not undo your progress. Return to your usual routine when it works for you.
+
+Enjoy your meal, relax, and let's stay consistent over the long haul. What does your schedule look like tomorrow—are we hitting a training session?`
   } else if (qLower.includes('click') || qLower.includes('cracking') || qLower.includes('crepitus') || qLower.includes('pop without pain')) {
     answerMarkdown = `Joint clicking or popping without any sharp pain or swelling is known as physiological crepitus, and it is usually completely harmless—often just tiny nitrogen gas bubbles moving in the synovial fluid or tendons gliding smoothly over bony landmarks.
 
@@ -425,13 +477,13 @@ Here is how we optimize joint mechanics:
 2. Focus on joint tracking: ensure your knees track in line with your second and third toes on squats and lunges.
 3. As long as there is zero pain, throbbing, or instability, you are cleared to train with confidence.
 
-Stay mindful of your form, own your tempo, and let's get after it!`
+Stay mindful of your form, own your tempo, and let's get after it! How does the joint feel right now when you do a slow, controlled bodyweight squat?`
   } else if (qLower.includes('eat') || qLower.includes('meal') || qLower.includes('protein') || qLower.includes('food') || qLower.includes('nutrition')) {
     answerMarkdown = `Great question! Remember, food is biological information and fuel to help your body adapt and recover—never something to feel guilty or stressed about. 
 
 Right now after your workout, your muscles are primed for recovery. I want you to aim for **30 to 40 grams of high-quality protein**—chicken breast, wild salmon, egg whites, or a clean whey isolate shake—paired with some complex carbohydrates like sweet potatoes, jasmine rice, or oatmeal to replenish your glycogen stores.
 
-Drink a tall 16 to 24 ounce glass of water with some electrolytes as well to restore intra-cellular hydration. Fuel your body well, enjoy your meal, and let's keep stacking these wins!`
+Drink a tall 16 to 24 ounce glass of water with some electrolytes as well to restore intra-cellular hydration. Fuel your body well, enjoy your meal, and let's keep stacking these wins! What are you planning on having for your post-workout meal today?`
   } else if (qLower.includes('back') || qLower.includes('knee') || qLower.includes('shoulder') || qLower.includes('tight') || qLower.includes('pain') || qLower.includes('sore')) {
     answerMarkdown = `I'm glad you brought this up. We are training for the next 20 years, not just the next 20 minutes, so we never force a lift or sacrifice joint health for ego.
 
@@ -440,25 +492,25 @@ Let's take 3 minutes right now to run a quick corrective reset:
 2. Hold a gentle 30-second stretch (like a kneeling hip flexor or chest stretch) to lengthen tight tissue.
 3. Wake up your stabilizing muscles with 10 to 12 bodyweight glute bridges or prone cobras.
 
-If the joint still feels reactive after this reset, drop your working load by 20% today and focus purely on smooth, pain-free range of motion. Protect your spine, own your positions, and let me know how that feels!`
+If the joint still feels reactive after this reset, drop your working load by 20% today and focus purely on smooth, pain-free range of motion. Protect your spine, own your positions, and let me know how that feels! Does that 60-second release bring any immediate relief to the joint?`
   } else if (qLower.includes('cardio') || qLower.includes('interval') || qLower.includes('pace') || qLower.includes('rpe')) {
     answerMarkdown = `For today's cardio, the goal is smart energy system conditioning that builds your engine without fatiguing your nervous system for lifting.
 
 In **Phase ${nasmOptPhase}**, keep your intensity right around **${nasmOptPhase === 2 ? 'an RPE 6 to 7 during work intervals' : 'a comfortable RPE 3 to 4 steady-state pace'}**. You should be able to maintain smooth, nasal or diaphragmatic breathing and bring your heart rate back down during rest intervals.
 
-Stay tall, keep your posture upright, and log your duration when you finish. You're doing outstanding work—let's bring it home!`
+Stay tall, keep your posture upright, and log your duration when you finish. You're doing outstanding work—let's bring it home! Are you hitting the treadmill, the bike, or getting outside for this cardio block?`
   } else if (qLower.includes('golf') || qLower.includes('rotational') || qLower.includes('swing')) {
     answerMarkdown = `To add effortless clubhead speed without beating up your lower back, the secret is making sure that rotation comes from the right joints. We want rotation happening through your **thoracic spine and hips**, while your lumbar spine stays rock solid like an anchor.
 
 Try hitting standing cable woodchops or rotational medicine ball scoop tosses. Focus on pushing hard into the ground through your back leg, pivoting your trail foot, and transferring that ground force right through your core.
 
-Give me 3 crisp sets of 8 reps per side with explosive intent, and let's build that rotational power!`
+Give me 3 crisp sets of 8 reps per side with explosive intent, and let's build that rotational power! Do you have a cable stack or medicine balls available in your gym right now?`
   } else {
     answerMarkdown = `I'm right here in your corner. In **Phase ${nasmOptPhase} (${goal.replace('_', ' ')})**, our main focus is dialing in movement quality and progressive adaptation.
 
 Remember our golden rule: **earn the right to add load by owning the movement first**. Keep your deep core braced, control your tempo on the way down, and keep your effort dialed right into your target RPE.
 
-Make sure you hydrate post-workout and prioritize high-quality sleep tonight. You've got everything you need—let's lock in and execute!`
+Make sure you hydrate post-workout and prioritize high-quality sleep tonight. You've got everything you need—what exercise or movement are we tackling next?`
   }
 
   spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
@@ -570,6 +622,22 @@ export function deriveRecommendedAction(
  */
 function deriveSuggestedFollowUps(question: string, goal: string, optPhase: number): string[] {
   const qLower = question.toLowerCase()
+
+  if (isOutOfTrainingScope(question)) {
+    return [
+      'What exercises are scheduled today?',
+      'How should we adjust today’s workout?',
+      'Can you check my recovery score?',
+    ]
+  }
+
+  if (qLower.includes('hello') || qLower.includes('good morning') || qLower.includes('how are you') || qLower.includes('hey coach')) {
+    return [
+      `How should I pace today’s Phase ${optPhase} session?`,
+      'Can we review my scheduled exercises today?',
+      'What dynamic warmup should I do?',
+    ]
+  }
 
   if (qLower.includes('swap') || qLower.includes('exercise')) {
     return [
