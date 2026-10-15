@@ -567,11 +567,14 @@ export default function LiveVirtualBackgroundStage({
 
       {/* Branded Logo Watermark Overlay on Bottom Right of Video Feed */}
       <div
+        onClick={onOpenPicker}
+        title={onOpenPicker ? 'Click to change training background' : undefined}
         style={{
           position: 'absolute',
           bottom: 12,
           right: 12,
-          pointerEvents: 'none',
+          pointerEvents: onOpenPicker ? 'auto' : 'none',
+          cursor: onOpenPicker ? 'pointer' : 'default',
           zIndex: 15,
           display: 'flex',
           alignItems: 'center',
@@ -581,6 +584,7 @@ export default function LiveVirtualBackgroundStage({
           borderRadius: 8,
           padding: '4px 10px 4px 6px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.85)',
+          transition: 'transform 0.15s ease, border-color 0.15s ease',
         }}
       >
         <div
@@ -588,7 +592,7 @@ export default function LiveVirtualBackgroundStage({
             width: 28,
             height: 28,
             borderRadius: 6,
-            backgroundImage: "url('/images/logo-mark-source.png')",
+            backgroundImage: "url('/images/brand/logo-concept-1-kinetic-f.jpg')",
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             border: '1px solid rgba(212,160,23,0.5)',

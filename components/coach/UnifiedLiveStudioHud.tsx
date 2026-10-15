@@ -10,6 +10,7 @@ import LiveSessionWrapUpModal from './LiveSessionWrapUpModal'
 import LiveVirtualBackgroundStage from './LiveVirtualBackgroundStage'
 import LiveVisualTempoPulseHud from './LiveVisualTempoPulseHud'
 import { COACH_BACKGROUND_PRESETS, CoachBackgroundPreset } from '@/lib/coach-backgrounds-catalog'
+import CoachVirtualBackgroundPickerModal from './CoachVirtualBackgroundPickerModal'
 import BarbellPlateCalculator from '@/components/fitness/BarbellPlateCalculator'
 import { isOlympicWeightExercise } from '@/lib/barbell-plate-calculator'
 import { evaluateLiveCardioTelemetry } from '@/lib/live-cardio-telemetry'
@@ -302,7 +303,7 @@ export default function UnifiedLiveStudioHud({
   const [isRinging, setIsRinging] = useState(false)
   const [ringFeedback, setRingFeedback] = useState<string | null>(null)
   const [selectedBackground, setSelectedBackground] = useState<CoachBackgroundPreset | null>(COACH_BACKGROUND_PRESETS[0])
-  const [_showBackgroundPicker, setShowBackgroundPicker] = useState(false)
+  const [showBackgroundPicker, setShowBackgroundPicker] = useState(false)
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
 
   // ── In-HUD Luxury Toast Notification State ──
@@ -2347,7 +2348,7 @@ export default function UnifiedLiveStudioHud({
                     isMirrored={facingMode === 'user'}
                     selectedBackground={selectedBackground}
                     coachName={coachName}
-                    onOpenPicker={handleCycleBackground}
+                    onOpenPicker={() => setShowBackgroundPicker(true)}
                   />
 
                   {/* Coach Status & Swap Badge */}
@@ -2811,7 +2812,7 @@ export default function UnifiedLiveStudioHud({
                   isMirrored={facingMode === 'user'}
                   selectedBackground={selectedBackground}
                   coachName={coachName}
-                  onOpenPicker={handleCycleBackground}
+                  onOpenPicker={() => setShowBackgroundPicker(true)}
                 />
 
                 {/* Swap Stage Return Overlay Button */}
@@ -3777,7 +3778,7 @@ export default function UnifiedLiveStudioHud({
 
               <button
                 type="button"
-                onClick={handleCycleBackground}
+                onClick={() => setShowBackgroundPicker(true)}
                 style={{
                   padding: '5px 10px',
                   background: selectedBackground ? 'rgba(212,160,23,0.25)' : 'rgba(255,255,255,0.08)',
@@ -3791,10 +3792,10 @@ export default function UnifiedLiveStudioHud({
                   alignItems: 'center',
                   gap: 4,
                 }}
-                title={selectedBackground ? `Active: ${selectedBackground.name} (Click to cycle)` : 'Virtual Background: Off (Click to enable)'}
+                title={selectedBackground ? `Active: ${selectedBackground.name} (Click to choose training background)` : 'Virtual Background: Off (Click to choose training background)'}
               >
                 <GaaIcon name="camera" size={12} tone="inherit" />
-                <span>{selectedBackground ? (selectedBackground.isBlur ? 'Virtual BG: Blur' : 'Virtual BG: Studio') : 'Virtual BG: OFF'}</span>
+                <span>{selectedBackground ? (selectedBackground.isBlur ? 'Virtual BG: Blur' : `Virtual BG: ${selectedBackground.badge.split('·')[0].trim()}`) : 'Virtual BG: OFF'}</span>
               </button>
             </div>
 
@@ -5343,6 +5344,21 @@ export default function UnifiedLiveStudioHud({
           </div>
         </div>
       )}
+
+      {/* Virtual Background Picker Modal */}
+      <CoachVirtualBackgroundPickerModal
+        isOpen={showBackgroundPicker}
+        activeBackground={selectedBackground}
+        onSelectBackground={(bg) => {
+          setSelectedBackground(bg)
+          if (bg) {
+            showHudToast(`Virtual BG: ${bg.name}`, 'gold')
+          } else {
+            showHudToast('Virtual BG: Off (Raw Camera)', 'info')
+          }
+        }}
+        onClose={() => setShowBackgroundPicker(false)}
+      />
     </div>
   )
 }

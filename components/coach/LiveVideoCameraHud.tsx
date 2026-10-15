@@ -9,6 +9,7 @@ import { WebRtcPeerBridge, type LobbyParticipant } from '@/lib/webrtc-peer-bridg
 import LiveRemoteVideoFeed from './LiveRemoteVideoFeed'
 import LiveVirtualBackgroundStage from './LiveVirtualBackgroundStage'
 import { COACH_BACKGROUND_PRESETS, type CoachBackgroundPreset } from '@/lib/coach-backgrounds-catalog'
+import CoachVirtualBackgroundPickerModal from './CoachVirtualBackgroundPickerModal'
 import LiveStillCameraGuidanceModal from './LiveStillCameraGuidanceModal'
 import LiveErapSafetyModal from './LiveErapSafetyModal'
 import {
@@ -177,6 +178,7 @@ export default function LiveVideoCameraHud({
   }, [])
 
   const [selectedBackground, setSelectedBackground] = useState<CoachBackgroundPreset | null>(COACH_BACKGROUND_PRESETS[0])
+  const [showBackgroundPicker, setShowBackgroundPicker] = useState(false)
 
   const handleCycleBackground = useCallback(() => {
     setSelectedBackground((prev) => {
@@ -1239,6 +1241,7 @@ export default function LiveVideoCameraHud({
                       isMirrored={facingMode === 'user'}
                       selectedBackground={selectedBackground}
                       coachName={coachName}
+                      onOpenPicker={() => setShowBackgroundPicker(true)}
                     />
                   ) : (
                     <video
@@ -1769,6 +1772,7 @@ export default function LiveVideoCameraHud({
                     isMirrored={facingMode === 'user'}
                     selectedBackground={selectedBackground}
                     coachName={coachName}
+                    onOpenPicker={() => setShowBackgroundPicker(true)}
                   />
                 ) : (
                   <video
@@ -2669,9 +2673,9 @@ export default function LiveVideoCameraHud({
           {/* Virtual Background Preset Cycler */}
           <button
             type="button"
-            onClick={handleCycleBackground}
+            onClick={() => setShowBackgroundPicker(true)}
             data-testid="virtual-background-btn"
-            title={selectedBackground ? `Active: ${selectedBackground.name} (Click to cycle)` : 'Virtual Background: Off'}
+            title={selectedBackground ? `Active: ${selectedBackground.name} (Click to choose training background)` : 'Virtual Background: Off (Click to choose)'}
             style={{
               padding: '6px 12px',
               background: selectedBackground ? 'rgba(212,160,23,0.22)' : 'rgba(255,255,255,0.08)',
@@ -3100,6 +3104,21 @@ export default function LiveVideoCameraHud({
           </div>
         </div>
       )}
+
+      {/* Virtual Background Picker Modal */}
+      <CoachVirtualBackgroundPickerModal
+        isOpen={showBackgroundPicker}
+        activeBackground={selectedBackground}
+        onSelectBackground={(bg) => {
+          setSelectedBackground(bg)
+          if (bg) {
+            showHudToast(`Virtual BG: ${bg.name}`, 'gold')
+          } else {
+            showHudToast('Virtual BG: Off (Raw Camera)', 'info')
+          }
+        }}
+        onClose={() => setShowBackgroundPicker(false)}
+      />
     </div>
   )
 }
