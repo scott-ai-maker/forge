@@ -105,21 +105,66 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { data: linkData, error } = await admin.auth.admin.generateLink({
+    const { data: linkData, error: initialError } = await admin.auth.admin.generateLink({
       type: 'recovery',
       email,
       options: {
         redirectTo: `${baseUrl}/auth/reset-password`,
       },
     })
+    let error = initialError
 
-    // Keep response generic regardless of existence or auth provider state (except for master coach).
-    if (error || !linkData?.properties?.hashed_token) {
+    const isMasterCoach =
+      email === 'scott.gordon72@outlook.com' ||
+      email === (process.env.TEST_COACH_EMAIL || '').toLowerCase()
+
+    let hashedToken = linkData?.properties?.hashed_token
+
+    // If master coach is not yet provisioned in auth.users, auto-provision and retry
+    if ((error || !hashedToken) && isMasterCoach) {
+      console.warn('[PasswordReset] Master coach account missing in auth.users, provisioning now:', { email })
+      try {
+        const { data: newUser, error: createErr } = await admin.auth.admin.createUser({
+          email,
+          email_confirm: true,
+          user_metadata: { surface_role: 'coach', must_reset_password: false },
+        })
+
+        const coachUserId = newUser?.user?.id
+        if (coachUserId) {
+          await admin.from('clients').upsert({
+            id: coachUserId,
+            email,
+            full_name: 'Coach Scott Gordon',
+            role: 'coach',
+            status: 'active',
+            must_reset_password: false,
+          }, { onConflict: 'id' })
+        } else if (createErr?.message?.includes('already been registered')) {
+          // User exists, re-query link
+        }
+
+        const retry = await admin.auth.admin.generateLink({
+          type: 'recovery',
+          email,
+          options: {
+            redirectTo: `${baseUrl}/auth/reset-password`,
+          },
+        })
+        hashedToken = retry.data?.properties?.hashed_token
+        error = retry.error
+      } catch (provisionErr) {
+        console.error('[PasswordReset] Failed auto-provisioning master coach account:', provisionErr)
+      }
+    }
+
+    // Keep response generic regardless of existence or auth provider state
+    if (!hashedToken) {
       console.warn('[PasswordReset] Failed to generate recovery link (user may not exist or auth error):', {
         email,
         error: error?.message ?? 'No hashed_token returned',
       })
-      if (email === 'scott.gordon72@outlook.com') {
+      if (isMasterCoach && (process.env.NODE_ENV === 'development' || process.env.ENABLE_DEMO_LOGIN === 'true')) {
         return NextResponse.json(
           { error: `Account lookup error (${error?.message || 'user not found'}). Please sign in with 1-Click Coach Fast Pass.` },
           { status: 400 }
@@ -131,7 +176,7 @@ export async function POST(req: NextRequest) {
     // Build a scanner-safe reset URL by putting token params in the URL fragment.
     // Most email link scanners only request the URL path/query and ignore fragments,
     // which prevents accidental one-time token consumption before the user clicks.
-    const resetLink = `${baseUrl}/auth/reset-password#token_hash=${encodeURIComponent(linkData.properties.hashed_token)}&type=recovery`
+    const resetLink = `${baseUrl}/auth/reset-password#token_hash=${encodeURIComponent(hashedToken)}&type=recovery`
 
     if (process.env.NODE_ENV === 'development' || process.env.ENABLE_DEMO_LOGIN === 'true') {
       console.info(

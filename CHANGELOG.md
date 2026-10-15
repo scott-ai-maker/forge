@@ -2,6 +2,15 @@
 
 All notable changes to Gordon Athletic Advisory (GAA / SGF App) will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.39.8] - 2026-10-14
+
+### Security & Hardening
+- **Cross-Origin-Opener-Policy ([`next.config.ts`](file:///Users/scottgordon/Repos/forge/next.config.ts))**: Injected `Cross-Origin-Opener-Policy: same-origin-allow-popups` into global security headers to protect OAuth popups and Stripe checkout redirects from cross-origin manipulation.
+- **Resilient Coach Password Recovery ([`app/api/auth/password-reset/route.ts`](file:///Users/scottgordon/Repos/forge/app/api/auth/password-reset/route.ts))**: Added automated fallback coach account provisioning and `#token_hash` URL fragment encapsulation, ensuring master coach password recovery emails reliably dispatch without user-not-found barriers.
+- **Mobile Cleartext Network Hardening ([`capacitor.config.ts`](file:///Users/scottgordon/Repos/forge/capacitor.config.ts))**: Environmentally scoped Capacitor cleartext HTTP traffic strictly to local development emulators and disabled Android mixed content (`allowMixedContent: false`).
+- **Multi-Role Billing Portal ([`app/api/stripe/portal/route.ts`](file:///Users/scottgordon/Repos/forge/app/api/stripe/portal/route.ts))**: Expanded Stripe billing portal access to support both `client` and `coach` user roles.
+
 ## [1.39.7] - 2026-10-12
 
 ### Fixed

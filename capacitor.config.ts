@@ -14,7 +14,9 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     iosScheme: 'https',
     url: defaultServerUrl,
-    cleartext: true,
+    cleartext:
+      process.env.NODE_ENV === 'development' &&
+      (defaultServerUrl.includes('localhost') || defaultServerUrl.includes('10.0.2.2') || defaultServerUrl.includes('127.0.0.1')),
     allowNavigation: [
       'forge-athletic.app',
       '*.forge-athletic.app',
@@ -35,7 +37,7 @@ const config: CapacitorConfig = {
   },
   android: {
     backgroundColor: '#080E14',
-    allowMixedContent: true,
+    allowMixedContent: false,
     captureInput: true,
     webContentsDebuggingEnabled: process.env.NODE_ENV === 'development',
   },

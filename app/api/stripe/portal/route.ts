@@ -5,7 +5,7 @@ import { getTrustedAppBaseUrl } from '@/lib/app-base-url'
 export async function POST(req: NextRequest) {
   try {
     const authz = await getRequestAuthz(req)
-    requireRole(authz.client.role, ['client'])
+    requireRole(authz.client.role, ['client', 'coach'])
     const userId = authz.user.id
 
     const { stripe } = await import('@/lib/stripe')
