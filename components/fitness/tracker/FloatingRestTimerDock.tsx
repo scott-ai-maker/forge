@@ -36,6 +36,8 @@ export interface FloatingRestTimerDockProps {
   onToggleSoundMetronome?: () => void
   soundMetronomeMode?: RestAudioMetronomeMode
   onChangeMetronomeMode?: (mode: RestAudioMetronomeMode) => void
+  sanctuaryModeActive?: boolean
+  sanctuaryBreathingLabel?: string
 }
 
 export default function FloatingRestTimerDock({
@@ -51,6 +53,8 @@ export default function FloatingRestTimerDock({
   onToggleSoundMetronome,
   soundMetronomeMode: _soundMetronomeMode = 'cardiac_pulse',
   onChangeMetronomeMode: _onChangeMetronomeMode,
+  sanctuaryModeActive = false,
+  sanctuaryBreathingLabel,
 }: FloatingRestTimerDockProps) {
   const [showCardioPacer, setShowCardioPacer] = useState(false)
   const [dismissedExtensionAlert, setDismissedExtensionAlert] = useState(false)
@@ -174,6 +178,28 @@ export default function FloatingRestTimerDock({
               <span style={{ color: activeRestState.isRunning ? '#34D399' : '#FCD34D', flexShrink: 0 }}>
                 ● {activeRestState.isRunning ? 'Active' : 'Paused'}
               </span>
+
+              {/* Sanctuary Mode Down-Regulation Breathing Pill */}
+              {sanctuaryModeActive && (
+                <span
+                  style={{
+                    fontSize: 9,
+                    padding: '1px 5px',
+                    borderRadius: 3,
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    color: '#38BDF8',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    flexShrink: 0,
+                  }}
+                  title="Sanctuary Mode: Down-regulation breathwork active"
+                >
+                  <span>🫁 {sanctuaryBreathingLabel || 'Breath Pacer'}</span>
+                </span>
+              )}
 
               {/* Real-Time Heart Rate Zone Badge */}
               {hrAdaptation && (

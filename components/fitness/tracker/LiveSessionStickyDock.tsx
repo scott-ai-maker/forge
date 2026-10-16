@@ -17,6 +17,7 @@ export interface LiveSessionStickyDockProps {
   onPauseResume: () => void
   onStartCardio: () => void
   onFinishLifts: () => void
+  sanctuaryFocusScore?: number
 }
 
 export default function LiveSessionStickyDock({
@@ -32,6 +33,7 @@ export default function LiveSessionStickyDock({
   onPauseResume,
   onStartCardio,
   onFinishLifts,
+  sanctuaryFocusScore,
 }: LiveSessionStickyDockProps) {
   if (!isWorkoutTimerActive || activeWorkoutSessionDay === null) return null
 
@@ -170,6 +172,28 @@ export default function LiveSessionStickyDock({
           <div style={{ fontSize: 11, fontWeight: 800, color: '#FBBF24', marginLeft: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
             <GaaIcon name="flame" size={12} tone="amber" /> {telemetry.caloriesBurned} <span style={{ fontSize: 9.5, color: '#94A3B8' }}>kcal</span>
           </div>
+
+          {typeof sanctuaryFocusScore === 'number' && (
+            <div
+              style={{
+                fontSize: 9.5,
+                fontWeight: 800,
+                color: sanctuaryFocusScore >= 90 ? '#34D399' : sanctuaryFocusScore >= 75 ? '#FBBF24' : '#F87171',
+                background: 'rgba(255,255,255,0.06)',
+                padding: '1px 6px',
+                borderRadius: 3,
+                border: '1px solid rgba(255,255,255,0.12)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 3,
+                marginLeft: 2,
+              }}
+              title="Forge Sanctuary Mode: Zero Distraction Focus Score"
+            >
+              <span>🛡️</span>
+              <span>{Math.round(sanctuaryFocusScore)}% Focus</span>
+            </div>
+          )}
         </div>
       </div>
 

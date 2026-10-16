@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.41.0'
+export const APP_VERSION = '1.41.1'
 export const APP_RELEASE_DATE = '2026-10-16'
-export const APP_RELEASE_CODENAME = 'The Zero-Distraction Sanctuary & Peer Recommendation Engine'
+export const APP_RELEASE_CODENAME = 'Gym Sanctuary Mode & Autonomic Down-Regulation Engine'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,30 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.41.0',
+    version: '1.41.1',
     date: '2026-10-16',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Gym Sanctuary Mode · Zero-Distraction Interception · Vagal Down-Regulation Pacer · Web Audio Breath Tones · Focus Scoring & Badges',
+    title: 'Gym Sanctuary Mode & Autonomic Down-Regulation Engine',
+    summary: 'Activated the active in-gym Sanctuary Mode protocol directly within the workout tracker, transforming the gym into an uninterrupted temple of focus. Deploys real-time tab and app-switch distraction interception during rest intervals, an in-ear down-regulation breathing pacer with Web Audio tone synthesis (Box 4x4, 4-2-6 Vagal Recovery), live 0-100% focus discipline scoring, rest timer dock integration, and post-workout discipline badges.',
+    highlights: [
+      'In-Gym Anti-Distraction Shield: Real-time window blur and visibility change monitoring detects when athletes leave the app during rest periods, triggering Coach Gordon’s gentle refocus intervention and protecting ATP-CP recovery.',
+      'Autonomic Down-Regulation Breathwork: Integrated 3 clinical breathing cadences (Box 4x4, 4-2-6 Vagal Activation, and Cardiac Recovery) with real-time radial visual sphere guidance and breath-phase tracking.',
+      'Synthesized In-Ear Web Audio Breath Metronome: Harmonic low-pass sine waves (130.81 Hz C3 inhale, 98.00 Hz G2 exhale) guide breathing through headphones without requiring athletes to look at the screen.',
+      'Sanctuary Mode HUD: Executive dark-mode focus bar with live focus discipline pill (0–100%), breathing sphere animation, audio pacer toggle, and cadence selector.',
+      'Floating Rest Timer Dock Integration: Real-time breathing state pill (🫁 Inhale / Hold / Exhale) embedded directly into the active rest countdown dock.',
+      'Post-Workout Sanctuary Discipline Badges: Authors authoritative discipline recognition (Diamond Sanctuary Master, High-Discipline Lifter, Steady Execution) synced directly into the end-of-session summary.',
+    ],
+    relatedLinks: [
+      { label: 'Workout Tracker', href: '/dashboard/fitness' },
+      { label: 'Brand Manifesto', href: '/docs/brand-strategy-manifesto.md' },
+    ],
+  },
+  {
+    version: '1.41.0',
+    date: '2026-10-16',
+    codename: 'The Zero-Distraction Sanctuary & Peer Recommendation Engine',
     category: 'feature',
     badge: 'The Zero-Distraction Sanctuary · No Social Media Manifesto · Peer Recommendation Engine · High-Intent SEO · Human + AI Synergy',
     title: 'The Zero-Distraction Sanctuary & Peer Recommendation Engine',

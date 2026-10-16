@@ -3,6 +3,19 @@
 All notable changes to Forge Athletic will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.41.1] - 2026-10-16
+
+### Added & Improved
+- **Gym Sanctuary Mode & Anti-Distraction Shield ([`lib/sanctuary-mode-engine.ts`](file:///Users/scottgordon/Repos/forge/lib/sanctuary-mode-engine.ts), [`components/fitness/SanctuaryModeHud.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/SanctuaryModeHud.tsx), [`components/fitness/hooks/useSanctuaryMode.ts`](file:///Users/scottgordon/Repos/forge/components/fitness/hooks/useSanctuaryMode.ts))**:
+  - Activated the active in-gym Sanctuary Mode protocol directly within the workout tracker, transforming the gym into an uninterrupted temple of focus.
+  - Deployed real-time tab and app-switch distraction interception during rest intervals, preventing athletes from losing neural drive to social media feeds.
+  - Implemented 3 autonomic down-regulation breathing cadences (Box 4x4, 4-2-6 Vagal Recovery, and Cardiac Recovery) with real-time radial visual sphere guidance.
+  - Synthesized native in-ear Web Audio breath metronomes with pure low-pass sine waves (130.81 Hz C3 inhale, 98.00 Hz G2 exhale) for eyes-free resting.
+  - Added live 0-100% focus discipline scoring with post-workout discipline badges (Diamond Sanctuary Master, High-Discipline Lifter, Steady Execution).
+- **Dock & Summary Integrations ([`components/fitness/tracker/FloatingRestTimerDock.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/tracker/FloatingRestTimerDock.tsx), [`components/fitness/tracker/LiveSessionStickyDock.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/tracker/LiveSessionStickyDock.tsx), [`components/fitness/FitnessTrackerClient.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/FitnessTrackerClient.tsx))**:
+  - Embedded the real-time breathing state pill (`🫁 Inhale / Hold / Exhale`) directly into the active floating rest countdown dock.
+  - Integrated the live Focus Score pill into the sticky live session dock and the end-of-workout review modal.
+
 ## [1.41.0] - 2026-10-16
 
 ### Added & Improved
