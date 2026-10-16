@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { resolveWorkoutCardioProtocol } from './FitnessTrackerClient'
+import type { IntegratedCardioPrescription } from '@/lib/rag-nasm-program-generator'
 
 describe('FitnessTrackerClient - Cardio Protocol Robustness', () => {
   it('normalizes coachingCues and recommendedModalities when provided as strings', () => {
-    const rawCardioProtocol: any = {
+    const rawCardioProtocol = {
       stage: 1,
       title: 'Post-Workout Tanaka Stage 1 Aerobic Fat Flush Walk',
       stageName: 'Aerobic Base Conditioning',
@@ -12,7 +13,7 @@ describe('FitnessTrackerClient - Cardio Protocol Robustness', () => {
       durationMins: 12,
       workRestRatio: 'Continuous steady state (12:0)',
       recommendedModalities: 'Incline Treadmill Walk',
-    }
+    } as unknown as IntegratedCardioPrescription
 
     const workout = {
       day: 1,
@@ -35,7 +36,7 @@ describe('FitnessTrackerClient - Cardio Protocol Robustness', () => {
   })
 
   it('preserves coachingCues and recommendedModalities when already arrays', () => {
-    const rawCardioProtocol: any = {
+    const rawCardioProtocol = {
       stage: 1,
       title: 'Stage 1 Walk',
       stageName: 'Stage 1 Aerobic Base',
@@ -44,7 +45,7 @@ describe('FitnessTrackerClient - Cardio Protocol Robustness', () => {
       durationMins: 15,
       workRestRatio: 'Continuous',
       recommendedModalities: ['Outdoor Brisk Walking', 'Treadmill Walk'],
-    }
+    } as unknown as IntegratedCardioPrescription
 
     const workout = {
       day: 2,
@@ -61,7 +62,7 @@ describe('FitnessTrackerClient - Cardio Protocol Robustness', () => {
   })
 
   it('handles null/undefined coachingCues and recommendedModalities gracefully', () => {
-    const rawCardioProtocol: any = {
+    const rawCardioProtocol = {
       stage: 2,
       title: 'Intervals',
       stageName: 'Stage 2 Intervals',
@@ -70,7 +71,7 @@ describe('FitnessTrackerClient - Cardio Protocol Robustness', () => {
       durationMins: 20,
       workRestRatio: '1:2',
       recommendedModalities: null,
-    }
+    } as unknown as IntegratedCardioPrescription
 
     const workout = {
       day: 3,

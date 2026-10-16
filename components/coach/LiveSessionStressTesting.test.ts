@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import { WebRtcPeerBridge, type WebRtcSignalPayload } from '@/lib/webrtc-peer-bridge'
 import { DEFAULT_LIVE_ASSESSMENT_PLAN } from './LiveSessionClient'
 import { analyzePosturalMesh, type PosturalViewType } from '@/lib/ai-postural-mesh-scanner'
@@ -14,7 +15,7 @@ describe('Live Studio Stress & Adversarial Test Suite ("Run It Hot")', () => {
         send: vi.fn().mockResolvedValue('ok'),
         on: vi.fn().mockReturnThis(),
         subscribe: vi.fn(),
-      } as any
+      } as unknown as RealtimeChannel
     }
 
     it('survives rapid, concurrent createOffer calls without throwing', async () => {
@@ -46,7 +47,7 @@ describe('Live Studio Stress & Adversarial Test Suite ("Run It Hot")', () => {
 
       bridge.init()
 
-      const malformedPayloads: any[] = [
+      const malformedPayloads: (WebRtcSignalPayload | unknown)[] = [
         null,
         undefined,
         {},
@@ -60,7 +61,7 @@ describe('Live Studio Stress & Adversarial Test Suite ("Run It Hot")', () => {
       ]
 
       for (const payload of malformedPayloads) {
-        await expect(bridge.handleSignal(payload)).resolves.not.toThrow()
+        await expect(bridge.handleSignal(payload as unknown as WebRtcSignalPayload)).resolves.not.toThrow()
       }
 
       bridge.destroy()
@@ -122,19 +123,19 @@ describe('Live Studio Stress & Adversarial Test Suite ("Run It Hot")', () => {
 
       bridge.init()
 
-      expect(() => bridge.attachLocalStream(null as any)).not.toThrow()
+      expect(() => bridge.attachLocalStream(null as unknown as MediaStream)).not.toThrow()
 
       const emptyStream = {
         getTracks: () => [],
-      } as any
+      } as unknown as MediaStream
 
       expect(() => bridge.attachLocalStream(emptyStream)).not.toThrow()
 
       // Simulate stream with mock audio and video tracks
       const mockTrack = { kind: 'video', id: 'track-1' }
       const populatedStream = {
-        getTracks: () => [mockTrack],
-      } as any
+        getTracks: () => [mockTrack as unknown as MediaStreamTrack],
+      } as unknown as MediaStream
 
       // Rapidly attach/replace stream 10 times in a row
       for (let i = 0; i < 10; i++) {
@@ -170,8 +171,9 @@ describe('Live Studio Stress & Adversarial Test Suite ("Run It Hot")', () => {
             throw new Error('SecurityError: Failed to execute toDataURL on HTMLCanvasElement: Tainted canvases may not be exported.')
           }
           return { success: true, dataUrl: 'data:image/jpeg;base64,valid', error: null }
-        } catch (err: any) {
-          return { success: false, dataUrl: null, error: err.message }
+        } catch (err: unknown) {
+          const error = err as Error
+          return { success: false, dataUrl: null, error: error.message }
         }
       }
 

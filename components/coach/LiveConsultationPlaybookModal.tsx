@@ -499,14 +499,14 @@ export default function LiveConsultationPlaybookModal({
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                 {[
-                  { id: 'low', label: 'Low / Optimal', desc: 'Normal HRV, optimal recovery readiness', color: '#34D399' },
-                  { id: 'moderate', label: 'Moderate Load', desc: 'Mild sympathetic bias, slight fatigue', color: '#FBBF24' },
-                  { id: 'high', label: 'High / Suppressed', desc: 'Elevated stress, deload recommended', color: '#F87171' },
+                  { id: 'low' as const, label: 'Low / Optimal', desc: 'Normal HRV, optimal recovery readiness', color: '#34D399' },
+                  { id: 'moderate' as const, label: 'Moderate Load', desc: 'Mild sympathetic bias, slight fatigue', color: '#FBBF24' },
+                  { id: 'high' as const, label: 'High / Suppressed', desc: 'Elevated stress, deload recommended', color: '#F87171' },
                 ].map(item => (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setAllostaticLoad(item.id as any)}
+                    onClick={() => setAllostaticLoad(item.id)}
                     style={{
                       padding: 12,
                       background: allostaticLoad === item.id ? `${item.color}15` : 'rgba(0,0,0,0.35)',

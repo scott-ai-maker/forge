@@ -106,7 +106,7 @@ export default function CoachScheduleSessionModal({
     return () => {
       cancelled = true
     }
-  }, [isOpen])
+  }, [isOpen, activePackages])
 
   if (!isOpen) return null
 

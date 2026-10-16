@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react'
 import GaaMasterWatermarkSeal from '@/components/ui/GaaMasterWatermarkSeal'
 import { GaaIcon, GaaIconName } from '@/components/ui/GaaIcon'
+import ReferralHubModal from '@/components/referrals/ReferralHubModal'
 
 export interface PostWorkoutTrophyData {
   dayNumber: number
@@ -73,6 +74,7 @@ export default function PostWorkoutTrophyCard({
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [downloading, setDownloading] = useState(false)
+  const [referralOpen, setReferralOpen] = useState(false)
 
   const equivalence = getTonnageEquivalence(data.totalVolumeLbs)
 
@@ -365,11 +367,45 @@ export default function PostWorkoutTrophyCard({
           justifyContent: 'center',
           gap: 8,
           boxShadow: '0 4px 18px rgba(212,160,23,0.4)',
+          marginBottom: 10,
         }}
       >
         <GaaIcon name="camera" size={18} tone="dark" />
         <span>{downloading ? 'GENERATING HIGH-RES PNG...' : 'SAVE TROPHY CARD / INSTAGRAM STORY'}</span>
       </button>
+
+      {/* Referral Viral Hook: Invite Partner & Earn $20 */}
+      <button
+        type="button"
+        onClick={() => setReferralOpen(true)}
+        className="tactile-btn"
+        style={{
+          width: '100%',
+          padding: '11px 16px',
+          background: 'rgba(197, 160, 89, 0.12)',
+          border: '1px solid rgba(197, 160, 89, 0.35)',
+          borderRadius: 8,
+          color: '#F3E5AB',
+          fontFamily: 'var(--font-sans, Raleway), sans-serif',
+          fontSize: 12.5,
+          fontWeight: 700,
+          letterSpacing: '0.04em',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+        }}
+      >
+        <GaaIcon name="crown" size={16} tone="gold" />
+        <span>Invite Workout Partner · Give 30 Days, Get $20</span>
+      </button>
+
+      {/* Ambassador Referral Modal */}
+      <ReferralHubModal
+        isOpen={referralOpen}
+        onClose={() => setReferralOpen(false)}
+      />
     </div>
   )
 }

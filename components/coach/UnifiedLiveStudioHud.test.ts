@@ -293,7 +293,7 @@ describe('Unified Live Studio HUD Helper Mechanics', () => {
 
     function simulateClientFrameCapture(
       availableFeeds: MockVideoFeed[],
-      isStageSwapped: boolean
+      _isStageSwapped: boolean
     ): { capturedRole: string; capturedWidth: number; capturedHeight: number; uncroppedEntireFrame: boolean } {
       // Invariant: capture ALWAYS targets athlete/client video element regardless of where athlete is located
       const clientVideo = availableFeeds.find(f => f.role === 'athlete')

@@ -134,7 +134,7 @@ export function calculateSessionFatigueCnsIndex(input: SessionFatigueCnsInput): 
     sessionDurationMinutes,
     sessionRpe,
     setLogs,
-    units = 'imperial',
+    units: _units = 'imperial',
   } = input
 
   const safeDuration = Math.max(1, Math.round(sessionDurationMinutes))
@@ -142,7 +142,6 @@ export function calculateSessionFatigueCnsIndex(input: SessionFatigueCnsInput): 
 
   // 1. Calculate Average RPE, RIR, and Failures
   let sumRpe = 0
-  let sumRir = 0
   let failureSetsCount = 0
   let axialLoadingSetsCount = 0
   let totalVolumeKg = 0
@@ -168,7 +167,6 @@ export function calculateSessionFatigueCnsIndex(input: SessionFatigueCnsInput): 
     const rirVal = set.rir !== undefined && set.rir !== null ? normalizeRirValue(set.rir) : mapRpeToRir(rpeVal)
 
     sumRpe += rpeVal
-    sumRir += rirVal
 
     if (rirVal === 0 || rpeVal >= 9.8) {
       failureSetsCount += 1

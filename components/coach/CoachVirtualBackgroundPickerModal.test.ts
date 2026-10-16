@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { COACH_BACKGROUND_PRESETS } from '@/lib/coach-backgrounds-catalog'
 
 describe('CoachVirtualBackgroundPickerModal Architecture & Training Suite', () => {

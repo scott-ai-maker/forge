@@ -191,7 +191,7 @@ export function generateBackOffAndDropSetPlan(params: {
   coachVoiceCue: string
 } {
   const {
-    exerciseName,
+    exerciseName: _exerciseName,
     currentWeightLbs,
     currentReps,
     targetReps,

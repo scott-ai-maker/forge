@@ -514,7 +514,9 @@ describe('GAA Native HealthKit & Health Connect Bridge', () => {
         },
       }
 
-      const { summary, provider, cnsScore } = normalizeNativeMobileTelemetry(rawAndroid as any)
+      const { summary, provider, cnsScore } = normalizeNativeMobileTelemetry(
+        rawAndroid as unknown as Parameters<typeof normalizeNativeMobileTelemetry>[0]
+      )
       expect(provider).toBe('google_fit')
       expect(summary.provider).toBe('google_fit')
       expect(summary.restingHeartRate).toBe(52)
@@ -545,7 +547,9 @@ describe('GAA Native HealthKit & Health Connect Bridge', () => {
         },
       }
 
-      const { summary, provider, cnsScore } = normalizeNativeMobileTelemetry(rawApple as any)
+      const { summary, provider, cnsScore } = normalizeNativeMobileTelemetry(
+        rawApple as unknown as Parameters<typeof normalizeNativeMobileTelemetry>[0]
+      )
       expect(provider).toBe('apple_health')
       expect(summary.provider).toBe('apple_health')
       expect(summary.restingHeartRate).toBe(50)

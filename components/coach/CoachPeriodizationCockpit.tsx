@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import {
   generate12WeekMacrocycle,
@@ -76,6 +77,7 @@ export default function CoachPeriodizationCockpit({
   clientGoal = 'Body Recomposition & Maximal Power Output',
   initialPlan = null,
 }: CoachPeriodizationCockpitProps) {
+  const router = useRouter()
   const [macrocycle, setMacrocycle] = useState<MacrocyclePlan>(() => {
     return initialPlan || generate12WeekMacrocycle(1, clientGoal)
   })
@@ -178,11 +180,9 @@ export default function CoachPeriodizationCockpit({
       if (res.ok && data.ok) {
         setSaveStatus({ success: true, message: '✓ Macrocycle periodization calibrated! Advancing to Stage 6: Program Design...' })
         if (data.plan) setMacrocycle(data.plan)
-        if (typeof window !== 'undefined') {
-          setTimeout(() => {
-            window.location.href = `/coach/clients/${clientId}?tab=program#workspace-tab-content`
-          }, 1500)
-        }
+        setTimeout(() => {
+          router.push(`/coach/clients/${clientId}?tab=program#workspace-tab-content`)
+        }, 1500)
       } else {
         setSaveStatus({ success: false, message: data.error || 'Failed to save periodization plan.' })
       }

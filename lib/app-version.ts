@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.40.0'
-export const APP_RELEASE_DATE = '2026-10-15'
-export const APP_RELEASE_CODENAME = 'Holiday Pre-Launch Unmasking Engine & Founding Member Portal'
+export const APP_VERSION = '1.41.0'
+export const APP_RELEASE_DATE = '2026-10-16'
+export const APP_RELEASE_CODENAME = 'The Zero-Distraction Sanctuary & Peer Recommendation Engine'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,31 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
+    version: '1.41.0',
+    date: '2026-10-16',
+    codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'The Zero-Distraction Sanctuary · No Social Media Manifesto · Peer Recommendation Engine · High-Intent SEO · Human + AI Synergy',
+    title: 'The Zero-Distraction Sanctuary & Peer Recommendation Engine',
+    summary: 'Codified the foundational brand strategy and operational manifesto for Forge Athletic: NO SOCIAL MEDIA, ZERO DISTRACTIONS, 100% COACHING & TOOLS. Reinvests 100% of would-be social ad spend directly into software engineering and master coach availability. Deployed the algorithmic Peer Recommendation & Referral Engine, enhanced high-intent US schema and SEO directives, and integrated the Anti-Distraction Gym Sanctuary across marketing touchpoints.',
+    highlights: [
+      'The Zero-Distraction Sanctuary (Anti-Social Media Manifesto): Codified the strict anti-distraction stance rejecting doom-scrolling, vanity selfies, and in-app feeds—establishing the gym as sacred ground for pure kinetic focus and progressive overload.',
+      'The 3-Part Growth Flywheel: Architected the sustainable acquisition flywheel uniting High-Intent Institutional SEO, the Peer Recommendation & Referral Engine, and the Goal-Achieving App Moat.',
+      'Algorithmic Peer Recommendation & Referral Engine: Engineered full referral infrastructure (/api/referrals, /r/[code], dynamic QR codes, client referral dashboards) enabling clients to gift Founding Member Passes and guest privileges with verified tracking.',
+      'Human + AI Performance Symbiosis: Articulated the gold standard uniting sub-180ms computational AI (bar velocity, posture mesh diagnostics, autoregulation) with Coach Gordon’s 18+ years of clinical human stewardship (NASM Master Trainer Candidate, CPT, CES, PES).',
+      'Marketing & Splash Integration: Deployed the Anti-Distraction Gym Sanctuary manifesto banner across HolidayUnmaskingSplash, FullMarketingHome, and app/page.tsx.',
+      'Master Brand Documentation: Authored the comprehensive strategy and operational manifesto in docs/brand-strategy-manifesto.md.',
+    ],
+    relatedLinks: [
+      { label: 'Unmasking Splash', href: '/' },
+      { label: 'Staff Preview', href: '/preview' },
+      { label: 'Brand Manifesto', href: '/docs/brand-strategy-manifesto.md' },
+    ],
+  },
+  {
     version: '1.40.0',
     date: '2026-10-15',
-    codename: APP_RELEASE_CODENAME,
+    codename: 'Holiday Pre-Launch Unmasking Engine & Founding Member Portal',
     category: 'feature',
     badge: 'Parked Pre-Launch Engine · Live Unmasking Countdown · 3D Holographic Founding Pass · Democratized Positioning',
     title: 'Holiday Pre-Launch Unmasking Engine & Founding Member Portal',

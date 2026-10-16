@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   computeLiveSessionSummary,
@@ -26,6 +27,7 @@ export default function LiveSessionWrapUpModal({
   onClose,
   onSuccess,
 }: LiveSessionWrapUpModalProps) {
+  const router = useRouter()
   const [coachNotes, setCoachNotes] = useState('Exceptional kinetic execution. Controlled eccentric tempos maintained throughout all compound lifts.')
   const [recoveryDirective, setRecoveryDirective] = useState('Hydrate with 20–30oz electrolyte solution + 40g post-workout protein within 60 minutes. Maintain 8+ hours sleep window.')
   const [deductCredit, setDeductCredit] = useState(true)
@@ -162,9 +164,7 @@ export default function LiveSessionWrapUpModal({
               type="button"
               onClick={() => {
                 onClose()
-                if (typeof window !== 'undefined') {
-                  window.location.href = `/coach/clients/${clientId}?tab=checkins#workspace-tab-content`
-                }
+                router.push(`/coach/clients/${clientId}?tab=checkins#workspace-tab-content`)
               }}
               style={{
                 marginTop: 10,

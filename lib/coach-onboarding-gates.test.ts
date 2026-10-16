@@ -214,8 +214,7 @@ describe('Coach Onboarding Authorization Gates Engine', () => {
   })
 
   it('reconstructs gate authorization map from client_lifecycle_audit_logs when primary table is unavailable', async () => {
-    // Mock admin client where coach_onboarding_gates errors with missing table
-    const mockAdmin: any = {
+    const mockAdmin = {
       from: (table: string) => {
         if (table === 'coach_onboarding_gates') {
           return {
@@ -255,7 +254,7 @@ describe('Coach Onboarding Authorization Gates Engine', () => {
       },
     }
 
-    const gates = await loadClientOnboardingGates(mockAdmin, 'client-test-id')
+    const gates = await loadClientOnboardingGates(mockAdmin as unknown as Parameters<typeof loadClientOnboardingGates>[0], 'client-test-id')
     expect(gates[1]).toBeDefined()
     expect(gates[1].status).toBe('authorized')
     expect(gates[1].authorizedBy).toBe('coach-123')

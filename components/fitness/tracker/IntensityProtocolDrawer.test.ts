@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   calculateDropStages,
-  calculateMyoRepsProtocol,
   formatIntensityProtocolNotes,
   parseIntensityProtocolNotes,
 } from '@/lib/intensity-protocols-engine'

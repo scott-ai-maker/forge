@@ -11,7 +11,7 @@ vi.mock('@/lib/authz', async () => {
   return {
     ...actual,
     getRequestAuthz: getRequestAuthzMock,
-    requireCoachAssignedClient: vi.fn().mockImplementation(async (coachId, clientId) => {
+    requireCoachAssignedClient: vi.fn().mockImplementation(async (coachId, _clientId) => {
       if (coachId === 'unauthorized-coach') {
         throw new actual.AuthzError('Not authorized for this athlete.', 403)
       }

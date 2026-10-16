@@ -166,7 +166,7 @@ export default function AiPostureMeshScannerModal({
         setActiveView(initialView)
       }
     }
-  }, [initialCapturedPhoto, initialPhotosByView, initialView, isOpen])
+  }, [initialCapturedPhoto, initialPhotosByView, initialView, isOpen, activeView])
 
   // Live Camera Viewfinder State
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false)

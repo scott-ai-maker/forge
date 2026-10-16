@@ -11,16 +11,14 @@
  * 7. Unified Telemetry Readiness Diagnostic Harness
  */
 
-import { Capacitor } from '@capacitor/core'
 import { App, type AppState, type URLOpenListenerEvent } from '@capacitor/app'
-import { Device, type DeviceInfo, type BatteryInfo } from '@capacitor/device'
-import { Network, type ConnectionStatus } from '@capacitor/network'
+import { Device } from '@capacitor/device'
+import { Network } from '@capacitor/network'
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
 import { StatusBar, Style } from '@capacitor/status-bar'
 
 import {
   isNativeMobile,
-  isNativeIOS,
   isNativeAndroid,
   getNativePlatform,
   isNativeHealthKitAvailable,
@@ -291,7 +289,13 @@ export function subscribeToNetworkStatus(
 // 4. SCREEN KEEP-AWAKE / WAKE LOCK MANAGEMENT
 // ============================================================================
 
-let activeWakeLock: any = null
+interface WakeLockSentinelLike {
+  released: boolean
+  addEventListener(type: 'release', listener: () => void): void
+  release(): Promise<void>
+}
+
+let activeWakeLock: WakeLockSentinelLike | null = null
 
 /**
  * Requests display keep-awake (prevents screen dimming or sleeping during in-gym workouts)
@@ -299,7 +303,10 @@ let activeWakeLock: any = null
 export async function requestKeepAwake(): Promise<boolean> {
   try {
     if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
-      activeWakeLock = await (navigator as any).wakeLock.request('screen')
+      const nav = navigator as unknown as {
+        wakeLock: { request: (type: 'screen') => Promise<WakeLockSentinelLike> }
+      }
+      activeWakeLock = await nav.wakeLock.request('screen')
       activeWakeLock.addEventListener('release', () => {
         activeWakeLock = null
       })

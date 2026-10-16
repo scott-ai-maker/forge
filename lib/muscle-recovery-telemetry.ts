@@ -6,7 +6,7 @@
  * and evidence-based supplement acceleration (ISSN/IOC Tier A/B standards).
  */
 
-import type { MedicalHealthConditions, SupplementGoal } from './supplement-prescriptions'
+import type { MedicalHealthConditions } from './supplement-prescriptions'
 import type { ParqAnswers } from './liability-shield'
 
 export type BiologicalSex = 'male' | 'female'

@@ -13,6 +13,7 @@ import {
   calculateExecutiveCardioDebrief,
   resolveSegmentFromTotalElapsed,
   type CardioPatternId,
+  type CardioIntervalSegment,
 } from './coach-cardio-engine'
 
 describe('coach-cardio-engine', () => {
@@ -392,11 +393,13 @@ describe('coach-cardio-engine', () => {
   })
 
   describe('resolveSegmentFromTotalElapsed', () => {
-    const mockIntervals = [
-      { id: '1', segmentType: 'warmup' as const, title: 'Warmup', durationSeconds: 300, targetRpe: 3, breathingProfile: {} as any, voiceCues: {} as any },
-      { id: '2', segmentType: 'work' as const, title: 'Interval 1', durationSeconds: 180, targetRpe: 7, breathingProfile: {} as any, voiceCues: {} as any },
-      { id: '3', segmentType: 'recovery' as const, title: 'Recovery 1', durationSeconds: 120, targetRpe: 4, breathingProfile: {} as any, voiceCues: {} as any },
-      { id: '4', segmentType: 'cooldown' as const, title: 'Cooldown', durationSeconds: 300, targetRpe: 2, breathingProfile: {} as any, voiceCues: {} as any },
+    const emptyBreathing = {} as unknown as CardioIntervalSegment['breathingProfile']
+    const emptyCues = {} as unknown as CardioIntervalSegment['voiceCues']
+    const mockIntervals: CardioIntervalSegment[] = [
+      { id: '1', segmentType: 'warmup', title: 'Warmup', durationSeconds: 300, targetRpe: 3, breathingProfile: emptyBreathing, voiceCues: emptyCues },
+      { id: '2', segmentType: 'work', title: 'Interval 1', durationSeconds: 180, targetRpe: 7, breathingProfile: emptyBreathing, voiceCues: emptyCues },
+      { id: '3', segmentType: 'recovery', title: 'Recovery 1', durationSeconds: 120, targetRpe: 4, breathingProfile: emptyBreathing, voiceCues: emptyCues },
+      { id: '4', segmentType: 'cooldown', title: 'Cooldown', durationSeconds: 300, targetRpe: 2, breathingProfile: emptyBreathing, voiceCues: emptyCues },
     ] // Total: 900s (0-300, 300-480, 480-600, 600-900)
 
     it('resolves the very start of workout (0s)', () => {

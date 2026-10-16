@@ -152,7 +152,7 @@ export function isExerciseStrictlyExcluded(exerciseName: string, exclusions?: st
 /**
  * Returns a biomechanically sound substitute for an excluded movement.
  */
-function getExclusionSubstitute(exerciseName: string, exclusions?: string[]): string {
+function getExclusionSubstitute(exerciseName: string, _exclusions?: string[]): string {
   const lowerEx = exerciseName.toLowerCase()
   if (lowerEx.includes('mountain climber')) return 'plank'
   if (lowerEx.includes('run') || lowerEx.includes('jog')) return 'step up to balance frontal'
@@ -166,7 +166,7 @@ function getExclusionSubstitute(exerciseName: string, exclusions?: string[]): st
 export function buildDeterministicMasterCoachMemo(
   request: GeminiCoachGenerationRequest,
   targetPhase: number,
-  planTitle: string
+  _planTitle: string
 ): string {
   const firstName = (request.clientName || 'Athlete').trim().split(' ')[0]
 

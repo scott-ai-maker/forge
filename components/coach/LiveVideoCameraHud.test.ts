@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { VideoHudLayout } from './LiveVideoCameraHud'
-import { isWebRtcSupported, DEFAULT_RTC_CONFIG, WebRtcPeerBridge } from '@/lib/webrtc-peer-bridge'
+import { DEFAULT_RTC_CONFIG } from '@/lib/webrtc-peer-bridge'
 
 describe('Live Video Camera HUD Architecture & WebRTC Bridge', () => {
   it('supports split, pip, and focus layout configurations', () => {

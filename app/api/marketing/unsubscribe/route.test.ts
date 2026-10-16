@@ -2,9 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 import { createUnsubscribeToken } from '@/lib/marketing-email'
 
-const { suppressEmailMock, verifyUnsubscribeTokenMock } = vi.hoisted(() => ({
+const { suppressEmailMock } = vi.hoisted(() => ({
   suppressEmailMock: vi.fn(),
-  verifyUnsubscribeTokenMock: vi.fn(),
 }))
 
 vi.mock('@/lib/marketing-email', async (importOriginal) => {

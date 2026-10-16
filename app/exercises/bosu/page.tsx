@@ -555,6 +555,7 @@ export default function BosuExerciseExplorerPage() {
                     marginBottom: 16,
                   }}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`https://img.youtube.com/vi/${ex.videoId}/hqdefault.jpg`}
                     alt={ex.name}
@@ -863,6 +864,7 @@ export default function BosuExerciseExplorerPage() {
                     zIndex: 10,
                   }}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`https://img.youtube.com/vi/${selectedExercise.videoId}/hqdefault.jpg`}
                     alt={selectedExercise.name}

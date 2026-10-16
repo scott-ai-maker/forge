@@ -25,7 +25,7 @@ export default function AthleticPerformanceStudio({
   initialAge = 30,
 }: AthleticPerformanceStudioProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'davies' | 'shark' | 'shuttle' | 'pushups'>('overview')
-  const [sex, setSex] = useState<'male' | 'female' | 'other'>(initialSex)
+  const [sex, _setSex] = useState<'male' | 'female' | 'other'>(initialSex)
   const age = initialAge
 
   // 1. Davies Test Form State

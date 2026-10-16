@@ -75,19 +75,25 @@ function getRTCPeerConnectionConstructor(): typeof RTCPeerConnection | undefined
   if (typeof window !== 'undefined' && window.RTCPeerConnection) {
     return window.RTCPeerConnection
   }
-  if (typeof globalThis !== 'undefined' && (globalThis as any).RTCPeerConnection) {
-    return (globalThis as any).RTCPeerConnection
+  if (typeof globalThis !== 'undefined' && 'RTCPeerConnection' in globalThis) {
+    return (globalThis as unknown as { RTCPeerConnection: typeof RTCPeerConnection }).RTCPeerConnection
   }
   return undefined
 }
 
 function getRTCSessionDescription(sdp: RTCSessionDescriptionInit): RTCSessionDescription {
-  const ctor = (typeof window !== 'undefined' && window.RTCSessionDescription) || (globalThis as any).RTCSessionDescription
+  const globalDesc = typeof globalThis !== 'undefined' && 'RTCSessionDescription' in globalThis
+    ? (globalThis as unknown as { RTCSessionDescription: typeof RTCSessionDescription }).RTCSessionDescription
+    : undefined
+  const ctor = (typeof window !== 'undefined' && window.RTCSessionDescription) || globalDesc
   return ctor ? new ctor(sdp) : (sdp as unknown as RTCSessionDescription)
 }
 
 function getRTCIceCandidate(cand: RTCIceCandidateInit): RTCIceCandidate {
-  const ctor = (typeof window !== 'undefined' && window.RTCIceCandidate) || (globalThis as any).RTCIceCandidate
+  const globalCand = typeof globalThis !== 'undefined' && 'RTCIceCandidate' in globalThis
+    ? (globalThis as unknown as { RTCIceCandidate: typeof RTCIceCandidate }).RTCIceCandidate
+    : undefined
+  const ctor = (typeof window !== 'undefined' && window.RTCIceCandidate) || globalCand
   return ctor ? new ctor(cand) : (cand as unknown as RTCIceCandidate)
 }
 
@@ -137,7 +143,10 @@ export class WebRtcPeerBridge {
         ...DEFAULT_RTC_CONFIG,
         iceServers: getIceServers(),
       })
-      const MediaStreamClass = typeof window !== 'undefined' ? window.MediaStream : (globalThis as any).MediaStream
+      const globalMediaStream = typeof globalThis !== 'undefined' && 'MediaStream' in globalThis
+        ? (globalThis as unknown as { MediaStream: typeof MediaStream }).MediaStream
+        : undefined
+      const MediaStreamClass = typeof window !== 'undefined' ? window.MediaStream : globalMediaStream
       this.remoteStream = MediaStreamClass ? new MediaStreamClass() : null
 
       // Perfect Negotiation: onnegotiationneeded triggers offer generation automatically
@@ -307,7 +316,7 @@ export class WebRtcPeerBridge {
       }
       // Cap at 2.0 Mbps to prevent bufferbloat and packet drops on fluctuating networks
       params.encodings[0].maxBitrate = 2000000
-      ;(params as any).degradationPreference = 'maintain-framerate'
+      ;(params as RTCRtpSendParameters & { degradationPreference?: string }).degradationPreference = 'maintain-framerate'
       void sender.setParameters(params).catch(() => {})
     } catch {
       // Optional browser optimization
@@ -339,8 +348,8 @@ export class WebRtcPeerBridge {
     if (!this.pc || this.isDestroyed || this.isRestartingIce) return
     this.isRestartingIce = true
     try {
-      if (typeof (this.pc as any).restartIce === 'function') {
-        ;(this.pc as any).restartIce()
+      if ('restartIce' in this.pc && typeof (this.pc as { restartIce?: () => void }).restartIce === 'function') {
+        ;(this.pc as { restartIce: () => void }).restartIce()
       } else {
         const offer = await this.pc.createOffer({ iceRestart: true })
         if (this.pc.signalingState !== 'stable') return

@@ -123,9 +123,9 @@ export default function CoachCardioVoiceoverPlayer({
   const [averagePaceFormatted, setAveragePaceFormatted] = useState<string>('— /mi')
   const [stepCount, setStepCount] = useState<number>(0)
   const [stepCadenceSpm, setStepCadenceSpm] = useState<number>(0)
-  const [stepSource, setStepSource] = useState<'sensor' | 'gps_estimated' | 'idle'>('idle')
+  const [_stepSource, setStepSource] = useState<'sensor' | 'gps_estimated' | 'idle'>('idle')
   const [splits, setSplits] = useState<CardioDistanceSplit[]>([])
-  const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null)
+  const [_gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null)
 
   // Distance & Step Tracking Synchronization Refs
   const watchIdRef = useRef<number | null>(null)
@@ -221,7 +221,7 @@ export default function CoachCardioVoiceoverPlayer({
   // High-End Biometric & Wearable State (Bluetooth Heart Rate)
   const [isBtConnecting, setIsBtConnecting] = useState<boolean>(false)
   const [isBtConnected, setIsBtConnected] = useState<boolean>(false)
-  const [btDeviceName, setBtDeviceName] = useState<string | null>(null)
+  const [_btDeviceName, setBtDeviceName] = useState<string | null>(null)
   const [liveBpm, setLiveBpm] = useState<number | null>(null)
   const [nativeBpm, setNativeBpm] = useState<number | null>(null)
   const [bpmSamples, setBpmSamples] = useState<number[]>([])
@@ -229,7 +229,7 @@ export default function CoachCardioVoiceoverPlayer({
 
   // Two-Way Hands-Free Voice Copilot
   const [isVoiceCopilotEnabled, setIsVoiceCopilotEnabled] = useState<boolean>(false)
-  const [isListeningForVoice, setIsListeningForVoice] = useState<boolean>(false)
+  const [_isListeningForVoice, setIsListeningForVoice] = useState<boolean>(false)
   const [lastVoiceFeedback, setLastVoiceFeedback] = useState<string | null>(null)
 
   // Equipment Form Guidance Drawer
@@ -971,14 +971,28 @@ export default function CoachCardioVoiceoverPlayer({
   useEffect(() => {
     if (!isVoiceCopilotEnabled || typeof window === 'undefined') return
 
+    interface SpeechRecognitionEventLike {
+      results?: ArrayLike<ArrayLike<{ transcript: string }>>
+    }
+    interface SpeechRecognitionLike {
+      continuous: boolean
+      interimResults: boolean
+      lang: string
+      onstart: (() => void) | null
+      onend: (() => void) | null
+      onresult: ((event: SpeechRecognitionEventLike) => void) | null
+      start: () => void
+      stop: () => void
+    }
+
     const windowAny = window as unknown as {
-      SpeechRecognition?: new () => any
-      webkitSpeechRecognition?: new () => any
+      SpeechRecognition?: new () => SpeechRecognitionLike
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike
     }
     const SpeechClass = windowAny.SpeechRecognition || windowAny.webkitSpeechRecognition
     if (!SpeechClass) return
 
-    let recognition: any = null
+    let recognition: SpeechRecognitionLike | null = null
     try {
       recognition = new SpeechClass()
       recognition.continuous = true
@@ -989,14 +1003,14 @@ export default function CoachCardioVoiceoverPlayer({
       recognition.onend = () => {
         if (isVoiceCopilotEnabled && isPlaying) {
           try {
-            recognition.start()
+            recognition?.start()
           } catch {}
         } else {
           setIsListeningForVoice(false)
         }
       }
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEventLike) => {
         const results = event.results
         if (!results || results.length === 0) return
         const last = results[results.length - 1]
@@ -1064,6 +1078,9 @@ export default function CoachCardioVoiceoverPlayer({
     pauseSession,
     resumeSession,
     handleSkipSegment,
+    currentPaceFormatted,
+    distanceUnit,
+    isDistanceTrackingEnabled,
   ])
 
   // Start Session
@@ -1102,12 +1119,16 @@ export default function CoachCardioVoiceoverPlayer({
     void requestScreenWakeLock()
 
     // Request iOS motion sensor permission on direct user gesture tap
+    const DeviceMotionEventWithPermission = typeof DeviceMotionEvent !== 'undefined'
+      ? (DeviceMotionEvent as unknown as { requestPermission?: () => Promise<'granted' | 'denied'> })
+      : null
+
     if (
-      typeof DeviceMotionEvent !== 'undefined' &&
-      typeof (DeviceMotionEvent as any).requestPermission === 'function'
+      DeviceMotionEventWithPermission &&
+      typeof DeviceMotionEventWithPermission.requestPermission === 'function'
     ) {
       try {
-        void (DeviceMotionEvent as any).requestPermission().catch(() => {})
+        void DeviceMotionEventWithPermission.requestPermission().catch(() => {})
       } catch {}
     }
 

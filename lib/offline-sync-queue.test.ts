@@ -139,7 +139,7 @@ describe('offline-sync-queue', () => {
   })
 
   it('discards items exceeding MAX_RETRY_COUNT (5 retries)', async () => {
-    const item = enqueueOfflineSet({
+    enqueueOfflineSet({
       sessionDate: '2026-08-26',
       exerciseName: 'Malformed Deadlift',
       setNumber: 1,

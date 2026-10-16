@@ -7,6 +7,7 @@ import { triggerHaptic } from '@/lib/offline-sync-queue'
 import type { DashboardWorkspace } from '@/lib/validation'
 import { getMembershipDisplayName } from '@/lib/forge-memberships'
 import PrescribedToolboxBanner from '@/components/fitness/PrescribedToolboxBanner'
+import ReferralDashboardWidget from '@/components/referrals/ReferralDashboardWidget'
 import type { DossierMetrics } from '@/lib/sunday-dossier-engine'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
 
@@ -343,6 +344,7 @@ export default function ExecutiveCommandCenterClient({
                     boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
                   }}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={leadExerciseImg}
                     alt={leadExerciseName || 'Exercise'}
@@ -565,6 +567,9 @@ export default function ExecutiveCommandCenterClient({
 
       {/* ── 4. Prescribed Protocol Banner (If applicable) ── */}
       <PrescribedToolboxBanner toolboxId="desk_worker_posture" />
+
+      {/* ── 4b. Ambassador Referral Engine ── */}
+      <ReferralDashboardWidget />
 
       {/* ── 5. Flagship Sports Science Diagnostics Launchpad ── */}
       <div>

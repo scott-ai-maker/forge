@@ -5,7 +5,6 @@ import Link from 'next/link'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SiteFooter from '@/components/ui/SiteFooter'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
-import GaaIcon from '@/components/ui/GaaIcon'
 
 interface StabilityBallExercise {
   id: string
@@ -554,6 +553,7 @@ export default function StabilityBallPage() {
                       marginBottom: 16,
                     }}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`https://img.youtube.com/vi/${ex.videoId}/hqdefault.jpg`}
                       alt={ex.name}
@@ -880,6 +880,7 @@ export default function StabilityBallPage() {
                     zIndex: 10,
                   }}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`https://img.youtube.com/vi/${selectedExercise.videoId}/hqdefault.jpg`}
                     alt={selectedExercise.name}

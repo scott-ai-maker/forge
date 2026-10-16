@@ -313,6 +313,7 @@ export default function AuthForm({
       }
 
       // Hard navigation ensures fresh session cookies reach server components and avoids Next.js cache race conditions
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = resolvedRedirectPath
       return
     }

@@ -9,7 +9,6 @@ import {
 import {
   detectAndGroupSupersets,
   type GroupedExerciseEntry,
-  type SupersetPair,
   type ExerciseItemInfo,
 } from '@/lib/superset-pairing-engine'
 

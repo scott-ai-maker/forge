@@ -54,17 +54,87 @@ export interface RawProfileData {
   onboarding_completed_at?: string | null
 }
 
+export interface RawAssessmentData {
+  id?: string
+  coach_summary_notes?: string | null
+  static_posture_findings?: unknown
+  overhead_squat_findings?: unknown
+  [key: string]: unknown
+}
+
+export interface RawPlanData {
+  id?: string
+  name?: string | null
+  nasm_opt_phase?: number | null
+  phase_name?: string | null
+  sessions_per_week?: number | null
+  plan_json?: { workouts?: unknown[] } | null
+  workouts?: unknown[] | null
+  [key: string]: unknown
+}
+
+export interface RawSessionData {
+  id?: string
+  notes?: string | null
+  scheduled_at?: string | null
+  session_date?: string | null
+  status?: string | null
+  [key: string]: unknown
+}
+
+export interface RawPackageData {
+  id?: string
+  package_name?: string | null
+  sessions_remaining?: number | null
+  [key: string]: unknown
+}
+
+export interface EditFormData {
+  phone?: string
+  fitnessGoal?: string
+  trainingDaysPerWeek?: number
+  preferredTrainingDays?: string[]
+  medicalConditions?: string
+  surgeriesOrInjuries?: string
+  medications?: string
+  allergies?: string
+  primaryPhysicianPhone?: string
+  emergencyContactPhone?: string
+  age?: number | string
+  sex?: string
+  heightCm?: number | string
+  weightKg?: number | string
+  waistCm?: number | string
+  neckCm?: number | string
+  hipCm?: number | string
+  preferredUnits?: string
+  coachSummaryNotes?: string
+  nasmOptPhase?: number | string
+  phaseName?: string
+  sessionsPerWeek?: number | string
+  planName?: string
+  notes?: string
+  [key: string]: unknown
+}
+
+export interface RawBodyCompositionData {
+  id?: string
+  estimated_bodyfat_percent?: number | null
+  method?: string | null
+  [key: string]: unknown
+}
+
 export interface CoachOnboardingProgressionCardProps {
   profile: ClientProgressionProfile
   activeTab?: CoachClientTab
   rawClient?: RawClientData | null
   rawIntake?: RawIntakeData | null
   rawProfile?: RawProfileData | null
-  rawAssessment?: any
-  rawPlan?: any
-  rawSessions?: any[]
-  rawPackages?: any[]
-  rawBodyComposition?: any
+  rawAssessment?: RawAssessmentData | null
+  rawPlan?: RawPlanData | null
+  rawSessions?: RawSessionData[]
+  rawPackages?: RawPackageData[]
+  rawBodyComposition?: RawBodyCompositionData | null
 }
 
 const STATE_COLORS: Record<StageState, { border: string; bg: string; text: string; badgeBg: string }> = {
@@ -189,7 +259,7 @@ export function formatStaticPostureFinding(finding: unknown): string {
   }
 
   if (typeof finding === 'object') {
-    const f = finding as Record<string, any>
+    const f = finding as Record<string, unknown>
 
     // 1. Observation + checkpoint pairing
     const observation = typeof f.observation === 'string' ? f.observation.trim() : ''
@@ -247,7 +317,7 @@ export function formatStaticPostureFinding(finding: unknown): string {
     // 6. Any other non-empty string value on object
     const stringVals = Object.entries(f)
       .filter(([k, v]) => typeof v === 'string' && v.trim().length > 0 && k !== 'id' && k !== 'client_id' && k !== 'created_at')
-      .map(([_, v]) => v.trim())
+      .map(([_, v]) => (v as string).trim())
     if (stringVals.length > 0) {
       return stringVals[0]
     }
@@ -302,15 +372,15 @@ export default function CoachOnboardingProgressionCard({
   const [clientData, setClientData] = useState<RawClientData | null>(initialClient || null)
   const [intakeData, setIntakeData] = useState<RawIntakeData | null>(initialIntake || null)
   const [profileData, setProfileData] = useState<RawProfileData | null>(initialProfile || null)
-  const [assessmentData, setAssessmentData] = useState<any>(initialAssessment || null)
-  const [planData, setPlanData] = useState<any>(initialPlan || null)
-  const [sessionsData] = useState<any[]>(initialSessions)
-  const [packagesData] = useState<any[]>(initialPackages)
-  const [bodyCompData] = useState<any>(initialBodyComp)
+  const [assessmentData, setAssessmentData] = useState<RawAssessmentData | null>(initialAssessment || null)
+  const [planData, setPlanData] = useState<RawPlanData | null>(initialPlan || null)
+  const [sessionsData] = useState<RawSessionData[]>(initialSessions)
+  const [packagesData] = useState<RawPackageData[]>(initialPackages)
+  const [bodyCompData] = useState<RawBodyCompositionData | null>(initialBodyComp || null)
 
   // Edit Mode state
   const [isEditing, setIsEditing] = useState(false)
-  const [editFormData, setEditFormData] = useState<Record<string, any>>({})
+  const [editFormData, setEditFormData] = useState<EditFormData>({})
 
   // Gate actions state
   const [isAuthorizing, setIsAuthorizing] = useState(false)
@@ -355,7 +425,7 @@ export default function CoachOnboardingProgressionCard({
 
   // Initialize edit form when opening edit mode
   const handleOpenEdit = useCallback(() => {
-    const initialValues: Record<string, any> = {}
+    const initialValues: Record<string, unknown> = {}
     if (selectedStageNumber === 1) {
       initialValues.phone = clientData?.phone || ''
       initialValues.fitnessGoal = profileData?.fitness_goal || ''
@@ -472,8 +542,9 @@ export default function CoachOnboardingProgressionCard({
       setActionFeedback({ type: 'success', message: `Step ${selectedStageNumber} parameters updated and saved.` })
       setIsEditing(false)
       router.refresh()
-    } catch (err: any) {
-      setActionFeedback({ type: 'error', message: err.message || 'Error updating parameters' })
+    } catch (err: unknown) {
+      const error = err as Error
+      setActionFeedback({ type: 'error', message: error.message || 'Error updating parameters' })
     } finally {
       setIsSavingData(false)
     }
@@ -536,8 +607,9 @@ export default function CoachOnboardingProgressionCard({
       }
 
       router.refresh()
-    } catch (err: any) {
-      setActionFeedback({ type: 'error', message: err.message || 'Authorization failed' })
+    } catch (err: unknown) {
+      const error = err as Error
+      setActionFeedback({ type: 'error', message: error.message || 'Authorization failed' })
     } finally {
       setIsAuthorizing(false)
     }
@@ -583,8 +655,9 @@ export default function CoachOnboardingProgressionCard({
 
       setActionFeedback({ type: 'success', message: `Stage ${selectedStageNumber} has been reopened for coach review.` })
       router.refresh()
-    } catch (err: any) {
-      setActionFeedback({ type: 'error', message: err.message || 'Failed to reopen gate' })
+    } catch (err: unknown) {
+      const error = err as Error
+      setActionFeedback({ type: 'error', message: error.message || 'Failed to reopen gate' })
     } finally {
       setIsReopening(false)
     }
@@ -1755,10 +1828,11 @@ export default function CoachOnboardingProgressionCard({
                       <div style={{ fontSize: 12.5, color: 'var(--white)', marginTop: 4 }}>
                         {ohsaFindingsList.length > 0 ? (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, maxHeight: 160, overflowY: 'auto', paddingRight: 2 }}>
-                            {ohsaFindingsList.map((f: any, idx: number) => {
+                            {ohsaFindingsList.map((f: unknown, idx: number) => {
+                              const fObj = typeof f === 'object' && f !== null ? (f as Record<string, unknown>) : null
                               const label = typeof f === 'string'
                                 ? f.replace(/_/g, ' ')
-                                : (f?.compensation ? String(f.compensation).replace(/_/g, ' ') : f?.observation || f?.name || f?.label || 'Compensation')
+                                : (fObj?.compensation ? String(fObj.compensation).replace(/_/g, ' ') : String(fObj?.observation || fObj?.name || fObj?.label || 'Compensation'))
                               return (
                                 <span key={idx} style={{ padding: '2px 6px', background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 3, fontSize: 11, color: '#FCA5A5', lineHeight: 1.4 }}>
                                   {label}
@@ -1776,7 +1850,7 @@ export default function CoachOnboardingProgressionCard({
                       <div style={{ fontSize: 12.5, color: 'var(--white)', marginTop: 4 }}>
                         {staticPostureList.length > 0 ? (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, maxHeight: 160, overflowY: 'auto', paddingRight: 2 }}>
-                            {staticPostureList.map((f: any, idx: number) => {
+                            {staticPostureList.map((f: unknown, idx: number) => {
                               const label = formatStaticPostureFinding(f)
                               if (!label) return null
                               return (
@@ -1938,10 +2012,10 @@ export default function CoachOnboardingProgressionCard({
                     <div style={infoCardStyle}>
                       <div style={infoLabelStyle}>Kickoff Session Status</div>
                       <div style={{ ...infoValueStyle, color: sessionsData[0]?.status === 'completed' ? '#34D399' : 'var(--gold)' }}>
-                        {sessionsData[0]?.status ? sessionsData[0].status.toUpperCase() : 'SCHEDULED'}
+                        {sessionsData[0]?.status ? String(sessionsData[0].status).toUpperCase() : 'SCHEDULED'}
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--gray)', marginTop: 2 }}>
-                        {sessionsData[0]?.scheduled_at ? new Date(sessionsData[0].scheduled_at).toLocaleString() : 'Kickoff session scheduled'}
+                        {sessionsData[0]?.scheduled_at ? new Date(String(sessionsData[0].scheduled_at)).toLocaleString() : 'Kickoff session scheduled'}
                       </div>
                     </div>
                     <div style={infoCardStyle}>

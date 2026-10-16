@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import CoachCustomPeriodizationStudio from '@/components/coach/studio/CoachCustomPeriodizationStudio'
 import CoachTravelRecalibratorModal from '@/components/coach/CoachTravelRecalibratorModal'
 import GaaIcon from '@/components/ui/GaaIcon'
@@ -106,6 +107,7 @@ export default function CoachProgramWorkspace({
   initialSessionsPerWeek = null,
   clientAge = null,
 }: CoachProgramWorkspaceProps) {
+  const router = useRouter()
   const [plansList, setPlansList] = useState<LatestWorkoutPlan[]>(
     allPlans && allPlans.length > 0 ? allPlans : (latestPlan ? [latestPlan] : [])
   )
@@ -224,9 +226,7 @@ export default function CoachProgramWorkspace({
     setPlansList(prev => [updatedPlanRecord, ...prev.filter(p => p.id !== updatedPlanRecord.id)])
     setActionStatus(`✓ Deployed "${newPlan.planTitle}" to ${clientName}'s active programming! Advancing to Stage 7: Delivery Kickoff...`)
     setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.location.href = `/coach/clients/${clientId}?tab=sessions#workspace-tab-content`
-      }
+      router.push(`/coach/clients/${clientId}?tab=sessions#workspace-tab-content`)
     }, 1400)
   }
 

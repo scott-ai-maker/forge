@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   type Checkin,
-  type ReadinessSummary,
   type WeeklyTelemetrySummary,
   type WorkoutLogItem,
 } from './CoachCheckinReview'
@@ -34,15 +33,6 @@ describe('Stage 8 Telemetry Monitoring & Weekly Triage Mechanics', () => {
     notes: 'Heavy travel and late nights. Hamstrings very tight.',
     coach_feedback: null,
     coach_rating_adjustment: null,
-  }
-
-  const mockReadinessSummary: ReadinessSummary = {
-    completionRate14d: 88,
-    avgRpe14d: 7.4,
-    completedSessions7d: 4,
-    daysSinceLastCompleted: 1,
-    readiness: 'high',
-    recommendation: 'Athlete appears ready for progressive overload and advanced sessions this week.',
   }
 
   const mockWeeklySummary: WeeklyTelemetrySummary = {

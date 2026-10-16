@@ -3,6 +3,22 @@
 All notable changes to Forge Athletic will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.41.0] - 2026-10-16
+
+### Added & Improved
+- **The Zero-Distraction Sanctuary & Brand Manifesto ([`docs/brand-strategy-manifesto.md`](file:///Users/scottgordon/Repos/forge/docs/brand-strategy-manifesto.md), [`components/marketing/HolidayUnmaskingSplash.tsx`](file:///Users/scottgordon/Repos/forge/components/marketing/HolidayUnmaskingSplash.tsx), [`components/marketing/FullMarketingHome.tsx`](file:///Users/scottgordon/Repos/forge/components/marketing/FullMarketingHome.tsx))**:
+  - Codified the core Forge Athletic stance: **NO SOCIAL MEDIA, ZERO DISTRACTIONS, 100% COACHING & TOOLS**.
+  - Capital allocation promise: 100% of resources that other brands spend on social media ads or influencer clout is reinvested directly into the world's best sports science tools and elite Master Coach guidance.
+  - Embedded the Anti-Distraction Gym Sanctuary manifesto showcase with `✕ NO SOCIAL MEDIA · ZERO DISTRACTIONS · 100% COACHING` badge on the pre-launch splash page and marketing home.
+  - Documented the Human + AI performance synergy: sub-180ms computational AI (bar velocity, posture mesh diagnostics, dynamic load autoregulation) paired with Coach Gordon's 18+ years of clinical human stewardship (`NASM-CPT® · CES® · PES® · CNC™ · CSNC · Master Trainer Candidate`).
+- **Algorithmic Peer Recommendation & Referral Engine ([`app/api/referrals/`](file:///Users/scottgordon/Repos/forge/app/api/referrals/), [`app/r/`](file:///Users/scottgordon/Repos/forge/app/r/), [`components/referrals/`](file:///Users/scottgordon/Repos/forge/components/referrals/), [`lib/referrals.ts`](file:///Users/scottgordon/Repos/forge/lib/referrals.ts))**:
+  - Deployed high-trust peer-to-peer referral architecture with unique referral codes, dynamic QR codes, Founding Member Pass gift sharing, and verified conversion tracking.
+  - Drives sustainable word-of-mouth growth powered by undeniable physical results and client transformations.
+- **High-Intent Institutional SEO & Telemetry Hardening**:
+  - Integrated Google Analytics 4, US schema markup, sitemap, and robots GEO directives to attract serious lifters, desk workers, and longevity athletes actively searching for clinical periodization.
+- **Service Worker Cache Sync ([`public/sw.js`](file:///Users/scottgordon/Repos/forge/public/sw.js))**:
+  - Synchronized PWA and iOS native web asset caches to `gaa-v1.41.0`.
+
 ## [1.40.0] - 2026-10-15
 
 ### Added & Improved

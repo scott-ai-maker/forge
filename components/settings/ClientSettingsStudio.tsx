@@ -16,7 +16,6 @@ import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 import WorkoutCalendarView, { WorkoutCalendarEntry } from '@/components/fitness/WorkoutCalendarView'
 import AppStoreBadges from '@/components/marketing/AppStoreBadges'
 import AppStorePlaceholderModal, { PlaceholderPlatform } from '@/components/marketing/AppStorePlaceholderModal'
-import { MOBILE_APPS_CONFIG } from '@/lib/mobile-apps-config'
 import Link from 'next/link'
 
 export type SettingsTab = 'schedule' | 'wearables' | 'apps' | 'spotify' | 'billing' | 'fitness' | 'medical' | 'profile' | 'security' | 'notifications'

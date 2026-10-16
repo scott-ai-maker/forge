@@ -18,11 +18,11 @@ import {
   checkNativeTelemetryReadiness,
 } from './native-capabilities'
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
-import { Device } from '@capacitor/device'
+import { Device, type DeviceInfo } from '@capacitor/device'
 import { Network } from '@capacitor/network'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { App } from '@capacitor/app'
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import * as HealthBridge from './native-healthkit-bridge'
 
 vi.mock('@capacitor/core', () => ({
@@ -144,7 +144,7 @@ describe('Native Capabilities & Telemetry Suite', () => {
         manufacturer: 'Apple',
         isVirtual: false,
         memUsed: 1024,
-      } as any)
+      } as unknown as DeviceInfo)
       vi.mocked(App.getInfo).mockResolvedValue({
         version: '1.36.1',
         build: '42',
@@ -171,7 +171,7 @@ describe('Native Capabilities & Telemetry Suite', () => {
         manufacturer: 'Google',
         isVirtual: false,
         memUsed: 2048,
-      } as any)
+      } as unknown as DeviceInfo)
       vi.mocked(App.getInfo).mockResolvedValue({
         version: '1.36.1',
         build: '42',
@@ -269,13 +269,13 @@ describe('Native Capabilities & Telemetry Suite', () => {
   describe('App Lifecycle & Deep Linking', () => {
     it('subscribes to onAppResume on native mobile', async () => {
       vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
-      vi.mocked(App.addListener).mockImplementation(((event: string, cb: any) => {
+      vi.mocked(App.addListener).mockImplementation(((event: string, cb: (data: unknown) => void) => {
         if (event === 'appStateChange') {
           // Simulate active state
           cb({ isActive: true })
         }
-        return Promise.resolve({ remove: vi.fn() })
-      }) as any)
+        return Promise.resolve({ remove: vi.fn() } as unknown as PluginListenerHandle)
+      }) as unknown as typeof App.addListener)
 
       const callback = vi.fn()
       onAppResume(callback)
@@ -287,12 +287,12 @@ describe('Native Capabilities & Telemetry Suite', () => {
 
     it('subscribes to onAppUrlOpen for deep linking', async () => {
       vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
-      vi.mocked(App.addListener).mockImplementation(((event: string, cb: any) => {
+      vi.mocked(App.addListener).mockImplementation(((event: string, cb: (data: unknown) => void) => {
         if (event === 'appUrlOpen') {
           cb({ url: 'forge://workout/start' })
         }
-        return Promise.resolve({ remove: vi.fn() })
-      }) as any)
+        return Promise.resolve({ remove: vi.fn() } as unknown as PluginListenerHandle)
+      }) as unknown as typeof App.addListener)
 
       const callback = vi.fn()
       onAppUrlOpen(callback)
@@ -304,12 +304,12 @@ describe('Native Capabilities & Telemetry Suite', () => {
     it('intercepts backButton on Android', async () => {
       vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
       vi.mocked(Capacitor.getPlatform).mockReturnValue('android')
-      vi.mocked(App.addListener).mockImplementation(((event: string, cb: any) => {
+      vi.mocked(App.addListener).mockImplementation(((event: string, cb: (data: unknown) => void) => {
         if (event === 'backButton') {
           cb({ canGoBack: true })
         }
-        return Promise.resolve({ remove: vi.fn() })
-      }) as any)
+        return Promise.resolve({ remove: vi.fn() } as unknown as PluginListenerHandle)
+      }) as unknown as typeof App.addListener)
 
       const handler = vi.fn()
       onAndroidBackButton(handler)
@@ -347,7 +347,7 @@ describe('Native Capabilities & Telemetry Suite', () => {
         osVersion: '18.2',
         manufacturer: 'Apple',
         isVirtual: false,
-      } as any)
+      } as unknown as DeviceInfo)
       vi.mocked(Device.getBatteryInfo).mockResolvedValue({
         batteryLevel: 0.9,
         isCharging: false,
@@ -397,7 +397,7 @@ describe('Native Capabilities & Telemetry Suite', () => {
         osVersion: '15.0',
         manufacturer: 'Google',
         isVirtual: false,
-      } as any)
+      } as unknown as DeviceInfo)
       vi.mocked(Device.getBatteryInfo).mockResolvedValue({
         batteryLevel: 0.75,
         isCharging: true,

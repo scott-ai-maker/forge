@@ -8,7 +8,6 @@ import ClientMembershipStatusBanner from '@/components/dashboard/ClientMembershi
 import ExecutiveCommandCenterClient from '@/components/dashboard/ExecutiveCommandCenterClient'
 import { generateSundayDossier } from '@/lib/sunday-dossier-engine'
 import {
-  extractWorkoutDayTag,
   filterSetLogsForMicrocycleWeek,
   resolveNextUnfinishedWorkoutDay,
   resolveWorkoutDayCompletion,
@@ -216,7 +215,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       })
     : { isCompleted: false, completedLog: null, completionCount: 0 }
 
-  const activeWorkoutCompletedLog = activeWorkoutCompletion.completedLog
   const isWorkoutCompleted = activeWorkoutCompletion.isCompleted
 
   const activeDaySetLogs = activeWorkout

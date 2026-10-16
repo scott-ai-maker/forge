@@ -33,6 +33,11 @@ vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: supabaseAdminMock,
 }))
 
+vi.mock('@/lib/referrals', () => ({
+  attributeReferralSignup: vi.fn().mockResolvedValue({ success: true }),
+  getOrCreateClientReferralCode: vi.fn().mockResolvedValue({ code: 'FORGE-TEST' }),
+}))
+
 import { GET } from '@/app/auth/callback/route'
 
 describe('GET /auth/callback (OAuth & PKCE flow)', () => {

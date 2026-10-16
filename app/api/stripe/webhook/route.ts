@@ -421,6 +421,19 @@ export async function POST(req: NextRequest) {
               amountCents: grantResult.parsedDiscountAmount,
             })
           }
+
+          // Process referral conversion and grant reward to the referrer
+          try {
+            const { processReferralConversion } = await import('@/lib/referrals')
+            await processReferralConversion(admin, {
+              refereeId: clientId,
+              stripeSubscriptionId: subscriptionId,
+              stripePaymentId: invoiceId,
+              amountPaidCents: invoice.amount_paid ?? 0,
+            })
+          } catch (refErr) {
+            console.warn('[stripe:webhook] Referral conversion processing warning:', refErr)
+          }
         }
       }
     }

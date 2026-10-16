@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { trackMarketingEvent } from '@/lib/marketing-analytics'
 import { isCompanionApp } from '@/lib/native-companion'
 
@@ -26,6 +27,7 @@ export default function PurchaseButton({
   showDiscountCode = true,
 }: PurchaseButtonProps) {
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [discountCode, setDiscountCode] = useState('')
   const [isCompanion, setIsCompanion] = useState(false)
@@ -76,7 +78,7 @@ export default function PurchaseButton({
     })
 
     if (res.status === 401) {
-      window.location.href = `/auth/login?next=${encodeURIComponent(redirectNext || (productId ? '/audit' : '/packages'))}`
+      router.push(`/auth/login?next=${encodeURIComponent(redirectNext || (productId ? '/audit' : '/packages'))}`)
       return
     }
 

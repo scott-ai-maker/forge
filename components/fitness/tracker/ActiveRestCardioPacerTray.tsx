@@ -25,7 +25,7 @@ export interface ActiveRestCardioPacerTrayProps {
 export default function ActiveRestCardioPacerTray({
   exerciseName,
   elapsedRestSeconds,
-  totalRestSeconds,
+  totalRestSeconds: _totalRestSeconds,
   currentHeartRateBpm,
   restingHeartRateBpm = 60,
   userAge = 30,
@@ -39,7 +39,7 @@ export default function ActiveRestCardioPacerTray({
   // Peak HR at set completion estimation (or from telemetry if higher)
   const estimatedPeakHr = useMemo(() => {
     return Math.max(145, (currentHeartRateBpm || 135) + 12)
-  }, [exerciseName])
+  }, [currentHeartRateBpm])
 
   // Live HR recovery computation
   const effectiveCurrentBpm = currentHeartRateBpm || Math.max(80, Math.round(estimatedPeakHr - (elapsedRestSeconds * 0.4)))

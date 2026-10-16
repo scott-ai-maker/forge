@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import GaaIcon from '@/components/ui/GaaIcon'
 import LiveTelestratorCanvas, { TelestratorTool, TelestratorColor } from './LiveTelestratorCanvas'
 import LiveSlowMoReplayModal from './LiveSlowMoReplayModal'
@@ -213,6 +214,7 @@ export default function UnifiedLiveStudioHud({
   today,
   coachUserId,
 }: UnifiedLiveStudioHudProps) {
+  const router = useRouter()
   const [workoutsState, setWorkoutsState] = useState<Workout[]>(plan?.plan_json?.workouts ?? [])
   const [selectedDay, setSelectedDay] = useState<number>(workoutsState[0]?.day ?? 1)
   const currentWorkout = workoutsState.find(w => w.day === selectedDay) || workoutsState[0]
@@ -316,7 +318,7 @@ export default function UnifiedLiveStudioHud({
     }, 3500)
   }, [])
 
-  const handleCycleBackground = useCallback(() => {
+  const _handleCycleBackground = useCallback(() => {
     setSelectedBackground((prev) => {
       if (!prev) {
         const next = COACH_BACKGROUND_PRESETS[0]
@@ -393,10 +395,10 @@ export default function UnifiedLiveStudioHud({
     }
   })
   const [capturedFrame, setCapturedFrame] = useState<string | null>(null)
-  const [capturedTimestamp, setCapturedTimestamp] = useState<number | null>(null)
+  const [_capturedTimestamp, setCapturedTimestamp] = useState<number | null>(null)
   const [captureFeedback, setCaptureFeedback] = useState<string | null>(null)
   const [isVaultOpen, setIsVaultOpen] = useState<boolean>(true)
-  const [previewVaultImage, setPreviewVaultImage] = useState<string | null>(null)
+  const [_previewVaultImage, setPreviewVaultImage] = useState<string | null>(null)
 
   const clearAllVaultPhotos = useCallback(() => {
     setCapturedFrames({
@@ -627,6 +629,9 @@ export default function UnifiedLiveStudioHud({
     }
   }, [isCameraActive, isMicMuted, coachUserId, coachName])
 
+  const mediaStreamRef = useRef(mediaStream)
+  mediaStreamRef.current = mediaStream
+
   // WebRTC Peer Bridge with Stateful Supabase Realtime Presence
   useEffect(() => {
     if (!clientId) return
@@ -646,7 +651,7 @@ export default function UnifiedLiveStudioHud({
       currentUserId: senderId,
       isCoach: true,
       channel,
-      localStream: mediaStream,
+      localStream: mediaStreamRef.current,
       onRemoteStream: stream => {
         setActiveRemoteStream(stream)
       },
@@ -666,7 +671,7 @@ export default function UnifiedLiveStudioHud({
       const presenceState = channel.presenceState()
       let foundAthlete: LobbyParticipant | null = null
       for (const key of Object.keys(presenceState)) {
-        const presences = presenceState[key] as any[]
+        const presences = presenceState[key] as unknown as (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[]
         for (const p of presences) {
           if (p.role === 'athlete') {
             foundAthlete = {
@@ -694,8 +699,8 @@ export default function UnifiedLiveStudioHud({
 
     channel
       .on('presence', { event: 'sync' }, syncLobby)
-      .on('presence', { event: 'join' }, ({ newPresences }: any) => {
-        const athlete = newPresences?.find((p: any) => p.role === 'athlete')
+      .on('presence', { event: 'join' }, ({ newPresences }: { newPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
+        const athlete = newPresences?.find(p => p.role === 'athlete')
         if (athlete) {
           setAthleteInLobby({
             userId: athlete.userId || clientId,
@@ -709,8 +714,8 @@ export default function UnifiedLiveStudioHud({
           showHudToast(`🟢 ${athleteName} entered the Studio Lobby!`, 'emerald')
         }
       })
-      .on('presence', { event: 'leave' }, ({ leftPresences }: any) => {
-        const athlete = leftPresences?.find((p: any) => p.role === 'athlete')
+      .on('presence', { event: 'leave' }, ({ leftPresences }: { leftPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
+        const athlete = leftPresences?.find(p => p.role === 'athlete')
         if (athlete) {
           setAthleteInLobby(null)
           showHudToast(`${athleteName} disconnected from the lobby.`, 'amber')
@@ -1195,9 +1200,7 @@ export default function UnifiedLiveStudioHud({
   }
 
   const handleExit = () => {
-    if (typeof window !== 'undefined') {
-      window.location.href = `/coach/clients/${clientId}`
-    }
+    router.push(`/coach/clients/${clientId}`)
   }
 
   const formatSessionTime = (totalSeconds: number) => {
@@ -2440,6 +2443,7 @@ export default function UnifiedLiveStudioHud({
                     }}
                     title={activeMovementCard.embedUrl ? 'Click to watch demo video' : activeExercise?.name}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={activeMovementCard.imageUrl || activeMovementCard.fallbackImageUrl || '/images/exercises/image-not-available.jpg'}
                       alt={activeExercise?.name || 'Exercise'}
@@ -4183,6 +4187,7 @@ export default function UnifiedLiveStudioHud({
                 >
                   {(activeMovementCard?.imageUrl || activeMovementCard?.fallbackImageUrl) ? (
                     <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         data-testid="exercise-guide-image"
                         src={activeMovementCard.imageUrl || activeMovementCard.fallbackImageUrl || '/images/exercises/image-not-available.jpg'}
@@ -4221,12 +4226,15 @@ export default function UnifiedLiveStudioHud({
                       )}
                     </>
                   ) : (
-                    <img
-                      data-testid="exercise-guide-image"
-                      src="/images/exercises/image-not-available.jpg"
-                      alt={activeExercise.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        data-testid="exercise-guide-image"
+                        src="/images/exercises/image-not-available.jpg"
+                        alt={activeExercise.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </>
                   )}
                 </div>
 
@@ -4278,14 +4286,14 @@ export default function UnifiedLiveStudioHud({
                   {/* Tab Selection */}
                   <div style={{ display: 'flex', gap: 4 }}>
                     {[
-                      { key: 'cues', label: 'All Cues' },
-                      { key: 'checkpoints', label: '5 Checkpoints' },
-                      { key: 'setup', label: 'Setup & Motion' },
+                      { key: 'cues' as const, label: 'All Cues' },
+                      { key: 'checkpoints' as const, label: '5 Checkpoints' },
+                      { key: 'setup' as const, label: 'Setup & Motion' },
                     ].map(tab => (
                       <button
                         key={tab.key}
                         type="button"
-                        onClick={() => setActiveGuideTab(tab.key as any)}
+                        onClick={() => setActiveGuideTab(tab.key)}
                         style={{
                           flex: 1,
                           padding: '3px 6px',
@@ -5133,9 +5141,7 @@ export default function UnifiedLiveStudioHud({
               <button
                 type="button"
                 onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.location.href = '/coach'
-                  }
+                  router.push('/coach')
                 }}
                 data-testid="modal-exit-to-triage-btn"
                 style={{

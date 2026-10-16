@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
-import Link from 'next/link'
 import GaaMasterWatermarkSeal from '@/components/ui/GaaMasterWatermarkSeal'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
@@ -28,7 +27,7 @@ export default function CorporateProposalStudio({
   initialTitle = 'Wellness program team',
   initialSeats = 10,
   initialCadence = 'annual',
-  isStandalonePage = false,
+  isStandalonePage: _isStandalonePage = false,
 }: CorporateProposalStudioProps) {
   const [companyName, setCompanyName] = useState(initialCompany)
   const [sponsorName, setSponsorName] = useState(initialSponsor)

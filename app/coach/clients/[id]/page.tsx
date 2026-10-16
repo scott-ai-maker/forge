@@ -32,7 +32,6 @@ import {
   evaluateClientOnboardingProgression,
   parseParqAnswers,
   type ClientGateRecord,
-  type CoachGateStatus,
 } from '@/lib/coach-onboarding-progression'
 import { loadClientOnboardingGates } from '@/lib/coach-onboarding-gates-storage'
 
@@ -45,12 +44,6 @@ const NasmAssessmentSuite = dynamicImport(() => import('@/components/coach/NasmA
 })
 const CoachLiabilityShield = dynamicImport(() => import('@/components/coach/CoachLiabilityShield'), {
   loading: () => <CoachTabSkeleton label="Loading Clinical Liability Shield..." />,
-})
-const CoachToolboxAssigner = dynamicImport(() => import('@/components/coach/CoachToolboxAssigner'), {
-  loading: () => <CoachTabSkeleton label="Loading Specialized Client Toolbox..." />,
-})
-const CoachSupplementPrescriber = dynamicImport(() => import('@/components/coach/CoachSupplementPrescriber'), {
-  loading: () => <CoachTabSkeleton label="Loading Clinical Supplement Prescriptions..." />,
 })
 const CoachPrescriptionsWorkspace = dynamicImport(() => import('@/components/coach/CoachPrescriptionsWorkspace'), {
   loading: () => <CoachTabSkeleton label="Loading Prescriptions & Toolboxes Workspace..." />,

@@ -10,6 +10,9 @@ export type NotificationType =
   | 'session_credits_added'
   | 'payment_failed'
   | 'access_expiring'
+  | 'referral_joined'
+  | 'referral_converted'
+  | 'referral_milestone_unlocked'
 
 export interface NotificationDefinition {
   category: NotificationCategory
@@ -31,6 +34,9 @@ export const NOTIFICATION_CATALOG: Record<NotificationType, NotificationDefiniti
   session_credits_added: { category: 'billing', push: true, email: true, sms: false },
   payment_failed: { category: 'billing', push: true, email: true, sms: true },
   access_expiring: { category: 'billing', push: true, email: true, sms: false },
+  referral_joined: { category: 'reminders', push: true, email: true, sms: false },
+  referral_converted: { category: 'billing', push: true, email: true, sms: true },
+  referral_milestone_unlocked: { category: 'billing', push: true, email: true, sms: false },
 }
 
 export const NOTIFICATION_CATEGORIES: readonly { id: NotificationCategory; label: string; description: string; mutable: boolean }[] = [

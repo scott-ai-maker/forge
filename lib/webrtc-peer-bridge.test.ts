@@ -7,6 +7,147 @@ import {
   WebRtcPeerBridge,
 } from './webrtc-peer-bridge'
 
+type MockTrack = {
+  kind: string
+  id: string
+  stop: ReturnType<typeof vi.fn>
+  addEventListener: ReturnType<typeof vi.fn>
+  removeEventListener: ReturnType<typeof vi.fn>
+}
+
+type MockStream = {
+  getTracks: ReturnType<typeof vi.fn>
+  addTrack: ReturnType<typeof vi.fn>
+  addEventListener: ReturnType<typeof vi.fn>
+  removeEventListener: ReturnType<typeof vi.fn>
+}
+
+type MockSender = {
+  track: MockTrack
+  replaceTrack: ReturnType<typeof vi.fn>
+  getParameters: ReturnType<typeof vi.fn>
+  setParameters: ReturnType<typeof vi.fn>
+}
+
+interface MockPcState {
+  ontrack: ((ev: unknown) => void) | null
+  onicecandidate: ((ev: unknown) => void) | null
+  onconnectionstatechange: (() => void) | null
+  oniceconnectionstatechange: (() => void) | null
+  onnegotiationneeded: (() => void) | null
+  signalingState: string
+  connectionState: string
+  iceConnectionState: string
+  localDescription: { type: string; sdp: string } | null
+  remoteDescription: { type: string; sdp: string } | null
+  getSenders: ReturnType<typeof vi.fn>
+  addTrack: ReturnType<typeof vi.fn>
+  createOffer: ReturnType<typeof vi.fn>
+  setLocalDescription: ReturnType<typeof vi.fn>
+  setRemoteDescription: ReturnType<typeof vi.fn>
+  createAnswer: ReturnType<typeof vi.fn>
+  addIceCandidate: ReturnType<typeof vi.fn>
+  restartIce: ReturnType<typeof vi.fn>
+  close: ReturnType<typeof vi.fn>
+}
+
+type BridgeChannel = NonNullable<ConstructorParameters<typeof WebRtcPeerBridge>[0]['channel']>
+
+function setupMockWebRtc(overrides: Partial<MockPcState> = {}) {
+  const mockTrack: MockTrack = {
+    kind: 'video',
+    id: 'trk-1',
+    stop: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }
+
+  const mockStream: MockStream = {
+    getTracks: vi.fn().mockReturnValue([mockTrack]),
+    addTrack: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }
+
+  const mockSender: MockSender = {
+    track: mockTrack,
+    replaceTrack: vi.fn().mockResolvedValue(undefined),
+    getParameters: vi.fn().mockReturnValue({ encodings: [{}] }),
+    setParameters: vi.fn().mockResolvedValue(undefined),
+  }
+
+  const mockPc: MockPcState = {
+    ontrack: null,
+    onicecandidate: null,
+    onconnectionstatechange: null,
+    oniceconnectionstatechange: null,
+    onnegotiationneeded: null,
+    signalingState: 'stable',
+    connectionState: 'connected',
+    iceConnectionState: 'connected',
+    localDescription: { type: 'offer', sdp: 'mock-local-sdp' },
+    remoteDescription: null,
+    getSenders: vi.fn().mockReturnValue([mockSender]),
+    addTrack: vi.fn().mockReturnValue(mockSender),
+    createOffer: vi.fn().mockResolvedValue({ type: 'offer', sdp: 'mock-offer-sdp' }),
+    setLocalDescription: vi.fn().mockResolvedValue(undefined),
+    setRemoteDescription: vi.fn().mockImplementation((desc: { type: string; sdp: string }) => {
+      mockPc.remoteDescription = desc
+      return Promise.resolve()
+    }),
+    createAnswer: vi.fn().mockResolvedValue({ type: 'answer', sdp: 'mock-answer-sdp' }),
+    addIceCandidate: vi.fn().mockResolvedValue(undefined),
+    restartIce: vi.fn(),
+    close: vi.fn(),
+    ...overrides,
+  }
+
+  const g = globalThis as unknown as Record<string, unknown>
+  const originalWindow = g.window
+  const originalMediaStream = g.MediaStream
+  const originalRTCPeerConnection = g.RTCPeerConnection
+  const originalRTCSessionDescription = g.RTCSessionDescription
+  const originalRTCIceCandidate = g.RTCIceCandidate
+
+  function MockRTCPeerConnection() {
+    return mockPc
+  }
+  function MockMediaStream() {
+    return mockStream
+  }
+  function MockRTCSessionDescription(this: Record<string, unknown>, sdp: Record<string, unknown>) {
+    Object.assign(this, sdp)
+  }
+  function MockRTCIceCandidate(this: Record<string, unknown>, cand: Record<string, unknown>) {
+    Object.assign(this, cand)
+  }
+
+  g.RTCPeerConnection = MockRTCPeerConnection
+  g.MediaStream = MockMediaStream
+  g.RTCSessionDescription = MockRTCSessionDescription
+  g.RTCIceCandidate = MockRTCIceCandidate
+  g.window = {
+    RTCPeerConnection: MockRTCPeerConnection,
+    MediaStream: MockMediaStream,
+    RTCSessionDescription: MockRTCSessionDescription,
+    RTCIceCandidate: MockRTCIceCandidate,
+  }
+
+  return {
+    mockPc,
+    mockStream: mockStream as unknown as MediaStream,
+    mockTrack: mockTrack as unknown as MediaStreamTrack,
+    mockSender,
+    cleanup: () => {
+      g.window = originalWindow
+      g.MediaStream = originalMediaStream
+      g.RTCPeerConnection = originalRTCPeerConnection
+      g.RTCSessionDescription = originalRTCSessionDescription
+      g.RTCIceCandidate = originalRTCIceCandidate
+    },
+  }
+}
+
 describe('lib/webrtc-peer-bridge', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
@@ -26,72 +167,9 @@ describe('lib/webrtc-peer-bridge', () => {
   })
 
   it('initializes and manages RTCPeerConnection lifecycle with Perfect Negotiation Pattern', async () => {
-    const mockTrack = { kind: 'video', id: 'trk-1', stop: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn() }
-    const mockStream = {
-      getTracks: vi.fn().mockReturnValue([mockTrack]),
-      addTrack: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }
-    const mockSender = { track: mockTrack, replaceTrack: vi.fn().mockResolvedValue(undefined) }
-
-    const mockPc: any = {
-      ontrack: null,
-      onicecandidate: null,
-      onconnectionstatechange: null,
-      oniceconnectionstatechange: null,
-      onnegotiationneeded: null,
-      signalingState: 'stable',
-      connectionState: 'connected',
-      iceConnectionState: 'connected',
-      localDescription: { type: 'offer', sdp: 'mock-local-sdp' },
-      remoteDescription: null,
-      getSenders: vi.fn().mockReturnValue([mockSender]),
-      addTrack: vi.fn(),
-      createOffer: vi.fn().mockResolvedValue({ type: 'offer', sdp: 'mock-offer-sdp' }),
-      setLocalDescription: vi.fn().mockResolvedValue(undefined),
-      setRemoteDescription: vi.fn().mockImplementation((desc: any) => {
-        mockPc.remoteDescription = desc
-        return Promise.resolve()
-      }),
-      createAnswer: vi.fn().mockResolvedValue({ type: 'answer', sdp: 'mock-answer-sdp' }),
-      addIceCandidate: vi.fn().mockResolvedValue(undefined),
-      restartIce: vi.fn(),
-      close: vi.fn(),
-    }
-
-    // Mock browser environment
-    const originalWindow = (globalThis as any).window
-    const originalMediaStream = (globalThis as any).MediaStream
-    const originalRTCPeerConnection = (globalThis as any).RTCPeerConnection
-    const originalRTCSessionDescription = (globalThis as any).RTCSessionDescription
-    const originalRTCIceCandidate = (globalThis as any).RTCIceCandidate
-
-    function MockRTCPeerConnection() {
-      return mockPc
-    }
-    function MockMediaStream() {
-      return mockStream
-    }
-    function MockRTCSessionDescription(this: any, sdp: any) {
-      Object.assign(this, sdp)
-    }
-    function MockRTCIceCandidate(this: any, cand: any) {
-      Object.assign(this, cand)
-    }
+    const { mockPc, mockStream, cleanup } = setupMockWebRtc()
 
     try {
-      ;(globalThis as any).RTCPeerConnection = MockRTCPeerConnection
-      ;(globalThis as any).MediaStream = MockMediaStream
-      ;(globalThis as any).RTCSessionDescription = MockRTCSessionDescription
-      ;(globalThis as any).RTCIceCandidate = MockRTCIceCandidate
-      ;(globalThis as any).window = {
-        RTCPeerConnection: MockRTCPeerConnection,
-        MediaStream: MockMediaStream,
-        RTCSessionDescription: MockRTCSessionDescription,
-        RTCIceCandidate: MockRTCIceCandidate,
-      }
-
       expect(isWebRtcSupported()).toBe(true)
 
       const channelMock = {
@@ -104,8 +182,8 @@ describe('lib/webrtc-peer-bridge', () => {
         sessionId: 'session-123',
         currentUserId: 'coach-1',
         isCoach: true,
-        channel: channelMock as any,
-        localStream: mockStream as any,
+        channel: channelMock as unknown as BridgeChannel,
+        localStream: mockStream,
         onRemoteStream: remoteStreamCb,
         onConnectionStateChange: connectionStateCb,
       })
@@ -140,7 +218,7 @@ describe('lib/webrtc-peer-bridge', () => {
       await coachBridge.handleSignal({
         type: 'answer',
         senderId: 'client-1',
-        sdp: { type: 'answer', sdp: 'remote-answer-sdp' } as any,
+        sdp: { type: 'answer', sdp: 'remote-answer-sdp' },
       })
       expect(mockPc.setRemoteDescription).toHaveBeenCalled()
 
@@ -175,16 +253,16 @@ describe('lib/webrtc-peer-bridge', () => {
         sessionId: 'session-123',
         currentUserId: 'athlete-1',
         isCoach: false, // isPolite = true
-        channel: channelMock as any,
+        channel: channelMock as unknown as BridgeChannel,
       })
       athleteBridge.init()
 
       // Simulate offer collision: athlete is in mid-offer
-      ;(athleteBridge as any).makingOffer = true
+      ;(athleteBridge as unknown as { makingOffer: boolean }).makingOffer = true
       await athleteBridge.handleSignal({
         type: 'offer',
         senderId: 'coach-1',
-        sdp: { type: 'offer', sdp: 'incoming-coach-offer' } as any,
+        sdp: { type: 'offer', sdp: 'incoming-coach-offer' },
       })
       // Polite peer rolls back local description and creates answer
       expect(mockPc.setLocalDescription).toHaveBeenCalledWith({ type: 'rollback' })
@@ -195,42 +273,24 @@ describe('lib/webrtc-peer-bridge', () => {
       athleteBridge.destroy()
       expect(mockPc.close).toHaveBeenCalled()
     } finally {
-      ;(globalThis as any).window = originalWindow
-      ;(globalThis as any).MediaStream = originalMediaStream
-      ;(globalThis as any).RTCPeerConnection = originalRTCPeerConnection
-      ;(globalThis as any).RTCSessionDescription = originalRTCSessionDescription
-      ;(globalThis as any).RTCIceCandidate = originalRTCIceCandidate
+      cleanup()
     }
   })
 
   it('handles ping and pong signals for real-time RTT latency measurement', async () => {
-    const channelMock = {
-      send: vi.fn().mockResolvedValue(undefined),
-    }
-    const latencyCb = vi.fn()
-    const mockPc: any = {
-      signalingState: 'stable',
-      connectionState: 'connected',
-      iceConnectionState: 'connected',
-      getSenders: vi.fn().mockReturnValue([]),
-      close: vi.fn(),
-    }
+    const { cleanup } = setupMockWebRtc()
 
-    const originalWindow = (globalThis as any).window
-    const originalRTCPeerConnection = (globalThis as any).RTCPeerConnection
     try {
-      ;(globalThis as any).RTCPeerConnection = function () {
-        return mockPc
+      const channelMock = {
+        send: vi.fn().mockResolvedValue(undefined),
       }
-      ;(globalThis as any).window = {
-        RTCPeerConnection: (globalThis as any).RTCPeerConnection,
-      }
+      const latencyCb = vi.fn()
 
       const bridge = new WebRtcPeerBridge({
         sessionId: 'session-ping-1',
         currentUserId: 'coach-1',
         isCoach: true,
-        channel: channelMock as any,
+        channel: channelMock as unknown as BridgeChannel,
         onLatencyChange: latencyCb,
       })
       bridge.init()
@@ -278,40 +338,25 @@ describe('lib/webrtc-peer-bridge', () => {
 
       bridge.destroy()
     } finally {
-      ;(globalThis as any).window = originalWindow
-      ;(globalThis as any).RTCPeerConnection = originalRTCPeerConnection
+      cleanup()
     }
   })
 
   it('suppresses createOffer renegotiation when peer connection is already connected', async () => {
-    const channelMock = {
-      send: vi.fn().mockResolvedValue(undefined),
-    }
-    const mockPc: any = {
-      signalingState: 'stable',
-      connectionState: 'connected', // Peer is ALREADY connected
-      iceConnectionState: 'connected',
-      createOffer: vi.fn().mockResolvedValue({ type: 'offer', sdp: 'mock-offer' }),
-      setLocalDescription: vi.fn().mockResolvedValue(undefined),
-      getSenders: vi.fn().mockReturnValue([]),
-      close: vi.fn(),
-    }
+    const { mockPc, cleanup } = setupMockWebRtc({
+      connectionState: 'connected',
+    })
 
-    const originalWindow = (globalThis as any).window
-    const originalRTCPeerConnection = (globalThis as any).RTCPeerConnection
     try {
-      ;(globalThis as any).RTCPeerConnection = function () {
-        return mockPc
-      }
-      ;(globalThis as any).window = {
-        RTCPeerConnection: (globalThis as any).RTCPeerConnection,
+      const channelMock = {
+        send: vi.fn().mockResolvedValue(undefined),
       }
 
       const coachBridge = new WebRtcPeerBridge({
         sessionId: 'session-reneg-1',
         currentUserId: 'coach-1',
         isCoach: true,
-        channel: channelMock as any,
+        channel: channelMock as unknown as BridgeChannel,
       })
       coachBridge.init()
 
@@ -348,35 +393,15 @@ describe('lib/webrtc-peer-bridge', () => {
 
       coachBridge.destroy()
     } finally {
-      ;(globalThis as any).window = originalWindow
-      ;(globalThis as any).RTCPeerConnection = originalRTCPeerConnection
+      cleanup()
     }
   })
 
   it('debounces ICE restart on transient network disconnection and cancels on recovery', async () => {
     vi.useFakeTimers()
-    const mockPc: any = {
-      iceConnectionState: 'connected',
-      signalingState: 'stable',
-      connectionState: 'connected',
-      oniceconnectionstatechange: null,
-      restartIce: vi.fn(),
-      createOffer: vi.fn().mockResolvedValue({ type: 'offer', sdp: 'restart-offer' }),
-      setLocalDescription: vi.fn().mockResolvedValue(undefined),
-      getSenders: vi.fn().mockReturnValue([]),
-      close: vi.fn(),
-    }
+    const { mockPc, cleanup } = setupMockWebRtc()
 
-    const originalWindow = (globalThis as any).window
-    const originalRTCPeerConnection = (globalThis as any).RTCPeerConnection
     try {
-      ;(globalThis as any).RTCPeerConnection = function () {
-        return mockPc
-      }
-      ;(globalThis as any).window = {
-        RTCPeerConnection: (globalThis as any).RTCPeerConnection,
-      }
-
       const bridge = new WebRtcPeerBridge({
         sessionId: 'session-ice-debounce',
         currentUserId: 'coach-1',
@@ -386,7 +411,7 @@ describe('lib/webrtc-peer-bridge', () => {
 
       // Case 1: Transient drop - disconnected for 2 seconds, then reconnects
       mockPc.iceConnectionState = 'disconnected'
-      mockPc.oniceconnectionstatechange()
+      mockPc.oniceconnectionstatechange?.()
       expect(mockPc.restartIce).not.toHaveBeenCalled()
 
       // Advance 2 seconds (still before 4s debounce timeout)
@@ -395,7 +420,7 @@ describe('lib/webrtc-peer-bridge', () => {
 
       // Reconnects back to 'connected'
       mockPc.iceConnectionState = 'connected'
-      mockPc.oniceconnectionstatechange()
+      mockPc.oniceconnectionstatechange?.()
 
       // Advance past the original 4s window - restart should NOT fire because it reconnected
       vi.advanceTimersByTime(3000)
@@ -403,7 +428,7 @@ describe('lib/webrtc-peer-bridge', () => {
 
       // Case 2: Persistent drop - stays disconnected for full 4+ seconds
       mockPc.iceConnectionState = 'disconnected'
-      mockPc.oniceconnectionstatechange()
+      mockPc.oniceconnectionstatechange?.()
       expect(mockPc.restartIce).not.toHaveBeenCalled()
 
       // Advance past 4s debounce
@@ -416,42 +441,22 @@ describe('lib/webrtc-peer-bridge', () => {
       // Case 3: Hard failure ('failed') triggers immediate restart
       mockPc.restartIce.mockClear()
       mockPc.iceConnectionState = 'failed'
-      mockPc.oniceconnectionstatechange()
+      mockPc.oniceconnectionstatechange?.()
       expect(mockPc.restartIce).toHaveBeenCalledTimes(1)
 
       bridge.destroy()
     } finally {
       vi.useRealTimers()
-      ;(globalThis as any).window = originalWindow
-      ;(globalThis as any).RTCPeerConnection = originalRTCPeerConnection
+      cleanup()
     }
   })
 
   it('optimizes video sender bitrate and degradation preference', () => {
-    const mockParameters = {
-      encodings: [{} as any],
-    }
-    const mockSender = {
-      track: { kind: 'video', id: 'vid-1' },
-      getParameters: vi.fn().mockReturnValue(mockParameters),
-      setParameters: vi.fn().mockResolvedValue(undefined),
-    }
-    const mockPc: any = {
+    const { mockPc, mockSender, cleanup } = setupMockWebRtc({
       getSenders: vi.fn().mockReturnValue([]),
-      addTrack: vi.fn().mockReturnValue(mockSender),
-      close: vi.fn(),
-    }
+    })
 
-    const originalWindow = (globalThis as any).window
-    const originalRTCPeerConnection = (globalThis as any).RTCPeerConnection
     try {
-      ;(globalThis as any).RTCPeerConnection = function () {
-        return mockPc
-      }
-      ;(globalThis as any).window = {
-        RTCPeerConnection: (globalThis as any).RTCPeerConnection,
-      }
-
       const bridge = new WebRtcPeerBridge({
         sessionId: 'session-video-opt',
         currentUserId: 'coach-1',
@@ -462,7 +467,7 @@ describe('lib/webrtc-peer-bridge', () => {
       const mockVideoStream = {
         getTracks: vi.fn().mockReturnValue([{ kind: 'video', id: 'vid-1' }]),
       }
-      bridge.attachLocalStream(mockVideoStream as any)
+      bridge.attachLocalStream(mockVideoStream as unknown as MediaStream)
 
       expect(mockPc.addTrack).toHaveBeenCalled()
       expect(mockSender.setParameters).toHaveBeenCalledWith(
@@ -478,8 +483,7 @@ describe('lib/webrtc-peer-bridge', () => {
 
       bridge.destroy()
     } finally {
-      ;(globalThis as any).window = originalWindow
-      ;(globalThis as any).RTCPeerConnection = originalRTCPeerConnection
+      cleanup()
     }
   })
 })

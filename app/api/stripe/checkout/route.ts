@@ -90,6 +90,30 @@ export async function POST(req: NextRequest) {
         }, { status: 503 })
       }
 
+      const { supabaseAdmin } = await import('@/lib/supabase')
+      const admin = supabaseAdmin()
+
+      const rawReferralCode = typeof body?.referralCode === 'string'
+        ? body.referralCode
+        : req.cookies.get('forge_referral_code')?.value
+
+      let referralPromotion: { code: string; referrerId: string; refereeTrialDays: number } | null = null
+      if (rawReferralCode) {
+        const { validateReferralCode } = await import('@/lib/referrals')
+        const refCheck = await validateReferralCode(admin, rawReferralCode)
+        if (refCheck.valid && refCheck.code && refCheck.referrerId) {
+          referralPromotion = {
+            code: refCheck.code,
+            referrerId: refCheck.referrerId,
+            refereeTrialDays: refCheck.refereeTrialDays || 30,
+          }
+        }
+      }
+
+      const effectiveTrialDays = referralPromotion
+        ? referralPromotion.refereeTrialDays
+        : forgeMembership.trialDays
+
       const metadataPayload = {
         clientId: userId,
         packageId: forgeMembership.id,
@@ -99,6 +123,8 @@ export async function POST(req: NextRequest) {
         basePriceCents: String(membershipPrice.amountCents),
         finalPriceCents: String(membershipPrice.amountCents),
         source: 'forge_membership',
+        referralCode: referralPromotion?.code || '',
+        referrerId: referralPromotion?.referrerId || '',
       }
 
       try {
@@ -121,9 +147,7 @@ export async function POST(req: NextRequest) {
           ],
           subscription_data: {
             metadata: metadataPayload,
-            ...(forgeMembership.trialDays
-              ? { trial_period_days: forgeMembership.trialDays }
-              : {}),
+            ...(effectiveTrialDays ? { trial_period_days: effectiveTrialDays } : {}),
           },
           metadata: metadataPayload,
           success_url: `${appUrl}/dashboard?success=true`,
@@ -137,6 +161,8 @@ export async function POST(req: NextRequest) {
             discountAmountCents: 0,
             finalPriceCents: membershipPrice.amountCents,
             discountCode: null,
+            referralCode: referralPromotion?.code || null,
+            trialDays: effectiveTrialDays || null,
           },
         })
       } catch (stripeErr) {

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 describe('app/api/coach/clients/[id]/onboarding-gates', () => {
   it('validates stage ID mapping structure', () => {

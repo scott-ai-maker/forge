@@ -252,6 +252,7 @@ export default function SupersetPairCard({
             minHeight: 44,
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={thumbImgA}
             alt={pair.exerciseA.name}
@@ -302,6 +303,7 @@ export default function SupersetPairCard({
             minHeight: 44,
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={thumbImgB}
             alt={pair.exerciseB.name}

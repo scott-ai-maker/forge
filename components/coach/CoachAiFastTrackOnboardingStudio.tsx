@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
@@ -55,16 +56,16 @@ export default function CoachAiFastTrackOnboardingStudio({
   contraindicationTags = [],
   initialDexaScan = null,
   initialPostureScan = null,
-  currentOptPhase = 1,
+  currentOptPhase: _currentOptPhase = 1,
   onProgramDeployed,
 }: CoachAiFastTrackOnboardingStudioProps) {
+  const router = useRouter()
   const [dexaScan, setDexaScan] = useState<BodyCompositionScanResult | null>(initialDexaScan)
   const [postureScan, setPostureScan] = useState<PosturalMeshScanResult | null>(initialPostureScan)
 
   const [isPostureModalOpen, setIsPostureModalOpen] = useState<boolean>(false)
   const [isDexaModalOpen, setIsDexaModalOpen] = useState<boolean>(false)
 
-  const [isSynthesizing, setIsSynthesizing] = useState<boolean>(false)
   const [synthesis, setSynthesis] = useState<UnifiedAiOnboardingSynthesis | null>(null)
 
   const [isDeploying, setIsDeploying] = useState<boolean>(false)
@@ -73,7 +74,7 @@ export default function CoachAiFastTrackOnboardingStudio({
 
   const [activePreviewTab, setActivePreviewTab] = useState<'periodization' | 'program' | 'cex'>('periodization')
 
-  const clientProfile: ClientOnboardingProfileInput = {
+  const clientProfile: ClientOnboardingProfileInput = useMemo(() => ({
     clientId,
     clientName,
     age,
@@ -86,7 +87,20 @@ export default function CoachAiFastTrackOnboardingStudio({
     cardioEquipmentAccess,
     injuriesLimitations: injuriesLimitations || undefined,
     contraindicationTags,
-  }
+  }), [
+    clientId,
+    clientName,
+    age,
+    sex,
+    heightCm,
+    weightKg,
+    fitnessGoal,
+    trainingDaysPerWeek,
+    equipmentAccess,
+    cardioEquipmentAccess,
+    injuriesLimitations,
+    contraindicationTags,
+  ])
 
   // Auto-synthesize when scans are updated or available
   useEffect(() => {
@@ -100,7 +114,7 @@ export default function CoachAiFastTrackOnboardingStudio({
     } catch (err) {
       console.error('Failed to run AI coach synthesis:', err)
     }
-  }, [dexaScan, postureScan, clientId])
+  }, [dexaScan, postureScan, clientProfile])
 
   // Handlers for modal callbacks
   const handleApplyPostureScan = (scanResult: PosturalMeshScanResult) => {
@@ -237,9 +251,9 @@ export default function CoachAiFastTrackOnboardingStudio({
       setDeploySuccess(data.message || `✓ Successfully deployed AI periodization & 4-Phase CEx program for ${clientName}! Advancing to Stage 7: Delivery Kickoff...`)
       if (onProgramDeployed) {
         onProgramDeployed()
-      } else if (typeof window !== 'undefined') {
+      } else {
         setTimeout(() => {
-          window.location.href = `/coach/clients/${clientId}?tab=sessions#workspace-tab-content`
+          router.push(`/coach/clients/${clientId}?tab=sessions#workspace-tab-content`)
         }, 1200)
       }
     } catch (err: unknown) {
@@ -740,6 +754,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                       const imgUrl = resolveGaaExerciseImage(item, true) || BRAND_LOGO_FALLBACK_IMAGE
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.25)', padding: '4px 6px', borderRadius: 4 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imgUrl}
                             alt={item}
@@ -761,6 +776,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                       const imgUrl = resolveGaaExerciseImage(item, true) || BRAND_LOGO_FALLBACK_IMAGE
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.25)', padding: '4px 6px', borderRadius: 4 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imgUrl}
                             alt={item}
@@ -782,6 +798,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                       const imgUrl = resolveGaaExerciseImage(item, true) || BRAND_LOGO_FALLBACK_IMAGE
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.25)', padding: '4px 6px', borderRadius: 4 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imgUrl}
                             alt={item}
@@ -803,6 +820,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                       const imgUrl = resolveGaaExerciseImage(item, true) || BRAND_LOGO_FALLBACK_IMAGE
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.25)', padding: '4px 6px', borderRadius: 4 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imgUrl}
                             alt={item}

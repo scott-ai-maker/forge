@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import GlobalCommandPalette from '@/components/ui/GlobalCommandPalette'
 import MobileNavigationDrawer from '@/components/ui/MobileNavigationDrawer'
 import InteractiveFeatureTutorialModal from '@/components/tutorials/InteractiveFeatureTutorialModal'
+import ReferralHubModal from '@/components/referrals/ReferralHubModal'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import { createClient } from '@/lib/supabase-browser'
@@ -56,6 +57,7 @@ export default function SiteHeader({
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(false)
+  const [referralOpen, setReferralOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ id: string; email?: string } | null>(null)
 
   useEffect(() => {
@@ -220,6 +222,39 @@ export default function SiteHeader({
               </div>
             )}
 
+            {isDashboard && !isCoach && currentUser && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('tap')
+                  setReferralOpen(true)
+                }}
+                className="tactile-btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  height: 38,
+                  padding: '0 12px',
+                  borderRadius: 6,
+                  background: 'rgba(197, 160, 89, 0.15)',
+                  border: '1px solid rgba(197, 160, 89, 0.45)',
+                  color: '#F3E5AB',
+                  fontFamily: 'Raleway, sans-serif',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+                aria-label="Ambassador Referral Engine"
+              >
+                <GaaIcon name="crown" size={14} tone="gold" />
+                <span>Refer &amp; Earn ($20)</span>
+              </button>
+            )}
+
             {/* Mobile Header Controls: single MENU entry point (feature search lives on desktop via Cmd/Ctrl+K) */}
             <div className="mobile-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button
@@ -275,6 +310,12 @@ export default function SiteHeader({
         isOpen={tutorialOpen}
         initialAudience={isCoach ? 'coach' : 'client'}
         onClose={() => setTutorialOpen(false)}
+      />
+
+      {/* Ambassador Referral Hub Modal */}
+      <ReferralHubModal
+        isOpen={referralOpen}
+        onClose={() => setReferralOpen(false)}
       />
     </>
   )

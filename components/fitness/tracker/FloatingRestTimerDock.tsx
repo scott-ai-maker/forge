@@ -49,8 +49,8 @@ export default function FloatingRestTimerDock({
   userAge = 30,
   soundMetronomeEnabled = false,
   onToggleSoundMetronome,
-  soundMetronomeMode = 'cardiac_pulse',
-  onChangeMetronomeMode,
+  soundMetronomeMode: _soundMetronomeMode = 'cardiac_pulse',
+  onChangeMetronomeMode: _onChangeMetronomeMode,
 }: FloatingRestTimerDockProps) {
   const [showCardioPacer, setShowCardioPacer] = useState(false)
   const [dismissedExtensionAlert, setDismissedExtensionAlert] = useState(false)

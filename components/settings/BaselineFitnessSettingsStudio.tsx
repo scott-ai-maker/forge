@@ -11,7 +11,6 @@ import {
   parseInjuriesFromText,
   serializeInjuriesWithNotes,
   SportsInjuryRegion,
-  type SportsInjuryDefinition,
 } from '@/lib/sports-injuries'
 
 type Units = 'metric' | 'imperial'

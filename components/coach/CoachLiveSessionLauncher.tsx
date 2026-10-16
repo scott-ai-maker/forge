@@ -13,6 +13,11 @@ export interface AssignedClientLauncherItem {
   sessionsRemaining?: number
 }
 
+interface LiveRoomPresence {
+  role?: string
+  [key: string]: unknown
+}
+
 interface CoachLiveSessionLauncherProps {
   assignedClients: AssignedClientLauncherItem[]
 }
@@ -40,7 +45,7 @@ export default function CoachLiveSessionLauncher({ assignedClients }: CoachLiveS
           const presenceState = channel.presenceState()
           let hasAthlete = false
           for (const key of Object.keys(presenceState)) {
-            const list = presenceState[key] as any[]
+            const list = presenceState[key] as LiveRoomPresence[]
             if (list.some(p => p.role === 'athlete')) {
               hasAthlete = true
               break
@@ -48,13 +53,13 @@ export default function CoachLiveSessionLauncher({ assignedClients }: CoachLiveS
           }
           setWaitingClients(prev => ({ ...prev, [client.id]: hasAthlete }))
         })
-        .on('presence', { event: 'join' }, ({ newPresences }: any) => {
-          if (newPresences?.some((p: any) => p.role === 'athlete')) {
+        .on('presence', { event: 'join' }, ({ newPresences }: { newPresences?: LiveRoomPresence[] }) => {
+          if (newPresences?.some(p => p.role === 'athlete')) {
             setWaitingClients(prev => ({ ...prev, [client.id]: true }))
           }
         })
-        .on('presence', { event: 'leave' }, ({ leftPresences }: any) => {
-          if (leftPresences?.some((p: any) => p.role === 'athlete')) {
+        .on('presence', { event: 'leave' }, ({ leftPresences }: { leftPresences?: LiveRoomPresence[] }) => {
+          if (leftPresences?.some(p => p.role === 'athlete')) {
             setWaitingClients(prev => ({ ...prev, [client.id]: false }))
           }
         })

@@ -237,17 +237,6 @@ STRICT SAFETY MANDATE:
 This inquiry is OUTSIDE your scope of athletic training and sports science. In accordance with your scope of practice, warmly, politely, and conversationally state that your entire focus, expertise, and passion are 100% dedicated to their athletic training, physical performance, and recovery. Explain that this is your entire professional scope (your RAG knowledge base). Do not speculate or answer off-topic questions. Gracefully redirect the conversation back to their physical workout, energy, or athletic goals with a supportive check-in question.`
     : ''
 
-  const conversationHistoryContext = activeConversationHistory.length > 0
-    ? `\nRecent Conversation History:\n${activeConversationHistory.slice(-8).map(h => `${h.role === 'user' ? 'Athlete' : 'Coach Gordon'}: ${h.text}`).join('\n')}`
-    : ''
-
-  const fullPrompt = `${athleteContext}${ragContext}${contraindicationsClause}${scopeBoundaryDirective}${conversationHistoryContext}
-
-Athlete's Question:
-"${question.trim()}"
-
-Respond conversationally in your warm 1-on-1 spoken voice as Coach Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going.`
-
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
 
   if (apiKey) {

@@ -35,7 +35,7 @@ describe('lib/voice-notes-storage', () => {
     }
 
     const testDataUrl = 'data:audio/mp4;base64,AAAA'
-    const res = await uploadVoiceNoteAudio(adminMock as any, {
+    const res = await uploadVoiceNoteAudio(adminMock as unknown as Parameters<typeof uploadVoiceNoteAudio>[0], {
       clientId: 'client-abc',
       audioDataUrl: testDataUrl,
       duration: 8,
@@ -56,7 +56,7 @@ describe('lib/voice-notes-storage', () => {
     }
 
     const testDataUrl = 'data:audio/webm;base64,GkXf'
-    const res = await uploadVoiceNoteAudio(adminMock as any, {
+    const res = await uploadVoiceNoteAudio(adminMock as unknown as Parameters<typeof uploadVoiceNoteAudio>[0], {
       clientId: 'client-abc',
       audioDataUrl: testDataUrl,
       duration: 5,
@@ -86,7 +86,10 @@ describe('lib/voice-notes-storage', () => {
       { id: '3', message_body: '[retracted]:[voice-note]:20:client-1/voice_2.mp4' },
     ]
 
-    const enriched = await enrichMessagesWithSignedVoiceUrls(adminMock as any, rawMessages)
+    const enriched = await enrichMessagesWithSignedVoiceUrls(
+      adminMock as unknown as Parameters<typeof enrichMessagesWithSignedVoiceUrls>[0],
+      rawMessages
+    )
 
     expect(enriched[0].message_body).toBe('Great workout today!')
     expect(enriched[1].message_body).toBe('[voice-note]:10:https://cdn.example.com/signed_1.mp4')

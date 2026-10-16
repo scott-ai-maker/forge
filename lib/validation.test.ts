@@ -7,7 +7,6 @@ import {
   normalizeCoachClientTab,
   CoachClientTabSchema,
   normalizeSettingsTab,
-  SettingsTabSchema,
 } from '@/lib/validation'
 
 describe('validation schema & normalizers', () => {

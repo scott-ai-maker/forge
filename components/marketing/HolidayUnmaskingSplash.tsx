@@ -1654,6 +1654,288 @@ export default function HolidayUnmaskingSplash({
           </div>
         </div>
 
+        {/* BRAND MANIFESTO: The Zero-Distraction Sanctuary */}
+        <section
+          style={{
+            marginBottom: 64,
+            background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(8, 14, 24, 0.98) 100%)',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            borderRadius: 18,
+            padding: '40px 28px',
+            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(245, 158, 11, 0.2)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+          aria-labelledby="manifesto-title"
+        >
+          {/* Subtle Ambient Glow */}
+          <div
+            style={{
+              position: 'absolute',
+              top: -60,
+              right: -60,
+              width: 240,
+              height: 240,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }}
+          />
+
+          <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto 36px', position: 'relative' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '5px 14px',
+                borderRadius: 9999,
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                color: '#FCA5A5',
+                fontFamily: 'var(--font-telemetry)',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                marginBottom: 16,
+              }}
+            >
+              <span>✕ NO SOCIAL MEDIA</span>
+              <span>·</span>
+              <span>ZERO DISTRACTIONS</span>
+              <span>·</span>
+              <span>100% COACHING</span>
+            </div>
+
+            <h2
+              id="manifesto-title"
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 'clamp(1.85rem, 4vw, 2.75rem)',
+                fontWeight: 800,
+                letterSpacing: '0.03em',
+                lineHeight: 1.1,
+                textTransform: 'uppercase',
+                margin: '0 0 14px',
+                color: '#FFFFFF',
+              }}
+            >
+              The Anti-Distraction Gym Sanctuary
+            </h2>
+
+            <p
+              style={{
+                fontSize: 'clamp(0.95rem, 1.8vw, 1.1rem)',
+                lineHeight: 1.6,
+                color: '#CBD5E1',
+                margin: '0 auto',
+              }}
+            >
+              We don&apos;t buy paid social ads. We don&apos;t build endless feeds or pay fitness influencers to pose.
+              We pour 100% of our energy into two things: <strong>the world&apos;s best sports science tools</strong> and <strong>the highest quality coaching</strong>—giving you an extraordinary training experience with zero noise.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 20,
+              position: 'relative',
+            }}
+          >
+            {/* Pillar 1: Pure In-Gym Focus */}
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 14,
+                padding: '24px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#F87171',
+                }}
+              >
+                <ForgeIcon name="lock" size={18} />
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: 10,
+                  color: '#F87171',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                }}
+              >
+                THE FOCUS SANCTUARY
+              </div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  margin: 0,
+                  letterSpacing: '0.02em',
+                }}
+              >
+                Zero Feeds. Pure Flow.
+              </h3>
+              <p
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.55,
+                  color: '#94A3B8',
+                  margin: 0,
+                }}
+              >
+                No doom-scrolling between sets. No dopamine traps or camera circus. The gym is sacred ground for mechanical tension, heart rate control, and mental clarity.
+              </p>
+            </div>
+
+            {/* Pillar 2: Human & AI Symbiosis */}
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.8)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: 14,
+                padding: '24px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FBBF24',
+                }}
+              >
+                <ForgeIcon name="zap" size={18} />
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: 10,
+                  color: '#FBBF24',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                }}
+              >
+                THE GOLD STANDARD
+              </div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  margin: 0,
+                  letterSpacing: '0.02em',
+                }}
+              >
+                Best Tools × Best Coaching
+              </h3>
+              <p
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.55,
+                  color: '#94A3B8',
+                  margin: 0,
+                }}
+              >
+                Sub-180ms computational AI handles bar velocity, posture mesh diagnostics, and dynamic load adaptation—steered by Coach Gordon&apos;s 18+ years of clinical human stewardship.
+              </p>
+            </div>
+
+            {/* Pillar 3: Organic Word-of-Mouth & Results */}
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 14,
+                padding: '24px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: 'rgba(52, 211, 153, 0.12)',
+                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#34D399',
+                }}
+              >
+                <ForgeIcon name="target" size={18} />
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: 10,
+                  color: '#34D399',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                }}
+              >
+                UNDENIABLE PROOF
+              </div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  margin: 0,
+                  letterSpacing: '0.02em',
+                }}
+              >
+                Results-Driven Flywheel
+              </h3>
+              <p
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.55,
+                  color: '#94A3B8',
+                  margin: 0,
+                }}
+              >
+                Powered by high-intent search discovery, peer recommendations, and a goal-achieving app that delivers measurable PRs and pain-free joints. Nothing but the best will do.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* FOUNDING MEMBER PRIVILEGES SECTION */}
         <section
           style={{

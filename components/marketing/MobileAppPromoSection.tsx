@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import GaaIcon from '@/components/ui/GaaIcon'
+import GaaIcon, { type GaaIconName } from '@/components/ui/GaaIcon'
 import GaaMasterWatermarkSeal from '@/components/ui/GaaMasterWatermarkSeal'
 import AppStoreBadges, { AppleLogoIcon, AndroidLogoIcon, AppleAppStoreBadgeSvg, GooglePlayBadgeSvg } from './AppStoreBadges'
 import TrackedCtaLink from './TrackedCtaLink'
@@ -145,6 +145,7 @@ export default function MobileAppPromoSection({
             position: 'relative',
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/images/mobile-apps-telemetry.jpg"
             alt="Forge Athletic Mobile Telemetry HUD and Smartwatch Integration"
@@ -449,7 +450,7 @@ export default function MobileAppPromoSection({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <GaaIcon name={(item.icon as any) || 'sparkles'} size={18} tone="gold" />
+                <GaaIcon name={(item.icon as GaaIconName) || 'sparkles'} size={18} tone="gold" />
                 <strong style={{ color: '#FFFFFF', fontSize: 13.5, fontFamily: 'Raleway, sans-serif' }}>
                   {item.title}
                 </strong>

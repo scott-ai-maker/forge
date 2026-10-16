@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import GaaIcon from '@/components/ui/GaaIcon'
+import GaaIcon, { type GaaIconName } from '@/components/ui/GaaIcon'
 import { CoachingPackage, CoachingAddon } from '@/lib/stripe'
 import PurchaseButton from '@/components/packages/PurchaseButton'
 import MasterAllocationModal from '@/components/packages/MasterAllocationModal'
@@ -693,7 +693,7 @@ export default function PackagesStudioClient({
                       }}
                     >
                       <GaaIcon
-                        name={(addon.icon as any) || 'sparkles'}
+                        name={(addon.icon as GaaIconName) || 'sparkles'}
                         size={20}
                         tone={isChecked ? 'gold' : 'amber'}
                       />

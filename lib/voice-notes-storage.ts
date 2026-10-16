@@ -41,6 +41,22 @@ export function formatVoiceNoteBody(duration: number, pathOrUrl: string): string
   return `[voice-note]:${Math.max(0, Math.round(duration))}:${pathOrUrl.trim()}`
 }
 
+export interface StorageBucketHandler {
+  upload: (path: string, body: Buffer, options?: Record<string, unknown>) => Promise<{ error: { message?: string } | null }>
+  createSignedUrls: (paths: string[], expiresIn: number) => Promise<{
+    data: Array<{ path: string; signedUrl: string }> | null
+    error: unknown | null
+  }>
+}
+
+export interface SupabaseStorageAdminLike {
+  storage: {
+    from: (bucket: string) => StorageBucketHandler
+  }
+}
+
+export type SupabaseStorageAdmin = SupabaseClient | SupabaseStorageAdminLike
+
 /**
  * Uploads a base64 audio data URL to private Supabase Storage bucket and returns
  * the relative storage path (e.g., "clientId/voice_1712345678_abcd.mp4").
@@ -49,7 +65,7 @@ export function formatVoiceNoteBody(duration: number, pathOrUrl: string): string
  * safely to returning the original data URL so no voice data is lost.
  */
 export async function uploadVoiceNoteAudio(
-  admin: SupabaseClient | { storage: { from: (bucket: string) => any } },
+  admin: SupabaseStorageAdmin,
   params: {
     clientId: string
     audioDataUrl: string
@@ -91,7 +107,8 @@ export async function uploadVoiceNoteAudio(
     const randomHex = randomBytes(6).toString('hex')
     const filename = `${clientId}/voice_${Date.now()}_${randomHex}.${ext}`
 
-    const { error: uploadError } = await admin.storage
+    const storageAdmin = admin as unknown as SupabaseStorageAdminLike
+    const { error: uploadError } = await storageAdmin.storage
       .from(COACH_VOICE_NOTES_BUCKET)
       .upload(filename, buffer, {
         contentType: mimeType,
@@ -99,7 +116,7 @@ export async function uploadVoiceNoteAudio(
       })
 
     if (uploadError) {
-      console.warn('[VoiceNotes] Supabase voice note storage upload failed, using inline fallback:', uploadError.message)
+      console.warn('[VoiceNotes] Supabase voice note storage upload failed, using inline fallback:', uploadError.message || String(uploadError))
       return formatVoiceNoteBody(duration, audioDataUrl)
     }
 
@@ -115,7 +132,7 @@ export async function uploadVoiceNoteAudio(
  * Batch generates signed URLs for messages containing private storage paths.
  */
 export async function enrichMessagesWithSignedVoiceUrls(
-  admin: SupabaseClient | { storage: { from: (bucket: string) => any } },
+  admin: SupabaseStorageAdmin,
   messages: Array<{
     id: string
     message_body: string
@@ -149,7 +166,8 @@ export async function enrichMessagesWithSignedVoiceUrls(
   const signedUrlMap = new Map<string, string>()
 
   try {
-    const { data, error } = await admin.storage
+    const storageAdmin = admin as unknown as SupabaseStorageAdminLike
+    const { data, error } = await storageAdmin.storage
       .from(COACH_VOICE_NOTES_BUCKET)
       .createSignedUrls(uniquePaths, VOICE_NOTE_SIGNED_URL_TTL_SECONDS)
 

@@ -29,7 +29,7 @@ describe('components/coach/LiveRemoteVideoFeed', () => {
 
     const mockVideo = {
       muted: false,
-      srcObject: null as any,
+      srcObject: null as MediaStream | null,
       play: vi.fn().mockImplementation(async () => {
         if (!isMuted) {
           const err = new Error('play() failed because the user didn\'t interact with the document first.')
@@ -45,8 +45,9 @@ describe('components/coach/LiveRemoteVideoFeed', () => {
         await mockVideo.play()
         isPlaying = true
         isAudioBlocked = false
-      } catch (err: any) {
-        if (err.name === 'NotAllowedError') {
+      } catch (err) {
+        const error = err as Error
+        if (error.name === 'NotAllowedError') {
           isMuted = true
           mockVideo.muted = true
           await mockVideo.play()

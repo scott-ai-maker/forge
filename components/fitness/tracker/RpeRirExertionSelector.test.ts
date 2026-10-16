@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   getRpeScalePoint,
   mapRpeToRir,
-  mapRirToRpe,
   getFatigueSafetyNotice,
   RPE_SCALE_POINTS,
 } from '@/lib/rpe-exertion-scale'

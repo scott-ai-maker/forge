@@ -6,7 +6,6 @@ import {
   calculateRepVelocityAndPower,
   analyzeSetVelocityAndPower,
   resolveExerciseRomMeters,
-  classifyVbtZone,
   type RepCadenceDuration,
 } from '@/lib/bar-velocity-power-engine'
 

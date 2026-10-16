@@ -64,7 +64,7 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
           insert: vi.fn().mockResolvedValue({ error: null }),
         }
       }),
-    } as any
+    } as unknown as Parameters<typeof triggerLeadEmailAutomation>[0]
   }
 
   it('dispatches founding cohort VIP briefing memo with reservation number and links', async () => {

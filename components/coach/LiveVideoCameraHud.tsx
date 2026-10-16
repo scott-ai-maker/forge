@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import GaaIcon from '@/components/ui/GaaIcon'
 import LiveTelestratorCanvas, { TelestratorTool, TelestratorColor } from './LiveTelestratorCanvas'
 import LiveSlowMoReplayModal from './LiveSlowMoReplayModal'
@@ -24,7 +25,6 @@ import {
 } from './UnifiedLiveStudioHud'
 import {
   getNasmClinicalMovementCard,
-  type NasmClinicalMovementCard,
 } from '@/lib/nasm-clinical-movement-cards'
 
 export type VideoHudLayout = 'split' | 'pip' | 'focus'
@@ -139,6 +139,7 @@ export default function LiveVideoCameraHud({
   onOpenPlateCalc,
   onQuickCue,
 }: LiveVideoCameraHudProps) {
+  const router = useRouter()
   const [layout, setLayout] = useState<VideoHudLayout>('split')
   const [isStageSwapped, setIsStageSwapped] = useState(false)
   const [isCameraActive, setIsCameraActive] = useState(true)
@@ -146,7 +147,7 @@ export default function LiveVideoCameraHud({
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
   const [showPlumbLine, setShowPlumbLine] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [streamError, setStreamError] = useState<string | null>(null)
+  const [_streamError, setStreamError] = useState<string | null>(null)
 
   // ── WebRTC Remote Stream & Peer Connection State ──
   const [activeRemoteStream, setActiveRemoteStream] = useState<MediaStream | null>(remoteStream ?? null)
@@ -180,7 +181,7 @@ export default function LiveVideoCameraHud({
   const [selectedBackground, setSelectedBackground] = useState<CoachBackgroundPreset | null>(COACH_BACKGROUND_PRESETS[0])
   const [showBackgroundPicker, setShowBackgroundPicker] = useState(false)
 
-  const handleCycleBackground = useCallback(() => {
+  const _handleCycleBackground = useCallback(() => {
     setSelectedBackground((prev) => {
       if (!prev) {
         const next = COACH_BACKGROUND_PRESETS[0]
@@ -362,8 +363,10 @@ export default function LiveVideoCameraHud({
 
     showHudToast('Video stream initializing. Ensure camera is connected.', 'amber')
     return null
-  }, [clientName, selectedCaptureSlot, showHudToast])
+  }, [clientName, isCoach, selectedCaptureSlot, showHudToast])
   const bridgeRef = useRef<WebRtcPeerBridge | null>(null)
+  const mediaStreamRef = useRef(mediaStream)
+  mediaStreamRef.current = mediaStream
 
   // Synchronize remoteStream prop
   useEffect(() => {
@@ -403,7 +406,7 @@ export default function LiveVideoCameraHud({
       currentUserId,
       isCoach,
       channel,
-      localStream: mediaStream,
+      localStream: mediaStreamRef.current,
       onRemoteStream: stream => {
         setActiveRemoteStream(stream)
       },
@@ -423,7 +426,7 @@ export default function LiveVideoCameraHud({
       const presenceState = channel.presenceState()
       let foundCoach: LobbyParticipant | null = null
       for (const key of Object.keys(presenceState)) {
-        const presences = presenceState[key] as any[]
+        const presences = presenceState[key] as unknown as (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[]
         for (const p of presences) {
           if (p.role === 'coach') {
             foundCoach = {
@@ -444,8 +447,8 @@ export default function LiveVideoCameraHud({
 
     channel
       .on('presence', { event: 'sync' }, syncPresence)
-      .on('presence', { event: 'join' }, ({ newPresences }: any) => {
-        const coach = newPresences?.find((p: any) => p.role === 'coach')
+      .on('presence', { event: 'join' }, ({ newPresences }: { newPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
+        const coach = newPresences?.find(p => p.role === 'coach')
         if (coach) {
           setCoachInStudio({
             userId: coach.userId || 'coach',
@@ -458,8 +461,8 @@ export default function LiveVideoCameraHud({
           showHudToast(`🟢 ${coachName} entered the Live Studio!`, 'emerald')
         }
       })
-      .on('presence', { event: 'leave' }, ({ leftPresences }: any) => {
-        const coach = leftPresences?.find((p: any) => p.role === 'coach')
+      .on('presence', { event: 'leave' }, ({ leftPresences }: { leftPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
+        const coach = leftPresences?.find(p => p.role === 'coach')
         if (coach) {
           setCoachInStudio(null)
           showHudToast(`${coachName} left the studio room.`, 'amber')
@@ -1457,6 +1460,7 @@ export default function LiveVideoCameraHud({
               >
                 {(movementCard?.imageUrl || movementCard?.fallbackImageUrl) ? (
                   <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={movementCard.imageUrl || movementCard.fallbackImageUrl || '/images/exercises/image-not-available.jpg'}
                       alt={resolvedExerciseName}
@@ -1494,11 +1498,14 @@ export default function LiveVideoCameraHud({
                     )}
                   </>
                 ) : (
-                  <img
-                    src="/images/exercises/image-not-available.jpg"
-                    alt={resolvedExerciseName}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/images/exercises/image-not-available.jpg"
+                      alt={resolvedExerciseName}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </>
                 )}
               </div>
 
@@ -2377,9 +2384,7 @@ export default function LiveVideoCameraHud({
                   <button
                     type="button"
                     onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.location.href = '/dashboard/fitness#body-comp'
-                      }
+                      router.push('/dashboard/fitness#body-comp')
                     }}
                     data-testid="vault-launch-body-comp-btn"
                     className="tactile-btn"
@@ -2407,9 +2412,7 @@ export default function LiveVideoCameraHud({
                   <button
                     type="button"
                     onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.location.href = '/dashboard/fitness#ohsa'
-                      }
+                      router.push('/dashboard/fitness#ohsa')
                     }}
                     data-testid="vault-launch-ohsa-btn"
                     className="tactile-btn"

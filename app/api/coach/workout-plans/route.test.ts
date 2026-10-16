@@ -23,6 +23,24 @@ vi.mock('@/lib/supabase', () => ({
 import { GET, POST, DELETE } from '@/app/api/coach/workout-plans/route'
 import { AuthzError } from '@/lib/authz'
 
+interface LibraryQueryBuilder {
+  eq: () => LibraryQueryBuilder
+  in: () => LibraryQueryBuilder
+  limit: () => Promise<{ data: unknown[]; error: null }>
+  then: (resolve: (val: { data: unknown[]; error: null }) => void) => Promise<void>
+}
+
+const createLibraryQueryBuilder = (): LibraryQueryBuilder => {
+  const qb: LibraryQueryBuilder = {
+    eq: () => qb,
+    in: () => qb,
+    limit: async () => ({ data: [], error: null }),
+    then: (resolve: (val: { data: unknown[]; error: null }) => void) =>
+      Promise.resolve({ data: [], error: null }).then(resolve),
+  }
+  return qb
+}
+
 const coachUser = { user: { id: 'coach-123' }, client: { role: 'coach' } }
 const clientId = 'client-456'
 
@@ -131,12 +149,7 @@ describe('/api/coach/workout-plans', () => {
             }
           }
           if (table === 'exercise_library_entries' || table === 'equipment_library_entries') {
-            const queryBuilder: any = {
-              eq: () => queryBuilder,
-              in: () => queryBuilder,
-              limit: async () => ({ data: [], error: null }),
-              then: (resolve: (val: any) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-            }
+            const queryBuilder = createLibraryQueryBuilder()
             return {
               select: () => queryBuilder,
             }
@@ -238,12 +251,7 @@ describe('/api/coach/workout-plans', () => {
             }
           }
           if (table === 'exercise_library_entries' || table === 'equipment_library_entries') {
-            const queryBuilder: any = {
-              eq: () => queryBuilder,
-              in: () => queryBuilder,
-              limit: async () => ({ data: [], error: null }),
-              then: (resolve: (val: any) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-            }
+            const queryBuilder = createLibraryQueryBuilder()
             return {
               select: () => queryBuilder,
             }
@@ -338,12 +346,7 @@ describe('/api/coach/workout-plans', () => {
             }
           }
           if (table === 'exercise_library_entries' || table === 'equipment_library_entries') {
-            const queryBuilder: any = {
-              eq: () => queryBuilder,
-              in: () => queryBuilder,
-              limit: async () => ({ data: [], error: null }),
-              then: (resolve: (val: any) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-            }
+            const queryBuilder = createLibraryQueryBuilder()
             return {
               select: () => queryBuilder,
             }
@@ -407,14 +410,14 @@ describe('/api/coach/workout-plans', () => {
       const data = await res.json()
       expect(data.success).toBe(true)
 
-      const planJson = (insertedPayload as any)?.plan_json
+      const planJson = (insertedPayload as { plan_json: Record<string, unknown> } | null)?.plan_json
       expect(planJson).toBeDefined()
-      expect(planJson.clinicalRationale).toBe(testRationale)
-      expect(planJson.handPortionPlan).toEqual(testHandPortion)
-      expect(planJson.dualCardioPlan).toEqual(testDualCardio)
-      expect(planJson.isCertifiedByCoach).toBe(true)
-      expect(planJson.safetyGateCertified).toBe(true)
-      expect(planJson.certifiedBy).toBe('Coach Scott Gordon (NASM Master Trainer)')
+      expect(planJson?.clinicalRationale).toBe(testRationale)
+      expect(planJson?.handPortionPlan).toEqual(testHandPortion)
+      expect(planJson?.dualCardioPlan).toEqual(testDualCardio)
+      expect(planJson?.isCertifiedByCoach).toBe(true)
+      expect(planJson?.safetyGateCertified).toBe(true)
+      expect(planJson?.certifiedBy).toBe('Coach Scott Gordon (NASM Master Trainer)')
     })
   })
 

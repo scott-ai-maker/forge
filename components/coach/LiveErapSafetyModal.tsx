@@ -88,7 +88,7 @@ export default function LiveErapSafetyModal({
   const erap = data?.erap
   const resolvedAthleteName = data?.athleteName || athleteName
   const dispatchPhone = erap?.localEmergencyDispatchPhone || '911 (Local PSAP)'
-  const hasLocalDispatch = dispatchPhone && !dispatchPhone.startsWith('911')
+  const _hasLocalDispatch = dispatchPhone && !dispatchPhone.startsWith('911')
 
   const fullStreet = erap?.workoutStreetAddress
   const fullCityStateZip = [erap?.workoutCity, erap?.workoutState, erap?.workoutPostalCode]

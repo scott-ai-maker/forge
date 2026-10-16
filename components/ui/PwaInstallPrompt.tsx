@@ -148,6 +148,7 @@ export default function PwaInstallPrompt() {
             flexShrink: 0,
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/icon-192.png?v=2" alt="" width={36} height={36} style={{ borderRadius: 8, display: "block" }} />
         </div>
         <div style={{ minWidth: 0 }}>

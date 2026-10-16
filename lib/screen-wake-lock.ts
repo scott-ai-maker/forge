@@ -6,7 +6,13 @@
  * Gracefully handles visibility changes and unsupported platforms.
  */
 
-let wakeLockSentinel: any = null
+interface WakeLockSentinelLike {
+  released: boolean
+  addEventListener(type: 'release', listener: () => void): void
+  release(): Promise<void>
+}
+
+let wakeLockSentinel: WakeLockSentinelLike | null = null
 
 /**
  * Requests a screen wake lock from the browser.
@@ -22,7 +28,10 @@ export async function requestScreenWakeLock(): Promise<boolean> {
       return true
     }
 
-    const lock = await (navigator as any).wakeLock.request('screen')
+    const nav = navigator as unknown as {
+      wakeLock: { request: (type: 'screen') => Promise<WakeLockSentinelLike> }
+    }
+    const lock = await nav.wakeLock.request('screen')
     wakeLockSentinel = lock
 
     lock.addEventListener('release', () => {

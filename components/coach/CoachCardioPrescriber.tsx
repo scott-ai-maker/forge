@@ -19,7 +19,7 @@ export interface CoachCardioPrescriberProps {
 export default function CoachCardioPrescriber({
   clientId,
   clientName = 'Athlete',
-  clientAge = 35,
+  clientAge: _clientAge = 35,
   onSavedPrescription,
 }: CoachCardioPrescriberProps) {
   const [selectedPatternId, setSelectedPatternId] = useState<CardioPatternId>('zone2_aerobic_engine')

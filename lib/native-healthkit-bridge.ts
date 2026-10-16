@@ -270,11 +270,12 @@ export async function getNativeCurrentHeartRate(): Promise<{
         timestamp: res?.timestamp || null,
       }
     }
-    const biometrics = await plugin.queryLatestBiometrics()
-    const hr = (biometrics as any)?.heart_rate || (biometrics as any)?.heartRate || null
+    const biometrics = (await plugin.queryLatestBiometrics()) as Record<string, unknown> | null
+    const rawHr = biometrics?.heart_rate ?? biometrics?.heartRate
+    const hr = typeof rawHr === 'number' ? rawHr : null
     return {
-      heartRate: typeof hr === 'number' ? Math.round(hr) : null,
-      timestamp: biometrics?.date || null,
+      heartRate: hr !== null ? Math.round(hr) : null,
+      timestamp: (typeof biometrics?.date === 'string' ? biometrics.date : null),
     }
   } catch (err) {
     console.warn('[GAAHealthKitBridge] getNativeCurrentHeartRate notice:', err)

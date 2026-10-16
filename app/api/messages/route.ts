@@ -3,7 +3,6 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestAuthz, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
 import { notifyUser } from '@/lib/notifications'
 import {
-  isVoiceNoteBody,
   parseVoiceNoteBody,
   uploadVoiceNoteAudio,
   enrichMessagesWithSignedVoiceUrls,

@@ -9,7 +9,6 @@ import {
   COACH_GORDON_VOICE_ID,
   preloadedAudioBlobUrls,
   sanitizeCoachSpeechText,
-  speakCoachVoiceCue,
   speakWebSpeechCoachVoiceCue,
   stopCoachVoiceCue,
 } from './coach-voice-synthesizer'

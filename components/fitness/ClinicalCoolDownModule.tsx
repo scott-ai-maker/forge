@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { resolveExerciseVideoEmbed, extractYouTubeVideoId } from '@/lib/nasm-exercise-video-catalog'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
 import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import ExerciseVideoModal, { ExerciseModalData } from '@/components/fitness/ExerciseVideoModal'
@@ -1206,6 +1205,7 @@ export default function ClinicalCoolDownModule({
                     }}
                     title={isBreathing ? item.name : `View NASM Clinical Form & Demonstration for ${item.name}`}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={imgUrl}
                       alt={item.name}
@@ -1320,6 +1320,7 @@ export default function ClinicalCoolDownModule({
                     }}
                     title={`View NASM Clinical Form & Demonstration for ${item.name}`}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={imgUrl}
                       alt={item.name}
@@ -1629,6 +1630,7 @@ export default function ClinicalCoolDownModule({
                       }}
                       title={`View NASM Clinical Form & Demonstration for ${activeItem.name}`}
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={activeImg}
                         alt={activeItem.name}

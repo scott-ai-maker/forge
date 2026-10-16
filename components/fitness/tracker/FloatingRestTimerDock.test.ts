@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   evaluateDynamicRestHeartRateRecovery,
-  classifyHeartRateZone,
   getRestAudioMetronomeTone,
 } from '@/lib/rest-timer-audio-hr-engine'
 

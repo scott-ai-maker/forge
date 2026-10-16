@@ -204,6 +204,161 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
         </div>
       </section>
 
+      {/* Brand Manifesto: The Focus Sanctuary */}
+      <section
+        className="forge-manifesto-banner"
+        style={{
+          margin: '3.5rem auto',
+          maxWidth: '1160px',
+          padding: '2.75rem 2rem',
+          borderRadius: '16px',
+          background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 14, 24, 0.98) 100%)',
+          border: '1px solid rgba(245, 158, 11, 0.35)',
+          boxShadow: '0 20px 48px rgba(0, 0, 0, 0.5)',
+        }}
+      >
+        <div style={{ textAlign: 'center', maxWidth: '820px', margin: '0 auto' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '4px 14px',
+              borderRadius: '9999px',
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#FCA5A5',
+              fontFamily: 'var(--font-telemetry)',
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              marginBottom: '14px',
+            }}
+          >
+            <span>✕ NO SOCIAL MEDIA</span>
+            <span>·</span>
+            <span>ZERO DISTRACTIONS</span>
+            <span>·</span>
+            <span>100% COACHING</span>
+          </div>
+          <h2
+            style={{
+              fontFamily: 'var(--font-heading)',
+              fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.03em',
+              color: '#FFFFFF',
+              margin: '0 0 12px',
+            }}
+          >
+            The Anti-Distraction Gym Sanctuary
+          </h2>
+          <p
+            style={{
+              fontSize: '1.05rem',
+              lineHeight: 1.6,
+              color: '#CBD5E1',
+              margin: '0 auto 2rem',
+            }}
+          >
+            We don&apos;t spend your membership dues on social ads, endless feeds, or influencer clout.
+            We pour 100% of our focus into <strong>the best tools</strong> and <strong>the best coaching</strong>—the perfect combination of computational AI and 18+ years of Master Coach stewardship.
+          </p>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: '1.25rem',
+              textAlign: 'left',
+            }}
+          >
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '1.25rem',
+              }}
+            >
+              <div
+                style={{
+                  color: '#F87171',
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  marginBottom: '6px',
+                }}
+              >
+                PURE FOCUS
+              </div>
+              <h3 style={{ color: '#FFF', fontSize: '1.1rem', margin: '0 0 6px', fontFamily: 'var(--font-heading)' }}>
+                Zero Feeds. Pure Flow.
+              </h3>
+              <p style={{ color: '#94A3B8', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
+                No doom-scrolling between sets. No dopamine traps. When you train, your attention belongs to mechanical tension, kinetic alignment, and real progress.
+              </p>
+            </div>
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.8)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '12px',
+                padding: '1.25rem',
+              }}
+            >
+              <div
+                style={{
+                  color: '#FBBF24',
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  marginBottom: '6px',
+                }}
+              >
+                THE GOLD STANDARD
+              </div>
+              <h3 style={{ color: '#FFF', fontSize: '1.1rem', margin: '0 0 6px', fontFamily: 'var(--font-heading)' }}>
+                Best Tools × Best Coaching
+              </h3>
+              <p style={{ color: '#94A3B8', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
+                Sub-180ms computational AI handles bar velocity, posture mesh diagnostics, and dynamic load adaptation—steered by Master Coach Gordon&apos;s clinical guidance.
+              </p>
+            </div>
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.8)',
+                border: '1px solid rgba(52, 211, 153, 0.3)',
+                borderRadius: '12px',
+                padding: '1.25rem',
+              }}
+            >
+              <div
+                style={{
+                  color: '#34D399',
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  marginBottom: '6px',
+                }}
+              >
+                UNDENIABLE PROOF
+              </div>
+              <h3 style={{ color: '#FFF', fontSize: '1.1rem', margin: '0 0 6px', fontFamily: 'var(--font-heading)' }}>
+                Results-Driven Flywheel
+              </h3>
+              <p style={{ color: '#94A3B8', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
+                High-intent search discovery, peer recommendations, and a goal-achieving app that delivers measurable PRs with zero joint pain. Nothing but the best will do.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="forge-pricing-section" id="memberships" aria-labelledby="forge-pricing-title">
         <div className="forge-section-intro">
           <p className="forge-eyebrow">Simple membership options</p>

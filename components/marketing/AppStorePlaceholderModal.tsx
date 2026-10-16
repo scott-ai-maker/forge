@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { AppleLogoIcon, AndroidLogoIcon } from './AppStoreBadges'
-import { MOBILE_APPS_CONFIG } from '@/lib/mobile-apps-config'
 
 export type PlaceholderPlatform = 'ios' | 'android' | 'pwa'
 
@@ -148,6 +147,7 @@ export default function AppStorePlaceholderModal({
                 justifyContent: 'center',
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/brand/logo-concept-1-kinetic-f.jpg"
                 alt="Forge Athletic"

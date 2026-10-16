@@ -276,6 +276,7 @@ export default function ExerciseVideoModal({
                 boxShadow: '0 6px 20px rgba(0,0,0,0.5)',
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={
                   resolveGaaExerciseImage(card.name, false) ||

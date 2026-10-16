@@ -15,7 +15,6 @@ import {
   type GeneratedExerciseItem,
 } from './rag-nasm-program-generator'
 import {
-  detectExerciseEquipment,
   parseEquipmentCapabilities,
   doesExerciseMatchEquipment,
 } from './nasm-equipment-detector'

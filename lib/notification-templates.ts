@@ -21,6 +21,9 @@ export const DEFAULT_NOTIFICATION_URLS: Record<NotificationType, string> = {
   session_credits_added: '/dashboard/book',
   payment_failed: '/dashboard/settings',
   access_expiring: '/packages',
+  referral_joined: '/dashboard?openReferrals=true',
+  referral_converted: '/dashboard?openReferrals=true',
+  referral_milestone_unlocked: '/dashboard?openReferrals=true',
 }
 
 export function buildNotificationEmail(content: NotificationContent, baseUrl: string) {

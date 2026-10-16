@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   calculateRepVelocityAndPower,
   analyzeSetVelocityAndPower,
-  classifyVbtZone,
 } from '@/lib/bar-velocity-power-engine'
 
 describe('BarVelocityPowerTrackerTray Component Logic', () => {

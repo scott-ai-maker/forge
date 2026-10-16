@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   IOS_STILL_CAMERA_STEPS,
   ANDROID_STILL_CAMERA_STEPS,

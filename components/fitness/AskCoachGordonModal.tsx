@@ -61,7 +61,7 @@ interface AskCoachGordonModalProps {
   onAutoRegulateLoad?: (reductionPercent: number) => void
 }
 
-const PRESET_TOPIC_CHIPS: Array<{ iconName: GaaIconName; label: string; prompt: string }> = [
+const _PRESET_TOPIC_CHIPS: Array<{ iconName: GaaIconName; label: string; prompt: string }> = [
   { iconName: 'lightbulb', label: 'Swap this exercise', prompt: 'I need an alternative exercise for my current movement based on my available equipment.' },
   { iconName: 'camera', label: 'Form Check', prompt: 'Can you check my squat form and bar path depth?' },
   { iconName: 'nutrition', label: 'Post-workout meal', prompt: 'What should I eat for my post-workout meal to maximize protein synthesis and recovery?' },
@@ -1064,6 +1064,7 @@ export default function AskCoachGordonModal({
                 >
                   {msg.attachedImageUrl && (
                     <div style={{ marginBottom: '8px' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={msg.attachedImageUrl}
                         alt="Uploaded gym asset"
@@ -1444,6 +1445,7 @@ export default function AskCoachGordonModal({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={attachedImage.previewUrl}
                 alt="Selected"

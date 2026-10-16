@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { EmailOtpType } from '@supabase/supabase-js'
+import { attributeReferralSignup, getOrCreateClientReferralCode } from '@/lib/referrals'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -198,6 +199,31 @@ export async function GET(request: NextRequest) {
           .eq('role', 'client')
           .is('designated_coach_id', null)
       }
+    }
+
+    const rawReferral =
+      searchParams.get('ref') ||
+      searchParams.get('referral') ||
+      request.cookies.get('forge_referral_code')?.value
+
+    if (rawReferral && !existingProfile) {
+      try {
+        await attributeReferralSignup(admin, {
+          code: rawReferral,
+          refereeId: user.id,
+          refereeEmail: userEmail,
+          source: 'signup_callback',
+        })
+      } catch (err) {
+        console.warn('[auth:callback] Referral attribution warning:', err)
+      }
+    }
+
+    // Provision user's own referral code so they can invite friends immediately
+    try {
+      await getOrCreateClientReferralCode(admin, user.id, displayName)
+    } catch (err) {
+      console.warn('[auth:callback] Referral code provisioning warning:', err)
     }
 
     // Role-aware redirect: If a coach logs in and target was default (/dashboard), redirect to /coach

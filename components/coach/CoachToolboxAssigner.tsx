@@ -6,7 +6,7 @@ import {
   SpecializedToolbox,
   ToolboxId,
 } from '@/lib/specialized-toolboxes'
-import { GaaIcon } from '@/components/ui/GaaIcon'
+import { GaaIcon, type GaaIconName } from '@/components/ui/GaaIcon'
 
 interface CoachToolboxAssignerProps {
   clientId: string
@@ -122,7 +122,7 @@ export default function CoachToolboxAssigner({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <GaaIcon name={(tb.icon as any) || 'sparkles'} size={18} tone={active ? 'gold' : 'slate'} />
+                <GaaIcon name={(tb.icon as GaaIconName) || 'sparkles'} size={18} tone={active ? 'gold' : 'slate'} />
                 <span style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 14, letterSpacing: '0.03em' }}>
                   {tb.title}
                 </span>
@@ -139,7 +139,7 @@ export default function CoachToolboxAssigner({
       <div className="glass-card-gold" style={{ padding: 20, display: 'grid', gap: 14 }}>
         <div>
           <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <GaaIcon name={(activeToolbox.icon as any) || 'sparkles'} size={14} tone="gold" />
+            <GaaIcon name={(activeToolbox.icon as GaaIconName) || 'sparkles'} size={14} tone="gold" />
             <span>Active Prescription Details: {activeToolbox.title}</span>
           </div>
           <p style={{ margin: '4px 0 0', color: 'var(--white)', fontSize: 14, lineHeight: 1.5 }}>

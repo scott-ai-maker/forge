@@ -261,6 +261,18 @@ export default function OnboardingForm() {
           : prev.equipmentAccess
 
         const parqAnswers = intake?.parq_answers || {}
+        const typedParq = parqAnswers as {
+          erap?: {
+            workoutStreetAddress?: string
+            workoutUnitOrGateCode?: string
+            workoutCity?: string
+            workoutState?: string
+            workoutPostalCode?: string
+            localEmergencyDispatchPhone?: string
+            virtualTelehealthConsent?: boolean
+          }
+        }
+        const typedIntake = intake as Record<string, unknown> | undefined
 
         const merged = {
           ...prev,
@@ -305,18 +317,18 @@ export default function OnboardingForm() {
           emergencyContactPhone: intake?.emergency_contact_phone || prev.emergencyContactPhone,
           primaryPhysicianName: intake?.primary_physician_name || prev.primaryPhysicianName,
           primaryPhysicianPhone: intake?.primary_physician_phone || prev.primaryPhysicianPhone,
-          workoutStreetAddress: (parqAnswers as any)?.erap?.workoutStreetAddress || (intake as any)?.workout_street_address || prev.workoutStreetAddress,
-          workoutUnitOrGateCode: (parqAnswers as any)?.erap?.workoutUnitOrGateCode || (intake as any)?.workout_unit || prev.workoutUnitOrGateCode,
-          workoutCity: (parqAnswers as any)?.erap?.workoutCity || (intake as any)?.workout_city || prev.workoutCity,
-          workoutState: (parqAnswers as any)?.erap?.workoutState || (intake as any)?.workout_state || prev.workoutState,
-          workoutPostalCode: (parqAnswers as any)?.erap?.workoutPostalCode || (intake as any)?.workout_postal_code || prev.workoutPostalCode,
-          localEmergencyDispatchPhone: (parqAnswers as any)?.erap?.localEmergencyDispatchPhone || (intake as any)?.local_emergency_dispatch_phone || prev.localEmergencyDispatchPhone,
+          workoutStreetAddress: typedParq?.erap?.workoutStreetAddress || (typedIntake?.workout_street_address as string | undefined) || prev.workoutStreetAddress,
+          workoutUnitOrGateCode: typedParq?.erap?.workoutUnitOrGateCode || (typedIntake?.workout_unit as string | undefined) || prev.workoutUnitOrGateCode,
+          workoutCity: typedParq?.erap?.workoutCity || (typedIntake?.workout_city as string | undefined) || prev.workoutCity,
+          workoutState: typedParq?.erap?.workoutState || (typedIntake?.workout_state as string | undefined) || prev.workoutState,
+          workoutPostalCode: typedParq?.erap?.workoutPostalCode || (typedIntake?.workout_postal_code as string | undefined) || prev.workoutPostalCode,
+          localEmergencyDispatchPhone: typedParq?.erap?.localEmergencyDispatchPhone || (typedIntake?.local_emergency_dispatch_phone as string | undefined) || prev.localEmergencyDispatchPhone,
           legalConsentLiability: intake?.consent_liability_waiver ?? prev.legalConsentLiability,
           legalConsentInformed: intake?.consent_informed_consent ?? prev.legalConsentInformed,
           legalConsentPrivacy: intake?.consent_privacy_practices ?? prev.legalConsentPrivacy,
           legalConsentCoaching: intake?.consent_coaching_agreement ?? prev.legalConsentCoaching,
           legalConsentEmergency: intake?.consent_emergency_care ?? prev.legalConsentEmergency,
-          legalConsentVirtualTelehealth: (parqAnswers as any)?.erap?.virtualTelehealthConsent ?? (intake?.consent_liability_waiver ?? prev.legalConsentVirtualTelehealth),
+          legalConsentVirtualTelehealth: typedParq?.erap?.virtualTelehealthConsent ?? (intake?.consent_liability_waiver ?? prev.legalConsentVirtualTelehealth),
           legalSignatureName: intake?.consent_signature_name || prev.legalSignatureName,
         }
 

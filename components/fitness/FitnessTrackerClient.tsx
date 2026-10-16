@@ -46,7 +46,6 @@ const SmartExerciseSwapModal = dynamic(
 )
 import type { MindfulProtocolId } from '@/components/fitness/MindfulMomentModal'
 import type { CardioPatternId } from '@/lib/coach-cardio-engine'
-import { requestScreenWakeLock, releaseScreenWakeLock } from '@/lib/screen-wake-lock'
 import {
   parseInjuriesFromText,
   COMMON_SPORTS_INJURIES,
@@ -62,10 +61,9 @@ import { isExerciseAppropriateForInjuries } from '@/lib/nasm-opt-exercise-select
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import SetProgressionMatrix from '@/components/fitness/tracker/SetProgressionMatrix'
 import SupersetPairCard, { type SupersetDraftState } from '@/components/fitness/tracker/SupersetPairCard'
-import { detectAndGroupSupersets, type GroupedExerciseEntry } from '@/lib/superset-pairing-engine'
+import { type GroupedExerciseEntry } from '@/lib/superset-pairing-engine'
 import {
   getNasmOptPhaseFeatureRules,
-  isSupersetOfferedForPhase,
   getDefaultNasmOptTempo,
 } from '@/lib/nasm-opt-feature-matrix'
 import { calculateBioAdaptiveRestInterval } from '@/lib/bio-adaptive-rest-pacer'
@@ -80,7 +78,6 @@ import { LiftType, VideoCritiqueAnalysis } from '@/lib/video-form-analysis'
 import {
   detectPersonalRecord,
   computeExercisePrVault,
-  type PrDetectionResult,
   normalizeExerciseNameKey,
 } from '@/lib/personal-record-engine'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
@@ -91,7 +88,6 @@ import {
   getPendingQueueCount,
 } from '@/lib/offline-sync-queue'
 import { playPrecisionTone, playCountdownPip } from '@/lib/web-audio-cadence-engine'
-import { updateLockScreenSessionTelemetry, clearLockScreenSessionTelemetry } from '@/lib/media-session-telemetry'
 import { speakCoachVoiceCue, playNeuralCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import { useTrackerTimer } from '@/components/fitness/hooks/useTrackerTimer'
 import { useSetVolume, parseSetTarget } from '@/components/fitness/hooks/useSetVolume'
@@ -114,7 +110,6 @@ import { calculate1Rm } from '@/lib/progressive-overload-engine'
 import { identifyHeartRateZone } from '@/lib/nasm-cardio-stage-engine'
 import {
   calculateEstimatedWorkoutDuration,
-  formatDurationDisplay,
   parseRestSecondsFromExercise,
 } from '@/lib/workout-duration-engine'
 import {
@@ -123,8 +118,6 @@ import {
   buildRecommendedCardioModalities,
   type IntegratedCardioPrescription,
 } from '@/lib/rag-nasm-program-generator'
-import DynamicLoadPrescriptionPill from '@/components/fitness/DynamicLoadPrescriptionPill'
-import { computeWearableCnsScore, type DailyBiometricSummary } from '@/lib/wearables-telemetry'
 import type { ExercisePlanItem } from '@/lib/travel-workout-adapter'
 import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 import {
@@ -137,18 +130,8 @@ import {
   BAND_COLOR_SPECTRUM,
 } from '@/lib/exercise-logging-helpers'
 import {
-  isNativeIOS,
-  isNativeMobile,
-  autoInitializeNativeHealthKit,
-  saveWorkoutToNativeHealthKit,
-  subscribeToNativeHealthKitUpdates,
   syncActivityToAppleHealth,
 } from '@/lib/native-healthkit-bridge'
-import {
-  normalizeAppleHealthIngestPayload,
-  formatAppleHealthTelemetryToBiometricSummary,
-  type RawAppleHealthIngestPayload,
-} from '@/lib/apple-health-bridge'
 
 interface FitnessProfile {
   full_name?: string
@@ -757,7 +740,7 @@ export default function FitnessTrackerClient({
   const [bodyfatState, setBodyfatState] = useState({
     estimated: latestAnalysis?.estimated_bodyfat_percent ? String(latestAnalysis.estimated_bodyfat_percent) : '',
   })
-  const [status, setStatus] = useState<string | null>(null)
+  const [_status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [completeModal, setCompleteModal] = useState<WorkoutDay | null>(null)
   const [skipModal, setSkipModal] = useState<{ workoutDay: number; exercise: WorkoutExercise } | null>(null)
@@ -888,13 +871,12 @@ export default function FitnessTrackerClient({
   }
 
   const [expandedExerciseKey, setExpandedExerciseKey] = useState<string | null>(null)
-  const [openWarmupRamps, setOpenWarmupRamps] = useState<Record<string, boolean>>({})
   const [_showUnifiedSessionModal, _setShowUnifiedSessionModal] = useState<boolean>(false)
 
   // 1. Modular Superset Controller & NASM OPT Phase Governance
   const {
     enableSupersets,
-    setEnableSupersets,
+    setEnableSupersets: _setEnableSupersets,
     isSupersetOffered: _isSupersetOffered,
     phaseFeatureRules: _phaseFeatureRules,
     toggleSupersets,
@@ -956,7 +938,7 @@ export default function FitnessTrackerClient({
     setLogsByExercise,
     workoutProgressByDay,
     progression,
-    acwrTelemetry,
+    acwrTelemetry: _acwrTelemetry,
   } = useSetVolume({
     localSetLogs,
     localWorkoutLogs,
@@ -977,14 +959,14 @@ export default function FitnessTrackerClient({
     handleStartCardioSession,
     handlePauseResumeWorkoutSession,
     handleStopWorkoutSession,
-    setElapsedWorkoutSeconds,
-    setActiveWorkoutStage,
-    setIsWorkoutTimerActive,
-    setActiveWorkoutSessionDay,
+    setElapsedWorkoutSeconds: _setElapsedWorkoutSeconds,
+    setActiveWorkoutStage: _setActiveWorkoutStage,
+    setIsWorkoutTimerActive: _setIsWorkoutTimerActive,
+    setActiveWorkoutSessionDay: _setActiveWorkoutSessionDay,
     activeRestState,
     setActiveRestState,
     soundMetronomeEnabled,
-    setSoundMetronomeEnabled,
+    setSoundMetronomeEnabled: _setSoundMetronomeEnabled,
     soundMetronomeMode,
     setSoundMetronomeMode,
     activeHoldTimer,
@@ -1017,7 +999,7 @@ export default function FitnessTrackerClient({
   const {
     wearableTelemetry,
     liveReadinessScore,
-    setWearableTelemetry,
+    setWearableTelemetry: _setWearableTelemetry,
   } = useWearableTelemetrySync()
 
   const {
@@ -1031,8 +1013,8 @@ export default function FitnessTrackerClient({
     (msg) => setStatus(msg)
   )
 
-  const [labInitialLift, setLabInitialLift] = useState<LiftType | undefined>(undefined)
-  const [labInitialCritique, setLabInitialCritique] = useState<VideoCritiqueAnalysis | null>(null)
+  const [labInitialLift, _setLabInitialLift] = useState<LiftType | undefined>(undefined)
+  const [labInitialCritique, _setLabInitialCritique] = useState<VideoCritiqueAnalysis | null>(null)
 
   // All-Time Personal Record (PR) Vault
   const exercisePrVault = useMemo(() => {
@@ -1191,7 +1173,7 @@ export default function FitnessTrackerClient({
       window.removeEventListener('forge-start-rest-timer', handleCoachRestTimer)
       window.removeEventListener('forge-auto-regulate-load', handleCoachAutoRegulate)
     }
-  }, [effectiveActiveWorkoutDay, adaptedExercisesByDay, planWorkouts, expandedExerciseKey, handleExerciseSwap])
+  }, [effectiveActiveWorkoutDay, adaptedExercisesByDay, planWorkouts, expandedExerciseKey, handleExerciseSwap, setActiveRestState, setActiveRestTimerKey])
 
   // Continuous Context Synchronization to GlobalCoachGordonHost
   useEffect(() => {
@@ -1770,7 +1752,7 @@ export default function FitnessTrackerClient({
     setStatus(`Day ${workout.day} complete & tracked in Apple Health (${calculatedDuration} mins · ${estimatedCalories} kcal).`)
   }
 
-  async function handleCompleteUnifiedSession(
+  async function _handleCompleteUnifiedSession(
     workout: WorkoutDay,
     cardio?: IntegratedCardioPrescription | null,
     exertionRpe?: number
@@ -3690,6 +3672,7 @@ export default function FitnessTrackerClient({
                                       boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
                                     }}
                                   >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                       src={thumbUrl}
                                       alt={ex.name}
@@ -5627,7 +5610,7 @@ function PostWorkoutFinishModal({
   const totalElapsedMins = elapsedWorkoutSeconds > 0
     ? Math.max(Math.round(elapsedWorkoutSeconds / 60), 1)
     : Math.max((workout.exercises?.length || 4) * 8, 30)
-  const cardioMins = cardio?.durationMins || 15
+  const _cardioMins = cardio?.durationMins || 15
 
   // Calculate working sets & volume
   const daySetLogs = localSetLogs.filter(set => extractWorkoutDayTag(set.notes) === workout.day)

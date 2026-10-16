@@ -3,6 +3,7 @@ import Image from 'next/image'
 import AuthForm from '@/components/auth/AuthForm'
 import { Camera, CirclePlay, Users, BriefcaseBusiness } from 'lucide-react'
 import { supabaseAdmin } from '@/lib/supabase'
+import ReferralSignupBanner from '@/components/referrals/ReferralSignupBanner'
 
 export const metadata: Metadata = {
   title: 'Create Your Forge Athletic Account',
@@ -20,6 +21,8 @@ export const dynamic = 'force-dynamic'
 
 type SignupPageSearchParams = Promise<{
   coach?: string | string[] | undefined
+  ref?: string | string[] | undefined
+  referral?: string | string[] | undefined
   error?: string | string[] | undefined
   error_description?: string | string[] | undefined
 }>
@@ -31,6 +34,9 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
   const requestedCoachId = Array.isArray(resolvedSearchParams.coach)
     ? resolvedSearchParams.coach[0]
     : resolvedSearchParams.coach
+
+  const rawReferral = resolvedSearchParams.ref || resolvedSearchParams.referral
+  const referralCode = Array.isArray(rawReferral) ? rawReferral[0] : rawReferral
 
   const rawError = resolvedSearchParams.error_description || resolvedSearchParams.error
   const initialError = Array.isArray(rawError) ? rawError[0] : rawError
@@ -117,6 +123,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
             backdropFilter: 'blur(2px)',
           }}
         >
+          <ReferralSignupBanner initialCode={referralCode} />
           <AuthForm mode="signup" coachId={inviteCoachId} coachName={inviteCoachName} initialError={initialError} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.55rem', marginTop: '1rem' }}>

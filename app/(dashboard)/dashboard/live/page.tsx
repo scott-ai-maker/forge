@@ -103,12 +103,12 @@ export default async function AthleteLiveSessionPage() {
             coachName={coachName}
             clientName={athleteName}
             exerciseName={
-              (plan?.plan_json as any)?.workouts?.[0]?.exercises?.[0]?.name ||
+              (plan?.plan_json as { workouts?: Array<{ exercises?: Array<{ name?: string }> }> } | null)?.workouts?.[0]?.exercises?.[0]?.name ||
               'Overhead Squat Assessment'
             }
             optPhase={plan?.phase_name ? `Phase ${plan.nasm_opt_phase}: ${plan.phase_name}` : 'Phase 2: Strength Endurance'}
             currentTempo={
-              (plan?.plan_json as any)?.workouts?.[0]?.exercises?.[0]?.tempo ||
+              (plan?.plan_json as { workouts?: Array<{ exercises?: Array<{ tempo?: string }> }> } | null)?.workouts?.[0]?.exercises?.[0]?.tempo ||
               '2-0-2'
             }
             sessionId={`live-${user.id}`}

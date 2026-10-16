@@ -7,7 +7,6 @@ import {
   IOS_STILL_CAMERA_STEPS,
   ANDROID_STILL_CAMERA_STEPS,
   NASM_VIRTUAL_ASSESSMENT_CHECKLIST,
-  type MobileCameraPlatform,
 } from '@/lib/camera-still-mode'
 
 interface LiveStillCameraGuidanceModalProps {

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { syncActivityToAppleHealth } from '@/lib/native-healthkit-bridge'
 import { playPrecisionTone } from '@/lib/web-audio-cadence-engine'
@@ -92,10 +92,10 @@ export default function MindfulMomentModal({
   onClose,
   initialProtocol = '4-7-8',
   initialDurationMinutes,
-  athleteName = 'Athlete',
-  sourceContext = 'standalone',
+  athleteName: _athleteName = 'Athlete',
+  sourceContext: _sourceContext = 'standalone',
   onCompleted,
-  onFlowToCardio,
+  onFlowToCardio: _onFlowToCardio,
 }: MindfulMomentModalProps) {
   const [selectedProtocol, setSelectedProtocol] = useState<MindfulProtocolId>(initialProtocol)
   const protocolConfig = MINDFUL_PROTOCOLS[selectedProtocol]

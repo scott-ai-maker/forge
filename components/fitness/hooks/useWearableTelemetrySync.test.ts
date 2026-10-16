@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { computeWearableCnsScore } from '@/lib/wearables-telemetry'
 import {
   normalizeAppleHealthIngestPayload,
-  formatAppleHealthTelemetryToBiometricSummary,
 } from '@/lib/apple-health-bridge'
 
 describe('useWearableTelemetrySync logic & telemetry ingestion', () => {

@@ -33,7 +33,7 @@ export default function CinematicVideoPlayer({
   const [isControlsVisible, setIsControlsVisible] = useState(true)
   const [customInputUrl, setCustomInputUrl] = useState('')
   const [showUrlDrawer, setShowUrlDrawer] = useState(false)
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
+  const [_isVideoLoaded, setIsVideoLoaded] = useState(false)
 
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 

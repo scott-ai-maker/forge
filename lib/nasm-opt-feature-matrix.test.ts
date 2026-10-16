@@ -6,7 +6,6 @@ import {
   isIntensityProtocolOfferedForPhase,
   isVbtOfferedForPhase,
   getDefaultNasmOptTempo,
-  NASM_OPT_FEATURE_RULES,
 } from './nasm-opt-feature-matrix'
 
 describe('NASM OPT™ Phase Feature Matrix & Deterministic Rules Engine', () => {
