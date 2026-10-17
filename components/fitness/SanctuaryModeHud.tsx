@@ -340,7 +340,7 @@ export default function SanctuaryModeHud({
                 alignItems: 'center',
                 gap: 5,
               }}
-              title="Open Coach Scott Gordon In-Ear Voice Notes"
+              title="Open Coach Gordon In-Ear Voice Notes"
             >
               <ForgeIcon name="headphones" size={13} />
               <span>Coach Memos</span>
@@ -515,7 +515,7 @@ export default function SanctuaryModeHud({
         )}
       </aside>
 
-      {/* ── COACH SCOTT GORDON SANCTUARY AUDIO NOTES MODAL ── */}
+      {/* ── COACH GORDON SANCTUARY AUDIO NOTES MODAL ── */}
       {showAudioNotesModal && (
         <div
           role="dialog"
@@ -573,7 +573,7 @@ export default function SanctuaryModeHud({
                       textTransform: 'uppercase',
                     }}
                   >
-                    Coach Scott Gordon · In-Ear Memos
+                    Coach Gordon · In-Ear Memos
                   </h3>
                   <div
                     style={{

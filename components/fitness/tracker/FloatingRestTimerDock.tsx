@@ -457,7 +457,7 @@ export default function FloatingRestTimerDock({
         </button>
       </div>
 
-      {/* ── Coach Scott Gordon Sanctuary In-Ear Audio Note Banner ── */}
+      {/* ── Coach Gordon Sanctuary In-Ear Audio Note Banner ── */}
       {relevantCoachAudioNote && !showCoachAudioNote && (
         <div
           data-testid="coach-rest-audio-banner"
@@ -478,7 +478,7 @@ export default function FloatingRestTimerDock({
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
             <GaaIcon name="headphones" size={12} tone="gold" />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              🎙️ Coach Scott: {relevantCoachAudioNote.title} ({relevantCoachAudioNote.durationSeconds}s)
+              🎙️ Coach Gordon: {relevantCoachAudioNote.title} ({relevantCoachAudioNote.durationSeconds}s)
             </span>
           </div>
           <button

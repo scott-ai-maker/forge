@@ -77,7 +77,7 @@ function parsePayload(body: Record<string, unknown>): CoachProgramPayload | null
       ? body.certifiedBy
       : typeof rawJson.certifiedBy === 'string'
         ? rawJson.certifiedBy
-        : 'Coach Scott Gordon (NASM Master Trainer)',
+        : 'Coach Gordon (NASM Master Trainer)',
     safetyGateCertified: typeof body.safetyGateCertified === 'boolean'
       ? body.safetyGateCertified
       : typeof rawJson.safetyGateCertified === 'boolean'
@@ -384,7 +384,7 @@ export async function POST(req: NextRequest) {
       generatedBy: 'coach',
       isCertifiedByCoach: payload.isCertifiedByCoach ?? true,
       coachCertifiedAt: payload.coachCertifiedAt ?? new Date().toISOString(),
-      certifiedBy: payload.certifiedBy ?? 'Coach Scott Gordon (NASM Master Trainer)',
+      certifiedBy: payload.certifiedBy ?? 'Coach Gordon (NASM Master Trainer)',
       safetyGateCertified: payload.safetyGateCertified ?? true,
       overwrittenAt: (latestExistingId || shouldOverwrite) ? new Date().toISOString() : undefined,
     },

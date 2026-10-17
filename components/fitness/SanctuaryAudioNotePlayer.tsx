@@ -264,7 +264,7 @@ export default function SanctuaryAudioNotePlayer({
     const utterance = new SpeechSynthesisUtterance(note.transcript)
     speechUtteranceRef.current = utterance
 
-    // Coach Scott Gordon Voice Tuning: Authoritative, steady, measured
+    // Coach Gordon Voice Tuning: Authoritative, steady, measured
     utterance.rate = 0.96
     utterance.pitch = 0.94
     utterance.volume = 1.0
@@ -464,7 +464,7 @@ export default function SanctuaryAudioNotePlayer({
                   gap: 3,
                 }}
               >
-                <span>⚡ ElevenLabs Cloned Voice (Coach Scott Gordon)</span>
+                <span>⚡ ElevenLabs Cloned Voice (Coach Gordon)</span>
               </span>
             </div>
           </div>

@@ -26,7 +26,7 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-const COACH_ID = 'c4fc28e1-ff8d-493c-a8f5-a7f852f4e536' // Coach Scott Gordon
+const COACH_ID = 'c4fc28e1-ff8d-493c-a8f5-a7f852f4e536' // Coach Gordon
 
 const VIP_TARGETS = [
   {
@@ -145,7 +145,7 @@ async function grantVipAccess() {
       .insert({
         client_id: athlete.id,
         actor_id: COACH_ID,
-        actor_name: 'Coach Scott Gordon',
+        actor_name: 'Coach Gordon',
         actor_role: 'coach',
         action: 'status_change',
         previous_status: 'active',
@@ -306,7 +306,7 @@ async function grantVipAccess() {
             ],
             totalWeeks: 12,
             currentWeek: 1,
-            coachNotes: 'Executive Master Retainer Protocol calibrated by Coach Scott Gordon.',
+            coachNotes: 'Executive Master Retainer Protocol calibrated by Coach Gordon.',
           },
           workouts: [
             {

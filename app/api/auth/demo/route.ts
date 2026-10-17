@@ -8,7 +8,7 @@ const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD || 'DemoAthlete2026!GAA'
 
 const COACH_DEMO_EMAIL = process.env.TEST_COACH_EMAIL || 'scott.gordon72@outlook.com'
 const COACH_DEMO_PASSWORD = process.env.TEST_COACH_PASSWORD || 'CoachGordon2026!GAA'
-const COACH_DEMO_NAME = 'Coach Scott Gordon'
+const COACH_DEMO_NAME = 'Coach Gordon'
 
 const MASTER_DEMO_PLAN_JSON = {
   name: 'Phase 2: Strength Endurance & Power Contrast',

@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      coachIdentity: 'Coach Scott Gordon · Director of Human Performance, Forge Athletic',
+      coachIdentity: 'Coach Gordon · Director of Human Performance, Forge Athletic',
       response,
     })
   } catch (error) {

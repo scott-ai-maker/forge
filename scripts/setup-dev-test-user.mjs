@@ -30,7 +30,7 @@ const TEST_ATHLETE_NAME = 'Alexander Vance'
 
 const COACH_EMAIL = process.env.TEST_COACH_EMAIL || 'scott.gordon72@outlook.com'
 const COACH_PASSWORD = process.env.TEST_COACH_PASSWORD || 'CoachGordon2026!GAA'
-const COACH_NAME = 'Coach Scott Gordon'
+const COACH_NAME = 'Coach Gordon'
 
 const CLINICAL_ADDONS = [
   {

@@ -3,14 +3,22 @@
 All notable changes to Forge Athletic will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.43.4] - 2026-10-16
+
+### Added & Improved
+- **Universal Coach Gordon Neural Rest Start Engine & Brand Identity Enforcement ([`lib/coach-voice-synthesizer.ts`](file:///Users/scottgordon/Repos/forge/lib/coach-voice-synthesizer.ts), [`components/fitness/tracker/FloatingRestTimerDock.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/tracker/FloatingRestTimerDock.tsx), [`components/fitness/hooks/useWorkoutSetLogger.ts`](file:///Users/scottgordon/Repos/forge/components/fitness/hooks/useWorkoutSetLogger.ts))**:
+  - Standardized rest start audio prompts ("Starting 60 second rest interval.") across all set loggers, auto-pacers, and studio timers into Coach Gordon's authentic ElevenLabs cloned voice model with comprehensive buffer pre-warming.
+  - Pre-warmed audio buffers for all standard rest intervals (15s, 30s, 45s, 60s, 75s, 90s, 105s, 120s, 135s, 150s, 180s, 240s, 300s) for instant 0ms playback on gym floors.
+  - Completely eliminated all legacy "Coach Scott" nomenclature across the rest timer pill, voice memo modals, seed notes, and client notifications, strictly standardizing exclusively on Coach Gordon.
+
 ## [1.43.0] - 2026-10-16
 
 ### Added & Improved
 - **Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine ([`lib/sanctuary-audio-notes-engine.ts`](file:///Users/scottgordon/Repos/forge/lib/sanctuary-audio-notes-engine.ts), [`components/fitness/SanctuaryAudioNotePlayer.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/SanctuaryAudioNotePlayer.tsx))**:
   - Engineered an in-ear acoustic coaching pipeline enforcing Forge Athletic's brand standard: "NO SOCIAL MEDIA · ZERO DISTRACTIONS · 100% COACHING & TOOLS".
-  - Delivers 20-60 second high-impact voice memos from Coach Scott Gordon straight to the athlete's headphones during rest intervals, eliminating phone doomscrolling and vanity feeds.
+  - Delivers 20-60 second high-impact voice memos from Coach Gordon straight to the athlete's headphones during rest intervals, eliminating phone doomscrolling and vanity feeds.
   - Implements acoustic background music ducking via the W3C Audio Session API and Web Audio hardware clock (`configureAudioSession('ambient')` and harmonic chime stabs) to gently lower Spotify/Apple Music without pausing.
-  - Pre-loaded institutional seed library featuring Coach Scott Gordon master coaching directives across Big 5 compound lifts (360° squat brace, deadlift lat lock, bench retraction, overhead kinetic pillar) and vagal down-regulation breathwork.
+  - Pre-loaded institutional seed library featuring Coach Gordon master coaching directives across Big 5 compound lifts (360° squat brace, deadlift lat lock, bench retraction, overhead kinetic pillar) and vagal down-regulation breathwork.
   - Integrated into the active floating rest countdown dock ([`components/fitness/tracker/FloatingRestTimerDock.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/tracker/FloatingRestTimerDock.tsx)) with real-time exercise matching, 1-tap playback, and tactile haptics.
   - Added Sanctuary HUD Coach Memos launcher and drawer ([`components/fitness/SanctuaryModeHud.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/SanctuaryModeHud.tsx)) for anytime access to session briefings and reset cues.
 - **Coach Sanctuary Voice Studio ([`components/coach/CoachSanctuaryAudioNoteModal.tsx`](file:///Users/scottgordon/Repos/forge/components/coach/CoachSanctuaryAudioNoteModal.tsx), [`components/coach/CoachPeriodizationCockpit.tsx`](file:///Users/scottgordon/Repos/forge/components/coach/CoachPeriodizationCockpit.tsx))**:
@@ -26,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Dynamically calculates cumulative mechanical tonnage, Big 5 compound 1RM overload curves (Brzycki formula), and progressive overload delta percentages.
   - Integrates Sanctuary Mode autonomic focus fidelity telemetry, zero-distraction gym hours, and vagal down-regulation breathwork logs.
   - Features Acute:Chronic Workload Ratio (ACWR) safety index validation (0.8–1.3 sweet spot) and kinetic symmetry distributions (Push:Pull, Squat:Hinge).
-  - Outlines structured S.O.A.P. clinical notes and Coach Scott Gordon attestation (`NASM Master Trainer Candidate · CPT® · CES® · PES® · CNC™ · CSNC`).
+  - Outlines structured S.O.A.P. clinical notes and Coach Gordon attestation (`NASM Master Trainer Candidate · CPT® · CES® · PES® · CNC™ · CSNC`).
   - Deployed zero-login URL-safe tokenized share routes (`/pow/[token]`) with dynamic OpenGraph metadata, printable `@media print` formatting, and embedded Founding Member Pass peer referral links (`/r/[code]`).
 - **Client & Dashboard Integrations ([`components/fitness/FitnessTrackerClient.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/FitnessTrackerClient.tsx), [`components/dashboard/ExecutiveSundayDossier.tsx`](file:///Users/scottgordon/Repos/forge/components/dashboard/ExecutiveSundayDossier.tsx))**:
   - Embedded the Clinical Proof of Work Dossier action directly into the Progress & PRs hub and the end-of-workout review modal.

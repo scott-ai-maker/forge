@@ -209,13 +209,13 @@ Source of truth: `lib/stripe.ts`
   - Asynchronous biomechanical video reviews (48-hour clinician SLA)
   - Weekly macrocycle load recalibrations based on wearable recovery scores
   - Monthly comprehensive athletic performance & body composition audit
-  - In-app priority messaging with Coach Scott Gordon
+  - In-app priority messaging with Coach Gordon
 - **Best For**: Driven executives seeking elite periodization and form correction with asynchronous flexibility.
 
 ### Tier 2 - Hybrid Concierge ($649/mo · Flagship)
 - **Deliverables**:
   - Everything in Performance Protocol
-  - Bi-weekly 1:1 WebRTC live video consultation studio with Coach Scott
+  - Bi-weekly 1:1 WebRTC live video consultation studio with Coach Gordon
   - Interactive video telestrator analysis & real-time frame capture diagnostics
   - Weekly Sunday Performance Dossier with deep biometric & load volume analytics
   - Travel & jetlag workout recalibrations with on-the-fly hotel gym adaptations
@@ -226,7 +226,7 @@ Source of truth: `lib/stripe.ts`
 - **Deliverables**:
   - Everything in Hybrid Concierge
   - Weekly 1:1 WebRTC live consultation & movement optimization studio
-  - Direct private VIP Slack channel with Coach Scott (real-time access)
+  - Direct private VIP Slack channel with Coach Gordon (real-time access)
   - Bi-weekly 3D MediaPipe AI computer-vision kinematic movement scans
   - Daily continuous biometric telemetry monitoring & active recovery dosing
   - Complete concierge travel, dining, and executive lifestyle architecture

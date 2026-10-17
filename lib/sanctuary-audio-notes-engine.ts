@@ -4,7 +4,7 @@
  * Enforces the brand promise:
  * "NO SOCIAL MEDIA · ZERO DISTRACTIONS · 100% COACHING & TOOLS"
  * 
- * Delivers 20-60 second encrypted acoustic voice memos from Coach Scott Gordon
+ * Delivers 20-60 second encrypted acoustic voice memos from Coach Gordon
  * straight to the athlete's headphones during rest intervals. Replaces mindless
  * social feeds and doomscrolling with clinical biomechanical cues, vagal down-regulation,
  * and mental focus.
@@ -48,12 +48,12 @@ export interface SanctuaryAudioNote {
 const STORAGE_KEY = 'forge_sanctuary_audio_notes_v1'
 
 /**
- * Institutional Seed Library: Authoritative Voice Memos from Coach Scott Gordon
+ * Institutional Seed Library: Authoritative Voice Memos from Coach Gordon
  */
 export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
   {
     id: 'sanctuary-note-squat-brace',
-    coachName: 'Coach Scott Gordon',
+    coachName: 'Coach Gordon',
     coachTitle: 'Founder & Head Coach, Forge Athletic',
     coachInitials: 'SG',
     clientScope: 'all',
@@ -61,7 +61,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     category: 'movement_cue',
     title: 'Squat Wedge & 360° Intra-Abdominal Brace',
     transcript:
-      "Scott here. On your upcoming squat set: before you unrack, pull the bar down like you're bending it over your traps to engage the lats. Screw your feet into the floor with tripod contact. Take a deep diaphragmatic breath, expand your obliques 360 degrees, and drive through the midfoot on the ascent. No social media, eyes on the horizon. Let's execute.",
+      "Coach Gordon here. On your upcoming squat set: before you unrack, pull the bar down like you're bending it over your traps to engage the lats. Screw your feet into the floor with tripod contact. Take a deep diaphragmatic breath, expand your obliques 360 degrees, and drive through the midfoot on the ascent. No social media, eyes on the horizon. Let's execute.",
     durationSeconds: 38,
     waveformPoints: [
       0.2, 0.45, 0.78, 0.65, 0.35, 0.88, 0.95, 0.72, 0.4, 0.62, 0.84, 0.55,
@@ -77,7 +77,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
   },
   {
     id: 'sanctuary-note-deadlift-slack',
-    coachName: 'Coach Scott Gordon',
+    coachName: 'Coach Gordon',
     coachTitle: 'Founder & Head Coach, Forge Athletic',
     coachInitials: 'SG',
     clientScope: 'all',
@@ -85,7 +85,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     category: 'movement_cue',
     title: 'Deadlift Lat Lock & Slack Removal',
     transcript:
-      "Coach Scott in your ear. Take the slack out of the barbell before it breaks the floor—listen for that metal-on-metal click. Protect your spine by packing your lats as if squeezing oranges in your armpits. Push the floor away rather than pulling back with your lumbar. Keep the bar glued to your shins. Stay locked in.",
+      "Coach Gordon in your ear. Take the slack out of the barbell before it breaks the floor—listen for that metal-on-metal click. Protect your spine by packing your lats as if squeezing oranges in your armpits. Push the floor away rather than pulling back with your lumbar. Keep the bar glued to your shins. Stay locked in.",
     durationSeconds: 42,
     waveformPoints: [
       0.3, 0.55, 0.85, 0.7, 0.42, 0.68, 0.9, 0.82, 0.45, 0.6, 0.79, 0.88,
@@ -101,7 +101,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
   },
   {
     id: 'sanctuary-note-bench-retract',
-    coachName: 'Coach Scott Gordon',
+    coachName: 'Coach Gordon',
     coachTitle: 'Founder & Head Coach, Forge Athletic',
     coachInitials: 'SG',
     clientScope: 'all',
@@ -109,7 +109,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     category: 'movement_cue',
     title: 'Bench Scapular Retraction & Leg Drive',
     transcript:
-      "Scott Gordon with your bench cue. Retract and depress your scapulae into the pad like you're tucking them into your back pockets. Establish firm leg drive before you touch the bar. Flare lats on the eccentric, touch mid-sternum, and drive your heels into the floor to power off the chest. Zero distractions.",
+      "Coach Gordon with your bench cue. Retract and depress your scapulae into the pad like you're tucking them into your back pockets. Establish firm leg drive before you touch the bar. Flare lats on the eccentric, touch mid-sternum, and drive your heels into the floor to power off the chest. Zero distractions.",
     durationSeconds: 35,
     waveformPoints: [
       0.25, 0.48, 0.72, 0.86, 0.62, 0.4, 0.69, 0.85, 0.78, 0.52, 0.65, 0.88,
@@ -125,7 +125,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
   },
   {
     id: 'sanctuary-note-cns-vagal-sigh',
-    coachName: 'Coach Scott Gordon',
+    coachName: 'Coach Gordon',
     coachTitle: 'Founder & Head Coach, Forge Athletic',
     coachInitials: 'SG',
     clientScope: 'all',
@@ -148,14 +148,14 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
   },
   {
     id: 'sanctuary-note-creed-hands-bar',
-    coachName: 'Coach Scott Gordon',
+    coachName: 'Coach Gordon',
     coachTitle: 'Founder & Head Coach, Forge Athletic',
     coachInitials: 'SG',
     clientScope: 'all',
     category: 'mental_focus',
     title: 'The Sanctuary Creed: Hands on the Bar',
     transcript:
-      'Scott here. Remember why we built Forge: The gym is your sacred ground. No feeds, no scrolling, no vanity clout. Every distraction bleeds neurological intent and power output. When you step back up to that platform, you own every millimeter of the bar. Let us get back to work.',
+      'Coach Gordon here. Remember why we built Forge: The gym is your sacred ground. No feeds, no scrolling, no vanity clout. Every distraction bleeds neurological intent and power output. When you step back up to that platform, you own every millimeter of the bar. Let us get back to work.',
     durationSeconds: 30,
     waveformPoints: [
       0.32, 0.6, 0.88, 0.94, 0.75, 0.5, 0.72, 0.9, 0.85, 0.62, 0.78, 0.95,
@@ -171,7 +171,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
   },
   {
     id: 'sanctuary-note-ohp-kinetic-pillar',
-    coachName: 'Coach Scott Gordon',
+    coachName: 'Coach Gordon',
     coachTitle: 'Founder & Head Coach, Forge Athletic',
     coachInitials: 'SG',
     clientScope: 'all',
@@ -179,7 +179,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     category: 'movement_cue',
     title: 'Strict Overhead Press: Kinetic Pillar',
     transcript:
-      'Coach Scott here. The overhead press is a full-body movement. Squeeze your glutes and quads as hard as possible to turn your torso into a concrete pillar. Clear your head back, press straight up close to your nose, then punch your head through at the top. Zero hyperextension of the lumbar spine.',
+      'Coach Gordon here. The overhead press is a full-body movement. Squeeze your glutes and quads as hard as possible to turn your torso into a concrete pillar. Clear your head back, press straight up close to your nose, then punch your head through at the top. Zero hyperextension of the lumbar spine.',
     durationSeconds: 34,
     waveformPoints: [
       0.22, 0.45, 0.7, 0.82, 0.6, 0.44, 0.65, 0.84, 0.76, 0.58, 0.7, 0.89,
@@ -195,7 +195,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
   },
   {
     id: 'sanctuary-note-workout-briefing',
-    coachName: 'Coach Scott Gordon',
+    coachName: 'Coach Gordon',
     coachTitle: 'Founder & Head Coach, Forge Athletic',
     coachInitials: 'SG',
     clientScope: 'all',
@@ -398,7 +398,7 @@ export function getRelevantAudioNoteForRest(options: {
 
 /**
  * Plays a discrete, high-fidelity acoustic notification chime using Web Audio
- * to signal the start of Coach Scott Gordon's voice memo.
+ * to signal the start of Coach Gordon's voice memo.
  */
 export function playSanctuaryAcousticIntroChime(customCtx?: AudioContext | null): void {
   if (typeof window === 'undefined') return
@@ -464,7 +464,7 @@ export function createCoachAudioNote(params: {
 
   return {
     id,
-    coachName: 'Coach Scott Gordon',
+    coachName: 'Coach Gordon',
     coachTitle: 'Founder & Head Coach, Forge Athletic',
     coachInitials: 'SG',
     clientScope: params.clientScope || 'all',

@@ -153,7 +153,7 @@ export default async function ProofOfWorkSharePage({ params }: ProofOfWorkPagePr
           Sanctuary Mode autonomic telemetry are calculated directly from verified session logs.
         </p>
         <p style={{ margin: '6px 0 0', fontSize: 11 }}>
-          © {new Date().getFullYear()} Forge Athletic. Coach Scott Gordon, Master Trainer Candidate. All rights reserved.
+          © {new Date().getFullYear()} Forge Athletic. Coach Gordon, Master Trainer Candidate. All rights reserved.
         </p>
       </footer>
     </main>

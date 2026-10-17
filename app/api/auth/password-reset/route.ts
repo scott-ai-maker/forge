@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
           await admin.from('clients').upsert({
             id: coachUserId,
             email,
-            full_name: 'Coach Scott Gordon',
+            full_name: 'Coach Gordon',
             role: 'coach',
             status: 'active',
             must_reset_password: false,

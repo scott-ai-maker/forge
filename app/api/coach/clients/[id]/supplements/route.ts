@@ -119,7 +119,7 @@ export async function POST(
 
   const conciergeMessage = `**NEW PERFORMANCE SUPPLEMENT & NUTRIENT TIMING GUIDE**
 
-Coach Scott Gordon has published an evidence-based Chrono-Dosing Supplement Guide tailored to your athletic goals:
+Coach Gordon has published an evidence-based Chrono-Dosing Supplement Guide tailored to your athletic goals:
 
 **Morning Ignition (With Breakfast):**
 ${morningList || '• Standard hydration & electrolytes'}
@@ -133,7 +133,7 @@ ${postWorkoutList || '• High-protein whole meal'}
 **Night Sleep Architecture (Pre-Bed):**
 ${nightList || '• Relaxation & dim lighting'}
 
-${customCoachNote ? `**Coach Gordon's Directives & Notes:**\n"${customCoachNote}"\n\n` : ''}*Educational & Scope Notice: Formulated for athletic performance support based on published ISSN & IOC sports science consensus data. Coach Scott Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, prescriptions, or medical nutrition therapy. Always review all dietary supplements with your prescribing healthcare provider before starting, especially if taking prescription medications.*
+${customCoachNote ? `**Coach Gordon's Directives & Notes:**\n"${customCoachNote}"\n\n` : ''}*Educational & Scope Notice: Formulated for athletic performance support based on published ISSN & IOC sports science consensus data. Coach Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, prescriptions, or medical nutrition therapy. Always review all dietary supplements with your prescribing healthcare provider before starting, especially if taking prescription medications.*
 
 Open your **Fitness Hub** to track your daily chrono-dosing adherence.`
 

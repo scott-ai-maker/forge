@@ -173,7 +173,7 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
       relevantCurriculums: ['Scope of Practice & Clinical Liability Protection', 'Orthopedic Referral Protocols'],
       suggestedFollowUps: triage.isEmergency911
         ? ['Call 911 immediately', 'Locate Nearest Hospital', 'Notify Emergency Contacts']
-        : ['What should I ask my doctor/PT?', 'Message Coach Scott directly', 'How will my program be modified?'],
+        : ['What should I ask my doctor/PT?', 'Message Coach Gordon directly', 'How will my program be modified?'],
       requiresCoachPing: true,
       coachPingReason: triage.pingReason,
       isEmergency911: triage.isEmergency911,

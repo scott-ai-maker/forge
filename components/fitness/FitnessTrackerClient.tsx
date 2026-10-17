@@ -1178,6 +1178,8 @@ export default function FitnessTrackerClient({
       })
       setActiveRestTimerKey(timerKey)
       triggerHaptic('success')
+      playCoachChime(659.25, 0.22, 'triangle')
+      speakCoachVoiceCue(`Starting ${seconds} second rest interval.`)
       setStatus(`⏱️ Coach Gordon: Started ${seconds}s rest metronome for ${exName}`)
     }
 

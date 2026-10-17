@@ -417,7 +417,7 @@ describe('/api/coach/workout-plans', () => {
       expect(planJson?.dualCardioPlan).toEqual(testDualCardio)
       expect(planJson?.isCertifiedByCoach).toBe(true)
       expect(planJson?.safetyGateCertified).toBe(true)
-      expect(planJson?.certifiedBy).toBe('Coach Scott Gordon (NASM Master Trainer)')
+      expect(planJson?.certifiedBy).toBe('Coach Gordon (NASM Master Trainer)')
     })
   })
 

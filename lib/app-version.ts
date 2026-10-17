@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.43.3'
+export const APP_VERSION = '1.43.4'
 export const APP_RELEASE_DATE = '2026-10-16'
-export const APP_RELEASE_CODENAME = 'Web Audio Pipeline Autoplay Immunity for Rest Intervals'
+export const APP_RELEASE_CODENAME = 'Universal Coach Gordon Neural Rest Start Engine & Brand Identity Enforcement'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,13 +33,30 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.43.3',
+    version: '1.43.4',
     date: '2026-10-16',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Rest Start Neural Voice · ElevenLabs Cloned Model · Coach Gordon Strict Nomenclature · Zero Latency Buffering',
+    title: 'Universal Coach Gordon Neural Rest Start Engine & Absolute Brand Identity',
+    summary: 'Standardized rest start audio prompts ("Starting 60 second rest interval.") across all set loggers, auto-pacers, and studio timers into Coach Gordon\'s authentic ElevenLabs cloned voice model with comprehensive buffer pre-warming. Completely eliminated all legacy "Coach Scott" nomenclature across the rest timer pill, voice memo modals, seed notes, and client notifications, strictly standardizing exclusively on Coach Gordon.',
+    highlights: [
+      'Universal Rest Start Voice Delivery: In addition to rest interval completion, rest interval starts ("Starting 60 second rest interval.") now reliably stream in Coach Gordon\'s authentic cloned ElevenLabs voice model.',
+      'Comprehensive Pre-Warmed Cues: Pre-decoded audio buffers across all standard rest intervals (15s, 30s, 45s, 60s, 75s, 90s, 105s, 120s, 135s, 150s, 180s, 240s, 300s) for instant 0ms playback on gym floors.',
+      'Strict Brand Nomenclature Enforcement: Replaced all legacy "Coach Scott" and "Coach Scott Gordon" text across the floating rest dock pill, voice studio, default transcripts, seed notes, and database routes, strictly adopting "Coach Gordon" everywhere.',
+    ],
+    relatedLinks: [
+      { label: 'Workout Sanctuary HUD', href: '/dashboard/fitness' },
+    ],
+  },
+  {
+    version: '1.43.3',
+    date: '2026-10-16',
+    codename: 'Web Audio Pipeline Autoplay Immunity for Rest Intervals',
     category: 'fix',
     badge: 'Web Audio API · AudioBufferSourceNode · Autoplay Immunity · Zero-Delay Rest Completion Voice',
     title: 'Web Audio Pipeline Autoplay Immunity for Rest Interval Completion',
-    summary: 'Resolved browser timer autoplay restrictions where background rest interval countdowns (setInterval) caused HTMLAudioElement.play() to be blocked by browser media policies, triggering an unintended fallback to the robotic Web Speech system voice. Upgraded the entire neural voice engine to Web Audio API (AudioBufferSourceNode) with automatic user-gesture audio context unlocking, ensuring rest completion cues always stream Coach Scott Gordon\'s authentic cloned ElevenLabs voice.',
+    summary: 'Resolved browser timer autoplay restrictions where background rest interval countdowns (setInterval) caused HTMLAudioElement.play() to be blocked by browser media policies, triggering an unintended fallback to the robotic Web Speech system voice. Upgraded the entire neural voice engine to Web Audio API (AudioBufferSourceNode) with automatic user-gesture audio context unlocking, ensuring rest completion cues always stream Coach Gordon\'s authentic cloned ElevenLabs voice.',
     highlights: [
       'Web Audio API Hardware Routing: playNeuralCoachVoiceCue() now routes audio directly through an active AudioContext via AudioBufferSourceNode, which is completely immune to browser background timer autoplay restrictions.',
       'Auto-Warmed Decoded Buffers: Rest completion and tempo prompts are pre-decoded into memory as AudioBuffers (preloadedAudioBuffers) during app initialization, playing with true 0ms latency when countdowns reach zero.',
@@ -52,16 +69,16 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
     version: '1.43.2',
     date: '2026-10-16',
-    codename: 'Universal Coach Scott Gordon Voice Model Across All Spoken Prompts',
+    codename: 'Universal Coach Gordon Voice Model Across All Spoken Prompts',
     category: 'feature',
     badge: 'Universal Cloned Voice · ElevenLabs UPezm4CtrvcD6aNXjeU1 · Zero-Latency Pre-Buffering · All Spoken Prompts',
-    title: 'Universal Coach Scott Gordon Spoken Voice Engine',
-    summary: 'Ensured 100% of spoken audio prompts across the entire Forge Athletic ecosystem exclusively speak in Coach Scott Gordon\'s authentic cloned ElevenLabs voice model (UPezm4CtrvcD6aNXjeU1). Workout timers, set loggers, bio-paced rest cues, tempo metronome cadences, stretch hold timers, consultant memos, and Sunday Executive Dossier debriefs now stream Coach Gordon\'s true voice with zero-latency background pre-warming.',
+    title: 'Universal Coach Gordon Spoken Voice Engine',
+    summary: 'Ensured 100% of spoken audio prompts across the entire Forge Athletic ecosystem exclusively speak in Coach Gordon\'s authentic cloned ElevenLabs voice model (UPezm4CtrvcD6aNXjeU1). Workout timers, set loggers, bio-paced rest cues, tempo metronome cadences, stretch hold timers, consultant memos, and Sunday Executive Dossier debriefs now stream Coach Gordon\'s true voice with zero-latency background pre-warming.',
     highlights: [
-      'Universal Cloned Voice Pipeline: Every spoken voice cue in the application (workout timers, set logging confirmations, bio-paced rest cues, tempo metronome cadences, stretch holds, and debriefs) streams Coach Scott Gordon\'s authentic ElevenLabs clone (UPezm4CtrvcD6aNXjeU1).',
+      'Universal Cloned Voice Pipeline: Every spoken voice cue in the application (workout timers, set logging confirmations, bio-paced rest cues, tempo metronome cadences, stretch holds, and debriefs) streams Coach Gordon\'s authentic ElevenLabs clone (UPezm4CtrvcD6aNXjeU1).',
       'Development & Preview TTS Access: Upgraded /api/coach/tts authorization to ensure local development and client workout sessions synthesize Coach Gordon\'s authentic voice smoothly without 401 fallbacks to robotic browser speech.',
       'Zero-Latency In-Gym Pre-Buffering: Automatically pre-warms common recurring workout cues ("Three", "Two", "One. Lock in!", "Hold solid!", "DRIVE!", "Rest complete! Let\'s get this set.") into client memory for instant vocal delivery.',
-      'Eliminated Generic Voices: Removed all third-party generic voices (OpenAI Onyx) from the coaching speech pipeline, standardizing exclusively on Coach Scott Gordon\'s true athletic baritone.',
+      'Eliminated Generic Voices: Removed all third-party generic voices (OpenAI Onyx) from the coaching speech pipeline, standardizing exclusively on Coach Gordon\'s true athletic baritone.',
     ],
     relatedLinks: [
       { label: 'Workout Sanctuary HUD', href: '/dashboard/fitness' },
@@ -72,15 +89,15 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
     version: '1.43.1',
     date: '2026-10-16',
-    codename: 'Coach Scott Gordon Authentic ElevenLabs Cloned Voice Integration',
+    codename: 'Coach Gordon Authentic ElevenLabs Cloned Voice Integration',
     category: 'feature',
-    badge: 'ElevenLabs Voice Model · Coach Scott Gordon Custom Clone · Rest Dock Delivery · Zero Latency Buffering',
-    title: 'Coach Scott Gordon ElevenLabs Neural Voice Integration',
-    summary: 'Wired Coach Scott Gordon\'s authentic cloned ElevenLabs voice model (UPezm4CtrvcD6aNXjeU1) directly into the Sanctuary Audio Notes system. Athletes now hear Coach Scott\'s true voice delivering biomechanical cues, vagal down-regulation breathwork, and mental fortitude reminders with prefetching, background audio ducking, and 1-click voice memo synthesis in the Voice Studio.',
+    badge: 'ElevenLabs Voice Model · Coach Gordon Custom Clone · Rest Dock Delivery · Zero Latency Buffering',
+    title: 'Coach Gordon ElevenLabs Neural Voice Integration',
+    summary: 'Wired Coach Gordon\'s authentic cloned ElevenLabs voice model (UPezm4CtrvcD6aNXjeU1) directly into the Sanctuary Audio Notes system. Athletes now hear Coach Gordon\'s true voice delivering biomechanical cues, vagal down-regulation breathwork, and mental fortitude reminders with prefetching, background audio ducking, and 1-click voice memo synthesis in the Voice Studio.',
     highlights: [
-      'Authentic ElevenLabs Voice Pipeline: Directly connects the Sanctuary Audio Notes player to /api/coach/tts using Coach Scott Gordon\'s cloned voice ID (UPezm4CtrvcD6aNXjeU1) with zero-latency client-side blob caching.',
-      'Voice Studio Neural Generation: Coach Scott can type or select preset athletic cues and click "Generate with ElevenLabs Voice" to create, preview, and dispatch studio-quality audio in seconds.',
-      'Zero-Distraction Rest Audio Ducking: Preserves background music ducking while delivering Coach Scott Gordon\'s authentic voice straight to athlete headphones during sets.',
+      'Authentic ElevenLabs Voice Pipeline: Directly connects the Sanctuary Audio Notes player to /api/coach/tts using Coach Gordon\'s cloned voice ID (UPezm4CtrvcD6aNXjeU1) with zero-latency client-side blob caching.',
+      'Voice Studio Neural Generation: Coach Gordon can type or select preset athletic cues and click "Generate with ElevenLabs Voice" to create, preview, and dispatch studio-quality audio in seconds.',
+      'Zero-Distraction Rest Audio Ducking: Preserves background music ducking while delivering Coach Gordon\'s authentic voice straight to athlete headphones during sets.',
       'Failover Architecture: Automatically falls back to high-fidelity Web Speech API if offline or in restricted network conditions.',
     ],
     relatedLinks: [
@@ -93,14 +110,14 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
     date: '2026-10-16',
     codename: 'Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine',
     category: 'feature',
-    badge: 'Sanctuary Audio Notes · In-Ear Rest Delivery · Zero Social Media · Coach Scott Gordon Voice Memos · Audio Ducking',
+    badge: 'Sanctuary Audio Notes · In-Ear Rest Delivery · Zero Social Media · Coach Gordon Voice Memos · Audio Ducking',
     title: 'Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine',
-    summary: 'Delivered an authoritative acoustic coaching pipeline enforcing Forge Athletic\'s zero-distraction brand promise. Coach Scott Gordon can record and dispatch 20-60 second high-impact voice memos directly into the athlete\'s headphones during gym rest intervals—replacing mindless social feeds and doomscrolling with biomechanical cues, vagal down-regulation breathwork, and mental focus.',
+    summary: 'Delivered an authoritative acoustic coaching pipeline enforcing Forge Athletic\'s zero-distraction brand promise. Coach Gordon can record and dispatch 20-60 second high-impact voice memos directly into the athlete\'s headphones during gym rest intervals—replacing mindless social feeds and doomscrolling with biomechanical cues, vagal down-regulation breathwork, and mental focus.',
     highlights: [
       'In-Ear Rest Interval Audio Delivery: Replaces phone doomscrolling and vanity selfie feeds with concise, high-impact audio memos delivered straight to the athlete\'s headphones (AirPods) during rest intervals.',
-      'Acoustic Background Music Ducking: Utilizes the W3C Audio Session API and Web Audio hardware clock to gently duck Spotify and Apple Music while Coach Scott speaks, seamlessly restoring music volume upon completion.',
-      'Institutional Seed Library: Pre-loaded with Coach Scott Gordon\'s master coaching directives across Big 5 compound lifts (360° squat brace, deadlift lat lock, bench retraction, overhead kinetic pillar) and autonomic vagal down-regulation.',
-      'Universal PCM WAV Voice Studio: Coach Scott Gordon can record up to 60 seconds of crystal-clear 16-bit linear PCM audio with real-time waveform visualization, instant audio preview, exercise targeting, and 1-click dispatch.',
+      'Acoustic Background Music Ducking: Utilizes the W3C Audio Session API and Web Audio hardware clock to gently duck Spotify and Apple Music while Coach Gordon speaks, seamlessly restoring music volume upon completion.',
+      'Institutional Seed Library: Pre-loaded with Coach Gordon\'s master coaching directives across Big 5 compound lifts (360° squat brace, deadlift lat lock, bench retraction, overhead kinetic pillar) and autonomic vagal down-regulation.',
+      'Universal PCM WAV Voice Studio: Coach Gordon can record up to 60 seconds of crystal-clear 16-bit linear PCM audio with real-time waveform visualization, instant audio preview, exercise targeting, and 1-click dispatch.',
       'Tactile In-Ear Scrubber & Readable Transcript Drawer: Features high-contrast obsidian & gold waveform bars, audio scrub controls, and collapsible transcripts for loud, reverberant gym floors.',
     ],
     relatedLinks: [
@@ -121,7 +138,7 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
       'Big 5 Compound 1RM Overload Vault: Dynamically calculates estimated 1 Rep Max benchmarks (Brzycki model) across Barbell Back Squat, Conventional Deadlift, Bench Press, Overhead Press, and Weighted Pull-Up.',
       'Sanctuary Mode Autonomic & Neuro-Discipline Integration: Features real-time focus fidelity percentages, total hours logged in the gym without social media distractions, and vagal down-regulation breathwork counts.',
       'ACWR & Kinetic Symmetry Safety Index: Validates Acute:Chronic Workload Ratios (0.8–1.3 sweet spot) and Push:Pull / Squat:Hinge movement symmetry for physical therapist and orthopedic clearance.',
-      'Coach Scott Gordon Clinical Attestation: Digitally signs and certifies compliance with NASM OPT™ biomechanical standards, credentials, and cryptographic verification seals (FORGE-POW-XXXX).',
+      'Coach Gordon Clinical Attestation: Digitally signs and certifies compliance with NASM OPT™ biomechanical standards, credentials, and cryptographic verification seals (FORGE-POW-XXXX).',
       'Zero-Login Private Web Sharing & PDF Export: Embeds URL-safe tokenized share routes (/pow/[token]) and high-contrast @media print stylesheets with embedded Founding Member Pass peer referral links.',
     ],
     relatedLinks: [

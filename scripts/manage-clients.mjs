@@ -51,7 +51,7 @@ const SMOKETEST_ACCOUNTS = [
 const NEW_ACCOUNTS = [
   {
     email: 'scott.gordon72@outlook.com',
-    name: 'Coach Scott Gordon',
+    name: 'Coach Gordon',
     role: 'coach',
     password: process.env.SCOTT_COACH_PASSWORD || process.env.TEMP_CLIENT_PASSWORD || 'Temp1234!',
   },

@@ -41,13 +41,13 @@ export default function CoachSanctuaryAudioNoteModal({
 
   // Form State
   const [title, setTitle] = useState(
-    initialExerciseName ? `${initialExerciseName}: Biomechanical Cue` : 'Coach Scott: Focus Cue'
+    initialExerciseName ? `${initialExerciseName}: Biomechanical Cue` : 'Coach Gordon: Focus Cue'
   )
   const [category, setCategory] = useState<SanctuaryAudioCategory>('movement_cue')
   const [exerciseScope, setExerciseScope] = useState(initialExerciseName || '')
   const [clientScope, setClientScope] = useState(initialClientId || 'all')
   const [transcript, setTranscript] = useState(
-    'Coach Scott Gordon in your ear. Maximize mechanical tension, keep hands on the bar, and eliminate gym distractions. Pure execution.'
+    'Coach Gordon in your ear. Maximize mechanical tension, keep hands on the bar, and eliminate gym distractions. Pure execution.'
   )
   const [priority, setPriority] = useState<'high' | 'normal'>('high')
   const [savedSuccessMessage, setSavedSuccessMessage] = useState(false)
@@ -88,7 +88,7 @@ export default function CoachSanctuaryAudioNoteModal({
 
   if (!isOpen) return null
 
-  // Synthesize text using Coach Scott Gordon's ElevenLabs voice clone
+  // Synthesize text using Coach Gordon's ElevenLabs voice clone
   const handleGenerateWithElevenLabs = async () => {
     const textToSynthesize = transcript.trim() || title.trim()
     if (!textToSynthesize) {
@@ -195,7 +195,7 @@ export default function CoachSanctuaryAudioNoteModal({
       // Auto-generate transcript placeholder if empty
       if (!transcript) {
         setTranscript(
-          `Coach Scott Gordon audio memo for ${exerciseScope || 'training session'}. Maximize mechanical tension, keep hands on the bar, and eliminate gym distractions.`
+          `Coach Gordon audio memo for ${exerciseScope || 'training session'}. Maximize mechanical tension, keep hands on the bar, and eliminate gym distractions.`
         )
       }
     } catch (err: unknown) {
@@ -244,7 +244,7 @@ export default function CoachSanctuaryAudioNoteModal({
 
     const note = createCoachAudioNote({
       title: title.trim(),
-      transcript: transcript.trim() || 'Coach Scott Gordon voice instruction.',
+      transcript: transcript.trim() || 'Coach Gordon voice instruction.',
       category,
       durationSeconds: recordedDuration || Math.max(15, recordSeconds) || 30,
       exerciseScope: exerciseScope.trim() || undefined,
@@ -356,7 +356,7 @@ export default function CoachSanctuaryAudioNoteModal({
                   letterSpacing: '0.04em',
                 }}
               >
-                Coach Scott Gordon · Zero-Distraction Audio Memos (Max 60s)
+                Coach Gordon · Zero-Distraction Audio Memos (Max 60s)
               </div>
             </div>
           </div>
@@ -535,7 +535,7 @@ export default function CoachSanctuaryAudioNoteModal({
                       }}
                     >
                       {voiceProvider === 'elevenlabs-coach-gordon'
-                        ? '⚡ ElevenLabs Cloned Voice (Coach Scott Gordon)'
+                        ? '⚡ ElevenLabs Cloned Voice (Coach Gordon)'
                         : '🎙️ Live Microphone Recording'}
                     </div>
                   )}
@@ -545,10 +545,10 @@ export default function CoachSanctuaryAudioNoteModal({
                   {isRecording
                     ? 'Recording live PCM WAV audio... Speak clearly into your microphone.'
                     : isGeneratingVoice
-                    ? 'Synthesizing with Coach Scott Gordon’s authentic ElevenLabs voice model...'
+                    ? 'Synthesizing with Coach Gordon’s authentic ElevenLabs voice model...'
                     : recordedDataUrl
                     ? 'Audio memo ready. Review preview or re-generate below.'
-                    : 'Generate using Coach Scott Gordon’s authentic ElevenLabs voice model or record live via microphone.'}
+                    : 'Generate using Coach Gordon’s authentic ElevenLabs voice model or record live via microphone.'}
                 </div>
 
                 {/* Generation & Record Action Buttons */}
@@ -909,21 +909,21 @@ export default function CoachSanctuaryAudioNoteModal({
                         title: 'Squat Wedge & 360° Intra-Abdominal Brace',
                         ex: 'Barbell Back Squat',
                         cat: 'movement_cue' as const,
-                        text: "Scott here. Before you unrack, pull the bar down like you're bending it over your traps. Screw your feet into the floor with tripod contact. Expand your obliques 360 degrees, and drive through the midfoot.",
+                        text: "Coach Gordon here. Before you unrack, pull the bar down like you're bending it over your traps. Screw your feet into the floor with tripod contact. Expand your obliques 360 degrees, and drive through the midfoot.",
                       },
                       {
                         label: 'Deadlift Slack',
                         title: 'Deadlift Lat Lock & Slack Removal',
                         ex: 'Barbell Deadlift',
                         cat: 'movement_cue' as const,
-                        text: "Coach Scott in your ear. Take the slack out of the barbell before breaking the floor. Squeeze oranges in your armpits to pack your lats. Push the floor away. Keep the bar glued to your shins.",
+                        text: "Coach Gordon in your ear. Take the slack out of the barbell before breaking the floor. Squeeze oranges in your armpits to pack your lats. Push the floor away. Keep the bar glued to your shins.",
                       },
                       {
                         label: 'Bench Retract',
                         title: 'Bench Scapular Retraction & Leg Drive',
                         ex: 'Barbell Bench Press',
                         cat: 'movement_cue' as const,
-                        text: "Scott Gordon with your bench cue. Retract and depress your scapulae into the pad. Establish firm leg drive. Flare lats on the eccentric and punch off the chest.",
+                        text: "Coach Gordon with your bench cue. Retract and depress your scapulae into the pad. Establish firm leg drive. Flare lats on the eccentric and punch off the chest.",
                       },
                       {
                         label: 'Vagal Sigh',

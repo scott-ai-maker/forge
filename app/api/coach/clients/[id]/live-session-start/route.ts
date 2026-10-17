@@ -42,7 +42,7 @@ export async function POST(
   const athleteName = clientRow?.full_name || 'Athlete'
 
   // 2. Insert invitation message into Concierge line
-  const inviteMessage = `**1:1 LIVE VIDEO CONSULTATION IN PROGRESS**\n\nCoach Scott Gordon is waiting in your Live Movement Studio. Tap below to join your live coaching stream:\n\n[**Join Live Consultation Room**](/dashboard/live)`
+  const inviteMessage = `**1:1 LIVE VIDEO CONSULTATION IN PROGRESS**\n\nCoach Gordon is waiting in your Live Movement Studio. Tap below to join your live coaching stream:\n\n[**Join Live Consultation Room**](/dashboard/live)`
 
   await admin
     .from('coach_client_messages')
@@ -59,7 +59,7 @@ export async function POST(
     const res = await notifyUser({
       userId: clientId,
       type: 'live_session_started',
-      title: 'Coach Scott Gordon is Live!',
+      title: 'Coach Gordon is Live!',
       body: 'Your 1:1 Live Movement & Advisory Consultation is starting now. Tap to join.',
       data: { clientId, coachId: authz.user.id },
     })

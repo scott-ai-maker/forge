@@ -26,12 +26,12 @@ describe('CoachSanctuaryAudioNoteModal Component Architecture', () => {
 
   it('strictly adheres to brand rule: Forge Athletic, no GAA', () => {
     const source = fs.readFileSync(componentPath, 'utf-8')
-    expect(source).toContain('Coach Scott Gordon')
+    expect(source).toContain('Coach Gordon')
     expect(source).not.toContain('GAA')
     expect(source).not.toContain('Gordon Athletic Advisory')
   })
 
-  it('integrates ElevenLabs neural voice generation with Coach Scott Gordon cloned model', () => {
+  it('integrates ElevenLabs neural voice generation with Coach Gordon cloned model', () => {
     const source = fs.readFileSync(componentPath, 'utf-8')
     expect(source).toContain('generate-elevenlabs-voice-btn')
     expect(source).toContain('handleGenerateWithElevenLabs')

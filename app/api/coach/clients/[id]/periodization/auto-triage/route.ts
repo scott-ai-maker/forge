@@ -92,7 +92,7 @@ export async function POST(
       modulatedPlan = extendCurrentPhase(macrocycle, activePhase, 1, memo)
       actionSummary = `Extended Phase ${activePhase} by 1 reinforcement microcycle.`
     } else if (action === 'certify_safety_gate') {
-      actionSummary = 'Master Coach Safety Gate Certified: Workout selections & volume verified and cleared by Coach Scott Gordon.'
+      actionSummary = 'Master Coach Safety Gate Certified: Workout selections & volume verified and cleared by Coach Gordon.'
     }
 
     // 3. Persist to database
@@ -105,7 +105,7 @@ export async function POST(
           ? {
               isCertifiedByCoach: true,
               coachCertifiedAt: new Date().toISOString(),
-              certifiedBy: 'Coach Scott Gordon (NASM Master Trainer)',
+              certifiedBy: 'Coach Gordon (NASM Master Trainer)',
               safetyGateCertified: true,
             }
           : {}),
@@ -130,7 +130,7 @@ export async function POST(
             ? {
                 isCertifiedByCoach: true,
                 coachCertifiedAt: new Date().toISOString(),
-                certifiedBy: 'Coach Scott Gordon (NASM Master Trainer)',
+                certifiedBy: 'Coach Gordon (NASM Master Trainer)',
                 safetyGateCertified: true,
               }
             : {}),
@@ -141,7 +141,7 @@ export async function POST(
     // 4. Dispatch concierge notification to client (non-blocking)
     const activeWeekObj = modulatedPlan.weeks?.find(w => w.weekNumber === modulatedPlan.currentWeek) || modulatedPlan.weeks?.[0]
     const notificationContent = action === 'certify_safety_gate'
-      ? `### 🛡️ Master Coach Safety Gate: Program Certified\n\nCoach Scott Gordon has personally reviewed your exercise selections, volume, and kinetic movement profile.\n\n- **Status**: Clinically Certified & Cleared for Training\n- **Coach**: Scott Gordon, NASM Master Trainer (CPT · CES · PES)\n- **Verification**: ${actionSummary}\n\nYour program is certified and ready in your **Fitness Lab**!`
+      ? `### 🛡️ Master Coach Safety Gate: Program Certified\n\nCoach Gordon has personally reviewed your exercise selections, volume, and kinetic movement profile.\n\n- **Status**: Clinically Certified & Cleared for Training\n- **Coach**: Coach Gordon, NASM Master Trainer (CPT · CES · PES)\n- **Verification**: ${actionSummary}\n\nYour program is certified and ready in your **Fitness Lab**!`
       : `### Periodization Auto-Triage: Plan Calibrated\n\nCoach Gordon has calibrated your **12-Week OPT™ Macrocycle Architecture** based on your latest workload & recovery telemetry.\n\n- **Action Taken**: ${actionSummary}\n- **Active Phase**: ${activeWeekObj?.phase || 'Active Phase'}\n- **Microcycle Theme**: ${activeWeekObj?.theme || 'Standard Loading'}\n- **Target Variables**: ${activeWeekObj?.volumeIntensity || 'Prescribed Load'} (${activeWeekObj?.tempo ?? '4/2/1 tempo'})\n- **Directive**: ${activeWeekObj?.coachWeeklyMemo ?? 'Execute with strict tempo and joint control.'}\n\nYour updated timeline is live inside your **Fitness Lab**.`
 
     try {

@@ -26,7 +26,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 })
 
 const PROTECTED_EMAILS = new Set([
-  'scott.gordon72@outlook.com', // Master Coach Scott Gordon
+  'scott.gordon72@outlook.com', // Master Coach Gordon
   '5c077.60rd0n@gmail.com',    // Scott Gordon (Client)
   '5c077.60rd0n@proton.me',    // Scott Gordon (Proton reserve)
   'da_mona_lisa@msn.com',       // Lisa Gordon

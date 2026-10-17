@@ -8,7 +8,7 @@ const audioBufferCache = new Map<string, { buffer: ArrayBuffer; contentType: str
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
 const MAX_CACHE_ENTRIES = 200
 
-// Default ElevenLabs voice: Coach Scott Gordon authentic custom clone
+// Default ElevenLabs voice: Coach Gordon authentic custom clone
 const DEFAULT_ELEVENLABS_VOICE_ID =
   process.env.COACH_GORDON_ELEVENLABS_VOICE_ID ||
   process.env.ELEVENLABS_VOICE_ID ||
@@ -110,7 +110,7 @@ async function handleTtsRequest(rawText: string, voiceIdOverride?: string) {
 
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY
 
-  // 1. Primary: ElevenLabs Authentic Coach Scott Gordon Custom Cloned Voice Model
+  // 1. Primary: ElevenLabs Authentic Coach Gordon Custom Cloned Voice Model
   if (elevenLabsKey) {
     try {
       const voiceId = voiceIdOverride || DEFAULT_ELEVENLABS_VOICE_ID

@@ -84,8 +84,8 @@ describe('Ask Coach Gordon AI Engine & Multi-Tier Liability Safeguards', () => {
       expect(check.reason).toContain('herniated')
     })
 
-    it('detects coach ping need when athlete asks to message real Coach Scott', () => {
-      const check = detectCoachPingNeed('Can you ping coach scott to review my progress?')
+    it('detects coach ping need when athlete asks to message real Coach Gordon', () => {
+      const check = detectCoachPingNeed('Can you ping coach gordon to review my progress?')
       expect(check.requiresCoachPing).toBe(true)
       expect(check.reason).toContain('ping coach')
     })

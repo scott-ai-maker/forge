@@ -141,7 +141,7 @@ export async function POST(
     userId: clientId,
     type: 'live_session_recap',
     title: '1:1 Live Consultation Recap Ready',
-    body: 'Coach Scott Gordon has dispatched your live session metrics & recovery directive.',
+    body: 'Coach Gordon has dispatched your live session metrics & recovery directive.',
     data: { clientId, coachId: authz.user.id },
   }).catch(() => undefined)
 

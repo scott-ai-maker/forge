@@ -8,7 +8,7 @@
  * 1. Cumulative kinetic tonnage & Big 5 compound 1RM overload curve
  * 2. Sanctuary Mode autonomic focus & vagal down-regulation record
  * 3. ACWR workload safety index & kinetic symmetry distribution
- * 4. Clinical S.O.A.P. notes & Coach Scott Gordon master attestation
+ * 4. Clinical S.O.A.P. notes & Coach Gordon master attestation
  * 5. Deterministic cryptographic verification seal (FORGE-POW-XXXX)
  * 6. Private peer recommendation invite (claim a Founding Member Pass)
  * 7. URL-safe token serialization for zero-login doctor/PT/peer sharing

@@ -32,10 +32,10 @@ describe('Sanctuary Audio Notes Engine', () => {
   })
 
   describe('Default Seed Library', () => {
-    it('contains institutional notes from Coach Scott Gordon with Forge Athletic branding and ElevenLabs cloned voice', () => {
+    it('contains institutional notes from Coach Gordon with Forge Athletic branding and ElevenLabs cloned voice', () => {
       expect(DEFAULT_SANCTUARY_AUDIO_NOTES.length).toBeGreaterThanOrEqual(5)
       for (const note of DEFAULT_SANCTUARY_AUDIO_NOTES) {
-        expect(note.coachName).toBe('Coach Scott Gordon')
+        expect(note.coachName).toBe('Coach Gordon')
         expect(note.coachTitle).toContain('Forge Athletic')
         expect(note.coachInitials).toBe('SG')
         expect(note.durationSeconds).toBeLessThanOrEqual(60)

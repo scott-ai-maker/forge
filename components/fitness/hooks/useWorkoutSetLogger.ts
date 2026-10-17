@@ -193,7 +193,7 @@ export function useWorkoutSetLogger(
 
       triggerHaptic('success')
       playPrecisionTone({ freq: 659.25, duration: 0.22, type: 'triangle' })
-      speakCoachVoiceCue(`Set ${currentDraft.setNumber} saved. Starting ${restSecsToSave} second rest.`)
+      speakCoachVoiceCue(`Starting ${restSecsToSave} second rest interval.`)
 
       onStartRestTimer?.(exercise.name, key, restSecsToSave)
 
