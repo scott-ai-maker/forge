@@ -18,7 +18,7 @@ export interface CoachVoiceOptions {
   onEnded?: () => void
 }
 
-import { configureAudioSession } from './web-audio-cadence-engine'
+import { configureAudioSession, getSharedAudioContext } from './web-audio-cadence-engine'
 
 let cachedCoachVoice: SpeechSynthesisVoice | null = null
 
@@ -35,13 +35,55 @@ const MALE_COACH_NAMES = [
 ]
 
 let activeAudioElement: HTMLAudioElement | null = null
+let activeBufferSource: AudioBufferSourceNode | null = null
+let activeGainNode: GainNode | null = null
 let activeUtterances: SpeechSynthesisUtterance[] = []
+
+export const preloadedAudioBuffers = new Map<string, AudioBuffer>()
+
+async function decodeAudioBufferSafely(ctx: AudioContext, arrayBuffer: ArrayBuffer): Promise<AudioBuffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const copy = arrayBuffer.slice(0)
+      const res = ctx.decodeAudioData(
+        copy,
+        decoded => resolve(decoded),
+        err => reject(err)
+      )
+      if (res && typeof (res as Promise<AudioBuffer>).then === 'function') {
+        (res as Promise<AudioBuffer>).then(resolve).catch(reject)
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
 
 /**
  * Stops all currently active neural and Web Speech coach audio playback immediately.
  */
 export function stopCoachVoiceCue(): void {
   if (typeof window === 'undefined') return
+
+  if (activeBufferSource) {
+    try {
+      activeBufferSource.stop()
+      activeBufferSource.disconnect()
+    } catch {
+      // Ignore audio stop error
+    }
+    activeBufferSource = null
+  }
+
+  if (activeGainNode) {
+    try {
+      activeGainNode.disconnect()
+    } catch {
+      // Ignore gain disconnect error
+    }
+    activeGainNode = null
+  }
+
   if (activeAudioElement) {
     try {
       activeAudioElement.pause()
@@ -51,6 +93,7 @@ export function stopCoachVoiceCue(): void {
     }
     activeAudioElement = null
   }
+
   if ('speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel()
@@ -228,7 +271,12 @@ export const COMMON_COACH_GORDON_CUES = [
   'Control down... four',
   'Hold solid!',
   'DRIVE!',
-  'Rest complete! Let\'s get this set.',
+  "Rest complete! Let's get this set.",
+  "Rest interval complete. Let's get this set.",
+  "Rest complete. Let's get to work.",
+  'Starting 60 second rest interval.',
+  'Starting 90 second rest interval.',
+  'Starting 120 second rest interval.',
   'Stretch hold complete!',
   'SMR rolling complete!',
   'Rack it! Outstanding set.',
@@ -236,6 +284,7 @@ export const COMMON_COACH_GORDON_CUES = [
 
 /**
  * Pre-fetches an audio cue via ElevenLabs TTS to ensure zero-latency voice cues.
+ * Decodes into Web Audio buffer when AudioContext is available for instant non-exclusive playback.
  */
 export async function prefetchCoachVoiceCue(text: string, voiceId: string = COACH_GORDON_VOICE_ID): Promise<string | null> {
   if (typeof window === 'undefined') return null
@@ -263,9 +312,22 @@ export async function prefetchCoachVoiceCue(text: string, voiceId: string = COAC
 
     const contentType = res.headers.get('content-type') || ''
     if (contentType.includes('audio/')) {
-      const blob = await res.blob()
+      const arrayBuffer = await res.arrayBuffer()
+      const blob = new Blob([arrayBuffer], { type: contentType })
       const objectUrl = URL.createObjectURL(blob)
       preloadedAudioBlobUrls.set(cacheKey, objectUrl)
+
+      // Decode into Web Audio buffer for instant zero-latency playback
+      const ctx = getSharedAudioContext()
+      if (ctx) {
+        try {
+          const buffer = await decodeAudioBufferSafely(ctx, arrayBuffer)
+          preloadedAudioBuffers.set(cacheKey, buffer)
+        } catch {
+          // Ignore decoding errors during prefetch
+        }
+      }
+
       return objectUrl
     }
   } catch {
@@ -341,8 +403,9 @@ export function chunkTextIntoSpeechSentences(text: string, maxChunkLength = 160)
 /**
  * Plays hyper-realistic studio neural voice audio powered by Coach Gordon's authentic
  * cloned voice model (UPezm4CtrvcD6aNXjeU1) via the server-side /api/coach/tts route.
- * Uses client-side blob caching and synchronous audio initialization to maintain user activation
- * gestures on iOS Safari / WebKit, with graceful fallback to Web Speech API.
+ * Prioritizes Web Audio API (AudioBufferSourceNode) which is completely immune to
+ * browser timer/background autoplay restrictions, ensuring rest intervals, set loggers,
+ * and tempo countdowns always play in Coach Gordon's voice without robotic fallbacks.
  */
 export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceOptions = {}): Promise<boolean> {
   if (typeof window === 'undefined') return false
@@ -353,43 +416,109 @@ export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceO
   // Ensure AudioSession is set to transient to duck background music instead of pausing it
   configureAudioSession('transient')
 
-  try {
-    if (activeAudioElement) {
-      try {
-        activeAudioElement.pause()
-        activeAudioElement.currentTime = 0
-      } catch {
-        // Ignore audio pause error
-      }
-      activeAudioElement = null
-    }
+  // Stop any currently playing cue
+  stopCoachVoiceCue()
 
-    const targetVoiceId = options.voiceId || COACH_GORDON_VOICE_ID
-    const cacheKey = `${targetVoiceId}_${cleanText}`
+  const targetVoiceId = options.voiceId || COACH_GORDON_VOICE_ID
+  const cacheKey = `${targetVoiceId}_${cleanText}`
+  const ctx = getSharedAudioContext()
+
+  // ── Primary Path: Web Audio API (Hardware clock, immune to timer autoplay limits) ──
+  if (ctx) {
+    try {
+      let buffer = preloadedAudioBuffers.get(cacheKey)
+
+      if (!buffer) {
+        let arrayBuffer: ArrayBuffer | null = null
+        const cachedBlobUrl = preloadedAudioBlobUrls.get(cacheKey)
+
+        if (cachedBlobUrl) {
+          const blobRes = await fetch(cachedBlobUrl)
+          arrayBuffer = await blobRes.arrayBuffer()
+        } else {
+          const res = await fetch('/api/coach/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              text: cleanText,
+              voiceId: targetVoiceId,
+            }),
+          })
+
+          if (res.ok) {
+            const contentType = res.headers.get('content-type') || ''
+            if (contentType.includes('audio/')) {
+              arrayBuffer = await res.arrayBuffer()
+              const blob = new Blob([arrayBuffer], { type: contentType })
+              preloadedAudioBlobUrls.set(cacheKey, URL.createObjectURL(blob))
+            }
+          }
+        }
+
+        if (arrayBuffer) {
+          buffer = await decodeAudioBufferSafely(ctx, arrayBuffer)
+          preloadedAudioBuffers.set(cacheKey, buffer)
+        }
+      }
+
+      if (buffer) {
+        if (ctx.state === 'suspended') {
+          await ctx.resume()
+        }
+
+        const source = ctx.createBufferSource()
+        source.buffer = buffer
+
+        const gainNode = ctx.createGain()
+        gainNode.gain.setValueAtTime(options.volume ?? 1.0, ctx.currentTime)
+
+        source.connect(gainNode)
+        gainNode.connect(ctx.destination)
+
+        activeBufferSource = source
+        activeGainNode = gainNode
+
+        options.onStart?.()
+
+        source.onended = () => {
+          if (activeBufferSource === source) {
+            activeBufferSource = null
+            activeGainNode = null
+          }
+          options.onEnded?.()
+        }
+
+        source.start(0)
+        return true
+      }
+    } catch (err) {
+      console.warn('Web Audio neural speech error:', err)
+    }
+  }
+
+  // ── Secondary Path: HTMLAudioElement ──
+  try {
     let audioUrl = preloadedAudioBlobUrls.get(cacheKey)
 
     if (!audioUrl) {
-      try {
-        const res = await fetch('/api/coach/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({
-            text: cleanText,
-            voiceId: targetVoiceId,
-          }),
-        })
+      const res = await fetch('/api/coach/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          text: cleanText,
+          voiceId: targetVoiceId,
+        }),
+      })
 
-        if (res.ok) {
-          const contentType = res.headers.get('content-type') || ''
-          if (contentType.includes('audio/')) {
-            const blob = await res.blob()
-            audioUrl = URL.createObjectURL(blob)
-            preloadedAudioBlobUrls.set(cacheKey, audioUrl)
-          }
+      if (res.ok) {
+        const contentType = res.headers.get('content-type') || ''
+        if (contentType.includes('audio/')) {
+          const blob = await res.blob()
+          audioUrl = URL.createObjectURL(blob)
+          preloadedAudioBlobUrls.set(cacheKey, audioUrl)
         }
-      } catch {
-        // Fetch failed; fallback below
       }
     }
 
@@ -399,7 +528,7 @@ export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceO
       activeAudioElement = audio
 
       audio.onplay = () => {
-        if (options.onStart) options.onStart()
+        options.onStart?.()
       }
 
       audio.onerror = () => {
@@ -409,7 +538,7 @@ export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceO
 
       audio.onended = () => {
         if (activeAudioElement === audio) activeAudioElement = null
-        if (options.onEnded) options.onEnded()
+        options.onEnded?.()
       }
 
       const playPromise = audio.play()
@@ -422,7 +551,7 @@ export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceO
     // Fallback if browser audio element execution threw
   }
 
-  // Seamless fallback to client Web Speech API with sentence chunking
+  // ── Last-Resort Fallback: Web Speech API only if network completely unavailable ──
   speakWebSpeechCoachVoiceCue(cleanText, options)
   return false
 }

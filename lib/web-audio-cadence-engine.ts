@@ -53,6 +53,24 @@ export function getSharedAudioContext(): AudioContext | null {
   }
 }
 
+// Early warmup & unlock on first user gesture across iOS Safari, macOS, and desktop browsers
+if (typeof window !== 'undefined') {
+  const unlockAudioContext = () => {
+    try {
+      const ctx = getSharedAudioContext()
+      if (ctx && ctx.state === 'suspended') {
+        void ctx.resume()
+      }
+    } catch {
+      // Ignore early unlock errors
+    }
+  }
+  window.addEventListener('pointerdown', unlockAudioContext, { passive: true })
+  window.addEventListener('click', unlockAudioContext, { passive: true })
+  window.addEventListener('touchstart', unlockAudioContext, { passive: true })
+  window.addEventListener('keydown', unlockAudioContext, { passive: true })
+}
+
 export interface ToneOptions {
   freq: number
   startTime?: number

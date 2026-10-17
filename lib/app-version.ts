@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.43.2'
+export const APP_VERSION = '1.43.3'
 export const APP_RELEASE_DATE = '2026-10-16'
-export const APP_RELEASE_CODENAME = 'Universal Coach Scott Gordon Voice Model Across All Spoken Prompts'
+export const APP_RELEASE_CODENAME = 'Web Audio Pipeline Autoplay Immunity for Rest Intervals'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,26 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.43.2',
+    version: '1.43.3',
     date: '2026-10-16',
     codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'Web Audio API · AudioBufferSourceNode · Autoplay Immunity · Zero-Delay Rest Completion Voice',
+    title: 'Web Audio Pipeline Autoplay Immunity for Rest Interval Completion',
+    summary: 'Resolved browser timer autoplay restrictions where background rest interval countdowns (setInterval) caused HTMLAudioElement.play() to be blocked by browser media policies, triggering an unintended fallback to the robotic Web Speech system voice. Upgraded the entire neural voice engine to Web Audio API (AudioBufferSourceNode) with automatic user-gesture audio context unlocking, ensuring rest completion cues always stream Coach Scott Gordon\'s authentic cloned ElevenLabs voice.',
+    highlights: [
+      'Web Audio API Hardware Routing: playNeuralCoachVoiceCue() now routes audio directly through an active AudioContext via AudioBufferSourceNode, which is completely immune to browser background timer autoplay restrictions.',
+      'Auto-Warmed Decoded Buffers: Rest completion and tempo prompts are pre-decoded into memory as AudioBuffers (preloadedAudioBuffers) during app initialization, playing with true 0ms latency when countdowns reach zero.',
+      'Universal User-Gesture Warmup: Added automatic passive unlock listeners (pointerdown, click, touchstart, keydown) in lib/web-audio-cadence-engine.ts ensuring the AudioContext is warm before the athlete ever logs their first set.',
+    ],
+    relatedLinks: [
+      { label: 'Workout Sanctuary HUD', href: '/dashboard/fitness' },
+    ],
+  },
+  {
+    version: '1.43.2',
+    date: '2026-10-16',
+    codename: 'Universal Coach Scott Gordon Voice Model Across All Spoken Prompts',
     category: 'feature',
     badge: 'Universal Cloned Voice · ElevenLabs UPezm4CtrvcD6aNXjeU1 · Zero-Latency Pre-Buffering · All Spoken Prompts',
     title: 'Universal Coach Scott Gordon Spoken Voice Engine',
