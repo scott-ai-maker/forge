@@ -1,6 +1,6 @@
-# Launch Funnel Assets (Gordon Athletic Advisory)
+# Launch Funnel Assets (Forge Athletic)
 
-This document serves as the deploy-ready source of truth for the Gordon Athletic Advisory (GAA) launch funnel:
+This document serves as the deploy-ready source of truth for the Forge Athletic launch funnel:
 
 1. Landing page headline and CTA architecture
 2. Biomechanical diagnostic & tier-alignment quiz (offer matching)
@@ -160,7 +160,7 @@ Automated delivery (1 email every 24 hours) via `lib/marketing-email.ts`.
 ### Day 1 - The 5-Phase Architecture: Why Traditional Workouts Fail
 - **Subject**: "The 5-Phase Architecture: Why Traditional Workouts Fail"
 - **Preview**: "How NASM OPT™ methodology eliminates plateaus and injury risk."
-- **Core Message**: Most programs fail because they skip foundational stabilization and jump straight into progressive overload. GAA applies the NASM Optimum Performance Training (OPT™) model—stabilization endurance, strength endurance, muscular development, maximal strength, and power—sequenced to your physiological baseline.
+- **Core Message**: Most programs fail because they skip foundational stabilization and jump straight into progressive overload. Forge Athletic applies the NASM Optimum Performance Training (OPT™) model—stabilization endurance, strength endurance, muscular development, maximal strength, and power—sequenced to your physiological baseline.
 - **CTA**: Complete Your Diagnostic Intake (`/apply`)
 
 ### Day 2 - Computer Vision Biomechanics: What Your Movement Pattern Reveals

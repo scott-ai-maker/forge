@@ -1,194 +1,61 @@
-# Async Coaching Launch — Daily Tracking Sheet
+# Forge Athletic: Virtual Coaching Acquisition & Revenue Tracking Model
 
-Copy this into a Google Sheet or Excel for real-time tracking.
-
----
-
-## Daily Outreach Tracker (Days 1-14)
-
-| Date | Channel | Who Messaged | Reply? | Interested? | Booked Consult? | Notes |
-|------|---------|-------------|--------|------------|-----------------|-------|
-| 4/18 | DM | Client name | Y/N | Y/N/Maybe | Y/N | |
-| 4/18 | DM | Client name | Y/N | Y/N/Maybe | Y/N | |
-| 4/19 | Email | List segment (warm/cold) | Y/N | Y/N/Maybe | Y/N | Open rate: X% |
-| | | | | | | |
-
-**Daily Goals:**
-- Days 3-5: Send 10-15 DMs/day
-- Days 6-8: Send email wave + follow-ups
-- Days 9-10: Run consults
-- Days 11-14: Final push + close
+## Real-Time Operations Tracker
+Track inbound diagnostic leads, consult conversions, tier signups, and live session pack purchases for Forge Athletic's 100% remote virtual performance model.
 
 ---
 
-## Consult Tracker
+## 1. Daily Inbound & Referral Outreach Tracker
 
-| Date | Name | Tier Recommended | Objections Raised | Close Status | Outcome | Stripe Link Sent |
-|------|------|------------------|-------------------|--------------|---------|------------------|
-| 4/20 | [Name] | Independent Athlete | Price concern | Yes | Signed up | Y |
-| 4/20 | [Name] | Training Club | Self-doubt | Yes | Needs follow-up | N |
-| | | | | | | |
-
-**Conversion target:** 50%+ of people who book should sign up.
+| Date | Channel (Referral / Email / Direct) | Prospect Name | Status | Interested Tier | Booked Consult? | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+|      | Past Client Referral                 |              | Warm   | Coach Support   | Y/N             | Focus on zero-commute convenience |
+|      | Corporate / Exec Network             |              | Inbound| Live 1:1 Pack   | Y/N             | Desk ergonomics & posture audit |
+|      | Organic SEO / Apply Quiz             |              | New    | Core / Plus     | Y/N             | Completed 33-point OHSA quiz |
 
 ---
 
-## Signups & Revenue Dashboard
+## 2. Remote Consult & Diagnostic Conversion Tracker
 
-| Week | Signups | By Tier | Total Revenue | Avg Price Per Client | Add-On Sales | Notes |
-|------|---------|---------|----------------|----------------------|--------------|-------|
-| Week 1 (D1-7) | _ | — | $0 | — | $0 | Launch prep |
-| Week 2 (D8-14) | _ | Training Club: _ / Athlete: _ / Plus: _ | $_ | $_ | $_ | |
+| Date | Athlete Name | Training Environment (Home / Gym / Hotel) | Tier Recommended | Key Biomechanical Focus | Status | Stripe Checkout Link Sent |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+|      |              | Home (Dumbbells/Bench)                    | Plus ($49/mo)    | Desk Posture / Glute Activation | Closed | Y |
+|      |              | Apartment Fitness Center                  | Coach Support    | Overhead Press Impingement     | Closed | Y |
+|      |              | Commercial Club                           | 1:1 Live Pack    | Barbell Squat Valgus Rebuild    | Closed | Y |
 
-**Running Totals:**
-- Total signups: ___ / Goal: 5-10
-- Total revenue: $____ / Goal: $1,200-$3,500
-- Conversion rate (consults to signups): ___% / Goal: 50%+
+**Target Conversion Benchmark:** ≥ 50% from video consult to paid enrollment.
 
 ---
 
-## Content & Social Tracking
+## 3. Recurring Membership & Pack Revenue Dashboard
 
-| Date | Post Type | Platform | Impressions | Clicks | Cost (if paid) | Notes |
-|------|-----------|----------|-------------|--------|----------------|-------|
-| 4/18 | Post | Instagram | — | — | — | Pinned to story |
-| 4/20 | Reel | TikTok | — | — | — | Coaching content |
-| | | | | | | |
+| Cohort Period | Core ($19.99/mo) | Plus ($49/mo) | Coach Support ($199/mo) | 1:1 Live Packs ($660–$1,240) | Add-Ons ($19–$159) | Total MRR / Tonnage |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Month 1**   | _ active         | _ active      | _ / 25 cap              | _ packs                      | _ units            | $                   |
+| **Month 2**   | _ active         | _ active      | _ / 25 cap              | _ packs                      | _ units            | $                   |
+| **Month 3**   | _ active         | _ active      | _ / 25 cap              | _ packs                      | _ units            | $                   |
 
----
-
-## Client Onboarding Progress
-
-| Name | Signup Date | Intake Completed | First Plan Sent | First Check-In Date | Check-In Submitted | Progress Notes |
-|------|----------|-----------------|-----------------|-------------------|------------------|-----------------|
-| [Name] | 4/18 | Y/N | Y/N | 4/25 | Y/N | On track / At risk |
-| [Name] | 4/20 | Y/N | Y/N | 4/27 | Y/N | On track / At risk |
-| | | | | | | |
-
-**Checklist per client:**
-- [ ] Payment received
-- [ ] Welcome email sent
-- [ ] Intake form sent
-- [ ] Intake completed by client
-- [ ] First plan created
-- [ ] First check-in scheduled
-- [ ] First check-in reminder sent
-- [ ] First check-in reviewed & feedback given
+**Operating Goals:**
+- **Coach Support Cap:** Maintain strictly at or under 25 active athletes to protect 24h SLA.
+- **Gross Operating Margin:** Maintain ≥ 75% net EBITDA (enabled by zero commercial physical lease liabilities).
+- **Core Trial-to-Paid Conversion:** ≥ 65% following 7-day free trial completion.
 
 ---
 
-## Weekly Metrics Summary
+## 4. Athlete Onboarding & Telehealth Safety Compliance
 
-**Week 1 Results (Days 1-7):**
-- DMs sent: ___
-- Email list sent to: ___
-- Email open rate: ___%
-- Email click rate: ___%
-- Consults booked: ___
-- Signups: ___
-- Revenue: $___
+Every active remote athlete must complete the 5-point NASM VCS safety checklist before program activation:
 
-**Week 2 Results (Days 8-14):**
-- DMs sent this week: ___
-- Total DMs sent to date: ___
-- DM reply rate: __% (replies / DMs sent)
-- New email sends: ___
-- Consults booked this week: ___
-- Total consults to date: ___
-- Consult close rate: __% (signups / consults)
-- Total signups to date: ___
-- Total revenue to date: $___
-
-**Week 3: First Retention Check (Days 15-21)**
-- Clients completing check-ins: ___/[total signed up]
-- Check-in completion rate: ___%
-- Positive feedback received? Y/N (list names)
-- Any at-risk clients identified? (list names)
+| Athlete Name | PAR-Q+ Cleared | ERAP Address & EMS On File | Equipment Profile Selected | Baseline 33-Pt OHSA Complete | Phase 1 Block Active |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+|              | [ ]            | [ ]                        | [ ]                        | [ ]                          | [ ]                  |
+|              | [ ]            | [ ]                        | [ ]                        | [ ]                          | [ ]                  |
 
 ---
 
-## Key KPI Targets
+## 5. Weekly Biomechanical & Retention Review
 
-| KPI | Target | Actual | Status |
-|-----|--------|--------|--------|
-| DM reply rate | 20%+ | _% | ✓ / ✗ |
-| Email open rate | 35%+ | _% | ✓ / ✗ |
-| Email click rate | 8%+ | _% | ✓ / ✗ |
-| Consult booking rate | 15%+ of replies | _% | ✓ / ✗ |
-| Consult close rate | 50%+ | _% | ✓ / ✗ |
-| Total signups by Day 14 | 5-10 | _ | ✓ / ✗ |
-| Revenue by Day 14 | $1,200-$3,500 | $_ | ✓ / ✗ |
-| Client onboarding completion | 100% | _% | ✓ / ✗ |
-
----
-
-## Pain Points & Adjustments
-
-Log any issues or changes you make mid-launch:
-
-| Date | Issue | Action Taken | Result |
-|------|-------|--------------|--------|
-| 4/24 | Low DM reply rate | Increased volume to 20/day | Better traction |
-| | | | |
-
----
-
-## Lessons Learned (Fill Out Post-Launch)
-
-- What worked best for getting replies?
-- Which tier closed most easily?
-- Which objection was hardest to overcome?
-- What would you do differently next launch?
-- Which messaging resonated most?
-- Best place to find ideal clients?
-
-| Category | Learning |
-|----------|----------|
-| Best Channel | DM / Email / Social? |
-| Best Tier | Training Club / Athlete / Plus? |
-| Hardest Objection | _________________ |
-| Best Message Hook | _________________ |
-| What I'd Repeat | _________________ |
-| What I'd Change | _________________ |
-
----
-
-## Quick Math: Effective Hourly Rate Check (Fill Out Weekly)
-
-**Week 1 Results Example:**
-- Total revenue so far: $500
-- Total time spent (DMs, emails, consults, planning): 12 hours
-- Current effective rate: $500 / 12 = $41.67/hr
-
-*NOTE: This will look low in Week 1 (just launches). By Week 2-3 when clients are in the system, your rate improves dramatically.*
-
-**Week 2 Results Example:**
-- Total revenue to date: $2,500
-- Total time spent: 20 hours
-- Effective rate: $2,500 / 20 = $125/hr ✓
-
-| Week | Revenue | Time Spent | Effective Rate | Target? |
-|------|---------|-----------|-----------------|---------|
-| Week 1 | $_ | _ hrs | $__/hr | (expect low) |
-| Week 2 | $_ | _ hrs | $__/hr | 50%+ of target? |
-| Week 3 | $_ | _ hrs | $__/hr | 75%+ of target? |
-
----
-
-## Notes Section (Copy-Paste Here for Quick Thoughts)
-
-**Things to Remember:**
-- Only recommend ONE tier per person (not all three)
-- Don't lower pricing in first 14 days
-- Close early, don't over-explain
-- Under-promise, over-deliver on speed
-
-**Follow-up Pending:**
-- [Name] - Follow up on objection about X by [Date]
-- [Name] - Send second follow-up email by [Date]
-- [Name] - Check in on first week progress by [Date]
-
-**Content Ideas for Week 3+:**
-- [Post idea based on what worked]
-- [Testimonial to request from client]
-- [Win to celebrate]
+Review every Sunday:
+1. **Acute-to-Chronic Workload Ratio (ACWR):** Identify any athlete approaching ≥ 1.50 spike to trigger automated deloads.
+2. **Form Lab Video Audits:** Confirm 100% of submitted exercise technique clips were reviewed within 24 hours.
+3. **Downsell Retention Safety Net:** If any Coach Support client reports scheduling or financial friction, transition them to Plus ($49/mo) or Core ($19.99/mo) rather than canceling.

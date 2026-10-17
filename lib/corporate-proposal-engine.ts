@@ -226,7 +226,7 @@ export function getProposalDeliverablesList(seats: number, cadence: CorporateCad
       number: '06',
       title: 'On-site movement and ergonomics session',
       headline: 'Movement and workstation assessment',
-      details: 'Annual program option: Coach Gordon leads an in-person movement and workstation assessment at your organization.',
+      details: 'Annual program option: Coach Gordon leads an interactive movement and workstation assessment at your organization (or interactive live virtual clinic).',
       cadence: 'Annual Inclusion',
     })
   }

@@ -16,7 +16,7 @@ const FEATURE_PILLARS = [
     title: 'Move with confidence',
     description: 'Practical movement screening and coaching help you understand how to train well.',
     image: '/images/pillar-move-confidence.jpg',
-    imageAlt: 'Coach Gordon observing squat depth and knee alignment in a private studio',
+    imageAlt: 'Coach Gordon observing squat depth and knee alignment during a tailored movement screen',
   },
   {
     number: '03',
@@ -390,7 +390,7 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
           <h2 id="forge-founder-title">Built from lived experience.</h2>
           <p>
             A personal trainer since 2008 and NASM Master Trainer candidate (active NASM-CPT), Coach Gordon was Fitness Director
-            at Bally Total Fitness before opening his local training business in 2011. Today,
+            at Bally Total Fitness before launching his independent coaching practice in 2011. Having previously owned and operated a physical personal training studio, he deliberately evolved Forge Athletic into a 100% remote virtual performance model. Based in Massachusetts,
             he brings an AI engineer’s analytical mindset to training—and the empathy to meet
             every client where they are. Expect kindness and understanding, not drill-sergeant
             pressure; when your goals call for a firmer push, he can bring that too.

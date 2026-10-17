@@ -68,11 +68,11 @@ const SNEAK_PEEKS: Array<{
     tag: '1-on-1 Personalized Coaching',
     title: 'Private Coach Gordon Live Studio',
     icon: 'crosshair',
-    subtitle: 'Real-time interactive coaching sessions with custom biometric heads-up displays.',
+    subtitle: 'Encrypted sub-100ms WebRTC interactive video coaching sessions directly into your home gym or workout space.',
     bullets: [
-      'Dual-camera multi-angle form validation with instantaneous slow-motion replays',
-      'Live heart rate zone HUD synced directly with Apple Watch, Garmin, and Polar',
-      'Immediate movement cue corrections from Coach Gordon (NASM-CPT since 2008)',
+      'Zero commute friction: train live from home, apartment gym, or hotel with Coach Gordon in real time',
+      'Dual-camera multi-angle form validation with instantaneous slow-motion replays and telestration',
+      'Real-time biometric HUD and corrective cues from Coach Gordon (18+ years experience, NASM-CPT since 2008)',
     ],
     metric: '1-ON-1',
     metricLabel: 'Direct Coach Access',
@@ -88,7 +88,7 @@ const FOUNDING_PERKS = [
   {
     icon: 'assessment' as ForgeIconName,
     title: 'Pre-Holiday 1-on-1 Screening',
-    description: 'Guaranteed 60-minute movement diagnostic and structural audit with Coach Gordon before Thanksgiving.',
+    description: 'Guaranteed 60-minute remote movement diagnostic and 3D kinetic audit with Coach Gordon before Thanksgiving.',
   },
   {
     icon: 'zap' as ForgeIconName,
@@ -740,7 +740,7 @@ export default function HolidayUnmaskingSplash({
           >
             <strong>Don’t wait for January to repair what November broke.</strong> Forge Athletic
             is opening 50 early Founding Member spots to help everyday people, busy parents,
-            and desk workers build lasting strength, joint resilience, and energy before the holiday rush.
+            and desk workers build lasting strength, joint resilience, and energy before the holiday rush—delivered 100% remotely to your home gym or workout space with zero commute friction.
           </p>
 
           {/* COUNTDOWN TICKER HUD */}
@@ -938,7 +938,7 @@ export default function HolidayUnmaskingSplash({
                     margin: '0 0 24px',
                   }}
                 >
-                  Lock in early access built around your schedule and starting point. Receive a guaranteed pre-holiday movement screening with Coach Gordon and permanent Founding Member pricing.
+                  Lock in early access built around your schedule and environment. Train at home, in an apartment fitness center, or while traveling with guaranteed remote pre-holiday movement screening with Coach Gordon and permanent Founding Member pricing.
                 </p>
 
                 <form onSubmit={handleSubmit} noValidate>
@@ -1067,7 +1067,7 @@ export default function HolidayUnmaskingSplash({
                       <option value="posture_joint_health">Posture, Spine & Joint Health (Desk & Daily Life)</option>
                       <option value="functional_strength">Strength & Muscle Building (Beginner to Advanced)</option>
                       <option value="energy_conditioning">Cardio Stamina, Energy & Conditioning</option>
-                      <option value="flexible_training">Flexible Training (Home Gym, Apartment, or Travel)</option>
+                      <option value="flexible_training">Flexible Remote Training (Home Gym, Apartment, or Travel)</option>
                     </select>
                   </div>
 
@@ -1636,7 +1636,7 @@ export default function HolidayUnmaskingSplash({
                     color: '#94A3B8',
                   }}
                 >
-                  NASM-CPT® Since 2008 · Master Trainer Candidate
+                  NASM-CPT® Since 2008 · 18+ Years Dedicated Coaching · Master Trainer Track
                 </div>
               </div>
               <Link
@@ -2043,6 +2043,226 @@ export default function HolidayUnmaskingSplash({
                 </p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* 100% REMOTE PERFORMANCE OFFERINGS ARCHITECTURE */}
+        <section
+          style={{
+            marginBottom: 64,
+            background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(8, 14, 24, 0.95) 100%)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            borderRadius: 16,
+            padding: '36px 24px',
+            boxShadow: '0 20px 48px rgba(0, 0, 0, 0.5)',
+          }}
+          aria-labelledby="remote-offerings-title"
+        >
+          <div style={{ textAlign: 'center', maxWidth: 740, margin: '0 auto 28px' }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-telemetry)',
+                fontSize: 11,
+                letterSpacing: '0.14em',
+                color: '#F59E0B',
+                textTransform: 'uppercase',
+                marginBottom: 8,
+              }}
+            >
+              Asset-Light · 100% Remote Performance Model
+            </div>
+            <h2
+              id="remote-offerings-title"
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 'clamp(1.75rem, 4vw, 2.4rem)',
+                fontWeight: 700,
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                margin: '0 0 12px',
+                color: '#FFFFFF',
+              }}
+            >
+              Zero Commute. Master Coaching Anywhere.
+            </h2>
+            <p
+              style={{
+                fontSize: 14,
+                color: '#94A3B8',
+                lineHeight: 1.6,
+                margin: 0,
+              }}
+            >
+              We operate without physical gym overhead so you get master-level coaching at superior value. Train in your private home gym, apartment fitness center, or hotel while traveling—with personalized periodization, computer-vision movement audits, and encrypted WebRTC video.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: 16,
+              marginBottom: 28,
+            }}
+          >
+            {/* Core Tier Card */}
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 12,
+                padding: '20px 18px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-telemetry)', fontSize: 10, color: '#38BDF8', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Foundation
+                  </span>
+                  <span style={{ fontSize: 10, color: '#34D399', background: 'rgba(52, 211, 153, 0.12)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
+                    7-Day Free Trial
+                  </span>
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
+                  Core Lab
+                </h3>
+                <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
+                  $19.99 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
+                </div>
+                <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
+                  Autonomous 5-phase NASM OPT™ periodization, 33-point posture screen, and dynamic equipment swaps for home or travel.
+                </p>
+              </div>
+            </div>
+
+            {/* Plus Tier Card */}
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.85)',
+                border: '1px solid rgba(245, 158, 11, 0.4)',
+                borderRadius: 12,
+                padding: '20px 18px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                position: 'relative',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-telemetry)', fontSize: 10, color: '#FBBF24', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Guided Hybrid
+                  </span>
+                  <span style={{ fontSize: 10, color: '#FBBF24', background: 'rgba(245, 158, 11, 0.15)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
+                    Most Popular
+                  </span>
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
+                  Plus
+                </h3>
+                <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
+                  $49.00 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
+                </div>
+                <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
+                  Everything in Core + full Nutrition Periodization, Travel Pass hotel swaps, and 2 Form Lab video reviews per month.
+                </p>
+              </div>
+            </div>
+
+            {/* Coach Support Card */}
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 12,
+                padding: '20px 18px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-telemetry)', fontSize: 10, color: '#F472B6', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Master Coaching
+                  </span>
+                  <span style={{ fontSize: 10, color: '#F87171', background: 'rgba(239, 68, 68, 0.15)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
+                    Capped at 25
+                  </span>
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
+                  Coach Support
+                </h3>
+                <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
+                  $199.00 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
+                </div>
+                <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
+                  Direct messaging with Coach Gordon (24h SLA), custom plan certification, and 8 Form Lab video audits per month.
+                </p>
+              </div>
+            </div>
+
+            {/* 1:1 Live Telehealth Studio Card */}
+            <div
+              style={{
+                background: 'rgba(8, 14, 20, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 12,
+                padding: '20px 18px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-telemetry)', fontSize: 10, color: '#34D399', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    1:1 Telehealth
+                  </span>
+                  <span style={{ fontSize: 10, color: '#38BDF8', background: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
+                    WebRTC 60fps
+                  </span>
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
+                  Live Studio
+                </h3>
+                <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
+                  $180 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ session</span>
+                </div>
+                <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
+                  Private 60-min live virtual coaching with slow-mo telestration. 4-session pack at $660 ($165/ea) or 8-pack at $1,240 ($155/ea).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <Link
+              href="/packages"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 24px',
+                borderRadius: 8,
+                background: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.4)',
+                color: '#FBBF24',
+                fontFamily: 'var(--font-telemetry)',
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <span>Explore Complete Tier Comparison Matrix</span>
+              <span>&rarr;</span>
+            </Link>
           </div>
         </section>
 

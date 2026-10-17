@@ -27,7 +27,7 @@ const homeFaqStructuredData = {
       name: 'What makes Forge Athletic personal training methodology unique?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Forge Athletic pairs evidence-based NASM 5-phase Optimum Performance Training (OPT™) periodization with computer-vision 3D movement screening and wearable biometric telemetry. Every training plan adapts dynamically to your real schedule, joint health, and recovery data rather than rigid cookie-cutter routines.',
+        text: 'Forge Athletic pairs evidence-based NASM 5-phase Optimum Performance Training (OPT™) periodization with computer-vision 3D movement screening and wearable biometric telemetry. Built on the NASM Virtual Coaching Specialization (VCS) framework, every training plan adapts dynamically to your real schedule, joint health, and recovery data rather than rigid cookie-cutter routines.',
       },
     },
     {
@@ -35,7 +35,7 @@ const homeFaqStructuredData = {
       name: 'Is Forge Athletic coaching remote, hybrid, or in-person?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Forge Athletic provides nationwide remote and hybrid coaching across the United States. Athletes receive tailored training routines, video form analysis, live virtual coaching sessions, and mobile workout tracking across Apple iOS, Android, and Progressive Web Apps.',
+        text: 'Headquartered in Massachusetts, Forge Athletic operates as a 100% remote virtual performance coaching platform serving clients across the Commonwealth and nationwide across all 50 states. Athletes receive tailored training routines, asynchronous video form analysis in the Form Lab, live WebRTC virtual coaching sessions, and mobile workout tracking across Apple iOS, Android, and Progressive Web Apps—delivering master-level coaching directly to your home gym or private workout space with zero commute friction.',
       },
     },
     {
@@ -43,7 +43,7 @@ const homeFaqStructuredData = {
       name: 'Who is Forge Athletic designed for?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Forge Athletic is engineered for busy professionals seeking posture restoration and energy, longevity lifters (40s–60s+) protecting joint integrity and bone density, and everyday athletes wanting collegiate-grade strength and conditioning without wasting hours in the gym.',
+        text: 'Forge Athletic is engineered for busy executives and professionals seeking posture restoration and energy, longevity lifters (40s–60s+) protecting joint integrity and bone density, and everyday athletes wanting collegiate-grade strength and conditioning without wasting hours in the gym.',
       },
     },
     {
@@ -51,7 +51,7 @@ const homeFaqStructuredData = {
       name: 'What credentials does Coach Gordon have?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Coach Gordon holds a Bachelor of Science in Information Technology (3.72 GPA), an NCCA-accredited Certified Personal Trainer certification through the National Academy of Sports Medicine (NASM-CPT), ASTI CPR/AED credentials, and 34 verified professional certifications in AI and systems architecture.',
+        text: 'Coach Gordon has been a personal trainer since 2008 (18+ years of dedicated coaching experience). He holds an accredited Bachelor of Science in Information Technology (3.72 GPA), an active NCCA-accredited NASM-CPT certification (#1261890687), ASTI CPR/AED credentials, and 34 verified Credly badges in AI and cloud architecture. He is an active candidate on the NASM Master Trainer track across Corrective Exercise (CES), Performance Enhancement (PES), Nutrition (CNC, CSNC), and Virtual Coaching Specialization (VCS).',
       },
     },
     {
@@ -78,7 +78,7 @@ const FEATURE_PILLARS = [
     title: 'Move with confidence',
     description: 'Practical movement screening and coaching help you understand how to train well.',
     image: '/images/pillar-move-confidence.jpg',
-    imageAlt: 'Coach Gordon observing squat depth and knee alignment in a private studio',
+    imageAlt: 'Coach Gordon observing squat depth and knee alignment during a tailored movement screen',
   },
   {
     number: '03',
@@ -165,22 +165,22 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
         <div className="forge-hero-copy">
           <p className="forge-eyebrow"><span />Performance built on science</p>
           <h1 id="forge-hero-title">Personal Training, Built Around You.</h1>
-          <p className="forge-hero-tagline">Personal trainer since 2008. NASM-CPT · NASM Master Trainer Candidate.</p>
+          <p className="forge-hero-tagline">Personal trainer since 2008. NASM-CPT · NASM Master Trainer Candidate · Massachusetts &amp; Nationwide.</p>
           <p className="forge-hero-description">
             Whatever your goal, get a plan shaped around your starting point and schedule—with
-            practical coaching and progress you can measure.
+            practical coaching, clinical sports science, and progress you can measure.
           </p>
           <div className="forge-hero-actions">
             <Link className="forge-primary-link" href="/packages">Explore memberships</Link>
             <Link className="forge-secondary-link" href="/auth/login">Member sign in <span aria-hidden="true">→</span></Link>
           </div>
-          <p className="forge-hero-proof">Personal trainer since 2008 <span>·</span> NASM-CPT® Certified <span>·</span> No one-size-fits-all plans</p>
+          <p className="forge-hero-proof">Personal trainer since 2008 <span>·</span> NASM-CPT® Certified <span>·</span> NASM VCS Model <span>·</span> Massachusetts &amp; Remote</p>
         </div>
         <div className="forge-hero-showcase">
           <div className="forge-hero-image-wrapper">
             <Image
               src="/images/hero-personal-coaching.jpg"
-              alt="Coach Gordon coaching an everyday client through dumbbell goblet squat form in a boutique personal training studio"
+              alt="Coach Gordon coaching an everyday client through dumbbell goblet squat form during a personalized training session"
               width={680}
               height={510}
               priority
@@ -456,7 +456,7 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           <h2 id="forge-founder-title">Built from lived experience.</h2>
           <p>
             A personal trainer since 2008 and NASM Master Trainer candidate (active NASM-CPT), Coach Gordon was Fitness Director
-            at Bally Total Fitness before opening his local training business in 2011. Today,
+            at Bally Total Fitness before launching his independent coaching practice in 2011. Having previously owned and operated a physical personal training studio, he deliberately evolved Forge Athletic into a 100% remote virtual performance model. Based in Massachusetts,
             he brings an AI engineer’s analytical mindset to training—and the empathy to meet
             every client where they are. Expect kindness and understanding, not drill-sergeant
             pressure; when your goals call for a firmer push, he can bring that too.

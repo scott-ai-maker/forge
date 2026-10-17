@@ -1,6 +1,6 @@
 # Development & Testing Environment Guide
 
-This guide describes how to configure, run, and verify the development and testing environments for the **Gordon Athletic Advisory (GAA)** application.
+This guide describes how to configure, run, and verify the development and testing environments for the **Forge Athletic** application.
 
 ---
 

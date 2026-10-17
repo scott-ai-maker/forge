@@ -17,6 +17,10 @@ const PLAN_VISUALS: Record<string, { src: string; alt: string }> = {
     src: '/images/coach-client-plan.jpg',
     alt: 'Coach Gordon providing 1:1 program design and consultation',
   },
+const PLAN_SUBTITLES: Record<string, string> = {
+  'forge-core': 'Foundation · Autonomous NASM OPT™ Lab',
+  'forge-pro-athlete': 'Guided Hybrid · Exercise & Nutrition',
+  'forge-transformation-direct': 'Master Coaching · Direct Access (Cap 25)',
 }
 
 export default function ForgeMembershipPlans() {
@@ -69,6 +73,11 @@ export default function ForgeMembershipPlans() {
             </span>
           )}
           <h3>{membership.name}</h3>
+          {PLAN_SUBTITLES[membership.id] && (
+            <p style={{ color: 'var(--gold-lt)', fontSize: '0.8rem', fontFamily: 'var(--font-telemetry)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0.25rem 0 0' }}>
+              {PLAN_SUBTITLES[membership.id]}
+            </p>
+          )}
           {membership.annualPriceCents !== undefined ? (
             <>
               <p className="forge-plan-price">

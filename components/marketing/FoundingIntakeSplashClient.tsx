@@ -257,7 +257,7 @@ export default function FoundingIntakeSplashClient() {
               margin: '0 auto 20px',
             }}
           >
-            Forge Athletic brings evidence-led training, movement screening, and coaching together for real lives. Join the early-access list for product and membership updates.
+            Forge Athletic brings evidence-led training, 3D movement screening, and 100% remote coaching together for real lives. Join the early-access list for product and membership updates.
           </p>
 
           <div
@@ -276,7 +276,7 @@ export default function FoundingIntakeSplashClient() {
           >
             <GaaIcon name="shield-check" size={20} tone="gold" />
             <div style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--gold-lt)' }}>A note about our launch:</strong> Coach Gordon is completing NASM credentials and preparing the training space. Join the early-access list for updates about memberships and introductory pricing.
+              <strong style={{ color: 'var(--gold-lt)' }}>100% Remote Virtual Performance:</strong> Coach Gordon brings 18+ years of dedicated coaching experience (NASM-CPT® since 2008, ASTI CPR/AED, B.S. IT 3.72 GPA) directly into your private home gym, apartment facility, or hotel with zero commute friction. Join the early-access list for membership updates and introductory pricing.
               <div style={{ marginTop: 6 }}>
                 <a
                   href="#accreditation-portfolio"
@@ -366,19 +366,19 @@ export default function FoundingIntakeSplashClient() {
               {
                 icon: 'video-studio' as const,
                 title: 'Practical sports science',
-                body: 'NASM OPT™ periodization, training telemetry, and coaching tools designed to support steady progress.',
-                value: 'Training built around you',
+                body: 'NASM OPT™ periodization, training telemetry, and 100% remote coaching tools designed to support steady progress anywhere you train.',
+                value: 'Train anywhere',
               },
               {
                 icon: 'lock' as const,
                 title: 'Clear membership choices',
-                body: 'Choose Core, Plus, or Coach Support with straightforward monthly pricing.',
+                body: 'Choose Core ($19.99/mo with 7-day trial), Plus ($49/mo), or Coach Support ($199/mo) with straightforward monthly pricing.',
                 value: 'From $19.99/month',
               },
               {
                 icon: 'microscope' as const,
-                title: 'Movement assessment',
-                body: 'Movement screening can help you better understand how you move and where you might focus.',
+                title: '3D Movement assessment',
+                body: '33-point computer-vision movement screening evaluates kinetic chain compensations directly from your phone.',
                 value: 'Included with early access',
               },
             ].map((p, idx) => (
