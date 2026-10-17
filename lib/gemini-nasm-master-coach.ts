@@ -13,6 +13,8 @@ import { queryNasmRagLibrary } from './nasm-rag-knowledge-base'
 import {
   generateRagNasmProgram,
   type GeneratedMacrocyclePlan,
+  type GeneratedWorkoutDay,
+  type GeneratedExerciseItem,
   type HandPortionNutritionPlan,
   type DualCardioPlanSummary,
 } from './rag-nasm-program-generator'
@@ -471,6 +473,171 @@ export function enrichPlanWithNasmCdnMedia(plan: GeneratedMacrocyclePlan): Gener
 }
 
 /**
+ * Normalizes raw string/array inputs safely into string arrays.
+ */
+function toStringArray(val: unknown): string[] {
+  if (Array.isArray(val)) {
+    return val.map(item => typeof item === 'string' ? item.trim() : String(item ?? '')).filter(Boolean)
+  }
+  if (typeof val === 'string') {
+    const trimmed = val.trim()
+    if (!trimmed) return []
+    if (trimmed.includes(';') || trimmed.includes('\n')) {
+      return trimmed.split(/[;\n]+/).map(s => s.trim()).filter(Boolean)
+    }
+    return [trimmed]
+  }
+  return []
+}
+
+function normalizeGuidelineItem(val: unknown, fallbackMeasure: string): {
+  portionsPerMeal: string
+  handMeasure: string
+  examples: string
+  rationale: string
+} {
+  if (val && typeof val === 'object') {
+    const obj = val as Record<string, unknown>
+    return {
+      portionsPerMeal: String(obj.portionsPerMeal ?? obj.portions ?? '1-2 portions'),
+      handMeasure: String(obj.handMeasure ?? fallbackMeasure),
+      examples: String(obj.examples ?? 'Whole food sources'),
+      rationale: String(obj.rationale ?? 'Optimal macronutrient balance'),
+    }
+  }
+  if (typeof val === 'string' && val.trim()) {
+    return {
+      portionsPerMeal: '1-2 portions',
+      handMeasure: fallbackMeasure,
+      examples: val.trim(),
+      rationale: 'Balanced nutritional support',
+    }
+  }
+  return {
+    portionsPerMeal: '1-2 portions',
+    handMeasure: fallbackMeasure,
+    examples: 'Whole food sources',
+    rationale: 'Balanced nutritional support',
+  }
+}
+
+/**
+ * Normalizes raw Gemini or external JSON into a strictly conforming GeneratedMacrocyclePlan structure.
+ * Guarantees warmup protocols, coaching cues, guidelines, and exercise arrays adhere to expected types.
+ */
+export function normalizeGeneratedPlan(plan: any): GeneratedMacrocyclePlan {
+  if (!plan || typeof plan !== 'object') {
+    throw new Error('Generated plan is not a valid object')
+  }
+
+  const workouts: GeneratedWorkoutDay[] = Array.isArray(plan.workouts)
+    ? plan.workouts.map((w: any, idx: number) => {
+        const warmup = w.warmupProtocol || {}
+        const rawExercises = Array.isArray(w.exercises) ? w.exercises : []
+        const exercises: GeneratedExerciseItem[] = rawExercises.map((ex: any) => ({
+          block: (ex.block === 'warmup' || ex.block === 'core_balance' || ex.block === 'saq' || ex.block === 'resistance' || ex.block === 'cooldown')
+            ? ex.block
+            : 'resistance',
+          name: String(ex.name || 'Exercise'),
+          sets: String(ex.sets || '3'),
+          reps: String(ex.reps || '10-12'),
+          tempo: String(ex.tempo || '2/0/2'),
+          rest: String(ex.rest || '60s'),
+          intensityPercentage1RM: typeof ex.intensityPercentage1RM === 'number' ? ex.intensityPercentage1RM : undefined,
+          targetLoadLbs: typeof ex.targetLoadLbs === 'number' ? ex.targetLoadLbs : undefined,
+          supersetPairWith: ex.supersetPairWith ? String(ex.supersetPairWith) : undefined,
+          coachingCues: toStringArray(ex.coachingCues),
+          nasmClinicalSource: String(ex.nasmClinicalSource || 'NASM Essentials of Personal Fitness Training'),
+          whyForYou: ex.whyForYou ? String(ex.whyForYou) : undefined,
+          imageUrl: ex.imageUrl ?? null,
+          videoUrl: ex.videoUrl ?? null,
+          embedUrl: ex.embedUrl ?? null,
+          contraindicationReplacedFrom: ex.contraindicationReplacedFrom ? String(ex.contraindicationReplacedFrom) : undefined,
+        }))
+
+        return {
+          day: typeof w.day === 'number' ? w.day : idx + 1,
+          dayName: String(w.dayName || `Day ${idx + 1}`),
+          focus: String(w.focus || 'Full Body Stabilization'),
+          nasmOptPhase: typeof w.nasmOptPhase === 'number' ? w.nasmOptPhase : (plan.nasmOptPhase || 1),
+          phaseName: String(w.phaseName || plan.phaseName || 'Stabilization Endurance'),
+          estimatedDurationMins: typeof w.estimatedDurationMins === 'number' ? w.estimatedDurationMins : 45,
+          warmupProtocol: {
+            inhibitSmr: toStringArray(warmup.inhibitSmr),
+            lengthenStaticStretch: toStringArray(warmup.lengthenStaticStretch),
+            activateDynamic: toStringArray(warmup.activateDynamic),
+          },
+          exercises,
+          cardioProtocol: w.cardioProtocol ? {
+            ...w.cardioProtocol,
+            coachingCues: toStringArray(w.cardioProtocol.coachingCues),
+            recommendedModalities: toStringArray(w.cardioProtocol.recommendedModalities),
+          } : undefined,
+          dailyPeriodizationMemo: String(w.dailyPeriodizationMemo || ''),
+        }
+      })
+    : []
+
+  let handPortionPlan = plan.handPortionPlan
+  if (handPortionPlan && typeof handPortionPlan === 'object') {
+    const g = handPortionPlan.guidelines || {}
+    handPortionPlan = {
+      philosophy: 'precision_nutrition_hand_portion',
+      title: String(handPortionPlan.title || 'Precision Hand-Portion Architecture'),
+      mealsPerDay: typeof handPortionPlan.mealsPerDay === 'number' ? handPortionPlan.mealsPerDay : 3,
+      guidelines: {
+        protein: normalizeGuidelineItem(g.protein, '1 Palm per meal'),
+        vegetables: normalizeGuidelineItem(g.vegetables, '1-2 Fists per meal'),
+        smartCarbs: normalizeGuidelineItem(g.smartCarbs, '1 Cupped Hand per meal'),
+        healthyFats: normalizeGuidelineItem(g.healthyFats, '1 Thumb per meal'),
+      },
+      mindfulEatingCue: String(handPortionPlan.mindfulEatingCue || 'Eat until 80% full (Hara Hachi Bu)'),
+      hydrationAnchor: String(handPortionPlan.hydrationAnchor || 'Drink 16oz water upon waking and 2-3L daily'),
+      summary: String(handPortionPlan.summary || 'Hand-portion macronutrient guidelines tailored to your training demands.'),
+    }
+  }
+
+  let dualCardioPlan = plan.dualCardioPlan
+  if (dualCardioPlan && typeof dualCardioPlan === 'object') {
+    const sw = dualCardioPlan.sweatyFinisher || {}
+    const fn = dualCardioPlan.freshNeatWalk || {}
+    dualCardioPlan = {
+      sweatyFinisher: {
+        title: String(sw.title || 'In-Home Sweaty Finisher'),
+        durationMins: typeof sw.durationMins === 'number' ? sw.durationMins : 12,
+        modality: String(sw.modality || 'Incline Treadmill or Step'),
+        zone: String(sw.zone || 'Zone 2 / Zone 3 Intervals'),
+        timing: String(sw.timing || 'Post-workout before shower'),
+        rationale: String(sw.rationale || 'Elevate EPOC and metabolic conditioning'),
+      },
+      freshNeatWalk: fn.title ? {
+        title: String(fn.title || 'Fresh NEAT Walking Ritual'),
+        durationMins: typeof fn.durationMins === 'number' ? fn.durationMins : 25,
+        frequency: String(fn.frequency || 'Daily or on non-workout days'),
+        modality: String(fn.modality || 'Outdoor walking in fresh clothes'),
+        timing: String(fn.timing || 'Evenings or active recovery days'),
+        rationale: String(fn.rationale || 'Active parasympathetic recovery and NEAT energy expenditure'),
+      } : undefined,
+    }
+  }
+
+  return {
+    ...plan,
+    planTitle: String(plan.planTitle || 'Forge Athletic Periodized Macrocycle'),
+    primaryGoal: String(plan.primaryGoal || 'general_fitness'),
+    nasmOptPhase: typeof plan.nasmOptPhase === 'number' ? plan.nasmOptPhase : 1,
+    phaseName: String(plan.phaseName || 'Stabilization Endurance'),
+    totalWeeks: typeof plan.totalWeeks === 'number' ? plan.totalWeeks : 4,
+    sessionsPerWeek: typeof plan.sessionsPerWeek === 'number' ? plan.sessionsPerWeek : (workouts.length || 4),
+    ragSourcesCited: toStringArray(plan.ragSourcesCited),
+    periodizationWeeklyMemos: toStringArray(plan.periodizationWeeklyMemos),
+    workouts,
+    handPortionPlan,
+    dualCardioPlan,
+  }
+}
+
+/**
  * Calls the Gemini API using the Master NASM AI Head Coach Persona to generate
  * an authentic, periodized OPT™ training program with 100% official NASM Edge exercises,
  * equipment validation, and cardio/warmup/cooldown integration.
@@ -600,11 +767,8 @@ ${request.nutritionPhilosophy === 'precision_nutrition_hand_portion' ? '- handPo
   const configuredModel = process.env.GEMINI_MODEL?.trim()
   const modelsToTry = [
     ...(configuredModel ? [configuredModel] : []),
+    'gemini-3.5-flash-lite',
     'gemini-3.8-flash',
-    'gemini-3.7-flash',
-    'gemini-2.5-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
   ]
   let rawText: string | null = null
 
@@ -615,6 +779,7 @@ ${request.nutritionPhilosophy === 'precision_nutrition_hand_portion' ? '- handPo
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(45000),
           body: JSON.stringify({
             system_instruction: {
               parts: [{ text: MASTER_NASM_COACH_SYSTEM_PROMPT }],
@@ -623,6 +788,7 @@ ${request.nutritionPhilosophy === 'precision_nutrition_hand_portion' ? '- handPo
             generationConfig: {
               response_mime_type: 'application/json',
               temperature: 0.3,
+              thinking_config: { thinking_level: 'low' },
             },
           }),
         }
@@ -645,13 +811,14 @@ ${request.nutritionPhilosophy === 'precision_nutrition_hand_portion' ? '- handPo
       throw new Error('Gemini API call returned empty output or all models failed')
     }
 
-    const parsedPlan = JSON.parse(rawText) as GeneratedMacrocyclePlan
-    if (!parsedPlan || !Array.isArray(parsedPlan.workouts) || parsedPlan.workouts.length === 0) {
+    const rawParsed = JSON.parse(rawText)
+    const normalizedPlan = normalizeGeneratedPlan(rawParsed)
+    if (!normalizedPlan || !Array.isArray(normalizedPlan.workouts) || normalizedPlan.workouts.length === 0) {
       throw new Error('Gemini generated an invalid plan structure')
     }
 
     // 2. Strict Deterministic Guardrail Pipeline: Enforce Phase constraints, equipment isolation, and correctives
-    const { sanitizedPlan } = validateAndEnforceNasmOptGuardrails(parsedPlan, {
+    const { sanitizedPlan } = validateAndEnforceNasmOptGuardrails(normalizedPlan, {
       equipmentAccess: request.equipmentAccess,
       kineticCompensations: request.kineticCompensations,
       targetPhase,

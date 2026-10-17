@@ -241,9 +241,10 @@ export function injectKineticCorrectives(
   if (!compensations || compensations.length === 0) return day
 
   const clonedDay = { ...day, warmupProtocol: { ...day.warmupProtocol } }
-  const inhibit = [...(clonedDay.warmupProtocol?.inhibitSmr ?? [])]
-  const lengthen = [...(clonedDay.warmupProtocol?.lengthenStaticStretch ?? [])]
-  const activate = [...(clonedDay.warmupProtocol?.activateDynamic ?? [])]
+  const toArr = (v: unknown): string[] => Array.isArray(v) ? [...v] : typeof v === 'string' && v.trim() ? [v.trim()] : []
+  const inhibit = toArr(clonedDay.warmupProtocol?.inhibitSmr)
+  const lengthen = toArr(clonedDay.warmupProtocol?.lengthenStaticStretch)
+  const activate = toArr(clonedDay.warmupProtocol?.activateDynamic)
 
   for (const comp of compensations) {
     const lower = comp.toLowerCase()

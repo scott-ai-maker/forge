@@ -572,6 +572,7 @@ export default function CoachCustomPeriodizationStudio({
         }}
         onSynthesize={handleSynthesize}
         isSynthesizing={isSynthesizing}
+        error={synthesisError}
       />
 
       {/* Video Demonstration Modal */}

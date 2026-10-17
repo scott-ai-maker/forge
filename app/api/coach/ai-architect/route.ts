@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { generateMasterNasmOptProgram, type GeminiCoachGenerationRequest } from '@/lib/gemini-nasm-master-coach'
 
+export const maxDuration = 60
+
 export async function POST(req: NextRequest) {
   try {
     const authz = await getRequestAuthz(req)

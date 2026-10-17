@@ -105,18 +105,28 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const isMasterCoach =
+      email === 'coach@forge-athletic.app' ||
+      email === 'scott.gordon72@outlook.com' ||
+      email === (process.env.TEST_COACH_EMAIL || '').toLowerCase()
+
+    const { data: clientRecord } = await admin
+      .from('clients')
+      .select('role')
+      .eq('email', email)
+      .maybeSingle()
+
+    const isCoach = isMasterCoach || clientRecord?.role === 'coach'
+    const targetNext = isCoach ? '/coach' : '/dashboard'
+
     const { data: linkData, error: initialError } = await admin.auth.admin.generateLink({
       type: 'recovery',
       email,
       options: {
-        redirectTo: `${baseUrl}/auth/reset-password`,
+        redirectTo: `${baseUrl}/auth/reset-password?next=${encodeURIComponent(targetNext)}`,
       },
     })
     let error = initialError
-
-    const isMasterCoach =
-      email === 'scott.gordon72@outlook.com' ||
-      email === (process.env.TEST_COACH_EMAIL || '').toLowerCase()
 
     let hashedToken = linkData?.properties?.hashed_token
 
@@ -148,7 +158,7 @@ export async function POST(req: NextRequest) {
           type: 'recovery',
           email,
           options: {
-            redirectTo: `${baseUrl}/auth/reset-password`,
+            redirectTo: `${baseUrl}/auth/reset-password?next=${encodeURIComponent(targetNext)}`,
           },
         })
         hashedToken = retry.data?.properties?.hashed_token
@@ -176,7 +186,7 @@ export async function POST(req: NextRequest) {
     // Build a scanner-safe reset URL by putting token params in the URL fragment.
     // Most email link scanners only request the URL path/query and ignore fragments,
     // which prevents accidental one-time token consumption before the user clicks.
-    const resetLink = `${baseUrl}/auth/reset-password#token_hash=${encodeURIComponent(hashedToken)}&type=recovery`
+    const resetLink = `${baseUrl}/auth/reset-password#token_hash=${encodeURIComponent(hashedToken)}&type=recovery&next=${encodeURIComponent(targetNext)}`
 
     if (process.env.NODE_ENV === 'development' || process.env.ENABLE_DEMO_LOGIN === 'true') {
       console.info(
@@ -219,7 +229,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[PasswordReset] Failed to generate or dispatch recovery email:', err)
-    if (email === 'scott.gordon72@outlook.com' || process.env.NODE_ENV === 'development') {
+    if (email === 'coach@forge-athletic.app' || email === 'scott.gordon72@outlook.com' || process.env.NODE_ENV === 'development') {
       const msg = err instanceof Error ? err.message : 'Email dispatch provider error'
       return NextResponse.json(
         { error: `Email dispatch failed: ${msg}. Please use 1-Click Coach Fast Pass on the login page to access your console.` },

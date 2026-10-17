@@ -31,7 +31,7 @@ export async function dispatchCoachSafetyAlert(
   }
 
   const apiKey = process.env.RESEND_API_KEY
-  const coachEmail = process.env.COACH_ALERT_EMAIL || 'scott.gordon72@outlook.com'
+  const coachEmail = process.env.COACH_ALERT_EMAIL || 'coach@forge-athletic.app'
   const fromEmail =
     process.env.COACH_ALERT_FROM_EMAIL ||
     process.env.MARKETING_FROM_EMAIL ||

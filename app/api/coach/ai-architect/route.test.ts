@@ -104,4 +104,47 @@ describe('POST /api/coach/ai-architect', () => {
     expect(json.dualCardioPlan).toBeDefined()
     expect(json.dualCardioPlan.sweatyFinisher.title).toContain('Reebok Step')
   })
+
+  it('normalizes string warmup protocols, coaching cues, and nutrition guidelines into safe typed structures', async () => {
+    const { normalizeGeneratedPlan } = await import('@/lib/gemini-nasm-master-coach')
+    const rawMalformedPlan = {
+      planTitle: 'Test Plan',
+      nasmOptPhase: 1,
+      workouts: [
+        {
+          day: 1,
+          warmupProtocol: {
+            inhibitSmr: 'Foam roll calves; Foam roll lats',
+            lengthenStaticStretch: 'Static calf stretch',
+            activateDynamic: 'Single leg balance reach',
+          },
+          exercises: [
+            {
+              name: 'Ball Squat',
+              coachingCues: 'Keep chest tall and knees tracking toes',
+            },
+          ],
+        },
+      ],
+      handPortionPlan: {
+        title: 'Hand Portions',
+        guidelines: {
+          protein: '1-2 palms of chicken breast',
+          vegetables: '2 fists of broccoli',
+          smartCarbs: '1 cupped hand of rice',
+          healthyFats: '1 thumb of olive oil',
+        },
+      },
+    }
+
+    const normalized = normalizeGeneratedPlan(rawMalformedPlan)
+    expect(Array.isArray(normalized.workouts[0].warmupProtocol.inhibitSmr)).toBe(true)
+    expect(normalized.workouts[0].warmupProtocol.inhibitSmr).toEqual(['Foam roll calves', 'Foam roll lats'])
+    expect(normalized.workouts[0].warmupProtocol.lengthenStaticStretch).toEqual(['Static calf stretch'])
+    expect(Array.isArray(normalized.workouts[0].exercises[0].coachingCues)).toBe(true)
+    expect(normalized.workouts[0].exercises[0].coachingCues).toEqual(['Keep chest tall and knees tracking toes'])
+    expect(typeof normalized.handPortionPlan?.guidelines.protein).toBe('object')
+    expect(normalized.handPortionPlan?.guidelines.protein.examples).toBe('1-2 palms of chicken breast')
+  })
 })
+

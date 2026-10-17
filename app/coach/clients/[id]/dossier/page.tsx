@@ -39,6 +39,7 @@ export default async function CoachClientDossierPage({ params }: PageProps) {
     .maybeSingle()
 
   const isMasterCoach =
+    user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
     user.email?.toLowerCase() === 'scott.gordon72@outlook.com' ||
     user.user_metadata?.surface_role === 'coach'
 

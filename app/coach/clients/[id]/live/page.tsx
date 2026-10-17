@@ -39,6 +39,7 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
   } else if (client.designated_coach_id !== user.id) {
     // Only block if assigned to a different coach and current user is not Master Coach
     const isMasterCoach =
+      user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
       user.email?.toLowerCase() === 'scott.gordon72@outlook.com' ||
       user.user_metadata?.surface_role === 'coach'
     if (!isMasterCoach) {

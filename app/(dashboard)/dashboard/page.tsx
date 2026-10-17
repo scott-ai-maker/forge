@@ -57,7 +57,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .order('scheduled_at', { ascending: true }),
     supabase
       .from('clients')
-      .select('full_name, email')
+      .select('full_name, email, role')
       .eq('id', user.id)
       .maybeSingle(),
     supabase
@@ -92,6 +92,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .order('session_date', { ascending: false })
       .limit(30),
   ])
+
+  const resolvedSearchParams = await searchParams
+  const isPreview = resolvedSearchParams?.preview === 'client' || resolvedSearchParams?.as === 'athlete'
+  const isCoach =
+    clientRow?.role === 'coach' ||
+    user.user_metadata?.surface_role === 'coach' ||
+    user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
+    user.email?.toLowerCase() === 'scott.gordon72@outlook.com'
+
+  if (isCoach && !isPreview) {
+    redirect('/coach')
+  }
 
   const [{ data: profile }, { data: intakeForm }, { data: wearableMetric }] = await Promise.all([
     supabase

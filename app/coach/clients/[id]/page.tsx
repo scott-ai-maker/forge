@@ -137,6 +137,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
     client.designated_coach_id = user.id
   } else if (client.designated_coach_id !== user.id) {
     const isMasterCoach =
+      user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
       user.email?.toLowerCase() === 'scott.gordon72@outlook.com' ||
       user.user_metadata?.surface_role === 'coach'
     if (!isMasterCoach) {

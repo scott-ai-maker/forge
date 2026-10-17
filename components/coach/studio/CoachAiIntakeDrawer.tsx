@@ -38,6 +38,7 @@ export interface CoachAiIntakeDrawerProps {
   clientId: string
   onSynthesize: (data: CoachAiIntakeFormData) => Promise<void>
   isSynthesizing: boolean
+  error?: string | null
 }
 
 const COMMON_SUPERPOWERS = [
@@ -81,6 +82,7 @@ export default function CoachAiIntakeDrawer({
   clientName,
   onSynthesize,
   isSynthesizing,
+  error,
 }: CoachAiIntakeDrawerProps) {
   // Form State
   const [goal, setGoal] = useState<'fat_loss' | 'hypertrophy' | 'performance' | 'general_fitness'>(
@@ -1189,6 +1191,65 @@ export default function CoachAiIntakeDrawer({
               }}
             />
           </div>
+
+          {/* Active Synthesis Progress Feedback */}
+          {isSynthesizing && (
+            <div
+              style={{
+                background: 'linear-gradient(135deg, rgba(212,160,23,0.15) 0%, rgba(184,134,11,0.08) 100%)',
+                border: '1px solid rgba(212,160,23,0.4)',
+                borderRadius: 8,
+                padding: '12px 16px',
+                color: '#FDE68A',
+                fontSize: 13,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                marginTop: 12,
+                marginBottom: 4,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 16,
+                  height: 16,
+                  border: '2px solid #D4A017',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                  flexShrink: 0,
+                }}
+              />
+              <div>
+                <strong>Forge Athletic AI Architect</strong> is structuring your 4-week NASM OPT™ program, verifying official movement CDN links, and applying orthopedic safeguards...
+              </div>
+            </div>
+          )}
+
+          {/* Inline Synthesis Error Banner */}
+          {error && (
+            <div
+              style={{
+                background: 'linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(185,28,28,0.1) 100%)',
+                border: '1px solid #EF4444',
+                borderRadius: 8,
+                padding: '12px 16px',
+                color: '#FCA5A5',
+                fontSize: 13,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                marginTop: 12,
+                marginBottom: 4,
+              }}
+            >
+              <GaaIcon name="alert-triangle" size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
+              <div>
+                <strong>Synthesis Error:</strong> {error}
+              </div>
+            </div>
+          )}
 
           {/* Action Button Footer inside Drawer */}
           <div

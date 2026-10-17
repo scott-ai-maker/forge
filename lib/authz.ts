@@ -76,10 +76,23 @@ export async function requireSurfaceRole(
   return { supabase, user, role, client }
 }
 
+export const MASTER_COACH_EMAILS = new Set(
+  [
+    'coach@forge-athletic.app',
+    'scott.gordon72@outlook.com',
+    (process.env.TEST_COACH_EMAIL || '').toLowerCase().trim(),
+  ].filter(Boolean)
+)
+
+export function isMasterCoachEmail(email: string | null | undefined): boolean {
+  if (!email) return false
+  return MASTER_COACH_EMAILS.has(email.toLowerCase().trim())
+}
+
 async function ensureClientRecord(user: User): Promise<ClientRecord> {
   const admin = supabaseAdmin()
   const metadataSurfaceRole = normalizeRole((user.user_metadata?.surface_role as string | undefined) ?? null)
-  const isMasterCoach = (user.email ?? '').toLowerCase() === 'scott.gordon72@outlook.com'
+  const isMasterCoach = isMasterCoachEmail(user.email)
 
   // Defensively fetch existing client without strict column fail
   const { data: existing, error: existingError } = await admin
@@ -90,7 +103,8 @@ async function ensureClientRecord(user: User): Promise<ClientRecord> {
 
   if (existing) {
     const dbRole = normalizeRole(existing.role)
-    const resolvedRole: AppRole = (isMasterCoach || dbRole === 'coach') ? 'coach' : 'client'
+    const resolvedRole: AppRole =
+      (isMasterCoach || dbRole === 'coach') ? 'coach' : 'client'
     const resolvedStatus: ClientStatus = (existing.status as ClientStatus) || 'active'
 
     // If master coach is set to client in DB, self-heal to coach

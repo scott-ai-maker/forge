@@ -36,6 +36,7 @@ function createAdminClient() {
 }
 
 const PROTECTED_EMAILS = new Set([
+  'coach@forge-athletic.app',
   'scott.gordon72@outlook.com',
   '5c077.60rd0n@gmail.com',
   '5c077.60rd0n@proton.me',
@@ -49,6 +50,12 @@ const SMOKETEST_ACCOUNTS = [
 ]
 
 const NEW_ACCOUNTS = [
+  {
+    email: 'coach@forge-athletic.app',
+    name: 'Coach Gordon',
+    role: 'coach',
+    password: process.env.FORGE_COACH_PASSWORD || process.env.TEMP_CLIENT_PASSWORD || 'Temp1234!',
+  },
   {
     email: 'scott.gordon72@outlook.com',
     name: 'Coach Gordon',

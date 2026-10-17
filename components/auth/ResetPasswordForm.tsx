@@ -199,31 +199,57 @@ export default function ResetPasswordForm({ forceChange = false, nextPath = '/da
     }
 
     // Prefer an explicit next path from the URL, otherwise determine destination by role.
-    let redirectPath = nextPath && nextPath.startsWith('/') ? nextPath : '/dashboard'
+    const params = new URLSearchParams(window.location.search)
+    const hashParams = new URLSearchParams(
+      window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+    )
+    const urlNext = params.get('next') ?? hashParams.get('next')
+    let redirectPath =
+      urlNext && urlNext.startsWith('/') ? urlNext : nextPath && nextPath.startsWith('/') ? nextPath : '/dashboard'
+
+    let isCoach = false
     try {
       const { data } = await supabase.auth.getUser()
+      const user = data.user
+      const isCoachMeta = user?.user_metadata?.surface_role === 'coach'
+      const isCoachEmail =
+        user?.email &&
+        (user.email.toLowerCase() === 'coach@forge-athletic.app' ||
+          user.email.toLowerCase() === 'scott.gordon72@outlook.com')
 
-      if (nextPath === '/dashboard' && data.user?.id) {
+      if (isCoachMeta || isCoachEmail) {
+        isCoach = true
+      }
+
+      if (user?.id) {
         const { data: profile } = await supabase
           .from('clients')
           .select('role')
-          .eq('id', data.user.id)
+          .eq('id', user.id)
           .maybeSingle()
 
         if (profile?.role === 'coach') {
-          redirectPath = '/coach'
+          isCoach = true
         }
       }
     } catch {
-      // Fall back to the default route.
+      // Fall back to default role determination
     }
 
-    setSuccessMessage('✓ Password updated successfully! Redirecting to your dashboard...')
+    if (isCoach && (!urlNext || redirectPath === '/dashboard')) {
+      redirectPath = '/coach'
+    }
+
+    setSuccessMessage(
+      isCoach
+        ? '✓ Password updated successfully! Redirecting to your Coach Console...'
+        : '✓ Password updated successfully! Redirecting to your dashboard...'
+    )
     setLoading(false)
 
     setTimeout(() => {
-      router.push(redirectPath)
-      router.refresh()
+      // Hard navigation ensures fresh session cookies reach server components
+      window.location.href = redirectPath
     }, 1200)
   }
 

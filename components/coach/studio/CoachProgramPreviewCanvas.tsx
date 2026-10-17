@@ -24,6 +24,31 @@ export interface CoachProgramPreviewCanvasProps {
   onOpenExerciseSwap: (exerciseName: string, workoutDayIndex: number, exerciseIndex: number) => void
 }
 
+function toArr(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map(String).filter(Boolean)
+  if (typeof v === 'string') {
+    const trimmed = v.trim()
+    if (!trimmed) return []
+    if (trimmed.includes(';') || trimmed.includes('\n')) {
+      return trimmed.split(/[;\n]/).map(s => s.trim().replace(/^[-*•]\s*/, '')).filter(Boolean)
+    }
+    return [trimmed]
+  }
+  return []
+}
+
+function safeGuideline(item: unknown, defaultMeasure: string) {
+  if (!item) return { portions: '', measure: defaultMeasure, examples: '', rationale: '' }
+  if (typeof item === 'string') return { portions: '', measure: '', examples: '', rationale: item }
+  const obj = item as { portionsPerMeal?: string; handMeasure?: string; examples?: string; rationale?: string }
+  return {
+    portions: obj.portionsPerMeal || '',
+    measure: obj.handMeasure || defaultMeasure,
+    examples: obj.examples || '',
+    rationale: obj.rationale || '',
+  }
+}
+
 export default function CoachProgramPreviewCanvas({
   plan,
   clientId,
@@ -45,9 +70,21 @@ export default function CoachProgramPreviewCanvas({
   const firstName = isSandbox ? 'your athlete' : (clientName.trim().split(/\s+/)[0] || clientName)
   const personalNote = plan.coachPersonalNote ?? ''
 
-  const currentDayIndex = plan.workouts.findIndex(w => w.day === activeDayNumber)
+  const workouts = Array.isArray(plan.workouts) ? plan.workouts : []
+  const currentDayIndex = workouts.findIndex(w => w.day === activeDayNumber)
   const activeWorkout: GeneratedWorkoutDay =
-    currentDayIndex >= 0 ? plan.workouts[currentDayIndex] : plan.workouts[0]
+    currentDayIndex >= 0
+      ? workouts[currentDayIndex]
+      : (workouts[0] || {
+          day: 1,
+          dayName: 'Day 1',
+          focus: 'Stabilization & Movement Mechanics',
+          nasmOptPhase: plan.nasmOptPhase || 1,
+          phaseName: plan.phaseName || 'Phase 1: Stabilization Endurance',
+          estimatedDurationMins: 35,
+          exercises: [],
+          warmupProtocol: { inhibitSmr: [], lengthenStaticStretch: [], activateDynamic: [] },
+        })
   const safeDayIndex = currentDayIndex >= 0 ? currentDayIndex : 0
 
   // Inline exercise edits
@@ -180,7 +217,7 @@ export default function CoachProgramPreviewCanvas({
             {plan.planTitle}
           </h1>
           <p style={{ margin: 0, fontSize: 13, color: '#CBD5E1' }}>
-            Built by {COACH_DISPLAY_NAME} for <strong>{isSandbox ? 'a template athlete' : clientName}</strong> · Focus: <strong>{plan.primaryGoal.replace(/_/g, ' ')}</strong>
+            Built by {COACH_DISPLAY_NAME} for <strong>{isSandbox ? 'a template athlete' : clientName}</strong> · Focus: <strong>{(plan.primaryGoal || 'general_fitness').replace(/_/g, ' ')}</strong>
           </p>
         </div>
 
@@ -590,128 +627,164 @@ export default function CoachProgramPreviewCanvas({
           {/* 4 Hand Portions Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
             {/* Protein */}
-            <div
-              style={{
-                background: 'rgba(239, 68, 68, 0.08)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: 8,
-                padding: 16,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 20 }}>✋</span>
-                <div>
-                  <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#F87171', fontWeight: 800 }}>
-                    Protein
+            {(() => {
+              const g = safeGuideline(plan.handPortionPlan?.guidelines?.protein, 'Palm of your hand')
+              return (
+                <div
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>✋</span>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#F87171', fontWeight: 800 }}>
+                        Protein
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>
+                        {g.portions ? `${g.portions} (${g.measure})` : (g.measure || 'Palm of hand')}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>
-                    {plan.handPortionPlan.guidelines.protein.portionsPerMeal} ({plan.handPortionPlan.guidelines.protein.handMeasure})
-                  </div>
+                  {g.examples && (
+                    <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
+                      <strong>Examples:</strong> {g.examples}
+                    </div>
+                  )}
+                  {g.rationale && (
+                    <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>
+                      {g.rationale}
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
-                <strong>Examples:</strong> {plan.handPortionPlan.guidelines.protein.examples}
-              </div>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>
-                {plan.handPortionPlan.guidelines.protein.rationale}
-              </div>
-            </div>
+              )
+            })()}
 
             {/* Vegetables */}
-            <div
-              style={{
-                background: 'rgba(16, 185, 129, 0.08)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                borderRadius: 8,
-                padding: 16,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 20 }}>✊</span>
-                <div>
-                  <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#34D399', fontWeight: 800 }}>
-                    Vegetables
+            {(() => {
+              const g = safeGuideline(plan.handPortionPlan?.guidelines?.vegetables, 'Closed fist')
+              return (
+                <div
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>✊</span>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#34D399', fontWeight: 800 }}>
+                        Vegetables
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>
+                        {g.portions ? `${g.portions} (${g.measure})` : (g.measure || 'Closed fist')}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>
-                    {plan.handPortionPlan.guidelines.vegetables.portionsPerMeal} ({plan.handPortionPlan.guidelines.vegetables.handMeasure})
-                  </div>
+                  {g.examples && (
+                    <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
+                      <strong>Examples:</strong> {g.examples}
+                    </div>
+                  )}
+                  {g.rationale && (
+                    <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>
+                      {g.rationale}
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
-                <strong>Examples:</strong> {plan.handPortionPlan.guidelines.vegetables.examples}
-              </div>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>
-                {plan.handPortionPlan.guidelines.vegetables.rationale}
-              </div>
-            </div>
+              )
+            })()}
 
             {/* Smart Carbs */}
-            <div
-              style={{
-                background: 'rgba(245, 158, 11, 0.08)',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
-                borderRadius: 8,
-                padding: 16,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 20 }}>🤲</span>
-                <div>
-                  <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#FBBF24', fontWeight: 800 }}>
-                    Smart Carbs
+            {(() => {
+              const g = safeGuideline(plan.handPortionPlan?.guidelines?.smartCarbs, 'Cupped hand')
+              return (
+                <div
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.08)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>🤲</span>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#FBBF24', fontWeight: 800 }}>
+                        Smart Carbs
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>
+                        {g.portions ? `${g.portions} (${g.measure})` : (g.measure || 'Cupped hand')}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>
-                    {plan.handPortionPlan.guidelines.smartCarbs.portionsPerMeal} ({plan.handPortionPlan.guidelines.smartCarbs.handMeasure})
-                  </div>
+                  {g.examples && (
+                    <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
+                      <strong>Examples:</strong> {g.examples}
+                    </div>
+                  )}
+                  {g.rationale && (
+                    <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>
+                      {g.rationale}
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
-                <strong>Examples:</strong> {plan.handPortionPlan.guidelines.smartCarbs.examples}
-              </div>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>
-                {plan.handPortionPlan.guidelines.smartCarbs.rationale}
-              </div>
-            </div>
+              )
+            })()}
 
             {/* Healthy Fats */}
-            <div
-              style={{
-                background: 'rgba(56, 189, 248, 0.08)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
-                borderRadius: 8,
-                padding: 16,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 20 }}>👍</span>
-                <div>
-                  <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#38BDF8', fontWeight: 800 }}>
-                    Healthy Fats
+            {(() => {
+              const g = safeGuideline(plan.handPortionPlan?.guidelines?.healthyFats, 'Entire thumb')
+              return (
+                <div
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.08)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>👍</span>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#38BDF8', fontWeight: 800 }}>
+                        Healthy Fats
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>
+                        {g.portions ? `${g.portions} (${g.measure})` : (g.measure || 'Entire thumb')}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>
-                    {plan.handPortionPlan.guidelines.healthyFats.portionsPerMeal} ({plan.handPortionPlan.guidelines.healthyFats.handMeasure})
-                  </div>
+                  {g.examples && (
+                    <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
+                      <strong>Examples:</strong> {g.examples}
+                    </div>
+                  )}
+                  {g.rationale && (
+                    <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>
+                      {g.rationale}
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
-                <strong>Examples:</strong> {plan.handPortionPlan.guidelines.healthyFats.examples}
-              </div>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>
-                {plan.handPortionPlan.guidelines.healthyFats.rationale}
-              </div>
-            </div>
+              )
+            })()}
           </div>
 
           {/* Satiety Cue & Hydration */}
@@ -782,40 +855,50 @@ export default function CoachProgramPreviewCanvas({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
             {/* Card 1: Sweaty In-Home Finisher */}
-            <div
-              style={{
-                background: 'rgba(239, 68, 68, 0.08)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: 8,
-                padding: 18,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, textTransform: 'uppercase', color: '#F87171', fontWeight: 800 }}>
-                  💦 Protocol A: Post-Lift Finisher
-                </span>
-                <span style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 700 }}>
-                  {plan.dualCardioPlan.sweatyFinisher.durationMins} Mins
-                </span>
-              </div>
+            {plan.dualCardioPlan.sweatyFinisher && (
+              <div
+                style={{
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: 8,
+                  padding: 18,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, textTransform: 'uppercase', color: '#F87171', fontWeight: 800 }}>
+                    💦 Protocol A: Post-Lift Finisher
+                  </span>
+                  <span style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 700 }}>
+                    {plan.dualCardioPlan.sweatyFinisher.durationMins || 10} Mins
+                  </span>
+                </div>
 
-              <h4 style={{ margin: 0, fontSize: 16, color: '#FFFFFF' }}>
-                {plan.dualCardioPlan.sweatyFinisher.title}
-              </h4>
+                <h4 style={{ margin: 0, fontSize: 16, color: '#FFFFFF' }}>
+                  {plan.dualCardioPlan.sweatyFinisher.title || 'Post-Lift Cardio Finisher'}
+                </h4>
 
-              <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.5 }}>
-                <div><strong>Modality:</strong> {plan.dualCardioPlan.sweatyFinisher.modality}</div>
-                <div><strong>Intensity Zone:</strong> {plan.dualCardioPlan.sweatyFinisher.zone}</div>
-                <div><strong>Timing:</strong> {plan.dualCardioPlan.sweatyFinisher.timing}</div>
-              </div>
+                <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.5 }}>
+                  {plan.dualCardioPlan.sweatyFinisher.modality && (
+                    <div><strong>Modality:</strong> {plan.dualCardioPlan.sweatyFinisher.modality}</div>
+                  )}
+                  {plan.dualCardioPlan.sweatyFinisher.zone && (
+                    <div><strong>Intensity Zone:</strong> {plan.dualCardioPlan.sweatyFinisher.zone}</div>
+                  )}
+                  {plan.dualCardioPlan.sweatyFinisher.timing && (
+                    <div><strong>Timing:</strong> {plan.dualCardioPlan.sweatyFinisher.timing}</div>
+                  )}
+                </div>
 
-              <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8 }}>
-                {plan.dualCardioPlan.sweatyFinisher.rationale}
+                {plan.dualCardioPlan.sweatyFinisher.rationale && (
+                  <div style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8 }}>
+                    {plan.dualCardioPlan.sweatyFinisher.rationale}
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             {/* Card 2: Fresh NEAT Walk */}
             {plan.dualCardioPlan.freshNeatWalk && (
@@ -981,7 +1064,7 @@ export default function CoachProgramPreviewCanvas({
                     Inhibit (SMR Foam Roll)
                   </div>
                   <div style={{ fontSize: 12, color: '#E2E8F0', marginTop: 2 }}>
-                    {activeWorkout.warmupProtocol.inhibitSmr?.join(', ') || 'Calves, Thoracic Spine'}
+                    {toArr(activeWorkout.warmupProtocol.inhibitSmr).join(', ') || 'Calves, Thoracic Spine'}
                   </div>
                 </div>
 
@@ -990,7 +1073,7 @@ export default function CoachProgramPreviewCanvas({
                     Lengthen (Static Stretch)
                   </div>
                   <div style={{ fontSize: 12, color: '#E2E8F0', marginTop: 2 }}>
-                    {activeWorkout.warmupProtocol.lengthenStaticStretch?.join(', ') || 'Hip Flexors, Latissimus Dorsi'}
+                    {toArr(activeWorkout.warmupProtocol.lengthenStaticStretch).join(', ') || 'Hip Flexors, Latissimus Dorsi'}
                   </div>
                 </div>
 
@@ -999,7 +1082,7 @@ export default function CoachProgramPreviewCanvas({
                     Activate (Dynamic Movement)
                   </div>
                   <div style={{ fontSize: 12, color: '#E2E8F0', marginTop: 2 }}>
-                    {activeWorkout.warmupProtocol.activateDynamic?.join(', ') || 'Glute Bridges, Arm Hugs'}
+                    {toArr(activeWorkout.warmupProtocol.activateDynamic).join(', ') || 'Glute Bridges, Arm Hugs'}
                   </div>
                 </div>
               </div>
@@ -1073,7 +1156,7 @@ export default function CoachProgramPreviewCanvas({
                                 fontWeight: 800,
                               }}
                             >
-                              {ex.block.replace('_', ' ')}
+                              {(ex.block || 'resistance').replace(/_/g, ' ')}
                             </span>
                             <span style={{ fontSize: 11, color: '#94A3B8' }}>
                               {ex.nasmClinicalSource || 'NASM Edge Catalog'}
@@ -1224,7 +1307,7 @@ export default function CoachProgramPreviewCanvas({
                       </label>
                       <input
                         type="text"
-                        value={ex.coachingCues?.join(' | ') || ''}
+                        value={toArr(ex.coachingCues).join(' | ')}
                         onChange={e => handleExerciseChange(exIndex, 'coachingCues', e.target.value)}
                         placeholder="e.g. Keep chest tall, brace core, drive through midfoot..."
                         style={{

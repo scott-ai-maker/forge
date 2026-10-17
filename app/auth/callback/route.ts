@@ -129,24 +129,27 @@ export async function GET(request: NextRequest) {
     const displayName = rawFullName.length > 0 ? rawFullName : null
 
     const userEmail = (user.email ?? '').toLowerCase().trim()
-    const isMasterCoach = userEmail === 'scott.gordon72@outlook.com'
+    const isMasterCoach =
+      userEmail === 'coach@forge-athletic.app' ||
+      userEmail === 'scott.gordon72@outlook.com' ||
+      user.user_metadata?.surface_role === 'coach'
     const { data: existingProfile } = await admin
       .from('clients')
       .select('id, role, avatar_path')
       .eq('id', user.id)
       .maybeSingle()
 
-    let resolvedRole: 'coach' | 'client' = isMasterCoach ? 'coach' : 'client'
+    let resolvedRole: 'coach' | 'client' =
+      isMasterCoach || existingProfile?.role === 'coach' ? 'coach' : 'client'
 
     if (existingProfile) {
-      resolvedRole = (isMasterCoach || existingProfile.role === 'coach') ? 'coach' : 'client'
       // Refresh profile fields for existing accounts
       await admin
         .from('clients')
         .update({
           email: userEmail || user.email || '',
           full_name: displayName,
-          ...(isMasterCoach ? { role: 'coach' } : {}),
+          ...(resolvedRole === 'coach' ? { role: 'coach' } : {}),
         })
         .eq('id', user.id)
 
