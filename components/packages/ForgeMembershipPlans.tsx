@@ -17,6 +17,8 @@ const PLAN_VISUALS: Record<string, { src: string; alt: string }> = {
     src: '/images/coach-client-plan.jpg',
     alt: 'Coach Gordon providing 1:1 program design and consultation',
   },
+}
+
 const PLAN_SUBTITLES: Record<string, string> = {
   'forge-core': 'Foundation · Autonomous NASM OPT™ Lab',
   'forge-pro-athlete': 'Guided Hybrid · Exercise & Nutrition',
