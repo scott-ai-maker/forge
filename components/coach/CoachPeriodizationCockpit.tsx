@@ -21,6 +21,10 @@ const CoachConsultantMemoModal = dynamic(
   () => import('@/components/coach/CoachConsultantMemoModal'),
   { ssr: false }
 )
+const CoachSanctuaryAudioNoteModal = dynamic(
+  () => import('@/components/coach/CoachSanctuaryAudioNoteModal'),
+  { ssr: false }
+)
 
 interface CoachPeriodizationCockpitProps {
   clientId: string
@@ -93,6 +97,7 @@ export default function CoachPeriodizationCockpit({
   const [targetPhaseSelect, setTargetPhaseSelect] = useState<number>(2)
   const [extendWeeksCount, setExtendWeeksCount] = useState<number>(1)
   const [showMemoModal, setShowMemoModal] = useState<boolean>(false)
+  const [showAudioNoteModal, setShowAudioNoteModal] = useState<boolean>(false)
 
   // Load latest plan from API if not provided in SSR
   useEffect(() => {
@@ -1045,27 +1050,51 @@ export default function CoachPeriodizationCockpit({
                 <GaaIcon name="mic" size={13} tone="gold" />
                 <span>Coach Gordon Direct Memo for Week {activeWeek.weekNumber} (Visible in Athlete Portal):</span>
               </label>
-              <button
-                type="button"
-                onClick={() => setShowMemoModal(true)}
-                className="tactile-btn"
-                style={{
-                  padding: '3px 10px',
-                  background: 'rgba(212,160,23,0.15)',
-                  border: '1px solid rgba(212,160,23,0.45)',
-                  borderRadius: 4,
-                  color: 'var(--gold-lt)',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                }}
-              >
-                <GaaIcon name="sparkles" size={12} tone="gold" />
-                <span>AI Memo Studio &amp; Voice Preview →</span>
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  data-testid="open-audio-note-studio-btn"
+                  onClick={() => setShowAudioNoteModal(true)}
+                  className="tactile-btn"
+                  style={{
+                    padding: '3px 10px',
+                    background: 'rgba(56,189,248,0.15)',
+                    border: '1px solid rgba(56,189,248,0.45)',
+                    borderRadius: 4,
+                    color: '#38BDF8',
+                    fontSize: 11,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                >
+                  <GaaIcon name="headphones" size={12} tone="cyan" />
+                  <span>Sanctuary Voice Studio (Rest Delivery) →</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMemoModal(true)}
+                  className="tactile-btn"
+                  style={{
+                    padding: '3px 10px',
+                    background: 'rgba(212,160,23,0.15)',
+                    border: '1px solid rgba(212,160,23,0.45)',
+                    borderRadius: 4,
+                    color: 'var(--gold-lt)',
+                    fontSize: 11,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                >
+                  <GaaIcon name="sparkles" size={12} tone="gold" />
+                  <span>AI Memo Studio &amp; Voice Preview →</span>
+                </button>
+              </div>
             </div>
             <textarea
               rows={3}
@@ -1110,6 +1139,16 @@ export default function CoachPeriodizationCockpit({
                   })
                   .catch(() => {})
               }}
+            />
+          )}
+
+          {/* Coach Sanctuary In-Ear Audio Note Modal */}
+          {showAudioNoteModal && (
+            <CoachSanctuaryAudioNoteModal
+              isOpen={showAudioNoteModal}
+              onClose={() => setShowAudioNoteModal(false)}
+              initialClientId={clientId}
+              initialClientName={clientName}
             />
           )}
 

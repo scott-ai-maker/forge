@@ -75,4 +75,17 @@ describe('FloatingRestTimerDock Logic & Dynamic Adaptation', () => {
     expect(tone?.description).toContain('Cardiac Pulse')
     expect(tone?.secondaryTone?.freq).toBe(85)
   })
+
+  it('contains Sanctuary In-Ear Coach Audio Note banner and player tokens', () => {
+    const fs = require('fs')
+    const path = require('path')
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'components/fitness/tracker/FloatingRestTimerDock.tsx'),
+      'utf-8'
+    )
+    expect(source).toContain('coach-rest-audio-banner')
+    expect(source).toContain('listen-coach-audio-btn')
+    expect(source).toContain('SanctuaryAudioNotePlayer')
+    expect(source).toContain('getRelevantAudioNoteForRest')
+  })
 })

@@ -3,6 +3,21 @@
 All notable changes to Forge Athletic will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.43.0] - 2026-10-16
+
+### Added & Improved
+- **Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine ([`lib/sanctuary-audio-notes-engine.ts`](file:///Users/scottgordon/Repos/forge/lib/sanctuary-audio-notes-engine.ts), [`components/fitness/SanctuaryAudioNotePlayer.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/SanctuaryAudioNotePlayer.tsx))**:
+  - Engineered an in-ear acoustic coaching pipeline enforcing Forge Athletic's brand standard: "NO SOCIAL MEDIA · ZERO DISTRACTIONS · 100% COACHING & TOOLS".
+  - Delivers 20-60 second high-impact voice memos from Coach Scott Gordon straight to the athlete's headphones during rest intervals, eliminating phone doomscrolling and vanity feeds.
+  - Implements acoustic background music ducking via the W3C Audio Session API and Web Audio hardware clock (`configureAudioSession('ambient')` and harmonic chime stabs) to gently lower Spotify/Apple Music without pausing.
+  - Pre-loaded institutional seed library featuring Coach Scott Gordon master coaching directives across Big 5 compound lifts (360° squat brace, deadlift lat lock, bench retraction, overhead kinetic pillar) and vagal down-regulation breathwork.
+  - Integrated into the active floating rest countdown dock ([`components/fitness/tracker/FloatingRestTimerDock.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/tracker/FloatingRestTimerDock.tsx)) with real-time exercise matching, 1-tap playback, and tactile haptics.
+  - Added Sanctuary HUD Coach Memos launcher and drawer ([`components/fitness/SanctuaryModeHud.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/SanctuaryModeHud.tsx)) for anytime access to session briefings and reset cues.
+- **Coach Sanctuary Voice Studio ([`components/coach/CoachSanctuaryAudioNoteModal.tsx`](file:///Users/scottgordon/Repos/forge/components/coach/CoachSanctuaryAudioNoteModal.tsx), [`components/coach/CoachPeriodizationCockpit.tsx`](file:///Users/scottgordon/Repos/forge/components/coach/CoachPeriodizationCockpit.tsx))**:
+  - Embedded a 60-second voice memo recording console utilizing `UniversalVoiceRecorder` for crystal-clear 16-bit linear PCM WAV recording.
+  - Includes real-time input frequency visualizer, instant audio playback preview, exercise/client scope selector, and 1-click dispatch to the athlete's rest dock.
+  - Features an active dispatched notes library with playback tracking and management controls.
+
 ## [1.42.0] - 2026-10-16
 
 ### Added & Improved

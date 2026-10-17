@@ -7,6 +7,8 @@ import {
   evaluateDynamicRestHeartRateRecovery,
   type RestAudioMetronomeMode,
 } from '@/lib/rest-timer-audio-hr-engine'
+import { getRelevantAudioNoteForRest } from '@/lib/sanctuary-audio-notes-engine'
+import SanctuaryAudioNotePlayer from '@/components/fitness/SanctuaryAudioNotePlayer'
 
 export interface ActiveRestState {
   exerciseName: string
@@ -58,6 +60,15 @@ export default function FloatingRestTimerDock({
 }: FloatingRestTimerDockProps) {
   const [showCardioPacer, setShowCardioPacer] = useState(false)
   const [dismissedExtensionAlert, setDismissedExtensionAlert] = useState(false)
+  const [showCoachAudioNote, setShowCoachAudioNote] = useState(false)
+
+  const relevantCoachAudioNote = useMemo(() => {
+    if (!activeRestState) return null
+    return getRelevantAudioNoteForRest({
+      exerciseName: activeRestState.exerciseName,
+      unplayedFirst: true,
+    })
+  }, [activeRestState?.exerciseName, activeRestState?.key])
 
   const elapsedRestSecs = activeRestState
     ? Math.max(0, activeRestState.restSeconds - activeRestState.remainingSeconds)
@@ -445,6 +456,69 @@ export default function FloatingRestTimerDock({
           <span>Pacer</span>
         </button>
       </div>
+
+      {/* ── Coach Scott Gordon Sanctuary In-Ear Audio Note Banner ── */}
+      {relevantCoachAudioNote && !showCoachAudioNote && (
+        <div
+          data-testid="coach-rest-audio-banner"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            padding: '5px 10px',
+            borderRadius: 6,
+            background: 'rgba(212, 175, 55, 0.12)',
+            border: '1px solid rgba(212, 175, 55, 0.35)',
+            color: 'var(--gold-lt)',
+            fontSize: 10.5,
+            fontWeight: 700,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+            <GaaIcon name="headphones" size={12} tone="gold" />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              🎙️ Coach Scott: {relevantCoachAudioNote.title} ({relevantCoachAudioNote.durationSeconds}s)
+            </span>
+          </div>
+          <button
+            type="button"
+            data-testid="listen-coach-audio-btn"
+            onClick={() => {
+              triggerHaptic?.('tap')
+              setShowCoachAudioNote(true)
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
+              border: '1px solid #D4AF37',
+              color: '#0A0E18',
+              padding: '2px 8px',
+              borderRadius: 4,
+              fontSize: 10,
+              fontWeight: 800,
+              cursor: 'pointer',
+              flexShrink: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <GaaIcon name="play" size={10} tone="inherit" />
+            <span>Listen</span>
+          </button>
+        </div>
+      )}
+
+      {/* ── Expanded Sanctuary Audio Note Player ── */}
+      {showCoachAudioNote && relevantCoachAudioNote && (
+        <SanctuaryAudioNotePlayer
+          note={relevantCoachAudioNote}
+          compact
+          autoPlayOnMount
+          onClose={() => setShowCoachAudioNote(false)}
+          triggerHaptic={triggerHaptic}
+        />
+      )}
 
       {/* ── Dynamic Cardiac Delay / Acute Fatigue Extension Alert ── */}
       {hrAdaptation?.shouldExtend && !dismissedExtensionAlert && (

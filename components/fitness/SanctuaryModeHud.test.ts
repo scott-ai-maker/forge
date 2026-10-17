@@ -19,5 +19,7 @@ describe('SanctuaryModeHud Component Structure & Tokens', () => {
     expect(source).toContain('4-2-6 (Vagal Recovery)')
     expect(source).toContain('Cardiac Drift (Zone 2)')
     expect(source).toContain('Resynthesizing phosphagen (ATP-CP)')
+    expect(source).toContain('sanctuary-coach-notes-btn')
+    expect(source).toContain('SanctuaryAudioNotePlayer')
   })
 })

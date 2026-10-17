@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.42.0'
+export const APP_VERSION = '1.43.0'
 export const APP_RELEASE_DATE = '2026-10-16'
-export const APP_RELEASE_CODENAME = 'Clinical Proof of Work Dossier & Anti-Social Share Engine'
+export const APP_RELEASE_CODENAME = 'Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,29 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.42.0',
+    version: '1.43.0',
     date: '2026-10-16',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Sanctuary Audio Notes · In-Ear Rest Delivery · Zero Social Media · Coach Scott Gordon Voice Memos · Audio Ducking',
+    title: 'Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine',
+    summary: 'Delivered an authoritative acoustic coaching pipeline enforcing Forge Athletic\'s zero-distraction brand promise. Coach Scott Gordon can record and dispatch 20-60 second high-impact voice memos directly into the athlete\'s headphones during gym rest intervals—replacing mindless social feeds and doomscrolling with biomechanical cues, vagal down-regulation breathwork, and mental focus.',
+    highlights: [
+      'In-Ear Rest Interval Audio Delivery: Replaces phone doomscrolling and vanity selfie feeds with concise, high-impact audio memos delivered straight to the athlete\'s headphones (AirPods) during rest intervals.',
+      'Acoustic Background Music Ducking: Utilizes the W3C Audio Session API and Web Audio hardware clock to gently duck Spotify and Apple Music while Coach Scott speaks, seamlessly restoring music volume upon completion.',
+      'Institutional Seed Library: Pre-loaded with Coach Scott Gordon\'s master coaching directives across Big 5 compound lifts (360° squat brace, deadlift lat lock, bench retraction, overhead kinetic pillar) and autonomic vagal down-regulation.',
+      'Universal PCM WAV Voice Studio: Coach Scott Gordon can record up to 60 seconds of crystal-clear 16-bit linear PCM audio with real-time waveform visualization, instant audio preview, exercise targeting, and 1-click dispatch.',
+      'Tactile In-Ear Scrubber & Readable Transcript Drawer: Features high-contrast obsidian & gold waveform bars, audio scrub controls, and collapsible transcripts for loud, reverberant gym floors.',
+    ],
+    relatedLinks: [
+      { label: 'Workout Sanctuary HUD', href: '/dashboard/fitness' },
+      { label: 'Periodization Studio', href: '/coach' },
+    ],
+  },
+  {
+    version: '1.42.0',
+    date: '2026-10-16',
+    codename: 'Clinical Proof of Work Dossier & Anti-Social Share Engine',
     category: 'feature',
     badge: 'Clinical Proof of Work Dossier · Anti-Social Performance Report · Compound 1RM Vault · Zero-Login Web Share · Medical PDF Export',
     title: 'Clinical Proof of Work Dossier & Anti-Social Share Engine',

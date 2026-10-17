@@ -7,6 +7,11 @@ import {
   type BreathingPhaseState,
   type SanctuaryInterventionCue,
 } from '@/lib/sanctuary-mode-engine'
+import {
+  getStoredSanctuaryAudioNotes,
+  type SanctuaryAudioNote,
+} from '@/lib/sanctuary-audio-notes-engine'
+import SanctuaryAudioNotePlayer from '@/components/fitness/SanctuaryAudioNotePlayer'
 
 export interface SanctuaryModeHudProps {
   isWorkoutActive: boolean
@@ -42,6 +47,8 @@ export default function SanctuaryModeHud({
   isSanctuaryActive = true,
 }: SanctuaryModeHudProps) {
   const [expanded, setExpanded] = useState(false)
+  const [showAudioNotesModal, setShowAudioNotesModal] = useState(false)
+  const [selectedAudioNote, setSelectedAudioNote] = useState<SanctuaryAudioNote | null>(null)
 
   if (!isWorkoutActive || !isSanctuaryActive) return null
 
@@ -311,6 +318,34 @@ export default function SanctuaryModeHud({
               <span>{audioBreathPacerEnabled ? 'Audio Pacer ON' : 'Audio Pacer'}</span>
             </button>
 
+            {/* Coach Voice Notes Button */}
+            <button
+              type="button"
+              data-testid="sanctuary-coach-notes-btn"
+              onClick={() => {
+                const notes = getStoredSanctuaryAudioNotes()
+                setSelectedAudioNote(notes[0] || null)
+                setShowAudioNotesModal(true)
+              }}
+              style={{
+                background: 'rgba(212, 175, 55, 0.15)',
+                border: '1px solid rgba(212, 175, 55, 0.4)',
+                color: 'var(--gold-lt, #F3E5AB)',
+                borderRadius: 6,
+                padding: '5px 10px',
+                fontSize: 11,
+                fontFamily: 'var(--font-telemetry)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+              title="Open Coach Scott Gordon In-Ear Voice Notes"
+            >
+              <ForgeIcon name="headphones" size={13} />
+              <span>Coach Memos</span>
+            </button>
+
             {/* Expand / Minimize Breath Sphere Button */}
             <button
               type="button"
@@ -479,6 +514,183 @@ export default function SanctuaryModeHud({
           </div>
         )}
       </aside>
+
+      {/* ── COACH SCOTT GORDON SANCTUARY AUDIO NOTES MODAL ── */}
+      {showAudioNotesModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sanctuary-audio-notes-title"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100000,
+            background: 'rgba(4, 7, 14, 0.88)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 540,
+              width: '100%',
+              background: 'linear-gradient(180deg, #0F172A 0%, #080E18 100%)',
+              border: '1.5px solid rgba(212, 175, 55, 0.6)',
+              borderRadius: 16,
+              padding: 20,
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 32px rgba(212, 175, 55, 0.25)',
+              position: 'relative',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 16,
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                paddingBottom: 12,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ForgeIcon name="headphones" size={18} style={{ color: 'var(--gold)' }} />
+                <div>
+                  <h3
+                    id="sanctuary-audio-notes-title"
+                    style={{
+                      margin: 0,
+                      fontSize: 15,
+                      fontFamily: 'var(--font-heading)',
+                      fontWeight: 700,
+                      color: '#FFFFFF',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Coach Scott Gordon · In-Ear Memos
+                  </h3>
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      color: 'var(--gold-lt)',
+                      fontFamily: 'var(--font-telemetry)',
+                    }}
+                  >
+                    NO SOCIAL MEDIA · ZERO DISTRACTIONS · 100% COACHING
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAudioNotesModal(false)}
+                aria-label="Close Coach Memos"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94A3B8',
+                  cursor: 'pointer',
+                  padding: 4,
+                }}
+              >
+                <ForgeIcon name="close" size={16} />
+              </button>
+            </div>
+
+            {selectedAudioNote ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <SanctuaryAudioNotePlayer
+                  note={selectedAudioNote}
+                  autoPlayOnMount
+                  onClose={() => setSelectedAudioNote(null)}
+                />
+
+                <div style={{ marginTop: 8 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: '#94A3B8',
+                      marginBottom: 8,
+                      textTransform: 'uppercase',
+                      fontFamily: 'var(--font-telemetry)',
+                    }}
+                  >
+                    Other Available Coach Memos:
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {getStoredSanctuaryAudioNotes()
+                      .filter(n => n.id !== selectedAudioNote.id)
+                      .map(n => (
+                        <button
+                          key={n.id}
+                          type="button"
+                          onClick={() => setSelectedAudioNote(n)}
+                          style={{
+                            textAlign: 'left',
+                            background: 'rgba(255, 255, 255, 0.04)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: 6,
+                            padding: '8px 12px',
+                            color: '#FFFFFF',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 600 }}>{n.title}</div>
+                            <div style={{ fontSize: 10, color: '#94A3B8' }}>
+                              {n.category.replace('_', ' ')} · {n.durationSeconds}s
+                            </div>
+                          </div>
+                          <ForgeIcon name="play" size={11} style={{ color: 'var(--gold)' }} />
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {getStoredSanctuaryAudioNotes().map(n => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => setSelectedAudioNote(n)}
+                    style={{
+                      textAlign: 'left',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                      color: '#FFFFFF',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700 }}>{n.title}</div>
+                      <div style={{ fontSize: 11, color: '#CBD5E1', fontStyle: 'italic', marginTop: 2 }}>
+                        &ldquo;{n.transcript.slice(0, 70)}...&rdquo;
+                      </div>
+                    </div>
+                    <ForgeIcon name="headphones" size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   )
 }
