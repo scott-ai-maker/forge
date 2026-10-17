@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.41.1'
+export const APP_VERSION = '1.42.0'
 export const APP_RELEASE_DATE = '2026-10-16'
-export const APP_RELEASE_CODENAME = 'Gym Sanctuary Mode & Autonomic Down-Regulation Engine'
+export const APP_RELEASE_CODENAME = 'Clinical Proof of Work Dossier & Anti-Social Share Engine'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,30 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.41.1',
+    version: '1.42.0',
     date: '2026-10-16',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Clinical Proof of Work Dossier · Anti-Social Performance Report · Compound 1RM Vault · Zero-Login Web Share · Medical PDF Export',
+    title: 'Clinical Proof of Work Dossier & Anti-Social Share Engine',
+    summary: 'Engineered the ultimate anti-social alternative to superficial fitness posts: the Clinical Proof of Work Dossier. Aggregates verified cumulative mechanical tonnage, Big 5 compound 1RM progressive overload trajectories, Sanctuary Mode autonomic focus telemetry, ACWR injury prevention indices, and clinical S.O.A.P. notes into an institutional PDF export and zero-login URL-safe web share link (/pow/[token]) for doctors, physical therapists, and peers.',
+    highlights: [
+      'The Anti-Social Performance Standard: Replaces narcissistic vanity selfies and algorithmic clout with verified mechanical tonnage, 1RM progression curves, and clinical sports science.',
+      'Big 5 Compound 1RM Overload Vault: Dynamically calculates estimated 1 Rep Max benchmarks (Brzycki model) across Barbell Back Squat, Conventional Deadlift, Bench Press, Overhead Press, and Weighted Pull-Up.',
+      'Sanctuary Mode Autonomic & Neuro-Discipline Integration: Features real-time focus fidelity percentages, total hours logged in the gym without social media distractions, and vagal down-regulation breathwork counts.',
+      'ACWR & Kinetic Symmetry Safety Index: Validates Acute:Chronic Workload Ratios (0.8–1.3 sweet spot) and Push:Pull / Squat:Hinge movement symmetry for physical therapist and orthopedic clearance.',
+      'Coach Scott Gordon Clinical Attestation: Digitally signs and certifies compliance with NASM OPT™ biomechanical standards, credentials, and cryptographic verification seals (FORGE-POW-XXXX).',
+      'Zero-Login Private Web Sharing & PDF Export: Embeds URL-safe tokenized share routes (/pow/[token]) and high-contrast @media print stylesheets with embedded Founding Member Pass peer referral links.',
+    ],
+    relatedLinks: [
+      { label: 'Progress Hub', href: '/dashboard/fitness?hub=progress' },
+      { label: 'Brand Manifesto', href: '/docs/brand-strategy-manifesto.md' },
+    ],
+  },
+  {
+    version: '1.41.1',
+    date: '2026-10-16',
+    codename: 'Gym Sanctuary Mode & Autonomic Down-Regulation Engine',
     category: 'feature',
     badge: 'Gym Sanctuary Mode · Zero-Distraction Interception · Vagal Down-Regulation Pacer · Web Audio Breath Tones · Focus Scoring & Badges',
     title: 'Gym Sanctuary Mode & Autonomic Down-Regulation Engine',

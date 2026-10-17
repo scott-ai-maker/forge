@@ -548,6 +548,26 @@ export default function ExecutiveSundayDossier({
           </button>
 
           <a
+            href="/dashboard/fitness?hub=progress"
+            className="tactile-btn"
+            style={{
+              padding: '8px 14px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(212, 175, 55, 0.4)',
+              color: '#FFFFFF',
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span>📋 Clinical Proof of Work Dossier ➔</span>
+          </a>
+
+          <a
             href="/dashboard/fitness?workspace=coach"
             className="tactile-btn"
             style={{

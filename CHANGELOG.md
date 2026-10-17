@@ -3,6 +3,20 @@
 All notable changes to Forge Athletic will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.42.0] - 2026-10-16
+
+### Added & Improved
+- **Clinical Proof of Work Performance Dossier & Anti-Social Share Engine ([`lib/proof-of-work-dossier-engine.ts`](file:///Users/scottgordon/Repos/forge/lib/proof-of-work-dossier-engine.ts), [`components/fitness/ProofOfWorkDossierModal.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/ProofOfWorkDossierModal.tsx), [`app/pow/[token]/page.tsx`](file:///Users/scottgordon/Repos/forge/app/pow/[token]/page.tsx))**:
+  - Engineered the ultimate anti-social alternative to superficial fitness posts: an institutional clinical performance dossier.
+  - Dynamically calculates cumulative mechanical tonnage, Big 5 compound 1RM overload curves (Brzycki formula), and progressive overload delta percentages.
+  - Integrates Sanctuary Mode autonomic focus fidelity telemetry, zero-distraction gym hours, and vagal down-regulation breathwork logs.
+  - Features Acute:Chronic Workload Ratio (ACWR) safety index validation (0.8–1.3 sweet spot) and kinetic symmetry distributions (Push:Pull, Squat:Hinge).
+  - Outlines structured S.O.A.P. clinical notes and Coach Scott Gordon attestation (`NASM Master Trainer Candidate · CPT® · CES® · PES® · CNC™ · CSNC`).
+  - Deployed zero-login URL-safe tokenized share routes (`/pow/[token]`) with dynamic OpenGraph metadata, printable `@media print` formatting, and embedded Founding Member Pass peer referral links (`/r/[code]`).
+- **Client & Dashboard Integrations ([`components/fitness/FitnessTrackerClient.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/FitnessTrackerClient.tsx), [`components/dashboard/ExecutiveSundayDossier.tsx`](file:///Users/scottgordon/Repos/forge/components/dashboard/ExecutiveSundayDossier.tsx))**:
+  - Embedded the Clinical Proof of Work Dossier action directly into the Progress & PRs hub and the end-of-workout review modal.
+  - Linked the complete multi-week Proof of Work Dossier from the Executive Sunday Dossier toolbar.
+
 ## [1.41.1] - 2026-10-16
 
 ### Added & Improved

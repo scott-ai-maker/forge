@@ -93,6 +93,7 @@ import { useTrackerTimer } from '@/components/fitness/hooks/useTrackerTimer'
 import SanctuaryModeHud from '@/components/fitness/SanctuaryModeHud'
 import { useSanctuaryMode } from '@/components/fitness/hooks/useSanctuaryMode'
 import { getSanctuaryBadge } from '@/lib/sanctuary-mode-engine'
+import ProofOfWorkDossierModal from '@/components/fitness/ProofOfWorkDossierModal'
 import { useSetVolume, parseSetTarget } from '@/components/fitness/hooks/useSetVolume'
 import { useSupersetController } from '@/components/fitness/hooks/useSupersetController'
 import { useOfflineSyncManager } from '@/components/fitness/hooks/useOfflineSyncManager'
@@ -1038,6 +1039,7 @@ export default function FitnessTrackerClient({
 
   const [labInitialLift, _setLabInitialLift] = useState<LiftType | undefined>(undefined)
   const [labInitialCritique, _setLabInitialCritique] = useState<VideoCritiqueAnalysis | null>(null)
+  const [showProofOfWorkModal, setShowProofOfWorkModal] = useState(false)
 
   // All-Time Personal Record (PR) Vault
   const exercisePrVault = useMemo(() => {
@@ -5202,7 +5204,95 @@ export default function FitnessTrackerClient({
 
       {/* ── PROGRESS & PRS HUB ── */}
       {primaryHub === 'progress' && (
-        <ProgressAnalyticsView
+        <>
+          {/* Executive Proof of Work Dossier Launcher */}
+          <div
+            style={{
+              maxWidth: 1120,
+              margin: '0 auto 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 12,
+              padding: '14px 20px',
+              background: 'linear-gradient(90deg, rgba(8, 14, 24, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+              border: '1.5px solid rgba(212, 175, 55, 0.4)',
+              borderRadius: 10,
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(212, 175, 55, 0.15)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 8,
+                  background: 'rgba(212, 175, 55, 0.12)',
+                  border: '1px solid rgba(212, 175, 55, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 18,
+                  flexShrink: 0,
+                }}
+              >
+                📋
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 800, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Clinical Proof of Work Dossier
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 9.5,
+                      fontWeight: 800,
+                      padding: '2px 7px',
+                      borderRadius: 3,
+                      background: 'rgba(239, 68, 68, 0.18)',
+                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                      color: '#F87171',
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    ✕ Zero Social Media
+                  </span>
+                </div>
+                <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
+                  Export verified 1RM overload curves, ACWR safety index, and Sanctuary focus records for doctors, PTs, or peers.
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowProofOfWorkModal(true)}
+              data-testid="open-proof-of-work-btn"
+              style={{
+                background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
+                border: '1px solid #F3E5AB',
+                color: '#0A0E18',
+                borderRadius: 6,
+                padding: '9px 18px',
+                fontSize: 12,
+                fontWeight: 800,
+                fontFamily: 'var(--font-heading, sans-serif)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 4px 14px rgba(212, 175, 55, 0.35)',
+              }}
+            >
+              <span>📄 View &amp; Export Dossier</span>
+            </button>
+          </div>
+
+          <ProgressAnalyticsView
           sessionsPerWeek={sessionsPerWeek}
           optPhase={plan?.nasm_opt_phase}
           localWorkoutLogs={localWorkoutLogs}
@@ -5216,6 +5306,7 @@ export default function FitnessTrackerClient({
           setStatus={setStatus}
           formatWeight={formatWeight}
         />
+        </>
       )}
 
       {/* ── FITNESS LAB & DIAGNOSTICS HUB ── */}
@@ -5273,6 +5364,7 @@ export default function FitnessTrackerClient({
           plan={plan}
           sanctuaryFocusScore={sanctuaryFocusScore}
           sanctuaryBreathsCount={sanctuaryDownRegBreaths}
+          onOpenProofOfWork={() => setShowProofOfWorkModal(true)}
           onClose={() => setCompleteModal(null)}
           onConfirm={(rpe?: number) => {
             void handleCompleteWorkoutDay(completeModal, rpe)
@@ -5309,6 +5401,32 @@ export default function FitnessTrackerClient({
             }, 150)
           }}
           busy={busy === `log-day:${String(completeModal.day)}`}
+        />
+      )}
+
+      {/* ── CLINICAL PROOF OF WORK PERFORMANCE DOSSIER MODAL ── */}
+      {showProofOfWorkModal && (
+        <ProofOfWorkDossierModal
+          isOpen={showProofOfWorkModal}
+          onClose={() => setShowProofOfWorkModal(false)}
+          initialParams={{
+            athleteName: profile?.full_name || 'Forge Athlete',
+            optPhase: plan?.nasm_opt_phase || 2,
+            phaseName: plan?.name || undefined,
+            currentMicrocycleWeek: microcycleProgress.currentWeek,
+            setLogs: localSetLogs.map(s => ({
+              session_date: s.session_date || todayDateOnly(),
+              weight_lbs: units === 'metric' ? Math.round((s.weight_kg || 0) * 2.20462) : s.weight_kg,
+              reps: s.reps,
+              is_warmup: s.is_warmup,
+              rpe: s.rpe,
+              exercise_name: s.exercise_name,
+              notes: s.notes,
+            })),
+            sanctuaryFocusScore,
+            sanctuaryBreathsCount: sanctuaryDownRegBreaths,
+            sanctuaryDistractionCount,
+          }}
         />
       )}
 
@@ -5634,6 +5752,7 @@ function PostWorkoutFinishModal({
   busy,
   sanctuaryFocusScore,
   sanctuaryBreathsCount,
+  onOpenProofOfWork,
 }: {
   workout: WorkoutDay
   cardio?: IntegratedCardioPrescription | null
@@ -5649,6 +5768,7 @@ function PostWorkoutFinishModal({
   busy: boolean
   sanctuaryFocusScore?: number
   sanctuaryBreathsCount?: number
+  onOpenProofOfWork?: () => void
 }) {
   const [rpe, setRpe] = useState('8')
   const [showCnsModal, setShowCnsModal] = useState(false)
@@ -5825,6 +5945,44 @@ function PostWorkoutFinishModal({
             </div>
           </div>
         )}
+
+        {/* ── 1-Click Clinical Proof of Work Dossier Action ── */}
+        <button
+          type="button"
+          onClick={() => {
+            if (onOpenProofOfWork) {
+              onOpenProofOfWork()
+            }
+          }}
+          data-testid="post-workout-pow-btn"
+          style={{
+            background: 'rgba(212, 175, 55, 0.08)',
+            border: '1px solid rgba(212, 175, 55, 0.35)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            textAlign: 'left',
+            width: '100%',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 16 }}>📋</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold-lt, #F3E5AB)' }}>
+                View Clinical Proof of Work Dossier
+              </div>
+              <div style={{ fontSize: 10.5, color: '#94A3B8' }}>
+                Verified 1RM curves, ACWR safety index, and Sanctuary focus records.
+              </div>
+            </div>
+          </div>
+          <span style={{ fontSize: 12, color: 'var(--gold-lt)' }}>➔</span>
+        </button>
 
         {/* ── Apple Health Sync Confirmation Pill ── */}
         <div
