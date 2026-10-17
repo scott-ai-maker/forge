@@ -30,4 +30,14 @@ describe('CoachSanctuaryAudioNoteModal Component Architecture', () => {
     expect(source).not.toContain('GAA')
     expect(source).not.toContain('Gordon Athletic Advisory')
   })
+
+  it('integrates ElevenLabs neural voice generation with Coach Scott Gordon cloned model', () => {
+    const source = fs.readFileSync(componentPath, 'utf-8')
+    expect(source).toContain('generate-elevenlabs-voice-btn')
+    expect(source).toContain('handleGenerateWithElevenLabs')
+    expect(source).toContain('COACH_GORDON_ELEVENLABS_VOICE_ID')
+    expect(source).toContain('audio-provider-status')
+    expect(source).toContain('/api/coach/tts')
+    expect(source).toContain('voiceProvider')
+  })
 })

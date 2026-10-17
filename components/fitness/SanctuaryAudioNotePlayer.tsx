@@ -4,10 +4,14 @@ import React, { useState, useEffect, useRef } from 'react'
 import ForgeIcon from '@/components/ui/ForgeIcon'
 import {
   SanctuaryAudioNote,
+  COACH_GORDON_ELEVENLABS_VOICE_ID,
   playSanctuaryAcousticIntroChime,
   markAudioNoteListened,
 } from '@/lib/sanctuary-audio-notes-engine'
 import { configureAudioSession } from '@/lib/web-audio-cadence-engine'
+
+// Module-level audio blob cache for zero-latency ElevenLabs playback
+const elevenLabsBlobCache = new Map<string, string>()
 
 export interface SanctuaryAudioNotePlayerProps {
   note: SanctuaryAudioNote
@@ -30,12 +34,16 @@ export default function SanctuaryAudioNotePlayer({
   const [currentTime, setCurrentTime] = useState(0)
   const [showTranscript, setShowTranscript] = useState(!compact)
   const [isSynthesizing, setIsSynthesizing] = useState(false)
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false)
+  const [elevenLabsAudioUrl, setElevenLabsAudioUrl] = useState<string | null>(null)
+  const [activeVoiceMode, setActiveVoiceMode] = useState<'elevenlabs' | 'recorded' | 'webspeech'>('elevenlabs')
+  const [actualDuration, setActualDuration] = useState<number | null>(null)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
 
-  const totalDuration = note.durationSeconds || 30
+  const totalDuration = actualDuration || note.durationSeconds || 30
 
   // Category Theme Badges
   const categoryConfig: Record<
@@ -73,7 +81,7 @@ export default function SanctuaryAudioNotePlayer({
     personal_feedback: {
       label: 'Personal Voice Memo',
       color: '#10B981',
-      bg: 'rgba(16, 185, 129, 0.12)',
+      bg: 'rgba(168, 85, 247, 0.12)',
       border: 'rgba(16, 185, 129, 0.35)',
       icon: 'headphones',
     },
@@ -98,12 +106,110 @@ export default function SanctuaryAudioNotePlayer({
     }
     setIsPlaying(false)
     setIsSynthesizing(false)
+    setIsLoadingAudio(false)
     setCurrentTime(0)
     configureAudioSession('ambient')
   }
 
-  // Play audio note
-  const startPlayback = () => {
+  // Helper to fetch ElevenLabs audio
+  const fetchElevenLabsAudio = async (text: string, voiceId?: string): Promise<string | null> => {
+    const targetVoiceId = voiceId || COACH_GORDON_ELEVENLABS_VOICE_ID
+    const cacheKey = `${targetVoiceId}_${text}`
+    if (elevenLabsBlobCache.has(cacheKey)) {
+      return elevenLabsBlobCache.get(cacheKey)!
+    }
+
+    try {
+      const res = await fetch('/api/coach/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          voiceId: targetVoiceId,
+        }),
+      })
+
+      if (!res.ok) return null
+      const contentType = res.headers.get('content-type') || ''
+      if (contentType.includes('audio/')) {
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        elevenLabsBlobCache.set(cacheKey, url)
+        return url
+      }
+    } catch (err) {
+      console.warn('ElevenLabs voice fetch failed:', err)
+    }
+    return null
+  }
+
+  // Pre-fetch ElevenLabs audio on note mount
+  useEffect(() => {
+    let isMounted = true
+    if (!note.audioDataUrl && typeof window !== 'undefined') {
+      const targetVoiceId = note.voiceId || COACH_GORDON_ELEVENLABS_VOICE_ID
+      const cacheKey = `${targetVoiceId}_${note.transcript}`
+      if (elevenLabsBlobCache.has(cacheKey)) {
+        setElevenLabsAudioUrl(elevenLabsBlobCache.get(cacheKey)!)
+      } else {
+        void fetchElevenLabsAudio(note.transcript, note.voiceId).then(url => {
+          if (isMounted && url) {
+            setElevenLabsAudioUrl(url)
+          }
+        })
+      }
+    }
+    return () => {
+      isMounted = false
+    }
+  }, [note.id, note.transcript, note.voiceId, note.audioDataUrl])
+
+  // Play audio source via HTML5 Audio element
+  const playAudioSource = (url: string, mode: 'elevenlabs' | 'recorded') => {
+    setActiveVoiceMode(mode)
+    setIsSynthesizing(false)
+    setIsLoadingAudio(false)
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio(url)
+    } else {
+      audioRef.current.src = url
+    }
+
+    audioRef.current.onloadedmetadata = () => {
+      if (audioRef.current?.duration && !isNaN(audioRef.current.duration)) {
+        setActualDuration(Math.round(audioRef.current.duration))
+      }
+    }
+
+    audioRef.current.onended = () => {
+      setIsPlaying(false)
+      setCurrentTime(totalDuration)
+      if (progressTimerRef.current) clearInterval(progressTimerRef.current)
+      triggerHaptic?.('success')
+      onMarkDone?.()
+    }
+
+    audioRef.current.onerror = () => {
+      setActiveVoiceMode('webspeech')
+      playViaSpeechSynthesis()
+    }
+
+    void audioRef.current.play().catch(() => {
+      setActiveVoiceMode('webspeech')
+      playViaSpeechSynthesis()
+    })
+
+    // Scrubber interval
+    progressTimerRef.current = setInterval(() => {
+      if (audioRef.current) {
+        setCurrentTime(Math.min(totalDuration, Math.round(audioRef.current.currentTime)))
+      }
+    }, 500)
+  }
+
+  // Play audio note with ElevenLabs voice prioritization
+  const startPlayback = async () => {
     triggerHaptic?.('tap')
     stopAllAudio()
 
@@ -116,41 +222,34 @@ export default function SanctuaryAudioNotePlayer({
     setIsPlaying(true)
     markAudioNoteListened(note.id)
 
-    // Check if recorded audio data URL exists
+    // A. Check if pre-recorded or saved audioDataUrl exists
     if (note.audioDataUrl && typeof window !== 'undefined') {
-      if (!audioRef.current) {
-        audioRef.current = new Audio(note.audioDataUrl)
-      } else {
-        audioRef.current.src = note.audioDataUrl
-      }
-
-      audioRef.current.onended = () => {
-        setIsPlaying(false)
-        setCurrentTime(totalDuration)
-        if (progressTimerRef.current) clearInterval(progressTimerRef.current)
-        triggerHaptic?.('success')
-        onMarkDone?.()
-      }
-
-      audioRef.current.onerror = () => {
-        // Fallback to speech synthesis if audio failed
-        playViaSpeechSynthesis()
-      }
-
-      void audioRef.current.play().catch(() => {
-        playViaSpeechSynthesis()
-      })
-
-      // Scrubber interval
-      progressTimerRef.current = setInterval(() => {
-        if (audioRef.current) {
-          setCurrentTime(Math.min(totalDuration, Math.round(audioRef.current.currentTime)))
-        }
-      }, 500)
-    } else {
-      // Natural speech synthesis fallback for text notes
-      playViaSpeechSynthesis()
+      playAudioSource(note.audioDataUrl, 'recorded')
+      return
     }
+
+    // B. Check if preloaded ElevenLabs audio URL exists
+    if (elevenLabsAudioUrl && typeof window !== 'undefined') {
+      playAudioSource(elevenLabsAudioUrl, 'elevenlabs')
+      return
+    }
+
+    // C. Fetch ElevenLabs neural voice on demand
+    if (typeof window !== 'undefined') {
+      setIsLoadingAudio(true)
+      const url = await fetchElevenLabsAudio(note.transcript, note.voiceId)
+      setIsLoadingAudio(false)
+
+      if (url) {
+        setElevenLabsAudioUrl(url)
+        playAudioSource(url, 'elevenlabs')
+        return
+      }
+    }
+
+    // D. Fallback to Web Speech API if ElevenLabs is offline or unavailable
+    setActiveVoiceMode('webspeech')
+    playViaSpeechSynthesis()
   }
 
   const playViaSpeechSynthesis = () => {
@@ -224,7 +323,7 @@ export default function SanctuaryAudioNotePlayer({
     if (isPlaying) {
       stopAllAudio()
     } else {
-      startPlayback()
+      void startPlayback()
     }
   }
 
@@ -238,7 +337,7 @@ export default function SanctuaryAudioNotePlayer({
   useEffect(() => {
     if (autoPlayOnMount) {
       const timer = setTimeout(() => {
-        startPlayback()
+        void startPlayback()
       }, 350)
       return () => clearTimeout(timer)
     }
@@ -335,15 +434,37 @@ export default function SanctuaryAudioNotePlayer({
                 VERIFIED COACH
               </span>
             </div>
-            <div
-              style={{
-                fontSize: 10,
-                color: '#94A3B8',
-                fontFamily: 'var(--font-telemetry)',
-                letterSpacing: '0.04em',
-              }}
-            >
-              In-Ear Audio Memo · Rest Delivery
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  color: '#94A3B8',
+                  fontFamily: 'var(--font-telemetry)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                In-Ear Audio Memo · Rest Delivery
+              </span>
+              <span
+                data-testid="elevenlabs-voice-badge"
+                style={{
+                  fontSize: 8.5,
+                  fontWeight: 800,
+                  color: 'var(--gold-lt, #FDE68A)',
+                  background: 'rgba(212, 175, 55, 0.16)',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  padding: '1px 5px',
+                  borderRadius: 3,
+                  fontFamily: 'var(--font-telemetry)',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3,
+                }}
+              >
+                <span>⚡ ElevenLabs Cloned Voice (Coach Scott Gordon)</span>
+              </span>
             </div>
           </div>
         </div>
@@ -516,11 +637,23 @@ export default function SanctuaryAudioNotePlayer({
             <span>
               {Math.floor(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, '0')}
             </span>
-            {isSynthesizing && (
-              <span style={{ color: '#38BDF8', fontSize: 9.5, fontWeight: 700 }}>
-                ● Acoustic Stream
+            {isLoadingAudio ? (
+              <span style={{ color: '#F59E0B', fontSize: 9.5, fontWeight: 700 }}>
+                ● Buffering Cloned Voice...
               </span>
-            )}
+            ) : isPlaying && activeVoiceMode === 'elevenlabs' ? (
+              <span style={{ color: 'var(--gold-lt, #FDE68A)', fontSize: 9.5, fontWeight: 700 }}>
+                ● ElevenLabs Neural Stream
+              </span>
+            ) : isPlaying && activeVoiceMode === 'recorded' ? (
+              <span style={{ color: '#34D399', fontSize: 9.5, fontWeight: 700 }}>
+                ● Studio WAV Audio
+              </span>
+            ) : isSynthesizing ? (
+              <span style={{ color: '#38BDF8', fontSize: 9.5, fontWeight: 700 }}>
+                ● Device Web Speech Fallback
+              </span>
+            ) : null}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}>
@@ -569,8 +702,8 @@ export default function SanctuaryAudioNotePlayer({
                 : '0 2px 10px rgba(212, 175, 55, 0.35)',
             }}
           >
-            <ForgeIcon name={isPlaying ? 'pause' : 'play'} size={12} />
-            <span>{isPlaying ? 'Pause' : currentTime > 0 && currentTime < totalDuration ? 'Resume' : 'Play In Ear'}</span>
+            <ForgeIcon name={isLoadingAudio ? 'rotate-ccw' : isPlaying ? 'pause' : 'play'} size={12} />
+            <span>{isLoadingAudio ? 'Buffering Voice...' : isPlaying ? 'Pause' : currentTime > 0 && currentTime < totalDuration ? 'Resume' : 'Play In Ear'}</span>
           </button>
 
           {/* Replay Button */}

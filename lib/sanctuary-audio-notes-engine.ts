@@ -19,6 +19,8 @@ export type SanctuaryAudioCategory =
   | 'workout_briefing'
   | 'personal_feedback'
 
+export const COACH_GORDON_ELEVENLABS_VOICE_ID = 'UPezm4CtrvcD6aNXjeU1'
+
 export interface SanctuaryAudioNote {
   id: string
   coachName: string
@@ -39,6 +41,8 @@ export interface SanctuaryAudioNote {
   listenedAt?: string
   priority: 'high' | 'normal'
   audioSynthesisScript?: string
+  voiceProvider?: 'elevenlabs-coach-gordon' | 'microphone'
+  voiceId?: string
 }
 
 const STORAGE_KEY = 'forge_sanctuary_audio_notes_v1'
@@ -68,6 +72,8 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     isEncrypted: true,
     isListened: false,
     priority: 'high',
+    voiceProvider: 'elevenlabs-coach-gordon',
+    voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,
   },
   {
     id: 'sanctuary-note-deadlift-slack',
@@ -90,6 +96,8 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     isEncrypted: true,
     isListened: false,
     priority: 'high',
+    voiceProvider: 'elevenlabs-coach-gordon',
+    voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,
   },
   {
     id: 'sanctuary-note-bench-retract',
@@ -112,6 +120,8 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     isEncrypted: true,
     isListened: false,
     priority: 'high',
+    voiceProvider: 'elevenlabs-coach-gordon',
+    voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,
   },
   {
     id: 'sanctuary-note-cns-vagal-sigh',
@@ -133,6 +143,8 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     isEncrypted: true,
     isListened: false,
     priority: 'high',
+    voiceProvider: 'elevenlabs-coach-gordon',
+    voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,
   },
   {
     id: 'sanctuary-note-creed-hands-bar',
@@ -154,6 +166,8 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     isEncrypted: true,
     isListened: false,
     priority: 'normal',
+    voiceProvider: 'elevenlabs-coach-gordon',
+    voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,
   },
   {
     id: 'sanctuary-note-ohp-kinetic-pillar',
@@ -176,6 +190,8 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     isEncrypted: true,
     isListened: false,
     priority: 'normal',
+    voiceProvider: 'elevenlabs-coach-gordon',
+    voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,
   },
   {
     id: 'sanctuary-note-workout-briefing',
@@ -197,6 +213,8 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     isEncrypted: true,
     isListened: false,
     priority: 'normal',
+    voiceProvider: 'elevenlabs-coach-gordon',
+    voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,
   },
 ]
 
@@ -251,7 +269,12 @@ export function getStoredSanctuaryAudioNotes(): SanctuaryAudioNote[] {
     if (!Array.isArray(parsed) || parsed.length === 0) {
       return DEFAULT_SANCTUARY_AUDIO_NOTES
     }
-    return parsed
+    // Upgrade existing notes without voiceProvider or voiceId
+    return parsed.map(n => ({
+      ...n,
+      voiceProvider: n.voiceProvider || 'elevenlabs-coach-gordon',
+      voiceId: n.voiceId || COACH_GORDON_ELEVENLABS_VOICE_ID,
+    }))
   } catch {
     return DEFAULT_SANCTUARY_AUDIO_NOTES
   }
@@ -433,6 +456,8 @@ export function createCoachAudioNote(params: {
   clientScope?: string
   audioDataUrl?: string
   priority?: 'high' | 'normal'
+  voiceProvider?: 'elevenlabs-coach-gordon' | 'microphone'
+  voiceId?: string
 }): SanctuaryAudioNote {
   const id = `sanctuary-note-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
   const points = generateWaveformPoints(`${params.title}-${params.transcript}`)
@@ -454,5 +479,7 @@ export function createCoachAudioNote(params: {
     isEncrypted: true,
     isListened: false,
     priority: params.priority || 'normal',
+    voiceProvider: params.voiceProvider || 'elevenlabs-coach-gordon',
+    voiceId: params.voiceId || COACH_GORDON_ELEVENLABS_VOICE_ID,
   }
 }

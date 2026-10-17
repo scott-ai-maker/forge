@@ -36,4 +36,14 @@ describe('SanctuaryAudioNotePlayer Component Architecture & Design Standards', (
     expect(source).toContain('triggerHaptic')
     expect(source).toContain('SpeechSynthesisUtterance')
   })
+
+  it('integrates authentic ElevenLabs voice model with prefetching and status badges', () => {
+    const source = fs.readFileSync(componentPath, 'utf-8')
+    expect(source).toContain('COACH_GORDON_ELEVENLABS_VOICE_ID')
+    expect(source).toContain('/api/coach/tts')
+    expect(source).toContain('elevenLabsBlobCache')
+    expect(source).toContain('fetchElevenLabsAudio')
+    expect(source).toContain('elevenlabs-voice-badge')
+    expect(source).toContain('ElevenLabs Cloned Voice')
+  })
 })

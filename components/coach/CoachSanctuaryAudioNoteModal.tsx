@@ -6,6 +6,7 @@ import { UniversalVoiceRecorder } from '@/lib/wav-audio-recorder'
 import {
   SanctuaryAudioNote,
   SanctuaryAudioCategory,
+  COACH_GORDON_ELEVENLABS_VOICE_ID,
   createCoachAudioNote,
   saveSanctuaryAudioNote,
   getStoredSanctuaryAudioNotes,
@@ -29,12 +30,14 @@ export default function CoachSanctuaryAudioNoteModal({
 }: CoachSanctuaryAudioNoteModalProps) {
   const [activeTab, setActiveTab] = useState<'record' | 'library'>('record')
 
-  // Recording State
+  // Recording & Synthesis State
   const [isRecording, setIsRecording] = useState(false)
+  const [isGeneratingVoice, setIsGeneratingVoice] = useState(false)
   const [recordSeconds, setRecordSeconds] = useState(0)
   const [recordedDataUrl, setRecordedDataUrl] = useState<string | null>(null)
   const [recordedDuration, setRecordedDuration] = useState(0)
   const [recordingError, setRecordingError] = useState<string | null>(null)
+  const [voiceProvider, setVoiceProvider] = useState<'elevenlabs-coach-gordon' | 'microphone'>('elevenlabs-coach-gordon')
 
   // Form State
   const [title, setTitle] = useState(
@@ -43,7 +46,9 @@ export default function CoachSanctuaryAudioNoteModal({
   const [category, setCategory] = useState<SanctuaryAudioCategory>('movement_cue')
   const [exerciseScope, setExerciseScope] = useState(initialExerciseName || '')
   const [clientScope, setClientScope] = useState(initialClientId || 'all')
-  const [transcript, setTranscript] = useState('')
+  const [transcript, setTranscript] = useState(
+    'Coach Scott Gordon in your ear. Maximize mechanical tension, keep hands on the bar, and eliminate gym distractions. Pure execution.'
+  )
   const [priority, setPriority] = useState<'high' | 'normal'>('high')
   const [savedSuccessMessage, setSavedSuccessMessage] = useState(false)
 
@@ -83,6 +88,64 @@ export default function CoachSanctuaryAudioNoteModal({
 
   if (!isOpen) return null
 
+  // Synthesize text using Coach Scott Gordon's ElevenLabs voice clone
+  const handleGenerateWithElevenLabs = async () => {
+    const textToSynthesize = transcript.trim() || title.trim()
+    if (!textToSynthesize) {
+      setRecordingError('Please enter a note transcript or title to synthesize with ElevenLabs.')
+      return
+    }
+
+    try {
+      setRecordingError(null)
+      setIsGeneratingVoice(true)
+
+      const res = await fetch('/api/coach/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: textToSynthesize,
+          voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,
+        }),
+      })
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `Voice synthesis failed (${res.status})`)
+      }
+
+      const blob = await res.blob()
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string
+        setRecordedDataUrl(dataUrl)
+        setVoiceProvider('elevenlabs-coach-gordon')
+
+        // Probe duration from audio element
+        const probeAudio = new Audio(dataUrl)
+        probeAudio.onloadedmetadata = () => {
+          if (probeAudio.duration && !isNaN(probeAudio.duration)) {
+            setRecordedDuration(Math.round(probeAudio.duration))
+          }
+        }
+        // Fallback estimate based on words
+        const estimated = Math.min(60, Math.max(10, Math.round(textToSynthesize.split(' ').length * 0.45)))
+        setRecordedDuration(estimated)
+
+        setIsGeneratingVoice(false)
+      }
+      reader.onerror = () => {
+        setIsGeneratingVoice(false)
+        setRecordingError('Failed to parse generated audio buffer')
+      }
+      reader.readAsDataURL(blob)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'ElevenLabs voice generation failed'
+      setRecordingError(msg)
+      setIsGeneratingVoice(false)
+    }
+  }
+
   const handleStartRecording = async () => {
     try {
       setRecordingError(null)
@@ -94,6 +157,7 @@ export default function CoachSanctuaryAudioNoteModal({
 
       await recorder.start()
       setIsRecording(true)
+      setVoiceProvider('microphone')
 
       const startTime = Date.now()
       timerRef.current = setInterval(() => {
@@ -124,6 +188,7 @@ export default function CoachSanctuaryAudioNoteModal({
       const result = await recorderRef.current.stop()
       setRecordedDataUrl(result.dataUrl)
       setRecordedDuration(result.durationSec)
+      setVoiceProvider('microphone')
       setIsRecording(false)
 
       // Auto-generate transcript placeholder if empty
@@ -185,6 +250,8 @@ export default function CoachSanctuaryAudioNoteModal({
       clientScope: clientScope === 'all' ? 'all' : clientScope,
       audioDataUrl: recordedDataUrl || undefined,
       priority,
+      voiceProvider,
+      voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,
     })
 
     const updated = saveSanctuaryAudioNote(note)
@@ -432,46 +499,112 @@ export default function CoachSanctuaryAudioNoteModal({
                   boxShadow: isRecording ? '0 0 20px rgba(239, 68, 68, 0.25)' : 'none',
                 }}
               >
-                {/* Timer Display */}
-                <div
-                  style={{
-                    fontFamily: 'var(--font-telemetry)',
-                    fontSize: 32,
-                    fontWeight: 800,
-                    letterSpacing: '0.04em',
-                    color: isRecording ? '#EF4444' : recordedDataUrl ? '#34D399' : '#CBD5E1',
-                  }}
-                >
-                  {isRecording
-                    ? `0:${String(recordSeconds).padStart(2, '0')} / 0:60`
-                    : recordedDataUrl
-                    ? `0:${String(recordedDuration).padStart(2, '0')} Recorded`
-                    : '0:00 / 0:60'}
+                {/* Timer Display & Audio Provider Badge */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-telemetry)',
+                      fontSize: 32,
+                      fontWeight: 800,
+                      letterSpacing: '0.04em',
+                      color: isRecording ? '#EF4444' : recordedDataUrl ? '#34D399' : '#CBD5E1',
+                    }}
+                  >
+                    {isRecording
+                      ? `0:${String(recordSeconds).padStart(2, '0')} / 0:60`
+                      : recordedDataUrl
+                      ? `0:${String(recordedDuration).padStart(2, '0')} Ready`
+                      : '0:00 / 0:60'}
+                  </div>
+
+                  {recordedDataUrl && (
+                    <div
+                      data-testid="audio-provider-status"
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: voiceProvider === 'elevenlabs-coach-gordon' ? 'var(--gold-lt, #FDE68A)' : '#34D399',
+                        background: voiceProvider === 'elevenlabs-coach-gordon' ? 'rgba(212, 175, 55, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                        border: `1px solid ${voiceProvider === 'elevenlabs-coach-gordon' ? 'rgba(212, 175, 55, 0.35)' : 'rgba(52, 211, 153, 0.35)'}`,
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        letterSpacing: '0.04em',
+                        fontFamily: 'var(--font-telemetry)',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {voiceProvider === 'elevenlabs-coach-gordon'
+                        ? '⚡ ElevenLabs Cloned Voice (Coach Scott Gordon)'
+                        : '🎙️ Live Microphone Recording'}
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ fontSize: 11, color: '#94A3B8' }}>
                   {isRecording
                     ? 'Recording live PCM WAV audio... Speak clearly into your microphone.'
+                    : isGeneratingVoice
+                    ? 'Synthesizing with Coach Scott Gordon’s authentic ElevenLabs voice model...'
                     : recordedDataUrl
-                    ? 'Voice memo ready. Review preview or re-record below.'
-                    : 'Tap Record to capture up to 60 seconds of focused coaching guidance.'}
+                    ? 'Audio memo ready. Review preview or re-generate below.'
+                    : 'Generate using Coach Scott Gordon’s authentic ElevenLabs voice model or record live via microphone.'}
                 </div>
 
-                {/* Record Action Buttons */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+                {/* Generation & Record Action Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {/* ElevenLabs Voice Generation Button */}
+                  {!isRecording && (
+                    <button
+                      type="button"
+                      data-testid="generate-elevenlabs-voice-btn"
+                      disabled={isGeneratingVoice}
+                      onClick={handleGenerateWithElevenLabs}
+                      className="tactile-btn"
+                      style={{
+                        background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
+                        border: '1px solid #FDE68A',
+                        color: '#0A0E18',
+                        padding: '10px 18px',
+                        borderRadius: 8,
+                        fontSize: 12.5,
+                        fontWeight: 800,
+                        fontFamily: 'var(--font-heading)',
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        cursor: isGeneratingVoice ? 'wait' : 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        boxShadow: '0 4px 14px rgba(212, 175, 55, 0.4)',
+                        opacity: isGeneratingVoice ? 0.7 : 1,
+                      }}
+                    >
+                      <ForgeIcon name={isGeneratingVoice ? 'rotate-ccw' : 'sparkles'} size={14} />
+                      <span>
+                        {isGeneratingVoice
+                          ? 'Synthesizing Voice...'
+                          : recordedDataUrl && voiceProvider === 'elevenlabs-coach-gordon'
+                          ? 'Re-Generate Voice'
+                          : 'Generate with ElevenLabs Voice'}
+                      </span>
+                    </button>
+                  )}
+
+                  {/* Live Microphone Recording Button */}
                   {!isRecording ? (
                     <button
                       type="button"
                       data-testid="start-record-btn"
+                      disabled={isGeneratingVoice}
                       onClick={handleStartRecording}
                       className="tactile-btn"
                       style={{
-                        background: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
-                        border: '1px solid #EF4444',
-                        color: '#FFFFFF',
-                        padding: '10px 20px',
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        color: '#F87171',
+                        padding: '10px 16px',
                         borderRadius: 8,
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: 700,
                         fontFamily: 'var(--font-heading)',
                         letterSpacing: '0.04em',
@@ -479,12 +612,11 @@ export default function CoachSanctuaryAudioNoteModal({
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 8,
-                        boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
+                        gap: 6,
                       }}
                     >
-                      <ForgeIcon name="mic" size={14} />
-                      <span>{recordedDataUrl ? 'Re-Record Voice' : 'Start Recording'}</span>
+                      <ForgeIcon name="mic" size={13} />
+                      <span>Record Mic</span>
                     </button>
                   ) : (
                     <>
@@ -743,24 +875,100 @@ export default function CoachSanctuaryAudioNoteModal({
 
                 {/* Transcript */}
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: '#94A3B8',
-                      marginBottom: 6,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      fontFamily: 'var(--font-telemetry)',
-                    }}
-                  >
-                    Transcript / In-Ear Script
-                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: '#94A3B8',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        fontFamily: 'var(--font-telemetry)',
+                      }}
+                    >
+                      Transcript / In-Ear Script
+                    </label>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        color: 'var(--gold, #D4AF37)',
+                        fontFamily: 'var(--font-telemetry)',
+                      }}
+                    >
+                      ElevenLabs Synthesizer Ready
+                    </span>
+                  </div>
+
+                  {/* Preset Cue Chips */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                    {[
+                      {
+                        label: 'Squat 360° Brace',
+                        title: 'Squat Wedge & 360° Intra-Abdominal Brace',
+                        ex: 'Barbell Back Squat',
+                        cat: 'movement_cue' as const,
+                        text: "Scott here. Before you unrack, pull the bar down like you're bending it over your traps. Screw your feet into the floor with tripod contact. Expand your obliques 360 degrees, and drive through the midfoot.",
+                      },
+                      {
+                        label: 'Deadlift Slack',
+                        title: 'Deadlift Lat Lock & Slack Removal',
+                        ex: 'Barbell Deadlift',
+                        cat: 'movement_cue' as const,
+                        text: "Coach Scott in your ear. Take the slack out of the barbell before breaking the floor. Squeeze oranges in your armpits to pack your lats. Push the floor away. Keep the bar glued to your shins.",
+                      },
+                      {
+                        label: 'Bench Retract',
+                        title: 'Bench Scapular Retraction & Leg Drive',
+                        ex: 'Barbell Bench Press',
+                        cat: 'movement_cue' as const,
+                        text: "Scott Gordon with your bench cue. Retract and depress your scapulae into the pad. Establish firm leg drive. Flare lats on the eccentric and punch off the chest.",
+                      },
+                      {
+                        label: 'Vagal Sigh',
+                        title: 'Vagal Down-Regulation: Physiological Sigh',
+                        cat: 'cns_recovery' as const,
+                        text: "Great set. Down-regulate your central nervous system now. Two rapid nasal inhales—deep sniff, top off with a second sniff—then one long, slow sigh through pursed lips.",
+                      },
+                      {
+                        label: 'Sanctuary Creed',
+                        title: 'The Sanctuary Creed: Hands on the Bar',
+                        cat: 'mental_focus' as const,
+                        text: "Scott here. The gym is your sacred ground. No feeds, no scrolling. Every distraction bleeds power output. When you step back up, you own every millimeter of the bar.",
+                      },
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          setTitle(preset.title)
+                          setTranscript(preset.text)
+                          setCategory(preset.cat)
+                          if (preset.ex) setExerciseScope(preset.ex)
+                          setRecordedDataUrl(null)
+                        }}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          borderRadius: 4,
+                          padding: '3px 8px',
+                          color: '#CBD5E1',
+                          fontSize: 10,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+
                   <textarea
                     rows={3}
                     value={transcript}
-                    onChange={e => setTranscript(e.target.value)}
+                    onChange={e => {
+                      setTranscript(e.target.value)
+                      if (recordedDataUrl) setRecordedDataUrl(null)
+                    }}
                     placeholder="Enter transcript or guidance text for athlete..."
                     style={{
                       width: '100%',
@@ -883,6 +1091,35 @@ export default function CoachSanctuaryAudioNoteModal({
                       >
                         {item.durationSeconds}s
                       </span>
+                      {item.voiceProvider === 'elevenlabs-coach-gordon' || !item.voiceProvider ? (
+                        <span
+                          style={{
+                            fontSize: 9,
+                            padding: '1px 5px',
+                            borderRadius: 4,
+                            background: 'rgba(212, 175, 55, 0.16)',
+                            color: 'var(--gold-lt, #FDE68A)',
+                            border: '1px solid rgba(212, 175, 55, 0.35)',
+                            fontWeight: 700,
+                          }}
+                        >
+                          ⚡ ElevenLabs Voice
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: 9,
+                            padding: '1px 5px',
+                            borderRadius: 4,
+                            background: 'rgba(52, 211, 153, 0.16)',
+                            color: '#34D399',
+                            border: '1px solid rgba(52, 211, 153, 0.35)',
+                            fontWeight: 700,
+                          }}
+                        >
+                          🎙️ Mic Audio
+                        </span>
+                      )}
                     </div>
 
                     <div

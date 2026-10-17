@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.43.0'
+export const APP_VERSION = '1.43.1'
 export const APP_RELEASE_DATE = '2026-10-16'
-export const APP_RELEASE_CODENAME = 'Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine'
+export const APP_RELEASE_CODENAME = 'Coach Scott Gordon Authentic ElevenLabs Cloned Voice Integration'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,28 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.43.0',
+    version: '1.43.1',
     date: '2026-10-16',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'ElevenLabs Voice Model · Coach Scott Gordon Custom Clone · Rest Dock Delivery · Zero Latency Buffering',
+    title: 'Coach Scott Gordon ElevenLabs Neural Voice Integration',
+    summary: 'Wired Coach Scott Gordon\'s authentic cloned ElevenLabs voice model (UPezm4CtrvcD6aNXjeU1) directly into the Sanctuary Audio Notes system. Athletes now hear Coach Scott\'s true voice delivering biomechanical cues, vagal down-regulation breathwork, and mental fortitude reminders with prefetching, background audio ducking, and 1-click voice memo synthesis in the Voice Studio.',
+    highlights: [
+      'Authentic ElevenLabs Voice Pipeline: Directly connects the Sanctuary Audio Notes player to /api/coach/tts using Coach Scott Gordon\'s cloned voice ID (UPezm4CtrvcD6aNXjeU1) with zero-latency client-side blob caching.',
+      'Voice Studio Neural Generation: Coach Scott can type or select preset athletic cues and click "Generate with ElevenLabs Voice" to create, preview, and dispatch studio-quality audio in seconds.',
+      'Zero-Distraction Rest Audio Ducking: Preserves background music ducking while delivering Coach Scott Gordon\'s authentic voice straight to athlete headphones during sets.',
+      'Failover Architecture: Automatically falls back to high-fidelity Web Speech API if offline or in restricted network conditions.',
+    ],
+    relatedLinks: [
+      { label: 'Workout Sanctuary HUD', href: '/dashboard/fitness' },
+      { label: 'Periodization Studio', href: '/coach' },
+    ],
+  },
+  {
+    version: '1.43.0',
+    date: '2026-10-16',
+    codename: 'Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine',
     category: 'feature',
     badge: 'Sanctuary Audio Notes · In-Ear Rest Delivery · Zero Social Media · Coach Scott Gordon Voice Memos · Audio Ducking',
     title: 'Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine',

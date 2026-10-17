@@ -32,7 +32,7 @@ describe('Sanctuary Audio Notes Engine', () => {
   })
 
   describe('Default Seed Library', () => {
-    it('contains institutional notes from Coach Scott Gordon with Forge Athletic branding', () => {
+    it('contains institutional notes from Coach Scott Gordon with Forge Athletic branding and ElevenLabs cloned voice', () => {
       expect(DEFAULT_SANCTUARY_AUDIO_NOTES.length).toBeGreaterThanOrEqual(5)
       for (const note of DEFAULT_SANCTUARY_AUDIO_NOTES) {
         expect(note.coachName).toBe('Coach Scott Gordon')
@@ -41,6 +41,8 @@ describe('Sanctuary Audio Notes Engine', () => {
         expect(note.durationSeconds).toBeLessThanOrEqual(60)
         expect(note.waveformPoints.length).toBe(32)
         expect(note.transcript.length).toBeGreaterThan(20)
+        expect(note.voiceProvider).toBe('elevenlabs-coach-gordon')
+        expect(note.voiceId).toBe('UPezm4CtrvcD6aNXjeU1')
         // Strictly verify brand safety rule
         expect(note.coachTitle).not.toContain('GAA')
         expect(note.coachTitle).not.toContain('Gordon Athletic Advisory')
@@ -161,6 +163,17 @@ describe('Sanctuary Audio Notes Engine', () => {
         durationSeconds: 2, // should clamp to 5
       })
       expect(noteLow.durationSeconds).toBe(5)
+    })
+
+    it('defaults to ElevenLabs voiceProvider and Coach Gordon voiceId', () => {
+      const note = createCoachAudioNote({
+        title: 'Form Cue',
+        transcript: 'Hinge back',
+        category: 'movement_cue',
+        durationSeconds: 20,
+      })
+      expect(note.voiceProvider).toBe('elevenlabs-coach-gordon')
+      expect(note.voiceId).toBe('UPezm4CtrvcD6aNXjeU1')
     })
   })
 
