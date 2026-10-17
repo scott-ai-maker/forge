@@ -178,7 +178,7 @@ export default function LiveVideoCameraHud({
     }, 3500)
   }, [])
 
-  const [selectedBackground, setSelectedBackground] = useState<CoachBackgroundPreset | null>(COACH_BACKGROUND_PRESETS[0])
+  const [selectedBackground, setSelectedBackground] = useState<CoachBackgroundPreset | null>(null)
   const [showBackgroundPicker, setShowBackgroundPicker] = useState(false)
 
   const _handleCycleBackground = useCallback(() => {
@@ -524,7 +524,8 @@ export default function LiveVideoCameraHud({
       signalingChannelRef.current = null
       void supabase.removeChannel(channel)
     }
-  }, [sessionId, currentUserId, isCoach, clientName, coachName, isCameraActive, isMicMuted, showHudToast])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, currentUserId, isCoach, clientName, coachName, showHudToast])
 
   // Attach local media stream as soon as acquired
   useEffect(() => {

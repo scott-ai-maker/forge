@@ -304,7 +304,7 @@ export default function UnifiedLiveStudioHud({
   const [voiceEnabled, _setVoiceEnabled] = useState(false)
   const [isRinging, setIsRinging] = useState(false)
   const [ringFeedback, setRingFeedback] = useState<string | null>(null)
-  const [selectedBackground, setSelectedBackground] = useState<CoachBackgroundPreset | null>(COACH_BACKGROUND_PRESETS[0])
+  const [selectedBackground, setSelectedBackground] = useState<CoachBackgroundPreset | null>(null)
   const [showBackgroundPicker, setShowBackgroundPicker] = useState(false)
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
 
@@ -777,7 +777,8 @@ export default function UnifiedLiveStudioHud({
       signalingChannelRef.current = null
       void supabase.removeChannel(channel)
     }
-  }, [clientId, coachUserId, athleteName, coachName, isCameraActive, isMicMuted, playLobbyChime, showHudToast])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId, coachUserId, athleteName, coachName, playLobbyChime, showHudToast])
 
   // Attach local media stream as soon as it becomes available
   useEffect(() => {

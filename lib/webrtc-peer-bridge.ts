@@ -7,10 +7,14 @@ export function getIceServers(): RTCIceServer[] {
     { urls: 'stun:stun2.l.google.com:19302' },
     { urls: 'stun:stun3.l.google.com:19302' },
     { urls: 'stun:stun4.l.google.com:19302' },
+    { urls: 'stun:stun.cloudflare.com:3478' },
     { urls: 'stun:global.stun.twilio.com:3478' },
     // Public community TURN relay fallbacks for mobile cellular / symmetric NAT traversal
     {
       urls: [
+        'turn:relay.metered.ca:80',
+        'turn:relay.metered.ca:443',
+        'turns:relay.metered.ca:443?transport=tcp',
         'turn:openrelay.metered.ca:80',
         'turn:openrelay.metered.ca:443',
         'turns:openrelay.metered.ca:443?transport=tcp',
@@ -119,6 +123,7 @@ export class WebRtcPeerBridge {
   private makingOffer = false
   private ignoreOffer = false
   private isSettingRemoteAnswerPending = false
+  private negotiationPending = false
 
   // ICE Debounce & Latency State
   private iceRestartTimer: ReturnType<typeof setTimeout> | null = null
@@ -149,6 +154,16 @@ export class WebRtcPeerBridge {
       const MediaStreamClass = typeof window !== 'undefined' ? window.MediaStream : globalMediaStream
       this.remoteStream = MediaStreamClass ? new MediaStreamClass() : null
 
+      // Pre-allocate audio & video transceivers with bidirectional sendrecv support
+      if (typeof this.pc.addTransceiver === 'function') {
+        try {
+          this.pc.addTransceiver('audio', { direction: 'sendrecv' })
+          this.pc.addTransceiver('video', { direction: 'sendrecv' })
+        } catch {
+          // Fall back to dynamic track attachment
+        }
+      }
+
       // Perfect Negotiation: onnegotiationneeded triggers offer generation automatically
       this.pc.onnegotiationneeded = async () => {
         if (this.isDestroyed || !this.pc) return
@@ -158,7 +173,10 @@ export class WebRtcPeerBridge {
             offerToReceiveAudio: true,
             offerToReceiveVideo: true,
           })
-          if (this.pc.signalingState !== 'stable') return
+          if (this.pc.signalingState !== 'stable') {
+            this.negotiationPending = true
+            return
+          }
           await this.pc.setLocalDescription(offer)
           this.sendSignal({
             type: 'offer',
@@ -188,17 +206,24 @@ export class WebRtcPeerBridge {
           }
         }
 
-        if (event.track) {
-          event.track.onunmute = () => {
-            if (this.remoteStream && this.options.onRemoteStream) {
+        const notifyStream = () => {
+          if (this.remoteStream && this.options.onRemoteStream) {
+            try {
+              const fresh = new (MediaStreamClass || MediaStream)(this.remoteStream.getTracks())
+              this.options.onRemoteStream(fresh)
+            } catch {
               this.options.onRemoteStream(this.remoteStream)
             }
           }
         }
 
-        if (this.remoteStream && this.options.onRemoteStream) {
-          this.options.onRemoteStream(this.remoteStream)
+        if (event.track) {
+          event.track.onunmute = () => {
+            notifyStream()
+          }
         }
+
+        notifyStream()
       }
 
       // Connection state changes
@@ -289,12 +314,36 @@ export class WebRtcPeerBridge {
   public attachLocalStream(stream: MediaStream): void {
     this.options.localStream = stream
     if (!this.pc) return
-    const senders = this.pc.getSenders()
+
+    const transceivers = typeof this.pc.getTransceivers === 'function' ? this.pc.getTransceivers() : []
 
     stream.getTracks().forEach(track => {
+      // 1. Check existing transceivers first
+      const transceiver = transceivers.find(t =>
+        t.sender?.track?.id === track.id ||
+        t.sender?.track?.kind === track.kind ||
+        t.receiver?.track?.kind === track.kind
+      )
+
+      if (transceiver) {
+        if (transceiver.direction !== 'sendrecv') {
+          transceiver.direction = 'sendrecv'
+        }
+        void transceiver.sender.replaceTrack(track).catch(() => {})
+        if (track.kind === 'video') {
+          this.optimizeVideoSender(transceiver.sender)
+        }
+        return
+      }
+
+      // 2. Fall back to existing senders
+      const senders = this.pc!.getSenders()
       const existing = senders.find(s => s.track?.kind === track.kind)
       if (existing) {
-        Promise.resolve(existing.replaceTrack(track)).catch(() => {})
+        void existing.replaceTrack(track).catch(() => {})
+        if (track.kind === 'video') {
+          this.optimizeVideoSender(existing)
+        }
       } else {
         try {
           const sender = this.pc?.addTrack(track, stream)
@@ -306,6 +355,14 @@ export class WebRtcPeerBridge {
         }
       }
     })
+
+    if (this.pc.signalingState === 'stable') {
+      if (!this.isPolite) {
+        void this.createOffer()
+      }
+    } else {
+      this.negotiationPending = true
+    }
   }
 
   private optimizeVideoSender(sender: RTCRtpSender): void {
@@ -497,6 +554,12 @@ export class WebRtcPeerBridge {
       if (payload.type === 'answer' && payload.sdp) {
         await this.pc.setRemoteDescription(getRTCSessionDescription(payload.sdp))
         await this.drainPendingCandidates()
+        if (this.negotiationPending) {
+          this.negotiationPending = false
+          if (!this.isPolite && this.pc.signalingState === 'stable') {
+            void this.createOffer()
+          }
+        }
         return
       }
 

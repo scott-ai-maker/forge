@@ -3,6 +3,17 @@
 All notable changes to Forge Athletic will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.43.5] - 2026-10-17
+ 
+### Fixed & Improved
+- **Live Studio Hardware Failover & WebRTC Stabilization ([`components/coach/LiveVirtualBackgroundStage.tsx`](file:///Users/scottgordon/Repos/forge/components/coach/LiveVirtualBackgroundStage.tsx), [`lib/webrtc-peer-bridge.ts`](file:///Users/scottgordon/Repos/forge/lib/webrtc-peer-bridge.ts), [`components/coach/UnifiedLiveStudioHud.tsx`](file:///Users/scottgordon/Repos/forge/components/coach/UnifiedLiveStudioHud.tsx), [`components/coach/LiveVideoCameraHud.tsx`](file:///Users/scottgordon/Repos/forge/components/coach/LiveVideoCameraHud.tsx), [`components/coach/LiveRemoteVideoFeed.tsx`](file:///Users/scottgordon/Repos/forge/components/coach/LiveRemoteVideoFeed.tsx))**:
+  - Eliminated live studio freezing and blank screen failures by setting initial video startup to clean, low-latency direct hardware camera feed.
+  - Implemented 30 FPS inference throttling and single-frame execution mutex (`isProcessingRef`) on MediaPipe segmentation, preventing main-thread lockups.
+  - Added instant hardware camera fallback watchdog: if canvas frames stall or are delayed >1.2s, the raw camera feed immediately remains visible, preventing black screens.
+  - Fixed WebRTC channel destruction bug where toggling mic/camera caused connection teardown and call drop.
+  - Hardened interstate ICE gathering with Cloudflare STUN and active `relay.metered.ca` TURN endpoints for reliable cross-network consultations.
+  - Added auto-recovery interval on remote video feeds to revive stalled video tracks.
+
 ## [1.43.4] - 2026-10-16
 
 ### Added & Improved

@@ -42,6 +42,11 @@ export default function LiveVirtualBackgroundStage({
   const bgImageRef = useRef<HTMLImageElement | null>(null)
   const segmenterRef = useRef<ImageSegmenterInstance | null>(null)
   const [isAiReady, setIsAiReady] = useState(false)
+  const [isCanvasRendering, setIsCanvasRendering] = useState(false)
+  const isProcessingRef = useRef(false)
+  const lastInferenceTimeRef = useRef(0)
+  const lastSuccessfulRenderTimeRef = useRef(0)
+  const isGlLostRef = useRef(false)
   const isVirtualActive = Boolean(selectedBackground)
 
   // Attach stream to video tag
@@ -298,7 +303,20 @@ export default function LiveVirtualBackgroundStage({
       vertexBuffer,
     }
 
+    const onContextLost = (e: Event) => {
+      e.preventDefault()
+      isGlLostRef.current = true
+      setIsCanvasRendering(false)
+    }
+    const onContextRestored = () => {
+      isGlLostRef.current = false
+    }
+    canvas.addEventListener('webglcontextlost', onContextLost)
+    canvas.addEventListener('webglcontextrestored', onContextRestored)
+
     return () => {
+      canvas.removeEventListener('webglcontextlost', onContextLost)
+      canvas.removeEventListener('webglcontextrestored', onContextRestored)
       if (gl) {
         if (vs) gl.deleteShader(vs)
         if (fs) gl.deleteShader(fs)
@@ -306,14 +324,17 @@ export default function LiveVirtualBackgroundStage({
         if (vertexBuffer) gl.deleteBuffer(vertexBuffer)
       }
     }
-  }, [])
+  }, [isVirtualActive])
 
-  // Real-Time 60 FPS WebGL2 Render Loop
+  // Real-Time 30 FPS WebGL2 Render Loop (Throttled & Guarded Against Freezes)
   useEffect(() => {
-    if (!isVirtualActive || !isActive) return
+    if (!isVirtualActive || !isActive) {
+      setIsCanvasRendering(false)
+      return
+    }
 
+    const TARGET_INTERVAL_MS = 33.33 // 30 FPS cap prevents freezing CPU/GPU main thread
     let animationId: number
-    let lastTime = -1
 
     const render = () => {
       const video = videoRef.current
@@ -321,8 +342,22 @@ export default function LiveVirtualBackgroundStage({
       const segmenter = segmenterRef.current
       const gl = glRef.current
       const gpuProg = glProgramRef.current
+      const now = performance.now()
 
-      if (video && video.readyState >= 2 && video.videoWidth > 0 && canvas && gl && gpuProg) {
+      // Watchdog: If canvas hasn't received a frame in 1200ms, fall back to hardware camera immediately
+      if (lastSuccessfulRenderTimeRef.current > 0 && now - lastSuccessfulRenderTimeRef.current > 1200) {
+        setIsCanvasRendering(false)
+      }
+
+      if (
+        video &&
+        video.readyState >= 2 &&
+        video.videoWidth > 0 &&
+        canvas &&
+        gl &&
+        gpuProg &&
+        !isGlLostRef.current
+      ) {
         const w = video.videoWidth
         const h = video.videoHeight
 
@@ -332,117 +367,125 @@ export default function LiveVirtualBackgroundStage({
           gl.viewport(0, 0, w, h)
         }
 
-        const now = performance.now()
-        if (segmenter && isAiReady && now > lastTime) {
+        if (
+          segmenter &&
+          isAiReady &&
+          !isProcessingRef.current &&
+          now - lastInferenceTimeRef.current >= TARGET_INTERVAL_MS
+        ) {
+          isProcessingRef.current = true
+          lastInferenceTimeRef.current = now
+
           try {
             segmenter.segmentForVideo(video, now, (result) => {
-              const mask = (result.confidenceMasks && result.confidenceMasks.length > 0)
-                ? result.confidenceMasks[0]
-                : result.categoryMask
-              if (!mask) {
-                result.close?.()
-                return
-              }
+              try {
+                const mask = (result.confidenceMasks && result.confidenceMasks.length > 0)
+                  ? result.confidenceMasks[0]
+                  : result.categoryMask
+                if (!mask) return
 
-              const maskW = mask.width || 256
-              const maskH = mask.height || 256
-              const totalMask = maskW * maskH
+                const maskW = mask.width || 256
+                const maskH = mask.height || 256
+                const totalMask = maskW * maskH
 
-              if (!maskBufferRef.current || maskBufferRef.current.length !== totalMask) {
-                maskBufferRef.current = new Uint8Array(totalMask)
-              }
-              const maskBytes = maskBufferRef.current
-
-              let prevMask = prevMaskBufferRef.current
-              if (!prevMask || prevMask.length !== totalMask) {
-                prevMask = new Uint8Array(totalMask)
-                prevMaskBufferRef.current = prevMask
-              }
-
-              if (result.categoryMask && typeof result.categoryMask.getAsUint8Array === 'function') {
-                const uData = result.categoryMask.getAsUint8Array()
-                for (let i = 0; i < totalMask; i++) {
-                  // Multiclass Labels:
-                  // 0: background (couch, chair, room, gym, wall) -> cutout
-                  // 1: hair, 2: body-skin, 3: face-skin, 4: clothes, 5: others/accessories -> coach foreground
-                  const targetVal = uData[i] > 0 ? 255 : 0
-                  // Temporal EMA (80% current, 20% previous) eliminates single-frame edge flicker
-                  const smoothedVal = Math.round(0.80 * targetVal + 0.20 * prevMask[i])
-                  maskBytes[i] = smoothedVal
-                  prevMask[i] = smoothedVal
+                if (!maskBufferRef.current || maskBufferRef.current.length !== totalMask) {
+                  maskBufferRef.current = new Uint8Array(totalMask)
                 }
-              } else if (result.confidenceMasks && result.confidenceMasks.length > 0) {
-                const confMask = result.confidenceMasks[0]
-                if (typeof confMask.getAsUint8Array === 'function') {
-                  const uData = confMask.getAsUint8Array()
+                const maskBytes = maskBufferRef.current
+
+                let prevMask = prevMaskBufferRef.current
+                if (!prevMask || prevMask.length !== totalMask) {
+                  prevMask = new Uint8Array(totalMask)
+                  prevMaskBufferRef.current = prevMask
+                }
+
+                if (result.categoryMask && typeof result.categoryMask.getAsUint8Array === 'function') {
+                  const uData = result.categoryMask.getAsUint8Array()
                   for (let i = 0; i < totalMask; i++) {
-                    // MUST ALWAYS BE INVERTED per architecture rule: coach foreground is 255 (retained), room is 0 (cutout)
-                    const targetVal = 255 - uData[i]
+                    // Multiclass Labels:
+                    // 0: background (couch, chair, room, gym, wall) -> cutout
+                    // 1: hair, 2: body-skin, 3: face-skin, 4: clothes, 5: others/accessories -> coach foreground
+                    const targetVal = uData[i] > 0 ? 255 : 0
+                    // Temporal EMA (80% current, 20% previous) eliminates single-frame edge flicker
                     const smoothedVal = Math.round(0.80 * targetVal + 0.20 * prevMask[i])
                     maskBytes[i] = smoothedVal
                     prevMask[i] = smoothedVal
                   }
-                } else if (typeof confMask.getAsFloat32Array === 'function') {
-                  const fData = confMask.getAsFloat32Array()
-                  for (let i = 0; i < totalMask; i++) {
-                    // MUST ALWAYS BE INVERTED per architecture rule: const conf = 1 - rawConf
-                    const rawConf = fData[i] ?? 0
-                    const conf = 1 - rawConf
-                    const targetVal = Math.round(conf * 255)
-                    const smoothedVal = Math.round(0.80 * targetVal + 0.20 * prevMask[i])
-                    maskBytes[i] = smoothedVal
-                    prevMask[i] = smoothedVal
+                } else if (result.confidenceMasks && result.confidenceMasks.length > 0) {
+                  const confMask = result.confidenceMasks[0]
+                  if (typeof confMask.getAsUint8Array === 'function') {
+                    const uData = confMask.getAsUint8Array()
+                    for (let i = 0; i < totalMask; i++) {
+                      // MUST ALWAYS BE INVERTED per architecture rule: coach foreground is 255 (retained), room is 0 (cutout)
+                      const targetVal = 255 - uData[i]
+                      const smoothedVal = Math.round(0.80 * targetVal + 0.20 * prevMask[i])
+                      maskBytes[i] = smoothedVal
+                      prevMask[i] = smoothedVal
+                    }
+                  } else if (typeof confMask.getAsFloat32Array === 'function') {
+                    const fData = confMask.getAsFloat32Array()
+                    for (let i = 0; i < totalMask; i++) {
+                      // MUST ALWAYS BE INVERTED per architecture rule: const conf = 1 - rawConf
+                      const rawConf = fData[i] ?? 0
+                      const conf = 1 - rawConf
+                      const targetVal = Math.round(conf * 255)
+                      const smoothedVal = Math.round(0.80 * targetVal + 0.20 * prevMask[i])
+                      maskBytes[i] = smoothedVal
+                      prevMask[i] = smoothedVal
+                    }
                   }
+                } else {
+                  return
                 }
-              } else {
+
+                gl.useProgram(gpuProg.program)
+
+                // Upload Camera Video Frame (Texture Unit 0)
+                gl.activeTexture(gl.TEXTURE0)
+                gl.bindTexture(gl.TEXTURE_2D, gpuProg.frameTex)
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video)
+                gl.uniform1i(gpuProg.uFrame, 0)
+
+                // Upload Virtual Background Image (Texture Unit 1)
+                const isBlur = selectedBackground?.isBlur || selectedBackground?.id === 'studio-blur'
+                let hasBgImage = false
+                if (!isBlur && bgImageRef.current && bgImageRef.current.complete && bgImageRef.current.naturalWidth > 0) {
+                  gl.activeTexture(gl.TEXTURE1)
+                  gl.bindTexture(gl.TEXTURE_2D, gpuProg.bgTex)
+                  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bgImageRef.current)
+                  gl.uniform1i(gpuProg.uBackground, 1)
+                  hasBgImage = true
+                }
+
+                // Upload Segmentation Mask Texture (Texture Unit 2 - R8 Single Channel)
+                // Explicitly set unpack alignment to 1 byte to prevent scanline padding comb artifacts
+                gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1)
+                gl.activeTexture(gl.TEXTURE2)
+                gl.bindTexture(gl.TEXTURE_2D, gpuProg.maskTex)
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, maskW, maskH, 0, gl.RED, gl.UNSIGNED_BYTE, maskBytes)
+                gl.uniform1i(gpuProg.uMask, 2)
+
+                // Set Shader Uniforms
+                gl.uniform1i(gpuProg.uIsMirrored, isMirrored ? 1 : 0)
+                gl.uniform1i(gpuProg.uIsBlur, isBlur ? 1 : 0)
+                gl.uniform1i(gpuProg.uHasBgImage, hasBgImage ? 1 : 0)
+
+                // Draw Full-Screen Quad
+                gl.bindBuffer(gl.ARRAY_BUFFER, gpuProg.vertexBuffer)
+                gl.enableVertexAttribArray(gpuProg.attribPosition)
+                gl.vertexAttribPointer(gpuProg.attribPosition, 2, gl.FLOAT, false, 0, 0)
+
+                gl.drawArrays(gl.TRIANGLES, 0, 6)
+
+                lastSuccessfulRenderTimeRef.current = performance.now()
+                setIsCanvasRendering(true)
+              } finally {
                 result.close?.()
-                return
+                isProcessingRef.current = false
               }
-
-              gl.useProgram(gpuProg.program)
-
-              // Upload Camera Video Frame (Texture Unit 0)
-              gl.activeTexture(gl.TEXTURE0)
-              gl.bindTexture(gl.TEXTURE_2D, gpuProg.frameTex)
-              gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video)
-              gl.uniform1i(gpuProg.uFrame, 0)
-
-              // Upload Virtual Background Image (Texture Unit 1)
-              const isBlur = selectedBackground?.isBlur || selectedBackground?.id === 'studio-blur'
-              let hasBgImage = false
-              if (!isBlur && bgImageRef.current && bgImageRef.current.complete) {
-                gl.activeTexture(gl.TEXTURE1)
-                gl.bindTexture(gl.TEXTURE_2D, gpuProg.bgTex)
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bgImageRef.current)
-                gl.uniform1i(gpuProg.uBackground, 1)
-                hasBgImage = true
-              }
-
-              // Upload Segmentation Mask Texture (Texture Unit 2 - R8 Single Channel)
-              // Explicitly set unpack alignment to 1 byte to prevent scanline padding comb artifacts
-              gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1)
-              gl.activeTexture(gl.TEXTURE2)
-              gl.bindTexture(gl.TEXTURE_2D, gpuProg.maskTex)
-              gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, maskW, maskH, 0, gl.RED, gl.UNSIGNED_BYTE, maskBytes)
-              gl.uniform1i(gpuProg.uMask, 2)
-
-              // Set Shader Uniforms
-              gl.uniform1i(gpuProg.uIsMirrored, isMirrored ? 1 : 0)
-              gl.uniform1i(gpuProg.uIsBlur, isBlur ? 1 : 0)
-              gl.uniform1i(gpuProg.uHasBgImage, hasBgImage ? 1 : 0)
-
-              // Draw Full-Screen Quad
-              gl.bindBuffer(gl.ARRAY_BUFFER, gpuProg.vertexBuffer)
-              gl.enableVertexAttribArray(gpuProg.attribPosition)
-              gl.vertexAttribPointer(gpuProg.attribPosition, 2, gl.FLOAT, false, 0, 0)
-
-              gl.drawArrays(gl.TRIANGLES, 0, 6)
-
-              result.close?.()
             })
-            lastTime = now
           } catch {
-            // Frame drop
+            isProcessingRef.current = false
           }
         }
       }
@@ -454,6 +497,7 @@ export default function LiveVirtualBackgroundStage({
 
     return () => {
       if (animationId) cancelAnimationFrame(animationId)
+      isProcessingRef.current = false
     }
   }, [isVirtualActive, isActive, isAiReady, selectedBackground, isMirrored])
 
@@ -469,8 +513,9 @@ export default function LiveVirtualBackgroundStage({
     >
       {/* 
         Hardware Video Element:
-        - Visible when virtual background is OFF
-        - Hidden via opacity when AI background is ON (so it keeps decoding frames at full speed)
+        - Visible when virtual background is OFF or while AI background is preparing/recovering
+        - Hidden via opacity ONLY when AI background canvas is actively rendering frames
+        - Ensures screen NEVER freezes or goes black!
       */}
       <video
         ref={videoRef}
@@ -485,7 +530,7 @@ export default function LiveVirtualBackgroundStage({
           height: '100%',
           objectFit: 'cover',
           transform: isMirrored ? 'scaleX(-1)' : 'none',
-          opacity: isVirtualActive && isAiReady ? 0 : 1,
+          opacity: isVirtualActive && isAiReady && isCanvasRendering ? 0 : 1,
           zIndex: 1,
         }}
       />
@@ -502,9 +547,9 @@ export default function LiveVirtualBackgroundStage({
             height: '100%',
             objectFit: 'cover',
             transform: 'none',
-            opacity: isAiReady ? 1 : 0,
+            opacity: isCanvasRendering ? 1 : 0,
             zIndex: 2,
-            transition: 'opacity 0.3s ease',
+            transition: 'opacity 0.25s ease',
           }}
         />
       )}

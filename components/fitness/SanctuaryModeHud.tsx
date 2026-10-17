@@ -243,7 +243,7 @@ export default function SanctuaryModeHud({
                 }}
               >
                 <span>SANCTUARY MODE</span>
-                <span style={{ color: '#64748B' }}>//</span>
+                <span style={{ color: '#64748B' }}>{'//'}</span>
                 <span style={{ color: '#E2E8F0' }}>ZERO DISTRACTIONS</span>
               </div>
               <div style={{ fontSize: 11, color: '#94A3B8' }}>

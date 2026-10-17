@@ -144,6 +144,18 @@ export default function LiveRemoteVideoFeed({
     }
   }, [stream, attemptPlay])
 
+  // Periodic liveness check to auto-recover from transient pauses or mobile sleep stalls
+  useEffect(() => {
+    if (!isConnected || !stream) return
+    const interval = setInterval(() => {
+      const video = videoRef.current
+      if (video && video.paused && hasActiveTracks) {
+        void attemptPlay()
+      }
+    }, 2500)
+    return () => clearInterval(interval)
+  }, [isConnected, stream, hasActiveTracks, attemptPlay])
+
   const initials =
     participantName
       .split(/\s+/)

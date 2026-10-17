@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.43.4'
-export const APP_RELEASE_DATE = '2026-10-16'
-export const APP_RELEASE_CODENAME = 'Universal Coach Gordon Neural Rest Start Engine & Brand Identity Enforcement'
+export const APP_VERSION = '1.43.5'
+export const APP_RELEASE_DATE = '2026-10-17'
+export const APP_RELEASE_CODENAME = 'Live Studio Hardware Failover & WebRTC Interstate Connection Stabilization'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,25 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.43.5',
+    date: '2026-10-17',
+    codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'Live Studio Hardening · Zero-Freeze Hardware Fallback · WebRTC Interstate Traversal · 30 FPS MediaPipe Throttling',
+    title: 'Live Studio Hardware Failover & WebRTC Interstate Connection Stabilization',
+    summary: 'Hardened the 1:1 Live Coaching Studio against freeze-ups and blank screens. Defaulted studio launch to clean hardware camera feed, added 30 FPS inference throttling with in-flight mutex and watchdog fallback to prevent main-thread locking, eliminated premature WebRTC teardowns on mic/camera toggles, and resolved cross-network ICE candidate gathering for interstate consultations.',
+    highlights: [
+      'Zero-Freeze Startup: Live Studio now boots by default with crystal-clear, zero-latency raw hardware video, keeping AI background as an optional high-performance mode.',
+      'In-Flight Mutex & 30 FPS Throttling: Enforced strict single-inference execution locking and 30 FPS cap on MediaPipe segmentation, preventing main thread exhaustion on laptops and mobile devices.',
+      'Instant Video Watchdog Failover: If WebGL or neural processing is ever delayed >1.2s, the feed automatically falls back to raw camera video, guaranteeing the screen never goes blank or frozen.',
+      'WebRTC Connection Resilience: Removed device toggles from channel connection dependencies, preventing call teardowns when mic/camera states change.',
+      'Active Interstate ICE Traversal: Enhanced STUN/TURN server configuration with Cloudflare and active relay.metered.ca endpoints, eliminating DNS timeouts during cross-state NAT traversal.',
+    ],
+    relatedLinks: [
+      { label: 'Live Movement Studio', href: '/dashboard/live' },
+    ],
+  },
   {
     version: '1.43.4',
     date: '2026-10-16',
