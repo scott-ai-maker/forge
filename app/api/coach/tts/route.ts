@@ -22,9 +22,10 @@ async function authenticateAndRateLimit(req: NextRequest) {
     requireActiveClient(authz.client)
     userId = authz.user.id
   } catch (error) {
-    const isDevPreview = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ALLOW_ANON_PREVIEW === 'true'
+    const isDev = process.env.NODE_ENV === 'development'
     const isTest = process.env.NODE_ENV === 'test'
-    if (!isDevPreview && !isTest) {
+    const isAnonPreview = process.env.NEXT_PUBLIC_ALLOW_ANON_PREVIEW === 'true'
+    if (!isDev && !isTest && !isAnonPreview) {
       const status = error instanceof AuthzError ? error.status : 401
       const message = error instanceof Error ? error.message : 'Unauthorized'
       return { authorized: false, response: NextResponse.json({ error: message }, { status }) }
@@ -102,15 +103,14 @@ async function handleTtsRequest(rawText: string, voiceIdOverride?: string) {
       headers: {
         'Content-Type': cached.contentType,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'X-GAA-Voice-Provider': 'cache',
+        'X-Forge-Voice-Provider': 'cache',
       },
     })
   }
 
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY
-  const openAiKey = process.env.OPENAI_API_KEY
 
-  // 1. Try ElevenLabs (Premier Athletic Baritone - Marcus)
+  // 1. Primary: ElevenLabs Authentic Coach Scott Gordon Custom Cloned Voice Model
   if (elevenLabsKey) {
     try {
       const voiceId = voiceIdOverride || DEFAULT_ELEVENLABS_VOICE_ID
@@ -144,46 +144,15 @@ async function handleTtsRequest(rawText: string, voiceIdOverride?: string) {
           headers: {
             'Content-Type': 'audio/mpeg',
             'Cache-Control': 'public, max-age=86400',
-            'X-GAA-Voice-Provider': 'elevenlabs-coach-gordon',
+            'X-Forge-Voice-Provider': 'elevenlabs-coach-gordon',
           },
         })
+      } else {
+        const errText = await response.text().catch(() => '')
+        console.error('ElevenLabs TTS error response:', response.status, errText)
       }
     } catch (err) {
       console.warn('ElevenLabs TTS error:', err)
-    }
-  }
-
-  // 2. Try OpenAI TTS (Onyx Baritone)
-  if (openAiKey) {
-    try {
-      const response = await fetch('https://api.openai.com/v1/audio/speech', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'tts-1',
-          voice: 'onyx',
-          input: cleanText,
-        }),
-      })
-
-      if (response.ok) {
-        const audioBuffer = await response.arrayBuffer()
-        setCachedAudio(cacheKey, audioBuffer, 'audio/mpeg')
-
-        return new NextResponse(audioBuffer, {
-          status: 200,
-          headers: {
-            'Content-Type': 'audio/mpeg',
-            'Cache-Control': 'public, max-age=86400',
-            'X-GAA-Voice-Provider': 'openai-onyx',
-          },
-        })
-      }
-    } catch (err) {
-      console.warn('OpenAI TTS error:', err)
     }
   }
 

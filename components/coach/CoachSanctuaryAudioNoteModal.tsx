@@ -103,6 +103,7 @@ export default function CoachSanctuaryAudioNoteModal({
       const res = await fetch('/api/coach/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({
           text: textToSynthesize,
           voiceId: COACH_GORDON_ELEVENLABS_VOICE_ID,

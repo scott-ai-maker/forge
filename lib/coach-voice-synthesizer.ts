@@ -217,6 +217,24 @@ export const COACH_GORDON_ELEVENLABS_VOICE_ID = COACH_GORDON_VOICE_ID
 export const preloadedAudioBlobUrls = new Map<string, string>()
 
 /**
+ * Standard recurring voice cues across workout timers, tempo metronomes, and set loggers.
+ * Pre-warmed into client memory for zero-latency instant playback in Coach Gordon's authentic voice.
+ */
+export const COMMON_COACH_GORDON_CUES = [
+  'Three',
+  'Two',
+  'One. Lock in!',
+  'One',
+  'Control down... four',
+  'Hold solid!',
+  'DRIVE!',
+  'Rest complete! Let\'s get this set.',
+  'Stretch hold complete!',
+  'SMR rolling complete!',
+  'Rack it! Outstanding set.',
+]
+
+/**
  * Pre-fetches an audio cue via ElevenLabs TTS to ensure zero-latency voice cues.
  */
 export async function prefetchCoachVoiceCue(text: string, voiceId: string = COACH_GORDON_VOICE_ID): Promise<string | null> {
@@ -234,6 +252,7 @@ export async function prefetchCoachVoiceCue(text: string, voiceId: string = COAC
     const res = await fetch('/api/coach/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify({
         text: cleanText,
         voiceId,
@@ -254,6 +273,28 @@ export async function prefetchCoachVoiceCue(text: string, voiceId: string = COAC
   }
 
   return null
+}
+
+/**
+ * Pre-warms common in-gym cues into browser memory using requestIdleCallback
+ */
+export function prefetchCommonCoachVoiceCues(): void {
+  if (typeof window === 'undefined') return
+  const runner = () => {
+    COMMON_COACH_GORDON_CUES.forEach(cue => {
+      void prefetchCoachVoiceCue(cue)
+    })
+  }
+
+  if (typeof (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback === 'function') {
+    (window as unknown as { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback(runner, { timeout: 3000 })
+  } else {
+    setTimeout(runner, 1500)
+  }
+}
+
+if (typeof window !== 'undefined') {
+  prefetchCommonCoachVoiceCues()
 }
 
 /**
@@ -332,6 +373,7 @@ export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceO
         const res = await fetch('/api/coach/tts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
           body: JSON.stringify({
             text: cleanText,
             voiceId: targetVoiceId,

@@ -83,6 +83,7 @@ export async function prefetchCardioCue(text: string, voiceId: string = COACH_GO
     const res = await fetch('/api/coach/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify({
         text: cleanText,
         voiceId: targetVoiceId,

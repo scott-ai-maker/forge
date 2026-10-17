@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.43.1'
+export const APP_VERSION = '1.43.2'
 export const APP_RELEASE_DATE = '2026-10-16'
-export const APP_RELEASE_CODENAME = 'Coach Scott Gordon Authentic ElevenLabs Cloned Voice Integration'
+export const APP_RELEASE_CODENAME = 'Universal Coach Scott Gordon Voice Model Across All Spoken Prompts'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,29 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
-    version: '1.43.1',
+    version: '1.43.2',
     date: '2026-10-16',
     codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Universal Cloned Voice · ElevenLabs UPezm4CtrvcD6aNXjeU1 · Zero-Latency Pre-Buffering · All Spoken Prompts',
+    title: 'Universal Coach Scott Gordon Spoken Voice Engine',
+    summary: 'Ensured 100% of spoken audio prompts across the entire Forge Athletic ecosystem exclusively speak in Coach Scott Gordon\'s authentic cloned ElevenLabs voice model (UPezm4CtrvcD6aNXjeU1). Workout timers, set loggers, bio-paced rest cues, tempo metronome cadences, stretch hold timers, consultant memos, and Sunday Executive Dossier debriefs now stream Coach Gordon\'s true voice with zero-latency background pre-warming.',
+    highlights: [
+      'Universal Cloned Voice Pipeline: Every spoken voice cue in the application (workout timers, set logging confirmations, bio-paced rest cues, tempo metronome cadences, stretch holds, and debriefs) streams Coach Scott Gordon\'s authentic ElevenLabs clone (UPezm4CtrvcD6aNXjeU1).',
+      'Development & Preview TTS Access: Upgraded /api/coach/tts authorization to ensure local development and client workout sessions synthesize Coach Gordon\'s authentic voice smoothly without 401 fallbacks to robotic browser speech.',
+      'Zero-Latency In-Gym Pre-Buffering: Automatically pre-warms common recurring workout cues ("Three", "Two", "One. Lock in!", "Hold solid!", "DRIVE!", "Rest complete! Let\'s get this set.") into client memory for instant vocal delivery.',
+      'Eliminated Generic Voices: Removed all third-party generic voices (OpenAI Onyx) from the coaching speech pipeline, standardizing exclusively on Coach Scott Gordon\'s true athletic baritone.',
+    ],
+    relatedLinks: [
+      { label: 'Workout Sanctuary HUD', href: '/dashboard/fitness' },
+      { label: 'Tempo Metronome', href: '/dashboard/fitness' },
+      { label: 'Sunday Executive Dossier', href: '/dashboard' },
+    ],
+  },
+  {
+    version: '1.43.1',
+    date: '2026-10-16',
+    codename: 'Coach Scott Gordon Authentic ElevenLabs Cloned Voice Integration',
     category: 'feature',
     badge: 'ElevenLabs Voice Model · Coach Scott Gordon Custom Clone · Rest Dock Delivery · Zero Latency Buffering',
     title: 'Coach Scott Gordon ElevenLabs Neural Voice Integration',

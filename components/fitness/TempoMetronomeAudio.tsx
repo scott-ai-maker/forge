@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { playPrecisionTone } from '@/lib/web-audio-cadence-engine'
-import { speakCoachVoiceCue, speakTempoCoachCue } from '@/lib/coach-voice-synthesizer'
+import { speakCoachVoiceCue, speakTempoCoachCue, stopCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import { triggerHaptic as triggerSharedHaptic } from '@/lib/offline-sync-queue'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 
@@ -136,9 +136,7 @@ export default function TempoMetronomeAudio({
     setCurrentRep(0)
     setPhaseSecondsRemaining(0)
     if (intervalRef.current) clearInterval(intervalRef.current)
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-    }
+    stopCoachVoiceCue()
   }, [])
 
   const startCadence = useCallback(() => {

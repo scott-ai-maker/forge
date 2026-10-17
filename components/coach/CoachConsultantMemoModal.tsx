@@ -6,6 +6,7 @@ import {
   GeneratedConsultantMemo,
 } from '@/lib/coach-consultant-memo'
 import { speakNasmCue } from '@/lib/nasm-assessments'
+import { stopCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 
 interface CoachConsultantMemoModalProps {
@@ -54,9 +55,7 @@ export default function CoachConsultantMemoModal({
 
   const handleVoicePreview = () => {
     if (isSpeaking) {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel()
-      }
+      stopCoachVoiceCue()
       setIsSpeaking(false)
       return
     }
