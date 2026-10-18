@@ -25,5 +25,17 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **NEVER** refer to the brand, company, or platform as "GAA", "Gordon Athletic", or "Gordon Athletic Advisory" in any user communications, notes, summaries, or new code.
 - Legacy codebase references (e.g. historical file names or service worker cache tokens) must be treated strictly as legacy internal plumbing, while all current and future architectural notes, UI copy, and agent communications must consistently and exclusively use **Forge Athletic**.
 
+## Client Information Security & HIPAA (1996) Privacy Standard
+- **Core Directive**: When saving, processing, or transmitting client information online (PAR-Q+ questionnaires, health histories, medications, orthopedic limitations, biometric telemetry, posture photos, and video assessments), always maintain strict information security consistent with HIPAA (1996) Privacy & Security standards.
+- **Technical Safeguards**:
+  - All client data must be encrypted in transit via **TLS 1.3** and at rest via **AES-256**.
+  - Enforce PostgreSQL **Row-Level Security (RLS)** across all client tables (`fitness_profiles`, `client_intake_forms`, `coach_client_messages`, `nasm_assessments`, `workout_logs`, etc.). Clients may only access their own records (`auth.uid() = user_id`).
+  - Coach access to athlete records must always verify authorization and active assignment (`designated_coach_id === authz.user.id`) via [`requireCoachAssignedClient`](file:///Users/scottgordon/Repos/forge/lib/authz.ts) or server-side gatekeepers. Never expose client health data through unauthenticated endpoints.
+- **Media & Assessment Privacy**:
+  - Movement screen videos, OHSA photos, live studio telestrator recordings, and DEXA scans must reside strictly in private Supabase Storage buckets secured with RLS and accessed only via time-limited signed URLs—never public CDN buckets.
+- **Minimum Necessary Rule**:
+  - Only collect and transmit health and orthopedic indicators strictly necessary for biomechanical safety, NASM OPT™ exercise contraindication screening, and emergency remote action plans (ERAP).
+
+
 
 
