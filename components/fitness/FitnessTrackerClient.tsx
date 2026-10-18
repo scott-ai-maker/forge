@@ -63,6 +63,7 @@ import SetProgressionMatrix from '@/components/fitness/tracker/SetProgressionMat
 import PlateAdjustmentPresets from '@/components/fitness/tracker/PlateAdjustmentPresets'
 import RpeRirExertionSelector from '@/components/fitness/tracker/RpeRirExertionSelector'
 import RepCadenceMetronome from '@/components/fitness/tracker/RepCadenceMetronome'
+import OneRepMaxPercentageMatrix from '@/components/fitness/tracker/OneRepMaxPercentageMatrix'
 import SupersetPairCard, { type SupersetDraftState } from '@/components/fitness/tracker/SupersetPairCard'
 import { type GroupedExerciseEntry } from '@/lib/superset-pairing-engine'
 import {
@@ -4375,6 +4376,29 @@ export default function FitnessTrackerClient({
                                     setInlineSetDrafts(prev => ({
                                       ...prev,
                                       [exerciseKey]: { ...draft, rir: rirVal },
+                                    }))
+                                  }}
+                                  triggerHaptic={triggerHaptic}
+                                />
+                              )}
+
+                              {isStrength && !isTimed && (
+                                <OneRepMaxPercentageMatrix
+                                  exerciseName={ex.name}
+                                  currentWeight={draft.weight}
+                                  currentReps={draft.reps}
+                                  historicalMax1RmLbs={exercisePrVault.get(normalizeExerciseNameKey(ex.name))?.allTimeBest1RmLbs ?? null}
+                                  units={units}
+                                  isWarmup={draft.isWarmup}
+                                  isTimed={isTimed}
+                                  onApplyLoad={(targetWeight, targetReps) => {
+                                    setInlineSetDrafts(prev => ({
+                                      ...prev,
+                                      [exerciseKey]: {
+                                        ...draft,
+                                        weight: targetWeight,
+                                        reps: targetReps,
+                                      },
                                     }))
                                   }}
                                   triggerHaptic={triggerHaptic}
