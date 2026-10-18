@@ -62,6 +62,7 @@ import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import SetProgressionMatrix from '@/components/fitness/tracker/SetProgressionMatrix'
 import PlateAdjustmentPresets from '@/components/fitness/tracker/PlateAdjustmentPresets'
 import RpeRirExertionSelector from '@/components/fitness/tracker/RpeRirExertionSelector'
+import RepCadenceMetronome from '@/components/fitness/tracker/RepCadenceMetronome'
 import SupersetPairCard, { type SupersetDraftState } from '@/components/fitness/tracker/SupersetPairCard'
 import { type GroupedExerciseEntry } from '@/lib/superset-pairing-engine'
 import {
@@ -4299,6 +4300,23 @@ export default function FitnessTrackerClient({
                                 </div>
 
                               </div>
+
+                              {isStrength && Boolean(draft.tempo || effectiveTempo) && (
+                                <div style={{ gridColumn: '1 / -1' }}>
+                                  <RepCadenceMetronome
+                                    tempo={draft.tempo || effectiveTempo}
+                                    targetReps={draft.reps || 8}
+                                    exerciseName={ex.name}
+                                    onCompleteReps={(completedReps) => {
+                                      setInlineSetDrafts(prev => ({
+                                        ...prev,
+                                        [exerciseKey]: { ...draft, reps: String(completedReps) },
+                                      }))
+                                    }}
+                                    triggerHaptic={triggerHaptic}
+                                  />
+                                </div>
+                              )}
 
                               <div className="fitness-primary-set-inputs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                 <div>
