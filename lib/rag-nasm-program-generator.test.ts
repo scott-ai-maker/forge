@@ -495,5 +495,48 @@ describe('rag-nasm-program-generator', () => {
       expect(safeLunge?.coachingCues.some(c => c.includes('Injury Protection Shield'))).toBe(true)
     })
   })
+
+  describe('NASM OPT Periodization Safety Gate & Special Populations', () => {
+    it('safely clamps beginner athletes from Phase 5 Power into Phase 1 Stabilization', () => {
+      const plan = generateRagNasmProgram({
+        goal: 'performance',
+        targetNasmPhase: 5,
+        experienceLevel: 'beginner',
+        trainingDaysPerWeek: 3,
+      })
+
+      // Must be safely gated into Phase 1
+      expect(plan.nasmOptPhase).toBe(1)
+      expect(plan.phaseName).toBe('Stabilization Endurance')
+    })
+
+    it('safely clamps athletes with kinetic chain compensations from Phase 4/5 into Phase 2', () => {
+      const plan = generateRagNasmProgram({
+        goal: 'performance',
+        targetNasmPhase: 5,
+        experienceLevel: 'intermediate',
+        kineticCompensations: ['knees_cave_in'],
+        trainingDaysPerWeek: 4,
+      })
+
+      // Must be gated to Phase 2 Strength Endurance
+      expect(plan.nasmOptPhase).toBe(2)
+      expect(plan.phaseName).toBe('Strength Endurance')
+    })
+
+    it('adapts cardio prescription when client is on beta-blocker/hypertension medication', () => {
+      const plan = generateRagNasmProgram({
+        goal: 'fat_loss',
+        clientAge: 52,
+        injuriesLimitations: 'Client is taking daily beta-blockers for mild hypertension',
+        trainingDaysPerWeek: 3,
+      })
+
+      const day1 = plan.workouts[0]
+      expect(day1.cardioProtocol).toBeDefined()
+      expect(day1.cardioProtocol?.coachingCues.some(c => c.includes('Medication Guidance'))).toBe(true)
+      expect(day1.cardioProtocol?.targetZone).toContain('RPE')
+    })
+  })
 })
 

@@ -140,4 +140,25 @@ describe('Rest Timer Audio Metronome & Heart Rate Zone Dynamic Adaptation Engine
     const interval5 = getRestAudioMetronomeTone('interval_5s', 10, 50)
     expect(interval5?.description).toContain('5-Second Interval Marker')
   })
+
+  it('safeguards cardiac / beta-blocker patients from premature rest trimming despite Zone 1 drop', () => {
+    const result = evaluateDynamicRestHeartRateRecovery({
+      exerciseName: 'Barbell Bench Press',
+      baseRestSeconds: 90,
+      remainingSeconds: 45,
+      elapsedRestSeconds: 45,
+      currentHeartRateBpm: 98, // Drops into Zone 1 due to beta-blockers
+      userAge: 52,
+      hasHeartMedications: true,
+    })
+
+    // Must NEVER trim rest early for cardiac medication patients
+    expect(result.isRecoveredEarly).toBe(false)
+    expect(result.suggestedTrimmingSeconds).toBe(0)
+    expect(result.recommendedAction).toBe('maintain')
+    expect(result.adaptationReason).toContain('Heart rate is pharmacologically blunted by medication')
+    expect(result.adaptationReason).toContain('Complete scheduled rest required')
+    expect(result.coachVoiceCue).toContain('Preserving scheduled rest interval')
+  })
 })
+

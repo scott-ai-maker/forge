@@ -202,5 +202,26 @@ describe('ai-coach-onboarding-orchestrator', () => {
     expect(synthesis.periodizationRecommendation.clinicalRationale.bodyCompAnalysis).toContain('Baseline biometrics established')
     expect(synthesis.programDesignRecommendation.macrocyclePlan.workouts.length).toBe(4)
   })
+
+  it('clamps periodization targetPhase and macrocycle to Phase 2 max when special populations are present', () => {
+    const pregnantClient: ClientOnboardingProfileInput = {
+      ...mockClient,
+      fitnessGoal: 'Hypertrophy and Muscle Building',
+      injuriesLimitations: 'Currently pregnant in second trimester',
+    }
+
+    const recommendation = recommendPeriodizationFromScans({
+      client: pregnantClient,
+      dexaScan: null,
+      postureScan: null,
+    })
+
+    expect(recommendation.targetNasmPhase).toBeLessThanOrEqual(2)
+    expect(recommendation.macrocyclePlan.specialPopulation).toBe('pregnancy_prenatal')
+    expect(recommendation.macrocyclePlan.maxAllowedOptPhase).toBe(2)
+    const week12 = recommendation.macrocyclePlan.weeks.find(w => w.weekNumber === 12)
+    expect(week12?.phaseNumber).toBe(2)
+    expect(week12?.milestoneTitle).toContain('Prenatal Health Graduation')
+  })
 })
 

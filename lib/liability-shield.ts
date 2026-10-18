@@ -64,7 +64,7 @@ export interface ContraindicationRule {
   generalGuideline: string
 }
 
-import { COMMON_SPORTS_INJURIES } from './sports-injuries'
+import { COMMON_SPORTS_INJURIES, parseInjuriesFromText } from './sports-injuries'
 
 const sportsInjuryRules: Record<string, ContraindicationRule> = {}
 for (const [injuryId, def] of Object.entries(COMMON_SPORTS_INJURIES)) {
@@ -179,6 +179,9 @@ export const AI_COACHING_LEGAL_DISCLAIMER =
 export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult {
   const flaggedItems: string[] = []
   const contraindicationTags: string[] = []
+  let clearanceStatus: MedicalClearanceStatus = 'cleared_unrestricted'
+  let riskTier: ParqEvaluationResult['riskTier'] = 'Low Risk'
+  let maxAllowedOptPhase = 5
 
   if (answers.hasHeartCondition) {
     flaggedItems.push('Diagnosed heart condition')
@@ -195,6 +198,7 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
   if (answers.takesBloodPressureOrHeartMedication) {
     flaggedItems.push('Prescription blood pressure or cardiovascular medication')
     contraindicationTags.push('cardiovascular_hypertension')
+    maxAllowedOptPhase = Math.min(maxAllowedOptPhase, 2)
   }
   if (answers.hasBoneOrJointProblem) {
     flaggedItems.push('Bone or joint condition worsened by exercise')
@@ -208,11 +212,43 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
     flaggedItems.push('Recent surgical procedure or acute musculoskeletal injury')
   }
 
-  const flaggedQuestionsCount = flaggedItems.length
+  // Parse natural language and structured notes for special populations & orthopedic conditions
+  if (answers.reportedConditionsNotes?.trim()) {
+    const { selectedInjuryIds } = parseInjuriesFromText(answers.reportedConditionsNotes)
+    for (const injuryId of selectedInjuryIds) {
+      contraindicationTags.push(injuryId)
+      if (injuryId === 'pregnancy_prenatal') {
+        flaggedItems.push('Prenatal / pregnancy condition reported')
+        maxAllowedOptPhase = Math.min(maxAllowedOptPhase, 2)
+        if (clearanceStatus === 'cleared_unrestricted') {
+          clearanceStatus = 'cleared_with_modifications'
+          riskTier = 'Moderate Risk'
+        }
+      } else if (injuryId === 'osteoporosis_osteopenia') {
+        flaggedItems.push('Osteoporosis / osteopenia (bone mineral density shield) reported')
+        maxAllowedOptPhase = Math.min(maxAllowedOptPhase, 2)
+        if (clearanceStatus === 'cleared_unrestricted') {
+          clearanceStatus = 'cleared_with_modifications'
+          riskTier = 'Moderate Risk'
+        }
+      } else if (injuryId === 'cardiovascular_hypertension') {
+        flaggedItems.push('Cardiovascular / hypertension history reported')
+        maxAllowedOptPhase = Math.min(maxAllowedOptPhase, 2)
+        if (clearanceStatus === 'cleared_unrestricted') {
+          clearanceStatus = 'cleared_with_modifications'
+          riskTier = 'Moderate Risk'
+        }
+      } else if (injuryId === 'asthma_respiratory') {
+        flaggedItems.push('Asthma / exercise-induced bronchospasm reported')
+        if (clearanceStatus === 'cleared_unrestricted') {
+          clearanceStatus = 'cleared_with_modifications'
+          riskTier = 'Moderate Risk'
+        }
+      }
+    }
+  }
 
-  let clearanceStatus: MedicalClearanceStatus = 'cleared_unrestricted'
-  let riskTier: ParqEvaluationResult['riskTier'] = 'Low Risk'
-  let maxAllowedOptPhase = 5
+  const flaggedQuestionsCount = flaggedItems.length
 
   if (
     answers.hasHeartCondition ||
@@ -223,9 +259,12 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
     riskTier = 'High Risk - Medical Clearance Required'
     maxAllowedOptPhase = 1 // Restrict to gentle Phase 1 stabilization until clearance
   } else if (flaggedQuestionsCount > 0) {
-    clearanceStatus = 'cleared_with_modifications'
-    riskTier = 'Moderate Risk'
-    maxAllowedOptPhase = 3 // Limit to Phases 1-3 with biomechanical modifications
+    if (clearanceStatus === 'cleared_unrestricted') {
+      clearanceStatus = 'cleared_with_modifications'
+      riskTier = 'Moderate Risk'
+    }
+    // Limit to Phase 3 or tighter clinical clamp (e.g. Phase 2 for pregnancy, osteoporosis, heart meds)
+    maxAllowedOptPhase = Math.min(maxAllowedOptPhase, 3)
   }
 
   const uniqueTags = Array.from(new Set(contraindicationTags))

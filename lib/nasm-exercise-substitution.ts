@@ -1,3 +1,5 @@
+import { doesExerciseMatchEquipment } from './nasm-equipment-detector'
+
 export type MovementPattern =
   | 'squat'
   | 'hinge'
@@ -57,7 +59,8 @@ export function detectMovementPattern(exerciseName: string): MovementPattern {
 export function getSmartSubstitutions(
   currentExerciseName: string,
   optPhase = 'Phase 2: Strength Endurance',
-  discomfort?: DiscomfortArea
+  discomfort?: DiscomfortArea,
+  availableEquipment?: string[]
 ): ExerciseSubstitution[] {
   const pattern = detectMovementPattern(currentExerciseName)
   const results: ExerciseSubstitution[] = []
@@ -404,5 +407,191 @@ export function getSmartSubstitutions(
     })
   }
 
+  // ── Equipment Capabilities Filter & Bodyweight Fallback ──
+  if (availableEquipment && availableEquipment.length > 0) {
+    const matching = results.filter(sub =>
+      doesExerciseMatchEquipment(
+        { name: sub.name, description: sub.equipmentRequired },
+        availableEquipment
+      )
+    )
+
+    if (matching.length > 0) {
+      return matching
+    }
+
+    // If all candidate substitutions require equipment the client lacks,
+    // gracefully fallback to verified bodyweight progressions/regressions
+    return getBodyweightFallbackSubstitutions(pattern, optPhase)
+  }
+
   return results
+}
+
+/**
+ * Provides guaranteed bodyweight biomechanical regressions for each movement pattern
+ * when an athlete lacks commercial, barbell, cable, or dumbbell equipment.
+ */
+export function getBodyweightFallbackSubstitutions(
+  pattern: MovementPattern,
+  optPhase = 'Phase 2: Strength Endurance'
+): ExerciseSubstitution[] {
+  const isPhase1 = /phase 1|stabilization/i.test(optPhase)
+
+  switch (pattern) {
+    case 'squat':
+      return [
+        {
+          name: 'Bodyweight Box Squat to Chair',
+          category: 'squat',
+          reasoning: 'Zero external equipment required. Safe closed-kinetic chain squat with controlled eccentric depth cue.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '3-1-1',
+          equipmentRequired: 'Bodyweight + Chair/Bench',
+        },
+        {
+          name: 'Bodyweight Isometric Wall Sit (45° Knee Angle)',
+          category: 'squat',
+          reasoning: 'Calms patellofemoral and lumbar shear while building isometric quadriceps and core endurance.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: 'Hold 30-45s',
+          equipmentRequired: 'Bodyweight + Wall',
+        },
+      ]
+    case 'hinge':
+      return [
+        {
+          name: 'Floor Glute Bridge (Bilateral)',
+          category: 'hinge',
+          reasoning: 'Isolates gluteus maximus and hamstrings without compressive spinal axial loading or external weights.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '2-1-2',
+          equipmentRequired: 'Bodyweight + Mat',
+        },
+        {
+          name: 'Single-Leg Romanian Deadlift (Wall-Supported Balance)',
+          category: 'hinge',
+          reasoning: 'Bodyweight hip hinge developing unilateral hamstring flexibility and ankle proprioception.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: '4-2-1',
+          equipmentRequired: 'Bodyweight',
+        },
+      ]
+    case 'horizontal_push':
+      return [
+        {
+          name: 'Incline Push-Up (Hands on Elevated Bench or Wall)',
+          category: 'horizontal_push',
+          reasoning: 'De-loads bodyweight percentage to allow strict scapular protraction and rotator cuff stability.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '2-0-2',
+          equipmentRequired: 'Bodyweight + Wall / Elevated Surface',
+        },
+        {
+          name: 'Standard Floor Push-Up with Slow Eccentric',
+          category: 'horizontal_push',
+          reasoning: 'Master closed-kinetic chain pressing movement engaging serratus anterior and lumbo-pelvic-hip complex.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '2-0-2',
+          equipmentRequired: 'Bodyweight + Mat',
+        },
+      ]
+    case 'vertical_pull':
+    case 'horizontal_row':
+      return [
+        {
+          name: 'Doorframe Towel Row',
+          category: 'horizontal_row',
+          reasoning: 'Utilizes doorframe leverage for bodyweight horizontal pulling with neutral wrist tracking.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '2-1-2',
+          equipmentRequired: 'Bodyweight + Doorframe',
+        },
+        {
+          name: 'Prone Cobra with Scapular Retraction',
+          category: 'horizontal_row',
+          reasoning: 'Activates rhomboids, middle trapezius, and posterior rotator cuff without any equipment.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: 'Hold 30s',
+          equipmentRequired: 'Bodyweight + Mat',
+        },
+      ]
+    case 'overhead_press':
+      return [
+        {
+          name: 'Prone Scapular Y-T-W Wall Slides',
+          category: 'overhead_press',
+          reasoning: 'Restores scapulohumeral upward rotation rhythm and lower trapezius recruitment without external weights.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: '3-1-2',
+          equipmentRequired: 'Bodyweight + Wall',
+        },
+        {
+          name: 'Pike Push-Up with Hands on Floor',
+          category: 'overhead_press',
+          reasoning: 'Vertical pressing vector using bodyweight angle to safely overload anterior deltoids and triceps.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '2-0-2',
+          equipmentRequired: 'Bodyweight + Mat',
+        },
+      ]
+    case 'lunge_split':
+      return [
+        {
+          name: 'Bodyweight Reverse Lunge',
+          category: 'lunge_split',
+          reasoning: 'Posterior stepping vector minimizes patellofemoral shear and trains single-leg decelerative control.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '2-0-2',
+          equipmentRequired: 'Bodyweight',
+        },
+        {
+          name: 'Static Split Squat with Hand on Wall Support',
+          category: 'lunge_split',
+          reasoning: 'Eliminates balance variability and protects knee stability through controlled unilateral range of motion.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '2-0-2',
+          equipmentRequired: 'Bodyweight + Wall Support',
+        },
+      ]
+    case 'core_rotation':
+      return [
+        {
+          name: 'Dead Bug with Arm/Opposite Leg Reach',
+          category: 'core_rotation',
+          reasoning: 'High anterior core anti-extension stability without lumbar compressive force.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '2-0-2',
+          equipmentRequired: 'Bodyweight + Mat',
+        },
+        {
+          name: 'Side Plank from Knees',
+          category: 'core_rotation',
+          reasoning: 'Frontal plane lumbo-pelvic hip stabilization targeting quadratus lumborum and glute medius.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: 'Hold 30s per side',
+          equipmentRequired: 'Bodyweight + Mat',
+        },
+      ]
+    case 'isolation_arms':
+    default:
+      return [
+        {
+          name: 'Bodyweight Floor Triceps Dip (Hands on Sturdy Chair)',
+          category: 'isolation_arms',
+          reasoning: 'Safe elbow extension mechanics with self-regulated bodyweight load.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: isPhase1 ? '4-2-1' : '2-0-2',
+          equipmentRequired: 'Bodyweight + Chair / Floor',
+        },
+        {
+          name: 'Doorframe Static Biceps Curl Iso-Tension',
+          category: 'isolation_arms',
+          reasoning: 'Safe isometric tension across elbow flexors with neutral wrist alignment.',
+          benefitTag: 'Pain-Free Regression',
+          prescribedTempo: 'Hold 15-20s',
+          equipmentRequired: 'Bodyweight + Doorframe',
+        },
+      ]
+  }
 }

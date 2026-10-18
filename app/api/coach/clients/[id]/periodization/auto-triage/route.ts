@@ -9,6 +9,7 @@ import {
   extendCurrentPhase,
   MacrocyclePlan,
 } from '@/lib/periodization-roadmap'
+import { parseInjuriesFromText } from '@/lib/sports-injuries'
 import { PeriodizationAutoTriageAction } from '@/lib/coach-triage'
 
 export async function POST(
@@ -62,11 +63,16 @@ export async function POST(
     if (!macrocycle) {
       const { data: profile } = await admin
         .from('fitness_profiles')
-        .select('fitness_goal')
+        .select('fitness_goal, injuries_limitations')
         .eq('user_id', clientId)
         .maybeSingle()
       const clientGoal = profile?.fitness_goal || existingPlanRecord?.goal || 'Body Recomposition & Maximal Power Output'
-      macrocycle = generate12WeekMacrocycle(1, clientGoal)
+      const { selectedInjuryIds } = parseInjuriesFromText(profile?.injuries_limitations)
+      macrocycle = generate12WeekMacrocycle({
+        currentWeek: 1,
+        clientGoal,
+        contraindicationTags: selectedInjuryIds,
+      })
     }
 
     const currentWeekNum = macrocycle.currentWeek || 1

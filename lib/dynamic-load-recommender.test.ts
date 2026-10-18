@@ -115,5 +115,94 @@ describe('dynamic-load-recommender', () => {
 
       expect(result.recommendedWeightKg % 2.5).toBe(0)
     })
+
+    it('assigns conservative safe starter loads for unlogged exercises instead of arbitrary 45/95 lbs', () => {
+      // Bodyweight pushup
+      const pushup = recommendWorkingLoad({
+        exerciseName: 'Push-Up',
+        nasmOptPhase: 1,
+        historicalSets: [],
+      })
+      expect(pushup.recommendedWeightLbs).toBe(0)
+
+      // Single-joint DB lateral raise
+      const lateralRaise = recommendWorkingLoad({
+        exerciseName: 'Dumbbell Lateral Raise',
+        nasmOptPhase: 1,
+        historicalSets: [],
+      })
+      expect(lateralRaise.recommendedWeightLbs).toBe(10)
+
+      // Dumbbell Goblet Squat
+      const gobletSquat = recommendWorkingLoad({
+        exerciseName: 'Goblet Squat',
+        nasmOptPhase: 1,
+        historicalSets: [],
+      })
+      expect(gobletSquat.recommendedWeightLbs).toBe(25)
+
+      // Bodyweight Floor Bridge
+      const floorBridge = recommendWorkingLoad({
+        exerciseName: 'Single Leg Floor Bridge',
+        nasmOptPhase: 1,
+        historicalSets: [],
+      })
+      expect(floorBridge.recommendedWeightLbs).toBe(0)
+
+      // Standing Scaption
+      const scaption = recommendWorkingLoad({
+        exerciseName: 'Standing Scaption',
+        nasmOptPhase: 1,
+        historicalSets: [],
+      })
+      expect(scaption.recommendedWeightLbs).toBe(10)
+    })
+
+    it('resolves physiologically compatible tempos for static holds and plyometrics in load recommendations', () => {
+      const plank = recommendWorkingLoad({
+        exerciseName: 'Front Plank',
+        nasmOptPhase: 1,
+        historicalSets: [],
+      })
+      expect(plank.recommendedTempo).toBe('Hold 30-60s')
+
+      const squatJump = recommendWorkingLoad({
+        exerciseName: 'Squat Jump',
+        nasmOptPhase: 1,
+        historicalSets: [],
+      })
+      expect(squatJump.recommendedTempo).toBe('Explosive -> 3-5s landing freeze')
+    })
+
+    it('clamps load to 75% 1RM and RPE to 7.5 max for hypertension / cardiac medications', () => {
+      // In Phase 4 Maximal Strength (normally 90% 1RM, RPE 9.0)
+      const cardiacResult = recommendWorkingLoad({
+        exerciseName: 'Barbell Bench Press',
+        nasmOptPhase: 4,
+        targetRepsText: '3-5',
+        historicalSets: [{ weightLbs: 200, reps: 5 }], // 1RM ~ 230 lbs
+        hasHeartMedications: true,
+      })
+
+      expect(cardiacResult.targetIntensityPercentage).toBeLessThanOrEqual(75)
+      expect(cardiacResult.recommendedRpe).toBeLessThanOrEqual(7.5)
+      expect(cardiacResult.badge).toContain('Cardiac Guard')
+      expect(cardiacResult.rationale).toContain('Valsalva maneuver')
+    })
+
+    it('clamps load to 75% 1RM for osteoporosis / osteopenia clients', () => {
+      const osteoResult = recommendWorkingLoad({
+        exerciseName: 'Goblet Squat',
+        nasmOptPhase: 4,
+        targetRepsText: '4',
+        historicalSets: [{ weightLbs: 60, reps: 5 }],
+        specialPopulation: 'osteoporosis_osteopenia',
+      })
+
+      expect(osteoResult.targetIntensityPercentage).toBeLessThanOrEqual(75)
+      expect(osteoResult.badge).toContain('Bone Density Protocol')
+      expect(osteoResult.rationale).toContain('fracture risk')
+    })
   })
 })
+

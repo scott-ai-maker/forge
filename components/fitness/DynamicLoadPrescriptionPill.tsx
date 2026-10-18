@@ -17,6 +17,8 @@ interface DynamicLoadPrescriptionPillProps {
   dailyReadinessScore?: number | null
   acwrRatio?: number | null
   preferredUnits?: 'imperial' | 'metric'
+  specialPopulation?: 'osteoporosis_osteopenia' | 'cardiovascular_hypertension' | 'pregnancy_prenatal' | 'asthma_respiratory' | null
+  hasHeartMedications?: boolean
   onApplyRecommendation: (load: {
     weight: string
     reps: string
@@ -34,6 +36,8 @@ export default function DynamicLoadPrescriptionPill({
   dailyReadinessScore,
   acwrRatio,
   preferredUnits = 'imperial',
+  specialPopulation = null,
+  hasHeartMedications = false,
   onApplyRecommendation,
 }: DynamicLoadPrescriptionPillProps) {
   const [applied, setApplied] = useState(false)
@@ -48,8 +52,20 @@ export default function DynamicLoadPrescriptionPill({
       dailyReadinessScore,
       acwrRatio,
       preferredUnits,
+      specialPopulation,
+      hasHeartMedications,
     })
-  }, [exerciseName, nasmOptPhase, targetRepsText, historicalSets, dailyReadinessScore, acwrRatio, preferredUnits])
+  }, [
+    exerciseName,
+    nasmOptPhase,
+    targetRepsText,
+    historicalSets,
+    dailyReadinessScore,
+    acwrRatio,
+    preferredUnits,
+    specialPopulation,
+    hasHeartMedications,
+  ])
 
   const unitLabel = preferredUnits === 'imperial' ? 'lb' : 'kg'
 

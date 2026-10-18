@@ -84,4 +84,43 @@ describe('NASM Cardiorespiratory Stage Training & Zone Engine', () => {
     expect(averageFemale.fitnessRating).toBe('Average')
     expect(averageFemale.suggestedStartingStage).toBe(1)
   })
+
+  it('correctly adapts cardio zones and stage workouts when client is on heart/hypertension medications', () => {
+    const medZones = calculateCardioZones(55, 60, true)
+    expect(medZones.hasHeartMedications).toBe(true)
+    expect(medZones.isMedicationSuppressed).toBe(true)
+    expect(medZones.clinicalGuidance).toContain('Pharmacological Heart Rate Alert')
+    expect(medZones.intensityGuidance).toContain('RPE and Talk Test')
+    expect(medZones.zone1.intensity).toContain('Governed by RPE 3-4')
+
+    const zoneCheck = identifyHeartRateZone(110, 55, 60, true)
+    expect(zoneCheck.isMedicationSuppressed).toBe(true)
+    expect(zoneCheck.description).toContain('Medication Alert')
+
+    const stage1Med = generateStageWorkout(1, 55, 60, true)
+    expect(stage1Med.mainConditioning).toContain('strictly by RPE 3-4 and the Talk Test')
+    expect(stage1Med.coachingCues.some(c => c.includes('Medication Guidance'))).toBe(true)
+
+    const stage2Med = generateStageWorkout(2, 55, 60, true)
+    expect(stage2Med.coachingCues.some(c => c.includes('Valsalva'))).toBe(true)
+
+    // Rockport Test with heart medications
+    const rockportMed = calculateRockportVo2Max({
+      weightLbs: 180,
+      age: 55,
+      sex: 'male',
+      timeMinutes: 16.0,
+      endHeartRateBpm: 105,
+      hasHeartMedications: true,
+    })
+    expect(rockportMed.description).toContain('Pharmacological Heart Rate Alert')
+    expect(rockportMed.description).toContain('beta-blockers')
+
+    // YMCA Step Test with heart medications
+    const ymcaMed = evaluateYmcaStepTest(78, 55, 'male', true)
+    expect(ymcaMed.suggestedStartingStage).toBe(1)
+    expect(ymcaMed.rationale).toContain('Pharmacological Heart Rate Alert')
+    expect(ymcaMed.rationale).toContain('artificially suppress')
+  })
 })
+

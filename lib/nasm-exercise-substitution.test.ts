@@ -56,4 +56,31 @@ describe('Smart Exercise Substitution Engine', () => {
     const subs = getSmartSubstitutions('Standing Calf Raise', 'Phase 2', 'plantar_fasciitis')
     expect(subs.some(s => s.name.includes('Rathleff'))).toBe(true)
   })
+
+  it('filters substitutions strictly against client available equipment', () => {
+    // Client only has Dumbbells (no barbells, no cables, no machines)
+    const subs = getSmartSubstitutions(
+      'Barbell Back Squat',
+      'Phase 2',
+      undefined,
+      ['Dumbbells']
+    )
+    expect(subs.length).toBeGreaterThan(0)
+    // Must NOT suggest Leg Press Machine or Barbell Front Squat
+    expect(subs.every(s => !s.name.includes('Leg Press') && !s.name.includes('Barbell'))).toBe(true)
+  })
+
+  it('gracefully falls back to bodyweight progressions when client has zero equipment', () => {
+    // Client has only bodyweight
+    const subs = getSmartSubstitutions(
+      'Barbell Back Squat',
+      'Phase 1: Stabilization Endurance',
+      undefined,
+      ['bodyweight']
+    )
+    expect(subs.length).toBeGreaterThan(0)
+    expect(subs.some(s => s.name.includes('Bodyweight Box Squat') || s.name.includes('Wall Sit'))).toBe(true)
+    expect(subs.every(s => s.equipmentRequired.toLowerCase().includes('bodyweight'))).toBe(true)
+  })
 })
+

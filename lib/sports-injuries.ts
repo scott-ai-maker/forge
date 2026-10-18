@@ -19,6 +19,7 @@ export type SportsInjuryRegion =
   | 'hip'
   | 'foot_ankle'
   | 'wrist'
+  | 'special_population'
 
 export interface PrescribedInjurySubstitution {
   targetExerciseOrPattern: string
@@ -65,6 +66,10 @@ export type SportsInjuryKey =
   | 'cervical_strain_neck'
   | 'wrist_strain_carpal'
   | 'groin_adductor_strain'
+  | 'osteoporosis_osteopenia'
+  | 'pregnancy_prenatal'
+  | 'cardiovascular_hypertension'
+  | 'asthma_respiratory'
 
 export const COMMON_SPORTS_INJURIES: Record<string, SportsInjuryDefinition> = {
   runners_knee: {
@@ -768,6 +773,193 @@ export const COMMON_SPORTS_INJURIES: Record<string, SportsInjuryDefinition> = {
       activateDynamic: ['Supine Glute Bridge with Ball Squeeze Between Knees (12 reps with 3s hold)', 'Controlled Lateral Monster Walks (12 reps/side)'],
     },
   },
+
+  osteoporosis_osteopenia: {
+    id: 'osteoporosis_osteopenia',
+    name: 'Osteoporosis & Osteopenia (Bone Mineral Density Shield)',
+    commonAliases: ['osteoporosis', 'osteopenia', 'bone mineral density', 'low bone density', 'brittle bones', 'bone loss'],
+    region: 'special_population',
+    shortDescription: 'Decreased bone density requiring elimination of loaded spinal flexion, hyper-extensions, and extreme rotational shear.',
+    trainerProtocol: 'Strict neutral spine enforcement. Strictly eliminate loaded spinal flexion (crunches, sit-ups) and end-range rotation; prioritize axial weight-bearing closed-chain loading to stimulate osteoblast remodeling.',
+    blacklistedExercises: [
+      'Jefferson Curls',
+      'Jefferson Curl',
+      'Loaded Spinal Flexion (Jefferson Curls)',
+      'Crunch',
+      'Crunches',
+      'Sit-Up',
+      'Sit-Ups',
+      'Abdominal Crunch',
+      'Seated Cable Torso Rotation',
+      'Russian Twist',
+      'Hyper-Extensions',
+      'Roman Chair Hyper-Extensions',
+    ],
+    prescribedSubstitutions: [
+      {
+        targetExerciseOrPattern: 'Crunch',
+        replacement: 'Isometric McGill Curl-Up & Quadruped Bird-Dog',
+        rationale: 'Builds core cylinder stiffness with zero anterior vertebral compression shear.',
+        coachingCue: 'Maintain pristine neutral lumbar curve; do not flex or round lower back.',
+      },
+      {
+        targetExerciseOrPattern: 'Russian Twist',
+        replacement: 'Standing Pallof Press with Loop Band & Farmer Carries',
+        rationale: 'Develops anti-rotational core stabilization without rotational torque on thoracic vertebrae.',
+        coachingCue: 'Lock hips square, brace abdominal wall, breathe steadily.',
+      },
+      {
+        targetExerciseOrPattern: 'Jefferson Curls',
+        replacement: 'Neutral-Spine Trap Bar Deadlift & Banded Hip Hinge',
+        rationale: 'Compressive axial loading with neutral spine stimulates osteoblast bone remodeling without flexion shear.',
+        coachingCue: 'Maintain flat back and hinge deeply at the hips.',
+      },
+    ],
+    coachingCues: [
+      'Maintain tall posture with neutral cervical and lumbar curves at all times.',
+      'Never round or bend the spine forward while holding weights.',
+      'Hinge through the hips and bend at the knees to pick up weights from the floor.',
+    ],
+    warmupAdditions: {
+      inhibitSmr: ['SMR Foam Roll Thoracic Spine (Gentle Extension Only, No Flexion) (60s)', 'SMR Foam Roll Glutes (60s)'],
+      activateDynamic: ['Quadruped Bird-Dog (10 reps/side with 3s hold)', 'Prone Cobra on Floor (12 reps with 3s hold)'],
+    },
+    cardioModifications: {
+      avoidModalities: ['High-Impact Trampoline Jumping', 'Rowing Machine with Extreme Forward Slump'],
+      recommendedModalities: ['Brisk Incline Walking (Treadmill)', 'Elliptical with Upright Posture', 'Stationary Upright Bike'],
+      rationale: 'Weight-bearing impact stimulates bone mineralization while protecting against spinal flexion collapse.',
+    },
+  },
+
+  pregnancy_prenatal: {
+    id: 'pregnancy_prenatal',
+    name: 'Prenatal & Postpartum (Pregnancy Safety Shield)',
+    commonAliases: ['pregnant', 'pregnancy', 'prenatal', 'postpartum', 'expecting', 'trimester', 'second trimester', 'third trimester'],
+    region: 'special_population',
+    shortDescription: 'Pregnancy considerations: avoiding supine hypotension after week 12, joint laxity from relaxin, and abdominal wall defense.',
+    trainerProtocol: 'Eliminate supine exercises after 1st trimester; avoid prone postures; eliminate high-fall-risk instability equipment; emphasize pelvic floor and scapular retraction.',
+    blacklistedExercises: [
+      'Flat Barbell Bench Press',
+      'Flat Dumbbell Bench Press',
+      'Supine Floor Bridge',
+      'Supine Abdominal Crunches',
+      'Prone Iso-Abs',
+      'Prone Cobra',
+      'BOSU Jump Squats',
+      'Deep Box Jumps',
+    ],
+    prescribedSubstitutions: [
+      {
+        targetExerciseOrPattern: 'Flat Barbell Bench Press',
+        replacement: 'Incline Dumbbell Chest Press (30° Incline)',
+        rationale: 'Elevates torso above horizontal, preventing inferior vena cava compression and preserving fetal oxygenation.',
+        coachingCue: 'Plant feet firmly, press in scapular plane with elbows at 45°.',
+      },
+      {
+        targetExerciseOrPattern: 'Prone Cobra',
+        replacement: 'Standing Band Face Pull & Wall Angels',
+        rationale: 'Strengthens upper back without prone abdominal pressure.',
+        coachingCue: 'Stand tall with neutral pelvis, draw shoulder blades down and back.',
+      },
+      {
+        targetExerciseOrPattern: 'Supine Floor Bridge',
+        replacement: 'Supported Quadruped Glute Kickback',
+        rationale: 'Strengthens gluteus maximus without supine arterial compression.',
+        coachingCue: 'Keep back flat, drive heel toward ceiling without arching lower back.',
+      },
+    ],
+    coachingCues: [
+      'Exhale on exertion and inhale on relaxation; never hold breath.',
+      'Maintain supportive, wide athletic base of support to accommodate shifting center of gravity.',
+      'Stop immediately if experiencing dizziness, nausea, shortness of breath, or pelvic discomfort.',
+    ],
+    warmupAdditions: {
+      inhibitSmr: ['SMR Foam Roll Calves (60s)', 'SMR Foam Roll Upper Back / Rhomboids (60s)'],
+      activateDynamic: ['Pelvic Tilts in Quadruped (12 reps)', 'Side-Lying Clamshells (15 reps/side)'],
+    },
+    cardioModifications: {
+      avoidModalities: ['Outdoor Trail Running with Fall Risk', 'High-Impact Jumping / Plyometrics', 'Sprinting'],
+      recommendedModalities: ['Indoor Incline Walking', 'Stationary Recumbent Bike', 'Water Aerobics'],
+      rationale: 'Low-impact, stable footing eliminates fall risk while maintaining cardiorespiratory endurance.',
+    },
+  },
+
+  cardiovascular_hypertension: {
+    id: 'cardiovascular_hypertension',
+    name: 'Hypertension & Cardiovascular Health',
+    commonAliases: ['hypertension', 'high blood pressure', 'hbp', 'blood pressure medication', 'beta-blocker', 'beta blocker', 'cardiovascular condition'],
+    region: 'special_population',
+    shortDescription: 'Cardiovascular sensitivity requiring elimination of Valsalva maneuvers and RPE/Talk-Test guided pacing.',
+    trainerProtocol: 'Continuous rhythmic exhalation through concentric exertion; eliminate Valsalva breath-holding; avoid inverted head-down exercises; monitor with RPE/Talk Test.',
+    blacklistedExercises: [
+      '1RM Maximal Strain Lifts',
+      'Inverted Leg Press',
+      'Declined Bench Press',
+      'Max Effort Tabata Sprints',
+    ],
+    prescribedSubstitutions: [
+      {
+        targetExerciseOrPattern: '1RM Maximal Strain Lifts',
+        replacement: 'Controlled Moderate-Load Sets (10-15 reps @ 60-75% 1RM)',
+        rationale: 'Prevents acute mean arterial pressure surges (>220 mmHg) caused by Valsalva breath-holding.',
+        coachingCue: 'Breathe out continuously during the lift; never hold your breath.',
+      },
+      {
+        targetExerciseOrPattern: 'Inverted Leg Press',
+        replacement: 'Standing Dumbbell Goblet Squat',
+        rationale: 'Avoids head-down inversion and extreme intrathoracic venous pressure.',
+        coachingCue: 'Stand upright, keep chest proud and sink between hips.',
+      },
+    ],
+    coachingCues: [
+      'Exhale steadily on exertion; never hold breath or clamp jaw.',
+      'Allow 60-90 seconds between sets to normalize heart rate and arterial pressure.',
+      'Transition smoothly from floor to standing to prevent orthostatic dizziness.',
+    ],
+    warmupAdditions: {
+      inhibitSmr: ['SMR Foam Roll Calves (60s)', 'SMR Foam Roll Thoracic Spine (60s)'],
+      activateDynamic: ['Arm Circles & Shoulder Rolls (15 reps)', 'Bodyweight Floor Bridges with Rhythmic Breathing (12 reps)'],
+    },
+    cardioModifications: {
+      avoidModalities: ['All-Out Anaerobic HIIT Sprints', 'Prolonged High-Resistance Stair Climber'],
+      recommendedModalities: ['Continuous Stage 1 & 2 Aerobic Conditioning', 'Treadmill Incline Walking', 'Upright Stationary Cycling'],
+      rationale: 'Sustained moderate aerobic exercise promotes endothelial nitric oxide release and vascular vasodilation.',
+    },
+  },
+
+  asthma_respiratory: {
+    id: 'asthma_respiratory',
+    name: 'Asthma & Exercise-Induced Bronchospasm',
+    commonAliases: ['asthma', 'bronchospasm', 'inhaler', 'exercise induced asthma', 'eib', 'respiratory limitation'],
+    region: 'special_population',
+    shortDescription: 'Airway hyperreactivity requiring extended warm-up intervals and controlled breathing tempo.',
+    trainerProtocol: 'Mandatory 10-15 min progressive aerobic warm-up; keep rescue inhaler co-located; prioritize nasal inhalation; avoid abrupt high-intensity bursts in cold air.',
+    blacklistedExercises: [
+      'Max Effort Tabata Sprints',
+      'High-Intensity Anaerobic Bursts in Cold Air',
+    ],
+    prescribedSubstitutions: [
+      {
+        targetExerciseOrPattern: 'Max Effort Tabata Sprints',
+        replacement: 'Progressive Stage 1 & 2 Cardio Conditioning (RPE 5-7)',
+        rationale: 'Allows gradual airway accommodation and prevents bronchoconstriction triggers.',
+        coachingCue: 'Focus on rhythmic nasal inhalation and controlled pursed-lip exhalation.',
+      },
+    ],
+    coachingCues: [
+      'Inhale deeply through your nose to filter, humidify, and warm air before it reaches the bronchioles.',
+      'Take extended recovery breaks if chest tightness or coughing develops.',
+    ],
+    warmupAdditions: {
+      inhibitSmr: ['SMR Foam Roll Latissimus Dorsi (Lateral Ribcage) (60s)', 'SMR Foam Roll Pectorals with Tennis Ball (60s)'],
+      activateDynamic: ['Prone Cobra Diaphragmatic Expansion (10 reps with 3s hold)', 'Standing Side Bends with Deep Breathing (10 reps/side)'],
+    },
+    cardioModifications: {
+      avoidModalities: ['Cold Outdoor Sprints', 'High-Velocity Sprints in Dry Environments'],
+      recommendedModalities: ['Indoor Rowing Machine', 'Indoor Elliptical', 'Indoor Treadmill Walking'],
+      rationale: 'Controlled temperature and humidity prevent mucosal drying and airway hyperreactivity.',
+    },
+  },
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -791,6 +983,7 @@ export function getSportsInjuriesByRegion(): Record<SportsInjuryRegion, SportsIn
     hip: [],
     foot_ankle: [],
     wrist: [],
+    special_population: [],
   }
 
   for (const injury of Object.values(COMMON_SPORTS_INJURIES)) {

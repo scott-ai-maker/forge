@@ -40,6 +40,7 @@ export interface FloatingRestTimerDockProps {
   onChangeMetronomeMode?: (mode: RestAudioMetronomeMode) => void
   sanctuaryModeActive?: boolean
   sanctuaryBreathingLabel?: string
+  hasHeartMedications?: boolean
 }
 
 export default function FloatingRestTimerDock({
@@ -57,6 +58,7 @@ export default function FloatingRestTimerDock({
   onChangeMetronomeMode: _onChangeMetronomeMode,
   sanctuaryModeActive = false,
   sanctuaryBreathingLabel,
+  hasHeartMedications = false,
 }: FloatingRestTimerDockProps) {
   const [showCardioPacer, setShowCardioPacer] = useState(false)
   const [dismissedExtensionAlert, setDismissedExtensionAlert] = useState(false)
@@ -87,6 +89,7 @@ export default function FloatingRestTimerDock({
       hasAcuteFatigueDrop: activeRestState.hasAcuteFatigueDrop,
       acuteFatigueDropPercent: activeRestState.acuteFatigueDropPercent,
       velocityLossPercent: activeRestState.velocityLossPercent,
+      hasHeartMedications,
     })
   }, [
     activeRestState,
@@ -94,6 +97,7 @@ export default function FloatingRestTimerDock({
     currentHeartRateBpm,
     restingHeartRateBpm,
     userAge,
+    hasHeartMedications,
   ])
 
   if (!activeRestState) return null

@@ -305,7 +305,7 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
           if (rawText) {
             const spokenAudioText = sanitizeCoachSpeechText(rawText)
             const pingCheck = detectCoachPingNeed(question, rawText)
-            const recommendedAction = deriveRecommendedAction(question.toLowerCase(), currentExerciseName, rawText, nasmOptPhase)
+            const recommendedAction = deriveRecommendedAction(question.toLowerCase(), currentExerciseName, rawText, nasmOptPhase, equipmentAccess)
             return {
               answerMarkdown: rawText,
               spokenAudioText,
@@ -374,7 +374,7 @@ export function generateDeterministicCoachResponse(
   request: AskCoachGordonRequest,
   docs: RagDocumentMetadata[]
 ): AskCoachGordonResponse {
-  const { question, goal = 'fat_loss', nasmOptPhase = 1, currentExerciseName, contraindicationTags = [] } = request
+  const { question, goal = 'fat_loss', nasmOptPhase = 1, currentExerciseName, contraindicationTags = [], equipmentAccess = [] } = request
   const qLower = question.toLowerCase()
 
   // 1. Clinical Urgency & Scope of Practice Triage FIRST
@@ -669,7 +669,7 @@ Make sure you hydrate post-workout and prioritize high-quality sleep tonight. Yo
 
   spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
   const pingCheck = detectCoachPingNeed(question, answerMarkdown)
-  const recommendedAction = deriveRecommendedAction(qLower, currentExerciseName)
+  const recommendedAction = deriveRecommendedAction(qLower, currentExerciseName, answerMarkdown, nasmOptPhase, equipmentAccess)
 
   return {
     answerMarkdown,
@@ -690,14 +690,15 @@ export function deriveRecommendedAction(
   qLower: string,
   currentExerciseName?: string,
   answerText?: string,
-  nasmOptPhase: number = 1
+  nasmOptPhase: number = 1,
+  equipmentAccess?: string[]
 ): CoachActionRecommendation | undefined {
   const aLower = (answerText || '').toLowerCase()
   const combined = `${qLower} ${aLower}`
 
   if (combined.includes('swap') || combined.includes('replace') || combined.includes('substitute') || combined.includes('busy') || combined.includes('taken')) {
     if (currentExerciseName) {
-      const smartSubs = getSmartSubstitutions(currentExerciseName, `Phase ${nasmOptPhase}`)
+      const smartSubs = getSmartSubstitutions(currentExerciseName, `Phase ${nasmOptPhase}`, undefined, equipmentAccess)
       if (smartSubs && smartSubs.length > 0) {
         const topSub = smartSubs[0]
         const video = resolveExerciseVideoEmbed(topSub.name)

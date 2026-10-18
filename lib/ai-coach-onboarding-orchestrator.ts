@@ -32,6 +32,7 @@ import {
   OhsaCompensation,
   OhsaObservation,
 } from './nasm-assessments'
+import { parseInjuriesFromText } from './sports-injuries'
 
 export interface ClientOnboardingProfileInput {
   clientId: string
@@ -255,19 +256,45 @@ export function recommendPeriodizationFromScans(params: {
 }): AiPeriodizationRecommendation {
   const { client, dexaScan, postureScan } = params
 
-  const { targetPhase, targetPhaseName, velocity } = evaluateOptPhaseRequirement(
+  const { selectedInjuryIds } = parseInjuriesFromText(client.injuriesLimitations)
+  const combinedContraindications = Array.from(
+    new Set([...(client.contraindicationTags || []), ...selectedInjuryIds])
+  )
+
+  const isSpecialPop = combinedContraindications.some(
+    t =>
+      t.includes('pregnancy') ||
+      t.includes('prenatal') ||
+      t.includes('osteoporosis') ||
+      t.includes('osteopenia') ||
+      t.includes('hypertension') ||
+      t.includes('cardiovascular')
+  )
+
+  let { targetPhase, targetPhaseName, velocity } = evaluateOptPhaseRequirement(
     postureScan,
     dexaScan,
     client.fitnessGoal
   )
 
+  if (isSpecialPop && targetPhase > 2) {
+    targetPhase = 2
+    targetPhaseName = 'Phase 2: Strength Endurance'
+  }
+
   const clinicalRationale = buildClinicalRationale(client, dexaScan, postureScan, targetPhase)
 
   // Generate 12-week macrocycle structure
-  const rawMacrocycle = generate12WeekMacrocycle(
-    targetPhase,
-    client.fitnessGoal || (dexaScan?.recompositionProjection?.phaseName ? `Recomposition: ${dexaScan.recompositionProjection.phaseName}` : 'Body Recomposition & Movement Efficiency')
-  )
+  const rawMacrocycle = generate12WeekMacrocycle({
+    currentWeek: 1,
+    clientGoal:
+      client.fitnessGoal ||
+      (dexaScan?.recompositionProjection?.phaseName
+        ? `Recomposition: ${dexaScan.recompositionProjection.phaseName}`
+        : 'Body Recomposition & Movement Efficiency'),
+    adaptationVelocity: velocity,
+    contraindicationTags: combinedContraindications,
+  })
 
   // Customize weeks and coach memos based on findings
   const customizedWeeks: RoadmapWeek[] = rawMacrocycle.weeks.map(week => {

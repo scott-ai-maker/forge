@@ -20,7 +20,11 @@ import {
 } from './rag-nasm-program-generator'
 import { doesExerciseMatchEquipment, parseEquipmentCapabilities } from './nasm-equipment-detector'
 import { calculateCardioZones } from './nasm-cardio-stage-engine'
-import { validateAndEnforceNasmOptGuardrails, substituteMissingEquipment } from './nasm-opt-guardrails'
+import {
+  validateAndEnforceNasmOptGuardrails,
+  substituteMissingEquipment,
+  enforcePhaseExerciseConstraints,
+} from './nasm-opt-guardrails'
 import { checkExerciseContraindications } from './liability-shield'
 import { parseInjuriesFromText } from './sports-injuries'
 import { personalizePlan, type PersonalizationContext } from './program-personalization'
@@ -52,6 +56,7 @@ export interface GeminiCoachGenerationRequest {
   coachGuidanceNotes?: string
   contraindicationTags?: string[]
   injuriesLimitations?: string
+  hasHeartMedications?: boolean
 
   // Deep Humanized Personalization Extensions
   lifestyleRhythm?: GeminiCoachLifestyleRhythm
@@ -393,8 +398,11 @@ export function validateAndEnforceEquipmentConstraints(
 
   for (const workout of plan.workouts) {
     if (!Array.isArray(workout.exercises)) continue
+    const workoutPhase = workout.nasmOptPhase || plan.nasmOptPhase || 1
 
-    for (const ex of workout.exercises) {
+    for (let i = 0; i < workout.exercises.length; i++) {
+      const ex = workout.exercises[i]
+
       // 1. Missing equipment repair
       if (caps && !caps.isFullGym && !doesExerciseMatchEquipment({ name: ex.name }, caps)) {
         const repairs: string[] = []
@@ -429,21 +437,34 @@ export function validateAndEnforceEquipmentConstraints(
         }
       }
 
+      // 4. Secondary Equipment Re-check:
+      // If exclusion or contraindication substitution introduced a movement needing unavailable equipment,
+      // adapt to available equipment immediately.
+      if (caps && !caps.isFullGym && !doesExerciseMatchEquipment({ name: ex.name }, caps)) {
+        const repairs: string[] = []
+        ex.name = substituteMissingEquipment(ex.name, equipmentAccess || [], repairs)
+      }
+
+      // 5. Normalization & Tempo Compatibility Engine:
+      // Pass all exercises through enforcePhaseExerciseConstraints to guarantee phase tempo invariants
+      const repairs: string[] = []
+      workout.exercises[i] = enforcePhaseExerciseConstraints(ex, workoutPhase, repairs)
+
       // Track if burpees exist
-      if (ex.name.toLowerCase().includes('burpee')) {
+      if (workout.exercises[i].name.toLowerCase().includes('burpee')) {
         burpeeInjected = true
       }
     }
 
-    // 4. Inject burpee superpower into workout 2 if athlete excels at burpees and hasn't had it injected yet
+    // 6. Inject burpee superpower into workout 2 if athlete excels at burpees and hasn't had it injected yet
     if (hasBurpeeSuperpower && !burpeeInjected && workout.day === 2 && workout.exercises.length > 2) {
       const targetIdx = Math.min(2, workout.exercises.length - 1)
-      workout.exercises[targetIdx] = {
+      const burpeeEx: GeneratedExerciseItem = {
         block: 'resistance',
         name: 'squat thrust burpees',
         sets: '3',
         reps: '10-12',
-        tempo: '2/0/2',
+        tempo: 'Continuous',
         rest: '60s',
         coachingCues: [
           'Athlete Movement Superpower: Prescribed controlled Squat Thrust Burpees — smooth, authoritative cadence.',
@@ -451,6 +472,8 @@ export function validateAndEnforceEquipmentConstraints(
         ],
         nasmClinicalSource: 'NASM OPT Phase 2 Metabolic Superpower & Athletic Conditioning',
       }
+      const repairs: string[] = []
+      workout.exercises[targetIdx] = enforcePhaseExerciseConstraints(burpeeEx, workoutPhase, repairs)
       burpeeInjected = true
     }
   }
@@ -653,6 +676,13 @@ export async function generateMasterNasmOptProgram(
     goal: ragGoal,
     nasmOptPhase: targetPhase,
   })
+
+  const hasHeartMedications = Boolean(
+    request.hasHeartMedications ||
+    request.contraindicationTags?.includes('cardiovascular_hypertension') ||
+    /beta[- ]blocker|hypertension|blood pressure|cardiac|heart med/i.test(request.injuriesLimitations || '')
+  )
+
   const personalizationCtx: PersonalizationContext = {
     clientName: request.clientName,
     goal: request.goal,
@@ -680,6 +710,7 @@ export async function generateMasterNasmOptProgram(
       cardioBlendStyle: request.cardioBlendStyle,
       contraindicationTags: request.contraindicationTags,
       injuriesLimitations: request.injuriesLimitations,
+      hasHeartMedications,
     })
     const { sanitizedPlan: sanitizedFallback } = validateAndEnforceNasmOptGuardrails(ragPlan, {
       equipmentAccess: request.equipmentAccess,
@@ -695,7 +726,7 @@ export async function generateMasterNasmOptProgram(
       request.movementSuperpowers
     )
 
-    const cardioZones = calculateCardioZones(request.clientAge || 35)
+    const cardioZones = calculateCardioZones(request.clientAge || 35, 65, hasHeartMedications)
     validated.clinicalRationale = buildDeterministicMasterCoachMemo(request, targetPhase, validated.planTitle)
     if (request.nutritionPhilosophy === 'precision_nutrition_hand_portion') {
       validated.handPortionPlan = buildDeterministicHandPortionPlan(request)
@@ -709,7 +740,7 @@ export async function generateMasterNasmOptProgram(
 
   // 1. Filter allowed NASM Edge exercises strictly by available client equipment and strict exclusions
   const allowedNasmExercises = filterNasmEdgeCatalogByEquipment(request.equipmentAccess, request.strictExclusions)
-  const cardioZones = calculateCardioZones(request.clientAge || 35)
+  const cardioZones = calculateCardioZones(request.clientAge || 35, 65, hasHeartMedications)
 
   const promptContent = `Client Training Profile:
 - Name: ${request.clientName || 'Client'}
@@ -720,8 +751,7 @@ export async function generateMasterNasmOptProgram(
 - Experience Level: ${request.experienceLevel || 'intermediate'}
 - Available Equipment: ${(request.equipmentAccess || ['Full Commercial Gym']).join(', ')}
 - Kinetic Compensations / Movement Screen: ${(request.kineticCompensations || ['None observed']).join(', ')}
-${request.injuriesLimitations ? `- Clinical Sports Injuries & Limitations: ${request.injuriesLimitations}\n` : ''}${request.contraindicationTags && request.contraindicationTags.length > 0 ? `- Biomechanical Contraindication Tags: ${request.contraindicationTags.join(', ')}\n` : ''}- Cardiorespiratory Tanaka Target Zones: Zone 1 (${cardioZones.zone1.minBpm}-${cardioZones.zone1.maxBpm} BPM), Zone 2 (${cardioZones.zone2.minBpm}-${cardioZones.zone2.maxBpm} BPM), Zone 3 (${cardioZones.zone3.minBpm}-${cardioZones.zone3.maxBpm} BPM)
-- Cardiorespiratory Blend Style: ${request.cardioBlendStyle || 'integrated_finishers'}
+${request.injuriesLimitations ? `- Clinical Sports Injuries & Limitations: ${request.injuriesLimitations}\n` : ''}${request.contraindicationTags && request.contraindicationTags.length > 0 ? `- Biomechanical Contraindication Tags: ${request.contraindicationTags.join(', ')}\n` : ''}${hasHeartMedications ? '- Cardiorespiratory Intensity Protocol: ⚠️ CLIENT ON HEART/HYPERTENSION MEDICATION (BETA-BLOCKERS) — Autonomic HR blunted. Govern all cardio conditioning strictly by RPE & Talk Test, NOT BPM targets.\n' : `- Cardiorespiratory Tanaka Target Zones: Zone 1 (${cardioZones.zone1.minBpm}-${cardioZones.zone1.maxBpm} BPM), Zone 2 (${cardioZones.zone2.minBpm}-${cardioZones.zone2.maxBpm} BPM), Zone 3 (${cardioZones.zone3.minBpm}-${cardioZones.zone3.maxBpm} BPM)\n`}- Cardiorespiratory Blend Style: ${request.cardioBlendStyle || 'integrated_finishers'}
 ${request.lifestyleRhythm ? `- Athlete Lifestyle & Daily Rhythm: Work style: ${request.lifestyleRhythm.workStyle || 'Sedentary desk'}, Daily rhythm: ${request.lifestyleRhythm.dailyRhythm || 'Flexible'}, Target session duration: ${request.lifestyleRhythm.targetSessionDurationMins || 40} mins\n` : ''}${request.movementSuperpowers && request.movementSuperpowers.length > 0 ? `- Movement Superpowers (Athlete Excels At & Loves): ${request.movementSuperpowers.join(', ')}\n` : ''}${request.strictExclusions && request.strictExclusions.length > 0 ? `- STRICT MOVEMENT EXCLUSIONS (Under NO circumstances prescribe): ${request.strictExclusions.join(', ')}\n` : ''}${request.functionalDemands ? `- Real-World Functional & Family Demands: ${request.functionalDemands}\n` : ''}${request.nutritionPhilosophy ? `- Nutrition Strategy & Mindset: ${request.nutritionPhilosophy === 'precision_nutrition_hand_portion' ? 'Precision Nutrition Hand-Portion System (Palms = Protein, Fists = Veggies, Cupped Hands = Carbs, Thumbs = Healthy Fats) + 80% Fullness Cue (Hara Hachi Bu) - NO CALORIE COUNTING' : request.nutritionPhilosophy === 'macro_calorie_tracking' ? 'Precision Macro & Calorie Tracking' : 'Intuitive & Chrono-Nutrition'}\n` : ''}${request.dualCardioSplit ? `- Biomechanical Dual-Cardio Protocol: Sweaty In-Home Finisher: ${request.dualCardioSplit.sweatyFinisherModality || 'Incline Treadmill or Step'} done post-workout before shower; Fresh NEAT Walking Ritual: ${request.dualCardioSplit.freshNeatWalkingMins || 25} minutes done non-sweaty in clean clothes (${request.dualCardioSplit.freshNeatWalkingNotes || 'to visit family/relax'}).\n` : ''}- Additional Coach Notes: ${request.coachGuidanceNotes || 'Optimize for strict OPT periodization, joint longevity, and neuromuscular control.'}
 
 RAG Sports Science Context:
@@ -736,9 +766,9 @@ ${allowedNasmExercises.join(', ')}
 
 OPT MODEL WORKOUT DESIGN REQUIREMENTS:
 Each workout day in the 'workouts' array must contain:
-1. Warmup SMR (block: 'warmup', 1 set, 30-60s hold on tender spots from allowed list)
-2. Warmup Dynamic/Static (block: 'warmup', 1-2 sets, 10 reps or 30s holds from allowed list)
-3. Core (block: 'core', 2-3 sets, 12-20 reps @ 4/2/1 tempo from allowed list)
+1. Warmup SMR (block: 'warmup', 1 set, 30-60s hold on tender spots from allowed list; tempo: 'Hold 30-60s on tender spot')
+2. Warmup Dynamic/Static (block: 'warmup', 1-2 sets, 10 reps or 30s holds from allowed list; tempo: 'Hold 30s' or 'Dynamic')
+3. Core (block: 'core', 2-3 sets; dynamic core e.g. Ball Crunch @ 4/2/1 tempo 12-20 reps; static holds e.g. Planks @ 'Hold 30-60s' tempo and reps '30-60s hold')
 4. Balance (block: 'balance', 2-3 sets, 8-12 reps per leg @ 4/2/1 tempo from allowed list)
 5. Resistance Training (block: 'resistance', phase-appropriate sets, reps, and tempo from allowed list):
    - Phase 1: 1-3 sets, 12-20 reps @ 4/2/1 tempo, 0-90s rest, high proprioceptive instability.
@@ -746,8 +776,13 @@ Each workout day in the 'workouts' array must contain:
    - Phase 3: 3-5 sets, 6-12 reps @ 2/0/2 tempo, 75-85% 1RM, 0-60s rest.
    - Phase 4: 4-6 sets, 1-5 reps @ 1/1/1 or 2/0/2 tempo, 85-100% 1RM, 2-4 min rest.
    - Phase 5: 3-5 superset pairs (Heavy strength lift 1-5 reps @ 85-100% 1RM superset with explosive movement @ X/0/X tempo, 8-10 reps).
-6. Cooldown (block: 'cooldown', SMR + Static Stretching from allowed list).
-7. Integrated Cardio Protocol ('cardioProtocol' object on each workout day with title, stage: 1|2|3, stageName, targetZone, durationMins, workRestRatio, recommendedModalities, coachingCues).
+6. MANDATORY BIOMECHANICAL TEMPO EXCLUSIONS:
+   - NEVER prescribe 4/2/1 or rep counts for static core/holds (Planks, Wall Sits, Bird Dogs, Hollow Body); prescribe tempo: 'Hold 30-60s', reps: '30-60s hold'.
+   - NEVER prescribe 4/2/1 for plyometrics/jumps/slams/burpees (destroys the stretch-shortening cycle); Phase 1 plyos: 'Explosive -> 3-5s landing freeze' (5-8 reps); Phase 2-4: 'Continuous repeat jumps' (8-10 reps); Phase 5: 'X/0/X' (8-10 reps).
+   - NEVER prescribe 4/2/1 for ballistic/Olympic lifts (Kettlebell Swings, Cleans, Snatches, Push Presses); prescribe tempo: 'Explosive / 1/0/X'.
+   - NEVER prescribe 4/2/1 for floor deadlifts (Conventional / Sumo); use '2/0/2' to protect lumbar spine from a 2-second hover off the floor (Romanian Deadlifts / RDLs are allowed at 4/2/1).
+7. Cooldown (block: 'cooldown', SMR + Static Stretching from allowed list; tempo: 'Hold 30s').
+8. Integrated Cardio Protocol ('cardioProtocol' object on each workout day with title, stage: 1|2|3, stageName, targetZone, durationMins, workRestRatio, recommendedModalities, coachingCues).
 
 Generate a complete 4-week OPT™ periodized macrocycle split. Return as valid JSON matching the GeneratedMacrocyclePlan interface with fields:
 - planTitle (string)
@@ -862,6 +897,7 @@ ${request.nutritionPhilosophy === 'precision_nutrition_hand_portion' ? '- handPo
       cardioBlendStyle: request.cardioBlendStyle,
       contraindicationTags: request.contraindicationTags,
       injuriesLimitations: request.injuriesLimitations,
+      hasHeartMedications,
     })
     const { sanitizedPlan: sanitizedFallback } = validateAndEnforceNasmOptGuardrails(fallbackPlan, {
       equipmentAccess: request.equipmentAccess,

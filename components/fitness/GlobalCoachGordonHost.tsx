@@ -37,7 +37,11 @@ export interface CoachGordonContext {
 export function shouldShowCoachGordonFab(pathname: string | null | undefined): boolean {
   if (!pathname) return false
   const cleanPath = pathname.split('?')[0].replace(/\/+$/, '')
-  return cleanPath === '/dashboard' || cleanPath.startsWith('/dashboard/fitness')
+  return (
+    cleanPath === '/dashboard' ||
+    cleanPath.startsWith('/dashboard/fitness') ||
+    cleanPath.startsWith('/test-harness/fitness-mobile')
+  )
 }
 
 /**

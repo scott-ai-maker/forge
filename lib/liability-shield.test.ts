@@ -99,5 +99,64 @@ describe('liability-shield', () => {
     expect(check.isContraindicated).toBe(true)
     expect(check.replacement).toContain('Spanish Squats')
   })
+
+  it('detects pregnancy in PAR-Q notes, clamps maxAllowedOptPhase to 2, and prescribes incline modifications', () => {
+    const res = evaluateMedicalParq({
+      hasHeartCondition: false,
+      experiencesChestPain: false,
+      experiencesDizzinessOrSyncope: false,
+      hasBoneOrJointProblem: false,
+      takesBloodPressureOrHeartMedication: false,
+      hasChronicSpinalOrDiscCondition: false,
+      hasRecentSurgeryOrInjury: false,
+      reportedConditionsNotes: 'Currently pregnant in second trimester, avoiding supine exercises',
+    })
+
+    expect(res.clearanceStatus).toBe('cleared_with_modifications')
+    expect(res.maxAllowedOptPhase).toBe(2)
+    expect(res.contraindicationTags).toContain('pregnancy_prenatal')
+
+    const check = checkExerciseContraindications('Flat Barbell Bench Press', res.contraindicationTags)
+    expect(check.isContraindicated).toBe(true)
+    expect(check.replacement).toContain('Incline Dumbbell Chest Press')
+  })
+
+  it('detects osteoporosis in PAR-Q notes, clamps maxAllowedOptPhase to 2, and blocks spinal flexion crunches', () => {
+    const res = evaluateMedicalParq({
+      hasHeartCondition: false,
+      experiencesChestPain: false,
+      experiencesDizzinessOrSyncope: false,
+      hasBoneOrJointProblem: false,
+      takesBloodPressureOrHeartMedication: false,
+      hasChronicSpinalOrDiscCondition: false,
+      hasRecentSurgeryOrInjury: false,
+      reportedConditionsNotes: 'Diagnosed with osteoporosis in spine and hips',
+    })
+
+    expect(res.clearanceStatus).toBe('cleared_with_modifications')
+    expect(res.maxAllowedOptPhase).toBe(2)
+    expect(res.contraindicationTags).toContain('osteoporosis_osteopenia')
+
+    const check = checkExerciseContraindications('Abdominal Crunch', res.contraindicationTags)
+    expect(check.isContraindicated).toBe(true)
+    expect(check.replacement).toContain('McGill')
+  })
+
+  it('clamps maxAllowedOptPhase to 2 for clients taking blood pressure or cardiovascular medications', () => {
+    const res = evaluateMedicalParq({
+      hasHeartCondition: false,
+      experiencesChestPain: false,
+      experiencesDizzinessOrSyncope: false,
+      hasBoneOrJointProblem: false,
+      takesBloodPressureOrHeartMedication: true,
+      hasChronicSpinalOrDiscCondition: false,
+      hasRecentSurgeryOrInjury: false,
+    })
+
+    expect(res.clearanceStatus).toBe('cleared_with_modifications')
+    expect(res.maxAllowedOptPhase).toBe(2)
+    expect(res.contraindicationTags).toContain('cardiovascular_hypertension')
+  })
 })
+
 

@@ -60,6 +60,8 @@ import { isExerciseAppropriateForInjuries } from '@/lib/nasm-opt-exercise-select
 
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import SetProgressionMatrix from '@/components/fitness/tracker/SetProgressionMatrix'
+import PlateAdjustmentPresets from '@/components/fitness/tracker/PlateAdjustmentPresets'
+import RpeRirExertionSelector from '@/components/fitness/tracker/RpeRirExertionSelector'
 import SupersetPairCard, { type SupersetDraftState } from '@/components/fitness/tracker/SupersetPairCard'
 import { type GroupedExerciseEntry } from '@/lib/superset-pairing-engine'
 import {
@@ -792,7 +794,7 @@ export default function FitnessTrackerClient({
   const primaryDiscomfortArea = useMemo<DiscomfortArea | undefined>(() => {
     if (clientInjuries.length === 0) return undefined
     const first = clientInjuries[0]
-    const map: Record<SportsInjuryKey, DiscomfortArea> = {
+    const map: Partial<Record<SportsInjuryKey, DiscomfortArea>> = {
       runners_knee: 'runners_knee',
       tennis_elbow: 'tennis_elbow',
       golfers_elbow: 'golfers_elbow',
@@ -809,6 +811,7 @@ export default function FitnessTrackerClient({
       cervical_strain_neck: 'cervical_spine',
       wrist_strain_carpal: 'wrist',
       groin_adductor_strain: 'groin_strain',
+      osteoporosis_osteopenia: 'lower_back',
     }
     return map[first]
   }, [clientInjuries])
@@ -4211,6 +4214,20 @@ export default function FitnessTrackerClient({
                                   <div id={`weight-help-${workout.day}-${exIdx}`} style={{ fontSize: 10.5, color: 'var(--gray)', marginTop: 3 }}>
                                     0 = no added load
                                   </div>
+                                  <PlateAdjustmentPresets
+                                    exerciseName={ex.name}
+                                    currentWeight={draft.weight}
+                                    units={units}
+                                    isTimed={isTimed}
+                                    isBand={isBand}
+                                    onChangeWeight={(newWeight) => {
+                                      setInlineSetDrafts(prev => ({
+                                        ...prev,
+                                        [exerciseKey]: { ...draft, weight: newWeight },
+                                      }))
+                                    }}
+                                    triggerHaptic={triggerHaptic}
+                                  />
                                 </div>
                               )}
                             </div>
@@ -4323,6 +4340,29 @@ export default function FitnessTrackerClient({
                                   </div>
                                 )}
                               </div>
+
+                              {isStrength && (
+                                <RpeRirExertionSelector
+                                  exerciseName={ex.name}
+                                  currentRpe={draft.rpe}
+                                  currentRir={draft.rir}
+                                  isStrength={isStrength}
+                                  onChangeRpe={(rpeVal) => {
+                                    setInlineSetDrafts(prev => ({
+                                      ...prev,
+                                      [exerciseKey]: { ...draft, rpe: rpeVal },
+                                    }))
+                                  }}
+                                  onChangeRir={(rirVal) => {
+                                    setInlineSetDrafts(prev => ({
+                                      ...prev,
+                                      [exerciseKey]: { ...draft, rir: rirVal },
+                                    }))
+                                  }}
+                                  triggerHaptic={triggerHaptic}
+                                />
+                              )}
+
                               <details className="fitness-card-disclosure">
                                 <summary>Edit set details</summary>
                               {/* Workout Date & Set Number Override */}
@@ -5458,6 +5498,7 @@ export default function FitnessTrackerClient({
           currentExerciseName={swapModalExercise.exercise.name}
           optPhase={plan?.nasm_opt_phase ? String(plan.nasm_opt_phase) : 'Phase 2: Strength Endurance'}
           initialDiscomfort={swapModalExercise.initialDiscomfort || primaryDiscomfortArea}
+          availableEquipment={profile?.equipment_access}
           onSelectSubstitution={(substitution) => {
             handleExerciseSwap(swapModalExercise.workoutDay, swapModalExercise.exercise, substitution)
             setSwapModalExercise(null)
@@ -5585,6 +5626,11 @@ export default function FitnessTrackerClient({
         triggerHaptic={triggerHaptic}
         sanctuaryModeActive={isSanctuaryActive}
         sanctuaryBreathingLabel={sanctuaryBreathingState.label}
+        hasHeartMedications={
+          /beta[- ]blocker|hypertension|blood pressure|cardiac|heart med/i.test(profile?.injuries_limitations || '') ||
+          (Array.isArray((profile as any)?.injuries) && (profile as any).injuries.includes('cardiovascular_hypertension')) ||
+          Boolean((profile as any)?.hasHeartMedications)
+        }
       />
 
       {/* ── FLOATING STICKY LIVE WORKOUT SESSION DOCK (MOBILE & DESKTOP) ── */}

@@ -3,7 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
-import { speakCoachVoiceCue, playNeuralCoachVoiceCue, stopCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
+import {
+  speakCoachVoiceCue,
+  playNeuralCoachVoiceCue,
+  stopCoachVoiceCue,
+  prefetchCoachVoiceCue,
+} from '@/lib/coach-voice-synthesizer'
+import { getSharedAudioContext } from '@/lib/web-audio-cadence-engine'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import {
   deriveProactiveTelemetryGreeting,
@@ -127,8 +133,30 @@ export default function AskCoachGordonModal({
   const [isHandsFreeMode, setIsHandsFreeMode] = useState(false)
   const [handsFreeState, setHandsFreeState] = useState<'idle' | 'listening' | 'processing' | 'speaking'>('idle')
   const [liveSpokenTranscript, setLiveSpokenTranscript] = useState('')
-  const [actionFeedback, setActionFeedback] = useState<Record<string, string>>({})
+  const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null)
   const [effectiveContraindications, setEffectiveContraindications] = useState<string[]>(contraindicationTags)
+  const [actionFeedback, setActionFeedback] = useState<Record<string, string>>({})
+
+  // Pre-warm ElevenLabs audio for the initial greeting immediately when modal opens
+  useEffect(() => {
+    if (isOpen && initialGreeting) {
+      const text = initialGreeting.audioText || initialGreeting.text
+      if (text) {
+        void prefetchCoachVoiceCue(text)
+      }
+    }
+  }, [isOpen, initialGreeting])
+
+  // Pre-warm ElevenLabs audio for every incoming assistant response in the background
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1]
+    if (lastMsg && lastMsg.role === 'assistant') {
+      const text = lastMsg.audioText || lastMsg.text
+      if (text) {
+        void prefetchCoachVoiceCue(text)
+      }
+    }
+  }, [messages])
 
   useEffect(() => {
     if (contraindicationTags && contraindicationTags.length > 0) {
@@ -522,22 +550,37 @@ export default function AskCoachGordonModal({
     if (currentlySpeakingId === msg.id) {
       stopCoachVoiceCue()
       setCurrentlySpeakingId(null)
+      setLoadingAudioId(null)
       return
+    }
+
+    // Explicitly unlock Web Audio immediately in direct user tap handler to prevent browser autoplay blocking
+    const audioCtx = getSharedAudioContext()
+    if (audioCtx && audioCtx.state === 'suspended') {
+      try {
+        void audioCtx.resume()
+      } catch {}
     }
 
     const textToSpeak = msg.audioText || msg.text
     setCurrentlySpeakingId(msg.id)
+    setLoadingAudioId(msg.id)
 
     try {
       await playNeuralCoachVoiceCue(textToSpeak, {
         rate: 1.05,
         pitch: 0.92,
+        onStart: () => {
+          setLoadingAudioId(null)
+        },
         onEnded: () => {
           setCurrentlySpeakingId(null)
+          setLoadingAudioId(null)
         },
       })
     } catch {
       setCurrentlySpeakingId(null)
+      setLoadingAudioId(null)
     }
   }
 
@@ -1087,26 +1130,52 @@ export default function AskCoachGordonModal({
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                          <button
-                            type="button"
-                            onClick={() => handlePlayVoice(msg)}
-                            style={{
-                              background: isSpeaking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(212, 160, 23, 0.15)',
-                              border: isSpeaking ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(212, 160, 23, 0.4)',
-                              color: isSpeaking ? '#f87171' : 'var(--gold, #D4A017)',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                            }}
-                          >
-                            <GaaIcon name={isSpeaking ? 'stop' : 'volume'} size={12} tone={isSpeaking ? 'ruby' : 'gold'} />
-                            <span>{isSpeaking ? 'Stop Audio' : 'Listen to Coach'}</span>
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={() => handlePlayVoice(msg)}
+                              disabled={loadingAudioId === msg.id}
+                              style={{
+                                background: isSpeaking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(212, 160, 23, 0.15)',
+                                border: isSpeaking ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(212, 160, 23, 0.4)',
+                                color: isSpeaking ? '#f87171' : 'var(--gold, #D4A017)',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                padding: '4px 10px',
+                                borderRadius: '4px',
+                                cursor: loadingAudioId === msg.id ? 'wait' : 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                opacity: loadingAudioId === msg.id ? 0.75 : 1,
+                              }}
+                            >
+                              <GaaIcon name={isSpeaking ? 'stop' : 'volume'} size={12} tone={isSpeaking ? 'ruby' : 'gold'} />
+                              <span>
+                                {loadingAudioId === msg.id
+                                  ? 'Connecting Voice...'
+                                  : isSpeaking
+                                  ? 'Stop Audio'
+                                  : 'Listen to Coach'}
+                              </span>
+                            </button>
+
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                color: '#94a3b8',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'rgba(255, 255, 255, 0.04)',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                border: '1px solid rgba(255, 255, 255, 0.06)',
+                              }}
+                            >
+                              🎙️ ElevenLabs Cloned Voice
+                            </span>
+                          </div>
 
                           {/* RAG Sources Accordion — Visible only when logged in as Coach */}
                           {isCoachUser && msg.curriculums && msg.curriculums.length > 0 && (

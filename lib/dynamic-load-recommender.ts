@@ -11,6 +11,7 @@
  */
 
 import { calculate1Rm, isLowerBodyExercise } from './progressive-overload-engine'
+import { resolveAppropriateTempoAndVolume } from './nasm-tempo-compatibility'
 
 export interface HistoricalSetRecord {
   weightKg?: number | null
@@ -29,6 +30,8 @@ export interface DynamicLoadRecommendationParams {
   dailyReadinessScore?: number | null // 0 - 100
   acwrRatio?: number | null // e.g. 1.15
   preferredUnits?: 'imperial' | 'metric'
+  specialPopulation?: 'osteoporosis_osteopenia' | 'cardiovascular_hypertension' | 'pregnancy_prenatal' | 'asthma_respiratory' | null
+  hasHeartMedications?: boolean
 }
 
 export interface DynamicLoadRecommendation {
@@ -167,6 +170,101 @@ export function calculateBestHistorical1Rm(historicalSets: HistoricalSetRecord[]
 }
 
 /**
+ * Computes a conservative, biomechanically safe starter weight for an exercise
+ * when an athlete has zero prior historical logs.
+ * Prevents dangerous 45 lb / 95 lb defaults on single-joint dumbbell or bodyweight movements.
+ */
+export function calculateBaselineStarterLoad(exerciseName: string, isLower: boolean): {
+  lbs: number
+  kg: number
+  rationaleSnippet: string
+} {
+  const norm = exerciseName.toLowerCase().trim()
+
+  // 1. Bodyweight exercises -> 0 lbs
+  if (
+    norm.includes('push up') ||
+    norm.includes('push-up') ||
+    norm.includes('pull up') ||
+    norm.includes('pull-up') ||
+    norm.includes('chin up') ||
+    norm.includes('chin-up') ||
+    norm.includes('dip') ||
+    norm.includes('plank') ||
+    norm.includes('crunch') ||
+    norm.includes('dead bug') ||
+    norm.includes('bird dog') ||
+    norm.includes('bodyweight') ||
+    norm.includes('air squat') ||
+    norm.includes('prisoner squat') ||
+    norm.includes('burpee') ||
+    norm.includes('jump') ||
+    norm.includes('floor bridge') ||
+    norm.includes('glute bridge') ||
+    norm.includes('prone cobra') ||
+    norm.includes('superman') ||
+    norm.includes('superperson') ||
+    norm.includes('wall sit') ||
+    norm.includes('inverted row') ||
+    norm.includes('hanging leg') ||
+    norm.includes('knee raise') ||
+    norm.includes('bear crawl')
+  ) {
+    return { lbs: 0, kg: 0, rationaleSnippet: 'Bodyweight calibration baseline (0 external load).' }
+  }
+
+  // 2. Small stabilizers & single-joint isolation (Dumbbell lateral raise, curls, kickbacks, flyes, rear delt, scaption)
+  if (
+    norm.includes('lateral raise') ||
+    norm.includes('front raise') ||
+    norm.includes('rear delt') ||
+    norm.includes('scaption') ||
+    norm.includes('bicep curl') ||
+    norm.includes('curl') ||
+    norm.includes('tricep kickback') ||
+    norm.includes('triceps kickback') ||
+    norm.includes('tricep extension') ||
+    norm.includes('triceps extension') ||
+    norm.includes('wrist curl') ||
+    norm.includes('external rotation') ||
+    norm.includes('internal rotation') ||
+    norm.includes('fly') ||
+    norm.includes('flye')
+  ) {
+    return { lbs: 10, kg: 5, rationaleSnippet: 'Conservative single-joint starter load (10 lbs / 5 kg).' }
+  }
+
+  // 3. Dumbbell / Kettlebell compound movements (including goblet squats, lunges, split squats, step-ups)
+  if (
+    norm.includes('dumbbell') ||
+    norm.includes('db ') ||
+    norm.includes('kettlebell') ||
+    norm.includes('kb ') ||
+    norm.includes('goblet') ||
+    norm.includes('lunge') ||
+    norm.includes('split squat') ||
+    norm.includes('step-up') ||
+    norm.includes('step up') ||
+    norm.includes('single-leg squat') ||
+    norm.includes('single leg squat')
+  ) {
+    if (isLower) {
+      // Goblet squat, DB lunge, DB RDL, DB step-up
+      return { lbs: 25, kg: 12.5, rationaleSnippet: 'Conservative dumbbell compound lower starter load (25 lbs).' }
+    }
+    return { lbs: 20, kg: 10, rationaleSnippet: 'Conservative dumbbell compound upper starter load (20 lbs).' }
+  }
+
+  // 4. Barbell / Machine Compound Lower Body (Squat, Deadlift, Leg Press)
+  if (isLower) {
+    return { lbs: 65, kg: 30, rationaleSnippet: 'Conservative barbell lower starter load (65 lbs).' }
+  }
+
+  // 5. Barbell / Machine Compound Upper Body (Bench Press, Overhead Press, Barbell Row)
+  return { lbs: 45, kg: 20, rationaleSnippet: 'Standard Olympic barbell baseline (45 lbs).' }
+}
+
+/**
  * Core Algorithm: Computes Dynamic Load Recommendation
  */
 export function recommendWorkingLoad({
@@ -177,6 +275,8 @@ export function recommendWorkingLoad({
   dailyReadinessScore = null,
   acwrRatio = null,
   preferredUnits = 'imperial',
+  specialPopulation = null,
+  hasHeartMedications = false,
 }: DynamicLoadRecommendationParams): DynamicLoadRecommendation {
   const phaseNumber = Math.min(5, Math.max(1, nasmOptPhase || 1))
   const phaseConfig = NASM_PHASE_CONFIGS[phaseNumber] || NASM_PHASE_CONFIGS[1]
@@ -237,7 +337,25 @@ export function recommendWorkingLoad({
     rationale = `Calibrated to ${phaseConfig.phaseName} (${basePercentage}% 1RM). Standard progressive resistance prescribed.`
   }
 
-  const effectivePercentage = Math.max(30, Math.min(100, basePercentage + readinessModifier))
+  let effectivePercentage = Math.max(30, Math.min(100, basePercentage + readinessModifier))
+
+  // ── Special Populations & Clinical Safety Capping ──
+  const isHypertensiveOrCardiac = hasHeartMedications || specialPopulation === 'cardiovascular_hypertension'
+  const isOsteoporosis = specialPopulation === 'osteoporosis_osteopenia'
+
+  if (isHypertensiveOrCardiac && effectivePercentage > 75) {
+    effectivePercentage = 75
+    badge = 'Cardiac Guard · BP Shield'
+    badgeColor = 'amber'
+    rationale = `Hypertension / Cardiac protocol: Intensity capped at 75% 1RM to prevent dangerous Valsalva maneuver blood pressure spikes. Maintain continuous rhythmic diaphragmatic breathing.`
+    isAutoregulated = true
+  } else if (isOsteoporosis && effectivePercentage > 75) {
+    effectivePercentage = 75
+    badge = 'Bone Density Protocol'
+    badgeColor = 'blue'
+    rationale = `Bone density protocol: Intensity capped at 75% 1RM for osteogenic remodeling without compressive vertebral or articular fracture risk.`
+    isAutoregulated = true
+  }
 
   // ── Calculate Target Weight ──
   let recommendedWeightLbs = 0
@@ -249,11 +367,12 @@ export function recommendWorkingLoad({
     recommendedWeightLbs = Math.max(5, Math.round(rawTargetLbs / 5) * 5)
     recommendedWeightKg = Math.max(2.5, Math.round((rawTargetLbs / 2.20462) / 2.5) * 2.5)
   } else {
-    // Fallback if no 1RM logged yet (use standard starter weight)
-    recommendedWeightLbs = isLower ? 95 : 45
-    recommendedWeightKg = isLower ? 40 : 20
+    // Intelligent fallback if no 1RM logged yet
+    const starter = calculateBaselineStarterLoad(exerciseName, isLower)
+    recommendedWeightLbs = starter.lbs
+    recommendedWeightKg = starter.kg
     badge = 'Baseline Calibrator'
-    rationale = `Initial calibrating set for ${exerciseName}. Log this set to establish baseline 1RM.`
+    rationale = `Initial calibrating set for ${exerciseName} (${starter.rationaleSnippet}). Log this set to establish baseline 1RM.`
   }
 
   const recommendedWeight = preferredUnits === 'imperial' ? recommendedWeightLbs : recommendedWeightKg
@@ -262,6 +381,15 @@ export function recommendWorkingLoad({
   let recommendedRpe = phaseConfig.defaultRpe
   if (readinessModifier > 0) recommendedRpe = Math.min(9.5, recommendedRpe + 0.5)
   if (readinessModifier < 0) recommendedRpe = Math.max(6.0, recommendedRpe - 1.0)
+  if (isHypertensiveOrCardiac && recommendedRpe > 7.5) {
+    recommendedRpe = 7.5
+  }
+
+  // Resolve physiologically compatible tempo for this exercise
+  const recommendedTempo = resolveAppropriateTempoAndVolume(
+    { name: exerciseName, tempo: phaseConfig.defaultTempo },
+    phaseNumber
+  ).tempo
 
   return {
     recommendedWeight,
@@ -270,7 +398,7 @@ export function recommendWorkingLoad({
     recommendedReps: targetReps,
     recommendedRpe,
     recommendedRir: phaseConfig.defaultRir,
-    recommendedTempo: phaseConfig.defaultTempo,
+    recommendedTempo,
     estimated1RmLbs: best1RmLbs,
     estimated1RmKg: best1RmKg,
     targetIntensityPercentage: effectivePercentage,

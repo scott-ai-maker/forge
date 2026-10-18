@@ -13,6 +13,7 @@ interface SmartExerciseSwapModalProps {
   currentExerciseName: string
   optPhase?: string
   initialDiscomfort?: DiscomfortArea
+  availableEquipment?: string[]
   onSelectSubstitution: (substitution: ExerciseSubstitution) => void
   onClose: () => void
 }
@@ -21,13 +22,19 @@ export default function SmartExerciseSwapModal({
   currentExerciseName,
   optPhase = 'Phase 2: Strength Endurance',
   initialDiscomfort,
+  availableEquipment,
   onSelectSubstitution,
   onClose,
 }: SmartExerciseSwapModalProps) {
   const [selectedDiscomfort, setSelectedDiscomfort] = useState<DiscomfortArea | undefined>(initialDiscomfort)
 
   const pattern = detectMovementPattern(currentExerciseName)
-  const substitutions = getSmartSubstitutions(currentExerciseName, optPhase, selectedDiscomfort)
+  const substitutions = getSmartSubstitutions(
+    currentExerciseName,
+    optPhase,
+    selectedDiscomfort,
+    availableEquipment
+  )
 
   return (
     <div

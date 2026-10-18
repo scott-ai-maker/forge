@@ -112,6 +112,135 @@ describe('periodization-roadmap', () => {
     expect(week2?.targetIntensity1RmPercent).toBe(62)
     expect(week2?.coachWeeklyMemo).toBe('Strict 5-second eccentric tempo on all goblet squats.')
   })
+
+  it('generates a prenatal periodization track clamped at Phase 2 with zero 1RM testing', () => {
+    const roadmap = generate12WeekMacrocycle({
+      currentWeek: 1,
+      clientGoal: 'Prenatal Fitness & Pelvic Stability',
+      specialPopulation: 'pregnancy_prenatal',
+    })
+
+    expect(roadmap.specialPopulation).toBe('pregnancy_prenatal')
+    expect(roadmap.maxAllowedOptPhase).toBe(2)
+    expect(roadmap.weeks.length).toBe(12)
+
+    // Weeks 9-11 should be Phase 2 Strength Endurance (ZERO Phase 4/5)
+    const week9 = roadmap.weeks.find(w => w.weekNumber === 9)
+    const week10 = roadmap.weeks.find(w => w.weekNumber === 10)
+    const week11 = roadmap.weeks.find(w => w.weekNumber === 11)
+    expect(week9?.phaseNumber).toBe(2)
+    expect(week10?.phaseNumber).toBe(2)
+    expect(week11?.phaseNumber).toBe(2)
+    expect(week9?.phase).toBe('Phase 2: Strength Endurance')
+
+    // Week 12 must be submaximal functional screen, NEVER 1RM testing
+    const week12 = roadmap.weeks.find(w => w.weekNumber === 12)
+    expect(week12?.phaseNumber).toBe(2)
+    expect(week12?.targetIntensity1RmPercent).toBe(60)
+    expect(week12?.milestoneTitle).toContain('Prenatal Health Graduation')
+    expect(week12?.volumeIntensity).toContain('Zero 1RM Strain')
+  })
+
+  it('generates an osteoporosis periodization track capped at 75% 1RM with neutral spine', () => {
+    const roadmap = generate12WeekMacrocycle({
+      currentWeek: 1,
+      clientGoal: 'Bone Mineral Density & Postural Balance',
+      specialPopulation: 'osteoporosis_osteopenia',
+    })
+
+    expect(roadmap.specialPopulation).toBe('osteoporosis_osteopenia')
+    expect(roadmap.maxAllowedOptPhase).toBe(2)
+
+    // Check all weeks: no week should exceed 75% 1RM
+    for (const w of roadmap.weeks) {
+      expect(w.targetIntensity1RmPercent).toBeLessThanOrEqual(75)
+      expect(w.phaseNumber).toBeLessThanOrEqual(2)
+    }
+
+    // Week 1 neutral spine memo
+    expect(roadmap.weeks[0].coachWeeklyMemo).toContain('neutral spine protocol active')
+
+    // Week 12 balance graduation (zero 1RM testing)
+    const week12 = roadmap.weeks.find(w => w.weekNumber === 12)
+    expect(week12?.milestoneTitle).toContain('Bone Density Graduation')
+    expect(week12?.volumeIntensity).toContain('Zero 1RM Testing')
+  })
+
+  it('generates a cardiovascular hypertension track with PHA circuits and zero 1RM testing', () => {
+    const roadmap = generate12WeekMacrocycle({
+      currentWeek: 1,
+      clientGoal: 'Cardiovascular Health & BP Control',
+      specialPopulation: 'cardiovascular_hypertension',
+    })
+
+    expect(roadmap.specialPopulation).toBe('cardiovascular_hypertension')
+    expect(roadmap.maxAllowedOptPhase).toBe(2)
+
+    // Week 5 should introduce Peripheral Heart Action (PHA) circuits
+    const week5 = roadmap.weeks.find(w => w.weekNumber === 5)
+    expect(week5?.theme).toContain('Peripheral Heart Action')
+    expect(week5?.volumeIntensity).toContain('PHA')
+
+    // Weeks 9-11 should be Phase 2 with full rest intervals and zero Valsalva
+    const week9 = roadmap.weeks.find(w => w.weekNumber === 9)
+    expect(week9?.phaseNumber).toBe(2)
+    expect(week9?.restPeriod).toBe('90s')
+
+    // Week 12 submaximal cardiovascular graduation
+    const week12 = roadmap.weeks.find(w => w.weekNumber === 12)
+    expect(week12?.milestoneTitle).toContain('Cardiovascular Graduation')
+    expect(week12?.targetIntensity1RmPercent).toBe(60)
+  })
+
+  it('generates a 12-week Phase 1 Stabilization only track when maxAllowedOptPhase is 1', () => {
+    const roadmap = generate12WeekMacrocycle({
+      currentWeek: 1,
+      clientGoal: 'Post-Rehab Stabilization',
+      maxAllowedOptPhase: 1,
+    })
+
+    expect(roadmap.maxAllowedOptPhase).toBe(1)
+    for (const w of roadmap.weeks) {
+      expect(w.phaseNumber).toBe(1)
+      expect(w.phase).toContain('Phase 1: Stabilization')
+    }
+
+    const week12 = roadmap.weeks.find(w => w.weekNumber === 12)
+    expect(week12?.milestoneTitle).toContain('Stabilization Graduation')
+    expect(week12?.volumeIntensity).toContain('Zero 1RM Strain')
+  })
+
+  it('safely clamps acceleratePhaseTransition when attempting to accelerate special populations beyond maxAllowedOptPhase', () => {
+    const prenatalRoadmap = generate12WeekMacrocycle({
+      currentWeek: 3,
+      specialPopulation: 'pregnancy_prenatal',
+    })
+
+    // Attempt to accelerate to Phase 4 (Maximal Strength)
+    const accelerated = acceleratePhaseTransition(prenatalRoadmap, 4, 4, 'Mastered stability early')
+
+    // Must be clamped to Phase 2
+    const week4 = accelerated.weeks.find(w => w.weekNumber === 4)
+    expect(week4?.phaseNumber).toBe(2)
+    expect(week4?.coachWeeklyMemo).toContain('Safety Guard')
+    expect(week4?.coachWeeklyMemo).toContain('capped at Phase 2')
+  })
+
+  it('safely clamps updateMicrocycleWeek when manual phase update exceeds maxAllowedOptPhase', () => {
+    const osteoRoadmap = generate12WeekMacrocycle({
+      currentWeek: 2,
+      specialPopulation: 'osteoporosis_osteopenia',
+    })
+
+    const updated = updateMicrocycleWeek(osteoRoadmap, 5, {
+      phaseNumber: 5,
+    })
+
+    const week5 = updated.weeks.find(w => w.weekNumber === 5)
+    expect(week5?.phaseNumber).toBe(2)
+    expect(week5?.phase).toContain('Phase 2')
+  })
 })
+
 
 

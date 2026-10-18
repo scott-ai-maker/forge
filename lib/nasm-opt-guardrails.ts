@@ -18,6 +18,24 @@ import {
   parseEquipmentCapabilities,
   doesExerciseMatchEquipment,
 } from './nasm-equipment-detector'
+import {
+  classifyExerciseTempoCategory,
+  resolveAppropriateTempoAndVolume,
+  isExerciseExcludedFromTempo,
+  NASM_TEMPO_RULES,
+  type TempoExerciseCategory,
+  type TempoExclusionRule,
+} from './nasm-tempo-compatibility'
+import { checkExerciseContraindications } from './liability-shield'
+
+export {
+  classifyExerciseTempoCategory,
+  resolveAppropriateTempoAndVolume,
+  isExerciseExcludedFromTempo,
+  NASM_TEMPO_RULES,
+  type TempoExerciseCategory,
+  type TempoExclusionRule,
+}
 
 export interface GuardrailValidationAudit {
   isCompliant: boolean
@@ -38,6 +56,7 @@ export interface GuardrailOptions {
   equipmentAccess?: string[]
   kineticCompensations?: string[]
   targetPhase?: number
+  contraindicationTags?: string[]
 }
 
 /**
@@ -49,8 +68,19 @@ export function enforcePhaseExerciseConstraints(
   repairs: string[]
 ): GeneratedExerciseItem {
   const cloned = { ...exercise }
+  const category = classifyExerciseTempoCategory(cloned.name, cloned.block)
 
-  // 1. Warmup / Inhibit / Core / Balance handling
+  // 1. Non-dynamic resistance categories have strict biomechanical tempo & volume invariants
+  // (SMR/Flexibility, Isometric Core Holds, Plyometrics, Ballistics, Floor Deadlifts, SAQ, Rapid Alternating Core)
+  if (category !== 'dynamic_resistance') {
+    const resolved = resolveAppropriateTempoAndVolume(cloned, phase, repairs)
+    cloned.tempo = resolved.tempo
+    cloned.reps = resolved.reps
+    cloned.rest = resolved.rest
+    return cloned
+  }
+
+  // 2. Warmup / Inhibit / Core / Balance handling for standard dynamic movements
   if (cloned.block === 'warmup' || cloned.block === 'core_balance') {
     if (!cloned.tempo || cloned.tempo.trim() === '') {
       cloned.tempo = '4/2/1'
@@ -58,7 +88,12 @@ export function enforcePhaseExerciseConstraints(
     return cloned
   }
 
-  // 2. Resistance phase-specific constraints
+  const isPerLeg = cloned.reps?.includes('per leg')
+  const isPerSide = cloned.reps?.includes('per side')
+  const isPerArm = cloned.reps?.includes('per arm')
+  const unilateralSuffix = isPerLeg ? ' per leg' : isPerSide ? ' per side' : isPerArm ? ' per arm' : ''
+
+  // 3. Dynamic Resistance phase-specific constraints
   switch (phase) {
     case 1: {
       // Phase 1: Stabilization Endurance -> 4/2/1 tempo, 12-20 reps, 1-3 sets, 0-90s rest
@@ -67,9 +102,9 @@ export function enforcePhaseExerciseConstraints(
         cloned.tempo = '4/2/1'
       }
       const repsNum = parseInt(cloned.reps, 10)
-      if (isNaN(repsNum) || repsNum < 12 || repsNum > 20) {
-        repairs.push(`Auto-repaired reps for '${cloned.name}' in Phase 1 from '${cloned.reps}' to '12-15'`)
-        cloned.reps = '12-15'
+      if (isNaN(repsNum) || repsNum < 10 || repsNum > 20) {
+        repairs.push(`Auto-repaired reps for '${cloned.name}' in Phase 1 from '${cloned.reps}' to '12-15${unilateralSuffix}'`)
+        cloned.reps = `12-15${unilateralSuffix}`
       }
       if (!cloned.rest || cloned.rest.includes('min') || parseInt(cloned.rest, 10) > 90) {
         cloned.rest = '0-60s'
@@ -80,6 +115,10 @@ export function enforcePhaseExerciseConstraints(
     case 2: {
       // Phase 2: Strength Endurance -> Superset Strength (2/0/2, 8-12 reps) with Stabilization (4/2/1, 8-12 reps)
       const isStabilization =
+        cloned.supersetTag?.toLowerCase().includes('stability') ||
+        cloned.supersetTag?.toLowerCase().includes('1b') ||
+        cloned.supersetTag?.toLowerCase().includes('2b') ||
+        cloned.supersetTag?.toLowerCase().includes('3b') ||
         cloned.name.toLowerCase().includes('ball') ||
         cloned.name.toLowerCase().includes('single-leg') ||
         cloned.name.toLowerCase().includes('bosu') ||
@@ -94,7 +133,7 @@ export function enforcePhaseExerciseConstraints(
 
       const repsNum = parseInt(cloned.reps, 10)
       if (isNaN(repsNum) || repsNum < 8 || repsNum > 12) {
-        cloned.reps = '8-12'
+        cloned.reps = `8-12${unilateralSuffix}`
       }
       if (!cloned.rest || parseInt(cloned.rest, 10) > 60) {
         cloned.rest = '0-60s'
@@ -110,7 +149,7 @@ export function enforcePhaseExerciseConstraints(
       }
       const repsNum = parseInt(cloned.reps, 10)
       if (isNaN(repsNum) || repsNum < 6 || repsNum > 12) {
-        cloned.reps = '8-12'
+        cloned.reps = `8-12${unilateralSuffix}`
       }
       if (!cloned.rest || parseInt(cloned.rest, 10) > 90) {
         cloned.rest = '45-60s'
@@ -125,8 +164,8 @@ export function enforcePhaseExerciseConstraints(
       }
       const repsNum = parseInt(cloned.reps, 10)
       if (isNaN(repsNum) || repsNum < 1 || repsNum > 5) {
-        repairs.push(`Auto-repaired reps for '${cloned.name}' in Phase 4 from '${cloned.reps}' to '3-5' (Maximal Strength)`)
-        cloned.reps = '3-5'
+        repairs.push(`Auto-repaired reps for '${cloned.name}' in Phase 4 from '${cloned.reps}' to '3-5${unilateralSuffix}' (Maximal Strength)`)
+        cloned.reps = `3-5${unilateralSuffix}`
       }
       if (!cloned.rest || (!cloned.rest.includes('min') && parseInt(cloned.rest, 10) < 120)) {
         cloned.rest = '2-3 min'
@@ -135,26 +174,38 @@ export function enforcePhaseExerciseConstraints(
     }
 
     case 5: {
-      // Phase 5: Power -> High Load 1-5 reps superset with Explosive X/0/X 8-10 reps
-      const isPowerExplosive =
-        cloned.name.toLowerCase().includes('jump') ||
-        cloned.name.toLowerCase().includes('hop') ||
-        cloned.name.toLowerCase().includes('throw') ||
+      // Phase 5: Power -> Post-Activation Potentiation Contrast Pairs (Strength 1A: 1-5 reps @ 85-100% 1RM + Power 1B: 8-10 reps explosive)
+      const isPowerComponent =
+        cloned.supersetTag?.toLowerCase().includes('power') ||
+        cloned.supersetTag?.toLowerCase().includes('1b') ||
+        cloned.supersetTag?.toLowerCase().includes('2b') ||
+        cloned.supersetTag?.toLowerCase().includes('3b') ||
+        cloned.name.toLowerCase().includes('explosive') ||
+        cloned.name.toLowerCase().includes('pass') ||
         cloned.name.toLowerCase().includes('slam') ||
-        cloned.name.toLowerCase().includes('power') ||
-        cloned.name.toLowerCase().includes('bound')
+        cloned.name.toLowerCase().includes('throw')
 
-      if (isPowerExplosive) {
-        cloned.tempo = 'X/0/X'
-        cloned.reps = '8-10'
-        cloned.rest = '1-2 min'
+      if (isPowerComponent) {
+        if (!cloned.tempo || (!cloned.tempo.toLowerCase().includes('explosive') && cloned.tempo !== 'X/0/X')) {
+          cloned.tempo = 'Explosive'
+        }
+        const repsNum = parseInt(cloned.reps, 10)
+        if (isNaN(repsNum) || repsNum < 6 || repsNum > 12) {
+          cloned.reps = `8-10${unilateralSuffix}`
+        }
+        if (!cloned.rest) cloned.rest = '1-2 min'
       } else {
-        cloned.tempo = '2/0/2'
+        // High load strength component (1-5 reps @ 85-100% 1RM)
+        if (cloned.tempo !== '1/1/1' && cloned.tempo !== '2/0/2') {
+          cloned.tempo = '2/0/2'
+        }
         const repsNum = parseInt(cloned.reps, 10)
         if (isNaN(repsNum) || repsNum > 5) {
-          cloned.reps = '1-5'
+          cloned.reps = `1-5${unilateralSuffix}`
         }
-        cloned.rest = '1-2 min'
+        if (!cloned.rest || cloned.supersetPairWith || cloned.supersetTag?.toLowerCase().includes('strength') || cloned.supersetTag?.toLowerCase().includes('1a') || cloned.supersetTag?.toLowerCase().includes('2a') || cloned.supersetTag?.toLowerCase().includes('3a')) {
+          cloned.rest = '0s (Immediate transition to Power pair)'
+        }
       }
       break
     }
@@ -294,6 +345,7 @@ export function validateAndEnforceNasmOptGuardrails(
   const phase = options?.targetPhase || plan.nasmOptPhase || 1
   const equipment = options?.equipmentAccess || ['Full Commercial Gym']
   const compensations = options?.kineticCompensations || []
+  const contraindications = options?.contraindicationTags || []
 
   let totalExercises = 0
 
@@ -301,12 +353,26 @@ export function validateAndEnforceNasmOptGuardrails(
     // 1. Inject kinetic compensations into warmup
     const correctedDay = injectKineticCorrectives(day, compensations, repairs)
 
-    // 2. Sanitize and enforce phase & equipment constraints for each exercise
+    // 2. Sanitize and enforce phase, equipment, and contraindication constraints for each exercise
     const sanitizedExercises = (correctedDay.exercises || []).map(ex => {
       totalExercises++
 
-      // Substitute missing equipment
-      const validName = substituteMissingEquipment(ex.name, equipment, repairs)
+      // 1. Biomechanical contraindications screening (takes clinical precedence)
+      let validName = ex.name
+      if (contraindications.length > 0) {
+        const contraCheck = checkExerciseContraindications(validName, contraindications)
+        if (contraCheck.isContraindicated && contraCheck.replacement) {
+          const original = validName
+          validName = contraCheck.replacement
+          repairs.push(
+            `Auto-substituted contraindicated movement '${original}' with '${validName}' (${contraCheck.ruleLabel || 'Medical Safety'})`
+          )
+        }
+      }
+
+      // 2. Substitute missing equipment (for original or newly substituted movement)
+      validName = substituteMissingEquipment(validName, equipment, repairs)
+
       const validEx: GeneratedExerciseItem = {
         ...ex,
         name: validName,

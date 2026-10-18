@@ -6,6 +6,7 @@ import {
   MacrocyclePlan,
   syncMacrocycleWithCompletedWorkouts,
 } from '@/lib/periodization-roadmap'
+import { parseInjuriesFromText } from '@/lib/sports-injuries'
 
 export async function GET(
   req: NextRequest,
@@ -96,12 +97,17 @@ export async function GET(
     // 3. Otherwise fetch profile goal and generate baseline synced with microcycle progress
     const { data: profile } = await admin
       .from('fitness_profiles')
-      .select('fitness_goal')
+      .select('fitness_goal, injuries_limitations')
       .eq('user_id', clientId)
       .single()
 
     const clientGoal = profile?.fitness_goal || latestPlan?.goal || 'Body Recomposition & Maximal Power Output'
-    const generatedPlan = generate12WeekMacrocycle(1, clientGoal)
+    const { selectedInjuryIds } = parseInjuriesFromText(profile?.injuries_limitations)
+    const generatedPlan = generate12WeekMacrocycle({
+      currentWeek: 1,
+      clientGoal,
+      contraindicationTags: selectedInjuryIds,
+    })
     const syncedPlan = syncMacrocycleWithCompletedWorkouts(generatedPlan, completedCount, sessionsPerWeek)
 
     return NextResponse.json({

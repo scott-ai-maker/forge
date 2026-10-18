@@ -256,5 +256,91 @@ describe('Master NASM AI Head Coach Persona Engine', () => {
     expect(plan.clinicalRationale).toContain('contrast supersets')
     expect(plan.clinicalRationale).toContain('ORTHOPEDIC SHIELD')
   })
+
+  it('enforces secondary equipment validation and biomechanical tempo compatibility on all plan exercises', () => {
+    const rawPlan = generateRagNasmProgram({
+      goal: 'performance',
+      targetNasmPhase: 5,
+      trainingDaysPerWeek: 3,
+      equipmentAccess: ['Full Commercial Gym'],
+    })
+
+    // Suppose workout has an exercise that was replaced with something requiring cables, but client only has dumbbells and bodyweight
+    rawPlan.workouts[0].exercises.push({
+      block: 'resistance',
+      name: 'cable chop',
+      sets: '3',
+      reps: '10',
+      tempo: '2/0/2',
+      rest: '60s',
+      coachingCues: ['Maintain solid abdominal brace'],
+      nasmClinicalSource: 'NASM OPT Phase 1 Stabilization',
+    })
+    // Also add a static plank with an invalid dynamic tempo
+    rawPlan.workouts[0].exercises.push({
+      block: 'core_balance',
+      name: 'plank',
+      sets: '3',
+      reps: '15',
+      tempo: '4/2/1',
+      rest: '0s',
+      coachingCues: ['Hold strong spinal neutral'],
+      nasmClinicalSource: 'NASM OPT Phase 1 Stabilization',
+    })
+
+    const validated = validateAndEnforceEquipmentConstraints(
+      rawPlan,
+      ['Dumbbells', 'Bodyweight'],
+      [],
+      null,
+      [],
+      ['burpees']
+    )
+
+    // Check all exercises in workout 0
+    const w0Exercises = validated.workouts[0].exercises
+    for (const ex of w0Exercises) {
+      const nameLower = ex.name.toLowerCase()
+      // Should not contain cable or barbell
+      expect(nameLower).not.toContain('cable')
+      expect(nameLower).not.toContain('barbell')
+
+      // Plank should have hold tempo and hold reps, never 4/2/1
+      if (nameLower === 'plank') {
+        expect(ex.tempo).toMatch(/Hold 30–60s|Hold 30-60s/)
+        expect(ex.reps).toMatch(/30–60s hold|30-60s hold/)
+      }
+    }
+
+    // Workout 1 (day 2) should have burpees injected with Continuous tempo, never 2/0/2
+    const w1Exercises = validated.workouts[1].exercises
+    const burpeeEx = w1Exercises.find(ex => ex.name.toLowerCase().includes('burpee'))
+    expect(burpeeEx).toBeDefined()
+    expect(burpeeEx?.tempo).toBe('Continuous')
+  })
+
+  it('propagates heart medication warnings and blunts heart rate dependency in cardio protocols', async () => {
+    const plan = await generateMasterNasmOptProgram({
+      clientName: 'Arthur Dent',
+      clientAge: 62,
+      clientSex: 'male',
+      goal: 'fat_loss',
+      targetNasmPhase: 1,
+      trainingDaysPerWeek: 2,
+      equipmentAccess: ['Treadmill', 'Bodyweight'],
+      hasHeartMedications: true,
+      injuriesLimitations: 'Hypertension controlled with metoprolol (beta-blocker); doctor cleared for moderate exercise.',
+    })
+
+    for (const workout of plan.workouts) {
+      if (workout.cardioProtocol) {
+        expect(workout.cardioProtocol.targetZone).toContain('RPE')
+        const hasMedCue = workout.cardioProtocol.coachingCues?.some((cue: string) =>
+          cue.includes('Medication Alert') || cue.includes('beta-blocker') || cue.includes('RPE')
+        )
+        expect(hasMedCue).toBe(true)
+      }
+    }
+  })
 })
 

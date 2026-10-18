@@ -48,6 +48,7 @@ export interface DynamicRestAdaptationInput {
   velocityLossPercent?: number
   lastSetRpe?: number
   lastSetRir?: number
+  hasHeartMedications?: boolean
 }
 
 export interface DynamicRestAdaptationResult {
@@ -199,6 +200,7 @@ export function evaluateDynamicRestHeartRateRecovery(
     hasAcuteFatigueDrop = false,
     acuteFatigueDropPercent = 0,
     velocityLossPercent = 0,
+    hasHeartMedications = false,
   } = input
 
   const isHammer = isHammerCurlMovement(exerciseName)
@@ -242,11 +244,22 @@ export function evaluateDynamicRestHeartRateRecovery(
   }
   // 3. Early Vagal Recovery: Plenty of rest left (>25s) and athlete's HR has already dropped to Zone 1
   else if (remainingSeconds >= 25 && zoneTelemetry.zone === 1) {
-    isRecoveredEarly = true
-    suggestedTrimmingSeconds = Math.min(20, Math.floor(remainingSeconds * 0.5))
-    recommendedAction = 'ready_to_lift'
-    adaptationReason = `Parasympathetic tone fully restored (${zoneTelemetry.currentBpm} bpm in Zone 1). Ready to lift ahead of schedule.`
-    coachVoiceCue = `Heart rate recovered to Zone 1 (${zoneTelemetry.currentBpm} bpm). Ready for the next set.`
+    if (hasHeartMedications) {
+      // Beta-blockers and cardiac medications pharmacologically blunt heart rate, driving it into Zone 1
+      // artificially before neuromuscular, phosphagen, and blood pressure stabilization have occurred.
+      // Strictly maintain full rest to prevent orthostatic instability and hypertensive rebound.
+      isRecoveredEarly = false
+      suggestedTrimmingSeconds = 0
+      recommendedAction = 'maintain'
+      adaptationReason = 'Preserving full rest interval: Heart rate is pharmacologically blunted by medication. Complete scheduled rest required for safe hemodynamic and phosphagen recovery.'
+      coachVoiceCue = 'Preserving scheduled rest interval for safe cardiovascular and blood pressure recovery.'
+    } else {
+      isRecoveredEarly = true
+      suggestedTrimmingSeconds = Math.min(20, Math.floor(remainingSeconds * 0.5))
+      recommendedAction = 'ready_to_lift'
+      adaptationReason = `Parasympathetic tone fully restored (${zoneTelemetry.currentBpm} bpm in Zone 1). Ready to lift ahead of schedule.`
+      coachVoiceCue = `Heart rate recovered to Zone 1 (${zoneTelemetry.currentBpm} bpm). Ready for the next set.`
+    }
   }
 
   return {

@@ -443,6 +443,13 @@ export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceO
   const cacheKey = `${targetVoiceId}_${cleanText}`
   const ctx = getSharedAudioContext()
 
+  // ── Synchronously unlock / resume Web Audio context inside user gesture ──
+  if (ctx && ctx.state === 'suspended') {
+    try {
+      void ctx.resume()
+    } catch {}
+  }
+
   // ── Primary Path: Web Audio API (Hardware clock, immune to timer autoplay limits) ──
   if (ctx) {
     try {

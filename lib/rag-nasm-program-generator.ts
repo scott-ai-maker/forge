@@ -19,7 +19,7 @@ import { calculateCardioZones } from './nasm-cardio-stage-engine'
 import { enrichExerciseMedia } from './nasm-exercise-video-catalog'
 import { checkExerciseContraindications } from './liability-shield'
 import { parseInjuriesFromText, getInjuryAugmentations } from './sports-injuries'
-import { substituteMissingEquipment } from './nasm-opt-guardrails'
+import { substituteMissingEquipment, enforcePhaseExerciseConstraints } from './nasm-opt-guardrails'
 import { calculateEstimatedWorkoutDuration } from './workout-duration-engine'
 
 export interface RagProgramGenerationRequest {
@@ -37,6 +37,7 @@ export interface RagProgramGenerationRequest {
   cardioEquipmentAccess?: string[]
   contraindicationTags?: string[] // e.g. ['knee_patellofemoral', 'lumbar_disc_condition', 'shoulder_impingement']
   injuriesLimitations?: string
+  hasHeartMedications?: boolean
 }
 
 export interface GeneratedExerciseItem {
@@ -49,6 +50,7 @@ export interface GeneratedExerciseItem {
   intensityPercentage1RM?: number
   targetLoadLbs?: number
   supersetPairWith?: string
+  supersetTag?: string
   coachingCues: string[]
   nasmClinicalSource: string
   /** Client-facing, plain-language reason this movement is in this athlete's plan. */
@@ -331,35 +333,46 @@ export function buildIntegratedCardioPrescription(params: {
   blendStyle?: 'integrated_finishers' | 'dedicated_conditioning' | 'minimal_flush' | 'none'
   equipmentAccess?: string[]
   cardioEquipmentAccess?: string[]
+  hasHeartMedications?: boolean
 }): IntegratedCardioPrescription | undefined {
-  const { goal, phase, dayIndex, totalDays, clientAge = 35, blendStyle = 'integrated_finishers', equipmentAccess, cardioEquipmentAccess } = params
+  const { goal, phase, dayIndex, totalDays, clientAge = 35, blendStyle = 'integrated_finishers', equipmentAccess, cardioEquipmentAccess, hasHeartMedications = false } = params
   if (blendStyle === 'none') return undefined
 
-  const zones = calculateCardioZones(clientAge)
+  const zones = calculateCardioZones(clientAge, 65, hasHeartMedications)
   const caps = parseCardioEquipmentCapabilities(cardioEquipmentAccess, equipmentAccess)
+
+  const medCue = hasHeartMedications
+    ? '🛡️ Medication Guidance: Heart rate is blunted by cardiac/hypertension medication. Regulate workout intensity exclusively with RPE and the Talk Test.'
+    : null
 
   if (goal === 'fat_loss') {
     const isIntervalDay = dayIndex % 2 === 0 && (phase > 1 || totalDays <= 3)
     if (isIntervalDay) {
       const modalities = buildRecommendedCardioModalities(2, goal, caps)
+      const cues = [
+        ...(medCue ? [medCue] : []),
+        'Work Intervals: Push effort to RPE 6–7 (speaking requires pausing for breath).',
+        'Recovery Intervals: Active recovery at RPE 2–3 to bring heart rate back into Zone 1 before the next round.',
+        'Maintain steady pacing, tall posture, and controlled breathing.',
+      ]
       return {
         title: 'Stage 2: Aerobic Threshold Intervals',
         protocolType: 'stage_interval_conditioning',
         stage: 2,
         stageName: 'Stage 2: Threshold Interval Protocol',
-        targetZone: `Zone 2 (${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM) ↔ Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`,
-        targetBpmRange: `${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM`,
+        targetZone: hasHeartMedications
+          ? `Stage 2 Threshold (Governed by RPE 6–7 / Talk Test — HR suppressed by medication)`
+          : `Zone 2 (${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM) ↔ Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`,
+        targetBpmRange: hasHeartMedications
+          ? `RPE 6–7 Governed (Observed est: ${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM)`
+          : `${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM`,
         targetRpe: 'RPE 6–7 / 10 (Challenging Threshold Pace)',
         durationMins: phase === 1 ? 15 : 20,
         workRestRatio: 'Intervals: 1:2 Work-to-Rest (60s Work / 120s Recovery × 6 rounds)',
         timingGuideline: 'Perform immediately post-resistance training (or separated by ≥6 hours). Strength first → Cardio second.',
         recommendedModalities: modalities,
         metabolicRationale: 'Pushes aerobic threshold and elevates 24-hour Excess Post-Exercise Oxygen Consumption (EPOC) to increase total daily energy expenditure.',
-        coachingCues: [
-          'Work Intervals: Push effort to RPE 6–7 (speaking requires pausing for breath).',
-          'Recovery Intervals: Active recovery at RPE 2–3 to bring heart rate back into Zone 1 before the next round.',
-          'Maintain steady pacing, tall posture, and controlled breathing.',
-        ],
+        coachingCues: cues,
         nasmChapterSource: 'NASM CPT-7 Chapter 8 (Bioenergetics) & Chapter 15 (Cardiorespiratory Stage Training)',
       }
     } else {
@@ -369,8 +382,12 @@ export function buildIntegratedCardioPrescription(params: {
         protocolType: 'post_lift_finisher',
         stage: 1,
         stageName: 'Stage 1: Aerobic Base & Lipid Mobilization',
-        targetZone: `Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM / 65–75% HRmax)`,
-        targetBpmRange: `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM`,
+        targetZone: hasHeartMedications
+          ? `Stage 1 Base (Governed by RPE 3–4 / Talk Test — HR suppressed by medication)`
+          : `Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM / 65–75% HRmax)`,
+        targetBpmRange: hasHeartMedications
+          ? `RPE 3–4 Governed (Observed est: ${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`
+          : `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM`,
         targetRpe: 'RPE 3–4 / 10 (Moderate Conversational Pace)',
         durationMins: 20,
         workRestRatio: 'Steady State: Continuous Aerobic Pace',
@@ -378,6 +395,7 @@ export function buildIntegratedCardioPrescription(params: {
         recommendedModalities: modalities,
         metabolicRationale: 'Maximizes fat oxidation in a glycogen-depleted state without elevating cortisol or interfering with joint and muscular recovery.',
         coachingCues: [
+          ...(medCue ? [medCue] : []),
           'Maintain a smooth, continuous conversational pace at RPE 3–4 (able to speak in complete sentences).',
           'Maintain upright posture with natural arm swing; avoid gripping handrails.',
           'Focus on smooth diaphragmatic nasal breathing throughout.',
@@ -394,8 +412,12 @@ export function buildIntegratedCardioPrescription(params: {
       protocolType: 'active_recovery_flush',
       stage: 1,
       stageName: 'Stage 1: Active Recovery Flush',
-      targetZone: `Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM / 65–75% HRmax)`,
-      targetBpmRange: `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM`,
+      targetZone: hasHeartMedications
+        ? `Stage 1 Active Recovery (RPE 3 — HR blunted by medication)`
+        : `Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM / 65–75% HRmax)`,
+      targetBpmRange: hasHeartMedications
+        ? `RPE 3 Governed (Observed est: ${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`
+        : `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM`,
       targetRpe: 'RPE 3 / 10 (Light Recovery Pace)',
       durationMins: 15,
       workRestRatio: 'Steady State: Continuous Low-Impact',
@@ -403,6 +425,7 @@ export function buildIntegratedCardioPrescription(params: {
       recommendedModalities: modalities,
       metabolicRationale: 'Stimulates intramuscular capillary network density and enhances venous return for accelerated metabolite clearance without activating AMPK or blunting mTOR protein synthesis.',
       coachingCues: [
+        ...(medCue ? [medCue] : []),
         'Keep intensity strictly at RPE 3 to facilitate active metabolite clearance without adding fatigue.',
         'Prioritize smooth, low-impact motion to preserve muscular recovery for strength sessions.',
         'Relax upper-body tension and breathe diaphragmatically.',
@@ -420,16 +443,21 @@ export function buildIntegratedCardioPrescription(params: {
         protocolType: 'pap_hiit_contrast',
         stage: 3,
         stageName: 'Stage 3: Anaerobic Power & Peak Output HIIT',
-        targetZone: `Zone 3 (${zones.zone3.minBpm}–${zones.zone3.maxBpm} BPM) ↔ Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`,
-        targetBpmRange: `${zones.zone3.minBpm}–${zones.zone3.maxBpm} BPM`,
-        targetRpe: 'RPE 8–9 / 10 (Near Maximal High Power)',
+        targetZone: hasHeartMedications
+          ? `Stage 3 Power Intervals (Governed by RPE 7–8 — Physician clearance mandatory)`
+          : `Zone 3 (${zones.zone3.minBpm}–${zones.zone3.maxBpm} BPM) ↔ Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`,
+        targetBpmRange: hasHeartMedications
+          ? `RPE 7–8 Governed (Observed est: ${zones.zone3.minBpm}–${zones.zone3.maxBpm} BPM)`
+          : `${zones.zone3.minBpm}–${zones.zone3.maxBpm} BPM`,
+        targetRpe: hasHeartMedications ? 'RPE 7–8 / 10 (Controlled Hard — Cardiac Caution)' : 'RPE 8–9 / 10 (Near Maximal High Power)',
         durationMins: 15,
         workRestRatio: 'Sprint Intervals: 1:3 Work-to-Rest (30s High Output / 90s Recovery × 5 rounds)',
         timingGuideline: 'Perform at the end of athletic power / PAP training sessions or as a dedicated conditioning wave.',
         recommendedModalities: modalities,
         metabolicRationale: 'Challenges Rate of Force Development (RFD), peak anaerobic glycolysis, and rapid ATP-PC regeneration matching high-level athletic performance demands.',
         coachingCues: [
-          'Work Intervals: Attack with high power intent at RPE 8–9.',
+          ...(medCue ? [medCue] : []),
+          'Work Intervals: Attack with controlled high power intent at RPE 7–8.',
           'Recovery Intervals: Full active rest at RPE 2–3 to bring heart rate down before the next sprint.',
           'Prioritize form and mechanics over pure fatigue.',
         ],
@@ -442,8 +470,12 @@ export function buildIntegratedCardioPrescription(params: {
         protocolType: 'stage_interval_conditioning',
         stage: 2,
         stageName: 'Stage 2: Threshold Interval Protocol',
-        targetZone: `Zone 2 (${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM) ↔ Zone 1 Recovery`,
-        targetBpmRange: `${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM`,
+        targetZone: hasHeartMedications
+          ? `Stage 2 Threshold (Governed by RPE 6–7 / Talk Test — HR suppressed by medication)`
+          : `Zone 2 (${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM) ↔ Zone 1 Recovery`,
+        targetBpmRange: hasHeartMedications
+          ? `RPE 6–7 Governed (Observed est: ${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM)`
+          : `${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM`,
         targetRpe: 'RPE 6–7 / 10 (Challenging Threshold Pace)',
         durationMins: 16,
         workRestRatio: 'Intervals: 1:2 Work-to-Rest (45s Work / 90s Recovery × 6 rounds)',
@@ -451,6 +483,7 @@ export function buildIntegratedCardioPrescription(params: {
         recommendedModalities: modalities,
         metabolicRationale: 'Improves lactate buffering capacity and cardiovascular stroke volume.',
         coachingCues: [
+          ...(medCue ? [medCue] : []),
           'Work Intervals: Maintain strong threshold effort at RPE 6–7.',
           'Recovery: Active recovery at RPE 2–3 with rhythmic breathing.',
         ],
@@ -466,8 +499,12 @@ export function buildIntegratedCardioPrescription(params: {
     protocolType: 'steady_state_base',
     stage: stageNumber,
     stageName: stageNumber === 1 ? 'Stage 1: Aerobic Base (Zone 1)' : 'Stage 2: Aerobic Threshold (Zone 2)',
-    targetZone: stageNumber === 1 ? `Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM / 65–75% HRmax)` : `Zone 2 (${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM / 76–85% HRmax)`,
-    targetBpmRange: stageNumber === 1 ? `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM` : `${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM`,
+    targetZone: hasHeartMedications
+      ? `Stage ${stageNumber} (Governed by RPE & Talk Test — HR suppressed by medication)`
+      : (stageNumber === 1 ? `Zone 1 (${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM / 65–75% HRmax)` : `Zone 2 (${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM / 76–85% HRmax)`),
+    targetBpmRange: hasHeartMedications
+      ? `RPE Governed (Observed est: ${stageNumber === 1 ? zones.zone1.minBpm : zones.zone2.minBpm}–${stageNumber === 1 ? zones.zone1.maxBpm : zones.zone2.maxBpm} BPM)`
+      : (stageNumber === 1 ? `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM` : `${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM`),
     targetRpe: stageNumber === 1 ? 'RPE 3–4 / 10 (Moderate Conversational Pace)' : 'RPE 5–6 / 10 (Moderate to Challenging)',
     durationMins: 20,
     workRestRatio: stageNumber === 1 ? 'Steady State: Continuous Aerobic Pace' : 'Intervals: 1:2 Work-to-Rest (60s Work / 120s Recovery × 6 rounds)',
@@ -475,6 +512,7 @@ export function buildIntegratedCardioPrescription(params: {
     recommendedModalities: modalities,
     metabolicRationale: 'Reduces cardiometabolic disease risk, improves insulin sensitivity, and preserves cardiovascular functional reserve.',
     coachingCues: [
+      ...(medCue ? [medCue] : []),
       'Focus on consistent pacing, diaphragmatic breathing, and perceived exertion.',
       'Maintain tall spine and relaxed shoulders.',
     ],
@@ -486,9 +524,17 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
   let phase = request.targetNasmPhase
   if (!phase) {
     if (request.goal === 'fat_loss') phase = request.experienceLevel === 'beginner' ? 1 : 2
-    else if (request.goal === 'hypertrophy') phase = 3
-    else if (request.goal === 'performance') phase = request.experienceLevel === 'elite' ? 5 : 4
+    else if (request.goal === 'hypertrophy') phase = request.experienceLevel === 'beginner' ? 2 : 3
+    else if (request.goal === 'performance') phase = request.experienceLevel === 'elite' ? 5 : (request.experienceLevel === 'beginner' ? 1 : 4)
     else phase = 1
+  }
+
+  // NASM OPT™ Safety Periodization Gate (CPT-7 Ch 12 & 21):
+  // Phase 4 (Maximal Strength) and Phase 5 (Power) require foundational neuromuscular stability.
+  // Beginners or athletes with active kinetic chain compensations must not be placed directly
+  // into Phase 4/5 high-load/maximal-velocity training without stabilization conditioning.
+  if (phase >= 4 && (request.experienceLevel === 'beginner' || (request.kineticCompensations && request.kineticCompensations.length > 0))) {
+    phase = request.experienceLevel === 'beginner' ? 1 : 2
   }
 
   const phaseMeta = NASM_OPT_PHASE_STANDARDS[phase] ?? NASM_OPT_PHASE_STANDARDS[1]
@@ -506,6 +552,11 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
   const allContraTags = Array.from(
     new Set([...(request.contraindicationTags ?? []), ...detectedInjuries.selectedInjuryIds])
   )
+  const hasHeartMedications = Boolean(
+    request.hasHeartMedications ||
+    allContraTags.includes('cardiovascular_hypertension') ||
+    /beta[- ]blocker|hypertension|blood pressure|cardiac|heart med/i.test(request.injuriesLimitations || '')
+  )
   const injuryAugmentations = getInjuryAugmentations(allContraTags)
 
   const workouts: GeneratedWorkoutDay[] = []
@@ -518,6 +569,7 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
       goal: request.goal,
       clientAge: request.clientAge,
       cardioBlendStyle: request.cardioBlendStyle,
+      hasHeartMedications,
       equipment: request.equipmentAccess ?? [
         'barbell',
         'squat rack',
@@ -549,21 +601,34 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
 
     // 2. Apply Biomechanical Contraindications Shield (Sports Injuries & Orthopedic Substitutions) with final authority
     if (allContraTags.length > 0) {
-      for (const exercise of workoutDay.exercises) {
+      for (let i = 0; i < workoutDay.exercises.length; i++) {
+        const exercise = workoutDay.exercises[i]
         const contraCheck = checkExerciseContraindications(exercise.name, allContraTags)
         if (contraCheck.isContraindicated && contraCheck.replacement) {
           const originalName = exercise.name
-          exercise.name = contraCheck.replacement
+          let finalReplacement = contraCheck.replacement
+
+          // Secondary Equipment Re-check: If replacement requires equipment the athlete lacks, adapt to available equipment
+          if (request.equipmentAccess && request.equipmentAccess.length > 0) {
+            finalReplacement = substituteMissingEquipment(finalReplacement, request.equipmentAccess, [])
+          }
+
+          exercise.name = finalReplacement
           exercise.contraindicationReplacedFrom = originalName
+
+          // Enforce OPT phase constraints (tempo, volume, reps) on newly substituted movement
+          const repairs: string[] = []
+          workoutDay.exercises[i] = enforcePhaseExerciseConstraints(exercise, phase, repairs)
+
           if (contraCheck.coachingCue) {
-            exercise.coachingCues = [
+            workoutDay.exercises[i].coachingCues = [
               `🛡️ Injury Protection Shield: Replaced "${originalName}" (${contraCheck.ruleLabel || 'Medical Safety'})`,
               contraCheck.coachingCue,
-              ...exercise.coachingCues,
+              ...workoutDay.exercises[i].coachingCues,
             ]
           }
           if (contraCheck.rationale) {
-            exercise.nasmClinicalSource = `${exercise.nasmClinicalSource} | Biomechanical Safety: ${contraCheck.rationale}`
+            workoutDay.exercises[i].nasmClinicalSource = `${workoutDay.exercises[i].nasmClinicalSource} | Biomechanical Safety: ${contraCheck.rationale}`
           }
         }
       }
@@ -650,8 +715,9 @@ function buildDistinctOptWorkoutDay(params: {
   cardioBlendStyle?: 'integrated_finishers' | 'dedicated_conditioning' | 'minimal_flush' | 'none'
   benchmarks?: Record<string, { weightLbs: number; reps: number }>
   kineticCompensations?: string[]
+  hasHeartMedications?: boolean
 }): GeneratedWorkoutDay {
-  const { dayIndex, phase, benchmarks, kineticCompensations = [], equipment, cardioEquipment, goal, totalDays, clientAge, cardioBlendStyle } = params
+  const { dayIndex, phase, benchmarks, kineticCompensations = [], equipment, cardioEquipment, goal, totalDays, clientAge, cardioBlendStyle, hasHeartMedications = false } = params
   const phaseMeta = NASM_OPT_PHASE_STANDARDS[phase]
   const eq = parseEquipmentCapabilities(equipment)
 
@@ -693,6 +759,7 @@ function buildDistinctOptWorkoutDay(params: {
       blendStyle: 'dedicated_conditioning',
       equipmentAccess: equipment,
       cardioEquipmentAccess: cardioEquipment,
+      hasHeartMedications,
     })
 
     const primaryModality = cardioProtocol?.recommendedModalities[0] || 'Incline Treadmill Walk'
@@ -843,7 +910,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Two Arm Dumbbell Chest Press With Band',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Press forward while balancing on single leg', 'Resist backward band recoil with core'],
@@ -868,7 +935,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Single Arm Standing Row With Rotation',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15 per arm',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.6,
@@ -880,7 +947,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Dumbbell Bent Over Row',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.6,
@@ -892,7 +959,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Standing Tubing Row',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Anchor band at mid-torso height', 'Drive elbow into pocket without torso twist'],
@@ -917,7 +984,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Single Leg Scaption',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.5,
@@ -929,7 +996,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Single Leg Scaption',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Step on band with active foot', 'Raise arms at 45 degrees with thumbs facing upward'],
@@ -952,9 +1019,9 @@ function buildDistinctOptWorkoutDay(params: {
       if (eq.hasStabilityBall && eq.hasDumbbells) {
         exercises.push({
           block: 'resistance',
-          name: 'Dumbbell Bent Over Extention',
+          name: 'Dumbbell Bent-Over Extension',
           sets: '3',
-          reps: '15',
+          reps: '12–15',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.55,
@@ -964,9 +1031,9 @@ function buildDistinctOptWorkoutDay(params: {
       } else if (eq.hasDumbbells) {
         exercises.push({
           block: 'resistance',
-          name: 'Dumbbell Bent Over Extention',
+          name: 'Dumbbell Bent-Over Extension',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.55,
@@ -1122,8 +1189,8 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'core_balance',
           name: 'Side Plank',
           sets: '2',
-          reps: '10 per side',
-          tempo: '4/2/1',
+          reps: '30s hold per side',
+          tempo: 'Hold 30–60s',
           rest: '30s',
           coachingCues: ['Maintain straight lateral kinetic chain', 'Zero hip drop'],
           nasmClinicalSource: 'CPT7_Ch16',
@@ -1136,7 +1203,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Dumbbell Overhead Press',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.6,
@@ -1148,7 +1215,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Standing Tubing Overhead Press',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Loop band under active foot', 'Press overhead in scapular plane'],
@@ -1159,7 +1226,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Pike Push Up',
           sets: '3',
-          reps: '12 per leg',
+          reps: '12–15',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Hips high in inverted V', 'Lower crown of head toward floor under strict 4s control'],
@@ -1196,7 +1263,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Dumbbell Bent Over Row',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.6,
@@ -1208,7 +1275,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Standing Tubing Row',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Drive elbows down and back into ribcage', '4s eccentric release'],
@@ -1333,7 +1400,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Seated Machine Row Close Grip',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.6,
@@ -1345,7 +1412,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Dumbbell Renegade Row To Push Up',
           sets: '3',
-          reps: '12 per side',
+          reps: '6–8 per side (12–16 total)',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.6,
@@ -1357,7 +1424,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Standing Tubing Row',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Anchor band high', 'Drive elbows down while balancing on one foot'],
@@ -1382,7 +1449,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Lunge To Balance',
           sets: '3',
-          reps: '15 per leg',
+          reps: '10–12 per leg',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.55,
@@ -1394,7 +1461,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Lunge To Balance',
           sets: '3',
-          reps: '15 per leg',
+          reps: '10–12 per leg',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Step into lunge and curl band at bottom position'],
@@ -1405,7 +1472,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Lunge To Balance Transverse',
           sets: '3',
-          reps: '15 per leg',
+          reps: '10–12 per leg',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Hold bottom lunge for 2 seconds while rotating over front knee'],
@@ -1424,16 +1491,16 @@ function buildDistinctOptWorkoutDay(params: {
 
       // Pair 1: Chest
       const chestStrengthName = eq.hasBarbell
-        ? 'Barbell Flat Bench Press (Strength 1A)'
+        ? 'Barbell Flat Bench Press'
         : eq.hasDumbbells
-        ? 'Dual Dumbbell Flat Bench Press (Strength 1A)'
+        ? 'Dual Dumbbell Flat Bench Press'
         : eq.hasBands
-        ? 'Heavy Banded Push-Up (Strength 1A)'
-        : 'Tempo Deficit Push-Ups (Strength 1A)'
+        ? 'Heavy Banded Push-Up'
+        : 'Tempo Deficit Push-Ups'
 
       const chestStabilityName = eq.hasStabilityBall
-        ? 'Stability Ball Push-Up (Stability 1B)'
-        : 'Push-Up with Single-Leg Balance (Stability 1B)'
+        ? 'Stability Ball Push-Up'
+        : 'Push-Up with Single-Leg Balance'
 
       exercises.push(
         {
@@ -1446,6 +1513,7 @@ function buildDistinctOptWorkoutDay(params: {
           intensityPercentage1RM: 0.75,
           targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawBench1RM, 0.75) : undefined,
           supersetPairWith: chestStabilityName,
+          supersetTag: 'Strength 1A',
           coachingCues: ['Drive weight with explosive intent @ 75% 1RM', 'Zero rest before stability movement'],
           nasmClinicalSource: 'CPT7_Fat_Loss8.pdf & Chapter 21',
         },
@@ -1458,6 +1526,7 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '60s',
           intensityPercentage1RM: 0.5,
           supersetPairWith: chestStrengthName,
+          supersetTag: 'Stability 1B',
           coachingCues: ['Strict 4-second descent to recruit stabilizer motor units', '2-second bottom pause'],
           nasmClinicalSource: 'CPT7_Fat_Loss8.pdf & Chapter 21',
         }
@@ -1465,22 +1534,22 @@ function buildDistinctOptWorkoutDay(params: {
 
       // Pair 2: Back
       const backStrengthName = eq.hasCables
-        ? 'Seated Cable Row (Strength 2A)'
+        ? 'Seated Cable Row'
         : eq.hasBarbell
-        ? 'Barbell Bent-Over Row (Strength 2A)'
+        ? 'Barbell Bent-Over Row'
         : eq.hasDumbbells
-        ? 'Dual Dumbbell Bent-Over Row (Strength 2A)'
+        ? 'Dual Dumbbell Bent-Over Row'
         : eq.hasBands
-        ? 'Heavy Standing Band Row (Strength 2A)'
-        : 'Inverted Bodyweight Row (Strength 2A)'
+        ? 'Heavy Standing Band Row'
+        : 'Inverted Bodyweight Row'
 
       const backStabilityName = eq.hasCables
-        ? 'Single-Leg Cable Row (Stability 2B)'
+        ? 'Single-Leg Cable Row'
         : eq.hasDumbbells
-        ? 'Single-Leg Dumbbell Row (Stability 2B)'
+        ? 'Single-Leg Dumbbell Row'
         : eq.hasBands
-        ? 'Single-Leg Resistance Band Row (Stability 2B)'
-        : 'Prone Cobra with 4-Second Hold (Stability 2B)'
+        ? 'Single-Leg Resistance Band Row'
+        : 'Prone Cobra with 4-Second Hold'
 
       exercises.push(
         {
@@ -1492,6 +1561,7 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '0s (Immediate transition to 2B)',
           intensityPercentage1RM: 0.75,
           supersetPairWith: backStabilityName,
+          supersetTag: 'Strength 2A',
           coachingCues: ['Heavy prime mover row with strong lat contraction'],
           nasmClinicalSource: 'CPT7_Fat_Loss9.pdf',
         },
@@ -1499,11 +1569,12 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: backStabilityName,
           sets: '3',
-          reps: '12 per leg',
+          reps: backStabilityName.includes('Single-Leg') ? '12 per leg' : '12–15',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.5,
           supersetPairWith: backStrengthName,
+          supersetTag: 'Stability 2B',
           coachingCues: ['Single-leg balance with 4-second eccentric return'],
           nasmClinicalSource: 'CPT7_Fat_Loss9.pdf',
         }
@@ -1511,18 +1582,18 @@ function buildDistinctOptWorkoutDay(params: {
 
       // Pair 3: Shoulders
       const shoulderStrengthName = eq.hasDumbbells
-        ? 'Seated Dumbbell Shoulder Press (Strength 3A)'
+        ? 'Seated Dumbbell Shoulder Press'
         : eq.hasBarbell
-        ? 'Standing Barbell Overhead Press (Strength 3A)'
+        ? 'Standing Barbell Overhead Press'
         : eq.hasBands
-        ? 'Heavy Banded Overhead Press (Strength 3A)'
-        : 'Feet-Elevated Pike Push-Up (Strength 3A)'
+        ? 'Heavy Banded Overhead Press'
+        : 'Feet-Elevated Pike Push-Up'
 
       const shoulderStabilityName = eq.hasDumbbells
-        ? 'Single-Leg Dumbbell Scaption (Stability 3B)'
+        ? 'Single-Leg Dumbbell Scaption'
         : eq.hasBands
-        ? 'Single-Leg Banded Scaption (Stability 3B)'
-        : 'Single-Leg Y-Raise with 4-Second Eccentric (Stability 3B)'
+        ? 'Single-Leg Banded Scaption'
+        : 'Single-Leg Y-Raise with 4-Second Eccentric'
 
       exercises.push(
         {
@@ -1534,6 +1605,7 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '0s (Immediate transition to 3B)',
           intensityPercentage1RM: 0.75,
           supersetPairWith: shoulderStabilityName,
+          supersetTag: 'Strength 3A',
           coachingCues: ['Heavy overhead strength press'],
           nasmClinicalSource: 'CPT7_Fat_Loss10.pdf',
         },
@@ -1546,6 +1618,7 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '60s',
           intensityPercentage1RM: 0.5,
           supersetPairWith: shoulderStrengthName,
+          supersetTag: 'Stability 3B',
           coachingCues: ['45-degree angle in single leg balance', 'Strict stabilizer tempo'],
           nasmClinicalSource: 'CPT7_Fat_Loss10.pdf',
         }
@@ -1555,14 +1628,14 @@ function buildDistinctOptWorkoutDay(params: {
 
       // Pair 1: Quads / Squat
       const squatStrengthName = eq.hasBarbell && eq.hasSquatRack
-        ? 'Barbell Back Squat (Strength 1A)'
+        ? 'Barbell Back Squat'
         : eq.hasDumbbells
-        ? 'Heavy Dumbbell Goblet Squat (Strength 1A)'
+        ? 'Heavy Dumbbell Goblet Squat'
         : eq.hasBands
-        ? 'Heavy Banded Squat (Strength 1A)'
-        : 'Bulgarian Split Squat (Strength 1A)'
+        ? 'Heavy Banded Squat'
+        : 'Bulgarian Split Squat'
 
-      const squatStabilityName = 'Single-Leg Step-Up to Balance (Stability 1B)'
+      const squatStabilityName = 'Single-Leg Step-Up to Balance'
 
       exercises.push(
         {
@@ -1575,6 +1648,7 @@ function buildDistinctOptWorkoutDay(params: {
           intensityPercentage1RM: 0.75,
           targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawSquat1RM, 0.75) : undefined,
           supersetPairWith: squatStabilityName,
+          supersetTag: 'Strength 1A',
           coachingCues: ['Full depth squat @ 75% 1RM', 'Zero rest before step-up balance'],
           nasmClinicalSource: 'CPT7_Fat_Loss11-1.pdf & Chapter 21',
         },
@@ -1587,6 +1661,7 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '60s',
           intensityPercentage1RM: 0.5,
           supersetPairWith: squatStrengthName,
+          supersetTag: 'Stability 1B',
           coachingCues: ['Step onto box/chair, pause in single-leg balance 2 seconds'],
           nasmClinicalSource: 'CPT7_Fat_Loss11-1.pdf & Chapter 21',
         }
@@ -1594,14 +1669,14 @@ function buildDistinctOptWorkoutDay(params: {
 
       // Pair 2: Hamstrings / Hinge
       const deadliftStrengthName = eq.hasBarbell
-        ? 'Barbell Romanian Deadlift (Strength 2A)'
+        ? 'Barbell Romanian Deadlift'
         : eq.hasDumbbells
-        ? 'Dual Dumbbell Romanian Deadlift (Strength 2A)'
+        ? 'Dual Dumbbell Romanian Deadlift'
         : eq.hasBands
-        ? 'Heavy Banded Romanian Deadlift (Strength 2A)'
-        : 'Single-Leg Glute Bridge with Hold (Strength 2A)'
+        ? 'Heavy Banded Romanian Deadlift'
+        : 'Single-Leg Glute Bridge with Hold'
 
-      const deadliftStabilityName = 'Single-Leg Romanian Deadlift with Reach (Stability 2B)'
+      const deadliftStabilityName = 'Single-Leg Romanian Deadlift with Reach'
 
       exercises.push(
         {
@@ -1614,6 +1689,7 @@ function buildDistinctOptWorkoutDay(params: {
           intensityPercentage1RM: 0.75,
           targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawDeadlift1RM, 0.65) : undefined,
           supersetPairWith: deadliftStabilityName,
+          supersetTag: 'Strength 2A',
           coachingCues: ['Hip hinge with flat back', 'Full hamstring engagement'],
           nasmClinicalSource: 'CPT7_Fat_Loss12.pdf',
         },
@@ -1626,6 +1702,7 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '60s',
           intensityPercentage1RM: 0.5,
           supersetPairWith: deadliftStrengthName,
+          supersetTag: 'Stability 2B',
           coachingCues: ['4-second lowering on one foot', 'Square hips to floor'],
           nasmClinicalSource: 'CPT7_Fat_Loss12.pdf',
         }
@@ -2158,7 +2235,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Goblet Squat',
           sets: '3',
-          reps: '15 per leg',
+          reps: '12–15',
           tempo: '2/0/2',
           rest: '60s',
           coachingCues: ['Anchor band at knee height', 'Lock knee into full extension with 2s VMO contraction'],
@@ -2195,7 +2272,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Prisoner Squat Calf Raise',
           sets: '4',
-          reps: '15 per leg',
+          reps: '15–20',
           tempo: '2/0/2',
           rest: '45s',
           coachingCues: ['Full stretch at bottom of stair/step', 'Hold peak contraction 2 seconds'],
@@ -2217,7 +2294,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Prisoner Squat Calf Raise',
           sets: '4',
-          reps: '20 per leg',
+          reps: '20',
           tempo: '2/0/2',
           rest: '45s',
           coachingCues: ['Slow 3-second eccentric drop into deep ankle dorsiflexion'],
@@ -2308,7 +2385,7 @@ function buildDistinctOptWorkoutDay(params: {
           block: 'resistance',
           name: 'Single Leg Floor Bridge',
           sets: '4',
-          reps: '12–15',
+          reps: '10–12 per leg',
           tempo: '2/0/2',
           rest: '60s',
           coachingCues: ['Loop band across hips and anchor under feet', 'Full extension'],
@@ -2343,23 +2420,23 @@ function buildDistinctOptWorkoutDay(params: {
       } else if (eq.hasBands) {
         exercises.push({
           block: 'resistance',
-          name: 'Dumbbell Lateral Raise',
+          name: 'Standing Scaption',
           sets: '4',
-          reps: '15',
+          reps: '12–15',
           tempo: '2/0/2',
           rest: '45s',
-          coachingCues: ['Step on band with center foot', 'Raise handles to shoulder height with elbows high'],
+          coachingCues: ['Step on band with center foot', 'Raise handles in scapular plane at 45° with thumbs up'],
           nasmClinicalSource: 'CPT7_Ch21',
         })
       } else {
         exercises.push({
           block: 'resistance',
-          name: 'Bent Elbow Dumbbell Lateral Raise',
+          name: 'Prone Y-Raise',
           sets: '4',
-          reps: '15 per side',
+          reps: '15',
           tempo: '2/0/2',
           rest: '45s',
-          coachingCues: ['Isolate medial deltoid with strict horizontal abduction against wall/floor'],
+          coachingCues: ['Lie prone on mat or floor', 'Elevate arms in Y formation at 45° with thumbs up, squeezing lower traps and medial deltoids'],
           nasmClinicalSource: 'CPT7_Ch21',
         })
       }
@@ -2617,24 +2694,24 @@ function buildDistinctOptWorkoutDay(params: {
       focus = 'Upper Body Post-Activation Potentiation (Bench & Explosive Ball/Plyo Contrast)'
 
       const upperPAPStrengthName = eq.hasBarbell
-        ? 'Heavy Barbell Bench Press (Strength 1A)'
+        ? 'Heavy Barbell Bench Press'
         : eq.hasDumbbells
-        ? 'Heavy Dumbbell Flat Bench Press (Strength 1A)'
-        : 'Heavy Resistance Band Push-Up (Strength 1A)'
+        ? 'Heavy Dumbbell Flat Bench Press'
+        : 'Heavy Resistance Band Push-Up'
 
       const upperPAPPowerName = eq.hasMedicineBall
-        ? 'Explosive Medicine Ball Chest Pass (Power 1B)'
-        : 'Explosive Plyometric Push-Up / Clapping Push-Up (Power 1B)'
+        ? 'Explosive Medicine Ball Chest Pass'
+        : 'Explosive Plyometric Push-Up'
 
       const upperPAPRowStrengthName = eq.hasBarbell
-        ? 'Heavy Barbell Bent-Over Row (Strength 2A)'
+        ? 'Heavy Barbell Bent-Over Row'
         : eq.hasDumbbells
-        ? 'Heavy Dual Dumbbell Row (Strength 2A)'
-        : 'Heavy Band Row (Strength 2A)'
+        ? 'Heavy Dual Dumbbell Row'
+        : 'Heavy Band Row'
 
       const upperPAPRowPowerName = eq.hasMedicineBall
-        ? 'Medicine Ball Soccer Throw (Power 2B)'
-        : 'Banded Explosive Speed Row (Power 2B)'
+        ? 'Medicine Ball Soccer Throw'
+        : 'Banded Explosive Speed Row'
 
       exercises.push(
         {
@@ -2647,6 +2724,7 @@ function buildDistinctOptWorkoutDay(params: {
           intensityPercentage1RM: 0.88,
           targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawBench1RM, 0.88) : undefined,
           supersetPairWith: upperPAPPowerName,
+          supersetTag: 'Strength 1A',
           coachingCues: ['Heavy neural primer @ 88% 1RM', 'Immediately unrack for explosive power contrast'],
           nasmClinicalSource: 'CPT7_Performance7.pdf & Chapter 18/21',
         },
@@ -2659,6 +2737,7 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '2–3 min',
           intensityPercentage1RM: 0.35,
           supersetPairWith: upperPAPStrengthName,
+          supersetTag: 'Power 1B',
           coachingCues: ['Maximal release velocity / explosive drive', 'Take advantage of PAP primed motor units'],
           nasmClinicalSource: 'CPT7_Performance7.pdf & Chapter 18',
         },
@@ -2672,6 +2751,7 @@ function buildDistinctOptWorkoutDay(params: {
           intensityPercentage1RM: 0.88,
           targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawDeadlift1RM, 0.65) : undefined,
           supersetPairWith: upperPAPRowPowerName,
+          supersetTag: 'Strength 2A',
           coachingCues: ['Heavy pulling primer', 'Zero rest before explosive speed throw/row'],
           nasmClinicalSource: 'CPT7_Performance8.pdf',
         },
@@ -2684,6 +2764,7 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '2–3 min',
           intensityPercentage1RM: 0.35,
           supersetPairWith: upperPAPRowStrengthName,
+          supersetTag: 'Power 2B',
           coachingCues: ['Explosive velocity contraction', 'Maximal rate of force development'],
           nasmClinicalSource: 'CPT7_Performance8.pdf',
         }
@@ -2692,24 +2773,24 @@ function buildDistinctOptWorkoutDay(params: {
       focus = 'Lower Body Post-Activation Potentiation (Squat & Jump Contrast)'
 
       const lowerPAPSquatStrengthName = eq.hasBarbell && eq.hasSquatRack
-        ? 'Heavy Barbell Back Squat (Strength 1A)'
+        ? 'Heavy Barbell Back Squat'
         : eq.hasDumbbells
-        ? 'Heavy Dual Dumbbell Front Squat (Strength 1A)'
-        : 'Heavy Banded Squat (Strength 1A)'
+        ? 'Heavy Dual Dumbbell Front Squat'
+        : 'Heavy Banded Squat'
 
-      const lowerPAPJumpPowerName = 'Explosive Tuck Jump / Jump Squat (Power 1B)'
+      const lowerPAPJumpPowerName = 'Explosive Tuck Jump / Jump Squat'
 
       const lowerPAPHipStrengthName = eq.hasBarbell
-        ? 'Heavy Barbell Hip Thrust (Strength 2A)'
+        ? 'Heavy Barbell Hip Thrust'
         : eq.hasDumbbells
-        ? 'Heavy Dumbbell Hip Thrust / RDL (Strength 2A)'
-        : 'Heavy Banded Hip Thrust (Strength 2A)'
+        ? 'Heavy Dumbbell Hip Thrust / RDL'
+        : 'Heavy Banded Hip Thrust'
 
       const lowerPAPHipPowerName = eq.hasMedicineBall
-        ? 'Medicine Ball Backward Overhead Slam (Power 2B)'
+        ? 'Medicine Ball Backward Overhead Slam'
         : eq.hasDumbbells || eq.hasKettlebell
-        ? 'Explosive Dumbbell / Kettlebell Hinge Swing (Power 2B)'
-        : 'Explosive Broad Jump to Stick (Power 2B)'
+        ? 'Explosive Dumbbell / Kettlebell Hinge Swing'
+        : 'Explosive Broad Jump to Stick'
 
       exercises.push(
         {
@@ -2722,6 +2803,7 @@ function buildDistinctOptWorkoutDay(params: {
           intensityPercentage1RM: 0.88,
           targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawSquat1RM, 0.88) : undefined,
           supersetPairWith: lowerPAPJumpPowerName,
+          supersetTag: 'Strength 1A',
           coachingCues: ['Heavy prime mover @ 88% 1RM', 'Step out immediately to jump'],
           nasmClinicalSource: 'CPT7_Performance9.pdf & Chapter 18/21',
         },
@@ -2734,6 +2816,7 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '2–3 min',
           intensityPercentage1RM: 0.3,
           supersetPairWith: lowerPAPSquatStrengthName,
+          supersetTag: 'Power 1B',
           coachingCues: ['Maximal vertical displacement', 'Soft landing with triple flexion'],
           nasmClinicalSource: 'CPT7_Performance9.pdf & Chapter 18',
         },
@@ -2747,6 +2830,7 @@ function buildDistinctOptWorkoutDay(params: {
           intensityPercentage1RM: 0.88,
           targetLoadLbs: eq.hasBarbell || eq.hasDumbbells ? loadFromOneRepMax(rawDeadlift1RM, 0.75) : undefined,
           supersetPairWith: lowerPAPHipPowerName,
+          supersetTag: 'Strength 2A',
           coachingCues: ['Heavy glute/posterior chain driver'],
           nasmClinicalSource: 'CPT7_Performance10.pdf',
         },
@@ -2759,7 +2843,8 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '2–3 min',
           intensityPercentage1RM: 0.35,
           supersetPairWith: lowerPAPHipStrengthName,
-          coachingCues: ['Maximal horizontal/vertical kinetic projection'],
+          supersetTag: 'Power 2B',
+          coachingCues: ['Maximal explosive intent', 'Violent triple extension'],
           nasmClinicalSource: 'CPT7_Performance10.pdf',
         }
       )
@@ -2787,6 +2872,7 @@ function buildDistinctOptWorkoutDay(params: {
     blendStyle: cardioBlendStyle,
     equipmentAccess: equipment,
     cardioEquipmentAccess: cardioEquipment,
+    hasHeartMedications,
   })
 
   const sessionDurationBreakdown = calculateEstimatedWorkoutDuration({

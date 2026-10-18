@@ -213,5 +213,100 @@ describe('nasm-opt-guardrails', () => {
     expect(audit.isCompliant).toBe(false) // Violations were found and repaired
     expect(audit.repairsApplied.length).toBeGreaterThan(0)
   })
+
+  it('preserves unilateral per leg/side/arm rep suffixes during phase constraint enforcement', () => {
+    const repairs: string[] = []
+    const unilateralEx = {
+      block: 'resistance' as const,
+      name: 'Single Leg Squat',
+      sets: '3',
+      reps: '5 per leg', // Invalid low rep count for Phase 1
+      tempo: '2/0/2',
+      rest: '120s',
+      coachingCues: ['Track knee over toes'],
+      nasmClinicalSource: 'NASM-CPT 7th Ed, Ch. 14',
+    }
+
+    const sanitized = enforcePhaseExerciseConstraints(unilateralEx, 1, repairs)
+    expect(sanitized.reps).toBe('12-15 per leg')
+    expect(sanitized.tempo).toBe('4/2/1')
+  })
+
+  it('enforces Phase 5 PAP contrast pair parameters distinguishing Strength 1A from Power 1B', () => {
+    const repairs: string[] = []
+
+    const strength1A = {
+      block: 'resistance' as const,
+      name: 'Barbell Back Squat',
+      sets: '4',
+      reps: '12', // Invalid for Phase 5 Strength
+      tempo: '4/2/1',
+      rest: '60s',
+      supersetTag: 'Strength 1A',
+      coachingCues: ['Drive through midfoot'],
+      nasmClinicalSource: 'NASM-CPT 7th Ed, Ch. 18',
+    }
+
+    const power1B = {
+      block: 'resistance' as const,
+      name: 'Jump Squat',
+      sets: '4',
+      reps: '3', // Invalid for Phase 5 Power
+      tempo: '2/0/2',
+      rest: '30s',
+      supersetTag: 'Power 1B',
+      coachingCues: ['Explosive vertical jump'],
+      nasmClinicalSource: 'NASM-CPT 7th Ed, Ch. 18',
+    }
+
+    const sanitized1A = enforcePhaseExerciseConstraints(strength1A, 5, repairs)
+    expect(sanitized1A.reps).toBe('1-5')
+    expect(sanitized1A.tempo).toBe('2/0/2')
+    expect(sanitized1A.rest).toBe('0s (Immediate transition to Power pair)')
+
+    const sanitized1B = enforcePhaseExerciseConstraints(power1B, 5, repairs)
+    expect(sanitized1B.reps).toBe('8-10')
+    expect(sanitized1B.tempo).toMatch(/Explosive|X\/0\/X/)
+    expect(sanitized1B.rest).toBe('1-2 min')
+  })
+
+  it('screens contraindications and safely adapts substitutions in the master guardrail pipeline', () => {
+    const rawPlan = {
+      planTitle: 'Test Contra Plan',
+      clientGoal: 'general_fitness',
+      nasmOptPhase: 2,
+      workouts: [
+        {
+          day: 1,
+          focus: 'Lower Body Endurance',
+          exercises: [
+            {
+              block: 'resistance',
+              name: 'Seated Leg Extension', // Contraindicated for runners_knee
+              sets: '3',
+              reps: '12',
+              tempo: '2/0/2',
+              rest: '60s',
+              coachingCues: [],
+              nasmClinicalSource: '',
+            },
+          ],
+          warmupProtocol: { inhibitSmr: [], lengthenStaticStretch: [], activateDynamic: [] },
+        } as unknown as GeneratedWorkoutDay,
+      ],
+    }
+
+    const { sanitizedPlan, audit } = validateAndEnforceNasmOptGuardrails(rawPlan as unknown as GeneratedMacrocyclePlan, {
+      targetPhase: 2,
+      equipmentAccess: ['bodyweight'], // Client has only bodyweight
+      contraindicationTags: ['runners_knee'],
+    })
+
+    expect(sanitizedPlan.workouts[0].exercises[0].name).not.toBe('Seated Leg Extension')
+    // Must be safely adapted to bodyweight
+    expect(sanitizedPlan.workouts[0].exercises[0].name).toMatch(/Bodyweight|Squat|Step/i)
+    expect(audit.repairsApplied.some(r => r.includes('Auto-substituted contraindicated movement'))).toBe(true)
+  })
 })
+
 
