@@ -256,6 +256,12 @@ describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool
       const forearmCoords = MUSCLE_TARGET_COORDINATES.forearms.anterior!
       expect(forearmCoords[0][0]).toBe(122) // Left forearm inward toward center
       expect(forearmCoords[1][0]).toBe(390) // Right forearm inward toward center
+
+      // 7. Posterior trapezius reticle sits at mid-trapezius (Y=175) below the cervical spine
+      const trapCoords = MUSCLE_TARGET_COORDINATES.trapezius.posterior!
+      expect(trapCoords).toBeDefined()
+      expect(trapCoords[0][0]).toBe(256)
+      expect(trapCoords[0][1]).toBe(175)
     })
   })
 })

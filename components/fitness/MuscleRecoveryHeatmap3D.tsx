@@ -53,7 +53,7 @@ export const MUSCLE_TARGET_COORDINATES: Record<MuscleZoneId, { anterior?: [numbe
   forearms: { anterior: [[122, 317], [390, 317]] },
   abdominals: { anterior: [[256, 277]] },
   obliques: { anterior: [[212, 277], [300, 277]] },
-  trapezius: { posterior: [[256, 167]] },
+  trapezius: { posterior: [[256, 175]] },
   rhomboids: { posterior: [[236, 197], [276, 197]] },
   latissimus_dorsi: { posterior: [[210, 247], [302, 247]] },
   erector_spinae: { posterior: [[256, 287]] },
@@ -954,8 +954,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M236 102 L256 110 L276 102 L330 134 C314 164 290 202 256 240 C222 202 198 164 182 134 Z'
-                        : 'M232 102 L256 110 L280 102 L335 134 C318 164 292 202 256 240 C220 202 194 164 177 134 Z'
+                        ? 'M236 110 L256 118 L276 110 L330 142 C314 172 290 210 256 248 C222 210 198 172 182 142 Z'
+                        : 'M232 110 L256 118 L280 110 L335 142 C318 172 292 210 256 248 C220 210 194 172 177 142 Z'
                     }
                     fill="url(#grad_trap)"
                     opacity={getOverlayOpacity('trapezius')}
