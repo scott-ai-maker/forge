@@ -272,11 +272,13 @@ export function recommendPeriodizationFromScans(params: {
       t.includes('cardiovascular')
   )
 
-  let { targetPhase, targetPhaseName, velocity } = evaluateOptPhaseRequirement(
+  const evalResult = evaluateOptPhaseRequirement(
     postureScan,
     dexaScan,
     client.fitnessGoal
   )
+  let { targetPhase, targetPhaseName } = evalResult
+  const { velocity } = evalResult
 
   if (isSpecialPop && targetPhase > 2) {
     targetPhase = 2

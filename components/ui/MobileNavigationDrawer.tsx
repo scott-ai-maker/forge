@@ -15,6 +15,7 @@ interface MobileNavigationDrawerProps {
   actions?: React.ReactNode
   currentUser?: { id: string; email?: string } | null
   onOpenTutorial?: () => void
+  onOpenReferral?: () => void
 }
 
 export interface DrawerLinkItem {
@@ -110,6 +111,7 @@ export default function MobileNavigationDrawer({
   actions,
   currentUser,
   onOpenTutorial,
+  onOpenReferral,
 }: MobileNavigationDrawerProps) {
   const pathname = usePathname()
   const prevPathnameRef = useRef(pathname)
@@ -354,6 +356,59 @@ export default function MobileNavigationDrawer({
                 Coach Login
               </Link>
             </div>
+          </div>
+        )}
+
+        {/* Refer & Earn Ambassador Engine Quick Action */}
+        {!isCoach && onOpenReferral && (
+          <div style={{ padding: '12px 16px 4px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                onClose()
+                onOpenReferral()
+              }}
+              className="tactile-btn"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                borderRadius: 8,
+                background: 'linear-gradient(135deg, rgba(197, 160, 89, 0.22) 0%, rgba(197, 160, 89, 0.08) 100%)',
+                border: '1px solid rgba(197, 160, 89, 0.5)',
+                color: '#F3E5AB',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 6,
+                    background: 'rgba(197, 160, 89, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#C5A059',
+                  }}
+                >
+                  <GaaIcon name="crown" size={15} />
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#F8FAFC' }}>
+                    Refer &amp; Earn ($20)
+                  </div>
+                  <div style={{ fontSize: 10.5, color: '#94A3B8' }}>
+                    Give 30 Days Free · Get $20 Credit
+                  </div>
+                </div>
+              </div>
+              <span style={{ fontSize: 13, color: '#C5A059', fontWeight: 700 }}>→</span>
+            </button>
           </div>
         )}
 

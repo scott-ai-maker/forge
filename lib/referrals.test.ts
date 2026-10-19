@@ -2,8 +2,11 @@ import { describe, it, expect, vi } from 'vitest'
 import {
   normalizeReferralCode,
   generateReferralCode,
+  generateDeterministicReferralCode,
   maskEmail,
   calculateMilestoneProgress,
+  getOrCreateClientReferralCode,
+  getClientReferralDashboard,
   validateReferralCode,
   attributeReferralSignup,
   processReferralConversion,
@@ -32,6 +35,22 @@ describe('lib/referrals', () => {
 
       const codeDefault = generateReferralCode(null)
       expect(codeDefault.startsWith('FORGE-')).toBe(true)
+    })
+  })
+
+  describe('generateDeterministicReferralCode', () => {
+    it('generates stable, reproducible code for the same user id', () => {
+      const userId = '72dfb51e-1638-4f43-951e-a488e5576fd1'
+      const code1 = generateDeterministicReferralCode(userId, 'Scott Gordon')
+      const code2 = generateDeterministicReferralCode(userId, 'Scott Gordon')
+      expect(code1).toBe(code2)
+      expect(code1).toBe('SCOTT-72DF')
+    })
+
+    it('handles null clientName gracefully', () => {
+      const userId = 'a1b2c3d4-0000-0000-0000-000000000000'
+      const code = generateDeterministicReferralCode(userId, null)
+      expect(code).toBe('FORGE-A1B2')
     })
   })
 
@@ -74,6 +93,16 @@ describe('lib/referrals', () => {
       expect(result.currentTier.name).toBe('Founding Ambassador')
       expect(result.nextTier).toBeNull()
       expect(result.progressToNext).toBe(100)
+    })
+
+    it('exposes exactly 4 tiered referral milestones', () => {
+      expect(REFERRAL_MILESTONES.length).toBe(4)
+      expect(REFERRAL_MILESTONES.map(m => m.name)).toEqual([
+        'Recruit',
+        'Lead Athlete',
+        'Sovereign Elite',
+        'Founding Ambassador',
+      ])
     })
   })
 
@@ -265,6 +294,86 @@ describe('lib/referrals', () => {
       // Conversion #3 triggers Milestone 2: Form Lab Video Review!
       expect(insertedRewards.some(r => r.reward_type === 'form_lab_review')).toBe(true)
       expect(insertedEntitlements.some(e => e.feature === 'video-review' && e.uses_total === 1)).toBe(true)
+    })
+  })
+
+  describe('schema resilience (missing referral_codes table fallback)', () => {
+    it('returns synthetic deterministic record when table is not found (PGRST205)', async () => {
+      const mockAdmin = {
+        from: vi.fn().mockImplementation((table: string) => {
+          if (table === 'referral_codes') {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: 'PGRST205', message: "Could not find the table 'public.referral_codes' in the schema cache" },
+                  }),
+                }),
+              }),
+            }
+          }
+          return {}
+        }),
+      } as any
+
+      const result = await getOrCreateClientReferralCode(mockAdmin, '72dfb51e-1638-4f43-951e-a488e5576fd1', 'Scott Gordon')
+      expect(result.code).toBe('SCOTT-72DF')
+      expect(result.clicks).toBe(0)
+      expect(result.signupsCount).toBe(0)
+      expect(result.conversionsCount).toBe(0)
+    })
+
+    it('returns fully-formed ReferralDashboardData even when ledger tables are missing', async () => {
+      const mockAdmin = {
+        from: vi.fn().mockImplementation((table: string) => {
+          if (table === 'clients') {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue({
+                    data: { full_name: 'Scott Gordon', email: 'scott@forgeathletic.com' },
+                    error: null,
+                  }),
+                }),
+              }),
+            }
+          }
+          if (table === 'referral_codes') {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: 'PGRST205', message: "Could not find table" },
+                  }),
+                }),
+              }),
+            }
+          }
+          if (table === 'referral_attributions' || table === 'referral_rewards') {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  order: vi.fn().mockReturnValue({
+                    limit: vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST205' } }),
+                    eq: vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST205' } }),
+                  }),
+                }),
+              }),
+            }
+          }
+          return {}
+        }),
+      } as any
+
+      const dashboard = await getClientReferralDashboard(mockAdmin, '72dfb51e-1638-4f43-951e-a488e5576fd1')
+      expect(dashboard.code).toBe('SCOTT-72DF')
+      expect(dashboard.shareUrl).toBe('https://forgeathletic.com/r/SCOTT-72DF')
+      expect(dashboard.milestones.currentTier.name).toBe('Athlete')
+      expect(dashboard.milestones.nextTier?.name).toBe('Recruit')
+      expect(dashboard.history).toEqual([])
+      expect(dashboard.rewards).toEqual([])
     })
   })
 })

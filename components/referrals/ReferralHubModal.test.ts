@@ -1,3 +1,5 @@
+import fs from 'fs'
+import path from 'path'
 import { describe, it, expect } from 'vitest'
 import { REFERRAL_MILESTONES, calculateMilestoneProgress, maskEmail } from '@/lib/referrals'
 
@@ -31,5 +33,31 @@ describe('components/referrals/ReferralHubModal', () => {
     expect(progress4.currentTier.level).toBe(2)
     expect(progress4.nextTier?.level).toBe(3)
     expect(progress4.progressToNext).toBe(50)
+  })
+
+  it('verifies ReferralHubModal has zIndex: 100050 and retry capability on error', () => {
+    const modalPath = path.resolve(process.cwd(), 'components/referrals/ReferralHubModal.tsx')
+    const source = fs.readFileSync(modalPath, 'utf-8')
+    expect(source).toContain('zIndex: 100050')
+    expect(source).toContain('loadReferralData')
+    expect(source).toContain('fetchError')
+    expect(source).toContain('Retry')
+    expect(source).toContain('data.milestones?.currentTier?.name')
+  })
+
+  it('verifies SiteHeader renders referral button on dashboard and wires onOpenReferral to drawer', () => {
+    const headerPath = path.resolve(process.cwd(), 'components/ui/SiteHeader.tsx')
+    const source = fs.readFileSync(headerPath, 'utf-8')
+    expect(source).toContain('isDashboard && !isCoach')
+    expect(source).toContain('Refer &amp; Earn ($20)')
+    expect(source).toContain('onOpenReferral={isDashboard && !isCoach ? () => setReferralOpen(true) : undefined}')
+  })
+
+  it('verifies MobileNavigationDrawer supports onOpenReferral action', () => {
+    const drawerPath = path.resolve(process.cwd(), 'components/ui/MobileNavigationDrawer.tsx')
+    const source = fs.readFileSync(drawerPath, 'utf-8')
+    expect(source).toContain('onOpenReferral?: () => void')
+    expect(source).toContain('!isCoach && onOpenReferral')
+    expect(source).toContain('Refer &amp; Earn ($20)')
   })
 })

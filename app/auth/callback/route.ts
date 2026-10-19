@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id)
       .maybeSingle()
 
-    let resolvedRole: 'coach' | 'client' =
+    const resolvedRole: 'coach' | 'client' =
       isMasterCoach || existingProfile?.role === 'coach' ? 'coach' : 'client'
 
     if (existingProfile) {

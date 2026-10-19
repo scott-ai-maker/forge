@@ -222,7 +222,7 @@ export default function SiteHeader({
               </div>
             )}
 
-            {isDashboard && !isCoach && currentUser && (
+            {isDashboard && !isCoach && (
               <button
                 type="button"
                 onClick={() => {
@@ -303,6 +303,7 @@ export default function SiteHeader({
         actions={actions}
         currentUser={currentUser}
         onOpenTutorial={isPrivatePortal ? () => setTutorialOpen(true) : undefined}
+        onOpenReferral={isDashboard && !isCoach ? () => setReferralOpen(true) : undefined}
       />
 
       {/* Interactive Feature Tutorial Modal */}

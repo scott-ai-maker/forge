@@ -24,25 +24,41 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
   const [inviteSending, setInviteSending] = useState(false)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!isOpen) return
-
+  const loadReferralData = () => {
     setLoading(true)
+    setFetchError(null)
     fetch('/api/referrals/me')
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          throw new Error(errData.error || `Failed to load referral telemetry (HTTP ${res.status})`)
+        }
+        return res.json()
+      })
       .then((resData: ReferralDashboardData) => {
-        setData(resData)
-        if (resData.shareUrl) {
-          generateQrCodeSvg(resData.shareUrl, { width: 200 }).then(setQrSvg).catch(() => {})
+        if (resData && resData.milestones) {
+          setData(resData)
+          if (resData.shareUrl) {
+            generateQrCodeSvg(resData.shareUrl, { width: 200 }).then(setQrSvg).catch(() => {})
+          }
+        } else {
+          throw new Error('Invalid ambassador telemetry payload')
         }
       })
       .catch(err => {
         console.error('[ReferralHub] Failed fetching stats:', err)
+        setFetchError(err instanceof Error ? err.message : 'Unable to load referral profile')
       })
       .finally(() => {
         setLoading(false)
       })
+  }
+
+  useEffect(() => {
+    if (!isOpen) return
+    loadReferralData()
   }, [isOpen])
 
   if (!isOpen) return null
@@ -145,7 +161,7 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999,
+        zIndex: 100050,
         padding: '16px',
         overscrollBehavior: 'contain',
       }}
@@ -226,11 +242,33 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
         <div style={{ padding: '24px' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8' }}>
-              Loading ambassador telemetry...
+              <div style={{ fontSize: 13, marginBottom: 8, color: '#C5A059' }}>✦ ✦ ✦</div>
+              <div>Loading ambassador telemetry...</div>
             </div>
-          ) : !data ? (
-            <div style={{ textAlign: 'center', padding: '30px 0', color: '#EF4444' }}>
-              Unable to load referral profile. Please try again.
+          ) : fetchError || !data || !data.milestones ? (
+            <div style={{ textAlign: 'center', padding: '36px 16px', color: '#94A3B8' }}>
+              <div style={{ color: '#F87171', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+                {fetchError || 'Unable to load referral profile.'}
+              </div>
+              <p style={{ margin: '0 0 16px', fontSize: 12, color: '#64748B' }}>
+                Please check your network connection or try again.
+              </p>
+              <button
+                type="button"
+                onClick={loadReferralData}
+                style={{
+                  background: 'rgba(197, 160, 89, 0.2)',
+                  border: '1px solid rgba(197, 160, 89, 0.45)',
+                  color: '#F3E5AB',
+                  borderRadius: 6,
+                  padding: '8px 18px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Retry
+              </button>
             </div>
           ) : (
             <>
@@ -319,17 +357,17 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <div>
                     <span style={{ fontSize: 11, color: '#C5A059', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>
-                      Current Rank: {data.milestones.currentTier.name}
+                      Current Rank: {data.milestones?.currentTier?.name || 'Recruit'}
                     </span>
                     <h3 style={{ margin: '2px 0 0', fontSize: 14, color: '#F8FAFC', fontWeight: 600 }}>
-                      {data.milestones.nextTier
-                        ? `Next Milestone: ${data.milestones.nextTier.name} (${data.conversionsCount}/${data.milestones.nextTier.requiredConversions} Partners)`
+                      {data.milestones?.nextTier
+                        ? `Next Milestone: ${data.milestones.nextTier.name} (${data.conversionsCount || 0}/${data.milestones.nextTier.requiredConversions} Partners)`
                         : '🎉 All Milestones Achieved! Founding Ambassador'}
                     </h3>
                   </div>
-                  {data.milestones.nextTier && (
+                  {data.milestones?.nextTier && (
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#C5A059' }}>
-                      {data.milestones.progressToNext}%
+                      {data.milestones.progressToNext ?? 0}%
                     </span>
                   )}
                 </div>
@@ -348,7 +386,7 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
                   <div
                     style={{
                       height: '100%',
-                      width: `${data.milestones.progressToNext}%`,
+                      width: `${data.milestones?.progressToNext ?? 0}%`,
                       background: 'linear-gradient(90deg, #C5A059 0%, #10B981 100%)',
                       borderRadius: 4,
                       transition: 'width 0.3s ease',
@@ -358,7 +396,7 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
 
                 {/* Milestone Tiers Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-                  {data.milestones.allTiers.map(tier => (
+                  {(data.milestones?.allTiers || []).map(tier => (
                     <div
                       key={tier.level}
                       style={{
