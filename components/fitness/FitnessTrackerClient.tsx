@@ -65,11 +65,13 @@ import RpeRirExertionSelector from '@/components/fitness/tracker/RpeRirExertionS
 import RepCadenceMetronome from '@/components/fitness/tracker/RepCadenceMetronome'
 import OneRepMaxPercentageMatrix from '@/components/fitness/tracker/OneRepMaxPercentageMatrix'
 import AutoregulationDeloadAdvisor from '@/components/fitness/tracker/AutoregulationDeloadAdvisor'
+import BarVelocityPowerTrackerTray from '@/components/fitness/tracker/BarVelocityPowerTrackerTray'
 import SupersetPairCard, { type SupersetDraftState } from '@/components/fitness/tracker/SupersetPairCard'
 import { type GroupedExerciseEntry } from '@/lib/superset-pairing-engine'
 import {
   getNasmOptPhaseFeatureRules,
   getDefaultNasmOptTempo,
+  isVbtOfferedForPhase,
 } from '@/lib/nasm-opt-feature-matrix'
 import { calculateBioAdaptiveRestInterval } from '@/lib/bio-adaptive-rest-pacer'
 import { detectAcuteFatigueDrop } from '@/lib/autoregulation-advisor-engine'
@@ -746,6 +748,8 @@ export default function FitnessTrackerClient({
   const [localWorkoutLogs, setLocalWorkoutLogs] = useState<WorkoutLogRecord[]>(logs)
   const [inlineSetDrafts, setInlineSetDrafts] = useState<Record<string, InlineSetDraft>>({})
   const [localSetLogs, setLocalSetLogs] = useState<WorkoutSetLogRecord[]>(setLogs)
+  const [expandedVbtExerciseKey, setExpandedVbtExerciseKey] = useState<string | null>(null)
+  const [vbtVelocityLossByExercise, setVbtVelocityLossByExercise] = useState<Record<string, number>>({})
   const [bodyfatState, setBodyfatState] = useState({
     estimated: latestAnalysis?.estimated_bodyfat_percent ? String(latestAnalysis.estimated_bodyfat_percent) : '',
   })
@@ -4390,6 +4394,98 @@ export default function FitnessTrackerClient({
                                 />
                               )}
 
+                              {isStrength && !isTimed && isVbtOfferedForPhase(plan?.nasm_opt_phase) && (
+                                <div style={{ marginTop: 8, marginBottom: 8 }} data-testid={`vbt-container-${exerciseKey}`}>
+                                  {expandedVbtExerciseKey === exerciseKey ? (
+                                    <BarVelocityPowerTrackerTray
+                                      exerciseName={ex.name}
+                                      weightKg={draft.weight ? (units === 'imperial' ? Number(draft.weight) / 2.20462 : Number(draft.weight)) : 60}
+                                      units={units}
+                                      currentPhase={plan?.phase_name || `Phase ${plan?.nasm_opt_phase || 2}`}
+                                      currentRep={Number(draft.reps) || 1}
+                                      concentricDurationSec={(() => {
+                                        const t = draft.tempo || effectiveTempo
+                                        if (t) {
+                                          const parts = t.split('/')
+                                          if (parts.length >= 3) {
+                                            const c = parseFloat(parts[2])
+                                            if (!isNaN(c) && c > 0) return c
+                                          }
+                                        }
+                                        return 1.0
+                                      })()}
+                                      eccentricDurationSec={(() => {
+                                        const t = draft.tempo || effectiveTempo
+                                        if (t) {
+                                          const parts = t.split('/')
+                                          if (parts.length >= 1) {
+                                            const e = parseFloat(parts[0])
+                                            if (!isNaN(e) && e > 0) return e
+                                          }
+                                        }
+                                        return 2.0
+                                      })()}
+                                      onClose={() => {
+                                        triggerHaptic?.('tap')
+                                        setExpandedVbtExerciseKey(null)
+                                      }}
+                                      onVelocityLossChange={(lossPct) => {
+                                        setVbtVelocityLossByExercise(prev => ({
+                                          ...prev,
+                                          [exerciseKey]: lossPct,
+                                        }))
+                                      }}
+                                      triggerHaptic={triggerHaptic}
+                                    />
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        triggerHaptic?.('tap')
+                                        setExpandedVbtExerciseKey(exerciseKey)
+                                      }}
+                                      style={{
+                                        width: '100%',
+                                        padding: '6px 10px',
+                                        borderRadius: 6,
+                                        background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(13, 27, 42, 0.85) 100%)',
+                                        border: '1px solid rgba(56, 189, 248, 0.35)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                      data-testid="open-vbt-tracker-btn"
+                                      aria-label={`Open Bar Velocity & Kinetic Power Tracker for ${ex.name}`}
+                                    >
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <span style={{ fontSize: 13 }}>⚡</span>
+                                        <span style={{ fontSize: 11, fontWeight: 800, color: '#38BDF8', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                                          Bar Velocity & Kinetic Power
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontSize: 9.5,
+                                            fontWeight: 800,
+                                            padding: '1px 6px',
+                                            borderRadius: 4,
+                                            background: 'rgba(56, 189, 248, 0.2)',
+                                            color: '#BAE6FD',
+                                            border: '1px solid rgba(56, 189, 248, 0.35)',
+                                          }}
+                                        >
+                                          {getNasmOptPhaseFeatureRules(plan?.nasm_opt_phase).vbtBadge || 'VBT Telemetry'}
+                                        </span>
+                                      </div>
+                                      <span style={{ fontSize: 10, color: 'var(--gray, #94A3B8)', fontWeight: 700 }}>
+                                        Open Speedometer ▾
+                                      </span>
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+
                               {isStrength && !isTimed && (
                                 <AutoregulationDeloadAdvisor
                                   exerciseName={ex.name}
@@ -4425,6 +4521,7 @@ export default function FitnessTrackerClient({
                                   units={units}
                                   isTimed={isTimed}
                                   optPhase={plan?.nasm_opt_phase}
+                                  velocityLossPercent={vbtVelocityLossByExercise[exerciseKey]}
                                   sessionDurationMinutes={Math.max(15, Math.round(elapsedWorkoutSeconds / 60))}
                                   onApplyDeloadWeight={(newWeight) => {
                                     setInlineSetDrafts(prev => ({

@@ -50,4 +50,60 @@ describe('BarVelocityPowerTrackerTray Component Logic', () => {
     expect(setReport.hammerCurlGuidance).toContain('thumbs pointed up toward the ceiling')
     expect(setReport.hammerCurlGuidance).toContain('zero wrist twisting')
   })
+
+  it('exports BarVelocityPowerTrackerTray component cleanly and supports onVelocityLossChange', async () => {
+    const componentModule = await import('./BarVelocityPowerTrackerTray')
+    expect(componentModule.default).toBeDefined()
+    expect(typeof componentModule.default).toBe('function')
+  })
+
+  it('enforces NASM OPT™ phase matrix rules for VBT availability', async () => {
+    const { isVbtOfferedForPhase, getNasmOptPhaseFeatureRules } = await import('@/lib/nasm-opt-feature-matrix')
+
+    // Phase 1: Stabilization requires slow 4/2/1 tempo, VBT not offered
+    expect(isVbtOfferedForPhase(1)).toBe(false)
+    expect(getNasmOptPhaseFeatureRules(1).vbtBadge).toContain('N/A in Phase 1')
+
+    // Phase 2: Strength Endurance offers VBT to monitor concentric speed
+    expect(isVbtOfferedForPhase(2)).toBe(true)
+    expect(getNasmOptPhaseFeatureRules(2).vbtBadge).toContain('Velocity Telemetry')
+
+    // Phase 3: Hypertrophy monitors velocity loss threshold
+    expect(isVbtOfferedForPhase(3)).toBe(true)
+    expect(getNasmOptPhaseFeatureRules(3).vbtBadge).toContain('Velocity Loss Monitor')
+
+    // Phase 4: Maximal Strength requires velocity loss guardrails
+    expect(isVbtOfferedForPhase(4)).toBe(true)
+    expect(getNasmOptPhaseFeatureRules(4).vbtBadge).toContain('Velocity Loss Guardrail')
+
+    // Phase 5: Power has VBT as the primary core metric
+    expect(isVbtOfferedForPhase(5)).toBe(true)
+    expect(getNasmOptPhaseFeatureRules(5).isVbtPrimaryMetric).toBe(true)
+    expect(getNasmOptPhaseFeatureRules(5).vbtBadge).toContain('Core Metric')
+  })
+
+  it('integrates velocity loss directly with the Autoregulation Deload Advisor', async () => {
+    const { evaluateExerciseAutoregulation } = await import('@/lib/autoregulation-advisor-engine')
+
+    const sets = [
+      { setNumber: 1, weightLbs: 225, reps: 5, rpe: 8, rir: 2, isWarmup: false },
+    ]
+
+    // Feed 26% velocity loss from VBT tracker tray into autoregulation advisor
+    const advice = evaluateExerciseAutoregulation({
+      exerciseName: 'Barbell Back Squat',
+      currentDraftWeightLbs: 225,
+      currentDraftReps: 5,
+      targetReps: 5,
+      completedSets: sets,
+      units: 'imperial',
+      velocityLossPercent: 26,
+    })
+
+    expect(advice.hasAcuteFatigueDrop).toBe(true)
+    expect(advice.acuteFatigueDropPercent).toBe(26)
+    expect(advice.action).toBe('reduce_load_15pct')
+    expect(advice.badgeText).toContain('−15% Back-Off')
+    expect(advice.headline).toContain('Acute Fatigue Drop Detected (−26%)')
+  })
 })

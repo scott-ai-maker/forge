@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   calculateRepVelocityAndPower,
@@ -19,8 +19,10 @@ export interface BarVelocityPowerTrackerTrayProps {
   eccentricDurationSec?: number
   repHistory?: RepCadenceDuration[]
   onClose?: () => void
+  onVelocityLossChange?: (lossPercent: number) => void
   triggerHaptic?: (type: 'tap' | 'heavy' | 'success') => void
   compact?: boolean
+  className?: string
 }
 
 export default function BarVelocityPowerTrackerTray({
@@ -33,13 +35,15 @@ export default function BarVelocityPowerTrackerTray({
   eccentricDurationSec = 2.0,
   repHistory,
   onClose,
+  onVelocityLossChange,
   triggerHaptic,
   compact = false,
+  className = '',
 }: BarVelocityPowerTrackerTrayProps) {
   const [interactiveConcentricSec, setInteractiveConcentricSec] = useState<number>(concentricDurationSec)
   const [activeTab, setActiveTab] = useState<'live' | 'history' | 'vbt_zones'>('live')
 
-  const effectiveLoadKg = Math.max(weightKg, 20)
+  const effectiveLoadKg = weightKg > 0 ? weightKg : 20
   const loadDisplay = units === 'imperial'
     ? `${Math.round(effectiveLoadKg * 2.20462)} lbs`
     : `${Math.round(effectiveLoadKg)} kg`
@@ -84,8 +88,14 @@ export default function BarVelocityPowerTrackerTray({
 
   const isHammer = setAnalysis.isHammerCurl
 
+  useEffect(() => {
+    onVelocityLossChange?.(setAnalysis.overallVelocityLossPercent)
+  }, [setAnalysis.overallVelocityLossPercent, onVelocityLossChange])
+
   return (
     <div
+      className={className}
+      data-testid="bar-velocity-power-tracker-tray"
       style={{
         background: 'linear-gradient(160deg, #09131F 0%, #0D1B2A 60%, #060B12 100%)',
         border: '1px solid rgba(56, 189, 248, 0.35)',
