@@ -129,7 +129,7 @@ export default function ExecutiveSleepBiometricsHud({
             </span>
           </div>
           <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em', margin: '4px 0 0' }}>
-            SLEEP AND RECOVERY
+            SLEEP BIOMETRICS HUD
           </h3>
         </div>
 

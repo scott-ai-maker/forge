@@ -63,8 +63,8 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
   },
   {
     id: 'feat-sleep',
-    title: 'Sleep & Recovery',
-    subtitle: 'Review sleep, heart rate, and recovery trends',
+    title: 'Sleep Biometrics HUD',
+    subtitle: 'Review sleep stages, HRV, and autonomic recovery trends',
     category: 'Features & Tools',
     icon: 'sleep',
     href: '/dashboard/fitness?workspace=sleep',

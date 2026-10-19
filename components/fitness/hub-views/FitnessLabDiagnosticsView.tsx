@@ -84,7 +84,7 @@ const LAB_TOOLS: { id: FitnessLabTool; title: string; description: string }[] = 
   { id: 'nutrition', title: 'Nutrition', description: 'Review calorie targets, macros, and meal guidance.' },
   { id: 'travel', title: 'Travel workouts', description: 'Adapt your workout to the equipment available.' },
   { id: 'assessment', title: 'Movement assessment', description: 'Review your movement screen and warm-up guidance.' },
-  { id: 'sleep', title: 'Sleep & recovery', description: 'Explore sleep metrics and recovery guidance.' },
+  { id: 'sleep', title: 'Sleep Biometrics HUD', description: 'Explore sleep metrics, stage hypnograms, and recovery guidance.' },
   { id: 'performance', title: 'Athletic performance', description: 'Explore power training and performance tests.' },
   { id: 'calculator', title: 'Fitness calculators', description: 'Estimate lifting loads, cardio fitness, and body composition.' },
 ]
