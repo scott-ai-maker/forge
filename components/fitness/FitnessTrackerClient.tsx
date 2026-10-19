@@ -64,6 +64,7 @@ import PlateAdjustmentPresets from '@/components/fitness/tracker/PlateAdjustment
 import RpeRirExertionSelector from '@/components/fitness/tracker/RpeRirExertionSelector'
 import RepCadenceMetronome from '@/components/fitness/tracker/RepCadenceMetronome'
 import OneRepMaxPercentageMatrix from '@/components/fitness/tracker/OneRepMaxPercentageMatrix'
+import AutoregulationDeloadAdvisor from '@/components/fitness/tracker/AutoregulationDeloadAdvisor'
 import SupersetPairCard, { type SupersetDraftState } from '@/components/fitness/tracker/SupersetPairCard'
 import { type GroupedExerciseEntry } from '@/lib/superset-pairing-engine'
 import {
@@ -4398,6 +4399,84 @@ export default function FitnessTrackerClient({
                                         ...draft,
                                         weight: targetWeight,
                                         reps: targetReps,
+                                      },
+                                    }))
+                                  }}
+                                  triggerHaptic={triggerHaptic}
+                                />
+                              )}
+
+                              {isStrength && !isTimed && (
+                                <AutoregulationDeloadAdvisor
+                                  exerciseName={ex.name}
+                                  currentDraftWeight={draft.weight}
+                                  currentDraftReps={draft.reps}
+                                  targetReps={ex.reps}
+                                  completedSets={(setLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
+                                    .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === workout.day)
+                                    .map((row, idx) => ({
+                                      setNumber: row.set_number ?? idx + 1,
+                                      weightLbs: (row.weight_kg != null ? row.weight_kg * 2.20462 : 0),
+                                      weightKg: row.weight_kg ?? 0,
+                                      reps: Number(row.reps) || 0,
+                                      rpe: row.rpe ?? null,
+                                      rir: row.rir ?? null,
+                                      isWarmup: Boolean(row.is_warmup),
+                                      sessionDate: row.session_date,
+                                    }))}
+                                  allSessionSets={(localSetLogs || [])
+                                    .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === workout.day)
+                                    .map((row, idx) => ({
+                                      setNumber: row.set_number ?? idx + 1,
+                                      weightLbs: (row.weight_kg != null ? row.weight_kg * 2.20462 : 0),
+                                      weightKg: row.weight_kg ?? 0,
+                                      reps: Number(row.reps) || 0,
+                                      rpe: row.rpe ?? null,
+                                      rir: row.rir ?? null,
+                                      isWarmup: Boolean(row.is_warmup),
+                                      sessionDate: row.session_date,
+                                    }))}
+                                  units={units}
+                                  isTimed={isTimed}
+                                  sessionDurationMinutes={Math.max(15, Math.round(elapsedWorkoutSeconds / 60))}
+                                  onApplyDeloadWeight={(newWeight) => {
+                                    setInlineSetDrafts(prev => ({
+                                      ...prev,
+                                      [exerciseKey]: { ...draft, weight: newWeight },
+                                    }))
+                                  }}
+                                  onApplyRepCap={(newReps) => {
+                                    setInlineSetDrafts(prev => ({
+                                      ...prev,
+                                      [exerciseKey]: { ...draft, reps: newReps },
+                                    }))
+                                  }}
+                                  onExtendRestTimer={(extraSecs) => {
+                                    setActiveRestState(prev => prev ? {
+                                      ...prev,
+                                      restSeconds: prev.restSeconds + extraSecs,
+                                      remainingSeconds: prev.remainingSeconds + extraSecs,
+                                    } : null)
+                                  }}
+                                  onApplyClusterSet={(clusterPlan) => {
+                                    const clusterNote = clusterPlan.notesTag
+                                    const existing = (draft.notes || '').replace(/\[Cluster Set:[^\]]+\]/g, '').trim()
+                                    setInlineSetDrafts(prev => ({
+                                      ...prev,
+                                      [exerciseKey]: {
+                                        ...draft,
+                                        notes: existing ? `${existing} ${clusterNote}` : clusterNote,
+                                      },
+                                    }))
+                                  }}
+                                  onApplyMyoReps={(myoPlan) => {
+                                    const myoNote = myoPlan.notesTag
+                                    const existing = (draft.notes || '').replace(/\[Myo-Reps:[^\]]+\]/g, '').trim()
+                                    setInlineSetDrafts(prev => ({
+                                      ...prev,
+                                      [exerciseKey]: {
+                                        ...draft,
+                                        notes: existing ? `${existing} ${myoNote}` : myoNote,
                                       },
                                     }))
                                   }}
