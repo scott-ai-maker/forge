@@ -14,6 +14,7 @@ import {
   type RecoverySupplementKey,
   type MuscleTrainingStrain,
 } from '@/lib/muscle-recovery-telemetry'
+import { MUSCLE_TARGET_COORDINATES } from '@/components/fitness/MuscleRecoveryHeatmap3D'
 
 describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool #14)', () => {
   describe('Kinetic Muscle Anatomy & Zone Mapping', () => {
@@ -206,4 +207,47 @@ describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool
       expect(screened.allowedSupplements).toContain('magnesium')
     })
   })
+
+  describe('Anatomical Overlay & Reticle Coordinate Calibration', () => {
+    it('ensures crosshair reticles sit directly on muscle bellies and respect joint boundaries', () => {
+      // 1. Quadriceps must sit above the patella (< 460)
+      const quadCoords = MUSCLE_TARGET_COORDINATES.quadriceps.anterior!
+      expect(quadCoords).toBeDefined()
+      expect(quadCoords.length).toBe(2)
+      quadCoords.forEach(([cx, cy]) => {
+        expect(cy).toBeLessThanOrEqual(450) // Calibrated to 445 (above knee joint at ~520)
+        expect(cy).toBeGreaterThan(400)
+      })
+
+      // 2. Gluteals must sit above the inferior gluteal fold (< 410)
+      const gluteCoords = MUSCLE_TARGET_COORDINATES.gluteals.posterior!
+      expect(gluteCoords).toBeDefined()
+      gluteCoords.forEach(([cx, cy]) => {
+        expect(cy).toBeLessThanOrEqual(400) // Calibrated to 390 (above hamstring origin)
+        expect(cy).toBeGreaterThan(350)
+      })
+
+      // 3. Rectus Abdominis core reticle sits centered on the 6-pack (between 270 and 295)
+      const absCoords = MUSCLE_TARGET_COORDINATES.abdominals.anterior!
+      expect(absCoords).toBeDefined()
+      expect(absCoords[0][1]).toBe(285)
+
+      // 4. Hamstrings sit between gluteal fold and popliteal fossa (< 500)
+      const hamCoords = MUSCLE_TARGET_COORDINATES.hamstrings.posterior!
+      expect(hamCoords).toBeDefined()
+      hamCoords.forEach(([cx, cy]) => {
+        expect(cy).toBeLessThanOrEqual(490) // Calibrated to 485
+        expect(cy).toBeGreaterThan(440)
+      })
+
+      // 5. Gastrocnemius (calves) sits in the upper diamond heads (< 630)
+      const calfCoords = MUSCLE_TARGET_COORDINATES.calves_gastrocnemius.posterior!
+      expect(calfCoords).toBeDefined()
+      calfCoords.forEach(([cx, cy]) => {
+        expect(cy).toBeLessThanOrEqual(620) // Calibrated to 610 (above Achilles tendon)
+        expect(cy).toBeGreaterThan(570)
+      })
+    })
+  })
 })
+
