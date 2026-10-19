@@ -14,6 +14,7 @@
 import { normalizeRpeValue, normalizeRirValue, mapRpeToRir } from './rpe-exertion-scale'
 import { calculateDropStages, type DropStage } from './intensity-protocols-engine'
 import { isIntensityProtocolOfferedForPhase } from './nasm-opt-feature-matrix'
+import { parsePrescribedWorkingReps } from './warmup-auto-populator'
 
 export type AutoregulationAction =
   | 'reduce_load_5pct'
@@ -299,7 +300,7 @@ export function evaluateExerciseAutoregulation(params: {
     .sort((a, b) => (Number(a.setNumber) || 0) - (Number(b.setNumber) || 0))
   const parsedTargetReps = typeof targetReps === 'number'
     ? targetReps
-    : parseInt(String(targetReps || currentDraftReps).replace(/[^0-9]/g, ''), 10) || currentDraftReps || 8
+    : parseInt(parsePrescribedWorkingReps(targetReps || currentDraftReps), 10) || Number(currentDraftReps) || 8
 
   // If no sets completed yet, athlete is fresh
   if (workingSets.length === 0) {

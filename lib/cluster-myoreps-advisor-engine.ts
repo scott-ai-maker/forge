@@ -17,6 +17,7 @@
 
 import { isHammerCurlMovement, isCompoundLift } from './bio-adaptive-rest-pacer'
 import { roundToNearestIncrement } from './intensity-protocols-engine'
+import { parsePrescribedWorkingReps } from './warmup-auto-populator'
 
 export interface ClusterStage {
   clusterIndex: number
@@ -105,7 +106,7 @@ export function generateClusterSetPlan(input: ClusterSetAdvisorInput): ClusterSe
 
   const rawTargetReps = typeof targetReps === 'number'
     ? targetReps
-    : parseInt(String(targetReps || 8).replace(/[^0-9]/g, ''), 10) || 8
+    : parseInt(parsePrescribedWorkingReps(targetReps), 10) || 8
 
   const weightLbs = roundToNearestIncrement(Math.max(5, currentWeightLbs), units === 'imperial' ? 5 : 2.5)
   const weightKg = Math.round((weightLbs / 2.20462) * 10) / 10
@@ -189,7 +190,7 @@ export function generateMyoRepsPlan(input: MyoRepsAdvisorInput): MyoRepsPlan {
 
   const rawTargetReps = typeof targetReps === 'number'
     ? targetReps
-    : parseInt(String(targetReps || 12).replace(/[^0-9]/g, ''), 10) || 12
+    : parseInt(parsePrescribedWorkingReps(targetReps), 10) || 12
 
   // Activation set is typically 10-15 reps (default 12)
   const activationReps = Math.max(8, Math.min(15, rawTargetReps))

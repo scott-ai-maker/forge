@@ -102,4 +102,38 @@ describe('SupersetPairCard Logic Integration', () => {
     expect(check.isMatch).toBe(true)
     expect(check.rationale).toContain('Biceps / Triceps Antagonist Pair')
   })
+
+  it('correctly parses rep ranges like "8-10" without evaluating to 810 or falsely triggering acute fatigue on Set 1', async () => {
+    const { parsePrescribedWorkingReps } = await import('@/lib/warmup-auto-populator')
+    const { detectAcuteFatigueDrop } = await import('@/lib/autoregulation-advisor-engine')
+    const { calculateBioAdaptiveRestInterval } = await import('@/lib/bio-adaptive-rest-pacer')
+
+    // Exercise with range '8-10'
+    const prescribedReps = '8-10'
+    const targetRepsNum = parseInt(parsePrescribedWorkingReps(prescribedReps), 10)
+    expect(targetRepsNum).toBe(8)
+    expect(targetRepsNum).not.toBe(810)
+
+    // User logs 185 lbs with 8 reps, no RPE or RIR
+    const acuteDrop = detectAcuteFatigueDrop({
+      actualReps: 8,
+      previousSetReps: 0,
+      plannedReps: targetRepsNum,
+      actualRpe: undefined,
+    })
+    expect(acuteDrop.hasDrop).toBe(false)
+    expect(acuteDrop.dropPercent).toBe(0)
+
+    // In superset 1A with 0s transition rest:
+    const bioPaced = calculateBioAdaptiveRestInterval({
+      exerciseName: 'Dumbbell Romanian Deadlift',
+      baseRestSeconds: 0,
+      rpe: undefined,
+      rir: undefined,
+      hasAcuteFatigueDrop: acuteDrop.hasDrop,
+    })
+    expect(bioPaced.finalRestSeconds).toBe(0)
+    expect(bioPaced.isBioPaced).toBe(false)
+    expect(bioPaced.badgeText).toBe('Immediate Transition')
+  })
 })

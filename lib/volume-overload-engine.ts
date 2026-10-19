@@ -6,6 +6,7 @@
  */
 
 import { calculate1Rm, evaluate2For2Progression, OverloadEvaluation } from './progressive-overload-engine'
+import { parsePrescribedWorkingReps } from './warmup-auto-populator'
 
 export interface HistoricalSetLogInput {
   id?: string
@@ -210,7 +211,7 @@ export function computeVolumeOverloadTelemetry(params: {
   }
 
   // Evaluate NASM 2-for-2 Progression
-  const targetReps = parseInt(String(targetRepsText || '10').replace(/[^0-9]/g, ''), 10) || 10
+  const targetReps = parseInt(parsePrescribedWorkingReps(targetRepsText || '10'), 10) || 10
 
   // Format prior sessions for 2-for-2 evaluation
   const chronologicalDates = [...logsByDate.keys()].sort((a, b) => a.localeCompare(b))

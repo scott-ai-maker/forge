@@ -80,7 +80,9 @@ export function calculateBioAdaptiveRestInterval(input: BioAdaptiveRestInput): B
     velocityLossPercent = 0,
   } = input
 
-  const base = Math.max(10, baseRestSeconds || 60)
+  const base = typeof baseRestSeconds === 'number' && Number.isFinite(baseRestSeconds) && baseRestSeconds >= 0
+    ? baseRestSeconds
+    : 60
   const isHammer = isHammerCurlMovement(exerciseName)
 
   // If warm-up, disabled, or rapid transition (< 30s), preserve base rest
@@ -91,11 +93,15 @@ export function calculateBioAdaptiveRestInterval(input: BioAdaptiveRestInput): B
       deltaSeconds: 0,
       isBioPaced: false,
       pacingAction: 'preserved_optimal',
-      badgeText: base < 30 ? 'Transition Rest' : 'Standard Rest',
-      adaptationReason: base < 30
+      badgeText: base === 0 ? 'Immediate Transition' : base < 30 ? 'Transition Rest' : 'Standard Rest',
+      adaptationReason: base === 0
+        ? 'Immediate superset transition: proceed to paired movement with no rest.'
+        : base < 30
         ? 'Rapid superset transition interval preserved.'
         : 'Preserving scheduled baseline rest interval.',
-      coachVoiceCue: base < 30
+      coachVoiceCue: base === 0
+        ? 'Immediate transition to next exercise.'
+        : base < 30
         ? `Starting ${base} second transition.`
         : `Starting ${base} second rest interval.`,
       isHammerCurl: isHammer,

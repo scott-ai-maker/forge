@@ -116,6 +116,20 @@ describe('Bio-Adaptive Rest Timer Pacer Engine', () => {
     expect(result.adaptationReason).toContain('Rapid superset transition')
   })
 
+  it('preserves immediate transition rest (0s) in Phase 2 supersets without distortion or rest timers', () => {
+    const result = calculateBioAdaptiveRestInterval({
+      exerciseName: 'Dumbbell Romanian Deadlift',
+      baseRestSeconds: 0,
+      rir: null,
+      rpe: null,
+    })
+
+    expect(result.isBioPaced).toBe(false)
+    expect(result.finalRestSeconds).toBe(0)
+    expect(result.badgeText).toBe('Immediate Transition')
+    expect(result.coachVoiceCue).toContain('Immediate transition')
+  })
+
   it('correctly identifies compound vs isolation movements', () => {
     expect(isCompoundLift('Barbell Back Squat')).toBe(true)
     expect(isCompoundLift('Barbell Bench Press')).toBe(true)

@@ -73,6 +73,7 @@ import {
 } from '@/lib/nasm-opt-feature-matrix'
 import { calculateBioAdaptiveRestInterval } from '@/lib/bio-adaptive-rest-pacer'
 import { detectAcuteFatigueDrop } from '@/lib/autoregulation-advisor-engine'
+import { parsePrescribedWorkingReps } from '@/lib/warmup-auto-populator'
 import SessionFatigueCnsSummaryModal from '@/components/fitness/tracker/SessionFatigueCnsSummaryModal'
 import { calculateSessionFatigueCnsIndex } from '@/lib/session-fatigue-cns-index'
 import FloatingRestTimerDock from '@/components/fitness/tracker/FloatingRestTimerDock'
@@ -1387,17 +1388,20 @@ export default function FitnessTrackerClient({
     const tempoToSave = isStrength ? ((draft.tempo || effectiveTempo || '').trim() || null) : null
     const rirToSave = isStrength && draft.rir ? Number(draft.rir) : undefined
     const rpeToSave = draft.rpe ? Number(draft.rpe) : undefined
-    const parsedRestSecs = draft.restSeconds ? Number(draft.restSeconds) : parseRestSecondsFromExercise(exercise.rest, plan?.nasm_opt_phase, exercise.block)
-    const baseRestSecs = parsedRestSecs > 0 ? parsedRestSecs : 60
+    const parsedRestSecs = draft.restSeconds !== undefined && draft.restSeconds !== '' && Number.isFinite(Number(draft.restSeconds))
+      ? Number(draft.restSeconds)
+      : parseRestSecondsFromExercise(exercise.rest, plan?.nasm_opt_phase, exercise.block)
+    const baseRestSecs = Number.isFinite(parsedRestSecs) && parsedRestSecs >= 0 ? parsedRestSecs : 60
 
     // Detect acute fatigue drop from previous working set
     const exLogs = localSetLogs.filter(s => s.exercise_name === exercise.name && !s.is_warmup)
     const prevReps = exLogs.length > 0 ? Number(exLogs[0].reps || 0) : 0
-    const targetRepsNum = parseInt(String(exercise.reps || 8).replace(/[^0-9]/g, ''), 10) || 8
+    const targetRepsNum = parseInt(parsePrescribedWorkingReps(exercise.reps), 10) || 8
     const acuteDrop = detectAcuteFatigueDrop({
       actualReps: Number(draft.reps) || 0,
       previousSetReps: prevReps,
       plannedReps: targetRepsNum,
+      actualRpe: rpeToSave,
     })
 
     // Bio-Adaptive Rest Pacer calculation
@@ -1418,24 +1422,34 @@ export default function FitnessTrackerClient({
     triggerHaptic('success')
 
     // 1. IMMEDIATELY trigger coach audio chime & speech synthesis in user gesture context!
-    playCoachChime(659.25, 0.22, 'triangle')
-    speakCoachVoiceCue(bioPacedResult.coachVoiceCue)
+    if (restSecsToSave > 0) {
+      playCoachChime(659.25, 0.22, 'triangle')
+      speakCoachVoiceCue(bioPacedResult.coachVoiceCue)
+    } else {
+      playCoachChime(880, 0.15, 'sine')
+      speakCoachVoiceCue('Set complete. Immediate transition to paired exercise.')
+    }
 
-    // 2. Immediately start active rest countdown
-    setActiveRestState({
-      exerciseName: exercise.name,
-      key,
-      restSeconds: restSecsToSave,
-      remainingSeconds: restSecsToSave,
-      isRunning: true,
-      isBioPaced: bioPacedResult.isBioPaced,
-      bioPacedDelta: bioPacedResult.deltaSeconds,
-      bioPacedReason: bioPacedResult.adaptationReason,
-      badgeText: bioPacedResult.badgeText,
-      hasAcuteFatigueDrop: acuteDrop.hasDrop,
-      acuteFatigueDropPercent: acuteDrop.dropPercent,
-    })
-    setActiveRestTimerKey(key)
+    // 2. Immediately start active rest countdown only if rest is greater than 0
+    if (restSecsToSave > 0) {
+      setActiveRestState({
+        exerciseName: exercise.name,
+        key,
+        restSeconds: restSecsToSave,
+        remainingSeconds: restSecsToSave,
+        isRunning: true,
+        isBioPaced: bioPacedResult.isBioPaced,
+        bioPacedDelta: bioPacedResult.deltaSeconds,
+        bioPacedReason: bioPacedResult.adaptationReason,
+        badgeText: bioPacedResult.badgeText,
+        hasAcuteFatigueDrop: acuteDrop.hasDrop,
+        acuteFatigueDropPercent: acuteDrop.dropPercent,
+      })
+      setActiveRestTimerKey(key)
+    } else {
+      setActiveRestState(null)
+      setActiveRestTimerKey(null)
+    }
 
     // 3. OPTIMISTIC UI: Append set immediately (<1ms) so gym-floor flow is instantaneous
     const optimisticTempId = `temp_set_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
