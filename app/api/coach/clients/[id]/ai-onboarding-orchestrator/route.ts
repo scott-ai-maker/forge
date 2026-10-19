@@ -207,7 +207,7 @@ export async function POST(
       nasm_opt_phase: periodizationRec.targetNasmPhase,
       phase_name: periodizationRec.targetPhaseName,
       sessions_per_week: periodizationRec.trainingDaysPerWeek,
-      estimated_duration_mins: 55,
+      estimated_duration_mins: programRec.estimatedDurationMins || 45,
       plan_json: planJson,
     }
 

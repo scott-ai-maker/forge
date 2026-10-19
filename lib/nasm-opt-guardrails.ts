@@ -27,6 +27,7 @@ import {
   type TempoExclusionRule,
 } from './nasm-tempo-compatibility'
 import { checkExerciseContraindications } from './liability-shield'
+import { enforceSessionDurationHardCap } from './workout-duration-engine'
 
 export {
   classifyExerciseTempoCategory,
@@ -382,11 +383,28 @@ export function validateAndEnforceNasmOptGuardrails(
       return enforcePhaseExerciseConstraints(validEx, phase, repairs)
     })
 
-    return {
-      ...correctedDay,
-      nasmOptPhase: phase,
-      exercises: sanitizedExercises,
+    const hasDedicatedCardioDays = (plan.workouts || []).some(
+      w => (w.focus || '').toLowerCase().includes('cardiorespiratory') ||
+           (w.exercises || []).some(e => e.name?.toLowerCase().includes('cardiorespiratory') || (typeof e.reps === 'string' && e.reps.includes('min')))
+    )
+
+    const durationResult = enforceSessionDurationHardCap(
+      {
+        ...correctedDay,
+        nasmOptPhase: phase,
+        exercises: sanitizedExercises,
+      },
+      {
+        maxDurationMins: 52,
+        hasDedicatedCardioDays,
+      }
+    )
+
+    if (durationResult.adjusted && durationResult.repairs.length > 0) {
+      repairs.push(...durationResult.repairs.map(r => `[Day ${day.day ?? _dIdx + 1} Duration Cap]: ${r}`))
     }
+
+    return durationResult.workout as unknown as GeneratedWorkoutDay
   })
 
   const sanitizedPlan: GeneratedMacrocyclePlan = {

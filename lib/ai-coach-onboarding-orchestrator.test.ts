@@ -166,13 +166,20 @@ describe('ai-coach-onboarding-orchestrator', () => {
     expect(program.nasmOptPhase).toBe(1)
     expect(program.macrocyclePlan.workouts.length).toBe(4)
 
-    // Every workout day must contain the embedded 4-Phase CEx warmup protocol
+    // Every workout day must contain the embedded 4-Phase CEx warmup protocol with hard caps
     for (const day of program.macrocyclePlan.workouts) {
       expect(day.warmupProtocol.inhibitSmr.length).toBeGreaterThan(0)
+      expect(day.warmupProtocol.inhibitSmr.length).toBeLessThanOrEqual(3)
       expect(day.warmupProtocol.lengthenStaticStretch.length).toBeGreaterThan(0)
+      expect(day.warmupProtocol.lengthenStaticStretch.length).toBeLessThanOrEqual(3)
       expect(day.warmupProtocol.activateDynamic.length).toBeGreaterThan(0)
+      expect(day.warmupProtocol.activateDynamic.length).toBeLessThanOrEqual(3)
+      expect(day.estimatedDurationMins).toBeLessThanOrEqual(52)
       expect(day.dailyPeriodizationMemo).toContain('AI 4-Phase CEx')
     }
+
+    expect(program.estimatedDurationMins).toBeLessThanOrEqual(52)
+    expect(program.estimatedDurationMins).toBeGreaterThanOrEqual(38)
 
     // Must include master coach cues addressing knee valgus
     expect(program.masterCoachCues.some(cue => cue.includes('knee tracking') || cue.includes('knees'))).toBe(true)

@@ -6,6 +6,7 @@ import {
   parseRepsCount,
   resolveRepDurationSeconds,
   formatDurationDisplay,
+  enforceSessionDurationHardCap,
 } from './workout-duration-engine'
 
 describe('workout-duration-engine', () => {
@@ -160,5 +161,152 @@ describe('workout-duration-engine', () => {
       expect(result.totalDurationMins).toBeGreaterThanOrEqual(70)
     })
   })
+
+  describe('enforceSessionDurationHardCap', () => {
+    it('trims an 80-minute bloated Phase 1 session to under 52 minutes', () => {
+      const bloatedDay = {
+        day: 1,
+        focus: 'Upper Body Push & Pull Stabilization',
+        nasmOptPhase: 1,
+        exercises: [
+          { name: 'Dead Bug', sets: '2', reps: '15 per leg', tempo: '4/2/1', rest: '30s', block: 'core_balance' },
+          { name: 'Dumbbell Bench Press', sets: '3', reps: '15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Dumbbell Bent Over Row', sets: '3', reps: '12-15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Single Leg Scaption', sets: '3', reps: '12-15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Dumbbell Bent-Over Extension', sets: '3', reps: '12-15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Static Kneeling Hip Flexor Stretch', sets: '1', reps: '30s', tempo: 'Slow', rest: '0s', block: 'cooldown' },
+        ],
+        cardioProtocol: { durationMins: 20, stage: 1, title: 'Stage 1 Base' },
+        warmupProtocol: {
+          inhibitSmr: ['SMR Calves', 'SMR Quads', 'SMR TFL', 'SMR Lats', 'SMR Glutes'],
+          lengthenStaticStretch: ['Stretch Calves', 'Stretch Quads', 'Stretch Lats', 'Stretch Chest'],
+          activateDynamic: ['Bird Dog', 'Glute Bridge', 'Wall Slides', 'Arm Circles'],
+        },
+      }
+
+      const { workout, adjusted, repairs, durationBreakdown } = enforceSessionDurationHardCap(bloatedDay, {
+        maxDurationMins: 52,
+        hasDedicatedCardioDays: true,
+      })
+
+      expect(adjusted).toBe(true)
+      expect(durationBreakdown.totalDurationMins).toBeLessThanOrEqual(52)
+      expect(workout.cardioProtocol).toBeUndefined()
+      expect(repairs.length).toBeGreaterThan(0)
+    })
+
+    it('tempo directly scales work time and session length according to repetition duration', () => {
+      const makeWorkout = (tempo: string) => ({
+        focus: 'Tempo Comparison Workout',
+        exercises: [
+          { name: 'Dumbbell Chest Press', sets: '3', reps: '15', tempo, rest: '60s', block: 'resistance' },
+          { name: 'Dumbbell Row', sets: '3', reps: '15', tempo, rest: '60s', block: 'resistance' },
+        ],
+      })
+
+      const slowPhase1 = calculateEstimatedWorkoutDuration({
+        workout: makeWorkout('4/2/1'), // 7s per rep -> 105s work per set
+        optPhase: 1,
+      })
+
+      const moderatePhase2 = calculateEstimatedWorkoutDuration({
+        workout: makeWorkout('2/0/2'), // 4s per rep -> 60s work per set
+        optPhase: 2,
+      })
+
+      const fastPower = calculateEstimatedWorkoutDuration({
+        workout: makeWorkout('1/1/1'), // 3s per rep -> 45s work per set
+        optPhase: 5,
+      })
+
+      // Slow 4/2/1 tempo must produce substantially more work time than 2/0/2 and 1/1/1
+      expect(slowPhase1.totalWorkSeconds).toBeGreaterThan(moderatePhase2.totalWorkSeconds)
+      expect(moderatePhase2.totalWorkSeconds).toBeGreaterThan(fastPower.totalWorkSeconds)
+
+      // Total session duration must reflect this difference
+      expect(slowPhase1.totalDurationMins).toBeGreaterThan(moderatePhase2.totalDurationMins)
+      expect(moderatePhase2.totalDurationMins).toBeGreaterThan(fastPower.totalDurationMins)
+    })
+
+    it('rest intervals directly scale total rest and session length', () => {
+      const makeWorkoutWithRest = (rest: string) => ({
+        focus: 'Rest Interval Test',
+        exercises: [
+          { name: 'Barbell Squat', sets: '4', reps: '10', tempo: '2/0/2', rest, block: 'resistance' },
+          { name: 'Leg Press', sets: '4', reps: '10', tempo: '2/0/2', rest, block: 'resistance' },
+        ],
+      })
+
+      const shortRest = calculateEstimatedWorkoutDuration({
+        workout: makeWorkoutWithRest('45s'),
+        optPhase: 2,
+      })
+
+      const standardRest = calculateEstimatedWorkoutDuration({
+        workout: makeWorkoutWithRest('90s'),
+        optPhase: 3,
+      })
+
+      const longRest = calculateEstimatedWorkoutDuration({
+        workout: makeWorkoutWithRest('180s'),
+        optPhase: 4,
+      })
+
+      expect(shortRest.baseRestSeconds).toBeLessThan(standardRest.baseRestSeconds)
+      expect(standardRest.baseRestSeconds).toBeLessThan(longRest.baseRestSeconds)
+      expect(shortRest.totalDurationMins).toBeLessThan(standardRest.totalDurationMins)
+      expect(standardRest.totalDurationMins).toBeLessThan(longRest.totalDurationMins)
+    })
+
+    it('calculates an explicit extra rest buffer for fatigue accumulation and bio-adaptive recovery', () => {
+      const workout = {
+        focus: 'Compound Fatigue Test',
+        exercises: [
+          { name: 'Barbell Bench Press', sets: '3', reps: '10', tempo: '2/0/2', rest: '60s', block: 'resistance' },
+          { name: 'Barbell Bent Over Row', sets: '3', reps: '10', tempo: '2/0/2', rest: '60s', block: 'resistance' },
+        ],
+      }
+
+      const withBuffer = calculateEstimatedWorkoutDuration({
+        workout,
+        optPhase: 2,
+        options: { includeFatigueRestBuffer: true, restBufferFactor: 0.15, compoundExtraRestBufferSeconds: 15 },
+      })
+
+      const withoutBuffer = calculateEstimatedWorkoutDuration({
+        workout,
+        optPhase: 2,
+        options: { includeFatigueRestBuffer: false },
+      })
+
+      expect(withBuffer.restBufferSeconds).toBeGreaterThan(0)
+      expect(withoutBuffer.restBufferSeconds).toBe(0)
+      expect(withBuffer.totalRestSeconds).toBe(withBuffer.baseRestSeconds + withBuffer.restBufferSeconds)
+      expect(withBuffer.totalDurationMins).toBeGreaterThanOrEqual(withoutBuffer.totalDurationMins)
+    })
+
+    it('enforces <= 52 min ceiling while accommodating the extra rest buffer', () => {
+      const heavyDay = {
+        day: 1,
+        focus: 'Heavy Upper Body',
+        nasmOptPhase: 1,
+        exercises: [
+          { name: 'Dumbbell Bench Press', sets: '4', reps: '15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Dumbbell Bent Over Row', sets: '4', reps: '15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Single Leg Scaption', sets: '3', reps: '15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Dumbbell Bent-Over Extension', sets: '3', reps: '15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+        ],
+      }
+
+      const result = enforceSessionDurationHardCap(heavyDay, {
+        maxDurationMins: 52,
+        includeFatigueRestBuffer: true,
+      })
+
+      expect(result.durationBreakdown.totalDurationMins).toBeLessThanOrEqual(52)
+      expect(result.durationBreakdown.restBufferSeconds).toBeGreaterThan(0)
+    })
+  })
 })
+
 

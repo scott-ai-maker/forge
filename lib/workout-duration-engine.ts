@@ -27,6 +27,7 @@ export interface WorkoutDurationExerciseInput {
 }
 
 export interface WorkoutDurationCardioInput {
+  title?: string | null
   durationMins?: number | string | null
   stage?: number | string | null
   modality?: string | null
@@ -39,6 +40,19 @@ export interface WorkoutDurationOptions {
   defaultCooldownMins?: number
   interExerciseTransitionSeconds?: number
   compoundRampSetSeconds?: number
+  /**
+   * Extra rest buffer factor on intra-set rest (default 0.12 = 12%).
+   * Accommodates cumulative fatigue, breathing intervals, and bio-adaptive timer extensions.
+   */
+  restBufferFactor?: number
+  /**
+   * Explicit extra rest buffer in seconds added per compound lift working set (default 15s).
+   */
+  compoundExtraRestBufferSeconds?: number
+  /**
+   * Whether to include the fatigue and extra rest buffer (default true).
+   */
+  includeFatigueRestBuffer?: boolean
 }
 
 export interface WorkoutDurationBreakdown {
@@ -49,6 +63,9 @@ export interface WorkoutDurationBreakdown {
   totalDurationMins: number
   totalWorkingSets: number
   totalExercises: number
+  baseRestSeconds: number
+  restBufferSeconds: number
+  restBufferMins: number
   totalRestSeconds: number
   totalWorkSeconds: number
   totalTransitionSeconds: number
@@ -180,19 +197,22 @@ export function parseRepsCount(reps: string | number | undefined | null): number
 export function resolveRepDurationSeconds(tempo?: string | null, phase = 1): number {
   if (tempo) {
     const clean = tempo.trim().toLowerCase()
-    // e.g. "4/2/1" -> 4 + 2 + 1 = 7s
-    const parts = clean.split('/')
-    if (parts.length === 3) {
-      const ecc = parseInt(parts[0], 10)
-      const iso = parseInt(parts[1], 10)
-      const con = parseInt(parts[2], 10)
-      if (!isNaN(ecc) && !isNaN(iso) && !isNaN(con)) {
-        return Math.max(2, ecc + iso + con)
+    // Support 3-part ("4/2/1", "4-2-1") or 4-part ("4/2/1/0", "3/1/2/1") tempo notation
+    const delimiter = clean.includes('/') ? '/' : clean.includes('-') ? '-' : null
+    if (delimiter) {
+      const parts = clean.split(delimiter)
+      if (parts.length === 3 || parts.length === 4) {
+        const nums = parts.map(p => parseInt(p.trim(), 10))
+        if (nums.every(n => !isNaN(n) && n >= 0)) {
+          const sum = nums.reduce((a, b) => a + b, 0)
+          return Math.max(1.5, sum)
+        }
       }
     }
+    if (clean.includes('isometric') || clean.includes('iso')) return 6
     if (clean.includes('slow')) return 5
-    if (clean.includes('mod') || clean.includes('medium')) return 4
-    if (clean.includes('fast') || clean.includes('explosive') || clean.includes('x')) return 2.5
+    if (clean.includes('mod') || clean.includes('medium') || clean.includes('controlled')) return 4
+    if (clean.includes('fast') || clean.includes('explosive') || clean.includes('x') || clean.includes('power')) return 2.5
   }
 
   // Phase-specific tempo defaults
@@ -226,7 +246,7 @@ export function calculateSingleSetWorkSeconds(
 
   const reps = parseRepsCount(exercise.reps)
   const repSeconds = resolveRepDurationSeconds(exercise.tempo, phase)
-  return Math.max(15, Math.min(100, Math.round(reps * repSeconds)))
+  return Math.max(15, Math.min(180, Math.round(reps * repSeconds)))
 }
 
 /**
@@ -296,10 +316,15 @@ export function calculateEstimatedWorkoutDuration({
 
   // 2. Resistance / Working Sets duration
   let totalWorkSeconds = 0
-  let totalRestSeconds = 0
+  let baseRestSeconds = 0
+  let restBufferSeconds = 0
   let totalWorkingSets = 0
   let totalTransitionSeconds = 0
   let compoundRampsAdded = 0
+
+  const includeBuffer = options.includeFatigueRestBuffer !== false
+  const bufferFactor = options.restBufferFactor ?? 0.12 // 12% baseline rest buffer
+  const compoundBufferSec = options.compoundExtraRestBufferSeconds ?? 15 // 15s per compound working set
 
   for (let i = 0; i < workingExercises.length; i++) {
     const ex = workingExercises[i]
@@ -322,13 +347,24 @@ export function calculateEstimatedWorkoutDuration({
     }
 
     if (sets > 1) {
-      totalRestSeconds += (sets - 1) * effectiveRest
+      const exerciseBaseRest = (sets - 1) * effectiveRest
+      baseRestSeconds += exerciseBaseRest
+
+      // Extra Rest & Fatigue Buffer:
+      // Real-world sets accumulate neuromuscular and cardiorespiratory fatigue:
+      // 1. Later sets require additional recovery time (bio-adaptive rest extensions).
+      // 2. Heavy compound lifts generate systemic strain requiring breathing/water intervals.
+      if (includeBuffer) {
+        const factorBuffer = Math.round(exerciseBaseRest * bufferFactor)
+        const compoundBuffer = isCompound ? (sets - 1) * compoundBufferSec : 0
+        restBufferSeconds += factorBuffer + compoundBuffer
+      }
     }
 
     // Compound acclimation / ramp-up set on first 2 major compound lifts
     if (isCompound && compoundRampsAdded < 2) {
       totalWorkSeconds += 30
-      totalRestSeconds += compoundRampSec
+      baseRestSeconds += compoundRampSec
       compoundRampsAdded++
     }
 
@@ -338,6 +374,8 @@ export function calculateEstimatedWorkoutDuration({
     }
   }
 
+  const totalRestSeconds = baseRestSeconds + restBufferSeconds
+  const restBufferMins = Math.round(restBufferSeconds / 60)
   const resistanceTotalSeconds = totalWorkSeconds + totalRestSeconds + totalTransitionSeconds
   const resistanceMins = Math.round(resistanceTotalSeconds / 60)
 
@@ -386,10 +424,217 @@ export function calculateEstimatedWorkoutDuration({
     totalDurationMins,
     totalWorkingSets,
     totalExercises: workingExercises.length,
+    baseRestSeconds,
+    restBufferSeconds,
+    restBufferMins,
     totalRestSeconds,
     totalWorkSeconds,
     totalTransitionSeconds,
     summaryLabel: formatDurationDisplay(totalDurationMins),
   }
 }
+
+export interface DurationCapOptions {
+  maxDurationMins?: number
+  targetDurationMins?: number
+  hasDedicatedCardioDays?: boolean
+  includeFatigueRestBuffer?: boolean
+  restBufferFactor?: number
+  compoundExtraRestBufferSeconds?: number
+}
+
+export interface EnforcedWorkoutDay {
+  day?: number
+  dayName?: string
+  focus?: string | null
+  nasmOptPhase?: number
+  phaseName?: string
+  estimatedDurationMins?: number
+  warmupProtocol?: {
+    inhibitSmr?: string[]
+    lengthenStaticStretch?: string[]
+    activateDynamic?: string[]
+  }
+  exercises?: WorkoutDurationExerciseInput[]
+  cardioProtocol?: WorkoutDurationCardioInput | null
+  dailyPeriodizationMemo?: string
+}
+
+export interface DurationEnforcementResult<T extends EnforcedWorkoutDay> {
+  workout: T
+  adjusted: boolean
+  repairs: string[]
+  durationBreakdown: WorkoutDurationBreakdown
+}
+
+/**
+ * Enforces a strict duration ceiling on any workout day to prevent client overtraining,
+ * excessive cortisol elevation, and glycogen exhaustion.
+ *
+ * Default ceiling: 52 minutes (strictly < 55 minutes, targeting 40-48 minutes).
+ */
+export function enforceSessionDurationHardCap<T extends EnforcedWorkoutDay>(
+  workoutDay: T,
+  options: DurationCapOptions = {}
+): DurationEnforcementResult<T> {
+  const maxMins = options.maxDurationMins ?? 52
+  const hasDedicatedCardio = options.hasDedicatedCardioDays ?? false
+
+  const calcDuration = (cardio = workoutDay.cardioProtocol) =>
+    calculateEstimatedWorkoutDuration({
+      workout: workoutDay,
+      cardio,
+      optPhase: workoutDay.nasmOptPhase,
+      options: {
+        includeFatigueRestBuffer: options.includeFatigueRestBuffer,
+        restBufferFactor: options.restBufferFactor,
+        compoundExtraRestBufferSeconds: options.compoundExtraRestBufferSeconds,
+      },
+    })
+
+  let bd = calcDuration()
+
+  if (bd.totalDurationMins <= maxMins) {
+    workoutDay.estimatedDurationMins = bd.totalDurationMins
+    return {
+      workout: workoutDay,
+      adjusted: false,
+      repairs: [],
+      durationBreakdown: bd,
+    }
+  }
+
+  const repairs: string[] = []
+  let adjusted = false
+
+  const focusLower = (workoutDay.focus || '').toLowerCase()
+  const isDedicatedCardioDay =
+    focusLower.includes('cardiorespiratory') ||
+    focusLower.includes('active recovery') ||
+    (workoutDay.exercises || []).some(
+      e =>
+        e.name?.toLowerCase().includes('cardiorespiratory') ||
+        (typeof e.reps === 'string' && e.reps.includes('min'))
+    )
+
+  if (isDedicatedCardioDay) {
+    if (bd.totalDurationMins > maxMins) {
+      if (workoutDay.cardioProtocol && Number(workoutDay.cardioProtocol.durationMins) > 20) {
+        const prev = workoutDay.cardioProtocol.durationMins
+        workoutDay.cardioProtocol.durationMins = 20
+        adjusted = true
+        repairs.push(`Calibrated dedicated cardio duration from ${prev}m to 20m`)
+        bd = calcDuration(workoutDay.cardioProtocol)
+      }
+    }
+  } else {
+    // ── Resistance Training Day ─────────────────────────────────────────────
+    // 1. Check cardio on resistance days:
+    if (hasDedicatedCardio && workoutDay.cardioProtocol) {
+      const prevDur = workoutDay.cardioProtocol.durationMins
+      workoutDay.cardioProtocol = undefined
+      adjusted = true
+      repairs.push(
+        `Eliminated ${prevDur}m cardio from resistance Day ${workoutDay.day ?? ''} to prevent overtraining (cardio handled on dedicated cardio days)`
+      )
+      bd = calcDuration(null)
+    } else if (workoutDay.cardioProtocol && Number(workoutDay.cardioProtocol.durationMins) > 10) {
+      const prevDur = workoutDay.cardioProtocol.durationMins
+      workoutDay.cardioProtocol.durationMins = 10
+      adjusted = true
+      repairs.push(`Scaled post-lift cardio finisher from ${prevDur}m down to 10m`)
+      bd = calcDuration(workoutDay.cardioProtocol)
+    }
+
+    // 2. Calibrate Resistance Sets if still exceeding maxMins:
+    if (bd.totalDurationMins > maxMins && workoutDay.exercises) {
+      // First pass: reduce secondary / accessory / core exercises to 2 sets
+      for (const ex of workoutDay.exercises) {
+        if (bd.totalDurationMins <= maxMins) break
+        const currentSets = parseSetsCount(ex.sets)
+        if (currentSets > 2 && !isCompoundLift(ex.name)) {
+          ex.sets = '2'
+          adjusted = true
+          repairs.push(`Scaled '${ex.name}' from ${currentSets} to 2 sets`)
+          bd = calcDuration(workoutDay.cardioProtocol)
+        }
+      }
+
+      // Second pass: if still > maxMins, scale remaining compound exercises (except first) to 2 sets
+      if (bd.totalDurationMins > maxMins) {
+        let compoundsSeen = 0
+        for (const ex of workoutDay.exercises) {
+          if (bd.totalDurationMins <= maxMins) break
+          if (isCompoundLift(ex.name)) {
+            compoundsSeen++
+            if (compoundsSeen > 1) {
+              const currentSets = parseSetsCount(ex.sets)
+              if (currentSets > 2) {
+                ex.sets = '2'
+                adjusted = true
+                repairs.push(`Scaled compound '${ex.name}' from ${currentSets} to 2 sets`)
+                bd = calcDuration(workoutDay.cardioProtocol)
+              }
+            }
+          }
+        }
+      }
+
+      // Third pass: if STILL > maxMins, scale primary compound exercise to 2 sets (NASM Phase 1 allows 1-3 sets)
+      if (bd.totalDurationMins > maxMins) {
+        for (const ex of workoutDay.exercises) {
+          if (bd.totalDurationMins <= maxMins) break
+          const currentSets = parseSetsCount(ex.sets)
+          if (currentSets > 2) {
+            ex.sets = '2'
+            adjusted = true
+            repairs.push(`Scaled '${ex.name}' to 2 sets`)
+            bd = calcDuration(workoutDay.cardioProtocol)
+          }
+        }
+      }
+    }
+
+    // 3. Streamline Warmup Protocol if bloated:
+    if (workoutDay.warmupProtocol) {
+      if (workoutDay.warmupProtocol.inhibitSmr && workoutDay.warmupProtocol.inhibitSmr.length > 3) {
+        workoutDay.warmupProtocol.inhibitSmr = workoutDay.warmupProtocol.inhibitSmr.slice(0, 3)
+        adjusted = true
+        repairs.push('Streamlined SMR foam rolling to top 3 priority kinetic points')
+      }
+      if (workoutDay.warmupProtocol.lengthenStaticStretch && workoutDay.warmupProtocol.lengthenStaticStretch.length > 3) {
+        workoutDay.warmupProtocol.lengthenStaticStretch = workoutDay.warmupProtocol.lengthenStaticStretch.slice(0, 3)
+        adjusted = true
+        repairs.push('Streamlined static stretching to top 3 priority lines')
+      }
+      if (workoutDay.warmupProtocol.activateDynamic && workoutDay.warmupProtocol.activateDynamic.length > 2) {
+        workoutDay.warmupProtocol.activateDynamic = workoutDay.warmupProtocol.activateDynamic.slice(0, 2)
+        adjusted = true
+        repairs.push('Streamlined dynamic activation to top 2 movement preps')
+      }
+      bd = calcDuration(workoutDay.cardioProtocol)
+    }
+  }
+
+  workoutDay.estimatedDurationMins = bd.totalDurationMins
+
+  if (adjusted && workoutDay.dailyPeriodizationMemo) {
+    if (!workoutDay.cardioProtocol) {
+      workoutDay.dailyPeriodizationMemo = workoutDay.dailyPeriodizationMemo
+        .replace(/Integrated Cardio:[^.]+\.\s*/gi, '')
+        .trim()
+    } else {
+      workoutDay.dailyPeriodizationMemo = workoutDay.dailyPeriodizationMemo
+        .replace(/Integrated Cardio:[^.]+\./gi, `Integrated Cardio: ${workoutDay.cardioProtocol.title || 'Cardio Finisher'} (${workoutDay.cardioProtocol.durationMins} min).`)
+    }
+  }
+
+  return {
+    workout: workoutDay,
+    adjusted,
+    repairs,
+    durationBreakdown: bd,
+  }
+}
+
 

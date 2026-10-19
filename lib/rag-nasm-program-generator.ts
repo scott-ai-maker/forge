@@ -20,7 +20,7 @@ import { enrichExerciseMedia } from './nasm-exercise-video-catalog'
 import { checkExerciseContraindications } from './liability-shield'
 import { parseInjuriesFromText, getInjuryAugmentations } from './sports-injuries'
 import { substituteMissingEquipment, enforcePhaseExerciseConstraints } from './nasm-opt-guardrails'
-import { calculateEstimatedWorkoutDuration } from './workout-duration-engine'
+import { calculateEstimatedWorkoutDuration, enforceSessionDurationHardCap } from './workout-duration-engine'
 
 export interface RagProgramGenerationRequest {
   clientName?: string
@@ -345,6 +345,12 @@ export function buildIntegratedCardioPrescription(params: {
     ? '🛡️ Medication Guidance: Heart rate is blunted by cardiac/hypertension medication. Regulate workout intensity exclusively with RPE and the Talk Test.'
     : null
 
+  // On dedicated conditioning splits, cardio is programmed onto designated off-days (e.g. Day 2, 4).
+  // Strength days (Days 1, 3, etc.) must NOT stack long cardio on top of resistance to prevent overtraining.
+  if (blendStyle === 'dedicated_conditioning' && dayIndex % 2 !== 0) {
+    return undefined
+  }
+
   if (goal === 'fat_loss') {
     const isIntervalDay = dayIndex % 2 === 0 && (phase > 1 || totalDays <= 3)
     if (isIntervalDay) {
@@ -367,8 +373,8 @@ export function buildIntegratedCardioPrescription(params: {
           ? `RPE 6–7 Governed (Observed est: ${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM)`
           : `${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM`,
         targetRpe: 'RPE 6–7 / 10 (Challenging Threshold Pace)',
-        durationMins: phase === 1 ? 15 : 20,
-        workRestRatio: 'Intervals: 1:2 Work-to-Rest (60s Work / 120s Recovery × 6 rounds)',
+        durationMins: 8,
+        workRestRatio: 'Intervals: 1:2 Work-to-Rest (30s Work / 60s Recovery × 5–6 rounds)',
         timingGuideline: 'Perform immediately post-resistance training (or separated by ≥6 hours). Strength first → Cardio second.',
         recommendedModalities: modalities,
         metabolicRationale: 'Pushes aerobic threshold and elevates 24-hour Excess Post-Exercise Oxygen Consumption (EPOC) to increase total daily energy expenditure.',
@@ -389,8 +395,8 @@ export function buildIntegratedCardioPrescription(params: {
           ? `RPE 3–4 Governed (Observed est: ${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`
           : `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM`,
         targetRpe: 'RPE 3–4 / 10 (Moderate Conversational Pace)',
-        durationMins: 20,
-        workRestRatio: 'Steady State: Continuous Aerobic Pace',
+        durationMins: 10,
+        workRestRatio: 'Steady State: Continuous Aerobic Pace (10-minute Post-Lift Metabolic Flush)',
         timingGuideline: 'Perform immediately following strength training when glycogen is depleted for enhanced fatty acid oxidation.',
         recommendedModalities: modalities,
         metabolicRationale: 'Maximizes fat oxidation in a glycogen-depleted state without elevating cortisol or interfering with joint and muscular recovery.',
@@ -419,9 +425,9 @@ export function buildIntegratedCardioPrescription(params: {
         ? `RPE 3 Governed (Observed est: ${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`
         : `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM`,
       targetRpe: 'RPE 3 / 10 (Light Recovery Pace)',
-      durationMins: 15,
+      durationMins: 8,
       workRestRatio: 'Steady State: Continuous Low-Impact',
-      timingGuideline: 'Perform post-lift for 10–15 mins or on non-lifting recovery days. Avoid high-impact running to preserve leg recovery for heavy squats.',
+      timingGuideline: 'Perform post-lift for 8–10 mins or on non-lifting recovery days. Avoid high-impact running to preserve leg recovery for heavy squats.',
       recommendedModalities: modalities,
       metabolicRationale: 'Stimulates intramuscular capillary network density and enhances venous return for accelerated metabolite clearance without activating AMPK or blunting mTOR protein synthesis.',
       coachingCues: [
@@ -825,9 +831,9 @@ function buildDistinctOptWorkoutDay(params: {
   }
 
   if (kineticCompensations.includes('knees_cave_in')) {
-    warmupProtocol.inhibitSmr.push('Adductor Complex SMR - 30s per leg')
-    warmupProtocol.lengthenStaticStretch.push('Static Side Lunge Adductor Stretch - 30s per side')
-    warmupProtocol.activateDynamic.push(
+    warmupProtocol.inhibitSmr.unshift('Adductor Complex SMR - 30s per leg')
+    warmupProtocol.lengthenStaticStretch.unshift('Static Side Lunge Adductor Stretch - 30s per side')
+    warmupProtocol.activateDynamic.unshift(
       eq.hasBands
         ? 'Lateral Band Walk (Gluteus Medius Activation) - 15 steps each way'
         : 'Side-Lying Clamshell with 2s Hold - 15 reps/leg'
@@ -835,15 +841,15 @@ function buildDistinctOptWorkoutDay(params: {
   }
 
   if (kineticCompensations.includes('excessive_forward_lean')) {
-    warmupProtocol.inhibitSmr.push('Quadriceps & Rectus Femoris SMR - 30s per leg')
-    warmupProtocol.lengthenStaticStretch.push('Static Quad & Psoas Stretch - 30s per side')
-    warmupProtocol.activateDynamic.push('Standing Quadruped Bird-Dog - 12 reps per side')
+    warmupProtocol.inhibitSmr.unshift('Quadriceps & Rectus Femoris SMR - 30s per leg')
+    warmupProtocol.lengthenStaticStretch.unshift('Static Quad & Psoas Stretch - 30s per side')
+    warmupProtocol.activateDynamic.unshift('Standing Quadruped Bird-Dog - 12 reps per side')
   }
 
   if (kineticCompensations.includes('arms_fall_forward')) {
-    warmupProtocol.inhibitSmr.push('Pectoralis Major / Minor SMR - 30s per side')
-    warmupProtocol.lengthenStaticStretch.push('Static Doorframe Latissimus Stretch - 30s per side')
-    warmupProtocol.activateDynamic.push('Band / Bodyweight Wall Slides (Lower Trapezius Activation) - 12 reps')
+    warmupProtocol.inhibitSmr.unshift('Pectoralis Major / Minor SMR - 30s per side')
+    warmupProtocol.lengthenStaticStretch.unshift('Static Doorframe Latissimus Stretch - 30s per side')
+    warmupProtocol.activateDynamic.unshift('Band / Bodyweight Wall Slides (Lower Trapezius Activation) - 12 reps')
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -2875,22 +2881,23 @@ function buildDistinctOptWorkoutDay(params: {
     hasHeartMedications,
   })
 
-  const sessionDurationBreakdown = calculateEstimatedWorkoutDuration({
-    workout: { exercises, focus },
-    cardio: cardioProtocol ? { durationMins: cardioProtocol.durationMins, stage: cardioProtocol.stage } : null,
-    optPhase: phase,
-  })
-
-  return {
+  const rawDay: GeneratedWorkoutDay = {
     day: dayIndex,
     dayName: `Day ${dayIndex}: ${focus}`,
     focus,
     nasmOptPhase: phase,
     phaseName: phaseMeta.phaseName,
-    estimatedDurationMins: sessionDurationBreakdown.totalDurationMins,
+    estimatedDurationMins: 45,
     warmupProtocol,
     exercises,
     cardioProtocol,
     dailyPeriodizationMemo: `Session designed according to ${phaseMeta.phaseName} standards on ${eq.summaryLabel} (${phaseMeta.reps} reps, ${phaseMeta.tempo} tempo, ${phaseMeta.rest} rest). ${cardioProtocol ? `Integrated Cardio: ${cardioProtocol.title} (${cardioProtocol.durationMins} min in ${cardioProtocol.targetZone}). ` : ''}${phaseMeta.systemDescription}`,
   }
+
+  const durationEnforced = enforceSessionDurationHardCap(rawDay, {
+    maxDurationMins: 52,
+    hasDedicatedCardioDays: cardioBlendStyle === 'dedicated_conditioning',
+  })
+
+  return durationEnforced.workout
 }

@@ -33,6 +33,7 @@ import {
   OhsaObservation,
 } from './nasm-assessments'
 import { parseInjuriesFromText } from './sports-injuries'
+import { validateAndEnforceNasmOptGuardrails } from './nasm-opt-guardrails'
 
 export interface ClientOnboardingProfileInput {
   clientId: string
@@ -414,13 +415,14 @@ export function generateProgramDesignFromScans(params: {
   })
 
   // Explicitly embed the 4-Phase CEx Warmup Continuum into each workout day
+  // Slicing to max 3 items per warmup phase to prevent bloat while targeting primary compensations
   const enrichedWorkouts: GeneratedWorkoutDay[] = baseProgram.workouts.map(day => {
     return {
       ...day,
       warmupProtocol: {
-        inhibitSmr: Array.from(new Set([...day.warmupProtocol.inhibitSmr, ...cexSummary.inhibit])),
-        lengthenStaticStretch: Array.from(new Set([...day.warmupProtocol.lengthenStaticStretch, ...cexSummary.lengthen])),
-        activateDynamic: Array.from(new Set([...day.warmupProtocol.activateDynamic, ...cexSummary.activate])),
+        inhibitSmr: Array.from(new Set([...day.warmupProtocol.inhibitSmr, ...cexSummary.inhibit])).slice(0, 3),
+        lengthenStaticStretch: Array.from(new Set([...day.warmupProtocol.lengthenStaticStretch, ...cexSummary.lengthen])).slice(0, 3),
+        activateDynamic: Array.from(new Set([...day.warmupProtocol.activateDynamic, ...cexSummary.activate])).slice(0, 3),
       },
       dailyPeriodizationMemo: `${day.dailyPeriodizationMemo} [AI 4-Phase CEx]: Inhibit ${cexSummary.inhibit[0] || 'tight lines'}, Lengthen ${cexSummary.lengthen[0] || 'hip flexors'}, Activate ${cexSummary.activate[0] || 'glutes'}, Integrate ${cexSummary.integrate[0] || 'movement patterns'}.`,
     }
@@ -437,23 +439,36 @@ export function generateProgramDesignFromScans(params: {
     dexaScan ? `Nutritional synchronization: Maintain protein at 1.0g per lb Lean Body Mass (${Math.round(dexaScan.leanBodyMassLbs)}g/day) to preserve skeletal muscle.` : `Fuel adequately 90 minutes prior to training session.`,
   ]
 
-  const enrichedPlan: GeneratedMacrocyclePlan = {
+  const rawEnrichedPlan: GeneratedMacrocyclePlan = {
     ...baseProgram,
     workouts: enrichedWorkouts,
     planTitle: `${client.clientName} — 4-Phase CEx & OPT Phase ${targetPhase} Protocol`,
   }
 
+  // Enforce NASM OPT guardrails: 52-min duration hard cap, tempo/set volume bounds, equipment, and injury safety
+  const { sanitizedPlan } = validateAndEnforceNasmOptGuardrails(rawEnrichedPlan, {
+    targetPhase,
+    equipmentAccess: client.equipmentAccess,
+    kineticCompensations: postureScan?.detectedCompensations,
+    contraindicationTags: client.contraindicationTags,
+  })
+
+  // Calculate actual average workout duration across the validated days
+  const avgDurationMins = sanitizedPlan.workouts.length > 0
+    ? Math.round(sanitizedPlan.workouts.reduce((acc, w) => acc + (w.estimatedDurationMins || (w as unknown as { estimatedDurationMinutes?: number }).estimatedDurationMinutes || 45), 0) / sanitizedPlan.workouts.length)
+    : 45
+
   return {
-    planTitle: enrichedPlan.planTitle,
-    goal: enrichedPlan.primaryGoal,
+    planTitle: sanitizedPlan.planTitle,
+    goal: sanitizedPlan.primaryGoal,
     nasmOptPhase: targetPhase,
     phaseName: periodization.targetPhaseName,
     sessionsPerWeek: daysPerWeek,
-    estimatedDurationMins: 55,
-    macrocyclePlan: enrichedPlan,
+    estimatedDurationMins: avgDurationMins,
+    macrocyclePlan: sanitizedPlan,
     embeddedCEx: cexSummary,
     masterCoachCues,
-    summary: `Complete ${daysPerWeek}-day OPT Phase ${targetPhase} workout program designed by AI Coach with custom 4-Phase CEx Warmup embedded on every day.`,
+    summary: `Complete ${daysPerWeek}-day OPT Phase ${targetPhase} workout program designed by AI Coach with custom 4-Phase CEx Warmup embedded on every day (${avgDurationMins} min target).`,
   }
 }
 

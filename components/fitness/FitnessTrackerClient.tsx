@@ -3228,7 +3228,7 @@ export default function FitnessTrackerClient({
                               </div>
                               <div style={{ color: 'var(--white)', fontWeight: 700 }}>~{resistanceEstMins} mins</div>
                               <div style={{ fontSize: 10, color: 'var(--gray)' }}>
-                                {durationBreakdown.totalExercises} exercises · {totalWorkingSets} sets · ~{Math.round(durationBreakdown.totalRestSeconds / 60)}m rest
+                                {durationBreakdown.totalExercises} exercises · {totalWorkingSets} sets · ~{Math.round(durationBreakdown.totalRestSeconds / 60)}m rest{durationBreakdown.restBufferSeconds > 0 ? ` (incl. ~${Math.max(1, Math.round(durationBreakdown.restBufferSeconds / 60))}m buffer)` : ''}
                               </div>
                             </div>
 
