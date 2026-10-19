@@ -210,43 +210,52 @@ describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool
 
   describe('Anatomical Overlay & Reticle Coordinate Calibration', () => {
     it('ensures crosshair reticles sit directly on muscle bellies and respect joint boundaries', () => {
-      // 1. Quadriceps must sit above the patella (< 460)
+      // 1. Quadriceps must sit above the patella (< 440)
       const quadCoords = MUSCLE_TARGET_COORDINATES.quadriceps.anterior!
       expect(quadCoords).toBeDefined()
       expect(quadCoords.length).toBe(2)
       quadCoords.forEach(([cx, cy]) => {
-        expect(cy).toBeLessThanOrEqual(450) // Calibrated to 445 (above knee joint at ~520)
+        expect(cy).toBeLessThanOrEqual(440) // Calibrated to 437 (above knee joint at ~520)
         expect(cy).toBeGreaterThan(400)
       })
 
-      // 2. Gluteals must sit above the inferior gluteal fold (< 410)
+      // 2. Gluteals must sit above the inferior gluteal fold (< 390)
       const gluteCoords = MUSCLE_TARGET_COORDINATES.gluteals.posterior!
       expect(gluteCoords).toBeDefined()
       gluteCoords.forEach(([cx, cy]) => {
-        expect(cy).toBeLessThanOrEqual(400) // Calibrated to 390 (above hamstring origin)
-        expect(cy).toBeGreaterThan(350)
+        expect(cy).toBeLessThanOrEqual(390) // Calibrated to 382 (above hamstring origin)
+        expect(cy).toBeGreaterThan(340)
       })
 
-      // 3. Rectus Abdominis core reticle sits centered on the 6-pack (between 270 and 295)
+      // 3. Rectus Abdominis core reticle sits centered on the 6-pack
       const absCoords = MUSCLE_TARGET_COORDINATES.abdominals.anterior!
       expect(absCoords).toBeDefined()
-      expect(absCoords[0][1]).toBe(285)
+      expect(absCoords[0][1]).toBe(277)
 
-      // 4. Hamstrings sit between gluteal fold and popliteal fossa (< 500)
+      // 4. Hamstrings sit between gluteal fold and popliteal fossa (< 480)
       const hamCoords = MUSCLE_TARGET_COORDINATES.hamstrings.posterior!
       expect(hamCoords).toBeDefined()
       hamCoords.forEach(([cx, cy]) => {
-        expect(cy).toBeLessThanOrEqual(490) // Calibrated to 485
-        expect(cy).toBeGreaterThan(440)
+        expect(cy).toBeLessThanOrEqual(480) // Calibrated to 477
+        expect(cy).toBeGreaterThan(430)
       })
 
-      // 5. Gastrocnemius (calves) sits in the upper diamond heads (< 630)
+      // 5. Gastrocnemius (calves) sits in the upper diamond heads (< 610)
       const calfCoords = MUSCLE_TARGET_COORDINATES.calves_gastrocnemius.posterior!
       expect(calfCoords).toBeDefined()
       calfCoords.forEach(([cx, cy]) => {
-        expect(cy).toBeLessThanOrEqual(620) // Calibrated to 610 (above Achilles tendon)
-        expect(cy).toBeGreaterThan(570)
+        expect(cy).toBeLessThanOrEqual(610) // Calibrated to 602 (above Achilles tendon)
+        expect(cy).toBeGreaterThan(560)
       })
+
+      // 6. Arm muscles must be shifted medially toward the torso centerline (X=256)
+      const bicepCoords = MUSCLE_TARGET_COORDINATES.biceps.anterior!
+      expect(bicepCoords[0][0]).toBe(150) // Left bicep inward toward center
+      expect(bicepCoords[1][0]).toBe(362) // Right bicep inward toward center
+
+      const forearmCoords = MUSCLE_TARGET_COORDINATES.forearms.anterior!
+      expect(forearmCoords[0][0]).toBe(122) // Left forearm inward toward center
+      expect(forearmCoords[1][0]).toBe(390) // Right forearm inward toward center
     })
   })
 })

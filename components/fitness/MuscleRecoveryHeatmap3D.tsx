@@ -44,24 +44,24 @@ interface Props {
 }
 
 export const MUSCLE_TARGET_COORDINATES: Record<MuscleZoneId, { anterior?: [number, number][]; posterior?: [number, number][] }> = {
-  chest: { anterior: [[216, 190], [296, 190]] },
-  deltoids_anterior: { anterior: [[164, 180], [348, 180]] },
-  deltoids_lateral: { anterior: [[154, 184], [358, 184]], posterior: [[154, 184], [358, 184]] },
-  deltoids_posterior: { posterior: [[164, 180], [348, 180]] },
-  biceps: { anterior: [[138, 246], [374, 246]] },
-  triceps: { posterior: [[135, 246], [377, 246]] },
-  forearms: { anterior: [[110, 325], [402, 325]] },
-  abdominals: { anterior: [[256, 285]] },
-  obliques: { anterior: [[212, 285], [300, 285]] },
-  trapezius: { posterior: [[256, 175]] },
-  rhomboids: { posterior: [[236, 205], [276, 205]] },
-  latissimus_dorsi: { posterior: [[210, 255], [302, 255]] },
-  erector_spinae: { posterior: [[256, 295]] },
-  gluteals: { posterior: [[218, 390], [294, 390]] },
-  quadriceps: { anterior: [[210, 445], [302, 445]] },
-  hamstrings: { posterior: [[210, 485], [302, 485]] },
-  calves_gastrocnemius: { posterior: [[208, 610], [304, 610]] },
-  tibialis_anterior: { anterior: [[208, 625], [304, 625]] },
+  chest: { anterior: [[216, 182], [296, 182]] },
+  deltoids_anterior: { anterior: [[171, 172], [341, 172]] },
+  deltoids_lateral: { anterior: [[161, 176], [351, 176]], posterior: [[161, 176], [351, 176]] },
+  deltoids_posterior: { posterior: [[171, 172], [341, 172]] },
+  biceps: { anterior: [[150, 238], [362, 238]] },
+  triceps: { posterior: [[147, 238], [365, 238]] },
+  forearms: { anterior: [[122, 317], [390, 317]] },
+  abdominals: { anterior: [[256, 277]] },
+  obliques: { anterior: [[212, 277], [300, 277]] },
+  trapezius: { posterior: [[256, 167]] },
+  rhomboids: { posterior: [[236, 197], [276, 197]] },
+  latissimus_dorsi: { posterior: [[210, 247], [302, 247]] },
+  erector_spinae: { posterior: [[256, 287]] },
+  gluteals: { posterior: [[218, 382], [294, 382]] },
+  quadriceps: { anterior: [[210, 437], [302, 437]] },
+  hamstrings: { posterior: [[210, 477], [302, 477]] },
+  calves_gastrocnemius: { posterior: [[208, 602], [304, 602]] },
+  tibialis_anterior: { anterior: [[208, 617], [304, 617]] },
 }
 
 export default function MuscleRecoveryHeatmap3D({
@@ -693,8 +693,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M254 156 L190 158 C174 166 172 190 176 210 C186 228 220 232 254 226 Z'
-                        : 'M254 150 L184 152 C166 160 164 189 168 208 C178 226 216 230 254 224 Z'
+                        ? 'M254 148 L190 150 C174 158 172 182 176 202 C186 220 220 224 254 218 Z'
+                        : 'M254 142 L184 144 C166 152 164 181 168 200 C178 218 216 222 254 216 Z'
                     }
                     fill="url(#grad_chest_left)"
                     opacity={getOverlayOpacity('chest')}
@@ -709,8 +709,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M258 156 L322 158 C338 166 340 190 336 210 C326 228 292 232 258 226 Z'
-                        : 'M258 150 L328 152 C346 160 348 189 344 208 C334 226 296 230 258 224 Z'
+                        ? 'M258 148 L322 150 C338 158 340 182 336 202 C326 220 292 224 258 218 Z'
+                        : 'M258 142 L328 144 C346 152 348 181 344 200 C334 218 296 222 258 216 Z'
                     }
                     fill="url(#grad_chest_right)"
                     opacity={getOverlayOpacity('chest')}
@@ -727,8 +727,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M188 152 C164 154 152 170 150 192 C148 212 158 222 172 222 C178 204 182 178 188 152 Z'
-                        : 'M184 148 C160 150 146 166 144 189 C142 209 152 220 166 220 C174 202 178 174 184 148 Z'
+                        ? 'M195 144 C171 146 159 162 157 184 C155 204 165 214 179 214 C185 196 189 170 195 144 Z'
+                        : 'M191 140 C167 142 153 158 151 181 C149 201 159 212 173 212 C181 194 185 166 191 140 Z'
                     }
                     fill="url(#grad_delt_ant_left)"
                     opacity={getOverlayOpacity('deltoids_anterior')}
@@ -743,8 +743,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M324 152 C348 154 360 170 362 192 C364 212 354 222 340 222 C334 204 330 178 324 152 Z'
-                        : 'M328 148 C352 150 366 166 368 189 C370 209 360 220 346 220 C338 202 334 174 328 148 Z'
+                        ? 'M317 144 C341 146 353 162 355 184 C357 204 347 214 333 214 C327 196 323 170 317 144 Z'
+                        : 'M321 140 C345 142 359 158 361 181 C363 201 353 212 339 212 C331 194 327 166 321 140 Z'
                     }
                     fill="url(#grad_delt_ant_right)"
                     opacity={getOverlayOpacity('deltoids_anterior')}
@@ -761,8 +761,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M172 206 L142 210 C130 232 118 260 112 286 C126 290 142 290 150 284 C162 262 168 232 172 206 Z'
-                        : 'M170 206 L138 210 C124 232 110 260 102 286 C118 290 136 290 146 284 C158 262 166 232 170 206 Z'
+                        ? 'M184 198 L154 202 C142 224 130 252 124 278 C138 282 154 282 162 276 C174 254 180 224 184 198 Z'
+                        : 'M182 198 L150 202 C136 224 122 252 114 278 C130 282 148 282 158 276 C170 254 178 224 182 198 Z'
                     }
                     fill="url(#grad_bicep_left)"
                     opacity={getOverlayOpacity('biceps')}
@@ -777,8 +777,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M340 206 L370 210 C382 232 394 260 400 286 C386 290 370 290 362 284 C350 262 344 232 340 206 Z'
-                        : 'M342 206 L374 210 C388 232 402 260 410 286 C394 290 376 290 366 284 C354 262 346 232 342 206 Z'
+                        ? 'M328 198 L358 202 C370 224 382 252 388 278 C374 282 358 282 350 276 C338 254 332 224 328 198 Z'
+                        : 'M330 198 L362 202 C376 224 390 252 398 278 C382 282 364 282 354 276 C342 254 334 224 330 198 Z'
                     }
                     fill="url(#grad_bicep_right)"
                     opacity={getOverlayOpacity('biceps')}
@@ -795,8 +795,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M150 290 L114 292 C100 316 88 336 82 354 L104 354 C120 336 136 316 150 290 Z'
-                        : 'M144 290 L100 292 C84 316 72 336 68 351 L92 351 C108 336 126 316 144 290 Z'
+                        ? 'M162 282 L126 284 C112 308 100 328 94 346 L116 346 C132 328 148 308 162 282 Z'
+                        : 'M156 282 L112 284 C96 308 84 328 80 343 L104 343 C120 328 138 308 156 282 Z'
                     }
                     fill="url(#grad_forearm_left)"
                     opacity={getOverlayOpacity('forearms')}
@@ -811,8 +811,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M362 290 L398 292 C412 316 424 336 430 354 L408 354 C392 336 376 316 362 290 Z'
-                        : 'M368 290 L412 292 C428 316 440 336 444 351 L420 351 C404 336 386 316 368 290 Z'
+                        ? 'M350 282 L386 284 C400 308 412 328 418 346 L396 346 C380 328 364 308 350 282 Z'
+                        : 'M356 282 L400 284 C416 308 428 328 432 343 L408 343 C392 328 374 308 356 282 Z'
                     }
                     fill="url(#grad_forearm_right)"
                     opacity={getOverlayOpacity('forearms')}
@@ -829,8 +829,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M236 228 L276 228 C278 262 277 304 274 345 C266 354 246 354 238 345 C235 304 234 262 236 228 Z'
-                        : 'M235 226 L277 226 C280 260 279 302 275 345 C266 354 246 354 237 345 C233 302 232 260 235 226 Z'
+                        ? 'M236 220 L276 220 C278 254 277 296 274 337 C266 346 246 346 238 337 C235 296 234 254 236 220 Z'
+                        : 'M235 218 L277 218 C280 252 279 294 275 337 C266 346 246 346 237 337 C233 294 232 252 235 218 Z'
                     }
                     fill="url(#grad_abs)"
                     opacity={getOverlayOpacity('abdominals')}
@@ -847,8 +847,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M236 230 C216 236 200 258 198 296 C196 324 206 345 236 345 C234 312 234 272 236 230 Z'
-                        : 'M234 228 C212 234 194 256 192 294 C190 322 200 345 234 345 C232 312 232 270 234 228 Z'
+                        ? 'M236 222 C216 228 200 250 198 288 C196 316 206 337 236 337 C234 304 234 264 236 222 Z'
+                        : 'M234 220 C212 226 194 248 192 286 C190 314 200 337 234 337 C232 304 232 262 234 220 Z'
                     }
                     fill="url(#grad_oblique_left)"
                     opacity={getOverlayOpacity('obliques')}
@@ -863,8 +863,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M276 230 C296 236 312 258 314 296 C316 324 306 345 276 345 C278 312 278 272 276 230 Z'
-                        : 'M278 228 C300 234 318 256 320 294 C322 322 312 345 278 345 C280 312 280 270 278 228 Z'
+                        ? 'M276 222 C296 228 312 250 314 288 C316 316 306 337 276 337 C278 304 278 264 276 222 Z'
+                        : 'M278 220 C300 226 318 248 320 286 C322 314 312 337 278 337 C280 304 280 262 278 220 Z'
                     }
                     fill="url(#grad_oblique_right)"
                     opacity={getOverlayOpacity('obliques')}
@@ -881,8 +881,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M210 368 C188 382 178 415 180 455 C182 492 194 522 208 524 C224 522 240 492 240 435 C240 395 230 372 210 368 Z'
-                        : 'M210 368 C190 380 178 415 180 452 C182 490 194 522 208 524 C224 522 240 490 240 435 C240 395 230 372 210 368 Z'
+                        ? 'M210 360 C188 374 178 407 180 447 C182 484 194 514 208 516 C224 514 240 484 240 427 C240 387 230 364 210 360 Z'
+                        : 'M210 360 C190 372 178 407 180 444 C182 482 194 514 208 516 C224 514 240 482 240 427 C240 387 230 364 210 360 Z'
                     }
                     fill="url(#grad_quad_left)"
                     opacity={getOverlayOpacity('quadriceps')}
@@ -897,8 +897,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M302 368 C324 382 334 415 332 455 C330 492 318 522 304 524 C288 522 272 492 272 435 C272 395 282 372 302 368 Z'
-                        : 'M302 368 C322 380 334 415 332 452 C330 490 318 522 304 524 C288 522 272 490 272 435 C272 395 282 372 302 368 Z'
+                        ? 'M302 360 C324 374 334 407 332 447 C330 484 318 514 304 516 C288 514 272 484 272 427 C272 387 282 364 302 360 Z'
+                        : 'M302 360 C322 372 334 407 332 444 C330 482 318 514 304 516 C288 514 272 482 272 427 C272 387 282 364 302 360 Z'
                     }
                     fill="url(#grad_quad_right)"
                     opacity={getOverlayOpacity('quadriceps')}
@@ -915,8 +915,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M208 568 C196 586 190 621 194 666 C196 686 204 694 212 694 C220 694 224 666 224 621 C224 586 218 571 208 568 Z'
-                        : 'M208 568 C196 585 190 618 194 658 C196 676 204 682 212 682 C220 682 224 658 224 618 C224 585 218 571 208 568 Z'
+                        ? 'M208 560 C196 578 190 613 194 658 C196 678 204 686 212 686 C220 686 224 658 224 613 C224 578 218 563 208 560 Z'
+                        : 'M208 560 C196 577 190 610 194 650 C196 668 204 674 212 674 C220 674 224 650 224 610 C224 577 218 563 208 560 Z'
                     }
                     fill="url(#grad_tib_left)"
                     opacity={getOverlayOpacity('tibialis_anterior')}
@@ -931,8 +931,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M304 568 C316 586 322 621 318 666 C316 686 308 694 300 694 C292 694 288 666 288 621 C288 586 294 571 304 568 Z'
-                        : 'M304 568 C316 585 322 618 318 658 C316 676 308 682 300 682 C292 682 288 658 288 618 C288 585 294 571 304 568 Z'
+                        ? 'M304 560 C316 578 322 613 318 658 C316 678 308 686 300 686 C292 686 288 658 288 613 C288 578 294 563 304 560 Z'
+                        : 'M304 560 C316 577 322 610 318 650 C316 668 308 674 300 674 C292 674 288 650 288 610 C288 577 294 563 304 560 Z'
                     }
                     fill="url(#grad_tib_right)"
                     opacity={getOverlayOpacity('tibialis_anterior')}
@@ -954,8 +954,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M236 110 L256 118 L276 110 L330 142 C314 172 290 210 256 248 C222 210 198 172 182 142 Z'
-                        : 'M232 110 L256 118 L280 110 L335 142 C318 172 292 210 256 248 C220 210 194 172 177 142 Z'
+                        ? 'M236 102 L256 110 L276 102 L330 134 C314 164 290 202 256 240 C222 202 198 164 182 134 Z'
+                        : 'M232 102 L256 110 L280 102 L335 134 C318 164 292 202 256 240 C220 202 194 164 177 134 Z'
                     }
                     fill="url(#grad_trap)"
                     opacity={getOverlayOpacity('trapezius')}
@@ -972,8 +972,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M182 138 C162 148 150 166 148 190 C146 210 156 220 170 218 C176 199 180 169 182 138 Z'
-                        : 'M177 136 C158 146 144 164 142 189 C140 209 150 220 164 218 C172 199 174 169 177 136 Z'
+                        ? 'M189 130 C169 140 157 158 155 182 C153 202 163 212 177 210 C183 191 187 161 189 130 Z'
+                        : 'M184 128 C165 138 151 156 149 181 C147 201 157 212 171 210 C179 191 181 161 184 128 Z'
                     }
                     fill="url(#grad_delt_post_left)"
                     opacity={getOverlayOpacity('deltoids_posterior')}
@@ -988,8 +988,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M330 138 C350 148 362 166 364 190 C366 210 356 220 342 218 C336 199 332 169 330 138 Z'
-                        : 'M335 136 C354 146 368 164 370 189 C372 209 362 220 348 218 C340 199 338 169 335 136 Z'
+                        ? 'M323 130 C343 140 355 158 357 182 C359 202 349 212 335 210 C329 191 325 161 323 130 Z'
+                        : 'M328 128 C347 138 361 156 363 181 C365 201 355 212 341 210 C333 191 331 161 328 128 Z'
                     }
                     fill="url(#grad_delt_post_right)"
                     opacity={getOverlayOpacity('deltoids_posterior')}
@@ -1006,8 +1006,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M172 202 L134 202 C122 232 106 262 98 288 C112 292 130 292 140 286 C152 262 164 232 172 202 Z'
-                        : 'M174 202 L132 202 C118 232 98 262 90 288 C106 292 125 292 135 286 C148 262 162 232 174 202 Z'
+                        ? 'M184 194 L146 194 C134 224 118 254 110 280 C124 284 142 284 152 278 C164 254 176 224 184 194 Z'
+                        : 'M186 194 L144 194 C130 224 110 254 102 280 C118 284 137 284 147 278 C160 254 174 224 186 194 Z'
                     }
                     fill="url(#grad_tricep_left)"
                     opacity={getOverlayOpacity('triceps')}
@@ -1022,8 +1022,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M340 202 L378 202 C390 232 406 262 414 288 C400 292 382 292 372 286 C360 262 348 232 340 202 Z'
-                        : 'M338 202 L380 202 C394 232 414 262 422 288 C406 292 387 292 377 286 C364 262 350 232 338 202 Z'
+                        ? 'M328 194 L366 194 C378 224 394 254 402 280 C388 284 370 284 360 278 C348 254 336 224 328 194 Z'
+                        : 'M326 194 L368 194 C382 224 402 254 410 280 C394 284 375 284 365 278 C352 254 338 224 326 194 Z'
                     }
                     fill="url(#grad_tricep_right)"
                     opacity={getOverlayOpacity('triceps')}
@@ -1040,8 +1040,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M188 175 C180 207 186 257 194 311 C206 335 224 341 236 337 C238 287 236 237 242 213 C216 189 198 179 188 175 Z'
-                        : 'M185 175 C176 208 184 256 193 308 C205 332 224 338 236 334 C238 284 236 236 242 212 C215 188 195 179 185 175 Z'
+                        ? 'M188 167 C180 199 186 249 194 303 C206 327 224 333 236 329 C238 279 236 229 242 205 C216 181 198 171 188 167 Z'
+                        : 'M185 167 C176 200 184 248 193 300 C205 324 224 330 236 326 C238 276 236 228 242 204 C215 180 195 171 185 167 Z'
                     }
                     fill="url(#grad_lat_left)"
                     opacity={getOverlayOpacity('latissimus_dorsi')}
@@ -1056,8 +1056,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M324 175 C332 207 326 257 318 311 C306 335 288 341 276 337 C274 287 276 237 270 213 C296 189 314 179 324 175 Z'
-                        : 'M327 175 C336 208 328 256 319 308 C307 332 288 338 276 334 C274 284 276 236 270 212 C297 188 317 179 327 175 Z'
+                        ? 'M324 167 C332 199 326 249 318 303 C306 327 288 333 276 329 C274 279 276 229 270 205 C296 181 314 171 324 167 Z'
+                        : 'M327 167 C336 200 328 248 319 300 C307 324 288 330 276 326 C274 276 276 228 270 204 C297 180 317 171 327 167 Z'
                     }
                     fill="url(#grad_lat_right)"
                     opacity={getOverlayOpacity('latissimus_dorsi')}
@@ -1072,7 +1072,7 @@ export default function MuscleRecoveryHeatmap3D({
 
                   {/* Erector Spinae / Lower Back Spinal Pillars */}
                   <path
-                    d="M246 242 L266 242 L264 348 L248 348 Z"
+                    d="M246 234 L266 234 L264 340 L248 340 Z"
                     fill="url(#grad_erector)"
                     opacity={getOverlayOpacity('erector_spinae')}
                     stroke={getMuscleStroke('erector_spinae')}
@@ -1088,8 +1088,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M206 348 C182 365 178 395 184 425 C192 440 218 444 248 430 C250 395 250 365 246 352 C230 346 216 345 206 348 Z'
-                        : 'M208 348 C185 365 180 395 186 424 C194 438 220 442 250 428 C252 395 252 365 248 352 C232 346 218 345 208 348 Z'
+                        ? 'M206 340 C182 357 178 387 184 417 C192 432 218 436 248 422 C250 387 250 357 246 344 C230 338 216 337 206 340 Z'
+                        : 'M208 340 C185 357 180 387 186 416 C194 430 220 434 250 420 C252 387 252 357 248 344 C232 338 218 337 208 340 Z'
                     }
                     fill="url(#grad_glute_left)"
                     opacity={getOverlayOpacity('gluteals')}
@@ -1104,8 +1104,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M306 348 C330 365 334 395 328 425 C320 440 294 444 264 430 C262 395 262 365 266 352 C282 346 296 345 306 348 Z'
-                        : 'M304 348 C327 365 332 395 326 424 C318 438 292 442 262 428 C260 395 260 365 264 352 C280 346 294 345 304 348 Z'
+                        ? 'M306 340 C330 357 334 387 328 417 C320 432 294 436 264 422 C262 387 262 357 266 344 C282 338 296 337 306 340 Z'
+                        : 'M304 340 C327 357 332 387 326 416 C318 430 292 434 262 420 C260 387 260 357 264 344 C280 338 294 337 304 340 Z'
                     }
                     fill="url(#grad_glute_right)"
                     opacity={getOverlayOpacity('gluteals')}
@@ -1122,8 +1122,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M208 432 C186 447 176 482 180 527 C184 547 196 556 208 556 C224 554 236 532 238 482 C240 452 228 437 208 432 Z'
-                        : 'M210 432 C188 447 178 480 182 522 C186 542 198 550 210 550 C226 548 238 528 240 480 C242 452 230 437 210 432 Z'
+                        ? 'M208 424 C186 439 176 474 180 519 C184 539 196 548 208 548 C224 546 236 524 238 474 C240 444 228 429 208 424 Z'
+                        : 'M210 424 C188 439 178 472 182 514 C186 534 198 542 210 542 C226 540 238 520 240 472 C242 444 230 429 210 424 Z'
                     }
                     fill="url(#grad_ham_left)"
                     opacity={getOverlayOpacity('hamstrings')}
@@ -1138,8 +1138,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M304 432 C326 447 336 482 332 527 C328 547 316 556 304 556 C288 554 276 532 274 482 C272 452 284 437 304 432 Z'
-                        : 'M302 432 C324 447 334 480 330 522 C326 542 314 550 302 550 C286 548 274 528 272 480 C270 452 282 437 302 432 Z'
+                        ? 'M304 424 C326 439 336 474 332 519 C328 539 316 548 304 548 C288 546 276 524 274 474 C272 444 284 429 304 424 Z'
+                        : 'M302 424 C324 439 334 472 330 514 C326 534 314 542 302 542 C286 540 274 520 272 472 C270 444 282 429 302 424 Z'
                     }
                     fill="url(#grad_ham_right)"
                     opacity={getOverlayOpacity('hamstrings')}
@@ -1156,8 +1156,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M208 556 C188 576 182 606 186 641 C190 671 200 686 208 686 C218 686 228 656 228 611 C228 576 220 561 208 556 Z'
-                        : 'M208 556 C188 576 182 606 186 640 C190 668 200 682 208 682 C218 682 228 655 228 612 C228 578 220 562 208 556 Z'
+                        ? 'M208 548 C188 568 182 598 186 633 C190 663 200 678 208 678 C218 678 228 648 228 603 C228 568 220 553 208 548 Z'
+                        : 'M208 548 C188 568 182 598 186 632 C190 660 200 674 208 674 C218 674 228 647 228 604 C228 570 220 554 208 548 Z'
                     }
                     fill="url(#grad_calf_left)"
                     opacity={getOverlayOpacity('calves_gastrocnemius')}
@@ -1172,8 +1172,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M304 556 C324 576 330 606 326 641 C322 671 312 686 304 686 C294 686 284 656 284 611 C284 576 292 561 304 556 Z'
-                        : 'M304 556 C324 576 330 606 326 640 C322 668 312 682 304 682 C294 682 284 655 284 612 C284 578 292 562 304 556 Z'
+                        ? 'M304 548 C324 568 330 598 326 633 C322 663 312 678 304 678 C294 678 284 648 284 603 C284 568 292 553 304 548 Z'
+                        : 'M304 548 C324 568 330 598 326 632 C322 660 312 674 304 674 C294 674 284 647 284 604 C284 570 292 554 304 548 Z'
                     }
                     fill="url(#grad_calf_right)"
                     opacity={getOverlayOpacity('calves_gastrocnemius')}
