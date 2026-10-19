@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic'
 import { openCoachGordon } from '@/components/fitness/GlobalCoachGordonHost'
 import type { NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 import type { HandPortionNutritionPlan, DualCardioPlanSummary } from '@/lib/rag-nasm-program-generator'
+import type { DailyBiometricSummary } from '@/lib/wearables-telemetry'
 
 const FitnessLabDiagnosticsView = dynamic(
   () => import('@/components/fitness/hub-views/FitnessLabDiagnosticsView'),
@@ -306,6 +307,7 @@ interface FitnessTrackerClientProps {
   initialTab?: 'heatmap' | 'gate' | 'acwr' | 'deload' | '3d'
   initialOpenScanner?: boolean
   auditSuccess?: boolean
+  initialTelemetry?: DailyBiometricSummary | null
 }
 
 interface CardioLogEntry {
@@ -715,6 +717,7 @@ export default function FitnessTrackerClient({
   initialTab,
   initialOpenScanner = false,
   auditSuccess = false,
+  initialTelemetry,
 }: FitnessTrackerClientProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -5802,7 +5805,7 @@ export default function FitnessTrackerClient({
           logs={logs}
           setLogs={setLogs}
           plans={allPlans}
-          telemetry={wearableTelemetry}
+          telemetry={wearableTelemetry || initialTelemetry}
           initialLift={labInitialLift}
           initialCritique={labInitialCritique}
           initialTab={initialTab || (searchParams?.get('tab') as 'heatmap' | 'gate' | 'acwr' | 'deload' | '3d' | null) || undefined}

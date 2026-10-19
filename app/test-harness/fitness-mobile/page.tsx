@@ -79,10 +79,21 @@ const VARIETY_SCENARIOS = {
 }
 
 export default async function FitnessMobileTestHarnessPage({ searchParams }: {
-  searchParams: Promise<{ view?: string; scenario?: string }>
+  searchParams: Promise<{ view?: string; scenario?: string; workspace?: string; tab?: string }>
 }) {
   const params = await searchParams
   const variety = Object.entries(VARIETY_SCENARIOS).find(([name]) => name === params.scenario)?.[1]
+  const isReadinessScenario = params.scenario?.startsWith('readiness')
+  const isLabScenario = isReadinessScenario || params.scenario?.startsWith('lab')
+  const effectiveWorkspace = (params.workspace as any) || (isLabScenario ? 'lab' : 'train')
+  const effectiveTab = (params.tab as any) || (
+    params.scenario === 'readiness-acwr' ? 'acwr'
+      : params.scenario === 'readiness-deload' ? 'deload'
+      : params.scenario === 'readiness-heatmap' ? 'heatmap'
+      : isReadinessScenario ? 'gate'
+      : undefined
+  )
+
   const plan = params.scenario === 'schedule' ? {
     ...MOCK_PLAN,
     plan_json: {
@@ -109,6 +120,56 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
     nasm_opt_phase: variety.phase,
     plan_json: { workouts: [{ ...MOCK_PLAN.plan_json.workouts[0], exercises: variety.exercises }] },
   } : MOCK_PLAN
+
+  // Construct realistic 21-day timeline for readiness & ACWR scenarios
+  const now = new Date()
+  const getDateStr = (daysAgo: number) => {
+    const d = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000)
+    return d.toISOString().split('T')[0]
+  }
+
+  const isRed = params.scenario === 'readiness-red'
+  const isYellow = params.scenario === 'readiness-yellow'
+
+  const readinessLogs = isReadinessScenario ? [
+    // Week 1 (Days 1–7: Acute window)
+    { id: 'r-log-1', session_date: getDateStr(1), session_title: 'Upper Compound Power', exertion_rpe: isRed ? 10 : isYellow ? 8.5 : 8, completed: true },
+    { id: 'r-log-2', session_date: getDateStr(3), session_title: 'Lower Chain Hypertrophy', exertion_rpe: isRed ? 9.5 : isYellow ? 8.5 : 7.5, completed: true },
+    { id: 'r-log-3', session_date: getDateStr(5), session_title: 'Full Body Athletic Engine', exertion_rpe: isRed ? 9 : isYellow ? 8 : 7.5, completed: true },
+    ...(isRed ? [
+      { id: 'r-log-extra-1', session_date: getDateStr(2), session_title: 'Heavy Deadlift Contrast', exertion_rpe: 10, completed: true },
+      { id: 'r-log-extra-2', session_date: getDateStr(4), session_title: 'Metabolic Sprint Intervals', exertion_rpe: 9.5, completed: true },
+      { id: 'r-log-extra-3', session_date: getDateStr(6), session_title: 'High-Volume Squat Cluster', exertion_rpe: 10, completed: true },
+    ] : isYellow ? [
+      { id: 'r-log-extra-1', session_date: getDateStr(2), session_title: 'Shoulders & Arms Volume', exertion_rpe: 8.5, completed: true },
+    ] : []),
+    // Week 2 (Days 8–14: Chronic baseline)
+    { id: 'r-log-4', session_date: getDateStr(8), session_title: 'Upper Compound Power', exertion_rpe: 7.5, completed: true },
+    { id: 'r-log-5', session_date: getDateStr(10), session_title: 'Lower Chain Hypertrophy', exertion_rpe: 8, completed: true },
+    { id: 'r-log-6', session_date: getDateStr(12), session_title: 'Full Body Athletic Engine', exertion_rpe: 7, completed: true },
+    // Week 3 (Days 15–21: Chronic baseline)
+    { id: 'r-log-7', session_date: getDateStr(15), session_title: 'Upper Compound Power', exertion_rpe: 7.5, completed: true },
+    { id: 'r-log-8', session_date: getDateStr(17), session_title: 'Lower Chain Hypertrophy', exertion_rpe: 8, completed: true },
+    { id: 'r-log-9', session_date: getDateStr(19), session_title: 'Full Body Athletic Engine', exertion_rpe: 7.5, completed: true },
+  ] : []
+
+  const readinessSetLogs = isReadinessScenario ? readinessLogs.flatMap((log, lIdx) => [
+    { id: `r-set-${lIdx}-1`, session_date: log.session_date, exercise_name: 'Barbell Bench Press', set_number: 1, reps: 10, weight_kg: 80, rpe: log.exertion_rpe },
+    { id: `r-set-${lIdx}-2`, session_date: log.session_date, exercise_name: 'Barbell Bench Press', set_number: 2, reps: 10, weight_kg: 80, rpe: log.exertion_rpe },
+    { id: `r-set-${lIdx}-3`, session_date: log.session_date, exercise_name: 'Barbell Back Squat', set_number: 1, reps: 8, weight_kg: 100, rpe: log.exertion_rpe },
+    { id: `r-set-${lIdx}-4`, session_date: log.session_date, exercise_name: 'Barbell Back Squat', set_number: 2, reps: 8, weight_kg: 100, rpe: log.exertion_rpe },
+  ]) : []
+
+  const mockTelemetry = isReadinessScenario ? {
+    date: getDateStr(0),
+    provider: 'apple_health' as const,
+    sleepHours: isRed ? 5.2 : isYellow ? 6.4 : 8.2,
+    restingHeartRate: isRed ? 64 : isYellow ? 58 : 50,
+    hrvRmssdMs: isRed ? 32 : isYellow ? 48 : 74,
+    cnsStressScore: isRed ? 44 : isYellow ? 68 : 92,
+    updatedAt: new Date().toISOString(),
+  } : undefined
+
   return (
     <main style={{ minHeight: "100vh", background: "#0D1B2A", overflowX: "hidden", paddingBottom: "clamp(140px, 18vh, 180px)" }}>
       <div className="dashboard-fitness-content" style={{ maxWidth: 1440, margin: "0 auto", width: "100%", minWidth: 0, overflowX: "hidden", boxSizing: "border-box" }}>
@@ -131,11 +192,13 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
               full_name: "Scott Gordon",
               preferred_units: "imperial",
               fitness_goal: "Athletic Hypertrophy",
+              age: 38,
+              sex: 'male',
               ...(params.scenario === 'lab-bodycomp' ? { weight_kg: 80, height_cm: 180, sex: 'male' as const, preferred_units: 'metric' as const } : {}),
             }}
             latestPlan={plan}
             allPlans={[plan]}
-            logs={params.scenario === 'progress' ? Array.from({ length: 12 }, (_, index) => ({
+            logs={isReadinessScenario ? readinessLogs : params.scenario === 'progress' ? Array.from({ length: 12 }, (_, index) => ({
               id: `progress-session-${index}`,
               session_title: `Workout ${index + 1}`,
               session_date: `2026-10-${String(index + 1).padStart(2, '0')}`,
@@ -143,7 +206,7 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
               workout_plan_id: plan.id,
               exertion_rpe: 7,
             })) : []}
-            setLogs={params.scenario === 'progress' ? Array.from({ length: 24 }, (_, index) => ({
+            setLogs={isReadinessScenario ? readinessSetLogs : params.scenario === 'progress' ? Array.from({ length: 24 }, (_, index) => ({
               id: `progress-set-${index}`,
               exercise_name: index === 23 ? 'Standing Hip Flexor Static Stretch' : 'Barbell Flat Bench Press',
               session_date: `2026-10-${String(Math.floor(index / 2) + 1).padStart(2, '0')}`,
@@ -153,7 +216,9 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
               rpe: index < 2 ? undefined : 7,
             })) : []}
             latestAnalysis={params.scenario === 'lab-bodycomp' ? { estimated_bodyfat_percent: 20 } : null}
-            initialWorkspace="train"
+            initialWorkspace={effectiveWorkspace}
+            initialTab={effectiveTab}
+            initialTelemetry={mockTelemetry}
           />}
         </Suspense>
       </div>
