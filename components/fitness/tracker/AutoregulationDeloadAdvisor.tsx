@@ -15,6 +15,10 @@ import {
   type ClusterSetPlan,
   type MyoRepsPlan,
 } from '@/lib/cluster-myoreps-advisor-engine'
+import {
+  isIntensityProtocolOfferedForPhase,
+  getNasmOptPhaseFeatureRules,
+} from '@/lib/nasm-opt-feature-matrix'
 
 export interface AutoregulationDeloadAdvisorProps {
   exerciseName: string
@@ -27,6 +31,7 @@ export interface AutoregulationDeloadAdvisorProps {
   sessionDurationMinutes?: number
   allSessionSets?: CompletedSetPerformance[]
   velocityLossPercent?: number
+  optPhase?: number | null
   onApplyDeloadWeight?: (newWeight: string) => void
   onApplyRepCap?: (newReps: string) => void
   onExtendRestTimer?: (additionalSeconds: number) => void
@@ -48,6 +53,7 @@ export default function AutoregulationDeloadAdvisor({
   sessionDurationMinutes = 45,
   allSessionSets,
   velocityLossPercent,
+  optPhase,
   onApplyDeloadWeight,
   onApplyRepCap,
   onExtendRestTimer,
@@ -66,6 +72,8 @@ export default function AutoregulationDeloadAdvisor({
   const rawWeight = Number(currentDraftWeight) || 0
   const weightLbs = units === 'imperial' ? rawWeight : rawWeight * 2.20462
   const repsNum = Number(currentDraftReps) || 0
+  const allowIntensityProtocols = isIntensityProtocolOfferedForPhase(optPhase)
+  const phaseRules = optPhase ? getNasmOptPhaseFeatureRules(optPhase) : null
 
   const advice: AutoregulationAdvice = useMemo(() => {
     return evaluateExerciseAutoregulation({
@@ -76,8 +84,9 @@ export default function AutoregulationDeloadAdvisor({
       completedSets,
       units,
       velocityLossPercent,
+      optPhase,
     })
-  }, [exerciseName, weightLbs, repsNum, targetReps, completedSets, units, velocityLossPercent])
+  }, [exerciseName, weightLbs, repsNum, targetReps, completedSets, units, velocityLossPercent, optPhase])
 
   const sessionTelemetry = useMemo(() => {
     const setsToEvaluate = allSessionSets && allSessionSets.length > 0 ? allSessionSets : completedSets
@@ -311,7 +320,12 @@ export default function AutoregulationDeloadAdvisor({
       )}
 
       {/* ── 1-Tap Action Buttons ── */}
-      {(advice.action !== 'maintain' || advice.suggestedRestExtensionSeconds || advice.dropSetRecommendation?.shouldConvert || onApplyClusterSet || onApplyMyoReps || onApplyDeloadWeight) && (
+      {(advice.action !== 'maintain' ||
+        advice.suggestedRestExtensionSeconds ||
+        (allowIntensityProtocols && advice.dropSetRecommendation?.shouldConvert) ||
+        (allowIntensityProtocols && onApplyClusterSet) ||
+        (allowIntensityProtocols && onApplyMyoReps) ||
+        onApplyDeloadWeight) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           {displaySuggestedWeight !== undefined && onApplyDeloadWeight && (
             <button
@@ -346,7 +360,7 @@ export default function AutoregulationDeloadAdvisor({
             </button>
           )}
 
-          {advice.dropSetRecommendation?.shouldConvert && (
+          {allowIntensityProtocols && advice.dropSetRecommendation?.shouldConvert && (
             <button
               type="button"
               onClick={() => {
@@ -374,7 +388,7 @@ export default function AutoregulationDeloadAdvisor({
             </button>
           )}
 
-          {onApplyClusterSet && (
+          {allowIntensityProtocols && onApplyClusterSet && (
             <button
               type="button"
               onClick={() => {
@@ -402,7 +416,7 @@ export default function AutoregulationDeloadAdvisor({
             </button>
           )}
 
-          {onApplyMyoReps && (
+          {allowIntensityProtocols && onApplyMyoReps && (
             <button
               type="button"
               onClick={() => {
@@ -490,8 +504,28 @@ export default function AutoregulationDeloadAdvisor({
         </div>
       )}
 
+      {/* ── NASM OPT™ Phase Protocol Guardrail Note ── */}
+      {!allowIntensityProtocols && optPhase && (
+        <div
+          style={{
+            marginTop: 6,
+            fontSize: 10,
+            color: 'var(--gray, #94A3B8)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+          }}
+          data-testid="nasm-opt-phase-intensity-restriction-note"
+        >
+          <span style={{ fontSize: 11 }}>ℹ️</span>
+          <span>
+            <strong>NASM OPT™ Phase {optPhase} ({phaseRules?.phaseName}):</strong> Advanced failure/density protocols restricted to protect movement quality and neuromuscular recovery.
+          </span>
+        </div>
+      )}
+
       {/* ── Drop Set Preview Tray ── */}
-      {showDropSetPreview && advice.dropSetRecommendation && (
+      {allowIntensityProtocols && showDropSetPreview && advice.dropSetRecommendation && (
         <div
           style={{
             marginTop: 8,
@@ -561,7 +595,7 @@ export default function AutoregulationDeloadAdvisor({
       )}
 
       {/* ── Cluster Set Preview Tray ── */}
-      {showClusterPreview && (
+      {allowIntensityProtocols && showClusterPreview && (
         <div
           style={{
             marginTop: 8,
@@ -661,7 +695,7 @@ export default function AutoregulationDeloadAdvisor({
       )}
 
       {/* ── Myo-Reps Preview Tray ── */}
-      {showMyoRepsPreview && (
+      {allowIntensityProtocols && showMyoRepsPreview && (
         <div
           style={{
             marginTop: 8,

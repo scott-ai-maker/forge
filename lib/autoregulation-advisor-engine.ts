@@ -13,6 +13,7 @@
 
 import { normalizeRpeValue, normalizeRirValue, mapRpeToRir } from './rpe-exertion-scale'
 import { calculateDropStages, type DropStage } from './intensity-protocols-engine'
+import { isIntensityProtocolOfferedForPhase } from './nasm-opt-feature-matrix'
 
 export type AutoregulationAction =
   | 'reduce_load_5pct'
@@ -185,6 +186,8 @@ export function generateBackOffAndDropSetPlan(params: {
   targetReps: number
   fatigueDropPercent: number
   units?: 'imperial' | 'metric'
+  optPhase?: number | null
+  isIntensityOffered?: boolean
 }): {
   backOffPlan: BackOffPlan
   dropSetRecommendation: DropSetRecommendation
@@ -197,7 +200,15 @@ export function generateBackOffAndDropSetPlan(params: {
     targetReps,
     fatigueDropPercent,
     units = 'imperial',
+    optPhase,
+    isIntensityOffered,
   } = params
+
+  const isIntensityAllowed = isIntensityOffered !== undefined
+    ? isIntensityOffered
+    : optPhase !== undefined && optPhase !== null
+      ? isIntensityProtocolOfferedForPhase(optPhase)
+      : true
 
   const isSevere = fatigueDropPercent >= 25
   const reductionPercent = isSevere ? 15 : 10
@@ -216,27 +227,33 @@ export function generateBackOffAndDropSetPlan(params: {
   }
 
   // Generate 3-Stage Drop Set Plan starting at the current or back-off weight
-  const dropStages = calculateDropStages(
-    currentWeightLbs,
-    Math.max(6, currentReps),
-    2,
-    20,
-    units === 'imperial' ? 5 : 2.5
-  )
+  const dropStages = isIntensityAllowed
+    ? calculateDropStages(
+        currentWeightLbs,
+        Math.max(6, currentReps),
+        2,
+        20,
+        units === 'imperial' ? 5 : 2.5
+      )
+    : []
 
   const totalDropVolumeLbs = dropStages.reduce((sum, s) => sum + s.volumeLbs, 0)
   const totalDropVolumeKg = Math.round(totalDropVolumeLbs / 2.20462)
 
   const dropSetRecommendation: DropSetRecommendation = {
-    shouldConvert: true,
-    reason: `Convert upcoming set into a 3-Stage Drop Set starting at ${units === 'imperial' ? `${currentWeightLbs} lb` : `${Math.round(currentWeightLbs / 2.20462)} kg`} to maximize metabolic stress without grinding heavy loads.`,
+    shouldConvert: isIntensityAllowed,
+    reason: isIntensityAllowed
+      ? `Convert upcoming set into a 3-Stage Drop Set starting at ${units === 'imperial' ? `${currentWeightLbs} lb` : `${Math.round(currentWeightLbs / 2.20462)} kg`} to maximize metabolic stress without grinding heavy loads.`
+      : 'Drop sets and failure protocols are restricted in the current NASM OPT™ phase to safeguard neuromuscular recovery and kinetic chain integrity.',
     stages: dropStages,
     totalVolumeLbs: totalDropVolumeLbs,
     totalVolumeKg: totalDropVolumeKg,
   }
 
   const coachVoiceCue = isSevere
-    ? `Acute fatigue drop detected. Recommend dropping load ${reductionPercent} percent to ${units === 'imperial' ? backOffWeightLbs : backOffWeightKg} or converting to a drop set.`
+    ? isIntensityAllowed
+      ? `Acute fatigue drop detected. Recommend dropping load ${reductionPercent} percent to ${units === 'imperial' ? backOffWeightLbs : backOffWeightKg} or converting to a drop set.`
+      : `Acute fatigue drop detected. Recommend dropping load ${reductionPercent} percent to ${units === 'imperial' ? backOffWeightLbs : backOffWeightKg}.`
     : `Fatigue detected. Consider taking a ${reductionPercent} percent back-off load.`
 
   return {
@@ -257,6 +274,7 @@ export function evaluateExerciseAutoregulation(params: {
   completedSets: CompletedSetPerformance[]
   units?: 'imperial' | 'metric'
   velocityLossPercent?: number
+  optPhase?: number | null
 }): AutoregulationAdvice {
   const {
     exerciseName,
@@ -266,6 +284,7 @@ export function evaluateExerciseAutoregulation(params: {
     completedSets,
     units = 'imperial',
     velocityLossPercent,
+    optPhase,
   } = params
 
   const isHammer = isHammerCurlExercise(exerciseName)
@@ -321,6 +340,7 @@ export function evaluateExerciseAutoregulation(params: {
     targetReps: parsedTargetReps,
     fatigueDropPercent: acuteDrop.dropPercent,
     units,
+    optPhase,
   })
 
   const isConsecutiveFailure =
@@ -427,7 +447,9 @@ export function evaluateExerciseAutoregulation(params: {
       fatigueLevel: isSevere ? 'critical_overload' : 'elevated_fatigue',
       badgeText,
       headline: `Acute Fatigue Drop Detected (−${acuteDrop.dropPercent}%)`,
-      rationale: `${acuteDrop.reason} Apply a recommended Back-Off load to preserve high mechanical tension, or convert to a 3-stage Drop Set to maximize motor unit recruitment safely.`,
+      rationale: (optPhase !== undefined && optPhase !== null ? isIntensityProtocolOfferedForPhase(optPhase) : true)
+        ? `${acuteDrop.reason} Apply a recommended Back-Off load to preserve high mechanical tension, or convert to a 3-stage Drop Set to maximize motor unit recruitment safely.`
+        : `${acuteDrop.reason} Apply a recommended Back-Off load to preserve high mechanical tension and maintain kinetic chain integrity safely.`,
       suggestedWeightLbs: backOffPlan.backOffWeightLbs,
       suggestedWeightKg: backOffPlan.backOffWeightKg,
       suggestedReps: parsedTargetReps,

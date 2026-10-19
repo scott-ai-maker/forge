@@ -4424,6 +4424,7 @@ export default function FitnessTrackerClient({
                                     .sort((a, b) => a.setNumber - b.setNumber)}
                                   units={units}
                                   isTimed={isTimed}
+                                  optPhase={plan?.nasm_opt_phase}
                                   sessionDurationMinutes={Math.max(15, Math.round(elapsedWorkoutSeconds / 60))}
                                   onApplyDeloadWeight={(newWeight) => {
                                     setInlineSetDrafts(prev => ({

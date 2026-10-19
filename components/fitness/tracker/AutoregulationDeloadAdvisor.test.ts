@@ -3,6 +3,7 @@ import {
   evaluateExerciseAutoregulation,
   computeSessionRpeTelemetry,
 } from '@/lib/autoregulation-advisor-engine'
+import { isIntensityProtocolOfferedForPhase } from '@/lib/nasm-opt-feature-matrix'
 
 describe('AutoregulationDeloadAdvisor Integration', () => {
   it('detects high fatigue and prescribes 5% deload when rep target is missed at RIR 0', () => {
@@ -198,5 +199,101 @@ describe('AutoregulationDeloadAdvisor Integration', () => {
     expect(advice.suggestedWeightLbs).toBe(180)
     expect(advice.badgeText).toBe('−10% Back-Off Load')
     expect(advice.headline).toBe('Momentary Failure Reached (RIR 0)')
+  })
+
+  it('restricts drop set recommendations in Phase 1 (Stabilization) while preserving safety deloads', () => {
+    expect(isIntensityProtocolOfferedForPhase(1)).toBe(false)
+
+    const sets = [
+      { setNumber: 1, weightLbs: 200, reps: 10, rpe: 8, rir: 2, isWarmup: false },
+      { setNumber: 2, weightLbs: 200, reps: 6, rpe: 10, rir: 0, isWarmup: false }, // severe decay
+    ]
+
+    const advice = evaluateExerciseAutoregulation({
+      exerciseName: 'Barbell Bench Press',
+      currentDraftWeightLbs: 200,
+      currentDraftReps: 10,
+      targetReps: 10,
+      completedSets: sets,
+      units: 'imperial',
+      optPhase: 1,
+    })
+
+    // Safety deload is active (-5% load deload for missed rep target)
+    expect(advice.action).toBe('reduce_load_5pct')
+    expect(advice.hasAcuteFatigueDrop).toBe(true)
+    // But drop-set protocol is restricted in Phase 1
+    expect(advice.dropSetRecommendation?.shouldConvert).toBe(false)
+    expect(advice.dropSetRecommendation?.stages.length).toBe(0)
+    expect(advice.dropSetRecommendation?.reason).toContain('restricted')
+  })
+
+  it('restricts drop sets in Phase 4 (Maximal Strength) and Phase 5 (Power)', () => {
+    expect(isIntensityProtocolOfferedForPhase(4)).toBe(false)
+    expect(isIntensityProtocolOfferedForPhase(5)).toBe(false)
+
+    const sets = [
+      { setNumber: 1, weightLbs: 315, reps: 5, rpe: 8, rir: 2, isWarmup: false },
+      { setNumber: 2, weightLbs: 315, reps: 3, rpe: 10, rir: 0, isWarmup: false },
+    ]
+
+    const phase4Advice = evaluateExerciseAutoregulation({
+      exerciseName: 'Barbell Back Squat',
+      currentDraftWeightLbs: 315,
+      currentDraftReps: 5,
+      targetReps: 5,
+      completedSets: sets,
+      units: 'imperial',
+      optPhase: 4,
+    })
+    expect(phase4Advice.dropSetRecommendation?.shouldConvert).toBe(false)
+    expect(phase4Advice.dropSetRecommendation?.stages.length).toBe(0)
+
+    const phase5Advice = evaluateExerciseAutoregulation({
+      exerciseName: 'Barbell Back Squat',
+      currentDraftWeightLbs: 315,
+      currentDraftReps: 5,
+      targetReps: 5,
+      completedSets: sets,
+      units: 'imperial',
+      optPhase: 5,
+    })
+    expect(phase5Advice.dropSetRecommendation?.shouldConvert).toBe(false)
+    expect(phase5Advice.dropSetRecommendation?.stages.length).toBe(0)
+  })
+
+  it('permits intensity protocols in Phase 2 (Strength Endurance) and Phase 3 (Hypertrophy)', () => {
+    expect(isIntensityProtocolOfferedForPhase(2)).toBe(true)
+    expect(isIntensityProtocolOfferedForPhase(3)).toBe(true)
+
+    const sets = [
+      { setNumber: 1, weightLbs: 200, reps: 10, rpe: 8, rir: 2, isWarmup: false },
+      { setNumber: 2, weightLbs: 200, reps: 7, rpe: 9.5, rir: 0.5, isWarmup: false },
+    ]
+
+    const phase2Advice = evaluateExerciseAutoregulation({
+      exerciseName: 'Barbell Bench Press',
+      currentDraftWeightLbs: 200,
+      currentDraftReps: 10,
+      targetReps: 10,
+      completedSets: sets,
+      units: 'imperial',
+      optPhase: 2,
+    })
+    expect(phase2Advice.dropSetRecommendation?.shouldConvert).toBe(true)
+    expect(phase2Advice.dropSetRecommendation?.stages.length).toBe(3)
+
+    const phase3Advice = evaluateExerciseAutoregulation({
+      exerciseName: 'Barbell Bench Press',
+      currentDraftWeightLbs: 200,
+      currentDraftReps: 10,
+      targetReps: 10,
+      completedSets: sets,
+      units: 'imperial',
+      optPhase: 3,
+    })
+    expect(phase3Advice.dropSetRecommendation?.shouldConvert).toBe(true)
+    expect(phase3Advice.dropSetRecommendation?.stages.length).toBe(3)
+    expect(phase3Advice.dropSetRecommendation?.reason).toContain('3-Stage Drop Set')
   })
 })
