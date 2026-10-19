@@ -32,6 +32,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
+  async redirects() {
+    return [
+      {
+        source: '/fitness',
+        destination: '/dashboard/fitness',
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {
