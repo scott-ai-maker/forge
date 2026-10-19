@@ -118,8 +118,9 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   const isNutritionScenario = params.scenario === 'nutrition' || params.scenario === 'lab-nutrition' || params.scenario === 'macros'
   const isTravelScenario = params.scenario === 'travel' || params.scenario === 'lab-travel' || params.scenario === 'hotel'
   const isAssessmentScenario = params.scenario === 'assessment' || params.scenario === 'lab-assessment' || params.scenario === 'movement'
-  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || isNutritionScenario || isTravelScenario || isAssessmentScenario || params.scenario?.startsWith('lab')
-  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isNutritionScenario ? 'nutrition' : isTravelScenario ? 'travel' : isAssessmentScenario ? 'assessment' : isLabScenario ? 'lab' : 'train')
+  const isSleepScenario = params.scenario === 'sleep' || params.scenario === 'lab-sleep' || params.scenario === 'sleep-hud'
+  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || isNutritionScenario || isTravelScenario || isAssessmentScenario || isSleepScenario || params.scenario?.startsWith('lab')
+  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isNutritionScenario ? 'nutrition' : isTravelScenario ? 'travel' : isAssessmentScenario ? 'assessment' : isSleepScenario ? 'sleep' : isLabScenario ? 'lab' : 'train')
   const effectiveTab = (params.tab as any) || (
     params.scenario === 'readiness-acwr' ? 'acwr'
       : params.scenario === 'readiness-deload' ? 'deload'
@@ -194,12 +195,13 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
     { id: `r-set-${lIdx}-4`, session_date: log.session_date, exercise_name: 'Barbell Back Squat', set_number: 2, reps: 8, weight_kg: 100, rpe: log.exertion_rpe },
   ]) : []
 
-  const mockTelemetry = isReadinessScenario ? {
+  const mockTelemetry = isReadinessScenario || isSleepScenario ? {
     date: getDateStr(0),
     provider: 'apple_health' as const,
-    sleepHours: isRed ? 5.2 : isYellow ? 6.4 : 8.2,
+    sleepHours: isRed ? 5.2 : isYellow ? 6.4 : 7.9,
+    deepSleepHours: 2.2,
     restingHeartRate: isRed ? 64 : isYellow ? 58 : 50,
-    hrvRmssdMs: isRed ? 32 : isYellow ? 48 : 74,
+    hrvRmssdMs: isRed ? 32 : isYellow ? 48 : 76,
     cnsStressScore: isRed ? 44 : isYellow ? 68 : 92,
     updatedAt: new Date().toISOString(),
   } : undefined
