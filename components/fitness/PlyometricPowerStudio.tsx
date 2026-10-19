@@ -75,6 +75,13 @@ export default function PlyometricPowerStudio({
   })
 
   const landingScreenResult = evaluateLandingMechanics(selectedFaults)
+  const isSeverelyFaulted = selectedFaults.includes('knee_valgus') || landingScreenResult.observedFaultsCount >= 3
+  const effectiveQualifiedPhase = isSeverelyFaulted
+    ? 1
+    : selectedFaults.length > 0
+      ? Math.min(initialOptPhase, landingScreenResult.recommendedOptPhaseCap)
+      : initialOptPhase
+
   const currentSessionProtocol = generatePlyometricProtocol(prescribedPhase)
 
   const filteredExercises = NASM_PLYOMETRIC_LIBRARY.filter(ex => {
@@ -198,6 +205,137 @@ ${currentSessionProtocol.exercises
         </div>
       </div>
 
+      {/* ── Athlete Biomechanical Qualification Banner ─────────────── */}
+      <div
+        style={{
+          background: isSeverelyFaulted
+            ? 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(15,23,42,0.8) 100%)'
+            : effectiveQualifiedPhase >= 5
+              ? 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(15,23,42,0.8) 100%)'
+              : effectiveQualifiedPhase >= 2
+                ? 'linear-gradient(135deg, rgba(212,160,23,0.15) 0%, rgba(15,23,42,0.8) 100%)'
+                : 'linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(15,23,42,0.8) 100%)',
+          border: isSeverelyFaulted
+            ? '1px solid rgba(239,68,68,0.4)'
+            : effectiveQualifiedPhase >= 5
+              ? '1px solid rgba(16,185,129,0.4)'
+              : effectiveQualifiedPhase >= 2
+                ? '1px solid rgba(212,160,23,0.4)'
+                : '1px solid rgba(56,189,248,0.4)',
+          borderRadius: 10,
+          padding: '14px 18px',
+          marginBottom: 20,
+          display: 'grid',
+          gap: 10,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span
+              style={{
+                fontFamily: 'Raleway, sans-serif',
+                fontWeight: 800,
+                fontSize: 10.5,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                padding: '4px 10px',
+                borderRadius: 4,
+                background: isSeverelyFaulted
+                  ? 'rgba(239,68,68,0.25)'
+                  : effectiveQualifiedPhase >= 5
+                    ? 'rgba(16,185,129,0.25)'
+                    : effectiveQualifiedPhase >= 2
+                      ? 'rgba(212,160,23,0.25)'
+                      : 'rgba(56,189,248,0.25)',
+                color: isSeverelyFaulted
+                  ? '#FCA5A5'
+                  : effectiveQualifiedPhase >= 5
+                    ? '#6EE7B7'
+                    : effectiveQualifiedPhase >= 2
+                      ? 'var(--gold-lt)'
+                      : '#BAE6FD',
+                border: isSeverelyFaulted
+                  ? '1px solid #EF4444'
+                  : effectiveQualifiedPhase >= 5
+                    ? '1px solid #10B981'
+                    : effectiveQualifiedPhase >= 2
+                      ? '1px solid rgba(212,160,23,0.5)'
+                      : '1px solid #38BDF8',
+              }}
+            >
+              {isSeverelyFaulted
+                ? '⚠ Capped: Deceleration Fault Detected'
+                : effectiveQualifiedPhase >= 5
+                  ? '● Cleared for Phase 5 Elite Power'
+                  : effectiveQualifiedPhase >= 2
+                    ? `● Cleared for Phase ${effectiveQualifiedPhase} Dynamic Power`
+                    : '● Phase 1 Qualified · Deceleration Prerequisite Active'}
+            </span>
+
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#E2E8F0' }}>
+              NASM OPT™ Qualification Status
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('screener')}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: 6,
+              padding: '5px 10px',
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--gold-lt)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+            }}
+          >
+            <GaaIcon name="shield" size={11} tone="gold" />
+            <span>{selectedFaults.length > 0 ? `Review Screener (${selectedFaults.length} faults)` : 'Run Landing Screener'}</span>
+          </button>
+        </div>
+
+        <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5, color: '#CBD5E1' }}>
+          {isSeverelyFaulted ? (
+            <>
+              <strong style={{ color: '#F87171' }}>Dynamic knee valgus or multi-joint compensations detected.</strong> To prevent ACL strain and patellar tendinopathy, high-velocity Phase 2–5 reactive drills are locked. Focus strictly on Phase 1 drills with a 3–5s landing freeze.
+            </>
+          ) : effectiveQualifiedPhase >= 5 ? (
+            <>
+              <strong style={{ color: '#34D399' }}>Maximal Velocity Cleared:</strong> Athlete demonstrates pristine landing mechanics with optimal stretch reflex utilization. Cleared for depth jumps, ice skaters, and sub-150ms ground contact drills.
+            </>
+          ) : effectiveQualifiedPhase >= 2 ? (
+            <>
+              <strong style={{ color: 'var(--gold-lt)' }}>Dynamic SSC Cleared:</strong> Demonstrated deceleration control qualifies athlete for continuous, medium-tempo jumps (Phases 2–4). Complete Phase 5 power progression requires coach evaluation.
+            </>
+          ) : (
+            <>
+              <strong style={{ color: '#38BDF8' }}>Deceleration &amp; Joint Alignment Focus:</strong> Per NASM OPT™ sports science standards, clients in Phase 1 or without cleared landing mechanics must master <em>isometric deceleration (3–5s landing holds)</em> to absorb 3–5× bodyweight in ground reaction forces before advancing to high-velocity bounding.
+            </>
+          )}
+        </p>
+
+        {/* 3-Tier Prerequisite Progression Ladder */}
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 4, fontSize: 11 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#34D399', fontWeight: 600 }}>
+            <span>✓</span>
+            <span>Tier 1: Stabilization (3–5s Landing Metronome)</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: effectiveQualifiedPhase >= 2 ? '#34D399' : 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
+            <span>{effectiveQualifiedPhase >= 2 ? '✓' : '🔒'}</span>
+            <span>Tier 2: Continuous Strength (Phases 2–4)</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: effectiveQualifiedPhase >= 5 ? '#34D399' : 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
+            <span>{effectiveQualifiedPhase >= 5 ? '✓' : '🔒'}</span>
+            <span>Tier 3: Explosive Power (Phase 5)</span>
+          </div>
+        </div>
+      </div>
+
       {/* ── TAB 1: 3-TIER PLYOMETRIC EXERCISE MATRIX ──────────────────── */}
       {activeTab === 'library' && (
         <div style={{ display: 'grid', gap: 18 }}>
@@ -240,13 +378,22 @@ ${currentSessionProtocol.exercises
             {filteredExercises.map(ex => {
               const isTimerTarget = activeTimerExercise === ex.id && timerRunning
               const isStab = ex.tier === 'stabilization'
+              const isTierLocked = (ex.tier === 'strength' && effectiveQualifiedPhase < 2) || (ex.tier === 'power' && effectiveQualifiedPhase < 5)
 
               return (
                 <div
                   key={ex.id}
                   style={{
                     background: 'rgba(14,23,38,0.7)',
-                    border: isTimerTarget ? '1px solid #10B981' : isStab ? '1px solid rgba(59,130,246,0.4)' : ex.tier === 'strength' ? '1px solid rgba(212,160,23,0.4)' : '1px solid rgba(239,68,68,0.4)',
+                    border: isTimerTarget
+                      ? '1px solid #10B981'
+                      : isTierLocked
+                        ? '1px dashed rgba(234,179,8,0.35)'
+                        : isStab
+                          ? '1px solid rgba(59,130,246,0.4)'
+                          : ex.tier === 'strength'
+                            ? '1px solid rgba(212,160,23,0.4)'
+                            : '1px solid rgba(239,68,68,0.4)',
                     borderRadius: 10,
                     padding: 16,
                     display: 'flex',
@@ -254,25 +401,49 @@ ${currentSessionProtocol.exercises
                     justifyContent: 'space-between',
                     gap: 12,
                     boxShadow: isTimerTarget ? '0 0 15px rgba(16,185,129,0.3)' : 'none',
+                    opacity: isTierLocked ? 0.88 : 1,
                   }}
                 >
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 800,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.08em',
-                          padding: '3px 8px',
-                          borderRadius: 4,
-                          background: isStab ? 'rgba(59,130,246,0.15)' : ex.tier === 'strength' ? 'rgba(212,160,23,0.15)' : 'rgba(239,68,68,0.15)',
-                          color: isStab ? '#60A5FA' : ex.tier === 'strength' ? '#F5D77F' : '#F87171',
-                          border: isStab ? '1px solid rgba(59,130,246,0.3)' : ex.tier === 'strength' ? '1px solid rgba(212,160,23,0.3)' : '1px solid rgba(239,68,68,0.3)',
-                        }}
-                      >
-                        {ex.tierLabel}
-                      </span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            padding: '3px 8px',
+                            borderRadius: 4,
+                            background: isStab ? 'rgba(59,130,246,0.15)' : ex.tier === 'strength' ? 'rgba(212,160,23,0.15)' : 'rgba(239,68,68,0.15)',
+                            color: isStab ? '#60A5FA' : ex.tier === 'strength' ? '#F5D77F' : '#F87171',
+                            border: isStab ? '1px solid rgba(59,130,246,0.3)' : ex.tier === 'strength' ? '1px solid rgba(212,160,23,0.3)' : '1px solid rgba(239,68,68,0.3)',
+                          }}
+                        >
+                          {ex.tierLabel}
+                        </span>
+
+                        {isTierLocked && (
+                          <span
+                            style={{
+                              fontSize: 9.5,
+                              fontWeight: 700,
+                              color: '#FDE047',
+                              background: 'rgba(234, 179, 8, 0.15)',
+                              border: '1px solid rgba(234, 179, 8, 0.35)',
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            <GaaIcon name="lock" size={10} tone="gold" />
+                            <span>{ex.tier === 'strength' ? 'Phase 2+ Prereq' : 'Phase 5 Power Prereq'}</span>
+                          </span>
+                        )}
+                      </div>
+
                       <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'capitalize' }}>
                         {ex.plane} Plane
                       </span>
@@ -664,13 +835,14 @@ ${currentSessionProtocol.exercises
               Select OPT™ Training Phase:
             </span>
             {[
-              { phase: 1, label: 'Phase 1: Stabilization' },
-              { phase: 2, label: 'Phase 2: Strength Endurance' },
-              { phase: 3, label: 'Phase 3: Hypertrophy' },
-              { phase: 4, label: 'Phase 4: Max Strength' },
-              { phase: 5, label: 'Phase 5: Power' },
+              { phase: 1, label: 'Phase 1: Stabilization', minPhase: 1 },
+              { phase: 2, label: 'Phase 2: Strength Endurance', minPhase: 2 },
+              { phase: 3, label: 'Phase 3: Hypertrophy', minPhase: 3 },
+              { phase: 4, label: 'Phase 4: Max Strength', minPhase: 4 },
+              { phase: 5, label: 'Phase 5: Power', minPhase: 5 },
             ].map(p => {
               const active = prescribedPhase === p.phase
+              const isLocked = p.minPhase > effectiveQualifiedPhase
               return (
                 <button
                   key={p.phase}
@@ -682,16 +854,42 @@ ${currentSessionProtocol.exercises
                     fontSize: 12,
                     fontWeight: 700,
                     cursor: 'pointer',
-                    border: active ? '1px solid #D4A017' : '1px solid rgba(255,255,255,0.1)',
-                    background: active ? '#D4A017' : 'transparent',
-                    color: active ? '#0A0E18' : '#FFFFFF',
+                    border: active ? '1px solid #D4A017' : isLocked ? '1px dashed rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                    background: active ? '#D4A017' : isLocked ? 'rgba(0,0,0,0.3)' : 'transparent',
+                    color: active ? '#0A0E18' : isLocked ? 'rgba(255,255,255,0.5)' : '#FFFFFF',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
                   }}
                 >
-                  {p.label}
+                  {isLocked && <GaaIcon name="lock" size={10} tone={active ? 'inherit' : 'slate'} />}
+                  <span>{p.label}</span>
                 </button>
               )
             })}
           </div>
+
+          {/* Qualification Guidance / Preview Notice */}
+          {prescribedPhase > effectiveQualifiedPhase && (
+            <div
+              style={{
+                background: 'rgba(234, 179, 8, 0.12)',
+                border: '1px solid rgba(234, 179, 8, 0.35)',
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: 12,
+                color: '#FDE047',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <GaaIcon name="alert-triangle" size={16} tone="gold" />
+              <span>
+                <strong>Educational Preview Mode:</strong> You are previewing Phase {prescribedPhase} protocols. Your current biomechanical clearance is <strong>Phase {effectiveQualifiedPhase}</strong>. Mastering landing stabilization and zero knee valgus is required before progressing to high-velocity reactive loads.
+              </span>
+            </div>
+          )}
 
           {/* Session Overview Card */}
           <div
