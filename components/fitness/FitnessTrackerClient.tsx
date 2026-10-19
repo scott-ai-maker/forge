@@ -101,9 +101,6 @@ import {
 import { playPrecisionTone, playCountdownPip } from '@/lib/web-audio-cadence-engine'
 import { speakCoachVoiceCue, playNeuralCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import { useTrackerTimer } from '@/components/fitness/hooks/useTrackerTimer'
-import SanctuaryModeHud from '@/components/fitness/SanctuaryModeHud'
-import { useSanctuaryMode } from '@/components/fitness/hooks/useSanctuaryMode'
-import { getSanctuaryBadge } from '@/lib/sanctuary-mode-engine'
 import ProofOfWorkDossierModal from '@/components/fitness/ProofOfWorkDossierModal'
 import { useSetVolume, parseSetTarget } from '@/components/fitness/hooks/useSetVolume'
 import { useSupersetController } from '@/components/fitness/hooks/useSupersetController'
@@ -1027,26 +1024,6 @@ export default function FitnessTrackerClient({
         },
       }))
     },
-  })
-
-  // Sanctuary Mode: In-Gym Anti-Distraction & Down-Regulation Breathing Protocol
-  const {
-    isSanctuaryActive,
-    cadence: sanctuaryCadence,
-    setCadence: setSanctuaryCadence,
-    breathingState: sanctuaryBreathingState,
-    focusScore: sanctuaryFocusScore,
-    distractionCount: sanctuaryDistractionCount,
-    downRegBreathsCompleted: sanctuaryDownRegBreaths,
-    activeIntervention: sanctuaryIntervention,
-    dismissIntervention: dismissSanctuaryIntervention,
-    audioBreathPacerEnabled: sanctuaryAudioEnabled,
-    toggleAudioBreathPacer: toggleSanctuaryAudio,
-  } = useSanctuaryMode({
-    isWorkoutActive: isWorkoutTimerActive || elapsedWorkoutSeconds > 0,
-    isRestActive: Boolean(activeRestState && activeRestState.isRunning),
-    elapsedRestSeconds: activeRestState ? Math.max(0, activeRestState.restSeconds - activeRestState.remainingSeconds) : 0,
-    currentExerciseName: activeRestState?.exerciseName || 'Next Set',
   })
 
   // Continuous Inbound Wearable Telemetry & Readiness Sync
@@ -2749,22 +2726,7 @@ export default function FitnessTrackerClient({
             </div>
           </div>
 
-          {/* ── GYM SANCTUARY MODE HUD: ZERO DISTRACTION & VAGAL BREATH PACER ── */}
-          <SanctuaryModeHud
-            isWorkoutActive={isWorkoutTimerActive || elapsedWorkoutSeconds > 0}
-            isRestActive={Boolean(activeRestState && activeRestState.isRunning)}
-            focusScore={sanctuaryFocusScore}
-            distractionCount={sanctuaryDistractionCount}
-            downRegBreathsCompleted={sanctuaryDownRegBreaths}
-            breathingState={sanctuaryBreathingState}
-            cadence={sanctuaryCadence}
-            onChangeCadence={setSanctuaryCadence}
-            audioBreathPacerEnabled={sanctuaryAudioEnabled}
-            onToggleAudioBreathPacer={toggleSanctuaryAudio}
-            activeIntervention={sanctuaryIntervention}
-            onDismissIntervention={dismissSanctuaryIntervention}
-            isSanctuaryActive={isSanctuaryActive}
-          />
+
 
           {planWorkouts.length > 0 && (
             <div
@@ -5743,7 +5705,7 @@ export default function FitnessTrackerClient({
                   </span>
                 </div>
                 <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
-                  Export verified 1RM overload curves, ACWR safety index, and Sanctuary focus records for doctors, PTs, or peers.
+                  Export verified 1RM overload curves, ACWR safety index, and progressive overload records for doctors, PTs, or peers.
                 </div>
               </div>
             </div>
@@ -5844,8 +5806,6 @@ export default function FitnessTrackerClient({
           localSetLogs={activeSetLogs}
           profile={profile}
           plan={plan}
-          sanctuaryFocusScore={sanctuaryFocusScore}
-          sanctuaryBreathsCount={sanctuaryDownRegBreaths}
           onOpenProofOfWork={() => setShowProofOfWorkModal(true)}
           onClose={() => setCompleteModal(null)}
           onConfirm={(rpe?: number) => {
@@ -5905,9 +5865,6 @@ export default function FitnessTrackerClient({
               exercise_name: s.exercise_name,
               notes: s.notes,
             })),
-            sanctuaryFocusScore,
-            sanctuaryBreathsCount: sanctuaryDownRegBreaths,
-            sanctuaryDistractionCount,
           }}
         />
       )}
@@ -6101,8 +6058,6 @@ export default function FitnessTrackerClient({
         onTogglePause={handleTogglePauseRest}
         onCompleteRest={handleCompleteRest}
         triggerHaptic={triggerHaptic}
-        sanctuaryModeActive={isSanctuaryActive}
-        sanctuaryBreathingLabel={sanctuaryBreathingState.label}
         hasHeartMedications={
           /beta[- ]blocker|hypertension|blood pressure|cardiac|heart med/i.test(profile?.injuries_limitations || '') ||
           (Array.isArray((profile as any)?.injuries) && (profile as any).injuries.includes('cardiovascular_hypertension')) ||
@@ -6122,7 +6077,6 @@ export default function FitnessTrackerClient({
           userAge={profile?.age || 30}
           userWeightKg={profile?.weight_kg || 75}
           onPauseResume={handlePauseResumeWorkoutSession}
-          sanctuaryFocusScore={sanctuaryFocusScore}
           onStartCardio={() => {
             const activeWorkout = planWorkouts.find((w: WorkoutDay) => w.day === activeWorkoutSessionDay)
             if (activeWorkout) {
@@ -6275,8 +6229,6 @@ function PostWorkoutFinishModal({
   onFlowToCoolDown,
   onFlowToMindfulness,
   busy,
-  sanctuaryFocusScore,
-  sanctuaryBreathsCount,
   onOpenProofOfWork,
 }: {
   workout: WorkoutDay
@@ -6291,8 +6243,6 @@ function PostWorkoutFinishModal({
   onFlowToCoolDown?: (rpe?: number) => void
   onFlowToMindfulness?: (rpe?: number) => void
   busy: boolean
-  sanctuaryFocusScore?: number
-  sanctuaryBreathsCount?: number
   onOpenProofOfWork?: () => void
 }) {
   const [rpe, setRpe] = useState('8')
@@ -6403,73 +6353,7 @@ function PostWorkoutFinishModal({
           </div>
         </div>
 
-        {/* ── Sanctuary Focus & Autonomic Discipline Badge ── */}
-        {typeof sanctuaryFocusScore === 'number' && (
-          <div
-            data-testid="sanctuary-finish-badge"
-            style={{
-              background: 'linear-gradient(135deg, rgba(8, 14, 24, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
-              border: `1px solid ${getSanctuaryBadge(sanctuaryFocusScore).accentBorder}`,
-              borderRadius: 8,
-              padding: '12px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '50%',
-                  background: 'rgba(245, 158, 11, 0.12)',
-                  border: '1px solid rgba(245, 158, 11, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  flexShrink: 0,
-                }}
-              >
-                🛡️
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)' }}>
-                    Gym Sanctuary Mode
-                  </span>
-                  <span style={{ fontSize: 9, color: 'var(--gray)' }}>•</span>
-                  <span style={{ fontSize: 9.5, color: '#34D399', fontWeight: 700 }}>
-                    {sanctuaryBreathsCount || 0} breaths regulated
-                  </span>
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 1 }}>
-                  {getSanctuaryBadge(sanctuaryFocusScore).title}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--gray)', marginTop: 2 }}>
-                  {getSanctuaryBadge(sanctuaryFocusScore).subtitle}
-                </div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 9, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700 }}>
-                Focus
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-telemetry, monospace)',
-                  fontSize: 22,
-                  fontWeight: 800,
-                  color: getSanctuaryBadge(sanctuaryFocusScore).badgeColor,
-                }}
-              >
-                {Math.round(sanctuaryFocusScore)}%
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* ── 1-Click Clinical Proof of Work Dossier Action ── */}
         <button

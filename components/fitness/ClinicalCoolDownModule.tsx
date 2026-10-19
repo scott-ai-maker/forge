@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
 import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import ExerciseVideoModal, { ExerciseModalData } from '@/components/fitness/ExerciseVideoModal'
@@ -711,6 +712,28 @@ export default function ClinicalCoolDownModule({
   }, [storageKey, isFuture])
 
   const [guidedModalOpen, setGuidedModalOpen] = useState<boolean>(false)
+  const [mounted, setMounted] = useState<boolean>(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!guidedModalOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setGuidedModalOpen(false)
+      }
+    }
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = originalOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [guidedModalOpen])
+
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0)
   const [timerSecondsLeft, setTimerSecondsLeft] = useState<number>(30)
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false)
@@ -1503,8 +1526,8 @@ export default function ClinicalCoolDownModule({
                     <GaaIcon name="folder" size={11} tone="cyan" />
                     <span>How to perform:</span>
                   </div>
-                  {item.instructions.map((stepText, sIdx) => (
-                    <div key={sIdx} style={{ marginBottom: sIdx === item.instructions.length - 1 ? 0 : 3, wordBreak: 'break-word' }}>
+                  {(item.instructions || []).map((stepText, sIdx) => (
+                    <div key={sIdx} style={{ marginBottom: sIdx === (item.instructions?.length ?? 1) - 1 ? 0 : 3, wordBreak: 'break-word' }}>
                       {stepText}
                     </div>
                   ))}
@@ -1699,34 +1722,75 @@ export default function ClinicalCoolDownModule({
       )}
 
       {/* ── Guided Flow Timer Modal ────────────────────────────────────── */}
-      {guidedModalOpen && activeItem && (
+      {guidedModalOpen && activeItem && mounted && typeof document !== 'undefined' && createPortal(
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Guided Cool-Down Flow: ${activeItem.name}`}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setGuidedModalOpen(false)
+          }}
           style={{
             position: 'fixed',
             inset: 0,
             background: 'rgba(0,0,0,0.88)',
             zIndex: 100050,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
-            padding: 16,
+            padding: 'max(16px, env(safe-area-inset-top, 16px)) max(12px, env(safe-area-inset-right, 12px)) max(24px, env(safe-area-inset-bottom, 24px)) max(12px, env(safe-area-inset-left, 12px))',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
             backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            boxSizing: 'border-box',
           }}
         >
           <div
             className="responsive-modal-surface"
             style={{
+              position: 'relative',
               background: 'linear-gradient(180deg, #101626 0%, #080B14 100%)',
               border: '1px solid rgba(96,165,250,0.5)',
               borderRadius: 14,
-              padding: 'clamp(18px, 4vw, 32px)',
+              padding: 'clamp(16px, 4vw, 26px)',
               maxWidth: 520,
-              width: 'min(520px, calc(100vw - 24px))',
+              width: '100%',
+              margin: 'auto 0',
               textAlign: 'center',
               boxShadow: '0 25px 60px rgba(0,0,0,0.8)',
+              boxSizing: 'border-box',
             }}
           >
-            <div style={{ fontSize: 11, color: '#93C5FD', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
+            {/* Top-Right Quick Dismiss '✕' Button */}
+            <button
+              type="button"
+              onClick={() => setGuidedModalOpen(false)}
+              aria-label="Close guided flow"
+              title="Close guided flow"
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#E2E8F0',
+                fontSize: 16,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10,
+              }}
+            >
+              ✕
+            </button>
+
+            <div style={{ fontSize: 11, color: '#93C5FD', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700, paddingRight: 32 }}>
               Step {activeStepIndex + 1} of {coolDownItems.length} · {activeItem.phaseLabel}
             </div>
 
@@ -1743,17 +1807,17 @@ export default function ClinicalCoolDownModule({
               {activeItem.name}
             </h3>
 
-            <div style={{ fontSize: 13, color: 'var(--gray)', marginBottom: 16 }}>
+            <div style={{ fontSize: 13, color: 'var(--gray)', marginBottom: 14 }}>
               Target: <strong>{activeItem.target}</strong> · {activeItem.protocol}
             </div>
 
             {/* Breathing Step: Render Dedicated Breath Pacer */}
             {(activeItem.name.toLowerCase().includes('breath') || activeItem.phaseLabel.toLowerCase().includes('parasympathetic') || activeItem.name.toLowerCase().includes('box')) ? (
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 16 }}>
                 <ClinicalBreathPacer
                   requestedItem={activeItem}
                   onComplete={() => toggleItem(activeItem.id)}
-                  compact={false}
+                  compact={true}
                 />
               </div>
             ) : (
@@ -1773,11 +1837,11 @@ export default function ClinicalCoolDownModule({
                         position: 'relative',
                         width: '100%',
                         aspectRatio: '16 / 9',
-                        maxHeight: 'clamp(200px, 34vh, 300px)',
+                        maxHeight: 'clamp(140px, 24vh, 220px)',
                         height: 'auto',
                         borderRadius: 8,
                         overflow: 'hidden',
-                        marginBottom: 16,
+                        marginBottom: 14,
                         border: '1px solid rgba(96,165,250,0.35)',
                         backgroundColor: '#0a0f1d',
                         boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
@@ -1816,6 +1880,7 @@ export default function ClinicalCoolDownModule({
                           alignItems: 'center',
                           gap: 6,
                           backdropFilter: 'blur(4px)',
+                          WebkitBackdropFilter: 'blur(4px)',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
                         }}
                       >
@@ -1837,6 +1902,7 @@ export default function ClinicalCoolDownModule({
                           letterSpacing: '0.06em',
                           textTransform: 'uppercase',
                           backdropFilter: 'blur(4px)',
+                          WebkitBackdropFilter: 'blur(4px)',
                         }}
                       >
                         {movementCard.category} · {activeItem.phaseLabel}
@@ -1895,10 +1961,10 @@ export default function ClinicalCoolDownModule({
 
                       <div
                         style={{
-                          width: 130,
-                          height: 130,
+                          width: 'clamp(100px, 24vw, 130px)',
+                          height: 'clamp(100px, 24vw, 130px)',
                           borderRadius: '50%',
-                          margin: '0 auto 16px',
+                          margin: '0 auto 14px',
                           border: '4px solid rgba(96,165,250,0.3)',
                           borderTopColor: '#60A5FA',
                           display: 'flex',
@@ -1909,7 +1975,7 @@ export default function ClinicalCoolDownModule({
                           boxShadow: '0 0 25px rgba(96,165,250,0.2)',
                         }}
                       >
-                        <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 36, fontWeight: 700, color: '#60A5FA', lineHeight: 1 }}>
+                        <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 700, color: '#60A5FA', lineHeight: 1 }}>
                           {timerSecondsLeft}s
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>
@@ -1929,7 +1995,7 @@ export default function ClinicalCoolDownModule({
                     border: '1px solid rgba(255,255,255,0.08)',
                     borderRadius: 8,
                     padding: '12px 14px',
-                    marginBottom: 20,
+                    marginBottom: 16,
                     textAlign: 'left',
                     fontSize: 12,
                     color: '#E2E8F0',
@@ -1940,8 +2006,8 @@ export default function ClinicalCoolDownModule({
                     <GaaIcon name="folder" size={11} tone="cyan" />
                     <span>How to perform this step:</span>
                   </div>
-                  {activeItem.instructions.map((step, idx) => (
-                    <div key={idx} style={{ marginBottom: idx === activeItem.instructions.length - 1 ? 0 : 3 }}>
+                  {(activeItem.instructions || []).map((step, idx) => (
+                    <div key={idx} style={{ marginBottom: idx === (activeItem.instructions?.length ?? 1) - 1 ? 0 : 3 }}>
                       {step}
                     </div>
                   ))}
@@ -2040,13 +2106,18 @@ export default function ClinicalCoolDownModule({
                   borderRadius: 6,
                   fontSize: 12.5,
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
                 }}
               >
-                ✕ Close
+                <GaaIcon name="close" size={12} tone="inherit" />
+                <span>Close</span>
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Official NASM Movement Standards & Video Modal ── */}

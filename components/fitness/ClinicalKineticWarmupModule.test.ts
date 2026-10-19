@@ -155,5 +155,41 @@ describe('ClinicalKineticWarmupModule & ClinicalCoolDownModule Key Scoping & Fut
       expect(bilateralResult.isComplete).toBe(true)
     })
   })
+
+  describe('Mobile Guided Flow Modal Architecture & Viewport Protection', () => {
+    it('verifies that ClinicalKineticWarmupModule mounts Guided Flow via createPortal into document.body', async () => {
+      const fs = await import('node:fs')
+      const path = await import('node:path')
+      const code = fs.readFileSync(
+        path.resolve(process.cwd(), 'components/fitness/ClinicalKineticWarmupModule.tsx'),
+        'utf-8'
+      )
+
+      expect(code).toContain("import { createPortal } from 'react-dom'")
+      expect(code).toContain('createPortal(')
+      expect(code).toContain('document.body')
+      expect(code).toContain("aria-label=\"Close guided flow\"")
+      expect(code).toContain("WebkitOverflowScrolling: 'touch'")
+      expect(code).toContain("WebkitBackdropFilter: 'blur(8px)'")
+      expect(code).toContain("Array.isArray(pc.inhibit)")
+    })
+
+    it('verifies that ClinicalCoolDownModule mounts Guided Flow via createPortal into document.body', async () => {
+      const fs = await import('node:fs')
+      const path = await import('node:path')
+      const code = fs.readFileSync(
+        path.resolve(process.cwd(), 'components/fitness/ClinicalCoolDownModule.tsx'),
+        'utf-8'
+      )
+
+      expect(code).toContain("import { createPortal } from 'react-dom'")
+      expect(code).toContain('createPortal(')
+      expect(code).toContain('document.body')
+      expect(code).toContain("aria-label=\"Close guided flow\"")
+      expect(code).toContain("WebkitOverflowScrolling: 'touch'")
+      expect(code).toContain("WebkitBackdropFilter: 'blur(8px)'")
+    })
+  })
 })
+
 
