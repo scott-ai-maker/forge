@@ -86,8 +86,9 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   const isReadinessScenario = params.scenario?.startsWith('readiness')
   const isBodyCompScenario = params.scenario === 'bodycomp' || params.scenario === 'lab-bodycomp' || params.scenario === 'bodycomp-scanner'
   const isVideoScenario = params.scenario === 'video' || params.scenario === 'lab-video' || params.scenario === 'form-review'
-  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || params.scenario?.startsWith('lab')
-  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isLabScenario ? 'lab' : 'train')
+  const isRoadmapScenario = params.scenario === 'roadmap' || params.scenario === 'lab-roadmap' || params.scenario === 'periodization'
+  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || params.scenario?.startsWith('lab')
+  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isLabScenario ? 'lab' : 'train')
   const effectiveTab = (params.tab as any) || (
     params.scenario === 'readiness-acwr' ? 'acwr'
       : params.scenario === 'readiness-deload' ? 'deload'
