@@ -29,31 +29,31 @@ export const BAND_COLOR_SPECTRUM: BandResistanceLevel[] = [
     weightLbsMax: 10,
     weightLbsAvg: 10,
     weightKgAvg: 4.5,
-    label: 'Yellow (X-Light · 5–10 lbs)',
+    label: 'Yellow (Very Light · 5–10 lbs)',
     recommendedFor: 'Rotator cuff, shoulder rehab, hip mobility',
-  },
-  {
-    id: 'red',
-    colorName: 'Red',
-    emoji: '●',
-    colorHex: '#EF4444',
-    weightLbsMin: 10,
-    weightLbsMax: 25,
-    weightLbsAvg: 20,
-    weightKgAvg: 9,
-    label: 'Red (Light · 10–25 lbs)',
-    recommendedFor: 'Band pull-aparts, face pulls, shoulder activation',
   },
   {
     id: 'green',
     colorName: 'Green',
     emoji: '●',
     colorHex: '#10B981',
+    weightLbsMin: 10,
+    weightLbsMax: 25,
+    weightLbsAvg: 20,
+    weightKgAvg: 9,
+    label: 'Green (Light · 10–25 lbs)',
+    recommendedFor: 'Band pull-aparts, face pulls, shoulder activation',
+  },
+  {
+    id: 'red',
+    colorName: 'Red',
+    emoji: '●',
+    colorHex: '#EF4444',
     weightLbsMin: 25,
     weightLbsMax: 40,
     weightLbsAvg: 35,
     weightKgAvg: 16,
-    label: 'Green (Medium · 25–40 lbs)',
+    label: 'Red (Medium · 25–40 lbs)',
     recommendedFor: 'Banded walks, bicep curls, seated rows',
   },
   {
@@ -69,27 +69,27 @@ export const BAND_COLOR_SPECTRUM: BandResistanceLevel[] = [
     recommendedFor: 'Assisted pull-ups, squats, compound rows',
   },
   {
-    id: 'black',
-    colorName: 'Black',
-    emoji: '●',
-    colorHex: '#334155',
-    weightLbsMin: 60,
-    weightLbsMax: 80,
-    weightLbsAvg: 70,
-    weightKgAvg: 32,
-    label: 'Black (X-Heavy · 60–80 lbs)',
-    recommendedFor: 'Heavy deadlifts, hip thrusts, max strength',
-  },
-  {
     id: 'purple',
     colorName: 'Purple',
     emoji: '●',
     colorHex: '#8B5CF6',
+    weightLbsMin: 60,
+    weightLbsMax: 80,
+    weightLbsAvg: 70,
+    weightKgAvg: 32,
+    label: 'Purple (Ultra Heavy · 60–80 lbs)',
+    recommendedFor: 'Heavy deadlifts, hip thrusts, max strength',
+  },
+  {
+    id: 'black',
+    colorName: 'Black',
+    emoji: '●',
+    colorHex: '#334155',
     weightLbsMin: 80,
     weightLbsMax: 100,
     weightLbsAvg: 90,
     weightKgAvg: 41,
-    label: 'Purple (Monster · 80–100+ lbs)',
+    label: 'Black (Super Heavy · 80–100+ lbs)',
     recommendedFor: 'Elite power assistance & heavy overload',
   },
 ]
@@ -443,10 +443,10 @@ export function isStrengthExercise(
  */
 export function findBandByWeight(weight: number, units: 'imperial' | 'metric' = 'imperial'): BandResistanceLevel {
   const weightLbs = units === 'metric' ? weight * 2.20462 : weight
-  if (weightLbs <= 15) return BAND_COLOR_SPECTRUM[0] // Yellow
-  if (weightLbs <= 30) return BAND_COLOR_SPECTRUM[1] // Red
-  if (weightLbs <= 45) return BAND_COLOR_SPECTRUM[2] // Green
-  if (weightLbs <= 65) return BAND_COLOR_SPECTRUM[3] // Blue
-  if (weightLbs <= 85) return BAND_COLOR_SPECTRUM[4] // Black
-  return BAND_COLOR_SPECTRUM[5] // Purple
+  if (weightLbs <= 15) return BAND_COLOR_SPECTRUM[0] // Yellow (~10 lbs)
+  if (weightLbs <= 30) return BAND_COLOR_SPECTRUM[1] // Green (~20 lbs)
+  if (weightLbs <= 45) return BAND_COLOR_SPECTRUM[2] // Red (~35 lbs)
+  if (weightLbs <= 65) return BAND_COLOR_SPECTRUM[3] // Blue (~50 lbs)
+  if (weightLbs <= 85) return BAND_COLOR_SPECTRUM[4] // Purple (~70 lbs)
+  return BAND_COLOR_SPECTRUM[5] // Black (~90 lbs)
 }
