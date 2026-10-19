@@ -58,6 +58,88 @@ async function processAndCompressImageFile(file: File): Promise<string> {
   })
 }
 
+/**
+ * Converts user-typed biometric input strings cleanly between imperial and metric units
+ * without loss of precision or input jumping during manual typing.
+ */
+export function convertBiometricInputUnits(
+  value: string,
+  fromUnit: 'imperial' | 'metric',
+  type: 'weight' | 'height' | 'circumference'
+): string {
+  if (!value) return ''
+  const val = parseFloat(value)
+  if (isNaN(val) || val <= 0) return value
+
+  if (fromUnit === 'imperial') {
+    // Imperial -> Metric
+    if (type === 'weight') {
+      return String(Math.round((val / 2.20462) * 10) / 10)
+    } else if (type === 'height') {
+      return String(Math.round(val * 2.54))
+    } else {
+      return String(Math.round(val * 2.54 * 10) / 10)
+    }
+  } else {
+    // Metric -> Imperial
+    if (type === 'weight') {
+      return String(Math.round(val * 2.20462 * 10) / 10)
+    } else if (type === 'height') {
+      return String(Math.round(val / 2.54))
+    } else {
+      return String(Math.round((val / 2.54) * 10) / 10)
+    }
+  }
+}
+
+/**
+ * Resolves standard metric biometrics (kg/cm) from the user's active input state for scan execution.
+ */
+export function resolveScanMetricBiometrics(params: {
+  units: 'imperial' | 'metric'
+  weightInput: string
+  heightInput: string
+  ageInput: string
+  waistInput?: string
+  neckInput?: string
+  hipInput?: string
+}): {
+  weightKg: number
+  heightCm: number
+  age: number
+  waistCm?: number
+  neckCm?: number
+  hipCm?: number
+} {
+  const { units, weightInput, heightInput, ageInput, waistInput, neckInput, hipInput } = params
+  const parsedWeight = parseNumericInput(weightInput, 0)
+  const parsedHeight = parseNumericInput(heightInput, 0)
+  const parsedWaist = waistInput ? parseNumericInput(waistInput, 0) : undefined
+  const parsedNeck = neckInput ? parseNumericInput(neckInput, 0) : undefined
+  const parsedHip = hipInput ? parseNumericInput(hipInput, 0) : undefined
+
+  const finalWeightKg = units === 'imperial'
+    ? (parsedWeight > 0 ? parsedWeight / 2.20462 : 80)
+    : (parsedWeight > 0 ? parsedWeight : 80)
+
+  const finalHeightCm = units === 'imperial'
+    ? (parsedHeight > 0 ? parsedHeight * 2.54 : 178)
+    : (parsedHeight > 0 ? parsedHeight : 178)
+
+  const finalWaistCm = parsedWaist ? (units === 'imperial' ? parsedWaist * 2.54 : parsedWaist) : undefined
+  const finalNeckCm = parsedNeck ? (units === 'imperial' ? parsedNeck * 2.54 : parsedNeck) : undefined
+  const finalHipCm = parsedHip ? (units === 'imperial' ? parsedHip * 2.54 : parsedHip) : undefined
+
+  return {
+    weightKg: Math.round(finalWeightKg * 10) / 10,
+    heightCm: Math.round(finalHeightCm * 10) / 10,
+    age: parseNumericInput(ageInput, 32),
+    waistCm: finalWaistCm ? Math.round(finalWaistCm * 10) / 10 : undefined,
+    neckCm: finalNeckCm ? Math.round(finalNeckCm * 10) / 10 : undefined,
+    hipCm: finalHipCm ? Math.round(finalHipCm * 10) / 10 : undefined,
+  }
+}
+
 interface AiBodyCompositionScannerModalProps {
   isOpen: boolean
   onClose: () => void
@@ -95,17 +177,27 @@ export default function AiBodyCompositionScannerModal({
   initialPhotoSide,
   initialPhotoBack,
 }: AiBodyCompositionScannerModalProps) {
-  // Biometric state
-  const [sex, setSex] = useState<'male' | 'female' | 'other'>(initialSex)
-  const [heightCm, setHeightCm] = useState<string>(initialHeightCm ? String(initialHeightCm) : '178')
-  const [weightKg, setWeightKg] = useState<string>(initialWeightKg ? String(initialWeightKg) : '80')
-  const [age, setAge] = useState<string>(initialAge ? String(initialAge) : '32')
-  const [waistCm, setWaistCm] = useState<string>(initialWaistCm ? String(initialWaistCm) : '')
-  const [neckCm, setNeckCm] = useState<string>(initialNeckCm ? String(initialNeckCm) : '')
-  const [hipCm, setHipCm] = useState<string>(initialHipCm ? String(initialHipCm) : '')
-
   // Unit display
   const [units, setUnits] = useState<'imperial' | 'metric'>('imperial')
+
+  // Biometric state (stores the direct user-typed string in the active unit)
+  const [sex, setSex] = useState<'male' | 'female' | 'other'>(initialSex)
+  const [heightInput, setHeightInput] = useState<string>(() =>
+    initialHeightCm ? String(Math.round(initialHeightCm / 2.54)) : '70'
+  )
+  const [weightInput, setWeightInput] = useState<string>(() =>
+    initialWeightKg ? String(Math.round(initialWeightKg * 2.20462)) : '176'
+  )
+  const [age, setAge] = useState<string>(initialAge ? String(initialAge) : '32')
+  const [waistInput, setWaistInput] = useState<string>(() =>
+    initialWaistCm ? String(Math.round((initialWaistCm / 2.54) * 10) / 10) : ''
+  )
+  const [neckInput, setNeckInput] = useState<string>(() =>
+    initialNeckCm ? String(Math.round((initialNeckCm / 2.54) * 10) / 10) : ''
+  )
+  const [hipInput, setHipInput] = useState<string>(() =>
+    initialHipCm ? String(Math.round((initialHipCm / 2.54) * 10) / 10) : ''
+  )
 
   // Multi-view image state
   const [activeTab, setActiveTab] = useState<ScanViewType>('anterior')
@@ -127,13 +219,37 @@ export default function AiBodyCompositionScannerModal({
   const streamRef = useRef<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
+  // Explicit unit toggle with precise conversion
+  const handleToggleUnits = (targetUnit: 'imperial' | 'metric') => {
+    if (targetUnit === units) return
+    setWeightInput(prev => convertBiometricInputUnits(prev, units, 'weight'))
+    setHeightInput(prev => convertBiometricInputUnits(prev, units, 'height'))
+    setWaistInput(prev => convertBiometricInputUnits(prev, units, 'circumference'))
+    setNeckInput(prev => convertBiometricInputUnits(prev, units, 'circumference'))
+    setHipInput(prev => convertBiometricInputUnits(prev, units, 'circumference'))
+    setUnits(targetUnit)
+  }
+
   // Sync initial props
   useEffect(() => {
     if (initialSex) setSex(initialSex)
-    if (initialHeightCm) setHeightCm(String(initialHeightCm))
-    if (initialWeightKg) setWeightKg(String(initialWeightKg))
+    if (initialHeightCm) {
+      setHeightInput(units === 'imperial' ? String(Math.round(initialHeightCm / 2.54)) : String(initialHeightCm))
+    }
+    if (initialWeightKg) {
+      setWeightInput(units === 'imperial' ? String(Math.round(initialWeightKg * 2.20462)) : String(initialWeightKg))
+    }
     if (initialAge) setAge(String(initialAge))
-  }, [initialSex, initialHeightCm, initialWeightKg, initialAge])
+    if (initialWaistCm) {
+      setWaistInput(units === 'imperial' ? String(Math.round((initialWaistCm / 2.54) * 10) / 10) : String(initialWaistCm))
+    }
+    if (initialNeckCm) {
+      setNeckInput(units === 'imperial' ? String(Math.round((initialNeckCm / 2.54) * 10) / 10) : String(initialNeckCm))
+    }
+    if (initialHipCm) {
+      setHipInput(units === 'imperial' ? String(Math.round((initialHipCm / 2.54) * 10) / 10) : String(initialHipCm))
+    }
+  }, [initialSex, initialHeightCm, initialWeightKg, initialAge, initialWaistCm, initialNeckCm, initialHipCm])
 
   // Sync initial captured photos from live studio session or safe session storage
   useEffect(() => {
@@ -245,17 +361,27 @@ export default function AiBodyCompositionScannerModal({
         ? `/api/coach/clients/${clientId}/body-composition`
         : '/api/fitness/bodyfat'
 
+      const metricBiometrics = resolveScanMetricBiometrics({
+        units,
+        weightInput,
+        heightInput,
+        ageInput: age,
+        waistInput,
+        neckInput,
+        hipInput,
+      })
+
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sex,
-          heightCm: parseNumericInput(heightCm, 178),
-          weightKg: parseNumericInput(weightKg, 80),
-          age: parseNumericInput(age, 32),
-          waistCm: waistCm ? parseNumericInput(waistCm, 0) : undefined,
-          neckCm: neckCm ? parseNumericInput(neckCm, 0) : undefined,
-          hipCm: hipCm ? parseNumericInput(hipCm, 0) : undefined,
+          heightCm: metricBiometrics.heightCm,
+          weightKg: metricBiometrics.weightKg,
+          age: metricBiometrics.age,
+          waistCm: metricBiometrics.waistCm,
+          neckCm: metricBiometrics.neckCm,
+          hipCm: metricBiometrics.hipCm,
           anteriorPhotoBase64: anteriorPhoto || undefined,
           lateralPhotoBase64: lateralPhoto || undefined,
           posteriorPhotoBase64: posteriorPhoto || undefined,
@@ -411,7 +537,7 @@ export default function AiBodyCompositionScannerModal({
             >
               <button
                 type="button"
-                onClick={() => setUnits('imperial')}
+                onClick={() => handleToggleUnits('imperial')}
                 style={{
                   background: units === 'imperial' ? '#D4A017' : 'transparent',
                   color: units === 'imperial' ? '#080E14' : '#94A3B8',
@@ -428,7 +554,7 @@ export default function AiBodyCompositionScannerModal({
               </button>
               <button
                 type="button"
-                onClick={() => setUnits('metric')}
+                onClick={() => handleToggleUnits('metric')}
                 style={{
                   background: units === 'metric' ? '#D4A017' : 'transparent',
                   color: units === 'metric' ? '#080E14' : '#94A3B8',
@@ -823,15 +949,9 @@ export default function AiBodyCompositionScannerModal({
                   inputMode="decimal"
                   autoComplete="off"
                   onFocus={selectOnFocus}
-                  value={units === 'imperial' ? (heightCm ? String(Math.round(Number(heightCm) / 2.54)) : '') : heightCm}
-                  onChange={e => {
-                    const sanitized = sanitizeNumericInput(e.target.value)
-                    if (!sanitized) {
-                      setHeightCm('')
-                    } else {
-                      setHeightCm(units === 'imperial' ? String(Math.round(Number(sanitized) * 2.54)) : sanitized)
-                    }
-                  }}
+                  value={heightInput}
+                  onChange={e => setHeightInput(sanitizeNumericInput(e.target.value))}
+                  placeholder={units === 'imperial' ? '70' : '178'}
                   style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 8px', fontSize: 12 }}
                 />
               </div>
@@ -845,15 +965,9 @@ export default function AiBodyCompositionScannerModal({
                   inputMode="decimal"
                   autoComplete="off"
                   onFocus={selectOnFocus}
-                  value={units === 'imperial' ? (weightKg ? String(Math.round(Number(weightKg) * 2.20462)) : '') : weightKg}
-                  onChange={e => {
-                    const sanitized = sanitizeNumericInput(e.target.value)
-                    if (!sanitized) {
-                      setWeightKg('')
-                    } else {
-                      setWeightKg(units === 'imperial' ? String(Math.round(Number(sanitized) / 2.20462)) : sanitized)
-                    }
-                  }}
+                  value={weightInput}
+                  onChange={e => setWeightInput(sanitizeNumericInput(e.target.value))}
+                  placeholder={units === 'imperial' ? '185' : '84'}
                   style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 8px', fontSize: 12 }}
                 />
               </div>
@@ -903,12 +1017,8 @@ export default function AiBodyCompositionScannerModal({
                       autoComplete="off"
                       onFocus={selectOnFocus}
                       placeholder={units === 'imperial' ? '33' : '84'}
-                      value={waistCm ? (units === 'imperial' ? String(Math.round(Number(waistCm) / 2.54)) : waistCm) : ''}
-                      onChange={e => {
-                        const sanitized = sanitizeNumericInput(e.target.value)
-                        if (!sanitized) setWaistCm('')
-                        else setWaistCm(units === 'imperial' ? String(Math.round(Number(sanitized) * 2.54)) : sanitized)
-                      }}
+                      value={waistInput}
+                      onChange={e => setWaistInput(sanitizeNumericInput(e.target.value))}
                       style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '5px 6px', fontSize: 11 }}
                     />
                   </div>
@@ -920,12 +1030,8 @@ export default function AiBodyCompositionScannerModal({
                       autoComplete="off"
                       onFocus={selectOnFocus}
                       placeholder={units === 'imperial' ? '15.5' : '39'}
-                      value={neckCm ? (units === 'imperial' ? String(Math.round(Number(neckCm) / 2.54)) : neckCm) : ''}
-                      onChange={e => {
-                        const sanitized = sanitizeNumericInput(e.target.value)
-                        if (!sanitized) setNeckCm('')
-                        else setNeckCm(units === 'imperial' ? String(Math.round(Number(sanitized) * 2.54)) : sanitized)
-                      }}
+                      value={neckInput}
+                      onChange={e => setNeckInput(sanitizeNumericInput(e.target.value))}
                       style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '5px 6px', fontSize: 11 }}
                     />
                   </div>
@@ -937,12 +1043,8 @@ export default function AiBodyCompositionScannerModal({
                       autoComplete="off"
                       onFocus={selectOnFocus}
                       placeholder={units === 'imperial' ? '38' : '96'}
-                      value={hipCm ? (units === 'imperial' ? String(Math.round(Number(hipCm) / 2.54)) : hipCm) : ''}
-                      onChange={e => {
-                        const sanitized = sanitizeNumericInput(e.target.value)
-                        if (!sanitized) setHipCm('')
-                        else setHipCm(units === 'imperial' ? String(Math.round(Number(sanitized) * 2.54)) : sanitized)
-                      }}
+                      value={hipInput}
+                      onChange={e => setHipInput(sanitizeNumericInput(e.target.value))}
                       style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '5px 6px', fontSize: 11 }}
                     />
                   </div>

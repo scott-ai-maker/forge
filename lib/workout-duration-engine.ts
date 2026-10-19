@@ -24,6 +24,7 @@ export interface WorkoutDurationExerciseInput {
   rest?: string | null
   block?: string | null
   primaryEquipment?: string[] | null
+  contraindicationReplacedFrom?: string | null
 }
 
 export interface WorkoutDurationCardioInput {
