@@ -21,8 +21,6 @@ export interface AutoregulationDeloadAdvisorProps {
   currentDraftWeight: string | number
   currentDraftReps: string | number
   targetReps?: string | number | null
-  currentDraftRpe?: string | number | null
-  currentDraftRir?: string | number | null
   completedSets: CompletedSetPerformance[]
   units: 'imperial' | 'metric'
   isTimed?: boolean
@@ -44,8 +42,6 @@ export default function AutoregulationDeloadAdvisor({
   currentDraftWeight,
   currentDraftReps,
   targetReps,
-  currentDraftRpe,
-  currentDraftRir,
   completedSets,
   units,
   isTimed,
@@ -80,10 +76,8 @@ export default function AutoregulationDeloadAdvisor({
       completedSets,
       units,
       velocityLossPercent,
-      currentDraftRpe,
-      currentDraftRir,
     })
-  }, [exerciseName, weightLbs, repsNum, targetReps, completedSets, units, velocityLossPercent, currentDraftRpe, currentDraftRir])
+  }, [exerciseName, weightLbs, repsNum, targetReps, completedSets, units, velocityLossPercent])
 
   const sessionTelemetry = useMemo(() => {
     const setsToEvaluate = allSessionSets && allSessionSets.length > 0 ? allSessionSets : completedSets
@@ -348,45 +342,6 @@ export default function AutoregulationDeloadAdvisor({
                 {appliedAction === 'weight'
                   ? 'Applied!'
                   : `Apply ${advice.backOffPlan?.reductionPercent ? `−${advice.backOffPlan.reductionPercent}%` : advice.action === 'reduce_load_15pct' ? '−15%' : advice.action === 'reduce_load_10pct' ? '−10%' : '−5%'} Load (${displaySuggestedWeight} ${units === 'imperial' ? 'lb' : 'kg'})`}
-              </span>
-            </button>
-          )}
-
-          {/* If athlete is in optimal strain (maintain), also offer a proactive -10% back-off button */}
-          {advice.action === 'maintain' && displaySuggestedWeight === undefined && onApplyDeloadWeight && (
-            <button
-              type="button"
-              onClick={() => {
-                const backOffLbs = Math.max(5, Math.round((weightLbs * 0.90) / 5) * 5)
-                const backOffKg = Math.max(2.5, Math.round(((backOffLbs / 2.20462) / 2.5) * 2.5))
-                const targetWeight = units === 'imperial' ? backOffLbs : backOffKg
-                handleApplyWeight(String(targetWeight))
-              }}
-              style={{
-                padding: '5px 10px',
-                borderRadius: 4,
-                fontSize: 11,
-                fontWeight: 800,
-                cursor: 'pointer',
-                background: appliedAction === 'weight' ? '#10B981' : 'rgba(212,160,23,0.18)',
-                border: `1px solid ${appliedAction === 'weight' ? '#10B981' : 'rgba(212,160,23,0.5)'}`,
-                color: appliedAction === 'weight' ? '#FFFFFF' : 'var(--gold-lt, #F3E5AB)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                transition: 'all 0.2s ease',
-              }}
-              data-testid="apply-proactive-backoff-btn"
-            >
-              <GaaIcon
-                name={appliedAction === 'weight' ? 'check' : 'scale'}
-                size={11}
-                tone={appliedAction === 'weight' ? 'emerald' : 'gold'}
-              />
-              <span>
-                {appliedAction === 'weight'
-                  ? 'Applied!'
-                  : `Apply −10% Load (${units === 'imperial' ? Math.max(5, Math.round((weightLbs * 0.90) / 5) * 5) : Math.max(2.5, Math.round(((Math.max(5, Math.round((weightLbs * 0.90) / 5) * 5)) / 2.20462) / 2.5) * 2.5)} ${units === 'imperial' ? 'lb' : 'kg'})`}
               </span>
             </button>
           )}

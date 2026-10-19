@@ -157,30 +157,6 @@ describe('AutoregulationDeloadAdvisor Integration', () => {
     expect(typeof componentModule.default).toBe('function')
   })
 
-  it('detects active draft dialed at RPE 10 (0 RIR) and immediately prescribes 10% back-off load', () => {
-    const sets = [
-      { setNumber: 1, weightLbs: 200, reps: 8, rpe: 8, rir: 2, isWarmup: false },
-    ]
-
-    const advice = evaluateExerciseAutoregulation({
-      exerciseName: 'Barbell Bench Press',
-      currentDraftWeightLbs: 200,
-      currentDraftReps: 8,
-      targetReps: 8,
-      completedSets: sets,
-      units: 'imperial',
-      currentDraftRpe: '10',
-      currentDraftRir: '0',
-    })
-
-    expect(advice.action).toBe('reduce_load_10pct')
-    expect(advice.suggestedWeightLbs).toBe(180) // 200 * 0.9 = 180 lbs
-    expect(advice.badgeText).toBe('−10% Back-Off Load')
-    expect(advice.headline).toContain('RPE 10')
-    expect(advice.fatigueLevel).toBe('critical_overload')
-    expect(advice.backOffPlan?.reductionPercent).toBe(10)
-  })
-
   it('prescribes 10% back-off load when previous set hit momentary failure at target reps', () => {
     const sets = [
       { setNumber: 1, weightLbs: 200, reps: 8, rpe: 8, rir: 2, isWarmup: false },
