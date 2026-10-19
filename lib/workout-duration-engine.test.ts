@@ -7,6 +7,7 @@ import {
   resolveRepDurationSeconds,
   formatDurationDisplay,
   enforceSessionDurationHardCap,
+  isCardioPseudoExercise,
 } from './workout-duration-engine'
 
 describe('workout-duration-engine', () => {
@@ -191,7 +192,8 @@ describe('workout-duration-engine', () => {
 
       expect(adjusted).toBe(true)
       expect(durationBreakdown.totalDurationMins).toBeLessThanOrEqual(52)
-      expect(workout.cardioProtocol).toBeUndefined()
+      expect(workout.cardioProtocol).toBeDefined()
+      expect(workout.cardioProtocol?.durationMins).toBeLessThanOrEqual(10)
       expect(repairs.length).toBeGreaterThan(0)
     })
 
@@ -305,6 +307,52 @@ describe('workout-duration-engine', () => {
 
       expect(result.durationBreakdown.totalDurationMins).toBeLessThanOrEqual(52)
       expect(result.durationBreakdown.restBufferSeconds).toBeGreaterThan(0)
+    })
+
+    it('preserves post-lift cardio finisher under lifts when session fits within hard ceiling', () => {
+      const resistanceWithFinisher = {
+        day: 1,
+        focus: 'Upper Body Stabilization with Cardio Finisher',
+        nasmOptPhase: 1,
+        exercises: [
+          { name: 'Dead Bug', sets: '2', reps: '15 per leg', tempo: '4/2/1', rest: '30s', block: 'core_balance' },
+          { name: 'Dumbbell Bench Press', sets: '3', reps: '15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Dumbbell Bent Over Row', sets: '2', reps: '12-15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Single Leg Scaption', sets: '2', reps: '12-15', tempo: '4/2/1', rest: '60s', block: 'resistance' },
+          { name: 'Static Kneeling Hip Flexor Stretch', sets: '1', reps: '30s', tempo: 'Slow', rest: '0s', block: 'cooldown' },
+        ],
+        cardioProtocol: { durationMins: 10, stage: 1, title: 'Stage 1 Base' },
+        warmupProtocol: {
+          inhibitSmr: ['SMR Calves', 'SMR Lats'],
+          lengthenStaticStretch: ['Stretch Calves', 'Stretch Chest'],
+          activateDynamic: ['Bird Dog', 'Glute Bridge'],
+        },
+      }
+
+      const result = enforceSessionDurationHardCap(resistanceWithFinisher, {
+        maxDurationMins: 52,
+        hasDedicatedCardioDays: true,
+      })
+
+      expect(result.durationBreakdown.totalDurationMins).toBeLessThanOrEqual(52)
+      expect(result.workout.cardioProtocol).toBeDefined()
+      expect(result.workout.cardioProtocol?.durationMins).toBeGreaterThanOrEqual(8)
+      expect(result.workout.cardioProtocol?.durationMins).toBeLessThanOrEqual(10)
+    })
+  })
+
+  describe('isCardioPseudoExercise', () => {
+    it('accurately identifies cardio pseudo-exercises that should not appear as lifts', () => {
+      expect(isCardioPseudoExercise('Prescribed Cardiorespiratory Protocol: Treadmill')).toBe(true)
+      expect(isCardioPseudoExercise('Active Recovery Modality: Concept2 Rower')).toBe(true)
+      expect(isCardioPseudoExercise('Cardiorespiratory Protocol: Incline Walk')).toBe(true)
+      expect(isCardioPseudoExercise('Cardio Modality: Elliptical')).toBe(true)
+
+      expect(isCardioPseudoExercise('Dumbbell Bench Press')).toBe(false)
+      expect(isCardioPseudoExercise('Dead Bug')).toBe(false)
+      expect(isCardioPseudoExercise('Static Kneeling Hip Flexor Stretch')).toBe(false)
+      expect(isCardioPseudoExercise(null)).toBe(false)
+      expect(isCardioPseudoExercise(undefined)).toBe(false)
     })
   })
 })

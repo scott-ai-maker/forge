@@ -243,15 +243,19 @@ describe('rag-nasm-program-generator', () => {
 
     expect(plan.workouts.length).toBe(4)
 
-    // Day 1: Strength session
+    // Day 1: Strength session with integrated cardio finisher under lifts
     const day1 = plan.workouts[0]
     expect(day1.exercises.some(e => e.block === 'resistance')).toBe(true)
+    expect(day1.cardioProtocol).toBeDefined()
+    expect(day1.cardioProtocol?.durationMins).toBeLessThanOrEqual(10)
 
     // Day 2: Dedicated Cardio & Active Recovery Session (Off Day for Strength)
     const day2 = plan.workouts[1]
     expect(day2.focus).toContain('Cardiorespiratory Conditioning & Active Recovery')
     expect(day2.cardioProtocol).toBeDefined()
-    expect(day2.exercises.some(e => e.name.includes('Prescribed Cardiorespiratory Protocol'))).toBe(true)
+    expect(day2.cardioProtocol?.durationMins).toBe(20)
+    // Prescribed cardio lives strictly in cardioProtocol, never as pseudo-exercises in exercises
+    expect(day2.exercises.some(e => e.name.includes('Prescribed Cardiorespiratory Protocol'))).toBe(false)
     expect(day2.exercises.some(e => e.block === 'resistance')).toBe(false)
   })
 

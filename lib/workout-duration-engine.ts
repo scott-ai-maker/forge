@@ -530,15 +530,8 @@ export function enforceSessionDurationHardCap<T extends EnforcedWorkoutDay>(
   } else {
     // ── Resistance Training Day ─────────────────────────────────────────────
     // 1. Check cardio on resistance days:
-    if (hasDedicatedCardio && workoutDay.cardioProtocol) {
-      const prevDur = workoutDay.cardioProtocol.durationMins
-      workoutDay.cardioProtocol = undefined
-      adjusted = true
-      repairs.push(
-        `Eliminated ${prevDur}m cardio from resistance Day ${workoutDay.day ?? ''} to prevent overtraining (cardio handled on dedicated cardio days)`
-      )
-      bd = calcDuration(null)
-    } else if (workoutDay.cardioProtocol && Number(workoutDay.cardioProtocol.durationMins) > 10) {
+    // Scale any bloated cardio down to a focused 8-10 minute post-lift finisher under the lifts
+    if (workoutDay.cardioProtocol && Number(workoutDay.cardioProtocol.durationMins) > 10) {
       const prevDur = workoutDay.cardioProtocol.durationMins
       workoutDay.cardioProtocol.durationMins = 10
       adjusted = true
@@ -593,6 +586,50 @@ export function enforceSessionDurationHardCap<T extends EnforcedWorkoutDay>(
           }
         }
       }
+
+      // Pass 3b: If still > maxMins, scale core/balance/accessory movements to 1 set (NASM Phase 1 allows 1-3 sets)
+      if (bd.totalDurationMins > maxMins) {
+        for (const ex of workoutDay.exercises) {
+          if (bd.totalDurationMins <= maxMins) break
+          if (ex.block === 'core_balance' || (!isCompoundLift(ex.name) && !ex.contraindicationReplacedFrom)) {
+            const currentSets = parseSetsCount(ex.sets)
+            if (currentSets > 1) {
+              ex.sets = '1'
+              adjusted = true
+              repairs.push(`Scaled accessory '${ex.name}' to 1 set to preserve session duration`)
+              bd = calcDuration(workoutDay.cardioProtocol)
+            }
+          }
+        }
+      }
+
+      // Pass 3c: If still > maxMins, calibrate cardio finisher to 5m (NASM metabolic flush minimum)
+      if (bd.totalDurationMins > maxMins && workoutDay.cardioProtocol && Number(workoutDay.cardioProtocol.durationMins) > 5) {
+        const prev = workoutDay.cardioProtocol.durationMins
+        workoutDay.cardioProtocol.durationMins = 5
+        adjusted = true
+        repairs.push(`Calibrated post-lift cardio finisher from ${prev}m to 5m (metabolic flush minimum)`)
+        bd = calcDuration(workoutDay.cardioProtocol)
+      }
+
+      // Fourth pass: if STILL > maxMins and there are > 4 resistance exercises, trim lowest priority trailing isolation
+      // (Never trim exercises that were specifically substituted for client injuries/contraindications)
+      const resistanceExs = workoutDay.exercises.filter(
+        e => e.block !== 'warmup' && e.block !== 'cooldown' && !isCardioPseudoExercise(e.name)
+      )
+      if (bd.totalDurationMins > maxMins && resistanceExs.length > 4) {
+        for (let i = workoutDay.exercises.length - 1; i >= 0; i--) {
+          if (bd.totalDurationMins <= maxMins) break
+          const ex = workoutDay.exercises[i]
+          if (ex.block !== 'warmup' && ex.block !== 'cooldown' && !isCompoundLift(ex.name) && !ex.contraindicationReplacedFrom) {
+            workoutDay.exercises.splice(i, 1)
+            adjusted = true
+            repairs.push(`Trimmed auxiliary isolation '${ex.name}' to prioritize prime stabilization and preserve ${maxMins}m ceiling`)
+            bd = calcDuration(workoutDay.cardioProtocol)
+            break
+          }
+        }
+      }
     }
 
     // 3. Streamline Warmup Protocol if bloated:
@@ -613,6 +650,34 @@ export function enforceSessionDurationHardCap<T extends EnforcedWorkoutDay>(
         repairs.push('Streamlined dynamic activation to top 2 movement preps')
       }
       bd = calcDuration(workoutDay.cardioProtocol)
+    }
+
+    // 4. If still exceeding maxMins, calibrate post-lift cardio finisher (down to 8m, then 5m minimum metabolic flush)
+    if (bd.totalDurationMins > maxMins && workoutDay.cardioProtocol && Number(workoutDay.cardioProtocol.durationMins) > 8) {
+      const prevDur = workoutDay.cardioProtocol.durationMins
+      workoutDay.cardioProtocol.durationMins = 8
+      adjusted = true
+      repairs.push(`Calibrated post-lift cardio finisher from ${prevDur}m to 8m (NASM minimum threshold)`)
+      bd = calcDuration(workoutDay.cardioProtocol)
+    }
+
+    if (bd.totalDurationMins > maxMins && workoutDay.cardioProtocol && Number(workoutDay.cardioProtocol.durationMins) > 5) {
+      const prevDur = workoutDay.cardioProtocol.durationMins
+      workoutDay.cardioProtocol.durationMins = 5
+      adjusted = true
+      repairs.push(`Calibrated post-lift cardio finisher from ${prevDur}m to 5m (metabolic flush)`)
+      bd = calcDuration(workoutDay.cardioProtocol)
+    }
+
+    // 5. As absolute last resort, if session still strictly breaches hard ceiling and dedicated cardio days exist
+    if (bd.totalDurationMins > maxMins && hasDedicatedCardio && workoutDay.cardioProtocol) {
+      const prevDur = workoutDay.cardioProtocol.durationMins
+      workoutDay.cardioProtocol = undefined
+      adjusted = true
+      repairs.push(
+        `Eliminated ${prevDur}m cardio from resistance Day ${workoutDay.day ?? ''} to strictly preserve ${maxMins}m ceiling`
+      )
+      bd = calcDuration(null)
     }
   }
 
@@ -635,6 +700,21 @@ export function enforceSessionDurationHardCap<T extends EnforcedWorkoutDay>(
     repairs,
     durationBreakdown: bd,
   }
+}
+
+/**
+ * Detects legacy or generator pseudo-cardio exercise names that should not be rendered
+ * as resistance working sets or counted towards resistance volume.
+ */
+export function isCardioPseudoExercise(name?: string | null): boolean {
+  if (!name) return false
+  const n = name.trim().toLowerCase()
+  return (
+    n.startsWith('prescribed cardio') ||
+    n.startsWith('active recovery modality') ||
+    n.includes('cardiorespiratory protocol') ||
+    n.includes('cardio modality')
+  )
 }
 
 

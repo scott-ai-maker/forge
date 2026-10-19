@@ -3,6 +3,7 @@
 import { useMemo, useCallback } from 'react'
 import { calculateAcwrFromWorkoutLogs } from '@/lib/coach-triage'
 import { extractWorkoutDayTag, filterSetLogsForMicrocycleWeek } from '@/lib/fitness'
+import { isCardioPseudoExercise } from '@/lib/workout-duration-engine'
 
 export interface WorkoutSetLogRecord {
   id: string
@@ -199,6 +200,7 @@ export function computeWorkoutProgressByDay(
     }
 
     for (const exercise of workout.exercises) {
+      if (isCardioPseudoExercise(exercise.name)) continue
       metric.targetSets += parseSetTarget(exercise.sets)
 
       const logsForExercise = (

@@ -121,6 +121,7 @@ import { identifyHeartRateZone } from '@/lib/nasm-cardio-stage-engine'
 import {
   calculateEstimatedWorkoutDuration,
   parseRestSecondsFromExercise,
+  isCardioPseudoExercise,
 } from '@/lib/workout-duration-engine'
 import {
   buildIntegratedCardioPrescription,
@@ -3454,95 +3455,169 @@ export default function FitnessTrackerClient({
                       )}
 
                       {/* Step 2: Resistance Training */}
-                      {(activeStepFilter === 'all' || activeStepFilter === 'resistance') && (
-                        <div
-                          style={{
-                            marginBottom: 20,
-                            border: '1px solid rgba(212,160,23,0.35)',
-                            background: 'linear-gradient(135deg, rgba(212,160,23,0.06) 0%, rgba(10,16,28,0.95) 100%)',
-                            borderRadius: 8,
-                            padding: 'clamp(6px, 1.8vw, 16px)',
-                          }}
-                        >
+                      {(activeStepFilter === 'all' || activeStepFilter === 'resistance') && (() => {
+                        const rawCurrentExercises: WorkoutExercise[] = adaptedExercisesByDay[workout.day]
+                          ? adaptedExercisesByDay[workout.day].map(ae => ({
+                              name: ae.name,
+                              sets: String(ae.sets),
+                              reps: ae.reps,
+                              tempo: ae.tempo ?? null,
+                              rest: null,
+                              notes: ae.coachingCue ?? null,
+                              description: null,
+                              primaryEquipment: null,
+                              imageUrl: null,
+                              videoUrl: null,
+                              block: 'resistance',
+                            }))
+                          : workout.exercises
+
+                        const currentExercises = (rawCurrentExercises || []).filter(ex => !isCardioPseudoExercise(ex.name))
+                        const resistanceWorkingLifts = currentExercises.filter(
+                          ex => ex.block !== 'warmup' && ex.block !== 'cooldown' && !isTimedStaticStretch(ex.name, ex.block, ex.reps) && !isFoamRollerExercise(ex.name)
+                        )
+                        const isDedicatedCardioDay =
+                          workout.focus?.toLowerCase().includes('cardio') ||
+                          workout.focus?.toLowerCase().includes('recovery') ||
+                          resistanceWorkingLifts.length === 0
+
+                        return (
                           <div
                             style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              flexWrap: 'wrap',
-                              gap: 10,
-                              borderBottom: isStageCollapsed(workout.day, 'resistance') ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                              paddingBottom: isStageCollapsed(workout.day, 'resistance') ? 0 : 10,
-                              marginBottom: isStageCollapsed(workout.day, 'resistance') ? 0 : 14,
+                              marginBottom: 20,
+                              border: isDedicatedCardioDay ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid rgba(212,160,23,0.35)',
+                              background: isDedicatedCardioDay
+                                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, rgba(10,16,28,0.95) 100%)'
+                                : 'linear-gradient(135deg, rgba(212,160,23,0.06) 0%, rgba(10,16,28,0.95) 100%)',
+                              borderRadius: 8,
+                              padding: 'clamp(6px, 1.8vw, 16px)',
                             }}
                           >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 11, background: 'rgba(212,160,23,0.15)', color: 'var(--gold)', fontWeight: 800, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                                <GaaIcon name="dumbbell" size={13} tone="gold" />
-                                <span>STEP 2: RESISTANCE TRAINING</span>
-                              </span>
-                              <span style={{ color: 'var(--white)', fontSize: 14, fontWeight: 700 }}>
-                                Working Sets ({workout.exercises.length} Exercises)
-                              </span>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                              <button
-                                type="button"
-                                onClick={() => toggleStage(workout.day, 'resistance')}
-                                className="tactile-btn"
-                                style={{
-                                  background: 'rgba(255,255,255,0.06)',
-                                  border: '1px solid rgba(255,255,255,0.18)',
-                                  color: 'var(--gold-lt)',
-                                  borderRadius: 5,
-                                  padding: '6px 12px',
-                                  fontSize: 11.5,
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: 10,
+                                borderBottom: isStageCollapsed(workout.day, 'resistance') ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                                paddingBottom: isStageCollapsed(workout.day, 'resistance') ? 0 : 10,
+                                marginBottom: isStageCollapsed(workout.day, 'resistance') ? 0 : 14,
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                <span style={{
+                                  fontSize: 11,
+                                  background: isDedicatedCardioDay ? 'rgba(56, 189, 248, 0.15)' : 'rgba(212,160,23,0.15)',
+                                  color: isDedicatedCardioDay ? '#38BDF8' : 'var(--gold)',
+                                  fontWeight: 800,
+                                  padding: '2px 8px',
+                                  borderRadius: 4,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.06em',
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: 5,
-                                }}
-                              >
-                                {isStageCollapsed(workout.day, 'resistance') ? '▼ Expand Working Sets' : '▲ Collapse'}
-                              </button>
+                                  gap: 5
+                                }}>
+                                  <GaaIcon name={isDedicatedCardioDay ? 'runner' : 'dumbbell'} size={13} tone={isDedicatedCardioDay ? 'cyan' : 'gold'} />
+                                  <span>{isDedicatedCardioDay ? 'STEP 2: ACTIVE RECOVERY' : 'STEP 2: RESISTANCE TRAINING'}</span>
+                                </span>
+                                <span style={{ color: 'var(--white)', fontSize: 14, fontWeight: 700 }}>
+                                  {isDedicatedCardioDay ? 'Active Recovery · No Lifts Scheduled' : `Working Sets (${resistanceWorkingLifts.length} Exercises)`}
+                                </span>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleStage(workout.day, 'resistance')}
+                                  className="tactile-btn"
+                                  style={{
+                                    background: 'rgba(255,255,255,0.06)',
+                                    border: '1px solid rgba(255,255,255,0.18)',
+                                    color: isDedicatedCardioDay ? '#38BDF8' : 'var(--gold-lt)',
+                                    borderRadius: 5,
+                                    padding: '6px 12px',
+                                    fontSize: 11.5,
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                  }}
+                                >
+                                  {isStageCollapsed(workout.day, 'resistance') ? '▼ Expand' : '▲ Collapse'}
+                                </button>
+                              </div>
                             </div>
-                          </div>
 
-                          {!isStageCollapsed(workout.day, 'resistance') && (
-                            <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
-                    {(() => {
-                      const OPT_SECTION_ORDER = ['warm-up','activation','skill-development','resistance','clients-choice','cool-down']
-                      const OPT_SECTION_LABELS: Record<string, string> = {
-                        'warm-up': 'WARM-UP',
-                        'activation': 'ACTIVATION (core & balance)',
-                        'skill-development': 'SKILL DEVELOPMENT (plyometric & SAQ)',
-                        'resistance': 'RESISTANCE TRAINING',
-                        'clients-choice': "CLIENT'S CHOICE",
-                        'cool-down': 'COOL-DOWN',
-                      }
+                            {!isStageCollapsed(workout.day, 'resistance') && (
+                              isDedicatedCardioDay ? (
+                                <div
+                                  style={{
+                                    padding: '24px 18px',
+                                    textAlign: 'center',
+                                    background: 'rgba(56, 189, 248, 0.04)',
+                                    border: '1px dashed rgba(56, 189, 248, 0.25)',
+                                    borderRadius: 8,
+                                    margin: '6px 0 10px',
+                                  }}
+                                >
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#38BDF8', fontWeight: 800, fontSize: 13, marginBottom: 6, letterSpacing: '0.04em' }}>
+                                    <GaaIcon name="runner" size={16} tone="cyan" />
+                                    <span>Dedicated Cardiorespiratory & Active Recovery Day</span>
+                                  </div>
+                                  <p style={{ margin: '0 auto 12px', maxWidth: 480, fontSize: 12.5, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+                                    No resistance lifting scheduled for today. Complete your mobility drills in Step 1, then proceed directly to your prescribed cardiovascular conditioning session in Step 3 below.
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      triggerHaptic('tap')
+                                      setActiveStepFilter('cardio')
+                                      setCollapsedStages(prev => ({
+                                        ...prev,
+                                        [`${workout.day}-cardio`]: false,
+                                      }))
+                                    }}
+                                    className="tactile-btn"
+                                    style={{
+                                      background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                                      border: '1px solid #38BDF8',
+                                      color: '#FFFFFF',
+                                      borderRadius: 6,
+                                      padding: '8px 18px',
+                                      fontSize: 12,
+                                      fontWeight: 800,
+                                      letterSpacing: '0.05em',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 6,
+                                      boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
+                                    }}
+                                  >
+                                    <span>Proceed to Step 3: Cardio Session</span>
+                                    <span>→</span>
+                                  </button>
+                                </div>
+                              ) : (
+                                <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+                                  {(() => {
+                                    const OPT_SECTION_ORDER = ['warm-up','activation','skill-development','resistance','clients-choice','cool-down']
+                                    const OPT_SECTION_LABELS: Record<string, string> = {
+                                      'warm-up': 'WARM-UP',
+                                      'activation': 'ACTIVATION (core & balance)',
+                                      'skill-development': 'SKILL DEVELOPMENT (plyometric & SAQ)',
+                                      'resistance': 'RESISTANCE TRAINING',
+                                      'clients-choice': "CLIENT'S CHOICE",
+                                      'cool-down': 'COOL-DOWN',
+                                    }
 
-                      const currentExercises: WorkoutExercise[] = adaptedExercisesByDay[workout.day]
-                        ? adaptedExercisesByDay[workout.day].map(ae => ({
-                            name: ae.name,
-                            sets: String(ae.sets),
-                            reps: ae.reps,
-                            tempo: ae.tempo ?? null,
-                            rest: null,
-                            notes: ae.coachingCue ?? null,
-                            description: null,
-                            primaryEquipment: null,
-                            imageUrl: null,
-                            videoUrl: null,
-                            block: 'resistance',
-                          }))
-                        : workout.exercises
-
-                      const hasSections = currentExercises.some(ex => ex.block && OPT_SECTION_ORDER.includes(ex.block))
-                      const seenSections = new Set<string>()
-                      return (
-                        <>
+                                    const hasSections = currentExercises.some(ex => ex.block && OPT_SECTION_ORDER.includes(ex.block))
+                                    const seenSections = new Set<string>()
+                                    return (
+                                      <>
                           <div style={{ marginBottom: 6 }}>
                             {(() => {
                               const phaseRules = getNasmOptPhaseFeatureRules(plan?.nasm_opt_phase)
@@ -4705,11 +4780,13 @@ export default function FitnessTrackerClient({
                         </>
                       )
                   })()}
-                </ul>
-              )}
+                    </ul>
+                  )
+                )}
 
               {/* ── Auto-Prompt: Advance from Resistance to Cardio ── */}
               {(() => {
+                if (isDedicatedCardioDay) return null
                 const exercises = workout.exercises || []
                 const hasExercises = exercises.length > 0
                 const loggedCount = exercises.filter(ex => {
@@ -4726,67 +4803,129 @@ export default function FitnessTrackerClient({
                 const cardio = resolveWorkoutCardioProtocol(workout, profile, plan)
                 const isCardioLogged = localCardioLogs.some(log => log.notes?.includes(`[Day ${workout.day}`) || (workout.scheduledDate && log.session_date === workout.scheduledDate))
 
-                if (!allResistanceLogged || isCardioLogged) return null
+                if (!cardio || isCardioLogged) return null
 
-                return (
-                  <div
-                    style={{
-                      marginTop: 14,
-                      padding: '12px 16px',
-                      background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.16) 0%, rgba(13, 27, 42, 0.95) 100%)',
-                      border: '1px solid rgba(6, 182, 212, 0.45)',
-                      borderRadius: 8,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      flexWrap: 'wrap',
-                      gap: 12,
-                      boxShadow: '0 4px 20px rgba(6, 182, 212, 0.25)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <GaaIcon name="target" size={22} tone="cyan" />
-                      <div>
-                        <div style={{ fontSize: 12.5, fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.04em' }}>
-                          ALL RESISTANCE EXERCISES COMPLETE ({loggedCount}/{exercises.length})!
-                        </div>
-                        <div style={{ fontSize: 11.5, color: '#A5F3FC', marginTop: 1 }}>
-                          Ready for Stage 3: {cardio?.title || 'Cardiorespiratory Conditioning (Incline Walking / Intervals)'}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic('success')
-                        setActiveStepFilter('cardio')
-                        setCollapsedStages(prev => ({ ...prev, [`${workout.day}-cardio`]: false }))
-                      }}
-                      className="tactile-btn"
+                if (allResistanceLogged) {
+                  return (
+                    <div
                       style={{
-                        background: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
-                        border: 'none',
-                        color: '#FFFFFF',
-                        padding: '8px 14px',
-                        borderRadius: 5,
-                        fontSize: 11.5,
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
+                        marginTop: 14,
+                        padding: '12px 16px',
+                        background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.16) 0%, rgba(13, 27, 42, 0.95) 100%)',
+                        border: '1px solid rgba(6, 182, 212, 0.45)',
+                        borderRadius: 8,
+                        display: 'flex',
                         alignItems: 'center',
-                        gap: 6,
-                        boxShadow: '0 2px 10px rgba(6, 182, 212, 0.4)',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: 12,
+                        boxShadow: '0 4px 20px rgba(6, 182, 212, 0.25)',
                       }}
                     >
-                      <span>Advance to Stage 3 Cardio</span>
-                      <span>→</span>
-                    </button>
-                  </div>
-                )
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <GaaIcon name="target" size={22} tone="cyan" />
+                        <div>
+                          <div style={{ fontSize: 12.5, fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.04em' }}>
+                            ALL RESISTANCE EXERCISES COMPLETE ({loggedCount}/{exercises.length})!
+                          </div>
+                          <div style={{ fontSize: 11.5, color: '#A5F3FC', marginTop: 1 }}>
+                            Ready for Stage 3: {cardio?.title || 'Cardiorespiratory Conditioning (Incline Walking / Intervals)'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('success')
+                          setActiveStepFilter('cardio')
+                          setCollapsedStages(prev => ({ ...prev, [`${workout.day}-cardio`]: false }))
+                        }}
+                        className="tactile-btn"
+                        style={{
+                          background: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+                          border: 'none',
+                          color: '#FFFFFF',
+                          padding: '8px 14px',
+                          borderRadius: 5,
+                          fontSize: 11.5,
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          boxShadow: '0 2px 10px rgba(6, 182, 212, 0.4)',
+                        }}
+                      >
+                        <span>Advance to Stage 3 Cardio</span>
+                        <span>→</span>
+                      </button>
+                    </div>
+                  )
+                }
+
+                if (activeStepFilter === 'resistance') {
+                  return (
+                    <div
+                      style={{
+                        marginTop: 14,
+                        padding: '12px 16px',
+                        background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(13, 27, 42, 0.9) 100%)',
+                        border: '1px solid rgba(56, 189, 248, 0.3)',
+                        borderRadius: 8,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: 12,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <GaaIcon name="runner" size={20} tone="cyan" />
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#38BDF8' }}>
+                            Next Up After Lifts: Prescribed Cardio ({cardio.durationMins} min)
+                          </div>
+                          <div style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 600, marginTop: 2 }}>
+                            {cardio.title} · {cardio.targetZone}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('tap')
+                          setActiveStepFilter('cardio')
+                          setCollapsedStages(prev => ({ ...prev, [`${workout.day}-cardio`]: false }))
+                        }}
+                        className="tactile-btn"
+                        style={{
+                          background: 'rgba(56, 189, 248, 0.15)',
+                          border: '1px solid rgba(56, 189, 248, 0.4)',
+                          color: '#38BDF8',
+                          padding: '7px 12px',
+                          borderRadius: 5,
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <span>Open Cardio Session</span>
+                        <span>→</span>
+                      </button>
+                    </div>
+                  )
+                }
+
+                return null
               })()}
               </div>
-            )}
+            )
+          })()}
 
                       {/* ── Step 3: Integrated NASM Cardiorespiratory Protocol & Energy System Finisher ── */}
                       {(activeStepFilter === 'all' || activeStepFilter === 'cardio') && (() => {

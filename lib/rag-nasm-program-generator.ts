@@ -345,11 +345,7 @@ export function buildIntegratedCardioPrescription(params: {
     ? '🛡️ Medication Guidance: Heart rate is blunted by cardiac/hypertension medication. Regulate workout intensity exclusively with RPE and the Talk Test.'
     : null
 
-  // On dedicated conditioning splits, cardio is programmed onto designated off-days (e.g. Day 2, 4).
-  // Strength days (Days 1, 3, etc.) must NOT stack long cardio on top of resistance to prevent overtraining.
-  if (blendStyle === 'dedicated_conditioning' && dayIndex % 2 !== 0) {
-    return undefined
-  }
+  const isDedicatedCardioDay = blendStyle === 'dedicated_conditioning' && dayIndex % 2 === 0
 
   if (goal === 'fat_loss') {
     const isIntervalDay = dayIndex % 2 === 0 && (phase > 1 || totalDays <= 3)
@@ -363,7 +359,7 @@ export function buildIntegratedCardioPrescription(params: {
       ]
       return {
         title: 'Stage 2: Aerobic Threshold Intervals',
-        protocolType: 'stage_interval_conditioning',
+        protocolType: isDedicatedCardioDay ? 'stage_interval_conditioning' : 'post_lift_finisher',
         stage: 2,
         stageName: 'Stage 2: Threshold Interval Protocol',
         targetZone: hasHeartMedications
@@ -373,9 +369,13 @@ export function buildIntegratedCardioPrescription(params: {
           ? `RPE 6–7 Governed (Observed est: ${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM)`
           : `${zones.zone2.minBpm}–${zones.zone2.maxBpm} BPM`,
         targetRpe: 'RPE 6–7 / 10 (Challenging Threshold Pace)',
-        durationMins: 8,
-        workRestRatio: 'Intervals: 1:2 Work-to-Rest (30s Work / 60s Recovery × 5–6 rounds)',
-        timingGuideline: 'Perform immediately post-resistance training (or separated by ≥6 hours). Strength first → Cardio second.',
+        durationMins: isDedicatedCardioDay ? 20 : 8,
+        workRestRatio: isDedicatedCardioDay
+          ? 'Intervals: 1:2 Work-to-Rest (60s Work / 120s Recovery × 6–7 rounds)'
+          : 'Intervals: 1:2 Work-to-Rest (30s Work / 60s Recovery × 5–6 rounds)',
+        timingGuideline: isDedicatedCardioDay
+          ? 'Perform as a dedicated conditioning session on active recovery / non-lifting days.'
+          : 'Perform immediately post-resistance training under your lifts. Strength first → Cardio second.',
         recommendedModalities: modalities,
         metabolicRationale: 'Pushes aerobic threshold and elevates 24-hour Excess Post-Exercise Oxygen Consumption (EPOC) to increase total daily energy expenditure.',
         coachingCues: cues,
@@ -385,7 +385,7 @@ export function buildIntegratedCardioPrescription(params: {
       const modalities = buildRecommendedCardioModalities(1, goal, caps)
       return {
         title: 'Stage 1: Steady-State Aerobic Base',
-        protocolType: 'post_lift_finisher',
+        protocolType: isDedicatedCardioDay ? 'steady_state_base' : 'post_lift_finisher',
         stage: 1,
         stageName: 'Stage 1: Aerobic Base & Lipid Mobilization',
         targetZone: hasHeartMedications
@@ -395,9 +395,13 @@ export function buildIntegratedCardioPrescription(params: {
           ? `RPE 3–4 Governed (Observed est: ${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`
           : `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM`,
         targetRpe: 'RPE 3–4 / 10 (Moderate Conversational Pace)',
-        durationMins: 10,
-        workRestRatio: 'Steady State: Continuous Aerobic Pace (10-minute Post-Lift Metabolic Flush)',
-        timingGuideline: 'Perform immediately following strength training when glycogen is depleted for enhanced fatty acid oxidation.',
+        durationMins: isDedicatedCardioDay ? 20 : 10,
+        workRestRatio: isDedicatedCardioDay
+          ? 'Steady State: Continuous Aerobic Pace (20-minute Dedicated Aerobic Base Session)'
+          : 'Steady State: Continuous Aerobic Pace (10-minute Post-Lift Metabolic Flush)',
+        timingGuideline: isDedicatedCardioDay
+          ? 'Perform as a dedicated cardiorespiratory conditioning session on active recovery days.'
+          : 'Perform immediately following strength training under your lifts when glycogen is depleted for enhanced fatty acid oxidation.',
         recommendedModalities: modalities,
         metabolicRationale: 'Maximizes fat oxidation in a glycogen-depleted state without elevating cortisol or interfering with joint and muscular recovery.',
         coachingCues: [
@@ -425,9 +429,11 @@ export function buildIntegratedCardioPrescription(params: {
         ? `RPE 3 Governed (Observed est: ${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM)`
         : `${zones.zone1.minBpm}–${zones.zone1.maxBpm} BPM`,
       targetRpe: 'RPE 3 / 10 (Light Recovery Pace)',
-      durationMins: 8,
+      durationMins: isDedicatedCardioDay ? 20 : 8,
       workRestRatio: 'Steady State: Continuous Low-Impact',
-      timingGuideline: 'Perform post-lift for 8–10 mins or on non-lifting recovery days. Avoid high-impact running to preserve leg recovery for heavy squats.',
+      timingGuideline: isDedicatedCardioDay
+        ? 'Perform on non-lifting recovery days. Avoid high-impact running to preserve leg recovery for heavy squats.'
+        : 'Perform post-lift under your lifts for 8 mins. Avoid high-impact running to preserve leg recovery for heavy squats.',
       recommendedModalities: modalities,
       metabolicRationale: 'Stimulates intramuscular capillary network density and enhances venous return for accelerated metabolite clearance without activating AMPK or blunting mTOR protein synthesis.',
       coachingCues: [
@@ -768,40 +774,9 @@ function buildDistinctOptWorkoutDay(params: {
       hasHeartMedications,
     })
 
-    const primaryModality = cardioProtocol?.recommendedModalities[0] || 'Incline Treadmill Walk'
-    const secondaryModality = cardioProtocol?.recommendedModalities[1] || 'Concept2 Rower'
-
-    const cardioExercises: GeneratedExerciseItem[] = [
-      {
-        block: 'warmup',
-        name: 'Foam Roll Calves',
-        sets: '1',
-        reps: '60s',
-        tempo: 'Hold tender spots',
-        rest: '0s',
-        coachingCues: ['Progressively elevate core body temperature, roll slowly and hold tender trigger points for 30-60s.'],
-        nasmClinicalSource: 'NASM CPT-7 Chapter 14 & 15',
-      },
-      {
-        block: 'saq',
-        name: `Prescribed Cardiorespiratory Protocol: ${primaryModality}`,
-        sets: '1',
-        reps: `${cardioProtocol?.durationMins || 20} min`,
-        tempo: cardioProtocol?.workRestRatio || 'Continuous',
-        rest: '0s',
-        coachingCues: cardioProtocol?.coachingCues || ['Stay strictly within prescribed heart rate zone.'],
-        nasmClinicalSource: cardioProtocol?.nasmChapterSource || 'NASM CPT-7 Chapter 15',
-      },
-      {
-        block: 'saq',
-        name: `Active Recovery Modality: ${secondaryModality}`,
-        sets: '1',
-        reps: '10 min',
-        tempo: 'Steady Zone 1 Flush',
-        rest: '0s',
-        coachingCues: ['Low-impact steady movement to facilitate metabolite flush and capillary circulation.'],
-        nasmClinicalSource: 'NASM CPT-7 Chapter 15',
-      },
+    // Dedicated cardio days isolate prescribed cardio strictly to `cardioProtocol` (Step 3).
+    // `exercises` contains only genuine recovery stretches for Step 4 cool-down.
+    const cooldownExercises: GeneratedExerciseItem[] = [
       {
         block: 'cooldown',
         name: 'Static Kneeling Hip Flexor Stretch',
@@ -822,9 +797,9 @@ function buildDistinctOptWorkoutDay(params: {
       focus: cardioFocus,
       nasmOptPhase: phase,
       phaseName: 'Cardiorespiratory Conditioning & Recovery',
-      estimatedDurationMins: (cardioProtocol?.durationMins || 20) + 15,
+      estimatedDurationMins: (cardioProtocol?.durationMins || 20) + 10,
       warmupProtocol,
-      exercises: cardioExercises,
+      exercises: cooldownExercises,
       cardioProtocol,
       dailyPeriodizationMemo: `Dedicated cardiorespiratory conditioning session (${cardioProtocol?.title}) designed to enhance aerobic capacity, lactate threshold, and metabolic recovery without neuromuscular interference on non-strength days.`,
     }
@@ -1137,7 +1112,20 @@ function buildDistinctOptWorkoutDay(params: {
         })
       }
 
-      // 4. Integrated Step / Lunge
+      // 4. Hamstring / Glute Posterior Complex (Machine Leg Curl Alternative for Home Gym)
+      exercises.push({
+        block: 'resistance',
+        name: 'Floor Bridge',
+        sets: '3',
+        reps: '15',
+        tempo: '4/2/1',
+        rest: '60s',
+        intensityPercentage1RM: 0.6,
+        coachingCues: ['Drive through heels, squeeze glutes at top peak contraction', 'Keep ribs pulled down, avoid lumbar hyperextension'],
+        nasmClinicalSource: 'CPT7_Ch16 (Posterior Core Complex)',
+      })
+
+      // 5. Integrated Step / Lunge Progression
       exercises.push({
         block: 'resistance',
         name: eq.hasDumbbells
@@ -1150,19 +1138,6 @@ function buildDistinctOptWorkoutDay(params: {
         intensityPercentage1RM: 0.5,
         coachingCues: ['Pause at the top for 2 seconds in single-leg balance before stepping down'],
         nasmClinicalSource: 'CPT7_Ch21 (Integrated Step Progressions)',
-      })
-
-      // 5. Hamstring / Glute Posterior Complex
-      exercises.push({
-        block: 'resistance',
-        name: 'Floor Bridge',
-        sets: '3',
-        reps: '15',
-        tempo: '4/2/1',
-        rest: '60s',
-        intensityPercentage1RM: 0.6,
-        coachingCues: ['Drive through heels, squeeze glutes at top peak contraction', 'Keep ribs pulled down, avoid lumbar hyperextension'],
-        nasmClinicalSource: 'CPT7_Ch16 (Posterior Core Complex)',
       })
     } else if (dayIndex === 3) {
       focus = 'Rotary Power, Back & Vertical Push Stabilization'
