@@ -44,6 +44,10 @@ const SmartExerciseSwapModal = dynamic(
   () => import('@/components/coach/SmartExerciseSwapModal'),
   { ssr: false }
 )
+const BandResistanceChartModal = dynamic(
+  () => import('@/components/fitness/BandResistanceChartModal'),
+  { ssr: false }
+)
 import type { MindfulProtocolId } from '@/components/fitness/MindfulMomentModal'
 import type { CardioPatternId } from '@/lib/coach-cardio-engine'
 import {
@@ -799,6 +803,10 @@ export default function FitnessTrackerClient({
     workoutDay: number
     exercise: WorkoutExercise
     initialDiscomfort?: DiscomfortArea
+  } | null>(null)
+  const [activeBandChartModal, setActiveBandChartModal] = useState<{
+    exerciseKey: string
+    exerciseName: string
   } | null>(null)
 
   const clientInjuries = useMemo<SportsInjuryKey[]>(() => {
@@ -4091,6 +4099,33 @@ export default function FitnessTrackerClient({
                                       </button>
                                     )
                                   })}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      triggerHaptic('tap')
+                                      setActiveBandChartModal({ exerciseKey, exerciseName: ex.name })
+                                    }}
+                                    className="tactile-btn"
+                                    style={{
+                                      background: 'rgba(212,160,23,0.15)',
+                                      border: '1px solid rgba(212,160,23,0.4)',
+                                      color: 'var(--gold-lt)',
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      padding: '5px 12px',
+                                      minHeight: 44,
+                                      borderRadius: 4,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 6,
+                                    }}
+                                    title="Open full Forge Athletic Resistance Band Matrix & Calibration Guide"
+                                  >
+                                    <GaaIcon name="activity" size={12} tone="gold" />
+                                    <span>Matrix &amp; Calibration Chart 📊</span>
+                                  </button>
                                 </div>
                               </details>
                             )}
@@ -4447,6 +4482,33 @@ export default function FitnessTrackerClient({
                                   <GaaIcon name="shield-check" size={12} tone="gold" />
                                   <span>Swap for Joint Relief</span>
                                 </button>
+                                {isBand && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      triggerHaptic('tap')
+                                      setActiveBandChartModal({ exerciseKey, exerciseName: ex.name })
+                                    }}
+                                    style={{
+                                      fontSize: 11.5,
+                                      background: 'rgba(212,160,23,0.12)',
+                                      border: '1px solid rgba(212,160,23,0.35)',
+                                      color: 'var(--gold-lt)',
+                                      padding: '4px 10px',
+                                      borderRadius: 4,
+                                      cursor: 'pointer',
+                                      fontFamily: 'Raleway, sans-serif',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                      fontWeight: 700,
+                                    }}
+                                    title="Open Resistance Band Matrix & Weight Equivalent Calibration Chart"
+                                  >
+                                    <GaaIcon name="activity" size={12} tone="gold" />
+                                    <span>Band Matrix Chart</span>
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => setSkipModal({ workoutDay: workout.day, exercise: ex })}
@@ -5887,6 +5949,43 @@ export default function FitnessTrackerClient({
         <ExerciseVideoModal
           exercise={activeVideoExercise}
           onClose={() => setActiveVideoExercise(null)}
+        />
+      )}
+
+      {/* Resistance Band Matrix & Calibration Modal (Tool #12) */}
+      {activeBandChartModal && (
+        <BandResistanceChartModal
+          isOpen={Boolean(activeBandChartModal)}
+          onClose={() => setActiveBandChartModal(null)}
+          preferredUnits={units}
+          selectedBandId={(() => {
+            const currentDraft = inlineSetDrafts[activeBandChartModal.exerciseKey]
+            if (!currentDraft) return null
+            const match = BAND_COLOR_SPECTRUM.find(b =>
+              (currentDraft.notes && currentDraft.notes.includes(b.colorName)) ||
+              Number(currentDraft.weight) === (units === 'imperial' ? b.weightLbsAvg : b.weightKgAvg)
+            )
+            return match?.id ?? null
+          })()}
+          onSelectBand={(band) => {
+            const bandTargetWeight = units === 'imperial' ? band.weightLbsAvg : band.weightKgAvg
+            const noteTag = `[Band: ${band.colorName} (${units === 'imperial' ? `${band.weightLbsMin}–${band.weightLbsMax} lbs` : `${Math.round(band.weightLbsMin / 2.20462)}–${Math.round(band.weightLbsMax / 2.20462)} kg`})]`
+            triggerHaptic('success')
+            setInlineSetDrafts(prev => {
+              const key = activeBandChartModal.exerciseKey
+              const currentDraft = prev[key] ?? defaultInlineSetDraft(todayDateOnly())
+              const cleanedNotes = (currentDraft.notes || '').replace(/\[Band:[^\]]+\]/g, '').trim()
+              return {
+                ...prev,
+                [key]: {
+                  ...currentDraft,
+                  weight: String(bandTargetWeight),
+                  notes: cleanedNotes ? `${cleanedNotes} ${noteTag}` : noteTag,
+                },
+              }
+            })
+            setActiveBandChartModal(null)
+          }}
         />
       )}
 

@@ -8,12 +8,16 @@ interface BandResistanceChartModalProps {
   isOpen: boolean
   onClose: () => void
   preferredUnits?: 'imperial' | 'metric'
+  onSelectBand?: (band: BandResistanceLevel) => void
+  selectedBandId?: string | null
 }
 
 export default function BandResistanceChartModal({
   isOpen,
   onClose,
   preferredUnits = 'imperial',
+  onSelectBand,
+  selectedBandId,
 }: BandResistanceChartModalProps) {
   if (!isOpen) return null
 
@@ -40,7 +44,7 @@ export default function BandResistanceChartModal({
           border: '1px solid rgba(212, 160, 23, 0.4)',
           borderRadius: 12,
           padding: 24,
-          maxWidth: 640,
+          maxWidth: 680,
           width: '100%',
           maxHeight: '90vh',
           overflowY: 'auto',
@@ -105,6 +109,9 @@ export default function BandResistanceChartModal({
                   Est. Resistance ({preferredUnits === 'imperial' ? 'LBS' : 'KG'})
                 </th>
                 <th style={{ padding: '8px 10px', fontWeight: 800 }}>Recommended For</th>
+                {onSelectBand && (
+                  <th style={{ padding: '8px 10px', fontWeight: 800, textAlign: 'center' }}>Action</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -112,17 +119,25 @@ export default function BandResistanceChartModal({
                 const rangeStr = preferredUnits === 'imperial'
                   ? `${band.weightLbsMin}–${band.weightLbsMax} lbs (~${band.weightLbsAvg} lb)`
                   : `${Math.round(band.weightLbsMin / 2.20462)}–${Math.round(band.weightLbsMax / 2.20462)} kg (~${band.weightKgAvg} kg)`
+                const isSelected = selectedBandId === band.id
 
                 return (
                   <tr
                     key={band.id}
+                    onClick={() => onSelectBand?.(band)}
                     style={{
                       borderBottom: '1px solid rgba(255,255,255,0.06)',
-                      background: idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                      background: isSelected
+                        ? 'rgba(212,160,23,0.15)'
+                        : idx % 2 === 0
+                          ? 'rgba(255,255,255,0.02)'
+                          : 'transparent',
+                      cursor: onSelectBand ? 'pointer' : 'default',
+                      transition: 'background 0.15s ease',
                     }}
                   >
                     <td style={{ padding: '10px 10px', fontWeight: 700, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
-                      <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: band.colorHex, marginRight: 8 }} />
+                      <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: band.colorHex, marginRight: 8, boxShadow: `0 0 8px ${band.colorHex}66` }} />
                       <span style={{ color: band.colorHex }}>{band.colorName}</span>
                     </td>
                     <td style={{ padding: '10px 10px', color: '#E2E8F0', fontSize: 12 }}>
@@ -134,6 +149,40 @@ export default function BandResistanceChartModal({
                     <td style={{ padding: '10px 10px', color: 'var(--gray)', fontSize: 11.5 }}>
                       {band.recommendedFor}
                     </td>
+                    {onSelectBand && (
+                      <td style={{ padding: '10px 10px', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onSelectBand(band)
+                          }}
+                          className="tactile-btn"
+                          style={{
+                            background: isSelected ? 'rgba(16,185,129,0.2)' : 'rgba(212,160,23,0.15)',
+                            border: isSelected ? '1px solid #10B981' : '1px solid rgba(212,160,23,0.4)',
+                            color: isSelected ? '#34D399' : 'var(--gold-lt)',
+                            padding: '4px 10px',
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          {isSelected ? (
+                            <>
+                              <GaaIcon name="check" size={11} tone="emerald" />
+                              <span>Selected</span>
+                            </>
+                          ) : (
+                            <span>Select</span>
+                          )}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 )
               })}
