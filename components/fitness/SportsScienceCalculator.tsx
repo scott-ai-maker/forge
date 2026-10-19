@@ -231,7 +231,7 @@ export default function SportsScienceCalculator() {
           </div>
 
           {/* Prescribed OPT™ Phase Loading Table */}
-          <details className="fitness-card-disclosure fitness-lab-panel">
+          <details open className="fitness-card-disclosure fitness-lab-panel">
             <summary>Training loads by phase</summary>
             <div style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
               Prescribed OPT™ Phase Working Loads
