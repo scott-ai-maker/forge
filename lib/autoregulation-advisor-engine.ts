@@ -257,6 +257,8 @@ export function evaluateExerciseAutoregulation(params: {
   completedSets: CompletedSetPerformance[]
   units?: 'imperial' | 'metric'
   velocityLossPercent?: number
+  currentDraftRpe?: number | string | null
+  currentDraftRir?: number | string | null
 }): AutoregulationAdvice {
   const {
     exerciseName,
@@ -266,6 +268,8 @@ export function evaluateExerciseAutoregulation(params: {
     completedSets,
     units = 'imperial',
     velocityLossPercent,
+    currentDraftRpe,
+    currentDraftRir,
   } = params
 
   const isHammer = isHammerCurlExercise(exerciseName)
@@ -279,7 +283,59 @@ export function evaluateExerciseAutoregulation(params: {
     ? targetReps
     : parseInt(String(targetReps || currentDraftReps).replace(/[^0-9]/g, ''), 10) || currentDraftReps || 8
 
-  // If no sets completed yet, athlete is fresh
+  // Check if current draft is explicitly dialed at failure / peak exertion (RPE >= 9.5 or 0 RIR)
+  const draftRpe = currentDraftRpe != null && String(currentDraftRpe).trim() !== ''
+    ? normalizeRpeValue(currentDraftRpe)
+    : undefined
+  const draftRir = currentDraftRir != null && String(currentDraftRir).trim() !== ''
+    ? normalizeRirValue(currentDraftRir)
+    : (draftRpe !== undefined ? mapRpeToRir(draftRpe) : undefined)
+  const isDraftAtFailure = (draftRpe !== undefined && draftRpe >= 9.5) || (draftRir !== undefined && draftRir === 0)
+
+  if (isDraftAtFailure) {
+    const rawDraftReduced = currentDraftWeightLbs * 0.90
+    const draftReducedLbs = Math.max(5, Math.round(rawDraftReduced / 5) * 5)
+    const draftReducedKg = Math.max(2.5, Math.round((draftReducedLbs / 2.20462) / 2.5) * 2.5)
+
+    const draftBackOffPlan: BackOffPlan = {
+      backOffWeightLbs: draftReducedLbs,
+      backOffWeightKg: draftReducedKg,
+      reductionPercent: 10,
+      targetReps: parsedTargetReps,
+      rationale: `Apply a −10% back-off load to ${units === 'imperial' ? `${draftReducedLbs} lb` : `${draftReducedKg} kg`} to maintain mechanical tension and hit ${parsedTargetReps} reps without joint shear or technique breakdown.`,
+    }
+
+    const { dropSetRecommendation: draftDropSet, coachVoiceCue: draftVoiceCue } = generateBackOffAndDropSetPlan({
+      exerciseName,
+      currentWeightLbs: currentDraftWeightLbs,
+      currentReps: currentDraftReps,
+      targetReps: parsedTargetReps,
+      fatigueDropPercent: 15,
+      units,
+    })
+
+    return {
+      exerciseName,
+      action: 'reduce_load_10pct',
+      fatigueLevel: 'critical_overload',
+      badgeText: '−10% Back-Off Load',
+      headline: 'Peak Exertion Dialed: RPE 10 (0 RIR)',
+      rationale: 'Active set exertion is dialed at absolute muscular failure (0 RIR). Heavy central nervous system strain. Apply a −10% back-off load to preserve mechanical tension and prevent technique breakdown.',
+      suggestedWeightLbs: draftReducedLbs,
+      suggestedWeightKg: draftReducedKg,
+      suggestedRestExtensionSeconds: 30,
+      isHammerCurl: isHammer,
+      biomechanicalWarning: hammerGuardrailText,
+      hasAcuteFatigueDrop: true,
+      acuteFatigueDropPercent: 10,
+      acuteFatigueDropReason: 'RPE 10.0 (0 RIR) selected — peak CNS strain.',
+      backOffPlan: draftBackOffPlan,
+      dropSetRecommendation: draftDropSet,
+      coachVoiceCue: draftVoiceCue,
+    }
+  }
+
+  // If no sets completed yet and draft is not at failure, athlete is fresh
   if (workingSets.length === 0) {
     return {
       exerciseName,
@@ -440,51 +496,30 @@ export function evaluateExerciseAutoregulation(params: {
     }
   }
 
-  // ── 4. Momentary Failure on Final Rep of Target: Extend Rest ──
+  // ── 5. Momentary Failure on Final Rep of Target: −10% Back-Off Load & Extend Rest ──
   if (lastRir === 0 || lastRpe >= 9.5) {
+    const rawReduced = currentDraftWeightLbs * 0.90
+    const roundedLbs = Math.max(5, Math.round(rawReduced / 5) * 5)
+    const roundedKg = Math.max(2.5, Math.round((roundedLbs / 2.20462) / 2.5) * 2.5)
+
     return {
       exerciseName,
-      action: 'extend_rest',
+      action: 'reduce_load_10pct',
       fatigueLevel: 'elevated_fatigue',
-      badgeText: '+30s Rest Extension',
+      badgeText: '−10% Back-Off Load',
       headline: 'Momentary Failure Reached (RIR 0)',
-      rationale: 'Hit zero reps in reserve on the final rep. Extend rest interval by +30 seconds to allow complete ATP-CP resynthesis before your next set.',
+      rationale: 'Hit zero reps in reserve on previous set. Apply a −10% back-off load to safeguard bar velocity and prevent technical breakdown, or extend rest interval by +30 seconds.',
+      suggestedWeightLbs: roundedLbs,
+      suggestedWeightKg: roundedKg,
       suggestedRestExtensionSeconds: 30,
       isHammerCurl: isHammer,
       biomechanicalWarning: hammerGuardrailText,
-      hasAcuteFatigueDrop: false,
-      acuteFatigueDropPercent: 0,
+      hasAcuteFatigueDrop: true,
+      acuteFatigueDropPercent: 10,
+      acuteFatigueDropReason: 'Momentary failure reached on previous set.',
       backOffPlan,
       dropSetRecommendation,
       coachVoiceCue,
-    }
-  }
-
-  // ── 5. Velocity Decay: Reps Dropped by >= 2 Across Consecutive Sets ──
-  if (workingSets.length >= 2) {
-    const prev = workingSets[workingSets.length - 2]
-    const repDrop = prev.reps - lastSet.reps
-    if (repDrop >= 2 && lastSet.weightLbs >= prev.weightLbs) {
-      const suggestedRepsCap = Math.max(1, lastSet.reps)
-
-      return {
-        exerciseName,
-        action: 'cap_reps',
-        fatigueLevel: 'elevated_fatigue',
-        badgeText: `Cap at ${suggestedRepsCap} Reps`,
-        headline: 'Velocity Loss & Rep Decay Detected',
-        rationale: `Repetitions dropped from ${prev.reps} to ${lastSet.reps} at equal load. Cap upcoming set at ${suggestedRepsCap} reps to maintain bar velocity and prevent failure.`,
-        suggestedReps: suggestedRepsCap,
-        suggestedRestExtensionSeconds: 20,
-        isHammerCurl: isHammer,
-        biomechanicalWarning: hammerGuardrailText,
-        hasAcuteFatigueDrop: true,
-        acuteFatigueDropPercent: Math.round((repDrop / prev.reps) * 100),
-        acuteFatigueDropReason: `Reps dropped from ${prev.reps} to ${lastSet.reps}.`,
-        backOffPlan,
-        dropSetRecommendation,
-        coachVoiceCue,
-      }
     }
   }
 

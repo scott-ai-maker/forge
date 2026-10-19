@@ -4412,6 +4412,8 @@ export default function FitnessTrackerClient({
                                   currentDraftWeight={draft.weight}
                                   currentDraftReps={draft.reps}
                                   targetReps={ex.reps}
+                                  currentDraftRpe={draft.rpe}
+                                  currentDraftRir={draft.rir}
                                   completedSets={(setLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
                                     .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === workout.day)
                                     .map((row, idx) => ({
