@@ -41,6 +41,85 @@ export interface VideoCritiqueAnalysis {
     integrate: string[]
   }
   analyzedAt: string
+  videoUrl?: string | null
+  videoSourceType?: 'file' | 'youtube' | 'direct'
+  youtubeVideoId?: string | null
+}
+
+export interface YouTubeVideoInfo {
+  videoId: string
+  startTime?: number
+  isShort: boolean
+  embedUrl: string
+  watchUrl: string
+}
+
+/**
+ * Parses standard YouTube, YouTube Shorts, mobile youtu.be, and unlisted URLs,
+ * extracting the 11-character video ID and any timestamp start parameters.
+ */
+export function parseYouTubeVideoUrl(url: string | null | undefined): YouTubeVideoInfo | null {
+  if (!url || typeof url !== 'string') return null
+  const trimmed = url.trim()
+  if (!trimmed) return null
+
+  let videoId: string | null = null
+  let isShort = false
+  let startTime: number | undefined = undefined
+
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    videoId = trimmed
+  } else {
+    try {
+      const urlObj = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`)
+      const host = urlObj.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '')
+
+      if (host === 'youtu.be') {
+        videoId = urlObj.pathname.slice(1).split(/[?&#/]/)[0]
+      } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+        if (urlObj.pathname.startsWith('/shorts/')) {
+          videoId = urlObj.pathname.replace('/shorts/', '').split(/[?&#/]/)[0]
+          isShort = true
+        } else if (urlObj.pathname.startsWith('/embed/')) {
+          videoId = urlObj.pathname.replace('/embed/', '').split(/[?&#/]/)[0]
+        } else if (urlObj.pathname === '/watch') {
+          videoId = urlObj.searchParams.get('v')
+        }
+      }
+
+      const tParam = urlObj.searchParams.get('t') || urlObj.searchParams.get('start')
+      if (tParam) {
+        if (/^\d+$/.test(tParam)) {
+          startTime = parseInt(tParam, 10)
+        } else {
+          let totalSeconds = 0
+          const hMatch = tParam.match(/(\d+)h/i)
+          const mMatch = tParam.match(/(\d+)m/i)
+          const sMatch = tParam.match(/(\d+)s/i)
+          if (hMatch) totalSeconds += parseInt(hMatch[1], 10) * 3600
+          if (mMatch) totalSeconds += parseInt(mMatch[1], 10) * 60
+          if (sMatch) totalSeconds += parseInt(sMatch[1], 10)
+          if (totalSeconds > 0) startTime = totalSeconds
+        }
+      }
+    } catch {
+      const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/))([a-zA-Z0-9_-]{11})/)
+      if (match) {
+        videoId = match[1]
+        if (trimmed.includes('/shorts/')) isShort = true
+      }
+    }
+  }
+
+  if (!videoId || !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+    return null
+  }
+
+  const timeQuery = startTime ? `?start=${startTime}` : ''
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}${timeQuery}`
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}${startTime ? `&t=${startTime}` : ''}`
+
+  return { videoId, startTime, isShort, embedUrl, watchUrl }
 }
 
 export const LIFT_METADATA: Record<LiftType, { name: string; primaryPrimeMover: string; focusJoints: string[] }> = {
@@ -87,6 +166,8 @@ export interface VideoFormInput {
   repsCount?: number
   observedDeviations?: string[] // e.g. ['knee_valgus', 'excessive_forward_lean', 'butt_wink', 'lumbar_rounding']
   clientNotes?: string
+  videoUrl?: string | null
+  videoSourceType?: 'file' | 'youtube' | 'direct'
 }
 
 export function analyzeLiftForm(input: VideoFormInput): VideoCritiqueAnalysis {
@@ -264,6 +345,9 @@ export function analyzeLiftForm(input: VideoFormInput): VideoCritiqueAnalysis {
     ],
   }
 
+  const youtubeInfo = input.videoUrl ? parseYouTubeVideoUrl(input.videoUrl) : null
+  const videoSourceType = input.videoSourceType ?? (youtubeInfo ? 'youtube' : input.videoUrl ? 'file' : undefined)
+
   return {
     id: `critique-${Date.now()}`,
     liftType,
@@ -277,6 +361,9 @@ export function analyzeLiftForm(input: VideoFormInput): VideoCritiqueAnalysis {
     masterCoachSummary,
     prescribedCorrectiveContinuum,
     analyzedAt: new Date().toISOString(),
+    videoUrl: input.videoUrl ?? null,
+    videoSourceType,
+    youtubeVideoId: youtubeInfo?.videoId ?? null,
   }
 }
 

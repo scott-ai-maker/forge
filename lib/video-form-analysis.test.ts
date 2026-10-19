@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeLiftForm, LIFT_METADATA } from './video-form-analysis'
+import { analyzeLiftForm, LIFT_METADATA, parseYouTubeVideoUrl } from './video-form-analysis'
 
 describe('video-form-analysis', () => {
   it('analyzes flawless squat execution with mastery rating', () => {
@@ -51,5 +51,59 @@ describe('video-form-analysis', () => {
     expect(LIFT_METADATA.barbell_deadlift.focusJoints.length).toBeGreaterThan(2)
     expect(LIFT_METADATA.barbell_bench_press.primaryPrimeMover).toContain('Pectoralis Major')
   })
+
+  describe('parseYouTubeVideoUrl & Video Sharing', () => {
+    it('parses standard desktop YouTube watch URLs', () => {
+      const parsed = parseYouTubeVideoUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+      expect(parsed).not.toBeNull()
+      expect(parsed?.videoId).toBe('dQw4w9WgXcQ')
+      expect(parsed?.isShort).toBe(false)
+      expect(parsed?.embedUrl).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')
+      expect(parsed?.watchUrl).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+    })
+
+    it('parses mobile youtu.be links with start timestamp', () => {
+      const parsed = parseYouTubeVideoUrl('https://youtu.be/dQw4w9WgXcQ?t=45s')
+      expect(parsed).not.toBeNull()
+      expect(parsed?.videoId).toBe('dQw4w9WgXcQ')
+      expect(parsed?.startTime).toBe(45)
+      expect(parsed?.embedUrl).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?start=45')
+      expect(parsed?.watchUrl).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=45')
+    })
+
+    it('parses vertical YouTube Shorts URLs', () => {
+      const parsed = parseYouTubeVideoUrl('https://www.youtube.com/shorts/dQw4w9WgXcQ')
+      expect(parsed).not.toBeNull()
+      expect(parsed?.videoId).toBe('dQw4w9WgXcQ')
+      expect(parsed?.isShort).toBe(true)
+      expect(parsed?.embedUrl).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')
+    })
+
+    it('parses raw 11-character video IDs and handles timestamps', () => {
+      const parsed = parseYouTubeVideoUrl('dQw4w9WgXcQ')
+      expect(parsed).not.toBeNull()
+      expect(parsed?.videoId).toBe('dQw4w9WgXcQ')
+    })
+
+    it('returns null for non-YouTube or invalid URLs', () => {
+      expect(parseYouTubeVideoUrl('https://vimeo.com/123456')).toBeNull()
+      expect(parseYouTubeVideoUrl('not-a-url')).toBeNull()
+      expect(parseYouTubeVideoUrl(null)).toBeNull()
+      expect(parseYouTubeVideoUrl('')).toBeNull()
+    })
+
+    it('attaches parsed YouTube metadata to critique analysis output', () => {
+      const analysis = analyzeLiftForm({
+        liftType: 'barbell_back_squat',
+        loadLbs: 315,
+        videoUrl: 'https://youtu.be/dQw4w9WgXcQ?t=20',
+      })
+
+      expect(analysis.videoUrl).toBe('https://youtu.be/dQw4w9WgXcQ?t=20')
+      expect(analysis.videoSourceType).toBe('youtube')
+      expect(analysis.youtubeVideoId).toBe('dQw4w9WgXcQ')
+    })
+  })
 })
+
 

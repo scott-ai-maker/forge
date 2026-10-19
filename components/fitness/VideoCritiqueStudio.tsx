@@ -6,6 +6,8 @@ import {
   LiftType,
   LIFT_METADATA,
   VideoCritiqueAnalysis,
+  parseYouTubeVideoUrl,
+  YouTubeVideoInfo,
 } from '@/lib/video-form-analysis'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
@@ -67,7 +69,13 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
   const [selectedFaults, setSelectedFaults] = useState<string[]>([])
   const [clientNotes, setClientNotes] = useState<string>('')
   const [analyzing, setAnalyzing] = useState<boolean>(false)
-  const [activeInputTab, setActiveInputTab] = useState<'video_upload' | 'manual_diagnostic'>('video_upload')
+  const [activeInputTab, setActiveInputTab] = useState<'video_upload' | 'youtube_link' | 'manual_diagnostic'>('video_upload')
+
+  // YouTube Link & Player State
+  const [youtubeUrlInput, setYoutubeUrlInput] = useState<string>('')
+  const [activeYouTubeInfo, setActiveYouTubeInfo] = useState<YouTubeVideoInfo | null>(null)
+  const [youtubeError, setYoutubeError] = useState<string | null>(null)
+  const [copiedShareLink, setCopiedShareLink] = useState<boolean>(false)
 
   // Video File Upload & Playback State
   const [uploadedVideoFile, setUploadedVideoFile] = useState<File | null>(null)
@@ -117,10 +125,64 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
       setSelectedLift(inferred)
     }
 
-    runBiomechanicalScan(targetLift, file.name)
+    runBiomechanicalScan(targetLift, file.name, 'file')
   }
 
-  const runBiomechanicalScan = async (lift: LiftType, fileNameHint?: string) => {
+  const handleLoadYouTubeUrl = (urlToLoad?: string) => {
+    const raw = urlToLoad ?? youtubeUrlInput
+    if (!raw.trim()) {
+      setYoutubeError('Please enter a YouTube video URL or Shorts link.')
+      return
+    }
+    const info = parseYouTubeVideoUrl(raw)
+    if (!info) {
+      setYoutubeError('Invalid YouTube URL. Please provide a standard watch link, youtu.be shortlink, or YouTube Shorts link.')
+      return
+    }
+    setYoutubeError(null)
+    setActiveYouTubeInfo(info)
+    setYoutubeUrlInput(info.watchUrl)
+
+    // Trigger analysis with YouTube source
+    runBiomechanicalScan(selectedLift, info.watchUrl, 'youtube')
+  }
+
+  const handleClearYouTubeVideo = () => {
+    setActiveYouTubeInfo(null)
+    setYoutubeUrlInput('')
+    setYoutubeError(null)
+  }
+
+  const handleShareCritique = async () => {
+    if (!critique) return
+    const videoLine = critique.videoUrl ? `\nVideo Footage: ${critique.videoUrl}` : ''
+    const shareText = `🏋️ Forge Athletic Biomechanical Form Critique\nLift: ${critique.liftName} (${critique.loadLbs ? `${critique.loadLbs} lbs x ` : ''}${critique.repsObserved} reps)\nForm Score: ${critique.overallFormScore}/100 · ${critique.rating}${videoLine}\n\nMaster Coach Summary: ${critique.masterCoachSummary}`
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `Forge Athletic - ${critique.liftName} Form Critique`,
+          text: shareText,
+          url: critique.videoUrl || window.location.href,
+        })
+        return
+      } catch {
+        // Fall back to clipboard if user dismissed native share dialog
+      }
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(shareText)
+      setCopiedShareLink(true)
+      setTimeout(() => setCopiedShareLink(false), 2500)
+    }
+  }
+
+  const runBiomechanicalScan = async (
+    lift: LiftType,
+    fileNameOrUrlHint?: string,
+    sourceType: 'file' | 'youtube' | 'direct' = 'file'
+  ) => {
     if (meterUsage) {
       try {
         const res = await fetch('/api/fitness/video-critique', {
@@ -143,7 +205,11 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
     }
 
     setAnalyzing(true)
-    setScanProgress({ step: 1, totalSteps: 4, label: 'Extracting 60fps kinetic frame vectors & joint anchors...', percent: 25 })
+    const scanLabel = sourceType === 'youtube'
+      ? 'Connecting to YouTube kinematic video stream & parsing joint anchors...'
+      : 'Extracting 60fps kinetic frame vectors & joint anchors...'
+
+    setScanProgress({ step: 1, totalSteps: 4, label: scanLabel, percent: 25 })
 
     setTimeout(() => {
       setScanProgress({ step: 2, totalSteps: 4, label: 'Scanning spinal alignment & lumbar curvature...', percent: 50 })
@@ -163,7 +229,9 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
         loadLbs: loadLbs ? parseNumericInput(loadLbs, 0) : undefined,
         repsCount: parseNumericInput(repsCount, 5),
         observedDeviations: selectedFaults,
-        clientNotes: clientNotes || (fileNameHint ? `Analyzed footage: ${fileNameHint}` : undefined),
+        clientNotes: clientNotes || (fileNameOrUrlHint ? `Footage analyzed: ${fileNameOrUrlHint}` : undefined),
+        videoUrl: fileNameOrUrlHint && (fileNameOrUrlHint.startsWith('http') || parseYouTubeVideoUrl(fileNameOrUrlHint)) ? fileNameOrUrlHint : undefined,
+        videoSourceType: sourceType,
       })
       setCritique(result)
       setAnalyzing(false)
@@ -172,7 +240,11 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
   }
 
   const handleManualRunAnalysis = () => {
-    runBiomechanicalScan(selectedLift)
+    if (activeInputTab === 'youtube_link' && activeYouTubeInfo) {
+      runBiomechanicalScan(selectedLift, activeYouTubeInfo.watchUrl, 'youtube')
+    } else {
+      runBiomechanicalScan(selectedLift)
+    }
   }
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -252,7 +324,7 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
       </div>
 
       {/* Input Mode Selector Tabs */}
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button
           type="button"
           onClick={() => setActiveInputTab('video_upload')}
@@ -271,6 +343,26 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
           }}
         >
           <GaaIcon name="video-studio" size={14} tone={activeInputTab === 'video_upload' ? 'cyan' : 'slate'} /> Video Footage Upload & Dropzone
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveInputTab('youtube_link')}
+          className="tactile-btn"
+          style={{
+            padding: '8px 16px',
+            background: activeInputTab === 'youtube_link' ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.04)',
+            border: activeInputTab === 'youtube_link' ? '1px solid #EF4444' : '1px solid rgba(255,255,255,0.1)',
+            color: activeInputTab === 'youtube_link' ? '#F87171' : 'var(--gray)',
+            fontSize: 12.5,
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <span style={{ color: '#EF4444', fontWeight: 900 }}>▶</span> Share YouTube Video
         </button>
 
         <button
@@ -502,6 +594,309 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
         </div>
       )}
 
+      {/* Mode 2: YouTube Video Link */}
+      {activeInputTab === 'youtube_link' && (
+        <div className="glass-card" style={{ padding: 24, display: 'grid', gap: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span
+                style={{
+                  background: 'rgba(239,68,68,0.18)',
+                  border: '1px solid rgba(239,68,68,0.45)',
+                  color: '#F87171',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  letterSpacing: '0.06em',
+                }}
+              >
+                ▶ YOUTUBE
+              </span>
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, color: '#F87171', letterSpacing: '0.03em' }}>
+                Share & Analyze YouTube Lift Video
+              </h3>
+            </div>
+            {activeYouTubeInfo && (
+              <button
+                type="button"
+                onClick={handleClearYouTubeVideo}
+                style={{
+                  background: 'rgba(239,68,68,0.15)',
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  color: '#F87171',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                }}
+              >
+                ✕ Clear Video
+              </button>
+            )}
+          </div>
+
+          <p style={{ margin: 0, color: 'var(--gray)', fontSize: 13, lineHeight: 1.5 }}>
+            Paste a link to any public or unlisted YouTube video or vertical YouTube Shorts. Forge Athletic embeds your footage in a privacy-preserving player and extracts kinetic barbell tracking vectors.
+          </p>
+
+          {!activeYouTubeInfo ? (
+            <div style={{ display: 'grid', gap: 14 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 320px', position: 'relative' }}>
+                  <input
+                    type="url"
+                    value={youtubeUrlInput}
+                    onChange={e => {
+                      setYoutubeUrlInput(e.target.value)
+                      if (youtubeError) setYoutubeError(null)
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleLoadYouTubeUrl()
+                      }
+                    }}
+                    placeholder="e.g. https://youtu.be/... or https://www.youtube.com/shorts/..."
+                    style={{
+                      width: '100%',
+                      padding: '11px 14px',
+                      background: 'rgba(8,14,20,0.7)',
+                      border: youtubeError ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.15)',
+                      color: 'var(--white)',
+                      fontSize: 13.5,
+                      borderRadius: 4,
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleLoadYouTubeUrl()}
+                  className="tactile-btn"
+                  style={{
+                    padding: '11px 20px',
+                    background: '#EF4444',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    fontFamily: 'var(--font-sans, Raleway), sans-serif',
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <GaaIcon name="video-studio" size={14} tone="white" /> Load Video
+                </button>
+              </div>
+
+              {youtubeError && (
+                <div style={{ color: 'var(--error)', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <GaaIcon name="alert-triangle" size={13} tone="ruby" />
+                  {youtubeError}
+                </div>
+              )}
+
+              {/* Sample Quick-Load Chips */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', paddingTop: 4 }}>
+                <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em' }}>
+                  Quick Samples:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = 'https://www.youtube.com/watch?v=bEv6CCg2BC8'
+                    setYoutubeUrlInput(url)
+                    setSelectedLift('barbell_back_squat')
+                    handleLoadYouTubeUrl(url)
+                  }}
+                  className="tactile-btn"
+                  style={{
+                    padding: '4px 10px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'var(--white)',
+                    fontSize: 11,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  🏋️ Barbell Squat Sample
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = 'https://www.youtube.com/watch?v=op9kVnSso6Q'
+                    setYoutubeUrlInput(url)
+                    setSelectedLift('barbell_deadlift')
+                    handleLoadYouTubeUrl(url)
+                  }}
+                  className="tactile-btn"
+                  style={{
+                    padding: '4px 10px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'var(--white)',
+                    fontSize: 11,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ⚡ Deadlift Pull Sample
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = 'https://www.youtube.com/shorts/dQw4w9WgXcQ'
+                    setYoutubeUrlInput(url)
+                    handleLoadYouTubeUrl(url)
+                  }}
+                  className="tactile-btn"
+                  style={{
+                    padding: '4px 10px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'var(--white)',
+                    fontSize: 11,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  📱 YouTube Shorts Sample
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 14 }}>
+              {/* YouTube Player Container */}
+              <div
+                style={{
+                  background: '#000000',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  maxWidth: activeYouTubeInfo.isShort ? 360 : 760,
+                  margin: activeYouTubeInfo.isShort ? '0 auto' : undefined,
+                  width: '100%',
+                }}
+              >
+                <div style={{ position: 'relative', width: '100%', paddingTop: activeYouTubeInfo.isShort ? '177.77%' : '56.25%' }}>
+                  <iframe
+                    src={activeYouTubeInfo.embedUrl}
+                    title="Client YouTube Lift Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* YouTube Video Info Bar */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 10,
+                  padding: '10px 14px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 6,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--white)' }}>
+                    YouTube ID: <code style={{ color: '#F87171' }}>{activeYouTubeInfo.videoId}</code>
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: 3,
+                      background: 'rgba(255,255,255,0.08)',
+                      color: 'var(--gray)',
+                    }}
+                  >
+                    {activeYouTubeInfo.isShort ? '📱 YouTube Shorts (9:16)' : '🖥️ Standard 16:9'}
+                  </span>
+                  {activeYouTubeInfo.startTime != null && (
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: 3,
+                        background: 'rgba(56,189,248,0.15)',
+                        color: '#38BDF8',
+                      }}
+                    >
+                      Start: {activeYouTubeInfo.startTime}s
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <a
+                    href={activeYouTubeInfo.watchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      color: '#38BDF8',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Open on YouTube ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scanning Progress Bar Indicator */}
+          {scanProgress && (
+            <div style={{ background: 'rgba(8,14,24,0.85)', border: '1px solid #EF4444', borderRadius: 6, padding: '12px 16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#F87171' }}>
+                  {scanProgress.label}
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 900, color: '#FFFFFF' }}>
+                  Step {scanProgress.step}/{scanProgress.totalSteps} ({scanProgress.percent}%)
+                </span>
+              </div>
+              <div style={{ width: '100%', height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${scanProgress.percent}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #EF4444 0%, #F59E0B 100%)',
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Lift Submission & Parameter Controls */}
       <div className="glass-card" style={{ padding: 24, display: 'grid', gap: 16 }}>
         <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, color: 'var(--gold-lt)', letterSpacing: '0.03em' }}>
@@ -663,7 +1058,11 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
             }}
           >
             <GaaIcon name="lightning" size={16} tone="dark" />
-            {analyzing ? 'Running Biomechanical Scan...' : 'Run Biomechanical Diagnostics'}
+            {analyzing
+              ? 'Running Biomechanical Scan...'
+              : activeInputTab === 'youtube_link' && activeYouTubeInfo
+                ? 'Critique YouTube Lift Video'
+                : 'Run Biomechanical Diagnostics'}
           </button>
         </div>
       </div>
@@ -717,6 +1116,91 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
               <p style={{ margin: '4px 0 0', color: 'var(--white)', fontSize: 14, lineHeight: 1.5 }}>
                 {critique.masterCoachSummary}
               </p>
+            </div>
+
+            {/* Video Source & Share Action Strip */}
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 12,
+                paddingTop: 16,
+                borderTop: '1px solid rgba(255,255,255,0.1)',
+                marginTop: 8,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                {critique.videoSourceType === 'youtube' && critique.youtubeVideoId && (
+                  <span
+                    style={{
+                      background: 'rgba(239,68,68,0.18)',
+                      border: '1px solid rgba(239,68,68,0.45)',
+                      color: '#F87171',
+                      fontSize: 11,
+                      fontWeight: 800,
+                      padding: '3px 8px',
+                      borderRadius: 4,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
+                  >
+                    ▶ YouTube Verified Footage ({critique.youtubeVideoId})
+                  </span>
+                )}
+                {critique.videoUrl && (
+                  <a
+                    href={critique.videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: '#38BDF8',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    View Original Footage ↗
+                  </a>
+                )}
+                {critique.loadLbs != null && (
+                  <span style={{ fontSize: 12, color: 'var(--gray)' }}>
+                    Working Load: <strong style={{ color: 'var(--white)' }}>{critique.loadLbs} lbs</strong>
+                  </span>
+                )}
+                <span style={{ fontSize: 12, color: 'var(--gray)' }}>
+                  Observed: <strong style={{ color: 'var(--white)' }}>{critique.repsObserved} reps</strong>
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleShareCritique}
+                className="tactile-btn"
+                style={{
+                  padding: '8px 16px',
+                  background: copiedShareLink ? 'rgba(52,211,153,0.2)' : 'rgba(197,160,89,0.15)',
+                  border: `1px solid ${copiedShareLink ? 'var(--success)' : 'var(--gold)'}`,
+                  color: copiedShareLink ? 'var(--success)' : 'var(--gold-lt)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <GaaIcon name={copiedShareLink ? 'check' : 'share'} size={14} tone={copiedShareLink ? 'emerald' : 'gold'} />
+                {copiedShareLink ? 'Critique & Video Link Copied!' : 'Share Critique & Video Link'}
+              </button>
             </div>
           </div>
 
