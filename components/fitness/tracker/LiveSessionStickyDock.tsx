@@ -33,7 +33,7 @@ export default function LiveSessionStickyDock({
   onStartCardio,
   onFinishLifts,
 }: LiveSessionStickyDockProps) {
-  if (!isWorkoutTimerActive || activeWorkoutSessionDay === null) return null
+  if (activeWorkoutSessionDay === null) return null
 
   const mm = Math.floor(elapsedWorkoutSeconds / 60)
     .toString()
@@ -64,10 +64,12 @@ export default function LiveSessionStickyDock({
         background: 'linear-gradient(135deg, rgba(14,23,36,0.98) 0%, rgba(8,14,20,0.98) 100%)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(16,185,129,0.5)',
+        border: isWorkoutTimerActive ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(251,191,36,0.6)',
         borderRadius: 12,
         padding: '10px 16px',
-        boxShadow: '0 12px 35px rgba(0,0,0,0.8), 0 0 25px rgba(16,185,129,0.3)',
+        boxShadow: isWorkoutTimerActive
+          ? '0 12px 35px rgba(0,0,0,0.8), 0 0 25px rgba(16,185,129,0.3)'
+          : '0 12px 35px rgba(0,0,0,0.8), 0 0 25px rgba(251,191,36,0.25)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -82,29 +84,38 @@ export default function LiveSessionStickyDock({
             <span
               style={{
                 fontSize: 10,
-                color: '#34D399',
+                color: isWorkoutTimerActive ? '#34D399' : '#FBBF24',
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
               }}
             >
-              Day {activeWorkoutSessionDay} In Progress
+              Day {activeWorkoutSessionDay} {isWorkoutTimerActive ? 'In Progress' : 'Paused'}
             </span>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: isWorkoutTimerActive ? '#34D399' : '#FBBF24',
+                display: 'inline-block',
+                animation: isWorkoutTimerActive ? 'pulse 1.5s infinite' : 'none',
+              }}
+            />
           </div>
           <div
             style={{
               fontFamily: 'monospace',
               fontSize: 18,
               fontWeight: 900,
-              color: '#FFFFFF',
+              color: isWorkoutTimerActive ? '#FFFFFF' : '#FDE68A',
               letterSpacing: '0.04em',
               display: 'flex',
               alignItems: 'center',
               gap: 5,
             }}
           >
-            <GaaIcon name="watch" size={14} tone="white" /> {mm}:{ss}
+            <GaaIcon name="watch" size={14} tone={isWorkoutTimerActive ? 'white' : 'amber'} /> {mm}:{ss}
           </div>
         </div>
 
@@ -229,21 +240,23 @@ export default function LiveSessionStickyDock({
           onClick={onPauseResume}
           className="tactile-btn"
           style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            color: '#FFFFFF',
+            background: isWorkoutTimerActive
+              ? 'rgba(255,255,255,0.08)'
+              : 'linear-gradient(135deg, rgba(251,191,36,0.25) 0%, rgba(217,119,6,0.35) 100%)',
+            border: isWorkoutTimerActive ? '1px solid rgba(255,255,255,0.2)' : '1px solid #FBBF24',
+            color: isWorkoutTimerActive ? '#FFFFFF' : '#FDE68A',
             padding: '7px 12px',
             borderRadius: 5,
             fontSize: 11,
-            fontWeight: 700,
+            fontWeight: 800,
             cursor: 'pointer',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 5,
           }}
         >
-          <GaaIcon name={isWorkoutTimerActive ? 'pause' : 'play'} size={11} tone="white" />
-          {isWorkoutTimerActive ? 'Pause' : 'Resume'}
+          <GaaIcon name={isWorkoutTimerActive ? 'pause' : 'play'} size={11} tone={isWorkoutTimerActive ? 'white' : 'amber'} />
+          <span>{isWorkoutTimerActive ? 'Pause' : 'Resume'}</span>
         </button>
 
         <button

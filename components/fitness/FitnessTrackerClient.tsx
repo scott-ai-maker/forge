@@ -3021,18 +3021,21 @@ export default function FitnessTrackerClient({
                                 fontVariantNumeric: 'tabular-nums',
                                 fontSize: 13,
                                 fontWeight: 700,
-                                color: '#10B981',
+                                color: isWorkoutTimerActive ? '#10B981' : '#FBBF24',
                                 background: 'rgba(0,0,0,0.4)',
                                 padding: '4px 8px',
                                 borderRadius: 4,
-                                border: '1px solid rgba(16,185,129,0.3)',
+                                border: isWorkoutTimerActive ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(251,191,36,0.4)',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: 5,
                               }}
                             >
-                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 6px #10B981' }} />
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: isWorkoutTimerActive ? '#10B981' : '#FBBF24', boxShadow: isWorkoutTimerActive ? '0 0 6px #10B981' : '0 0 6px #FBBF24' }} />
                               <span>{timerDisplay}</span>
+                              {!isWorkoutTimerActive && (
+                                <span style={{ fontSize: 9.5, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.04em', textTransform: 'uppercase' }}>(Paused)</span>
+                              )}
                             </span>
                           </div>
                         )}

@@ -12,6 +12,7 @@ export interface LiveSessionMediaMetadata {
   currentExerciseName?: string
   completedSets?: number
   totalSets?: number
+  isPaused?: boolean
 }
 
 let silentAudioElement: HTMLAudioElement | null = null
@@ -40,20 +41,23 @@ export function updateLockScreenSessionTelemetry(
   const mm = Math.floor(meta.elapsedSeconds / 60).toString().padStart(2, '0')
   const ss = (meta.elapsedSeconds % 60).toString().padStart(2, '0')
   const stageLabel = meta.activeStage === 'cardio' ? 'Cardio' : meta.activeStage === 'cooldown' ? 'Cool-Down' : 'Strength'
+  const pausedSuffix = meta.isPaused ? ' · Paused' : ''
 
   const progress = meta.totalSets ? `Set ${meta.completedSets || 0}/${meta.totalSets}` : ''
   const exerciseText = meta.currentExerciseName ? ` · ${meta.currentExerciseName} (${progress})` : ''
 
   try {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: `Day ${meta.dayNumber}: ${meta.workoutFocus}`,
+      title: `Day ${meta.dayNumber}: ${meta.workoutFocus}${meta.isPaused ? ' (Paused)' : ''}`,
       artist: `Forge Athletic${exerciseText}`,
-      album: `${mm}:${ss} (${stageLabel})`,
+      album: `${mm}:${ss} (${stageLabel}${pausedSuffix})`,
       artwork: [
         { src: '/images/icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
         { src: '/images/icon-512.png?v=2', sizes: '512x512', type: 'image/png' },
       ],
     })
+
+    navigator.mediaSession.playbackState = meta.isPaused ? 'paused' : 'playing'
 
     if (callbacks?.onPause) {
       navigator.mediaSession.setActionHandler('pause', callbacks.onPause)
@@ -66,10 +70,14 @@ export function updateLockScreenSessionTelemetry(
     }
 
     const audio = ensureSilentAudioLoop()
-    if (audio && audio.paused) {
-      audio.play().catch(() => {
-        // Autoplay policy fallback
-      })
+    if (audio) {
+      if (meta.isPaused) {
+        audio.pause()
+      } else if (audio.paused) {
+        audio.play().catch(() => {
+          // Autoplay policy fallback
+        })
+      }
     }
   } catch {
     // Ignore environments where MediaMetadata is restricted
