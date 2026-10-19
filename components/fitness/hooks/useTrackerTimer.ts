@@ -39,6 +39,7 @@ export interface UseTrackerTimerReturn {
   handleStartCardioSession: (day: number, modality?: string, launchShortcut?: boolean) => void
   handlePauseResumeWorkoutSession: () => void
   handleStopWorkoutSession: () => void
+  handleQuitWorkoutSession: () => void
   setElapsedWorkoutSeconds: React.Dispatch<React.SetStateAction<number>>
   setActiveWorkoutStage: React.Dispatch<React.SetStateAction<WorkoutStage>>
   setIsWorkoutTimerActive: React.Dispatch<React.SetStateAction<boolean>>
@@ -215,6 +216,7 @@ export function useTrackerTimer({
     handleStartCardioSession: sessionTimer.handleStartCardioSession,
     handlePauseResumeWorkoutSession: sessionTimer.handlePauseResumeWorkoutSession,
     handleStopWorkoutSession: sessionTimer.handleStopWorkoutSession,
+    handleQuitWorkoutSession: sessionTimer.handleQuitWorkoutSession,
     setElapsedWorkoutSeconds: sessionTimer.setElapsedWorkoutSeconds,
     setActiveWorkoutStage: sessionTimer.setActiveWorkoutStage,
     setIsWorkoutTimerActive: sessionTimer.setIsWorkoutTimerActive,

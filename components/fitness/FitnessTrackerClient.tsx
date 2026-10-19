@@ -83,6 +83,7 @@ import SessionFatigueCnsSummaryModal from '@/components/fitness/tracker/SessionF
 import { calculateSessionFatigueCnsIndex } from '@/lib/session-fatigue-cns-index'
 import FloatingRestTimerDock from '@/components/fitness/tracker/FloatingRestTimerDock'
 import LiveSessionStickyDock from '@/components/fitness/tracker/LiveSessionStickyDock'
+import HoldToQuitWorkoutButton from '@/components/fitness/tracker/HoldToQuitWorkoutButton'
 import ExercisePrBadge from '@/components/fitness/tracker/ExercisePrBadge'
 import { HorizontalSetsCarousel } from '@/components/fitness/tracker/HorizontalSetsCarousel'
 import { LiftType, VideoCritiqueAnalysis } from '@/lib/video-form-analysis'
@@ -990,6 +991,7 @@ export default function FitnessTrackerClient({
     handleStartCardioSession,
     handlePauseResumeWorkoutSession,
     handleStopWorkoutSession,
+    handleQuitWorkoutSession,
     setElapsedWorkoutSeconds: _setElapsedWorkoutSeconds,
     setActiveWorkoutStage: _setActiveWorkoutStage,
     setIsWorkoutTimerActive: _setIsWorkoutTimerActive,
@@ -1047,6 +1049,12 @@ export default function FitnessTrackerClient({
   const [labInitialLift, _setLabInitialLift] = useState<LiftType | undefined>(undefined)
   const [labInitialCritique, _setLabInitialCritique] = useState<VideoCritiqueAnalysis | null>(null)
   const [showProofOfWorkModal, setShowProofOfWorkModal] = useState(false)
+
+  const handleClientQuitWorkout = useCallback(() => {
+    handleQuitWorkoutSession()
+    setCompleteModal(null)
+    setStatus('Workout session quit without penalty. No workout was recorded.')
+  }, [handleQuitWorkoutSession])
 
   // All-Time Personal Record (PR) Vault
   const exercisePrVault = useMemo(() => {
@@ -3037,6 +3045,12 @@ export default function FitnessTrackerClient({
                                 <span style={{ fontSize: 9.5, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.04em', textTransform: 'uppercase' }}>(Paused)</span>
                               )}
                             </span>
+                            <HoldToQuitWorkoutButton
+                              onQuit={handleClientQuitWorkout}
+                              label="Quit"
+                              size="sm"
+                              ariaLabel="Press and hold for 1.2 seconds to quit workout session without penalty"
+                            />
                           </div>
                         )}
                       </div>
@@ -5811,6 +5825,7 @@ export default function FitnessTrackerClient({
           plan={plan}
           onOpenProofOfWork={() => setShowProofOfWorkModal(true)}
           onClose={() => setCompleteModal(null)}
+          onQuitSession={handleClientQuitWorkout}
           onConfirm={(rpe?: number) => {
             void handleCompleteWorkoutDay(completeModal, rpe)
           }}
@@ -6080,6 +6095,7 @@ export default function FitnessTrackerClient({
           userAge={profile?.age || 30}
           userWeightKg={profile?.weight_kg || 75}
           onPauseResume={handlePauseResumeWorkoutSession}
+          onQuitSession={handleClientQuitWorkout}
           onStartCardio={() => {
             const activeWorkout = planWorkouts.find((w: WorkoutDay) => w.day === activeWorkoutSessionDay)
             if (activeWorkout) {
@@ -6228,6 +6244,7 @@ function PostWorkoutFinishModal({
   plan: _plan,
   onConfirm,
   onClose,
+  onQuitSession,
   onFlowToCardio,
   onFlowToCoolDown,
   onFlowToMindfulness,
@@ -6242,6 +6259,7 @@ function PostWorkoutFinishModal({
   plan?: Record<string, unknown> | WorkoutPlanRecord | null
   onConfirm: (rpe?: number) => void
   onClose: () => void
+  onQuitSession?: () => void
   onFlowToCardio?: (rpe?: number) => void
   onFlowToCoolDown?: (rpe?: number) => void
   onFlowToMindfulness?: (rpe?: number) => void
@@ -6659,6 +6677,18 @@ function PostWorkoutFinishModal({
               Back
             </button>
           </div>
+
+          {onQuitSession && (
+            <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center' }}>
+              <HoldToQuitWorkoutButton
+                onQuit={onQuitSession}
+                label="Hold to Discard Session (No Penalty)"
+                size="md"
+                style={{ width: '100%', justifyContent: 'center' }}
+                ariaLabel="Press and hold for 1.2 seconds to discard workout session without penalty"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

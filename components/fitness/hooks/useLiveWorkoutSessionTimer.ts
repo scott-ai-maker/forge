@@ -29,6 +29,7 @@ export interface UseLiveWorkoutSessionTimerResult {
   handleStartCardioSession: (dayNumber: number, modality?: string, launchShortcut?: boolean) => void
   handlePauseResumeWorkoutSession: () => void
   handleStopWorkoutSession: () => void
+  handleQuitWorkoutSession: () => void
   setElapsedWorkoutSeconds: React.Dispatch<React.SetStateAction<number>>
   setActiveWorkoutStage: React.Dispatch<React.SetStateAction<'strength' | 'cardio' | 'cooldown' | 'idle'>>
   setIsWorkoutTimerActive: React.Dispatch<React.SetStateAction<boolean>>
@@ -458,6 +459,24 @@ export function useLiveWorkoutSessionTimer(
     onStatusChange?.('Workout session ended.')
   }, [onStatusChange])
 
+  const handleQuitWorkoutSession = useCallback(() => {
+    lastTickTimestampRef.current = null
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('gaa_active_session')
+      }
+    } catch {}
+    setIsWorkoutTimerActive(false)
+    setActiveWorkoutSessionDay(null)
+    setActiveWorkoutStage('idle')
+    setElapsedWorkoutSeconds(0)
+    triggerHaptic('heavy')
+    clearLockScreenSessionTelemetry()
+    playCoachChimeTone(330, 0.25, 'sine')
+    speakCoachVoiceCue('Workout session quit without penalty.')
+    onStatusChange?.('Workout session quit without penalty. No workout was recorded.')
+  }, [onStatusChange])
+
   // Interval loop tracking elapsed time and syncing lock-screen media session
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null
@@ -557,6 +576,7 @@ export function useLiveWorkoutSessionTimer(
     handleStartCardioSession,
     handlePauseResumeWorkoutSession,
     handleStopWorkoutSession,
+    handleQuitWorkoutSession,
     setElapsedWorkoutSeconds,
     setActiveWorkoutStage,
     setIsWorkoutTimerActive,

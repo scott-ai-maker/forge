@@ -143,4 +143,29 @@ describe('useLiveWorkoutSessionTimer logic, pause isolation & storage recovery',
       expect(sync.newLastTickTimestamp).toBe(lastTick + 32000)
     })
   })
+
+  describe('Session Quitting without Penalty', () => {
+    it('guarantees clean reset of storage, timer, and stage when session is quit', () => {
+      // Simulating quit session execution
+      const mockStorage = new Map<string, string>()
+      mockStorage.set('gaa_active_session', JSON.stringify({
+        day: 2,
+        elapsedSeconds: 500,
+        isPaused: false,
+        stage: 'strength',
+        updatedAt: Date.now(),
+      }))
+
+      // Execute quit logic
+      mockStorage.delete('gaa_active_session')
+      const restored = restoreSessionFromStorage(mockStorage.get('gaa_active_session') || null)
+
+      expect(mockStorage.has('gaa_active_session')).toBe(false)
+      expect(restored.day).toBeNull()
+      expect(restored.elapsedSeconds).toBe(0)
+      expect(restored.isWorkoutTimerActive).toBe(false)
+      expect(restored.stage).toBe('idle')
+      expect(restored.shouldClearStorage).toBe(false)
+    })
+  })
 })

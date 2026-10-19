@@ -3,6 +3,7 @@
 import React from 'react'
 import { evaluateLiveCardioTelemetry } from '@/lib/live-cardio-telemetry'
 import { GaaIcon } from '@/components/ui/GaaIcon'
+import HoldToQuitWorkoutButton from './HoldToQuitWorkoutButton'
 
 export interface LiveSessionStickyDockProps {
   isWorkoutTimerActive: boolean
@@ -17,6 +18,7 @@ export interface LiveSessionStickyDockProps {
   onPauseResume: () => void
   onStartCardio: () => void
   onFinishLifts: () => void
+  onQuitSession?: () => void
 }
 
 export default function LiveSessionStickyDock({
@@ -32,6 +34,7 @@ export default function LiveSessionStickyDock({
   onPauseResume,
   onStartCardio,
   onFinishLifts,
+  onQuitSession,
 }: LiveSessionStickyDockProps) {
   if (activeWorkoutSessionDay === null) return null
 
@@ -258,6 +261,15 @@ export default function LiveSessionStickyDock({
           <GaaIcon name={isWorkoutTimerActive ? 'pause' : 'play'} size={11} tone={isWorkoutTimerActive ? 'white' : 'amber'} />
           <span>{isWorkoutTimerActive ? 'Pause' : 'Resume'}</span>
         </button>
+
+        {onQuitSession && (
+          <HoldToQuitWorkoutButton
+            onQuit={onQuitSession}
+            label="Quit"
+            size="sm"
+            ariaLabel="Press and hold for 1.2 seconds to quit session without penalty"
+          />
+        )}
 
         <button
           type="button"
