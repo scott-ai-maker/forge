@@ -486,14 +486,14 @@ export default function FitnessLabDiagnosticsView({
 
         {activeLabTool === 'performance' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <details className="fitness-card-disclosure fitness-lab-panel">
+            <details open className="fitness-card-disclosure fitness-lab-panel">
               <summary>Power training</summary>
               <PlyometricPowerStudio
                 initialOptPhase={plan?.nasm_opt_phase ?? 1}
                 athleteBodyweightLbs={profile?.weight_kg ? Math.round(profile.weight_kg * 2.20462) : 185}
               />
             </details>
-            <details className="fitness-card-disclosure fitness-lab-panel">
+            <details open className="fitness-card-disclosure fitness-lab-panel">
               <summary>Performance tests</summary>
               <AthleticPerformanceStudio
                 initialSex={profile?.sex ?? 'male'}

@@ -119,8 +119,10 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   const isTravelScenario = params.scenario === 'travel' || params.scenario === 'lab-travel' || params.scenario === 'hotel'
   const isAssessmentScenario = params.scenario === 'assessment' || params.scenario === 'lab-assessment' || params.scenario === 'movement'
   const isSleepScenario = params.scenario === 'sleep' || params.scenario === 'lab-sleep' || params.scenario === 'sleep-hud'
-  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || isNutritionScenario || isTravelScenario || isAssessmentScenario || isSleepScenario || params.scenario?.startsWith('lab')
-  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isNutritionScenario ? 'nutrition' : isTravelScenario ? 'travel' : isAssessmentScenario ? 'assessment' : isSleepScenario ? 'sleep' : isLabScenario ? 'lab' : 'train')
+  const isPerformanceScenario = params.scenario === 'performance' || params.scenario === 'lab-performance' || params.scenario === 'power'
+  const isCalculatorScenario = params.scenario === 'calculator' || params.scenario === 'lab-calculator' || params.scenario === 'calculators'
+  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || isNutritionScenario || isTravelScenario || isAssessmentScenario || isSleepScenario || isPerformanceScenario || isCalculatorScenario || params.scenario?.startsWith('lab')
+  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isNutritionScenario ? 'nutrition' : isTravelScenario ? 'travel' : isAssessmentScenario ? 'assessment' : isSleepScenario ? 'sleep' : isPerformanceScenario ? 'performance' : isCalculatorScenario ? 'calculator' : isLabScenario ? 'lab' : 'train')
   const effectiveTab = (params.tab as any) || (
     params.scenario === 'readiness-acwr' ? 'acwr'
       : params.scenario === 'readiness-deload' ? 'deload'
