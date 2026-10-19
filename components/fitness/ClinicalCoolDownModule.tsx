@@ -4,6 +4,10 @@ import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import ExerciseVideoModal, { ExerciseModalData } from '@/components/fitness/ExerciseVideoModal'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { syncActivityToAppleHealth } from '@/lib/native-healthkit-bridge'
+import { playCountdownPip } from '@/lib/web-audio-cadence-engine'
+import { triggerHaptic } from '@/lib/offline-sync-queue'
+import { speakCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
+import { isUnilateralMovement } from '@/lib/exercise-logging-helpers'
 
 interface ClinicalCoolDownModuleProps {
   workoutDay?: number
@@ -31,6 +35,7 @@ interface CoolDownItem {
   durationSec: number
   instructions: string[]
   clinicalRationale: string
+  isUnilateral?: boolean
 }
 
 export type BreathPatternType = '4-7-8' | '4-6' | 'box' | '5-5'
@@ -709,8 +714,10 @@ export default function ClinicalCoolDownModule({
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0)
   const [timerSecondsLeft, setTimerSecondsLeft] = useState<number>(30)
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false)
+  const [guidedSide, setGuidedSide] = useState<1 | 2>(1)
   const [activeInlineTimerId, setActiveInlineTimerId] = useState<string | null>(null)
   const [inlineTimerSeconds, setInlineTimerSeconds] = useState<number>(30)
+  const [inlineSide, setInlineSide] = useState<1 | 2>(1)
   const [activeMovementModal, setActiveMovementModal] = useState<CoolDownItem | null>(null)
 
   const openMovementModal = useCallback((item: CoolDownItem) => {
@@ -764,7 +771,8 @@ export default function ClinicalCoolDownModule({
             ? 'Latissimus Dorsi & Shoulder Girdle'
             : 'Hip Flexors & Lumbo-Pelvic Hip Complex',
         protocol: 'Hold 30s per side (no bouncing)',
-        durationSec: 60,
+        durationSec: 30,
+        isUnilateral: true,
         instructions: [
           '1. Move gently into the stretch until you feel comfortable elongation without pain.',
           '2. Maintain neutral spine and pelvis (posterior pelvic tilt).',
@@ -783,7 +791,8 @@ export default function ClinicalCoolDownModule({
             : 'static 90 90 hamstring stretch',
         target: isLower ? 'Hamstrings Complex & Calves' : 'Upper Trapezius & Neck Extensors',
         protocol: 'Hold 30s per side',
-        durationSec: 60,
+        durationSec: 30,
+        isUnilateral: true,
         instructions: [
           '1. Lie back or sit tall with neutral alignment.',
           '2. Gently extend limb until mild tension is felt in target muscle belly.',
@@ -801,8 +810,9 @@ export default function ClinicalCoolDownModule({
             ? 'self myofascial release smr thoracic spine'
             : 'foam roll calves',
         target: isLower ? 'Quadriceps & IT-Band Complex' : 'Thoracic Spine Extensors & Lats',
-        protocol: 'Hold tender spots 30–60s',
-        durationSec: 60,
+        protocol: isLower || !isUpper ? 'Hold tender spots 30s per side' : 'Hold tender spots 30–60s',
+        durationSec: 30,
+        isUnilateral: isLower || !isUpper,
         instructions: [
           '1. Position foam roller beneath heavily worked muscle group.',
           '2. Roll slowly along muscle belly to locate focal areas of high tone (trigger points).',
@@ -881,23 +891,55 @@ export default function ClinicalCoolDownModule({
     let interval: ReturnType<typeof setInterval> | null = null
     if (activeInlineTimerId && inlineTimerSeconds > 0) {
       interval = setInterval(() => {
-        setInlineTimerSeconds(prev => prev - 1)
+        setInlineTimerSeconds(prev => {
+          if (prev <= 4 && prev >= 2) {
+            playCountdownPip(prev - 1)
+          }
+          return prev - 1
+        })
       }, 1000)
     } else if (inlineTimerSeconds === 0 && activeInlineTimerId) {
-      toggleItem(activeInlineTimerId)
-      setActiveInlineTimerId(null)
+      const activeItem = coolDownItems.find(i => i.id === activeInlineTimerId)
+      const isUnilateral = activeItem ? (activeItem.isUnilateral ?? isUnilateralMovement(activeItem)) : false
+
+      if (isUnilateral && inlineSide === 1) {
+        // Switch to Side 2 for unilateral stretch
+        playCountdownPip(0)
+        triggerHaptic('heavy')
+        speakCoachVoiceCue('Switch sides! Now side 2.')
+        setInlineSide(2)
+        setInlineTimerSeconds(activeItem?.durationSec || 30)
+      } else {
+        // Both sides complete (or single bilateral movement)
+        playCountdownPip(0)
+        triggerHaptic('heavy')
+        speakCoachVoiceCue('Stretch complete!')
+        toggleItem(activeInlineTimerId)
+        setActiveInlineTimerId(null)
+        setInlineSide(1)
+      }
     }
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [activeInlineTimerId, inlineTimerSeconds, toggleItem])
+  }, [activeInlineTimerId, inlineTimerSeconds, inlineSide, coolDownItems, toggleItem])
 
   const startInlineTimer = (item: CoolDownItem) => {
     if (activeInlineTimerId === item.id) {
       setActiveInlineTimerId(null)
+      setInlineSide(1)
     } else {
       setActiveInlineTimerId(item.id)
+      setInlineSide(1)
       setInlineTimerSeconds(item.durationSec)
+      triggerHaptic('tap')
+      playCountdownPip(item.durationSec)
+      const isUnilateral = item.isUnilateral ?? isUnilateralMovement(item)
+      if (isUnilateral) {
+        speakCoachVoiceCue(`Starting Side 1: ${item.name}`)
+      } else {
+        speakCoachVoiceCue(`Starting ${item.durationSec} second timer`)
+      }
     }
   }
 
@@ -906,36 +948,97 @@ export default function ClinicalCoolDownModule({
     let interval: ReturnType<typeof setInterval> | null = null
     if (guidedModalOpen && isTimerRunning && timerSecondsLeft > 0) {
       interval = setInterval(() => {
-        setTimerSecondsLeft(prev => prev - 1)
+        setTimerSecondsLeft(prev => {
+          if (prev <= 4 && prev >= 2) {
+            playCountdownPip(prev - 1)
+          }
+          return prev - 1
+        })
       }, 1000)
     } else if (timerSecondsLeft === 0 && isTimerRunning) {
       const currentItem = coolDownItems[activeStepIndex]
-      if (currentItem) {
-        toggleItem(currentItem.id)
+      const isUnilateral = currentItem ? (currentItem.isUnilateral ?? isUnilateralMovement(currentItem)) : false
+
+      if (isUnilateral && guidedSide === 1) {
+        // Switch to Side 2 for unilateral movement!
+        playCountdownPip(0)
+        triggerHaptic('heavy')
+        speakCoachVoiceCue('Switch sides! Now side 2.')
+        setGuidedSide(2)
+        setTimerSecondsLeft(currentItem?.durationSec ?? 30)
+        // Keeps timer running for Side 2
+      } else {
+        // Both sides complete (or bilateral movement done)
+        playCountdownPip(0)
+        triggerHaptic('heavy')
+        if (currentItem) {
+          toggleItem(currentItem.id)
+          speakCoachVoiceCue('Stretch complete!')
+        }
+        setIsTimerRunning(false)
+        setGuidedSide(1)
       }
-      setIsTimerRunning(false)
     }
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [guidedModalOpen, isTimerRunning, timerSecondsLeft, activeStepIndex, coolDownItems, toggleItem])
+  }, [guidedModalOpen, isTimerRunning, timerSecondsLeft, activeStepIndex, guidedSide, coolDownItems, toggleItem])
 
   const startGuidedFlow = () => {
     setActiveStepIndex(0)
-    setTimerSecondsLeft(coolDownItems[0]?.durationSec ?? 60)
+    setGuidedSide(1)
+    const firstItem = coolDownItems[0]
+    setTimerSecondsLeft(firstItem?.durationSec ?? 30)
     setIsTimerRunning(true)
     setGuidedModalOpen(true)
+    triggerHaptic('tap')
+    if (firstItem) {
+      const isUnilateral = firstItem.isUnilateral ?? isUnilateralMovement(firstItem)
+      if (isUnilateral) {
+        speakCoachVoiceCue(`Starting Side 1: ${firstItem.name}`)
+      } else {
+        speakCoachVoiceCue(`Starting cool-down: ${firstItem.name}`)
+      }
+    }
   }
 
   const nextGuidedStep = () => {
     const nextIdx = activeStepIndex + 1
     if (nextIdx < coolDownItems.length) {
       setActiveStepIndex(nextIdx)
-      setTimerSecondsLeft(coolDownItems[nextIdx]?.durationSec ?? 60)
+      setGuidedSide(1)
+      const nextItem = coolDownItems[nextIdx]
+      setTimerSecondsLeft(nextItem?.durationSec ?? 30)
       setIsTimerRunning(true)
+      if (nextItem) {
+        const isUnilateral = nextItem.isUnilateral ?? isUnilateralMovement(nextItem)
+        if (isUnilateral) {
+          speakCoachVoiceCue(`Next: Side 1 of ${nextItem.name}`)
+        } else {
+          speakCoachVoiceCue(`Next: ${nextItem.name}`)
+        }
+      }
     } else {
       markAllComplete()
       setGuidedModalOpen(false)
+      setGuidedSide(1)
+    }
+  }
+
+  const handleManualSwitchSide = () => {
+    const currentItem = coolDownItems[activeStepIndex]
+    if (!currentItem) return
+    playCountdownPip(0)
+    triggerHaptic('tap')
+    if (guidedSide === 1) {
+      speakCoachVoiceCue('Switching to Side 2')
+      setGuidedSide(2)
+      setTimerSecondsLeft(currentItem.durationSec ?? 30)
+      setIsTimerRunning(true)
+    } else {
+      speakCoachVoiceCue('Side 1')
+      setGuidedSide(1)
+      setTimerSecondsLeft(currentItem.durationSec ?? 30)
     }
   }
 
@@ -1418,27 +1521,79 @@ export default function ClinicalCoolDownModule({
                 ) : (
                   /* Inline Action Row with Timer, Demo & Mark Done */
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      onClick={() => startInlineTimer(item)}
-                      className="tactile-btn"
-                      style={{
-                        background: isTimerActive ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)',
-                        border: isTimerActive ? '1px solid #60A5FA' : '1px solid rgba(255,255,255,0.18)',
-                        color: isTimerActive ? '#93C5FD' : 'var(--white)',
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        padding: '5px 12px',
-                        borderRadius: 4,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <GaaIcon name="watch" size={11} tone="cyan" />
-                      <span>{isTimerActive ? `${inlineTimerSeconds}s Left` : `${item.durationSec}s Timer`}</span>
-                    </button>
+                    {(() => {
+                      const itemIsUnilateral = item.isUnilateral ?? isUnilateralMovement(item)
+                      return (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => startInlineTimer(item)}
+                            className="tactile-btn"
+                            style={{
+                              background: isTimerActive ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)',
+                              border: isTimerActive ? '1px solid #60A5FA' : '1px solid rgba(255,255,255,0.18)',
+                              color: isTimerActive ? '#93C5FD' : 'var(--white)',
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              padding: '5px 12px',
+                              borderRadius: 4,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            <GaaIcon name="watch" size={11} tone="cyan" />
+                            <span>
+                              {isTimerActive
+                                ? itemIsUnilateral
+                                  ? `Side ${inlineSide}/2: ${inlineTimerSeconds}s Left`
+                                  : `${inlineTimerSeconds}s Left`
+                                : itemIsUnilateral
+                                  ? `${item.durationSec}s/Side Timer (Both Sides)`
+                                  : `${item.durationSec}s Timer`}
+                            </span>
+                          </button>
+
+                          {isTimerActive && itemIsUnilateral && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic('tap')
+                                playCountdownPip(0)
+                                if (inlineSide === 1) {
+                                  speakCoachVoiceCue('Switching to Side 2')
+                                  setInlineSide(2)
+                                  setInlineTimerSeconds(item.durationSec)
+                                } else {
+                                  speakCoachVoiceCue('Both sides complete!')
+                                  toggleItem(item.id)
+                                  setActiveInlineTimerId(null)
+                                  setInlineSide(1)
+                                }
+                              }}
+                              className="tactile-btn"
+                              style={{
+                                background: inlineSide === 1 ? 'rgba(59,130,246,0.2)' : 'rgba(16,185,129,0.2)',
+                                border: inlineSide === 1 ? '1px solid #3B82F6' : '1px solid #10B981',
+                                color: inlineSide === 1 ? '#60A5FA' : '#34D399',
+                                fontSize: 11,
+                                fontWeight: 700,
+                                padding: '5px 10px',
+                                borderRadius: 4,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                              }}
+                              title={inlineSide === 1 ? 'Skip to Side 2' : 'Finish Both Sides'}
+                            >
+                              <span>{inlineSide === 1 ? 'Switch to Side 2 ↻' : 'Finish Both Sides ✓'}</span>
+                            </button>
+                          )}
+                        </>
+                      )
+                    })()}
 
                     {!isBreathing && (
                       <button
@@ -1690,29 +1845,82 @@ export default function ClinicalCoolDownModule({
                   )
                 })()}
 
-                <div
-                  style={{
-                    width: 130,
-                    height: 130,
-                    borderRadius: '50%',
-                    margin: '0 auto 16px',
-                    border: '4px solid rgba(96,165,250,0.3)',
-                    borderTopColor: '#60A5FA',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'column',
-                    background: 'rgba(0,0,0,0.4)',
-                    boxShadow: '0 0 25px rgba(96,165,250,0.2)',
-                  }}
-                >
-                  <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 36, fontWeight: 700, color: '#60A5FA', lineHeight: 1 }}>
-                    {timerSecondsLeft}s
-                  </div>
-                  <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {isTimerRunning ? 'In Progress' : 'Paused'}
-                  </div>
-                </div>
+                {(() => {
+                  const activeIsUnilateral = activeItem ? (activeItem.isUnilateral ?? isUnilateralMovement(activeItem)) : false
+                  return (
+                    <>
+                      {activeIsUnilateral && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '5px 12px',
+                              borderRadius: 20,
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              background: guidedSide === 1 ? 'rgba(59,130,246,0.25)' : 'rgba(255,255,255,0.06)',
+                              border: guidedSide === 1 ? '1px solid #60A5FA' : '1px solid rgba(255,255,255,0.12)',
+                              color: guidedSide === 1 ? '#93C5FD' : 'var(--gray)',
+                            }}
+                          >
+                            <span>Side 1 of 2</span>
+                            {guidedSide === 1 && isTimerRunning && (
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#60A5FA', display: 'inline-block' }} />
+                            )}
+                            {guidedSide === 2 && <span>✓</span>}
+                          </div>
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '5px 12px',
+                              borderRadius: 20,
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              background: guidedSide === 2 ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.06)',
+                              border: guidedSide === 2 ? '1px solid #10B981' : '1px solid rgba(255,255,255,0.12)',
+                              color: guidedSide === 2 ? '#34D399' : 'var(--gray)',
+                            }}
+                          >
+                            <span>Side 2 of 2</span>
+                            {guidedSide === 2 && isTimerRunning && (
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399', display: 'inline-block' }} />
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div
+                        style={{
+                          width: 130,
+                          height: 130,
+                          borderRadius: '50%',
+                          margin: '0 auto 16px',
+                          border: '4px solid rgba(96,165,250,0.3)',
+                          borderTopColor: '#60A5FA',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexDirection: 'column',
+                          background: 'rgba(0,0,0,0.4)',
+                          boxShadow: '0 0 25px rgba(96,165,250,0.2)',
+                        }}
+                      >
+                        <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 36, fontWeight: 700, color: '#60A5FA', lineHeight: 1 }}>
+                          {timerSecondsLeft}s
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>
+                          {activeIsUnilateral
+                            ? (guidedSide === 1 ? 'Side 1 Hold' : 'Side 2 Hold')
+                            : (isTimerRunning ? 'In Progress' : 'Paused')}
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
 
                 {/* Step-by-Step Instructions */}
                 <div
@@ -1748,35 +1956,59 @@ export default function ClinicalCoolDownModule({
             {/* Modal Controls */}
             <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
               {!(activeItem.name.toLowerCase().includes('breath') || activeItem.phaseLabel.toLowerCase().includes('parasympathetic') || activeItem.name.toLowerCase().includes('box')) && (
-                <button
-                  type="button"
-                  onClick={() => setIsTimerRunning(prev => !prev)}
-                  style={{
-                    background: isTimerRunning ? 'rgba(255,255,255,0.1)' : 'rgba(16,185,129,0.2)',
-                    border: isTimerRunning ? '1px solid rgba(255,255,255,0.2)' : '1px solid #10B981',
-                    color: isTimerRunning ? '#FFFFFF' : '#10B981',
-                    padding: '9px 18px',
-                    borderRadius: 6,
-                    fontSize: 12.5,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  {isTimerRunning ? (
-                    <>
-                      <GaaIcon name="pause" size={12} tone="inherit" />
-                      <span>Pause</span>
-                    </>
-                  ) : (
-                    <>
-                      <GaaIcon name="play" size={12} tone="inherit" />
-                      <span>Resume</span>
-                    </>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsTimerRunning(prev => !prev)}
+                    style={{
+                      background: isTimerRunning ? 'rgba(255,255,255,0.1)' : 'rgba(16,185,129,0.2)',
+                      border: isTimerRunning ? '1px solid rgba(255,255,255,0.2)' : '1px solid #10B981',
+                      color: isTimerRunning ? '#FFFFFF' : '#10B981',
+                      padding: '9px 18px',
+                      borderRadius: 6,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    {isTimerRunning ? (
+                      <>
+                        <GaaIcon name="pause" size={12} tone="inherit" />
+                        <span>Pause</span>
+                      </>
+                    ) : (
+                      <>
+                        <GaaIcon name="play" size={12} tone="inherit" />
+                        <span>Resume</span>
+                      </>
+                    )}
+                  </button>
+
+                  {Boolean(activeItem && (activeItem.isUnilateral ?? isUnilateralMovement(activeItem)) && guidedSide === 1) && (
+                    <button
+                      type="button"
+                      onClick={handleManualSwitchSide}
+                      style={{
+                        background: 'rgba(59,130,246,0.2)',
+                        border: '1px solid #3B82F6',
+                        color: '#60A5FA',
+                        padding: '9px 16px',
+                        borderRadius: 6,
+                        fontSize: 12.5,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      <span>Switch to Side 2 ↻</span>
+                    </button>
                   )}
-                </button>
+                </>
               )}
 
               <button

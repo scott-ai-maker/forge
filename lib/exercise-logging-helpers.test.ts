@@ -8,6 +8,7 @@ import {
   formatExerciseTargetDisplay,
   findBandByWeight,
   BAND_COLOR_SPECTRUM,
+  isUnilateralMovement,
 } from './exercise-logging-helpers'
 
 describe('exercise-logging-helpers', () => {
@@ -161,6 +162,58 @@ describe('exercise-logging-helpers', () => {
       expect(isStrengthExercise('Plank', 'activation', '45s hold')).toBe(false)
       expect(isStrengthExercise('Treadmill Running', 'cardio')).toBe(false)
       expect(isStrengthExercise('Assault AirBike', 'cardio')).toBe(false)
+    })
+  })
+
+  describe('isUnilateralMovement', () => {
+    it('detects unilateral stretches and movements by name', () => {
+      expect(isUnilateralMovement('Kneeling Hip Flexor & Latissimus Stretch')).toBe(true)
+      expect(isUnilateralMovement('Doorway Pectoral Stretch')).toBe(true)
+      expect(isUnilateralMovement('Single-Leg Romanian Deadlift')).toBe(true)
+      expect(isUnilateralMovement('Pigeon Pose Stretch')).toBe(true)
+      expect(isUnilateralMovement('Couch Stretch')).toBe(true)
+      expect(isUnilateralMovement('Static Wall Calf Stretch')).toBe(true)
+      expect(isUnilateralMovement('Static Latissimus Dorsi Ball Stretch')).toBe(true)
+      expect(isUnilateralMovement('Side Plank Hold')).toBe(true)
+      expect(isUnilateralMovement('Figure-4 Piriformis Stretch')).toBe(true)
+    })
+
+    it('detects unilateral movements with per side / per leg / per arm / slash notation in protocol or reps', () => {
+      expect(isUnilateralMovement('Single Body Part Stretch')).toBe(true)
+      expect(isUnilateralMovement({ name: 'Single Body Part Stretch', reps: '30' })).toBe(true)
+      expect(isUnilateralMovement({ name: 'Foam Roll Calves', reps: '45s / side' })).toBe(true)
+      expect(isUnilateralMovement({ name: 'Single-Leg Balance Reach', reps: '10 reps / leg' })).toBe(true)
+      expect(isUnilateralMovement({ name: 'Quad Stretch', protocol: 'Static hold 30s per side' })).toBe(true)
+      expect(isUnilateralMovement({ name: 'SMR Rolling', reps: '30s per leg' })).toBe(true)
+      expect(isUnilateralMovement({ name: 'Dumbbell Row', reps: '10 reps each arm' })).toBe(true)
+      expect(isUnilateralMovement({ name: 'Adductor Lengthening', protocol: 'Hold 30s per side (no bouncing)' })).toBe(true)
+    })
+
+    it('detects single body part stretches and plural muscle names', () => {
+      expect(isUnilateralMovement('Stretch Calves')).toBe(true)
+      expect(isUnilateralMovement('Stretch Quads')).toBe(true)
+      expect(isUnilateralMovement('Stretch Lats')).toBe(true)
+      expect(isUnilateralMovement('Stretch Hamstrings')).toBe(true)
+      expect(isUnilateralMovement('Stretch Pecs')).toBe(true)
+      expect(isUnilateralMovement('Static Calves Stretch')).toBe(true)
+      expect(isUnilateralMovement('Foam Roll Calves')).toBe(true)
+      expect(isUnilateralMovement('Foam Roll Quads')).toBe(true)
+    })
+
+    it('detects NASM CEx lengthen phase static stretches as unilateral by default', () => {
+      expect(isUnilateralMovement({ name: 'Adductor Stretch', phase: 'lengthen' })).toBe(true)
+      expect(isUnilateralMovement({ name: 'Posterior Capsule Stretch', phase: 'lengthen' })).toBe(true)
+    })
+
+    it('rejects bilateral movements even if they are static holds or stretches', () => {
+      expect(isUnilateralMovement("Child's Pose")).toBe(false)
+      expect(isUnilateralMovement('Forward Fold Stretch')).toBe(false)
+      expect(isUnilateralMovement('Wall Sit')).toBe(false)
+      expect(isUnilateralMovement('Dead Hang')).toBe(false)
+      expect(isUnilateralMovement('Prone Cobra')).toBe(false)
+      expect(isUnilateralMovement('Barbell Bench Press')).toBe(false)
+      expect(isUnilateralMovement('Glute Bridge with 2s Isometric Hold')).toBe(false)
+      expect(isUnilateralMovement('Plank')).toBe(false)
     })
   })
 })

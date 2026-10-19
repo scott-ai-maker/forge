@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { playCountdownPip } from '@/lib/web-audio-cadence-engine'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import { speakCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
+import { isUnilateralMovement } from '@/lib/exercise-logging-helpers'
 
 export interface ActiveHoldTimerState {
   exerciseKey: string
@@ -12,6 +13,8 @@ export interface ActiveHoldTimerState {
   remainingSeconds: number
   isRunning: boolean
   type: 'stretch' | 'foam'
+  sidesCount?: 1 | 2
+  currentSide?: 1 | 2
 }
 
 export interface UseStaticStretchHoldTimerOptions {
@@ -25,16 +28,18 @@ export interface UseStaticStretchHoldTimerResult {
     exerciseKey: string,
     exerciseName: string,
     targetSeconds: number,
-    type?: 'stretch' | 'foam'
+    type?: 'stretch' | 'foam',
+    sides?: 1 | 2
   ) => void
   cancelHoldTimer: () => void
   pauseResumeHoldTimer: () => void
+  switchSide?: () => void
   setActiveHoldTimer: React.Dispatch<React.SetStateAction<ActiveHoldTimerState | null>>
 }
 
 /**
  * Manages timed static stretch holds and SMR foam rolling cadence countdowns,
- * delivering audio pips, voice cues, and haptic feedback.
+ * delivering audio pips, voice cues, and haptic feedback with unilateral side switching.
  */
 export function useStaticStretchHoldTimer(
   options: UseStaticStretchHoldTimerOptions = {}
@@ -53,7 +58,25 @@ export function useStaticStretchHoldTimer(
         if (prev.remainingSeconds <= 1) {
           playCountdownPip(0)
           triggerHaptic('heavy')
-          speakCoachVoiceCue(prev.type === 'stretch' ? 'Stretch hold complete!' : 'SMR rolling complete!')
+
+          // If unilateral and side 1, switch to side 2!
+          if (prev.sidesCount === 2 && prev.currentSide === 1) {
+            speakCoachVoiceCue('Switch sides! Now opposite side.')
+            return {
+              ...prev,
+              currentSide: 2,
+              remainingSeconds: prev.targetSeconds,
+              isRunning: true,
+            }
+          }
+
+          speakCoachVoiceCue(
+            prev.sidesCount === 2
+              ? 'Both sides complete!'
+              : prev.type === 'stretch'
+                ? 'Stretch hold complete!'
+                : 'SMR rolling complete!'
+          )
           onCompleteHold?.(prev.exerciseKey, prev.targetSeconds)
           return { ...prev, remainingSeconds: 0, isRunning: false }
         }
@@ -72,9 +95,11 @@ export function useStaticStretchHoldTimer(
       exerciseKey: string,
       exerciseName: string,
       targetSeconds: number,
-      type: 'stretch' | 'foam' = 'stretch'
+      type: 'stretch' | 'foam' = 'stretch',
+      sides?: 1 | 2
     ) => {
       const validSeconds = Math.max(1, targetSeconds || 30)
+      const sidesCount = sides ?? (isUnilateralMovement({ name: exerciseName }) ? 2 : 1)
       setActiveHoldTimer({
         exerciseKey,
         exerciseName,
@@ -82,8 +107,15 @@ export function useStaticStretchHoldTimer(
         remainingSeconds: validSeconds,
         isRunning: true,
         type,
+        sidesCount,
+        currentSide: 1,
       })
       triggerHaptic('tap')
+      if (sidesCount === 2) {
+        speakCoachVoiceCue(`Starting Side 1: ${validSeconds} seconds`)
+      } else {
+        speakCoachVoiceCue(`Starting ${validSeconds} second ${type === 'stretch' ? 'stretch hold' : 'foam roll'}`)
+      }
     },
     []
   )
@@ -101,12 +133,26 @@ export function useStaticStretchHoldTimer(
     })
   }, [])
 
+  const switchSide = useCallback(() => {
+    setActiveHoldTimer(prev => {
+      if (!prev || prev.sidesCount !== 2) return prev
+      triggerHaptic('tap')
+      playCountdownPip(0)
+      if (prev.currentSide === 1) {
+        speakCoachVoiceCue('Switching to Side 2')
+        return { ...prev, currentSide: 2, remainingSeconds: prev.targetSeconds, isRunning: true }
+      }
+      return prev
+    })
+  }, [])
+
   return {
     activeHoldTimer,
     isHoldRunning,
     startHoldTimer,
     cancelHoldTimer,
     pauseResumeHoldTimer,
+    switchSide,
     setActiveHoldTimer,
   }
 }

@@ -14,7 +14,7 @@
  */
 
 import { isCompoundLift } from './bio-adaptive-rest-pacer'
-import { isTimedStaticStretch, isFoamRollerExercise, parseHoldDurationSeconds } from './exercise-logging-helpers'
+import { isTimedStaticStretch, isFoamRollerExercise, parseHoldDurationSeconds, isUnilateralMovement } from './exercise-logging-helpers'
 
 export interface WorkoutDurationExerciseInput {
   name: string
@@ -242,7 +242,14 @@ export function calculateSingleSetWorkSeconds(
 ): number {
   // If timed static hold or foam roll
   if (isTimedStaticStretch(exercise.name, exercise.block, exercise.reps) || isFoamRollerExercise(exercise.name)) {
-    return parseHoldDurationSeconds(exercise.reps, 30)
+    const baseSeconds = parseHoldDurationSeconds(exercise.reps, 30)
+    const sides = isUnilateralMovement({
+      name: exercise.name,
+      reps: exercise.reps,
+      phase: exercise.block === 'cooldown' || exercise.block === 'warmup' ? 'lengthen' : undefined,
+      block: exercise.block,
+    }) ? 2 : 1
+    return baseSeconds * sides
   }
 
   const reps = parseRepsCount(exercise.reps)

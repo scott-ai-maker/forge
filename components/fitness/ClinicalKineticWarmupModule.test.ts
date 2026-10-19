@@ -87,5 +87,73 @@ describe('ClinicalKineticWarmupModule & ClinicalCoolDownModule Key Scoping & Fut
       }
     })
   })
+
+  describe('Unilateral Movement Two-Sided Timer Transition', () => {
+    it('requires Side 1 to switch to Side 2 before completing for unilateral stretches', () => {
+      interface ItemTimerState {
+        itemId: string
+        side: 1 | 2
+        secondsLeft: number
+        isUnilateral: boolean
+      }
+
+      const advanceTimerTick = (
+        state: ItemTimerState,
+        durationSec: number
+      ): { next: ItemTimerState; isComplete: boolean; switchedSide: boolean } => {
+        if (state.secondsLeft <= 1) {
+          if (state.isUnilateral && state.side === 1) {
+            return {
+              next: { ...state, side: 2, secondsLeft: durationSec },
+              isComplete: false,
+              switchedSide: true,
+            }
+          }
+          return {
+            next: { ...state, secondsLeft: 0 },
+            isComplete: true,
+            switchedSide: false,
+          }
+        }
+        return {
+          next: { ...state, secondsLeft: state.secondsLeft - 1 },
+          isComplete: false,
+          switchedSide: false,
+        }
+      }
+
+      // Unilateral item (Single Body Part Stretch, Kneeling Hip Flexor, etc.)
+      const unilateralItem: ItemTimerState = {
+        itemId: 'lengthen-def-1',
+        side: 1,
+        secondsLeft: 1,
+        isUnilateral: true,
+      }
+
+      // Side 1 finishes -> switches to Side 2 (30s)
+      const afterSide1 = advanceTimerTick(unilateralItem, 30)
+      expect(afterSide1.switchedSide).toBe(true)
+      expect(afterSide1.isComplete).toBe(false)
+      expect(afterSide1.next.side).toBe(2)
+      expect(afterSide1.next.secondsLeft).toBe(30)
+
+      // Side 2 finishes -> item is marked complete
+      const afterSide2 = advanceTimerTick({ ...afterSide1.next, secondsLeft: 1 }, 30)
+      expect(afterSide2.switchedSide).toBe(false)
+      expect(afterSide2.isComplete).toBe(true)
+      expect(afterSide2.next.secondsLeft).toBe(0)
+
+      // Bilateral item (e.g. Wall Sit or Child's Pose) finishes in 1 side
+      const bilateralItem: ItemTimerState = {
+        itemId: 'bilateral-1',
+        side: 1,
+        secondsLeft: 1,
+        isUnilateral: false,
+      }
+      const bilateralResult = advanceTimerTick(bilateralItem, 30)
+      expect(bilateralResult.switchedSide).toBe(false)
+      expect(bilateralResult.isComplete).toBe(true)
+    })
+  })
 })
 

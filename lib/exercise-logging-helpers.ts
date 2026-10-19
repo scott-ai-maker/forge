@@ -188,6 +188,141 @@ export function isBandExercise(name?: string | null, equipment?: string[] | null
 }
 
 /**
+ * Detects whether an exercise, stretch, or corrective movement is unilateral (performed one side at a time).
+ * Unilateral movements require timing both sides (Side 1 and Side 2) rather than a single timer.
+ */
+export interface UnilateralMovementCheckInput {
+  name?: string | null
+  phase?: string | null
+  protocol?: string | null
+  target?: string | null
+  targetMuscle?: string | null
+  instructions?: string[] | null
+  reps?: string | number | null
+  repsOrDuration?: string | number | null
+  block?: string | null
+  description?: string | null
+  cues?: string[] | null
+  coachingCues?: string[] | null
+  isUnilateral?: boolean
+}
+
+/**
+ * Detects whether an exercise, stretch, or corrective movement is unilateral (performed one side at a time).
+ * Unilateral movements require timing both sides (Side 1 and Side 2) rather than a single timer.
+ */
+export function isUnilateralMovement(movement?: UnilateralMovementCheckInput | string | null): boolean {
+  if (!movement) return false
+
+  if (typeof movement === 'string') {
+    movement = { name: movement }
+  }
+
+  if (typeof movement.isUnilateral === 'boolean') {
+    return movement.isUnilateral
+  }
+
+  const combinedText = [
+    movement.name ?? '',
+    movement.protocol ?? '',
+    movement.target ?? '',
+    movement.targetMuscle ?? '',
+    movement.reps ?? '',
+    movement.repsOrDuration ?? '',
+    movement.phase ?? '',
+    movement.block ?? '',
+    movement.description ?? '',
+    ...(movement.instructions ?? []),
+    ...(movement.cues ?? []),
+    ...(movement.coachingCues ?? []),
+  ].join(' ').toLowerCase()
+
+  // Explicit bilateral exclusions
+  if (
+    combinedText.includes('both sides at once') ||
+    combinedText.includes('bilateral') ||
+    combinedText.includes('both legs') ||
+    combinedText.includes('both arms') ||
+    combinedText.includes("child's pose") ||
+    combinedText.includes('childs pose') ||
+    combinedText.includes('forward fold') ||
+    combinedText.includes('wall sit') ||
+    combinedText.includes('dead hang') ||
+    combinedText.includes('prone cobra') ||
+    combinedText.includes('cat cow') ||
+    combinedText.includes('cat-cow') ||
+    (combinedText.includes('glute bridge') && !combinedText.includes('single')) ||
+    (combinedText.includes('plank') && !combinedText.includes('side') && !combinedText.includes('single'))
+  ) {
+    return false
+  }
+
+  // 1. Explicit per-side, per-limb, or single-side indicators
+  if (
+    combinedText.includes('single body part') ||
+    combinedText.includes('single body-part') ||
+    combinedText.includes('single bodypart') ||
+    combinedText.includes('single limb') ||
+    combinedText.includes('single side') ||
+    combinedText.includes('single-side') ||
+    combinedText.includes('one side') ||
+    combinedText.includes('per side') ||
+    combinedText.includes('each side') ||
+    combinedText.includes('/ side') ||
+    combinedText.includes('/side') ||
+    combinedText.includes('a side') ||
+    combinedText.includes('both sides') ||
+    combinedText.includes('single-leg') ||
+    combinedText.includes('single leg') ||
+    combinedText.includes('1-leg') ||
+    combinedText.includes('one leg') ||
+    combinedText.includes('per leg') ||
+    combinedText.includes('each leg') ||
+    combinedText.includes('/ leg') ||
+    combinedText.includes('/leg') ||
+    combinedText.includes('a leg') ||
+    combinedText.includes('single-arm') ||
+    combinedText.includes('single arm') ||
+    combinedText.includes('1-arm') ||
+    combinedText.includes('one arm') ||
+    combinedText.includes('per arm') ||
+    combinedText.includes('each arm') ||
+    combinedText.includes('/ arm') ||
+    combinedText.includes('/arm') ||
+    combinedText.includes('a arm') ||
+    combinedText.includes('per limb') ||
+    combinedText.includes('each limb') ||
+    combinedText.includes('/ limb') ||
+    combinedText.includes('/limb') ||
+    combinedText.includes('per foot') ||
+    combinedText.includes('each foot') ||
+    combinedText.includes('/ foot') ||
+    combinedText.includes('/foot') ||
+    combinedText.includes('unilateral')
+  ) {
+    return true
+  }
+
+  // 2. Specific single-side corrective / stretch patterns
+  if (
+    /\b(doorway|kneeling hip flexor|standing hip flexor|half[- ]kneeling|pigeon|couch stretch|side plank|figure[- ]?4|90[- ]?90|piriformis|sleeper stretch|cross[- ]body)\b/i.test(combinedText) ||
+    (/\b(stretch|stretching|lengthen|lengthening|smr|foam|roll|rolling|hold|iso|isometric|mobility)\b/i.test(combinedText) &&
+      /\b(calves|calf|gastrocnemius|gastroc|soleus|quads|quad|quadriceps|rectus femoris|vastus|hamstrings|hamstring|biceps femoris|lats|lat|latissimus|latissimus dorsi|pecs|pec|pectoral|pectorals|pectoralis|glutes|glute|gluteus|gluteal|hip flexor|hip flexors|psoas|iliopsoas|tfl|tensor fasciae|tensor fasciae latae|adductors|adductor|abductors|abductor|groin|inner thigh|traps|trap|trapezius|upper trap|upper trapezius|scalene|scalenes|levator|deltoid|deltoids|shoulder|shoulders|rotator cuff|bicep|biceps|tricep|triceps|forearm|forearms|wrist|wrists|ankle|ankles)\b/i.test(combinedText))
+  ) {
+    return true
+  }
+
+  // 3. In NASM CEx, Lengthen phase static stretches are unilateral by default
+  if (movement.phase === 'lengthen' || movement.block === 'cooldown' || movement.block === 'warmup') {
+    if (/\b(stretch|lengthen|hold)\b/i.test(combinedText)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
  * Extracts the duration in seconds from an exercise reps string (e.g. "30s", "30-60s", "45 sec", "30s hold").
  * Defaults to 30 seconds for static stretches / SMR if not specified.
  */

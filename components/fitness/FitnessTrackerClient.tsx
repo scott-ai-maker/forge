@@ -136,6 +136,7 @@ import {
   isFoamRollerExercise,
   isBandExercise,
   isStrengthExercise,
+  isUnilateralMovement,
   parseHoldDurationSeconds,
   formatExerciseTargetDisplay,
   BAND_COLOR_SPECTRUM,
@@ -178,6 +179,9 @@ interface WorkoutExercise {
   videoUrl?: string | null
   block?: string | null
   personalReason?: string | null
+  instructions?: string[] | null
+  protocol?: string | null
+  target?: string | null
 }
 
 interface WorkoutDay {
@@ -4173,57 +4177,115 @@ export default function FitnessTrackerClient({
                                   </div>
 
                                   {/* 1-Tap Real-Time Countdown Timer Button */}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const duration = Number(draft.reps) || 30
-                                      if (activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning) {
-                                        setActiveHoldTimer(prev => prev ? { ...prev, isRunning: false } : null)
-                                      } else {
-                                        triggerHaptic('heavy')
-                                        playCountdownPip(duration)
-                                        speakCoachVoiceCue(`Starting ${duration} second ${isStretch ? 'stretch hold' : 'foam roll'}.`)
-                                        setActiveHoldTimer({
-                                          exerciseKey,
-                                          exerciseName: ex.name,
-                                          targetSeconds: duration,
-                                          remainingSeconds: duration,
-                                          isRunning: true,
-                                          type: isStretch ? 'stretch' : 'foam',
-                                        })
-                                      }
-                                    }}
-                                    className="tactile-btn"
-                                    style={{
-                                      marginTop: 6,
-                                      minHeight: 44,
-                                      background: activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning
-                                        ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
-                                        : 'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(5,150,105,0.3) 100%)',
-                                      border: activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning
-                                        ? '1px solid #EF4444'
-                                        : '1px solid rgba(16,185,129,0.5)',
-                                      color: activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning ? '#FFFFFF' : '#34D399',
-                                      fontSize: 11,
-                                      fontWeight: 800,
-                                      padding: '5px 10px',
-                                      borderRadius: 4,
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: 6,
-                                      width: '100%',
-                                    }}
-                                  >
-                                    <GaaIcon name="watch" size={12} tone="emerald" />
-                                    <span>
-                                      {activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning
-                                        ? `Stop Hold (${activeHoldTimer.remainingSeconds}s left)`
-                                        : `Start ${draft.reps || 30}s Countdown Timer`}
-                                    </span>
-                                  </button>
-                                </div>
+                                  {(() => {
+                                    const isUnilateral = isUnilateralMovement({
+                                      name: ex.name,
+                                      reps: ex.reps || draft.reps,
+                                      protocol: (ex as any).protocol,
+                                      target: (ex as any).target,
+                                      instructions: ex.instructions,
+                                      phase: ex.block === 'warmup' || ex.block === 'cooldown' ? 'lengthen' : undefined,
+                                      block: ex.block,
+                                      description: ex.description,
+                                    })
+                                    return (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const duration = Number(draft.reps) || 30
+                                            if (activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning) {
+                                              setActiveHoldTimer(prev => prev ? { ...prev, isRunning: false } : null)
+                                            } else {
+                                              triggerHaptic('heavy')
+                                              playCountdownPip(duration)
+                                              if (isUnilateral) {
+                                                speakCoachVoiceCue(`Starting Side 1 of ${duration} second ${isStretch ? 'stretch hold' : 'foam roll'}.`)
+                                              } else {
+                                                speakCoachVoiceCue(`Starting ${duration} second ${isStretch ? 'stretch hold' : 'foam roll'}.`)
+                                              }
+                                              setActiveHoldTimer({
+                                                exerciseKey,
+                                                exerciseName: ex.name,
+                                                targetSeconds: duration,
+                                                remainingSeconds: duration,
+                                                isRunning: true,
+                                                type: isStretch ? 'stretch' : 'foam',
+                                                sidesCount: isUnilateral ? 2 : 1,
+                                                currentSide: 1,
+                                              })
+                                            }
+                                          }}
+                                          className="tactile-btn"
+                                          style={{
+                                            marginTop: 6,
+                                            minHeight: 44,
+                                            background: activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning
+                                              ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
+                                              : 'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(5,150,105,0.3) 100%)',
+                                            border: activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning
+                                              ? '1px solid #EF4444'
+                                              : '1px solid rgba(16,185,129,0.5)',
+                                            color: activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning ? '#FFFFFF' : '#34D399',
+                                            fontSize: 11,
+                                            fontWeight: 800,
+                                            padding: '5px 10px',
+                                            borderRadius: 4,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 6,
+                                            width: '100%',
+                                          }}
+                                        >
+                                          <GaaIcon name="watch" size={12} tone="emerald" />
+                                          <span>
+                                            {activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning
+                                              ? (activeHoldTimer.sidesCount === 2
+                                                  ? `Stop Hold (Side ${activeHoldTimer.currentSide}/2: ${activeHoldTimer.remainingSeconds}s left)`
+                                                  : `Stop Hold (${activeHoldTimer.remainingSeconds}s left)`)
+                                              : (isUnilateral
+                                                  ? `Start 2×${draft.reps || 30}s Timer (Both Sides)`
+                                                  : `Start ${draft.reps || 30}s Countdown Timer`)}
+                                          </span>
+                                        </button>
+
+                                  {activeHoldTimer?.exerciseKey === exerciseKey && activeHoldTimer.isRunning && activeHoldTimer.sidesCount === 2 && activeHoldTimer.currentSide === 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        triggerHaptic('tap')
+                                        playCountdownPip(0)
+                                        speakCoachVoiceCue('Switching to Side 2')
+                                        setActiveHoldTimer(prev => prev ? { ...prev, currentSide: 2, remainingSeconds: prev.targetSeconds, isRunning: true } : null)
+                                      }}
+                                      className="tactile-btn"
+                                      style={{
+                                        marginTop: 4,
+                                        minHeight: 36,
+                                        background: 'rgba(59,130,246,0.2)',
+                                        border: '1px solid #3B82F6',
+                                        color: '#60A5FA',
+                                        fontSize: 11,
+                                        fontWeight: 700,
+                                        padding: '4px 10px',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 5,
+                                        width: '100%',
+                                      }}
+                                    >
+                                      <span>Switch to Side 2 ↻</span>
+                                    </button>
+                                  )}
+                                </>
+                              )
+                            })()}
+                          </div>
                               ) : (
                                 <div>
                                   <label style={setFieldLabelStyle}>Reps Completed</label>
