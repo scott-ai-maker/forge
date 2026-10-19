@@ -26,7 +26,7 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-const COACH_ID = 'c4fc28e1-ff8d-493c-a8f5-a7f852f4e536' // Coach Gordon
+const COACH_ID = 'a896b7f6-5946-4452-a501-ace7feda0e55' // Coach Gordon (coach@forge-athletic.app)
 
 const VIP_TARGETS = [
   {

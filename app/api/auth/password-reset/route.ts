@@ -107,7 +107,6 @@ export async function POST(req: NextRequest) {
   try {
     const isMasterCoach =
       email === 'coach@forge-athletic.app' ||
-      email === 'scott.gordon72@outlook.com' ||
       email === (process.env.TEST_COACH_EMAIL || '').toLowerCase()
 
     const { data: clientRecord } = await admin
@@ -229,7 +228,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[PasswordReset] Failed to generate or dispatch recovery email:', err)
-    if (email === 'coach@forge-athletic.app' || email === 'scott.gordon72@outlook.com' || process.env.NODE_ENV === 'development') {
+    if (email === 'coach@forge-athletic.app' || process.env.NODE_ENV === 'development') {
       const msg = err instanceof Error ? err.message : 'Email dispatch provider error'
       return NextResponse.json(
         { error: `Email dispatch failed: ${msg}. Please use 1-Click Coach Fast Pass on the login page to access your console.` },

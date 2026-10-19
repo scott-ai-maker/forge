@@ -26,15 +26,16 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 })
 
 const PROTECTED_EMAILS = new Set([
-  'scott.gordon72@outlook.com', // Master Coach Gordon
-  '5c077.60rd0n@gmail.com',    // Scott Gordon (Client)
+  'coach@forge-athletic.app',   // Coach Gordon (Forge)
+  'scott@forge-athletic.app',   // Scott Gordon (Client)
+  '5c077.60rd0n@gmail.com',    // Scott Gordon (Client - Legacy)
   '5c077.60rd0n@proton.me',    // Scott Gordon (Proton reserve)
   'da_mona_lisa@msn.com',       // Lisa Gordon
   'rainvilj@hotmail.com',       // Jennifer Rainville
   'connor.gordon2002@gmail.com',// Connor Gordon
 ])
 
-const MASTER_COACH_ID = 'c4fc28e1-ff8d-493c-a8f5-a7f852f4e536'
+const MASTER_COACH_ID = 'a896b7f6-5946-4452-a501-ace7feda0e55'
 
 const DELETION_TABLES = [
   { table: 'workout_set_logs', column: 'user_id', label: 'Workout Set Logs' },

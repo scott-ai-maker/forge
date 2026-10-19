@@ -131,7 +131,6 @@ export async function GET(request: NextRequest) {
     const userEmail = (user.email ?? '').toLowerCase().trim()
     const isMasterCoach =
       userEmail === 'coach@forge-athletic.app' ||
-      userEmail === 'scott.gordon72@outlook.com' ||
       user.user_metadata?.surface_role === 'coach'
     const { data: existingProfile } = await admin
       .from('clients')

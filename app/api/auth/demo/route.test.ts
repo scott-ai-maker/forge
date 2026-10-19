@@ -105,7 +105,7 @@ describe('GET /api/auth/demo', () => {
     vi.stubEnv('ENABLE_DEMO_LOGIN', 'true')
 
     listUsersMock.mockResolvedValueOnce({
-      data: { users: [{ id: 'coach-demo-1', email: 'scott.gordon72@outlook.com' }] },
+      data: { users: [{ id: 'coach-demo-1', email: 'coach@forge-athletic.app' }] },
       error: null,
     })
 

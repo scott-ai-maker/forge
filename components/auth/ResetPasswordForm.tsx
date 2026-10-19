@@ -214,8 +214,7 @@ export default function ResetPasswordForm({ forceChange = false, nextPath = '/da
       const isCoachMeta = user?.user_metadata?.surface_role === 'coach'
       const isCoachEmail =
         user?.email &&
-        (user.email.toLowerCase() === 'coach@forge-athletic.app' ||
-          user.email.toLowerCase() === 'scott.gordon72@outlook.com')
+        user.email.toLowerCase() === 'coach@forge-athletic.app'
 
       if (isCoachMeta || isCoachEmail) {
         isCoach = true

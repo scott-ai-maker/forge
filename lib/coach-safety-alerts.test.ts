@@ -16,7 +16,7 @@ describe('Coach Safety Alerts Subsystem (lib/coach-safety-alerts)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubEnv('RESEND_API_KEY', 're_test_safety_key')
-    vi.stubEnv('COACH_ALERT_EMAIL', 'scott.gordon72@outlook.com')
+    vi.stubEnv('COACH_ALERT_EMAIL', 'coach@forge-athletic.app')
     vi.stubEnv('COACH_ALERT_FROM_EMAIL', 'Forge Athletic Safety <alerts@forge-athletic.com>')
     sendMock.mockResolvedValue({ data: { id: 'alert_msg_987' }, error: null })
   })
@@ -64,7 +64,7 @@ describe('Coach Safety Alerts Subsystem (lib/coach-safety-alerts)', () => {
     expect(result.messageId).toBe('alert_msg_987')
     expect(sendMock).toHaveBeenCalledTimes(1)
     const callArgs = sendMock.mock.calls[0][0]
-    expect(callArgs.to).toBe('scott.gordon72@outlook.com')
+    expect(callArgs.to).toBe('coach@forge-athletic.app')
     expect(callArgs.subject).toContain('COACH ACTION REQUIRED')
     expect(callArgs.subject).toContain('Alex Mercer')
     expect(callArgs.html).toContain('lumbar_disc_condition')

@@ -291,8 +291,7 @@ export default function AuthForm({
       if (resolvedRedirectPath === '/dashboard' && data.user) {
         const isCoach =
           data.user.user_metadata?.surface_role === 'coach' ||
-          data.user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-          data.user.email?.toLowerCase() === 'scott.gordon72@outlook.com'
+          data.user.email?.toLowerCase() === 'coach@forge-athletic.app'
 
         if (isCoach) {
           resolvedRedirectPath = '/coach'

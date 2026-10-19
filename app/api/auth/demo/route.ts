@@ -6,7 +6,7 @@ import { enforceRateLimit, getClientIp } from '@/lib/rate-limit'
 const DEMO_EMAIL = process.env.DEMO_USER_EMAIL || 'vip.athlete@gordonathleticadvisory.com'
 const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD || 'DemoAthlete2026!GAA'
 
-const COACH_DEMO_EMAIL = process.env.TEST_COACH_EMAIL || 'scott.gordon72@outlook.com'
+const COACH_DEMO_EMAIL = process.env.TEST_COACH_EMAIL || 'coach@forge-athletic.app'
 const COACH_DEMO_PASSWORD = process.env.TEST_COACH_PASSWORD || 'CoachGordon2026!GAA'
 const COACH_DEMO_NAME = 'Coach Gordon'
 

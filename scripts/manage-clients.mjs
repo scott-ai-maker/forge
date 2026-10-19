@@ -37,7 +37,7 @@ function createAdminClient() {
 
 const PROTECTED_EMAILS = new Set([
   'coach@forge-athletic.app',
-  'scott.gordon72@outlook.com',
+  'scott@forge-athletic.app',
   '5c077.60rd0n@gmail.com',
   '5c077.60rd0n@proton.me',
   'da_mona_lisa@msn.com',
@@ -57,10 +57,10 @@ const NEW_ACCOUNTS = [
     password: process.env.FORGE_COACH_PASSWORD || process.env.TEMP_CLIENT_PASSWORD || 'Temp1234!',
   },
   {
-    email: 'scott.gordon72@outlook.com',
-    name: 'Coach Gordon',
-    role: 'coach',
-    password: process.env.SCOTT_COACH_PASSWORD || process.env.TEMP_CLIENT_PASSWORD || 'Temp1234!',
+    email: 'scott@forge-athletic.app',
+    name: 'Scott Gordon',
+    role: 'client',
+    password: process.env.SCOTT_CLIENT_PASSWORD || process.env.TEMP_CLIENT_PASSWORD || 'ForgeAthlete2026!',
   },
   {
     email: '5c077.60rd0n@gmail.com',
@@ -250,7 +250,7 @@ async function sendWelcomeEmails(admin) {
         subject: welcomeEmail.subject,
         html: welcomeEmail.html,
         text: welcomeEmail.text,
-        replyTo: process.env.MARKETING_REPLY_TO_EMAIL || 'scott.gordon72@outlook.com',
+        replyTo: process.env.MARKETING_REPLY_TO_EMAIL || 'coach@forge-athletic.app',
       })
 
       if (error) {

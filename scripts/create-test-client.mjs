@@ -17,7 +17,7 @@
  *   --password <password>    Password (default: "TestAthlete2026!GAA")
  *   --blank                  Create a blank client without intake/workouts (test signup & onboarding)
  *   --unassigned             Do not assign a coach (leaves client in triage queue)
- *   --coach <email>          Specific coach email to assign (default: scott.gordon72@outlook.com)
+ *   --coach <email>          Specific coach email to assign (default: coach@forge-athletic.app)
  *   --status <status>        Status: active | pending | paused | archived (default: active)
  *   --tier <tier>            Membership tier (default: "Executive 1:1 Master")
  *   --help                   Display help
@@ -34,7 +34,7 @@ function parseArgs() {
     password: process.env.DEFAULT_TEST_CLIENT_PASSWORD || 'TestAthlete2026!GAA',
     blank: false,
     unassigned: false,
-    coachEmail: process.env.TEST_COACH_EMAIL || 'scott.gordon72@outlook.com',
+    coachEmail: process.env.TEST_COACH_EMAIL || 'coach@forge-athletic.app',
     status: 'active',
     tier: 'Executive 1:1 Master',
     help: false,
@@ -122,7 +122,7 @@ Options:
   --password <password>    Password (default: "TestAthlete2026!GAA")
   --blank                  Create minimal empty client (for testing onboarding/signup)
   --unassigned             Do not assign a coach (leaves client in triage queue)
-  --coach <email>          Designated coach email (default: scott.gordon72@outlook.com)
+  --coach <email>          Designated coach email (default: coach@forge-athletic.app)
   --status <status>        Client status: active | pending | paused | archived (default: active)
   --tier <tier>            Membership tier (default: "Executive 1:1 Master")
   --help                   Show this help message

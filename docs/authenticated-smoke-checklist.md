@@ -47,8 +47,8 @@ npm run smoke:auth
 
 Record the accounts used for the pass.
 
-- Coach email: scott.gordon72@outlook.com
-- Assigned client email: 5c077.60rd0n@gmail.com
+- Coach email: coach@forge-athletic.app
+- Assigned client email: scott@forge-athletic.app
 - Unassigned client email: connor.gordon2002@gmail.com
 - Extra coach email, if available:
 

@@ -98,8 +98,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const isCoach =
     clientRow?.role === 'coach' ||
     user.user_metadata?.surface_role === 'coach' ||
-    user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-    user.email?.toLowerCase() === 'scott.gordon72@outlook.com'
+    user.email?.toLowerCase() === 'coach@forge-athletic.app'
 
   if (isCoach && !isPreview) {
     redirect('/coach')

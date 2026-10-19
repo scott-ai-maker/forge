@@ -86,7 +86,6 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
 
   const isMasterCoach =
     user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-    user.email?.toLowerCase() === 'scott.gordon72@outlook.com' ||
     user.user_metadata?.surface_role === 'coach'
   const roleCheck = await supabaseAdmin()
     .from('clients')

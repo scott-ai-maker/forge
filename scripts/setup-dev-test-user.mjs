@@ -28,7 +28,7 @@ const TEST_ATHLETE_EMAIL = process.env.TEST_USER_EMAIL || 'test.athlete@gordonat
 const TEST_ATHLETE_PASSWORD = process.env.TEST_USER_PASSWORD || 'TestAthlete2026!GAA'
 const TEST_ATHLETE_NAME = 'Alexander Vance'
 
-const COACH_EMAIL = process.env.TEST_COACH_EMAIL || 'scott.gordon72@outlook.com'
+const COACH_EMAIL = process.env.TEST_COACH_EMAIL || 'coach@forge-athletic.app'
 const COACH_PASSWORD = process.env.TEST_COACH_PASSWORD || 'CoachGordon2026!GAA'
 const COACH_NAME = 'Coach Gordon'
 

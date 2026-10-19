@@ -7,7 +7,7 @@ const MOCK_PERIODIZATION_CLIENTS: ClientSummaryOption[] = [
   {
     id: 'athlete-scott',
     fullName: 'Scott Gordon',
-    email: 'scott.gordon72@outlook.com',
+    email: 'scott@forge-athletic.app',
     goal: 'Phase 1: Stabilization & Hypertrophy Recomposition',
     phase: 1,
     phaseName: 'Phase 1: Stabilization Endurance',

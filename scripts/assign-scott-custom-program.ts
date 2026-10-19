@@ -39,14 +39,26 @@ async function main() {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
-  const clientEmail = '5c077.60rd0n@gmail.com'
+  const clientEmail = process.argv[2]?.trim() || 'scott@forge-athletic.app'
   console.log(`\n🔍 Looking up client account for ${clientEmail}...`)
 
-  const { data: client, error: clientErr } = await admin
+  let { data: client, error: clientErr } = await admin
     .from('clients')
     .select('id, full_name, email, role, designated_coach_id')
     .eq('email', clientEmail)
-    .single()
+    .maybeSingle()
+
+  if (!client && clientEmail === 'scott@forge-athletic.app') {
+    const fallback = await admin
+      .from('clients')
+      .select('id, full_name, email, role, designated_coach_id')
+      .eq('email', '5c077.60rd0n@gmail.com')
+      .maybeSingle()
+    if (fallback.data) {
+      client = fallback.data
+      clientErr = null
+    }
+  }
 
   if (clientErr || !client) {
     throw new Error(`Client not found: ${clientErr?.message}`)

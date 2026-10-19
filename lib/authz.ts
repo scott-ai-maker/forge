@@ -79,7 +79,6 @@ export async function requireSurfaceRole(
 export const MASTER_COACH_EMAILS = new Set(
   [
     'coach@forge-athletic.app',
-    'scott.gordon72@outlook.com',
     (process.env.TEST_COACH_EMAIL || '').toLowerCase().trim(),
   ].filter(Boolean)
 )
