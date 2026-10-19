@@ -262,6 +262,12 @@ describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool
       expect(trapCoords).toBeDefined()
       expect(trapCoords[0][0]).toBe(256)
       expect(trapCoords[0][1]).toBe(175)
+
+      // 8. Latissimus dorsi reticles sit along the mid-ribcage lateral wings (Y=239)
+      const latCoords = MUSCLE_TARGET_COORDINATES.latissimus_dorsi.posterior!
+      expect(latCoords).toBeDefined()
+      expect(latCoords[0][1]).toBe(239)
+      expect(latCoords[1][1]).toBe(239)
     })
   })
 })

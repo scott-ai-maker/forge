@@ -55,7 +55,7 @@ export const MUSCLE_TARGET_COORDINATES: Record<MuscleZoneId, { anterior?: [numbe
   obliques: { anterior: [[212, 277], [300, 277]] },
   trapezius: { posterior: [[256, 175]] },
   rhomboids: { posterior: [[236, 197], [276, 197]] },
-  latissimus_dorsi: { posterior: [[210, 247], [302, 247]] },
+  latissimus_dorsi: { posterior: [[210, 239], [302, 239]] },
   erector_spinae: { posterior: [[256, 287]] },
   gluteals: { posterior: [[218, 382], [294, 382]] },
   quadriceps: { anterior: [[210, 437], [302, 437]] },
@@ -1040,8 +1040,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M188 167 C180 199 186 249 194 303 C206 327 224 333 236 329 C238 279 236 229 242 205 C216 181 198 171 188 167 Z'
-                        : 'M185 167 C176 200 184 248 193 300 C205 324 224 330 236 326 C238 276 236 228 242 204 C215 180 195 171 185 167 Z'
+                        ? 'M188 159 C180 191 186 241 194 295 C206 319 224 325 236 321 C238 271 236 221 242 197 C216 173 198 163 188 159 Z'
+                        : 'M185 159 C176 192 184 240 193 292 C205 316 224 322 236 318 C238 268 236 220 242 196 C215 172 195 163 185 159 Z'
                     }
                     fill="url(#grad_lat_left)"
                     opacity={getOverlayOpacity('latissimus_dorsi')}
@@ -1056,8 +1056,8 @@ export default function MuscleRecoveryHeatmap3D({
                   <path
                     d={
                       sex === 'female'
-                        ? 'M324 167 C332 199 326 249 318 303 C306 327 288 333 276 329 C274 279 276 229 270 205 C296 181 314 171 324 167 Z'
-                        : 'M327 167 C336 200 328 248 319 300 C307 324 288 330 276 326 C274 276 276 228 270 204 C297 180 317 171 327 167 Z'
+                        ? 'M324 159 C332 191 326 241 318 295 C306 319 288 325 276 321 C274 271 276 221 270 197 C296 173 314 163 324 159 Z'
+                        : 'M327 159 C336 192 328 240 319 292 C307 316 288 322 276 318 C274 268 276 220 270 196 C297 172 317 163 327 159 Z'
                     }
                     fill="url(#grad_lat_right)"
                     opacity={getOverlayOpacity('latissimus_dorsi')}
