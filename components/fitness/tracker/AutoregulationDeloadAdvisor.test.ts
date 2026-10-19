@@ -177,4 +177,26 @@ describe('AutoregulationDeloadAdvisor Integration', () => {
     expect(advice.badgeText).toBe('−10% Back-Off Load')
     expect(advice.suggestedRestExtensionSeconds).toBe(30)
   })
+
+  it('correctly sorts reverse-ordered sets ([Set 2, Set 1]) and evaluates Set 2 as the latest set', () => {
+    // Optimistic prepending puts newest set at index 0
+    const reverseSets = [
+      { setNumber: 2, weightLbs: 200, reps: 8, rpe: 10, rir: 0, isWarmup: false },
+      { setNumber: 1, weightLbs: 200, reps: 8, rpe: 8, rir: 2, isWarmup: false },
+    ]
+
+    const advice = evaluateExerciseAutoregulation({
+      exerciseName: 'Barbell Bench Press',
+      currentDraftWeightLbs: 200,
+      currentDraftReps: 8,
+      targetReps: 8,
+      completedSets: reverseSets,
+      units: 'imperial',
+    })
+
+    expect(advice.action).toBe('reduce_load_10pct')
+    expect(advice.suggestedWeightLbs).toBe(180)
+    expect(advice.badgeText).toBe('−10% Back-Off Load')
+    expect(advice.headline).toBe('Momentary Failure Reached (RIR 0)')
+  })
 })

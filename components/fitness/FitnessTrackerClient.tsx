@@ -1482,55 +1482,17 @@ export default function FitnessTrackerClient({
       }
     }
 
-    // Advance to next exercise if all target working sets complete
+    // Advance to next working set for this exercise
     const targetSets = parseInt(String(exercise.sets).trim(), 10) || 3
     const existingWorkingSets = (activeSetLogs || []).filter(l =>
       normalizeExerciseName(l.exercise_name) === normalizeExerciseName(exercise.name) &&
       !l.is_warmup &&
-      extractWorkoutDayTag(l.notes) === workout.day &&
-      (draft.sessionDate ? l.session_date === draft.sessionDate : true)
+      (extractWorkoutDayTag(l.notes) === Number(workout.day) || (draft.sessionDate ? l.session_date === draft.sessionDate : true))
     ).length
     const totalWorkingSetsNow = draft.isWarmup ? existingWorkingSets : existingWorkingSets + 1
 
-    if (!draft.isWarmup && totalWorkingSetsNow >= targetSets) {
-      const currentExIdx = (workout.exercises || []).findIndex(e => normalizeExerciseName(e.name) === normalizeExerciseName(exercise.name))
-      if (currentExIdx >= 0 && currentExIdx + 1 < workout.exercises.length) {
-        const nextExercise = workout.exercises[currentExIdx + 1]
-        const nextKey = `${workout.day}-${nextExercise.name}`
-        setExpandedExerciseKey(nextKey)
-
-        const nextDraftKey = exerciseDraftKey(workout.day, nextExercise.name)
-        if (!inlineSetDrafts[nextDraftKey]) {
-          const nextMovementCard = getNasmClinicalMovementCard(nextExercise.name, nextExercise)
-          const isNextStrength = isStrengthExercise(nextExercise.name, nextExercise.block, nextExercise.reps)
-          const nextTempo = isNextStrength ? (nextExercise.tempo || nextMovementCard.tempo || getDefaultNasmOptTempo(plan?.nasm_opt_phase, nextExercise.name).tempo) : ''
-          setInlineSetDrafts(prev => ({
-            ...prev,
-            [nextDraftKey]: defaultInlineSetDraft(draft.sessionDate, nextExercise.reps, plan?.nasm_opt_phase, nextExercise.block, nextExercise.rest, nextTempo, nextExercise.name),
-          }))
-        }
-
-        setTimeout(() => {
-          const nextEl = document.getElementById(`exercise-item-${workout.day}-${currentExIdx + 1}`)
-          if (nextEl) {
-            const rect = nextEl.getBoundingClientRect()
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-            const topOffset = 75
-            window.scrollTo({
-              top: Math.max(0, rect.top + scrollTop - topOffset),
-              behavior: 'smooth',
-            })
-          }
-        }, 100)
-
-        setStatus(`✓ All ${targetSets} working sets completed for ${exercise.name}! Switched to ${nextExercise.name}. Rest timer running (${restSecsToSave}s)...`)
-      } else {
-        // Last exercise in workout completed
-        setExpandedExerciseKey('none')
-        setStatus(`All resistance exercises finished for Day ${workout.day}! Rest timer running (${restSecsToSave}s). Ready for Cool-Down or completion!`)
-      }
-    } else if (!draft.isWarmup) {
-      // Advance to next working set for this exercise
+    if (!draft.isWarmup) {
+      // Always advance draft setNumber so SetProgressionMatrix and upcoming set reflect total working sets + 1
       setInlineSetDrafts(prev => ({
         ...prev,
         [key]: {
@@ -1541,6 +1503,28 @@ export default function FitnessTrackerClient({
           notes: '',
         },
       }))
+    }
+
+    if (!draft.isWarmup && totalWorkingSetsNow >= targetSets) {
+      // Pre-warm next exercise draft without forcefully collapsing the current exercise card
+      const currentExIdx = (workout.exercises || []).findIndex(e => normalizeExerciseName(e.name) === normalizeExerciseName(exercise.name))
+      if (currentExIdx >= 0 && currentExIdx + 1 < workout.exercises.length) {
+        const nextExercise = workout.exercises[currentExIdx + 1]
+        const nextDraftKey = exerciseDraftKey(workout.day, nextExercise.name)
+        if (!inlineSetDrafts[nextDraftKey]) {
+          const nextMovementCard = getNasmClinicalMovementCard(nextExercise.name, nextExercise)
+          const isNextStrength = isStrengthExercise(nextExercise.name, nextExercise.block, nextExercise.reps)
+          const nextTempo = isNextStrength ? (nextExercise.tempo || nextMovementCard.tempo || getDefaultNasmOptTempo(plan?.nasm_opt_phase, nextExercise.name).tempo) : ''
+          setInlineSetDrafts(prev => ({
+            ...prev,
+            [nextDraftKey]: defaultInlineSetDraft(draft.sessionDate, nextExercise.reps, plan?.nasm_opt_phase, nextExercise.block, nextExercise.rest, nextTempo, nextExercise.name),
+          }))
+        }
+        setStatus(`✓ Set ${draft.setNumber} saved for ${exercise.name} (${totalWorkingSetsNow}/${targetSets} target completed). Rest timer running (${restSecsToSave}s).`)
+      } else {
+        setStatus(`All resistance exercises finished for Day ${workout.day}! Rest timer running (${restSecsToSave}s). Ready for Cool-Down or completion!`)
+      }
+    } else if (!draft.isWarmup) {
       setStatus(`✓ Set ${draft.setNumber} saved for ${exercise.name}. Rest timer running (${restSecsToSave}s). Ready for Set ${totalWorkingSetsNow + 1}.`)
     } else {
       // Warm-up set logged: preserve working set progression
@@ -3626,10 +3610,10 @@ export default function FitnessTrackerClient({
                         const draft = inlineSetDrafts[exerciseKey] ?? defaultInlineSetDraft(workout.scheduledDate || todayDateOnly(), ex.reps, plan?.nasm_opt_phase, ex.block, ex.rest, effectiveTempo, ex.name)
                         const isFutureWorkout = workout.scheduledDate ? workout.scheduledDate > todayDateOnly() : false
                         const exerciseRecentLogs = isFutureWorkout ? [] : (setLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
-                          .filter(row => extractWorkoutDayTag(row.notes) === workout.day)
-                          .slice(0, 3)
+                          .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === Number(workout.day))
+                          .slice(0, 5)
                         const exLoggedSets = isFutureWorkout ? 0 : (setLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
-                          .filter(row => extractWorkoutDayTag(row.notes) === workout.day && !row.is_warmup).length
+                          .filter(row => (row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === Number(workout.day)) && !row.is_warmup).length
                         const exTargetSets = parseSetTarget(ex.sets)
 
                         const sectionHeader = hasSections && ex.block && OPT_SECTION_ORDER.includes(ex.block) && !seenSections.has(ex.block)
@@ -4413,9 +4397,9 @@ export default function FitnessTrackerClient({
                                   currentDraftReps={draft.reps}
                                   targetReps={ex.reps}
                                   completedSets={(setLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
-                                    .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === workout.day)
+                                    .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === Number(workout.day))
                                     .map((row, idx) => ({
-                                      setNumber: row.set_number ?? idx + 1,
+                                      setNumber: Number(row.set_number) || idx + 1,
                                       weightLbs: (row.weight_kg != null ? row.weight_kg * 2.20462 : 0),
                                       weightKg: row.weight_kg ?? 0,
                                       reps: Number(row.reps) || 0,
@@ -4423,11 +4407,12 @@ export default function FitnessTrackerClient({
                                       rir: row.rir ?? null,
                                       isWarmup: Boolean(row.is_warmup),
                                       sessionDate: row.session_date,
-                                    }))}
+                                    }))
+                                    .sort((a, b) => a.setNumber - b.setNumber)}
                                   allSessionSets={(localSetLogs || [])
-                                    .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === workout.day)
+                                    .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === Number(workout.day))
                                     .map((row, idx) => ({
-                                      setNumber: row.set_number ?? idx + 1,
+                                      setNumber: Number(row.set_number) || idx + 1,
                                       weightLbs: (row.weight_kg != null ? row.weight_kg * 2.20462 : 0),
                                       weightKg: row.weight_kg ?? 0,
                                       reps: Number(row.reps) || 0,
@@ -4435,7 +4420,8 @@ export default function FitnessTrackerClient({
                                       rir: row.rir ?? null,
                                       isWarmup: Boolean(row.is_warmup),
                                       sessionDate: row.session_date,
-                                    }))}
+                                    }))
+                                    .sort((a, b) => a.setNumber - b.setNumber)}
                                   units={units}
                                   isTimed={isTimed}
                                   sessionDurationMinutes={Math.max(15, Math.round(elapsedWorkoutSeconds / 60))}

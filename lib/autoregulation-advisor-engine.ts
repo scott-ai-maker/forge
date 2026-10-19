@@ -273,8 +273,11 @@ export function evaluateExerciseAutoregulation(params: {
     ? 'Strict Neutral Grip Guardrail: Under high bicep & brachioradialis fatigue, maintain strictly vertical dumbbells with thumbs pointing up and zero wrist supination/twisting. Never swing dumbbells horizontally. If form wavers, accept the Back-Off load reduction immediately.'
     : undefined
 
-  // Filter for valid working sets
-  const workingSets = completedSets.filter(s => !s.isWarmup && s.reps > 0 && s.weightLbs > 0)
+  // Filter for valid working sets and ensure strictly ascending chronological order (Set 1, Set 2, Set 3...)
+  const workingSets = completedSets
+    .filter(s => !s.isWarmup && s.reps > 0 && (s.weightLbs !== undefined ? s.weightLbs >= 0 : true))
+    .slice()
+    .sort((a, b) => (Number(a.setNumber) || 0) - (Number(b.setNumber) || 0))
   const parsedTargetReps = typeof targetReps === 'number'
     ? targetReps
     : parseInt(String(targetReps || currentDraftReps).replace(/[^0-9]/g, ''), 10) || currentDraftReps || 8
