@@ -3,8 +3,36 @@ import FitnessTrackerClient from "@/components/fitness/FitnessTrackerClient"
 import ClientSettingsStudio from '@/components/settings/ClientSettingsStudio'
 import GlobalCoachGordonHost from '@/components/fitness/GlobalCoachGordonHost'
 import { buildWorkoutSchedule } from '@/lib/workout-schedule'
+import { generateCorrectiveExercisePlan, NasmAssessmentRecord } from '@/lib/nasm-assessments'
 
 export const dynamic = 'force-dynamic'
+
+const { overactiveMuscles: mockOveractive, underactiveMuscles: mockUnderactive, plan: mockCorrectivePlan } = generateCorrectiveExercisePlan([
+  { compensation: 'arms_fall_forward', view: 'lateral', checkpoint: 'shoulders', severity: 'moderate' },
+  { compensation: 'knees_move_inward', view: 'anterior', checkpoint: 'knees', severity: 'moderate' },
+  { compensation: 'excessive_forward_lean', view: 'lateral', checkpoint: 'lphc', severity: 'moderate' },
+])
+
+const MOCK_ASSESSMENT: NasmAssessmentRecord = {
+  id: 'test-assessment-1',
+  client_id: 'test-user',
+  coach_id: 'coach-gordon',
+  assessment_date: new Date().toISOString(),
+  static_posture: [
+    { checkpoint: 'lphc', observation: 'Anterior Pelvic Tilt', distortionSyndrome: 'lower_crossed' },
+    { checkpoint: 'shoulders', observation: 'Protracted Scapulae', distortionSyndrome: 'upper_crossed' },
+  ],
+  ohsa_findings: [
+    { compensation: 'arms_fall_forward', view: 'lateral', checkpoint: 'shoulders', severity: 'moderate' },
+    { compensation: 'knees_move_inward', view: 'anterior', checkpoint: 'knees', severity: 'moderate' },
+    { compensation: 'excessive_forward_lean', view: 'lateral', checkpoint: 'lphc', severity: 'moderate' },
+  ],
+  overactive_muscles: mockOveractive,
+  underactive_muscles: mockUnderactive,
+  prescribed_correctives: mockCorrectivePlan,
+  coach_summary_notes: 'Athlete demonstrates common Upper & Lower Crossed compensations with tight latissimus dorsi and adductors, alongside inhibited gluteus medius and lower trapezius. Prioritize SMR on calves/lats and prone cobra activation.',
+  created_at: new Date().toISOString(),
+}
 
 const MOCK_PLAN = {
   id: "test-mobile-plan",
@@ -89,8 +117,9 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   const isRoadmapScenario = params.scenario === 'roadmap' || params.scenario === 'lab-roadmap' || params.scenario === 'periodization'
   const isNutritionScenario = params.scenario === 'nutrition' || params.scenario === 'lab-nutrition' || params.scenario === 'macros'
   const isTravelScenario = params.scenario === 'travel' || params.scenario === 'lab-travel' || params.scenario === 'hotel'
-  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || isNutritionScenario || isTravelScenario || params.scenario?.startsWith('lab')
-  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isNutritionScenario ? 'nutrition' : isTravelScenario ? 'travel' : isLabScenario ? 'lab' : 'train')
+  const isAssessmentScenario = params.scenario === 'assessment' || params.scenario === 'lab-assessment' || params.scenario === 'movement'
+  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || isNutritionScenario || isTravelScenario || isAssessmentScenario || params.scenario?.startsWith('lab')
+  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isNutritionScenario ? 'nutrition' : isTravelScenario ? 'travel' : isAssessmentScenario ? 'assessment' : isLabScenario ? 'lab' : 'train')
   const effectiveTab = (params.tab as any) || (
     params.scenario === 'readiness-acwr' ? 'acwr'
       : params.scenario === 'readiness-deload' ? 'deload'
@@ -203,6 +232,7 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
             }}
             latestPlan={plan}
             allPlans={[plan]}
+            latestAssessment={isAssessmentScenario ? MOCK_ASSESSMENT : null}
             logs={isReadinessScenario ? readinessLogs : params.scenario === 'progress' ? Array.from({ length: 12 }, (_, index) => ({
               id: `progress-session-${index}`,
               session_title: `Workout ${index + 1}`,
