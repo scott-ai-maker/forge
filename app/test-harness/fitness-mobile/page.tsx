@@ -88,8 +88,9 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   const isVideoScenario = params.scenario === 'video' || params.scenario === 'lab-video' || params.scenario === 'form-review'
   const isRoadmapScenario = params.scenario === 'roadmap' || params.scenario === 'lab-roadmap' || params.scenario === 'periodization'
   const isNutritionScenario = params.scenario === 'nutrition' || params.scenario === 'lab-nutrition' || params.scenario === 'macros'
-  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || isNutritionScenario || params.scenario?.startsWith('lab')
-  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isNutritionScenario ? 'nutrition' : isLabScenario ? 'lab' : 'train')
+  const isTravelScenario = params.scenario === 'travel' || params.scenario === 'lab-travel' || params.scenario === 'hotel'
+  const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || isNutritionScenario || isTravelScenario || params.scenario?.startsWith('lab')
+  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isNutritionScenario ? 'nutrition' : isTravelScenario ? 'travel' : isLabScenario ? 'lab' : 'train')
   const effectiveTab = (params.tab as any) || (
     params.scenario === 'readiness-acwr' ? 'acwr'
       : params.scenario === 'readiness-deload' ? 'deload'
