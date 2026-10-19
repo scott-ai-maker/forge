@@ -128,6 +128,22 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
     runBiomechanicalScan(targetLift, file.name, 'file')
   }
 
+  const handleLoadSampleVideo = (
+    sampleUrl: string,
+    fileName: string,
+    lift: LiftType,
+    faults: string[]
+  ) => {
+    setUploadedVideoUrl(sampleUrl)
+    setUploadedVideoFile(null)
+    setVideoFileName(fileName)
+    setVideoFileSize('Sample MP4')
+    setSelectedLift(lift)
+    setSelectedFaults(faults)
+
+    runBiomechanicalScan(lift, fileName, 'file')
+  }
+
   const handleLoadYouTubeUrl = (urlToLoad?: string) => {
     const raw = urlToLoad ?? youtubeUrlInput
     if (!raw.trim()) {
@@ -465,6 +481,104 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
               >
                 Browse Video File
               </button>
+
+              {/* Quick Sample Video Loaders */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  flexWrap: 'wrap',
+                  marginTop: 16,
+                  paddingTop: 12,
+                  borderTop: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em' }}>
+                  Quick Samples:
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleLoadSampleVideo('/samples/squat_good_form.mp4', 'squat_good_form.mp4', 'barbell_back_squat', [])
+                  }}
+                  className="tactile-btn"
+                  style={{
+                    padding: '4px 10px',
+                    background: 'rgba(52,211,153,0.12)',
+                    border: '1px solid rgba(52,211,153,0.3)',
+                    color: 'var(--success)',
+                    fontSize: 11,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  ✓ Good Squat (Textbook)
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleLoadSampleVideo('/samples/squat_knee_valgus_fault.mp4', 'squat_knee_valgus_fault.mp4', 'barbell_back_squat', ['knee_valgus', 'excessive_forward_lean'])
+                  }}
+                  className="tactile-btn"
+                  style={{
+                    padding: '4px 10px',
+                    background: 'rgba(239,68,68,0.12)',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                    color: '#F87171',
+                    fontSize: 11,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  ⚠️ Poor Squat (Valgus Fault)
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleLoadSampleVideo('/samples/deadlift_good_form.mp4', 'deadlift_good_form.mp4', 'barbell_deadlift', [])
+                  }}
+                  className="tactile-btn"
+                  style={{
+                    padding: '4px 10px',
+                    background: 'rgba(52,211,153,0.12)',
+                    border: '1px solid rgba(52,211,153,0.3)',
+                    color: 'var(--success)',
+                    fontSize: 11,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  ✓ Good Deadlift (Textbook)
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleLoadSampleVideo('/samples/deadlift_lumbar_rounding_fault.mp4', 'deadlift_lumbar_rounding_fault.mp4', 'barbell_deadlift', ['lumbar_rounding'])
+                  }}
+                  className="tactile-btn"
+                  style={{
+                    padding: '4px 10px',
+                    background: 'rgba(239,68,68,0.12)',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                    color: '#F87171',
+                    fontSize: 11,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  ⚠️ Poor Deadlift (Spinal Flexion)
+                </button>
+              </div>
             </div>
           ) : (
             <div style={{ display: 'grid', gap: 14 }}>
@@ -513,6 +627,32 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
                   </span>
                   <span style={{ color: 'var(--gray)' }}>({videoFileSize})</span>
                 </div>
+
+                {/* Clear Video Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadedVideoUrl(null)
+                    setUploadedVideoFile(null)
+                    setVideoFileName(null)
+                    setVideoFileSize(null)
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    background: 'rgba(239,68,68,0.25)',
+                    border: '1px solid rgba(239,68,68,0.5)',
+                    color: '#F87171',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: '4px 10px',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕ Clear Video
+                </button>
               </div>
 
               {/* Playback Controls & Rescan */}
