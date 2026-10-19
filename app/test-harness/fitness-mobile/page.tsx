@@ -79,13 +79,14 @@ const VARIETY_SCENARIOS = {
 }
 
 export default async function FitnessMobileTestHarnessPage({ searchParams }: {
-  searchParams: Promise<{ view?: string; scenario?: string; workspace?: string; tab?: string }>
+  searchParams: Promise<{ view?: string; scenario?: string; workspace?: string; tab?: string; openScanner?: string; scanner?: string }>
 }) {
   const params = await searchParams
   const variety = Object.entries(VARIETY_SCENARIOS).find(([name]) => name === params.scenario)?.[1]
   const isReadinessScenario = params.scenario?.startsWith('readiness')
-  const isLabScenario = isReadinessScenario || params.scenario?.startsWith('lab')
-  const effectiveWorkspace = (params.workspace as any) || (isLabScenario ? 'lab' : 'train')
+  const isBodyCompScenario = params.scenario === 'bodycomp' || params.scenario === 'lab-bodycomp' || params.scenario === 'bodycomp-scanner'
+  const isLabScenario = isReadinessScenario || isBodyCompScenario || params.scenario?.startsWith('lab')
+  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isLabScenario ? 'lab' : 'train')
   const effectiveTab = (params.tab as any) || (
     params.scenario === 'readiness-acwr' ? 'acwr'
       : params.scenario === 'readiness-deload' ? 'deload'
@@ -215,9 +216,10 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
               set_number: index % 2 + 1,
               rpe: index < 2 ? undefined : 7,
             })) : []}
-            latestAnalysis={params.scenario === 'lab-bodycomp' ? { estimated_bodyfat_percent: 20 } : null}
+            latestAnalysis={isBodyCompScenario ? { estimated_bodyfat_percent: 14.8 } : null}
             initialWorkspace={effectiveWorkspace}
             initialTab={effectiveTab}
+            initialOpenScanner={params.scenario === 'bodycomp-scanner' || params.openScanner === 'true' || params.scanner === 'true'}
             initialTelemetry={mockTelemetry}
           />}
         </Suspense>
