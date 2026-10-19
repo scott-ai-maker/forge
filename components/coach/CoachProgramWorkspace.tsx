@@ -519,7 +519,7 @@ export default function CoachProgramWorkspace({
             </div>
           </div>
 
-          {typeof activePlan.plan_json?.clinicalRationale === 'string' && activePlan.plan_json.clinicalRationale && (
+          {Boolean(activePlan.plan_json?.clinicalRationale) && (
             <div
               style={{
                 padding: '14px 18px',
@@ -535,9 +535,43 @@ export default function CoachProgramWorkspace({
                 <GaaIcon name="clipboard" size={13} style={{ color: 'var(--gold-lt)' }} />
                 <span>Coach Gordon Clinical Memo</span>
               </div>
-              <p style={{ margin: 0, fontSize: 13, color: '#E2E8F0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                {activePlan.plan_json.clinicalRationale}
-              </p>
+              {typeof activePlan.plan_json?.clinicalRationale === 'string' ? (
+                <p style={{ margin: 0, fontSize: 13, color: '#E2E8F0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                  {activePlan.plan_json.clinicalRationale}
+                </p>
+              ) : typeof activePlan.plan_json?.clinicalRationale === 'object' && activePlan.plan_json?.clinicalRationale !== null ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#E2E8F0', lineHeight: 1.6 }}>
+                  {Boolean((activePlan.plan_json.clinicalRationale as { summary?: string }).summary) && (
+                    <p style={{ margin: 0, fontWeight: 600, color: 'var(--gold-lt)' }}>
+                      {(activePlan.plan_json.clinicalRationale as { summary?: string }).summary}
+                    </p>
+                  )}
+                  {Boolean((activePlan.plan_json.clinicalRationale as { bodyCompAnalysis?: string }).bodyCompAnalysis) && (
+                    <div>
+                      <strong style={{ color: 'var(--gold)' }}>DEXA Assessment: </strong>
+                      <span>{(activePlan.plan_json.clinicalRationale as { bodyCompAnalysis?: string }).bodyCompAnalysis}</span>
+                    </div>
+                  )}
+                  {Boolean((activePlan.plan_json.clinicalRationale as { postureOhsaAnalysis?: string }).postureOhsaAnalysis) && (
+                    <div>
+                      <strong style={{ color: 'var(--gold)' }}>Movement Screening: </strong>
+                      <span>{(activePlan.plan_json.clinicalRationale as { postureOhsaAnalysis?: string }).postureOhsaAnalysis}</span>
+                    </div>
+                  )}
+                  {Boolean((activePlan.plan_json.clinicalRationale as { recommendedStrategy?: string }).recommendedStrategy) && (
+                    <div>
+                      <strong style={{ color: 'var(--gold)' }}>Strategy: </strong>
+                      <span>{(activePlan.plan_json.clinicalRationale as { recommendedStrategy?: string }).recommendedStrategy}</span>
+                    </div>
+                  )}
+                  {Boolean((activePlan.plan_json.clinicalRationale as { weeklyCardioPrescription?: string }).weeklyCardioPrescription) && (
+                    <div>
+                      <strong style={{ color: 'var(--gold)' }}>Cardio: </strong>
+                      <span>{(activePlan.plan_json.clinicalRationale as { weeklyCardioPrescription?: string }).weeklyCardioPrescription}</span>
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
           )}
 

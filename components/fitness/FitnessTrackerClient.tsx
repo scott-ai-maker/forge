@@ -211,7 +211,14 @@ interface WorkoutPlanRecord {
     certifiedBy?: string
     safetyGateCertified?: boolean
     nutritionTargets?: NutritionTargetsSnapshot
-    clinicalRationale?: string | null
+    clinicalRationale?: string | {
+      summary?: string
+      bodyCompAnalysis?: string
+      postureOhsaAnalysis?: string
+      recommendedStrategy?: string
+      weeklyCardioPrescription?: string
+      [key: string]: unknown
+    } | null
     coachPersonalNote?: string | null
     handPortionPlan?: HandPortionNutritionPlan | null
     dualCardioPlan?: DualCardioPlanSummary | null
@@ -2272,17 +2279,61 @@ export default function FitnessTrackerClient({
               {plan?.plan_json?.coachPersonalNote?.trim() ? "Coach's technical rationale" : 'Master Coach Briefing Memo · From Coach Gordon'}
             </div>
           </summary>
-          <p
-            style={{
-              margin: '0 0 14px',
-              fontSize: 13,
-              color: '#E2E8F0',
-              lineHeight: 1.6,
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {plan.plan_json.clinicalRationale}
-          </p>
+          {typeof plan.plan_json.clinicalRationale === 'string' ? (
+            <p
+              style={{
+                margin: '0 0 14px',
+                fontSize: 13,
+                color: '#E2E8F0',
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {plan.plan_json.clinicalRationale}
+            </p>
+          ) : typeof plan.plan_json.clinicalRationale === 'object' && plan.plan_json.clinicalRationale !== null ? (
+            <div
+              style={{
+                margin: '0 0 14px',
+                fontSize: 13,
+                color: '#E2E8F0',
+                lineHeight: 1.6,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
+            >
+              {Boolean((plan.plan_json.clinicalRationale as { summary?: string }).summary) && (
+                <p style={{ margin: 0, fontWeight: 600, color: 'var(--gold-lt)' }}>
+                  {(plan.plan_json.clinicalRationale as { summary?: string }).summary}
+                </p>
+              )}
+              {Boolean((plan.plan_json.clinicalRationale as { bodyCompAnalysis?: string }).bodyCompAnalysis) && (
+                <div>
+                  <strong style={{ color: 'var(--gold)' }}>Body Composition &amp; Metabolic Baseline: </strong>
+                  <span>{(plan.plan_json.clinicalRationale as { bodyCompAnalysis?: string }).bodyCompAnalysis}</span>
+                </div>
+              )}
+              {Boolean((plan.plan_json.clinicalRationale as { postureOhsaAnalysis?: string }).postureOhsaAnalysis) && (
+                <div>
+                  <strong style={{ color: 'var(--gold)' }}>Kinetic Chain &amp; Movement Diagnostic: </strong>
+                  <span>{(plan.plan_json.clinicalRationale as { postureOhsaAnalysis?: string }).postureOhsaAnalysis}</span>
+                </div>
+              )}
+              {Boolean((plan.plan_json.clinicalRationale as { recommendedStrategy?: string }).recommendedStrategy) && (
+                <div>
+                  <strong style={{ color: 'var(--gold)' }}>Periodization &amp; Loading Strategy: </strong>
+                  <span>{(plan.plan_json.clinicalRationale as { recommendedStrategy?: string }).recommendedStrategy}</span>
+                </div>
+              )}
+              {Boolean((plan.plan_json.clinicalRationale as { weeklyCardioPrescription?: string }).weeklyCardioPrescription) && (
+                <div>
+                  <strong style={{ color: 'var(--gold)' }}>Cardiorespiratory Conditioning Strategy: </strong>
+                  <span>{(plan.plan_json.clinicalRationale as { weeklyCardioPrescription?: string }).weeklyCardioPrescription}</span>
+                </div>
+              )}
+            </div>
+          ) : null}
         </details>
       )}
 

@@ -113,5 +113,20 @@ describe('FitnessTrackerClient - Master Coach Safety Gate Certification Badge', 
     expect(clientContent).toContain('In Master Coach Safety Gate Queue')
     expect(clientContent).toContain('Awaiting Coach Release')
   })
+
+  it('safely handles both string and structured object formats for clinicalRationale', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const clientFilePath = path.resolve(process.cwd(), 'components/fitness/FitnessTrackerClient.tsx')
+    const clientContent = fs.readFileSync(clientFilePath, 'utf-8')
+
+    expect(clientContent).toContain("typeof plan.plan_json.clinicalRationale === 'string'")
+    expect(clientContent).toContain("typeof plan.plan_json.clinicalRationale === 'object'")
+    expect(clientContent).toContain('bodyCompAnalysis')
+    expect(clientContent).toContain('postureOhsaAnalysis')
+    expect(clientContent).toContain('recommendedStrategy')
+    expect(clientContent).toContain('weeklyCardioPrescription')
+  })
 })
+
 
