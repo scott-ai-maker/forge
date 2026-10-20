@@ -1242,14 +1242,14 @@ function buildDistinctOptWorkoutDay(params: {
       } else if (eq.hasDumbbells) {
         exercises.push({
           block: 'resistance',
-          name: 'Single-Leg Dumbbell Bent Over Row',
+          name: 'Dumbbell Bent Over Row',
           sets: '3',
-          reps: '12–15 (switch legs halfway)',
+          reps: '12–15',
           tempo: '4/2/1',
           rest: '60s',
           intensityPercentage1RM: 0.6,
-          coachingCues: ['Keep lats engaged throughout arch', 'Balance on single leg'],
-          nasmClinicalSource: 'CPT7_Fat_Loss6.pdf (Home Adaptation)',
+          coachingCues: ['Keep lats engaged throughout arch', 'Maintain flat spine and neutral neck'],
+          nasmClinicalSource: 'CPT7_Ch21',
         })
       } else if (eq.hasBands) {
         exercises.push({
@@ -1276,7 +1276,19 @@ function buildDistinctOptWorkoutDay(params: {
       }
 
       // 4. Diagonal Rotational Pattern
-      if (eq.hasCables) {
+      if (eq.hasDumbbells) {
+        exercises.push({
+          block: 'resistance',
+          name: 'Russian Twist',
+          sets: '3',
+          reps: '15 per side',
+          tempo: '4/2/1',
+          rest: '60s',
+          intensityPercentage1RM: 0.55,
+          coachingCues: ['Rotate from trail hip through thoracic spine', '4s eccentric return'],
+          nasmClinicalSource: 'CPT7_Fat_Loss7.pdf (Home Dumbbell Adaptation)',
+        })
+      } else if (eq.hasCables) {
         exercises.push({
           block: 'resistance',
           name: 'Half Kneeling Tubing Rotation',
@@ -1298,18 +1310,6 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '60s',
           coachingCues: ['Step on band with lead foot', 'Drive diagonal rotation from hips through core'],
           nasmClinicalSource: 'CPT7_Fat_Loss7.pdf (Banded Adaptation)',
-        })
-      } else if (eq.hasDumbbells) {
-        exercises.push({
-          block: 'resistance',
-          name: 'Russian Twist',
-          sets: '3',
-          reps: '15 per side',
-          tempo: '4/2/1',
-          rest: '60s',
-          intensityPercentage1RM: 0.55,
-          coachingCues: ['Rotate from trail hip through thoracic spine', '4s eccentric return'],
-          nasmClinicalSource: 'CPT7_Fat_Loss7.pdf (Home Dumbbell Adaptation)',
         })
       } else {
         exercises.push({
