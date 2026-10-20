@@ -55,10 +55,10 @@ describe('Master 1-to-1 NASM Edge Exercise Video Resolver', () => {
     expect(scaption.embedUrl).toContain('PKjDGnwpB_o')
     expect(scaption.externalUrl).toContain('PKjDGnwpB_o')
 
-    // 10. Squat to Overhead Reach & Scaption -> PKjDGnwpB_o
+    // 10. Squat to Overhead Reach & Scaption -> 9k6IfkGBAVQ
     const squatReach = resolveExerciseVideoEmbed('Squat to Overhead Reach & Scaption', null)
-    expect(squatReach.embedUrl).toContain('PKjDGnwpB_o')
-    expect(squatReach.externalUrl).toContain('PKjDGnwpB_o')
+    expect(squatReach.embedUrl).toContain('9k6IfkGBAVQ')
+    expect(squatReach.externalUrl).toContain('9k6IfkGBAVQ')
 
     // 11. Single-Leg Single-Arm Scaption -> ikMg_3_jAWE
     const singleArmScaption = resolveExerciseVideoEmbed('Single-Leg Single-Arm Scaption', null)

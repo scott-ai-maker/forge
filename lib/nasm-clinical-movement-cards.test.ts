@@ -115,22 +115,22 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(singleLegGluteBridge.embedUrl).toContain('lHXShY-FivU')
   })
 
-  it('correctly resolves official NASM CDN video and default thumbnail for Squat to Overhead Reach & Scaption', () => {
+  it('correctly resolves verified studio image and official NASM video for Squat to Overhead Reach & Scaption', () => {
     // 1. Squat to Overhead Reach & Scaption (Clinical Warmup / Integration)
     const squatReachScaption = getNasmClinicalMovementCard('Squat to Overhead Reach & Scaption')
     expect(squatReachScaption.hasOfficialMedia).toBe(true)
-    expect(squatReachScaption.imageUrl).toBe('https://img.youtube.com/vi/PKjDGnwpB_o/hqdefault.jpg')
-    expect(squatReachScaption.videoUrl).toContain('PKjDGnwpB_o')
-    expect(squatReachScaption.embedUrl).toContain('PKjDGnwpB_o')
+    expect(squatReachScaption.imageUrl).toBe('/images/exercises/squat-to-overhead-reach.jpg')
+    expect(squatReachScaption.videoUrl).toContain('9k6IfkGBAVQ')
+    expect(squatReachScaption.embedUrl).toContain('9k6IfkGBAVQ')
     expect(squatReachScaption.primeMover).toContain('Deltoid')
     expect(squatReachScaption.primeMover).toContain('Supraspinatus')
 
     // 2. Squat to Overhead Reach (Postural Distortion Engine)
     const squatReach = getNasmClinicalMovementCard('Squat to Overhead Reach')
     expect(squatReach.hasOfficialMedia).toBe(true)
-    expect(squatReach.imageUrl).toBe('https://img.youtube.com/vi/PKjDGnwpB_o/hqdefault.jpg')
-    expect(squatReach.videoUrl).toContain('PKjDGnwpB_o')
-    expect(squatReach.embedUrl).toContain('PKjDGnwpB_o')
+    expect(squatReach.imageUrl).toBe('/images/exercises/squat-to-overhead-reach.jpg')
+    expect(squatReach.videoUrl).toContain('9k6IfkGBAVQ')
+    expect(squatReach.embedUrl).toContain('9k6IfkGBAVQ')
 
     // 3. Bilateral / Standard Scaption
     const scaption = getNasmClinicalMovementCard('Scaption')
@@ -177,7 +177,7 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(card.imageUrl).toBe('https://img.youtube.com/vi/CayG6UYqL8g/hqdefault.jpg')
 
     const squatCard = getNasmClinicalMovementCard('Squat to Overhead Reach & Scaption')
-    expect(squatCard.imageUrl).toBe('https://img.youtube.com/vi/PKjDGnwpB_o/hqdefault.jpg')
+    expect(squatCard.imageUrl).toBe('/images/exercises/squat-to-overhead-reach.jpg')
 
     const bridgeCard = getNasmClinicalMovementCard('Glute Bridge')
     expect(bridgeCard.imageUrl).toBe('https://img.youtube.com/vi/Z3cY3d3BBo4/hqdefault.jpg')

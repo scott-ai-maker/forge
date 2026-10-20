@@ -1039,9 +1039,9 @@ function getNasmClinicalMovementCardUncached(
     : null
 
   const resolvedImageUrl =
+    (verifiedGaaImage && verifiedGaaImage !== BRAND_LOGO_FALLBACK_IMAGE ? verifiedGaaImage : null) ||
     officialNasmThumbnail ||
     (hasOfficialNasmMatch && fuzzyMatch?.record.imageUrl ? fuzzyMatch.record.imageUrl : null) ||
-    verifiedGaaImage ||
     validCustomOverride ||
     null
 
