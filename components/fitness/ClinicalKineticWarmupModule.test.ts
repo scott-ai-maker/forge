@@ -224,6 +224,27 @@ describe('ClinicalKineticWarmupModule & ClinicalCoolDownModule Key Scoping & Fut
       expect(coolDownCode).not.toContain('Get ready in 3, 2, 1')
       expect(coolDownCode).not.toContain("'Begin stretch'")
     })
+
+    it('verifies that both Guided Flow modules pre-warm Coach Gordon authentic neural voice cues and unlock Web Audio', async () => {
+      const fs = await import('node:fs')
+      const path = await import('node:path')
+      const warmupCode = fs.readFileSync(
+        path.resolve(process.cwd(), 'components/fitness/ClinicalKineticWarmupModule.tsx'),
+        'utf-8'
+      )
+      const coolDownCode = fs.readFileSync(
+        path.resolve(process.cwd(), 'components/fitness/ClinicalCoolDownModule.tsx'),
+        'utf-8'
+      )
+
+      expect(warmupCode).toContain('prefetchCoachVoiceCue')
+      expect(warmupCode).toContain('getSharedAudioContext')
+      expect(warmupCode).toContain('ctx.resume()')
+
+      expect(coolDownCode).toContain('prefetchCoachVoiceCue')
+      expect(coolDownCode).toContain('getSharedAudioContext')
+      expect(coolDownCode).toContain('ctx.resume()')
+    })
   })
 })
 

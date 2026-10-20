@@ -300,6 +300,14 @@ export const COMMON_COACH_GORDON_CUES = [
   'Stretch hold complete!',
   'SMR rolling complete!',
   'Rack it! Outstanding set.',
+  'Switch sides. Side 2.',
+  'Switch sides! Now side 2.',
+  'Side 1',
+  'Stretch complete!',
+  'Both sides complete!',
+  'Switching to Side 2',
+  'Warmup complete! Great work.',
+  'Cool-down complete! Great work.',
 ]
 
 /**
@@ -314,6 +322,18 @@ export async function prefetchCoachVoiceCue(text: string, voiceId: string = COAC
 
   const cacheKey = `${voiceId}_${cleanText}`
   if (preloadedAudioBlobUrls.has(cacheKey)) {
+    // Ensure Web Audio buffer is also decoded into memory if not already present
+    if (!preloadedAudioBuffers.has(cacheKey)) {
+      const ctx = getSharedAudioContext()
+      if (ctx) {
+        const cachedBlobUrl = preloadedAudioBlobUrls.get(cacheKey)!
+        fetch(cachedBlobUrl)
+          .then(res => res.arrayBuffer())
+          .then(ab => decodeAudioBufferSafely(ctx, ab))
+          .then(buf => preloadedAudioBuffers.set(cacheKey, buf))
+          .catch(() => {})
+      }
+    }
     return preloadedAudioBlobUrls.get(cacheKey)!
   }
 
@@ -362,16 +382,19 @@ export async function prefetchCoachVoiceCue(text: string, voiceId: string = COAC
  */
 export function prefetchCommonCoachVoiceCues(): void {
   if (typeof window === 'undefined') return
-  const runner = () => {
-    COMMON_COACH_GORDON_CUES.forEach(cue => {
-      void prefetchCoachVoiceCue(cue)
-    })
+  const runner = async () => {
+    // Batch in groups of 4 to prevent network starvation or rate limit spikes
+    const batchSize = 4
+    for (let i = 0; i < COMMON_COACH_GORDON_CUES.length; i += batchSize) {
+      const chunk = COMMON_COACH_GORDON_CUES.slice(i, i + batchSize)
+      await Promise.allSettled(chunk.map(cue => prefetchCoachVoiceCue(cue)))
+    }
   }
 
   if (typeof (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback === 'function') {
-    (window as unknown as { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback(runner, { timeout: 3000 })
+    (window as unknown as { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback(() => { void runner() }, { timeout: 3000 })
   } else {
-    setTimeout(runner, 1500)
+    setTimeout(() => { void runner() }, 1500)
   }
 }
 

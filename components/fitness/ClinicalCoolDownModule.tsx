@@ -5,9 +5,9 @@ import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import ExerciseVideoModal, { ExerciseModalData } from '@/components/fitness/ExerciseVideoModal'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { syncActivityToAppleHealth } from '@/lib/native-healthkit-bridge'
-import { playCountdownPip } from '@/lib/web-audio-cadence-engine'
+import { playCountdownPip, getSharedAudioContext } from '@/lib/web-audio-cadence-engine'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
-import { speakCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
+import { speakCoachVoiceCue, prefetchCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import { isUnilateralMovement } from '@/lib/exercise-logging-helpers'
 
 interface ClinicalCoolDownModuleProps {
@@ -1068,7 +1068,46 @@ export default function ClinicalCoolDownModule({
     }
   }, [guidedModalOpen, prepCountdown, playCountdownPip])
 
+  // Pre-warm Coach Gordon authentic neural voice cues for all cool-down items
+  useEffect(() => {
+    if (typeof window === 'undefined' || !coolDownItems.length) return
+
+    void prefetchCoachVoiceCue('Switch sides. Side 2.')
+    void prefetchCoachVoiceCue('Side 1')
+    void prefetchCoachVoiceCue('Cool-down complete! Great work.')
+
+    // Pre-warm first item immediately
+    const firstItem = coolDownItems[0]
+    if (firstItem) {
+      const isUnilateral = firstItem.isUnilateral ?? isUnilateralMovement(firstItem)
+      if (isUnilateral) {
+        void prefetchCoachVoiceCue(`Starting Side 1: ${firstItem.name}`)
+        void prefetchCoachVoiceCue(`Next: Side 1 of ${firstItem.name}`)
+      } else {
+        void prefetchCoachVoiceCue(`Starting cool-down: ${firstItem.name}`)
+        void prefetchCoachVoiceCue(`Next: ${firstItem.name}`)
+      }
+    }
+
+    // Pre-warm remainder of flow
+    const rest = coolDownItems.slice(1)
+    rest.forEach(item => {
+      const isUnilateral = item.isUnilateral ?? isUnilateralMovement(item)
+      if (isUnilateral) {
+        void prefetchCoachVoiceCue(`Starting Side 1: ${item.name}`)
+        void prefetchCoachVoiceCue(`Next: Side 1 of ${item.name}`)
+      } else {
+        void prefetchCoachVoiceCue(`Starting cool-down: ${item.name}`)
+        void prefetchCoachVoiceCue(`Next: ${item.name}`)
+      }
+    })
+  }, [coolDownItems])
+
   const startGuidedFlow = () => {
+    const ctx = getSharedAudioContext()
+    if (ctx && ctx.state === 'suspended') {
+      void ctx.resume()
+    }
     setActiveStepIndex(0)
     setGuidedSide(1)
     const firstItem = coolDownItems[0]
@@ -1088,6 +1127,10 @@ export default function ClinicalCoolDownModule({
   }
 
   const nextGuidedStep = () => {
+    const ctx = getSharedAudioContext()
+    if (ctx && ctx.state === 'suspended') {
+      void ctx.resume()
+    }
     const nextIdx = activeStepIndex + 1
     if (nextIdx < coolDownItems.length) {
       setActiveStepIndex(nextIdx)
@@ -1114,6 +1157,10 @@ export default function ClinicalCoolDownModule({
   }
 
   const handleManualSwitchSide = () => {
+    const ctx = getSharedAudioContext()
+    if (ctx && ctx.state === 'suspended') {
+      void ctx.resume()
+    }
     const currentItem = coolDownItems[activeStepIndex]
     if (!currentItem) return
     playCountdownPip(0)

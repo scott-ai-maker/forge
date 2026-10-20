@@ -8,9 +8,9 @@ import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-g
 import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import ExerciseVideoModal, { ExerciseModalData } from '@/components/fitness/ExerciseVideoModal'
 import { ClinicalBreathPacer } from './ClinicalCoolDownModule'
-import { playCountdownPip } from '@/lib/web-audio-cadence-engine'
+import { playCountdownPip, getSharedAudioContext } from '@/lib/web-audio-cadence-engine'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
-import { speakCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
+import { speakCoachVoiceCue, prefetchCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import { isUnilateralMovement } from '@/lib/exercise-logging-helpers'
 
 interface ClinicalKineticWarmupModuleProps {
@@ -635,7 +635,31 @@ export default function ClinicalKineticWarmupModule({
     }
   }, [guidedModalOpen, prepCountdown, playCountdownPip])
 
+  // Pre-warm Coach Gordon authentic neural voice cues for all warmup items
+  useEffect(() => {
+    if (typeof window === 'undefined' || !warmupItems.length) return
+
+    void prefetchCoachVoiceCue('Switch sides. Side 2.')
+    void prefetchCoachVoiceCue('Side 1')
+    void prefetchCoachVoiceCue('Warmup complete! Great work.')
+
+    warmupItems.forEach(item => {
+      const isUnilateral = item.isUnilateral ?? isUnilateralMovement(item)
+      if (isUnilateral) {
+        void prefetchCoachVoiceCue(`Starting Side 1: ${item.name}`)
+        void prefetchCoachVoiceCue(`Next: Side 1 of ${item.name}`)
+      } else {
+        void prefetchCoachVoiceCue(`Starting warmup: ${item.name}`)
+        void prefetchCoachVoiceCue(`Next: ${item.name}`)
+      }
+    })
+  }, [warmupItems])
+
   const startGuidedFlow = () => {
+    const ctx = getSharedAudioContext()
+    if (ctx && ctx.state === 'suspended') {
+      void ctx.resume()
+    }
     setActiveStepIndex(0)
     setGuidedSide(1)
     const firstItem = warmupItems[0]
@@ -655,6 +679,10 @@ export default function ClinicalKineticWarmupModule({
   }
 
   const nextGuidedStep = () => {
+    const ctx = getSharedAudioContext()
+    if (ctx && ctx.state === 'suspended') {
+      void ctx.resume()
+    }
     const nextIdx = activeStepIndex + 1
     if (nextIdx < warmupItems.length) {
       setActiveStepIndex(nextIdx)
@@ -681,6 +709,10 @@ export default function ClinicalKineticWarmupModule({
   }
 
   const handleManualSwitchSide = () => {
+    const ctx = getSharedAudioContext()
+    if (ctx && ctx.state === 'suspended') {
+      void ctx.resume()
+    }
     const currentItem = warmupItems[activeStepIndex]
     if (!currentItem) return
     playCountdownPip(0)

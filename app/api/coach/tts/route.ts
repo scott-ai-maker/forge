@@ -32,41 +32,47 @@ async function authenticateAndRateLimit(req: NextRequest) {
     }
   }
 
-  // Enforce IP rate limit (60 requests per minute)
-  const ip = getClientIp(req)
-  const ipLimit = await enforceRateLimit({
-    key: `tts:ip:${ip}`,
-    limit: 60,
-    windowSeconds: 60,
-    route: '/api/coach/tts',
-    dimension: 'ip',
-  })
-  if (!ipLimit.allowed) {
-    return {
-      authorized: false,
-      response: NextResponse.json(
-        { error: 'Rate limit exceeded. Please wait a moment before requesting more voice cues.' },
-        { status: 429 }
-      ),
-    }
-  }
+  const isDev = process.env.NODE_ENV === 'development'
+  const isTest = process.env.NODE_ENV === 'test'
 
-  // Enforce User rate limit (100 requests per 10 minutes)
-  if (userId !== 'anonymous') {
-    const userLimit = await enforceRateLimit({
-      key: `tts:user:${userId}`,
-      limit: 100,
-      windowSeconds: 600,
+  // Only enforce rate limits in production to allow smooth local/preview development and coach testing
+  if (!isDev && !isTest) {
+    // Enforce IP rate limit (300 requests per minute to support full workout cue pre-warming)
+    const ip = getClientIp(req)
+    const ipLimit = await enforceRateLimit({
+      key: `tts:ip:${ip}`,
+      limit: 300,
+      windowSeconds: 60,
       route: '/api/coach/tts',
-      dimension: 'user',
+      dimension: 'ip',
     })
-    if (!userLimit.allowed) {
+    if (!ipLimit.allowed) {
       return {
         authorized: false,
         response: NextResponse.json(
-          { error: 'Voice synthesis limit reached. Please slow down.' },
+          { error: 'Rate limit exceeded. Please wait a moment before requesting more voice cues.' },
           { status: 429 }
         ),
+      }
+    }
+
+    // Enforce User rate limit (500 requests per 10 minutes)
+    if (userId !== 'anonymous') {
+      const userLimit = await enforceRateLimit({
+        key: `tts:user:${userId}`,
+        limit: 500,
+        windowSeconds: 600,
+        route: '/api/coach/tts',
+        dimension: 'user',
+      })
+      if (!userLimit.allowed) {
+        return {
+          authorized: false,
+          response: NextResponse.json(
+            { error: 'Voice synthesis limit reached. Please slow down.' },
+            { status: 429 }
+          ),
+        }
       }
     }
   }
@@ -169,16 +175,34 @@ async function handleTtsRequest(rawText: string, voiceIdOverride?: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await authenticateAndRateLimit(req)
-    if (!auth.authorized) {
-      return auth.response!
-    }
-
     const body = await req.json().catch(() => ({}))
     const rawText = body.text
     if (!rawText || typeof rawText !== 'string' || !rawText.trim()) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 })
     }
+
+    const cleanText = sanitizeCoachSpeechText(rawText)
+    const voiceId = body.voiceId || DEFAULT_ELEVENLABS_VOICE_ID
+    const cacheKey = `tts_${voiceId}_${cleanText.slice(0, 120)}_${cleanText.length}`
+
+    // Check in-memory server cache first (instant return with zero DB or ElevenLabs overhead)
+    const cached = audioBufferCache.get(cacheKey)
+    if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
+      return new NextResponse(cached.buffer, {
+        status: 200,
+        headers: {
+          'Content-Type': cached.contentType,
+          'Cache-Control': 'public, max-age=86400',
+          'X-Forge-Voice-Provider': 'cache',
+        },
+      })
+    }
+
+    const auth = await authenticateAndRateLimit(req)
+    if (!auth.authorized) {
+      return auth.response!
+    }
+
     return handleTtsRequest(rawText, body.voiceId)
   } catch (error) {
     console.error('TTS POST handler error:', error)
