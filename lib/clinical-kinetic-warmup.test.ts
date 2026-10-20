@@ -39,7 +39,7 @@ describe('Clinical Kinetic Warmup & OHSA Integration', () => {
     expect(resolveGaaExerciseImage('SMR Adductors (Inner Thigh)')).toBe('https://img.youtube.com/vi/Nqol0T6rKDg/hqdefault.jpg')
 
     // Warmup Lengthen (Static Stretches)
-    expect(resolveGaaExerciseImage('Kneeling Hip Flexor & Latissimus Stretch')).toBe('https://img.youtube.com/vi/UU7Nqd_Dric/hqdefault.jpg')
+    expect(resolveGaaExerciseImage('Kneeling Hip Flexor & Latissimus Stretch')).toBe('/images/exercises/static-kneeling-hip-flexor-stretch.jpg')
     expect(resolveGaaExerciseImage('Static Calf Stretch (Gastrocnemius / Soleus)')).toBe('https://img.youtube.com/vi/83G00Fwlqqw/hqdefault.jpg')
     expect(resolveGaaExerciseImage('Static Standing Hamstring Stretch (Neutral Rotation)')).toBe('https://img.youtube.com/vi/h_yZV27H684/hqdefault.jpg')
     expect(resolveGaaExerciseImage('Static Standing TFL / ITB Stretch')).toBe('https://img.youtube.com/vi/h_8VHKvi1zo/hqdefault.jpg')
