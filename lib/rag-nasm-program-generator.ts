@@ -1012,7 +1012,7 @@ function buildDistinctOptWorkoutDay(params: {
       } else if (eq.hasDumbbells) {
         exercises.push({
           block: 'resistance',
-          name: 'Dumbbell Bent-Over Extension',
+          name: 'Single-Leg Dumbbell Bent-Over Extension',
           sets: '3',
           reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
@@ -1182,7 +1182,7 @@ function buildDistinctOptWorkoutDay(params: {
       if (eq.hasDumbbells) {
         exercises.push({
           block: 'resistance',
-          name: 'Dumbbell Overhead Press',
+          name: 'Single-Leg Dumbbell Overhead Press',
           sets: '3',
           reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
@@ -1194,7 +1194,7 @@ function buildDistinctOptWorkoutDay(params: {
       } else if (eq.hasBands) {
         exercises.push({
           block: 'resistance',
-          name: 'Standing Tubing Overhead Press',
+          name: 'Single-Leg Standing Tubing Overhead Press',
           sets: '3',
           reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
@@ -1242,7 +1242,7 @@ function buildDistinctOptWorkoutDay(params: {
       } else if (eq.hasDumbbells) {
         exercises.push({
           block: 'resistance',
-          name: 'Dumbbell Bent Over Row',
+          name: 'Single-Leg Dumbbell Bent Over Row',
           sets: '3',
           reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
@@ -1254,7 +1254,7 @@ function buildDistinctOptWorkoutDay(params: {
       } else if (eq.hasBands) {
         exercises.push({
           block: 'resistance',
-          name: 'Standing Tubing Row',
+          name: 'Single-Leg Standing Tubing Row',
           sets: '3',
           reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',
@@ -1403,7 +1403,7 @@ function buildDistinctOptWorkoutDay(params: {
       } else if (eq.hasBands) {
         exercises.push({
           block: 'resistance',
-          name: 'Standing Tubing Row',
+          name: 'Single-Leg Standing Tubing Row',
           sets: '3',
           reps: '12–15 (switch legs halfway)',
           tempo: '4/2/1',

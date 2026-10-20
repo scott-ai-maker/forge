@@ -5973,6 +5973,11 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   'stability ball hamstring curls': 'floor bridge',
   'ball hamstring curl': 'floor bridge',
   'ball hamstring curls': 'floor bridge',
+  'single leg dumbbell overhead press': 'dumbbell overhead press',
+  'single leg dumbbell bent over row': 'supported bent over dumbbell row',
+  'single leg dumbbell bent over extension': 'supported bent over dumbbell extension',
+  'single leg standing tubing row': 'standing tubing row',
+  'single leg standing tubing overhead press': 'dumbbell overhead press',
 }
 
 /**

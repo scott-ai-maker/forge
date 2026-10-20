@@ -345,8 +345,12 @@ export const NASM_EDGE_OFFICIAL_CATALOG: Record<string, string> = {
   "stability ball bridge": "wgcyPpK60wc",
   "stability ball russian twist": "t3HhJ_LolVg",
   "stability ball spinal rotation": "t3HhJ_LolVg",
-  "stability ball scapular triad": "j6D0V742sT8",
-  "stability ball prone shoulder press": "VZJ0PHuNrYI"
+  "stability ball prone shoulder press": "VZJ0PHuNrYI",
+  "single leg dumbbell overhead press": "MMjBnEBnZKM",
+  "single leg standing tubing overhead press": "MMjBnEBnZKM",
+  "single leg dumbbell bent over row": "DJfQN6xJL28",
+  "single leg standing tubing row": "qykwviNOIyc",
+  "single leg dumbbell bent over extension": "kZ-ReOdn2qk"
 }
 
 // Official NASM Edge Master Fallback (Official NASM Edge Movement Standard)
@@ -438,7 +442,7 @@ export function resolveExerciseVideoEmbed(
     { keywords: ['bench dips', 'bench dip'], videoId: 'WVeZDBhZwLA', label: 'Bench Dips' },
 
     // Shoulders
-    { keywords: ['seated dumbbell shoulder press', 'seated dumbbell overhead shoulder press', 'dumbbell overhead press', 'dumbbell shoulder press', 'heavy banded overhead press', 'banded overhead press', 'standing neutral grip db overhead press'], videoId: 'MMjBnEBnZKM', label: 'Dumbbell Overhead Press' },
+    { keywords: ['single-leg dumbbell overhead press', 'single leg dumbbell overhead press', 'single-leg standing tubing overhead press', 'single leg standing tubing overhead press', 'seated dumbbell shoulder press', 'seated dumbbell overhead shoulder press', 'dumbbell overhead press', 'dumbbell shoulder press', 'heavy banded overhead press', 'banded overhead press', 'standing neutral grip db overhead press'], videoId: 'MMjBnEBnZKM', label: 'Dumbbell Overhead Press' },
     { keywords: ['standing barbell overhead press', 'heavy barbell overhead press', 'barbell overhead press', 'standing overhead press', 'military press'], videoId: 'cGnhixvC8uA', label: 'Barbell Overhead Press' },
     { keywords: ['feet-elevated pike push-up', 'feet elevated pike push up', 'pike push up', 'pike push-up'], videoId: 'XckEEwa1BPI', label: 'Pike Push-Up' },
     { keywords: ['dumbbell lateral raise', 'lateral raise'], videoId: 'XPPfnSEATJA', label: 'Dumbbell Lateral Raise' },
@@ -514,7 +518,7 @@ export function resolveExerciseVideoEmbed(
     { keywords: ['dumbbell hammer curl', 'single leg hammer curl', 'hammer curl'], videoId: 'nL3SedGG7X0', label: 'Dumbbell Hammer Curl' },
     { keywords: ['dumbbell preacher curl'], videoId: 't2BmBSmcjco', label: 'Dumbbell Preacher Curl' },
     { keywords: ['barbell bicep curl', 'barbell curl'], videoId: 'pQfJR-sSIvA', label: 'Barbell Biceps Curl' },
-    { keywords: ['seated single arm dumbbell tricep extension', 'supine dumbbell extension', 'dumbbell bent over extention', 'dumbbell bent over extension', 'dumbbell bent-over extension'], videoId: 'kZ-ReOdn2qk', label: 'Dumbbell Triceps Extension' },
+    { keywords: ['single-leg dumbbell bent-over extension', 'single-leg dumbbell bent over extension', 'single leg dumbbell bent over extension', 'seated single arm dumbbell tricep extension', 'supine dumbbell extension', 'dumbbell bent over extention', 'dumbbell bent over extension', 'dumbbell bent-over extension'], videoId: 'kZ-ReOdn2qk', label: 'Dumbbell Triceps Extension' },
 
     // Core & Balance
     { keywords: ['russian twist'], videoId: 's0kT80JLCfA', label: 'Russian Twist' },

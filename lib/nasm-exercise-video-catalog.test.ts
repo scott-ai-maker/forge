@@ -112,4 +112,22 @@ describe('Master 1-to-1 NASM Edge Exercise Video Resolver', () => {
     expect(enriched.videoUrl).toContain('Z3cY3d3BBo4')
     expect(enriched.imageUrl).toContain('Z3cY3d3BBo4')
   })
+
+  it('resolves Single-Leg Phase 1 upper body movements with video fallback', () => {
+    const press = resolveExerciseVideoEmbed('Single-Leg Dumbbell Overhead Press', null)
+    expect(press.embedUrl).toContain('MMjBnEBnZKM')
+
+    const tubingPress = resolveExerciseVideoEmbed('Single-Leg Standing Tubing Overhead Press', null)
+    expect(tubingPress.embedUrl).toContain('MMjBnEBnZKM')
+
+    const row = resolveExerciseVideoEmbed('Single-Leg Dumbbell Bent Over Row', null)
+    expect(row.embedUrl).toContain('DJfQN6xJL28')
+
+    const tubingRow = resolveExerciseVideoEmbed('Single-Leg Standing Tubing Row', null)
+    expect(tubingRow.embedUrl).toContain('qykwviNOIyc')
+
+    const ext = resolveExerciseVideoEmbed('Single-Leg Dumbbell Bent-Over Extension', null)
+    expect(ext.embedUrl).toContain('kZ-ReOdn2qk')
+  })
 })
+
