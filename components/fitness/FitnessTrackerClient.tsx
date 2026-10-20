@@ -4530,33 +4530,9 @@ export default function FitnessTrackerClient({
                               data-testid="exercise-set-details"
                               className="fitness-inline-set-controls"
                               style={{
-                                marginTop: 4,
-                                display: 'grid',
-                                gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-                                gap: 8,
+                                marginTop: 6,
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                              <div style={{ color: 'var(--gray)', fontSize: 12 }}>
-                                {isStrength && `Tempo ${draft.tempo || effectiveTempo} · `}Rest {draft.restSeconds || '60'}s
-                              </div>                                <div>
-                                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--gray)', fontSize: 12, minHeight: 44 }}>
-                                    <input
-                                      type="checkbox"
-                                      style={{ width: 16, height: 16, minWidth: 16, minHeight: 16, margin: 0, padding: 0, flexShrink: 0 }}
-                                      checked={draft.isWarmup}
-                                      onChange={event => {
-                                        const checked = event.target.checked
-                                        setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, isWarmup: checked } }))
-                                      }}
-                                      aria-label="Mark as warm-up set"
-                                    />
-                                    Warm-up
-                                  </label>
-                                </div>
-
-                              </div>
-
                               <div className="fitness-primary-set-inputs">
                                 {!isTimed ? (
                                   <div>
@@ -4775,6 +4751,21 @@ export default function FitnessTrackerClient({
                                     placeholder={isTimed ? '0' : '60'}
                                     aria-label="Rest time in seconds"
                                   />
+                                </div>
+                                <div>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--gray)', fontSize: 12, minHeight: 44, marginTop: 18 }}>
+                                    <input
+                                      type="checkbox"
+                                      style={{ width: 16, height: 16, minWidth: 16, minHeight: 16, margin: 0, padding: 0, flexShrink: 0 }}
+                                      checked={draft.isWarmup}
+                                      onChange={event => {
+                                        const checked = event.target.checked
+                                        setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, isWarmup: checked } }))
+                                      }}
+                                      aria-label="Mark as warm-up set"
+                                    />
+                                    Warm-up
+                                  </label>
                                 </div>
                               </div>
 
