@@ -9,6 +9,8 @@ import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import { calculateBioAdaptiveRestInterval } from '@/lib/bio-adaptive-rest-pacer'
 import { parsePrescribedWorkingReps } from '@/lib/warmup-auto-populator'
+import { isTimedStaticStretch, isFoamRollerExercise } from '@/lib/exercise-logging-helpers'
+import { mapRirToRpe } from '@/lib/rpe-exertion-scale'
 
 export interface SupersetDraftState {
   weight: string
@@ -85,12 +87,16 @@ export default function SupersetPairCard({
   const completedSetsA = setLogsA.filter(s => !s.is_warmup && (!s.session_date || s.session_date === sessionDate)).length
   const completedSetsB = setLogsB.filter(s => !s.is_warmup && (!s.session_date || s.session_date === sessionDate)).length
 
+  const isTimedCurrent = isTimedStaticStretch(currentEx.name, currentEx.block, currentEx.reps) || isFoamRollerExercise(currentEx.name)
+
   const projectedRestB = useMemo(() => {
+    const rirB = drafts.B.rir ? Number(drafts.B.rir) : undefined
+    const rpeB = drafts.B.rpe ? Number(drafts.B.rpe) : (rirB !== undefined ? mapRirToRpe(rirB) : undefined)
     return calculateBioAdaptiveRestInterval({
       exerciseName: pair.exerciseB.name,
       baseRestSeconds: pair.compoundRestSeconds,
-      rpe: drafts.B.rpe,
-      rir: drafts.B.rir,
+      rpe: rpeB,
+      rir: rirB,
       isWarmup: drafts.B.isWarmup,
     })
   }, [pair.exerciseB.name, pair.compoundRestSeconds, drafts.B.rpe, drafts.B.rir, drafts.B.isWarmup])
@@ -104,8 +110,15 @@ export default function SupersetPairCard({
     triggerHaptic?.('success')
     const restToApply = activeSub === 'A' ? pair.transitionRestSeconds : pair.compoundRestSeconds
 
+    const rirVal = currentDraft.rir?.trim()
+    const rpeVal = currentDraft.rpe?.trim()
+    const mappedRpe = !rpeVal && rirVal && Number.isFinite(Number(rirVal))
+      ? String(mapRirToRpe(Number(rirVal)))
+      : currentDraft.rpe
+
     onLogSet(currentEx, {
       ...currentDraft,
+      rpe: mappedRpe,
       restSeconds: restToApply,
     })
     setDrafts(prev => ({ ...prev, [activeSub]: { ...prev[activeSub], rpe: '', rir: '' } }))
@@ -490,29 +503,48 @@ export default function SupersetPairCard({
         </div>
       )}
 
-      <div data-testid="superset-set-details" className="fitness-inline-set-controls" style={{ display: 'grid', gap: 12 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {(['rpe', 'rir'] as const).map(field => (
-            <label key={field} style={{ color: 'var(--gray)', fontSize: 12 }}>
-              {field.toUpperCase()}
-              <input
-                aria-label={field === 'rpe' ? 'Rate of perceived exertion (1-10)' : 'Reps in reserve (0-6)'}
-                placeholder="Optional"
-                title={field === 'rpe' ? 'How hard this set felt (1-10).' : 'How many more reps you could perform (0-6).'}
-                type="text"
-                inputMode="decimal"
-                value={currentDraft[field]}
-                onFocus={selectOnFocus}
-                onChange={event => {
-                  const value = sanitizeNumericInput(event.target.value)
-                  setDrafts(prev => ({ ...prev, [activeSub]: { ...prev[activeSub], [field]: value } }))
-                }}
-                style={{ width: '100%', minWidth: 0, minHeight: 44, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, color: '#FFFFFF', fontSize: 16, padding: 8, boxSizing: 'border-box' }}
-              />
+      <div data-testid="superset-set-details" className="fitness-inline-set-controls" style={{ marginTop: 8 }}>
+        {!isTimedCurrent ? (
+          <div>
+            <label style={{ fontSize: 10.5, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 4, display: 'block' }}>
+              RiR
             </label>
-          ))}
-        </div>
-
+            <input
+              aria-label="Reps in reserve (0-6)"
+              placeholder="Optional (0–6)"
+              title="RiR: how many more reps you could perform (0-6)."
+              type="text"
+              inputMode="decimal"
+              value={currentDraft.rir}
+              onFocus={selectOnFocus}
+              onChange={event => {
+                const value = sanitizeNumericInput(event.target.value)
+                setDrafts(prev => ({ ...prev, [activeSub]: { ...prev[activeSub], rir: value } }))
+              }}
+              style={{ width: '100%', minWidth: 0, minHeight: 44, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, color: '#FFFFFF', fontSize: 16, padding: 8, boxSizing: 'border-box' }}
+            />
+          </div>
+        ) : (
+          <div>
+            <label style={{ fontSize: 10.5, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 4, display: 'block' }}>
+              RPE
+            </label>
+            <input
+              aria-label="Rate of perceived exertion (1-10)"
+              placeholder="Optional (1–10)"
+              title="RPE: how hard this set felt (1-10)."
+              type="text"
+              inputMode="decimal"
+              value={currentDraft.rpe}
+              onFocus={selectOnFocus}
+              onChange={event => {
+                const value = sanitizeNumericInput(event.target.value)
+                setDrafts(prev => ({ ...prev, [activeSub]: { ...prev[activeSub], rpe: value } }))
+              }}
+              style={{ width: '100%', minWidth: 0, minHeight: 44, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, color: '#FFFFFF', fontSize: 16, padding: 8, boxSizing: 'border-box' }}
+            />
+          </div>
+        )}
       </div>
       {/* ── 1-Tap Log Set & Auto-Advance Button ── */}
       <div style={{ marginTop: 12 }}>

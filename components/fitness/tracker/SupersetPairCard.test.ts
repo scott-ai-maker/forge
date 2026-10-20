@@ -22,8 +22,8 @@ describe('SupersetPairCard Logic Integration', () => {
       onLogSet: vi.fn(),
     }))
     expect(markup).toContain('superset-set-details')
-    expect(markup).toContain('Rate of perceived exertion (1-10)')
     expect(markup).toContain('Reps in reserve (0-6)')
+    expect(markup).not.toContain('Rate of perceived exertion (1-10)')
     expect(markup).not.toMatch(/Cadence Metronome|workout-tool-bottom-sheet|superset-tool-strip|Bar Velocity|Kinetic Power/)
     expect(markup).not.toContain('Plate Loading and Weight Presets')
     expect(markup).toContain('placeholder="—"')
@@ -32,6 +32,22 @@ describe('SupersetPairCard Logic Integration', () => {
     expect(markup).toContain('value="8"')
     expect(markup).not.toContain('value="810"')
     expect(markup.lastIndexOf('Log set &amp; start rest')).toBeGreaterThan(markup.lastIndexOf('Reps in reserve (0-6)'))
+
+    // Verify timed exercise in superset renders RPE instead of RiR
+    const timedMarkup = renderToStaticMarkup(createElement(SupersetPairCard, {
+      pair: {
+        ...group.pair,
+        exerciseA: { name: 'Static Quadriceps Stretch', sets: '3', reps: '30s', block: 'warmup' },
+      },
+      sessionDate: '2026-10-10',
+      units: 'imperial',
+      setLogsA: [],
+      setLogsB: [],
+      nasmOptPhase: 2,
+      onLogSet: vi.fn(),
+    }))
+    expect(timedMarkup).toContain('Rate of perceived exertion (1-10)')
+    expect(timedMarkup).not.toContain('Reps in reserve (0-6)')
   })
   it('correctly detects paired exercises and builds valid SupersetPair structure', () => {
     const exercises = [

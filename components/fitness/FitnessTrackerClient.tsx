@@ -66,7 +66,7 @@ import { isExerciseAppropriateForInjuries } from '@/lib/nasm-opt-exercise-select
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import SetProgressionMatrix from '@/components/fitness/tracker/SetProgressionMatrix'
 import PlateAdjustmentPresets from '@/components/fitness/tracker/PlateAdjustmentPresets'
-import RpeRirExertionSelector from '@/components/fitness/tracker/RpeRirExertionSelector'
+import { mapRirToRpe } from '@/lib/rpe-exertion-scale'
 import RepCadenceMetronome from '@/components/fitness/tracker/RepCadenceMetronome'
 import OneRepMaxPercentageMatrix from '@/components/fitness/tracker/OneRepMaxPercentageMatrix'
 import AutoregulationDeloadAdvisor from '@/components/fitness/tracker/AutoregulationDeloadAdvisor'
@@ -1382,6 +1382,9 @@ export default function FitnessTrackerClient({
     const key = exerciseDraftKey(workout.day, exercise.name)
     const movementCard = getNasmClinicalMovementCard(exercise.name, exercise)
     const isStrength = isStrengthExercise(exercise.name, exercise.block, exercise.reps)
+    const isStretch = isTimedStaticStretch(exercise.name, exercise.block, exercise.reps)
+    const isFoam = isFoamRollerExercise(exercise.name)
+    const isTimed = isStretch || isFoam
     const effectiveTempo = isStrength ? (exercise.tempo || movementCard.tempo || getDefaultNasmOptTempo(plan?.nasm_opt_phase, exercise.name).tempo) : ''
 
     const weightValue = Number(draft.weight)
@@ -1394,8 +1397,12 @@ export default function FitnessTrackerClient({
       : undefined
 
     const tempoToSave = isStrength ? ((draft.tempo || effectiveTempo || '').trim() || null) : null
-    const rirToSave = isStrength && draft.rir ? Number(draft.rir) : undefined
-    const rpeToSave = draft.rpe ? Number(draft.rpe) : undefined
+    const parsedRir = !isTimed && draft.rir !== undefined && draft.rir !== '' ? Number(draft.rir) : (draft.rir ? Number(draft.rir) : undefined)
+    const rirToSave = parsedRir !== undefined && Number.isFinite(parsedRir) ? parsedRir : undefined
+    const parsedRpe = draft.rpe !== undefined && draft.rpe !== '' ? Number(draft.rpe) : undefined
+    const rpeToSave = parsedRpe !== undefined && Number.isFinite(parsedRpe)
+      ? parsedRpe
+      : (rirToSave !== undefined ? mapRirToRpe(rirToSave) : undefined)
     const parsedRestSecs = draft.restSeconds !== undefined && draft.restSeconds !== '' && Number.isFinite(Number(draft.restSeconds))
       ? Number(draft.restSeconds)
       : parseRestSecondsFromExercise(exercise.rest, plan?.nasm_opt_phase, exercise.block)
@@ -1470,7 +1477,7 @@ export default function FitnessTrackerClient({
       reps: Number(draft.reps),
       weight_kg: weightKg,
       rest_seconds: restSecsToSave,
-      rpe: draft.rpe ? Number(draft.rpe) : undefined,
+      rpe: rpeToSave,
       rir: rirToSave,
       is_warmup: draft.isWarmup,
       notes: `${workoutDayTag(workout.day)} ${workoutWeekTag(microcycleProgress.currentWeek)} ${draft.notes}`.trim() || undefined,
@@ -4550,28 +4557,10 @@ export default function FitnessTrackerClient({
                                 </div>
                               )}
 
-                              <div className="fitness-primary-set-inputs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                <div>
-                                  <label style={setFieldLabelStyle}>RPE</label>
-                                  <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    autoComplete="off"
-                                    onFocus={selectOnFocus}
-                                    value={draft.rpe}
-                                    onChange={event => {
-                                      const value = sanitizeNumericInput(event.target.value)
-                                      setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, rpe: value } }))
-                                    }}
-                                    style={inputStyle}
-                                    placeholder="Optional"
-                                    title="RPE: how hard this set felt, from 1 (easy) to 10 (maximum effort)."
-                                    aria-label="Rate of perceived exertion (1-10)"
-                                  />
-                                </div>
-                                {isStrength && (
+                              <div className="fitness-primary-set-inputs">
+                                {!isTimed ? (
                                   <div>
-                                    <label style={setFieldLabelStyle}>RIR</label>
+                                    <label style={setFieldLabelStyle}>RiR</label>
                                     <input
                                       type="text"
                                       inputMode="decimal"
@@ -4583,35 +4572,32 @@ export default function FitnessTrackerClient({
                                         setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, rir: value } }))
                                       }}
                                       style={inputStyle}
-                                      placeholder="Optional"
-                                      title="RIR: how many more reps you could perform, from 0 to 6."
+                                      placeholder="Optional (0–6)"
+                                      title="RiR: how many more reps you could perform, from 0 to 6."
                                       aria-label="Reps in reserve (0-6)"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <label style={setFieldLabelStyle}>RPE</label>
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      autoComplete="off"
+                                      onFocus={selectOnFocus}
+                                      value={draft.rpe}
+                                      onChange={event => {
+                                        const value = sanitizeNumericInput(event.target.value)
+                                        setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, rpe: value } }))
+                                      }}
+                                      style={inputStyle}
+                                      placeholder="Optional (1–10)"
+                                      title="RPE: how hard this set felt, from 1 (easy) to 10 (maximum effort)."
+                                      aria-label="Rate of perceived exertion (1-10)"
                                     />
                                   </div>
                                 )}
                               </div>
-
-                              {isStrength && (
-                                <RpeRirExertionSelector
-                                  exerciseName={ex.name}
-                                  currentRpe={draft.rpe}
-                                  currentRir={draft.rir}
-                                  isStrength={isStrength}
-                                  onChangeRpe={(rpeVal) => {
-                                    setInlineSetDrafts(prev => ({
-                                      ...prev,
-                                      [exerciseKey]: { ...draft, rpe: rpeVal },
-                                    }))
-                                  }}
-                                  onChangeRir={(rirVal) => {
-                                    setInlineSetDrafts(prev => ({
-                                      ...prev,
-                                      [exerciseKey]: { ...draft, rir: rirVal },
-                                    }))
-                                  }}
-                                  triggerHaptic={triggerHaptic}
-                                />
-                              )}
 
                               {isStrength && !isTimed && (
                                 <OneRepMaxPercentageMatrix
