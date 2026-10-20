@@ -47,12 +47,6 @@ export default function PlateAdjustmentPresets({
 
   if (isTimed || isBand) return null
 
-  const handleAdjust = (delta: number) => {
-    triggerHaptic?.('tap')
-    const next = Math.max(0, Math.round((numWeight + delta) * 10) / 10)
-    onChangeWeight(String(next))
-  }
-
   const handleSetExact = (weightVal: number) => {
     triggerHaptic?.('heavy')
     onChangeWeight(String(weightVal))
@@ -68,45 +62,17 @@ export default function PlateAdjustmentPresets({
     onChangeWeight(String(next))
   }
 
-  const unitLabel = units === 'imperial' ? 'lb' : 'kg'
-
   return (
     <div style={{ marginTop: 6 }} aria-label="Plate Loading and Weight Presets">
-      {/* ── Micro-Loading Increments & BW Reset Strip ── */}
+      {/* ── BW Reset & Presets Toggle Strip ── */}
       <div
         style={{
           display: 'flex',
-          gap: 4,
-          flexWrap: 'wrap',
+          gap: 6,
           alignItems: 'center',
+          flexWrap: 'wrap',
         }}
       >
-        {config.microIncrements.map(inc => {
-          const isPositive = inc > 0
-          const displayLabel = isPositive ? `+${inc}` : `${inc}`
-          return (
-            <button
-              key={inc}
-              type="button"
-              onClick={() => handleAdjust(inc)}
-              className="tactile-btn"
-              title={`Adjust weight by ${displayLabel} ${unitLabel}`}
-              style={{
-                background: isPositive ? 'rgba(255,255,255,0.06)' : 'rgba(239,68,68,0.08)',
-                border: isPositive ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(239,68,68,0.25)',
-                color: isPositive ? 'var(--gold-lt)' : '#FCA5A5',
-                fontSize: 10,
-                fontWeight: 700,
-                padding: '2px 6px',
-                borderRadius: 3,
-                cursor: 'pointer',
-              }}
-            >
-              {displayLabel}{unitLabel}
-            </button>
-          )
-        })}
-
         {/* Clear to Bodyweight 0 */}
         <button
           type="button"
@@ -116,13 +82,13 @@ export default function PlateAdjustmentPresets({
           }}
           className="tactile-btn"
           style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: 'var(--gray)',
-            fontSize: 10,
-            fontWeight: 600,
-            padding: '2px 6px',
-            borderRadius: 3,
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            color: 'var(--gold-lt)',
+            fontSize: 10.5,
+            fontWeight: 700,
+            padding: '3px 8px',
+            borderRadius: 4,
             cursor: 'pointer',
           }}
           title="Reset load to bodyweight (0)"
@@ -142,16 +108,16 @@ export default function PlateAdjustmentPresets({
             background: showMilestones ? 'rgba(212,160,23,0.25)' : 'rgba(212,160,23,0.1)',
             border: '1px solid rgba(212,160,23,0.3)',
             color: 'var(--gold-lt)',
-            fontSize: 10,
+            fontSize: 10.5,
             fontWeight: 700,
-            padding: '2px 6px',
-            borderRadius: 3,
+            padding: '3px 8px',
+            borderRadius: 4,
             cursor: 'pointer',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 3,
+            gap: 4,
           }}
-          title="Toggle quick weight milestones"
+          title="Toggle quick weight presets"
         >
           <GaaIcon name="sliders" size={10} tone="gold" />
           <span>{showMilestones ? 'Hide Presets' : 'Presets'}</span>
