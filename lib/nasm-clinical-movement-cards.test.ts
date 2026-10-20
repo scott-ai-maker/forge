@@ -79,7 +79,7 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(bench.fallbackImageUrl).toBe('/images/exercises/image-not-available.jpg')
 
     const squat = getNasmClinicalMovementCard('Barbell Back Squat')
-    expect(squat.imageUrl).toBe('https://img.youtube.com/vi/-bJIpOq-LWk/hqdefault.jpg')
+    expect(squat.imageUrl).toBe('/images/exercises/barbell-back-squat.jpg')
 
     const novel = getNasmClinicalMovementCard('Unknown Outlier Movement 404')
     expect(novel.imageUrl).toBeNull()
