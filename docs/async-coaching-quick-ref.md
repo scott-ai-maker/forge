@@ -55,7 +55,7 @@
 When clients ask about training locations or compare to traditional in-person trainers:
 - **Zero Commute Hassle:** "You don't lose 45–60 minutes driving across Massachusetts traffic to a gym or waiting for equipment. You train in your private home gym, apartment fitness center, or hotel while traveling, with master-level coaching directly on your phone and screen."
 - **Greater Boston Value Equation:** "Commercial personal trainers in Greater Boston charge $120–$200 per single hour. Forge Athletic gives you an entire month of autonomous or direct master coaching for less than the cost of one or two gym sessions."
-- **Privacy & Sanctuary:** "No crowded commercial gyms, no waiting for benches, no influencer tripods. Your training space is your sanctuary."
+- **Privacy & Sanctuary:** "No crowded commercial gyms, no waiting for benches. Your training space is your sanctuary."
 - **Encrypted WebRTC Telehealth:** "When we do 1:1 live sessions, we connect via encrypted WebRTC video with dual-angle views, slow-motion telestration, and real-time movement correction."
 
 ---

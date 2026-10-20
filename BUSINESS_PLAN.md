@@ -35,7 +35,7 @@ The $96B fitness industry fails this demographic completely:
 - **Brand Name**: **Forge Athletic** (or "Forge").
 - **Palette**: Deep Obsidian (`#04070E` / `#080E14`), Brushed Athletic Gold (`#D4AF37` / `#F59E0B`), Emerald Recovery (`#10B981` / `#34D399`), and Ivory White (`#F8FAFC`).
 - **Typography Standard**: Classical Roman authority via `Cinzel` serif mastheads, modern technical precision via high-tracking uppercase `Barlow Condensed` / `Raleway`, and zero-error tabular monospace telemetry (`font-telemetry font-mono`, `fontVariantNumeric: "tabular-nums"`).
-- **The Zero-Distraction Sanctuary**: No social media feeds, no vanity metrics, no dopamine traps. When an athlete trains with Forge Athletic, 100% of their attention belongs to mechanical tension, kinetic alignment, breathing mechanics, and progressive overload.
+- **The Precision Training Sanctuary**: Deep kinetic focus and autonomic recovery. When an athlete trains with Forge Athletic, 100% of their attention belongs to mechanical tension, kinetic alignment, breathing mechanics, and progressive overload.
 
 ---
 
@@ -125,7 +125,7 @@ Forge Athletic adopts the National Academy of Sports Medicine Virtual Coaching S
 - **Authority**: Evidence-led NASM OPT™ whitepapers, kinetic chain research, verified Credly credentials, 18+ years coaching tenure.
 - **Social Proof**: Real client movement transformations, overhead squat compensation fixes, PR tracking data.
 - **Connection**: Empathetic onboarding, weekly Sunday intelligence notes, coach voice messages, transparent pricing.
-- **Attention**: Zero-Distraction Anti-Social-Media positioning, interactive movement diagnostic quiz, 7-day free trial on Core memberships.
+- **Attention**: High-impact value proposition, interactive movement diagnostic quiz, 7-day free trial on Core memberships.
 
 ---
 
@@ -223,7 +223,7 @@ $1,000,000 ┼──────────────────────
 
 ## 6. Client Acquisition & Marketing Flywheel
 
-Forge Athletic completely rejects paid social media ad spend, influencer marketing, and clickbait funnels. Instead, client acquisition is powered by an organic, high-trust flywheel based on NASM VCS Chapter 9:
+Rooted in NASM VCS Chapter 9, Forge Athletic deploys an authoritative, high-trust client acquisition engine centered on sports science education, interactive kinetic diagnostics, and client-centric value delivery:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -259,7 +259,7 @@ Forge Athletic completely rejects paid social media ad spend, influencer marketi
 1. **Authority**: Publishing technical deep-dives on the 5-phase OPT™ model, kinetic chain compensations (e.g., knee valgus and gluteus medius inhibition), and bar velocity telemetry.
 2. **Social Proof**: Real-world case studies showcasing posture restoration in desk-bound professionals and joint-pain relief in longevity lifters.
 3. **Connection**: Bi-weekly Sunday Intelligence Notes and personalized coach audio notes fostering deep rapport and trust.
-4. **Attention**: The uncompromising **Zero-Distraction Anti-Social-Media Sanctuary** manifesto ("The gym is a sanctuary, not a content studio").
+4. **Attention**: The inspiring **Precision Training Sanctuary** value proposition ("Deep kinetic focus, certified science, real measurable PRs").
 
 ---
 

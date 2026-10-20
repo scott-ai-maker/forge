@@ -9,11 +9,12 @@ describe('SanctuaryModeHud Component Structure & Tokens', () => {
     expect(fs.existsSync(componentPath)).toBe(true)
   })
 
-  it('contains Sanctuary Mode and Zero Distraction branding tokens', () => {
+  it('contains Sanctuary Mode and Kinetic Focus branding tokens', () => {
     const source = fs.readFileSync(componentPath, 'utf-8')
     expect(source).toContain('SANCTUARY MODE')
-    expect(source).toContain('ZERO DISTRACTIONS')
-    expect(source).toContain('NO SOCIAL MEDIA')
+    expect(source).toContain('SANCTUARY SHIELD')
+    expect(source).toContain('KINETIC FOCUS')
+    expect(source).toContain('AUTONOMIC RECOVERY')
     expect(source).toContain('The gym is sacred ground · Hands on the bar')
     expect(source).toContain('Box 4x4 (Power Reset)')
     expect(source).toContain('4-2-6 (Vagal Recovery)')

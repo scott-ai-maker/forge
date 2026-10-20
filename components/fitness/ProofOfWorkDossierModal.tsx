@@ -213,10 +213,10 @@ export default function ProofOfWorkDossierModal({
         </div>
       </div>
 
-      {/* ── ANTI-SOCIAL MANIFESTO STANCE BANNER ── */}
+      {/* ── VERIFIED EVIDENCE MANIFESTO BANNER ── */}
       <div
         style={{
-          background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.12) 0%, rgba(245, 158, 11, 0.12) 50%, rgba(16, 185, 129, 0.12) 100%)',
+          background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.12) 0%, rgba(16, 185, 129, 0.12) 100%)',
           border: '1px solid rgba(245, 158, 11, 0.3)',
           borderRadius: 8,
           padding: '10px 16px',
@@ -233,8 +233,8 @@ export default function ProofOfWorkDossierModal({
             style={{
               padding: '3px 8px',
               borderRadius: 4,
-              background: 'rgba(239, 68, 68, 0.25)',
-              color: '#F87171',
+              background: 'rgba(245, 158, 11, 0.25)',
+              color: '#FDE68A',
               fontFamily: 'var(--font-telemetry, monospace)',
               fontSize: 10,
               fontWeight: 800,
@@ -242,10 +242,10 @@ export default function ProofOfWorkDossierModal({
               textTransform: 'uppercase',
             }}
           >
-            ✕ ZERO SOCIAL MEDIA
+            VERIFIED CLINICAL EVIDENCE
           </span>
           <span style={{ fontSize: 12.5, color: '#E2E8F0', fontWeight: 600 }}>
-            Official Evidence of Physical Adaptation · Hands on the Bar, 0 Feeds
+            Official Evidence of Physical Adaptation · Hands on the Bar, 100% Focus
           </span>
         </div>
         <div
@@ -694,7 +694,7 @@ export default function ProofOfWorkDossierModal({
               {dossier.sanctuaryAudit.totalZeroDistractionHours} Hours Logged
             </div>
             <div style={{ fontSize: 11, color: '#34D399', marginTop: 1 }}>
-              Hands on bar, 0 social feeds
+              Hands on bar, uninterrupted flow
             </div>
           </div>
 

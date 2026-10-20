@@ -26,8 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added & Improved
 - **Coach-Client Sanctuary Audio Notes & In-Ear Rest Engine ([`lib/sanctuary-audio-notes-engine.ts`](file:///Users/scottgordon/Repos/forge/lib/sanctuary-audio-notes-engine.ts), [`components/fitness/SanctuaryAudioNotePlayer.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/SanctuaryAudioNotePlayer.tsx))**:
-  - Engineered an in-ear acoustic coaching pipeline enforcing Forge Athletic's brand standard: "NO SOCIAL MEDIA · ZERO DISTRACTIONS · 100% COACHING & TOOLS".
-  - Delivers 20-60 second high-impact voice memos from Coach Gordon straight to the athlete's headphones during rest intervals, eliminating phone doomscrolling and vanity feeds.
+  - Engineered an in-ear acoustic coaching pipeline enforcing Forge Athletic's brand standard: "CLINICAL SPORTS SCIENCE · DEEP KINETIC FLOW · 100% COACHING & TOOLS".
+  - Delivers 20-60 second high-impact voice memos from Coach Gordon straight to the athlete's headphones during rest intervals, enhancing mind-muscle intent and diaphragmatic breathwork.
   - Implements acoustic background music ducking via the W3C Audio Session API and Web Audio hardware clock (`configureAudioSession('ambient')` and harmonic chime stabs) to gently lower Spotify/Apple Music without pausing.
   - Pre-loaded institutional seed library featuring Coach Gordon master coaching directives across Big 5 compound lifts (360° squat brace, deadlift lat lock, bench retraction, overhead kinetic pillar) and vagal down-regulation breathwork.
   - Integrated into the active floating rest countdown dock ([`components/fitness/tracker/FloatingRestTimerDock.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/tracker/FloatingRestTimerDock.tsx)) with real-time exercise matching, 1-tap playback, and tactile haptics.
@@ -40,8 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.42.0] - 2026-10-16
 
 ### Added & Improved
-- **Clinical Proof of Work Performance Dossier & Anti-Social Share Engine ([`lib/proof-of-work-dossier-engine.ts`](file:///Users/scottgordon/Repos/forge/lib/proof-of-work-dossier-engine.ts), [`components/fitness/ProofOfWorkDossierModal.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/ProofOfWorkDossierModal.tsx), [`app/pow/[token]/page.tsx`](file:///Users/scottgordon/Repos/forge/app/pow/[token]/page.tsx))**:
-  - Engineered the ultimate anti-social alternative to superficial fitness posts: an institutional clinical performance dossier.
+- **Clinical Proof of Work Performance Dossier & Evidence Share Engine ([`lib/proof-of-work-dossier-engine.ts`](file:///Users/scottgordon/Repos/forge/lib/proof-of-work-dossier-engine.ts), [`components/fitness/ProofOfWorkDossierModal.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/ProofOfWorkDossierModal.tsx), [`app/pow/[token]/page.tsx`](file:///Users/scottgordon/Repos/forge/app/pow/[token]/page.tsx))**:
+  - Engineered an institutional clinical performance dossier providing verified evidence of physical adaptation.
   - Dynamically calculates cumulative mechanical tonnage, Big 5 compound 1RM overload curves (Brzycki formula), and progressive overload delta percentages.
   - Integrates Sanctuary Mode autonomic focus fidelity telemetry, zero-distraction gym hours, and vagal down-regulation breathwork logs.
   - Features Acute:Chronic Workload Ratio (ACWR) safety index validation (0.8–1.3 sweet spot) and kinetic symmetry distributions (Push:Pull, Squat:Hinge).
@@ -54,9 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.41.1] - 2026-10-16
 
 ### Added & Improved
-- **Gym Sanctuary Mode & Anti-Distraction Shield ([`lib/sanctuary-mode-engine.ts`](file:///Users/scottgordon/Repos/forge/lib/sanctuary-mode-engine.ts), [`components/fitness/SanctuaryModeHud.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/SanctuaryModeHud.tsx), [`components/fitness/hooks/useSanctuaryMode.ts`](file:///Users/scottgordon/Repos/forge/components/fitness/hooks/useSanctuaryMode.ts))**:
+- **Gym Sanctuary Mode & Kinetic Focus Shield ([`lib/sanctuary-mode-engine.ts`](file:///Users/scottgordon/Repos/forge/lib/sanctuary-mode-engine.ts), [`components/fitness/SanctuaryModeHud.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/SanctuaryModeHud.tsx), [`components/fitness/hooks/useSanctuaryMode.ts`](file:///Users/scottgordon/Repos/forge/components/fitness/hooks/useSanctuaryMode.ts))**:
   - Activated the active in-gym Sanctuary Mode protocol directly within the workout tracker, transforming the gym into an uninterrupted temple of focus.
-  - Deployed real-time tab and app-switch distraction interception during rest intervals, preventing athletes from losing neural drive to social media feeds.
+  - Deployed real-time tab and app-switch focus interception during rest intervals, safeguarding athlete neural drive and phosphagen resynthesis.
   - Implemented 3 autonomic down-regulation breathing cadences (Box 4x4, 4-2-6 Vagal Recovery, and Cardiac Recovery) with real-time radial visual sphere guidance.
   - Synthesized native in-ear Web Audio breath metronomes with pure low-pass sine waves (130.81 Hz C3 inhale, 98.00 Hz G2 exhale) for eyes-free resting.
   - Added live 0-100% focus discipline scoring with post-workout discipline badges (Diamond Sanctuary Master, High-Discipline Lifter, Steady Execution).
@@ -67,10 +67,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.41.0] - 2026-10-16
 
 ### Added & Improved
-- **The Zero-Distraction Sanctuary & Brand Manifesto ([`docs/brand-strategy-manifesto.md`](file:///Users/scottgordon/Repos/forge/docs/brand-strategy-manifesto.md), [`components/marketing/HolidayUnmaskingSplash.tsx`](file:///Users/scottgordon/Repos/forge/components/marketing/HolidayUnmaskingSplash.tsx), [`components/marketing/FullMarketingHome.tsx`](file:///Users/scottgordon/Repos/forge/components/marketing/FullMarketingHome.tsx))**:
-  - Codified the core Forge Athletic stance: **NO SOCIAL MEDIA, ZERO DISTRACTIONS, 100% COACHING & TOOLS**.
-  - Capital allocation promise: 100% of resources that other brands spend on social media ads or influencer clout is reinvested directly into the world's best sports science tools and elite Master Coach guidance.
-  - Embedded the Anti-Distraction Gym Sanctuary manifesto showcase with `✕ NO SOCIAL MEDIA · ZERO DISTRACTIONS · 100% COACHING` badge on the pre-launch splash page and marketing home.
+- **The Precision Training Sanctuary & Brand Manifesto ([`docs/brand-strategy-manifesto.md`](file:///Users/scottgordon/Repos/forge/docs/brand-strategy-manifesto.md), [`components/marketing/HolidayUnmaskingSplash.tsx`](file:///Users/scottgordon/Repos/forge/components/marketing/HolidayUnmaskingSplash.tsx), [`components/marketing/FullMarketingHome.tsx`](file:///Users/scottgordon/Repos/forge/components/marketing/FullMarketingHome.tsx))**:
+  - Codified the core Forge Athletic stance: **CLINICAL SPORTS SCIENCE, DEEP KINETIC FLOW, 100% COACHING & TOOLS**.
+  - Capital allocation promise: 100% of resources is invested directly into the world's best sports science tools and elite Master Coach guidance.
+  - Embedded the Precision Gym Sanctuary manifesto showcase with `CLINICAL SPORTS SCIENCE · DEEP KINETIC FLOW · 100% BESPOKE COACHING` badge on the pre-launch splash page and marketing home.
   - Documented the Human + AI performance synergy: sub-180ms computational AI (bar velocity, posture mesh diagnostics, dynamic load autoregulation) paired with Coach Gordon's 18+ years of clinical human stewardship (`NASM-CPT® · CES® · PES® · CNC™ · CSNC · Master Trainer Candidate`).
 - **Algorithmic Peer Recommendation & Referral Engine ([`app/api/referrals/`](file:///Users/scottgordon/Repos/forge/app/api/referrals/), [`app/r/`](file:///Users/scottgordon/Repos/forge/app/r/), [`components/referrals/`](file:///Users/scottgordon/Repos/forge/components/referrals/), [`lib/referrals.ts`](file:///Users/scottgordon/Repos/forge/lib/referrals.ts))**:
   - Deployed high-trust peer-to-peer referral architecture with unique referral codes, dynamic QR codes, Founding Member Pass gift sharing, and verified conversion tracking.

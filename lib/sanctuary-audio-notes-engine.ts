@@ -2,12 +2,11 @@
  * Forge Athletic — Coach-Client Sanctuary Audio Notes Engine
  * 
  * Enforces the brand promise:
- * "NO SOCIAL MEDIA · ZERO DISTRACTIONS · 100% COACHING & TOOLS"
+ * "CLINICAL SPORTS SCIENCE · DEEP KINETIC FLOW · 100% COACHING & TOOLS"
  * 
  * Delivers 20-60 second encrypted acoustic voice memos from Coach Gordon
- * straight to the athlete's headphones during rest intervals. Replaces mindless
- * social feeds and doomscrolling with clinical biomechanical cues, vagal down-regulation,
- * and mental focus.
+ * straight to the athlete's headphones during rest intervals. Delivers clinical
+ * biomechanical cues, vagal down-regulation, and mental focus.
  */
 
 import { configureAudioSession, getSharedAudioContext } from './web-audio-cadence-engine'
@@ -61,7 +60,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     category: 'movement_cue',
     title: 'Squat Wedge & 360° Intra-Abdominal Brace',
     transcript:
-      "Coach Gordon here. On your upcoming squat set: before you unrack, pull the bar down like you're bending it over your traps to engage the lats. Screw your feet into the floor with tripod contact. Take a deep diaphragmatic breath, expand your obliques 360 degrees, and drive through the midfoot on the ascent. No social media, eyes on the horizon. Let's execute.",
+      "Coach Gordon here. On your upcoming squat set: before you unrack, pull the bar down like you're bending it over your traps to engage the lats. Screw your feet into the floor with tripod contact. Take a deep diaphragmatic breath, expand your obliques 360 degrees, and drive through the midfoot on the ascent. Eyes on the horizon, total commitment to the movement. Let's execute.",
     durationSeconds: 38,
     waveformPoints: [
       0.2, 0.45, 0.78, 0.65, 0.35, 0.88, 0.95, 0.72, 0.4, 0.62, 0.84, 0.55,
@@ -155,7 +154,7 @@ export const DEFAULT_SANCTUARY_AUDIO_NOTES: SanctuaryAudioNote[] = [
     category: 'mental_focus',
     title: 'The Sanctuary Creed: Hands on the Bar',
     transcript:
-      'Coach Gordon here. Remember why we built Forge: The gym is your sacred ground. No feeds, no scrolling, no vanity clout. Every distraction bleeds neurological intent and power output. When you step back up to that platform, you own every millimeter of the bar. Let us get back to work.',
+      'Coach Gordon here. Remember your standard: The training floor is where you build lifelong resilience. Breathe through the diaphragm, stay locked into your movement cadence, and channel every ounce of neurological intent. When you step back up to that platform, you own every millimeter of the bar. Let us get back to work.',
     durationSeconds: 30,
     waveformPoints: [
       0.32, 0.6, 0.88, 0.94, 0.75, 0.5, 0.72, 0.9, 0.85, 0.62, 0.78, 0.95,

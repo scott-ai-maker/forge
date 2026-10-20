@@ -1690,9 +1690,9 @@ export default function HolidayUnmaskingSplash({
                 gap: 8,
                 padding: '5px 14px',
                 borderRadius: 9999,
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
-                color: '#FCA5A5',
+                background: 'rgba(245, 158, 11, 0.12)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                color: '#FDE68A',
                 fontFamily: 'var(--font-telemetry)',
                 fontSize: 11,
                 fontWeight: 700,
@@ -1701,11 +1701,11 @@ export default function HolidayUnmaskingSplash({
                 marginBottom: 16,
               }}
             >
-              <span>✕ NO SOCIAL MEDIA</span>
+              <span>CLINICAL SPORTS SCIENCE</span>
               <span>·</span>
-              <span>ZERO DISTRACTIONS</span>
+              <span>DEEP KINETIC FLOW</span>
               <span>·</span>
-              <span>100% COACHING</span>
+              <span>100% BESPOKE COACHING</span>
             </div>
 
             <h2
@@ -1721,7 +1721,7 @@ export default function HolidayUnmaskingSplash({
                 color: '#FFFFFF',
               }}
             >
-              The Anti-Distraction Gym Sanctuary
+              The Precision Training Sanctuary
             </h2>
 
             <p
@@ -1732,7 +1732,7 @@ export default function HolidayUnmaskingSplash({
                 margin: '0 auto',
               }}
             >
-              We don&apos;t buy paid social ads. We don&apos;t build endless feeds or pay fitness influencers to pose.
+              Engineered around NASM Virtual Coaching best practices, Forge Athletic brings clinical-grade sports science and master coach guidance directly to your workout.
               We pour 100% of our energy into two things: <strong>the world&apos;s best sports science tools</strong> and <strong>the highest quality coaching</strong>—giving you an extraordinary training experience with zero noise.
             </p>
           </div>
@@ -1762,12 +1762,12 @@ export default function HolidayUnmaskingSplash({
                   width: 38,
                   height: 38,
                   borderRadius: 10,
-                  background: 'rgba(239, 68, 68, 0.12)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#F87171',
+                  color: '#FBBF24',
                 }}
               >
                 <ForgeIcon name="lock" size={18} />
@@ -1776,7 +1776,7 @@ export default function HolidayUnmaskingSplash({
                 style={{
                   fontFamily: 'var(--font-telemetry)',
                   fontSize: 10,
-                  color: '#F87171',
+                  color: '#FBBF24',
                   letterSpacing: '0.12em',
                   textTransform: 'uppercase',
                   fontWeight: 600,
@@ -1794,7 +1794,7 @@ export default function HolidayUnmaskingSplash({
                   letterSpacing: '0.02em',
                 }}
               >
-                Zero Feeds. Pure Flow.
+                Uninterrupted Flow State
               </h3>
               <p
                 style={{
@@ -1804,7 +1804,7 @@ export default function HolidayUnmaskingSplash({
                   margin: 0,
                 }}
               >
-                No doom-scrolling between sets. No dopamine traps or camera circus. The gym is sacred ground for mechanical tension, heart rate control, and mental clarity.
+                Every second between sets is dialed in for autonomic recovery, diaphragmatic breathwork, and nervous system replenishment. Hands on the bar, mind in the muscle, eyes on real physical progress.
               </p>
             </div>
 

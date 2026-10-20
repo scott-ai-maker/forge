@@ -225,9 +225,9 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
               gap: '8px',
               padding: '4px 14px',
               borderRadius: '9999px',
-              background: 'rgba(239, 68, 68, 0.12)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#FCA5A5',
+              background: 'rgba(245, 158, 11, 0.12)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              color: '#FDE68A',
               fontFamily: 'var(--font-telemetry)',
               fontSize: '11px',
               fontWeight: 700,
@@ -236,11 +236,11 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
               marginBottom: '14px',
             }}
           >
-            <span>✕ NO SOCIAL MEDIA</span>
+            <span>CLINICAL SPORTS SCIENCE</span>
             <span>·</span>
-            <span>ZERO DISTRACTIONS</span>
+            <span>DEEP KINETIC FLOW</span>
             <span>·</span>
-            <span>100% COACHING</span>
+            <span>100% BESPOKE COACHING</span>
           </div>
           <h2
             style={{
@@ -253,7 +253,7 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
               margin: '0 0 12px',
             }}
           >
-            The Anti-Distraction Gym Sanctuary
+            The Precision Training Sanctuary
           </h2>
           <p
             style={{
@@ -263,7 +263,7 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
               margin: '0 auto 2rem',
             }}
           >
-            We don&apos;t spend your membership dues on social ads, endless feeds, or influencer clout.
+            Engineered around NASM Virtual Coaching best practices, Forge Athletic brings clinical-grade sports science and master coach guidance directly to your workout.
             We pour 100% of our focus into <strong>the best tools</strong> and <strong>the best coaching</strong>—the perfect combination of computational AI and 18+ years of Master Coach stewardship.
           </p>
           <div
@@ -284,7 +284,7 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
             >
               <div
                 style={{
-                  color: '#F87171',
+                  color: '#FBBF24',
                   fontFamily: 'var(--font-telemetry)',
                   fontSize: '10px',
                   letterSpacing: '0.12em',
@@ -292,13 +292,13 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
                   marginBottom: '6px',
                 }}
               >
-                PURE FOCUS
+                DEEP KINETIC FLOW
               </div>
               <h3 style={{ color: '#FFF', fontSize: '1.1rem', margin: '0 0 6px', fontFamily: 'var(--font-heading)' }}>
-                Zero Feeds. Pure Flow.
+                Uninterrupted Flow State
               </h3>
               <p style={{ color: '#94A3B8', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
-                No doom-scrolling between sets. No dopamine traps. When you train, your attention belongs to mechanical tension, kinetic alignment, and real progress.
+                Every second between sets is dialed in for autonomic recovery, diaphragmatic breathwork, and nervous system replenishment. Hands on the bar, mind in the muscle, eyes on real physical progress.
               </p>
             </div>
             <div

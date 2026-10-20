@@ -83,25 +83,25 @@ describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
     expect(remaining).toBe(12)
   })
 
-  it('verifies Anti-Distraction Sanctuary, No Social Media, and Human + AI manifesto tokens across marketing surfaces', () => {
+  it('verifies Precision Training Sanctuary, Clinical Sports Science, and Human + AI manifesto tokens across marketing surfaces', () => {
     // Splash page assertions
-    expect(componentSource).toContain('NO SOCIAL MEDIA')
-    expect(componentSource).toContain('The Anti-Distraction Gym Sanctuary')
-    expect(componentSource).toContain('Zero Feeds. Pure Flow.')
+    expect(componentSource).toContain('CLINICAL SPORTS SCIENCE')
+    expect(componentSource).toContain('The Precision Training Sanctuary')
+    expect(componentSource).toContain('Uninterrupted Flow State')
     expect(componentSource).toContain('Best Tools × Best Coaching')
     expect(componentSource).toContain('Results-Driven Flywheel')
 
     // Home page assertions
-    expect(homePageSource).toContain('The Anti-Distraction Gym Sanctuary')
-    expect(homePageSource).toContain('NO SOCIAL MEDIA')
+    expect(homePageSource).toContain('The Precision Training Sanctuary')
+    expect(homePageSource).toContain('CLINICAL SPORTS SCIENCE')
     expect(homePageSource).toContain('Best Tools × Best Coaching')
 
     // Master manifesto document validation
     const manifestoPath = path.resolve(process.cwd(), 'docs/brand-strategy-manifesto.md')
     expect(fs.existsSync(manifestoPath)).toBe(true)
     const manifestoContent = fs.readFileSync(manifestoPath, 'utf-8')
-    expect(manifestoContent).toContain('The Zero-Distraction Sanctuary')
-    expect(manifestoContent).toContain('NO SOCIAL MEDIA')
+    expect(manifestoContent).toContain('The Precision Training Sanctuary')
+    expect(manifestoContent).toContain('Clinical Sports Science')
     expect(manifestoContent).toContain('The Triad of Organic Growth')
     expect(manifestoContent).toContain('HIGH-INTENT ORGANIC SEO')
     expect(manifestoContent).toContain('RECOMMENDATION & REFERRAL ENGINE')

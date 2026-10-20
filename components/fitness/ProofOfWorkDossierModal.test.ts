@@ -9,10 +9,11 @@ describe('ProofOfWorkDossierModal Component Structure & Tokens', () => {
     expect(fs.existsSync(componentPath)).toBe(true)
   })
 
-  it('contains Anti-Social proof of work and clinical periodization tokens', () => {
+  it('contains verified evidence proof of work and clinical periodization tokens', () => {
     const source = fs.readFileSync(componentPath, 'utf-8')
     expect(source).toContain('Proof of Work Performance Dossier')
-    expect(source).toContain('ZERO SOCIAL MEDIA')
+    expect(source).toContain('VERIFIED CLINICAL EVIDENCE')
+    expect(source).toContain('Hands on bar, uninterrupted flow')
     expect(source).toContain('Compound Overload Vault')
     expect(source).toContain('Sanctuary Mode Autonomic &amp; Neuro-Discipline Record')
     expect(source).toContain('Clinical S.O.A.P. Documentation')

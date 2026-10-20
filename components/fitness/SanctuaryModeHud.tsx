@@ -106,9 +106,9 @@ export default function SanctuaryModeHud({
                 gap: 6,
                 padding: '4px 12px',
                 borderRadius: 9999,
-                background: 'rgba(239, 68, 68, 0.15)',
-                border: '1px solid rgba(239, 68, 68, 0.4)',
-                color: '#F87171',
+                background: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.4)',
+                color: '#FDE68A',
                 fontFamily: 'var(--font-telemetry)',
                 fontSize: 10.5,
                 fontWeight: 700,
@@ -117,9 +117,9 @@ export default function SanctuaryModeHud({
                 marginBottom: 16,
               }}
             >
-              <span>✕ NO SOCIAL MEDIA</span>
-              <span>·</span>
               <span>SANCTUARY SHIELD</span>
+              <span>·</span>
+              <span>KINETIC FOCUS</span>
             </div>
 
             <h3
@@ -582,7 +582,7 @@ export default function SanctuaryModeHud({
                       fontFamily: 'var(--font-telemetry)',
                     }}
                   >
-                    NO SOCIAL MEDIA · ZERO DISTRACTIONS · 100% COACHING
+                    AUTONOMIC RECOVERY · DEEP FOCUS · 100% COACHING
                   </div>
                 </div>
               </div>

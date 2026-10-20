@@ -2,7 +2,7 @@
  * Forge Athletic — Clinical "Proof of Work" Performance Dossier Engine
  * 
  * Enforces the brand promise:
- * "NO SOCIAL MEDIA. ZERO DISTRACTIONS. 100% COACHING & EVIDENCE."
+ * "CLINICAL EVIDENCE · DEEP KINETIC FLOW · 100% COACHING & TOOLS"
  * 
  * Generates an executive-grade clinical performance dossier combining:
  * 1. Cumulative kinetic tonnage & Big 5 compound 1RM overload curve
@@ -339,8 +339,8 @@ export function buildProofOfWorkDossier(params: BuildProofOfWorkParams): ProofOf
   const peerInvitation = {
     referralCode: rawCode,
     shareUrl,
-    invitationHeadline: '✕ NO SOCIAL MEDIA · 100% COACHING & TOOLS',
-    invitationBody: `In a fitness culture flooded with superficial algorithms, vanity selfies, and sponsored hype, ${athleteName} trains in the Forge Athletic Gym Sanctuary. Hand this clinical dossier to a trusted doctor, physical therapist, or training partner who values uncompromised results.`,
+    invitationHeadline: 'CLINICAL PROOF OF WORK · 100% COACHING & EVIDENCE',
+    invitationBody: `Rooted in NASM sports science and certified coaching excellence, ${athleteName} trains with verified biomechanical progression in Forge Athletic. Hand this clinical dossier to a trusted doctor, physical therapist, or training partner who values uncompromised results.`,
   }
 
   const dossier: ProofOfWorkDossier = {
@@ -538,8 +538,8 @@ export function decodeProofOfWorkToken(token: string): ProofOfWorkDossier | null
       peerInvitation: {
         referralCode: c.ref || 'FOUNDING-VIP',
         shareUrl: `https://forgeathletic.com/r/${c.ref || 'FOUNDING-VIP'}`,
-        invitationHeadline: '✕ NO SOCIAL MEDIA · 100% COACHING & TOOLS',
-        invitationBody: `In a fitness culture flooded with superficial algorithms, vanity selfies, and sponsored hype, ${athleteName} trains in the Forge Athletic Gym Sanctuary. Hand this clinical dossier to a trusted doctor, physical therapist, or training partner who values uncompromised results.`,
+        invitationHeadline: 'CLINICAL PROOF OF WORK · 100% COACHING & EVIDENCE',
+        invitationBody: `Rooted in NASM sports science and certified coaching excellence, ${athleteName} trains with verified biomechanical progression in Forge Athletic. Hand this clinical dossier to a trusted doctor, physical therapist, or training partner who values uncompromised results.`,
       },
       shareToken: token,
     }

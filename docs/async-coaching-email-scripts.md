@@ -105,7 +105,7 @@ Coach Gordon
 ## 2. Inbound Email Sequences
 
 ### Email 1: The 100% Remote Performance Announcement
-**Subject:** No gym commute. No influencer fluff. Master coaching anywhere.
+**Subject:** No gym commute. No cookie-cutter fluff. Master coaching anywhere.
 
 ```text
 Hey [First Name],

@@ -935,7 +935,7 @@ export default function CoachSanctuaryAudioNoteModal({
                         label: 'Sanctuary Creed',
                         title: 'The Sanctuary Creed: Hands on the Bar',
                         cat: 'mental_focus' as const,
-                        text: "Scott here. The gym is your sacred ground. No feeds, no scrolling. Every distraction bleeds power output. When you step back up, you own every millimeter of the bar.",
+                        text: "Coach Gordon here. Lock into your training zone. Keep your breath steady and your mind on kinetic intent. When you step back up to the bar, you own every millimeter of the lift.",
                       },
                     ].map(preset => (
                       <button

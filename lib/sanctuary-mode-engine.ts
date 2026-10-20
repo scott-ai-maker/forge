@@ -2,12 +2,12 @@
  * Forge Athletic — The Zero-Distraction Gym Sanctuary Engine
  * 
  * Enforces the core brand promise:
- * "NO SOCIAL MEDIA. ZERO DISTRACTIONS. 100% COACHING & TOOLS."
+ * "CLINICAL SPORTS SCIENCE · DEEP KINETIC FLOW · 100% COACHING & TOOLS"
  * 
  * Provides:
  * 1. Autonomic Down-Regulation Breathing Cadences (Box 4x4, 4-2-6 Vagal Recovery)
- * 2. In-Ear Web Audio Breath Metronomes (Hands on the bar, eyes off the phone)
- * 3. Rest Interval Distraction Guard & Tab-Switch Interception
+ * 2. In-Ear Web Audio Breath Metronomes (Hands on the bar, eyes on the movement)
+ * 3. Rest Interval Focus Guard & Active Screen Continuity
  * 4. Sanctuary Focus Discipline Scoring & Tonnage Telemetry
  */
 
@@ -216,7 +216,7 @@ export function calculateSanctuaryFocusScore(
   // Base score 100
   let score = 100
 
-  // Penalty per distraction event (e.g. checking Instagram/Twitter during rest)
+  // Penalty per distraction event (e.g. leaving the active training screen during rest)
   const eventPenalty = distractionEvents * 14
   // Penalty for time spent away from the workout
   const durationPenalty = Math.min(30, Math.floor(totalDistractionSeconds / 8))
@@ -274,7 +274,7 @@ export function getSanctuaryDisciplineBadge(
       tier: 'BRONZE',
       title: 'Refocus Needed',
       badge: 'Rest Disrupted · Distraction Detected',
-      quote: 'Remember our code: No feeds, no clout. Your recovery between heavy sets belongs to your nervous system.',
+      quote: 'Prioritize your recovery: Hands on the bar, breath regulated. Your recovery between heavy sets belongs to your nervous system.',
       score: safeScore,
       distractionEvents,
       downRegBreaths,
@@ -316,14 +316,14 @@ export function getDistractionInterceptionCue(
   if (distractionCount <= 1) {
     return {
       headline: 'SANCTUARY MODE // FOCUS RESTORED',
-      coachMessage: `Leave the notifications outside. Your nervous system needs this rest period to resynthesize ATP-CP before ${exerciseName}.`,
-      voiceCue: 'Focus restored. Hands on the bar, not on the feed.',
+      coachMessage: `Leave notifications outside. Your nervous system needs this rest period to resynthesize ATP-CP before ${exerciseName}.`,
+      voiceCue: 'Focus restored. Hands on the bar, breathe through the nose.',
       suggestedAction: 'Take 3 down-regulation breaths',
     }
   } else if (distractionCount === 2) {
     return {
       headline: 'SANCTUARY ALERT // PROTECT YOUR FOCUS',
-      coachMessage: 'The gym is sacred ground. Doom-scrolling between sets spikes cortisol and drops bar velocity. Dial back in.',
+      coachMessage: 'The training zone is where champions adapt. Losing focus between sets elevates sympathetic strain and reduces power output. Dial back in.',
       voiceCue: 'Lock back in. Breathe through your nose.',
       suggestedAction: 'Resume box breathing',
     }
@@ -331,7 +331,7 @@ export function getDistractionInterceptionCue(
     return {
       headline: 'COACH GORDON // EYES ON THE WEIGHTS',
       coachMessage: 'We do not sell your attention; we build your body. Finish this session with zero more screen switches.',
-      voiceCue: 'Own this set. No more distractions.',
+      voiceCue: 'Own this set. Complete focus.',
       suggestedAction: 'Commit to 100% focus',
     }
   }

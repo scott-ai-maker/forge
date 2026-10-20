@@ -53,7 +53,7 @@ Verify all active Stripe payment links and web endpoints match the calibrated ti
 
 ## 4. Inbound Client Acquisition & Authority Engine (NASM VCS Ch 8 & 9)
 
-Forge Athletic adheres strictly to an organic, high-trust, anti-social-media marketing strategy:
+Forge Athletic adheres strictly to an organic, high-trust digital marketing and client acquisition strategy rooted in NASM VCS Chapters 8 & 9:
 
 1. **Executive Authority Articles:** Publish deep dives on kinetic chain restoration, desk-worker lumbar relief, and bar velocity telemetry.
 2. **Interactive Kinetic Diagnostic (`/apply` & `/packages`):** 2-minute diagnostic quiz routing athletes to their ideal tier based on training experience and equipment.
