@@ -461,7 +461,7 @@ export default function ClinicalKineticWarmupModule({
     }
   }, [completedItems, isFuture, onWarmupCompleted, storageKey, warmupItems, workoutDay])
 
-  const markAllComplete = () => {
+  const markAllComplete = useCallback(() => {
     const updated: Record<string, boolean> = {}
     warmupItems.forEach(item => {
       updated[item.id] = true
@@ -475,7 +475,7 @@ export default function ClinicalKineticWarmupModule({
     if (onWarmupCompleted) {
       onWarmupCompleted(workoutDay)
     }
-  }
+  }, [isFuture, onWarmupCompleted, storageKey, warmupItems, workoutDay])
 
   // Inline Step Timer
   useEffect(() => {
@@ -551,29 +551,65 @@ export default function ClinicalKineticWarmupModule({
       const isUnilateral = currentItem ? (currentItem.isUnilateral ?? isUnilateralMovement(currentItem)) : false
 
       if (isUnilateral && guidedSide === 1) {
-        // Switch to Side 2 for unilateral movement!
+        // Switch to Side 2 for unilateral movement with 3-second get ready buffer!
         playCountdownPip(0)
         triggerHaptic('heavy')
-        speakCoachVoiceCue('Switch sides! Now side 2.')
+        speakCoachVoiceCue('Switch sides! Now side 2. Get ready in 3, 2, 1.')
         setGuidedSide(2)
         setTimerSecondsLeft(currentItem?.durationSec ?? 30)
-        // Keeps timer running for Side 2
+        setIsTimerRunning(false)
+        setPrepCountdown(3)
       } else {
         // Both sides complete (or bilateral movement done)
         playCountdownPip(0)
         triggerHaptic('heavy')
         if (currentItem) {
           toggleItem(currentItem.id)
-          speakCoachVoiceCue(currentItem.phase === 'lengthen' ? 'Both sides complete!' : 'Step complete!')
         }
-        setIsTimerRunning(false)
-        setGuidedSide(1)
+
+        const nextIdx = activeStepIndex + 1
+        if (nextIdx < warmupItems.length) {
+          // Naturally advance to the next exercise with 3-second get ready buffer!
+          setActiveStepIndex(nextIdx)
+          setGuidedSide(1)
+          const nextItem = warmupItems[nextIdx]
+          setTimerSecondsLeft(nextItem?.durationSec ?? 30)
+          setIsTimerRunning(false)
+          setPrepCountdown(3)
+          if (nextItem) {
+            const nextIsUnilateral = nextItem.isUnilateral ?? isUnilateralMovement(nextItem)
+            if (nextIsUnilateral) {
+              speakCoachVoiceCue(`Next: Side 1 of ${nextItem.name}. Get ready in 3, 2, 1.`)
+            } else {
+              speakCoachVoiceCue(`Next: ${nextItem.name}. Get ready in 3, 2, 1.`)
+            }
+          }
+        } else {
+          // Entire guided sequence completed
+          speakCoachVoiceCue('Warmup complete! Great work.')
+          markAllComplete()
+          setGuidedModalOpen(false)
+          setGuidedSide(1)
+          setPrepCountdown(0)
+          setIsTimerRunning(false)
+        }
       }
     }
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [guidedModalOpen, isTimerRunning, timerSecondsLeft, activeStepIndex, guidedSide, warmupItems, toggleItem])
+  }, [
+    guidedModalOpen,
+    isTimerRunning,
+    timerSecondsLeft,
+    activeStepIndex,
+    guidedSide,
+    warmupItems,
+    toggleItem,
+    markAllComplete,
+    playCountdownPip,
+    speakCoachVoiceCue,
+  ])
 
   // Guided Prep Countdown (3-second buffer to get ready for the next stretch)
   useEffect(() => {
@@ -649,14 +685,16 @@ export default function ClinicalKineticWarmupModule({
     playCountdownPip(0)
     triggerHaptic('tap')
     if (guidedSide === 1) {
-      speakCoachVoiceCue('Switching to Side 2')
+      speakCoachVoiceCue('Switching to Side 2. Get ready in 3, 2, 1.')
       setGuidedSide(2)
       setTimerSecondsLeft(currentItem.durationSec ?? 30)
-      setIsTimerRunning(true)
+      setIsTimerRunning(false)
+      setPrepCountdown(3)
     } else {
       speakCoachVoiceCue('Side 1')
       setGuidedSide(1)
       setTimerSecondsLeft(currentItem.durationSec ?? 30)
+      setIsTimerRunning(true)
     }
   }
 
@@ -1487,7 +1525,11 @@ export default function ClinicalKineticWarmupModule({
                           }}
                         >
                           <GaaIcon name="timer" size={13} tone="cyan" />
-                          <span>Get into position for next stretch ({prepCountdown}s)</span>
+                          <span>
+                            {activeIsUnilateral && guidedSide === 2
+                              ? `Get into position for Side 2 (${prepCountdown}s)`
+                              : `Get into position for next stretch (${prepCountdown}s)`}
+                          </span>
                         </div>
                       )}
 

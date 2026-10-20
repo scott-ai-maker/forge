@@ -894,7 +894,7 @@ export default function ClinicalCoolDownModule({
     }
   }, [completedItems, coolDownItems, isFuture, onCoolDownCompleted, storageKey, workoutDay])
 
-  const markAllComplete = () => {
+  const markAllComplete = useCallback(() => {
     const updated: Record<string, boolean> = {}
     coolDownItems.forEach(item => {
       updated[item.id] = true
@@ -908,7 +908,7 @@ export default function ClinicalCoolDownModule({
     if (onCoolDownCompleted) {
       onCoolDownCompleted(workoutDay)
     }
-  }
+  }, [coolDownItems, isFuture, onCoolDownCompleted, storageKey, workoutDay])
 
   // Inline Step Timer
   useEffect(() => {
@@ -984,29 +984,65 @@ export default function ClinicalCoolDownModule({
       const isUnilateral = currentItem ? (currentItem.isUnilateral ?? isUnilateralMovement(currentItem)) : false
 
       if (isUnilateral && guidedSide === 1) {
-        // Switch to Side 2 for unilateral movement!
+        // Switch to Side 2 for unilateral movement with 3-second get ready buffer!
         playCountdownPip(0)
         triggerHaptic('heavy')
-        speakCoachVoiceCue('Switch sides! Now side 2.')
+        speakCoachVoiceCue('Switch sides! Now side 2. Get ready in 3, 2, 1.')
         setGuidedSide(2)
         setTimerSecondsLeft(currentItem?.durationSec ?? 30)
-        // Keeps timer running for Side 2
+        setIsTimerRunning(false)
+        setPrepCountdown(3)
       } else {
         // Both sides complete (or bilateral movement done)
         playCountdownPip(0)
         triggerHaptic('heavy')
         if (currentItem) {
           toggleItem(currentItem.id)
-          speakCoachVoiceCue('Stretch complete!')
         }
-        setIsTimerRunning(false)
-        setGuidedSide(1)
+
+        const nextIdx = activeStepIndex + 1
+        if (nextIdx < coolDownItems.length) {
+          // Naturally advance to the next exercise with 3-second get ready buffer!
+          setActiveStepIndex(nextIdx)
+          setGuidedSide(1)
+          const nextItem = coolDownItems[nextIdx]
+          setTimerSecondsLeft(nextItem?.durationSec ?? 30)
+          setIsTimerRunning(false)
+          setPrepCountdown(3)
+          if (nextItem) {
+            const nextIsUnilateral = nextItem.isUnilateral ?? isUnilateralMovement(nextItem)
+            if (nextIsUnilateral) {
+              speakCoachVoiceCue(`Next: Side 1 of ${nextItem.name}. Get ready in 3, 2, 1.`)
+            } else {
+              speakCoachVoiceCue(`Next: ${nextItem.name}. Get ready in 3, 2, 1.`)
+            }
+          }
+        } else {
+          // Entire guided sequence completed
+          speakCoachVoiceCue('Cool-down complete! Great work.')
+          markAllComplete()
+          setGuidedModalOpen(false)
+          setGuidedSide(1)
+          setPrepCountdown(0)
+          setIsTimerRunning(false)
+        }
       }
     }
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [guidedModalOpen, isTimerRunning, timerSecondsLeft, activeStepIndex, guidedSide, coolDownItems, toggleItem])
+  }, [
+    guidedModalOpen,
+    isTimerRunning,
+    timerSecondsLeft,
+    activeStepIndex,
+    guidedSide,
+    coolDownItems,
+    toggleItem,
+    markAllComplete,
+    playCountdownPip,
+    speakCoachVoiceCue,
+  ])
 
   // Guided Prep Countdown (3-second buffer to get ready for the next stretch)
   useEffect(() => {
@@ -1082,14 +1118,16 @@ export default function ClinicalCoolDownModule({
     playCountdownPip(0)
     triggerHaptic('tap')
     if (guidedSide === 1) {
-      speakCoachVoiceCue('Switching to Side 2')
+      speakCoachVoiceCue('Switching to Side 2. Get ready in 3, 2, 1.')
       setGuidedSide(2)
       setTimerSecondsLeft(currentItem.durationSec ?? 30)
-      setIsTimerRunning(true)
+      setIsTimerRunning(false)
+      setPrepCountdown(3)
     } else {
       speakCoachVoiceCue('Side 1')
       setGuidedSide(1)
       setTimerSecondsLeft(currentItem.durationSec ?? 30)
+      setIsTimerRunning(true)
     }
   }
 
@@ -2005,7 +2043,11 @@ export default function ClinicalCoolDownModule({
                           }}
                         >
                           <GaaIcon name="timer" size={13} tone="cyan" />
-                          <span>Get into position for next stretch ({prepCountdown}s)</span>
+                          <span>
+                            {activeIsUnilateral && guidedSide === 2
+                              ? `Get into position for Side 2 (${prepCountdown}s)`
+                              : `Get into position for next stretch (${prepCountdown}s)`}
+                          </span>
                         </div>
                       )}
 
