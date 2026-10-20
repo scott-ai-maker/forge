@@ -4462,75 +4462,11 @@ export default function FitnessTrackerClient({
                               )}
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                              <details className="fitness-card-disclosure"><summary>Exercise options</summary>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => setSwapModalExercise({ workoutDay: workout.day, exercise: ex, initialDiscomfort: primaryDiscomfortArea })}
-                                  style={{
-                                    fontSize: 11.5,
-                                    background: 'rgba(212,160,23,0.12)',
-                                    border: '1px solid rgba(212,160,23,0.35)',
-                                    color: 'var(--gold-lt)',
-                                    padding: '4px 10px',
-                                    borderRadius: 4,
-                                    cursor: 'pointer',
-                                    fontFamily: 'Raleway, sans-serif',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 5,
-                                    fontWeight: 700,
-                                    transition: 'all 0.15s ease',
-                                  }}
-                                  title="Substitute this movement with an NASM safe regression for joint relief or equipment constraints"
-                                >
-                                  <GaaIcon name="shield-check" size={12} tone="gold" />
-                                  <span>Swap for Joint Relief</span>
-                                </button>
-                                {isBand && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      triggerHaptic('tap')
-                                      setActiveBandChartModal({ exerciseKey, exerciseName: ex.name })
-                                    }}
-                                    style={{
-                                      fontSize: 11.5,
-                                      background: 'rgba(212,160,23,0.12)',
-                                      border: '1px solid rgba(212,160,23,0.35)',
-                                      color: 'var(--gold-lt)',
-                                      padding: '4px 10px',
-                                      borderRadius: 4,
-                                      cursor: 'pointer',
-                                      fontFamily: 'Raleway, sans-serif',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 5,
-                                      fontWeight: 700,
-                                    }}
-                                    title="Open Resistance Band Matrix & Weight Equivalent Calibration Chart"
-                                  >
-                                    <GaaIcon name="activity" size={12} tone="gold" />
-                                    <span>Band Matrix Chart</span>
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => setSkipModal({ workoutDay: workout.day, exercise: ex })}
-                                  style={{ fontSize: 12, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--gray)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'Raleway, sans-serif' }}
-                                >
-                                  Skip Exercise
-                                </button>
-                              </div>
-                              </details>
-                            </div>
-
                             <div
                               data-testid="exercise-set-details"
                               className="fitness-inline-set-controls"
                               style={{
-                                marginTop: 6,
+                                marginTop: 8,
                               }}
                             >
                               <div className="fitness-primary-set-inputs">
@@ -4573,6 +4509,70 @@ export default function FitnessTrackerClient({
                                     />
                                   </div>
                                 )}
+                              </div>
+
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                                <details className="fitness-card-disclosure"><summary>Exercise options</summary>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSwapModalExercise({ workoutDay: workout.day, exercise: ex, initialDiscomfort: primaryDiscomfortArea })}
+                                    style={{
+                                      fontSize: 11.5,
+                                      background: 'rgba(212,160,23,0.12)',
+                                      border: '1px solid rgba(212,160,23,0.35)',
+                                      color: 'var(--gold-lt)',
+                                      padding: '4px 10px',
+                                      borderRadius: 4,
+                                      cursor: 'pointer',
+                                      fontFamily: 'Raleway, sans-serif',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                      fontWeight: 700,
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                    title="Substitute this movement with an NASM safe regression for joint relief or equipment constraints"
+                                  >
+                                    <GaaIcon name="shield-check" size={12} tone="gold" />
+                                    <span>Swap for Joint Relief</span>
+                                  </button>
+                                  {isBand && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        triggerHaptic('tap')
+                                        setActiveBandChartModal({ exerciseKey, exerciseName: ex.name })
+                                      }}
+                                      style={{
+                                        fontSize: 11.5,
+                                        background: 'rgba(212,160,23,0.12)',
+                                        border: '1px solid rgba(212,160,23,0.35)',
+                                        color: 'var(--gold-lt)',
+                                        padding: '4px 10px',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontFamily: 'Raleway, sans-serif',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 5,
+                                        fontWeight: 700,
+                                      }}
+                                      title="Open Resistance Band Matrix & Weight Equivalent Calibration Chart"
+                                    >
+                                      <GaaIcon name="activity" size={12} tone="gold" />
+                                      <span>Band Matrix Chart</span>
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setSkipModal({ workoutDay: workout.day, exercise: ex })}
+                                    style={{ fontSize: 12, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--gray)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'Raleway, sans-serif' }}
+                                  >
+                                    Skip Exercise
+                                  </button>
+                                </div>
+                                </details>
                               </div>
 
                               {isStrength && !isTimed && (
