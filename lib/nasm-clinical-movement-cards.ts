@@ -474,6 +474,54 @@ export const NASM_MOVEMENT_PROFILES: Record<string, Partial<NasmClinicalMovement
       'Fully extend arms at bottom for complete muscle stretch.',
     ],
   },
+  'dumbbell hammer curl': {
+    category: 'Arms',
+    optPhase: 'Phase 1 (Stabilization Endurance), Phase 2 (Strength Endurance), Phase 3 (Hypertrophy)',
+    tempo: '2/0/2 or 4/2/1',
+    primeMover: 'Brachioradialis & Brachialis',
+    synergists: ['Biceps Brachii', 'Pronator Teres'],
+    stabilizers: ['Rotator Cuff', 'Anterior Deltoid', 'Wrist Extensors & Flexors (Isometric)', 'Core LPHC'],
+    antagonists: ['Triceps Brachii', 'Anconeus'],
+    kineticCheckpoints: {
+      feetAnkles: 'Hip-width apart, straight and parallel, weight evenly distributed through tripod foot (heels and midfoot).',
+      knees: 'Soft athletic micro-bend (never hyperextended or locked), aligned over second and third toes.',
+      lphc: 'Neutral pelvis and lumbar lordosis; core braced to prevent sagittal trunk sway, swinging, or lumbar hyperextension.',
+      shoulders: 'Scapulae retracted and depressed; elbows pinned firmly against lateral ribcage as stationary hinges; strict neutral grip (palms facing inward toward each other, thumbs pointing straight up toward ceiling, dumbbell heads vertical, strictly zero supination or twisting).',
+      headNeck: 'Neutral cervical spine, chin packed/tucked, gaze directed straight ahead.',
+    },
+    setupInstructions: 'Stand tall with feet hip-width apart and knees soft. Hold a dumbbell in each hand with arms extended at sides in a strict neutral grip—palms facing inward toward each other and dumbbell heads aligned vertically.',
+    executionInstructions: 'Pinning elbows firmly against lateral ribcage, curl dumbbells upward by flexing at the elbows until forearms reach 90°–100°. Maintain strict neutral vertical grip with thumbs pointing up throughout; squeeze peak contraction and lower under controlled 2-second eccentric tempo with zero hip swing.',
+    clinicalCues: [
+      'Maintain strict neutral grip with palms facing inward and thumbs pointing up—strictly zero wrist twisting or supination.',
+      'Dumbbell orientation must remain strictly vertical (top head pointing at ceiling, bottom head at floor).',
+      'Lock elbows against lateral ribcage as fixed hinges; avoid elbow flare or anterior drift into shoulder flexion.',
+      'Brace core and engage glutes to eliminate backward torso sway or momentum.',
+    ],
+  },
+  'hammer curl': {
+    category: 'Arms',
+    optPhase: 'Phase 1 (Stabilization Endurance), Phase 2 (Strength Endurance), Phase 3 (Hypertrophy)',
+    tempo: '2/0/2 or 4/2/1',
+    primeMover: 'Brachioradialis & Brachialis',
+    synergists: ['Biceps Brachii', 'Pronator Teres'],
+    stabilizers: ['Rotator Cuff', 'Anterior Deltoid', 'Wrist Extensors & Flexors (Isometric)', 'Core LPHC'],
+    antagonists: ['Triceps Brachii', 'Anconeus'],
+    kineticCheckpoints: {
+      feetAnkles: 'Hip-width apart, straight and parallel, weight evenly distributed through tripod foot (heels and midfoot).',
+      knees: 'Soft athletic micro-bend (never hyperextended or locked), aligned over second and third toes.',
+      lphc: 'Neutral pelvis and lumbar lordosis; core braced to prevent sagittal trunk sway, swinging, or lumbar hyperextension.',
+      shoulders: 'Scapulae retracted and depressed; elbows pinned firmly against lateral ribcage as stationary hinges; strict neutral grip (palms facing inward toward each other, thumbs pointing straight up toward ceiling, dumbbell heads vertical, strictly zero supination or twisting).',
+      headNeck: 'Neutral cervical spine, chin packed/tucked, gaze directed straight ahead.',
+    },
+    setupInstructions: 'Stand tall with feet hip-width apart and knees soft. Hold a dumbbell in each hand with arms extended at sides in a strict neutral grip—palms facing inward toward each other and dumbbell heads aligned vertically.',
+    executionInstructions: 'Pinning elbows firmly against lateral ribcage, curl dumbbells upward by flexing at the elbows until forearms reach 90°–100°. Maintain strict neutral vertical grip with thumbs pointing up throughout; squeeze peak contraction and lower under controlled 2-second eccentric tempo with zero hip swing.',
+    clinicalCues: [
+      'Maintain strict neutral grip with palms facing inward and thumbs pointing up—strictly zero wrist twisting or supination.',
+      'Dumbbell orientation must remain strictly vertical (top head pointing at ceiling, bottom head at floor).',
+      'Lock elbows against lateral ribcage as fixed hinges; avoid elbow flare or anterior drift into shoulder flexion.',
+      'Brace core and engage glutes to eliminate backward torso sway or momentum.',
+    ],
+  },
   'triceps pushdown': {
     category: 'Arms',
     optPhase: 'Phase 2 (Strength Endurance), Phase 3 (Hypertrophy)',
@@ -869,6 +917,15 @@ export function deriveExerciseHowToSteps(
       '2. Lower hips vertically until front thigh is parallel to floor and rear knee hovers just above ground.',
       '3. Keep front knee tracking directly over middle toes without caving inward.',
       '4. Drive forcefully through the front heel to return to top standing position.',
+    ]
+  }
+
+  if (norm.includes('hammer curl')) {
+    return [
+      '1. Stand tall with feet hip-width apart, holding dumbbells at sides in a strict neutral grip (palms facing inward, thumbs pointing up).',
+      '2. Pin elbows firmly against lateral ribcage as fixed hinges with core braced and spine neutral.',
+      '3. Curl dumbbells upward with dumbbell heads held strictly vertical until forearms reach 90°–100° flexion.',
+      '4. Squeeze brachioradialis and brachialis at peak contraction, then lower under controlled 2-second tempo with zero supination.',
     ]
   }
 

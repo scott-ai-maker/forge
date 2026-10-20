@@ -182,5 +182,19 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     const bridgeCard = getNasmClinicalMovementCard('Glute Bridge')
     expect(bridgeCard.imageUrl).toBe('/images/exercises/glute-bridge.jpg')
   })
+
+  it('resolves Dumbbell Hammer Curl with strict neutral grip 5-checkpoint standards and zero supination', () => {
+    const hammer = getNasmClinicalMovementCard('Dumbbell Hammer Curl')
+    expect(hammer.hasOfficialMedia).toBe(true)
+    expect(hammer.imageUrl).toBe('/images/exercises/dumbbell-hammer-curl.jpg')
+    expect(hammer.primeMover).toContain('Brachioradialis')
+    expect(hammer.primeMover).toContain('Brachialis')
+    expect(hammer.kineticCheckpoints.shoulders).toContain('neutral grip')
+    expect(hammer.kineticCheckpoints.shoulders).toContain('zero supination')
+    expect(hammer.kineticCheckpoints.lphc).toContain('Neutral pelvis')
+    expect(hammer.howToSteps[0]).toMatch(/palms facing each other|neutral grip/)
+    expect(hammer.howToSteps.every(s => !s.toLowerCase().includes('supinated'))).toBe(true)
+    expect(hammer.clinicalCues.some(c => c.toLowerCase().includes('zero wrist twisting or supination'))).toBe(true)
+  })
 })
 
