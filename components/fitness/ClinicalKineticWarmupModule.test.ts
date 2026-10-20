@@ -189,6 +189,31 @@ describe('ClinicalKineticWarmupModule & ClinicalCoolDownModule Key Scoping & Fut
       expect(code).toContain("WebkitOverflowScrolling: 'touch'")
       expect(code).toContain("WebkitBackdropFilter: 'blur(8px)'")
     })
+
+    it('verifies that both Guided Flow modules enforce a 3-second get-ready countdown upon advancing to the next stretch', async () => {
+      const fs = await import('node:fs')
+      const path = await import('node:path')
+      const warmupCode = fs.readFileSync(
+        path.resolve(process.cwd(), 'components/fitness/ClinicalKineticWarmupModule.tsx'),
+        'utf-8'
+      )
+      const coolDownCode = fs.readFileSync(
+        path.resolve(process.cwd(), 'components/fitness/ClinicalCoolDownModule.tsx'),
+        'utf-8'
+      )
+
+      // Warmup module 3-second get ready assertions
+      expect(warmupCode).toContain('setPrepCountdown(3)')
+      expect(warmupCode).toContain('Get ready in 3, 2, 1')
+      expect(warmupCode).toContain('Get into position for next stretch')
+      expect(warmupCode).toContain("'Get Ready'")
+
+      // Cool-down module 3-second get ready assertions
+      expect(coolDownCode).toContain('setPrepCountdown(3)')
+      expect(coolDownCode).toContain('Get ready in 3, 2, 1')
+      expect(coolDownCode).toContain('Get into position for next stretch')
+      expect(coolDownCode).toContain("'Get Ready'")
+    })
   })
 })
 

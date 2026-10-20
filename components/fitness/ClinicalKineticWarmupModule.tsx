@@ -249,6 +249,7 @@ export default function ClinicalKineticWarmupModule({
   const [timerSecondsLeft, setTimerSecondsLeft] = useState<number>(30)
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false)
   const [guidedSide, setGuidedSide] = useState<1 | 2>(1)
+  const [prepCountdown, setPrepCountdown] = useState<number>(0)
   const [activeInlineTimerId, setActiveInlineTimerId] = useState<string | null>(null)
   const [inlineTimerSeconds, setInlineTimerSeconds] = useState<number>(30)
   const [inlineSide, setInlineSide] = useState<1 | 2>(1)
@@ -574,9 +575,33 @@ export default function ClinicalKineticWarmupModule({
     }
   }, [guidedModalOpen, isTimerRunning, timerSecondsLeft, activeStepIndex, guidedSide, warmupItems, toggleItem])
 
+  // Guided Prep Countdown (3-second buffer to get ready for the next stretch)
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null
+    if (guidedModalOpen && prepCountdown > 0) {
+      interval = setInterval(() => {
+        setPrepCountdown(prev => {
+          if (prev <= 1) {
+            playCountdownPip(0)
+            triggerHaptic('timer')
+            setIsTimerRunning(true)
+            speakCoachVoiceCue('Begin stretch')
+            return 0
+          }
+          playCountdownPip(prev - 1)
+          return prev - 1
+        })
+      }, 1000)
+    }
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [guidedModalOpen, prepCountdown, playCountdownPip, speakCoachVoiceCue])
+
   const startGuidedFlow = () => {
     setActiveStepIndex(0)
     setGuidedSide(1)
+    setPrepCountdown(0)
     const firstItem = warmupItems[0]
     setTimerSecondsLeft(firstItem?.durationSec ?? 30)
     setIsTimerRunning(true)
@@ -599,19 +624,22 @@ export default function ClinicalKineticWarmupModule({
       setGuidedSide(1)
       const nextItem = warmupItems[nextIdx]
       setTimerSecondsLeft(nextItem?.durationSec ?? 30)
-      setIsTimerRunning(true)
+      setIsTimerRunning(false)
+      setPrepCountdown(3)
+      triggerHaptic('tap')
       if (nextItem) {
         const isUnilateral = nextItem.isUnilateral ?? isUnilateralMovement(nextItem)
         if (isUnilateral) {
-          speakCoachVoiceCue(`Next: Side 1 of ${nextItem.name}`)
+          speakCoachVoiceCue(`Next: Side 1 of ${nextItem.name}. Get ready in 3, 2, 1.`)
         } else {
-          speakCoachVoiceCue(`Next: ${nextItem.name}`)
+          speakCoachVoiceCue(`Next: ${nextItem.name}. Get ready in 3, 2, 1.`)
         }
       }
     } else {
       markAllComplete()
       setGuidedModalOpen(false)
       setGuidedSide(1)
+      setPrepCountdown(0)
     }
   }
 
@@ -1441,29 +1469,54 @@ export default function ClinicalKineticWarmupModule({
                       )}
 
                       {/* Circular Timer Clock */}
+                      {prepCountdown > 0 && (
+                        <div
+                          style={{
+                            background: 'rgba(56,189,248,0.15)',
+                            border: '1px solid rgba(56,189,248,0.4)',
+                            borderRadius: 20,
+                            padding: '4px 14px',
+                            margin: '0 auto 12px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            color: '#38BDF8',
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          <GaaIcon name="timer" size={13} tone="cyan" />
+                          <span>Get into position for next stretch ({prepCountdown}s)</span>
+                        </div>
+                      )}
+
                       <div
                         style={{
                           width: 'clamp(100px, 24vw, 130px)',
                           height: 'clamp(100px, 24vw, 130px)',
                           borderRadius: '50%',
                           margin: '0 auto 14px',
-                          border: '4px solid rgba(212,160,23,0.3)',
-                          borderTopColor: '#D4AF37',
+                          border: prepCountdown > 0 ? '4px solid rgba(56,189,248,0.5)' : '4px solid rgba(212,160,23,0.3)',
+                          borderTopColor: prepCountdown > 0 ? '#38BDF8' : '#D4AF37',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexDirection: 'column',
                           background: 'rgba(0,0,0,0.4)',
-                          boxShadow: '0 0 25px rgba(212,160,23,0.2)',
+                          boxShadow: prepCountdown > 0 ? '0 0 25px rgba(56,189,248,0.35)' : '0 0 25px rgba(212,160,23,0.2)',
+                          transition: 'all 0.2s ease',
                         }}
                       >
-                        <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 700, color: '#D4AF37', lineHeight: 1 }}>
-                          {timerSecondsLeft}s
+                        <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 700, color: prepCountdown > 0 ? '#38BDF8' : '#D4AF37', lineHeight: 1 }}>
+                          {prepCountdown > 0 ? prepCountdown : `${timerSecondsLeft}s`}
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>
-                          {activeIsUnilateral
-                            ? (guidedSide === 1 ? 'Side 1 Hold' : 'Side 2 Hold')
-                            : (isTimerRunning ? 'In Progress' : 'Paused')}
+                        <div style={{ fontSize: 10, color: prepCountdown > 0 ? '#38BDF8' : 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4, fontWeight: prepCountdown > 0 ? 800 : 500 }}>
+                          {prepCountdown > 0
+                            ? 'Get Ready'
+                            : activeIsUnilateral
+                              ? (guidedSide === 1 ? 'Side 1 Hold' : 'Side 2 Hold')
+                              : (isTimerRunning ? 'In Progress' : 'Paused')}
                         </div>
                       </div>
                     </>
@@ -1503,22 +1556,29 @@ export default function ClinicalKineticWarmupModule({
                 <>
                   <button
                     type="button"
+                    disabled={prepCountdown > 0}
                     onClick={() => setIsTimerRunning(prev => !prev)}
                     style={{
-                      background: isTimerRunning ? 'rgba(255,255,255,0.1)' : 'rgba(16,185,129,0.2)',
-                      border: isTimerRunning ? '1px solid rgba(255,255,255,0.2)' : '1px solid #10B981',
-                      color: isTimerRunning ? '#FFFFFF' : '#10B981',
+                      background: prepCountdown > 0 ? 'rgba(56,189,248,0.08)' : isTimerRunning ? 'rgba(255,255,255,0.1)' : 'rgba(16,185,129,0.2)',
+                      border: prepCountdown > 0 ? '1px solid rgba(56,189,248,0.25)' : isTimerRunning ? '1px solid rgba(255,255,255,0.2)' : '1px solid #10B981',
+                      color: prepCountdown > 0 ? '#38BDF8' : isTimerRunning ? '#FFFFFF' : '#10B981',
                       padding: '9px 18px',
                       borderRadius: 6,
                       fontSize: 12.5,
                       fontWeight: 700,
-                      cursor: 'pointer',
+                      cursor: prepCountdown > 0 ? 'default' : 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 5,
+                      opacity: prepCountdown > 0 ? 0.75 : 1,
                     }}
                   >
-                    {isTimerRunning ? (
+                    {prepCountdown > 0 ? (
+                      <>
+                        <GaaIcon name="timer" size={12} tone="cyan" />
+                        <span>Ready in {prepCountdown}s</span>
+                      </>
+                    ) : isTimerRunning ? (
                       <>
                         <GaaIcon name="pause" size={12} tone="inherit" />
                         <span>Pause</span>
