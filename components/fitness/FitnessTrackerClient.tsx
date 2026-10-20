@@ -4354,6 +4354,20 @@ export default function FitnessTrackerClient({
                                       +
                                     </button>
                                   </div>
+                                  {isStrength && Boolean(draft.tempo || effectiveTempo) && (
+                                    <RepCadenceMetronome
+                                      tempo={draft.tempo || effectiveTempo}
+                                      targetReps={draft.reps || 8}
+                                      exerciseName={ex.name}
+                                      onCompleteReps={(completedReps) => {
+                                        setInlineSetDrafts(prev => ({
+                                          ...prev,
+                                          [exerciseKey]: { ...draft, reps: String(completedReps) },
+                                        }))
+                                      }}
+                                      triggerHaptic={triggerHaptic}
+                                    />
+                                  )}
                                 </div>
                               )}
 
@@ -4539,23 +4553,6 @@ export default function FitnessTrackerClient({
                                 </div>
 
                               </div>
-
-                              {isStrength && Boolean(draft.tempo || effectiveTempo) && (
-                                <div style={{ gridColumn: '1 / -1' }}>
-                                  <RepCadenceMetronome
-                                    tempo={draft.tempo || effectiveTempo}
-                                    targetReps={draft.reps || 8}
-                                    exerciseName={ex.name}
-                                    onCompleteReps={(completedReps) => {
-                                      setInlineSetDrafts(prev => ({
-                                        ...prev,
-                                        [exerciseKey]: { ...draft, reps: String(completedReps) },
-                                      }))
-                                    }}
-                                    triggerHaptic={triggerHaptic}
-                                  />
-                                </div>
-                              )}
 
                               <div className="fitness-primary-set-inputs">
                                 {!isTimed ? (
