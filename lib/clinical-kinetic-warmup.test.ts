@@ -34,7 +34,7 @@ describe('Clinical Kinetic Warmup & OHSA Integration', () => {
 
     // Warmup Inhibit SMR
     expect(resolveGaaExerciseImage('SMR Calves & Thoracic Spine')).toBe('/images/exercises/foam-roll-calves.jpg')
-    expect(resolveGaaExerciseImage('SMR Peroneals')).toBe('https://img.youtube.com/vi/o0sqnX6FMzk/hqdefault.jpg')
+    expect(resolveGaaExerciseImage('SMR Peroneals')).toBe('/images/exercises/self-myofascial-release-smr-peroneals.jpg')
     expect(resolveGaaExerciseImage('SMR IT-Band / TFL')).toBe('https://img.youtube.com/vi/NfWjVK7agTM/hqdefault.jpg')
     expect(resolveGaaExerciseImage('SMR Adductors (Inner Thigh)')).toBe('/images/exercises/foam-roll-adductors.jpg')
 
