@@ -135,7 +135,7 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     // 3. Bilateral / Standard Scaption
     const scaption = getNasmClinicalMovementCard('Scaption')
     expect(scaption.hasOfficialMedia).toBe(true)
-    expect(scaption.imageUrl).toBe('https://img.youtube.com/vi/PKjDGnwpB_o/hqdefault.jpg')
+    expect(scaption.imageUrl).toBe('/images/exercises/single-leg-scaption.jpg')
     expect(scaption.videoUrl).toContain('PKjDGnwpB_o')
     expect(scaption.embedUrl).toContain('PKjDGnwpB_o')
     expect(scaption.clinicalCues.some(cue => cue.includes('scapular plane'))).toBe(true)
@@ -143,7 +143,7 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     // 4. Single-Leg Scaption (Core Stabilization Phase 1)
     const singleLegScaption = getNasmClinicalMovementCard('Single-Leg Scaption')
     expect(singleLegScaption.hasOfficialMedia).toBe(true)
-    expect(singleLegScaption.imageUrl).toBe('https://img.youtube.com/vi/PKjDGnwpB_o/hqdefault.jpg')
+    expect(singleLegScaption.imageUrl).toBe('/images/exercises/single-leg-scaption.jpg')
     expect(singleLegScaption.videoUrl).toContain('PKjDGnwpB_o')
     expect(singleLegScaption.embedUrl).toContain('PKjDGnwpB_o')
 
