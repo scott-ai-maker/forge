@@ -116,7 +116,7 @@ import {
 } from '@/lib/fitness'
 import { calculateActiveMicrocycleProgress } from '@/lib/periodization-roadmap'
 import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
-import { resolveGaaExerciseImage } from '@/lib/nasm-generated-images'
+import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
 import { detectExerciseEquipment } from '@/lib/nasm-equipment-detector'
 import { calculate1Rm } from '@/lib/progressive-overload-engine'
 import { identifyHeartRateZone } from '@/lib/nasm-cardio-stage-engine'
@@ -3614,10 +3614,11 @@ export default function FitnessTrackerClient({
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                              {/* Visual Media Thumbnail (GAA Movement Photography) */}
+                              {/* Visual Media Thumbnail (Forge Movement Photography) */}
                               {(() => {
-                                const gaaImage = resolveGaaExerciseImage(ex.name, false)
-                                const thumbUrl = gaaImage || movementCard.imageUrl || movementCard.fallbackImageUrl || '/images/exercises/image-not-available.jpg'
+                                const gaaImage = resolveGaaExerciseImage(ex.name, true)
+                                const thumbUrl = gaaImage || movementCard.imageUrl || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+                                const hasVideo = Boolean(ex.videoUrl || movementCard.videoUrl)
                                 const isDone = exLoggedSets >= exTargetSets && exTargetSets > 0
                                 return (
                                   <div
@@ -3638,35 +3639,50 @@ export default function FitnessTrackerClient({
                                     }}
                                     style={{
                                       position: 'relative',
-                                      width: 44,
-                                      height: 44,
+                                      width: 'clamp(84px, 18vw, 112px)',
+                                      aspectRatio: '16 / 10',
+                                      minWidth: 'clamp(84px, 18vw, 112px)',
+                                      height: 'auto',
                                       borderRadius: 6,
                                       overflow: 'hidden',
+                                      backgroundColor: '#0a0f1d',
+                                      border: isDone ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(212,160,23,0.35)',
+                                      cursor: 'pointer',
                                       flexShrink: 0,
-                                      backgroundColor: '#070B14',
-                                      border: isDone ? '1px solid rgba(16,185,129,0.45)' : '1px solid rgba(212,160,23,0.3)',
                                       boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
                                     }}
+                                    title={`View form demonstration for ${ex.name}`}
                                   >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                       src={thumbUrl}
                                       alt={ex.name}
-                                      width={44}
-                                      height={44}
                                       loading="lazy"
                                       decoding="async"
                                       onError={(e) => {
-                                        (e.currentTarget as HTMLImageElement).src = '/images/exercises/image-not-available.jpg'
+                                        (e.currentTarget as HTMLImageElement).src = BRAND_LOGO_FALLBACK_IMAGE
                                       }}
                                       style={{
                                         width: '100%',
                                         height: '100%',
+                                        aspectRatio: '16 / 10',
                                         objectFit: 'cover',
                                         objectPosition: 'center',
                                         display: 'block',
                                       }}
                                     />
+                                    <div
+                                      style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        background: 'rgba(0,0,0,0.35)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                      }}
+                                    >
+                                      <GaaIcon name={hasVideo ? "play" : "book"} size={13} tone="white" />
+                                    </div>
                                   </div>
                                 )
                               })()}
@@ -3723,7 +3739,83 @@ export default function FitnessTrackerClient({
                             </div>
                           </summary>
                           {(isExpanded || activeRestTimerKey === exerciseKey) && (
-                          <div style={{ padding: '6px 4px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                          <div style={{ padding: '8px 12px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                            {/* High-Definition Visual Movement Demonstration Banner */}
+                            {(() => {
+                              const gaaImage = resolveGaaExerciseImage(ex.name, true)
+                              const bannerUrl = gaaImage || movementCard.imageUrl || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+                              const isDone = exLoggedSets >= exTargetSets && exTargetSets > 0
+                              return (
+                                <div
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setActiveVideoExercise(ex)
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault()
+                                      e.stopPropagation()
+                                      setActiveVideoExercise(ex)
+                                    }
+                                  }}
+                                  style={{
+                                    position: 'relative',
+                                    width: '100%',
+                                    aspectRatio: '16 / 9',
+                                    maxHeight: 'clamp(180px, 32vh, 260px)',
+                                    borderRadius: 8,
+                                    overflow: 'hidden',
+                                    marginBottom: 12,
+                                    backgroundColor: '#0a0f1d',
+                                    border: isDone ? '1px solid rgba(16,185,129,0.35)' : '1px solid rgba(212,160,23,0.35)',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
+                                  }}
+                                  title={`View form demonstration for ${ex.name}`}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={bannerUrl}
+                                    alt={ex.name}
+                                    loading="lazy"
+                                    decoding="async"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = BRAND_LOGO_FALLBACK_IMAGE
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      aspectRatio: '16 / 9',
+                                      objectFit: 'cover',
+                                      objectPosition: 'center',
+                                      display: 'block',
+                                    }}
+                                  />
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      bottom: 8,
+                                      right: 8,
+                                      background: 'rgba(0,0,0,0.8)',
+                                      border: '1px solid rgba(212,160,23,0.55)',
+                                      borderRadius: 4,
+                                      padding: '4px 8px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      color: 'var(--gold-lt)',
+                                    }}
+                                  >
+                                    <GaaIcon name="play" size={11} tone="gold" />
+                                    <span>Watch Video Demonstration</span>
+                                  </div>
+                                </div>
+                              )
+                            })()}
                         {ex.personalReason?.trim() && (
                           <p className="client-exercise-why">
                             <span className="client-exercise-why-label">Why this is in your plan</span>

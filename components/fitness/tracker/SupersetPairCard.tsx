@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { SupersetPair } from '@/lib/superset-pairing-engine'
 import SetProgressionMatrix, { LoggedSetData } from './SetProgressionMatrix'
-import { resolveGaaExerciseImage } from '@/lib/nasm-generated-images'
+import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
 import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import { calculateBioAdaptiveRestInterval } from '@/lib/bio-adaptive-rest-pacer'
@@ -138,8 +138,8 @@ export default function SupersetPairCard({
     }
   }
 
-  const thumbImgA = resolveGaaExerciseImage(pair.exerciseA.name, false) || cardA.imageUrl || cardA.fallbackImageUrl || '/images/exercises/image-not-available.jpg'
-  const thumbImgB = resolveGaaExerciseImage(pair.exerciseB.name, false) || cardB.imageUrl || cardB.fallbackImageUrl || '/images/exercises/image-not-available.jpg'
+  const thumbImgA = resolveGaaExerciseImage(pair.exerciseA.name, true) || cardA.imageUrl || cardA.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+  const thumbImgB = resolveGaaExerciseImage(pair.exerciseB.name, true) || cardB.imageUrl || cardB.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
 
   return (
     <div
@@ -265,18 +265,30 @@ export default function SupersetPairCard({
             minHeight: 44,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={thumbImgA}
-            alt={pair.exerciseA.name}
-            width={34}
-            height={34}
-            loading="lazy"
-            onError={e => {
-              ;(e.currentTarget as HTMLImageElement).src = '/images/exercises/image-not-available.jpg'
+          <div
+            style={{
+              position: 'relative',
+              width: 'clamp(44px, 10vw, 56px)',
+              aspectRatio: '16 / 10',
+              borderRadius: 4,
+              overflow: 'hidden',
+              flexShrink: 0,
+              backgroundColor: '#0a0f1d',
+              border: (completedSetsA >= targetSetsA && targetSetsA > 0) ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(56, 189, 248, 0.3)',
             }}
-            style={{ width: 34, height: 34, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
-          />
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumbImgA}
+              alt={pair.exerciseA.name}
+              loading="lazy"
+              decoding="async"
+              onError={e => {
+                ;(e.currentTarget as HTMLImageElement).src = BRAND_LOGO_FALLBACK_IMAGE
+              }}
+              style={{ width: '100%', height: '100%', aspectRatio: '16 / 10', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+            />
+          </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 9.5, fontWeight: 900, color: activeSub === 'A' ? '#38BDF8' : '#64748B', textTransform: 'uppercase' }}>
@@ -316,18 +328,30 @@ export default function SupersetPairCard({
             minHeight: 44,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={thumbImgB}
-            alt={pair.exerciseB.name}
-            width={34}
-            height={34}
-            loading="lazy"
-            onError={e => {
-              ;(e.currentTarget as HTMLImageElement).src = '/images/exercises/image-not-available.jpg'
+          <div
+            style={{
+              position: 'relative',
+              width: 'clamp(44px, 10vw, 56px)',
+              aspectRatio: '16 / 10',
+              borderRadius: 4,
+              overflow: 'hidden',
+              flexShrink: 0,
+              backgroundColor: '#0a0f1d',
+              border: (completedSetsB >= targetSetsB && targetSetsB > 0) ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(56, 189, 248, 0.3)',
             }}
-            style={{ width: 34, height: 34, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
-          />
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumbImgB}
+              alt={pair.exerciseB.name}
+              loading="lazy"
+              decoding="async"
+              onError={e => {
+                ;(e.currentTarget as HTMLImageElement).src = BRAND_LOGO_FALLBACK_IMAGE
+              }}
+              style={{ width: '100%', height: '100%', aspectRatio: '16 / 10', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+            />
+          </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 9.5, fontWeight: 900, color: activeSub === 'B' ? '#38BDF8' : '#64748B', textTransform: 'uppercase' }}>
@@ -347,6 +371,81 @@ export default function SupersetPairCard({
       <div style={{ fontSize: 12, color: 'var(--gray)', marginBottom: 6 }}>
         {currentEx.sets} sets × {currentEx.reps} · Tempo {currentDraft.tempo}
       </div>
+
+      {/* High-Definition Visual Movement Demonstration Banner */}
+      {(() => {
+        const activeImg = activeSub === 'A' ? thumbImgA : thumbImgB
+        const isCurrentDone = activeSub === 'A' ? completedSetsA >= targetSetsA && targetSetsA > 0 : completedSetsB >= targetSetsB && targetSetsB > 0
+        return (
+          <div
+            role={onOpenVideoModal ? 'button' : undefined}
+            tabIndex={onOpenVideoModal ? 0 : undefined}
+            onClick={() => onOpenVideoModal?.(currentEx.name)}
+            onKeyDown={(e) => {
+              if (onOpenVideoModal && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault()
+                onOpenVideoModal(currentEx.name)
+              }
+            }}
+            style={{
+              position: 'relative',
+              width: '100%',
+              aspectRatio: '16 / 9',
+              maxHeight: 'clamp(180px, 32vh, 260px)',
+              borderRadius: 8,
+              overflow: 'hidden',
+              marginBottom: 12,
+              backgroundColor: '#0a0f1d',
+              border: isCurrentDone ? '1px solid rgba(16,185,129,0.35)' : '1px solid rgba(56, 189, 248, 0.4)',
+              cursor: onOpenVideoModal ? 'pointer' : 'default',
+              boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
+            }}
+            title={onOpenVideoModal ? `Watch form demonstration for ${currentEx.name}` : currentEx.name}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={activeImg}
+              alt={currentEx.name}
+              loading="lazy"
+              decoding="async"
+              onError={e => {
+                ;(e.currentTarget as HTMLImageElement).src = BRAND_LOGO_FALLBACK_IMAGE
+              }}
+              style={{
+                width: '100%',
+                height: '100%',
+                aspectRatio: '16 / 9',
+                objectFit: 'cover',
+                objectPosition: 'center',
+                display: 'block',
+              }}
+            />
+            {onOpenVideoModal && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 8,
+                  right: 8,
+                  background: 'rgba(0,0,0,0.8)',
+                  border: '1px solid rgba(56, 189, 248, 0.55)',
+                  borderRadius: 4,
+                  padding: '4px 8px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: '#7DD3FC',
+                }}
+              >
+                <GaaIcon name="play" size={11} tone="cyan" />
+                <span>Watch Video Demonstration</span>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
       {/* ── Active Sub-Exercise Set Progression Matrix ── */}
       <SetProgressionMatrix
         targetSets={currentEx.sets || 3}
