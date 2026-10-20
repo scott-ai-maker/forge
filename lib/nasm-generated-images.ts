@@ -34,7 +34,7 @@ export const VERIFIED_GAA_EXERCISE_IMAGES: Record<string, string> = {
   "foam roll calves": "/images/exercises/foam-roll-calves.jpg",
   "single leg romanian deadlift to pnf pattern 2": "https://img.youtube.com/vi/znQ41ErG4Wk/hqdefault.jpg",
   "single leg cobra to hip extension": "https://img.youtube.com/vi/fY64Qk6IfMk/hqdefault.jpg",
-  "good mornings": "https://img.youtube.com/vi/Daq-wJMUnes/hqdefault.jpg",
+  "good mornings": "/images/exercises/good-mornings.jpg",
   "plank walkup": "https://img.youtube.com/vi/6Tv4xTRPtUc/hqdefault.jpg",
   "single leg balance reach frontal plane": "/images/exercises/single-leg-balance-reach-frontal-plane.jpg",
   "single leg balance reach": "/images/exercises/single-leg-balance-reach-frontal-plane.jpg",
@@ -215,7 +215,7 @@ export const VERIFIED_GAA_EXERCISE_IMAGES: Record<string, string> = {
   "incline stance curl to overhead press": "https://img.youtube.com/vi/OE5ZvGOpGTY/hqdefault.jpg",
   "long lever ball crunch": "https://img.youtube.com/vi/YkEu2Hs3gw8/hqdefault.jpg",
   "double kettlebell snatch": "https://img.youtube.com/vi/p7Evs2D5aZc/hqdefault.jpg",
-  "step up to balance sagital": "https://img.youtube.com/vi/k0_42mij5Fc/hqdefault.jpg",
+  "step up to balance sagital": "/images/exercises/step-up-to-balance.jpg",
   "split jerk": "https://img.youtube.com/vi/UcYVQWjygSw/hqdefault.jpg",
   "lunge to balance frontal": "https://img.youtube.com/vi/WFmIGf0kyEs/hqdefault.jpg",
   "iron cross": "https://img.youtube.com/vi/uBEXsoMclPY/hqdefault.jpg",
@@ -230,7 +230,7 @@ export const VERIFIED_GAA_EXERCISE_IMAGES: Record<string, string> = {
   "medicine ball step over push up": "https://img.youtube.com/vi/-nuCpkC0I7s/hqdefault.jpg",
   "lunge to balance": "https://img.youtube.com/vi/UInwcEa5BH4/hqdefault.jpg",
   "barbell bench press with bands": "https://img.youtube.com/vi/N4H4o8k9WbE/hqdefault.jpg",
-  "seated single arm dumbbell tricep extension": "https://img.youtube.com/vi/kZ-ReOdn2qk/hqdefault.jpg",
+  "seated single arm dumbbell tricep extension": "/images/exercises/overhead-triceps-extension.jpg",
   "barbell overhead press": "https://img.youtube.com/vi/cGnhixvC8uA/hqdefault.jpg",
   "kettlebell crush curl with squat": "https://img.youtube.com/vi/BPGOyQKy9R0/hqdefault.jpg",
   "transverse slalom": "https://img.youtube.com/vi/rTWU9qDQNgo/hqdefault.jpg",
@@ -293,7 +293,7 @@ export const VERIFIED_GAA_EXERCISE_IMAGES: Record<string, string> = {
   "single leg throw and catch frontal": "https://img.youtube.com/vi/TLgyE-Flcws/hqdefault.jpg",
   "w in in out out": "https://img.youtube.com/vi/6rkW1Mmz4Ak/hqdefault.jpg",
   "side lying leg raise": "https://img.youtube.com/vi/xVSwJhJCsgo/hqdefault.jpg",
-  "incline dumbbell curl": "https://img.youtube.com/vi/0dT4L6Lsi80/hqdefault.jpg",
+  "incline dumbbell curl": "/images/exercises/incline-dumbbell-curl.jpg",
   "squat jump with stabilization multiplanar": "https://img.youtube.com/vi/SEM9l4KNM-I/hqdefault.jpg",
   "child's pose": "https://img.youtube.com/vi/_ZX_zTOBgp8/hqdefault.jpg",
   "child s pose": "https://img.youtube.com/vi/_ZX_zTOBgp8/hqdefault.jpg",
@@ -301,7 +301,12 @@ export const VERIFIED_GAA_EXERCISE_IMAGES: Record<string, string> = {
   "seated leg curl": "https://img.youtube.com/vi/_2Kd0d-JEUM/hqdefault.jpg",
   "medicine ball bent over chest pass": "https://img.youtube.com/vi/6Uuxb4h2N5I/hqdefault.jpg",
   "lunge jump": "https://img.youtube.com/vi/_5kDxC0flg0/hqdefault.jpg",
-  "dumbbell renegade row to push up": "https://img.youtube.com/vi/RuJ9a05aa0A/hqdefault.jpg"
+  "dumbbell renegade row to push up": "https://img.youtube.com/vi/RuJ9a05aa0A/hqdefault.jpg",
+  "cable pallof press": "/images/exercises/cable-pallof-press.jpg",
+  "pallof press": "/images/exercises/cable-pallof-press.jpg",
+  "overhead triceps extension": "/images/exercises/overhead-triceps-extension.jpg",
+  "step up to balance": "/images/exercises/step-up-to-balance.jpg",
+  "barbell good mornings": "/images/exercises/good-mornings.jpg"
 }
 
 /**
@@ -472,6 +477,16 @@ const EXERCISE_ALIAS_MAP: Record<string, string> = {
   'prone cobra': 'floor prone cobra',
   'single leg rdl': 'single leg romanian deadlift',
   'sl rdl': 'single leg romanian deadlift',
+  'good morning': 'good mornings',
+  'barbell good morning': 'good mornings',
+  'standing pallof press': 'cable pallof press',
+  'overhead dumbbell triceps extension': 'overhead triceps extension',
+  'overhead tricep extension': 'overhead triceps extension',
+  'overhead dumbbell tricep extension': 'overhead triceps extension',
+  'seated overhead triceps extension': 'overhead triceps extension',
+  'seated triceps extension': 'overhead triceps extension',
+  'step-up to balance': 'step up to balance',
+  'step up to balance sagittal': 'step up to balance',
 }
 
 const GAA_IMAGE_CACHE = new Map<string, string | null>()
