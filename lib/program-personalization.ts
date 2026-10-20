@@ -9,8 +9,6 @@ export interface PersonalizationContext {
   kineticCompensations?: string[]
   injuriesLimitations?: string
   contraindicationTags?: string[]
-  movementSuperpowers?: string[]
-  functionalDemands?: string
 }
 
 type CompensationKey = 'knee_valgus' | 'arms_forward' | 'low_back' | 'forward_lean' | 'feet_turn_out' | 'shoulder_elevation' | 'head_forward'
@@ -86,13 +84,6 @@ export function buildPersonalReason(exercise: GeneratedExerciseItem, ctx: Person
     return limitation
       ? `Chosen instead of ${exercise.contraindicationReplacedFrom} to protect your ${limitation.toLowerCase()} while still training the same pattern.`
       : `Chosen instead of ${exercise.contraindicationReplacedFrom} so you get the same benefit with less joint stress.`
-  }
-
-  const superpower = (ctx.movementSuperpowers ?? []).find(power =>
-    name.includes(power.replace(/_/g, ' ').toLowerCase().replace(/s$/, ''))
-  )
-  if (superpower) {
-    return `You told me you're great at ${superpower.replace(/_/g, ' ')} — so we're using that strength to push your conditioning.`
   }
 
   const isUpperPull = /row|pull|lat|rear|face pull|reverse fly|ys?\b|t-raise|w-raise/.test(name)
@@ -174,9 +165,6 @@ export function buildCoachPersonalNote(ctx: PersonalizationContext): string {
   }
   if (limitation) {
     sentences.push(`I've also planned around your ${limitation.toLowerCase()} — if anything ever feels off, tell me and we'll adjust.`)
-  }
-  if (ctx.functionalDemands) {
-    sentences.push(`I kept your real life in mind too (${ctx.functionalDemands.trim().replace(/\.$/, '')}).`)
   }
   if (phaseName) {
     sentences.push(`We're starting in a ${phaseName} phase, so own the tempo and quality of every rep.`)

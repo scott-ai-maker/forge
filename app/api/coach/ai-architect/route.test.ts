@@ -67,7 +67,7 @@ describe('POST /api/coach/ai-architect', () => {
     expect(firstExercise.imageUrl).toBeDefined()
   })
 
-  it('successfully returns clinicalRationale, handPortionPlan, and dualCardioPlan when requested with deep personalization', async () => {
+  it('successfully returns authentic NASM OPT program with clinicalRationale and coach identity', async () => {
     getRequestAuthzMock.mockResolvedValueOnce({
       user: { id: 'coach-123' },
       client: { role: 'coach' },
@@ -75,34 +75,24 @@ describe('POST /api/coach/ai-architect', () => {
 
     const res = await POST(
       makePostRequest({
-        clientName: 'Jennifer Rainville',
-        clientAge: 34,
+        clientName: 'Alex Morgan',
+        clientAge: 29,
         clientSex: 'female',
         goal: 'fat_loss',
         targetNasmPhase: 2,
         trainingDaysPerWeek: 3,
-        equipmentAccess: ['Reebok Step', 'Dumbbells', 'Bodyweight'],
-        movementSuperpowers: ['burpees'],
-        strictExclusions: ['mountain_climbers', 'running'],
-        functionalDemands: 'Helping elderly father on weekends with lifting and carrying',
-        nutritionPhilosophy: 'precision_nutrition_hand_portion',
-        dualCardioSplit: {
-          sweatyFinisherModality: 'Reebok Step Finisher',
-          freshNeatWalkingMins: 25,
-        },
+        equipmentAccess: ['Dumbbells', 'Bodyweight'],
       })
     )
 
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.success).toBe(true)
+    expect(json.coachIdentity).toContain('Coach Gordon')
     expect(json.clinicalRationale).toBeDefined()
     expect(json.clinicalRationale).toContain('COACH GORDON MASTER BRIEFING MEMO:')
-    expect(json.clinicalRationale).toContain('Jennifer')
-    expect(json.handPortionPlan).toBeDefined()
-    expect(json.handPortionPlan.philosophy).toBe('precision_nutrition_hand_portion')
-    expect(json.dualCardioPlan).toBeDefined()
-    expect(json.dualCardioPlan.sweatyFinisher.title).toContain('Reebok Step')
+    expect(json.clinicalRationale).toContain('Alex')
+    expect(json.plan.nasmOptPhase).toBe(2)
   })
 
   it('normalizes string warmup protocols, coaching cues, and nutrition guidelines into safe typed structures', async () => {
@@ -126,15 +116,6 @@ describe('POST /api/coach/ai-architect', () => {
           ],
         },
       ],
-      handPortionPlan: {
-        title: 'Hand Portions',
-        guidelines: {
-          protein: '1-2 palms of chicken breast',
-          vegetables: '2 fists of broccoli',
-          smartCarbs: '1 cupped hand of rice',
-          healthyFats: '1 thumb of olive oil',
-        },
-      },
     }
 
     const normalized = normalizeGeneratedPlan(rawMalformedPlan)
@@ -143,8 +124,6 @@ describe('POST /api/coach/ai-architect', () => {
     expect(normalized.workouts[0].warmupProtocol.lengthenStaticStretch).toEqual(['Static calf stretch'])
     expect(Array.isArray(normalized.workouts[0].exercises[0].coachingCues)).toBe(true)
     expect(normalized.workouts[0].exercises[0].coachingCues).toEqual(['Keep chest tall and knees tracking toes'])
-    expect(typeof normalized.handPortionPlan?.guidelines.protein).toBe('object')
-    expect(normalized.handPortionPlan?.guidelines.protein.examples).toBe('1-2 palms of chicken breast')
   })
 })
 

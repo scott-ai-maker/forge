@@ -3,6 +3,7 @@ import { resolveExerciseVideoEmbed } from '@/lib/nasm-exercise-video-catalog'
 import { resolveGaaExerciseImage } from '@/lib/nasm-generated-images'
 import { getSmartSubstitutions, detectMovementPattern } from '@/lib/nasm-exercise-substitution'
 import type { GeneratedMacrocyclePlan } from '@/lib/rag-nasm-program-generator'
+import type { CoachAiIntakeFormData } from './CoachAiIntakeDrawer'
 
 describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
   it('resolves official NASM Edge video demonstrations with verified YouTube embed URLs', () => {
@@ -43,41 +44,28 @@ describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
     expect(firstSub.prescribedTempo).toBeTruthy()
   })
 
-  it('correctly structures Jennifer profile intake parameters for synthesis', () => {
-    const jenniferIntake = {
-      clientName: 'Jennifer',
+  it('correctly structures athlete intake parameters for NASM OPT synthesis', () => {
+    const intake: CoachAiIntakeFormData = {
+      clientName: 'Sarah Jenkins',
       clientAge: 46,
-      clientSex: 'female' as const,
-      goal: 'fat_loss' as const,
+      clientSex: 'female',
+      goal: 'fat_loss',
       targetNasmPhase: 1,
       trainingDaysPerWeek: 3,
-      experienceLevel: 'intermediate' as const,
-      equipmentAccess: ['dumbbell', 'band', 'reebok step', 'stability ball', 'bodyweight'],
-      lifestyleRhythm: {
-        workStyle: 'sedentary_desk' as const,
-        dailyRhythm: 'early_morning' as const,
-        sessionDurationMins: 35,
-      },
-      movementSuperpowers: ['Burpees', 'Reebok Step Aerobics'],
-      strictExclusions: ['Mountain Climbers', 'Running / Jogging', 'Forward Lunges (Runner\'s Knee)'],
-      functionalDemands: 'Assists elderly father on weekends; needs posterior chain and hinge integrity.',
-      nutritionPhilosophy: 'precision_nutrition_hand_portion' as const,
-      dualCardioSplit: {
-        sweatyFinisherModality: '10-Minute Reebok Step Metabolic Flush',
-        freshNeatWalkMinutes: 30,
-        freshNeatNotes: 'Morning walk to father\'s home; non-sweaty NEAT to clear mind.',
-      },
-      coachGuidanceNotes: 'Incorporate Reebok Step. Burpees loved. Strictly exclude mountain climbers and running.',
+      sessionDurationMins: 45,
+      experienceLevel: 'intermediate',
+      equipmentAccess: ['dumbbell', 'band', 'stability ball', 'bodyweight'],
+      coachGuidanceNotes: 'Phase 1 stabilization endurance with controlled 4/2/1 tempo.',
     }
 
-    expect(jenniferIntake.movementSuperpowers).toContain('Burpees')
-    expect(jenniferIntake.strictExclusions).toContain('Mountain Climbers')
-    expect(jenniferIntake.nutritionPhilosophy).toBe('precision_nutrition_hand_portion')
-    expect(jenniferIntake.dualCardioSplit.sweatyFinisherModality).toContain('Reebok Step')
-    expect(jenniferIntake.dualCardioSplit.freshNeatWalkMinutes).toBe(30)
+    expect(intake.targetNasmPhase).toBe(1)
+    expect(intake.trainingDaysPerWeek).toBe(3)
+    expect(intake.sessionDurationMins).toBe(45)
+    expect(intake.equipmentAccess).toContain('dumbbell')
+    expect(intake.equipmentAccess).not.toContain('reebok step')
   })
 
-  it('transforms generated program into workout_plans deployment payload with rich clinical and hand-portion fields', () => {
+  it('transforms generated program into workout_plans deployment payload with rich clinical fields', () => {
     const mockPlan: GeneratedMacrocyclePlan = {
       planTitle: 'Jennifer · 4-Week Phase 1 Stabilization Endurance Block',
       primaryGoal: 'fat_loss',
@@ -98,38 +86,6 @@ describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
         clinicalGuideline: 'Maintain distinct energy pathways',
       },
       clinicalRationale: 'Coach Gordon: High-EQ clinical briefing memo.',
-      handPortionPlan: {
-        philosophy: 'precision_nutrition_hand_portion',
-        title: 'Precision Nutrition Hand-Portion Plate',
-        mealsPerDay: 3,
-        guidelines: {
-          protein: { portionsPerMeal: '1-2 palms', handMeasure: 'Palm', examples: 'Chicken, fish, tofu', rationale: 'Maintain LBM' },
-          vegetables: { portionsPerMeal: '1-2 fists', handMeasure: 'Fist', examples: 'Spinach, broccoli', rationale: 'Micronutrient density' },
-          smartCarbs: { portionsPerMeal: '1 cupped hand', handMeasure: 'Cupped hand', examples: 'Oats, quinoa', rationale: 'Glycogen repletion' },
-          healthyFats: { portionsPerMeal: '1 thumb', handMeasure: 'Thumb', examples: 'Olive oil, almonds', rationale: 'Hormonal balance' },
-        },
-        mindfulEatingCue: 'Eat until 80% full (Hara Hachi Bu)',
-        hydrationAnchor: '2.5L water daily',
-        summary: 'Precision Hand-Portion Architecture',
-      },
-      dualCardioPlan: {
-        sweatyFinisher: {
-          title: '10-Minute Reebok Step Metabolic Flush',
-          durationMins: 10,
-          modality: 'Reebok Step',
-          zone: 'Zone 2-3',
-          timing: 'Post-Lift',
-          rationale: 'Glycogen depletion and EPOC without joint impact',
-        },
-        freshNeatWalk: {
-          title: '30-Minute Morning NEAT Walk',
-          durationMins: 30,
-          frequency: 'Daily',
-          modality: 'Outdoor walk',
-          timing: 'Morning',
-          rationale: 'Circadian reset and recovery',
-        },
-      },
       workouts: [
         {
           day: 1,
@@ -151,7 +107,7 @@ describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
               reps: '12',
               tempo: '4/2/1',
               rest: '60s',
-              coachingCues: ['Drive through heel on Reebok Step'],
+              coachingCues: ['Drive through front heel with strong core brace'],
               nasmClinicalSource: 'NASM Edge Catalog',
             },
           ],
@@ -163,7 +119,7 @@ describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
 
     // Prepare payload as deployed in CoachProgramPreviewCanvas & CoachCustomPeriodizationStudio
     const payload = {
-      clientId: 'client-jennifer-123',
+      clientId: 'client-sarah-123',
       name: mockPlan.planTitle,
       goal: mockPlan.primaryGoal,
       nasmOptPhase: mockPlan.nasmOptPhase,
@@ -171,8 +127,6 @@ describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
       sessionsPerWeek: mockPlan.sessionsPerWeek,
       estimatedDurationMins: 45,
       clinicalRationale: mockPlan.clinicalRationale,
-      handPortionPlan: mockPlan.handPortionPlan,
-      dualCardioPlan: mockPlan.dualCardioPlan,
       strengthCardioBlendSummary: mockPlan.strengthCardioBlendSummary,
       periodizationPlan: {
         weeklyMemos: mockPlan.periodizationWeeklyMemos,
@@ -197,10 +151,6 @@ describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
 
     expect(payload.name).toBe('Jennifer · 4-Week Phase 1 Stabilization Endurance Block')
     expect(payload.clinicalRationale).toBe('Coach Gordon: High-EQ clinical briefing memo.')
-    expect(payload.handPortionPlan?.philosophy).toBe('precision_nutrition_hand_portion')
-    expect(payload.handPortionPlan?.guidelines.protein.portionsPerMeal).toBe('1-2 palms')
-    expect(payload.dualCardioPlan?.sweatyFinisher.title).toBe('10-Minute Reebok Step Metabolic Flush')
-    expect(payload.dualCardioPlan?.freshNeatWalk?.durationMins).toBe(30)
     expect(payload.workouts[0].exercises[0].name).toBe('Dumbbell Step-Up to Balance')
     expect(payload.workouts[0].exercises[0].tempo).toBe('4/2/1')
   })

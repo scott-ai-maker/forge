@@ -10,8 +10,6 @@ import type {
   GeneratedMacrocyclePlan,
   GeneratedWorkoutDay,
   GeneratedExerciseItem,
-  HandPortionNutritionPlan,
-  DualCardioPlanSummary,
   StrengthCardioBlendSummary,
 } from '@/lib/rag-nasm-program-generator'
 import { GaaIcon } from '@/components/ui/GaaIcon'
@@ -56,7 +54,7 @@ export default function CoachCustomPeriodizationStudio({
   clientExperienceLevel,
   initialGoal = 'fat_loss',
   initialPhase = 1,
-  initialEquipmentAccess = ['dumbbell', 'band', 'reebok step', 'stability ball', 'bodyweight'],
+  initialEquipmentAccess = ['dumbbell', 'band', 'stability ball', 'bodyweight'],
   initialSessionsPerWeek = 3,
   initialCompensations = [],
   contraindicationTags = [],
@@ -129,8 +127,6 @@ export default function CoachCustomPeriodizationStudio({
       const planJson = existingPlan.plan_json
       const periodizationPlan = planJson.periodizationPlan as { ragSourcesCited?: string[]; weeklyMemos?: string[] } | undefined
       const blendSummary = planJson.strengthCardioBlendSummary as StrengthCardioBlendSummary | undefined
-      const handPortionPlan = (planJson.handPortionPlan as HandPortionNutritionPlan) || null
-      const dualCardioPlan = (planJson.dualCardioPlan as DualCardioPlanSummary) || null
 
       return {
         planTitle: existingPlan.name || `${clientName} · Bespoke NASM OPT™ Program`,
@@ -188,8 +184,6 @@ export default function CoachCustomPeriodizationStudio({
         periodizationWeeklyMemos: periodizationPlan?.weeklyMemos || [],
         clinicalRationale: typeof planJson.clinicalRationale === 'string' ? planJson.clinicalRationale : '',
         coachPersonalNote: typeof planJson.coachPersonalNote === 'string' ? planJson.coachPersonalNote : undefined,
-        handPortionPlan,
-        dualCardioPlan,
       }
     }
     return null
@@ -222,14 +216,9 @@ export default function CoachCustomPeriodizationStudio({
           goal: formData.goal,
           targetNasmPhase: formData.targetNasmPhase,
           trainingDaysPerWeek: formData.trainingDaysPerWeek,
+          sessionDurationMins: formData.sessionDurationMins,
           experienceLevel: formData.experienceLevel,
           equipmentAccess: formData.equipmentAccess,
-          lifestyleRhythm: formData.lifestyleRhythm,
-          movementSuperpowers: formData.movementSuperpowers,
-          strictExclusions: formData.strictExclusions,
-          functionalDemands: formData.functionalDemands,
-          nutritionPhilosophy: formData.nutritionPhilosophy,
-          dualCardioSplit: formData.dualCardioSplit,
           coachGuidanceNotes: formData.coachGuidanceNotes,
           contraindicationTags,
           injuriesLimitations: limitationsText || undefined,
@@ -339,8 +328,6 @@ export default function CoachCustomPeriodizationStudio({
           workouts: workoutsPayload,
           clinicalRationale: currentPlan.clinicalRationale,
           coachPersonalNote: currentPlan.coachPersonalNote?.trim() || undefined,
-          handPortionPlan: currentPlan.handPortionPlan,
-          dualCardioPlan: currentPlan.dualCardioPlan,
           strengthCardioBlendSummary: currentPlan.strengthCardioBlendSummary,
           periodizationPlan: {
             weeklyMemos: currentPlan.periodizationWeeklyMemos,
@@ -359,7 +346,7 @@ export default function CoachCustomPeriodizationStudio({
       }
 
       setDeploySuccessMessage(
-        `Certified & Sent to ${clientFirstName}. Master Coach Safety Gate certified · "${currentPlan.planTitle}"${currentPlan.coachPersonalNote?.trim() ? ' with your personal note' : ''} is active.`
+        `Approved & Sent to ${clientFirstName}. Master Coach approved · "${currentPlan.planTitle}"${currentPlan.coachPersonalNote?.trim() ? ' with your personal note' : ''} is active.`
       )
 
       if (onPlanAssigned) {
@@ -568,6 +555,7 @@ export default function CoachCustomPeriodizationStudio({
           goal: initialGoal,
           targetNasmPhase: initialPhase,
           trainingDaysPerWeek: initialSessionsPerWeek || 3,
+          sessionDurationMins: 45,
           equipmentAccess: initialEquipmentAccess,
         }}
         onSynthesize={handleSynthesize}

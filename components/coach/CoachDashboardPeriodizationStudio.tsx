@@ -53,7 +53,7 @@ export default function CoachDashboardPeriodizationStudio({
         goal: 'General Fitness & Recomposition',
         phase: 1,
         phaseName: 'Phase 1: Stabilization Endurance',
-        equipmentAccess: ['dumbbell', 'band', 'reebok step', 'stability ball', 'bodyweight'],
+        equipmentAccess: ['dumbbell', 'band', 'stability ball', 'bodyweight'],
         sessionsPerWeek: 3,
         age: 34,
         medicalConditions: null,

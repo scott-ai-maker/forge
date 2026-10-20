@@ -34,13 +34,6 @@ export async function POST(req: NextRequest) {
       coachGuidanceNotes: body.coachGuidanceNotes,
       contraindicationTags: Array.isArray(body.contraindicationTags) ? body.contraindicationTags : undefined,
       injuriesLimitations: typeof body.injuriesLimitations === 'string' ? body.injuriesLimitations : undefined,
-
-      lifestyleRhythm: body.lifestyleRhythm,
-      movementSuperpowers: Array.isArray(body.movementSuperpowers) ? body.movementSuperpowers : undefined,
-      strictExclusions: Array.isArray(body.strictExclusions) ? body.strictExclusions : undefined,
-      functionalDemands: typeof body.functionalDemands === 'string' ? body.functionalDemands : undefined,
-      nutritionPhilosophy: body.nutritionPhilosophy,
-      dualCardioSplit: body.dualCardioSplit,
     }
 
     const plan = await generateMasterNasmOptProgram(requestPayload)
@@ -50,8 +43,6 @@ export async function POST(req: NextRequest) {
       coachIdentity: 'Coach Gordon · Master NASM Head Coach & Periodization Architect (20+ Yrs Exp)',
       plan,
       clinicalRationale: plan.clinicalRationale,
-      handPortionPlan: plan.handPortionPlan,
-      dualCardioPlan: plan.dualCardioPlan,
     })
   } catch (error) {
     console.error('Master NASM AI Coach Architect generation failed:', error)

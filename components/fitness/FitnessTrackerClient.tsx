@@ -6,7 +6,6 @@ import dynamic from 'next/dynamic'
 
 import { openCoachGordon } from '@/components/fitness/GlobalCoachGordonHost'
 import type { NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
-import type { HandPortionNutritionPlan, DualCardioPlanSummary } from '@/lib/rag-nasm-program-generator'
 import type { DailyBiometricSummary } from '@/lib/wearables-telemetry'
 
 const FitnessLabDiagnosticsView = dynamic(
@@ -228,8 +227,6 @@ interface WorkoutPlanRecord {
       [key: string]: unknown
     } | null
     coachPersonalNote?: string | null
-    handPortionPlan?: HandPortionNutritionPlan | null
-    dualCardioPlan?: DualCardioPlanSummary | null
     workouts?: WorkoutDay[]
     calendar?: Array<{
       day: number
@@ -2049,85 +2046,6 @@ export default function FitnessTrackerClient({
         </div>
       )}
 
-      {/* ── Master Coach Safety Gate Certification Badge ── */}
-      {(plan?.plan_json?.isCertifiedByCoach || plan?.plan_json?.safetyGateCertified) && (
-        <div
-          role="status"
-          aria-label="Master Coach Safety Gate Certified"
-          data-testid="safety-gate-certified-badge"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 12,
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(13, 27, 42, 0.95) 100%)',
-            border: '1px solid rgba(16, 185, 129, 0.45)',
-            borderRadius: 8,
-            padding: '10px 16px',
-            marginBottom: 14,
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }} aria-hidden="true">🛡️</span>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#34D399', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>Master Coach Safety Gate Certified</span>
-                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(52, 211, 153, 0.2)', border: '1px solid rgba(52, 211, 153, 0.35)' }}>
-                  NASM Verified
-                </span>
-              </div>
-              <div style={{ fontSize: 12.5, color: '#E2E8F0', marginTop: 2 }}>
-                {plan?.plan_json?.certifiedBy || 'Coach Gordon (NASM Master Trainer)'} certified this program for biomechanical safety, volume tolerance, and kinetic chain alignment.
-              </div>
-            </div>
-          </div>
-          {plan?.plan_json?.coachCertifiedAt && (
-            <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'var(--font-telemetry, monospace)' }}>
-              Verified {new Date(plan.plan_json.coachCertifiedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Safety Gate Pending Coach Release Banner ── */}
-      {plan && !(plan?.plan_json?.isCertifiedByCoach || plan?.plan_json?.safetyGateCertified) && (
-        <div
-          role="status"
-          aria-label="Master Coach Safety Gate Pending Review"
-          data-testid="safety-gate-pending-badge"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 12,
-            background: 'linear-gradient(135deg, rgba(212, 160, 23, 0.12) 0%, rgba(13, 27, 42, 0.95) 100%)',
-            border: '1px solid rgba(212, 160, 23, 0.45)',
-            borderRadius: 8,
-            padding: '10px 16px',
-            marginBottom: 14,
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }} aria-hidden="true">⏳</span>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold, #D4A017)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>In Master Coach Safety Gate Queue</span>
-                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(212, 160, 23, 0.2)', border: '1px solid rgba(212, 160, 23, 0.35)' }}>
-                  Awaiting Coach Release
-                </span>
-              </div>
-              <div style={{ fontSize: 12.5, color: '#E2E8F0', marginTop: 2 }}>
-                Coach Gordon is reviewing this program in his evening advisory window to certify exercise selection, kinetic chain safety, and load progression before full clearance.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Athlete Metric Strip (Compact 1-Row / 3-Cell Strip for Mobile & Desktop) ── */}
       <div
         className="athlete-telemetry-strip"
@@ -2345,124 +2263,7 @@ export default function FitnessTrackerClient({
         </details>
       )}
 
-      {/* ── Precision Nutrition Hand-Portion Architecture ── */}
-      {plan?.plan_json?.handPortionPlan && (
-        <section
-          aria-label="Precision Nutrition Hand-Portion Plate"
-          style={{
-            border: '1px solid rgba(212,160,23,0.4)',
-            background: 'linear-gradient(135deg, rgba(13,27,42,0.95) 0%, rgba(8,16,28,0.98) 100%)',
-            borderRadius: 10,
-            padding: '16px',
-            marginBottom: 16,
-            display: 'grid',
-            gap: 12,
-          }}
-        >
-          <div>
-            <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
-              Precision Nutrition Architecture · No Calorie Counting
-            </div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--white)', marginTop: 2 }}>
-              {plan.plan_json.handPortionPlan.title}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--gray)', marginTop: 2 }}>
-              Visual hand portions for each of your {plan.plan_json.handPortionPlan.mealsPerDay} meals today.
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
-            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, padding: '10px' }}>
-              <div style={{ fontSize: 11, color: '#F87171', fontWeight: 800 }}>✋ Protein</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                {plan.plan_json.handPortionPlan.guidelines.protein.portionsPerMeal}
-              </div>
-              <div style={{ fontSize: 11, color: '#CBD5E1', marginTop: 3 }}>
-                {plan.plan_json.handPortionPlan.guidelines.protein.handMeasure}
-              </div>
-            </div>
-
-            <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 6, padding: '10px' }}>
-              <div style={{ fontSize: 11, color: '#34D399', fontWeight: 800 }}>✊ Vegetables</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                {plan.plan_json.handPortionPlan.guidelines.vegetables.portionsPerMeal}
-              </div>
-              <div style={{ fontSize: 11, color: '#CBD5E1', marginTop: 3 }}>
-                {plan.plan_json.handPortionPlan.guidelines.vegetables.handMeasure}
-              </div>
-            </div>
-
-            <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 6, padding: '10px' }}>
-              <div style={{ fontSize: 11, color: '#FBBF24', fontWeight: 800 }}>🤲 Smart Carbs</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                {plan.plan_json.handPortionPlan.guidelines.smartCarbs.portionsPerMeal}
-              </div>
-              <div style={{ fontSize: 11, color: '#CBD5E1', marginTop: 3 }}>
-                {plan.plan_json.handPortionPlan.guidelines.smartCarbs.handMeasure}
-              </div>
-            </div>
-
-            <div style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 6, padding: '10px' }}>
-              <div style={{ fontSize: 11, color: '#38BDF8', fontWeight: 800 }}>👍 Healthy Fats</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                {plan.plan_json.handPortionPlan.guidelines.healthyFats.portionsPerMeal}
-              </div>
-              <div style={{ fontSize: 11, color: '#CBD5E1', marginTop: 3 }}>
-                {plan.plan_json.handPortionPlan.guidelines.healthyFats.handMeasure}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ fontSize: 12, color: 'var(--gold-lt)', background: 'rgba(212,160,23,0.1)', border: '1px solid rgba(212,160,23,0.25)', borderRadius: 6, padding: '8px 10px' }}>
-            🥢 <strong>Mindful Satiety Cue:</strong> {plan.plan_json.handPortionPlan.mindfulEatingCue}
-          </div>
-        </section>
-      )}
-
-      {/* ── Dual-Cardio Protocol Split ── */}
-      {plan?.plan_json?.dualCardioPlan && (
-        <section
-          aria-label="Dual-Cardio Protocol Split"
-          style={{
-            border: '1px solid rgba(56,189,248,0.35)',
-            background: 'linear-gradient(135deg, rgba(13,27,42,0.95) 0%, rgba(8,16,28,0.98) 100%)',
-            borderRadius: 10,
-            padding: '14px 16px',
-            marginBottom: 16,
-            display: 'grid',
-            gap: 10,
-          }}
-        >
-          <div style={{ color: '#38BDF8', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
-            Dual-Cardio Protocol Architecture
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, padding: '10px' }}>
-              <div style={{ fontSize: 11, color: '#F87171', fontWeight: 800 }}>💦 Post-Lift Finisher ({plan.plan_json.dualCardioPlan.sweatyFinisher.durationMins}m)</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                {plan.plan_json.dualCardioPlan.sweatyFinisher.title}
-              </div>
-              <div style={{ fontSize: 11, color: '#CBD5E1', marginTop: 3 }}>
-                {plan.plan_json.dualCardioPlan.sweatyFinisher.modality} · {plan.plan_json.dualCardioPlan.sweatyFinisher.timing}
-              </div>
-            </div>
-
-            {plan.plan_json.dualCardioPlan.freshNeatWalk && (
-              <div style={{ background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 6, padding: '10px' }}>
-                <div style={{ fontSize: 11, color: '#38BDF8', fontWeight: 800 }}>🌿 Fresh NEAT Walk ({plan.plan_json.dualCardioPlan.freshNeatWalk.durationMins}m)</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                  {plan.plan_json.dualCardioPlan.freshNeatWalk.title}
-                </div>
-                <div style={{ fontSize: 11, color: '#CBD5E1', marginTop: 3 }}>
-                  {plan.plan_json.dualCardioPlan.freshNeatWalk.modality} · {plan.plan_json.dualCardioPlan.freshNeatWalk.timing}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {plan?.plan_json?.nutritionTargets && !plan?.plan_json?.handPortionPlan && (
+      {plan?.plan_json?.nutritionTargets && (
         <section
           aria-label="Daily nutrition targets"
           style={{

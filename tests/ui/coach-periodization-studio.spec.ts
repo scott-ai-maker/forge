@@ -81,11 +81,11 @@ test.describe('Coach Program Builder (OPT periodization studio)', () => {
     await page.setViewportSize({ width: 1280, height: 900 })
     await openIntake(page)
 
-    const dialog = page.getByRole('dialog', { name: /Deep Personalization Intake/i })
+    const dialog = page.getByRole('dialog', { name: /NASM OPT Program Intake/i })
     await expect(dialog).toBeVisible()
-    await expect(dialog.getByText(/Movement Superpowers/i).first()).toBeVisible()
-    await expect(dialog.getByText(/Real-World Functional Demands/i)).toBeVisible()
-    await expect(dialog.getByText(/Precision Nutrition Hand-Portion/i)).toBeVisible()
+    await expect(dialog.getByText(/NASM OPT™ Target Phase/i).first()).toBeVisible()
+    await expect(dialog.getByText(/Primary Goal/i)).toBeVisible()
+    await expect(dialog.getByText(/Equipment Available/i)).toBeVisible()
 
     const panel = await page.locator('.coach-intake-panel').boundingBox()
     expect(panel).not.toBeNull()

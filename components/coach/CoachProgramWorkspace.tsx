@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import CoachCustomPeriodizationStudio from '@/components/coach/studio/CoachCustomPeriodizationStudio'
 import CoachTravelRecalibratorModal from '@/components/coach/CoachTravelRecalibratorModal'
 import GaaIcon from '@/components/ui/GaaIcon'
-import { NASM_OPT_PHASE_STANDARDS, GeneratedMacrocyclePlan, type HandPortionNutritionPlan } from '@/lib/rag-nasm-program-generator'
+import { NASM_OPT_PHASE_STANDARDS, GeneratedMacrocyclePlan } from '@/lib/rag-nasm-program-generator'
 import { parseInjuriesFromText } from '@/lib/sports-injuries'
 import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 import type { ParqEvaluationResult } from '@/lib/liability-shield'
@@ -575,52 +575,6 @@ export default function CoachProgramWorkspace({
             </div>
           )}
 
-          {Boolean(activePlan.plan_json?.handPortionPlan) && (() => {
-            const hp = activePlan.plan_json?.handPortionPlan as HandPortionNutritionPlan | undefined
-            return (
-              <section
-                aria-label="Active program hand-portion nutrition plan"
-                style={{
-                  padding: '14px 16px',
-                  border: '1px solid rgba(212,160,23,0.45)',
-                  borderRadius: 9,
-                  background: 'rgba(8,14,24,0.8)',
-                  display: 'grid',
-                  gap: 10,
-                }}
-              >
-                <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  {hp?.title || 'Precision Nutrition Hand-Portion Plate (No Calorie Counting)'}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
-                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, padding: '8px 10px' }}>
-                    <div style={{ fontSize: 11, color: '#F87171', fontWeight: 800 }}>✋ Protein</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                      {hp?.guidelines?.protein?.portionsPerMeal}
-                    </div>
-                  </div>
-                  <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 6, padding: '8px 10px' }}>
-                    <div style={{ fontSize: 11, color: '#34D399', fontWeight: 800 }}>✊ Vegetables</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                      {hp?.guidelines?.vegetables?.portionsPerMeal}
-                    </div>
-                  </div>
-                  <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 6, padding: '8px 10px' }}>
-                    <div style={{ fontSize: 11, color: '#FBBF24', fontWeight: 800 }}>🤲 Smart Carbs</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                      {hp?.guidelines?.smartCarbs?.portionsPerMeal}
-                    </div>
-                  </div>
-                  <div style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 6, padding: '8px 10px' }}>
-                    <div style={{ fontSize: 11, color: '#38BDF8', fontWeight: 800 }}>👍 Healthy Fats</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                      {hp?.guidelines?.healthyFats?.portionsPerMeal}
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )
-          })()}
 
           {activePlan.plan_json?.nutritionTargets && (
             <section
