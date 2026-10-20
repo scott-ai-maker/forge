@@ -4354,6 +4354,9 @@ export default function FitnessTrackerClient({
                                       +
                                     </button>
                                   </div>
+                                  <div style={{ fontSize: 10.5, color: 'var(--gray)', marginTop: 3 }}>
+                                    {isStrength && (draft.tempo || effectiveTempo) ? `Tempo ${draft.tempo || effectiveTempo}` : '\u00A0'}
+                                  </div>
                                   {isStrength && Boolean(draft.tempo || effectiveTempo) && (
                                     <RepCadenceMetronome
                                       tempo={draft.tempo || effectiveTempo}
