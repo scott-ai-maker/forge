@@ -36,7 +36,7 @@ describe('Clinical Kinetic Warmup & OHSA Integration', () => {
     expect(resolveGaaExerciseImage('SMR Calves & Thoracic Spine')).toBe('/images/exercises/foam-roll-calves.jpg')
     expect(resolveGaaExerciseImage('SMR Peroneals')).toBe('https://img.youtube.com/vi/o0sqnX6FMzk/hqdefault.jpg')
     expect(resolveGaaExerciseImage('SMR IT-Band / TFL')).toBe('https://img.youtube.com/vi/NfWjVK7agTM/hqdefault.jpg')
-    expect(resolveGaaExerciseImage('SMR Adductors (Inner Thigh)')).toBe('https://img.youtube.com/vi/Nqol0T6rKDg/hqdefault.jpg')
+    expect(resolveGaaExerciseImage('SMR Adductors (Inner Thigh)')).toBe('/images/exercises/foam-roll-adductors.jpg')
 
     // Warmup Lengthen (Static Stretches)
     expect(resolveGaaExerciseImage('Kneeling Hip Flexor & Latissimus Stretch')).toBe('/images/exercises/static-kneeling-hip-flexor-stretch.jpg')
