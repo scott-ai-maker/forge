@@ -45,7 +45,7 @@ describe('Clinical Kinetic Warmup & OHSA Integration', () => {
     expect(resolveGaaExerciseImage('Static Standing TFL / ITB Stretch')).toBe('https://img.youtube.com/vi/h_8VHKvi1zo/hqdefault.jpg')
 
     // Warmup Activate & Integrate
-    expect(resolveGaaExerciseImage('Glute Bridge & Floor Prone Cobra')).toBe('https://img.youtube.com/vi/keErJXdp2lE/hqdefault.jpg')
+    expect(resolveGaaExerciseImage('Glute Bridge & Floor Prone Cobra')).toBe('/images/exercises/floor-prone-cobra.jpg')
     expect(resolveGaaExerciseImage('Squat to Scaption / Multi-Planar Reach')).toBe('/images/exercises/squat-to-overhead-reach.jpg')
     expect(resolveGaaExerciseImage('Isolated Anterior Tibialis Dorsiflexion')).toBe('https://img.youtube.com/vi/CeFbXhifvvA/hqdefault.jpg')
     expect(resolveGaaExerciseImage('Side-Lying Clamshells with Band')).toBe('/images/exercises/clamshells.jpg')
