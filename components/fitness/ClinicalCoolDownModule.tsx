@@ -984,14 +984,14 @@ export default function ClinicalCoolDownModule({
       const isUnilateral = currentItem ? (currentItem.isUnilateral ?? isUnilateralMovement(currentItem)) : false
 
       if (isUnilateral && guidedSide === 1) {
-        // Switch to Side 2 for unilateral movement with 3-second get ready buffer!
+        // Switch to Side 2 for unilateral movement with 5-second get ready buffer!
         playCountdownPip(0)
         triggerHaptic('heavy')
-        speakCoachVoiceCue('Switch sides! Now side 2. Get ready in 3, 2, 1.')
+        speakCoachVoiceCue('Switch sides. Side 2.')
         setGuidedSide(2)
         setTimerSecondsLeft(currentItem?.durationSec ?? 30)
         setIsTimerRunning(false)
-        setPrepCountdown(3)
+        setPrepCountdown(5)
       } else {
         // Both sides complete (or bilateral movement done)
         playCountdownPip(0)
@@ -1002,19 +1002,19 @@ export default function ClinicalCoolDownModule({
 
         const nextIdx = activeStepIndex + 1
         if (nextIdx < coolDownItems.length) {
-          // Naturally advance to the next exercise with 3-second get ready buffer!
+          // Naturally advance to the next exercise with 5-second get ready buffer!
           setActiveStepIndex(nextIdx)
           setGuidedSide(1)
           const nextItem = coolDownItems[nextIdx]
           setTimerSecondsLeft(nextItem?.durationSec ?? 30)
           setIsTimerRunning(false)
-          setPrepCountdown(3)
+          setPrepCountdown(5)
           if (nextItem) {
             const nextIsUnilateral = nextItem.isUnilateral ?? isUnilateralMovement(nextItem)
             if (nextIsUnilateral) {
-              speakCoachVoiceCue(`Next: Side 1 of ${nextItem.name}. Get ready in 3, 2, 1.`)
+              speakCoachVoiceCue(`Next: Side 1 of ${nextItem.name}`)
             } else {
-              speakCoachVoiceCue(`Next: ${nextItem.name}. Get ready in 3, 2, 1.`)
+              speakCoachVoiceCue(`Next: ${nextItem.name}`)
             }
           }
         } else {
@@ -1044,7 +1044,7 @@ export default function ClinicalCoolDownModule({
     speakCoachVoiceCue,
   ])
 
-  // Guided Prep Countdown (3-second buffer to get ready for the next stretch)
+  // Guided Prep Countdown (5-second buffer to get ready for the next stretch)
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null
     if (guidedModalOpen && prepCountdown > 0) {
@@ -1054,10 +1054,11 @@ export default function ClinicalCoolDownModule({
             playCountdownPip(0)
             triggerHaptic('timer')
             setIsTimerRunning(true)
-            speakCoachVoiceCue('Begin stretch')
             return 0
           }
-          playCountdownPip(prev - 1)
+          if (prev <= 4 && prev >= 2) {
+            playCountdownPip(prev - 1)
+          }
           return prev - 1
         })
       }, 1000)
@@ -1065,7 +1066,7 @@ export default function ClinicalCoolDownModule({
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [guidedModalOpen, prepCountdown, playCountdownPip, speakCoachVoiceCue])
+  }, [guidedModalOpen, prepCountdown, playCountdownPip])
 
   const startGuidedFlow = () => {
     setActiveStepIndex(0)
@@ -1073,15 +1074,15 @@ export default function ClinicalCoolDownModule({
     const firstItem = coolDownItems[0]
     setTimerSecondsLeft(firstItem?.durationSec ?? 30)
     setIsTimerRunning(false)
-    setPrepCountdown(3)
+    setPrepCountdown(5)
     setGuidedModalOpen(true)
     triggerHaptic('tap')
     if (firstItem) {
       const isUnilateral = firstItem.isUnilateral ?? isUnilateralMovement(firstItem)
       if (isUnilateral) {
-        speakCoachVoiceCue(`Starting Side 1: ${firstItem.name}. Get ready in 3, 2, 1.`)
+        speakCoachVoiceCue(`Starting Side 1: ${firstItem.name}`)
       } else {
-        speakCoachVoiceCue(`Starting cool-down: ${firstItem.name}. Get ready in 3, 2, 1.`)
+        speakCoachVoiceCue(`Starting cool-down: ${firstItem.name}`)
       }
     }
   }
@@ -1094,14 +1095,14 @@ export default function ClinicalCoolDownModule({
       const nextItem = coolDownItems[nextIdx]
       setTimerSecondsLeft(nextItem?.durationSec ?? 30)
       setIsTimerRunning(false)
-      setPrepCountdown(3)
+      setPrepCountdown(5)
       triggerHaptic('tap')
       if (nextItem) {
         const isUnilateral = nextItem.isUnilateral ?? isUnilateralMovement(nextItem)
         if (isUnilateral) {
-          speakCoachVoiceCue(`Next: Side 1 of ${nextItem.name}. Get ready in 3, 2, 1.`)
+          speakCoachVoiceCue(`Next: Side 1 of ${nextItem.name}`)
         } else {
-          speakCoachVoiceCue(`Next: ${nextItem.name}. Get ready in 3, 2, 1.`)
+          speakCoachVoiceCue(`Next: ${nextItem.name}`)
         }
       }
     } else {
@@ -1118,11 +1119,11 @@ export default function ClinicalCoolDownModule({
     playCountdownPip(0)
     triggerHaptic('tap')
     if (guidedSide === 1) {
-      speakCoachVoiceCue('Switching to Side 2. Get ready in 3, 2, 1.')
+      speakCoachVoiceCue('Switch sides. Side 2.')
       setGuidedSide(2)
       setTimerSecondsLeft(currentItem.durationSec ?? 30)
       setIsTimerRunning(false)
-      setPrepCountdown(3)
+      setPrepCountdown(5)
     } else {
       speakCoachVoiceCue('Side 1')
       setGuidedSide(1)

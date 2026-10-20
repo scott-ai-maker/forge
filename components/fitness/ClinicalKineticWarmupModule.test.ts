@@ -190,7 +190,7 @@ describe('ClinicalKineticWarmupModule & ClinicalCoolDownModule Key Scoping & Fut
       expect(code).toContain("WebkitBackdropFilter: 'blur(8px)'")
     })
 
-    it('verifies that both Guided Flow modules enforce a 3-second get-ready countdown upon advancing to the next stretch', async () => {
+    it('verifies that both Guided Flow modules enforce a 5-second get-ready countdown with streamlined voice cues', async () => {
       const fs = await import('node:fs')
       const path = await import('node:path')
       const warmupCode = fs.readFileSync(
@@ -202,23 +202,27 @@ describe('ClinicalKineticWarmupModule & ClinicalCoolDownModule Key Scoping & Fut
         'utf-8'
       )
 
-      // Warmup module 3-second get ready assertions
-      expect(warmupCode).toContain('setPrepCountdown(3)')
-      expect(warmupCode).toContain('Get ready in 3, 2, 1')
+      // Warmup module 5-second get ready assertions
+      expect(warmupCode).toContain('setPrepCountdown(5)')
       expect(warmupCode).toContain('Get into position for next stretch')
       expect(warmupCode).toContain('Get into position for Side 2')
-      expect(warmupCode).toContain('Switch sides! Now side 2. Get ready in 3, 2, 1.')
-      expect(warmupCode).toContain("Starting warmup: ${firstItem.name}. Get ready in 3, 2, 1.")
+      expect(warmupCode).toContain('Switch sides. Side 2.')
+      expect(warmupCode).toContain("Starting warmup: ${firstItem.name}")
       expect(warmupCode).toContain("'Get Ready'")
+      // Voice cues must be streamlined to prevent overlap
+      expect(warmupCode).not.toContain('Get ready in 3, 2, 1')
+      expect(warmupCode).not.toContain("'Begin stretch'")
 
-      // Cool-down module 3-second get ready assertions
-      expect(coolDownCode).toContain('setPrepCountdown(3)')
-      expect(coolDownCode).toContain('Get ready in 3, 2, 1')
+      // Cool-down module 5-second get ready assertions
+      expect(coolDownCode).toContain('setPrepCountdown(5)')
       expect(coolDownCode).toContain('Get into position for next stretch')
       expect(coolDownCode).toContain('Get into position for Side 2')
-      expect(coolDownCode).toContain('Switch sides! Now side 2. Get ready in 3, 2, 1.')
-      expect(coolDownCode).toContain("Starting cool-down: ${firstItem.name}. Get ready in 3, 2, 1.")
+      expect(coolDownCode).toContain('Switch sides. Side 2.')
+      expect(coolDownCode).toContain("Starting cool-down: ${firstItem.name}")
       expect(coolDownCode).toContain("'Get Ready'")
+      // Voice cues must be streamlined to prevent overlap
+      expect(coolDownCode).not.toContain('Get ready in 3, 2, 1')
+      expect(coolDownCode).not.toContain("'Begin stretch'")
     })
   })
 })
