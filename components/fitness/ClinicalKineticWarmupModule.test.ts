@@ -208,6 +208,7 @@ describe('ClinicalKineticWarmupModule & ClinicalCoolDownModule Key Scoping & Fut
       expect(warmupCode).toContain('Get into position for next stretch')
       expect(warmupCode).toContain('Get into position for Side 2')
       expect(warmupCode).toContain('Switch sides! Now side 2. Get ready in 3, 2, 1.')
+      expect(warmupCode).toContain("Starting warmup: ${firstItem.name}. Get ready in 3, 2, 1.")
       expect(warmupCode).toContain("'Get Ready'")
 
       // Cool-down module 3-second get ready assertions
@@ -216,6 +217,7 @@ describe('ClinicalKineticWarmupModule & ClinicalCoolDownModule Key Scoping & Fut
       expect(coolDownCode).toContain('Get into position for next stretch')
       expect(coolDownCode).toContain('Get into position for Side 2')
       expect(coolDownCode).toContain('Switch sides! Now side 2. Get ready in 3, 2, 1.')
+      expect(coolDownCode).toContain("Starting cool-down: ${firstItem.name}. Get ready in 3, 2, 1.")
       expect(coolDownCode).toContain("'Get Ready'")
     })
   })
