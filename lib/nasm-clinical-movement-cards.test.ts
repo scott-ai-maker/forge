@@ -75,7 +75,7 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
 
   it('resolves authentic verified official NASM CDN default images and provides brand logo fallback', () => {
     const bench = getNasmClinicalMovementCard('Barbell Flat Bench Press')
-    expect(bench.imageUrl).toBe('https://img.youtube.com/vi/CayG6UYqL8g/hqdefault.jpg')
+    expect(bench.imageUrl).toBe('/images/exercises/barbell-bench-press.jpg')
     expect(bench.fallbackImageUrl).toBe('/images/exercises/image-not-available.jpg')
 
     const squat = getNasmClinicalMovementCard('Barbell Back Squat')
@@ -90,12 +90,12 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     // 1. Bilateral Glute Bridge / Floor Bridge
     const gluteBridge = getNasmClinicalMovementCard('Glute Bridge')
     expect(gluteBridge.hasOfficialMedia).toBe(true)
-    expect(gluteBridge.imageUrl).toBe('https://img.youtube.com/vi/Z3cY3d3BBo4/hqdefault.jpg')
+    expect(gluteBridge.imageUrl).toBe('/images/exercises/glute-bridge.jpg')
     expect(gluteBridge.videoUrl).toContain('Z3cY3d3BBo4')
     expect(gluteBridge.embedUrl).toContain('Z3cY3d3BBo4')
 
     const floorBridge = getNasmClinicalMovementCard('Floor Bridge')
-    expect(floorBridge.imageUrl).toBe('https://img.youtube.com/vi/Z3cY3d3BBo4/hqdefault.jpg')
+    expect(floorBridge.imageUrl).toBe('/images/exercises/floor-bridge.jpg')
     expect(floorBridge.videoUrl).toContain('Z3cY3d3BBo4')
     expect(floorBridge.howToSteps.length).toBe(4)
     expect(floorBridge.howToSteps[0]).toContain('Lie on your back')
@@ -158,7 +158,7 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
   it('resolves Glute Bridge with 2s Isometric Hold and demonstrates O(1) in-memory memoization', () => {
     // 1. Clinical warmup item variation
     const warmupBridge = getNasmClinicalMovementCard('Glute Bridge with 2s Isometric Hold')
-    expect(warmupBridge.imageUrl).toBe('https://img.youtube.com/vi/Z3cY3d3BBo4/hqdefault.jpg')
+    expect(warmupBridge.imageUrl).toBe('/images/exercises/floor-bridge.jpg')
     expect(warmupBridge.hasOfficialMedia).toBe(true)
 
     // 2. Memoization test: subsequent lookups return exact cached instance
@@ -174,13 +174,13 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
 
   it('resolves verified official NASM CDN default thumbnails for compound and corrective movements', () => {
     const card = getNasmClinicalMovementCard('Barbell Flat Bench Press')
-    expect(card.imageUrl).toBe('https://img.youtube.com/vi/CayG6UYqL8g/hqdefault.jpg')
+    expect(card.imageUrl).toBe('/images/exercises/barbell-bench-press.jpg')
 
     const squatCard = getNasmClinicalMovementCard('Squat to Overhead Reach & Scaption')
     expect(squatCard.imageUrl).toBe('/images/exercises/squat-to-overhead-reach.jpg')
 
     const bridgeCard = getNasmClinicalMovementCard('Glute Bridge')
-    expect(bridgeCard.imageUrl).toBe('https://img.youtube.com/vi/Z3cY3d3BBo4/hqdefault.jpg')
+    expect(bridgeCard.imageUrl).toBe('/images/exercises/glute-bridge.jpg')
   })
 })
 
