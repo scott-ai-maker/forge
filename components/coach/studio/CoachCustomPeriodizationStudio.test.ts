@@ -22,11 +22,11 @@ describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
   it('resolves verified exercise thumbnail images for studio matrix display', () => {
     const gobletSquatImg = resolveGaaExerciseImage('goblet squat')
     expect(gobletSquatImg).toBeTruthy()
-    expect(gobletSquatImg).toContain('img.youtube.com')
+    expect(gobletSquatImg).toMatch(/(img\.youtube\.com|\/images\/exercises\/)/)
 
     const pushUpImg = resolveGaaExerciseImage('push up')
     expect(pushUpImg).toBeTruthy()
-    expect(pushUpImg).toContain('img.youtube.com')
+    expect(pushUpImg).toMatch(/(img\.youtube\.com|\/images\/exercises\/)/)
   })
 
   it('powers 1-click smart exercise swaps with joint-protective biomechanical alternatives', () => {

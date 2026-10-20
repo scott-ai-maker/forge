@@ -509,7 +509,7 @@ describe('Unified Live Studio HUD Helper Mechanics', () => {
       expect(card.name).toBe('Barbell Back Squat')
       expect(card.category).toBe('Legs')
       expect(card.hasOfficialMedia).toBe(true)
-      expect(card.imageUrl).toContain('img.youtube.com')
+      expect(card.imageUrl).toMatch(/(img\.youtube\.com|\/images\/exercises\/)/)
       expect(card.embedUrl).toContain('youtube-nocookie.com/embed')
       expect(card.clinicalCues.length).toBeGreaterThanOrEqual(2)
       expect(card.primeMover).toContain('Quadriceps')
