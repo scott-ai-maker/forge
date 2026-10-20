@@ -101,7 +101,7 @@ const MOCK_TRIAGE_CLIENTS: ClientTriageSummary[] = [
 
 export default function CoachTriageTestHarnessPage() {
   return (
-    <main style={{ minHeight: '100vh', background: '#080E14', padding: '24px 16px' }}>
+    <main style={{ minHeight: '100dvh', background: '#080E14', padding: '24px 16px' }}>
       <div style={{ maxWidth: 1440, margin: '0 auto' }}>
         <CoachTriageCockpit initialClients={MOCK_TRIAGE_CLIENTS} />
       </div>

@@ -58,11 +58,11 @@ export default function LiveSessionStickyDock({
       className="live-session-sticky-dock"
       style={{
         position: 'fixed',
-        bottom: 16,
+        bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 99998,
-        maxWidth: 'calc(100vw - 20px)',
+        maxWidth: 'min(calc(100dvw - 20px), 100%)',
         width: 560,
         background: 'linear-gradient(135deg, rgba(14,23,36,0.98) 0%, rgba(8,14,20,0.98) 100%)',
         backdropFilter: 'blur(20px)',

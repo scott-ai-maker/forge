@@ -160,7 +160,7 @@ export default function AuditLandingPage() {
   const auditProduct = STANDALONE_PRODUCTS[0]
 
   return (
-    <main id="main-content" style={{ minHeight: '100vh', background: 'var(--navy)', position: 'relative' }}>
+    <main id="main-content" style={{ minHeight: '100dvh', background: 'var(--navy)', position: 'relative' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(auditStructuredData) }}

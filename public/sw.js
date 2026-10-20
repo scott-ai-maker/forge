@@ -105,7 +105,7 @@ self.addEventListener('fetch', event => {
   if (url.pathname.startsWith('/images/exercises/')) {
     event.respondWith(
       caches.open(STATIC_CACHE).then(async cache => {
-        const cachedResponse = await cache.match(request)
+        const cachedResponse = await cache.match(request, { ignoreSearch: true })
 
         const fetchPromise = fetch(request)
           .then(networkResponse => {
@@ -116,7 +116,7 @@ self.addEventListener('fetch', event => {
           })
           .catch(async () => {
             if (cachedResponse) return cachedResponse
-            const fallback = await caches.match('/images/exercises/image-not-available.jpg')
+            const fallback = await caches.match('/images/exercises/image-not-available.jpg', { ignoreSearch: true })
             return fallback || new Response('', { status: 404, statusText: 'Image Not Found' })
           })
 
@@ -171,7 +171,7 @@ self.addEventListener('fetch', event => {
   ) {
     event.respondWith(
       caches.open(STATIC_CACHE).then(async cache => {
-        const cached = await cache.match(request)
+        const cached = await cache.match(request, { ignoreSearch: true })
         const fetchPromise = fetch(request)
           .then(networkResponse => {
             if (networkResponse.ok) {
@@ -189,6 +189,6 @@ self.addEventListener('fetch', event => {
 
   // 5. Default fetch handler
   event.respondWith(
-    fetch(request).catch(() => caches.match(request))
+    fetch(request).catch(() => caches.match(request, { ignoreSearch: true }))
   )
 })

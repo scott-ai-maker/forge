@@ -5,7 +5,7 @@
  * 
  * Elicits Master Coach Gordon AI (backed by Gemini 3.8 Flash and NASM OPT™ curriculum)
  * to generate a personalized, time-efficient 3-day Strength Endurance (Phase 2)
- * body recomposition program for Scott Gordon (5c077.60rd0n@gmail.com).
+ * body recomposition program for Scott Gordon (scott@forge-athletic.app).
  * 
  * Tailored for:
  * - 308 lbs, ~27% bodyfat (~225 lbs Lean Body Mass foundation)
@@ -47,18 +47,6 @@ async function main() {
     .select('id, full_name, email, role, designated_coach_id')
     .eq('email', clientEmail)
     .maybeSingle()
-
-  if (!client && clientEmail === 'scott@forge-athletic.app') {
-    const fallback = await admin
-      .from('clients')
-      .select('id, full_name, email, role, designated_coach_id')
-      .eq('email', '5c077.60rd0n@gmail.com')
-      .maybeSingle()
-    if (fallback.data) {
-      client = fallback.data
-      clientErr = null
-    }
-  }
 
   if (clientErr || !client) {
     throw new Error(`Client not found: ${clientErr?.message}`)

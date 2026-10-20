@@ -53,7 +53,7 @@ export default async function ProofOfWorkSharePage({ params }: ProofOfWorkPagePr
   return (
     <main
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         background: '#04070E',
         color: '#F8FAFC',
         padding: 'clamp(16px, 4vw, 40px) 16px 64px',

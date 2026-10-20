@@ -21,7 +21,7 @@ export default async function OnboardingPage() {
     .maybeSingle()
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--navy)', padding: '40px 24px' }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--navy)', padding: '40px 24px' }}>
       <SiteHeader
         links={[
           { href: '/dashboard', label: 'Today' },

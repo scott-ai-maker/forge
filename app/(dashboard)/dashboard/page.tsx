@@ -268,7 +268,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const workspace = normalizeDashboardWorkspace(params.workspace)
 
   return (
-    <main className="dashboard-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main className="dashboard-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         links={[
           { href: '/dashboard', label: 'Today' },

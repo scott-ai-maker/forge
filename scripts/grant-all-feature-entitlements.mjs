@@ -24,7 +24,7 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-const EMAILS = ['da_mona_lisa@msn.com', 'rainvilj@hotmail.com', '5c077.60rd0n@gmail.com', 'scott@forge-athletic.app']
+const EMAILS = ['da_mona_lisa@msn.com', 'rainvilj@hotmail.com', 'scott@forge-athletic.app']
 const FEATURES = ['nutrition', 'video-review', 'travel']
 const ACCESS_YEARS = 10
 

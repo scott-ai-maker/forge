@@ -80,7 +80,7 @@ export default function FoundingIntakeSplashClient() {
     <div
       className="mobile-touch-scope"
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         background: 'radial-gradient(ellipse at 50% 0%, rgba(197, 160, 89, 0.12) 0%, rgba(8, 14, 24, 0.98) 60%), #080E18',
         color: '#FFFFFF',
         position: 'relative',

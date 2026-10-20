@@ -417,6 +417,8 @@ export default function MobileNavigationDrawer({
           style={{
             flex: 1,
             overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            scrollbarGutter: 'stable',
             padding: '16px 14px',
             display: 'flex',
             flexDirection: 'column',

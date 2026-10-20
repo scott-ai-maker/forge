@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function WhatsNewPage() {
   return (
-    <main id="main-content" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main id="main-content" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         fixed
         links={[

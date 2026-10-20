@@ -82,7 +82,7 @@ const CHALLENGES = [
 
 export default function CorporateRetainersPage() {
   return (
-    <main id="main-content" style={{ minHeight: '100vh', background: 'var(--navy)', position: 'relative' }}>
+    <main id="main-content" style={{ minHeight: '100dvh', background: 'var(--navy)', position: 'relative' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(corporateStructuredData) }}

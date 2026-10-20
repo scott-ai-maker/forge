@@ -69,7 +69,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main
       className="sgf-auth-bg sgf-auth-page"
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

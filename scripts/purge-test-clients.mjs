@@ -28,8 +28,6 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 const PROTECTED_EMAILS = new Set([
   'coach@forge-athletic.app',   // Coach Gordon (Forge)
   'scott@forge-athletic.app',   // Scott Gordon (Client)
-  '5c077.60rd0n@gmail.com',    // Scott Gordon (Client - Legacy)
-  '5c077.60rd0n@proton.me',    // Scott Gordon (Proton reserve)
   'da_mona_lisa@msn.com',       // Lisa Gordon
   'rainvilj@hotmail.com',       // Jennifer Rainville
   'connor.gordon2002@gmail.com',// Connor Gordon

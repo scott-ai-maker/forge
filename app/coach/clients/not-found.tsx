@@ -4,7 +4,7 @@ import LogoutButton from '@/components/auth/LogoutButton'
 
 export default function CoachNotFound() {
   return (
-    <main id="main-content" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main id="main-content" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         links={[{ href: '/coach', label: 'Coach Dashboard' }]}
         actions={<LogoutButton />}

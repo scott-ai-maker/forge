@@ -48,7 +48,7 @@ const appsStructuredData = {
 
 export default function AppsPage() {
   return (
-    <main style={{ minHeight: '100vh', background: '#080E14' }}>
+    <main style={{ minHeight: '100dvh', background: '#080E14' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(appsStructuredData) }}

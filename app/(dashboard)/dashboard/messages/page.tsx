@@ -23,7 +23,7 @@ export default async function ClientMessagesPage() {
   }
 
   return (
-    <main className="dashboard-messages-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main className="dashboard-messages-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText="Coach messages"
         links={[

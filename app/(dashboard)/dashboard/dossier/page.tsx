@@ -156,7 +156,7 @@ export default async function ExecutiveSundayDossierPage({
   })
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText={isCoachPreview ? 'Coach view' : 'Progress summary'}
         links={

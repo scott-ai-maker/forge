@@ -14,8 +14,8 @@ export function triggerGoldPrCelebration(_options?: { message?: string }) {
   const canvas = document.createElement('canvas')
   canvas.style.position = 'fixed'
   canvas.style.inset = '0'
-  canvas.style.width = '100vw'
-  canvas.style.height = '100vh'
+  canvas.style.width = '100%'
+  canvas.style.height = '100dvh'
   canvas.style.pointerEvents = 'none'
   canvas.style.zIndex = '999999'
   document.body.appendChild(canvas)

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function ApplyPage() {
   return (
-    <main id="main-content" className="apply-page" style={{ minHeight: '100vh', background: 'var(--navy)', padding: '2rem 1rem 4rem' }}>
+    <main id="main-content" className="apply-page" style={{ minHeight: '100dvh', background: 'var(--navy)', padding: '2rem 1rem 4rem' }}>
       <SiteHeader
         links={[
           { href: '/packages', label: 'Memberships' },

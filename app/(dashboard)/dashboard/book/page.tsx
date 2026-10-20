@@ -33,7 +33,7 @@ export default async function BookPage() {
   )
 
   return (
-    <main className="dashboard-book-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main className="dashboard-book-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText="Book a session"
         links={[

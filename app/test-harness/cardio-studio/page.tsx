@@ -16,7 +16,7 @@ export default function CardioStudioTestHarnessPage() {
   const [flowedToCoolDown, setFlowedToCoolDown] = useState(false)
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0A0F1D", padding: "16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+    <main style={{ minHeight: "100dvh", background: "#0A0F1D", padding: "16px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
       {!isStudioOpen && (
         <div style={{ textAlign: "center", color: "#FFFFFF", display: "grid", gap: 12 }}>
           <div data-testid="studio-closed-banner" style={{ color: "#94A3B8", fontSize: 16 }}>

@@ -101,7 +101,7 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
   const initialTab = (tabParam as SettingsTab) || 'wearables'
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText="Settings & Hardware"
         links={[

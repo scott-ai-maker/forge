@@ -40,7 +40,7 @@ export default function ReferralLandingClient({
     <main
       className="sgf-auth-bg"
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

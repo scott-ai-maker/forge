@@ -58,7 +58,7 @@ export default async function CoachSettingsPage({ searchParams }: CoachSettingsP
     : 'promotions'
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText="Coach Console"
         links={[

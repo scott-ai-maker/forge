@@ -30,7 +30,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
     <main
       className="sgf-auth-bg"
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -5,7 +5,7 @@ export default function NotFound() {
     <main
       id="main-content"
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         background: 'radial-gradient(ellipse at 50% 20%, rgba(197, 160, 89, 0.08) 0%, transparent 70%), var(--navy)',
         display: 'flex',
         alignItems: 'center',

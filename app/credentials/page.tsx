@@ -116,7 +116,7 @@ export default function CredentialsPage() {
   }
 
   return (
-    <main className="foundation-home forge-marketing" id="main-content" style={{ minHeight: '100vh', background: '#080E14' }}>
+    <main className="foundation-home forge-marketing" id="main-content" style={{ minHeight: '100dvh', background: '#080E14' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(credentialsStructuredData) }}

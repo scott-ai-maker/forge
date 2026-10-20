@@ -38,8 +38,6 @@ function createAdminClient() {
 const PROTECTED_EMAILS = new Set([
   'coach@forge-athletic.app',
   'scott@forge-athletic.app',
-  '5c077.60rd0n@gmail.com',
-  '5c077.60rd0n@proton.me',
   'da_mona_lisa@msn.com',
   'rainvilj@hotmail.com',
   'connor.gordon2002@gmail.com',
@@ -61,12 +59,6 @@ const NEW_ACCOUNTS = [
     name: 'Scott Gordon',
     role: 'client',
     password: process.env.SCOTT_CLIENT_PASSWORD || process.env.TEMP_CLIENT_PASSWORD || 'ForgeAthlete2026!',
-  },
-  {
-    email: '5c077.60rd0n@gmail.com',
-    name: 'Scott Gordon',
-    role: 'client',
-    password: process.env.SCOTT_CLIENT_PASSWORD || process.env.TEMP_CLIENT_PASSWORD || 'Temp1234!',
   },
   {
     email: 'da_mona_lisa@msn.com',

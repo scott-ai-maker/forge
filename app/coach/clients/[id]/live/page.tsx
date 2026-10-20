@@ -65,7 +65,7 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
     .order('created_at', { ascending: true })
 
   return (
-    <main style={{ minHeight: '100vh', background: '#04070E' }}>
+    <main style={{ minHeight: '100dvh', background: '#04070E' }}>
       <SiteHeader
         badgeText="Live Coaching"
         links={[

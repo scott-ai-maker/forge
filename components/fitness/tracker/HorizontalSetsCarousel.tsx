@@ -86,6 +86,7 @@ export const HorizontalSetsCarousel: React.FC<HorizontalSetsCarouselProps> = ({
           alignItems: 'center',
           gap: 6,
           overflowX: 'auto',
+          overscrollBehaviorX: 'contain',
           paddingBottom: 4,
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',

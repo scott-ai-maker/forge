@@ -72,7 +72,7 @@ export default function OfflineTelemetryBadge() {
       style={{
         position: 'fixed',
         top: 'calc(12px + env(safe-area-inset-top, 0px))',
-        right: 'clamp(12px, 2.5vw, 24px)',
+        right: 'max(clamp(12px, 2.5vw, 24px), env(safe-area-inset-right, 12px))',
         zIndex: 99999,
         animation: 'fadeIn 0.25s ease-out',
         pointerEvents: 'auto',

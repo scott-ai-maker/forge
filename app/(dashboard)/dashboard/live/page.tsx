@@ -51,7 +51,7 @@ export default async function AthleteLiveSessionPage() {
   const athleteName = client?.full_name || user.email?.split('@')[0] || 'Athlete'
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText="Live Studio"
         links={[

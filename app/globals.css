@@ -30,6 +30,13 @@
   /* Telemetry Status Tokens */
   --success:  #34D399;
   --error:    #F87171;
+
+  /* PWA & Responsive Tokens */
+  --app-height: 100dvh;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
 @font-face {
@@ -93,6 +100,7 @@ html {
   overflow-x: clip;
   position: relative;
   background-color: var(--navy);
+  scrollbar-gutter: stable;
 }
 body {
   margin: 0;
@@ -108,6 +116,17 @@ body {
   padding-right: env(safe-area-inset-right, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Dynamic Viewport Unit Helpers */
+.min-h-screen-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.h-screen-dvh {
+  height: 100vh;
+  height: 100dvh;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -2523,6 +2542,7 @@ a:focus-visible {
   gap: clamp(1rem, 5vw, 4rem);
   max-width: 1280px;
   min-height: min(720px, calc(100vh - 78px));
+  min-height: min(720px, calc(100dvh - 78px));
   margin: 0 auto;
   padding: clamp(3rem, 7vw, 6rem) 0;
 }
@@ -3314,14 +3334,17 @@ a:focus-visible {
 .responsive-modal-surface {
   max-width: 720px;
   width: min(720px, calc(100vw - 24px));
+  width: min(720px, calc(100dvw - 24px));
   max-height: 90dvh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 480px) {
   .responsive-modal-surface {
     width: calc(100vw - 16px) !important;
+    width: calc(100dvw - 16px) !important;
     max-height: 93dvh !important;
     border-radius: 12px !important;
   }
@@ -3588,6 +3611,59 @@ body:has(.posture-scanner-backdrop) .global-coach-gordon-fab {
     justify-content: center !important;
     text-align: center !important;
   }
+
+  /* Prevent iOS Safari from auto-zooming when tapping inputs */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* PWA Window Controls Overlay (Desktop Standalone Mode) */
+@media (display-mode: window-controls-overlay) {
+  .site-header-fixed,
+  .site-header {
+    padding-top: max(env(titlebar-area-height, 0px), env(safe-area-inset-top, 0px)) !important;
+  }
+  .titlebar-drag-region {
+    app-region: drag;
+    -webkit-app-region: drag;
+  }
+  .titlebar-no-drag {
+    app-region: no-drag;
+    -webkit-app-region: no-drag;
+  }
+}
+
+/* Touch Ergonomics & Tap Targets for Touchscreens */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  .tactile-btn,
+  .touch-target {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Modal, Sheet, and Drawer Overscroll Containment */
+.modal-backdrop,
+.modal-overlay,
+.drawer-overlay,
+.pwa-install-banner,
+.coach-cardio-modal-backdrop,
+.posture-scanner-backdrop {
+  overscroll-behavior: contain;
+}
+
+.modal-content,
+.modal-scrollable,
+.drawer-content,
+.responsive-tabs-scroll,
+.luxury-snap-rail {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 /* Executive Workout Command Layout */
@@ -3853,6 +3929,7 @@ aside.first-visit-dock,
 
 .foundation-home {
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 0 clamp(1.25rem, 5vw, 5rem);
   background: var(--navy);
   color: var(--white);

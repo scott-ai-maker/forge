@@ -389,7 +389,7 @@ export default function HolidayUnmaskingSplash({
     <div
       className="holiday-unmasking-wrapper"
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         backgroundColor: '#06090F',
         color: '#F8FAFC',
         position: 'relative',

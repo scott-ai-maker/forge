@@ -215,7 +215,7 @@ export default function VirtualBackgroundHarnessPage() {
   }, [simMode])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#070B14', color: '#F8FAFC', padding: 24, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: '#070B14', color: '#F8FAFC', padding: 24, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 16 }}>
         <div>

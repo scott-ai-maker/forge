@@ -151,7 +151,7 @@ const COMPARISON_ROWS = [
 
 export default function PackagesPage() {
   return (
-    <main id="main-content" className="packages-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main id="main-content" className="packages-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(packagesStructuredData) }}

@@ -276,7 +276,7 @@ export default function BosuExerciseExplorerPage() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--navy)', color: 'var(--white)' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--navy)', color: 'var(--white)' }}>
       {/* 3px Gold Horizon line */}
       <div style={{ height: 3, background: 'linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%)' }} />
 

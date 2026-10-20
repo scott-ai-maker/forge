@@ -743,15 +743,19 @@ export default function AskCoachGordonModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: 'max(16px, env(safe-area-inset-top, 16px)) max(16px, env(safe-area-inset-right, 16px)) max(16px, env(safe-area-inset-bottom, 16px)) max(16px, env(safe-area-inset-left, 16px))',
+        overscrollBehavior: 'contain',
       }}
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Ask Coach Gordon"
         style={{
           width: '100%',
           maxWidth: '680px',
-          maxHeight: '90vh',
+          maxHeight: 'min(90dvh, calc(100dvh - 32px))',
           backgroundColor: '#0c0f14',
           border: '1px solid rgba(212, 160, 23, 0.4)',
           borderRadius: '16px',
@@ -759,6 +763,7 @@ export default function AskCoachGordonModal({
           flexDirection: 'column',
           boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(212, 160, 23, 0.15)',
           overflow: 'hidden',
+          overscrollBehavior: 'contain',
         }}
         onClick={e => e.stopPropagation()}
       >

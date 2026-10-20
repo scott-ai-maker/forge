@@ -51,7 +51,7 @@ export default function CoachPeriodizationTestHarness() {
     <main
       data-hydrated="true"
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         background: 'var(--navy)',
         padding: '30px 20px',
         color: '#FFFFFF',

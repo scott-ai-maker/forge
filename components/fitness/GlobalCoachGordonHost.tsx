@@ -268,13 +268,14 @@ export default function GlobalCoachGordonHost() {
       <style jsx>{`
         .global-coach-gordon-fab {
           position: fixed;
-          bottom: 24px;
-          right: 24px;
+          bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+          right: max(24px, env(safe-area-inset-right, 0px));
           z-index: 900;
           background: linear-gradient(135deg, #182236 0%, #0d121c 100%);
           border: 1px solid rgba(212, 160, 23, 0.6);
           border-radius: 28px;
           padding: 10px 18px;
+          min-height: 44px;
           color: var(--gold-lt, #fef08a);
           font-weight: 800;
           font-size: 13px;
@@ -286,6 +287,8 @@ export default function GlobalCoachGordonHost() {
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
           transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
         }
 
         .global-coach-gordon-fab:hover {
@@ -327,10 +330,11 @@ export default function GlobalCoachGordonHost() {
         @media (max-width: 768px) {
           .global-coach-gordon-fab {
             bottom: calc(68px + env(safe-area-inset-bottom, 8px));
-            right: 14px;
+            right: max(14px, env(safe-area-inset-right, 0px));
             padding: 8px 14px;
             font-size: 12px;
             border-radius: 24px;
+            min-height: 44px;
           }
         }
       `}</style>

@@ -35,7 +35,7 @@ export default async function CorporateProposalPage({ searchParams }: CorporateP
   const cadenceParam: CorporateCadence = params.cadence === 'monthly' ? 'monthly' : 'annual'
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--navy)', position: 'relative' }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--navy)', position: 'relative' }}>
       <div style={{ height: 3, background: 'linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%)' }} />
 
       <SiteHeader

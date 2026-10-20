@@ -1,6 +1,6 @@
 export default function CoachLoading() {
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--navy)', padding: '40px 24px' }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--navy)', padding: '40px 24px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         {/* Header skeleton */}
         <div style={{ marginBottom: 40 }}>

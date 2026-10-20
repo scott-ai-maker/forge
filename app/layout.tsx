@@ -109,6 +109,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
   themeColor: '#080E14',
   viewportFit: 'cover',
+  interactiveWidget: 'resizes-content',
 }
 
 const forgeStructuredData = {

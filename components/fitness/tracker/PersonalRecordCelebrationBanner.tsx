@@ -66,11 +66,11 @@ export default function PersonalRecordCelebrationBanner({
       aria-live="assertive"
       style={{
         position: 'fixed',
-        top: 20,
+        top: 'calc(20px + env(safe-area-inset-top, 0px))',
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 100000,
-        maxWidth: 'calc(100vw - 24px)',
+        maxWidth: 'min(calc(100dvw - 24px), 100%)',
         width: 520,
         background: 'linear-gradient(180deg, #0A0F1E 0%, #04070E 100%)',
         backdropFilter: 'blur(25px)',

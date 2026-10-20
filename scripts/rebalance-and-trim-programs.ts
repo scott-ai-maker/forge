@@ -87,11 +87,11 @@ async function main() {
   // 1. SCOTT GORDON — Trimmed 40-44m High-Density Recomposition Protocol
   // =========================================================================
   console.log('\n======================================================')
-  console.log('⚡ Processing Scott Gordon (5c077.60rd0n@gmail.com)...')
+  console.log('⚡ Processing Scott Gordon (scott@forge-athletic.app)...')
   const { data: scottClient } = await admin
     .from('clients')
     .select('id, designated_coach_id')
-    .eq('email', '5c077.60rd0n@gmail.com')
+    .eq('email', 'scott@forge-athletic.app')
     .single()
 
   if (scottClient) {

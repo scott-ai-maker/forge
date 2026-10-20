@@ -563,7 +563,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
     : null
 
   return (
-    <main className="coach-client-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main className="coach-client-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText="Member Profile"
         links={[

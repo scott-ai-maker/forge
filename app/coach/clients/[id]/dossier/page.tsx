@@ -149,7 +149,7 @@ export default async function CoachClientDossierPage({ params }: PageProps) {
   })
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText="Coach Intelligence"
         links={[

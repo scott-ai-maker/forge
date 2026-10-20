@@ -933,7 +933,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
   })
 
   return (
-    <main className="coach-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main className="coach-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText="Coach Dashboard"
         links={[

@@ -273,7 +273,7 @@ export default function StabilityBallPage() {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--navy)', color: 'var(--white)' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--navy)', color: 'var(--white)' }}>
       {/* 3px Crimson & Gold Horizon Line */}
       <div style={{ height: 3, background: 'linear-gradient(90deg, transparent 0%, #E31837 35%, var(--gold) 50%, #E31837 65%, transparent 100%)' }} />
 

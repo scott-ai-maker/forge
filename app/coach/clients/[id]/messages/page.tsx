@@ -53,7 +53,7 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
   const athleteName = client.full_name || client.email
 
   return (
-    <main className="coach-client-messages-page" style={{ minHeight: '100vh', background: 'var(--navy)' }}>
+    <main className="coach-client-messages-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
         badgeText="Messages"
         links={[

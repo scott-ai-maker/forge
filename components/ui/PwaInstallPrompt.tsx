@@ -118,7 +118,7 @@ export default function PwaInstallPrompt() {
         top: 'calc(10px + env(safe-area-inset-top, 0px))',
         left: '50%',
         transform: 'translateX(-50%)',
-        width: 'min(94vw, 440px)',
+        width: 'min(calc(100dvw - 24px), 440px)',
         zIndex: 9998,
         background: 'rgba(14, 23, 36, 0.97)',
         backdropFilter: 'blur(20px)',
@@ -172,18 +172,23 @@ export default function PwaInstallPrompt() {
           <button
             type="button"
             onClick={handleInstallClick}
+            className="tactile-btn"
             style={{
               background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
               color: '#080E14',
               border: 'none',
               borderRadius: 6,
-              padding: '6px 12px',
+              minHeight: 44,
+              padding: '8px 14px',
               fontSize: 11,
               fontWeight: 800,
               cursor: 'pointer',
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
               boxShadow: '0 2px 8px rgba(245,158,11,0.35)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             Install
@@ -198,7 +203,9 @@ export default function PwaInstallPrompt() {
             border: 'none',
             color: '#8A99AA',
             cursor: 'pointer',
-            padding: 4,
+            padding: 8,
+            minWidth: 44,
+            minHeight: 44,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

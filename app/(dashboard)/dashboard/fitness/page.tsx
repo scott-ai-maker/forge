@@ -121,7 +121,7 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
   }))
 
   return (
-    <main className="dashboard-fitness-page" style={{ minHeight: '100vh', background: 'var(--navy)', padding: 'clamp(8px, 1.5vw, 18px) clamp(6px, 1.5vw, 16px) clamp(140px, 18vh, 180px)', maxWidth: '100vw', overflowX: 'hidden', boxSizing: 'border-box' }}>
+    <main className="dashboard-fitness-page" style={{ minHeight: '100dvh', background: 'var(--navy)', padding: 'clamp(8px, 1.5vw, 18px) clamp(6px, 1.5vw, 16px) calc(140px + env(safe-area-inset-bottom, 16px))', maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}>
       <SiteHeader
         links={[
           { href: '/dashboard', label: 'Today' },

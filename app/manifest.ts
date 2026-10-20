@@ -9,10 +9,13 @@ export default function manifest(): MetadataRoute.Manifest {
     id: '/companion',
     scope: '/',
     display: 'standalone',
-    display_override: ['standalone', 'window-controls-overlay'],
+    display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
     background_color: '#080E14',
     theme_color: '#080E14',
-    orientation: 'portrait',
+    orientation: 'portrait-primary',
+    lang: 'en-US',
+    dir: 'ltr',
+    prefer_related_applications: false,
     categories: ['fitness', 'health', 'lifestyle', 'sports'],
     icons: [
       {

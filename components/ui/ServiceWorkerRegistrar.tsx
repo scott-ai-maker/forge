@@ -35,18 +35,42 @@ export default function ServiceWorkerRegistrar() {
       return
     }
 
+    let registration: ServiceWorkerRegistration | null = null
+    let updateInterval: ReturnType<typeof setInterval> | null = null
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && registration) {
+        void registration.update()
+      }
+    }
+
     const register = async () => {
       try {
-        await navigator.serviceWorker.register('/sw.js', {
+        registration = await navigator.serviceWorker.register('/sw.js', {
           scope: '/',
           updateViaCache: 'none',
         })
+
+        // Auto-check for updates when athlete returns to the active PWA
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        // Periodic hourly check for long-running standalone sessions
+        updateInterval = setInterval(() => {
+          if (registration) {
+            void registration.update()
+          }
+        }, 60 * 60 * 1000)
       } catch (error) {
         console.warn('Service worker registration failed', error)
       }
     }
 
     void register()
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (updateInterval) clearInterval(updateInterval)
+    }
   }, [])
 
   return null
