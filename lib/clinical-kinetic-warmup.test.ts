@@ -53,7 +53,7 @@ describe('Clinical Kinetic Warmup & OHSA Integration', () => {
 
     // Cooldown Movements
     expect(resolveGaaExerciseImage('self myofascial release smr quadriceps')).toBe('https://img.youtube.com/vi/vUzmXO56jDI/hqdefault.jpg')
-    expect(resolveGaaExerciseImage('self myofascial release smr thoracic spine')).toBe('https://img.youtube.com/vi/xKmqizOqshI/hqdefault.jpg')
+    expect(resolveGaaExerciseImage('self myofascial release smr thoracic spine')).toBe('/images/exercises/self-myofascial-release-smr-thoracic-spine.jpg')
     expect(resolveGaaExerciseImage('static latissimus dorsi ball stretch')).toBe('/images/exercises/static-latissimus-dorsi-ball-stretch.jpg')
     expect(resolveGaaExerciseImage('static 90 90 hamstring stretch')).toBe('https://img.youtube.com/vi/h_yZV27H684/hqdefault.jpg')
 
