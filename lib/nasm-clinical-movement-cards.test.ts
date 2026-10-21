@@ -150,7 +150,7 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     // 5. Single-Leg Single-Arm Scaption
     const singleArmScaption = getNasmClinicalMovementCard('Single-Leg Single-Arm Scaption')
     expect(singleArmScaption.hasOfficialMedia).toBe(true)
-    expect(singleArmScaption.imageUrl).toBe('https://img.youtube.com/vi/ikMg_3_jAWE/hqdefault.jpg')
+    expect(singleArmScaption.imageUrl).toBe('/images/exercises/single-leg-single-arm-scaption.jpg')
     expect(singleArmScaption.videoUrl).toContain('ikMg_3_jAWE')
     expect(singleArmScaption.embedUrl).toContain('ikMg_3_jAWE')
   })
