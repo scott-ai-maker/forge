@@ -126,7 +126,7 @@ export default function CredentialsPage() {
       <header className="forge-home-header">
         <Link className="forge-home-brand" href="/" aria-label="Forge Athletic home">
           <Image
-            src="/images/brand/logo-concept-1-kinetic-f.jpg"
+            src="/images/brand/logo-concept-1-kinetic-f.jpg?v=crest"
             alt=""
             width={48}
             height={48}

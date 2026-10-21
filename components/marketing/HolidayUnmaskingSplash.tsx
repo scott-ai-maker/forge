@@ -475,7 +475,7 @@ export default function HolidayUnmaskingSplash({
                 }}
               >
                 <Image
-                  src="/images/brand/logo-concept-1-kinetic-f.jpg"
+                  src="/images/brand/logo-concept-1-kinetic-f.jpg?v=crest"
                   alt="Forge Athletic Monogram"
                   fill
                   sizes="44px"
@@ -1250,7 +1250,7 @@ export default function HolidayUnmaskingSplash({
                         }}
                       >
                         <Image
-                          src="/images/brand/logo-concept-1-kinetic-f.jpg"
+                          src="/images/brand/logo-concept-1-kinetic-f.jpg?v=crest"
                           alt=""
                           width={32}
                           height={32}

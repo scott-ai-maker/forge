@@ -79,7 +79,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="sgf-auth-content forge-auth-content" style={{ width: '100%', maxWidth: 420 }}>
         <Image
           className="sgf-auth-crest forge-auth-logo"
-          src="/images/brand/logo-concept-1-kinetic-f.jpg"
+          src="/images/brand/logo-concept-1-kinetic-f.jpg?v=crest"
           alt="Forge Athletic"
           width={112}
           height={112}

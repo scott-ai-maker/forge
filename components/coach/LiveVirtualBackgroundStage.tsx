@@ -637,7 +637,7 @@ export default function LiveVirtualBackgroundStage({
             width: 28,
             height: 28,
             borderRadius: 6,
-            backgroundImage: "url('/images/brand/logo-concept-1-kinetic-f.jpg')",
+            backgroundImage: "url('/images/brand/logo-concept-1-kinetic-f.jpg?v=crest')",
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             border: '1px solid rgba(212,160,23,0.5)',

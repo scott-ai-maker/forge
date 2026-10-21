@@ -19,7 +19,7 @@ export default function GaaMasterWatermarkSeal({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/images/brand/logo-concept-1-kinetic-f.jpg"
+      src="/images/brand/logo-concept-1-kinetic-f.jpg?v=crest"
       alt=""
       aria-hidden="true"
       className={`gaa-master-seal ${className}`.trim()}

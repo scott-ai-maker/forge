@@ -149,7 +149,7 @@ export default function AppStorePlaceholderModal({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/images/brand/logo-concept-1-kinetic-f.jpg"
+                src="/images/brand/logo-concept-1-kinetic-f.jpg?v=crest"
                 alt="Forge Athletic"
                 style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'contain' }}
               />
