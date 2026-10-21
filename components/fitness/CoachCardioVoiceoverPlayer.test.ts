@@ -262,6 +262,23 @@ describe('CoachCardioVoiceoverPlayer Responsive Design & Session Engine Logic', 
       expect(content).toContain('if (onFlowToCoolDown)')
       expect(content).toContain('onFlowToCoolDown()')
     })
+
+    it('verifies CoachCardioVoiceoverPlayer enforces true 50% workout halfway milestone and dynamic remaining minutes', async () => {
+      const fs = await import('fs')
+      const path = await import('path')
+      const playerPath = path.resolve(__dirname, './CoachCardioVoiceoverPlayer.tsx')
+      const content = fs.readFileSync(playerPath, 'utf-8')
+
+      // Verifies hasWorkoutHalfwayFiredRef exists and is reset
+      expect(content).toContain('hasWorkoutHalfwayFiredRef = useRef<boolean>(false)')
+      expect(content).toContain('hasWorkoutHalfwayFiredRef.current = false')
+
+      // Verifies true 50% halfway milestone check
+      expect(content).toContain('const workoutHalfSecs = Math.floor(currentSession.totalSeconds / 2)')
+      expect(content).toContain('exactTotalSec < workoutHalfSecs')
+      expect(content).toContain('hasWorkoutHalfwayFiredRef.current = true')
+      expect(content).toContain("speakCue(`Halfway mark! You are halfway through today's session.${remainingPhrase}")
+    })
   })
 })
 

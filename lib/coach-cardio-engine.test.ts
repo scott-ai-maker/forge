@@ -509,6 +509,71 @@ describe('coach-cardio-engine', () => {
       expect(stepCheck.type).toBe('STEP_CHECK')
       expect(stepCheck.spokenFeedback).toContain('3,850 steps')
       expect(stepCheck.spokenFeedback).toContain('165 steps per minute')
+
+      // 5. Zero remaining seconds handling
+      const zeroCheck = parseCardioVoiceCommand('time check', {
+        segmentRemainingSecs: 0,
+        totalRemainingSecs: 120,
+      })
+      expect(zeroCheck.type).toBe('TIME_CHECK')
+      expect(zeroCheck.spokenFeedback).toContain('0 seconds left in this interval')
+      expect(zeroCheck.spokenFeedback).toContain('2 minutes left')
+    })
+  })
+
+  describe('Cardio Timing & Halfway Cue Precision', () => {
+    it('dynamically computes remaining steady state minutes for Zone 2 across all durations', () => {
+      const durations = [10, 15, 20, 30, 45]
+      for (const mins of durations) {
+        const session = buildCardioSession({ patternId: 'zone2_aerobic_engine', durationMinutes: mins })
+        const block1 = session.intervals.find(i => i.id === 'z2-block-1')
+        const block2 = session.intervals.find(i => i.id === 'z2-block-2')
+
+        expect(block1).toBeDefined()
+        expect(block2).toBeDefined()
+
+        // Block 1 must NOT contain misleading "Halfway through this first block"
+        expect(block1?.voiceCues.midIntervalCue).not.toContain('Halfway through this first block')
+        expect(block1?.voiceCues.midIntervalCue).toContain('Check your cadence and breathing')
+
+        // Block 2 must NOT contain hardcoded "Ten minutes remaining in our steady state"
+        if (mins < 30) {
+          expect(block2?.voiceCues.midIntervalCue).not.toContain('Ten minutes remaining')
+        }
+
+        // For shorter workouts (10m, 15m, 20m), it calculates realistic remaining minutes
+        if (mins === 15) {
+          expect(block2?.voiceCues.midIntervalCue).toContain('Approximately 3 minutes remaining in our steady state')
+        } else if (mins === 20) {
+          expect(block2?.voiceCues.midIntervalCue).toContain('Approximately 4 minutes remaining in our steady state')
+        } else if (mins === 30) {
+          expect(block2?.voiceCues.midIntervalCue).toContain('Approximately 6 minutes remaining in our steady state')
+        }
+      }
+    })
+
+    it('ensures HIIT, Ladder, and Threshold over-under mid-interval cues avoid false halfway cues', () => {
+      const hiit = buildCardioSession({ patternId: 'hiit_1_to_2', durationMinutes: 20 })
+      const hiitRecov = hiit.intervals.filter(i => i.segmentType === 'recovery')
+      for (const recov of hiitRecov) {
+        expect(recov.voiceCues.midIntervalCue).not.toContain('Halfway through this recovery')
+        expect(recov.voiceCues.midIntervalCue).toContain('Focus on bringing your heart rate down')
+      }
+
+      const ladder = buildCardioSession({ patternId: 'pyramid_ladder', durationMinutes: 25 })
+      const ladderWork = ladder.intervals.filter(i => i.segmentType === 'work')
+      for (const step of ladderWork) {
+        expect(step.voiceCues.midIntervalCue).not.toContain('Halfway through this tier')
+        expect(step.voiceCues.midIntervalCue).toContain('Midpoint of this tier')
+      }
+
+      const overUnder = buildCardioSession({ patternId: 'threshold_tempo_over_under', durationMinutes: 20 })
+      const under = overUnder.intervals.find(i => i.id === 'ou-under-1')
+      const over = overUnder.intervals.find(i => i.id === 'ou-over-1')
+      expect(under?.voiceCues.midIntervalCue).toContain('Ninety seconds remaining on this cruise block')
+      expect(under?.voiceCues.midIntervalCue).not.toContain('One minute left')
+      expect(over?.voiceCues.midIntervalCue).toContain('Thirty seconds remaining in this surge')
+      expect(over?.voiceCues.midIntervalCue).not.toContain('Halfway through the surge')
     })
   })
 })

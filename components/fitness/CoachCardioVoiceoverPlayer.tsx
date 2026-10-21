@@ -425,6 +425,7 @@ export default function CoachCardioVoiceoverPlayer({
 
   // Track cues that have fired to avoid duplicate speech within a segment
   const firedCuesRef = useRef<Set<string>>(new Set())
+  const hasWorkoutHalfwayFiredRef = useRef<boolean>(false)
 
   // Prefetch first few cues when session configuration changes
   useEffect(() => {
@@ -632,6 +633,24 @@ export default function CoachCardioVoiceoverPlayer({
       // 3-2-1 countdown pips
       if (activeSegmentRemaining <= 3 && activeSegmentRemaining >= 1) {
         playIntervalTransitionPip(activeSegmentRemaining)
+      }
+
+      // True 50% Workout Halfway Milestone Cue
+      const workoutHalfSecs = Math.floor(currentSession.totalSeconds / 2)
+      if (exactTotalSec < workoutHalfSecs) {
+        hasWorkoutHalfwayFiredRef.current = false
+      } else if (
+        !hasWorkoutHalfwayFiredRef.current &&
+        workoutHalfSecs > 0 &&
+        activeSegment.segmentType !== 'cooldown' &&
+        !resolved.isCompleted &&
+        resolved.segmentIndex === prevSegmentIndex // avoid colliding with interval transition startCue
+      ) {
+        hasWorkoutHalfwayFiredRef.current = true
+        const remainingWorkoutSecs = Math.max(0, currentSession.totalSeconds - exactTotalSec)
+        const remainingMins = Math.round(remainingWorkoutSecs / 60)
+        const remainingPhrase = remainingMins > 0 ? ` Approximately ${remainingMins} minutes left.` : ''
+        speakCue(`Halfway mark! You are halfway through today's session.${remainingPhrase} Protect your cadence, stay disciplined with your breathing, and let's finish strong.`)
       }
 
       // Mid-interval breathing & check-in cue
@@ -1099,6 +1118,7 @@ export default function CoachCardioVoiceoverPlayer({
     setSegmentElapsedSeconds(0)
     setTotalElapsedSeconds(0)
     firedCuesRef.current.clear()
+    hasWorkoutHalfwayFiredRef.current = false
 
     // Reset distance, pace & step metrics
     distanceMetersRef.current = 0
