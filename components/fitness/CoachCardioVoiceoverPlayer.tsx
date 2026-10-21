@@ -57,6 +57,7 @@ export interface CoachCardioVoiceoverPlayerProps {
   externalHeartRateBpm?: number | null
   clientNotes?: string
   voiceIdOverride?: string
+  autoStart?: boolean
   onClose?: () => void
   onFlowToCoolDown?: () => void
   onFlowToMindfulness?: () => void
@@ -93,6 +94,7 @@ export default function CoachCardioVoiceoverPlayer({
   externalHeartRateBpm,
   clientNotes,
   voiceIdOverride,
+  autoStart = false,
   onClose,
   onFlowToCoolDown,
   onFlowToMindfulness,
@@ -140,8 +142,8 @@ export default function CoachCardioVoiceoverPlayer({
   const distanceUnitRef = useRef<'mi' | 'km'>('mi')
 
   // Player State
-  const [isPlaying, setIsPlaying] = useState<boolean>(false)
-  const [hasStarted, setHasStarted] = useState<boolean>(false)
+  const [isPlaying, setIsPlaying] = useState<boolean>(Boolean(autoStart))
+  const [hasStarted, setHasStarted] = useState<boolean>(Boolean(autoStart))
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState<number>(0)
   const [segmentElapsedSeconds, setSegmentElapsedSeconds] = useState<number>(0)
   const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0)
@@ -1103,7 +1105,7 @@ export default function CoachCardioVoiceoverPlayer({
   ])
 
   // Start Session
-  const handleStartSession = () => {
+  const handleStartSession = useCallback(() => {
     const now = Date.now()
     sessionStartTimestampRef.current = now
     pausedAccumulatedMsRef.current = 0
@@ -1166,7 +1168,23 @@ export default function CoachCardioVoiceoverPlayer({
     // Speak initial intro + first segment cue
     const firstCue = currentSegment.voiceCues.startCue || session.personalizedIntro
     speakCue(firstCue)
-  }
+  }, [
+    distanceUnit,
+    isMusicDuckingActive,
+    currentSegment?.segmentType,
+    currentSegment?.voiceCues?.startCue,
+    session?.personalizedIntro,
+    speakCue,
+  ])
+
+  // Auto-start on mount if autoStart is true (eliminates intermediate setup middleman)
+  const autoStartFiredRef = useRef<boolean>(false)
+  useEffect(() => {
+    if (autoStart && !autoStartFiredRef.current) {
+      autoStartFiredRef.current = true
+      handleStartSession()
+    }
+  }, [autoStart, handleStartSession])
 
   // Pause / Resume
   const handleTogglePlayPause = () => {
@@ -1523,8 +1541,37 @@ export default function CoachCardioVoiceoverPlayer({
           </div>
         </div>
 
-        {/* Quick Controls: Bluetooth HR, Hands-Free Voice, Music, Mute, Close */}
+        {/* Quick Controls: Bluetooth HR, Hands-Free Voice, Music, Mute, Options, Close */}
         <div className="coach-cardio-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {/* Quick Option to Adjust / Switch Protocol if needed */}
+          {hasStarted && !sessionCompleted && (
+            <button
+              type="button"
+              onClick={() => {
+                pauseSession()
+                setHasStarted(false)
+              }}
+              title="Adjust cardio prescription protocol or duration"
+              className="tactile-btn"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: 'var(--gray-lt)',
+                borderRadius: 8,
+                padding: '5px 8px',
+                fontSize: 10.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <GaaIcon name="sliders" size={12} tone="gold" />
+              <span>Options</span>
+            </button>
+          )}
+
           {/* Bluetooth HR Connect */}
           <button
             type="button"

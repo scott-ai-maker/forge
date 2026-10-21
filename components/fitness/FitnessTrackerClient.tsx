@@ -98,7 +98,7 @@ import {
   flushOfflineQueue,
   getPendingQueueCount,
 } from '@/lib/offline-sync-queue'
-import { playPrecisionTone, playCountdownPip } from '@/lib/web-audio-cadence-engine'
+import { playPrecisionTone, playCountdownPip, getSharedAudioContext } from '@/lib/web-audio-cadence-engine'
 import { speakCoachVoiceCue, playNeuralCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import { useTrackerTimer } from '@/components/fitness/hooks/useTrackerTimer'
 import ProofOfWorkDossierModal from '@/components/fitness/ProofOfWorkDossierModal'
@@ -775,6 +775,7 @@ export default function FitnessTrackerClient({
     patternId: CardioPatternId
     durationMins: number
     modality: string
+    autoStart?: boolean
   } | null>(null)
   const [activeMindfulSession, setActiveMindfulSession] = useState<{
     isOpen: boolean
@@ -5003,6 +5004,10 @@ export default function FitnessTrackerClient({
                                   <button
                                     type="button"
                                     onClick={() => {
+                                      const ctx = getSharedAudioContext()
+                                      if (ctx && ctx.state === 'suspended') {
+                                        void ctx.resume()
+                                      }
                                       const modality = getFirstCardioModality(cardio, 'Treadmill Incline Walk')
                                       handleStartCardioSession(workout.day, modality, false)
                                       const patId: CardioPatternId =
@@ -5015,6 +5020,7 @@ export default function FitnessTrackerClient({
                                         patternId: patId,
                                         durationMins: cardio?.durationMins || 20,
                                         modality,
+                                        autoStart: true,
                                       })
                                     }}
                                     className="tactile-btn"
@@ -5700,6 +5706,10 @@ export default function FitnessTrackerClient({
             void handleCompleteWorkoutDay(completeModal, rpe)
           }}
           onFlowToCardio={(rpe?: number) => {
+            const ctx = getSharedAudioContext()
+            if (ctx && ctx.state === 'suspended') {
+              void ctx.resume()
+            }
             const targetWorkout = completeModal
             void handleCompleteWorkoutDay(targetWorkout, rpe)
             const cardio = resolveWorkoutCardioProtocol(targetWorkout, profile, plan)
@@ -5714,6 +5724,7 @@ export default function FitnessTrackerClient({
               patternId: patId,
               durationMins: cardio?.durationMins || 20,
               modality,
+              autoStart: true,
             })
           }}
           onFlowToCoolDown={(rpe?: number) => {
@@ -5867,6 +5878,7 @@ export default function FitnessTrackerClient({
             athleteWeightKg={profile?.weight_kg || 75}
             athleteGender={(profile?.sex as 'male' | 'female') || 'male'}
             initialModality={activeCardioPlayerSession.modality || 'Treadmill Incline Walk'}
+            autoStart={activeCardioPlayerSession.autoStart ?? true}
             externalHeartRateBpm={wearableTelemetry?.currentHeartRate ?? null}
             onClose={() => setActiveCardioPlayerSession(null)}
             onFlowToCoolDown={() => {
@@ -5913,6 +5925,10 @@ export default function FitnessTrackerClient({
             setStatus(`Mindful Moment complete: ${res.minutes} mins logged to Apple Health!`)
           }}
           onFlowToCardio={() => {
+            const ctx = getSharedAudioContext()
+            if (ctx && ctx.state === 'suspended') {
+              void ctx.resume()
+            }
             setActiveMindfulSession(null)
             const fallbackWorkout = completeModal || planWorkouts[0]
             const cardio = fallbackWorkout ? resolveWorkoutCardioProtocol(fallbackWorkout, profile, plan) : null
@@ -5927,6 +5943,7 @@ export default function FitnessTrackerClient({
               patternId: patId,
               durationMins: cardio?.durationMins || 20,
               modality,
+              autoStart: true,
             })
           }}
         />
@@ -5967,6 +5984,10 @@ export default function FitnessTrackerClient({
           onPauseResume={handlePauseResumeWorkoutSession}
           onQuitSession={handleClientQuitWorkout}
           onStartCardio={() => {
+            const ctx = getSharedAudioContext()
+            if (ctx && ctx.state === 'suspended') {
+              void ctx.resume()
+            }
             const activeWorkout = planWorkouts.find((w: WorkoutDay) => w.day === activeWorkoutSessionDay)
             if (activeWorkout) {
               const cardio = resolveWorkoutCardioProtocol(activeWorkout, profile, plan)
@@ -5982,6 +6003,7 @@ export default function FitnessTrackerClient({
                 patternId: patId,
                 durationMins: cardio?.durationMins || 20,
                 modality,
+                autoStart: true,
               })
             }
           }}

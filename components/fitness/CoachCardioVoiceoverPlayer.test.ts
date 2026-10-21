@@ -279,6 +279,28 @@ describe('CoachCardioVoiceoverPlayer Responsive Design & Session Engine Logic', 
       expect(content).toContain('hasWorkoutHalfwayFiredRef.current = true')
       expect(content).toContain("speakCue(`Halfway mark! You are halfway through today's session.${remainingPhrase}")
     })
+
+    it('verifies autoStart prop immediately starts prescribed cardio and eliminates the middleman setup card', async () => {
+      const fs = await import('fs')
+      const path = await import('path')
+      const playerPath = path.resolve(__dirname, './CoachCardioVoiceoverPlayer.tsx')
+      const playerContent = fs.readFileSync(playerPath, 'utf-8')
+      const clientPath = path.resolve(__dirname, './FitnessTrackerClient.tsx')
+      const clientContent = fs.readFileSync(clientPath, 'utf-8')
+
+      // Verifies CoachCardioVoiceoverPlayer supports autoStart prop and starts immediately
+      expect(playerContent).toContain('autoStart?: boolean')
+      expect(playerContent).toContain('autoStart = false')
+      expect(playerContent).toContain('const [isPlaying, setIsPlaying] = useState<boolean>(Boolean(autoStart))')
+      expect(playerContent).toContain('const [hasStarted, setHasStarted] = useState<boolean>(Boolean(autoStart))')
+      expect(playerContent).toContain('autoStartFiredRef')
+      expect(playerContent).toContain('handleStartSession()')
+
+      // Verifies FitnessTrackerClient passes autoStart: true when launched from workout
+      expect(clientContent).toContain('autoStart: true')
+      expect(clientContent).toContain('autoStart={activeCardioPlayerSession.autoStart ?? true}')
+      expect(clientContent).toContain('getSharedAudioContext')
+    })
   })
 })
 
