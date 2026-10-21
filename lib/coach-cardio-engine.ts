@@ -457,6 +457,12 @@ export const CARDIO_PATTERNS: Record<CardioPatternId, CardioPatternDefinition> =
       const halfMainSecs = Math.floor(mainWorkSecs / 2)
       const secondHalfSecs = mainWorkSecs - halfMainSecs
 
+      const steadyHalfRemainingSecs = Math.round(secondHalfSecs / 2)
+      const steadyHalfRemainingMins = Math.round(steadyHalfRemainingSecs / 60)
+      const remainingSteadyPhrase = steadyHalfRemainingMins >= 2
+        ? `Approximately ${steadyHalfRemainingMins} minutes remaining in our steady state.`
+        : 'Final couple minutes remaining in our steady state.'
+
       return [
         {
           id: 'z2-warmup',
@@ -480,7 +486,7 @@ export const CARDIO_PATTERNS: Record<CardioPatternId, CardioPatternDefinition> =
           breathingProfile: getBreathingProfileForRpe(4),
           voiceCues: {
             startCue: 'Lock into RPE 4. Deep belly breaths. If your phone is in your pocket, don\'t look down: sync your breathing to your movement turnover—3 strides or cycles in, 3 out. You should be able to speak a full sentence right now, but feel your lungs working continuously. Find your pace and protect it.',
-            midIntervalCue: 'Halfway through this first block. Notice your breathing. Keep that steady 3:3 movement cadence locked in. Smooth and diaphragmatic. If you find yourself panting, ease off slightly. This is where your engine is built.',
+            midIntervalCue: 'Check your cadence and breathing. Keep that steady 3:3 movement rhythm locked in. Smooth and diaphragmatic. If you find yourself panting, ease off slightly. This is where your aerobic engine is built.',
             swiftKickCue: 'Do not let your focus drift. Check your posture, tighten your midsection, and keep your turnover constant.',
           },
         },
@@ -492,8 +498,8 @@ export const CARDIO_PATTERNS: Record<CardioPatternId, CardioPatternDefinition> =
           targetRpe: 5,
           breathingProfile: getBreathingProfileForRpe(5),
           voiceCues: {
-            startCue: 'Second half. Bump your effort slightly to RPE 5. Still sustainable, but breathing is deliberate. Keep that 3:3 turnover locked into your cadence. Oxygen in through the nose, smooth release through pursed lips.',
-            midIntervalCue: 'Ten minutes remaining in our steady state. You are doing fantastic. Stay patient. Your mitochondria are working for you right here.',
+            startCue: 'Phase two of our cruise. Bump your effort slightly to RPE 5. Still sustainable, but breathing is deliberate. Keep that 3:3 turnover locked into your cadence. Oxygen in through the nose, smooth release through pursed lips.',
+            midIntervalCue: `${remainingSteadyPhrase} You are doing fantastic. Stay patient. Your mitochondria are working for you right here.`,
             countdown10sCue: 'Ten seconds until we dial it back for our recovery cooldown.',
             swiftKickCue: 'I know boredom tries to creep in on steady state. Stay mentally sharp! Every single minute counts toward your cardiovascular longevity.',
           },
@@ -582,7 +588,7 @@ export const CARDIO_PATTERNS: Record<CardioPatternId, CardioPatternDefinition> =
           breathingProfile: getBreathingProfileForRpe(3),
           voiceCues: {
             startCue: 'Ease off! Drop immediately to RPE 3. Long nasal inhales for 3 to 4 slow strides or cycles, slow mouth exhales. Force your heart rate to come down.',
-            midIntervalCue: 'Breathe deep into your ribcage. Stand tall, open your airway. Halfway through this recovery.',
+            midIntervalCue: 'Breathe deep into your ribcage. Stand tall, open your airway. Focus on bringing your heart rate down.',
             countdown10sCue: i < numRounds ? 'Ten seconds until the next work round. Get mentally locked in.' : 'Ten seconds until we enter our cool-down.',
           },
         })
@@ -670,7 +676,7 @@ export const CARDIO_PATTERNS: Record<CardioPatternId, CardioPatternDefinition> =
               : step.rpe >= 8
               ? `Step ${idx + 1}: Lactate surge at RPE ${step.rpe}. Shift to a 2:1 cadence—two quick breaths in, punch the air out on the power phase! Meet it with authority.`
               : `Step ${idx + 1}: Move up to RPE ${step.rpe}. Deepen your breath. Lock your turnover into your breathing cadence.`,
-            midIntervalCue: `Halfway through this tier. Check your breathing against the target RPE ${step.rpe}.`,
+            midIntervalCue: `Midpoint of this tier. Check your breathing against target RPE ${step.rpe}.`,
             countdown10sCue: idx < 6 ? 'Ten seconds until our next tier shift.' : 'Ten seconds until the final cool-down.',
             swiftKickCue: isPeak || step.rpe >= 8 ? getRandomSwiftKick() : undefined,
           },
@@ -741,7 +747,7 @@ export const CARDIO_PATTERNS: Record<CardioPatternId, CardioPatternDefinition> =
           breathingProfile: getBreathingProfileForRpe(5),
           voiceCues: {
             startCue: `Cycle ${i}: Settle into RPE 5. Lock into a 3:3 stride or turnover cadence. Diaphragmatic nasal-in, mouth-out. Noticeable work, but you are holding a controlled rhythm.`,
-            midIntervalCue: 'One minute left on this cruise block. Stay relaxed in the shoulders. Prepare yourself mentally for the surge.',
+            midIntervalCue: 'Ninety seconds remaining on this cruise block. Stay relaxed in the shoulders. Prepare yourself mentally for the surge.',
             countdown10sCue: 'Ten seconds until the OVER surge. Get ready to push to RPE 8.',
           },
         })
@@ -755,7 +761,7 @@ export const CARDIO_PATTERNS: Record<CardioPatternId, CardioPatternDefinition> =
           breathingProfile: getBreathingProfileForRpe(8),
           voiceCues: {
             startCue: 'SURGE! RPE 8 for sixty seconds! Ramp up your output! Shift to a 2:1 cadence—two quick breaths in, punch the air out on each power stroke or strike! One-word answers only!',
-            midIntervalCue: 'Thirty seconds! Halfway through the surge! Don\'t back off now! Drive!',
+            midIntervalCue: 'Thirty seconds remaining in this surge! Don\'t back off now! Drive!',
             countdown10sCue: 'Ten seconds! Hold this power all the way through!',
             swiftKickCue: getRandomSwiftKick(),
           },
@@ -1235,10 +1241,18 @@ export function parseCardioVoiceCommand(
 
   // 5. Time Check ("How much time?", "What's the clock?", "Time remaining?")
   if (t.includes('time') || t.includes('clock') || t.includes('how long') || t.includes('left')) {
-    const segMins = context?.segmentRemainingSecs ? Math.floor(context.segmentRemainingSecs / 60) : 0
-    const segSecs = context?.segmentRemainingSecs ? context.segmentRemainingSecs % 60 : 30
-    const totalMins = context?.totalRemainingSecs ? Math.ceil(context.totalRemainingSecs / 60) : 10
-    const text = `You have ${segMins > 0 ? `${segMins} minutes and ` : ''}${segSecs} seconds left in this interval, and ${totalMins} minutes left in the workout. Stay locked in!`
+    const hasSeg = typeof context?.segmentRemainingSecs === 'number'
+    const segMins = hasSeg ? Math.floor(context.segmentRemainingSecs! / 60) : 0
+    const segSecs = hasSeg ? Math.max(0, context.segmentRemainingSecs! % 60) : 30
+    const hasTotal = typeof context?.totalRemainingSecs === 'number'
+    const totalRemaining = hasTotal ? context.totalRemainingSecs! : 600
+    const totalMins = Math.ceil(totalRemaining / 60)
+
+    const intervalPart = segMins > 0
+      ? `${segMins} minutes and ${segSecs} seconds left in this interval`
+      : `${segSecs} seconds left in this interval`
+
+    const text = `You have ${intervalPart}, and ${totalMins} minutes left in the workout. Stay locked in!`
     return { type: 'TIME_CHECK', spokenFeedback: text }
   }
 
