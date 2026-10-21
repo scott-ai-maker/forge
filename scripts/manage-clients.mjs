@@ -41,6 +41,7 @@ const PROTECTED_EMAILS = new Set([
   'da_mona_lisa@msn.com',
   'rainvilj@hotmail.com',
   'connor.gordon2002@gmail.com',
+  'kalicocat7@yahoo.com',
 ])
 
 const SMOKETEST_ACCOUNTS = [
@@ -77,6 +78,12 @@ const NEW_ACCOUNTS = [
     name: 'Connor Gordon',
     role: 'client',
     password: process.env.CONNOR_CLIENT_PASSWORD || process.env.TEMP_CLIENT_PASSWORD || 'Temp1234!',
+  },
+  {
+    email: 'kalicocat7@yahoo.com',
+    name: 'Kalli Seabrooke',
+    role: 'client',
+    password: process.env.KALLI_CLIENT_PASSWORD || process.env.TEMP_CLIENT_PASSWORD || 'ForgeBeta2026!',
   },
 ]
 
