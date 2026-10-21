@@ -27,7 +27,7 @@ export interface CoachBackgroundPreset {
   logoPosition?: 'wall-plaque-right' | 'center-plaque' | 'top-right' | 'center-top'
 }
 
-const BRAND_LOGO = '/images/brand/logo-concept-1-kinetic-f.jpg?v=crest'
+const BRAND_LOGO = '/images/brand/forge-crest-mark.png'
 
 export const COACH_BACKGROUND_PRESETS: CoachBackgroundPreset[] = [
   // ── 1. Biomechanical Assessment & Movement Screen (Diagnostic & Corrective) ──

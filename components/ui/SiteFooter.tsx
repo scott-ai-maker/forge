@@ -7,7 +7,7 @@ import { APP_VERSION, APP_RELEASE_CODENAME } from '@/lib/app-version'
 import { AppleLogoIcon, AndroidLogoIcon } from '@/components/marketing/AppStoreBadges'
 import { isCompanionApp, useHelperAppMode } from '@/lib/native-companion'
 
-const BRAND_LOGO = '/images/brand/logo-concept-1-kinetic-f.jpg?v=crest'
+const BRAND_LOGO = '/images/brand/forge-crest-mark.png'
 
 const SOCIAL_LINKS = [
   { name: 'Instagram', href: 'https://instagram.com/forgeathletic', Icon: Camera },

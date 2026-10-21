@@ -40,7 +40,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
       <div className="forge-auth-content" style={{ width: '100%', maxWidth: 420 }}>
         <Image
           className="forge-auth-logo"
-          src="/images/brand/logo-concept-1-kinetic-f.jpg?v=crest"
+          src="/images/brand/forge-crest-mark.png"
           alt="Forge Athletic"
           width={112}
           height={112}

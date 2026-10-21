@@ -67,7 +67,7 @@ describe('Coach Virtual Background Catalog — Client Training Modality Suite', 
 
     for (const preset of presetsWithImages) {
       const thumbStyleStr = JSON.stringify(preset.thumbnailStyle)
-      expect(thumbStyleStr).toContain('/images/brand/logo-concept-1-kinetic-f.jpg')
+      expect(thumbStyleStr).toContain('/images/brand/forge-crest-mark.png')
     }
   })
 

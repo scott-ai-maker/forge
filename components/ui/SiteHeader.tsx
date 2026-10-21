@@ -14,7 +14,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { isCompanionApp, useHelperAppMode } from '@/lib/native-companion'
 import { CLIENT_PRIMARY_NAV } from '@/components/ui/client-primary-navigation'
 
-const BRAND_LOGO = '/images/brand/logo-concept-1-kinetic-f.jpg?v=crest'
+const BRAND_LOGO = '/images/brand/forge-crest-mark.png'
 
 type NavLink = {
   label: string

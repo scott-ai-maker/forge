@@ -53,7 +53,7 @@ export default function ReferralLandingClient({
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <Image
-            src="/images/brand/logo-concept-1-kinetic-f.jpg?v=crest"
+            src="/images/brand/forge-crest-mark.png"
             alt="Forge Athletic"
             width={88}
             height={88}

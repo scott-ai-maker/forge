@@ -153,7 +153,7 @@ describe('Public Funnel & Architecture', () => {
     expect(homePageSource).toContain('ForgeMembershipPlans')
     expect(homePageSource).toContain('NASM Master Trainer')
     expect(homePageSource).toContain('Fitness Director')
-    expect(homePageSource).toContain('/images/brand/logo-concept-1-kinetic-f.jpg')
+    expect(homePageSource).toContain('/images/brand/forge-crest-mark.png')
   })
 
   it('guarantees PackagesStudioClient formats prices with monospace tabular telemetry', () => {

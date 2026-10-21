@@ -146,7 +146,7 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
       <header className="forge-home-header">
         <Link className="forge-home-brand" href="/" aria-label="Forge Athletic home">
           <Image
-            src="/images/brand/logo-concept-1-kinetic-f.jpg?v=crest"
+            src="/images/brand/forge-crest-mark.png"
             alt=""
             width={48}
             height={48}
