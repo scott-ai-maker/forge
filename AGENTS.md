@@ -36,6 +36,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **Minimum Necessary Rule**:
   - Only collect and transmit health and orthopedic indicators strictly necessary for biomechanical safety, NASM OPT™ exercise contraindication screening, and emergency remote action plans (ERAP).
 
-
-
-
+## Athlete Photography Wardrobe & Visual Standards (GUYS MUST KEEP SHIRTS ON)
+- **Shirts On at All Times**: All male athletes in exercise photography, demonstrations, and marketing assets must strictly have their shirts kept on at all times.
+- **No Shirtless or Sleeveless Tops**: Male models must never be shirtless, bare-chested, or wearing sleeveless stringer/tank tops.
+- **Approved Apparel**: Always dress male athletes in fitted charcoal, dark slate, dark navy, or black athletic performance crewneck t-shirts (short-sleeve) or athletic long-sleeve compression tops, paired with athletic training shorts/tights and clean black training shoes.
