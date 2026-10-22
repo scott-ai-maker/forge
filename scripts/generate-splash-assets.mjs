@@ -6,19 +6,24 @@ import sharp from 'sharp'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 
-const SOURCE_LOGO = path.join(ROOT, 'public', 'images', 'logo-mark-source.png')
-const BG_COLOR = { r: 8, g: 14, b: 20, alpha: 1.0 } // #080E14
+const SOURCE_LOCKUP = fs.existsSync(path.join(ROOT, 'public', 'images', 'brand', 'forge-brand-lockup.png'))
+  ? path.join(ROOT, 'public', 'images', 'brand', 'forge-brand-lockup.png')
+  : path.join(ROOT, 'public', 'images', 'logo-mark-source.png')
+
+const BG_COLOR = { r: 8, g: 14, b: 20, alpha: 1.0 } // #080E14 (Forge Athletic Obsidian Slate)
 
 async function main() {
-  console.log('🚀 Generating upgraded, enlarged, seamless Splash Screens and App Icons...')
+  console.log('🚀 Generating upgraded, seamless Forge Athletic Splash Screens...')
+  console.log(`  Source artwork: ${path.relative(ROOT, SOURCE_LOCKUP)}`)
 
   // Step 1: Create clean seamlessly blended master image (1024x1024)
-  const { data, info } = await sharp(SOURCE_LOGO)
+  const { data, info } = await sharp(SOURCE_LOCKUP)
     .raw()
     .toBuffer({ resolveWithObject: true })
 
   const { width, height, channels } = info
   const seamlessBuffer = Buffer.alloc(width * height * 4)
+  const targetBg = [8, 14, 20]
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -29,30 +34,19 @@ async function main() {
       const g = data[srcIdx + 1]
       const b = data[srcIdx + 2]
 
-      // Distance from monogram center (512, 445)
-      const dMonogram = Math.hypot(x - 512, y - 445)
-      // Distance from text horizontal segment (y=788, x between 200 and 824)
+      // Distance to artwork bounding core: X [200, 824], Y [190, 834]
       const clampedX = Math.max(200, Math.min(824, x))
-      const dText = Math.hypot(x - clampedX, y - 788)
+      const clampedY = Math.max(190, Math.min(834, y))
+      const d = Math.hypot(x - clampedX, y - clampedY)
 
-      let fade = 0
-      if (dMonogram <= 260 || dText <= 30) {
-        fade = 1.0
-      } else if (dMonogram < 370) {
-        fade = Math.max(0, (370 - dMonogram) / 110)
-      } else if (dText < 70) {
-        fade = Math.max(0, (70 - dText) / 40)
+      let factor = 1.0
+      if (d > 20) {
+        factor = Math.max(0, (120 - d) / 100)
       }
 
-      // If pixel itself is gold, force fade to 1.0
-      if (r > 70 && g > 55) {
-        fade = 1.0
-      }
-
-      const bgR = 8, bgG = 14, bgB = 20
-      seamlessBuffer[outIdx] = Math.round(r * fade + bgR * (1 - fade))
-      seamlessBuffer[outIdx + 1] = Math.round(g * fade + bgG * (1 - fade))
-      seamlessBuffer[outIdx + 2] = Math.round(b * fade + bgB * (1 - fade))
+      seamlessBuffer[outIdx] = Math.round(r * factor + targetBg[0] * (1 - factor))
+      seamlessBuffer[outIdx + 1] = Math.round(g * factor + targetBg[1] * (1 - factor))
+      seamlessBuffer[outIdx + 2] = Math.round(b * factor + targetBg[2] * (1 - factor))
       seamlessBuffer[outIdx + 3] = 255
     }
   }
@@ -61,7 +55,7 @@ async function main() {
     .png()
     .toBuffer()
 
-  console.log('✅ Generated seamless 1024x1024 master emblem with smooth #080E14 vignette')
+  console.log('✅ Generated seamless 1024x1024 master lockup with smooth #080E14 edge vignette')
 
   // Helper to render splash canvas
   async function renderSplash(width, height, emblemSize, outputPath) {
@@ -71,6 +65,11 @@ async function main() {
 
     const left = Math.round((width - emblemSize) / 2)
     const top = Math.round((height - emblemSize) / 2)
+
+    const targetDir = path.dirname(outputPath)
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true })
+    }
 
     await sharp({
       create: {
@@ -87,14 +86,15 @@ async function main() {
           top,
         },
       ])
+      .removeAlpha()
       .png({ quality: 95, compressionLevel: 8 })
       .toFile(outputPath)
 
     console.log(`  ✓ Generated: ${path.relative(ROOT, outputPath)} (${width}x${height}, logo: ${emblemSize}px)`)
   }
 
-  // 1. Apple PWA Splash Screens (public/splash/)
-  console.log('\n📱 Generating Enlarged Apple PWA Splash Screens in public/splash/...')
+  // 1. Apple PWA / Standalone Splash Screens (public/splash/)
+  console.log('\n📱 Generating Apple iOS Splash Screens (16 device resolutions)...')
   const APPLE_SPLASH_SCREENS = [
     { name: 'apple-splash-1290-2796.png', w: 1290, h: 2796, logoSize: 920 },
     { name: 'apple-splash-1179-2556.png', w: 1179, h: 2556, logoSize: 850 },
@@ -121,10 +121,10 @@ async function main() {
     await renderSplash(s.w, s.h, s.logoSize, path.join(splashDir, s.name))
   }
 
-  // Also sync to android/app/src/main/assets/public/splash and ios/App/App/public/splash if they exist
+  // Sync to native iOS and Android public/splash asset folders
   const capacitorSplashDirs = [
-    path.join(ROOT, 'android', 'app', 'src', 'main', 'assets', 'public', 'splash'),
     path.join(ROOT, 'ios', 'App', 'App', 'public', 'splash'),
+    path.join(ROOT, 'android', 'app', 'src', 'main', 'assets', 'public', 'splash'),
   ]
   for (const dir of capacitorSplashDirs) {
     if (fs.existsSync(path.dirname(dir))) {
@@ -132,21 +132,22 @@ async function main() {
       for (const s of APPLE_SPLASH_SCREENS) {
         fs.copyFileSync(path.join(splashDir, s.name), path.join(dir, s.name))
       }
-      console.log(`  ✓ Synced PWA splashes to ${path.relative(ROOT, dir)}`)
+      console.log(`  ✓ Synced Apple splash screens to ${path.relative(ROOT, dir)}`)
     }
   }
 
   // 2. iOS Native Assets (ios/App/App/Assets.xcassets/Splash.imageset/)
-  console.log('\n🍎 Generating Enlarged iOS Native Splash Assets...')
+  console.log('\n🍎 Generating iOS Native Storyboard Splash Assets (Splash.imageset)...')
   const iosSplashDir = path.join(ROOT, 'ios', 'App', 'App', 'Assets.xcassets', 'Splash.imageset')
   if (fs.existsSync(iosSplashDir)) {
     await renderSplash(160, 160, 150, path.join(iosSplashDir, 'splash-1x.png'))
     await renderSplash(320, 320, 300, path.join(iosSplashDir, 'splash-2x.png'))
     await renderSplash(480, 480, 450, path.join(iosSplashDir, 'splash-3x.png'))
+    console.log('  ✓ Updated iOS Splash.imageset (1x, 2x, 3x)')
   }
 
   // 3. Android Native Assets (android/app/src/main/res/)
-  console.log('\n🤖 Generating Enlarged Android 12+ Splash Assets...')
+  console.log('\n🤖 Generating Android Native Splash Assets...')
   const androidDensities = [
     { name: 'mipmap-mdpi', size: 288, logoSize: 220 },
     { name: 'mipmap-hdpi', size: 432, logoSize: 330 },
@@ -166,30 +167,7 @@ async function main() {
     await renderSplash(512, 512, 450, path.join(androidDrawableDir, 'splash.png'))
   }
 
-  // 4. Master App Icons (512x512, 192x192, apple-touch-icon, favicon-32)
-  console.log('\n⭐ Generating App Icons from Master Emblem...')
-  await sharp(masterPNG)
-    .resize(512, 512)
-    .png()
-    .toFile(path.join(ROOT, 'public', 'images', 'icon-512.png'))
-  await sharp(masterPNG)
-    .resize(192, 192)
-    .png()
-    .toFile(path.join(ROOT, 'public', 'images', 'icon-192.png'))
-  await sharp(masterPNG)
-    .resize(180, 180)
-    .png()
-    .toFile(path.join(ROOT, 'public', 'apple-touch-icon.png'))
-  await sharp(masterPNG)
-    .resize(32, 32)
-    .png()
-    .toFile(path.join(ROOT, 'public', 'favicon-32.png'))
-  await sharp(masterPNG)
-    .resize(512, 512)
-    .png()
-    .toFile(path.join(ROOT, 'public', 'favicon.png'))
-
-  console.log('✨ All Splash Screens and Brand Icons generated successfully with enlarged, uncropped logos!')
+  console.log('\n✨ All Forge Athletic Splash Screens generated successfully!')
 }
 
 main().catch(err => {
