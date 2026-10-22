@@ -146,12 +146,21 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
   },
   {
     id: 'feat-book',
-    title: 'Book a Coaching Session',
-    subtitle: 'Schedule a video session or movement assessment with Coach Gordon',
+    title: 'Diagnostic & Benchmark Testing',
+    subtitle: 'Schedule an occasional movement screen or baseline assessment with Coach Gordon',
     category: 'Features & Tools',
     icon: 'calendar',
     href: '/dashboard/book',
-    keywords: ['book', 'schedule', 'session', 'consultation', 'calendar', 'appointment'],
+    keywords: ['book', 'schedule', 'diagnostic', 'assessment', 'testing', 'calendar', 'appointment'],
+  },
+  {
+    id: 'feat-form-lab',
+    title: 'Form Lab (Technique Review)',
+    subtitle: 'Submit lift videos for asynchronous kinetic chain critique and cues',
+    category: 'Features & Tools',
+    icon: 'video-studio',
+    href: '/dashboard/fitness?workspace=lab',
+    keywords: ['form', 'video', 'technique', 'critique', 'analysis', 'squat', 'bench', 'deadlift', 'upload', 'lab'],
   },
   {
     id: 'feat-messages',
@@ -174,12 +183,12 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
   },
   {
     id: 'feat-live',
-    title: 'Live Video Coaching',
-    subtitle: 'Train with your coach over live video',
+    title: 'Diagnostic Live Studio',
+    subtitle: 'Movement screen & kinetic chain diagnostic room',
     category: 'Features & Tools',
     icon: 'video-studio',
     href: '/dashboard/live',
-    keywords: ['live', 'studio', 'video call', 'telestrator', 'camera', 'hud', 'telehealth'],
+    keywords: ['live', 'studio', 'video call', 'diagnostic', 'camera', 'hud', 'telehealth'],
   },
 
   // ── Coach Operations ──

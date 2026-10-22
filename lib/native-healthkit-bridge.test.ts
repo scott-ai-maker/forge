@@ -41,6 +41,10 @@ vi.mock('@capacitor/core', async () => {
       setSyncConfiguration: vi.fn(),
       writeWorkout: vi.fn(),
       writeMindfulSession: vi.fn(),
+      sendWorkoutToWatch: vi.fn(),
+      updateWatchRestTimer: vi.fn(),
+      isWatchAppInstalled: vi.fn(),
+      sendCnsReadinessToWatch: vi.fn(),
       addListener: vi.fn(),
     })),
   }
@@ -560,5 +564,118 @@ describe('GAA Native HealthKit & Health Connect Bridge', () => {
       expect(typeof cnsScore).toBe('number')
       expect(summary.cnsStressScore).toBe(cnsScore)
     })
+
+    describe('Apple Watch Companion Synchronization', () => {
+      it('syncs workout state to Apple Watch when on native iOS', async () => {
+        vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
+        vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+
+        const { syncWorkoutStateToWatch } = await import('./native-healthkit-bridge')
+        vi.mocked(GAAHealthKitNative.sendWorkoutToWatch!).mockResolvedValue({ success: true })
+
+        const res = await syncWorkoutStateToWatch({
+          workoutId: 'w-101',
+          dayNumber: 2,
+          focus: 'Hypertrophy Upper Body',
+          completedSets: 3,
+          totalSets: 12,
+          activeExercise: {
+            exerciseName: 'Incline Dumbbell Press',
+            setNumber: 2,
+            totalSets: 4,
+            prescribedWeight: 75,
+            prescribedReps: 10,
+            restSeconds: 60,
+          },
+        })
+
+        expect(res).toBe(true)
+        expect(GAAHealthKitNative.sendWorkoutToWatch).toHaveBeenCalledWith({
+          workout: expect.objectContaining({
+            workoutId: 'w-101',
+            focus: 'Hypertrophy Upper Body',
+          }),
+        })
+      })
+
+      it('syncs rest timer state to Apple Watch when on native iOS', async () => {
+        vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
+        vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+
+        const { syncRestTimerStateToWatch } = await import('./native-healthkit-bridge')
+        vi.mocked(GAAHealthKitNative.updateWatchRestTimer!).mockResolvedValue({ success: true })
+
+        const res = await syncRestTimerStateToWatch({
+          isRunning: true,
+          remainingSeconds: 45,
+          restSeconds: 60,
+          exerciseName: 'Barbell Back Squat',
+          isBioPaced: true,
+          badgeText: 'Ready to Lift',
+        })
+
+        expect(res).toBe(true)
+        expect(GAAHealthKitNative.updateWatchRestTimer).toHaveBeenCalledWith({
+          timer: expect.objectContaining({
+            remainingSeconds: 45,
+            isBioPaced: true,
+          }),
+        })
+      })
+
+      it('checks Apple Watch companion installation and pairing status', async () => {
+        vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
+        vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+
+        const { checkAppleWatchCompanionStatus } = await import('./native-healthkit-bridge')
+        vi.mocked(GAAHealthKitNative.isWatchAppInstalled!).mockResolvedValue({ installed: true, paired: true })
+
+        const status = await checkAppleWatchCompanionStatus()
+        expect(status).toEqual({ installed: true, paired: true })
+      })
+
+      it('subscribes to sets logged on the Apple Watch', async () => {
+        vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
+        vi.mocked(Capacitor.getPlatform).mockReturnValue('ios')
+
+        const { subscribeToWatchSetLogged } = await import('./native-healthkit-bridge')
+
+        let capturedListener: ((data: any) => void) | null = null
+        const mockRemove = vi.fn()
+        vi.mocked(GAAHealthKitNative.addListener).mockImplementation(((event: string, listener: any) => {
+          if (event === 'onWatchSetLogged') {
+            capturedListener = listener
+          }
+          return Promise.resolve({ remove: mockRemove })
+        }) as any)
+
+        const callback = vi.fn()
+        const unsubscribe = await subscribeToWatchSetLogged(callback)
+
+        expect(GAAHealthKitNative.addListener).toHaveBeenCalledWith('onWatchSetLogged', expect.any(Function))
+        expect(capturedListener).toBeDefined()
+
+        // Simulate set logged on wrist
+        capturedListener!({
+          exerciseName: 'Barbell Deadlift',
+          setIndex: 3,
+          reps: 5,
+          weightLbs: 315,
+          rpe: 8.5,
+        })
+
+        expect(callback).toHaveBeenCalledWith(
+          expect.objectContaining({
+            exerciseName: 'Barbell Deadlift',
+            reps: 5,
+            weightLbs: 315,
+          })
+        )
+
+        unsubscribe!()
+        expect(mockRemove).toHaveBeenCalled()
+      })
+    })
   })
 })
+

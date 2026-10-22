@@ -83,7 +83,7 @@ export default async function BookPage() {
                 fontWeight: 800,
               }}
             >
-              One-to-one coaching session
+              Diagnostic &amp; Benchmark Testing
             </span>
             <h1
               style={{
@@ -95,7 +95,7 @@ export default async function BookPage() {
                 lineHeight: 1.2,
               }}
             >
-              Book a coaching session
+              Diagnostic Assessment Booking
             </h1>
             <p
               style={{
@@ -106,7 +106,7 @@ export default async function BookPage() {
                 margin: 0,
               }}
             >
-              Meet with Coach Gordon for 60 minutes by video to discuss movement, exercise form, or nutrition.
+              Comprehensive kinetic chain movement screen and baseline performance evaluation with Coach Gordon.
             </p>
           </div>
 
@@ -120,10 +120,10 @@ export default async function BookPage() {
             }}
           >
             <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800 }}>
-              Available Session Credits
+              Available Diagnostic Credits
             </div>
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 28, fontWeight: 700, color: '#FFFFFF', lineHeight: 1, margin: '2px 0' }}>
-              {totalSessionsRemaining} <span style={{ fontSize: 13, fontFamily: 'Raleway, sans-serif', color: 'var(--gold-lt)' }}>sessions</span>
+              {totalSessionsRemaining} <span style={{ fontSize: 13, fontFamily: 'Raleway, sans-serif', color: 'var(--gold-lt)' }}>credits</span>
             </div>
           </div>
         </div>
@@ -131,10 +131,10 @@ export default async function BookPage() {
         {/* ── Consultation Track Selection Pills ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
           {[
-            { icon: 'microscope' as const, title: 'Movement check', desc: 'Review posture and movement patterns' },
-            { icon: 'video-studio' as const, title: 'Exercise form review', desc: 'Review your movement during a lift' },
-            { icon: 'lightning' as const, title: 'Nutrition support', desc: 'Build an eating plan around your training' },
-            { icon: 'travel' as const, title: 'Travel workouts', desc: 'Plan workouts for a hotel or limited equipment' },
+            { icon: 'microscope' as const, title: 'Movement Screen', desc: '5-angle OHSA & kinetic chain compensation check' },
+            { icon: 'video-studio' as const, title: 'Diagnostic Benchmark', desc: 'Baseline endurance, power & movement audit' },
+            { icon: 'lightning' as const, title: 'Corrective Strategy', desc: 'Targeted mobility & activation warm-up plan' },
+            { icon: 'travel' as const, title: 'Periodization Review', desc: 'Align NASM OPT™ phases with your goals' },
           ].map((track, i) => (
             <div
               key={i}
@@ -174,9 +174,9 @@ export default async function BookPage() {
                 textAlign: 'center',
               }}
             >
-              <GaaIcon name="calendar" size={36} tone="gold" />
+              <GaaIcon name="microscope" size={36} tone="gold" />
               <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '12px 0 6px', letterSpacing: '0.04em' }}>
-                No sessions available
+                No diagnostic credits active
               </h3>
               <p
                 style={{
@@ -184,24 +184,46 @@ export default async function BookPage() {
                   fontWeight: 300,
                   fontSize: 14,
                   color: 'var(--gray)',
-                  maxWidth: 480,
+                  maxWidth: 520,
                   margin: '0 auto 20px',
                   lineHeight: 1.6,
                 }}
               >
-                You’ve used the sessions included with your current plan. Visit memberships to see options for adding more coaching.
+                Diagnostic testing is scheduled by appointment or requested through your coach during diagnostic review cycles. If you need technique feedback on a lift, submit your video directly in Form Lab.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <a
-                  href="/dashboard/messages"
-                  className="sgf-button sgf-button-primary"
-                  style={{ padding: '12px 26px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-                >
-                  <GaaIcon name="message" size={15} tone="dark" />
-                  <span>Message Coach Gordon about another session</span>
-                </a>
-                <span style={{ fontSize: 11.5, color: 'var(--gray)' }}>
-                  View membershipss can be adjusted at <strong style={{ color: 'var(--gold-lt)' }}>forge-athletic.app</strong>.
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <a
+                    href="/dashboard/fitness?workspace=lab"
+                    className="sgf-button sgf-button-primary"
+                    style={{ padding: '12px 22px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <GaaIcon name="video-studio" size={15} tone="dark" />
+                    <span>Submit Lift to Form Lab</span>
+                  </a>
+                  <a
+                    href="/dashboard/messages"
+                    className="tactile-btn"
+                    style={{
+                      padding: '12px 22px',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid var(--navy-lt)',
+                      borderRadius: 6,
+                      color: 'var(--white)',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <GaaIcon name="message" size={15} tone="gold" />
+                    <span>Message Coach Gordon</span>
+                  </a>
+                </div>
+                <span style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 4 }}>
+                  Diagnostic add-ons and memberships can be explored at <a href="/packages" style={{ color: 'var(--gold-lt)', textDecoration: 'none', fontWeight: 700 }}>forge-athletic.app/packages</a>.
                 </span>
               </div>
             </div>

@@ -68,9 +68,47 @@ export interface GAAHealthKitPluginInterface {
     lastSyncTimestamp?: string
     telemetryReady: boolean
   }>
+  sendWorkoutToWatch?(options: {
+    workout: {
+      workoutId: string
+      dayNumber: number
+      focus: string
+      completedSets: number
+      totalSets: number
+      activeExercise?: {
+        exerciseName: string
+        setNumber: number
+        totalSets: number
+        prescribedWeight: number
+        prescribedReps: number
+        targetRpe?: number
+        tempo?: string
+        restSeconds: number
+        isCompound?: boolean
+        isHammerCurl?: boolean
+        optPhase?: number
+      }
+    }
+  }): Promise<{ success: boolean }>
+  updateWatchRestTimer?(options: {
+    timer: {
+      isRunning: boolean
+      remainingSeconds: number
+      restSeconds: number
+      exerciseName?: string
+      isBioPaced?: boolean
+      badgeText?: string
+    }
+  }): Promise<{ success: boolean }>
+  isWatchAppInstalled?(): Promise<{ installed: boolean; paired: boolean }>
+  sendCnsReadinessToWatch?(options: {
+    score: number
+    restingHeartRate?: number
+    hrvRmssd?: number
+  }): Promise<{ success: boolean }>
   addListener(
-    eventName: 'onTelemetryUpdate',
-    listenerFunc: (telemetry: RawMobileHealthPayload) => void
+    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged',
+    listenerFunc: (data: any) => void
   ): Promise<PluginListenerHandle>
 }
 
@@ -954,3 +992,177 @@ export async function autoInitializeNativeHealthKit(): Promise<{
     }
   }
 }
+
+// MARK: - Apple Watch Companion Bridge Helpers
+
+export interface WatchActiveExercisePayload {
+  exerciseName: string
+  setNumber: number
+  totalSets: number
+  prescribedWeight: number
+  prescribedReps: number
+  targetRpe?: number
+  tempo?: string
+  restSeconds: number
+  isCompound?: boolean
+  isHammerCurl?: boolean
+  optPhase?: number
+}
+
+export interface WatchWorkoutSyncPayload {
+  workoutId: string
+  dayNumber: number
+  focus: string
+  completedSets: number
+  totalSets: number
+  activeExercise?: WatchActiveExercisePayload
+}
+
+export interface WatchRestTimerSyncPayload {
+  isRunning: boolean
+  remainingSeconds: number
+  restSeconds: number
+  exerciseName?: string
+  isBioPaced?: boolean
+  badgeText?: string
+}
+
+export interface WatchSetLoggedPayload {
+  exerciseName: string
+  setIndex: number
+  reps: number
+  weightLbs: number
+  rpe?: number
+  rir?: number
+  loggedAt?: string
+}
+
+/**
+ * Pushes active workout state and current exercise to Apple Watch.
+ */
+export async function syncWorkoutStateToWatch(payload: WatchWorkoutSyncPayload): Promise<boolean> {
+  if (!isNativeIOS()) return false
+  try {
+    const plugin = getNativeHealthPlugin()
+    if (plugin.sendWorkoutToWatch) {
+      const res = await plugin.sendWorkoutToWatch({ workout: payload })
+      return Boolean(res?.success)
+    }
+    return false
+  } catch (err) {
+    console.warn('[WatchBridge] Notice syncing workout to watch:', err)
+    return false
+  }
+}
+
+/**
+ * Broadcasts active rest timer countdown and bio-adaptive status to Apple Watch.
+ */
+export async function syncRestTimerStateToWatch(timer: WatchRestTimerSyncPayload): Promise<boolean> {
+  if (!isNativeIOS()) return false
+  try {
+    const plugin = getNativeHealthPlugin()
+    if (plugin.updateWatchRestTimer) {
+      const res = await plugin.updateWatchRestTimer({ timer })
+      return Boolean(res?.success)
+    }
+    return false
+  } catch (err) {
+    return false
+  }
+}
+
+/**
+ * Checks whether Apple Watch is paired and Forge Watch app is installed.
+ */
+export async function checkAppleWatchCompanionStatus(): Promise<{ installed: boolean; paired: boolean }> {
+  if (!isNativeIOS()) return { installed: false, paired: false }
+  try {
+    const plugin = getNativeHealthPlugin()
+    if (plugin.isWatchAppInstalled) {
+      const res = await plugin.isWatchAppInstalled()
+      return { installed: Boolean(res?.installed), paired: Boolean(res?.paired) }
+    }
+    return { installed: false, paired: false }
+  } catch (err) {
+    return { installed: false, paired: false }
+  }
+}
+
+/**
+ * Pushes daily CNS Readiness score to Apple Watch face complications.
+ */
+export async function syncCnsReadinessToWatch(score: number, restingHeartRate?: number, hrvRmssd?: number): Promise<boolean> {
+  if (!isNativeIOS()) return false
+  try {
+    const plugin = getNativeHealthPlugin()
+    if (plugin.sendCnsReadinessToWatch) {
+      const res = await plugin.sendCnsReadinessToWatch({ score, restingHeartRate, hrvRmssd })
+      return Boolean(res?.success)
+    }
+    return false
+  } catch (err) {
+    return false
+  }
+}
+
+/**
+ * Subscribes to sets logged by the athlete on their Apple Watch.
+ */
+export async function subscribeToWatchSetLogged(
+  callback: (set: WatchSetLoggedPayload) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchSetLogged', (data: WatchSetLoggedPayload) => {
+      callback(data)
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to rest timer adjustments triggered on the Apple Watch ('ready', 'add15', etc.).
+ */
+export async function subscribeToWatchRestAction(
+  callback: (action: { action: string; timestamp?: string }) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchRestAction', (data: { action: string; timestamp?: string }) => {
+      callback(data)
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to continuous optical heart rate updates streamed from Apple Watch HKWorkoutSession.
+ */
+export async function subscribeToWatchHeartRate(
+  callback: (data: { heartRate: number; timestamp?: string }) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchHeartRateUpdate', (data: { heartRate: number; timestamp?: string }) => {
+      callback(data)
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+

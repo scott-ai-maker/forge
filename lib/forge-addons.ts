@@ -20,18 +20,14 @@ export interface ForgeAddon {
   // Number of uses granted for metered unlocks (omitted = unlimited during the access window)
   uses?: number
   includes: readonly string[]
+  isParked?: boolean
 }
 
 export const FORGE_ADDON_CATEGORIES: readonly { id: ForgeAddonCategory; title: string; blurb: string }[] = [
   {
     id: 'advanced-feature',
-    title: 'Advanced features',
-    blurb: 'Targeted upgrades you can add to any membership. One-time purchases, no new subscription.',
-  },
-  {
-    id: 'private-session',
-    title: 'Private sessions with Coach Gordon',
-    blurb: 'Live 1:1 video sessions scheduled during dedicated evening and Saturday advisory windows (48h advance notice).',
+    title: 'Performance Upgrades & Diagnostics',
+    blurb: 'Targeted tools, asynchronous video reviews, and diagnostic movement screens you can add to any membership. One-time purchases, no new subscription.',
   },
 ]
 
@@ -39,14 +35,16 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
   {
     id: 'addon-movement-screen',
     category: 'advanced-feature',
-    name: 'Coach-Reviewed Movement Screen',
-    tagline: 'Find out what is limiting your movement, with a plan to fix it.',
+    name: 'Biomechanical Movement Screen & Diagnostic',
+    tagline: 'Comprehensive kinetic chain assessment to identify compensations with an actionable corrective plan.',
     priceCents: 15900,
     sessions: 1,
+    popular: true,
     includes: [
-      'One live 45-minute video screen with Coach Gordon',
-      'Posture and movement-compensation report',
-      'Corrective warm-up added to your training plan',
+      'Comprehensive 5-angle movement screen (scheduled diagnostic slot or guided video capture)',
+      'Detailed posture and kinetic chain compensation report',
+      'Personalized corrective warm-up added to your training plan',
+      'Direct diagnostic review notes from Coach Gordon',
     ],
   },
   {
@@ -95,6 +93,7 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
       'Jet-lag recovery guidelines',
     ],
   },
+  // Parked 1:1 private session packs (parked while focusing on self-serve + async + occasional testing)
   {
     id: 'addon-private-session-single',
     category: 'private-session',
@@ -102,6 +101,7 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
     tagline: 'One live 1:1 session (evenings & Saturday mornings).',
     priceCents: 18000,
     sessions: 1,
+    isParked: true,
     includes: [
       '60-minute live video session with Coach Gordon',
       'Dedicated off-hours booking (evenings & Saturday mornings, 48h advance notice)',
@@ -116,7 +116,7 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
     priceCents: 66000,
     sessions: 4,
     listPriceCents: 72000,
-    popular: true,
+    isParked: true,
     includes: [
       'Four 60-minute live sessions with Coach Gordon',
       'Dedicated off-hours booking (evenings & Saturdays, 48h advance notice)',
@@ -131,6 +131,7 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
     priceCents: 124000,
     sessions: 8,
     listPriceCents: 144000,
+    isParked: true,
     includes: [
       'Eight 60-minute live sessions with Coach Gordon',
       'Dedicated off-hours booking (evenings & Saturdays, 48h advance notice)',
@@ -143,8 +144,12 @@ export function getForgeAddon(id: string): ForgeAddon | undefined {
   return FORGE_ADDONS.find(addon => addon.id === id)
 }
 
-export function getForgeAddonsByCategory(category: ForgeAddonCategory): ForgeAddon[] {
-  return FORGE_ADDONS.filter(addon => addon.category === category)
+export function getActiveForgeAddons(): ForgeAddon[] {
+  return FORGE_ADDONS.filter(addon => !addon.isParked)
+}
+
+export function getForgeAddonsByCategory(category: ForgeAddonCategory, includeParked = false): ForgeAddon[] {
+  return FORGE_ADDONS.filter(addon => addon.category === category && (includeParked || !addon.isParked))
 }
 
 export function getForgeAddonByFeature(feature: ForgeAddonFeature): ForgeAddon | undefined {

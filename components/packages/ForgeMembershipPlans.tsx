@@ -21,7 +21,7 @@ const PLAN_VISUALS: Record<string, { src: string; alt: string }> = {
 
 const PLAN_SUBTITLES: Record<string, string> = {
   'forge-core': 'Foundation · Autonomous NASM OPT™ Lab',
-  'forge-pro-athlete': 'Guided Hybrid · Exercise & Nutrition',
+  'forge-pro-athlete': 'Guided Asynchronous · Form Lab & Nutrition',
   'forge-transformation-direct': 'Master Coaching · Direct Access (Cap 25)',
 }
 

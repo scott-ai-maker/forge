@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import ActiveRestCardioPacerTray from './ActiveRestCardioPacerTray'
 import {
@@ -95,6 +95,52 @@ export default function FloatingRestTimerDock({
     userAge,
     hasHeartMedications,
   ])
+
+  // Sync active rest countdown and bio-adaptive status to Apple Watch
+  useEffect(() => {
+    if (!activeRestState) return
+    void import('@/lib/native-healthkit-bridge').then(({ syncRestTimerStateToWatch }) => {
+      void syncRestTimerStateToWatch({
+        isRunning: activeRestState.isRunning,
+        remainingSeconds: activeRestState.remainingSeconds,
+        restSeconds: activeRestState.restSeconds,
+        exerciseName: activeRestState.exerciseName,
+        isBioPaced: Boolean(activeRestState.isBioPaced || hrAdaptation?.isRecoveredEarly),
+        badgeText: activeRestState.badgeText || (hrAdaptation?.isRecoveredEarly ? 'Ready to Lift' : 'Standard Rest'),
+      })
+    })
+  }, [
+    activeRestState?.isRunning,
+    activeRestState?.remainingSeconds,
+    activeRestState?.restSeconds,
+    activeRestState?.exerciseName,
+    activeRestState?.isBioPaced,
+    activeRestState?.badgeText,
+    hrAdaptation?.isRecoveredEarly,
+  ])
+
+  // Subscribe to rest timer actions performed on the Apple Watch (LIFT, +15s, -15s)
+  useEffect(() => {
+    let cleanupFunc: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchRestAction }) => {
+      void subscribeToWatchRestAction((payload) => {
+        if (payload.action === 'ready') {
+          onCompleteRest()
+        } else if (payload.action === 'add15') {
+          onAddSeconds(15)
+        } else if (payload.action === 'minus15') {
+          onAddSeconds(-15)
+        } else if (payload.action === 'togglePause') {
+          onTogglePause()
+        }
+      }).then(cleanup => {
+        cleanupFunc = cleanup
+      })
+    })
+    return () => {
+      if (cleanupFunc) cleanupFunc()
+    }
+  }, [onCompleteRest, onAddSeconds, onTogglePause])
 
   if (!activeRestState) return null
 

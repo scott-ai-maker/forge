@@ -10,15 +10,16 @@ describe('Forge Athletic add-on catalog', () => {
     }
   })
 
-  it('keeps the catalog focused so buyers are not overwhelmed', () => {
+  it('keeps the active catalog focused and parks 1:1 hourly session packs', () => {
     expect(getForgeAddonsByCategory('advanced-feature')).toHaveLength(4)
-    expect(getForgeAddonsByCategory('private-session')).toHaveLength(3)
-    expect(FORGE_ADDONS.filter(a => a.popular)).toHaveLength(1)
+    expect(getForgeAddonsByCategory('private-session')).toHaveLength(0)
+    expect(getForgeAddonsByCategory('private-session', true)).toHaveLength(3)
+    expect(FORGE_ADDONS.filter(a => a.popular && !a.isParked)).toHaveLength(1)
   })
 
   it('prices session packs below single-session list price with accurate savings', () => {
     const single = getForgeAddon('addon-private-session-single')!
-    for (const addon of getForgeAddonsByCategory('private-session')) {
+    for (const addon of getForgeAddonsByCategory('private-session', true)) {
       expect(addon.priceCents / addon.sessions).toBeLessThanOrEqual(single.priceCents)
       if (addon.sessions > 1) {
         expect(addon.listPriceCents).toBe(single.priceCents * addon.sessions)

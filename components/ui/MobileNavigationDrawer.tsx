@@ -47,8 +47,8 @@ export const CLIENT_DRAWER_SECTIONS: DrawerSection[] = [
       { href: '#coach-gordon', label: 'Ask Coach Gordon', icon: 'message', desc: 'On-demand training and movement guidance', badge: 'Live AI' },
       { href: '/dashboard/fitness?workspace=coach', label: 'Coach Hub', icon: 'clipboard', desc: 'Check-ins, advice, and session options' },
       { href: '/dashboard/messages', label: 'Message Coach', icon: 'message', desc: 'Private communication with your coach' },
-      { href: '/dashboard/live', label: 'Live Coaching', icon: 'video-studio', desc: '1:1 video coaching and form feedback' },
-      { href: '/dashboard/book', label: 'Book a Session', icon: 'calendar', desc: 'Schedule a consultation or movement screen' },
+      { href: '/audit', label: 'Movement Audit', icon: 'microscope', desc: 'AI movement screen & posture breakdown' },
+      { href: '/dashboard/dossier', label: 'Progress Dossier', icon: 'chart', desc: 'Proof-of-work telemetry and performance trends' },
     ],
   },
   {

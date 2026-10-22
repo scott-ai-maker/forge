@@ -9,6 +9,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Register Native HealthKit Background Delivery Observers
         GAAHealthSyncManager.shared.registerBackgroundObservers()
+        // Activate Apple Watch Bidirectional Connectivity
+        ForgeWatchConnectivityManager.shared.activate()
         return true
     }
 

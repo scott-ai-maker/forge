@@ -47,17 +47,17 @@ export default function AddonSelectionStudio({
             Forge Athletic Performance Upgrades
           </span>
           <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 22, margin: '2px 0 0', color: '#FFFFFF', letterSpacing: '0.04em' }}>
-            OPTIONAL ADD-ONS &amp; PRIVATE SESSIONS
+            OPTIONAL PERFORMANCE UPGRADES &amp; DIAGNOSTICS
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--gray)' }}>
-            One-time purchases with no new subscriptions. Sessions and features unlock immediately.
+            One-time purchases with no new subscriptions. Diagnostic evaluations and self-serve tools unlock immediately.
           </p>
         </div>
         <GaaIcon name="lightning" size={24} tone="gold" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
-        {FORGE_ADDONS.map(addon => {
+        {FORGE_ADDONS.filter(addon => !addon.isParked).map(addon => {
           const perSession = getForgeAddonPerSessionCents(addon)
           const savings = addon.listPriceCents ? addon.listPriceCents - addon.priceCents : 0
 
@@ -120,7 +120,7 @@ export default function AddonSelectionStudio({
                 </div>
                 <div style={{ paddingRight: addon.popular ? 60 : 0 }}>
                   <div style={{ fontSize: 10, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800 }}>
-                    {addon.category === 'private-session' ? 'Live Coaching' : 'Feature Unlock'}
+                    {addon.id === 'addon-movement-screen' ? 'Diagnostic Screen' : addon.category === 'private-session' ? 'Live Coaching' : 'Feature Unlock'}
                   </div>
                   <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 16, color: '#FFFFFF', margin: 0, letterSpacing: '0.04em' }}>
                     {addon.name}
@@ -202,7 +202,7 @@ export default function AddonSelectionStudio({
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800 }}>
-                    {activeAddon.category === 'private-session' ? 'Private Coaching' : 'Targeted Upgrade'} · One-Time
+                    {activeAddon.id === 'addon-movement-screen' ? 'Diagnostic Screen' : activeAddon.category === 'private-session' ? 'Private Coaching' : 'Targeted Upgrade'} · One-Time
                   </div>
                   <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.04em' }}>
                     {activeAddon.name}

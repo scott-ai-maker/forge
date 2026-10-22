@@ -21,13 +21,36 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "writeWorkout", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "writeMindfulSession", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getCurrentHeartRate", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getTelemetryDiagnostics", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getTelemetryDiagnostics", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "sendWorkoutToWatch", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "updateWatchRestTimer", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "isWatchAppInstalled", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "sendCnsReadinessToWatch", returnType: CAPPluginReturnPromise)
     ]
 
     override public func load() {
         super.load()
         GAAHealthSyncManager.shared.onTelemetryUpdated = { [weak self] telemetry in
             self?.notifyListeners("onTelemetryUpdate", data: telemetry)
+        }
+
+        // Apple Watch Bidirectional Event Listeners
+        ForgeWatchConnectivityManager.shared.onSetLoggedFromWatch = { [weak self] setData in
+            self?.notifyListeners("onWatchSetLogged", data: setData)
+        }
+        ForgeWatchConnectivityManager.shared.onRestActionFromWatch = { [weak self] actionData in
+            self?.notifyListeners("onWatchRestAction", data: actionData)
+        }
+        ForgeWatchConnectivityManager.shared.onHeartRateFromWatch = { [weak self] bpm, timestamp in
+            self?.notifyListeners("onWatchHeartRateUpdate", data: [
+                "heartRate": bpm,
+                "timestamp": timestamp
+            ])
+        }
+        ForgeWatchConnectivityManager.shared.onWatchSessionStateChanged = { [weak self] installed in
+            self?.notifyListeners("onWatchStateChanged", data: [
+                "isWatchAppInstalled": installed
+            ])
         }
     }
 
@@ -258,6 +281,43 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         GAAHealthSyncManager.shared.getTelemetryDiagnostics { diag in
             call.resolve(diag)
         }
+    }
+
+    // MARK: - Apple Watch Companion Bridge
+
+    @objc public func isWatchAppInstalled(_ call: CAPPluginCall) {
+        let installed = ForgeWatchConnectivityManager.shared.isWatchAppInstalled
+        let paired = ForgeWatchConnectivityManager.shared.isWatchPaired
+        call.resolve([
+            "installed": installed,
+            "paired": paired
+        ])
+    }
+
+    @objc public func sendWorkoutToWatch(_ call: CAPPluginCall) {
+        guard let workoutObject = call.getObject("workout") ?? call.data else {
+            call.reject("Missing required workout payload.")
+            return
+        }
+        ForgeWatchConnectivityManager.shared.sendWorkoutState(workoutData: workoutObject)
+        call.resolve(["success": true])
+    }
+
+    @objc public func updateWatchRestTimer(_ call: CAPPluginCall) {
+        guard let timerObject = call.getObject("timer") ?? call.data else {
+            call.reject("Missing required rest timer payload.")
+            return
+        }
+        ForgeWatchConnectivityManager.shared.sendRestTimerUpdate(restData: timerObject)
+        call.resolve(["success": true])
+    }
+
+    @objc public func sendCnsReadinessToWatch(_ call: CAPPluginCall) {
+        let score = call.getInt("score") ?? 80
+        let rhr = call.getInt("restingHeartRate") ?? 55
+        let hrv = call.getInt("hrvRmssd") ?? 70
+        ForgeWatchConnectivityManager.shared.sendCnsReadiness(score: score, rhr: rhr, hrv: hrv)
+        call.resolve(["success": true])
     }
 }
 

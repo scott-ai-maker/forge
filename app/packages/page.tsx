@@ -127,11 +127,11 @@ const COMPARISON_ROWS = [
     note: 'Direct messaging with Coach Gordon during dedicated advisory windows.',
   },
   {
-    feature: '1:1 Live WebRTC Strategy Sessions',
-    core: 'Add-on ($180)',
-    plus: 'Add-on ($180)',
-    support: 'Quarterly Live Review',
-    note: 'Real-time video consultation with slow-motion telestration and unmirrored backgrounds.',
+    feature: 'Biomechanical & Diagnostic Testing',
+    core: 'Add-on ($159)',
+    plus: 'Add-on ($159)',
+    support: 'Quarterly Diagnostic Screen',
+    note: 'Comprehensive 5-angle movement screen & kinetic chain evaluation with Coach Gordon.',
   },
   {
     feature: 'Master Coach Safety Gate Oversight',

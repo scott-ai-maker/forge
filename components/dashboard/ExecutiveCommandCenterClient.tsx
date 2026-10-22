@@ -482,19 +482,25 @@ export default function ExecutiveCommandCenterClient({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#6EE7B7', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', boxShadow: '0 0 6px #34D399' }} />
-                <span>1:1 Live Studio</span>
+                <span>{nextSession ? 'Diagnostic Studio' : totalRemaining > 0 ? 'Diagnostic Testing' : 'Technique Feedback'}</span>
               </div>
               <span style={{ fontSize: 10, color: 'var(--gold-lt)', fontWeight: 700 }}>
-                {totalRemaining} {totalRemaining === 1 ? 'Credit' : 'Credits'} Available
+                {totalRemaining > 0 ? `${totalRemaining} ${totalRemaining === 1 ? 'Credit' : 'Credits'} Available` : 'Form Lab Active'}
               </span>
             </div>
             <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 17, color: '#FFFFFF', margin: 0, fontWeight: 700, letterSpacing: '0.03em' }}>
-              {nextSession ? 'Upcoming coaching session' : 'Book a coaching session'}
+              {nextSession
+                ? 'Upcoming diagnostic session'
+                : totalRemaining > 0
+                ? 'Diagnostic assessment available'
+                : 'Form Lab & Asynchronous Review'}
             </h3>
             <p style={{ fontSize: 12, color: '#94A3B8', margin: '4px 0 0', lineHeight: 1.4 }}>
               {nextSession
                 ? `${new Date(nextSession.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(nextSession.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-                : '1:1 biomechanics audit, lift technique verification, and periodization strategy with Coach Gordon.'
+                : totalRemaining > 0
+                ? 'Occasional kinetic chain movement screen or benchmark evaluation with Coach Gordon.'
+                : 'Submit lift videos for frame-by-frame kinetic chain feedback from Coach Gordon, or message your coach.'
               }
             </p>
           </div>
@@ -525,24 +531,24 @@ export default function ExecutiveCommandCenterClient({
                 className="sgf-button sgf-button-primary"
                 style={{ padding: '7px 14px', fontSize: 11.5, textDecoration: 'none' }}
               >
-                Book a session ({totalRemaining} left)
+                Schedule Diagnostic ({totalRemaining} left)
               </Link>
             ) : (
               <Link
-                href="/dashboard/book"
+                href="/dashboard/fitness?workspace=lab"
                 className="tactile-btn"
                 style={{
                   padding: '7px 14px',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid var(--navy-lt)',
+                  background: 'rgba(212,160,23,0.15)',
+                  border: '1px solid var(--gold-lt)',
                   borderRadius: 6,
-                  color: 'var(--white)',
+                  color: 'var(--gold-lt)',
                   fontSize: 11.5,
                   fontWeight: 700,
                   textDecoration: 'none',
                 }}
               >
-                View Booking Calendar
+                Open Form Lab →
               </Link>
             )}
 

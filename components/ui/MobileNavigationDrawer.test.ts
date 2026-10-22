@@ -39,14 +39,14 @@ describe('MobileNavigationDrawer Structure & Unique Keys', () => {
     expect(memberItems.some(item => item.label === 'AI Voice Cardio Studio')).toBe(false)
   })
 
-  it('retains direct access to human coaching services and account settings', () => {
+  it('retains direct access to human coaching services, diagnostics, and account settings', () => {
     const memberItems = CLIENT_DRAWER_SECTIONS.flatMap(section => section.items)
 
     expect(memberItems.map(item => item.href)).toEqual(expect.arrayContaining([
       '/dashboard/fitness?workspace=coach',
       '/dashboard/messages',
-      '/dashboard/live',
-      '/dashboard/book',
+      '/audit',
+      '/dashboard/dossier',
       '/dashboard/settings',
     ]))
   })
