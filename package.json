@@ -44,6 +44,8 @@
     "ios:dev": "cap open ios",
     "ios:archive": "npm run sync:sw && npx cap sync ios && xcodebuild -project ios/App/App.xcodeproj -scheme App -destination 'generic/platform=iOS' -archivePath ios/App/build/App.xcarchive archive",
     "ios:export": "xcodebuild -exportArchive -archivePath ios/App/build/App.xcarchive -exportPath ios/App/build/export -exportOptionsPlist ios/App/exportOptions.plist -allowProvisioningUpdates",
+    "ios:upload": "xcodebuild -exportArchive -archivePath ios/App/build/App.xcarchive -exportOptionsPlist ios/App/uploadOptions.plist -allowProvisioningUpdates",
+    "ios:release": "npm run ios:archive && npm run ios:upload",
     "cap:sync:android": "cap sync android",
     "cap:open:android": "cap open android",
     "android:dev": "cap open android",
