@@ -49,6 +49,7 @@ const BandResistanceChartModal = dynamic(
   { ssr: false }
 )
 import type { MindfulProtocolId } from '@/components/fitness/MindfulMomentModal'
+import type { WeeklyCheckin } from '@/components/fitness/WeeklyCheckinForm'
 import type { CardioPatternId } from '@/lib/coach-cardio-engine'
 import {
   parseInjuriesFromText,
@@ -303,6 +304,7 @@ interface FitnessTrackerClientProps {
   initialOpenScanner?: boolean
   auditSuccess?: boolean
   initialTelemetry?: DailyBiometricSummary | null
+  initialCheckin?: WeeklyCheckin | null
 }
 
 interface CardioLogEntry {
@@ -713,6 +715,7 @@ export default function FitnessTrackerClient({
   initialOpenScanner = false,
   auditSuccess = false,
   initialTelemetry,
+  initialCheckin,
 }: FitnessTrackerClientProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -5581,21 +5584,6 @@ export default function FitnessTrackerClient({
                   <span style={{ fontSize: 13.5, fontWeight: 800, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Clinical Proof of Work Dossier
                   </span>
-                  <span
-                    style={{
-                      fontSize: 9.5,
-                      fontWeight: 800,
-                      padding: '2px 7px',
-                      borderRadius: 3,
-                      background: 'rgba(239, 68, 68, 0.18)',
-                      border: '1px solid rgba(239, 68, 68, 0.35)',
-                      color: '#F87171',
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    ✕ Zero Social Media
-                  </span>
                 </div>
                 <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
                   Export verified 1RM overload curves, ACWR safety index, and progressive overload records for doctors, PTs, or peers.
@@ -5688,6 +5676,7 @@ export default function FitnessTrackerClient({
           bodyfatState={bodyfatState}
           setBodyfatState={setBodyfatState}
           setStatus={setStatus}
+          initialCheckin={initialCheckin}
         />
       )}
 

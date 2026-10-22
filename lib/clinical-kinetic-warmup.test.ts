@@ -35,14 +35,14 @@ describe('Clinical Kinetic Warmup & OHSA Integration', () => {
     // Warmup Inhibit SMR
     expect(resolveGaaExerciseImage('SMR Calves & Thoracic Spine')).toBe('/images/exercises/foam-roll-calves.jpg')
     expect(resolveGaaExerciseImage('SMR Peroneals')).toBe('/images/exercises/self-myofascial-release-smr-peroneals.jpg')
-    expect(resolveGaaExerciseImage('SMR IT-Band / TFL')).toBe('https://img.youtube.com/vi/NfWjVK7agTM/hqdefault.jpg')
+    expect(resolveGaaExerciseImage('SMR IT-Band / TFL')).toBe('/images/exercises/self-myofascial-release-smr-tensor-fascia-latae.jpg')
     expect(resolveGaaExerciseImage('SMR Adductors (Inner Thigh)')).toBe('/images/exercises/foam-roll-adductors.jpg')
 
     // Warmup Lengthen (Static Stretches)
     expect(resolveGaaExerciseImage('Kneeling Hip Flexor & Latissimus Stretch')).toBe('/images/exercises/static-kneeling-hip-flexor-stretch.jpg')
-    expect(resolveGaaExerciseImage('Static Calf Stretch (Gastrocnemius / Soleus)')).toBe('https://img.youtube.com/vi/83G00Fwlqqw/hqdefault.jpg')
-    expect(resolveGaaExerciseImage('Static Standing Hamstring Stretch (Neutral Rotation)')).toBe('https://img.youtube.com/vi/h_yZV27H684/hqdefault.jpg')
-    expect(resolveGaaExerciseImage('Static Standing TFL / ITB Stretch')).toBe('https://img.youtube.com/vi/h_8VHKvi1zo/hqdefault.jpg')
+    expect(resolveGaaExerciseImage('Static Calf Stretch (Gastrocnemius / Soleus)')).toBe('/images/exercises/static-seated-calf-stretch.jpg')
+    expect(resolveGaaExerciseImage('Static Standing Hamstring Stretch (Neutral Rotation)')).toBe('/images/exercises/static-90-90-hamstring-stretch.jpg')
+    expect(resolveGaaExerciseImage('Static Standing TFL / ITB Stretch')).toBe('/images/exercises/static-3d-standing-tfl-stretch.jpg')
 
     // Warmup Activate & Integrate
     expect(resolveGaaExerciseImage('Glute Bridge & Floor Prone Cobra')).toBe('/images/exercises/floor-prone-cobra.jpg')
@@ -52,10 +52,10 @@ describe('Clinical Kinetic Warmup & OHSA Integration', () => {
     expect(resolveGaaExerciseImage('Single-Leg Squat to Balance')).toBe('/images/exercises/single-leg-squat.jpg')
 
     // Cooldown Movements
-    expect(resolveGaaExerciseImage('self myofascial release smr quadriceps')).toBe('https://img.youtube.com/vi/vUzmXO56jDI/hqdefault.jpg')
+    expect(resolveGaaExerciseImage('self myofascial release smr quadriceps')).toBe('/images/exercises/self-myofascial-release-smr-quadriceps.jpg')
     expect(resolveGaaExerciseImage('self myofascial release smr thoracic spine')).toBe('/images/exercises/self-myofascial-release-smr-thoracic-spine.jpg')
     expect(resolveGaaExerciseImage('static latissimus dorsi ball stretch')).toBe('/images/exercises/static-latissimus-dorsi-ball-stretch.jpg')
-    expect(resolveGaaExerciseImage('static 90 90 hamstring stretch')).toBe('https://img.youtube.com/vi/h_yZV27H684/hqdefault.jpg')
+    expect(resolveGaaExerciseImage('static 90 90 hamstring stretch')).toBe('/images/exercises/static-90-90-hamstring-stretch.jpg')
 
     // Outliers & Breathwork fallback to brand logo
     expect(resolveGaaExerciseImage('4-7-8 Parasympathetic Reset')).toBe(BRAND_LOGO_FALLBACK_IMAGE)

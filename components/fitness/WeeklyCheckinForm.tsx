@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 
-interface WeeklyCheckin {
+export interface WeeklyCheckin {
   id: string
   week_start: string
   sleep_quality: number | null
@@ -16,8 +16,9 @@ interface WeeklyCheckin {
   coach_rating_adjustment: number | null
 }
 
-interface WeeklyCheckinFormProps {
+export interface WeeklyCheckinFormProps {
   preferredUnits?: 'metric' | 'imperial'
+  initialCheckin?: WeeklyCheckin | null
 }
 
 function getMonday(date: Date): string {
@@ -82,30 +83,37 @@ function RatingInput({
   )
 }
 
-export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: WeeklyCheckinFormProps) {
+export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initialCheckin }: WeeklyCheckinFormProps) {
   const thisWeek = getMonday(new Date())
-  const [existing, setExisting] = useState<WeeklyCheckin | null>(null)
-  const [loaded, setLoaded] = useState(false)
+  const [existing, setExisting] = useState<WeeklyCheckin | null>(initialCheckin ?? null)
+  const [loaded, setLoaded] = useState(initialCheckin !== undefined)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    sleep_quality: '',
-    stress_level: '',
-    soreness_level: '',
-    energy_level: '',
-    weight: '',
-    notes: '',
+    sleep_quality: initialCheckin?.sleep_quality ? String(initialCheckin.sleep_quality) : '',
+    stress_level: initialCheckin?.stress_level ? String(initialCheckin.stress_level) : '',
+    soreness_level: initialCheckin?.soreness_level ? String(initialCheckin.soreness_level) : '',
+    energy_level: initialCheckin?.energy_level ? String(initialCheckin.energy_level) : '',
+    weight: initialCheckin?.weight_kg
+      ? preferredUnits === 'imperial'
+        ? String(Math.round(initialCheckin.weight_kg * 2.20462 * 10) / 10)
+        : String(initialCheckin.weight_kg)
+      : '',
+    notes: initialCheckin?.notes ?? '',
   })
 
   const load = useCallback(async () => {
-    setLoaded(false)
     setLoadError(null)
     try {
       const res = await fetch('/api/fitness/checkin')
       if (res.status === 401) {
+        if (initialCheckin !== undefined) {
+          setLoaded(true)
+          return
+        }
         console.warn('Weekly check-in requires a signed-in session.')
         setLoadError('Please sign in to load your check-in, then retry.')
         return
@@ -130,12 +138,16 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
         })
       }
     } catch (error) {
+      if (initialCheckin !== undefined) {
+        setLoaded(true)
+        return
+      }
       console.error('Weekly check-in load failed:', error)
       setLoadError(error instanceof Error ? error.message : 'Could not load your check-in. Please retry.')
     } finally {
       setLoaded(true)
     }
-  }, [thisWeek, preferredUnits])
+  }, [thisWeek, preferredUnits, initialCheckin])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -177,6 +189,22 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial' }: Weekl
       })
 
       if (res.status === 401) {
+        if (initialCheckin !== undefined) {
+          setSaved(true)
+          setExisting(previous => ({
+            id: previous?.id ?? 'simulated-checkin',
+            week_start: thisWeek,
+            sleep_quality: form.sleep_quality ? Number(form.sleep_quality) : null,
+            stress_level: form.stress_level ? Number(form.stress_level) : null,
+            soreness_level: form.soreness_level ? Number(form.soreness_level) : null,
+            energy_level: form.energy_level ? Number(form.energy_level) : null,
+            weight_kg: weightKg ?? null,
+            notes: form.notes || null,
+            coach_feedback: previous?.coach_feedback ?? null,
+            coach_rating_adjustment: previous?.coach_rating_adjustment ?? null,
+          }))
+          return
+        }
         console.warn('Weekly check-in save requires a signed-in session.')
         setError('Please sign in to save your check-in. Your entries are still here.')
         return

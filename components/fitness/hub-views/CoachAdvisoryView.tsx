@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import WeeklyCheckinForm from '@/components/fitness/WeeklyCheckinForm'
+import WeeklyCheckinForm, { WeeklyCheckin } from '@/components/fitness/WeeklyCheckinForm'
 import ProgressPhotoTimeline from '@/components/fitness/ProgressPhotoTimeline'
 import { parseParqMedicationsAndConditions } from '@/lib/muscle-recovery-telemetry'
 import { GaaIcon } from '@/components/ui/GaaIcon'
@@ -34,6 +34,7 @@ interface CoachAdvisoryViewProps {
   bodyfatState: { estimated: string }
   setBodyfatState: React.Dispatch<React.SetStateAction<{ estimated: string }>>
   setStatus: (msg: string | null) => void
+  initialCheckin?: WeeklyCheckin | null
 }
 
 export default function CoachAdvisoryView({
@@ -45,6 +46,7 @@ export default function CoachAdvisoryView({
   bodyfatState,
   setBodyfatState,
   setStatus,
+  initialCheckin,
 }: CoachAdvisoryViewProps) {
   // Clinically parse intake medications and conditions
   const parsedMeds = useMemo(() => {
@@ -149,7 +151,7 @@ export default function CoachAdvisoryView({
         </div>
       </div>
 
-      <WeeklyCheckinForm preferredUnits={units} />
+      <WeeklyCheckinForm preferredUnits={units} initialCheckin={initialCheckin} />
 
       {/* ── ATHLETE PROFILE & CLINICAL SAFEGUARDS CARD ── */}
       <details

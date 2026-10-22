@@ -119,10 +119,28 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   const isTravelScenario = params.scenario === 'travel' || params.scenario === 'lab-travel' || params.scenario === 'hotel'
   const isAssessmentScenario = params.scenario === 'assessment' || params.scenario === 'lab-assessment' || params.scenario === 'movement'
   const isSleepScenario = params.scenario === 'sleep' || params.scenario === 'lab-sleep' || params.scenario === 'sleep-hud'
-  const isPerformanceScenario = params.scenario === 'performance' || params.scenario === 'lab-performance' || params.scenario === 'power'
+  const isPerformanceScenario = params.scenario === 'performance' || params.scenario === 'lab-performance' || params.scenario === 'lab-power'
   const isCalculatorScenario = params.scenario === 'calculator' || params.scenario === 'lab-calculator' || params.scenario === 'calculators'
   const isLabScenario = isReadinessScenario || isBodyCompScenario || isVideoScenario || isRoadmapScenario || isNutritionScenario || isTravelScenario || isAssessmentScenario || isSleepScenario || isPerformanceScenario || isCalculatorScenario || params.scenario?.startsWith('lab')
-  const effectiveWorkspace = (params.workspace as any) || (isBodyCompScenario ? 'bodycomp' : isVideoScenario ? 'video' : isRoadmapScenario ? 'roadmap' : isNutritionScenario ? 'nutrition' : isTravelScenario ? 'travel' : isAssessmentScenario ? 'assessment' : isSleepScenario ? 'sleep' : isPerformanceScenario ? 'performance' : isCalculatorScenario ? 'calculator' : isLabScenario ? 'lab' : 'train')
+  const isWorkoutScenario = Boolean(variety) || params.scenario === 'superset' || params.scenario === 'schedule' || params.scenario === 'train'
+  const isProgressScenario = params.scenario === 'progress' || params.scenario === 'analytics' || params.scenario === 'prs'
+  const isCoachScenario = params.scenario === 'coach' || params.scenario === 'coach-empty' || params.scenario === 'advisory' || params.scenario === 'checkin'
+  const effectiveWorkspace = (params.workspace as any) || (
+    isWorkoutScenario ? 'train'
+      : isProgressScenario ? 'progress'
+      : isCoachScenario ? 'coach'
+      : isBodyCompScenario ? 'bodycomp'
+      : isVideoScenario ? 'video'
+      : isRoadmapScenario ? 'roadmap'
+      : isNutritionScenario ? 'nutrition'
+      : isTravelScenario ? 'travel'
+      : isAssessmentScenario ? 'assessment'
+      : isSleepScenario ? 'sleep'
+      : isPerformanceScenario ? 'performance'
+      : isCalculatorScenario ? 'calculator'
+      : isLabScenario ? 'lab'
+      : 'train'
+  )
   const effectiveTab = (params.tab as any) || (
     params.scenario === 'readiness-acwr' ? 'acwr'
       : params.scenario === 'readiness-deload' ? 'deload'
@@ -208,6 +226,56 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
     updatedAt: new Date().toISOString(),
   } : undefined
 
+  // Mock Coach Hub intake, check-in, and physique timeline data
+  const mondayOffset = (now.getUTCDay() === 0 ? -6 : 1 - now.getUTCDay())
+  const thisMondayDate = new Date(now.getTime() + mondayOffset * 24 * 60 * 60 * 1000)
+  const thisWeekStart = thisMondayDate.toISOString().slice(0, 10)
+
+  const isCoachEmpty = params.scenario === 'coach-empty'
+  const mockCheckin = isCoachEmpty ? null : {
+    id: 'mock-checkin-week',
+    week_start: thisWeekStart,
+    sleep_quality: 4,
+    stress_level: 4,
+    soreness_level: 3,
+    energy_level: 4,
+    weight_kg: 84.2,
+    notes: 'Volume progression on flat bench and back squat felt crisp. Right shoulder felt stable during scaption warm-up.',
+    coach_feedback: 'Outstanding kinetic chain control on your squat depth this week. Progressive overload is tracking 4% ahead of schedule. Keep maintaining the 3-second eccentric pause.',
+    coach_rating_adjustment: 2.5,
+  }
+
+  const mockIntake = isCoachEmpty ? {
+    parq_answers: {},
+    parq_any_yes: false,
+    medical_conditions: null,
+    medications: null,
+    surgeries_or_injuries: null,
+    allergies: null,
+  } : {
+    parq_answers: {},
+    parq_any_yes: false,
+    medical_conditions: 'Mild Stage 1 Hypertension (blood pressure well-controlled with lifestyle and low-dose ACE inhibitor)',
+    medications: 'Lisinopril 10mg (ACE Inhibitor - monitored for post-exertional orthostatic hypotension)',
+    surgeries_or_injuries: 'Prior left ACL reconstruction (2018, fully cleared); occasional right subacromial impingement with heavy overhead press',
+    allergies: 'None reported',
+  }
+
+  const mockProgressPhotos = isCoachEmpty ? [] : [
+    {
+      id: 'mock-photo-1',
+      photo_url: '/images/exercises/barbell-flat-bench-press.jpg',
+      taken_at: getDateStr(7),
+      notes: 'Week 2 check-in front view — upper pec density and posture improving.',
+    },
+    {
+      id: 'mock-photo-2',
+      photo_url: '/images/exercises/barbell-back-squat.jpg',
+      taken_at: getDateStr(21),
+      notes: 'Intake baseline photo — beginning Phase 1 stabilization cycle.',
+    },
+  ]
+
   return (
     <main style={{ minHeight: "100dvh", background: "#0D1B2A", overflowX: "hidden", paddingBottom: "calc(140px + env(safe-area-inset-bottom, 16px))" }}>
       <div className="dashboard-fitness-content" style={{ maxWidth: 1440, margin: "0 auto", width: "100%", minWidth: 0, overflowX: "hidden", boxSizing: "border-box" }}>
@@ -232,10 +300,20 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
               fitness_goal: "Athletic Hypertrophy",
               age: 38,
               sex: 'male',
+              injuries_limitations: isCoachEmpty ? undefined : "Mild right shoulder impingement with overhead pressing; right patellar tendinitis under deep flexion",
+              height_cm: 182,
+              weight_kg: 84.2,
+              waist_cm: 86,
+              neck_cm: 41,
+              hip_cm: 100,
+              training_days_per_week: 4,
               ...(params.scenario === 'lab-bodycomp' ? { weight_kg: 80, height_cm: 180, sex: 'male' as const, preferred_units: 'metric' as const } : {}),
             }}
             latestPlan={plan}
             allPlans={[plan]}
+            intake={mockIntake}
+            progressPhotos={mockProgressPhotos}
+            initialCheckin={mockCheckin}
             latestAssessment={isAssessmentScenario ? MOCK_ASSESSMENT : null}
             logs={isReadinessScenario ? readinessLogs : params.scenario === 'progress' ? Array.from({ length: 12 }, (_, index) => ({
               id: `progress-session-${index}`,

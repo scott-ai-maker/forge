@@ -110,7 +110,7 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     // 3. Unilateral Single-Leg Glute Bridge / Single-Leg Floor Bridge
     const singleLegGluteBridge = getNasmClinicalMovementCard('Single-Leg Glute Bridge')
     expect(singleLegGluteBridge.hasOfficialMedia).toBe(true)
-    expect(singleLegGluteBridge.imageUrl).toBe('https://img.youtube.com/vi/lHXShY-FivU/hqdefault.jpg')
+    expect(singleLegGluteBridge.imageUrl).toBe('/images/exercises/single-leg-glute-bridge.jpg')
     expect(singleLegGluteBridge.videoUrl).toContain('lHXShY-FivU')
     expect(singleLegGluteBridge.embedUrl).toContain('lHXShY-FivU')
   })
