@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.43.5'
-export const APP_RELEASE_DATE = '2026-10-17'
-export const APP_RELEASE_CODENAME = 'Live Studio Hardware Failover & WebRTC Interstate Connection Stabilization'
+export const APP_VERSION = '1.44.0'
+export const APP_RELEASE_DATE = '2026-10-22'
+export const APP_RELEASE_CODENAME = 'Forge Athletic for Apple Watch (watchOS) Companion & Ultra 49mm Hardware Simulator'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,27 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.44.0',
+    date: '2026-10-22',
+    codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Apple Watch (watchOS) Companion · Digital Crown Set Logging · Bio-Adaptive Rest Haptics · Tanaka Cardio Tracking · Ultra 49mm Simulator',
+    title: 'Forge Athletic for Apple Watch (watchOS) Companion & In-Browser Hardware Simulator',
+    summary: 'Engineered a full native watchOS companion application for Apple Watch Series 4–10 and Ultra 1–2, paired with bidirectional WatchConnectivity sync, silent NASM tempo metronomes, bio-adaptive rest timer synchronization, Tanaka 3-stage cardio tracking, WidgetKit complications, and an interactive in-browser Apple Watch Ultra 49mm hardware simulator.',
+    highlights: [
+      'Digital Crown In-Gym Set Logging: Adjust reps and weight with analog crown precision and confirm sets via the physical Apple Watch Ultra Action Button or OLED tap, eliminating phone interaction during heavy barbell sets.',
+      'Bio-Adaptive Rest Timer Sync: Bidirectional WCSession synchronization with FloatingRestTimerDock; double-pulse wrist haptics signal when Zone 1 parasympathetic recovery is achieved early.',
+      'Silent Taptic NASM Metronome: Wrist pulses guide eccentric (4s), isometric pause (2s), and explosive concentric tempo phases in noisy gym environments.',
+      'Tanaka 3-Stage Cardio Zone Engine: Live optical photoplethysmography (PPG) heart rate streaming, continuous active calorie accumulation, and zone boundary haptic alerts.',
+      'WidgetKit Complications: AccessoryCircular, AccessoryRectangular, AccessoryCorner, and AccessoryInline complications for Apple Watch faces displaying real-time Central Nervous System (CNS) recovery readiness.',
+      'Apple Watch Ultra 49mm Hardware Simulator: Interactive browser simulator featuring titanium chassis, rotatable Digital Crown, orange Action Button, and live mode tabs for gym-floor testing.',
+    ],
+    relatedLinks: [
+      { label: 'Wearables & Companion Studio', href: '/dashboard/settings?tab=hardware' },
+      { label: 'Mobile Test Harness', href: '/test-harness/fitness-mobile' },
+    ],
+  },
   {
     version: '1.43.5',
     date: '2026-10-17',

@@ -3,6 +3,19 @@
 All notable changes to Forge Athletic will be documented in this file,
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.44.0] - 2026-10-22
+
+### Added & Improved
+- **Forge Athletic for Apple Watch (watchOS) Companion & Hardware Simulator ([`ios/App/ForgeWatch/`](file:///Users/scottgordon/Repos/forge/ios/App/ForgeWatch/), [`components/fitness/watch/AppleWatchSimulatorModal.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/watch/AppleWatchSimulatorModal.tsx), [`components/fitness/WearablesDeviceStudio.tsx`](file:///Users/scottgordon/Repos/forge/components/fitness/WearablesDeviceStudio.tsx))**:
+  - Engineered a native standalone and companion watchOS application supporting Apple Watch Series 4–10 and Ultra 1–2 with true OLED dark mode UI.
+  - Implemented analog Digital Crown micro-adjustments for workout reps and weight, with physical Apple Watch Ultra Action Button confirmation to log sets without phone interaction.
+  - Integrated bidirectional `WatchConnectivity` (`WCSession`) syncing active workout stage, active exercise prescription, and rest countdown timers between wrist and phone.
+  - Added bio-adaptive rest timer synchronization: double-pulse Taptic feedback notifies athletes when Zone 1 parasympathetic recovery is reached early.
+  - Built silent tactile Taptic metronomes pacing NASM 4-2-1-1 tempos through eccentric, isometric pause, and concentric contraction phases in noisy gym environments.
+  - Implemented 3-stage Tanaka cardio zone engine with continuous optical PPG heart rate streaming, active calorie accumulation, and zone boundary haptic alerts.
+  - Built WidgetKit complications supporting `accessoryCircular`, `accessoryRectangular`, `accessoryCorner`, and `accessoryInline` displaying real-time CNS recovery readiness.
+  - Added an interactive in-browser Apple Watch Ultra 49mm Hardware Simulator inside `WearablesDeviceStudio.tsx` with rotatable Digital Crown, Action Button, and live mode tabs.
+
 ## [1.43.5] - 2026-10-17
  
 ### Fixed & Improved

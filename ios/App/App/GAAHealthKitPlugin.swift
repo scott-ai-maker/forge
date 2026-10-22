@@ -295,7 +295,7 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc public func sendWorkoutToWatch(_ call: CAPPluginCall) {
-        guard let workoutObject = call.getObject("workout") ?? call.data else {
+        guard let workoutObject = call.getObject("workout") ?? (call.options as? [String: Any]) else {
             call.reject("Missing required workout payload.")
             return
         }
@@ -304,7 +304,7 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc public func updateWatchRestTimer(_ call: CAPPluginCall) {
-        guard let timerObject = call.getObject("timer") ?? call.data else {
+        guard let timerObject = call.getObject("timer") ?? (call.options as? [String: Any]) else {
             call.reject("Missing required rest timer payload.")
             return
         }

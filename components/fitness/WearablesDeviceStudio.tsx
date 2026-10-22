@@ -32,6 +32,7 @@ import {
 } from './HealthLogos'
 import BluetoothHeartRateMonitor from './BluetoothHeartRateMonitor'
 import AppStorePlaceholderModal, { PlaceholderPlatform } from '@/components/marketing/AppStorePlaceholderModal'
+import AppleWatchSimulatorModal from './watch/AppleWatchSimulatorModal'
 
 interface WearablesDeviceStudioProps {
   onTelemetryUpdate?: (telemetry: DailyBiometricSummary | null) => void
@@ -53,6 +54,7 @@ export default function WearablesDeviceStudio({
   const [appModalPlatform, setAppModalPlatform] = useState<PlaceholderPlatform>('ios')
   const [nativeReport, setNativeReport] = useState<NativeTelemetryReadinessReport | null>(null)
   const [watchCompanion, setWatchCompanion] = useState<{ installed: boolean; paired: boolean }>({ installed: false, paired: false })
+  const [showWatchSimulator, setShowWatchSimulator] = useState<boolean>(false)
 
   const onTelemetryUpdateRef = useRef(onTelemetryUpdate)
   onTelemetryUpdateRef.current = onTelemetryUpdate
@@ -722,6 +724,44 @@ export default function WearablesDeviceStudio({
                 </div>
               ))}
             </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 10,
+                paddingTop: 10,
+                borderTop: '1px solid rgba(56,189,248,0.15)',
+              }}
+            >
+              <div style={{ fontSize: 11, color: 'var(--gray)' }}>
+                Test Digital Crown logging, Zone 1 bio-adaptive rest haptics, and silent NASM tempo metronome on wrist.
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowWatchSimulator(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                  color: '#FFFFFF',
+                  border: '1px solid rgba(56,189,248,0.5)',
+                  borderRadius: 8,
+                  padding: '7px 14px',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(2,132,199,0.3)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span>⌚</span>
+                <span>Open Watch Ultra Simulator</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -1073,6 +1113,12 @@ export default function WearablesDeviceStudio({
         onClose={() => setShowAppModal(false)}
         initialPlatform={appModalPlatform}
         sourceContext="wearables_device_studio"
+      />
+
+      {/* Interactive Apple Watch Ultra 49mm Hardware Simulator */}
+      <AppleWatchSimulatorModal
+        isOpen={showWatchSimulator}
+        onClose={() => setShowWatchSimulator(false)}
       />
     </div>
   )
