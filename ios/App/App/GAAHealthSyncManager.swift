@@ -12,6 +12,7 @@ import UIKit
 
     public let healthStore = HKHealthStore()
     private var isObserversRegistered = false
+    private var isBackgroundDeliveryEnabled = false
     private var observerQueries: [HKObserverQuery] = []
     
     // UserDefaults Keys
@@ -218,8 +219,10 @@ import UIKit
             group.leave()
         }
 
-        group.notify(queue: .main) {
-            completion(overallError == nil, overallError)
+        group.notify(queue: .main) { [weak self] in
+            let success = (overallError == nil)
+            self?.isBackgroundDeliveryEnabled = success
+            completion(success, overallError)
         }
     }
 

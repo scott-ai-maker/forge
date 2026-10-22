@@ -1,12 +1,20 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
+import fs from 'fs/promises'
+import { existsSync } from 'fs'
 import sharp from 'sharp'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 
-const SOURCE_CREST = '/Users/scottgordon/.gemini/antigravity-ide/brain/3d53ebc0-76fb-45bb-b742-d9602cf34c79/forge_apex_crest_master_1792580373155.jpg'
-const SOURCE_LOCKUP = '/Users/scottgordon/.gemini/antigravity-ide/brain/3d53ebc0-76fb-45bb-b742-d9602cf34c79/forge_apex_crest_lockup_1792580390011.jpg'
+// Preferred repository master paths with fallback to brain artifacts
+const SOURCE_CREST = existsSync(path.join(ROOT, 'public', 'images', 'brand', 'forge-crest-master.jpg'))
+  ? path.join(ROOT, 'public', 'images', 'brand', 'forge-crest-master.jpg')
+  : '/Users/scottgordon/.gemini/antigravity-ide/brain/3d53ebc0-76fb-45bb-b742-d9602cf34c79/forge_apex_crest_master_1792580373155.jpg'
+
+const SOURCE_LOCKUP = existsSync(path.join(ROOT, 'public', 'images', 'brand', 'forge-lockup-master.jpg'))
+  ? path.join(ROOT, 'public', 'images', 'brand', 'forge-lockup-master.jpg')
+  : '/Users/scottgordon/.gemini/antigravity-ide/brain/3d53ebc0-76fb-45bb-b742-d9602cf34c79/forge_apex_crest_lockup_1792580390011.jpg'
 
 const BG_COLOR = { r: 8, g: 14, b: 20, alpha: 1.0 } // #080E14
 
@@ -23,6 +31,11 @@ async function main() {
     .resize(1024, 1024)
     .png({ quality: 95 })
     .toFile(path.join(ROOT, 'public', 'images', 'brand-logo.png'))
+
+  await sharp(SOURCE_LOCKUP)
+    .resize(1024, 1024)
+    .png({ quality: 95 })
+    .toFile(path.join(ROOT, 'public', 'images', 'brand', 'forge-brand-lockup.png'))
 
   await sharp(SOURCE_CREST)
     .resize(512, 512)
@@ -124,13 +137,104 @@ async function main() {
   <image href='data:image/png;base64,${base64Favicon}' x='32' y='32' width='448' height='448' preserveAspectRatio='xMidYMid meet'/>
 </svg>`
 
-  await import('fs').then(fs => fs.promises.writeFile(path.join(ROOT, 'public', 'favicon.svg'), svgContent, 'utf-8'))
+  await fs.writeFile(path.join(ROOT, 'public', 'favicon.svg'), svgContent, 'utf-8')
   console.log('✅ SVG favicon updated.')
 
-  console.log('🎉 All Forge Athletic brand assets successfully deployed with Proof 2 (Precision Apex Crest)!')
+  // 6. iOS App Icon (Asset Catalog: exactly 1024x1024, sRGB, no alpha channel per Apple TestFlight rules)
+  const iosAppIconPath = path.join(
+    ROOT,
+    'ios',
+    'App',
+    'App',
+    'Assets.xcassets',
+    'AppIcon.appiconset',
+    'AppIcon-512@2x.png'
+  )
+  if (existsSync(path.dirname(iosAppIconPath))) {
+    await sharp(SOURCE_CREST)
+      .resize(1024, 1024)
+      .removeAlpha()
+      .png({ compressionLevel: 9 })
+      .toFile(iosAppIconPath)
+    console.log('✅ iOS AppIcon-512@2x.png (1024x1024 RGB, no alpha) generated.')
+  }
+
+  // 7. iOS Splash Screen Images (160x160 @1x, 320x320 @2x, 480x480 @3x)
+  const iosSplashDir = path.join(ROOT, 'ios', 'App', 'App', 'Assets.xcassets', 'Splash.imageset')
+  if (existsSync(iosSplashDir)) {
+    await sharp(SOURCE_CREST)
+      .resize(160, 160)
+      .removeAlpha()
+      .png({ compressionLevel: 9 })
+      .toFile(path.join(iosSplashDir, 'splash-1x.png'))
+
+    await sharp(SOURCE_CREST)
+      .resize(320, 320)
+      .removeAlpha()
+      .png({ compressionLevel: 9 })
+      .toFile(path.join(iosSplashDir, 'splash-2x.png'))
+
+    await sharp(SOURCE_CREST)
+      .resize(480, 480)
+      .removeAlpha()
+      .png({ compressionLevel: 9 })
+      .toFile(path.join(iosSplashDir, 'splash-3x.png'))
+
+    console.log('✅ iOS Splash.imageset (1x, 2x, 3x) generated.')
+  }
+
+  // 8. Android Launcher & Splash Assets
+  const androidResDir = path.join(ROOT, 'android', 'app', 'src', 'main', 'res')
+  if (existsSync(androidResDir)) {
+    const mipmapSizes = {
+      mdpi: { icon: 48, splash: 288 },
+      hdpi: { icon: 72, splash: 432 },
+      xhdpi: { icon: 96, splash: 576 },
+      xxhdpi: { icon: 144, splash: 864 },
+      xxxhdpi: { icon: 192, splash: 1152 },
+    }
+
+    for (const [folder, sizes] of Object.entries(mipmapSizes)) {
+      const folderPath = path.join(androidResDir, `mipmap-${folder}`)
+      if (existsSync(folderPath)) {
+        await sharp(SOURCE_CREST)
+          .resize(sizes.icon, sizes.icon)
+          .png()
+          .toFile(path.join(folderPath, 'ic_launcher.png'))
+
+        await sharp(SOURCE_CREST)
+          .resize(sizes.icon, sizes.icon)
+          .png()
+          .toFile(path.join(folderPath, 'ic_launcher_round.png'))
+
+        await sharp(SOURCE_CREST)
+          .resize(sizes.splash, sizes.splash)
+          .png()
+          .toFile(path.join(folderPath, 'splash_icon.png'))
+      }
+    }
+
+    const drawableDir = path.join(androidResDir, 'drawable')
+    if (existsSync(drawableDir)) {
+      await sharp(SOURCE_CREST)
+        .resize(512, 512)
+        .png()
+        .toFile(path.join(drawableDir, 'splash.png'))
+
+      await sharp(SOURCE_CREST)
+        .resize(512, 512)
+        .png()
+        .toFile(path.join(drawableDir, 'splash_icon.png'))
+    }
+
+    console.log('✅ Android mipmap icons and splash drawables generated.')
+  }
+
+  console.log('🎉 All Forge Athletic brand assets successfully deployed across Web, PWA, iOS & Android!')
 }
 
 main().catch(err => {
   console.error('❌ Error deploying brand crest:', err)
   process.exit(1)
 })
+
