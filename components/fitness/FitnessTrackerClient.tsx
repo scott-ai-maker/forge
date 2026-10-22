@@ -76,7 +76,11 @@ import {
   getNasmOptPhaseFeatureRules,
   getDefaultNasmOptTempo,
 } from '@/lib/nasm-opt-feature-matrix'
-import { calculateBioAdaptiveRestInterval } from '@/lib/bio-adaptive-rest-pacer'
+import {
+  calculateBioAdaptiveRestInterval,
+  isCompoundLift,
+  isHammerCurlMovement,
+} from '@/lib/bio-adaptive-rest-pacer'
 import { detectAcuteFatigueDrop } from '@/lib/autoregulation-advisor-engine'
 import { parsePrescribedWorkingReps } from '@/lib/warmup-auto-populator'
 import SessionFatigueCnsSummaryModal from '@/components/fitness/tracker/SessionFatigueCnsSummaryModal'
@@ -1264,6 +1268,62 @@ export default function FitnessTrackerClient({
     localSetLogs,
   ])
 
+  // Continuous Workout State Synchronization to Apple Watch Companion App
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
+    if (!activeWorkout) return
+
+    const activeExName = expandedExerciseKey ? expandedExerciseKey.split('-')[1] : activeWorkout.exercises?.[0]?.name
+    const activeEx = activeWorkout.exercises?.find(e => e.name === activeExName) || activeWorkout.exercises?.[0]
+    const completedWorkingSets = (localSetLogs || []).filter(l =>
+      !l.is_warmup && extractWorkoutDayTag(l.notes) === Number(activeWorkout.day)
+    ).length
+    const totalWorkingSets = (activeWorkout.exercises || []).reduce((acc, ex) => acc + (parseInt(String(ex.sets), 10) || 3), 0)
+
+    const exDraft = activeEx ? inlineSetDrafts[exerciseDraftKey(activeWorkout.day, activeEx.name)] : undefined
+    const prescribedSetsCount = activeEx ? parseInt(String(activeEx.sets), 10) || 3 : 3
+    const currentExCompletedWorkingSets = activeEx ? (localSetLogs || []).filter(l =>
+      normalizeExerciseName(l.exercise_name) === normalizeExerciseName(activeEx.name) &&
+      !l.is_warmup &&
+      extractWorkoutDayTag(l.notes) === Number(activeWorkout.day)
+    ).length : 0
+
+    const nextSetNumber = Math.min(prescribedSetsCount, currentExCompletedWorkingSets + 1)
+    const weightNum = exDraft?.weight ? Number(exDraft.weight) || 135 : 135
+    const repsNum = exDraft?.reps ? parseInt(exDraft.reps, 10) || 10 : 10
+
+    void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
+      void syncWorkoutStateToWatch({
+        workoutId: `workout-day-${activeWorkout.day}`,
+        dayNumber: Number(activeWorkout.day) || 1,
+        focus: activeWorkout.focus || 'Strength & Conditioning',
+        completedSets: completedWorkingSets,
+        totalSets: totalWorkingSets,
+        activeExercise: activeEx ? {
+          exerciseName: activeEx.name,
+          setNumber: nextSetNumber,
+          totalSets: prescribedSetsCount,
+          prescribedWeight: weightNum,
+          prescribedReps: repsNum,
+          targetRpe: exDraft?.rpe ? Number(exDraft.rpe) : 8.0,
+          tempo: activeEx.tempo || '2-0-2-0',
+          restSeconds: exDraft?.restSeconds ? Number(exDraft.restSeconds) : 60,
+          isCompound: isCompoundLift(activeEx.name),
+          isHammerCurl: isHammerCurlMovement(activeEx.name),
+          optPhase: plan?.nasm_opt_phase || 3,
+        } : undefined,
+      })
+    })
+  }, [
+    effectiveActiveWorkoutDay,
+    expandedExerciseKey,
+    planWorkouts,
+    inlineSetDrafts,
+    localSetLogs,
+    plan?.nasm_opt_phase,
+  ])
+
 
   // Synchronize active hub and lab tool whenever searchParams or initialWorkspace changes
   useEffect(() => {
@@ -1699,6 +1759,52 @@ export default function FitnessTrackerClient({
 
     await executeSetLog(workout, exercise, draft)
   }
+
+  // Listen for set logging performed directly on Apple Watch (Digital Crown / Action Button)
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchSetLogged }) => {
+      void subscribeToWatchSetLogged((watchSet) => {
+        const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
+        if (!activeWorkout) return
+
+        const matchingEx = activeWorkout.exercises?.find(
+          e => normalizeExerciseName(e.name) === normalizeExerciseName(watchSet.exerciseName)
+        ) || (expandedExerciseKey ? activeWorkout.exercises?.find(e => e.name === expandedExerciseKey.split('-')[1]) : undefined)
+
+        if (!matchingEx) return
+
+        const draftKey = exerciseDraftKey(activeWorkout.day, matchingEx.name)
+        const currentDraft = inlineSetDrafts[draftKey] || defaultInlineSetDraft(
+          todayDateOnly(),
+          matchingEx.reps,
+          plan?.nasm_opt_phase,
+          matchingEx.block,
+          matchingEx.rest,
+          matchingEx.tempo,
+          matchingEx.name
+        )
+
+        const constructedDraft: InlineSetDraft = {
+          ...currentDraft,
+          setNumber: String(watchSet.setIndex || currentDraft.setNumber),
+          reps: String(watchSet.reps),
+          weight: String(watchSet.weightLbs),
+          rpe: watchSet.rpe !== undefined ? String(watchSet.rpe) : currentDraft.rpe,
+          rir: watchSet.rir !== undefined ? String(watchSet.rir) : currentDraft.rir,
+          isWarmup: false,
+        }
+
+        void executeSetLog(activeWorkout, matchingEx, constructedDraft)
+      }).then(cleanup => {
+        unsubscribe = cleanup
+      })
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [effectiveActiveWorkoutDay, planWorkouts, expandedExerciseKey, inlineSetDrafts, plan?.nasm_opt_phase])
 
   async function handleSkipExercise(workout: WorkoutDay, exercise: WorkoutExercise, reason: string, _notes: string) {
     await fetch('/api/fitness/skip-exercise', {

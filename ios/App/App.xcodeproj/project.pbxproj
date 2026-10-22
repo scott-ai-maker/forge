@@ -20,6 +20,7 @@
 		GAA000022026083100000002 /* GAAHealthKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = GAA000052026083100000005 /* GAAHealthKitPlugin.swift */; };
 		GAA000032026083100000003 /* GAAHealthKitPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = GAA000062026083100000006 /* GAAHealthKitPlugin.m */; };
 		GAA000082026090100000008 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = GAA000092026090100000009 /* MainViewController.swift */; };
+		FORGE0012026102200000001 /* ForgeWatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FORGE0042026102200000004 /* ForgeWatchConnectivityManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +40,7 @@
 		GAA000062026083100000006 /* GAAHealthKitPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GAAHealthKitPlugin.m; sourceTree = "<group>"; };
 		GAA000072026083100000007 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		GAA000092026090100000009 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		FORGE0042026102200000004 /* ForgeWatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeWatchConnectivityManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,6 +89,7 @@
 				GAA000062026083100000006 /* GAAHealthKitPlugin.m */,
 				GAA000072026083100000007 /* App.entitlements */,
 				GAA000092026090100000009 /* MainViewController.swift */,
+				FORGE0042026102200000004 /* ForgeWatchConnectivityManager.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -179,6 +182,7 @@
 				GAA000022026083100000002 /* GAAHealthKitPlugin.swift in Sources */,
 				GAA000032026083100000003 /* GAAHealthKitPlugin.m in Sources */,
 				GAA000082026090100000008 /* MainViewController.swift in Sources */,
+				FORGE0012026102200000001 /* ForgeWatchConnectivityManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

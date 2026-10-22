@@ -151,9 +151,28 @@ export function useWearableTelemetrySync(): UseWearableTelemetrySyncResult {
       void runSync()
     }, 5 * 60 * 1000)
 
+    // Subscribe to live optical heart rate streaming from Apple Watch HKWorkoutSession
+    let unsubscribeWatchHr: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchHeartRate }) => {
+      void subscribeToWatchHeartRate((data) => {
+        if (isMounted && data.heartRate && data.heartRate > 30) {
+          setWearableTelemetry((prev) => {
+            if (!prev) return prev
+            return {
+              ...prev,
+              currentHeartRate: data.heartRate,
+            }
+          })
+        }
+      }).then(cleanup => {
+        unsubscribeWatchHr = cleanup
+      })
+    })
+
     return () => {
       isMounted = false
       unsubscribeResume()
+      if (unsubscribeWatchHr) unsubscribeWatchHr()
       if (typeof window !== 'undefined') {
         window.removeEventListener('focus', runSync)
         document.removeEventListener('visibilitychange', handleVisibilityChange)
