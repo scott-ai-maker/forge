@@ -3740,7 +3740,7 @@ export default function FitnessTrackerClient({
                             </div>
                           </summary>
                           {(isExpanded || activeRestTimerKey === exerciseKey) && (
-                          <div style={{ padding: '8px 12px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                          <div style={{ padding: '8px 8px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                             {/* High-Definition Visual Movement Demonstration Banner */}
                             {(() => {
                               const gaaImage = resolveGaaExerciseImage(ex.name, true)
@@ -4032,7 +4032,7 @@ export default function FitnessTrackerClient({
                                         const cur = Number(draft.reps) || 30
                                         setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, reps: String(Math.max(5, cur - 5)) } }))
                                       }}
-                                      style={stepperButtonStyle}
+                                      style={{ ...stepperButtonStyle, fontSize: 12 }}
                                       aria-label="Decrease duration"
                                     >
                                       −5s
@@ -4047,7 +4047,7 @@ export default function FitnessTrackerClient({
                                         const value = sanitizeNumericInput(event.target.value)
                                         setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, reps: value } }))
                                       }}
-                                      style={{ ...inputStyle, textAlign: 'center' }}
+                                      style={stepperInputStyle}
                                       placeholder="30"
                                       required
                                       aria-label="Duration in seconds"
@@ -4059,7 +4059,7 @@ export default function FitnessTrackerClient({
                                         const cur = Number(draft.reps) || 30
                                         setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, reps: String(cur + 5) } }))
                                       }}
-                                      style={stepperButtonStyle}
+                                      style={{ ...stepperButtonStyle, fontSize: 12 }}
                                       aria-label="Increase duration"
                                     >
                                       +5s
@@ -4230,7 +4230,7 @@ export default function FitnessTrackerClient({
                                         const value = sanitizeNumericInput(event.target.value)
                                         setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, reps: value } }))
                                       }}
-                                      style={{ ...inputStyle, textAlign: 'center' }}
+                                      style={stepperInputStyle}
                                       placeholder="8"
                                       required
                                       aria-label="Number of reps"
@@ -4313,7 +4313,7 @@ export default function FitnessTrackerClient({
                                         const value = sanitizeNumericInput(event.target.value)
                                         setInlineSetDrafts(prev => ({ ...prev, [exerciseKey]: { ...draft, weight: value } }))
                                       }}
-                                      style={{ ...inputStyle, textAlign: 'center' }}
+                                      style={stepperInputStyle}
                                       placeholder="—"
                                       required
                                       pattern="[0-9]+([.][0-9]+)?"
@@ -6074,10 +6074,10 @@ const stepperButtonStyle: React.CSSProperties = {
   background: 'rgba(255, 255, 255, 0.08)',
   border: '1px solid rgba(255, 255, 255, 0.16)',
   color: 'var(--white)',
-  fontSize: 15,
+  fontSize: 16,
   fontWeight: 700,
-  width: 44,
-  minWidth: 44,
+  width: 36,
+  minWidth: 36,
   height: 44,
   minHeight: 44,
   borderRadius: 4,
@@ -6087,6 +6087,18 @@ const stepperButtonStyle: React.CSSProperties = {
   cursor: 'pointer',
   userSelect: 'none',
   transition: 'all 0.1s ease',
+  flexShrink: 0,
+}
+
+const stepperInputStyle: React.CSSProperties = {
+  ...inputStyle,
+  flex: '1 1 0px',
+  minWidth: 0,
+  width: '100%',
+  padding: '6px 4px',
+  textAlign: 'center',
+  fontWeight: 800,
+  fontSize: 16,
 }
 
 const workoutStatBadgeStyle: React.CSSProperties = {
