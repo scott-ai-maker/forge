@@ -21,7 +21,21 @@
 		GAA000032026083100000003 /* GAAHealthKitPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = GAA000062026083100000006 /* GAAHealthKitPlugin.m */; };
 		GAA000082026090100000008 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = GAA000092026090100000009 /* MainViewController.swift */; };
 		FORGE0012026102200000001 /* ForgeWatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FORGE0042026102200000004 /* ForgeWatchConnectivityManager.swift */; };
+		FW93B0B334C3A9359BA3F401 /* ForgeWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW6B4F877D278CF891B2AD01 /* ForgeWatchApp.swift */; };
+		FWB44C77E72024F6F027EB01 /* ForgeWatchWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW02154CD524F54380FA4F01 /* ForgeWatchWidgets.swift */; };
+		FW6748A471511DB580715201 /* WatchWorkoutModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW0E2CC2A50CD8B5DDD67201 /* WatchWorkoutModel.swift */; };
+		FWCD6CAB46D05CD1CC6E8B01 /* WatchWorkoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FWEB0F4582432ED4A6477101 /* WatchWorkoutManager.swift */; };
+		FWD7E3CC9E38FD923345A801 /* WatchSessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW9676071712491F913C5701 /* WatchSessionCoordinator.swift */; };
+		FW69DA488ED9C26738E86601 /* WatchHapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW9E8A1876923BF63AC31501 /* WatchHapticManager.swift */; };
+		FWCDE425B0101A309E1C4E01 /* WorkoutActiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW720D0580E06CA835366501 /* WorkoutActiveView.swift */; };
+		FW4AB20AE216843365765901 /* RestTimerRadialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW14C7EE55FFDCEC63186401 /* RestTimerRadialView.swift */; };
+		FW3B7A630276181B39ED0E01 /* CardioZoneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW9EED7929C215B419CDC601 /* CardioZoneView.swift */; };
+		FWDAE87EC77CE6E13EF14E01 /* TempoMetronomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW56E621A686EEBFF0A4BD01 /* TempoMetronomeView.swift */; };
+		FW5FD564A97F9FDE7FB06C01 /* CNSReadinessComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FWD1EB09472734C814890201 /* CNSReadinessComplicationView.swift */; };
+		FWB1202C7A8238826DC78201 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FWD7A955E5F260D10039C701 /* Assets.xcassets */; };
+		FWA009BB2F38F415DCEA8701 /* ForgeWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = FWA278F7D1DBA0AAB0DC6101 /* ForgeWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
 
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
@@ -41,7 +55,23 @@
 		GAA000072026083100000007 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		GAA000092026090100000009 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		FORGE0042026102200000004 /* ForgeWatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeWatchConnectivityManager.swift; sourceTree = "<group>"; };
+		FWA278F7D1DBA0AAB0DC6101 /* ForgeWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ForgeWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FW6B4F877D278CF891B2AD01 /* ForgeWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeWatchApp.swift; sourceTree = "<group>"; };
+		FW02154CD524F54380FA4F01 /* ForgeWatchWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeWatchWidgets.swift; sourceTree = "<group>"; };
+		FW48B781FEB0A8D49F7DC301 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FW3647B61E4E0D0C5C942B01 /* ForgeWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ForgeWatch.entitlements; sourceTree = "<group>"; };
+		FWD7A955E5F260D10039C701 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FW0E2CC2A50CD8B5DDD67201 /* WatchWorkoutModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWorkoutModel.swift; sourceTree = "<group>"; };
+		FWEB0F4582432ED4A6477101 /* WatchWorkoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWorkoutManager.swift; sourceTree = "<group>"; };
+		FW9676071712491F913C5701 /* WatchSessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionCoordinator.swift; sourceTree = "<group>"; };
+		FW9E8A1876923BF63AC31501 /* WatchHapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHapticManager.swift; sourceTree = "<group>"; };
+		FW720D0580E06CA835366501 /* WorkoutActiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActiveView.swift; sourceTree = "<group>"; };
+		FW14C7EE55FFDCEC63186401 /* RestTimerRadialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerRadialView.swift; sourceTree = "<group>"; };
+		FW9EED7929C215B419CDC601 /* CardioZoneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioZoneView.swift; sourceTree = "<group>"; };
+		FW56E621A686EEBFF0A4BD01 /* TempoMetronomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempoMetronomeView.swift; sourceTree = "<group>"; };
+		FWD1EB09472734C814890201 /* CNSReadinessComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CNSReadinessComplicationView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
 
 /* Begin PBXFrameworksBuildPhase section */
 		504EC3011FED79650016851F /* Frameworks */ = {
@@ -49,6 +79,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FW68D1795E2EF1879BF0A301 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,6 +98,7 @@
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
+				FWE9EF8309882C521AB82901 /* ForgeWatch */,
 			);
 			sourceTree = "<group>";
 		};
@@ -68,6 +106,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				FWA278F7D1DBA0AAB0DC6101 /* ForgeWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -94,6 +133,51 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		FWF2056FAABD5C04E6372701 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FW0E2CC2A50CD8B5DDD67201 /* WatchWorkoutModel.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		FWB3FA39E63A257ADA546801 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				FWEB0F4582432ED4A6477101 /* WatchWorkoutManager.swift */,
+				FW9676071712491F913C5701 /* WatchSessionCoordinator.swift */,
+				FW9E8A1876923BF63AC31501 /* WatchHapticManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		FW3B8707AF229482F351B101 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FW720D0580E06CA835366501 /* WorkoutActiveView.swift */,
+				FW14C7EE55FFDCEC63186401 /* RestTimerRadialView.swift */,
+				FW9EED7929C215B419CDC601 /* CardioZoneView.swift */,
+				FW56E621A686EEBFF0A4BD01 /* TempoMetronomeView.swift */,
+				FWD1EB09472734C814890201 /* CNSReadinessComplicationView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FWE9EF8309882C521AB82901 /* ForgeWatch */ = {
+			isa = PBXGroup;
+			children = (
+				FW6B4F877D278CF891B2AD01 /* ForgeWatchApp.swift */,
+				FW02154CD524F54380FA4F01 /* ForgeWatchWidgets.swift */,
+				FWF2056FAABD5C04E6372701 /* Models */,
+				FWB3FA39E63A257ADA546801 /* Services */,
+				FW3B8707AF229482F351B101 /* Views */,
+				FWD7A955E5F260D10039C701 /* Assets.xcassets */,
+				FW48B781FEB0A8D49F7DC301 /* Info.plist */,
+				FW3647B61E4E0D0C5C942B01 /* ForgeWatch.entitlements */,
+			);
+			path = ForgeWatch;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -117,7 +201,25 @@
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
 		};
+		FW171AD5C0BD5BE5A9767201 /* ForgeWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FWE1C907DC65C81EA03F6701 /* Build configuration list for PBXNativeTarget "ForgeWatch" */;
+			buildPhases = (
+				FW7DBBBD4E7704F6680D2001 /* Sources */,
+				FW68D1795E2EF1879BF0A301 /* Frameworks */,
+				FWEC155253089BF314704E01 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ForgeWatch;
+			productName = ForgeWatch;
+			productReference = FWA278F7D1DBA0AAB0DC6101 /* ForgeWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
+
 
 /* Begin PBXProject section */
 		504EC2FC1FED79650016851F /* Project object */ = {
@@ -127,6 +229,10 @@
 				LastSwiftUpdateCheck = 0920;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					FW171AD5C0BD5BE5A9767201 = {
+						CreatedOnToolsVersion = 14.0;
+						ProvisioningStyle = Automatic;
+					};
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
@@ -151,6 +257,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				FW171AD5C0BD5BE5A9767201 /* ForgeWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -169,6 +276,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FWEC155253089BF314704E01 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FWB1202C7A8238826DC78201 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -183,6 +298,24 @@
 				GAA000032026083100000003 /* GAAHealthKitPlugin.m in Sources */,
 				GAA000082026090100000008 /* MainViewController.swift in Sources */,
 				FORGE0012026102200000001 /* ForgeWatchConnectivityManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FW7DBBBD4E7704F6680D2001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FW93B0B334C3A9359BA3F401 /* ForgeWatchApp.swift in Sources */,
+				FWB44C77E72024F6F027EB01 /* ForgeWatchWidgets.swift in Sources */,
+				FW6748A471511DB580715201 /* WatchWorkoutModel.swift in Sources */,
+				FWCD6CAB46D05CD1CC6E8B01 /* WatchWorkoutManager.swift in Sources */,
+				FWD7E3CC9E38FD923345A801 /* WatchSessionCoordinator.swift in Sources */,
+				FW69DA488ED9C26738E86601 /* WatchHapticManager.swift in Sources */,
+				FWCDE425B0101A309E1C4E01 /* WorkoutActiveView.swift in Sources */,
+				FW4AB20AE216843365765901 /* RestTimerRadialView.swift in Sources */,
+				FW3B7A630276181B39ED0E01 /* CardioZoneView.swift in Sources */,
+				FWDAE87EC77CE6E13EF14E01 /* TempoMetronomeView.swift in Sources */,
+				FW5FD564A97F9FDE7FB06C01 /* CNSReadinessComplicationView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -375,6 +508,56 @@
 			};
 			name = Release;
 		};
+		FW5F8C7A1B31F971C9734701 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = ForgeWatch/ForgeWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(CURRENT_PROJECT_VERSION)";
+				DEVELOPMENT_TEAM = V9M3B8F9P2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ForgeWatch/Info.plist;
+				MARKETING_VERSION = "$(MARKETING_VERSION)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.gordonathletic.app.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		FW5459DE620628AA1C640301 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = ForgeWatch/ForgeWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(CURRENT_PROJECT_VERSION)";
+				DEVELOPMENT_TEAM = V9M3B8F9P2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ForgeWatch/Info.plist;
+				MARKETING_VERSION = "$(MARKETING_VERSION)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.gordonathletic.app.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -392,6 +575,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FWE1C907DC65C81EA03F6701 /* Build configuration list for PBXNativeTarget "ForgeWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FW5F8C7A1B31F971C9734701 /* Debug */,
+				FW5459DE620628AA1C640301 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

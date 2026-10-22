@@ -39,6 +39,7 @@ export interface FloatingRestTimerDockProps {
   soundMetronomeMode?: RestAudioMetronomeMode
   onChangeMetronomeMode?: (mode: RestAudioMetronomeMode) => void
   hasHeartMedications?: boolean
+  onOpenWatchSimulator?: () => void
 }
 
 export default function FloatingRestTimerDock({
@@ -55,6 +56,7 @@ export default function FloatingRestTimerDock({
   soundMetronomeMode: _soundMetronomeMode = 'cardiac_pulse',
   onChangeMetronomeMode: _onChangeMetronomeMode,
   hasHeartMedications = false,
+  onOpenWatchSimulator,
 }: FloatingRestTimerDockProps) {
   const [showCardioPacer, setShowCardioPacer] = useState(false)
   const [dismissedExtensionAlert, setDismissedExtensionAlert] = useState(false)
@@ -337,7 +339,7 @@ export default function FloatingRestTimerDock({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: onToggleSoundMetronome ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)',
+          gridTemplateColumns: `repeat(${[true, true, true, Boolean(onToggleSoundMetronome), true, Boolean(onOpenWatchSimulator)].filter(Boolean).length}, 1fr)`,
           gap: 6,
           width: '100%',
           marginTop: 2,
@@ -479,6 +481,37 @@ export default function FloatingRestTimerDock({
           <GaaIcon name="heart" size={11} tone={showCardioPacer ? 'cyan' : 'slate'} />
           <span>Pacer</span>
         </button>
+
+        {/* Apple Watch Companion Quick Launcher */}
+        {onOpenWatchSimulator && (
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic?.('tap')
+              onOpenWatchSimulator()
+            }}
+            className="tactile-btn"
+            style={{
+              background: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              color: '#38BDF8',
+              padding: '5px 4px',
+              borderRadius: 5,
+              fontSize: 10.5,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+            }}
+            title="Open Apple Watch Ultra Companion Simulator"
+            data-testid="toggle-watch-simulator-btn"
+          >
+            <span>⌚</span>
+            <span>Watch</span>
+          </button>
+        )}
       </div>
 
       {/* ── Coach Gordon Sanctuary In-Ear Audio Note Banner ── */}

@@ -19,6 +19,7 @@ export interface LiveSessionStickyDockProps {
   onStartCardio: () => void
   onFinishLifts: () => void
   onQuitSession?: () => void
+  onOpenWatchSimulator?: () => void
 }
 
 export default function LiveSessionStickyDock({
@@ -35,6 +36,7 @@ export default function LiveSessionStickyDock({
   onStartCardio,
   onFinishLifts,
   onQuitSession,
+  onOpenWatchSimulator,
 }: LiveSessionStickyDockProps) {
   if (activeWorkoutSessionDay === null) return null
 
@@ -261,6 +263,32 @@ export default function LiveSessionStickyDock({
           <GaaIcon name={isWorkoutTimerActive ? 'pause' : 'play'} size={11} tone={isWorkoutTimerActive ? 'white' : 'amber'} />
           <span>{isWorkoutTimerActive ? 'Pause' : 'Resume'}</span>
         </button>
+
+        {onOpenWatchSimulator && (
+          <button
+            type="button"
+            onClick={onOpenWatchSimulator}
+            className="tactile-btn"
+            title="Open Apple Watch Ultra Companion Simulator"
+            style={{
+              background: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              color: '#38BDF8',
+              fontFamily: 'Raleway, sans-serif',
+              fontWeight: 800,
+              fontSize: 11,
+              padding: '7px 10px',
+              borderRadius: 5,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span>⌚</span>
+            <span>Watch</span>
+          </button>
+        )}
 
         {onQuitSession && (
           <HoldToQuitWorkoutButton

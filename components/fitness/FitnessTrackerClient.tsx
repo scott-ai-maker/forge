@@ -87,6 +87,7 @@ import SessionFatigueCnsSummaryModal from '@/components/fitness/tracker/SessionF
 import { calculateSessionFatigueCnsIndex } from '@/lib/session-fatigue-cns-index'
 import FloatingRestTimerDock from '@/components/fitness/tracker/FloatingRestTimerDock'
 import LiveSessionStickyDock from '@/components/fitness/tracker/LiveSessionStickyDock'
+import AppleWatchSimulatorModal from '@/components/fitness/watch/AppleWatchSimulatorModal'
 import HoldToQuitWorkoutButton from '@/components/fitness/tracker/HoldToQuitWorkoutButton'
 import ExercisePrBadge from '@/components/fitness/tracker/ExercisePrBadge'
 import { HorizontalSetsCarousel } from '@/components/fitness/tracker/HorizontalSetsCarousel'
@@ -737,6 +738,7 @@ export default function FitnessTrackerClient({
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(
     latestPlan?.id ?? (allPlans[0]?.id ?? null)
   )
+  const [isWatchSimulatorOpen, setIsWatchSimulatorOpen] = useState(false)
 
   const plan = useMemo(() => {
     if (selectedPlanId && allPlans.length > 0) {
@@ -6063,6 +6065,7 @@ export default function FitnessTrackerClient({
           (Array.isArray((profile as any)?.injuries) && (profile as any).injuries.includes('cardiovascular_hypertension')) ||
           Boolean((profile as any)?.hasHeartMedications)
         }
+        onOpenWatchSimulator={() => setIsWatchSimulatorOpen(true)}
       />
 
       {/* ── FLOATING STICKY LIVE WORKOUT SESSION DOCK (MOBILE & DESKTOP) ── */}
@@ -6078,6 +6081,7 @@ export default function FitnessTrackerClient({
           userWeightKg={profile?.weight_kg || 75}
           onPauseResume={handlePauseResumeWorkoutSession}
           onQuitSession={handleClientQuitWorkout}
+          onOpenWatchSimulator={() => setIsWatchSimulatorOpen(true)}
           onStartCardio={() => {
             const ctx = getSharedAudioContext()
             if (ctx && ctx.state === 'suspended') {
@@ -6113,6 +6117,50 @@ export default function FitnessTrackerClient({
           }}
         />
       )}
+
+      {/* ── INTERACTIVE APPLE WATCH ULTRA 49MM HARDWARE SIMULATOR ── */}
+      <AppleWatchSimulatorModal
+        isOpen={isWatchSimulatorOpen}
+        onClose={() => setIsWatchSimulatorOpen(false)}
+        currentExerciseName={
+          activeRestState?.exerciseName ||
+          (expandedExerciseKey ? planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.find(e => e.name === expandedExerciseKey.split('-')[1])?.name : undefined) ||
+          planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.[0]?.name ||
+          'Barbell Flat Bench Press'
+        }
+        currentSetNumber={activeRestState ? 2 : 1}
+        currentTotalSets={3}
+        prescribedWeight={185}
+        prescribedReps={10}
+        onSimulateSetLogged={(data) => {
+          const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay) || planWorkouts[0]
+          if (!activeWorkout) return
+          const matchingEx = activeWorkout.exercises?.find(
+            e => normalizeExerciseName(e.name) === normalizeExerciseName(data.exerciseName)
+          ) || activeWorkout.exercises?.[0]
+          if (!matchingEx) return
+
+          const draftKey = exerciseDraftKey(activeWorkout.day, matchingEx.name)
+          const currentDraft = inlineSetDrafts[draftKey] || defaultInlineSetDraft(
+            todayDateOnly(),
+            matchingEx.reps,
+            plan?.nasm_opt_phase,
+            matchingEx.block,
+            matchingEx.rest,
+            matchingEx.tempo,
+            matchingEx.name
+          )
+          const constructedDraft: InlineSetDraft = {
+            ...currentDraft,
+            setNumber: String(data.setIndex || currentDraft.setNumber),
+            reps: String(data.reps),
+            weight: String(data.weightLbs),
+            rpe: data.rpe !== undefined ? String(data.rpe) : currentDraft.rpe,
+            isWarmup: false,
+          }
+          void executeSetLog(activeWorkout, matchingEx, constructedDraft)
+        }}
+      />
 
 
     </>
