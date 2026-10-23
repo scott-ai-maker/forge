@@ -1374,6 +1374,21 @@ export default function FitnessTrackerClient({
       const weightNum = draft?.weight ? Number(draft.weight) || 135 : 135
       const repsNum = draft?.reps ? parseInt(draft.reps, 10) || 10 : 10
 
+      const movementCard = getNasmClinicalMovementCard(ex.name, ex)
+      const targetMuscles = movementCard.category
+        ? (movementCard.primeMover ? `${movementCard.category} • ${movementCard.primeMover}` : movementCard.category)
+        : (movementCard.primeMover || 'Target Musculature')
+      const equipment = (movementCard.equipment && movementCard.equipment.length > 0)
+        ? movementCard.equipment.slice(0, 2).join(', ')
+        : 'Gym Equipment'
+      const setupCue = movementCard.setupInstructions
+        ? (movementCard.setupInstructions.split('.')[0] + '.')
+        : 'Set stable base & kinetic checkpoints.'
+      const movementCues = (movementCard.clinicalCues && movementCard.clinicalCues.length > 0)
+        ? movementCard.clinicalCues.slice(0, 3).map(c => c.length > 85 ? c.slice(0, 82) + '...' : c)
+        : ['Control eccentric tempo', 'Maintain core bracing', 'Full active range of motion']
+      const coachingTip = movementCard.clinicalCues?.[0] || 'Focus on controlled tempo and stability.'
+
       return {
         exerciseName: ex.name,
         block: ex.block || 'resistance',
@@ -1392,6 +1407,11 @@ export default function FitnessTrackerClient({
         optPhase: plan?.nasm_opt_phase || 3,
         isCompleted,
         completedSetsCount: setsLogged,
+        targetMuscles,
+        equipment,
+        setupCue,
+        movementCues,
+        coachingTip,
       }
     })
 
@@ -1475,6 +1495,11 @@ export default function FitnessTrackerClient({
         isCompound: activeEx.isCompound,
         isHammerCurl: activeEx.isHammerCurl,
         optPhase: activeEx.optPhase,
+        targetMuscles: activeEx.targetMuscles,
+        equipment: activeEx.equipment,
+        setupCue: activeEx.setupCue,
+        movementCues: activeEx.movementCues,
+        coachingTip: activeEx.coachingTip,
       } : undefined,
       exercises: exercisesList,
       cardioProtocol: cardioPayload,

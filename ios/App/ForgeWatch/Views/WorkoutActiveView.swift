@@ -22,6 +22,8 @@ public struct WorkoutActiveView: View {
     @State private var showCancelConfirmation: Bool = false
     @State private var showFinishConfirmation: Bool = false
     @State private var showPhasesSheet: Bool = false
+    @State private var showExerciseDetailSheet: Bool = false
+    @State private var selectedExerciseForDetail: WatchExerciseInfo? = nil
 
     // Drill & stretch interactive countdown timer state
     @State private var activeTimerItemName: String? = nil
@@ -128,10 +130,24 @@ public struct WorkoutActiveView: View {
             PlateCalculatorSheet(totalWeightLbs: loggedWeight)
         }
         .sheet(isPresented: $showPhasesSheet) {
-            WorkoutPhasesSheet(onSelectExercise: { name in
-                coordinator.selectExercise(named: name)
-                syncStateFromCoordinator()
-            })
+            WorkoutPhasesSheet(
+                onSelectExercise: { name in
+                    coordinator.selectExercise(named: name)
+                    syncStateFromCoordinator()
+                },
+                onInspectExercise: { ex in
+                    selectedExerciseForDetail = ex
+                    showPhasesSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showExerciseDetailSheet = true
+                    }
+                }
+            )
+        }
+        .sheet(isPresented: $showExerciseDetailSheet) {
+            if let ex = selectedExerciseForDetail ?? coordinator.workoutState.activeExercise {
+                TerseExerciseCardSheet(exercise: ex)
+            }
         }
         .confirmationDialog("Cancel Workout?", isPresented: $showCancelConfirmation, titleVisibility: .visible) {
             Button("Discard Workout", role: .destructive) {
@@ -469,14 +485,91 @@ public struct WorkoutActiveView: View {
                 .buttonStyle(PlainButtonStyle())
             }
 
-            // Exercise Title
-            Text(coordinator.workoutState.activeExercise?.exerciseName ?? "Bench Press")
-                .font(.system(size: 16, weight: .black, design: .rounded))
-                .foregroundColor(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 2)
+            // Exercise Title & Terse Glance Bar
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .center) {
+                    Text(coordinator.workoutState.activeExercise?.exerciseName ?? "Bench Press")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+
+                    Spacer()
+
+                    Button(action: {
+                        selectedExerciseForDetail = coordinator.workoutState.activeExercise
+                        showExerciseDetailSheet = true
+                        WKInterfaceDevice.current().play(.click)
+                    }) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "info.circle.fill")
+                                .font(.system(size: 9, weight: .bold))
+                            Text("FORM")
+                                .font(.system(size: 8.5, weight: .black, design: .rounded))
+                        }
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 3)
+                        .background(Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.18))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                        .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+
+                // Terse Target Muscle & Equipment Badges
+                HStack(spacing: 4) {
+                    let muscles = coordinator.workoutState.activeExercise?.targetMuscles ?? "TARGET MUSCLES"
+                    Text(muscles.uppercased())
+                        .font(.system(size: 8, weight: .black, design: .rounded))
+                        .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09)) // Gold
+                        .lineLimit(1)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color(red: 0.83, green: 0.63, blue: 0.09).opacity(0.15))
+                        .cornerRadius(4)
+
+                    if let equip = coordinator.workoutState.activeExercise?.equipment, !equip.isEmpty {
+                        Text(equip.uppercased())
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .foregroundColor(.gray)
+                            .lineLimit(1)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(4)
+                    }
+                }
+
+                // Glanceable 1-Line Form / Setup Cue
+                if let cue = coordinator.workoutState.activeExercise?.coachingTip ?? coordinator.workoutState.activeExercise?.setupCue, !cue.isEmpty {
+                    Button(action: {
+                        selectedExerciseForDetail = coordinator.workoutState.activeExercise
+                        showExerciseDetailSheet = true
+                        WKInterfaceDevice.current().play(.click)
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "lightbulb.fill")
+                                .font(.system(size: 8))
+                                .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.11))
+                            Text(cue)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(1)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 7))
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Color.white.opacity(0.06))
+                        .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 2)
 
             // Hero Metric Cards (Reps & Weight) with Tactile Steppers & Crown Rotation
             HStack(spacing: 6) {
@@ -1311,12 +1404,201 @@ struct PhaseTabButton: View {
 }
 
 /**
+ * TerseExerciseCardSheet
+ * Wrist-first biomechanical reference card presenting target musculature,
+ * equipment, kinetic setup checkpoints, movement cues, tempo, and coaching safety tips.
+ * Forge Athletic
+ */
+struct TerseExerciseCardSheet: View {
+    let exercise: WatchExerciseInfo
+    @Environment(\.presentationMode) var presentationMode
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+                // Header with Done button
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("EXERCISE FORM CARD")
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09)) // Gold
+
+                        Text(exercise.exerciseName)
+                            .font(.system(size: 13, weight: .black, design: .rounded))
+                            .foregroundColor(.white)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer()
+
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .font(.system(size: 11, weight: .bold))
+                }
+                .padding(.bottom, 2)
+
+                // 1. Target Musculature
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "figure.strengthtraining.traditional")
+                            .font(.system(size: 9))
+                            .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                        Text("TARGET MUSCLES")
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                    }
+
+                    Text(exercise.targetMuscles ?? "Primary Muscle Mover & Core Stabilizers")
+                        .font(.system(size: 10.5, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .padding(7)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white.opacity(0.06))
+                .cornerRadius(8)
+
+                // 2. Prescription & Equipment Specs
+                HStack(spacing: 6) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("EQUIPMENT")
+                            .font(.system(size: 8, weight: .black, design: .rounded))
+                            .foregroundColor(.gray)
+                        Text(exercise.equipment ?? "Free Weights")
+                            .font(.system(size: 9.5, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(6)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(6)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("TEMPO")
+                            .font(.system(size: 8, weight: .black, design: .rounded))
+                            .foregroundColor(.gray)
+                        Text(exercise.tempo ?? "2-0-2-0")
+                            .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(6)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(6)
+                }
+
+                // 3. Setup Checkpoint
+                if let setup = exercise.setupCue, !setup.isEmpty {
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.shield.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.11))
+                            Text("SETUP CHECKPOINTS")
+                                .font(.system(size: 9, weight: .black, design: .rounded))
+                                .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.11))
+                        }
+
+                        Text(setup)
+                            .font(.system(size: 9.5, weight: .medium))
+                            .foregroundColor(.white.opacity(0.95))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(7)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.06))
+                    .cornerRadius(8)
+                }
+
+                // 4. Movement Execution Cues
+                if let cues = exercise.movementCues, !cues.isEmpty {
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "list.bullet.clipboard.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                            Text("EXECUTION FORM CUES")
+                                .font(.system(size: 9, weight: .black, design: .rounded))
+                                .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                        }
+
+                        ForEach(cues, id: \.self) { cue in
+                            HStack(alignment: .top, spacing: 5) {
+                                Image(systemName: "arrow.right.circle.fill")
+                                    .font(.system(size: 7))
+                                    .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                                    .padding(.top, 2)
+                                Text(cue)
+                                    .font(.system(size: 9.5, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .padding(.vertical, 1)
+                        }
+                    }
+                    .padding(7)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.06))
+                    .cornerRadius(8)
+                }
+
+                // 5. Coach Safety Note
+                if let tip = exercise.coachingTip, !tip.isEmpty {
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                            Text("COACH CUE & SAFETY")
+                                .font(.system(size: 9, weight: .black, design: .rounded))
+                                .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                        }
+
+                        Text(tip)
+                            .font(.system(size: 9.5, weight: .medium))
+                            .foregroundColor(.white.opacity(0.9))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(7)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.09))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(red: 0.83, green: 0.63, blue: 0.09).opacity(0.3), lineWidth: 1)
+                    )
+                }
+
+                // Bottom Dismiss Action
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Text("BACK TO WORKOUT")
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(Color(red: 0.22, green: 0.74, blue: 0.97))
+                        .foregroundColor(.black)
+                        .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.top, 4)
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+}
+
+/**
  * WorkoutPhasesSheet
  * Full workout plan drawer showing all 4 phases and prescribed exercises
  */
 struct WorkoutPhasesSheet: View {
     @ObservedObject var coordinator = WatchSessionCoordinator.shared
     let onSelectExercise: (String) -> Void
+    var onInspectExercise: ((WatchExerciseInfo) -> Void)? = nil
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
@@ -1379,36 +1661,60 @@ struct WorkoutPhasesSheet: View {
                         .padding(.horizontal, 2)
                     } else {
                         ForEach(coordinator.workoutState.exercises) { ex in
-                            Button(action: {
-                                onSelectExercise(ex.exerciseName)
-                                presentationMode.wrappedValue.dismiss()
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: ex.isCompleted ? "checkmark.circle.fill" : "circle")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(ex.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
+                            HStack(spacing: 4) {
+                                Button(action: {
+                                    onSelectExercise(ex.exerciseName)
+                                    presentationMode.wrappedValue.dismiss()
+                                }) {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: ex.isCompleted ? "checkmark.circle.fill" : "circle")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(ex.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
 
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text(ex.exerciseName)
-                                            .font(.system(size: 11, weight: .bold))
-                                            .foregroundColor(ex.isCompleted ? .gray : .white)
-                                            .lineLimit(1)
-                                        Text("\(ex.totalSets) sets × \(ex.repsDisplay) · \(Int(ex.prescribedWeight)) lbs")
-                                            .font(.system(size: 9, weight: .medium))
+                                        VStack(alignment: .leading, spacing: 1) {
+                                            Text(ex.exerciseName)
+                                                .font(.system(size: 11, weight: .bold))
+                                                .foregroundColor(ex.isCompleted ? .gray : .white)
+                                                .lineLimit(1)
+
+                                            if let muscles = ex.targetMuscles, !muscles.isEmpty {
+                                                Text(muscles)
+                                                    .font(.system(size: 8.5, weight: .semibold))
+                                                    .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                                                    .lineLimit(1)
+                                            }
+
+                                            let equipStr = (ex.equipment != nil && !ex.equipment!.isEmpty) ? " · \(ex.equipment!)" : ""
+                                            Text("\(ex.totalSets) sets × \(ex.repsDisplay) · \(Int(ex.prescribedWeight)) lbs\(equipStr)")
+                                                .font(.system(size: 8.5, weight: .medium))
+                                                .foregroundColor(.gray)
+                                                .lineLimit(1)
+                                        }
+
+                                        Spacer()
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 9))
                                             .foregroundColor(.gray)
                                     }
-
-                                    Spacer()
-
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 9))
-                                        .foregroundColor(.gray)
                                 }
-                                .padding(6)
-                                .background(ex.exerciseName == coordinator.workoutState.activeExercise?.exerciseName ? Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.15) : Color.clear)
-                                .cornerRadius(6)
+                                .buttonStyle(PlainButtonStyle())
+
+                                if onInspectExercise != nil {
+                                    Button(action: {
+                                        onInspectExercise?(ex)
+                                    }) {
+                                        Image(systemName: "info.circle.fill")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                                            .frame(width: 24, height: 24)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .padding(6)
+                            .background(ex.exerciseName == coordinator.workoutState.activeExercise?.exerciseName ? Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.15) : Color.clear)
+                            .cornerRadius(6)
                         }
                     }
                 }

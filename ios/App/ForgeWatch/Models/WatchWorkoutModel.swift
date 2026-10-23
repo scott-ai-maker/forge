@@ -26,6 +26,11 @@ public struct WatchExerciseInfo: Codable, Identifiable {
     public var optPhase: Int?
     public var isCompleted: Bool
     public var completedSetsCount: Int
+    public var targetMuscles: String?
+    public var equipment: String?
+    public var setupCue: String?
+    public var movementCues: [String]?
+    public var coachingTip: String?
 
     public init(
         exerciseName: String,
@@ -44,7 +49,12 @@ public struct WatchExerciseInfo: Codable, Identifiable {
         isHammerCurl: Bool? = false,
         optPhase: Int? = 3,
         isCompleted: Bool = false,
-        completedSetsCount: Int = 0
+        completedSetsCount: Int = 0,
+        targetMuscles: String? = nil,
+        equipment: String? = nil,
+        setupCue: String? = nil,
+        movementCues: [String]? = nil,
+        coachingTip: String? = nil
     ) {
         self.exerciseName = exerciseName
         self.block = block
@@ -63,6 +73,11 @@ public struct WatchExerciseInfo: Codable, Identifiable {
         self.optPhase = optPhase
         self.isCompleted = isCompleted
         self.completedSetsCount = completedSetsCount
+        self.targetMuscles = targetMuscles
+        self.equipment = equipment
+        self.setupCue = setupCue
+        self.movementCues = movementCues
+        self.coachingTip = coachingTip
     }
 }
 

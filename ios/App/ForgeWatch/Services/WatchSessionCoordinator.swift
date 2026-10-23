@@ -30,9 +30,35 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     private var localDrillOverrides: [String: (isCompleted: Bool, timestamp: Date)] = [:]
     private var localStretchOverrides: [String: (isCompleted: Bool, timestamp: Date)] = [:]
 
+    private let cachedWorkoutKey = "forge_cached_workout_state"
+
     private override init() {
         super.init()
+        restoreCachedWorkoutState()
         activateSession()
+    }
+
+    public func saveCachedWorkoutState() {
+        do {
+            let data = try JSONEncoder().encode(self.workoutState)
+            UserDefaults.standard.set(data, forKey: cachedWorkoutKey)
+            print("[WatchSessionCoordinator] Saved cached workout state: \(self.workoutState.workoutId), \(self.workoutState.exercises.count) exercises")
+        } catch {
+            print("[WatchSessionCoordinator] Error caching workout state: \(error.localizedDescription)")
+        }
+    }
+
+    public func restoreCachedWorkoutState() {
+        guard let data = UserDefaults.standard.data(forKey: cachedWorkoutKey) else { return }
+        do {
+            let cached = try JSONDecoder().decode(WatchWorkoutState.self, from: data)
+            if !cached.exercises.isEmpty {
+                self.workoutState = cached
+                print("[WatchSessionCoordinator] Successfully restored offline workout state with \(cached.exercises.count) exercises")
+            }
+        } catch {
+            print("[WatchSessionCoordinator] Error restoring cached workout state: \(error.localizedDescription)")
+        }
     }
 
     public func activateSession() {
@@ -102,6 +128,8 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
 
         let restSecs = workoutState.activeExercise?.restSeconds ?? 60
         startLocalRestTimer(seconds: restSecs, exerciseName: exerciseName)
+
+        saveCachedWorkoutState()
 
         // Automatically navigate to the radial rest timer tab to pace recovery
         DispatchQueue.main.async {
@@ -393,12 +421,15 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 self?.transferUserInfo(payload)
             }
         } else {
+            // Phone is unreachable (e.g. in gym locker room) — queue guaranteed system transfer
             transferUserInfo(payload)
         }
     }
 
     private func transferUserInfo(_ payload: [String: Any]) {
-        WCSession.default.transferUserInfo(payload)
+        let transfer = WCSession.default.transferUserInfo(payload)
+        let typeStr = (payload["type"] as? String) ?? "unknown"
+        print("[WatchSessionCoordinator] Queued offline sync packet '\(typeStr)' (isTransferring=\(transfer.isTransferring), outstanding=\(WCSession.default.outstandingUserInfoTransfers.count))")
     }
 
     // MARK: - Local Rest Timer Pacing
@@ -447,6 +478,7 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     public func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         DispatchQueue.main.async {
             self.isPhoneReachable = session.isReachable
+            print("[WatchSessionCoordinator] Session activated: state=\(activationState.rawValue), isReachable=\(session.isReachable), outstandingTransfers=\(session.outstandingUserInfoTransfers.count)")
             if activationState == .activated {
                 self.refreshFromApplicationContext()
             }
@@ -456,6 +488,7 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     public func sessionReachabilityDidChange(_ session: WCSession) {
         DispatchQueue.main.async {
             self.isPhoneReachable = session.isReachable
+            print("[WatchSessionCoordinator] Reachability changed: isReachable=\(session.isReachable), outstandingTransfers=\(session.outstandingUserInfoTransfers.count)")
         }
     }
 
@@ -617,6 +650,11 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 let opt = exDict["optPhase"] as? Int ?? 3
                 let isDone = exDict["isCompleted"] as? Bool ?? false
                 let doneSets = exDict["completedSetsCount"] as? Int ?? 0
+                let targetMuscles = exDict["targetMuscles"] as? String
+                let equipment = exDict["equipment"] as? String
+                let setupCue = exDict["setupCue"] as? String
+                let movementCues = exDict["movementCues"] as? [String]
+                let coachingTip = exDict["coachingTip"] as? String
 
                 parsedExercises.append(
                     WatchExerciseInfo(
@@ -636,7 +674,12 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                         isHammerCurl: isHammer,
                         optPhase: opt,
                         isCompleted: isDone,
-                        completedSetsCount: doneSets
+                        completedSetsCount: doneSets,
+                        targetMuscles: targetMuscles,
+                        equipment: equipment,
+                        setupCue: setupCue,
+                        movementCues: movementCues,
+                        coachingTip: coachingTip
                     )
                 )
             }
@@ -645,6 +688,12 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         // Active exercise
         var activeEx: WatchExerciseInfo? = nil
         if let exDict = dict["activeExercise"] as? [String: Any] {
+            let targetMuscles = exDict["targetMuscles"] as? String
+            let equipment = exDict["equipment"] as? String
+            let setupCue = exDict["setupCue"] as? String
+            let movementCues = exDict["movementCues"] as? [String]
+            let coachingTip = exDict["coachingTip"] as? String
+
             activeEx = WatchExerciseInfo(
                 exerciseName: exDict["exerciseName"] as? String ?? "Exercise",
                 block: exDict["block"] as? String ?? "resistance",
@@ -662,7 +711,12 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 isHammerCurl: exDict["isHammerCurl"] as? Bool ?? false,
                 optPhase: exDict["optPhase"] as? Int ?? 3,
                 isCompleted: exDict["isCompleted"] as? Bool ?? false,
-                completedSetsCount: exDict["completedSetsCount"] as? Int ?? 0
+                completedSetsCount: exDict["completedSetsCount"] as? Int ?? 0,
+                targetMuscles: targetMuscles,
+                equipment: equipment,
+                setupCue: setupCue,
+                movementCues: movementCues,
+                coachingTip: coachingTip
             )
         } else if !parsedExercises.isEmpty {
             let safeIdx = min(max(0, activeExIndex), parsedExercises.count - 1)
@@ -765,6 +819,9 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             isSessionActive: isActive,
             startedAt: ISO8601DateFormatter().string(from: Date())
         )
+
+        // Persist to offline cache on watch so session remains intact if phone stays in locker
+        saveCachedWorkoutState()
 
         // Ensure background HKWorkoutSession is active to keep optical HR reading when session is active
         if isActive && !WatchWorkoutManager.shared.isWorkoutActive {

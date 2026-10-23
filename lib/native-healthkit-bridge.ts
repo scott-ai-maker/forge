@@ -987,6 +987,11 @@ export interface WatchActiveExercisePayload {
   isCompound?: boolean
   isHammerCurl?: boolean
   optPhase?: number
+  targetMuscles?: string
+  equipment?: string
+  setupCue?: string
+  movementCues?: string[]
+  coachingTip?: string
 }
 
 export interface WatchExerciseItemPayload {
@@ -1007,6 +1012,11 @@ export interface WatchExerciseItemPayload {
   optPhase?: number
   isCompleted?: boolean
   completedSetsCount?: number
+  targetMuscles?: string
+  equipment?: string
+  setupCue?: string
+  movementCues?: string[]
+  coachingTip?: string
 }
 
 export interface WatchCardioProtocolPayload {
