@@ -1,5 +1,6 @@
 import Foundation
 import WatchConnectivity
+import HealthKit
 
 /**
  * ForgeWatchConnectivityManager
@@ -54,7 +55,7 @@ import WatchConnectivity
         let session = WCSession.default
         guard session.activationState == .activated else { return }
 
-        var payload: [String: Any] = [
+        let payload: [String: Any] = [
             "type": "workoutState",
             "workout": workoutData,
             "timestamp": ISO8601DateFormatter().string(from: Date())
@@ -71,6 +72,48 @@ import WatchConnectivity
         if session.isReachable {
             session.sendMessage(payload, replyHandler: nil) { err in
                 print("[Forge Watch] Notice sending instant message: \(err.localizedDescription)")
+            }
+        }
+
+        // 3. Queue guaranteed background transferUserInfo (reliable across watch app launches)
+        session.transferUserInfo(payload)
+
+        // 4. If session is being actively started on iPhone, launch the companion watch app via HealthKit
+        let isSessionActive = workoutData["isSessionActive"] as? Bool ?? false
+        if isSessionActive {
+            self.launchWatchAppForActiveWorkout(workoutData: workoutData)
+        }
+    }
+
+    /**
+     * Wakes & launches the companion Apple Watch application via HealthKit startWatchApp(with:)
+     * when the athlete taps Start Workout on their iPhone.
+     */
+    @objc public func launchWatchAppForActiveWorkout(workoutData: [String: Any]) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            print("[Forge Watch] Health data is unavailable on this device.")
+            return
+        }
+
+        let config = HKWorkoutConfiguration()
+        let activePhase = (workoutData["activePhase"] as? String)?.lowercased() ?? "warmup"
+
+        switch activePhase {
+        case "cardio":
+            config.activityType = .highIntensityIntervalTraining
+        case "cooldown":
+            config.activityType = .flexibility
+        default:
+            config.activityType = .traditionalStrengthTraining
+        }
+        config.locationType = .indoor
+
+        let healthStore = GAAHealthSyncManager.shared.healthStore
+        healthStore.startWatchApp(with: config) { success, error in
+            if let error = error {
+                print("[Forge Watch] Failed launching watch app via startWatchApp: \(error.localizedDescription)")
+            } else {
+                print("[Forge Watch] startWatchApp successfully requested (success=\(success))")
             }
         }
     }

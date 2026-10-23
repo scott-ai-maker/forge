@@ -312,6 +312,18 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve(["success": true])
     }
 
+    @objc public func startWatchWorkout(_ call: CAPPluginCall) {
+        guard let workoutObject = call.getObject("workout") ?? (call.options as? [String: Any]) else {
+            call.reject("Missing required workout payload.")
+            return
+        }
+        var mutableWorkout = workoutObject
+        mutableWorkout["isSessionActive"] = true
+        ForgeWatchConnectivityManager.shared.sendWorkoutState(workoutData: mutableWorkout)
+        ForgeWatchConnectivityManager.shared.launchWatchAppForActiveWorkout(workoutData: mutableWorkout)
+        call.resolve(["success": true])
+    }
+
     @objc public func updateWatchRestTimer(_ call: CAPPluginCall) {
         guard let timerObject = call.getObject("timer") ?? (call.options as? [String: Any]) else {
             call.reject("Missing required rest timer payload.")

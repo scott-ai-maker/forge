@@ -68,28 +68,8 @@ export interface GAAHealthKitPluginInterface {
     lastSyncTimestamp?: string
     telemetryReady: boolean
   }>
-  sendWorkoutToWatch?(options: {
-    workout: {
-      workoutId: string
-      dayNumber: number
-      focus: string
-      completedSets: number
-      totalSets: number
-      activeExercise?: {
-        exerciseName: string
-        setNumber: number
-        totalSets: number
-        prescribedWeight: number
-        prescribedReps: number
-        targetRpe?: number
-        tempo?: string
-        restSeconds: number
-        isCompound?: boolean
-        isHammerCurl?: boolean
-        optPhase?: number
-      }
-    }
-  }): Promise<{ success: boolean }>
+  sendWorkoutToWatch?(options: { workout: any }): Promise<{ success: boolean }>
+  startWatchWorkout?(options: { workout: any }): Promise<{ success: boolean }>
   updateWatchRestTimer?(options: {
     timer: {
       isRunning: boolean
@@ -1101,6 +1081,30 @@ export async function syncWorkoutStateToWatch(payload: WatchWorkoutSyncPayload):
     return false
   } catch (err) {
     console.warn('[WatchBridge] Notice syncing workout to watch:', err)
+    return false
+  }
+}
+
+/**
+ * Immediately launches the companion Apple Watch app via HealthKit startWatchApp(with:)
+ * and synchronizes the active workout payload.
+ */
+export async function startWatchWorkout(payload: WatchWorkoutSyncPayload): Promise<boolean> {
+  if (!isNativeIOS()) return false
+  try {
+    const plugin = getNativeHealthPlugin()
+    const activePayload = { ...payload, isSessionActive: true }
+    if (plugin.startWatchWorkout) {
+      const res = await plugin.startWatchWorkout({ workout: activePayload })
+      return Boolean(res?.success)
+    }
+    if (plugin.sendWorkoutToWatch) {
+      const res = await plugin.sendWorkoutToWatch({ workout: activePayload })
+      return Boolean(res?.success)
+    }
+    return false
+  } catch (err) {
+    console.warn('[WatchBridge] Notice starting watch workout:', err)
     return false
   }
 }

@@ -29,6 +29,17 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             let session = WCSession.default
             session.delegate = self
             session.activate()
+            if session.activationState == .activated {
+                refreshFromApplicationContext()
+            }
+        }
+    }
+
+    public func refreshFromApplicationContext() {
+        guard WCSession.isSupported() else { return }
+        let session = WCSession.default
+        if !session.receivedApplicationContext.isEmpty {
+            handleIncomingMessage(session.receivedApplicationContext)
         }
     }
 
@@ -262,6 +273,9 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     public func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         DispatchQueue.main.async {
             self.isPhoneReachable = session.isReachable
+            if activationState == .activated {
+                self.refreshFromApplicationContext()
+            }
         }
     }
 
@@ -279,7 +293,11 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         handleIncomingMessage(applicationContext)
     }
 
-    private func handleIncomingMessage(_ dict: [String: Any]) {
+    public func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        handleIncomingMessage(userInfo)
+    }
+
+    public func handleIncomingMessage(_ dict: [String: Any]) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
 
@@ -289,9 +307,11 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 return
             }
 
-            // Workout State Update from iPhone
+            // Workout State Update from iPhone (nested under "workout" or passed top-level)
             if let workoutDict = dict["workout"] as? [String: Any] {
                 self.parseWorkoutState(workoutDict)
+            } else if dict["workoutId"] != nil || dict["dayNumber"] != nil || dict["exercises"] != nil || dict["warmupDrills"] != nil {
+                self.parseWorkoutState(dict)
             }
 
             // Rest Timer Update from iPhone
@@ -339,7 +359,7 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         let effectiveWorkoutId = workoutId.isEmpty ? "active-session" : workoutId
         let dayNumber = dict["dayNumber"] as? Int ?? 1
         let focus = dict["focus"] as? String ?? "Strength & Conditioning"
-        let activePhase = dict["activePhase"] as? String ?? "resistance"
+        let activePhase = dict["activePhase"] as? String ?? "warmup"
         let completed = dict["completedSets"] as? Int ?? 0
         let total = dict["totalSets"] as? Int ?? 12
         let activeExIndex = dict["activeExerciseIndex"] as? Int ?? 0

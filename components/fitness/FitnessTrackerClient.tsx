@@ -38,6 +38,7 @@ import {
 } from '@/components/fitness/ClinicalCoolDownModule'
 import { calculateCardioZones } from '@/lib/nasm-cardio-stage-engine'
 import type {
+  WatchWorkoutSyncPayload,
   WatchExerciseItemPayload,
   WatchCardioProtocolPayload,
   WatchWarmupDrillPayload,
@@ -1295,18 +1296,21 @@ export default function FitnessTrackerClient({
     localSetLogs,
   ])
 
-  // Continuous Workout State Synchronization to Apple Watch Companion App
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
-    if (!activeWorkout) return
+  // Helper to construct full 4-phase Apple Watch companion synchronization payload
+  const constructWatchWorkoutPayload = useCallback((
+    dayNumber: number,
+    forceSessionActive?: boolean,
+    forcePhase?: 'warmup' | 'resistance' | 'cardio' | 'cooldown'
+  ): WatchWorkoutSyncPayload | null => {
+    const activeWorkout = planWorkouts.find(w => w.day === dayNumber)
+    if (!activeWorkout) return null
 
-    const isSessionActive = Boolean(
-      activeWorkoutSessionDay === activeWorkout.day && (isWorkoutTimerActive || elapsedWorkoutSeconds > 0)
-    )
+    const isSessionActive = forceSessionActive !== undefined
+      ? forceSessionActive
+      : Boolean(activeWorkoutSessionDay === activeWorkout.day && (isWorkoutTimerActive || elapsedWorkoutSeconds > 0))
 
     const activePhase: 'warmup' | 'resistance' | 'cardio' | 'cooldown' =
-      activeStepFilter === 'all' ? 'resistance' : activeStepFilter
+      forcePhase || (activeStepFilter === 'all' ? 'warmup' : activeStepFilter)
 
     // 1. Warm-Up Drills
     const warmupItems = resolvePrescribedWarmupDrills(latestAssessment, activeWorkout.focus)
@@ -1318,8 +1322,10 @@ export default function FitnessTrackerClient({
     )
     let completedWarmupRecord: Record<string, boolean> = {}
     try {
-      const saved = localStorage.getItem(warmupKey)
-      if (saved) completedWarmupRecord = JSON.parse(saved)
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem(warmupKey)
+        if (saved) completedWarmupRecord = JSON.parse(saved)
+      }
     } catch {}
     const warmupDrills: WatchWarmupDrillPayload[] = warmupItems.map(item => ({
       name: item.name,
@@ -1415,8 +1421,10 @@ export default function FitnessTrackerClient({
     )
     let completedCooldownRecord: Record<string, boolean> = {}
     try {
-      const saved = localStorage.getItem(cooldownKey)
-      if (saved) completedCooldownRecord = JSON.parse(saved)
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem(cooldownKey)
+        if (saved) completedCooldownRecord = JSON.parse(saved)
+      }
     } catch {}
     const cooldownStretches: WatchCooldownStretchPayload[] = cooldownItems.map(item => ({
       name: item.name,
@@ -1425,52 +1433,61 @@ export default function FitnessTrackerClient({
       isCompleted: Boolean(completedCooldownRecord[item.id]),
     }))
 
-    void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
-      void syncWorkoutStateToWatch({
-        workoutId: `workout-day-${activeWorkout.day}`,
-        dayNumber: Number(activeWorkout.day) || 1,
-        focus: activeWorkout.focus || 'Strength & Conditioning',
-        completedSets: completedWorkingSets,
-        totalSets: totalWorkingSets,
-        isSessionActive,
-        activePhase,
-        activeExerciseIndex: activeExIndex,
-        activeExercise: activeEx ? {
-          exerciseName: activeEx.exerciseName,
-          setNumber: activeEx.setNumber,
-          totalSets: activeEx.totalSets,
-          prescribedWeight: activeEx.prescribedWeight,
-          prescribedReps: activeEx.prescribedReps,
-          targetRpe: activeEx.targetRpe,
-          tempo: activeEx.tempo,
-          restSeconds: activeEx.restSeconds,
-          isCompound: activeEx.isCompound,
-          isHammerCurl: activeEx.isHammerCurl,
-          optPhase: activeEx.optPhase,
-        } : undefined,
-        exercises: exercisesList,
-        cardioProtocol: cardioPayload,
-        warmupDrills,
-        cooldownStretches,
-      })
-    })
+    return {
+      workoutId: `workout-day-${activeWorkout.day}`,
+      dayNumber: Number(activeWorkout.day) || 1,
+      focus: activeWorkout.focus || 'Strength & Conditioning',
+      completedSets: completedWorkingSets,
+      totalSets: totalWorkingSets,
+      isSessionActive,
+      activePhase,
+      activeExerciseIndex: activeExIndex,
+      activeExercise: activeEx ? {
+        exerciseName: activeEx.exerciseName,
+        setNumber: activeEx.setNumber,
+        totalSets: activeEx.totalSets,
+        prescribedWeight: activeEx.prescribedWeight,
+        prescribedReps: activeEx.prescribedReps,
+        targetRpe: activeEx.targetRpe,
+        tempo: activeEx.tempo,
+        restSeconds: activeEx.restSeconds,
+        isCompound: activeEx.isCompound,
+        isHammerCurl: activeEx.isHammerCurl,
+        optPhase: activeEx.optPhase,
+      } : undefined,
+      exercises: exercisesList,
+      cardioProtocol: cardioPayload,
+      warmupDrills,
+      cooldownStretches,
+    }
   }, [
-    effectiveActiveWorkoutDay,
+    planWorkouts,
     activeWorkoutSessionDay,
     isWorkoutTimerActive,
     elapsedWorkoutSeconds,
     activeStepFilter,
-    expandedExerciseKey,
-    planWorkouts,
-    adaptedExercisesByDay,
-    inlineSetDrafts,
-    localSetLogs,
+    latestAssessment,
     plan?.id,
     plan?.nasm_opt_phase,
-    profile,
-    latestAssessment,
     microcycleProgress.currentWeek,
+    adaptedExercisesByDay,
+    localSetLogs,
+    inlineSetDrafts,
+    expandedExerciseKey,
+    profile,
+    plan,
   ])
+
+  // Continuous Workout State Synchronization to Apple Watch Companion App
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const payload = constructWatchWorkoutPayload(effectiveActiveWorkoutDay)
+    if (!payload) return
+
+    void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
+      void syncWorkoutStateToWatch(payload)
+    })
+  }, [effectiveActiveWorkoutDay, constructWatchWorkoutPayload])
 
 
   // Synchronize active hub and lab tool whenever searchParams or initialWorkspace changes
@@ -1567,6 +1584,12 @@ export default function FitnessTrackerClient({
   const jumpToWorkoutDay = useCallback((day: number) => {
     setActiveWorkoutDay(day)
     setExpandedExerciseKey(null)
+    const payload = constructWatchWorkoutPayload(day, false)
+    if (payload) {
+      void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
+        void syncWorkoutStateToWatch(payload)
+      })
+    }
     setTimeout(() => {
       const anchor = document.getElementById('workout-days-top-anchor')
       if (anchor) {
@@ -1574,7 +1597,7 @@ export default function FitnessTrackerClient({
         window.scrollTo({ top: Math.max(0, topOffset), behavior: 'smooth' })
       }
     }, 40)
-  }, [])
+  }, [constructWatchWorkoutPayload])
 
   useEffect(() => {
     const rawDay = searchParams.get('day')
@@ -3114,6 +3137,13 @@ export default function FitnessTrackerClient({
                               setActiveWorkoutDay(workout.day)
                               setActiveStepFilter('warmup')
                               setCollapsedStages(prev => ({ ...prev, [`${workout.day}-warmup`]: false }))
+                              // Immediately wake & launch companion Apple Watch app via HealthKit
+                              const payload = constructWatchWorkoutPayload(workout.day, true, 'warmup')
+                              if (payload) {
+                                void import('@/lib/native-healthkit-bridge').then(({ startWatchWorkout }) => {
+                                  void startWatchWorkout(payload)
+                                })
+                              }
                             }}
                             className="tactile-btn"
                             style={{
@@ -5340,6 +5370,12 @@ export default function FitnessTrackerClient({
                                       }
                                       const modality = getFirstCardioModality(cardio, 'Treadmill Incline Walk')
                                       handleStartCardioSession(workout.day, modality, false)
+                                      const watchCardioPayload = constructWatchWorkoutPayload(workout.day, true, 'cardio')
+                                      if (watchCardioPayload) {
+                                        void import('@/lib/native-healthkit-bridge').then(({ startWatchWorkout }) => {
+                                          void startWatchWorkout(watchCardioPayload)
+                                        })
+                                      }
                                       const patId: CardioPatternId =
                                         cardio?.stage === 3
                                           ? 'tabata_micro_bursts'
@@ -6311,6 +6347,12 @@ export default function FitnessTrackerClient({
               const cardio = resolveWorkoutCardioProtocol(activeWorkout, profile, plan)
               const modality = getFirstCardioModality(cardio, 'Treadmill Incline Walk')
               handleStartCardioSession(activeWorkout.day, modality, false)
+              const watchCardioPayload = constructWatchWorkoutPayload(activeWorkout.day, true, 'cardio')
+              if (watchCardioPayload) {
+                void import('@/lib/native-healthkit-bridge').then(({ startWatchWorkout }) => {
+                  void startWatchWorkout(watchCardioPayload)
+                })
+              }
               const patId: CardioPatternId =
                 cardio?.stage === 3
                   ? 'tabata_micro_bursts'

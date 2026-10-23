@@ -147,16 +147,28 @@ public struct WatchWorkoutState: Codable {
     public var isSessionActive: Bool
     public var startedAt: String?
 
+    public static let defaultWarmupDrills: [WatchWarmupDrill] = [
+        WatchWarmupDrill(name: "SMR Calves & Thoracic Spine", phaseLabel: "1. INHIBIT", durationSec: 30, protocolText: "Hold tender spots 30-60s"),
+        WatchWarmupDrill(name: "Kneeling Hip Flexor & Lat Stretch", phaseLabel: "2. LENGTHEN", durationSec: 30, protocolText: "Static hold 30s per side"),
+        WatchWarmupDrill(name: "Glute Bridge / Bird-Dog", phaseLabel: "3. ACTIVATE", durationSec: 45, protocolText: "1-2 sets × 12-15 (4-2-1 tempo)")
+    ]
+
+    public static let defaultCooldownStretches: [WatchCooldownStretch] = [
+        WatchCooldownStretch(name: "Static Kneeling Hip Flexor Stretch", durationSec: 30, protocolText: "Hold 30s per side (no bouncing)"),
+        WatchCooldownStretch(name: "Doorway Pectoral & Lat Stretch", durationSec: 30, protocolText: "Hold 30s per side"),
+        WatchCooldownStretch(name: "Diaphragmatic Parasympathetic Reset", durationSec: 60, protocolText: "4-7-8 breathing cadence")
+    ]
+
     public init(
         workoutId: String = "active-session",
         dayNumber: Int = 1,
         focus: String = "Athletic Performance",
-        activePhase: String = "resistance",
+        activePhase: String = "warmup",
         activeExerciseIndex: Int = 0,
         activeExercise: WatchExerciseInfo? = nil,
         exercises: [WatchExerciseInfo] = [],
-        warmupDrills: [WatchWarmupDrill] = [],
-        cooldownStretches: [WatchCooldownStretch] = [],
+        warmupDrills: [WatchWarmupDrill] = WatchWorkoutState.defaultWarmupDrills,
+        cooldownStretches: [WatchCooldownStretch] = WatchWorkoutState.defaultCooldownStretches,
         cardioProtocol: WatchCardioProtocol? = nil,
         completedSetsCount: Int = 0,
         totalSetsCount: Int = 12,
@@ -170,8 +182,8 @@ public struct WatchWorkoutState: Codable {
         self.activeExerciseIndex = activeExerciseIndex
         self.activeExercise = activeExercise
         self.exercises = exercises
-        self.warmupDrills = warmupDrills
-        self.cooldownStretches = cooldownStretches
+        self.warmupDrills = warmupDrills.isEmpty ? WatchWorkoutState.defaultWarmupDrills : warmupDrills
+        self.cooldownStretches = cooldownStretches.isEmpty ? WatchWorkoutState.defaultCooldownStretches : cooldownStretches
         self.cardioProtocol = cardioProtocol
         self.completedSetsCount = completedSetsCount
         self.totalSetsCount = totalSetsCount

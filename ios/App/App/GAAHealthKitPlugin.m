@@ -14,6 +14,7 @@ CAP_PLUGIN(GAAHealthKitPlugin, "GAAHealthKit",
     CAP_PLUGIN_METHOD(getCurrentHeartRate, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(getTelemetryDiagnostics, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(sendWorkoutToWatch, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(startWatchWorkout, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(updateWatchRestTimer, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(isWatchAppInstalled, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(sendCnsReadinessToWatch, CAPPluginReturnPromise);

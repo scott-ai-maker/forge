@@ -1,4 +1,27 @@
 import SwiftUI
+import HealthKit
+import WatchKit
+
+/**
+ * ExtensionDelegate
+ * Handles watch app wake & launch from companion iPhone via HealthKit startWatchApp(with:)
+ * Forge Athletic
+ */
+class ExtensionDelegate: NSObject, WKApplicationDelegate {
+    func handle(_ workoutConfiguration: HKWorkoutConfiguration) {
+        print("[Forge Watch] Launched from iPhone via startWatchApp (activityType=\(workoutConfiguration.activityType.rawValue))")
+        DispatchQueue.main.async {
+            WatchWorkoutManager.shared.startWorkout(activityType: workoutConfiguration.activityType)
+            WatchSessionCoordinator.shared.workoutState.isSessionActive = true
+            WatchSessionCoordinator.shared.workoutState.activePhase = "warmup"
+            WatchSessionCoordinator.shared.refreshFromApplicationContext()
+        }
+    }
+
+    func applicationDidBecomeActive() {
+        WatchSessionCoordinator.shared.refreshFromApplicationContext()
+    }
+}
 
 /**
  * ForgeWatchApp
@@ -7,6 +30,7 @@ import SwiftUI
  */
 @main
 struct ForgeWatchApp: App {
+    @WKApplicationDelegateAdaptor(ExtensionDelegate.self) var extensionDelegate
     @StateObject private var coordinator = WatchSessionCoordinator.shared
     @StateObject private var workoutManager = WatchWorkoutManager.shared
 
@@ -17,6 +41,7 @@ struct ForgeWatchApp: App {
                 .environmentObject(workoutManager)
                 .onAppear {
                     coordinator.activateSession()
+                    coordinator.refreshFromApplicationContext()
                     workoutManager.requestPermissions { _ in }
                 }
         }
@@ -236,7 +261,7 @@ struct WatchHomeView: View {
 
                 // Prescribed Workout Glance
                 if coordinator.workoutState.dayNumber > 0 {
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text("DAY \(coordinator.workoutState.dayNumber)")
                                 .font(.system(size: 10, weight: .black, design: .rounded))
@@ -248,17 +273,40 @@ struct WatchHomeView: View {
 
                             Spacer()
 
-                            if !coordinator.workoutState.exercises.isEmpty {
-                                Text("\(coordinator.workoutState.exercises.count) EXERCISES")
-                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.gray)
-                            }
+                            Text(coordinator.isPhoneReachable ? "LIVE SYNCED" : "PRESCRIBED")
+                                .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                                .foregroundColor(coordinator.isPhoneReachable ? Color(red: 0.06, green: 0.72, blue: 0.51) : .gray)
                         }
 
                         Text(coordinator.workoutState.focus)
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .lineLimit(2)
+
+                        // 4-Phase Plan Summary Glance (Warm-Up, Lifts, Cardio, Cool-Down)
+                        HStack(spacing: 4) {
+                            HStack(spacing: 2) {
+                                Circle().fill(Color(red: 0.97, green: 0.58, blue: 0.11)).frame(width: 5, height: 5)
+                                Text("\(coordinator.workoutState.warmupDrills.count) WARM")
+                                    .font(.system(size: 8, weight: .black, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.85))
+                            }
+                            Text("·").font(.system(size: 8)).foregroundColor(.gray)
+                            HStack(spacing: 2) {
+                                Circle().fill(Color(red: 0.22, green: 0.74, blue: 0.97)).frame(width: 5, height: 5)
+                                Text("\(coordinator.workoutState.exercises.count) LIFTS")
+                                    .font(.system(size: 8, weight: .black, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.85))
+                            }
+                            Text("·").font(.system(size: 8)).foregroundColor(.gray)
+                            HStack(spacing: 2) {
+                                Circle().fill(Color(red: 0.20, green: 0.78, blue: 0.55)).frame(width: 5, height: 5)
+                                Text("\(coordinator.workoutState.cooldownStretches.count) COOL")
+                                    .font(.system(size: 8, weight: .black, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.85))
+                            }
+                        }
+                        .padding(.top, 2)
                     }
                     .padding(8)
                     .background(Color.white.opacity(0.06))
@@ -271,6 +319,7 @@ struct WatchHomeView: View {
                         WKInterfaceDevice.current().play(.start)
                         workoutManager.startWorkout(activityType: .traditionalStrengthTraining)
                         coordinator.workoutState.isSessionActive = true
+                        coordinator.workoutState.activePhase = "warmup"
                     }) {
                         HStack(spacing: 8) {
                             ZStack {
