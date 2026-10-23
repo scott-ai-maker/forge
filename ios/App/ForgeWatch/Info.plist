@@ -28,7 +28,7 @@
 	<string>Forge Athletic streams optical heart rate and HRV telemetry from Apple Watch to autoregulate in-gym rest intervals, monitor Tanaka cardio stages, and assess CNS recovery readiness.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Forge Athletic records completed strength training and cardio sessions directly into Apple Health with true active calories and heart rate samples.</string>
-	<key>UIBackgroundModes</key>
+	<key>WKBackgroundModes</key>
 	<array>
 		<string>workout-processing</string>
 	</array>
