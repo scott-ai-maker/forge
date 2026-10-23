@@ -87,7 +87,7 @@ export interface GAAHealthKitPluginInterface {
     hrvRmssd?: number
   }): Promise<{ success: boolean }>
   addListener(
-    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected' | 'onWatchStartWorkout',
+    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected' | 'onWatchStartWorkout' | 'onWatchWarmupDrillToggled' | 'onWatchCooldownStretchToggled',
     listenerFunc: (data: any) => void
   ): Promise<PluginListenerHandle>
 }
@@ -1290,6 +1290,46 @@ export async function subscribeToWatchStartWorkout(
   try {
     const plugin = getNativeHealthPlugin()
     const handle = await plugin.addListener('onWatchStartWorkout', (data: { dayNumber: number; phase: string; timestamp?: string }) => {
+      callback(data)
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to warm-up drill checkbox toggle events sent from Apple Watch.
+ */
+export async function subscribeToWatchWarmupToggled(
+  callback: (data: { drillName: string; isCompleted: boolean; timestamp?: string }) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchWarmupDrillToggled', (data: { drillName: string; isCompleted: boolean; timestamp?: string }) => {
+      callback(data)
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to cool-down stretch checkbox toggle events sent from Apple Watch.
+ */
+export async function subscribeToWatchCooldownToggled(
+  callback: (data: { stretchName: string; isCompleted: boolean; timestamp?: string }) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchCooldownStretchToggled', (data: { stretchName: string; isCompleted: boolean; timestamp?: string }) => {
       callback(data)
     })
     return () => {

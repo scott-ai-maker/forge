@@ -13,7 +13,9 @@ class ExtensionDelegate: NSObject, WKApplicationDelegate {
         DispatchQueue.main.async {
             WatchWorkoutManager.shared.startWorkout(activityType: workoutConfiguration.activityType)
             WatchSessionCoordinator.shared.workoutState.isSessionActive = true
-            WatchSessionCoordinator.shared.workoutState.activePhase = "warmup"
+            if WatchSessionCoordinator.shared.workoutState.activePhase.isEmpty {
+                WatchSessionCoordinator.shared.workoutState.activePhase = "warmup"
+            }
             WatchSessionCoordinator.shared.refreshFromApplicationContext()
         }
     }

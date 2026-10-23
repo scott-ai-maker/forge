@@ -453,6 +453,11 @@ export default function ClinicalKineticWarmupModule({
     if (typeof window !== 'undefined' && !isFuture) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(updated))
+        window.dispatchEvent(
+          new CustomEvent('forge:warmup-drill-toggled-local', {
+            detail: { drillId: id, isCompleted: isNowDone, workoutDay },
+          })
+        )
       } catch {}
     }
     if (warmupItems.every(item => updated[item.id]) && onWarmupCompleted) {
@@ -477,12 +482,48 @@ export default function ClinicalKineticWarmupModule({
     if (typeof window !== 'undefined' && !isFuture) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(updated))
+        window.dispatchEvent(
+          new CustomEvent('forge:warmup-drill-toggled-local', {
+            detail: { allCompleted: true, workoutDay },
+          })
+        )
       } catch {}
     }
     if (onWarmupCompleted) {
       onWarmupCompleted(workoutDay)
     }
   }, [isFuture, onWarmupCompleted, storageKey, warmupItems, workoutDay])
+
+  // Listen for real-time warmup drill checkmark updates dispatched from Apple Watch
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleWatchDrillToggle = (e: Event) => {
+      const detail = (e as CustomEvent<{ drillName?: string; drillId?: string; isCompleted?: boolean; workoutDay?: number }>).detail
+      if (!detail) return
+      if (detail.workoutDay !== undefined && workoutDay !== undefined && detail.workoutDay !== workoutDay) return
+
+      const matchedId = detail.drillId || warmupItems.find(
+        item => item.name.toLowerCase() === (detail.drillName || '').toLowerCase() ||
+                (detail.drillName || '').toLowerCase().includes(item.name.toLowerCase()) ||
+                item.name.toLowerCase().includes((detail.drillName || '').toLowerCase())
+      )?.id
+
+      if (matchedId) {
+        setCompletedItems(prev => {
+          const next = { ...prev, [matchedId]: Boolean(detail.isCompleted) }
+          if (warmupItems.every(item => next[item.id]) && onWarmupCompleted) {
+            onWarmupCompleted(workoutDay)
+          }
+          return next
+        })
+      }
+    }
+
+    window.addEventListener('forge:warmup-drill-toggled', handleWatchDrillToggle)
+    return () => {
+      window.removeEventListener('forge:warmup-drill-toggled', handleWatchDrillToggle)
+    }
+  }, [warmupItems, workoutDay, onWarmupCompleted])
 
   // Inline Step Timer
   useEffect(() => {

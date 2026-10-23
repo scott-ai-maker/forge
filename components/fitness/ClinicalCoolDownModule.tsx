@@ -884,6 +884,11 @@ export default function ClinicalCoolDownModule({
     if (typeof window !== 'undefined' && !isFuture) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(updated))
+        window.dispatchEvent(
+          new CustomEvent('forge:cooldown-stretch-toggled-local', {
+            detail: { stretchId: id, isCompleted: isNowDone, workoutDay },
+          })
+        )
       } catch {}
     }
     if (coolDownItems.every(item => updated[item.id]) && onCoolDownCompleted) {
@@ -908,12 +913,48 @@ export default function ClinicalCoolDownModule({
     if (typeof window !== 'undefined' && !isFuture) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(updated))
+        window.dispatchEvent(
+          new CustomEvent('forge:cooldown-stretch-toggled-local', {
+            detail: { allCompleted: true, workoutDay },
+          })
+        )
       } catch {}
     }
     if (onCoolDownCompleted) {
       onCoolDownCompleted(workoutDay)
     }
   }, [coolDownItems, isFuture, onCoolDownCompleted, storageKey, workoutDay])
+
+  // Listen for real-time cool-down stretch checkmark updates dispatched from Apple Watch
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleWatchStretchToggle = (e: Event) => {
+      const detail = (e as CustomEvent<{ stretchName?: string; stretchId?: string; isCompleted?: boolean; workoutDay?: number }>).detail
+      if (!detail) return
+      if (detail.workoutDay !== undefined && workoutDay !== undefined && detail.workoutDay !== workoutDay) return
+
+      const matchedId = detail.stretchId || coolDownItems.find(
+        item => item.name.toLowerCase() === (detail.stretchName || '').toLowerCase() ||
+                (detail.stretchName || '').toLowerCase().includes(item.name.toLowerCase()) ||
+                item.name.toLowerCase().includes((detail.stretchName || '').toLowerCase())
+      )?.id
+
+      if (matchedId) {
+        setCompletedItems(prev => {
+          const next = { ...prev, [matchedId]: Boolean(detail.isCompleted) }
+          if (coolDownItems.every(item => next[item.id]) && onCoolDownCompleted) {
+            onCoolDownCompleted(workoutDay)
+          }
+          return next
+        })
+      }
+    }
+
+    window.addEventListener('forge:cooldown-stretch-toggled', handleWatchStretchToggle)
+    return () => {
+      window.removeEventListener('forge:cooldown-stretch-toggled', handleWatchStretchToggle)
+    }
+  }, [coolDownItems, workoutDay, onCoolDownCompleted])
 
   // Inline Step Timer
   useEffect(() => {

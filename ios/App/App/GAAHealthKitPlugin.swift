@@ -23,6 +23,7 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "getCurrentHeartRate", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getTelemetryDiagnostics", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "sendWorkoutToWatch", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startWatchWorkout", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "updateWatchRestTimer", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "isWatchAppInstalled", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "sendCnsReadinessToWatch", returnType: CAPPluginReturnPromise)
@@ -63,6 +64,12 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         }
         ForgeWatchConnectivityManager.shared.onStartWorkoutFromWatch = { [weak self] startData in
             self?.notifyListeners("onWatchStartWorkout", data: startData)
+        }
+        ForgeWatchConnectivityManager.shared.onWarmupDrillToggledFromWatch = { [weak self] drillData in
+            self?.notifyListeners("onWatchWarmupDrillToggled", data: drillData)
+        }
+        ForgeWatchConnectivityManager.shared.onCooldownStretchToggledFromWatch = { [weak self] stretchData in
+            self?.notifyListeners("onWatchCooldownStretchToggled", data: stretchData)
         }
     }
 

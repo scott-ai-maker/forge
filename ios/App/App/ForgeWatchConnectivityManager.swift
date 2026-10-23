@@ -19,6 +19,8 @@ import HealthKit
     public var onExerciseSelectedFromWatch: ((String) -> Void)?
     public var onPhaseSelectedFromWatch: ((String) -> Void)?
     public var onStartWorkoutFromWatch: (([String: Any]) -> Void)?
+    public var onWarmupDrillToggledFromWatch: (([String: Any]) -> Void)?
+    public var onCooldownStretchToggledFromWatch: (([String: Any]) -> Void)?
 
     private override init() {
         super.init()
@@ -78,12 +80,6 @@ import HealthKit
 
         // 3. Queue guaranteed background transferUserInfo (reliable across watch app launches)
         session.transferUserInfo(payload)
-
-        // 4. If session is being actively started on iPhone, launch the companion watch app via HealthKit
-        let isSessionActive = workoutData["isSessionActive"] as? Bool ?? false
-        if isSessionActive {
-            self.launchWatchAppForActiveWorkout(workoutData: workoutData)
-        }
     }
 
     /**
@@ -242,6 +238,14 @@ import HealthKit
             case "startWorkout":
                 // Athlete started workout session directly on Apple Watch
                 self?.onStartWorkoutFromWatch?(dict)
+
+            case "warmupDrillToggled":
+                // Athlete toggled a warmup drill checkbox on Apple Watch
+                self?.onWarmupDrillToggledFromWatch?(dict)
+
+            case "cooldownStretchToggled":
+                // Athlete toggled a cooldown stretch checkbox on Apple Watch
+                self?.onCooldownStretchToggledFromWatch?(dict)
 
             default:
                 break

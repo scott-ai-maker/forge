@@ -20,6 +20,12 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     private var localTimer: Timer?
     private var lastWarningFiredSeconds: Int = -1
 
+    // Local override tracking to prevent race conditions from in-flight sync payloads
+    private var lastLocalPhaseSelectionTime: Date?
+    private var lastLocalPhaseSelected: String?
+    private var localDrillOverrides: [String: (isCompleted: Bool, timestamp: Date)] = [:]
+    private var localStretchOverrides: [String: (isCompleted: Bool, timestamp: Date)] = [:]
+
     private override init() {
         super.init()
         activateSession()
@@ -136,6 +142,8 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             workoutState.activeExerciseIndex = idx
             workoutState.activeExercise = workoutState.exercises[idx]
             workoutState.activePhase = "resistance"
+            lastLocalPhaseSelectionTime = Date()
+            lastLocalPhaseSelected = "resistance"
             WKInterfaceDevice.current().play(.click)
 
             sendToPhone([
@@ -147,6 +155,8 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     }
 
     public func selectPhase(_ phase: String) {
+        lastLocalPhaseSelectionTime = Date()
+        lastLocalPhaseSelected = phase
         workoutState.activePhase = phase
         selectedTab = 1
         WKInterfaceDevice.current().play(.click)
@@ -161,31 +171,77 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     public func toggleWarmupDrill(named name: String) {
         if let idx = workoutState.warmupDrills.firstIndex(where: { $0.name == name }) {
             workoutState.warmupDrills[idx].isCompleted.toggle()
-            if workoutState.warmupDrills[idx].isCompleted {
+            let isDone = workoutState.warmupDrills[idx].isCompleted
+            localDrillOverrides[name] = (isCompleted: isDone, timestamp: Date())
+
+            if isDone {
                 WatchHapticManager.shared.playSuccessKnock()
             } else {
                 WKInterfaceDevice.current().play(.click)
             }
+
+            sendToPhone([
+                "type": "warmupDrillToggled",
+                "drillName": name,
+                "isCompleted": isDone,
+                "timestamp": ISO8601DateFormatter().string(from: Date())
+            ])
         }
     }
 
     public func completeWarmupDrill(named name: String) {
-        toggleWarmupDrill(named: name)
+        if let idx = workoutState.warmupDrills.firstIndex(where: { $0.name == name }) {
+            if !workoutState.warmupDrills[idx].isCompleted {
+                workoutState.warmupDrills[idx].isCompleted = true
+                localDrillOverrides[name] = (isCompleted: true, timestamp: Date())
+                WatchHapticManager.shared.playSuccessKnock()
+
+                sendToPhone([
+                    "type": "warmupDrillToggled",
+                    "drillName": name,
+                    "isCompleted": true,
+                    "timestamp": ISO8601DateFormatter().string(from: Date())
+                ])
+            }
+        }
     }
 
     public func toggleCooldownStretch(named name: String) {
         if let idx = workoutState.cooldownStretches.firstIndex(where: { $0.name == name }) {
             workoutState.cooldownStretches[idx].isCompleted.toggle()
-            if workoutState.cooldownStretches[idx].isCompleted {
+            let isDone = workoutState.cooldownStretches[idx].isCompleted
+            localStretchOverrides[name] = (isCompleted: isDone, timestamp: Date())
+
+            if isDone {
                 WatchHapticManager.shared.playSuccessKnock()
             } else {
                 WKInterfaceDevice.current().play(.click)
             }
+
+            sendToPhone([
+                "type": "cooldownStretchToggled",
+                "stretchName": name,
+                "isCompleted": isDone,
+                "timestamp": ISO8601DateFormatter().string(from: Date())
+            ])
         }
     }
 
     public func completeCooldownStretch(named name: String) {
-        toggleCooldownStretch(named: name)
+        if let idx = workoutState.cooldownStretches.firstIndex(where: { $0.name == name }) {
+            if !workoutState.cooldownStretches[idx].isCompleted {
+                workoutState.cooldownStretches[idx].isCompleted = true
+                localStretchOverrides[name] = (isCompleted: true, timestamp: Date())
+                WatchHapticManager.shared.playSuccessKnock()
+
+                sendToPhone([
+                    "type": "cooldownStretchToggled",
+                    "stretchName": name,
+                    "isCompleted": true,
+                    "timestamp": ISO8601DateFormatter().string(from: Date())
+                ])
+            }
+        }
     }
 
     /**
@@ -402,7 +458,14 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         let effectiveWorkoutId = workoutId.isEmpty ? "active-session" : workoutId
         let dayNumber = dict["dayNumber"] as? Int ?? 1
         let focus = dict["focus"] as? String ?? "Strength & Conditioning"
-        let activePhase = dict["activePhase"] as? String ?? "warmup"
+        var activePhase = dict["activePhase"] as? String ?? "warmup"
+        // If athlete selected a phase locally on the watch within the last 5 seconds, preserve local selection
+        if let lastTime = lastLocalPhaseSelectionTime,
+           let localPhase = lastLocalPhaseSelected,
+           Date().timeIntervalSince(lastTime) < 5.0 {
+            activePhase = localPhase
+        }
+
         let completed = dict["completedSets"] as? Int ?? 0
         let total = dict["totalSets"] as? Int ?? 12
         let activeExIndex = dict["activeExerciseIndex"] as? Int ?? 0
@@ -496,45 +559,63 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         var parsedWarmups: [WatchWarmupDrill] = []
         if let wArray = dict["warmupDrills"] as? [[String: Any]] {
             for w in wArray {
+                let name = w["name"] as? String ?? "Warmup Drill"
+                let remoteDone = w["isCompleted"] as? Bool ?? false
+                let effectiveDone: Bool
+                if let override = localDrillOverrides[name], Date().timeIntervalSince(override.timestamp) < 5.0 {
+                    effectiveDone = override.isCompleted
+                } else {
+                    effectiveDone = remoteDone
+                }
                 parsedWarmups.append(
                     WatchWarmupDrill(
-                        name: w["name"] as? String ?? "Warmup Drill",
+                        name: name,
                         phaseLabel: w["phaseLabel"] as? String ?? "WARM-UP",
                         durationSec: w["durationSec"] as? Int ?? 30,
                         protocolText: w["protocol"] as? String ?? "1 set × 30s",
-                        isCompleted: w["isCompleted"] as? Bool ?? false
+                        isCompleted: effectiveDone
                     )
                 )
             }
         }
         if parsedWarmups.isEmpty {
-            parsedWarmups = [
-                WatchWarmupDrill(name: "Foam Rolling SMR", phaseLabel: "1. INHIBIT", durationSec: 60, protocolText: "Static pressure on tight trigger points"),
-                WatchWarmupDrill(name: "Dynamic Arm & Hip Swings", phaseLabel: "2. LENGTHEN", durationSec: 30, protocolText: "2 sets × 10 reps"),
-                WatchWarmupDrill(name: "Core Bridge / Plank", phaseLabel: "3. ACTIVATE", durationSec: 45, protocolText: "1 set × 45s hold")
-            ]
+            let existing = self.workoutState.warmupDrills
+            if !existing.isEmpty {
+                parsedWarmups = existing
+            } else {
+                parsedWarmups = WatchWorkoutState.defaultWarmupDrills
+            }
         }
 
         // Parse Cooldown Stretches
         var parsedCooldowns: [WatchCooldownStretch] = []
         if let cdArray = dict["cooldownStretches"] as? [[String: Any]] {
             for cd in cdArray {
+                let name = cd["name"] as? String ?? "Static Stretch"
+                let remoteDone = cd["isCompleted"] as? Bool ?? false
+                let effectiveDone: Bool
+                if let override = localStretchOverrides[name], Date().timeIntervalSince(override.timestamp) < 5.0 {
+                    effectiveDone = override.isCompleted
+                } else {
+                    effectiveDone = remoteDone
+                }
                 parsedCooldowns.append(
                     WatchCooldownStretch(
-                        name: cd["name"] as? String ?? "Static Stretch",
+                        name: name,
                         durationSec: cd["durationSec"] as? Int ?? 30,
                         protocolText: cd["protocol"] as? String ?? "Hold for 30s",
-                        isCompleted: cd["isCompleted"] as? Bool ?? false
+                        isCompleted: effectiveDone
                     )
                 )
             }
         }
         if parsedCooldowns.isEmpty {
-            parsedCooldowns = [
-                WatchCooldownStretch(name: "Static Kneeling Hip Flexor Stretch", durationSec: 30, protocolText: "Hold 30s per side"),
-                WatchCooldownStretch(name: "Doorway Pectoral Stretch", durationSec: 30, protocolText: "Hold 30s"),
-                WatchCooldownStretch(name: "Diaphragmatic Parasympathetic Reset", durationSec: 60, protocolText: "4-7-8 breathing tempo")
-            ]
+            let existing = self.workoutState.cooldownStretches
+            if !existing.isEmpty {
+                parsedCooldowns = existing
+            } else {
+                parsedCooldowns = WatchWorkoutState.defaultCooldownStretches
+            }
         }
 
         self.workoutState = WatchWorkoutState(

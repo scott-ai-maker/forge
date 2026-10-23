@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useCallback, useEffect } from 'react'
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 
@@ -823,6 +823,13 @@ export default function FitnessTrackerClient({
     primaryEquipment?: string[] | null
   } | null>(null)
   const [activeStepFilter, setActiveStepFilter] = useState<'all' | 'warmup' | 'resistance' | 'cardio' | 'cooldown'>('warmup')
+  const activeWatchPhaseRef = useRef<'warmup' | 'resistance' | 'cardio' | 'cooldown'>('warmup')
+
+  useEffect(() => {
+    if (activeStepFilter !== 'all') {
+      activeWatchPhaseRef.current = activeStepFilter
+    }
+  }, [activeStepFilter])
   const [swapModalExercise, setSwapModalExercise] = useState<{
     workoutDay: number
     exercise: WorkoutExercise
@@ -1310,7 +1317,7 @@ export default function FitnessTrackerClient({
       : Boolean(activeWorkoutSessionDay === activeWorkout.day && (isWorkoutTimerActive || elapsedWorkoutSeconds > 0))
 
     const activePhase: 'warmup' | 'resistance' | 'cardio' | 'cooldown' =
-      forcePhase || (activeStepFilter === 'all' ? 'warmup' : activeStepFilter)
+      forcePhase || (activeStepFilter === 'all' ? activeWatchPhaseRef.current : activeStepFilter)
 
     // 1. Warm-Up Drills
     const warmupItems = resolvePrescribedWarmupDrills(latestAssessment, activeWorkout.focus)
@@ -2024,6 +2031,7 @@ export default function FitnessTrackerClient({
       void subscribeToWatchPhaseSelected((phase) => {
         const validPhase = phase as 'warmup' | 'resistance' | 'cardio' | 'cooldown'
         if (['warmup', 'resistance', 'cardio', 'cooldown'].includes(validPhase)) {
+          activeWatchPhaseRef.current = validPhase
           setActiveStepFilter(validPhase)
           setCollapsedStages(prev => ({ ...prev, [`${effectiveActiveWorkoutDay}-${validPhase}`]: false }))
         }
@@ -2060,6 +2068,155 @@ export default function FitnessTrackerClient({
       if (unsubscribe) unsubscribe()
     }
   }, [])
+
+  // Listen for warm-up drill checkbox toggled on Apple Watch
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchWarmupToggled, syncWorkoutStateToWatch }) => {
+      void subscribeToWatchWarmupToggled((data) => {
+        if (!data?.drillName) return
+        const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
+        if (!activeWorkout) return
+
+        const warmupItems = resolvePrescribedWarmupDrills(latestAssessment, activeWorkout.focus)
+        const matchedItem = warmupItems.find(
+          item => item.name.toLowerCase() === data.drillName.toLowerCase() ||
+                  data.drillName.toLowerCase().includes(item.name.toLowerCase()) ||
+                  item.name.toLowerCase().includes(data.drillName.toLowerCase())
+        )
+        const targetId = matchedItem ? matchedItem.id : data.drillName
+
+        const warmupKey = getWarmupStorageKey(
+          plan?.id,
+          microcycleProgress.currentWeek,
+          activeWorkout.day,
+          activeWorkout.scheduledDate
+        )
+
+        try {
+          if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(warmupKey)
+            const record: Record<string, boolean> = saved ? JSON.parse(saved) : {}
+            record[targetId] = data.isCompleted
+            localStorage.setItem(warmupKey, JSON.stringify(record))
+
+            // Dispatch global event so ClinicalKineticWarmupModule immediately updates its React state
+            window.dispatchEvent(
+              new CustomEvent('forge:warmup-drill-toggled', {
+                detail: {
+                  drillName: data.drillName,
+                  drillId: targetId,
+                  isCompleted: data.isCompleted,
+                  workoutDay: activeWorkout.day,
+                },
+              })
+            )
+          }
+        } catch (e) {
+          console.error('[Watch Sync] Error updating warmup drill from watch:', e)
+        }
+
+        // Push updated payload to watch
+        const updatedPayload = constructWatchWorkoutPayload(effectiveActiveWorkoutDay)
+        if (updatedPayload) {
+          void syncWorkoutStateToWatch(updatedPayload)
+        }
+      }).then(cleanup => {
+        unsubscribe = cleanup
+      })
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [effectiveActiveWorkoutDay, planWorkouts, latestAssessment, plan?.id, microcycleProgress.currentWeek, constructWatchWorkoutPayload])
+
+  // Listen for cool-down stretch checkbox toggled on Apple Watch
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchCooldownToggled, syncWorkoutStateToWatch }) => {
+      void subscribeToWatchCooldownToggled((data) => {
+        if (!data?.stretchName) return
+        const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
+        if (!activeWorkout) return
+
+        const cooldownItems = resolvePrescribedCoolDownStretches(
+          activeWorkout.focus,
+          activeWorkout.exercises || [],
+          activeWorkout.notes,
+          activeWorkout.day
+        )
+        const matchedItem = cooldownItems.find(
+          item => item.name.toLowerCase() === data.stretchName.toLowerCase() ||
+                  data.stretchName.toLowerCase().includes(item.name.toLowerCase()) ||
+                  item.name.toLowerCase().includes(data.stretchName.toLowerCase())
+        )
+        const targetId = matchedItem ? matchedItem.id : data.stretchName
+
+        const cooldownKey = getCoolDownStorageKey(
+          plan?.id,
+          microcycleProgress.currentWeek,
+          activeWorkout.day,
+          activeWorkout.scheduledDate
+        )
+
+        try {
+          if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(cooldownKey)
+            const record: Record<string, boolean> = saved ? JSON.parse(saved) : {}
+            record[targetId] = data.isCompleted
+            localStorage.setItem(cooldownKey, JSON.stringify(record))
+
+            // Dispatch global event so ClinicalCoolDownModule immediately updates its React state
+            window.dispatchEvent(
+              new CustomEvent('forge:cooldown-stretch-toggled', {
+                detail: {
+                  stretchName: data.stretchName,
+                  stretchId: targetId,
+                  isCompleted: data.isCompleted,
+                  workoutDay: activeWorkout.day,
+                },
+              })
+            )
+          }
+        } catch (e) {
+          console.error('[Watch Sync] Error updating cooldown stretch from watch:', e)
+        }
+
+        // Push updated payload to watch
+        const updatedPayload = constructWatchWorkoutPayload(effectiveActiveWorkoutDay)
+        if (updatedPayload) {
+          void syncWorkoutStateToWatch(updatedPayload)
+        }
+      }).then(cleanup => {
+        unsubscribe = cleanup
+      })
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [effectiveActiveWorkoutDay, planWorkouts, plan?.id, microcycleProgress.currentWeek, constructWatchWorkoutPayload])
+
+  // Listen for local drill toggles on phone web UI and immediately sync to Apple Watch
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleLocalDrillToggle = () => {
+      const payload = constructWatchWorkoutPayload(effectiveActiveWorkoutDay)
+      if (payload) {
+        void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
+          void syncWorkoutStateToWatch(payload)
+        })
+      }
+    }
+
+    window.addEventListener('forge:warmup-drill-toggled-local', handleLocalDrillToggle)
+    window.addEventListener('forge:cooldown-stretch-toggled-local', handleLocalDrillToggle)
+    return () => {
+      window.removeEventListener('forge:warmup-drill-toggled-local', handleLocalDrillToggle)
+      window.removeEventListener('forge:cooldown-stretch-toggled-local', handleLocalDrillToggle)
+    }
+  }, [effectiveActiveWorkoutDay, constructWatchWorkoutPayload])
 
   async function handleSkipExercise(workout: WorkoutDay, exercise: WorkoutExercise, reason: string, _notes: string) {
     await fetch('/api/fitness/skip-exercise', {
