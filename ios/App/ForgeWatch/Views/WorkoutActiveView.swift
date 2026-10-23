@@ -19,7 +19,8 @@ public struct WorkoutActiveView: View {
     @State private var loggedRpe: Double = 8.0
     @State private var isCrownFocusedOnReps: Bool = true
     @State private var showPlateSheet: Bool = false
-    @State private var showEndConfirmation: Bool = false
+    @State private var showCancelConfirmation: Bool = false
+    @State private var showFinishConfirmation: Bool = false
     @State private var showPhasesSheet: Bool = false
 
     // Drill & stretch interactive countdown timer state
@@ -132,11 +133,24 @@ public struct WorkoutActiveView: View {
                 syncStateFromCoordinator()
             })
         }
-        .confirmationDialog("End Workout?", isPresented: $showEndConfirmation, titleVisibility: .visible) {
-            Button("End Workout", role: .destructive) {
-                coordinator.endSession()
+        .confirmationDialog("Cancel Workout?", isPresented: $showCancelConfirmation, titleVisibility: .visible) {
+            Button("Discard Workout", role: .destructive) {
+                coordinator.cancelSession(notifyPhone: true)
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Resume Workout", role: .cancel) {}
+        } message: {
+            Text("Workout will not be saved to Apple Health or training history.")
+        }
+        .confirmationDialog("Finish Workout?", isPresented: $showFinishConfirmation, titleVisibility: .visible) {
+            Button("Save & Complete", role: .none) {
+                coordinator.finishSession(notifyPhone: true)
+            }
+            Button("Discard Workout", role: .destructive) {
+                coordinator.cancelSession(notifyPhone: true)
+            }
+            Button("Continue Workout", role: .cancel) {}
+        } message: {
+            Text("Save completed session to Apple Health and training history.")
         }
     }
 
@@ -695,15 +709,15 @@ public struct WorkoutActiveView: View {
             .buttonStyle(PlainButtonStyle())
             .padding(.top, 2)
 
-            // Tactile End Workout Button at bottom of scroll
+            // Tactile Cancel Workout Button at bottom of scroll
             Button(action: {
-                showEndConfirmation = true
+                showCancelConfirmation = true
                 WKInterfaceDevice.current().play(.click)
             }) {
                 HStack(spacing: 5) {
-                    Image(systemName: "xmark.circle")
+                    Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 11))
-                    Text("End Workout")
+                    Text("Cancel Workout")
                         .font(.system(size: 11, weight: .bold))
                 }
                 .foregroundColor(Color(red: 0.97, green: 0.44, blue: 0.44).opacity(0.85))
@@ -1140,7 +1154,7 @@ public struct WorkoutActiveView: View {
 
             // Finish Workout Button
             Button(action: {
-                showEndConfirmation = true
+                showFinishConfirmation = true
                 WKInterfaceDevice.current().play(.click)
             }) {
                 HStack(spacing: 6) {
@@ -1454,6 +1468,46 @@ struct WorkoutPhasesSheet: View {
                     .background(Color.white.opacity(0.05))
                     .cornerRadius(8)
                 }
+
+                // 5. Explicit Session Completion & Discard Actions
+                VStack(spacing: 6) {
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                        coordinator.finishSession()
+                    }) {
+                        HStack(spacing: 5) {
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.system(size: 11))
+                            Text("SAVE & FINISH WORKOUT")
+                                .font(.system(size: 10, weight: .black, design: .rounded))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 7)
+                        .background(Color(red: 0.20, green: 0.78, blue: 0.55))
+                        .foregroundColor(.black)
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                        coordinator.cancelSession()
+                    }) {
+                        HStack(spacing: 5) {
+                            Image(systemName: "xmark.circle")
+                                .font(.system(size: 11))
+                            Text("DISCARD / CANCEL WORKOUT")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(Color.white.opacity(0.06))
+                        .foregroundColor(Color(red: 0.97, green: 0.44, blue: 0.44))
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding(.top, 4)
             }
             .padding(.horizontal, 4)
         }

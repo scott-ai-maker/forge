@@ -94,7 +94,14 @@ public final class WatchWorkoutManager: NSObject, ObservableObject, HKWorkoutSes
         }
     }
 
+    /**
+     * Completes and saves the workout session to Apple Health store.
+     */
     public func endWorkout(completion: (() -> Void)? = nil) {
+        finishWorkout(completion: completion)
+    }
+
+    public func finishWorkout(completion: (() -> Void)? = nil) {
         guard let session = session, let builder = builder else {
             isPaused = false
             completion?()
@@ -114,6 +121,32 @@ public final class WatchWorkoutManager: NSObject, ObservableObject, HKWorkoutSes
                     completion?()
                 }
             }
+        }
+    }
+
+    /**
+     * Cancels/discards the workout session.
+     * Instructs HKLiveWorkoutBuilder to discard all collected telemetry so NOTHING is saved to Apple Health.
+     */
+    public func discardWorkout(completion: (() -> Void)? = nil) {
+        guard let session = session, let builder = builder else {
+            isPaused = false
+            isWorkoutActive = false
+            stopElapsedTimer()
+            completion?()
+            return
+        }
+
+        isPaused = false
+        stopElapsedTimer()
+        session.end()
+        builder.discardWorkout()
+        DispatchQueue.main.async { [weak self] in
+            self?.isWorkoutActive = false
+            self?.isPaused = false
+            self?.session = nil
+            self?.builder = nil
+            completion?()
         }
     }
 

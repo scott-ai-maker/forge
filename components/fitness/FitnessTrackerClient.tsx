@@ -1083,15 +1083,8 @@ export default function FitnessTrackerClient({
   const handleClientQuitWorkout = useCallback(() => {
     handleQuitWorkoutSession()
     setCompleteModal(null)
-    void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
-      void syncWorkoutStateToWatch({
-        workoutId: '',
-        dayNumber: 0,
-        focus: '',
-        completedSets: 0,
-        totalSets: 0,
-        isSessionActive: false,
-      })
+    void import('@/lib/native-healthkit-bridge').then(({ cancelWatchWorkout }) => {
+      void cancelWatchWorkout()
     })
     setStatus('Workout session quit without penalty. No workout was recorded.')
   }, [handleQuitWorkoutSession])
@@ -2025,6 +2018,22 @@ export default function FitnessTrackerClient({
     }
   }, [effectiveActiveWorkoutDay, planWorkouts])
 
+  // Listen for Cancel / Discard Workout triggered directly on Apple Watch
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchCancelWorkout }) => {
+      void subscribeToWatchCancelWorkout(() => {
+        handleClientQuitWorkout()
+      }).then(cleanup => {
+        unsubscribe = cleanup
+      })
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [handleClientQuitWorkout])
+
   // Listen for Exercise tapped on Apple Watch workout drawer
   useEffect(() => {
     let unsubscribe: (() => void) | null = null
@@ -2365,7 +2374,7 @@ export default function FitnessTrackerClient({
     handleStopWorkoutSession()
     setCompleteModal(null)
 
-    // 2b. Notify Apple Watch to close its active HKWorkoutSession and return to idle home
+    // 2b. Notify Apple Watch to close its active HKWorkoutSession and save to Health
     void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
       void syncWorkoutStateToWatch({
         workoutId: '',
@@ -2374,6 +2383,7 @@ export default function FitnessTrackerClient({
         completedSets: 0,
         totalSets: 0,
         isSessionActive: false,
+        action: 'finishWorkout',
       })
     })
 

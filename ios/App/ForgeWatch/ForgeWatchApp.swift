@@ -209,11 +209,16 @@ struct WorkoutControlsView: View {
             }
             .padding(.horizontal, 4)
         }
-        .confirmationDialog("End Workout?", isPresented: $showEndConfirmation, titleVisibility: .visible) {
-            Button("End Workout", role: .destructive) {
-                coordinator.endSession()
+        .confirmationDialog("Workout Options", isPresented: $showEndConfirmation, titleVisibility: .visible) {
+            Button("Save & Finish", role: .none) {
+                coordinator.finishSession()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Discard / Cancel", role: .destructive) {
+                coordinator.cancelSession()
+            }
+            Button("Resume Workout", role: .cancel) {}
+        } message: {
+            Text("Discarding will exit without saving to Apple Health or history.")
         }
     }
 

@@ -16,6 +16,7 @@ import HealthKit
     public var onHeartRateFromWatch: ((Int, String) -> Void)?
     public var onWatchSessionStateChanged: ((Bool) -> Void)?
     public var onEndWorkoutFromWatch: (() -> Void)?
+    public var onCancelWorkoutFromWatch: (() -> Void)?
     public var onExerciseSelectedFromWatch: ((String) -> Void)?
     public var onPhaseSelectedFromWatch: ((String) -> Void)?
     public var onStartWorkoutFromWatch: (([String: Any]) -> Void)?
@@ -221,8 +222,12 @@ import HealthKit
                 }
 
             case "endWorkout":
-                // Athlete tapped 'End Workout' on Apple Watch
+                // Athlete tapped 'Save & Finish Workout' on Apple Watch
                 self?.onEndWorkoutFromWatch?()
+
+            case "cancelWorkout":
+                // Athlete cancelled or discarded workout on Apple Watch
+                self?.onCancelWorkoutFromWatch?()
 
             case "exerciseSelected":
                 // Athlete selected an exercise from the watch list/stepper

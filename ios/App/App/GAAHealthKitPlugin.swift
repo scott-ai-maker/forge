@@ -56,6 +56,9 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         ForgeWatchConnectivityManager.shared.onEndWorkoutFromWatch = { [weak self] in
             self?.notifyListeners("onWatchEndWorkout", data: [:])
         }
+        ForgeWatchConnectivityManager.shared.onCancelWorkoutFromWatch = { [weak self] in
+            self?.notifyListeners("onWatchCancelWorkout", data: [:])
+        }
         ForgeWatchConnectivityManager.shared.onExerciseSelectedFromWatch = { [weak self] exerciseName in
             self?.notifyListeners("onWatchExerciseSelected", data: ["exerciseName": exerciseName])
         }

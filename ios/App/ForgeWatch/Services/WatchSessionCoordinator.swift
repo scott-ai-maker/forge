@@ -475,9 +475,15 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
 
+            // Cancel Workout Signal from iPhone
+            if let type = dict["type"] as? String, type == "cancelWorkout" {
+                self.cancelSession(notifyPhone: false)
+                return
+            }
+
             // End Workout Signal from iPhone
             if let type = dict["type"] as? String, type == "endWorkout" {
-                self.endSession(notifyPhone: false)
+                self.finishSession(notifyPhone: false)
                 return
             }
 
@@ -505,14 +511,14 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     }
 
     /**
-     * Athlete or iPhone ends the active workout session.
+     * Athlete or iPhone finishes and saves the active workout session to HealthKit and training history.
      */
-    public func endSession(notifyPhone: Bool = true) {
+    public func finishSession(notifyPhone: Bool = true) {
         workoutState.isSessionActive = false
         stopLocalRestTimer()
         resetCardioInterval()
         isCardioCompleted = false
-        WatchWorkoutManager.shared.endWorkout()
+        WatchWorkoutManager.shared.finishWorkout()
         WatchHapticManager.shared.playSuccessKnock()
 
         if notifyPhone {
@@ -524,11 +530,54 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         }
     }
 
+    /**
+     * Athlete or iPhone cancels/discards the workout session without saving to Apple Health.
+     */
+    public func cancelSession(notifyPhone: Bool = true) {
+        workoutState.isSessionActive = false
+        stopLocalRestTimer()
+        resetCardioInterval()
+        isCardioCompleted = false
+        WatchWorkoutManager.shared.discardWorkout()
+        WKInterfaceDevice.current().play(.failure)
+
+        if notifyPhone {
+            let payload: [String: Any] = [
+                "type": "cancelWorkout",
+                "timestamp": ISO8601DateFormatter().string(from: Date())
+            ]
+            sendToPhone(payload)
+        }
+    }
+
+    /**
+     * Backward-compatible endSession. Defaults to saving if save == true, or discarding if save == false.
+     */
+    public func endSession(save: Bool = true, notifyPhone: Bool = true) {
+        if save {
+            finishSession(notifyPhone: notifyPhone)
+        } else {
+            cancelSession(notifyPhone: notifyPhone)
+        }
+    }
+
     private func parseWorkoutState(_ dict: [String: Any]) {
         let isActive = dict["isSessionActive"] as? Bool ?? true
+        let isCancelled = dict["isCancelled"] as? Bool ?? false
+        let action = dict["action"] as? String ?? ""
         let workoutId = dict["workoutId"] as? String ?? ""
+
+        if isCancelled || action == "cancelWorkout" {
+            self.cancelSession(notifyPhone: false)
+            return
+        }
+
         if !isActive && (workoutId.isEmpty || workoutId == "idle") {
-            self.endSession(notifyPhone: false)
+            if action == "finishWorkout" {
+                self.finishSession(notifyPhone: false)
+            } else {
+                self.cancelSession(notifyPhone: false)
+            }
             return
         }
 

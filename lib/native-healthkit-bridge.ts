@@ -87,7 +87,7 @@ export interface GAAHealthKitPluginInterface {
     hrvRmssd?: number
   }): Promise<{ success: boolean }>
   addListener(
-    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected' | 'onWatchStartWorkout' | 'onWatchWarmupDrillToggled' | 'onWatchCooldownStretchToggled' | 'onWatchCardioCompleted',
+    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchCancelWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected' | 'onWatchStartWorkout' | 'onWatchWarmupDrillToggled' | 'onWatchCooldownStretchToggled' | 'onWatchCardioCompleted',
     listenerFunc: (data: any) => void
   ): Promise<PluginListenerHandle>
 }
@@ -1047,6 +1047,8 @@ export interface WatchWorkoutSyncPayload {
   cardioProtocol?: WatchCardioProtocolPayload
   warmupDrills?: WatchWarmupDrillPayload[]
   cooldownStretches?: WatchCooldownStretchPayload[]
+  isCancelled?: boolean
+  action?: 'cancelWorkout' | 'finishWorkout' | 'sync'
 }
 
 export interface WatchRestTimerSyncPayload {
@@ -1370,3 +1372,40 @@ export async function subscribeToWatchCardioCompleted(
     return null
   }
 }
+
+/**
+ * Signals Apple Watch to cancel and discard the active workout session without saving to Apple Health.
+ */
+export async function cancelWatchWorkout(): Promise<boolean> {
+  return syncWorkoutStateToWatch({
+    workoutId: '',
+    dayNumber: 0,
+    focus: '',
+    completedSets: 0,
+    totalSets: 0,
+    isSessionActive: false,
+    isCancelled: true,
+    action: 'cancelWorkout',
+  })
+}
+
+/**
+ * Subscribes to workout cancellation events triggered directly on Apple Watch.
+ */
+export async function subscribeToWatchCancelWorkout(
+  callback: () => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchCancelWorkout', () => {
+      callback()
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
