@@ -71,6 +71,9 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         ForgeWatchConnectivityManager.shared.onCooldownStretchToggledFromWatch = { [weak self] stretchData in
             self?.notifyListeners("onWatchCooldownStretchToggled", data: stretchData)
         }
+        ForgeWatchConnectivityManager.shared.onCardioCompletedFromWatch = { [weak self] cardioData in
+            self?.notifyListeners("onWatchCardioCompleted", data: cardioData)
+        }
     }
 
     @objc public func isAvailable(_ call: CAPPluginCall) {

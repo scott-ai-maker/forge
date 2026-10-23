@@ -72,19 +72,22 @@ public struct WatchCardioProtocol: Codable {
     public let targetZone: Int
     public let targetBpmMin: Int
     public let targetBpmMax: Int
+    public var isCompleted: Bool
 
     public init(
         modality: String = "Cardio Zone 2",
         durationMins: Int = 20,
         targetZone: Int = 2,
         targetBpmMin: Int = 125,
-        targetBpmMax: Int = 142
+        targetBpmMax: Int = 142,
+        isCompleted: Bool = false
     ) {
         self.modality = modality
         self.durationMins = durationMins
         self.targetZone = targetZone
         self.targetBpmMin = targetBpmMin
         self.targetBpmMax = targetBpmMax
+        self.isCompleted = isCompleted
     }
 }
 

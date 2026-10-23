@@ -293,10 +293,10 @@ struct WatchHomeView: View {
                             }
                             Text("·").font(.system(size: 8)).foregroundColor(.gray)
                             HStack(spacing: 2) {
-                                Circle().fill(Color(red: 0.22, green: 0.74, blue: 0.97)).frame(width: 5, height: 5)
-                                Text("\(coordinator.workoutState.exercises.count) LIFTS")
+                                Circle().fill(coordinator.workoutState.exercises.isEmpty ? Color.gray : Color(red: 0.22, green: 0.74, blue: 0.97)).frame(width: 5, height: 5)
+                                Text(coordinator.workoutState.exercises.isEmpty ? "NO LIFTS" : "\(coordinator.workoutState.exercises.count) LIFTS")
                                     .font(.system(size: 8, weight: .black, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.85))
+                                    .foregroundColor(coordinator.workoutState.exercises.isEmpty ? .gray : .white.opacity(0.85))
                             }
                             Text("·").font(.system(size: 8)).foregroundColor(.gray)
                             HStack(spacing: 2) {
@@ -317,7 +317,8 @@ struct WatchHomeView: View {
                 VStack(spacing: 8) {
                     Button(action: {
                         WKInterfaceDevice.current().play(.start)
-                        workoutManager.startWorkout(activityType: .traditionalStrengthTraining)
+                        let isCardioDay = coordinator.workoutState.exercises.isEmpty
+                        workoutManager.startWorkout(activityType: isCardioDay ? .highIntensityIntervalTraining : .traditionalStrengthTraining)
                         coordinator.workoutState.isSessionActive = true
                         coordinator.workoutState.activePhase = "warmup"
                         coordinator.selectedTab = 1
@@ -333,7 +334,11 @@ struct WatchHomeView: View {
                                     .foregroundColor(.black)
                             }
 
-                            Text(coordinator.workoutState.dayNumber > 0 ? "START DAY \(coordinator.workoutState.dayNumber)" : "START WORKOUT")
+                            Text(
+                                coordinator.workoutState.exercises.isEmpty
+                                    ? (coordinator.workoutState.dayNumber > 0 ? "START DAY \(coordinator.workoutState.dayNumber) CARDIO" : "START CARDIO")
+                                    : (coordinator.workoutState.dayNumber > 0 ? "START DAY \(coordinator.workoutState.dayNumber)" : "START WORKOUT")
+                            )
                                 .font(.system(size: 12.5, weight: .black, design: .rounded))
                                 .foregroundColor(.black)
 

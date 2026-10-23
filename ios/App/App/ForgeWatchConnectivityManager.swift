@@ -21,6 +21,7 @@ import HealthKit
     public var onStartWorkoutFromWatch: (([String: Any]) -> Void)?
     public var onWarmupDrillToggledFromWatch: (([String: Any]) -> Void)?
     public var onCooldownStretchToggledFromWatch: (([String: Any]) -> Void)?
+    public var onCardioCompletedFromWatch: (([String: Any]) -> Void)?
 
     private override init() {
         super.init()
@@ -246,6 +247,10 @@ import HealthKit
             case "cooldownStretchToggled":
                 // Athlete toggled a cooldown stretch checkbox on Apple Watch
                 self?.onCooldownStretchToggledFromWatch?(dict)
+
+            case "cardioCompleted":
+                // Athlete completed and logged cardio interval on Apple Watch
+                self?.onCardioCompletedFromWatch?(dict)
 
             default:
                 break

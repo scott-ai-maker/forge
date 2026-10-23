@@ -1343,7 +1343,7 @@ export default function FitnessTrackerClient({
     }))
 
     // 2. Resistance Exercises
-    const rawExercises: WorkoutExercise[] = adaptedExercisesByDay[activeWorkout.day]
+    const rawCandidateExercises: WorkoutExercise[] = adaptedExercisesByDay[activeWorkout.day]
       ? adaptedExercisesByDay[activeWorkout.day].map(ae => ({
           name: ae.name,
           sets: String(ae.sets),
@@ -1353,6 +1353,21 @@ export default function FitnessTrackerClient({
           block: (ae as unknown as { block?: string | null }).block ?? 'resistance',
         }))
       : (activeWorkout.exercises || [])
+
+    const isDedicatedCardioDay =
+      activeWorkout.focus?.toLowerCase().includes('cardio') ||
+      activeWorkout.focus?.toLowerCase().includes('recovery')
+
+    const rawExercises: WorkoutExercise[] = isDedicatedCardioDay
+      ? []
+      : rawCandidateExercises.filter(
+          ex =>
+            !isCardioPseudoExercise(ex.name) &&
+            ex.block !== 'warmup' &&
+            ex.block !== 'cooldown' &&
+            !isTimedStaticStretch(ex.name, ex.block, ex.reps) &&
+            !isFoamRollerExercise(ex.name)
+        )
 
     const exercisesList: WatchExerciseItemPayload[] = rawExercises.map((ex, idx) => {
       const setsLogged = (localSetLogs || []).filter(l =>
@@ -1388,8 +1403,8 @@ export default function FitnessTrackerClient({
     })
 
     const activeExName = expandedExerciseKey ? expandedExerciseKey.split('-')[1] : rawExercises[0]?.name
-    const activeExIndex = Math.max(0, rawExercises.findIndex(e => e.name === activeExName))
-    const activeEx = exercisesList[activeExIndex] || exercisesList[0]
+    const activeExIndex = activeExName ? Math.max(0, rawExercises.findIndex(e => e.name === activeExName)) : 0
+    const activeEx = exercisesList.length > 0 ? (exercisesList[activeExIndex] || exercisesList[0]) : undefined
 
     const completedWorkingSets = (localSetLogs || []).filter(l =>
       !l.is_warmup && extractWorkoutDayTag(l.notes) === Number(activeWorkout.day)
@@ -1404,12 +1419,18 @@ export default function FitnessTrackerClient({
       const zones = calculateCardioZones(age, profile?.resting_heart_rate || 65)
       const stage = Number(cardio.stage) || 2
       const targetZoneMetrics = stage === 1 ? zones.zone1 : stage === 3 ? zones.zone3 : zones.zone2
+      const isCardioLogged = (localCardioLogs || []).some(log => {
+        const isMatchDay = log.notes?.includes(`[Day ${activeWorkout.day}`)
+        const isMatchDate = activeWorkout.scheduledDate && log.session_date === activeWorkout.scheduledDate
+        return isMatchDay || isMatchDate
+      })
       cardioPayload = {
         modality: cardio.recommendedModalities?.[0] || 'Incline Treadmill Walk',
         durationMins: Number(cardio.durationMins) || 15,
         targetZone: stage,
         targetBpmMin: targetZoneMetrics.minBpm,
         targetBpmMax: targetZoneMetrics.maxBpm,
+        isCompleted: isCardioLogged,
       }
     }
 
@@ -1483,6 +1504,7 @@ export default function FitnessTrackerClient({
     expandedExerciseKey,
     profile,
     plan,
+    localCardioLogs,
   ])
 
   // Continuous Workout State Synchronization to Apple Watch Companion App
@@ -2197,6 +2219,94 @@ export default function FitnessTrackerClient({
       if (unsubscribe) unsubscribe()
     }
   }, [effectiveActiveWorkoutDay, planWorkouts, plan?.id, microcycleProgress.currentWeek, constructWatchWorkoutPayload])
+
+  // Listen for cardio interval completion on Apple Watch and auto-log to database & Apple HealthKit
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchCardioCompleted, syncWorkoutStateToWatch, syncActivityToAppleHealth }) => {
+      void subscribeToWatchCardioCompleted(async (data) => {
+        if (!data) return
+        const targetDay = data.workoutDay || effectiveActiveWorkoutDay
+        const activeWorkout = planWorkouts.find(w => w.day === targetDay) || planWorkouts[0]
+        if (!activeWorkout) return
+
+        const cardio = resolveWorkoutCardioProtocol(activeWorkout, profile, plan)
+        const durationMins = data.durationMins && data.durationMins > 0
+          ? data.durationMins
+          : (cardio?.durationMins ? Number(cardio.durationMins) : 20)
+        const modality = data.modality || (cardio ? getFirstCardioModality(cardio, 'Cardio') : 'Cardio')
+        const activityType = modality.toLowerCase().includes('run')
+          ? 'running'
+          : modality.toLowerCase().includes('cycl') || modality.toLowerCase().includes('bike')
+          ? 'cycling'
+          : modality.toLowerCase().includes('row')
+          ? 'rowing'
+          : modality.toLowerCase().includes('swim')
+          ? 'swimming'
+          : modality.toLowerCase().includes('ellipt')
+          ? 'elliptical'
+          : modality.toLowerCase().includes('walk')
+          ? 'walking'
+          : modality.toLowerCase().includes('stair')
+          ? 'stair_climber'
+          : 'hiit'
+
+        const sessionDate = activeWorkout.scheduledDate || todayDateOnly()
+        const noteParts = [
+          `[Day ${activeWorkout.day} Prescribed Cardio]`,
+          cardio ? `${cardio.title} (Stage ${cardio.stage})` : 'Cardio Interval',
+          `Modality: ${modality}`,
+          data.targetZone ? `Target: ${data.targetZone}` : (cardio?.workRestRatio ? `Protocol: ${cardio.workRestRatio}` : ''),
+          '[Logged via Apple Watch]',
+        ].filter(Boolean)
+
+        try {
+          const res = await fetch('/api/fitness/cardio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session_date: sessionDate,
+              activity_type: activityType,
+              duration_mins: durationMins,
+              avg_heart_rate: data.avgHeartRate || undefined,
+              calories: data.calories || undefined,
+              notes: noteParts.join(' · '),
+            }),
+          })
+
+          const payload = await res.json().catch(() => ({}))
+          if (res.ok && payload?.log) {
+            setLocalCardioLogs(prev => [payload.log as CardioLogEntry, ...prev])
+          }
+
+          void syncActivityToAppleHealth({
+            type: 'cardio',
+            modality,
+            durationMinutes: durationMins,
+            calories: data.calories || undefined,
+            avgHeartRate: data.avgHeartRate || wearableTelemetry?.currentHeartRate || undefined,
+            notes: noteParts.join(' · '),
+          }).catch(err => console.warn('[AppleHealth] Watch cardio sync notice:', err))
+
+          setStatus(`✓ Apple Watch Logged: ${durationMins}m ${modality}${data.avgHeartRate ? ` @ ${data.avgHeartRate} BPM` : ''} for Day ${activeWorkout.day}!`)
+        } catch (e) {
+          console.error('[Watch Sync] Error logging completed cardio from watch:', e)
+        }
+
+        // Push updated workout payload back to watch
+        const updatedPayload = constructWatchWorkoutPayload(effectiveActiveWorkoutDay)
+        if (updatedPayload) {
+          void syncWorkoutStateToWatch(updatedPayload)
+        }
+      }).then(cleanup => {
+        unsubscribe = cleanup
+      })
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [effectiveActiveWorkoutDay, planWorkouts, profile, plan, constructWatchWorkoutPayload, wearableTelemetry?.currentHeartRate])
 
   // Listen for local drill toggles on phone web UI and immediately sync to Apple Watch
   useEffect(() => {

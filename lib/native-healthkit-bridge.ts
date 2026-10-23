@@ -87,7 +87,7 @@ export interface GAAHealthKitPluginInterface {
     hrvRmssd?: number
   }): Promise<{ success: boolean }>
   addListener(
-    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected' | 'onWatchStartWorkout' | 'onWatchWarmupDrillToggled' | 'onWatchCooldownStretchToggled',
+    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected' | 'onWatchStartWorkout' | 'onWatchWarmupDrillToggled' | 'onWatchCooldownStretchToggled' | 'onWatchCardioCompleted',
     listenerFunc: (data: any) => void
   ): Promise<PluginListenerHandle>
 }
@@ -1015,6 +1015,7 @@ export interface WatchCardioProtocolPayload {
   targetZone: number
   targetBpmMin: number
   targetBpmMax: number
+  isCompleted?: boolean
 }
 
 export interface WatchWarmupDrillPayload {
@@ -1330,6 +1331,36 @@ export async function subscribeToWatchCooldownToggled(
   try {
     const plugin = getNativeHealthPlugin()
     const handle = await plugin.addListener('onWatchCooldownStretchToggled', (data: { stretchName: string; isCompleted: boolean; timestamp?: string }) => {
+      callback(data)
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+export interface WatchCardioCompletedEvent {
+  workoutDay?: number
+  durationMins?: number
+  modality?: string
+  targetZone?: string | number
+  avgHeartRate?: number
+  calories?: number
+  timestamp?: string
+}
+
+/**
+ * Subscribes to cardio interval completion events sent from Apple Watch.
+ */
+export async function subscribeToWatchCardioCompleted(
+  callback: (data: WatchCardioCompletedEvent) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchCardioCompleted', (data: WatchCardioCompletedEvent) => {
       callback(data)
     })
     return () => {

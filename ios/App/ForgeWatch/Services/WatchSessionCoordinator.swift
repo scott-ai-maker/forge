@@ -16,8 +16,12 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     @Published public var cnsReadiness: WatchCnsReadiness = WatchCnsReadiness()
     @Published public var isPhoneReachable: Bool = false
     @Published public var selectedTab: Int = 1
+    @Published public var isCardioIntervalRunning: Bool = false
+    @Published public var cardioElapsedSeconds: Int = 0
+    @Published public var isCardioCompleted: Bool = false
 
     private var localTimer: Timer?
+    private var cardioTimer: Timer?
     private var lastWarningFiredSeconds: Int = -1
 
     // Local override tracking to prevent race conditions from in-flight sync payloads
@@ -258,6 +262,77 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         sendToPhone(payload)
     }
 
+    // MARK: - Cardio Conditioning Interval Controls
+
+    public func startCardioInterval() {
+        cardioTimer?.invalidate()
+        isCardioIntervalRunning = true
+        WKInterfaceDevice.current().play(.start)
+
+        if !WatchWorkoutManager.shared.isWorkoutActive {
+            WatchWorkoutManager.shared.startWorkout(activityType: .highIntensityIntervalTraining)
+        }
+
+        cardioTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            if self.isCardioIntervalRunning {
+                self.cardioElapsedSeconds += 1
+
+                let prescribedSecs = (self.workoutState.cardioProtocol?.durationMins ?? 20) * 60
+                if self.cardioElapsedSeconds == prescribedSecs {
+                    WatchHapticManager.shared.playSuccessKnock()
+                }
+            }
+        }
+    }
+
+    public func pauseCardioInterval() {
+        isCardioIntervalRunning = false
+        WKInterfaceDevice.current().play(.stop)
+    }
+
+    public func resumeCardioInterval() {
+        isCardioIntervalRunning = true
+        WKInterfaceDevice.current().play(.start)
+    }
+
+    public func resetCardioInterval() {
+        cardioTimer?.invalidate()
+        cardioTimer = nil
+        isCardioIntervalRunning = false
+        cardioElapsedSeconds = 0
+    }
+
+    public func completeCardioInterval() {
+        let elapsed = cardioElapsedSeconds
+        resetCardioInterval()
+        isCardioCompleted = true
+        if workoutState.cardioProtocol != nil {
+            workoutState.cardioProtocol?.isCompleted = true
+        }
+
+        WatchHapticManager.shared.playSuccessKnock()
+        WKInterfaceDevice.current().play(.success)
+
+        let prescribedMins = workoutState.cardioProtocol?.durationMins ?? 20
+        let effectiveDurationMins = elapsed >= 45 ? max(1, Int(round(Double(elapsed) / 60.0))) : prescribedMins
+        let modality = workoutState.cardioProtocol?.modality ?? "Zone 2 Cardio"
+        let zone = workoutState.cardioProtocol?.targetZone ?? 2
+        let currentBpm = WatchWorkoutManager.shared.currentHeartRate
+        let calories = Int(WatchWorkoutManager.shared.activeCalories)
+
+        let payload: [String: Any] = [
+            "type": "cardioCompleted",
+            "durationMins": effectiveDurationMins,
+            "modality": modality,
+            "targetZone": zone,
+            "avgHeartRate": currentBpm > 0 ? currentBpm : 0,
+            "calories": calories > 0 ? calories : 0,
+            "timestamp": ISO8601DateFormatter().string(from: Date())
+        ]
+        sendToPhone(payload)
+    }
+
     /**
      * Athlete triggers a rest timer action on wrist ('ready', 'add15', 'minus15', 'skip').
      */
@@ -435,6 +510,8 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     public func endSession(notifyPhone: Bool = true) {
         workoutState.isSessionActive = false
         stopLocalRestTimer()
+        resetCardioInterval()
+        isCardioCompleted = false
         WatchWorkoutManager.shared.endWorkout()
         WatchHapticManager.shared.playSuccessKnock()
 
@@ -546,12 +623,17 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         // Parse Cardio Protocol
         var parsedCardio: WatchCardioProtocol? = nil
         if let cDict = dict["cardioProtocol"] as? [String: Any] {
+            let remoteDone = cDict["isCompleted"] as? Bool ?? false
+            if remoteDone {
+                self.isCardioCompleted = true
+            }
             parsedCardio = WatchCardioProtocol(
                 modality: cDict["modality"] as? String ?? "Cardio Zone 2",
                 durationMins: cDict["durationMins"] as? Int ?? 20,
                 targetZone: cDict["targetZone"] as? Int ?? 2,
                 targetBpmMin: cDict["targetBpmMin"] as? Int ?? 125,
-                targetBpmMax: cDict["targetBpmMax"] as? Int ?? 142
+                targetBpmMax: cDict["targetBpmMax"] as? Int ?? 142,
+                isCompleted: remoteDone || self.isCardioCompleted
             )
         }
 
@@ -624,8 +706,8 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             focus: focus,
             activePhase: activePhase,
             activeExerciseIndex: activeExIndex,
-            activeExercise: activeEx,
-            exercises: parsedExercises.isEmpty && activeEx != nil ? [activeEx!] : parsedExercises,
+            activeExercise: parsedExercises.isEmpty ? nil : activeEx,
+            exercises: parsedExercises,
             warmupDrills: parsedWarmups,
             cooldownStretches: parsedCooldowns,
             cardioProtocol: parsedCardio,

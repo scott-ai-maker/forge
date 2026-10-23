@@ -73,18 +73,18 @@ public struct WorkoutActiveView: View {
                     )
 
                     PhaseTabButton(
-                        label: "LIFTS",
+                        label: coordinator.workoutState.exercises.isEmpty ? "NO LIFTS" : "LIFTS",
                         phase: "resistance",
                         activePhase: coordinator.workoutState.activePhase,
-                        color: Color(red: 0.22, green: 0.74, blue: 0.97), // Cyan
+                        color: coordinator.workoutState.exercises.isEmpty ? Color.gray : Color(red: 0.22, green: 0.74, blue: 0.97), // Cyan
                         onSelect: { coordinator.selectPhase("resistance") }
                     )
 
                     PhaseTabButton(
-                        label: "CARDIO",
+                        label: (coordinator.workoutState.cardioProtocol?.isCompleted == true || coordinator.isCardioCompleted) ? "CARDIO ✓" : "CARDIO",
                         phase: "cardio",
                         activePhase: coordinator.workoutState.activePhase,
-                        color: Color(red: 0.97, green: 0.35, blue: 0.35), // Red
+                        color: (coordinator.workoutState.cardioProtocol?.isCompleted == true || coordinator.isCardioCompleted) ? Color(red: 0.20, green: 0.78, blue: 0.55) : Color(red: 0.97, green: 0.35, blue: 0.35), // Red / Emerald
                         onSelect: { coordinator.selectPhase("cardio") }
                     )
 
@@ -238,37 +238,158 @@ public struct WorkoutActiveView: View {
                 .cornerRadius(10)
             }
 
-            // Advance to Lifts
-            Button(action: {
-                coordinator.selectPhase("resistance")
-                WKInterfaceDevice.current().play(.start)
-            }) {
-                HStack(spacing: 6) {
-                    Text("START RESISTANCE LIFTS")
-                        .font(.system(size: 12, weight: .black, design: .rounded))
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.system(size: 13))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(
-                    LinearGradient(
-                        colors: [Color(red: 0.22, green: 0.74, blue: 0.97), Color(red: 0.15, green: 0.60, blue: 0.85)],
-                        startPoint: .leading,
-                        endPoint: .trailing
+            // Advance Button
+            if coordinator.workoutState.exercises.isEmpty {
+                Button(action: {
+                    coordinator.selectPhase("cardio")
+                    WKInterfaceDevice.current().play(.start)
+                }) {
+                    HStack(spacing: 6) {
+                        Text("PROCEED TO CARDIO")
+                            .font(.system(size: 12, weight: .black, design: .rounded))
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 13))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.97, green: 0.35, blue: 0.35), Color(red: 0.85, green: 0.25, blue: 0.25)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-                .foregroundColor(.black)
-                .cornerRadius(10)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.top, 4)
+            } else {
+                Button(action: {
+                    coordinator.selectPhase("resistance")
+                    WKInterfaceDevice.current().play(.start)
+                }) {
+                    HStack(spacing: 6) {
+                        Text("START RESISTANCE LIFTS")
+                            .font(.system(size: 12, weight: .black, design: .rounded))
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 13))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.22, green: 0.74, blue: 0.97), Color(red: 0.15, green: 0.60, blue: 0.85)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundColor(.black)
+                    .cornerRadius(10)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.top, 4)
             }
-            .buttonStyle(PlainButtonStyle())
-            .padding(.top, 4)
         }
     }
 
     // MARK: - Phase 2: Resistance Training (Lifts) View
 
     private var resistancePhaseView: some View {
+        Group {
+            if coordinator.workoutState.exercises.isEmpty {
+                emptyLiftsRecoveryView
+            } else {
+                standardResistanceLiftsView
+            }
+        }
+    }
+
+    private var emptyLiftsRecoveryView: some View {
+        VStack(spacing: 12) {
+            VStack(spacing: 6) {
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "figure.run")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                }
+                .padding(.top, 4)
+
+                Text("ACTIVE RECOVERY")
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+
+                Text("NO LIFTS SCHEDULED")
+                    .font(.system(size: 10, weight: .black, design: .monospaced))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(4)
+
+                Text("Today is dedicated to aerobic base conditioning, cellular mitochondrial density, and tissue restoration.")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 8)
+            }
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(Color.white.opacity(0.05))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.3), lineWidth: 1)
+            )
+
+            // Direct button to proceed to cardio
+            Button(action: {
+                coordinator.selectPhase("cardio")
+                WKInterfaceDevice.current().play(.start)
+            }) {
+                HStack(spacing: 6) {
+                    Text("PROCEED TO CARDIO")
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 13))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.97, green: 0.35, blue: 0.35), Color(red: 0.85, green: 0.25, blue: 0.25)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .foregroundColor(.white)
+                .cornerRadius(10)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            // Or jump directly to cool-down / mobility
+            Button(action: {
+                coordinator.selectPhase("cooldown")
+                WKInterfaceDevice.current().play(.click)
+            }) {
+                HStack(spacing: 4) {
+                    Text("Skip to Cool-Down")
+                        .font(.system(size: 11, weight: .semibold))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9))
+                }
+                .foregroundColor(.gray)
+                .padding(.vertical, 4)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.horizontal, 4)
+    }
+
+    private var standardResistanceLiftsView: some View {
         VStack(spacing: 8) {
             // Exercise Stepper Bar
             HStack(alignment: .center) {
@@ -597,104 +718,336 @@ public struct WorkoutActiveView: View {
     private var cardioPhaseView: some View {
         VStack(spacing: 10) {
             let cardio = coordinator.workoutState.cardioProtocol
+            let isDone = coordinator.isCardioCompleted || (cardio?.isCompleted ?? false)
+            let durationMins = cardio?.durationMins ?? 20
+            let targetSecs = durationMins * 60
+            let elapsedSecs = coordinator.cardioElapsedSeconds
+            let remainingSecs = max(0, targetSecs - elapsedSecs)
 
+            // Header: Protocol Name & Target Tanaka Zone
             VStack(spacing: 2) {
                 Text(cardio?.modality.uppercased() ?? "ZONE 2 CARDIO ENGINE")
-                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .font(.system(size: 12.5, weight: .black, design: .rounded))
                     .foregroundColor(Color(red: 0.97, green: 0.35, blue: 0.35))
                     .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
 
-                Text("\(cardio?.durationMins ?? 20) MINS · TANAKA ZONE \(cardio?.targetZone ?? 2)")
-                    .font(.system(size: 10, weight: .bold))
+                Text("\(durationMins) MINS · TANAKA ZONE \(cardio?.targetZone ?? 2)")
+                    .font(.system(size: 9.5, weight: .bold))
                     .foregroundColor(.gray)
             }
             .padding(.top, 2)
 
-            // Telemetry Header: Elapsed Time & Active Calories
-            HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: "stopwatch.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
-                    Text(formatElapsed(workoutManager.elapsedSeconds))
-                        .font(.system(size: 12, weight: .black, design: .monospaced))
-                        .foregroundColor(.white)
-                }
+            if isDone {
+                // Completed State Card
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(red: 0.20, green: 0.78, blue: 0.55).opacity(0.18))
+                            .frame(width: 44, height: 44)
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                    }
+                    .padding(.top, 4)
 
-                Spacer()
+                    Text("CARDIO COMPLETED")
+                        .font(.system(size: 12.5, weight: .black, design: .rounded))
+                        .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
 
-                HStack(spacing: 4) {
-                    Image(systemName: "flame.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.22))
-                    Text("\(Int(workoutManager.activeCalories)) kcal")
-                        .font(.system(size: 12, weight: .black, design: .monospaced))
-                        .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.22))
-                }
-            }
-            .padding(.horizontal, 4)
-
-            // Large Heart Rate Telemetry HUD
-            VStack(spacing: 4) {
-                HStack(spacing: 6) {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(heartRateColor)
-
-                    Text(workoutManager.currentHeartRate > 0 ? "\(workoutManager.currentHeartRate)" : "--")
-                        .font(.system(size: 42, weight: .black, design: .monospaced))
-                        .foregroundColor(.white)
-
-                    Text("BPM")
-                        .font(.system(size: 12, weight: .bold))
+                    Text("Logged to Apple Health & Forge Athletic Profile")
+                        .font(.system(size: 9.5, weight: .medium))
                         .foregroundColor(.gray)
-                }
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 6)
 
-                let minBpm = cardio?.targetBpmMin ?? 125
-                let maxBpm = cardio?.targetBpmMax ?? 142
-                let curBpm = workoutManager.currentHeartRate
-
-                if curBpm == 0 {
-                    Text("Target: \(minBpm)–\(maxBpm) BPM")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.gray)
-                } else if curBpm < minBpm {
-                    Text("Accelerate: Target \(minBpm)–\(maxBpm) BPM")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
-                } else if curBpm <= maxBpm {
-                    Text("✓ In Optimal Tanaka Zone (\(minBpm)–\(maxBpm))")
-                        .font(.system(size: 11, weight: .black))
-                        .foregroundColor(Color(red: 0.06, green: 0.72, blue: 0.51))
-                } else {
-                    Text("Ease Pace: Above \(maxBpm) BPM")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(Color(red: 0.97, green: 0.35, blue: 0.35))
+                    Button(action: {
+                        coordinator.isCardioCompleted = false
+                        coordinator.startCardioInterval()
+                    }) {
+                        Text("Log Another Interval")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.gray)
+                            .padding(.vertical, 4)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-            }
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity)
-            .background(Color.white.opacity(0.06))
-            .cornerRadius(12)
-
-            // Advance to Cool-Down
-            Button(action: {
-                coordinator.selectPhase("cooldown")
-                WKInterfaceDevice.current().play(.start)
-            }) {
-                HStack(spacing: 6) {
-                    Text("GO TO COOL-DOWN")
-                        .font(.system(size: 12, weight: .black, design: .rounded))
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.system(size: 13))
-                }
-                .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(Color(red: 0.20, green: 0.78, blue: 0.55))
-                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(red: 0.20, green: 0.78, blue: 0.55).opacity(0.35), lineWidth: 1)
+                )
+
+                // Advance directly to Cool-Down
+                Button(action: {
+                    coordinator.selectPhase("cooldown")
+                    WKInterfaceDevice.current().play(.start)
+                }) {
+                    HStack(spacing: 6) {
+                        Text("PROCEED TO COOL-DOWN")
+                            .font(.system(size: 12, weight: .black, design: .rounded))
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 13))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color(red: 0.20, green: 0.78, blue: 0.55))
+                    .foregroundColor(.black)
+                    .cornerRadius(10)
+                }
+                .buttonStyle(PlainButtonStyle())
+            } else {
+                // Interactive Interval Runner Card
+                VStack(spacing: 6) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(coordinator.isCardioIntervalRunning ? "REMAINING" : (elapsedSecs > 0 ? "PAUSED" : "TARGET INTERVAL"))
+                                .font(.system(size: 8.5, weight: .black, design: .monospaced))
+                                .foregroundColor(coordinator.isCardioIntervalRunning ? Color(red: 0.97, green: 0.35, blue: 0.35) : .gray)
+
+                            Text(coordinator.isCardioIntervalRunning || elapsedSecs > 0 ? formatElapsed(remainingSecs) : "\(durationMins):00")
+                                .font(.system(size: 26, weight: .black, design: .monospaced))
+                                .foregroundColor(.white)
+                        }
+
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 1) {
+                            Text("INTERVAL ELAPSED")
+                                .font(.system(size: 8.5, weight: .black, design: .monospaced))
+                                .foregroundColor(.gray)
+
+                            Text(formatElapsed(elapsedSecs))
+                                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                        }
+                    }
+                    .padding(.horizontal, 4)
+
+                    // Progress bar
+                    let progress = min(1.0, Double(elapsedSecs) / Double(max(1, targetSecs)))
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.white.opacity(0.12))
+                                .frame(height: 6)
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(red: 0.97, green: 0.35, blue: 0.35), Color(red: 0.97, green: 0.58, blue: 0.22)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: max(6, geo.size.width * CGFloat(progress)), height: 6)
+                        }
+                    }
+                    .frame(height: 6)
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 2)
+
+                    // Interval Control Buttons
+                    if !coordinator.isCardioIntervalRunning && elapsedSecs == 0 {
+                        Button(action: {
+                            coordinator.startCardioInterval()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "play.fill")
+                                    .font(.system(size: 13))
+                                Text("START INTERVAL (\(durationMins) MIN)")
+                                    .font(.system(size: 12, weight: .black, design: .rounded))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 9)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color(red: 0.97, green: 0.35, blue: 0.35), Color(red: 0.85, green: 0.25, blue: 0.25)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .foregroundColor(.white)
+                            .cornerRadius(9)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.top, 2)
+                    } else if coordinator.isCardioIntervalRunning {
+                        HStack(spacing: 6) {
+                            Button(action: {
+                                coordinator.pauseCardioInterval()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "pause.fill")
+                                        .font(.system(size: 11))
+                                    Text("PAUSE")
+                                        .font(.system(size: 11, weight: .black))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(Color.white.opacity(0.12))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+
+                            Button(action: {
+                                coordinator.completeCardioInterval()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 11))
+                                    Text("COMPLETE")
+                                        .font(.system(size: 11, weight: .black))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(Color(red: 0.20, green: 0.78, blue: 0.55))
+                                .foregroundColor(.black)
+                                .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .padding(.top, 2)
+                    } else {
+                        // Paused state
+                        HStack(spacing: 6) {
+                            Button(action: {
+                                coordinator.resumeCardioInterval()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "play.fill")
+                                        .font(.system(size: 11))
+                                    Text("RESUME")
+                                        .font(.system(size: 11, weight: .black))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(Color(red: 0.22, green: 0.74, blue: 0.97))
+                                .foregroundColor(.black)
+                                .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+
+                            Button(action: {
+                                coordinator.completeCardioInterval()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 11))
+                                    Text("LOG")
+                                        .font(.system(size: 11, weight: .black))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(Color(red: 0.20, green: 0.78, blue: 0.55))
+                                .foregroundColor(.black)
+                                .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .padding(.top, 2)
+
+                        Button(action: {
+                            coordinator.resetCardioInterval()
+                        }) {
+                            Text("Reset Timer")
+                                .font(.system(size: 9.5, weight: .semibold))
+                                .foregroundColor(.gray)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(8)
+                .frame(maxWidth: .infinity)
+                .background(Color.white.opacity(0.06))
                 .cornerRadius(10)
+
+                // Large Heart Rate Telemetry HUD
+                VStack(spacing: 4) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(heartRateColor)
+
+                        Text(workoutManager.currentHeartRate > 0 ? "\(workoutManager.currentHeartRate)" : "--")
+                            .font(.system(size: 34, weight: .black, design: .monospaced))
+                            .foregroundColor(.white)
+
+                        Text("BPM")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.gray)
+                    }
+
+                    let minBpm = cardio?.targetBpmMin ?? 125
+                    let maxBpm = cardio?.targetBpmMax ?? 142
+                    let curBpm = workoutManager.currentHeartRate
+
+                    if curBpm == 0 {
+                        Text("Target: \(minBpm)–\(maxBpm) BPM")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.gray)
+                    } else if curBpm < minBpm {
+                        Text("Accelerate: Target \(minBpm)–\(maxBpm) BPM")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                    } else if curBpm <= maxBpm {
+                        Text("✓ In Optimal Tanaka Zone (\(minBpm)–\(maxBpm))")
+                            .font(.system(size: 10, weight: .black))
+                            .foregroundColor(Color(red: 0.06, green: 0.72, blue: 0.51))
+                    } else {
+                        Text("Ease Pace: Above \(maxBpm) BPM")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(Color(red: 0.97, green: 0.35, blue: 0.35))
+                    }
+
+                    // Button to open Fullscreen 52pt HUD
+                    Button(action: {
+                        coordinator.selectedTab = 3
+                        WKInterfaceDevice.current().play(.click)
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "gauge.with.needle")
+                                .font(.system(size: 9))
+                            Text("OPEN FULLSCREEN HUD")
+                                .font(.system(size: 9, weight: .black, design: .rounded))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.1))
+                        .foregroundColor(.white)
+                        .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.top, 2)
+                }
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity)
+                .background(Color.white.opacity(0.04))
+                .cornerRadius(10)
+
+                // Advance to Cool-Down
+                Button(action: {
+                    coordinator.selectPhase("cooldown")
+                    WKInterfaceDevice.current().play(.start)
+                }) {
+                    HStack(spacing: 6) {
+                        Text("GO TO COOL-DOWN")
+                            .font(.system(size: 11.5, weight: .black, design: .rounded))
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 12))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+                    .background(Color(red: 0.20, green: 0.78, blue: 0.55))
+                    .foregroundColor(.black)
+                    .cornerRadius(9)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
-            .buttonStyle(PlainButtonStyle())
         }
     }
 
@@ -999,37 +1352,50 @@ struct WorkoutPhasesSheet: View {
                         .font(.system(size: 10, weight: .black, design: .rounded))
                         .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
 
-                    ForEach(coordinator.workoutState.exercises) { ex in
-                        Button(action: {
-                            onSelectExercise(ex.exerciseName)
-                            presentationMode.wrappedValue.dismiss()
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: ex.isCompleted ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(ex.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
+                    if coordinator.workoutState.exercises.isEmpty {
+                        HStack(spacing: 6) {
+                            Image(systemName: "figure.run")
+                                .font(.system(size: 11))
+                                .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                            Text("Active Recovery · No Lifts Scheduled")
+                                .font(.system(size: 10.5, weight: .medium))
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 2)
+                    } else {
+                        ForEach(coordinator.workoutState.exercises) { ex in
+                            Button(action: {
+                                onSelectExercise(ex.exerciseName)
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: ex.isCompleted ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(ex.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
 
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(ex.exerciseName)
-                                        .font(.system(size: 11, weight: .bold))
-                                        .foregroundColor(ex.isCompleted ? .gray : .white)
-                                        .lineLimit(1)
-                                    Text("\(ex.totalSets) sets × \(ex.repsDisplay) · \(Int(ex.prescribedWeight)) lbs")
-                                        .font(.system(size: 9, weight: .medium))
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(ex.exerciseName)
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(ex.isCompleted ? .gray : .white)
+                                            .lineLimit(1)
+                                        Text("\(ex.totalSets) sets × \(ex.repsDisplay) · \(Int(ex.prescribedWeight)) lbs")
+                                            .font(.system(size: 9, weight: .medium))
+                                            .foregroundColor(.gray)
+                                    }
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 9))
                                         .foregroundColor(.gray)
                                 }
-
-                                Spacer()
-
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 9))
-                                    .foregroundColor(.gray)
+                                .padding(6)
+                                .background(ex.exerciseName == coordinator.workoutState.activeExercise?.exerciseName ? Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.15) : Color.clear)
+                                .cornerRadius(6)
                             }
-                            .padding(6)
-                            .background(ex.exerciseName == coordinator.workoutState.activeExercise?.exerciseName ? Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.15) : Color.clear)
-                            .cornerRadius(6)
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(8)
@@ -1038,14 +1404,22 @@ struct WorkoutPhasesSheet: View {
 
                 // 3. Cardio Section
                 if let cardio = coordinator.workoutState.cardioProtocol {
+                    let cardioDone = cardio.isCompleted || coordinator.isCardioCompleted
                     VStack(alignment: .leading, spacing: 4) {
                         Text("3. CARDIO PROTOCOL")
                             .font(.system(size: 10, weight: .black, design: .rounded))
                             .foregroundColor(Color(red: 0.97, green: 0.35, blue: 0.35))
 
-                        Text(cardio.modality)
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white)
+                        HStack(spacing: 6) {
+                            Image(systemName: cardioDone ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 11))
+                                .foregroundColor(cardioDone ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
+
+                            Text(cardio.modality)
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(cardioDone ? .gray : .white)
+                                .strikethrough(cardioDone)
+                        }
 
                         Text("\(cardio.durationMins) mins · Tanaka Zone \(cardio.targetZone) (\(cardio.targetBpmMin)–\(cardio.targetBpmMax) BPM)")
                             .font(.system(size: 9, weight: .medium))
