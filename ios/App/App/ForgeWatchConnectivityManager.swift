@@ -18,6 +18,7 @@ import HealthKit
     public var onEndWorkoutFromWatch: (() -> Void)?
     public var onExerciseSelectedFromWatch: ((String) -> Void)?
     public var onPhaseSelectedFromWatch: ((String) -> Void)?
+    public var onStartWorkoutFromWatch: (([String: Any]) -> Void)?
 
     private override init() {
         super.init()
@@ -237,6 +238,10 @@ import HealthKit
                 if let phase = dict["phase"] as? String {
                     self?.onPhaseSelectedFromWatch?(phase)
                 }
+
+            case "startWorkout":
+                // Athlete started workout session directly on Apple Watch
+                self?.onStartWorkoutFromWatch?(dict)
 
             default:
                 break

@@ -52,13 +52,11 @@ struct ContentView: View {
     @ObservedObject var coordinator = WatchSessionCoordinator.shared
     @ObservedObject var workoutManager = WatchWorkoutManager.shared
 
-    @State private var selectedTab: Int = 1
-
     var body: some View {
         Group {
             if coordinator.workoutState.isSessionActive || workoutManager.isWorkoutActive {
-                TabView(selection: $selectedTab) {
-                    WorkoutControlsView(selectedTab: $selectedTab)
+                TabView(selection: $coordinator.selectedTab) {
+                    WorkoutControlsView(selectedTab: $coordinator.selectedTab)
                         .tag(0)
 
                     WorkoutActiveView()
@@ -320,6 +318,8 @@ struct WatchHomeView: View {
                         workoutManager.startWorkout(activityType: .traditionalStrengthTraining)
                         coordinator.workoutState.isSessionActive = true
                         coordinator.workoutState.activePhase = "warmup"
+                        coordinator.selectedTab = 1
+                        coordinator.startWorkoutFromWatch(dayNumber: coordinator.workoutState.dayNumber, phase: "warmup")
                     }) {
                         HStack(spacing: 8) {
                             ZStack {
@@ -358,6 +358,9 @@ struct WatchHomeView: View {
                         WKInterfaceDevice.current().play(.start)
                         workoutManager.startWorkout(activityType: .highIntensityIntervalTraining)
                         coordinator.workoutState.isSessionActive = true
+                        coordinator.workoutState.activePhase = "cardio"
+                        coordinator.selectedTab = 1
+                        coordinator.startWorkoutFromWatch(dayNumber: coordinator.workoutState.dayNumber, phase: "cardio")
                     }) {
                         HStack(spacing: 8) {
                             ZStack {

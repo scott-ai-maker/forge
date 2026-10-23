@@ -2037,6 +2037,30 @@ export default function FitnessTrackerClient({
     }
   }, [effectiveActiveWorkoutDay])
 
+  // Listen for Workout started directly on Apple Watch
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchStartWorkout }) => {
+      void subscribeToWatchStartWorkout((data) => {
+        if (data?.dayNumber) {
+          setActiveWorkoutDay(data.dayNumber)
+        }
+        if (data?.phase && ['warmup', 'resistance', 'cardio', 'cooldown'].includes(data.phase)) {
+          setActiveStepFilter(data.phase as any)
+          if (data.dayNumber) {
+            setCollapsedStages(prev => ({ ...prev, [`${data.dayNumber}-${data.phase}`]: false }))
+          }
+        }
+      }).then(cleanup => {
+        unsubscribe = cleanup
+      })
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [])
+
   async function handleSkipExercise(workout: WorkoutDay, exercise: WorkoutExercise, reason: string, _notes: string) {
     await fetch('/api/fitness/skip-exercise', {
       method: 'POST',

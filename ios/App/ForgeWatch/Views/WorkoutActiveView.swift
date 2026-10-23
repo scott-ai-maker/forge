@@ -22,13 +22,11 @@ public struct WorkoutActiveView: View {
     @State private var showEndConfirmation: Bool = false
     @State private var showPhasesSheet: Bool = false
 
-    // Warm-up drill timer state
-    @State private var activeWarmupSeconds: Int = 30
-    @State private var isWarmupTimerActive: Bool = false
-
-    // Cool-down stretch timer state
-    @State private var activeCooldownSeconds: Int = 30
-    @State private var isCooldownTimerActive: Bool = false
+    // Drill & stretch interactive countdown timer state
+    @State private var activeTimerItemName: String? = nil
+    @State private var activeTimerRemainingSec: Int = 0
+    @State private var activeTimerTotalSec: Int = 0
+    @State private var drillTimer: Timer? = nil
 
     public var body: some View {
         ScrollView {
@@ -116,6 +114,15 @@ public struct WorkoutActiveView: View {
         .onAppear {
             syncStateFromCoordinator()
         }
+        .onChange(of: coordinator.workoutState.activeExerciseIndex) { _ in
+            syncStateFromCoordinator()
+        }
+        .onChange(of: coordinator.workoutState.activeExercise?.exerciseName) { _ in
+            syncStateFromCoordinator()
+        }
+        .onDisappear {
+            stopDrillTimer()
+        }
         .sheet(isPresented: $showPlateSheet) {
             PlateCalculatorSheet(totalWeightLbs: loggedWeight)
         }
@@ -152,28 +159,79 @@ public struct WorkoutActiveView: View {
 
             ForEach(coordinator.workoutState.warmupDrills) { drill in
                 HStack(spacing: 8) {
+                    // Checkmark Toggle Button
                     Button(action: {
-                        coordinator.completeWarmupDrill(named: drill.name)
+                        coordinator.toggleWarmupDrill(named: drill.name)
                     }) {
                         Image(systemName: drill.isCompleted ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 16))
+                            .font(.system(size: 18))
                             .foregroundColor(drill.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
                     }
                     .buttonStyle(PlainButtonStyle())
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(drill.name)
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(drill.isCompleted ? .gray : .white)
-                            .strikethrough(drill.isCompleted)
-                            .lineLimit(1)
+                    // Drill Details (Tap row to toggle)
+                    Button(action: {
+                        coordinator.toggleWarmupDrill(named: drill.name)
+                    }) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(drill.phaseLabel)
+                                .font(.system(size: 8, weight: .black, design: .rounded))
+                                .foregroundColor(warmupBadgeColor(drill.phaseLabel))
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1.5)
+                                .background(warmupBadgeColor(drill.phaseLabel).opacity(0.18))
+                                .cornerRadius(3)
 
-                        Text(drill.protocolText)
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(.gray)
+                            Text(drill.name)
+                                .font(.system(size: 11.5, weight: .bold))
+                                .foregroundColor(drill.isCompleted ? .gray : .white)
+                                .strikethrough(drill.isCompleted)
+                                .lineLimit(1)
+
+                            Text(drill.protocolText)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.gray)
+                                .lineLimit(1)
+                        }
                     }
+                    .buttonStyle(PlainButtonStyle())
 
-                    Spacer()
+                    Spacer(minLength: 2)
+
+                    // Interactive Hold Timer Button
+                    if activeTimerItemName == drill.name {
+                        Button(action: { stopDrillTimer() }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "stop.fill")
+                                    .font(.system(size: 8))
+                                Text("\(activeTimerRemainingSec)s")
+                                    .font(.system(size: 10, weight: .black, design: .monospaced))
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 5)
+                            .background(Color(red: 0.97, green: 0.58, blue: 0.11))
+                            .foregroundColor(.black)
+                            .cornerRadius(6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    } else {
+                        Button(action: {
+                            startDrillTimer(named: drill.name, duration: drill.durationSec, isWarmup: true)
+                        }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "timer")
+                                    .font(.system(size: 9))
+                                Text("\(drill.durationSec)s")
+                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            }
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 5)
+                            .background(Color.white.opacity(0.1))
+                            .foregroundColor(drill.isCompleted ? .gray : Color(red: 0.97, green: 0.58, blue: 0.11))
+                            .cornerRadius(6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
                 }
                 .padding(8)
                 .background(Color.white.opacity(0.06))
@@ -285,79 +343,147 @@ public struct WorkoutActiveView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 2)
 
-            // Hero Metric Cards (Reps & Weight) with Crown Rotation
-            HStack(spacing: 8) {
+            // Hero Metric Cards (Reps & Weight) with Tactile Steppers & Crown Rotation
+            HStack(spacing: 6) {
                 // REPS CARD
-                Button(action: {
-                    isCrownFocusedOnReps = true
-                    WKInterfaceDevice.current().play(.click)
-                }) {
-                    VStack(spacing: 2) {
-                        HStack(spacing: 4) {
+                VStack(spacing: 2) {
+                    Button(action: {
+                        isCrownFocusedOnReps = true
+                        WKInterfaceDevice.current().play(.click)
+                    }) {
+                        HStack(spacing: 3) {
                             if isCrownFocusedOnReps {
                                 Circle()
                                     .fill(Color(red: 0.22, green: 0.74, blue: 0.97))
-                                    .frame(width: 5, height: 5)
+                                    .frame(width: 4, height: 4)
                             }
                             Text("REPS")
-                                .font(.system(size: 11, weight: .black))
+                                .font(.system(size: 10, weight: .black))
                                 .foregroundColor(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97) : .gray)
                         }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    HStack(spacing: 2) {
+                        Button(action: {
+                            isCrownFocusedOnReps = true
+                            if loggedReps > 1 {
+                                loggedReps -= 1
+                                WKInterfaceDevice.current().play(.click)
+                            }
+                        }) {
+                            Image(systemName: "minus")
+                                .font(.system(size: 10, weight: .black))
+                                .foregroundColor(.white)
+                                .frame(width: 22, height: 22)
+                                .background(Color.white.opacity(0.12))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
 
                         Text("\(Int(loggedReps))")
-                            .font(.system(size: 38, weight: .black, design: .rounded))
+                            .font(.system(size: 30, weight: .black, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(.white)
-                            .minimumScaleFactor(0.8)
+                            .frame(minWidth: 36)
+
+                        Button(action: {
+                            isCrownFocusedOnReps = true
+                            if loggedReps < 99 {
+                                loggedReps += 1
+                                WKInterfaceDevice.current().play(.click)
+                            }
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 10, weight: .black))
+                                .foregroundColor(.white)
+                                .frame(width: 22, height: 22)
+                                .background(Color.white.opacity(0.12))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.18) : Color.white.opacity(0.06))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97) : Color.white.opacity(0.1), lineWidth: isCrownFocusedOnReps ? 2 : 1)
-                    )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.18) : Color.white.opacity(0.06))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97) : Color.white.opacity(0.1), lineWidth: isCrownFocusedOnReps ? 2 : 1)
+                )
 
                 // WEIGHT CARD
-                Button(action: {
-                    isCrownFocusedOnReps = false
-                    WKInterfaceDevice.current().play(.click)
-                }) {
-                    VStack(spacing: 2) {
-                        HStack(spacing: 4) {
+                VStack(spacing: 2) {
+                    Button(action: {
+                        isCrownFocusedOnReps = false
+                        WKInterfaceDevice.current().play(.click)
+                    }) {
+                        HStack(spacing: 3) {
                             if !isCrownFocusedOnReps {
                                 Circle()
                                     .fill(Color(red: 0.83, green: 0.63, blue: 0.09))
-                                    .frame(width: 5, height: 5)
+                                    .frame(width: 4, height: 4)
                             }
                             Text("LBS")
-                                .font(.system(size: 11, weight: .black))
+                                .font(.system(size: 10, weight: .black))
                                 .foregroundColor(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09) : .gray)
                         }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    HStack(spacing: 2) {
+                        Button(action: {
+                            isCrownFocusedOnReps = false
+                            if loggedWeight >= 5 {
+                                loggedWeight -= 5
+                                WKInterfaceDevice.current().play(.click)
+                            }
+                        }) {
+                            Text("-5")
+                                .font(.system(size: 9, weight: .black))
+                                .foregroundColor(.white)
+                                .frame(width: 22, height: 22)
+                                .background(Color.white.opacity(0.12))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
 
                         Text("\(Int(loggedWeight))")
-                            .font(.system(size: 38, weight: .black, design: .rounded))
+                            .font(.system(size: 30, weight: .black, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(.white)
-                            .minimumScaleFactor(0.8)
+                            .frame(minWidth: 42)
+
+                        Button(action: {
+                            isCrownFocusedOnReps = false
+                            if loggedWeight <= 995 {
+                                loggedWeight += 5
+                                WKInterfaceDevice.current().play(.click)
+                            }
+                        }) {
+                            Text("+5")
+                                .font(.system(size: 9, weight: .black))
+                                .foregroundColor(.white)
+                                .frame(width: 22, height: 22)
+                                .background(Color.white.opacity(0.12))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09).opacity(0.18) : Color.white.opacity(0.06))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09) : Color.white.opacity(0.1), lineWidth: !isCrownFocusedOnReps ? 2 : 1)
-                    )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09).opacity(0.18) : Color.white.opacity(0.06))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09) : Color.white.opacity(0.1), lineWidth: !isCrownFocusedOnReps ? 2 : 1)
+                )
             }
             .focusable(true)
             .digitalCrownRotation(
@@ -369,6 +495,36 @@ public struct WorkoutActiveView: View {
                 isContinuous: false,
                 isHapticFeedbackEnabled: true
             )
+
+            // Compact RPE Intensity Selector
+            HStack(spacing: 3) {
+                Text("RPE")
+                    .font(.system(size: 9, weight: .black, design: .rounded))
+                    .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                    .padding(.leading, 2)
+
+                Spacer()
+
+                ForEach([7.0, 8.0, 8.5, 9.0, 10.0], id: \.self) { rpeVal in
+                    Button(action: {
+                        loggedRpe = rpeVal
+                        WKInterfaceDevice.current().play(.click)
+                    }) {
+                        Text(rpeVal == 10.0 ? "10" : (rpeVal.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(rpeVal))" : String(format: "%.1f", rpeVal)))
+                            .font(.system(size: 9.5, weight: .bold, design: .rounded))
+                            .foregroundColor(loggedRpe == rpeVal ? .black : .white.opacity(0.85))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2.5)
+                            .background(loggedRpe == rpeVal ? Color(red: 0.83, green: 0.63, blue: 0.09) : Color.white.opacity(0.08))
+                            .cornerRadius(5)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2.5)
+            .background(Color.white.opacity(0.04))
+            .cornerRadius(6)
 
             // Barbell Plate Math Button
             Button(action: {
@@ -454,6 +610,30 @@ public struct WorkoutActiveView: View {
             }
             .padding(.top, 2)
 
+            // Telemetry Header: Elapsed Time & Active Calories
+            HStack {
+                HStack(spacing: 4) {
+                    Image(systemName: "stopwatch.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                    Text(formatElapsed(workoutManager.elapsedSeconds))
+                        .font(.system(size: 12, weight: .black, design: .monospaced))
+                        .foregroundColor(.white)
+                }
+
+                Spacer()
+
+                HStack(spacing: 4) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.22))
+                    Text("\(Int(workoutManager.activeCalories)) kcal")
+                        .font(.system(size: 12, weight: .black, design: .monospaced))
+                        .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.22))
+                }
+            }
+            .padding(.horizontal, 4)
+
             // Large Heart Rate Telemetry HUD
             VStack(spacing: 4) {
                 HStack(spacing: 6) {
@@ -538,27 +718,67 @@ public struct WorkoutActiveView: View {
             ForEach(coordinator.workoutState.cooldownStretches) { stretch in
                 HStack(spacing: 8) {
                     Button(action: {
-                        coordinator.completeCooldownStretch(named: stretch.name)
+                        coordinator.toggleCooldownStretch(named: stretch.name)
                     }) {
                         Image(systemName: stretch.isCompleted ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 16))
+                            .font(.system(size: 18))
                             .foregroundColor(stretch.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
                     }
                     .buttonStyle(PlainButtonStyle())
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(stretch.name)
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(stretch.isCompleted ? .gray : .white)
-                            .strikethrough(stretch.isCompleted)
-                            .lineLimit(1)
+                    Button(action: {
+                        coordinator.toggleCooldownStretch(named: stretch.name)
+                    }) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(stretch.name)
+                                .font(.system(size: 11.5, weight: .bold))
+                                .foregroundColor(stretch.isCompleted ? .gray : .white)
+                                .strikethrough(stretch.isCompleted)
+                                .lineLimit(1)
 
-                        Text(stretch.protocolText)
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(.gray)
+                            Text(stretch.protocolText)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.gray)
+                                .lineLimit(1)
+                        }
                     }
+                    .buttonStyle(PlainButtonStyle())
 
-                    Spacer()
+                    Spacer(minLength: 2)
+
+                    if activeTimerItemName == stretch.name {
+                        Button(action: { stopDrillTimer() }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "stop.fill")
+                                    .font(.system(size: 8))
+                                Text("\(activeTimerRemainingSec)s")
+                                    .font(.system(size: 10, weight: .black, design: .monospaced))
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 5)
+                            .background(Color(red: 0.20, green: 0.78, blue: 0.55))
+                            .foregroundColor(.black)
+                            .cornerRadius(6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    } else {
+                        Button(action: {
+                            startDrillTimer(named: stretch.name, duration: stretch.durationSec, isWarmup: false)
+                        }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "timer")
+                                    .font(.system(size: 9))
+                                Text("\(stretch.durationSec)s")
+                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            }
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 5)
+                            .background(Color.white.opacity(0.1))
+                            .foregroundColor(stretch.isCompleted ? .gray : Color(red: 0.20, green: 0.78, blue: 0.55))
+                            .cornerRadius(6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
                 }
                 .padding(8)
                 .background(Color.white.opacity(0.06))
@@ -635,9 +855,61 @@ public struct WorkoutActiveView: View {
     }
 
     private func formatQuickPlateBar(weightLbs: Double) -> String {
-        guard weightLbs > 45 else { return "Bar only (45 lbs)" }
-        let perSide = (weightLbs - 45) / 2
-        return "Side: \(Int(perSide)) lbs"
+        if weightLbs >= 45 {
+            let perSide = (weightLbs - 45) / 2
+            return "Barbell: \(Int(perSide)) lbs/side"
+        } else if weightLbs > 0 {
+            return "\(Int(weightLbs)) lbs · Dumbbell / Cable"
+        } else {
+            return "Bodyweight"
+        }
+    }
+
+    private func formatElapsed(_ totalSeconds: Int) -> String {
+        let mm = totalSeconds / 60
+        let ss = totalSeconds % 60
+        return String(format: "%02d:%02d", mm, ss)
+    }
+
+    private func startDrillTimer(named name: String, duration: Int, isWarmup: Bool) {
+        drillTimer?.invalidate()
+        activeTimerItemName = name
+        activeTimerRemainingSec = duration
+        activeTimerTotalSec = duration
+        WKInterfaceDevice.current().play(.start)
+
+        drillTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            if self.activeTimerRemainingSec > 1 {
+                self.activeTimerRemainingSec -= 1
+            } else {
+                self.stopDrillTimer()
+                WatchHapticManager.shared.playSuccessKnock()
+                if isWarmup {
+                    self.coordinator.completeWarmupDrill(named: name)
+                } else {
+                    self.coordinator.completeCooldownStretch(named: name)
+                }
+            }
+        }
+    }
+
+    private func stopDrillTimer() {
+        drillTimer?.invalidate()
+        drillTimer = nil
+        activeTimerItemName = nil
+        activeTimerRemainingSec = 0
+    }
+
+    private func warmupBadgeColor(_ label: String) -> Color {
+        let upper = label.uppercased()
+        if upper.contains("INHIBIT") {
+            return Color(red: 0.97, green: 0.58, blue: 0.11) // Amber
+        } else if upper.contains("LENGTHEN") {
+            return Color(red: 0.22, green: 0.74, blue: 0.97) // Cyan
+        } else if upper.contains("ACTIVATE") {
+            return Color(red: 0.20, green: 0.78, blue: 0.55) // Emerald
+        }
+        return Color(red: 0.83, green: 0.63, blue: 0.09) // Gold
     }
 }
 

@@ -31,8 +31,8 @@ public struct RestTimerRadialView: View {
                 .cornerRadius(6)
 
                 // Autonomic Status Pill
-                Text(isReadyToLift ? "READY TO LIFT" : "RECOVERING")
-                    .font(.system(size: 10, weight: .black))
+                Text(coordinator.restTimer.isBioPaced ? "ZONE 1 · READY" : (isReadyToLift ? "READY TO LIFT" : "RECOVERING"))
+                    .font(.system(size: 9.5, weight: .black))
                     .foregroundColor(isReadyToLift ? Color(red: 0.06, green: 0.72, blue: 0.51) : Color(red: 0.83, green: 0.63, blue: 0.09))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)

@@ -85,6 +85,9 @@ public struct TempoMetronomeView: View {
         .padding(.horizontal, 4)
         .padding(.bottom, 2)
         .onAppear(perform: parsePrescribedTempo)
+        .onChange(of: coordinator.workoutState.activeExercise?.tempo) { _ in
+            parsePrescribedTempo()
+        }
         .onDisappear {
             stopPacing()
         }

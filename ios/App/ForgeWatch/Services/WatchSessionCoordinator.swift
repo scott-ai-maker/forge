@@ -15,6 +15,7 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     @Published public var restTimer: WatchRestTimerState = WatchRestTimerState()
     @Published public var cnsReadiness: WatchCnsReadiness = WatchCnsReadiness()
     @Published public var isPhoneReachable: Bool = false
+    @Published public var selectedTab: Int = 1
 
     private var localTimer: Timer?
     private var lastWarningFiredSeconds: Int = -1
@@ -91,6 +92,11 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
 
         let restSecs = workoutState.activeExercise?.restSeconds ?? 60
         startLocalRestTimer(seconds: restSecs, exerciseName: exerciseName)
+
+        // Automatically navigate to the radial rest timer tab to pace recovery
+        DispatchQueue.main.async {
+            self.selectedTab = 2
+        }
     }
 
     // MARK: - Exercise & Phase Navigation
@@ -142,6 +148,7 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
 
     public func selectPhase(_ phase: String) {
         workoutState.activePhase = phase
+        selectedTab = 1
         WKInterfaceDevice.current().play(.click)
 
         sendToPhone([
@@ -151,18 +158,48 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         ])
     }
 
-    public func completeWarmupDrill(named name: String) {
+    public func toggleWarmupDrill(named name: String) {
         if let idx = workoutState.warmupDrills.firstIndex(where: { $0.name == name }) {
-            workoutState.warmupDrills[idx].isCompleted = true
-            WatchHapticManager.shared.playSuccessKnock()
+            workoutState.warmupDrills[idx].isCompleted.toggle()
+            if workoutState.warmupDrills[idx].isCompleted {
+                WatchHapticManager.shared.playSuccessKnock()
+            } else {
+                WKInterfaceDevice.current().play(.click)
+            }
+        }
+    }
+
+    public func completeWarmupDrill(named name: String) {
+        toggleWarmupDrill(named: name)
+    }
+
+    public func toggleCooldownStretch(named name: String) {
+        if let idx = workoutState.cooldownStretches.firstIndex(where: { $0.name == name }) {
+            workoutState.cooldownStretches[idx].isCompleted.toggle()
+            if workoutState.cooldownStretches[idx].isCompleted {
+                WatchHapticManager.shared.playSuccessKnock()
+            } else {
+                WKInterfaceDevice.current().play(.click)
+            }
         }
     }
 
     public func completeCooldownStretch(named name: String) {
-        if let idx = workoutState.cooldownStretches.firstIndex(where: { $0.name == name }) {
-            workoutState.cooldownStretches[idx].isCompleted = true
-            WatchHapticManager.shared.playSuccessKnock()
-        }
+        toggleCooldownStretch(named: name)
+    }
+
+    /**
+     * Athlete starts workout directly from watch home view.
+     * Notifies companion iPhone so the web app switches to the active workout session.
+     */
+    public func startWorkoutFromWatch(dayNumber: Int, phase: String = "warmup") {
+        let payload: [String: Any] = [
+            "type": "startWorkout",
+            "dayNumber": dayNumber,
+            "phase": phase,
+            "timestamp": ISO8601DateFormatter().string(from: Date())
+        ]
+        sendToPhone(payload)
     }
 
     /**
@@ -180,6 +217,9 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         switch action {
         case "ready", "skip":
             stopLocalRestTimer()
+            DispatchQueue.main.async {
+                self.selectedTab = 1
+            }
         case "add15":
             restTimer.remainingSeconds += 15
             restTimer.totalRestSeconds += 15
@@ -257,6 +297,9 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             } else {
                 self.stopLocalRestTimer()
                 WatchHapticManager.shared.playRestComplete()
+                DispatchQueue.main.async {
+                    self.selectedTab = 1
+                }
             }
         }
     }

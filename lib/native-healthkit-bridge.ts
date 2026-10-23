@@ -87,7 +87,7 @@ export interface GAAHealthKitPluginInterface {
     hrvRmssd?: number
   }): Promise<{ success: boolean }>
   addListener(
-    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected',
+    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected' | 'onWatchStartWorkout',
     listenerFunc: (data: any) => void
   ): Promise<PluginListenerHandle>
 }
@@ -1280,3 +1280,22 @@ export async function subscribeToWatchPhaseSelected(
   }
 }
 
+/**
+ * Subscribes to workout start events initiated directly from the Apple Watch home dashboard.
+ */
+export async function subscribeToWatchStartWorkout(
+  callback: (data: { dayNumber: number; phase: string; timestamp?: string }) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchStartWorkout', (data: { dayNumber: number; phase: string; timestamp?: string }) => {
+      callback(data)
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
