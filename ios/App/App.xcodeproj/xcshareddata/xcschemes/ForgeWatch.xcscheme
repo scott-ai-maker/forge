@@ -46,7 +46,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FW171AD5C0BD5BE5A9767201"
             BuildableName = "ForgeWatch.app"
-            BlueprintName = "ForgeWatch"
             ReferencedContainer = "container:App.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -63,7 +62,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FW171AD5C0BD5BE5A9767201"
             BuildableName = "ForgeWatch.app"
-            BlueprintName = "ForgeWatch"
             ReferencedContainer = "container:App.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

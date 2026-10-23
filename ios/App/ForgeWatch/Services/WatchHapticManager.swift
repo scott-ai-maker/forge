@@ -50,6 +50,14 @@ public final class WatchHapticManager {
     }
 
     /**
+     * Authoritative success haptic knock upon set or action completion.
+     */
+    public func playSuccessKnock() {
+        let device = WKInterfaceDevice.current()
+        device.play(.success)
+    }
+
+    /**
      * Paces NASM OPT™ tempo phases (e.g. 4-2-1-1).
      */
     public func playTempoBeat(phase: String) {

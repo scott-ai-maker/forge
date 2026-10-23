@@ -2,14 +2,15 @@ import SwiftUI
 
 /**
  * TempoMetronomeView
- * Visual contraction pacer and synchronous Taptic metronome for NASM OPT™ tempos
+ * Visual contraction pacer and synchronous Taptic metronome for NASM OPT™ tempos.
+ * Massive 52pt phase counter for mechanical timing under maximum load.
  * Forge Athletic
  */
 public struct TempoMetronomeView: View {
     @ObservedObject var coordinator = WatchSessionCoordinator.shared
 
     @State private var isPacing: Bool = false
-    @State private var currentPhaseName: String = "Eccentric"
+    @State private var currentPhaseName: String = "Eccentric (Lower)"
     @State private var phaseSecondsRemaining: Int = 4
     @State private var currentPhaseIndex: Int = 0 // 0: Eccentric, 1: Iso-bottom, 2: Concentric, 3: Iso-top
     @State private var timer: Timer?
@@ -21,55 +22,68 @@ public struct TempoMetronomeView: View {
     @State private var isoTopSeconds: Int = 1
 
     public var body: some View {
-        VStack(spacing: 8) {
-            // Header
+        VStack(spacing: 6) {
+            // Header: Prescribed NASM Tempo Pill
             HStack {
-                Text("NASM TEMPO")
-                    .font(.system(size: 10, weight: .black))
-                    .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                Text("NASM CADENCE")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97)) // Cyan
                 Spacer()
                 Text("\(eccentricSeconds)-\(isoBottomSeconds)-\(concentricSeconds)-\(isoTopSeconds)")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(.system(size: 13, weight: .black, design: .monospaced))
                     .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(4)
             }
             .padding(.horizontal, 4)
 
-            // Dynamic Visual Contraction Pacer
+            Spacer(minLength: 0)
+
+            // Dynamic Full-Width Visual Contraction Card
             VStack(spacing: 2) {
                 Text(currentPhaseName.uppercased())
-                    .font(.system(size: 11, weight: .black))
+                    .font(.system(size: 13, weight: .black, design: .rounded))
                     .foregroundColor(phaseColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
 
                 Text("\(phaseSecondsRemaining)")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .font(.system(size: 52, weight: .black, design: .rounded))
+                    .monospacedDigit()
                     .foregroundColor(.white)
+                    .padding(.vertical, -4)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(phaseColor.opacity(0.12))
-            .cornerRadius(10)
+            .padding(.vertical, 6)
+            .background(phaseColor.opacity(0.16))
+            .cornerRadius(12)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(phaseColor.opacity(0.6), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(phaseColor, lineWidth: 2)
             )
 
-            // Start / Stop Cadence Button
+            Spacer(minLength: 0)
+
+            // Big Tactile Start / Stop Cadence Button
             Button(action: togglePacing) {
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     Image(systemName: isPacing ? "pause.fill" : "play.fill")
-                        .font(.system(size: 10, weight: .black))
-                    Text(isPacing ? "PAUSE PACER" : "START CADENCE")
-                        .font(.system(size: 11, weight: .black))
+                        .font(.system(size: 12, weight: .bold))
+                    Text(isPacing ? "PAUSE CADENCE" : "START CADENCE")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-                .background(isPacing ? Color.red.opacity(0.8) : Color(red: 0.22, green: 0.74, blue: 0.97))
-                .foregroundColor(.white)
-                .cornerRadius(8)
+                .padding(.vertical, 10)
+                .background(isPacing ? Color.red.opacity(0.85) : Color(red: 0.22, green: 0.74, blue: 0.97))
+                .foregroundColor(isPacing ? .white : .black)
+                .cornerRadius(10)
             }
             .buttonStyle(PlainButtonStyle())
         }
         .padding(.horizontal, 4)
+        .padding(.bottom, 2)
         .onAppear(perform: parsePrescribedTempo)
         .onDisappear {
             stopPacing()

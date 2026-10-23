@@ -2,52 +2,89 @@ import SwiftUI
 
 /**
  * CNSReadinessComplicationView
- * Daily Central Nervous System (CNS) recovery complications & watch face widgets
+ * Daily Central Nervous System (CNS) recovery complications & watch face widgets.
+ * High-contrast athletic biometric card for morning readiness check.
  * Forge Athletic
  */
 public struct CNSReadinessCardView: View {
     let cns: WatchCnsReadiness
 
     public var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
+            // Header: Category & Tier Label
             HStack {
-                Text("CNS READINESS")
-                    .font(.system(size: 9, weight: .black))
-                    .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                HStack(spacing: 4) {
+                    Image(systemName: "brain.head.profile")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                    Text("CNS READINESS")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                }
+
                 Spacer()
+
                 Text(cns.tierLabel.uppercased())
-                    .font(.system(size: 8, weight: .heavy))
+                    .font(.system(size: 9, weight: .black))
                     .foregroundColor(scoreColor)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 1)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
                     .background(scoreColor.opacity(0.2))
-                    .cornerRadius(3)
+                    .cornerRadius(4)
             }
 
-            HStack(alignment: .firstTextBaseline) {
-                Text("\(cns.score)%")
-                    .font(.system(size: 26, weight: .black, design: .rounded))
-                    .foregroundColor(scoreColor)
+            // Score Row with Large 36pt Numeral and Biometrics
+            HStack(alignment: .center) {
+                // Large Score
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("\(cns.score)")
+                        .font(.system(size: 36, weight: .black, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(scoreColor)
+                    Text("%")
+                        .font(.system(size: 14, weight: .black))
+                        .foregroundColor(scoreColor.opacity(0.8))
+                }
+
                 Spacer()
-                VStack(alignment: .trailing, spacing: 0) {
-                    Text("HRV \(cns.hrvRmssd) ms")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(.white)
-                    Text("RHR \(cns.restingHeartRate) bpm")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(.gray)
+
+                // HRV & RHR Biometric Pills
+                VStack(alignment: .trailing, spacing: 3) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "waveform.path.ecg")
+                            .font(.system(size: 9))
+                            .foregroundColor(Color(red: 0.06, green: 0.72, blue: 0.51))
+                        Text("HRV \(cns.hrvRmssd) ms")
+                            .font(.system(size: 11, weight: .black, design: .monospaced))
+                            .foregroundColor(.white)
+                    }
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 9))
+                            .foregroundColor(Color(red: 0.97, green: 0.44, blue: 0.44))
+                        Text("RHR \(cns.restingHeartRate) bpm")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundColor(.gray)
+                    }
                 }
             }
         }
-        .padding(8)
-        .background(Color.white.opacity(0.06))
-        .cornerRadius(10)
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(scoreColor.opacity(0.3), lineWidth: 1)
+        )
     }
 
     private var scoreColor: Color {
-        if cns.score >= 80 { return Color(red: 0.06, green: 0.72, blue: 0.51) } // Green
-        if cns.score >= 60 { return Color(red: 0.83, green: 0.63, blue: 0.09) } // Gold
-        return Color(red: 0.97, green: 0.44, blue: 0.44) // Red
+        if cns.score >= 80 { return Color(red: 0.06, green: 0.72, blue: 0.51) } // Emerald Green
+        if cns.score >= 60 { return Color(red: 0.83, green: 0.63, blue: 0.09) } // Forge Gold
+        return Color(red: 0.97, green: 0.44, blue: 0.44) // Crimson Red
     }
 }
 
@@ -60,21 +97,21 @@ public struct CNSCircularComplicationView: View {
     public var body: some View {
         ZStack {
             Circle()
-                .stroke(Color.white.opacity(0.15), lineWidth: 3)
+                .stroke(Color.white.opacity(0.15), lineWidth: 3.5)
             Circle()
                 .trim(from: 0.0, to: CGFloat(score) / 100.0)
                 .stroke(
                     score >= 75 ? Color(red: 0.06, green: 0.72, blue: 0.51) : Color(red: 0.83, green: 0.63, blue: 0.09),
-                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                    style: StrokeStyle(lineWidth: 3.5, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
 
             VStack(spacing: 0) {
                 Text("\(score)")
-                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .font(.system(size: 15, weight: .black, design: .rounded))
                     .foregroundColor(.white)
                 Text("CNS")
-                    .font(.system(size: 7, weight: .bold))
+                    .font(.system(size: 8, weight: .black))
                     .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
             }
         }
