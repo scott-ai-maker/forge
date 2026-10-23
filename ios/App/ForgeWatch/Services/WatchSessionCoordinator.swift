@@ -27,6 +27,8 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     // Local override tracking to prevent race conditions from in-flight sync payloads
     private var lastLocalPhaseSelectionTime: Date?
     private var lastLocalPhaseSelected: String?
+    private var lastLocalExerciseSelectionTime: Date?
+    private var lastLocalExerciseIndex: Int?
     private var localDrillOverrides: [String: (isCompleted: Bool, timestamp: Date)] = [:]
     private var localStretchOverrides: [String: (isCompleted: Bool, timestamp: Date)] = [:]
 
@@ -113,21 +115,42 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         // Advance local completed sets count and launch local bio-adaptive rest timer
         workoutState.completedSetsCount += 1
 
+        var currentExRestSecs = 60
+
         if var current = workoutState.activeExercise {
             current.completedSetsCount += 1
-            if current.setNumber < current.totalSets {
-                current.setNumber += 1
+            currentExRestSecs = current.restSeconds
+
+            if current.completedSetsCount < current.totalSets {
+                current.setNumber = min(current.totalSets, current.completedSetsCount + 1)
+                workoutState.activeExercise = current
+                if workoutState.activeExerciseIndex < workoutState.exercises.count {
+                    workoutState.exercises[workoutState.activeExerciseIndex] = current
+                }
             } else {
                 current.isCompleted = true
-            }
-            workoutState.activeExercise = current
-            if workoutState.activeExerciseIndex < workoutState.exercises.count {
-                workoutState.exercises[workoutState.activeExerciseIndex] = current
+                if workoutState.activeExerciseIndex < workoutState.exercises.count {
+                    workoutState.exercises[workoutState.activeExerciseIndex] = current
+                }
+
+                // All sets met for this exercise! Smoothly auto-advance to next exercise
+                if workoutState.activeExerciseIndex < workoutState.exercises.count - 1 {
+                    let nextIndex = workoutState.activeExerciseIndex + 1
+                    workoutState.activeExerciseIndex = nextIndex
+                    workoutState.activeExercise = workoutState.exercises[nextIndex]
+                    lastLocalExerciseSelectionTime = Date()
+                    lastLocalExerciseIndex = nextIndex
+
+                    sendToPhone([
+                        "type": "exerciseSelected",
+                        "exerciseName": workoutState.exercises[nextIndex].exerciseName,
+                        "timestamp": ISO8601DateFormatter().string(from: Date())
+                    ])
+                }
             }
         }
 
-        let restSecs = workoutState.activeExercise?.restSeconds ?? 60
-        startLocalRestTimer(seconds: restSecs, exerciseName: exerciseName)
+        startLocalRestTimer(seconds: currentExRestSecs, exerciseName: exerciseName)
 
         saveCachedWorkoutState()
 
@@ -145,6 +168,9 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         guard nextIndex != workoutState.activeExerciseIndex else { return }
         workoutState.activeExerciseIndex = nextIndex
         workoutState.activeExercise = workoutState.exercises[nextIndex]
+        lastLocalExerciseSelectionTime = Date()
+        lastLocalExerciseIndex = nextIndex
+        saveCachedWorkoutState()
         WKInterfaceDevice.current().play(.click)
 
         sendToPhone([
@@ -160,6 +186,9 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         guard prevIndex != workoutState.activeExerciseIndex else { return }
         workoutState.activeExerciseIndex = prevIndex
         workoutState.activeExercise = workoutState.exercises[prevIndex]
+        lastLocalExerciseSelectionTime = Date()
+        lastLocalExerciseIndex = prevIndex
+        saveCachedWorkoutState()
         WKInterfaceDevice.current().play(.click)
 
         sendToPhone([
@@ -170,17 +199,23 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     }
 
     public func selectExercise(named name: String) {
-        if let idx = workoutState.exercises.firstIndex(where: { $0.exerciseName.lowercased() == name.lowercased() }) {
+        let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if let idx = workoutState.exercises.firstIndex(where: {
+            $0.exerciseName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == cleaned
+        }) {
             workoutState.activeExerciseIndex = idx
             workoutState.activeExercise = workoutState.exercises[idx]
             workoutState.activePhase = "resistance"
             lastLocalPhaseSelectionTime = Date()
             lastLocalPhaseSelected = "resistance"
+            lastLocalExerciseSelectionTime = Date()
+            lastLocalExerciseIndex = idx
+            saveCachedWorkoutState()
             WKInterfaceDevice.current().play(.click)
 
             sendToPhone([
                 "type": "exerciseSelected",
-                "exerciseName": name,
+                "exerciseName": workoutState.exercises[idx].exerciseName,
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ])
         }
@@ -667,8 +702,20 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 let isCompound = exDict["isCompound"] as? Bool ?? false
                 let isHammer = exDict["isHammerCurl"] as? Bool ?? false
                 let opt = exDict["optPhase"] as? Int ?? 3
-                let isDone = exDict["isCompleted"] as? Bool ?? false
-                let doneSets = exDict["completedSetsCount"] as? Int ?? 0
+                var isDone = exDict["isCompleted"] as? Bool ?? false
+                var doneSets = exDict["completedSetsCount"] as? Int ?? 0
+
+                // If watch already logged sets locally for this exercise, preserve local progress
+                if let existingEx = self.workoutState.exercises.first(where: {
+                    $0.exerciseName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                }) {
+                    if existingEx.completedSetsCount > doneSets {
+                        doneSets = existingEx.completedSetsCount
+                    }
+                    if existingEx.isCompleted {
+                        isDone = true
+                    }
+                }
                 let targetMuscles = exDict["targetMuscles"] as? String
                 let equipment = exDict["equipment"] as? String
                 let equipmentModality = exDict["equipmentModality"] as? String
@@ -826,13 +873,41 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             }
         }
 
+        let phoneActiveIndex = dict["activeExerciseIndex"] as? Int ?? 0
+        var effectiveActiveExIndex = phoneActiveIndex
+
+        if let lastTime = lastLocalExerciseSelectionTime,
+           let localIndex = lastLocalExerciseIndex,
+           Date().timeIntervalSince(lastTime) < 15.0 {
+            // Respect recent local selection on watch within 15-second window
+            effectiveActiveExIndex = localIndex
+        } else if self.workoutState.activeExerciseIndex > 0 && phoneActiveIndex == 0 && self.workoutState.workoutId == effectiveWorkoutId {
+            // Guard against phone sending default 0 when watch is already progressed into the workout
+            if self.workoutState.activeExerciseIndex < parsedExercises.count {
+                effectiveActiveExIndex = self.workoutState.activeExerciseIndex
+            }
+        }
+
+        if !parsedExercises.isEmpty {
+            effectiveActiveExIndex = max(0, min(parsedExercises.count - 1, effectiveActiveExIndex))
+        } else {
+            effectiveActiveExIndex = 0
+        }
+
+        let effectiveActiveEx: WatchExerciseInfo?
+        if !parsedExercises.isEmpty && parsedExercises.indices.contains(effectiveActiveExIndex) {
+            effectiveActiveEx = parsedExercises[effectiveActiveExIndex]
+        } else {
+            effectiveActiveEx = activeEx ?? parsedExercises.first
+        }
+
         self.workoutState = WatchWorkoutState(
             workoutId: effectiveWorkoutId,
             dayNumber: dayNumber,
             focus: focus,
             activePhase: activePhase,
-            activeExerciseIndex: activeExIndex,
-            activeExercise: parsedExercises.isEmpty ? nil : activeEx,
+            activeExerciseIndex: effectiveActiveExIndex,
+            activeExercise: effectiveActiveEx,
             exercises: parsedExercises,
             warmupDrills: parsedWarmups,
             cooldownStretches: parsedCooldowns,

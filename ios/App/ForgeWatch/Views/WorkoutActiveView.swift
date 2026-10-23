@@ -1378,13 +1378,8 @@ public struct WorkoutActiveView: View {
             rpe: loggedRpe
         )
 
-        // If exercise completed all sets, advance to next exercise automatically
-        if let ex = coordinator.workoutState.activeExercise, ex.isCompleted {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                coordinator.selectNextExercise()
-                syncStateFromCoordinator()
-            }
-        }
+        // Sync local input state immediately to coordinator's active/advanced exercise
+        syncStateFromCoordinator()
     }
 
     private func handleSelectModality(_ modality: WatchEquipmentModality) {

@@ -390,6 +390,12 @@ function normalizeExerciseName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
+function getExerciseNameFromKey(key: string | null | undefined): string | null {
+  if (!key || key === 'none') return null
+  const firstDash = key.indexOf('-')
+  return firstDash !== -1 ? key.slice(firstDash + 1).trim() : key.trim()
+}
+
 function formatGoalTitle(raw?: string | null): string {
   if (!raw) return 'Not set'
   const trimmed = raw.trim()
@@ -1178,7 +1184,7 @@ export default function FitnessTrackerClient({
             notes: we.description ?? undefined,
           }))
 
-      const targetNameLower = (targetExerciseName || (expandedExerciseKey ? expandedExerciseKey.split('-')[1] : '')).toLowerCase()
+      const targetNameLower = (targetExerciseName || getExerciseNameFromKey(expandedExerciseKey) || '').toLowerCase()
       let oldEx = currentDayExercises.find(
         ex => ex.name.toLowerCase() === targetNameLower ||
               targetNameLower.includes(ex.name.toLowerCase()) ||
@@ -1213,7 +1219,7 @@ export default function FitnessTrackerClient({
     const handleCoachRestTimer = (e: Event) => {
       const customEvent = e as CustomEvent<{ seconds?: number; exerciseName?: string }>
       const seconds = customEvent.detail?.seconds || 90
-      const exName = customEvent.detail?.exerciseName || (expandedExerciseKey ? expandedExerciseKey.split('-')[1] : 'Active Exercise')
+      const exName = customEvent.detail?.exerciseName || getExerciseNameFromKey(expandedExerciseKey) || 'Active Exercise'
       const timerKey = `coach-gordon-timer-${Date.now()}`
 
       setActiveRestState({
@@ -1254,7 +1260,7 @@ export default function FitnessTrackerClient({
   useEffect(() => {
     if (typeof window === 'undefined') return
     const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
-    const activeExName = expandedExerciseKey ? expandedExerciseKey.split('-')[1] : undefined
+    const activeExName = getExerciseNameFromKey(expandedExerciseKey) || undefined
     const exercisesList = (activeWorkout?.exercises || []).map(e => e.name)
     const lastLog = localSetLogs[localSetLogs.length - 1]
 
@@ -1450,8 +1456,10 @@ export default function FitnessTrackerClient({
       }
     })
 
-    const activeExName = expandedExerciseKey ? expandedExerciseKey.split('-')[1] : rawExercises[0]?.name
-    const activeExIndex = activeExName ? Math.max(0, rawExercises.findIndex(e => e.name === activeExName)) : 0
+    const effectiveActiveExName = getExerciseNameFromKey(effectiveOpenExerciseKey) || rawExercises[0]?.name
+    const activeExIndex = effectiveActiveExName
+      ? Math.max(0, rawExercises.findIndex(e => normalizeExerciseName(e.name) === normalizeExerciseName(effectiveActiveExName)))
+      : 0
     const activeEx = exercisesList.length > 0 ? (exercisesList[activeExIndex] || exercisesList[0]) : undefined
 
     const completedWorkingSets = (localSetLogs || []).filter(l =>
@@ -1556,6 +1564,7 @@ export default function FitnessTrackerClient({
     localSetLogs,
     inlineSetDrafts,
     expandedExerciseKey,
+    effectiveOpenExerciseKey,
     profile,
     plan,
     localCardioLogs,
@@ -1850,10 +1859,11 @@ export default function FitnessTrackerClient({
     }
 
     if (!draft.isWarmup && totalWorkingSetsNow >= targetSets) {
-      // Pre-warm next exercise draft without forcefully collapsing the current exercise card
+      // Pre-warm next exercise draft and auto-advance expanded exercise to next movement
       const currentExIdx = (workout.exercises || []).findIndex(e => normalizeExerciseName(e.name) === normalizeExerciseName(exercise.name))
       if (currentExIdx >= 0 && currentExIdx + 1 < workout.exercises.length) {
         const nextExercise = workout.exercises[currentExIdx + 1]
+        setExpandedExerciseKey(`${workout.day}-${nextExercise.name}`)
         const nextDraftKey = exerciseDraftKey(workout.day, nextExercise.name)
         if (!inlineSetDrafts[nextDraftKey]) {
           const nextMovementCard = getNasmClinicalMovementCard(nextExercise.name, nextExercise)
@@ -2022,9 +2032,10 @@ export default function FitnessTrackerClient({
         const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
         if (!activeWorkout) return
 
+        const activeExName = getExerciseNameFromKey(expandedExerciseKey)
         const matchingEx = activeWorkout.exercises?.find(
           e => normalizeExerciseName(e.name) === normalizeExerciseName(watchSet.exerciseName)
-        ) || (expandedExerciseKey ? activeWorkout.exercises?.find(e => e.name === expandedExerciseKey.split('-')[1]) : undefined)
+        ) || (activeExName ? activeWorkout.exercises?.find(e => normalizeExerciseName(e.name) === normalizeExerciseName(activeExName)) : undefined)
 
         if (!matchingEx) return
 
@@ -3638,7 +3649,7 @@ export default function FitnessTrackerClient({
                                 type="button"
                                 onClick={() => {
                                   const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
-                                  const activeExName = expandedExerciseKey ? expandedExerciseKey.split('-')[1] : undefined
+                                  const activeExName = getExerciseNameFromKey(expandedExerciseKey) || undefined
                                   const lastLog = localSetLogs[localSetLogs.length - 1]
                                   openCoachGordon({
                                     athleteName: profile?.full_name?.split(' ')[0] || 'Athlete',
@@ -6747,7 +6758,7 @@ export default function FitnessTrackerClient({
         onClose={() => setIsWatchSimulatorOpen(false)}
         currentExerciseName={
           activeRestState?.exerciseName ||
-          (expandedExerciseKey ? planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.find(e => e.name === expandedExerciseKey.split('-')[1])?.name : undefined) ||
+          (expandedExerciseKey ? planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.find(e => normalizeExerciseName(e.name) === normalizeExerciseName(getExerciseNameFromKey(expandedExerciseKey) || ''))?.name : undefined) ||
           planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.[0]?.name ||
           'Barbell Flat Bench Press'
         }
