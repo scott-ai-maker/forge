@@ -3,55 +3,145 @@ import Foundation
 /**
  * WatchWorkoutModel
  * Core physiological & workout data structures for Forge Athletic watchOS
+ * Supports all 4 workout phases: Warm-Up, Lifts/Resistance, Cardio, and Cool-Down
  * Forge Athletic
  */
 
 public struct WatchExerciseInfo: Codable, Identifiable {
-    public var id: String { "\(exerciseName)-\(setNumber)" }
+    public var id: String { "\(exerciseName)-\(orderIndex)" }
     public let exerciseName: String
-    public let setNumber: Int
-    public let totalSets: Int
-    public let prescribedWeight: Double
-    public let prescribedReps: Int
-    public let targetRpe: Double?
-    public let tempo: String? // e.g. "4-2-1-1" or "2-0-2-0"
-    public let restSeconds: Int
-    public let isCompound: Bool?
-    public let isHammerCurl: Bool?
-    public let optPhase: Int?
+    public var block: String?
+    public var phaseLabel: String
+    public var orderIndex: Int
+    public var setNumber: Int
+    public var totalSets: Int
+    public var prescribedWeight: Double
+    public var prescribedReps: Int
+    public var repsDisplay: String
+    public var targetRpe: Double?
+    public var tempo: String? // e.g. "4-2-1-1" or "2-0-2-0"
+    public var restSeconds: Int
+    public var isCompound: Bool?
+    public var isHammerCurl: Bool?
+    public var optPhase: Int?
+    public var isCompleted: Bool
+    public var completedSetsCount: Int
 
     public init(
         exerciseName: String,
-        setNumber: Int,
-        totalSets: Int,
-        prescribedWeight: Double,
-        prescribedReps: Int,
+        block: String? = "resistance",
+        phaseLabel: String = "RESISTANCE",
+        orderIndex: Int = 0,
+        setNumber: Int = 1,
+        totalSets: Int = 3,
+        prescribedWeight: Double = 135.0,
+        prescribedReps: Int = 10,
+        repsDisplay: String = "10",
         targetRpe: Double? = 8.0,
         tempo: String? = "2-0-2-0",
         restSeconds: Int = 60,
         isCompound: Bool? = false,
         isHammerCurl: Bool? = false,
-        optPhase: Int? = 3
+        optPhase: Int? = 3,
+        isCompleted: Bool = false,
+        completedSetsCount: Int = 0
     ) {
         self.exerciseName = exerciseName
+        self.block = block
+        self.phaseLabel = phaseLabel
+        self.orderIndex = orderIndex
         self.setNumber = setNumber
         self.totalSets = totalSets
         self.prescribedWeight = prescribedWeight
         self.prescribedReps = prescribedReps
+        self.repsDisplay = repsDisplay
         self.targetRpe = targetRpe
         self.tempo = tempo
         self.restSeconds = restSeconds
         self.isCompound = isCompound
         self.isHammerCurl = isHammerCurl
         self.optPhase = optPhase
+        self.isCompleted = isCompleted
+        self.completedSetsCount = completedSetsCount
+    }
+}
+
+public struct WatchCardioProtocol: Codable {
+    public let modality: String
+    public let durationMins: Int
+    public let targetZone: Int
+    public let targetBpmMin: Int
+    public let targetBpmMax: Int
+
+    public init(
+        modality: String = "Cardio Zone 2",
+        durationMins: Int = 20,
+        targetZone: Int = 2,
+        targetBpmMin: Int = 125,
+        targetBpmMax: Int = 142
+    ) {
+        self.modality = modality
+        self.durationMins = durationMins
+        self.targetZone = targetZone
+        self.targetBpmMin = targetBpmMin
+        self.targetBpmMax = targetBpmMax
+    }
+}
+
+public struct WatchWarmupDrill: Codable, Identifiable {
+    public var id: String { name }
+    public let name: String
+    public let phaseLabel: String
+    public let durationSec: Int
+    public let protocolText: String
+    public var isCompleted: Bool
+
+    public init(
+        name: String,
+        phaseLabel: String = "WARM-UP",
+        durationSec: Int = 30,
+        protocolText: String = "1 set × 30s",
+        isCompleted: Bool = false
+    ) {
+        self.name = name
+        self.phaseLabel = phaseLabel
+        self.durationSec = durationSec
+        self.protocolText = protocolText
+        self.isCompleted = isCompleted
+    }
+}
+
+public struct WatchCooldownStretch: Codable, Identifiable {
+    public var id: String { name }
+    public let name: String
+    public let durationSec: Int
+    public let protocolText: String
+    public var isCompleted: Bool
+
+    public init(
+        name: String,
+        durationSec: Int = 30,
+        protocolText: String = "Hold for 30s",
+        isCompleted: Bool = false
+    ) {
+        self.name = name
+        self.durationSec = durationSec
+        self.protocolText = protocolText
+        self.isCompleted = isCompleted
     }
 }
 
 public struct WatchWorkoutState: Codable {
-    public let workoutId: String
-    public let dayNumber: Int
-    public let focus: String
+    public var workoutId: String
+    public var dayNumber: Int
+    public var focus: String
+    public var activePhase: String // "warmup", "resistance", "cardio", "cooldown"
+    public var activeExerciseIndex: Int
     public var activeExercise: WatchExerciseInfo?
+    public var exercises: [WatchExerciseInfo]
+    public var warmupDrills: [WatchWarmupDrill]
+    public var cooldownStretches: [WatchCooldownStretch]
+    public var cardioProtocol: WatchCardioProtocol?
     public var completedSetsCount: Int
     public var totalSetsCount: Int
     public var isSessionActive: Bool
@@ -61,7 +151,13 @@ public struct WatchWorkoutState: Codable {
         workoutId: String = "active-session",
         dayNumber: Int = 1,
         focus: String = "Athletic Performance",
+        activePhase: String = "resistance",
+        activeExerciseIndex: Int = 0,
         activeExercise: WatchExerciseInfo? = nil,
+        exercises: [WatchExerciseInfo] = [],
+        warmupDrills: [WatchWarmupDrill] = [],
+        cooldownStretches: [WatchCooldownStretch] = [],
+        cardioProtocol: WatchCardioProtocol? = nil,
         completedSetsCount: Int = 0,
         totalSetsCount: Int = 12,
         isSessionActive: Bool = false,
@@ -70,7 +166,13 @@ public struct WatchWorkoutState: Codable {
         self.workoutId = workoutId
         self.dayNumber = dayNumber
         self.focus = focus
+        self.activePhase = activePhase
+        self.activeExerciseIndex = activeExerciseIndex
         self.activeExercise = activeExercise
+        self.exercises = exercises
+        self.warmupDrills = warmupDrills
+        self.cooldownStretches = cooldownStretches
+        self.cardioProtocol = cardioProtocol
         self.completedSetsCount = completedSetsCount
         self.totalSetsCount = totalSetsCount
         self.isSessionActive = isSessionActive

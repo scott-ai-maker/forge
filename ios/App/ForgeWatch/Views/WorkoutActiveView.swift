@@ -2,8 +2,12 @@ import SwiftUI
 
 /**
  * WorkoutActiveView
- * High-contrast, large-format wrist-first active exercise card.
- * Designed for 0.5-second glanceability under heavy gym fatigue.
+ * Comprehensive, wrist-first active workout view supporting all 4 workout phases:
+ * 1. Warm-Up & Movement Prep
+ * 2. Resistance Training (with Digital Crown precision, plate math, and set logging)
+ * 3. Cardio Conditioning (with live Tanaka zone pacing)
+ * 4. Cool-Down & Mobility (with stretch hold timers)
+ * Plus full workout plan overview sheet to jump to any prescribed exercise.
  * Forge Athletic
  */
 public struct WorkoutActiveView: View {
@@ -16,218 +20,586 @@ public struct WorkoutActiveView: View {
     @State private var isCrownFocusedOnReps: Bool = true
     @State private var showPlateSheet: Bool = false
     @State private var showEndConfirmation: Bool = false
+    @State private var showPhasesSheet: Bool = false
+
+    // Warm-up drill timer state
+    @State private var activeWarmupSeconds: Int = 30
+    @State private var isWarmupTimerActive: Bool = false
+
+    // Cool-down stretch timer state
+    @State private var activeCooldownSeconds: Int = 30
+    @State private var isCooldownTimerActive: Bool = false
 
     public var body: some View {
         ScrollView {
             VStack(spacing: 8) {
-                // 1. Top Glance Header: Heart Rate + Set Progress
+                // 1. Top Glance Header: Workout Day, Focus & Heart Rate
                 HStack(alignment: .center) {
-                    // Optical HR Badge with Heart Rate Zone Color
-                    HStack(spacing: 4) {
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 11))
-                            .foregroundColor(heartRateColor)
-                        Text(workoutManager.currentHeartRate > 0 ? "\(workoutManager.currentHeartRate)" : "--")
-                            .font(.system(size: 14, weight: .black, design: .monospaced))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("DAY \(coordinator.workoutState.dayNumber)")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09)) // Gold
+
+                        Text(coordinator.workoutState.focus)
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
-                        Text("BPM")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.gray)
+                            .lineLimit(1)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.white.opacity(0.08))
-                    .cornerRadius(8)
 
                     Spacer()
 
-                    // Set Progress Pill
-                    let currentSet = coordinator.workoutState.activeExercise?.setNumber ?? 1
-                    let totalSets = coordinator.workoutState.activeExercise?.totalSets ?? 4
-                    Text("SET \(currentSet) OF \(totalSets)")
-                        .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97)) // Cyan
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.15))
-                        .cornerRadius(8)
-                }
-
-                // 2. Exercise Title (Large & High Contrast)
-                Text(coordinator.workoutState.activeExercise?.exerciseName ?? "Bench Press")
-                    .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 2)
-
-                // 3. Hero Metric Cards (Reps & Weight) with Crown Glow
-                HStack(spacing: 8) {
-                    // REPS CARD
-                    Button(action: {
-                        isCrownFocusedOnReps = true
-                        WKInterfaceDevice.current().play(.click)
-                    }) {
-                        VStack(spacing: 2) {
-                            HStack(spacing: 4) {
-                                if isCrownFocusedOnReps {
-                                    Circle()
-                                        .fill(Color(red: 0.22, green: 0.74, blue: 0.97))
-                                        .frame(width: 5, height: 5)
-                                }
-                                Text("REPS")
-                                    .font(.system(size: 11, weight: .black))
-                                    .foregroundColor(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97) : .gray)
-                            }
-
-                            Text("\(Int(loggedReps))")
-                                .font(.system(size: 38, weight: .black, design: .rounded))
-                                .monospacedDigit()
-                                .foregroundColor(.white)
-                                .minimumScaleFactor(0.8)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.18) : Color.white.opacity(0.06))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97) : Color.white.opacity(0.1), lineWidth: isCrownFocusedOnReps ? 2 : 1)
-                        )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-
-                    // WEIGHT CARD
-                    Button(action: {
-                        isCrownFocusedOnReps = false
-                        WKInterfaceDevice.current().play(.click)
-                    }) {
-                        VStack(spacing: 2) {
-                            HStack(spacing: 4) {
-                                if !isCrownFocusedOnReps {
-                                    Circle()
-                                        .fill(Color(red: 0.83, green: 0.63, blue: 0.09))
-                                        .frame(width: 5, height: 5)
-                                }
-                                Text("LBS")
-                                    .font(.system(size: 11, weight: .black))
-                                    .foregroundColor(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09) : .gray)
-                            }
-
-                            Text("\(Int(loggedWeight))")
-                                .font(.system(size: 38, weight: .black, design: .rounded))
-                                .monospacedDigit()
-                                .foregroundColor(.white)
-                                .minimumScaleFactor(0.8)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09).opacity(0.18) : Color.white.opacity(0.06))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09) : Color.white.opacity(0.1), lineWidth: !isCrownFocusedOnReps ? 2 : 1)
-                        )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                .focusable(true)
-                .digitalCrownRotation(
-                    isCrownFocusedOnReps ? $loggedReps : $loggedWeight,
-                    from: isCrownFocusedOnReps ? 1.0 : 0.0,
-                    through: isCrownFocusedOnReps ? 50.0 : 800.0,
-                    by: isCrownFocusedOnReps ? 1.0 : 5.0,
-                    sensitivity: .medium,
-                    isContinuous: false,
-                    isHapticFeedbackEnabled: true
-                )
-
-                // 4. Quick Visual Plate Math Pill
-                Button(action: {
-                    showPlateSheet = true
-                    WKInterfaceDevice.current().play(.click)
-                }) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "scalemass.fill")
+                    // Optical HR Badge
+                    HStack(spacing: 3) {
+                        Image(systemName: "heart.fill")
                             .font(.system(size: 10))
-                            .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
-                        Text(formatQuickPlateBar(weightLbs: loggedWeight))
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundColor(heartRateColor)
+                        Text(workoutManager.currentHeartRate > 0 ? "\(workoutManager.currentHeartRate)" : "--")
+                            .font(.system(size: 13, weight: .black, design: .monospaced))
                             .foregroundColor(.white)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.gray)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
                     .background(Color.white.opacity(0.08))
                     .cornerRadius(8)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal, 4)
 
-                // 5. Hero Full-Bleed "LOG SET" Button
-                Button(action: handleLogSet) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16, weight: .bold))
-                        Text("LOG SET")
-                            .font(.system(size: 16, weight: .black, design: .rounded))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(red: 0.06, green: 0.72, blue: 0.51), Color(red: 0.04, green: 0.55, blue: 0.38)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                // 2. 4-Phase Segmented Navigation Bar
+                HStack(spacing: 4) {
+                    PhaseTabButton(
+                        label: "WARM",
+                        phase: "warmup",
+                        activePhase: coordinator.workoutState.activePhase,
+                        color: Color(red: 0.97, green: 0.58, blue: 0.11), // Orange
+                        onSelect: { coordinator.selectPhase("warmup") }
                     )
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                    .shadow(color: Color(red: 0.06, green: 0.72, blue: 0.51).opacity(0.5), radius: 6, y: 2)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .padding(.top, 2)
 
-                // 6. Tactile End Workout Button at bottom of scroll
-                Button(action: {
-                    showEndConfirmation = true
-                    WKInterfaceDevice.current().play(.click)
-                }) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "xmark.circle")
-                            .font(.system(size: 11))
-                        Text("End Workout")
-                            .font(.system(size: 11, weight: .bold))
-                    }
-                    .foregroundColor(Color(red: 0.97, green: 0.44, blue: 0.44).opacity(0.85))
-                    .padding(.vertical, 8)
+                    PhaseTabButton(
+                        label: "LIFTS",
+                        phase: "resistance",
+                        activePhase: coordinator.workoutState.activePhase,
+                        color: Color(red: 0.22, green: 0.74, blue: 0.97), // Cyan
+                        onSelect: { coordinator.selectPhase("resistance") }
+                    )
+
+                    PhaseTabButton(
+                        label: "CARDIO",
+                        phase: "cardio",
+                        activePhase: coordinator.workoutState.activePhase,
+                        color: Color(red: 0.97, green: 0.35, blue: 0.35), // Red
+                        onSelect: { coordinator.selectPhase("cardio") }
+                    )
+
+                    PhaseTabButton(
+                        label: "COOL",
+                        phase: "cooldown",
+                        activePhase: coordinator.workoutState.activePhase,
+                        color: Color(red: 0.20, green: 0.78, blue: 0.55), // Emerald
+                        onSelect: { coordinator.selectPhase("cooldown") }
+                    )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal, 2)
+
+                // 3. Dynamic Phase Body
+                if coordinator.workoutState.activePhase == "warmup" {
+                    warmupPhaseView
+                } else if coordinator.workoutState.activePhase == "cardio" {
+                    cardioPhaseView
+                } else if coordinator.workoutState.activePhase == "cooldown" {
+                    cooldownPhaseView
+                } else {
+                    resistancePhaseView
+                }
             }
             .padding(.horizontal, 4)
         }
         .onAppear {
-            if let ex = coordinator.workoutState.activeExercise {
-                loggedReps = Double(ex.prescribedReps)
-                loggedWeight = ex.prescribedWeight
-                loggedRpe = ex.targetRpe ?? 8.0
-            }
+            syncStateFromCoordinator()
         }
         .sheet(isPresented: $showPlateSheet) {
             PlateCalculatorSheet(totalWeightLbs: loggedWeight)
+        }
+        .sheet(isPresented: $showPhasesSheet) {
+            WorkoutPhasesSheet(onSelectExercise: { name in
+                coordinator.selectExercise(named: name)
+                syncStateFromCoordinator()
+            })
         }
         .confirmationDialog("End Workout?", isPresented: $showEndConfirmation, titleVisibility: .visible) {
             Button("End Workout", role: .destructive) {
                 coordinator.endSession()
             }
             Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    // MARK: - Phase 1: Pre-Lift Warm-Up View
+
+    private var warmupPhaseView: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text("PRE-LIFT MOBILITY")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.11))
+                Spacer()
+                Button(action: { showPhasesSheet = true }) {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 4)
+
+            ForEach(coordinator.workoutState.warmupDrills) { drill in
+                HStack(spacing: 8) {
+                    Button(action: {
+                        coordinator.completeWarmupDrill(named: drill.name)
+                    }) {
+                        Image(systemName: drill.isCompleted ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 16))
+                            .foregroundColor(drill.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(drill.name)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(drill.isCompleted ? .gray : .white)
+                            .strikethrough(drill.isCompleted)
+                            .lineLimit(1)
+
+                        Text(drill.protocolText)
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+
+                    Spacer()
+                }
+                .padding(8)
+                .background(Color.white.opacity(0.06))
+                .cornerRadius(10)
+            }
+
+            // Advance to Lifts
+            Button(action: {
+                coordinator.selectPhase("resistance")
+                WKInterfaceDevice.current().play(.start)
+            }) {
+                HStack(spacing: 6) {
+                    Text("START RESISTANCE LIFTS")
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 13))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.22, green: 0.74, blue: 0.97), Color(red: 0.15, green: 0.60, blue: 0.85)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .foregroundColor(.black)
+                .cornerRadius(10)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.top, 4)
+        }
+    }
+
+    // MARK: - Phase 2: Resistance Training (Lifts) View
+
+    private var resistancePhaseView: some View {
+        VStack(spacing: 8) {
+            // Exercise Stepper Bar
+            HStack(alignment: .center) {
+                Button(action: {
+                    coordinator.selectPreviousExercise()
+                    syncStateFromCoordinator()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(coordinator.workoutState.activeExerciseIndex > 0 ? Color(red: 0.22, green: 0.74, blue: 0.97) : .gray.opacity(0.4))
+                        .frame(width: 28, height: 28)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(6)
+                }
+                .disabled(coordinator.workoutState.activeExerciseIndex <= 0)
+                .buttonStyle(PlainButtonStyle())
+
+                Spacer()
+
+                VStack(spacing: 1) {
+                    let totalEx = max(1, coordinator.workoutState.exercises.count)
+                    let curEx = min(totalEx, coordinator.workoutState.activeExerciseIndex + 1)
+                    Text("EXERCISE \(curEx) OF \(totalEx)")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+
+                    let currentSet = coordinator.workoutState.activeExercise?.setNumber ?? 1
+                    let totalSets = coordinator.workoutState.activeExercise?.totalSets ?? 3
+                    Text("SET \(currentSet) OF \(totalSets)")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundColor(.gray)
+                }
+
+                Spacer()
+
+                Button(action: {
+                    coordinator.selectNextExercise()
+                    syncStateFromCoordinator()
+                }) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(coordinator.workoutState.activeExerciseIndex < coordinator.workoutState.exercises.count - 1 ? Color(red: 0.22, green: 0.74, blue: 0.97) : .gray.opacity(0.4))
+                        .frame(width: 28, height: 28)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(6)
+                }
+                .disabled(coordinator.workoutState.activeExerciseIndex >= coordinator.workoutState.exercises.count - 1)
+                .buttonStyle(PlainButtonStyle())
+
+                Button(action: { showPhasesSheet = true }) {
+                    HStack(spacing: 2) {
+                        Image(systemName: "list.bullet")
+                            .font(.system(size: 10))
+                        Text("ALL")
+                            .font(.system(size: 10, weight: .black))
+                    }
+                    .padding(.horizontal, 6)
+                    .frame(height: 28)
+                    .background(Color.white.opacity(0.08))
+                    .foregroundColor(.white)
+                    .cornerRadius(6)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+
+            // Exercise Title
+            Text(coordinator.workoutState.activeExercise?.exerciseName ?? "Bench Press")
+                .font(.system(size: 16, weight: .black, design: .rounded))
+                .foregroundColor(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 2)
+
+            // Hero Metric Cards (Reps & Weight) with Crown Rotation
+            HStack(spacing: 8) {
+                // REPS CARD
+                Button(action: {
+                    isCrownFocusedOnReps = true
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    VStack(spacing: 2) {
+                        HStack(spacing: 4) {
+                            if isCrownFocusedOnReps {
+                                Circle()
+                                    .fill(Color(red: 0.22, green: 0.74, blue: 0.97))
+                                    .frame(width: 5, height: 5)
+                            }
+                            Text("REPS")
+                                .font(.system(size: 11, weight: .black))
+                                .foregroundColor(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97) : .gray)
+                        }
+
+                        Text("\(Int(loggedReps))")
+                            .font(.system(size: 38, weight: .black, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(.white)
+                            .minimumScaleFactor(0.8)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.18) : Color.white.opacity(0.06))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isCrownFocusedOnReps ? Color(red: 0.22, green: 0.74, blue: 0.97) : Color.white.opacity(0.1), lineWidth: isCrownFocusedOnReps ? 2 : 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                // WEIGHT CARD
+                Button(action: {
+                    isCrownFocusedOnReps = false
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    VStack(spacing: 2) {
+                        HStack(spacing: 4) {
+                            if !isCrownFocusedOnReps {
+                                Circle()
+                                    .fill(Color(red: 0.83, green: 0.63, blue: 0.09))
+                                    .frame(width: 5, height: 5)
+                            }
+                            Text("LBS")
+                                .font(.system(size: 11, weight: .black))
+                                .foregroundColor(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09) : .gray)
+                        }
+
+                        Text("\(Int(loggedWeight))")
+                            .font(.system(size: 38, weight: .black, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(.white)
+                            .minimumScaleFactor(0.8)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09).opacity(0.18) : Color.white.opacity(0.06))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09) : Color.white.opacity(0.1), lineWidth: !isCrownFocusedOnReps ? 2 : 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .focusable(true)
+            .digitalCrownRotation(
+                isCrownFocusedOnReps ? $loggedReps : $loggedWeight,
+                from: isCrownFocusedOnReps ? 1.0 : 0.0,
+                through: isCrownFocusedOnReps ? 50.0 : 800.0,
+                by: isCrownFocusedOnReps ? 1.0 : 5.0,
+                sensitivity: .medium,
+                isContinuous: false,
+                isHapticFeedbackEnabled: true
+            )
+
+            // Barbell Plate Math Button
+            Button(action: {
+                showPlateSheet = true
+                WKInterfaceDevice.current().play(.click)
+            }) {
+                HStack(spacing: 5) {
+                    Image(systemName: "scalemass.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                    Text(formatQuickPlateBar(weightLbs: loggedWeight))
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.gray)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.08))
+                .cornerRadius(8)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            // Hero Full-Bleed "LOG SET" Button
+            Button(action: handleLogSet) {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("LOG SET")
+                        .font(.system(size: 16, weight: .black, design: .rounded))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.06, green: 0.72, blue: 0.51), Color(red: 0.04, green: 0.55, blue: 0.38)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .foregroundColor(.white)
+                .cornerRadius(12)
+                .shadow(color: Color(red: 0.06, green: 0.72, blue: 0.51).opacity(0.5), radius: 6, y: 2)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.top, 2)
+
+            // Tactile End Workout Button at bottom of scroll
+            Button(action: {
+                showEndConfirmation = true
+                WKInterfaceDevice.current().play(.click)
+            }) {
+                HStack(spacing: 5) {
+                    Image(systemName: "xmark.circle")
+                        .font(.system(size: 11))
+                    Text("End Workout")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .foregroundColor(Color(red: 0.97, green: 0.44, blue: 0.44).opacity(0.85))
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+
+    // MARK: - Phase 3: Cardio Conditioning Protocol View
+
+    private var cardioPhaseView: some View {
+        VStack(spacing: 10) {
+            let cardio = coordinator.workoutState.cardioProtocol
+
+            VStack(spacing: 2) {
+                Text(cardio?.modality.uppercased() ?? "ZONE 2 CARDIO ENGINE")
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .foregroundColor(Color(red: 0.97, green: 0.35, blue: 0.35))
+                    .multilineTextAlignment(.center)
+
+                Text("\(cardio?.durationMins ?? 20) MINS · TANAKA ZONE \(cardio?.targetZone ?? 2)")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.gray)
+            }
+            .padding(.top, 2)
+
+            // Large Heart Rate Telemetry HUD
+            VStack(spacing: 4) {
+                HStack(spacing: 6) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(heartRateColor)
+
+                    Text(workoutManager.currentHeartRate > 0 ? "\(workoutManager.currentHeartRate)" : "--")
+                        .font(.system(size: 42, weight: .black, design: .monospaced))
+                        .foregroundColor(.white)
+
+                    Text("BPM")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.gray)
+                }
+
+                let minBpm = cardio?.targetBpmMin ?? 125
+                let maxBpm = cardio?.targetBpmMax ?? 142
+                let curBpm = workoutManager.currentHeartRate
+
+                if curBpm == 0 {
+                    Text("Target: \(minBpm)–\(maxBpm) BPM")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.gray)
+                } else if curBpm < minBpm {
+                    Text("Accelerate: Target \(minBpm)–\(maxBpm) BPM")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                } else if curBpm <= maxBpm {
+                    Text("✓ In Optimal Tanaka Zone (\(minBpm)–\(maxBpm))")
+                        .font(.system(size: 11, weight: .black))
+                        .foregroundColor(Color(red: 0.06, green: 0.72, blue: 0.51))
+                } else {
+                    Text("Ease Pace: Above \(maxBpm) BPM")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(Color(red: 0.97, green: 0.35, blue: 0.35))
+                }
+            }
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(Color.white.opacity(0.06))
+            .cornerRadius(12)
+
+            // Advance to Cool-Down
+            Button(action: {
+                coordinator.selectPhase("cooldown")
+                WKInterfaceDevice.current().play(.start)
+            }) {
+                HStack(spacing: 6) {
+                    Text("GO TO COOL-DOWN")
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 13))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Color(red: 0.20, green: 0.78, blue: 0.55))
+                .foregroundColor(.black)
+                .cornerRadius(10)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+
+    // MARK: - Phase 4: Cool-Down & Static Stretches View
+
+    private var cooldownPhaseView: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text("COOL-DOWN & MOBILITY")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                Spacer()
+                Button(action: { showPhasesSheet = true }) {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 4)
+
+            ForEach(coordinator.workoutState.cooldownStretches) { stretch in
+                HStack(spacing: 8) {
+                    Button(action: {
+                        coordinator.completeCooldownStretch(named: stretch.name)
+                    }) {
+                        Image(systemName: stretch.isCompleted ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 16))
+                            .foregroundColor(stretch.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(stretch.name)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(stretch.isCompleted ? .gray : .white)
+                            .strikethrough(stretch.isCompleted)
+                            .lineLimit(1)
+
+                        Text(stretch.protocolText)
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+
+                    Spacer()
+                }
+                .padding(8)
+                .background(Color.white.opacity(0.06))
+                .cornerRadius(10)
+            }
+
+            // Finish Workout Button
+            Button(action: {
+                showEndConfirmation = true
+                WKInterfaceDevice.current().play(.click)
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 14))
+                    Text("FINISH WORKOUT")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.06, green: 0.72, blue: 0.51), Color(red: 0.04, green: 0.55, blue: 0.38)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .foregroundColor(.white)
+                .cornerRadius(10)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.top, 4)
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func syncStateFromCoordinator() {
+        if let ex = coordinator.workoutState.activeExercise {
+            loggedReps = Double(ex.prescribedReps)
+            loggedWeight = ex.prescribedWeight
+            loggedRpe = ex.targetRpe ?? 8.0
         }
     }
 
@@ -240,7 +612,6 @@ public struct WorkoutActiveView: View {
     }
 
     private func handleLogSet() {
-        // Authoritative success haptic
         WatchHapticManager.shared.playSuccessKnock()
 
         let exName = coordinator.workoutState.activeExercise?.exerciseName ?? "Set"
@@ -253,12 +624,193 @@ public struct WorkoutActiveView: View {
             weightLbs: loggedWeight,
             rpe: loggedRpe
         )
+
+        // If exercise completed all sets, advance to next exercise automatically
+        if let ex = coordinator.workoutState.activeExercise, ex.isCompleted {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                coordinator.selectNextExercise()
+                syncStateFromCoordinator()
+            }
+        }
     }
 
     private func formatQuickPlateBar(weightLbs: Double) -> String {
         guard weightLbs > 45 else { return "Bar only (45 lbs)" }
         let perSide = (weightLbs - 45) / 2
         return "Side: \(Int(perSide)) lbs"
+    }
+}
+
+/**
+ * PhaseTabButton
+ * Compact segmented button for selecting one of the 4 workout phases
+ */
+struct PhaseTabButton: View {
+    let label: String
+    let phase: String
+    let activePhase: String
+    let color: Color
+    let onSelect: () -> Void
+
+    var isSelected: Bool { phase == activePhase }
+
+    var body: some View {
+        Button(action: {
+            WKInterfaceDevice.current().play(.click)
+            onSelect()
+        }) {
+            Text(label)
+                .font(.system(size: 9.5, weight: .black, design: .rounded))
+                .foregroundColor(isSelected ? .black : .white.opacity(0.8))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+                .background(isSelected ? color : Color.white.opacity(0.08))
+                .cornerRadius(6)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+/**
+ * WorkoutPhasesSheet
+ * Full workout plan drawer showing all 4 phases and prescribed exercises
+ */
+struct WorkoutPhasesSheet: View {
+    @ObservedObject var coordinator = WatchSessionCoordinator.shared
+    let onSelectExercise: (String) -> Void
+    @Environment(\.presentationMode) var presentationMode
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                // Header
+                HStack {
+                    Text("WORKOUT PLAN")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                    Spacer()
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .font(.system(size: 11, weight: .bold))
+                }
+                .padding(.bottom, 2)
+
+                // 1. Warm-Up Section
+                if !coordinator.workoutState.warmupDrills.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("1. WARM-UP & MOBILITY")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.11))
+
+                        ForEach(coordinator.workoutState.warmupDrills) { drill in
+                            HStack(spacing: 6) {
+                                Image(systemName: drill.isCompleted ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(drill.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
+                                Text(drill.name)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    }
+                    .padding(8)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(8)
+                }
+
+                // 2. Resistance Section
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("2. RESISTANCE TRAINING")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+
+                    ForEach(coordinator.workoutState.exercises) { ex in
+                        Button(action: {
+                            onSelectExercise(ex.exerciseName)
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: ex.isCompleted ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(ex.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
+
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(ex.exerciseName)
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundColor(ex.isCompleted ? .gray : .white)
+                                        .lineLimit(1)
+                                    Text("\(ex.totalSets) sets × \(ex.repsDisplay) · \(Int(ex.prescribedWeight)) lbs")
+                                        .font(.system(size: 9, weight: .medium))
+                                        .foregroundColor(.gray)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(6)
+                            .background(ex.exerciseName == coordinator.workoutState.activeExercise?.exerciseName ? Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.15) : Color.clear)
+                            .cornerRadius(6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(8)
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(8)
+
+                // 3. Cardio Section
+                if let cardio = coordinator.workoutState.cardioProtocol {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("3. CARDIO PROTOCOL")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.97, green: 0.35, blue: 0.35))
+
+                        Text(cardio.modality)
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.white)
+
+                        Text("\(cardio.durationMins) mins · Tanaka Zone \(cardio.targetZone) (\(cardio.targetBpmMin)–\(cardio.targetBpmMax) BPM)")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+                    .padding(8)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(8)
+                }
+
+                // 4. Cool-Down Section
+                if !coordinator.workoutState.cooldownStretches.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("4. COOL-DOWN & MOBILITY")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+
+                        ForEach(coordinator.workoutState.cooldownStretches) { stretch in
+                            HStack(spacing: 6) {
+                                Image(systemName: stretch.isCompleted ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(stretch.isCompleted ? Color(red: 0.20, green: 0.78, blue: 0.55) : .gray)
+                                Text(stretch.name)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    }
+                    .padding(8)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(8)
+                }
+            }
+            .padding(.horizontal, 4)
+        }
     }
 }
 

@@ -26,7 +26,7 @@ interface ClinicalCoolDownModuleProps {
   isCompleted?: boolean
 }
 
-interface CoolDownItem {
+export interface CoolDownItem {
   id: string
   phaseNumber: number
   phaseLabel: string
@@ -657,6 +657,108 @@ export function cleanupLegacyCoolDownKeys(): void {
   } catch {}
 }
 
+export function resolvePrescribedCoolDownStretches(
+  workoutFocus: string = '',
+  exercises: Array<{ name: string; block?: string | null }> = [],
+  notes?: string | null,
+  workoutDay: number = 1
+): CoolDownItem[] {
+  const isUpper = workoutFocus.toLowerCase().includes('upper') || workoutFocus.toLowerCase().includes('push') || workoutFocus.toLowerCase().includes('pull')
+  const isLower = workoutFocus.toLowerCase().includes('lower') || workoutFocus.toLowerCase().includes('leg') || workoutFocus.toLowerCase().includes('squat') || workoutFocus.toLowerCase().includes('deadlift')
+
+  const explicitBreathEx = exercises.find(e =>
+    e.name.toLowerCase().includes('breath') ||
+    (e.block === 'cooldown' && (e.name.toLowerCase().includes('downregulation') || e.name.toLowerCase().includes('recovery')))
+  )
+
+  const parsedBreath = parseRequestedBreathwork(
+    explicitBreathEx?.name,
+    undefined,
+    undefined,
+    undefined,
+    notes,
+    workoutFocus
+  )
+
+  return [
+    {
+      id: `cd-stretch-1-${workoutDay}`,
+      phaseNumber: 1,
+      phaseLabel: '1. Static Stretching (Length-Tension Reset)',
+      name: isLower
+        ? 'static kneeling hip flexor stretch'
+        : isUpper
+          ? 'static latissimus dorsi ball stretch'
+          : 'static kneeling hip flexor stretch',
+      target: isLower
+        ? 'Psoas & Rectus Femoris (Hip Flexors)'
+        : isUpper
+          ? 'Latissimus Dorsi & Shoulder Girdle'
+          : 'Hip Flexors & Lumbo-Pelvic Hip Complex',
+      protocol: 'Hold 30s per side (no bouncing)',
+      durationSec: 30,
+      isUnilateral: true,
+      instructions: [
+        '1. Move gently into the stretch until you feel comfortable elongation without pain.',
+        '2. Maintain neutral spine and pelvis (posterior pelvic tilt).',
+        '3. Hold statically for 30 seconds per side while breathing deeply.',
+      ],
+      clinicalRationale: 'NASM Ch. 5 & 20: Autogenic inhibition via Golgi Tendon Organs (GTO) resets resting sarcomere length.',
+    },
+    {
+      id: `cd-stretch-2-${workoutDay}`,
+      phaseNumber: 2,
+      phaseLabel: '2. Secondary Static Stretch',
+      name: isLower
+        ? 'static 90 90 hamstring stretch'
+        : isUpper
+          ? 'static upper trapezius stretch'
+          : 'static 90 90 hamstring stretch',
+      target: isLower ? 'Hamstrings Complex & Calves' : 'Upper Trapezius & Neck Extensors',
+      protocol: 'Hold 30s per side',
+      durationSec: 30,
+      isUnilateral: true,
+      instructions: [
+        '1. Lie back or sit tall with neutral alignment.',
+        '2. Gently extend limb until mild tension is felt in target muscle belly.',
+        '3. Exhale smoothly and hold position for 30s per side.',
+      ],
+      clinicalRationale: 'NASM Clinical Guideline: Restores reciprocal length-tension balance and eliminates post-lifting tonic spasm.',
+    },
+    {
+      id: `cd-smr-${workoutDay}`,
+      phaseNumber: 3,
+      phaseLabel: '3. SMR Myofascial Downregulation',
+      name: isLower
+        ? 'self myofascial release smr quadriceps'
+        : isUpper
+          ? 'self myofascial release smr thoracic spine'
+          : 'foam roll calves',
+      target: isLower ? 'Quadriceps & IT-Band Complex' : 'Thoracic Spine Extensors & Lats',
+      protocol: isLower || !isUpper ? 'Hold tender spots 30s per side' : 'Hold tender spots 30–60s',
+      durationSec: 30,
+      isUnilateral: isLower || !isUpper,
+      instructions: [
+        '1. Position foam roller beneath heavily worked muscle group.',
+        '2. Roll slowly along muscle belly to locate focal areas of high tone (trigger points).',
+        '3. Hold steady bodyweight compression on tender spots for 30–60 seconds to stimulate tissue release.',
+      ],
+      clinicalRationale: 'NASM Ch. 5: Calms hyperactive muscle spindle afferents and stimulates interstitial fluid exchange.',
+    },
+    {
+      id: `cd-breath-${workoutDay}`,
+      phaseNumber: 4,
+      phaseLabel: '4. Parasympathetic Recovery Reset',
+      name: parsedBreath.name,
+      target: 'Vagus Nerve & Autonomic Downregulation',
+      protocol: parsedBreath.protocol,
+      durationSec: parsedBreath.totalDurationSec,
+      instructions: parsedBreath.instructions,
+      clinicalRationale: parsedBreath.rationale,
+    },
+  ]
+}
+
 export default function ClinicalCoolDownModule({
   workoutDay = 1,
   workoutFocus = 'Full-Body Recovery & Autonomic Downregulation',
@@ -759,106 +861,9 @@ export default function ClinicalCoolDownModule({
     }
   }, [onOpenExerciseModal])
 
-  // Dynamically tailor stretches and SMR based on session focus and exercises
-  const isUpper = workoutFocus.toLowerCase().includes('upper') || workoutFocus.toLowerCase().includes('push') || workoutFocus.toLowerCase().includes('pull')
-  const isLower = workoutFocus.toLowerCase().includes('lower') || workoutFocus.toLowerCase().includes('leg') || workoutFocus.toLowerCase().includes('squat') || workoutFocus.toLowerCase().includes('deadlift')
-
   const coolDownItems: CoolDownItem[] = useMemo(() => {
-    // Check if any specific breathing exercise was passed in exercises or notes
-    const explicitBreathEx = exercises.find(e =>
-      e.name.toLowerCase().includes('breath') ||
-      (e.block === 'cooldown' && (e.name.toLowerCase().includes('downregulation') || e.name.toLowerCase().includes('recovery')))
-    )
-
-    const parsedBreath = parseRequestedBreathwork(
-      explicitBreathEx?.name,
-      undefined,
-      undefined,
-      undefined,
-      notes,
-      workoutFocus
-    )
-
-    const items: CoolDownItem[] = [
-      {
-        id: `cd-stretch-1-${workoutDay}`,
-        phaseNumber: 1,
-        phaseLabel: '1. Static Stretching (Length-Tension Reset)',
-        name: isLower
-          ? 'static kneeling hip flexor stretch'
-          : isUpper
-            ? 'static latissimus dorsi ball stretch'
-            : 'static kneeling hip flexor stretch',
-        target: isLower
-          ? 'Psoas & Rectus Femoris (Hip Flexors)'
-          : isUpper
-            ? 'Latissimus Dorsi & Shoulder Girdle'
-            : 'Hip Flexors & Lumbo-Pelvic Hip Complex',
-        protocol: 'Hold 30s per side (no bouncing)',
-        durationSec: 30,
-        isUnilateral: true,
-        instructions: [
-          '1. Move gently into the stretch until you feel comfortable elongation without pain.',
-          '2. Maintain neutral spine and pelvis (posterior pelvic tilt).',
-          '3. Hold statically for 30 seconds per side while breathing deeply.',
-        ],
-        clinicalRationale: 'NASM Ch. 5 & 20: Autogenic inhibition via Golgi Tendon Organs (GTO) resets resting sarcomere length.',
-      },
-      {
-        id: `cd-stretch-2-${workoutDay}`,
-        phaseNumber: 2,
-        phaseLabel: '2. Secondary Static Stretch',
-        name: isLower
-          ? 'static 90 90 hamstring stretch'
-          : isUpper
-            ? 'static upper trapezius stretch'
-            : 'static 90 90 hamstring stretch',
-        target: isLower ? 'Hamstrings Complex & Calves' : 'Upper Trapezius & Neck Extensors',
-        protocol: 'Hold 30s per side',
-        durationSec: 30,
-        isUnilateral: true,
-        instructions: [
-          '1. Lie back or sit tall with neutral alignment.',
-          '2. Gently extend limb until mild tension is felt in target muscle belly.',
-          '3. Exhale smoothly and hold position for 30s per side.',
-        ],
-        clinicalRationale: 'NASM Clinical Guideline: Restores reciprocal length-tension balance and eliminates post-lifting tonic spasm.',
-      },
-      {
-        id: `cd-smr-${workoutDay}`,
-        phaseNumber: 3,
-        phaseLabel: '3. SMR Myofascial Downregulation',
-        name: isLower
-          ? 'self myofascial release smr quadriceps'
-          : isUpper
-            ? 'self myofascial release smr thoracic spine'
-            : 'foam roll calves',
-        target: isLower ? 'Quadriceps & IT-Band Complex' : 'Thoracic Spine Extensors & Lats',
-        protocol: isLower || !isUpper ? 'Hold tender spots 30s per side' : 'Hold tender spots 30–60s',
-        durationSec: 30,
-        isUnilateral: isLower || !isUpper,
-        instructions: [
-          '1. Position foam roller beneath heavily worked muscle group.',
-          '2. Roll slowly along muscle belly to locate focal areas of high tone (trigger points).',
-          '3. Hold steady bodyweight compression on tender spots for 30–60 seconds to stimulate tissue release.',
-        ],
-        clinicalRationale: 'NASM Ch. 5: Calms hyperactive muscle spindle afferents and stimulates interstitial fluid exchange.',
-      },
-      {
-        id: `cd-breath-${workoutDay}`,
-        phaseNumber: 4,
-        phaseLabel: '4. Parasympathetic Recovery Reset',
-        name: parsedBreath.name,
-        target: 'Vagus Nerve & Autonomic Downregulation',
-        protocol: parsedBreath.protocol,
-        durationSec: parsedBreath.totalDurationSec,
-        instructions: parsedBreath.instructions,
-        clinicalRationale: parsedBreath.rationale,
-      },
-    ]
-
-    return items
-  }, [workoutDay, workoutFocus, isUpper, isLower, notes, exercises])
+    return resolvePrescribedCoolDownStretches(workoutFocus, exercises, notes, workoutDay)
+  }, [workoutFocus, exercises, notes, workoutDay])
 
   const allCompleted = coolDownItems.length > 0 && coolDownItems.every(item => completedItems[item.id])
 

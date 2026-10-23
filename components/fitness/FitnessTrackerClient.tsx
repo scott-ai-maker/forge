@@ -28,6 +28,21 @@ const ClinicalCoolDownModule = dynamic(
   () => import('@/components/fitness/ClinicalCoolDownModule'),
   { ssr: false }
 )
+import {
+  resolvePrescribedWarmupDrills,
+  getWarmupStorageKey,
+} from '@/components/fitness/ClinicalKineticWarmupModule'
+import {
+  resolvePrescribedCoolDownStretches,
+  getCoolDownStorageKey,
+} from '@/components/fitness/ClinicalCoolDownModule'
+import { calculateCardioZones } from '@/lib/nasm-cardio-stage-engine'
+import type {
+  WatchExerciseItemPayload,
+  WatchCardioProtocolPayload,
+  WatchWarmupDrillPayload,
+  WatchCooldownStretchPayload,
+} from '@/lib/native-healthkit-bridge'
 const CoachCardioVoiceoverPlayer = dynamic(
   () => import('@/components/fitness/CoachCardioVoiceoverPlayer'),
   { ssr: false }
@@ -1113,7 +1128,7 @@ export default function FitnessTrackerClient({
     )
   }, [planWorkouts, planCompletedLogs, localWorkoutLogs, plan?.id, sessionsPerWeek])
 
-  const effectiveActiveWorkoutDay = activeWorkoutDay ?? nextUnfinishedDay
+  const effectiveActiveWorkoutDay = activeWorkoutSessionDay ?? activeWorkoutDay ?? nextUnfinishedDay
 
   const effectiveOpenExerciseKey = useMemo(() => {
     if (expandedExerciseKey !== null) {
@@ -1286,24 +1301,129 @@ export default function FitnessTrackerClient({
     const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
     if (!activeWorkout) return
 
-    const activeExName = expandedExerciseKey ? expandedExerciseKey.split('-')[1] : activeWorkout.exercises?.[0]?.name
-    const activeEx = activeWorkout.exercises?.find(e => e.name === activeExName) || activeWorkout.exercises?.[0]
+    const isSessionActive = Boolean(
+      activeWorkoutSessionDay === activeWorkout.day && (isWorkoutTimerActive || elapsedWorkoutSeconds > 0)
+    )
+
+    const activePhase: 'warmup' | 'resistance' | 'cardio' | 'cooldown' =
+      activeStepFilter === 'all' ? 'resistance' : activeStepFilter
+
+    // 1. Warm-Up Drills
+    const warmupItems = resolvePrescribedWarmupDrills(latestAssessment, activeWorkout.focus)
+    const warmupKey = getWarmupStorageKey(
+      plan?.id,
+      microcycleProgress.currentWeek,
+      activeWorkout.day,
+      activeWorkout.scheduledDate
+    )
+    let completedWarmupRecord: Record<string, boolean> = {}
+    try {
+      const saved = localStorage.getItem(warmupKey)
+      if (saved) completedWarmupRecord = JSON.parse(saved)
+    } catch {}
+    const warmupDrills: WatchWarmupDrillPayload[] = warmupItems.map(item => ({
+      name: item.name,
+      phaseLabel: item.phaseLabel,
+      durationSec: item.durationSec,
+      protocol: item.protocol,
+      isCompleted: Boolean(completedWarmupRecord[item.id]),
+    }))
+
+    // 2. Resistance Exercises
+    const rawExercises: WorkoutExercise[] = adaptedExercisesByDay[activeWorkout.day]
+      ? adaptedExercisesByDay[activeWorkout.day].map(ae => ({
+          name: ae.name,
+          sets: String(ae.sets),
+          reps: ae.reps,
+          tempo: ae.tempo ?? null,
+          rest: null,
+          block: (ae as unknown as { block?: string | null }).block ?? 'resistance',
+        }))
+      : (activeWorkout.exercises || [])
+
+    const exercisesList: WatchExerciseItemPayload[] = rawExercises.map((ex, idx) => {
+      const setsLogged = (localSetLogs || []).filter(l =>
+        normalizeExerciseName(l.exercise_name) === normalizeExerciseName(ex.name) &&
+        extractWorkoutDayTag(l.notes) === Number(activeWorkout.day) &&
+        !l.is_warmup
+      ).length
+      const targetSets = parseInt(String(ex.sets), 10) || 3
+      const isCompleted = setsLogged >= targetSets
+      const draft = inlineSetDrafts[exerciseDraftKey(activeWorkout.day, ex.name)]
+      const weightNum = draft?.weight ? Number(draft.weight) || 135 : 135
+      const repsNum = draft?.reps ? parseInt(draft.reps, 10) || 10 : 10
+
+      return {
+        exerciseName: ex.name,
+        block: ex.block || 'resistance',
+        phaseLabel: ex.block === 'warmup' ? 'Warmup' : ex.block === 'cooldown' ? 'Cool-Down' : 'Resistance',
+        orderIndex: idx,
+        setNumber: Math.min(targetSets, setsLogged + 1),
+        totalSets: targetSets,
+        prescribedWeight: weightNum,
+        prescribedReps: repsNum,
+        repsDisplay: String(ex.reps || '10'),
+        targetRpe: draft?.rpe ? Number(draft.rpe) : 8.0,
+        tempo: ex.tempo || '2-0-2-0',
+        restSeconds: draft?.restSeconds ? Number(draft.restSeconds) : 60,
+        isCompound: isCompoundLift(ex.name),
+        isHammerCurl: isHammerCurlMovement(ex.name),
+        optPhase: plan?.nasm_opt_phase || 3,
+        isCompleted,
+        completedSetsCount: setsLogged,
+      }
+    })
+
+    const activeExName = expandedExerciseKey ? expandedExerciseKey.split('-')[1] : rawExercises[0]?.name
+    const activeExIndex = Math.max(0, rawExercises.findIndex(e => e.name === activeExName))
+    const activeEx = exercisesList[activeExIndex] || exercisesList[0]
+
     const completedWorkingSets = (localSetLogs || []).filter(l =>
       !l.is_warmup && extractWorkoutDayTag(l.notes) === Number(activeWorkout.day)
     ).length
-    const totalWorkingSets = (activeWorkout.exercises || []).reduce((acc, ex) => acc + (parseInt(String(ex.sets), 10) || 3), 0)
+    const totalWorkingSets = rawExercises.reduce((acc, ex) => acc + (parseInt(String(ex.sets), 10) || 3), 0)
 
-    const exDraft = activeEx ? inlineSetDrafts[exerciseDraftKey(activeWorkout.day, activeEx.name)] : undefined
-    const prescribedSetsCount = activeEx ? parseInt(String(activeEx.sets), 10) || 3 : 3
-    const currentExCompletedWorkingSets = activeEx ? (localSetLogs || []).filter(l =>
-      normalizeExerciseName(l.exercise_name) === normalizeExerciseName(activeEx.name) &&
-      !l.is_warmup &&
-      extractWorkoutDayTag(l.notes) === Number(activeWorkout.day)
-    ).length : 0
+    // 3. Cardio Protocol
+    const cardio = resolveWorkoutCardioProtocol(activeWorkout, profile, plan)
+    let cardioPayload: WatchCardioProtocolPayload | undefined = undefined
+    if (cardio) {
+      const age = Number(profile?.age) || 35
+      const zones = calculateCardioZones(age, profile?.resting_heart_rate || 65)
+      const stage = Number(cardio.stage) || 2
+      const targetZoneMetrics = stage === 1 ? zones.zone1 : stage === 3 ? zones.zone3 : zones.zone2
+      cardioPayload = {
+        modality: cardio.recommendedModalities?.[0] || 'Incline Treadmill Walk',
+        durationMins: Number(cardio.durationMins) || 15,
+        targetZone: stage,
+        targetBpmMin: targetZoneMetrics.minBpm,
+        targetBpmMax: targetZoneMetrics.maxBpm,
+      }
+    }
 
-    const nextSetNumber = Math.min(prescribedSetsCount, currentExCompletedWorkingSets + 1)
-    const weightNum = exDraft?.weight ? Number(exDraft.weight) || 135 : 135
-    const repsNum = exDraft?.reps ? parseInt(exDraft.reps, 10) || 10 : 10
+    // 4. Cool-Down Stretches
+    const cooldownItems = resolvePrescribedCoolDownStretches(
+      activeWorkout.focus,
+      activeWorkout.exercises || [],
+      activeWorkout.notes,
+      activeWorkout.day
+    )
+    const cooldownKey = getCoolDownStorageKey(
+      plan?.id,
+      microcycleProgress.currentWeek,
+      activeWorkout.day,
+      activeWorkout.scheduledDate
+    )
+    let completedCooldownRecord: Record<string, boolean> = {}
+    try {
+      const saved = localStorage.getItem(cooldownKey)
+      if (saved) completedCooldownRecord = JSON.parse(saved)
+    } catch {}
+    const cooldownStretches: WatchCooldownStretchPayload[] = cooldownItems.map(item => ({
+      name: item.name,
+      durationSec: item.durationSec,
+      protocol: item.protocol,
+      isCompleted: Boolean(completedCooldownRecord[item.id]),
+    }))
 
     void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
       void syncWorkoutStateToWatch({
@@ -1312,28 +1432,44 @@ export default function FitnessTrackerClient({
         focus: activeWorkout.focus || 'Strength & Conditioning',
         completedSets: completedWorkingSets,
         totalSets: totalWorkingSets,
+        isSessionActive,
+        activePhase,
+        activeExerciseIndex: activeExIndex,
         activeExercise: activeEx ? {
-          exerciseName: activeEx.name,
-          setNumber: nextSetNumber,
-          totalSets: prescribedSetsCount,
-          prescribedWeight: weightNum,
-          prescribedReps: repsNum,
-          targetRpe: exDraft?.rpe ? Number(exDraft.rpe) : 8.0,
-          tempo: activeEx.tempo || '2-0-2-0',
-          restSeconds: exDraft?.restSeconds ? Number(exDraft.restSeconds) : 60,
-          isCompound: isCompoundLift(activeEx.name),
-          isHammerCurl: isHammerCurlMovement(activeEx.name),
-          optPhase: plan?.nasm_opt_phase || 3,
+          exerciseName: activeEx.exerciseName,
+          setNumber: activeEx.setNumber,
+          totalSets: activeEx.totalSets,
+          prescribedWeight: activeEx.prescribedWeight,
+          prescribedReps: activeEx.prescribedReps,
+          targetRpe: activeEx.targetRpe,
+          tempo: activeEx.tempo,
+          restSeconds: activeEx.restSeconds,
+          isCompound: activeEx.isCompound,
+          isHammerCurl: activeEx.isHammerCurl,
+          optPhase: activeEx.optPhase,
         } : undefined,
+        exercises: exercisesList,
+        cardioProtocol: cardioPayload,
+        warmupDrills,
+        cooldownStretches,
       })
     })
   }, [
     effectiveActiveWorkoutDay,
+    activeWorkoutSessionDay,
+    isWorkoutTimerActive,
+    elapsedWorkoutSeconds,
+    activeStepFilter,
     expandedExerciseKey,
     planWorkouts,
+    adaptedExercisesByDay,
     inlineSetDrafts,
     localSetLogs,
+    plan?.id,
     plan?.nasm_opt_phase,
+    profile,
+    latestAssessment,
+    microcycleProgress.currentWeek,
   ])
 
 
@@ -1836,6 +1972,47 @@ export default function FitnessTrackerClient({
       if (unsubscribe) unsubscribe()
     }
   }, [effectiveActiveWorkoutDay, planWorkouts])
+
+  // Listen for Exercise tapped on Apple Watch workout drawer
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchExerciseSelected }) => {
+      void subscribeToWatchExerciseSelected((exerciseName) => {
+        const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
+        if (activeWorkout) {
+          setExpandedExerciseKey(`${activeWorkout.day}-${exerciseName}`)
+          setActiveStepFilter('resistance')
+          setCollapsedStages(prev => ({ ...prev, [`${activeWorkout.day}-resistance`]: false }))
+        }
+      }).then(cleanup => {
+        unsubscribe = cleanup
+      })
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [effectiveActiveWorkoutDay, planWorkouts])
+
+  // Listen for Phase tab tapped on Apple Watch (Warmup, Resistance, Cardio, Cooldown)
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchPhaseSelected }) => {
+      void subscribeToWatchPhaseSelected((phase) => {
+        const validPhase = phase as 'warmup' | 'resistance' | 'cardio' | 'cooldown'
+        if (['warmup', 'resistance', 'cardio', 'cooldown'].includes(validPhase)) {
+          setActiveStepFilter(validPhase)
+          setCollapsedStages(prev => ({ ...prev, [`${effectiveActiveWorkoutDay}-${validPhase}`]: false }))
+        }
+      }).then(cleanup => {
+        unsubscribe = cleanup
+      })
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [effectiveActiveWorkoutDay])
 
   async function handleSkipExercise(workout: WorkoutDay, exercise: WorkoutExercise, reason: string, _notes: string) {
     await fetch('/api/fitness/skip-exercise', {
@@ -2934,6 +3111,7 @@ export default function FitnessTrackerClient({
                             type="button"
                             onClick={() => {
                               handleStartWorkoutSession(workout.day)
+                              setActiveWorkoutDay(workout.day)
                               setActiveStepFilter('warmup')
                               setCollapsedStages(prev => ({ ...prev, [`${workout.day}-warmup`]: false }))
                             }}

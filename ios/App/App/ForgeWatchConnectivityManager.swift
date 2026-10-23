@@ -15,6 +15,8 @@ import WatchConnectivity
     public var onHeartRateFromWatch: ((Int, String) -> Void)?
     public var onWatchSessionStateChanged: ((Bool) -> Void)?
     public var onEndWorkoutFromWatch: (() -> Void)?
+    public var onExerciseSelectedFromWatch: ((String) -> Void)?
+    public var onPhaseSelectedFromWatch: ((String) -> Void)?
 
     private override init() {
         super.init()
@@ -180,6 +182,18 @@ import WatchConnectivity
             case "endWorkout":
                 // Athlete tapped 'End Workout' on Apple Watch
                 self?.onEndWorkoutFromWatch?()
+
+            case "exerciseSelected":
+                // Athlete selected an exercise from the watch list/stepper
+                if let name = dict["exerciseName"] as? String {
+                    self?.onExerciseSelectedFromWatch?(name)
+                }
+
+            case "phaseSelected":
+                // Athlete selected a phase (warmup, resistance, cardio, cooldown) on watch
+                if let phase = dict["phase"] as? String {
+                    self?.onPhaseSelectedFromWatch?(phase)
+                }
 
             default:
                 break

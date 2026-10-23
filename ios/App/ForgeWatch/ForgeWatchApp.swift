@@ -234,6 +234,37 @@ struct WatchHomeView: View {
                 // Morning CNS Readiness Card
                 CNSReadinessCardView(cns: coordinator.cnsReadiness)
 
+                // Prescribed Workout Glance
+                if coordinator.workoutState.dayNumber > 0 {
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack {
+                            Text("DAY \(coordinator.workoutState.dayNumber)")
+                                .font(.system(size: 10, weight: .black, design: .rounded))
+                                .foregroundColor(Color(red: 0.83, green: 0.69, blue: 0.22))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color(red: 0.83, green: 0.69, blue: 0.22).opacity(0.18))
+                                .cornerRadius(4)
+
+                            Spacer()
+
+                            if !coordinator.workoutState.exercises.isEmpty {
+                                Text("\(coordinator.workoutState.exercises.count) EXERCISES")
+                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.gray)
+                            }
+                        }
+
+                        Text(coordinator.workoutState.focus)
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .lineLimit(2)
+                    }
+                    .padding(8)
+                    .background(Color.white.opacity(0.06))
+                    .cornerRadius(10)
+                }
+
                 // Quick Start Buttons (Large 44pt Touch Targets)
                 VStack(spacing: 8) {
                     Button(action: {
@@ -246,18 +277,18 @@ struct WatchHomeView: View {
                                 Circle()
                                     .fill(Color.black.opacity(0.2))
                                     .frame(width: 28, height: 28)
-                                Image(systemName: "dumbbell.fill")
-                                    .font(.system(size: 14))
+                                Image(systemName: "play.fill")
+                                    .font(.system(size: 12))
                                     .foregroundColor(.black)
                             }
 
-                            Text("START STRENGTH")
-                                .font(.system(size: 13, weight: .black, design: .rounded))
+                            Text(coordinator.workoutState.dayNumber > 0 ? "START DAY \(coordinator.workoutState.dayNumber)" : "START WORKOUT")
+                                .font(.system(size: 12.5, weight: .black, design: .rounded))
                                 .foregroundColor(.black)
 
                             Spacer()
 
-                            Image(systemName: "play.fill")
+                            Image(systemName: "chevron.right")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.black.opacity(0.6))
                         }
@@ -265,7 +296,7 @@ struct WatchHomeView: View {
                         .padding(.vertical, 10)
                         .background(
                             LinearGradient(
-                                colors: [Color(red: 0.22, green: 0.74, blue: 0.97), Color(red: 0.15, green: 0.60, blue: 0.85)],
+                                colors: [Color(red: 0.83, green: 0.69, blue: 0.22), Color(red: 0.67, green: 0.51, blue: 0.04)],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )

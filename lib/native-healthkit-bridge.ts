@@ -107,7 +107,7 @@ export interface GAAHealthKitPluginInterface {
     hrvRmssd?: number
   }): Promise<{ success: boolean }>
   addListener(
-    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout',
+    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected',
     listenerFunc: (data: any) => void
   ): Promise<PluginListenerHandle>
 }
@@ -1009,6 +1009,49 @@ export interface WatchActiveExercisePayload {
   optPhase?: number
 }
 
+export interface WatchExerciseItemPayload {
+  exerciseName: string
+  block?: string
+  phaseLabel: string
+  orderIndex: number
+  setNumber: number
+  totalSets: number
+  prescribedWeight: number
+  prescribedReps: number
+  repsDisplay: string
+  targetRpe?: number
+  tempo?: string
+  restSeconds: number
+  isCompound?: boolean
+  isHammerCurl?: boolean
+  optPhase?: number
+  isCompleted?: boolean
+  completedSetsCount?: number
+}
+
+export interface WatchCardioProtocolPayload {
+  modality: string
+  durationMins: number
+  targetZone: number
+  targetBpmMin: number
+  targetBpmMax: number
+}
+
+export interface WatchWarmupDrillPayload {
+  name: string
+  phaseLabel: string
+  durationSec: number
+  protocol: string
+  isCompleted?: boolean
+}
+
+export interface WatchCooldownStretchPayload {
+  name: string
+  durationSec: number
+  protocol: string
+  isCompleted?: boolean
+}
+
 export interface WatchWorkoutSyncPayload {
   workoutId: string
   dayNumber: number
@@ -1016,7 +1059,13 @@ export interface WatchWorkoutSyncPayload {
   completedSets: number
   totalSets: number
   isSessionActive?: boolean
+  activePhase?: 'warmup' | 'resistance' | 'cardio' | 'cooldown'
+  activeExerciseIndex?: number
   activeExercise?: WatchActiveExercisePayload
+  exercises?: WatchExerciseItemPayload[]
+  cardioProtocol?: WatchCardioProtocolPayload
+  warmupDrills?: WatchWarmupDrillPayload[]
+  cooldownStretches?: WatchCooldownStretchPayload[]
 }
 
 export interface WatchRestTimerSyncPayload {
@@ -1178,6 +1227,46 @@ export async function subscribeToWatchEndWorkout(
     const plugin = getNativeHealthPlugin()
     const handle = await plugin.addListener('onWatchEndWorkout', () => {
       callback()
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to exercise selection tapped directly on Apple Watch.
+ */
+export async function subscribeToWatchExerciseSelected(
+  callback: (exerciseName: string) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchExerciseSelected', (data: { exerciseName: string }) => {
+      if (data?.exerciseName) callback(data.exerciseName)
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to phase tab changes triggered directly on Apple Watch ('warmup' | 'resistance' | 'cardio' | 'cooldown').
+ */
+export async function subscribeToWatchPhaseSelected(
+  callback: (phase: string) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchPhaseSelected', (data: { phase: string }) => {
+      if (data?.phase) callback(data.phase)
     })
     return () => {
       handle.remove()

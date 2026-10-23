@@ -28,7 +28,7 @@ interface ClinicalKineticWarmupModuleProps {
   isCompleted?: boolean
 }
 
-interface WarmupItem {
+export interface WarmupItem {
   id: string
   phase: 'inhibit' | 'lengthen' | 'activate' | 'integrate'
   phaseNumber: number
@@ -169,6 +169,162 @@ export function cleanupLegacyWarmupKeys(): void {
   } catch {}
 }
 
+export function resolvePrescribedWarmupDrills(
+  latestAssessment?: NasmAssessmentRecord | null,
+  _workoutFocus?: string
+): WarmupItem[] {
+  const items: WarmupItem[] = []
+
+  if (latestAssessment?.prescribed_correctives) {
+    const pc = latestAssessment.prescribed_correctives
+    const inhibit = Array.isArray(pc.inhibit) ? pc.inhibit : []
+    const lengthen = Array.isArray(pc.lengthen) ? pc.lengthen : []
+    const activate = Array.isArray(pc.activate) ? pc.activate : []
+    const integrate = Array.isArray(pc.integrate) ? pc.integrate : []
+
+    inhibit.slice(0, 2).forEach((ex, i) => {
+      const cues = ex.coachingCues || []
+      const isUnilateral = isUnilateralMovement({ phase: 'inhibit', name: ex.name, protocol: ex.protocol || ex.repsOrDuration })
+      items.push({
+        id: `inhibit-${i}`,
+        phase: 'inhibit',
+        phaseNumber: 1,
+        phaseLabel: '1. Inhibit (SMR Trigger Points)',
+        name: ex.name,
+        target: ex.targetMuscle || 'Overactive Myofascial Tissue',
+        protocol: ex.protocol || ex.repsOrDuration || 'Hold tender spot 30-60s',
+        durationSec: 30,
+        cues,
+        instructions: deriveHowToSteps('inhibit', ex.name, cues),
+        isUnilateral,
+      })
+    })
+
+    lengthen.slice(0, 2).forEach((ex, i) => {
+      const cues = ex.coachingCues || []
+      const isUnilateral = isUnilateralMovement({ phase: 'lengthen', name: ex.name, protocol: ex.protocol || ex.repsOrDuration })
+      items.push({
+        id: `lengthen-${i}`,
+        phase: 'lengthen',
+        phaseNumber: 2,
+        phaseLabel: '2. Lengthen (Static Stretches)',
+        name: ex.name,
+        target: ex.targetMuscle || 'Shortened Kinetic Checkpoint',
+        protocol: ex.protocol || ex.repsOrDuration || 'Static hold 30s per side',
+        durationSec: 30,
+        cues,
+        instructions: deriveHowToSteps('lengthen', ex.name, cues),
+        isUnilateral,
+      })
+    })
+
+    activate.slice(0, 2).forEach((ex, i) => {
+      const cues = ex.coachingCues || []
+      items.push({
+        id: `activate-${i}`,
+        phase: 'activate',
+        phaseNumber: 3,
+        phaseLabel: '3. Activate (Isolated Stabilizers)',
+        name: ex.name,
+        target: ex.targetMuscle || 'Underactive Stabilizer',
+        protocol: `${ex.sets ?? '1-2'} sets × ${ex.repsOrDuration ?? '12-15'} (${ex.tempo ?? '4/2/1'} tempo)`,
+        durationSec: 45,
+        cues,
+        instructions: deriveHowToSteps('activate', ex.name, cues),
+      })
+    })
+
+    integrate.slice(0, 1).forEach((ex, i) => {
+      const cues = ex.coachingCues || []
+      items.push({
+        id: `integrate-${i}`,
+        phase: 'integrate',
+        phaseNumber: 4,
+        phaseLabel: '4. Integrate (Kinetic Chain)',
+        name: ex.name,
+        target: ex.targetMuscle || 'Integrated Kinetic Chain',
+        protocol: `${ex.sets ?? '1-2'} sets × ${ex.repsOrDuration ?? '10-12'}`,
+        durationSec: 45,
+        cues,
+        instructions: deriveHowToSteps('integrate', ex.name, cues),
+      })
+    })
+  }
+
+  // If assessment correctives are empty, fallback to standard protocol
+  if (items.length === 0) {
+    items.push(
+      {
+        id: 'inhibit-def-1',
+        phase: 'inhibit',
+        phaseNumber: 1,
+        phaseLabel: '1. Inhibit (SMR Foam Roll)',
+        name: 'SMR Calves & Thoracic Spine',
+        target: 'Gastrocnemius / Soleus & Thoracic Extensors',
+        protocol: 'Hold tender spots 30-60s',
+        durationSec: 30,
+        cues: ['Roll slowly over muscle bellies. Hold pressure when finding tender points.'],
+        instructions: [
+          '1. Sit on floor with foam roller under mid-calf or mid-back.',
+          '2. Slowly roll along muscle to find the most tender trigger point.',
+          '3. Hold static direct pressure for 30–60s while taking deep diaphragmatic breaths until tension releases.',
+        ],
+      },
+      {
+        id: 'lengthen-def-1',
+        phase: 'lengthen',
+        phaseNumber: 2,
+        phaseLabel: '2. Lengthen (Static Stretch)',
+        name: 'Kneeling Hip Flexor & Latissimus Stretch',
+        target: 'Psoas / Rectus Femoris & Lats',
+        protocol: 'Static hold 30s per side',
+        durationSec: 30,
+        isUnilateral: true,
+        cues: ['Tuck pelvis slightly (posterior tilt) and reach overhead.'],
+        instructions: [
+          '1. Half-kneeling lunge on one knee, front knee bent 90 degrees.',
+          '2. Tuck your pelvis under (posterior tilt) and shift forward slightly.',
+          '3. Reach overhead on the kneeling side. Hold for 30s per side without bouncing.',
+        ],
+      },
+      {
+        id: 'activate-def-1',
+        phase: 'activate',
+        phaseNumber: 3,
+        phaseLabel: '3. Activate (Stabilizers)',
+        name: 'Glute Bridge with 2s Isometric Hold',
+        target: 'Gluteus Maximus & Core Local Stabilizers',
+        protocol: '2 sets × 12 reps (4/2/1 tempo)',
+        durationSec: 45,
+        cues: ['Drive through heels, maintain neutral spine, squeeze glutes for 2 seconds at peak.'],
+        instructions: [
+          '1. Lie on back, feet flat and hip-width apart.',
+          '2. Drive through heels to raise hips into full extension.',
+          '3. Squeeze glutes for 2 seconds at top, then lower for 4 seconds. Complete 12 reps.',
+        ],
+      },
+      {
+        id: 'integrate-def-1',
+        phase: 'integrate',
+        phaseNumber: 4,
+        phaseLabel: '4. Integrate (Dynamic Movement)',
+        name: 'Squat to Overhead Reach & Scaption',
+        target: 'Full Kinetic Chain & Scapulohumeral Rhythm',
+        protocol: '1-2 sets × 10 reps',
+        durationSec: 45,
+        cues: ['Keep knees tracked over 2nd toes, arms moving at 45 degree scapular plane.'],
+        instructions: [
+          '1. Stand feet shoulder-width, knees aligned over 2nd toes.',
+          '2. Squat down under control with hips back.',
+          '3. Stand up and simultaneously reach arms overhead at a 45° angle. Repeat for 10 reps.',
+        ],
+      }
+    )
+  }
+
+  return items
+}
+
 export default function ClinicalKineticWarmupModule({
   workoutDay = 1,
   workoutFocus: _workoutFocus = 'Kinetic Chain Mobility & Corrective Preparation',
@@ -275,157 +431,8 @@ export default function ClinicalKineticWarmupModule({
 
   // Derive clinical warmup items from assessment or workout notes
   const warmupItems: WarmupItem[] = React.useMemo(() => {
-    const items: WarmupItem[] = []
-
-    if (latestAssessment?.prescribed_correctives) {
-      const pc = latestAssessment.prescribed_correctives
-      const inhibit = Array.isArray(pc.inhibit) ? pc.inhibit : []
-      const lengthen = Array.isArray(pc.lengthen) ? pc.lengthen : []
-      const activate = Array.isArray(pc.activate) ? pc.activate : []
-      const integrate = Array.isArray(pc.integrate) ? pc.integrate : []
-
-      inhibit.slice(0, 2).forEach((ex, i) => {
-        const cues = ex.coachingCues || []
-        const isUnilateral = isUnilateralMovement({ phase: 'inhibit', name: ex.name, protocol: ex.protocol || ex.repsOrDuration })
-        items.push({
-          id: `inhibit-${i}`,
-          phase: 'inhibit',
-          phaseNumber: 1,
-          phaseLabel: '1. Inhibit (SMR Trigger Points)',
-          name: ex.name,
-          target: ex.targetMuscle || 'Overactive Myofascial Tissue',
-          protocol: ex.protocol || ex.repsOrDuration || 'Hold tender spot 30-60s',
-          durationSec: 30,
-          cues,
-          instructions: deriveHowToSteps('inhibit', ex.name, cues),
-          isUnilateral,
-        })
-      })
-
-      lengthen.slice(0, 2).forEach((ex, i) => {
-        const cues = ex.coachingCues || []
-        const isUnilateral = isUnilateralMovement({ phase: 'lengthen', name: ex.name, protocol: ex.protocol || ex.repsOrDuration })
-        items.push({
-          id: `lengthen-${i}`,
-          phase: 'lengthen',
-          phaseNumber: 2,
-          phaseLabel: '2. Lengthen (Static Stretches)',
-          name: ex.name,
-          target: ex.targetMuscle || 'Shortened Kinetic Checkpoint',
-          protocol: ex.protocol || ex.repsOrDuration || 'Static hold 30s per side',
-          durationSec: 30,
-          cues,
-          instructions: deriveHowToSteps('lengthen', ex.name, cues),
-          isUnilateral,
-        })
-      })
-
-      activate.slice(0, 2).forEach((ex, i) => {
-        const cues = ex.coachingCues || []
-        items.push({
-          id: `activate-${i}`,
-          phase: 'activate',
-          phaseNumber: 3,
-          phaseLabel: '3. Activate (Isolated Stabilizers)',
-          name: ex.name,
-          target: ex.targetMuscle || 'Underactive Stabilizer',
-          protocol: `${ex.sets ?? '1-2'} sets × ${ex.repsOrDuration ?? '12-15'} (${ex.tempo ?? '4/2/1'} tempo)`,
-          durationSec: 45,
-          cues,
-          instructions: deriveHowToSteps('activate', ex.name, cues),
-        })
-      })
-
-      integrate.slice(0, 1).forEach((ex, i) => {
-        const cues = ex.coachingCues || []
-        items.push({
-          id: `integrate-${i}`,
-          phase: 'integrate',
-          phaseNumber: 4,
-          phaseLabel: '4. Integrate (Kinetic Chain)',
-          name: ex.name,
-          target: ex.targetMuscle || 'Integrated Kinetic Chain',
-          protocol: `${ex.sets ?? '1-2'} sets × ${ex.repsOrDuration ?? '10-12'}`,
-          durationSec: 45,
-          cues,
-          instructions: deriveHowToSteps('integrate', ex.name, cues),
-        })
-      })
-    }
-
-    // If assessment correctives are empty, fallback to standard protocol
-    if (items.length === 0) {
-      items.push(
-        {
-          id: 'inhibit-def-1',
-          phase: 'inhibit',
-          phaseNumber: 1,
-          phaseLabel: '1. Inhibit (SMR Foam Roll)',
-          name: 'SMR Calves & Thoracic Spine',
-          target: 'Gastrocnemius / Soleus & Thoracic Extensors',
-          protocol: 'Hold tender spots 30-60s',
-          durationSec: 30,
-          cues: ['Roll slowly over muscle bellies. Hold pressure when finding tender points.'],
-          instructions: [
-            '1. Sit on floor with foam roller under mid-calf or mid-back.',
-            '2. Slowly roll along muscle to find the most tender trigger point.',
-            '3. Hold static direct pressure for 30–60s while taking deep diaphragmatic breaths until tension releases.',
-          ],
-        },
-        {
-          id: 'lengthen-def-1',
-          phase: 'lengthen',
-          phaseNumber: 2,
-          phaseLabel: '2. Lengthen (Static Stretch)',
-          name: 'Kneeling Hip Flexor & Latissimus Stretch',
-          target: 'Psoas / Rectus Femoris & Lats',
-          protocol: 'Static hold 30s per side',
-          durationSec: 30,
-          isUnilateral: true,
-          cues: ['Tuck pelvis slightly (posterior tilt) and reach overhead.'],
-          instructions: [
-            '1. Half-kneeling lunge on one knee, front knee bent 90 degrees.',
-            '2. Tuck your pelvis under (posterior tilt) and shift forward slightly.',
-            '3. Reach overhead on the kneeling side. Hold for 30s per side without bouncing.',
-          ],
-        },
-        {
-          id: 'activate-def-1',
-          phase: 'activate',
-          phaseNumber: 3,
-          phaseLabel: '3. Activate (Stabilizers)',
-          name: 'Glute Bridge with 2s Isometric Hold',
-          target: 'Gluteus Maximus & Core Local Stabilizers',
-          protocol: '2 sets × 12 reps (4/2/1 tempo)',
-          durationSec: 45,
-          cues: ['Drive through heels, maintain neutral spine, squeeze glutes for 2 seconds at peak.'],
-          instructions: [
-            '1. Lie on back, feet flat and hip-width apart.',
-            '2. Drive through heels to raise hips into full extension.',
-            '3. Squeeze glutes for 2 seconds at top, then lower for 4 seconds. Complete 12 reps.',
-          ],
-        },
-        {
-          id: 'integrate-def-1',
-          phase: 'integrate',
-          phaseNumber: 4,
-          phaseLabel: '4. Integrate (Dynamic Movement)',
-          name: 'Squat to Overhead Reach & Scaption',
-          target: 'Full Kinetic Chain & Scapulohumeral Rhythm',
-          protocol: '1-2 sets × 10 reps',
-          durationSec: 45,
-          cues: ['Keep knees tracked over 2nd toes, arms moving at 45 degree scapular plane.'],
-          instructions: [
-            '1. Stand feet shoulder-width, knees aligned over 2nd toes.',
-            '2. Squat down under control with hips back.',
-            '3. Stand up and simultaneously reach arms overhead at a 45° angle. Repeat for 10 reps.',
-          ],
-        }
-      )
-    }
-
-    return items
-  }, [latestAssessment])
+    return resolvePrescribedWarmupDrills(latestAssessment, _workoutFocus)
+  }, [latestAssessment, _workoutFocus])
 
   const allCompleted = warmupItems.length > 0 && warmupItems.every(item => completedItems[item.id])
 
