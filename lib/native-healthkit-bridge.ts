@@ -107,7 +107,7 @@ export interface GAAHealthKitPluginInterface {
     hrvRmssd?: number
   }): Promise<{ success: boolean }>
   addListener(
-    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged',
+    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout',
     listenerFunc: (data: any) => void
   ): Promise<PluginListenerHandle>
 }
@@ -1015,6 +1015,7 @@ export interface WatchWorkoutSyncPayload {
   focus: string
   completedSets: number
   totalSets: number
+  isSessionActive?: boolean
   activeExercise?: WatchActiveExercisePayload
 }
 
@@ -1157,6 +1158,26 @@ export async function subscribeToWatchHeartRate(
     const plugin = getNativeHealthPlugin()
     const handle = await plugin.addListener('onWatchHeartRateUpdate', (data: { heartRate: number; timestamp?: string }) => {
       callback(data)
+    })
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to End Workout action triggered directly on Apple Watch.
+ */
+export async function subscribeToWatchEndWorkout(
+  callback: () => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchEndWorkout', () => {
+      callback()
     })
     return () => {
       handle.remove()

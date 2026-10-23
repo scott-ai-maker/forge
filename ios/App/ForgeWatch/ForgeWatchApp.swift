@@ -27,23 +27,26 @@ struct ContentView: View {
     @ObservedObject var coordinator = WatchSessionCoordinator.shared
     @ObservedObject var workoutManager = WatchWorkoutManager.shared
 
-    @State private var selectedTab: Int = 0
+    @State private var selectedTab: Int = 1
 
     var body: some View {
         Group {
             if coordinator.workoutState.isSessionActive || workoutManager.isWorkoutActive {
                 TabView(selection: $selectedTab) {
-                    WorkoutActiveView()
+                    WorkoutControlsView(selectedTab: $selectedTab)
                         .tag(0)
 
-                    RestTimerRadialView()
+                    WorkoutActiveView()
                         .tag(1)
 
-                    CardioZoneView()
+                    RestTimerRadialView()
                         .tag(2)
 
-                    TempoMetronomeView()
+                    CardioZoneView()
                         .tag(3)
+
+                    TempoMetronomeView()
+                        .tag(4)
                 }
                 .tabViewStyle(PageTabViewStyle())
             } else {
@@ -51,6 +54,148 @@ struct ContentView: View {
             }
         }
         .background(Color(red: 0.06, green: 0.09, blue: 0.14).ignoresSafeArea()) // #0F172A Obsidian
+    }
+}
+
+/**
+ * WorkoutControlsView
+ * Standard watchOS workout session controls (End / Pause / Summary).
+ * Swiping to the leftmost tab provides instant, unmistakable workout termination.
+ */
+struct WorkoutControlsView: View {
+    @ObservedObject var coordinator = WatchSessionCoordinator.shared
+    @ObservedObject var workoutManager = WatchWorkoutManager.shared
+    @Binding var selectedTab: Int
+
+    @State private var showEndConfirmation: Bool = false
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 8) {
+                // Header Glance with Live Duration
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(coordinator.isPhoneReachable ? Color(red: 0.06, green: 0.72, blue: 0.51) : Color(red: 0.83, green: 0.63, blue: 0.09))
+                        .frame(width: 6, height: 6)
+
+                    Text("SESSION CONTROLS")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .foregroundColor(.gray)
+
+                    Spacer()
+
+                    Text(formatTime(workoutManager.elapsedSeconds))
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 4)
+
+                // Large Red END WORKOUT Button
+                Button(action: {
+                    showEndConfirmation = true
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    HStack(spacing: 8) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.2))
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "xmark")
+                                .font(.system(size: 14, weight: .black))
+                                .foregroundColor(.white)
+                        }
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("END WORKOUT")
+                                .font(.system(size: 13, weight: .black, design: .rounded))
+                                .foregroundColor(.white)
+                            Text("Save & sync session")
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 10)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.94, green: 0.27, blue: 0.27), Color(red: 0.75, green: 0.15, blue: 0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .cornerRadius(12)
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                // Amber PAUSE / RESUME Button
+                Button(action: {
+                    WKInterfaceDevice.current().play(.click)
+                    if workoutManager.isPaused {
+                        workoutManager.resumeWorkout()
+                    } else {
+                        workoutManager.pauseWorkout()
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.12))
+                                .frame(width: 32, height: 32)
+                            Image(systemName: workoutManager.isPaused ? "play.fill" : "pause.fill")
+                                .font(.system(size: 13, weight: .black))
+                                .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                        }
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(workoutManager.isPaused ? "RESUME" : "PAUSE")
+                                .font(.system(size: 13, weight: .black, design: .rounded))
+                                .foregroundColor(.white)
+                            Text(workoutManager.isPaused ? "Session is paused" : "Pause workout timer")
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.gray)
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 10)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(12)
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                // Return to Active Exercise Button
+                Button(action: {
+                    selectedTab = 1
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 12))
+                        Text("BACK TO LIFT")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                    }
+                    .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 4)
+        }
+        .confirmationDialog("End Workout?", isPresented: $showEndConfirmation, titleVisibility: .visible) {
+            Button("End Workout", role: .destructive) {
+                coordinator.endSession()
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private func formatTime(_ totalSeconds: Int) -> String {
+        let m = totalSeconds / 60
+        let s = totalSeconds % 60
+        return String(format: "%02d:%02d", m, s)
     }
 }
 

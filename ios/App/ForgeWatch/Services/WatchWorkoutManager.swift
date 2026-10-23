@@ -75,18 +75,40 @@ public final class WatchWorkoutManager: NSObject, ObservableObject, HKWorkoutSes
         }
     }
 
+    @Published public var isPaused: Bool = false
+
+    public func pauseWorkout() {
+        session?.pause()
+        isPaused = true
+        stopElapsedTimer()
+    }
+
+    public func resumeWorkout() {
+        session?.resume()
+        isPaused = false
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.elapsedSeconds += 1
+            }
+        }
+    }
+
     public func endWorkout(completion: (() -> Void)? = nil) {
         guard let session = session, let builder = builder else {
+            isPaused = false
             completion?()
             return
         }
 
+        isPaused = false
         stopElapsedTimer()
         session.end()
         builder.endCollection(withEnd: Date()) { [weak self] success, error in
             builder.finishWorkout { _, _ in
                 DispatchQueue.main.async {
                     self?.isWorkoutActive = false
+                    self?.isPaused = false
                     self?.session = nil
                     self?.builder = nil
                     completion?()
@@ -114,7 +136,8 @@ public final class WatchWorkoutManager: NSObject, ObservableObject, HKWorkoutSes
 
     public func workoutSession(_ workoutSession: HKWorkoutSession, didChangeTo toState: HKWorkoutSessionState, from fromState: HKWorkoutSessionState, date: Date) {
         DispatchQueue.main.async {
-            self.isWorkoutActive = (toState == .running)
+            self.isWorkoutActive = (toState == .running || toState == .paused)
+            self.isPaused = (toState == .paused)
         }
     }
 

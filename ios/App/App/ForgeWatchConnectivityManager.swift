@@ -14,6 +14,7 @@ import WatchConnectivity
     public var onRestActionFromWatch: (([String: Any]) -> Void)?
     public var onHeartRateFromWatch: ((Int, String) -> Void)?
     public var onWatchSessionStateChanged: ((Bool) -> Void)?
+    public var onEndWorkoutFromWatch: (() -> Void)?
 
     private override init() {
         super.init()
@@ -175,6 +176,10 @@ import WatchConnectivity
                     let ts = (dict["timestamp"] as? String) ?? ISO8601DateFormatter().string(from: Date())
                     self?.onHeartRateFromWatch?(bpm, ts)
                 }
+
+            case "endWorkout":
+                // Athlete tapped 'End Workout' on Apple Watch
+                self?.onEndWorkoutFromWatch?()
 
             default:
                 break

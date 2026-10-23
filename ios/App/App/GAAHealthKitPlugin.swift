@@ -52,6 +52,9 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
                 "isWatchAppInstalled": installed
             ])
         }
+        ForgeWatchConnectivityManager.shared.onEndWorkoutFromWatch = { [weak self] in
+            self?.notifyListeners("onWatchEndWorkout", data: [:])
+        }
     }
 
     @objc public func isAvailable(_ call: CAPPluginCall) {

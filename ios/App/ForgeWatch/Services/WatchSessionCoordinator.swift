@@ -196,6 +196,12 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
 
+            // End Workout Signal from iPhone
+            if let type = dict["type"] as? String, type == "endWorkout" {
+                self.endSession(notifyPhone: false)
+                return
+            }
+
             // Workout State Update from iPhone
             if let workoutDict = dict["workout"] as? [String: Any] {
                 self.parseWorkoutState(workoutDict)
@@ -217,7 +223,31 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         }
     }
 
+    /**
+     * Athlete or iPhone ends the active workout session.
+     */
+    public func endSession(notifyPhone: Bool = true) {
+        workoutState.isSessionActive = false
+        stopLocalRestTimer()
+        WatchWorkoutManager.shared.endWorkout()
+        WatchHapticManager.shared.playSuccessKnock()
+
+        if notifyPhone {
+            let payload: [String: Any] = [
+                "type": "endWorkout",
+                "timestamp": ISO8601DateFormatter().string(from: Date())
+            ]
+            sendToPhone(payload)
+        }
+    }
+
     private func parseWorkoutState(_ dict: [String: Any]) {
+        let isActive = dict["isSessionActive"] as? Bool ?? true
+        if !isActive {
+            self.endSession(notifyPhone: false)
+            return
+        }
+
         let workoutId = dict["workoutId"] as? String ?? "active-session"
         let dayNumber = dict["dayNumber"] as? Int ?? 1
         let focus = dict["focus"] as? String ?? "Strength & Conditioning"

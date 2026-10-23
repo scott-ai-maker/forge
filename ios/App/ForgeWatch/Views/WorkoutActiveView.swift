@@ -15,6 +15,7 @@ public struct WorkoutActiveView: View {
     @State private var loggedRpe: Double = 8.0
     @State private var isCrownFocusedOnReps: Bool = true
     @State private var showPlateSheet: Bool = false
+    @State private var showEndConfirmation: Bool = false
 
     public var body: some View {
         ScrollView {
@@ -193,6 +194,22 @@ public struct WorkoutActiveView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.top, 2)
+
+                // 6. Tactile End Workout Button at bottom of scroll
+                Button(action: {
+                    showEndConfirmation = true
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "xmark.circle")
+                            .font(.system(size: 11))
+                        Text("End Workout")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundColor(Color(red: 0.97, green: 0.44, blue: 0.44).opacity(0.85))
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 4)
         }
@@ -205,6 +222,12 @@ public struct WorkoutActiveView: View {
         }
         .sheet(isPresented: $showPlateSheet) {
             PlateCalculatorSheet(totalWeightLbs: loggedWeight)
+        }
+        .confirmationDialog("End Workout?", isPresented: $showEndConfirmation, titleVisibility: .visible) {
+            Button("End Workout", role: .destructive) {
+                coordinator.endSession()
+            }
+            Button("Cancel", role: .cancel) {}
         }
     }
 

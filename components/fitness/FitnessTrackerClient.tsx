@@ -1060,6 +1060,16 @@ export default function FitnessTrackerClient({
   const handleClientQuitWorkout = useCallback(() => {
     handleQuitWorkoutSession()
     setCompleteModal(null)
+    void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
+      void syncWorkoutStateToWatch({
+        workoutId: '',
+        dayNumber: 0,
+        focus: '',
+        completedSets: 0,
+        totalSets: 0,
+        isSessionActive: false,
+      })
+    })
     setStatus('Workout session quit without penalty. No workout was recorded.')
   }, [handleQuitWorkoutSession])
 
@@ -1808,6 +1818,25 @@ export default function FitnessTrackerClient({
     }
   }, [effectiveActiveWorkoutDay, planWorkouts, expandedExerciseKey, inlineSetDrafts, plan?.nasm_opt_phase])
 
+  // Listen for End Workout triggered directly on Apple Watch
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchEndWorkout }) => {
+      void subscribeToWatchEndWorkout(() => {
+        const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay) || planWorkouts[0]
+        if (activeWorkout) {
+          setCompleteModal(activeWorkout)
+        }
+      }).then(cleanup => {
+        unsubscribe = cleanup
+      })
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [effectiveActiveWorkoutDay, planWorkouts])
+
   async function handleSkipExercise(workout: WorkoutDay, exercise: WorkoutExercise, reason: string, _notes: string) {
     await fetch('/api/fitness/skip-exercise', {
       method: 'POST',
@@ -1844,6 +1873,18 @@ export default function FitnessTrackerClient({
     // 2. ALWAYS close out live telemetry session (stops timer, resets active day, clears localStorage & MediaSession)
     handleStopWorkoutSession()
     setCompleteModal(null)
+
+    // 2b. Notify Apple Watch to close its active HKWorkoutSession and return to idle home
+    void import('@/lib/native-healthkit-bridge').then(({ syncWorkoutStateToWatch }) => {
+      void syncWorkoutStateToWatch({
+        workoutId: '',
+        dayNumber: 0,
+        focus: '',
+        completedSets: 0,
+        totalSets: 0,
+        isSessionActive: false,
+      })
+    })
 
     // 3. Sync to Apple Health (Native HealthKit & Backend Wearables API)
     const isCardioDay = Boolean(
