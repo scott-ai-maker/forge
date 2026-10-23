@@ -186,6 +186,25 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         }
     }
 
+    public func updateActiveExerciseEquipmentModality(_ modality: WatchEquipmentModality) {
+        if var active = workoutState.activeExercise {
+            active.equipmentModality = modality.rawValue
+            workoutState.activeExercise = active
+            if workoutState.activeExerciseIndex < workoutState.exercises.count {
+                workoutState.exercises[workoutState.activeExerciseIndex].equipmentModality = modality.rawValue
+            }
+            saveCachedWorkoutState()
+            WKInterfaceDevice.current().play(.click)
+
+            sendToPhone([
+                "type": "modalitySelected",
+                "exerciseName": active.exerciseName,
+                "equipmentModality": modality.rawValue,
+                "timestamp": ISO8601DateFormatter().string(from: Date())
+            ])
+        }
+    }
+
     public func selectPhase(_ phase: String) {
         lastLocalPhaseSelectionTime = Date()
         lastLocalPhaseSelected = phase
@@ -652,6 +671,7 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 let doneSets = exDict["completedSetsCount"] as? Int ?? 0
                 let targetMuscles = exDict["targetMuscles"] as? String
                 let equipment = exDict["equipment"] as? String
+                let equipmentModality = exDict["equipmentModality"] as? String
                 let setupCue = exDict["setupCue"] as? String
                 let movementCues = exDict["movementCues"] as? [String]
                 let coachingTip = exDict["coachingTip"] as? String
@@ -677,6 +697,7 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                         completedSetsCount: doneSets,
                         targetMuscles: targetMuscles,
                         equipment: equipment,
+                        equipmentModality: equipmentModality,
                         setupCue: setupCue,
                         movementCues: movementCues,
                         coachingTip: coachingTip
@@ -690,6 +711,7 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         if let exDict = dict["activeExercise"] as? [String: Any] {
             let targetMuscles = exDict["targetMuscles"] as? String
             let equipment = exDict["equipment"] as? String
+            let equipmentModality = exDict["equipmentModality"] as? String
             let setupCue = exDict["setupCue"] as? String
             let movementCues = exDict["movementCues"] as? [String]
             let coachingTip = exDict["coachingTip"] as? String
@@ -714,6 +736,7 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 completedSetsCount: exDict["completedSetsCount"] as? Int ?? 0,
                 targetMuscles: targetMuscles,
                 equipment: equipment,
+                equipmentModality: equipmentModality,
                 setupCue: setupCue,
                 movementCues: movementCues,
                 coachingTip: coachingTip

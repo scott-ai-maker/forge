@@ -989,6 +989,7 @@ export interface WatchActiveExercisePayload {
   optPhase?: number
   targetMuscles?: string
   equipment?: string
+  equipmentModality?: string
   setupCue?: string
   movementCues?: string[]
   coachingTip?: string
@@ -1014,6 +1015,7 @@ export interface WatchExerciseItemPayload {
   completedSetsCount?: number
   targetMuscles?: string
   equipment?: string
+  equipmentModality?: string
   setupCue?: string
   movementCues?: string[]
   coachingTip?: string

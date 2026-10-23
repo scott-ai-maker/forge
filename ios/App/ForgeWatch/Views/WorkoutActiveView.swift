@@ -10,6 +10,22 @@ import SwiftUI
  * Plus full workout plan overview sheet to jump to any prescribed exercise.
  * Forge Athletic
  */
+private enum WorkoutActiveSheet: Identifiable {
+    case modality
+    case loadHelper
+    case phases
+    case exerciseDetail
+
+    var id: String {
+        switch self {
+        case .modality: return "modality"
+        case .loadHelper: return "loadHelper"
+        case .phases: return "phases"
+        case .exerciseDetail: return "exerciseDetail"
+        }
+    }
+}
+
 public struct WorkoutActiveView: View {
     @ObservedObject var coordinator = WatchSessionCoordinator.shared
     @ObservedObject var workoutManager = WatchWorkoutManager.shared
@@ -18,11 +34,11 @@ public struct WorkoutActiveView: View {
     @State private var loggedWeight: Double = 135.0
     @State private var loggedRpe: Double = 8.0
     @State private var isCrownFocusedOnReps: Bool = true
-    @State private var showPlateSheet: Bool = false
+    @State private var currentModality: WatchEquipmentModality = .barbell
+    @State private var barbellBarWeight: Double = 45.0
+    @State private var activeSheet: WorkoutActiveSheet? = nil
     @State private var showCancelConfirmation: Bool = false
     @State private var showFinishConfirmation: Bool = false
-    @State private var showPhasesSheet: Bool = false
-    @State private var showExerciseDetailSheet: Bool = false
     @State private var selectedExerciseForDetail: WatchExerciseInfo? = nil
 
     // Drill & stretch interactive countdown timer state
@@ -123,30 +139,43 @@ public struct WorkoutActiveView: View {
         .onChange(of: coordinator.workoutState.activeExercise?.exerciseName) { _ in
             syncStateFromCoordinator()
         }
+        .onChange(of: coordinator.workoutState.activeExercise?.equipmentModality) { _ in
+            syncStateFromCoordinator()
+        }
         .onDisappear {
             stopDrillTimer()
         }
-        .sheet(isPresented: $showPlateSheet) {
-            PlateCalculatorSheet(totalWeightLbs: loggedWeight)
-        }
-        .sheet(isPresented: $showPhasesSheet) {
-            WorkoutPhasesSheet(
-                onSelectExercise: { name in
-                    coordinator.selectExercise(named: name)
-                    syncStateFromCoordinator()
-                },
-                onInspectExercise: { ex in
-                    selectedExerciseForDetail = ex
-                    showPhasesSheet = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showExerciseDetailSheet = true
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .modality:
+                EquipmentModalityPickerSheet(
+                    selectedModality: currentModality,
+                    onSelect: { newModality in
+                        handleSelectModality(newModality)
                     }
+                )
+            case .loadHelper:
+                DynamicLoadHelperSheet(
+                    modality: currentModality,
+                    weight: $loggedWeight,
+                    barWeight: $barbellBarWeight
+                )
+            case .phases:
+                WorkoutPhasesSheet(
+                    onSelectExercise: { name in
+                        coordinator.selectExercise(named: name)
+                        syncStateFromCoordinator()
+                        activeSheet = nil
+                    },
+                    onInspectExercise: { ex in
+                        selectedExerciseForDetail = ex
+                        activeSheet = .exerciseDetail
+                    }
+                )
+            case .exerciseDetail:
+                if let ex = selectedExerciseForDetail ?? coordinator.workoutState.activeExercise {
+                    TerseExerciseCardSheet(exercise: ex)
                 }
-            )
-        }
-        .sheet(isPresented: $showExerciseDetailSheet) {
-            if let ex = selectedExerciseForDetail ?? coordinator.workoutState.activeExercise {
-                TerseExerciseCardSheet(exercise: ex)
             }
         }
         .confirmationDialog("Cancel Workout?", isPresented: $showCancelConfirmation, titleVisibility: .visible) {
@@ -179,7 +208,7 @@ public struct WorkoutActiveView: View {
                     .font(.system(size: 11, weight: .black, design: .rounded))
                     .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.11))
                 Spacer()
-                Button(action: { showPhasesSheet = true }) {
+                Button(action: { activeSheet = .phases }) {
                     Image(systemName: "list.bullet")
                         .font(.system(size: 11))
                 }
@@ -469,7 +498,7 @@ public struct WorkoutActiveView: View {
                 .disabled(coordinator.workoutState.activeExerciseIndex >= coordinator.workoutState.exercises.count - 1)
                 .buttonStyle(PlainButtonStyle())
 
-                Button(action: { showPhasesSheet = true }) {
+                Button(action: { activeSheet = .phases }) {
                     HStack(spacing: 2) {
                         Image(systemName: "list.bullet")
                             .font(.system(size: 10))
@@ -498,7 +527,7 @@ public struct WorkoutActiveView: View {
 
                     Button(action: {
                         selectedExerciseForDetail = coordinator.workoutState.activeExercise
-                        showExerciseDetailSheet = true
+                        activeSheet = .exerciseDetail
                         WKInterfaceDevice.current().play(.click)
                     }) {
                         HStack(spacing: 3) {
@@ -516,8 +545,33 @@ public struct WorkoutActiveView: View {
                     .buttonStyle(PlainButtonStyle())
                 }
 
-                // Terse Target Muscle & Equipment Badges
+                // Modality Selector Pill + Muscle & Equipment Badges
                 HStack(spacing: 4) {
+                    // 1-Tap Equipment Modality Selector
+                    Button(action: {
+                        activeSheet = .modality
+                        WKInterfaceDevice.current().play(.click)
+                    }) {
+                        HStack(spacing: 3) {
+                            Image(systemName: currentModality.iconName)
+                                .font(.system(size: 8, weight: .black))
+                            Text(currentModality.shortBadge)
+                                .font(.system(size: 8, weight: .black, design: .rounded))
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 6, weight: .bold))
+                        }
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2.5)
+                        .background(modalityColor(currentModality).opacity(0.18))
+                        .foregroundColor(modalityColor(currentModality))
+                        .cornerRadius(4)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(modalityColor(currentModality).opacity(0.4), lineWidth: 0.8)
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
                     let muscles = coordinator.workoutState.activeExercise?.targetMuscles ?? "TARGET MUSCLES"
                     Text(muscles.uppercased())
                         .font(.system(size: 8, weight: .black, design: .rounded))
@@ -544,7 +598,7 @@ public struct WorkoutActiveView: View {
                 if let cue = coordinator.workoutState.activeExercise?.coachingTip ?? coordinator.workoutState.activeExercise?.setupCue, !cue.isEmpty {
                     Button(action: {
                         selectedExerciseForDetail = coordinator.workoutState.activeExercise
-                        showExerciseDetailSheet = true
+                        activeSheet = .exerciseDetail
                         WKInterfaceDevice.current().play(.click)
                     }) {
                         HStack(spacing: 4) {
@@ -655,9 +709,10 @@ public struct WorkoutActiveView: View {
                                     .fill(Color(red: 0.83, green: 0.63, blue: 0.09))
                                     .frame(width: 4, height: 4)
                             }
-                            Text("LBS")
-                                .font(.system(size: 10, weight: .black))
+                            Text(currentModality.weightUnitLabel)
+                                .font(.system(size: 9.5, weight: .black))
                                 .foregroundColor(!isCrownFocusedOnReps ? Color(red: 0.83, green: 0.63, blue: 0.09) : .gray)
+                                .lineLimit(1)
                         }
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -665,13 +720,17 @@ public struct WorkoutActiveView: View {
                     HStack(spacing: 2) {
                         Button(action: {
                             isCrownFocusedOnReps = false
-                            if loggedWeight >= 5 {
-                                loggedWeight -= 5
+                            let step = currentModality.stepIncrement
+                            if loggedWeight >= step {
+                                loggedWeight -= step
+                                WKInterfaceDevice.current().play(.click)
+                            } else if currentModality == .bodyweight && loggedWeight > -50 {
+                                loggedWeight -= 5.0
                                 WKInterfaceDevice.current().play(.click)
                             }
                         }) {
-                            Text("-5")
-                                .font(.system(size: 9, weight: .black))
+                            Text(stepFormat(currentModality.stepIncrement, isMinus: true))
+                                .font(.system(size: 8.5, weight: .black))
                                 .foregroundColor(.white)
                                 .frame(width: 22, height: 22)
                                 .background(Color.white.opacity(0.12))
@@ -679,21 +738,22 @@ public struct WorkoutActiveView: View {
                         }
                         .buttonStyle(PlainButtonStyle())
 
-                        Text("\(Int(loggedWeight))")
-                            .font(.system(size: 30, weight: .black, design: .rounded))
+                        Text(weightDisplayString(weight: loggedWeight, modality: currentModality))
+                            .font(.system(size: (currentModality == .bodyweight && loggedWeight == 0) ? 22 : 28, weight: .black, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(.white)
                             .frame(minWidth: 42)
 
                         Button(action: {
                             isCrownFocusedOnReps = false
+                            let step = currentModality.stepIncrement
                             if loggedWeight <= 995 {
-                                loggedWeight += 5
+                                loggedWeight += step
                                 WKInterfaceDevice.current().play(.click)
                             }
                         }) {
-                            Text("+5")
-                                .font(.system(size: 9, weight: .black))
+                            Text(stepFormat(currentModality.stepIncrement, isMinus: false))
+                                .font(.system(size: 8.5, weight: .black))
                                 .foregroundColor(.white)
                                 .frame(width: 22, height: 22)
                                 .background(Color.white.opacity(0.12))
@@ -716,9 +776,9 @@ public struct WorkoutActiveView: View {
             .focusable(true)
             .digitalCrownRotation(
                 isCrownFocusedOnReps ? $loggedReps : $loggedWeight,
-                from: isCrownFocusedOnReps ? 1.0 : 0.0,
+                from: isCrownFocusedOnReps ? 1.0 : (currentModality == .bodyweight ? -60.0 : 0.0),
                 through: isCrownFocusedOnReps ? 50.0 : 800.0,
-                by: isCrownFocusedOnReps ? 1.0 : 5.0,
+                by: isCrownFocusedOnReps ? 1.0 : currentModality.stepIncrement,
                 sensitivity: .medium,
                 isContinuous: false,
                 isHapticFeedbackEnabled: true
@@ -754,24 +814,36 @@ public struct WorkoutActiveView: View {
             .background(Color.white.opacity(0.04))
             .cornerRadius(6)
 
-            // Barbell Plate Math Button
+            // Dynamic Load Helper Button (Replaces static plate math button)
             Button(action: {
-                showPlateSheet = true
+                activeSheet = .loadHelper
                 WKInterfaceDevice.current().play(.click)
             }) {
                 HStack(spacing: 5) {
-                    Image(systemName: "scalemass.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
-                    Text(formatQuickPlateBar(weightLbs: loggedWeight))
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    Image(systemName: currentModality.iconName)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(modalityColor(currentModality))
+
+                    Text(loadHelperSummary(weight: loggedWeight, modality: currentModality, barWeight: barbellBarWeight))
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
+                        .lineLimit(1)
+
                     Spacer()
+
+                    Text(loadHelperActionBadge(modality: currentModality))
+                        .font(.system(size: 7.5, weight: .black, design: .rounded))
+                        .foregroundColor(modalityColor(currentModality))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(modalityColor(currentModality).opacity(0.18))
+                        .cornerRadius(3)
+
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: 8, weight: .bold))
                         .foregroundColor(.gray)
                 }
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 8)
                 .padding(.vertical, 6)
                 .background(Color.white.opacity(0.08))
                 .cornerRadius(8)
@@ -1167,7 +1239,7 @@ public struct WorkoutActiveView: View {
                     .font(.system(size: 11, weight: .black, design: .rounded))
                     .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
                 Spacer()
-                Button(action: { showPhasesSheet = true }) {
+                Button(action: { activeSheet = .phases }) {
                     Image(systemName: "list.bullet")
                         .font(.system(size: 11))
                 }
@@ -1280,6 +1352,7 @@ public struct WorkoutActiveView: View {
             loggedReps = Double(ex.prescribedReps)
             loggedWeight = ex.prescribedWeight
             loggedRpe = ex.targetRpe ?? 8.0
+            currentModality = ex.detectedModality
         }
     }
 
@@ -1312,6 +1385,118 @@ public struct WorkoutActiveView: View {
                 syncStateFromCoordinator()
             }
         }
+    }
+
+    private func handleSelectModality(_ modality: WatchEquipmentModality) {
+        currentModality = modality
+        coordinator.updateActiveExerciseEquipmentModality(modality)
+
+        // Smart auto-adjustment if current weight is outside typical range for new modality
+        switch modality {
+        case .barbell:
+            if loggedWeight < 45 {
+                loggedWeight = 135.0
+            }
+        case .dumbbell:
+            if loggedWeight > 120 || loggedWeight <= 0 {
+                loggedWeight = 25.0
+            }
+        case .cable:
+            if loggedWeight > 250 || loggedWeight <= 0 {
+                loggedWeight = 40.0
+            }
+        case .bands:
+            if loggedWeight > 100 || loggedWeight <= 0 {
+                loggedWeight = 25.0
+            }
+        case .bodyweight:
+            if loggedWeight > 100 {
+                loggedWeight = 0.0
+            }
+        case .kettlebell:
+            if loggedWeight > 100 || loggedWeight < 10 {
+                loggedWeight = 35.0
+            }
+        }
+    }
+
+    private func modalityColor(_ modality: WatchEquipmentModality) -> Color {
+        switch modality {
+        case .barbell: return Color(red: 0.83, green: 0.63, blue: 0.09) // Gold
+        case .dumbbell: return Color(red: 0.22, green: 0.74, blue: 0.97) // Cyan
+        case .cable: return Color(red: 0.72, green: 0.45, blue: 0.98) // Purple
+        case .bands: return Color(red: 0.97, green: 0.58, blue: 0.11) // Orange
+        case .bodyweight: return Color(red: 0.20, green: 0.78, blue: 0.55) // Emerald
+        case .kettlebell: return Color(red: 0.97, green: 0.35, blue: 0.35) // Red
+        }
+    }
+
+    private func stepFormat(_ step: Double, isMinus: Bool) -> String {
+        let sign = isMinus ? "-" : "+"
+        if step.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(sign)\(Int(step))"
+        } else {
+            return "\(sign)\(String(format: "%.1f", step))"
+        }
+    }
+
+    private func weightDisplayString(weight: Double, modality: WatchEquipmentModality) -> String {
+        if modality == .bodyweight && weight == 0 {
+            return "BW"
+        }
+        if weight.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(Int(weight))"
+        } else {
+            return String(format: "%.1f", weight)
+        }
+    }
+
+    private func loadHelperSummary(weight: Double, modality: WatchEquipmentModality, barWeight: Double) -> String {
+        switch modality {
+        case .barbell:
+            if weight >= barWeight {
+                let perSide = (weight - barWeight) / 2
+                return "\(Int(perSide)) lb/side (\(Int(barWeight)) lb bar)"
+            } else {
+                return "\(Int(weight)) lbs · Barbell"
+            }
+        case .dumbbell:
+            return "\(Int(weight)) lbs / hand"
+        case .cable:
+            return "\(Int(weight)) lbs Stack Pin"
+        case .bands:
+            return bandTensionLabel(weight)
+        case .bodyweight:
+            if weight == 0 {
+                return "Bodyweight (0 lb added)"
+            } else if weight > 0 {
+                return "+\(Int(weight)) lb Added Load"
+            } else {
+                return "\(Int(weight)) lb Assisted"
+            }
+        case .kettlebell:
+            return "\(Int(weight)) lb Kettlebell"
+        }
+    }
+
+    private func loadHelperActionBadge(modality: WatchEquipmentModality) -> String {
+        switch modality {
+        case .barbell: return "PLATES"
+        case .dumbbell: return "DB RACK"
+        case .cable: return "PIN"
+        case .bands: return "BANDS"
+        case .bodyweight: return "BW LOAD"
+        case .kettlebell: return "KB RACK"
+        }
+    }
+
+    private func bandTensionLabel(_ weight: Double) -> String {
+        if weight <= 12 { return "Yellow · X-Light (10 lb)" }
+        if weight <= 22 { return "Red · Light (20 lb)" }
+        if weight <= 35 { return "Green · Medium (30 lb)" }
+        if weight <= 50 { return "Blue · Heavy (45 lb)" }
+        if weight <= 70 { return "Black · X-Heavy (60 lb)" }
+        return "Orange · Monster (80 lb)"
     }
 
     private func formatQuickPlateBar(weightLbs: Double) -> String {
@@ -1821,54 +2006,218 @@ struct WorkoutPhasesSheet: View {
 }
 
 /**
- * Visual Barbell Plate Calculator Sheet
- * Displays an actual Olympic barbell sleeve with color-coded plates
+ * EquipmentModalityPickerSheet
+ * Allows 1-tap switching between Barbell, Dumbbell, Cable, Bands, Bodyweight, and Kettlebell
+ * Forge Athletic
  */
-struct PlateCalculatorSheet: View {
-    let totalWeightLbs: Double
+struct EquipmentModalityPickerSheet: View {
+    let selectedModality: WatchEquipmentModality
+    let onSelect: (WatchEquipmentModality) -> Void
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         ScrollView {
+            VStack(spacing: 6) {
+                Text("EQUIPMENT MODALITY")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                    .padding(.top, 2)
+
+                Text("Choose loading type for this lift")
+                    .font(.system(size: 9.5, weight: .medium))
+                    .foregroundColor(.gray)
+                    .padding(.bottom, 2)
+
+                ForEach(WatchEquipmentModality.allCases) { modality in
+                    let isSelected = modality == selectedModality
+                    Button(action: {
+                        onSelect(modality)
+                        WKInterfaceDevice.current().play(.click)
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        HStack(spacing: 8) {
+                            ZStack {
+                                Circle()
+                                    .fill(modalityColor(modality).opacity(0.2))
+                                    .frame(width: 24, height: 24)
+                                Image(systemName: modality.iconName)
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(modalityColor(modality))
+                            }
+
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(modality.displayName)
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.white)
+                                Text(modalitySubtitle(modality))
+                                    .font(.system(size: 8.5, weight: .medium))
+                                    .foregroundColor(.gray)
+                            }
+
+                            Spacer()
+
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                            }
+                        }
+                        .padding(8)
+                        .background(isSelected ? modalityColor(modality).opacity(0.12) : Color.white.opacity(0.06))
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(isSelected ? modalityColor(modality) : Color.clear, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+
+    private func modalitySubtitle(_ m: WatchEquipmentModality) -> String {
+        switch m {
+        case .barbell: return "Olympic / EZ / Smith bar"
+        case .dumbbell: return "Individual pairs (per hand)"
+        case .cable: return "Pin-select weight stack"
+        case .bands: return "Color-coded elastic tension"
+        case .bodyweight: return "Bodyweight, vest or assist"
+        case .kettlebell: return "Cast iron / competition"
+        }
+    }
+
+    private func modalityColor(_ m: WatchEquipmentModality) -> Color {
+        switch m {
+        case .barbell: return Color(red: 0.83, green: 0.63, blue: 0.09)
+        case .dumbbell: return Color(red: 0.22, green: 0.74, blue: 0.97)
+        case .cable: return Color(red: 0.72, green: 0.45, blue: 0.98)
+        case .bands: return Color(red: 0.97, green: 0.58, blue: 0.11)
+        case .bodyweight: return Color(red: 0.20, green: 0.78, blue: 0.55)
+        case .kettlebell: return Color(red: 0.97, green: 0.35, blue: 0.35)
+        }
+    }
+}
+
+/**
+ * DynamicLoadHelperSheet
+ * Routes to the specialized wrist-first adjuster matching the active exercise modality
+ */
+struct DynamicLoadHelperSheet: View {
+    let modality: WatchEquipmentModality
+    @Binding var weight: Double
+    @Binding var barWeight: Double
+
+    var body: some View {
+        Group {
+            switch modality {
+            case .barbell:
+                BarbellPlateCalculatorSheet(totalWeightLbs: $weight, barWeight: $barWeight)
+            case .dumbbell:
+                DumbbellRackSheet(selectedWeight: $weight)
+            case .cable:
+                CableStackSheet(selectedWeight: $weight)
+            case .bands:
+                BandSelectorSheet(selectedTension: $weight)
+            case .bodyweight:
+                BodyweightAdjusterSheet(selectedLoad: $weight)
+            case .kettlebell:
+                KettlebellPickerSheet(selectedWeight: $weight)
+            }
+        }
+    }
+}
+
+/**
+ * BarbellPlateCalculatorSheet
+ * Olympic sleeve bumper visualization, bar weight selector, and quick jump buttons
+ */
+struct BarbellPlateCalculatorSheet: View {
+    @Binding var totalWeightLbs: Double
+    @Binding var barWeight: Double
+    @Environment(\.presentationMode) var presentationMode
+
+    private let availableBars: [(name: String, weight: Double)] = [
+        ("45 lb Standard", 45.0),
+        ("35 lb Tech/Women", 35.0),
+        ("25 lb EZ Curl", 25.0),
+        ("15 lb Light", 15.0),
+        ("0 lb Smith/Sled", 0.0)
+    ]
+
+    var body: some View {
+        ScrollView {
             VStack(spacing: 10) {
-                // Total Weight Header
+                // Header & Total
                 VStack(spacing: 2) {
                     Text("\(Int(totalWeightLbs)) LBS")
                         .font(.system(size: 24, weight: .black, design: .rounded))
                         .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
 
-                    let perSide = max(0, (totalWeightLbs - 45) / 2)
-                    Text("Load \(Int(perSide)) lbs per side on a 45 lb bar")
-                        .font(.system(size: 11, weight: .semibold))
+                    let perSide = max(0, (totalWeightLbs - barWeight) / 2)
+                    Text("Load \(Int(perSide)) lbs/side on \(Int(barWeight)) lb bar")
+                        .font(.system(size: 10.5, weight: .semibold))
                         .foregroundColor(.gray)
                 }
-                .padding(.top, 4)
+                .padding(.top, 2)
+
+                // Selectable Bar Weight Chips
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("BAR WEIGHT")
+                        .font(.system(size: 8.5, weight: .black, design: .rounded))
+                        .foregroundColor(.gray)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 4) {
+                            ForEach(availableBars, id: \.weight) { bar in
+                                let isSelected = barWeight == bar.weight
+                                Button(action: {
+                                    barWeight = bar.weight
+                                    if totalWeightLbs < bar.weight {
+                                        totalWeightLbs = bar.weight
+                                    }
+                                    WKInterfaceDevice.current().play(.click)
+                                }) {
+                                    Text("\(Int(bar.weight))#")
+                                        .font(.system(size: 9.5, weight: .bold, design: .rounded))
+                                        .foregroundColor(isSelected ? .black : .white)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 3)
+                                        .background(isSelected ? Color(red: 0.83, green: 0.63, blue: 0.09) : Color.white.opacity(0.1))
+                                        .cornerRadius(5)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 4)
 
                 // Visual Barbell Sleeve Representation
-                let perSide = max(0, (totalWeightLbs - 45) / 2)
+                let perSide = max(0, (totalWeightLbs - barWeight) / 2)
                 let plates = calculatePlates(perSide: perSide)
 
-                VStack(spacing: 6) {
-                    // Barbell Collar & Plates Row
+                VStack(spacing: 4) {
                     HStack(alignment: .center, spacing: 3) {
-                        // Barbell Shaft
+                        // Shaft
                         Rectangle()
                             .fill(Color.gray.opacity(0.5))
-                            .frame(width: 14, height: 16)
+                            .frame(width: 12, height: 14)
                             .cornerRadius(2)
 
                         // Collar
                         Rectangle()
-                            .fill(Color.white.opacity(0.8))
-                            .frame(width: 8, height: 28)
+                            .fill(Color.white.opacity(0.85))
+                            .frame(width: 7, height: 26)
                             .cornerRadius(2)
 
                         // Plates Stacked on Sleeve
                         if plates.isEmpty {
-                            Text("Empty Bar (45 lbs)")
-                                .font(.system(size: 11, weight: .bold))
+                            Text(barWeight > 0 ? "Empty Bar (\(Int(barWeight)) lbs)" : "0 lbs")
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.gray)
-                                .padding(.leading, 6)
+                                .padding(.leading, 4)
                         } else {
                             ForEach(plates.indices, id: \.self) { idx in
                                 let p = plates[idx]
@@ -1878,19 +2227,124 @@ struct PlateCalculatorSheet: View {
 
                         Spacer()
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 10)
                     .background(Color.white.opacity(0.06))
-                    .cornerRadius(10)
+                    .cornerRadius(8)
+
+                    if !plates.isEmpty {
+                        Text(platesSummaryString(plates: plates))
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundColor(.white)
+                            .padding(.vertical, 1)
+                    }
                 }
 
-                // Plate Count Legend
-                if !plates.isEmpty {
-                    Text(platesSummaryString(plates: plates))
-                        .font(.system(size: 12, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white)
-                        .padding(.vertical, 2)
+                // Quick Plate Jumps (+ / - pair of plates)
+                VStack(spacing: 4) {
+                    HStack(spacing: 4) {
+                        Button(action: {
+                            if totalWeightLbs >= barWeight + 20 { totalWeightLbs -= 20; WKInterfaceDevice.current().play(.click) }
+                        }) {
+                            Text("-10/sd")
+                                .font(.system(size: 9, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color.white.opacity(0.08))
+                                .foregroundColor(.white)
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: {
+                            if totalWeightLbs >= barWeight + 50 { totalWeightLbs -= 50; WKInterfaceDevice.current().play(.click) }
+                        }) {
+                            Text("-25/sd")
+                                .font(.system(size: 9, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color.white.opacity(0.08))
+                                .foregroundColor(.white)
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: {
+                            if totalWeightLbs >= barWeight + 90 { totalWeightLbs -= 90; WKInterfaceDevice.current().play(.click) }
+                        }) {
+                            Text("-45/sd")
+                                .font(.system(size: 9, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color.white.opacity(0.08))
+                                .foregroundColor(.white)
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+
+                    HStack(spacing: 4) {
+                        Button(action: { totalWeightLbs += 20; WKInterfaceDevice.current().play(.click) }) {
+                            Text("+10/sd")
+                                .font(.system(size: 9, weight: .black))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color(red: 0.18, green: 0.70, blue: 0.35).opacity(0.25))
+                                .foregroundColor(Color(red: 0.18, green: 0.70, blue: 0.35))
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: { totalWeightLbs += 50; WKInterfaceDevice.current().play(.click) }) {
+                            Text("+25/sd")
+                                .font(.system(size: 9, weight: .black))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color(red: 0.95, green: 0.75, blue: 0.10).opacity(0.25))
+                                .foregroundColor(Color(red: 0.95, green: 0.75, blue: 0.10))
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: { totalWeightLbs += 90; WKInterfaceDevice.current().play(.click) }) {
+                            Text("+45/sd")
+                                .font(.system(size: 9, weight: .black))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color(red: 0.90, green: 0.22, blue: 0.21).opacity(0.25))
+                                .foregroundColor(Color(red: 0.90, green: 0.22, blue: 0.21))
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
                 }
+                .padding(.horizontal, 2)
+
+                // Common Total Presets
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("STANDARD PRESETS")
+                        .font(.system(size: 8.5, weight: .black, design: .rounded))
+                        .foregroundColor(.gray)
+
+                    HStack(spacing: 3) {
+                        ForEach([95.0, 135.0, 185.0, 225.0, 275.0, 315.0], id: \.self) { preset in
+                            Button(action: {
+                                totalWeightLbs = preset
+                                WKInterfaceDevice.current().play(.click)
+                            }) {
+                                Text("\(Int(preset))")
+                                    .font(.system(size: 9, weight: totalWeightLbs == preset ? .black : .medium))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 3.5)
+                                    .background(totalWeightLbs == preset ? Color(red: 0.83, green: 0.63, blue: 0.09) : Color.white.opacity(0.08))
+                                    .foregroundColor(totalWeightLbs == preset ? .black : .white)
+                                    .cornerRadius(4)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                }
+                .padding(.horizontal, 2)
 
                 Button("Done") {
                     presentationMode.wrappedValue.dismiss()
@@ -1901,7 +2355,6 @@ struct PlateCalculatorSheet: View {
                 .background(Color.white.opacity(0.12))
                 .foregroundColor(.white)
                 .cornerRadius(8)
-                .padding(.top, 4)
             }
             .padding(.horizontal, 4)
         }
@@ -1932,6 +2385,449 @@ struct PlateCalculatorSheet: View {
             return "\(count)×\(label) lb"
         }
         return parts.joined(separator: " + ")
+    }
+}
+
+/**
+ * DumbbellRackSheet
+ * Quick-tap grid of standard dumbbell pairs for instantaneous 1-tap weight selection
+ */
+struct DumbbellRackSheet: View {
+    @Binding var selectedWeight: Double
+    @Environment(\.presentationMode) var presentationMode
+
+    private let weights: [Double] = [
+        5, 7.5, 10,
+        12.5, 15, 17.5,
+        20, 22.5, 25,
+        27.5, 30, 32.5,
+        35, 40, 45,
+        50, 55, 60,
+        65, 70, 75,
+        80, 85, 90,
+        95, 100, 110
+    ]
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4)
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 8) {
+                VStack(spacing: 2) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "dumbbell.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                        Text("DUMBBELL RACK")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                    }
+                    Text("Select weight per hand")
+                        .font(.system(size: 9.5, weight: .medium))
+                        .foregroundColor(.gray)
+                }
+                .padding(.top, 2)
+
+                LazyVGrid(columns: columns, spacing: 4) {
+                    ForEach(weights, id: \.self) { w in
+                        let isSelected = selectedWeight == w
+                        Button(action: {
+                            selectedWeight = w
+                            WKInterfaceDevice.current().play(.click)
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text(w.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(w))" : String(format: "%.1f", w))
+                                .font(.system(size: 12, weight: isSelected ? .black : .bold, design: .rounded))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(isSelected ? Color(red: 0.22, green: 0.74, blue: 0.97) : Color.white.opacity(0.08))
+                                .foregroundColor(isSelected ? .black : .white)
+                                .cornerRadius(6)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(isSelected ? Color.white : Color.clear, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+}
+
+/**
+ * BandSelectorSheet
+ * Visual color-coded resistance band tiers for 1-tap tension selection
+ */
+struct BandSelectorSheet: View {
+    @Binding var selectedTension: Double
+    @Environment(\.presentationMode) var presentationMode
+
+    private struct BandTier: Identifiable {
+        let id: String
+        let colorName: String
+        let color: Color
+        let tensionLbs: Double
+        let levelLabel: String
+        let recommendedUses: String
+    }
+
+    private let tiers: [BandTier] = [
+        BandTier(id: "yellow", colorName: "Yellow", color: Color(red: 0.95, green: 0.85, blue: 0.20), tensionLbs: 10, levelLabel: "Extra Light (10 lbs)", recommendedUses: "Mobility, rotator cuff & warm-up"),
+        BandTier(id: "red", colorName: "Red", color: Color(red: 0.92, green: 0.25, blue: 0.25), tensionLbs: 20, levelLabel: "Light (20 lbs)", recommendedUses: "High reps, lateral raises & pull-aparts"),
+        BandTier(id: "green", colorName: "Green", color: Color(red: 0.20, green: 0.78, blue: 0.40), tensionLbs: 30, levelLabel: "Medium (30 lbs)", recommendedUses: "Biceps, triceps & face pulls"),
+        BandTier(id: "blue", colorName: "Blue", color: Color(red: 0.22, green: 0.55, blue: 0.95), tensionLbs: 45, levelLabel: "Heavy (45 lbs)", recommendedUses: "Chest press, rows & light squats"),
+        BandTier(id: "black", colorName: "Black", color: Color(red: 0.45, green: 0.45, blue: 0.50), tensionLbs: 60, levelLabel: "X-Heavy (60 lbs)", recommendedUses: "Assisted pull-ups & heavy rows"),
+        BandTier(id: "orange", colorName: "Orange", color: Color(red: 0.97, green: 0.55, blue: 0.15), tensionLbs: 80, levelLabel: "Monster (80 lbs)", recommendedUses: "Deadlifts, heavy squats & max effort")
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 6) {
+                VStack(spacing: 2) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "waveform.path")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.11))
+                        Text("RESISTANCE BANDS")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.11))
+                    }
+                    Text("Select band tension tier")
+                        .font(.system(size: 9.5, weight: .medium))
+                        .foregroundColor(.gray)
+                }
+                .padding(.top, 2)
+
+                ForEach(tiers) { tier in
+                    let isSelected = abs(selectedTension - tier.tensionLbs) < 5
+                    Button(action: {
+                        selectedTension = tier.tensionLbs
+                        WKInterfaceDevice.current().play(.click)
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(tier.color)
+                                .frame(width: 14, height: 14)
+                                .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
+
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(tier.levelLabel)
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.white)
+                                Text(tier.recommendedUses)
+                                    .font(.system(size: 8, weight: .medium))
+                                    .foregroundColor(.gray)
+                                    .lineLimit(1)
+                            }
+
+                            Spacer()
+
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                            }
+                        }
+                        .padding(8)
+                        .background(isSelected ? Color.white.opacity(0.14) : Color.white.opacity(0.06))
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(isSelected ? tier.color : Color.clear, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+}
+
+/**
+ * CableStackSheet
+ * Quick selector pin grid for standard cable machine weight stacks
+ */
+struct CableStackSheet: View {
+    @Binding var selectedWeight: Double
+    @Environment(\.presentationMode) var presentationMode
+
+    private let pinWeights: [Double] = [
+        10, 15, 20,
+        25, 30, 35,
+        40, 50, 60,
+        70, 80, 90,
+        100, 110, 120,
+        130, 140, 150,
+        160, 180, 200
+    ]
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4)
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 8) {
+                VStack(spacing: 2) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "cable.connector.horizontal")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(red: 0.72, green: 0.45, blue: 0.98))
+                        Text("CABLE PIN STACK")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.72, green: 0.45, blue: 0.98))
+                    }
+                    Text("Select stack plate pin")
+                        .font(.system(size: 9.5, weight: .medium))
+                        .foregroundColor(.gray)
+                }
+                .padding(.top, 2)
+
+                LazyVGrid(columns: columns, spacing: 4) {
+                    ForEach(pinWeights, id: \.self) { w in
+                        let isSelected = selectedWeight == w
+                        Button(action: {
+                            selectedWeight = w
+                            WKInterfaceDevice.current().play(.click)
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text("\(Int(w))")
+                                .font(.system(size: 12, weight: isSelected ? .black : .bold, design: .rounded))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(isSelected ? Color(red: 0.72, green: 0.45, blue: 0.98) : Color.white.opacity(0.08))
+                                .foregroundColor(isSelected ? .black : .white)
+                                .cornerRadius(6)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(isSelected ? Color.white : Color.clear, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+}
+
+/**
+ * BodyweightAdjusterSheet
+ * Adjusts bodyweight exercises between unweighted, added load (vest/dip belt), or machine assist
+ */
+struct BodyweightAdjusterSheet: View {
+    @Binding var selectedLoad: Double
+    @Environment(\.presentationMode) var presentationMode
+
+    private let addedWeights: [Double] = [5, 10, 15, 20, 25, 35, 45, 55]
+    private let assistedWeights: [Double] = [-10, -20, -30, -40, -50]
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4)
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 8) {
+                VStack(spacing: 2) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "figure.walk")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                        Text("BODYWEIGHT & LOAD")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                    }
+                    Text("Select loading profile")
+                        .font(.system(size: 9.5, weight: .medium))
+                        .foregroundColor(.gray)
+                }
+                .padding(.top, 2)
+
+                // 1. Unweighted Button
+                Button(action: {
+                    selectedLoad = 0.0
+                    WKInterfaceDevice.current().play(.click)
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    HStack {
+                        Image(systemName: "figure.walk")
+                            .font(.system(size: 12))
+                        Text("Bodyweight Only (0 lb added)")
+                            .font(.system(size: 11, weight: .bold))
+                        Spacer()
+                        if selectedLoad == 0.0 {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 13))
+                                .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                        }
+                    }
+                    .padding(8)
+                    .background(selectedLoad == 0.0 ? Color(red: 0.20, green: 0.78, blue: 0.55).opacity(0.18) : Color.white.opacity(0.08))
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(selectedLoad == 0.0 ? Color(red: 0.20, green: 0.78, blue: 0.55) : Color.clear, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                // 2. Added Load Grid
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("ADDED WEIGHT (DIP BELT / VEST)")
+                        .font(.system(size: 8.5, weight: .black, design: .rounded))
+                        .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+
+                    LazyVGrid(columns: columns, spacing: 4) {
+                        ForEach(addedWeights, id: \.self) { w in
+                            let isSelected = selectedLoad == w
+                            Button(action: {
+                                selectedLoad = w
+                                WKInterfaceDevice.current().play(.click)
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                Text("+\(Int(w))")
+                                    .font(.system(size: 11, weight: isSelected ? .black : .bold, design: .rounded))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 6)
+                                    .background(isSelected ? Color(red: 0.83, green: 0.63, blue: 0.09) : Color.white.opacity(0.08))
+                                    .foregroundColor(isSelected ? .black : .white)
+                                    .cornerRadius(6)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                }
+
+                // 3. Assisted Grid
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("ASSISTED (COUNTERWEIGHT)")
+                        .font(.system(size: 8.5, weight: .black, design: .rounded))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+
+                    LazyVGrid(columns: columns, spacing: 4) {
+                        ForEach(assistedWeights, id: \.self) { w in
+                            let isSelected = selectedLoad == w
+                            Button(action: {
+                                selectedLoad = w
+                                WKInterfaceDevice.current().play(.click)
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                Text("\(Int(w))")
+                                    .font(.system(size: 11, weight: isSelected ? .black : .bold, design: .rounded))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 6)
+                                    .background(isSelected ? Color(red: 0.22, green: 0.74, blue: 0.97) : Color.white.opacity(0.08))
+                                    .foregroundColor(isSelected ? .black : .white)
+                                    .cornerRadius(6)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+}
+
+/**
+ * KettlebellPickerSheet
+ * Standard Russian and American kettlebell weights for 1-tap setting
+ */
+struct KettlebellPickerSheet: View {
+    @Binding var selectedWeight: Double
+    @Environment(\.presentationMode) var presentationMode
+
+    private struct KettlebellOption: Identifiable {
+        let id: Int
+        let lbs: Double
+        let kg: Int
+        let tier: String
+    }
+
+    private let options: [KettlebellOption] = [
+        KettlebellOption(id: 9, lbs: 9, kg: 4, tier: "Light / Rehab"),
+        KettlebellOption(id: 18, lbs: 18, kg: 8, tier: "Warm-Up / Form"),
+        KettlebellOption(id: 26, lbs: 26, kg: 12, tier: "Endurance / Mobility"),
+        KettlebellOption(id: 35, lbs: 35, kg: 16, tier: "Standard / Conditioning"),
+        KettlebellOption(id: 44, lbs: 44, kg: 20, tier: "Intermediate Power"),
+        KettlebellOption(id: 53, lbs: 53, kg: 24, tier: "Strength Standard"),
+        KettlebellOption(id: 62, lbs: 62, kg: 28, tier: "Heavy Swings"),
+        KettlebellOption(id: 70, lbs: 70, kg: 32, tier: "The Beast / Max Power"),
+        KettlebellOption(id: 88, lbs: 88, kg: 40, tier: "Super Heavy Elite")
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 6) {
+                VStack(spacing: 2) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(red: 0.97, green: 0.35, blue: 0.35))
+                        Text("KETTLEBELL RACK")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.97, green: 0.35, blue: 0.35))
+                    }
+                    Text("Select bell weight")
+                        .font(.system(size: 9.5, weight: .medium))
+                        .foregroundColor(.gray)
+                }
+                .padding(.top, 2)
+
+                ForEach(options) { opt in
+                    let isSelected = abs(selectedWeight - opt.lbs) < 2
+                    Button(action: {
+                        selectedWeight = opt.lbs
+                        WKInterfaceDevice.current().play(.click)
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        HStack(spacing: 8) {
+                            Text("\(Int(opt.lbs))#")
+                                .font(.system(size: 13, weight: .black, design: .rounded))
+                                .foregroundColor(isSelected ? .black : Color(red: 0.97, green: 0.35, blue: 0.35))
+                                .frame(width: 38)
+
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("\(opt.kg) kg · \(opt.tier)")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(isSelected ? .black : .white)
+                            }
+
+                            Spacer()
+
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.black)
+                            }
+                        }
+                        .padding(7)
+                        .background(isSelected ? Color(red: 0.97, green: 0.35, blue: 0.35) : Color.white.opacity(0.06))
+                        .cornerRadius(7)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(.horizontal, 4)
+        }
     }
 }
 

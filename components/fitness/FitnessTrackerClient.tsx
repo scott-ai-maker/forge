@@ -1370,10 +1370,6 @@ export default function FitnessTrackerClient({
       ).length
       const targetSets = parseInt(String(ex.sets), 10) || 3
       const isCompleted = setsLogged >= targetSets
-      const draft = inlineSetDrafts[exerciseDraftKey(activeWorkout.day, ex.name)]
-      const weightNum = draft?.weight ? Number(draft.weight) || 135 : 135
-      const repsNum = draft?.reps ? parseInt(draft.reps, 10) || 10 : 10
-
       const movementCard = getNasmClinicalMovementCard(ex.name, ex)
       const targetMuscles = movementCard.category
         ? (movementCard.primeMover ? `${movementCard.category} • ${movementCard.primeMover}` : movementCard.category)
@@ -1381,6 +1377,44 @@ export default function FitnessTrackerClient({
       const equipment = (movementCard.equipment && movementCard.equipment.length > 0)
         ? movementCard.equipment.slice(0, 2).join(', ')
         : 'Gym Equipment'
+
+      const nameLower = ex.name.toLowerCase()
+      const equipLower = (movementCard.equipment || []).join(' ').toLowerCase()
+      let equipmentModality: 'barbell' | 'dumbbell' | 'cable' | 'bands' | 'bodyweight' | 'kettlebell' = 'barbell'
+
+      if (nameLower.includes('dumbbell') || nameLower.includes('db ') || nameLower.startsWith('db') || equipLower.includes('dumbbell')) {
+        equipmentModality = 'dumbbell'
+      } else if (nameLower.includes('cable') || nameLower.includes('pulley') || equipLower.includes('cable') || nameLower.includes('lat pulldown') || nameLower.includes('pushdown')) {
+        equipmentModality = 'cable'
+      } else if (nameLower.includes('band') || nameLower.includes('tubing') || equipLower.includes('band')) {
+        equipmentModality = 'bands'
+      } else if (nameLower.includes('kettlebell') || nameLower.includes('kb ') || equipLower.includes('kettlebell')) {
+        equipmentModality = 'kettlebell'
+      } else if (
+        nameLower.includes('pull-up') || nameLower.includes('pull up') ||
+        nameLower.includes('chin-up') || nameLower.includes('chin up') ||
+        nameLower.includes('push-up') || nameLower.includes('push up') ||
+        nameLower.includes('dip') || nameLower.includes('plank') ||
+        nameLower.includes('crunch') || nameLower.includes('hanging') ||
+        nameLower.includes('bodyweight') || equipLower.includes('bodyweight')
+      ) {
+        equipmentModality = 'bodyweight'
+      }
+
+      let defaultWeightForModality = 135
+      if (equipmentModality === 'dumbbell') defaultWeightForModality = 25
+      else if (equipmentModality === 'bands') defaultWeightForModality = 25
+      else if (equipmentModality === 'cable') defaultWeightForModality = 40
+      else if (equipmentModality === 'bodyweight') defaultWeightForModality = 0
+      else if (equipmentModality === 'kettlebell') defaultWeightForModality = 35
+      else if (!isCompoundLift(ex.name)) defaultWeightForModality = 65
+
+      const draft = inlineSetDrafts[exerciseDraftKey(activeWorkout.day, ex.name)]
+      const weightNum = (draft?.weight !== undefined && draft?.weight !== null && draft?.weight !== '')
+        ? (Number(draft.weight) || defaultWeightForModality)
+        : defaultWeightForModality
+      const repsNum = draft?.reps ? parseInt(draft.reps, 10) || 10 : 10
+
       const setupCue = movementCard.setupInstructions
         ? (movementCard.setupInstructions.split('.')[0] + '.')
         : 'Set stable base & kinetic checkpoints.'
@@ -1409,6 +1443,7 @@ export default function FitnessTrackerClient({
         completedSetsCount: setsLogged,
         targetMuscles,
         equipment,
+        equipmentModality,
         setupCue,
         movementCues,
         coachingTip,
@@ -1497,6 +1532,7 @@ export default function FitnessTrackerClient({
         optPhase: activeEx.optPhase,
         targetMuscles: activeEx.targetMuscles,
         equipment: activeEx.equipment,
+        equipmentModality: activeEx.equipmentModality,
         setupCue: activeEx.setupCue,
         movementCues: activeEx.movementCues,
         coachingTip: activeEx.coachingTip,

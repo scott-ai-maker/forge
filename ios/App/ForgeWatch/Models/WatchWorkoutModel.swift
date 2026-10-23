@@ -7,6 +7,74 @@ import Foundation
  * Forge Athletic
  */
 
+public enum WatchEquipmentModality: String, CaseIterable, Identifiable, Codable {
+    case barbell = "Barbell"
+    case dumbbell = "Dumbbell"
+    case cable = "Cable"
+    case bands = "Bands"
+    case bodyweight = "Bodyweight"
+    case kettlebell = "Kettlebell"
+
+    public var id: String { rawValue }
+
+    public var displayName: String { rawValue }
+
+    public var iconName: String {
+        switch self {
+        case .barbell: return "scalemass.fill"
+        case .dumbbell: return "dumbbell.fill"
+        case .cable: return "cable.connector.horizontal"
+        case .bands: return "waveform.path"
+        case .bodyweight: return "figure.walk"
+        case .kettlebell: return "flame.fill"
+        }
+    }
+
+    public var shortBadge: String {
+        switch self {
+        case .barbell: return "BARBELL"
+        case .dumbbell: return "DUMBBELL"
+        case .cable: return "CABLE"
+        case .bands: return "BANDS"
+        case .bodyweight: return "BODYWEIGHT"
+        case .kettlebell: return "KETTLEBELL"
+        }
+    }
+
+    public var weightUnitLabel: String {
+        switch self {
+        case .barbell: return "TOTAL LBS"
+        case .dumbbell: return "PER DB"
+        case .cable: return "STACK LBS"
+        case .bands: return "TENSION"
+        case .bodyweight: return "ADDED LBS"
+        case .kettlebell: return "KB LBS"
+        }
+    }
+
+    public var defaultWeight: Double {
+        switch self {
+        case .barbell: return 135.0
+        case .dumbbell: return 25.0
+        case .cable: return 40.0
+        case .bands: return 25.0
+        case .bodyweight: return 0.0
+        case .kettlebell: return 35.0
+        }
+    }
+
+    public var stepIncrement: Double {
+        switch self {
+        case .barbell: return 5.0
+        case .dumbbell: return 5.0
+        case .cable: return 5.0
+        case .bands: return 5.0
+        case .bodyweight: return 5.0
+        case .kettlebell: return 5.0
+        }
+    }
+}
+
 public struct WatchExerciseInfo: Codable, Identifiable {
     public var id: String { "\(exerciseName)-\(orderIndex)" }
     public let exerciseName: String
@@ -28,9 +96,42 @@ public struct WatchExerciseInfo: Codable, Identifiable {
     public var completedSetsCount: Int
     public var targetMuscles: String?
     public var equipment: String?
+    public var equipmentModality: String?
     public var setupCue: String?
     public var movementCues: [String]?
     public var coachingTip: String?
+
+    public var detectedModality: WatchEquipmentModality {
+        if let explicit = equipmentModality?.lowercased() {
+            if explicit.contains("dumbbell") || explicit.contains("db") { return .dumbbell }
+            if explicit.contains("cable") || explicit.contains("pulley") || explicit.contains("machine") { return .cable }
+            if explicit.contains("band") || explicit.contains("tubing") { return .bands }
+            if explicit.contains("bodyweight") || explicit.contains("bw") || explicit.contains("calisthenics") { return .bodyweight }
+            if explicit.contains("kettlebell") || explicit.contains("kb") { return .kettlebell }
+            if explicit.contains("barbell") || explicit.contains("bb") { return .barbell }
+        }
+
+        let combined = "\(exerciseName) \(equipment ?? "")".lowercased()
+        if combined.contains("dumbbell") || combined.contains("db ") || combined.hasPrefix("db") || combined.contains("dual db") {
+            return .dumbbell
+        }
+        if combined.contains("cable") || combined.contains("pulley") || combined.contains("lat pulldown") ||
+           combined.contains("pushdown") || combined.contains("cable crossover") || combined.contains("cable fly") {
+            return .cable
+        }
+        if combined.contains("band") || combined.contains("tubing") || combined.contains("pull-apart") {
+            return .bands
+        }
+        if combined.contains("kettlebell") || combined.contains("kb ") || combined.hasPrefix("kb") {
+            return .kettlebell
+        }
+        if combined.contains("pull up") || combined.contains("pull-up") || combined.contains("chin up") || combined.contains("chin-up") ||
+           combined.contains("push up") || combined.contains("push-up") || combined.contains("dip") || combined.contains("hanging") ||
+           combined.contains("plank") || combined.contains("crunch") || combined.contains("bodyweight") {
+            return .bodyweight
+        }
+        return .barbell
+    }
 
     public init(
         exerciseName: String,
@@ -52,6 +153,7 @@ public struct WatchExerciseInfo: Codable, Identifiable {
         completedSetsCount: Int = 0,
         targetMuscles: String? = nil,
         equipment: String? = nil,
+        equipmentModality: String? = nil,
         setupCue: String? = nil,
         movementCues: [String]? = nil,
         coachingTip: String? = nil
@@ -75,6 +177,7 @@ public struct WatchExerciseInfo: Codable, Identifiable {
         self.completedSetsCount = completedSetsCount
         self.targetMuscles = targetMuscles
         self.equipment = equipment
+        self.equipmentModality = equipmentModality
         self.setupCue = setupCue
         self.movementCues = movementCues
         self.coachingTip = coachingTip
