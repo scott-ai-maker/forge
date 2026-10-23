@@ -475,27 +475,46 @@ public struct WorkoutActiveView: View {
                         .font(.system(size: 10, weight: .black, design: .rounded))
                         .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
 
-                    let currentSet = coordinator.workoutState.activeExercise?.setNumber ?? 1
+                    let completedSets = coordinator.workoutState.activeExercise?.completedSetsCount ?? 0
                     let totalSets = coordinator.workoutState.activeExercise?.totalSets ?? 3
-                    Text("SET \(currentSet) OF \(totalSets)")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .foregroundColor(.gray)
+                    let isExDone = completedSets >= totalSets || (coordinator.workoutState.activeExercise?.isCompleted ?? false)
+
+                    if isExDone {
+                        HStack(spacing: 3) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 8))
+                                .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                            Text("ALL \(totalSets) SETS DONE")
+                                .font(.system(size: 8.5, weight: .black, design: .monospaced))
+                                .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.55))
+                        }
+                    } else {
+                        Text("SET \(min(totalSets, completedSets + 1)) OF \(totalSets)")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundColor(.gray)
+                    }
                 }
 
                 Spacer()
 
+                let isLastExercise = coordinator.workoutState.activeExerciseIndex >= coordinator.workoutState.exercises.count - 1
                 Button(action: {
-                    coordinator.selectNextExercise()
-                    syncStateFromCoordinator()
+                    if isLastExercise {
+                        let nextPhase = (coordinator.workoutState.cardioProtocol != nil && !coordinator.isCardioCompleted && !(coordinator.workoutState.cardioProtocol?.isCompleted ?? false)) ? "cardio" : "cooldown"
+                        coordinator.selectPhase(nextPhase)
+                        WKInterfaceDevice.current().play(.start)
+                    } else {
+                        coordinator.selectNextExercise()
+                        syncStateFromCoordinator()
+                    }
                 }) {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: isLastExercise ? "arrow.right.to.line" : "chevron.right")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(coordinator.workoutState.activeExerciseIndex < coordinator.workoutState.exercises.count - 1 ? Color(red: 0.22, green: 0.74, blue: 0.97) : .gray.opacity(0.4))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
                         .frame(width: 28, height: 28)
                         .background(Color.white.opacity(0.08))
                         .cornerRadius(6)
                 }
-                .disabled(coordinator.workoutState.activeExerciseIndex >= coordinator.workoutState.exercises.count - 1)
                 .buttonStyle(PlainButtonStyle())
 
                 Button(action: { activeSheet = .phases }) {
@@ -850,29 +869,106 @@ public struct WorkoutActiveView: View {
             }
             .buttonStyle(PlainButtonStyle())
 
-            // Hero Full-Bleed "LOG SET" Button
-            Button(action: handleLogSet) {
-                HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 16, weight: .bold))
-                    Text("LOG SET")
-                        .font(.system(size: 16, weight: .black, design: .rounded))
+            let completedSets = coordinator.workoutState.activeExercise?.completedSetsCount ?? 0
+            let totalSets = coordinator.workoutState.activeExercise?.totalSets ?? 1
+            let isExDone = completedSets >= totalSets || (coordinator.workoutState.activeExercise?.isCompleted ?? false)
+            let isLastEx = coordinator.workoutState.activeExerciseIndex >= coordinator.workoutState.exercises.count - 1
+
+            if isExDone {
+                // Exercise completed! Primary action is to advance to next exercise or next phase
+                if !isLastEx {
+                    Button(action: {
+                        coordinator.selectNextExercise()
+                        syncStateFromCoordinator()
+                    }) {
+                        HStack(spacing: 6) {
+                            Text("NEXT EXERCISE")
+                                .font(.system(size: 15, weight: .black, design: .rounded))
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(red: 0.22, green: 0.74, blue: 0.97), Color(red: 0.12, green: 0.54, blue: 0.75)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .shadow(color: Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.4), radius: 6, y: 2)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                } else {
+                    // Last exercise (e.g. Russian Twist) finished! Advance to next phase (Cardio or Cool-Down)
+                    let nextPhase = (coordinator.workoutState.cardioProtocol != nil && !coordinator.isCardioCompleted && !(coordinator.workoutState.cardioProtocol?.isCompleted ?? false)) ? "cardio" : "cooldown"
+                    Button(action: {
+                        coordinator.selectPhase(nextPhase)
+                        WKInterfaceDevice.current().play(.start)
+                    }) {
+                        HStack(spacing: 6) {
+                            Text(nextPhase == "cardio" ? "PROCEED TO CARDIO" : "PROCEED TO COOL-DOWN")
+                                .font(.system(size: 13.5, weight: .black, design: .rounded))
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.system(size: 15, weight: .bold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            LinearGradient(
+                                colors: nextPhase == "cardio"
+                                    ? [Color(red: 0.97, green: 0.35, blue: 0.35), Color(red: 0.85, green: 0.25, blue: 0.25)]
+                                    : [Color(red: 0.20, green: 0.78, blue: 0.55), Color(red: 0.16, green: 0.65, blue: 0.45)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .shadow(color: (nextPhase == "cardio" ? Color(red: 0.97, green: 0.35, blue: 0.35) : Color(red: 0.20, green: 0.78, blue: 0.55)).opacity(0.4), radius: 6, y: 2)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    LinearGradient(
-                        colors: [Color(red: 0.06, green: 0.72, blue: 0.51), Color(red: 0.04, green: 0.55, blue: 0.38)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+
+                // Explicit secondary button for optional bonus sets
+                Button(action: handleLogSet) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus.circle")
+                            .font(.system(size: 10))
+                        Text("Log Bonus Set \(completedSets + 1)")
+                            .font(.system(size: 10.5, weight: .bold))
+                    }
+                    .foregroundColor(.gray)
+                    .padding(.vertical, 5)
+                }
+                .buttonStyle(PlainButtonStyle())
+            } else {
+                // Hero Full-Bleed "LOG SET" Button with explicit set number
+                Button(action: handleLogSet) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 16, weight: .bold))
+                        Text("LOG SET \(completedSets + 1) OF \(totalSets)")
+                            .font(.system(size: 15, weight: .black, design: .rounded))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.06, green: 0.72, blue: 0.51), Color(red: 0.04, green: 0.55, blue: 0.38)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .foregroundColor(.white)
-                .cornerRadius(12)
-                .shadow(color: Color(red: 0.06, green: 0.72, blue: 0.51).opacity(0.5), radius: 6, y: 2)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+                    .shadow(color: Color(red: 0.06, green: 0.72, blue: 0.51).opacity(0.5), radius: 6, y: 2)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.top, 2)
             }
-            .buttonStyle(PlainButtonStyle())
-            .padding(.top, 2)
 
             // Tactile Cancel Workout Button at bottom of scroll
             Button(action: {

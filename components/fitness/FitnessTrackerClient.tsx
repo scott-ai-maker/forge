@@ -1517,6 +1517,11 @@ export default function FitnessTrackerClient({
       isCompleted: Boolean(completedCooldownRecord[item.id]),
     }))
 
+    const allLiftsDone = exercisesList.length > 0 && exercisesList.every(e => e.isCompleted)
+    const effectivePhase = (activePhase === 'resistance' && allLiftsDone)
+      ? (cardioPayload && !cardioPayload.isCompleted ? 'cardio' : 'cooldown')
+      : activePhase
+
     return {
       workoutId: `workout-day-${activeWorkout.day}`,
       dayNumber: Number(activeWorkout.day) || 1,
@@ -1524,7 +1529,7 @@ export default function FitnessTrackerClient({
       completedSets: completedWorkingSets,
       totalSets: totalWorkingSets,
       isSessionActive,
-      activePhase,
+      activePhase: effectivePhase,
       activeExerciseIndex: activeExIndex,
       activeExercise: activeEx ? {
         exerciseName: activeEx.exerciseName,
@@ -1538,6 +1543,8 @@ export default function FitnessTrackerClient({
         isCompound: activeEx.isCompound,
         isHammerCurl: activeEx.isHammerCurl,
         optPhase: activeEx.optPhase,
+        isCompleted: activeEx.isCompleted,
+        completedSetsCount: activeEx.completedSetsCount,
         targetMuscles: activeEx.targetMuscles,
         equipment: activeEx.equipment,
         equipmentModality: activeEx.equipmentModality,
@@ -1877,6 +1884,10 @@ export default function FitnessTrackerClient({
         setStatus(`✓ Set ${draft.setNumber} saved for ${exercise.name} (${totalWorkingSetsNow}/${targetSets} target completed). Rest timer running (${restSecsToSave}s).`)
       } else {
         setStatus(`All resistance exercises finished for Day ${workout.day}! Rest timer running (${restSecsToSave}s). Ready for Cool-Down or completion!`)
+        const hasCardio = Boolean(resolveWorkoutCardioProtocol(workout, profile, plan))
+        const nextPhase = hasCardio ? 'cardio' : 'cooldown'
+        setActiveStepFilter(nextPhase)
+        setExpandedExerciseKey('none')
       }
     } else if (!draft.isWarmup) {
       setStatus(`✓ Set ${draft.setNumber} saved for ${exercise.name}. Rest timer running (${restSecsToSave}s). Ready for Set ${totalWorkingSetsNow + 1}.`)

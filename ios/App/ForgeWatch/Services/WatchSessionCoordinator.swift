@@ -129,11 +129,13 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 }
             } else {
                 current.isCompleted = true
+                current.setNumber = current.totalSets
+                workoutState.activeExercise = current
                 if workoutState.activeExerciseIndex < workoutState.exercises.count {
                     workoutState.exercises[workoutState.activeExerciseIndex] = current
                 }
 
-                // All sets met for this exercise! Smoothly auto-advance to next exercise
+                // All sets met for this exercise! Smoothly auto-advance to next exercise or next phase
                 if workoutState.activeExerciseIndex < workoutState.exercises.count - 1 {
                     let nextIndex = workoutState.activeExerciseIndex + 1
                     workoutState.activeExerciseIndex = nextIndex
@@ -144,6 +146,27 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                     sendToPhone([
                         "type": "exerciseSelected",
                         "exerciseName": workoutState.exercises[nextIndex].exerciseName,
+                        "timestamp": ISO8601DateFormatter().string(from: Date())
+                    ])
+                } else {
+                    // All resistance lifts completed for today's session!
+                    // Determine next phase: Cardio (if available & unfinished) -> Cool-Down (if available) -> Finish
+                    let nextPhase: String
+                    if let cardio = workoutState.cardioProtocol, !cardio.isCompleted, !isCardioCompleted {
+                        nextPhase = "cardio"
+                    } else if !workoutState.cooldownStretches.isEmpty {
+                        nextPhase = "cooldown"
+                    } else {
+                        nextPhase = "cooldown"
+                    }
+
+                    workoutState.activePhase = nextPhase
+                    lastLocalPhaseSelectionTime = Date()
+                    lastLocalPhaseSelected = nextPhase
+
+                    sendToPhone([
+                        "type": "phaseSelected",
+                        "phase": nextPhase,
                         "timestamp": ISO8601DateFormatter().string(from: Date())
                     ])
                 }

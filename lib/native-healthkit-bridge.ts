@@ -993,6 +993,8 @@ export interface WatchActiveExercisePayload {
   setupCue?: string
   movementCues?: string[]
   coachingTip?: string
+  isCompleted?: boolean
+  completedSetsCount?: number
 }
 
 export interface WatchExerciseItemPayload {
