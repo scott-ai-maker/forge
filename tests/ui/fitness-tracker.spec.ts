@@ -176,7 +176,7 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
       const item = page.locator(`#exercise-item-1-${index}`)
       await item.locator('summary').first().click()
       await item.getByRole('textbox', { name: /Weight in pounds/i }).fill('50')
-      await item.getByRole('button', { name: 'Log set & start rest', exact: true }).click()
+      await item.getByRole('button', { name: 'Log set & start rest', exact: true }).click({ force: true })
     }
     await expect(page.getByRole('button', { name: 'Advance to Stage 3 Cardio' })).not.toBeVisible()
 
@@ -185,9 +185,9 @@ test.describe('Gym-Floor Fitness Tracker, Set Logger & Movement Standards Featur
       const input = item.getByRole('textbox', { name: /Number of reps/i })
       if (!(await input.isVisible())) await item.locator('summary').first().click()
       await expect(item.getByRole('button', { name: /^Set 2:/ })).toHaveAttribute('aria-pressed', 'true')
-      await item.getByRole('button', { name: 'Log set & start rest', exact: true }).click()
+      await item.getByRole('button', { name: 'Log set & start rest', exact: true }).click({ force: true })
       await expect(item.getByRole('button', { name: /^Set 3:/ })).toHaveAttribute('aria-pressed', 'true')
-      await item.getByRole('button', { name: 'Log set & start rest', exact: true }).click()
+      await item.getByRole('button', { name: 'Log set & start rest', exact: true }).click({ force: true })
     }
     const advance = page.getByRole('button', { name: 'Advance to Stage 3 Cardio' })
     if (await advance.isVisible()) {

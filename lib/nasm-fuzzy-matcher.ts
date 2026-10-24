@@ -666,7 +666,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "id": "b27e0212-e95e-4fa7-bb08-159108200451",
     "name": "Single Leg Balance Reach Frontal Plane",
     "slug": "single-leg-balance-reach-frontal-plane",
-    "description": "Step 1: Stand in athletic posture one one foot with hands on hips, toe pointed straight forward, neutral spine, and abs drawn in.\n\nStep 2: Move the floating foot to the side as far as possible without compromising posture.\n\nStep 3: Reverse the movement and return to starting position.\n\nStep 4: Repeat. Maintain posture throughout. Ensure toes are forward at all times, hips stay level and balance is maintained.",
+    "description": "Step 1: Stand in athletic posture on one foot with hands on hips, toe pointed straight forward, neutral spine, and abs drawn in.\n\nStep 2: Move the floating foot to the side as far as possible without compromising posture.\n\nStep 3: Reverse the movement and return to starting position.\n\nStep 4: Repeat. Maintain posture throughout. Ensure toes are forward at all times, hips stay level and balance is maintained.",
     "coachingCues": [],
     "primaryEquipment": [
       "None"
@@ -814,10 +814,15 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "slug": "single-leg-scaption-0216",
     "description": "Step 1: Setup Stand on your right leg with a slight bend in the knee, holding a light dumbbell in your left hand at your side.\n\nStep 2: Brace/Position Engage your core and maintain an upright posture, ensuring your left arm is straight and your shoulder is relaxed.\n\nStep 3: Execute Raise your left arm diagonally in front of you at a 30-degree angle, keeping your elbow straight and your thumb pointing up, until it reaches shoulder height.\n\nStep 4: Return/Repeat Lower your left arm back to the starting position with control, then repeat for the desired number of repetitions before switching to the right arm.",
     "coachingCues": [],
-    "primaryEquipment": [],
+    "primaryEquipment": [
+      "Dumbbells"
+    ],
     "muscleGroups": [
       "core",
-      "glutes"
+      "deltoids",
+      "glutes",
+      "rotator cuff",
+      "shoulders"
     ],
     "imageUrl": "https://img.youtube.com/vi/PKjDGnwpB_o/hqdefault.jpg",
     "videoId": "PKjDGnwpB_o",
@@ -1028,7 +1033,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "id": "13c261b3-5fec-4e1e-8622-221a669581bc",
     "name": "Single Arm Dumbbell Chest Press",
     "slug": "single-arm-dumbbell-chest-press",
-    "description": "Step 1: Lie supine with neutral spine on a bench with your feet straight and flat on the floor. Draw in and brace the abs and lock the shoulders blades back and down on the bench. Hold the dumbbell at approximately shoulder level to begin slightly out to the sides of the body in line with the chest.\n\nStep 2: Press the dumbbell up and in until the arm is completely extended ending with it directly above the shoulder.\n\nStep 3: Reverse the pattern and return the starting position.\n\nStep 4: Repeat. Maintain posture throughout. Do not arch the back or jut the head forward. Avoid letting the shoulders round, posture shift or feet lift in the air. Keep the elbows under the dumbbells to maintain balance at all times.",
+    "description": "Step 1: Lie supine with neutral spine on a bench with your feet straight and flat on the floor. Draw in and brace the abs and lock the shoulders blades back and down on the bench. Hold the dumbbell at approximately shoulder level to begin slightly out to the sides of the body in line with the chest.\n\nStep 2: Press the dumbbell up and in until the arm is completely extended ending with it directly above the shoulder.\n\nStep 3: Reverse the pattern and return the starting position.\n\nStep 4: Repeat. Maintain posture throughout. Do not arch the back or jut the head forward. Avoid letting the shoulders round, posture shift or feet lift in the air. Keep the elbow under the dumbbell to maintain balance at all times.",
     "coachingCues": [],
     "primaryEquipment": [
       "Bench",
@@ -1081,7 +1086,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "id": "f72a4814-62c0-4b20-8e6f-21abbda384d3",
     "name": "Single Leg Press",
     "slug": "single-leg-press",
-    "description": "Step 1: Sit in the leg press machine with feet hip to shoulder width apart and straight ahead on the leg press platform. Ensure foot height placement allows for good range of movement at both the hip and knee. Let one foot rest on the foot rest below. Draw in and brace the abs. Lock the shoulder blades back and down. Stabilize the upper body by grasping the handles.\n\nStep 2: Lower the platform down toward the body ensuring the knee stays aligned with the middle toes and weight is distributed evenly across the foot. Move through a maximum range without losing technique or bottoming out the thighs into the rib cage.\n\nStep 3: Reverse the pattern and return to starting position.\n\nStep 4: Repeat. Maintain posture throughout. Avoid locking the knees, bouncing at the bottom of the movement to create momentum, rounding the spine or letting the hips come off the pad, or collapsing the knees inward. Do not let the hips or torso rotate.",
+    "description": "Step 1: Sit in the leg press machine with feet hip to shoulder width apart and straight ahead on the leg press platform. Ensure foot height placement allows for good range of movement at both the hip and knee. Let one foot rest on the foot rest below. Draw in and brace the abs. Lock the shoulder blades back and down. Stabilize the upper body by grasping the handles.\n\nStep 2: Lower the platform down toward the body ensuring the knee stays aligned with the middle toes and weight is distributed evenly across the foot. Move through a maximum range without losing technique or bottoming out the thighs into the rib cage.\n\nStep 3: Reverse the pattern and return to starting position.\n\nStep 4: Repeat. Maintain posture throughout. Avoid locking the working knee, bouncing at the bottom of the movement to create momentum, rounding the spine or letting the hips come off the pad, or collapsing the knee inward. Do not let the hips or torso rotate.",
     "coachingCues": [],
     "primaryEquipment": [
       "Leg Press Machine"
@@ -1118,7 +1123,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "id": "70c36845-9901-4a40-8f81-67ebbdd1f62a",
     "name": "Single Arm Incline Dumbbell Chest Press",
     "slug": "single-arm-incline-dumbbell-chest-press",
-    "description": "Step 1: Lie supine with neutral spine on an incline bench with your feet straight and flat on the floor. Draw in and brace the abs and lock the shoulders blades back and down on the bench. Hold the dumbbell at approximately shoulder level to begin slightly out to the sides of the body in line with the chest.\n\nStep 2: Press the dumbbell up and in until the arm is completely extended ending with it directly above the shoulder.\n\nStep 3: Reverse the pattern and return the starting position.\n\nStep 4: Repeat. Maintain posture throughout. Do not arch the back or jut the head forward. Avoid letting the shoulders round, posture shift or feet lift in the air. Keep the elbows under the dumbbells to maintain balance at all times.",
+    "description": "Step 1: Lie supine with neutral spine on an incline bench with your feet straight and flat on the floor. Draw in and brace the abs and lock the shoulders blades back and down on the bench. Hold the dumbbell at approximately shoulder level to begin slightly out to the sides of the body in line with the chest.\n\nStep 2: Press the dumbbell up and in until the arm is completely extended ending with it directly above the shoulder.\n\nStep 3: Reverse the pattern and return the starting position.\n\nStep 4: Repeat. Maintain posture throughout. Do not arch the back or jut the head forward. Avoid letting the shoulders round, posture shift or feet lift in the air. Keep the elbow under the dumbbell to maintain balance at all times.",
     "coachingCues": [],
     "primaryEquipment": [
       "Bench",
@@ -2372,11 +2377,16 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "slug": "push-press-0063",
     "description": "Step 1: Setup Stand with your feet shoulder-width apart, holding a barbell at shoulder height with an overhand grip, elbows slightly in front of the bar.\n\nStep 2: Brace/Position Engage your core, keep your chest up, and maintain a neutral spine while positioning your feet firmly on the ground.\n\nStep 3: Execute Press the barbell overhead by extending your arms while simultaneously driving through your legs, using a slight dip in your knees for momentum.\n\nStep 4: Return/Repeat Lower the barbell back to shoulder height in a controlled manner, ensuring your elbows remain in front of the bar before repeating the movement.",
     "coachingCues": [],
-    "primaryEquipment": [],
+    "primaryEquipment": [
+      "Barbell"
+    ],
     "muscleGroups": [
+      "deltoids",
       "glutes",
       "hamstrings",
-      "quadriceps"
+      "quadriceps",
+      "shoulders",
+      "triceps"
     ],
     "imageUrl": "https://img.youtube.com/vi/ODwyDtlXnXk/hqdefault.jpg",
     "videoId": "ODwyDtlXnXk",
@@ -3639,9 +3649,12 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "Kettlebell"
     ],
     "muscleGroups": [
+      "deltoids",
       "glutes",
       "hamstrings",
-      "quadriceps"
+      "quadriceps",
+      "shoulders",
+      "triceps"
     ],
     "imageUrl": "https://img.youtube.com/vi/k4q6HkT99iA/hqdefault.jpg",
     "videoId": "k4q6HkT99iA",
@@ -3657,9 +3670,12 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "Kettlebell"
     ],
     "muscleGroups": [
+      "deltoids",
       "glutes",
       "hamstrings",
-      "quadriceps"
+      "quadriceps",
+      "shoulders",
+      "triceps"
     ],
     "imageUrl": "https://img.youtube.com/vi/k4q6HkT99iA/hqdefault.jpg",
     "videoId": "k4q6HkT99iA",
@@ -3766,11 +3782,14 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "slug": "activation-ball-prone-shoulder-ext-rotation-0006",
     "description": "Step 1: Setup Lie face down on a mat with your legs extended and feet hip-width apart, holding an activation ball between your hands, positioned under your forehead.\n\nStep 2: Brace/Position Engage your core and maintain a neutral spine, ensuring your shoulders are relaxed and away from your ears while keeping your elbows bent at 90 degrees.\n\nStep 3: Execute Squeeze the activation ball and rotate your shoulders outward, lifting your forearms off the ground while keeping your elbows close to your body.\n\nStep 4: Return/Repeat Slowly lower your forearms back to the ground, maintaining control, and repeat the movement for the desired number of repetitions.",
     "coachingCues": [],
-    "primaryEquipment": [],
+    "primaryEquipment": [
+      "Medicine Ball"
+    ],
     "muscleGroups": [
-      "glutes",
-      "hamstrings",
-      "quadriceps"
+      "deltoids",
+      "rotator cuff",
+      "shoulders",
+      "upper back"
     ],
     "imageUrl": "https://img.youtube.com/vi/Ck26oIpb6tg/hqdefault.jpg",
     "videoId": "Ck26oIpb6tg",
@@ -3942,10 +3961,15 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "slug": "single-leg-single-arm-scaption-0215",
     "description": "Step 1: Setup Stand on your right leg with your left knee lifted to hip height, holding a dumbbell in your right hand at your side.\n\nStep 2: Brace/Position Engage your core, maintain a neutral spine, and slightly bend your right knee while keeping your left leg stable.\n\nStep 3: Execute Raise the dumbbell diagonally in front of you at a 45-degree angle, lifting it to shoulder height while keeping your elbow slightly bent.\n\nStep 4: Return/Repeat Lower the dumbbell back to the starting position with control, then repeat for the desired number of repetitions before switching to the left leg.",
     "coachingCues": [],
-    "primaryEquipment": [],
+    "primaryEquipment": [
+      "Dumbbells"
+    ],
     "muscleGroups": [
       "core",
-      "glutes"
+      "deltoids",
+      "glutes",
+      "rotator cuff",
+      "shoulders"
     ],
     "imageUrl": "https://img.youtube.com/vi/ikMg_3_jAWE/hqdefault.jpg",
     "videoId": "ikMg_3_jAWE",
@@ -3957,10 +3981,15 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "slug": "single-leg-single-arm-scaption-0036",
     "description": "Step 1: Setup Stand on your right leg with a slight bend in the knee, holding a dumbbell in your left hand at your side.\n\nStep 2: Brace/Position Engage your core, maintain a neutral spine, and lift your left arm to shoulder height, keeping your elbow slightly bent.\n\nStep 3: Execute Raise your left arm diagonally upward at a 30-degree angle from your body while maintaining balance on your right leg.\n\nStep 4: Return/Repeat Lower your left arm back to the starting position and repeat for the desired number of repetitions before switching legs.",
     "coachingCues": [],
-    "primaryEquipment": [],
+    "primaryEquipment": [
+      "Dumbbells"
+    ],
     "muscleGroups": [
       "core",
-      "glutes"
+      "deltoids",
+      "glutes",
+      "rotator cuff",
+      "shoulders"
     ],
     "imageUrl": "https://img.youtube.com/vi/P7NmvKXWfyI/hqdefault.jpg",
     "videoId": "P7NmvKXWfyI",
@@ -5287,9 +5316,12 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "Dumbbells"
     ],
     "muscleGroups": [
+      "deltoids",
       "glutes",
       "hamstrings",
-      "quadriceps"
+      "quadriceps",
+      "shoulders",
+      "triceps"
     ],
     "imageUrl": "https://img.youtube.com/vi/vuaYVK8xyqo/hqdefault.jpg",
     "videoId": "vuaYVK8xyqo",
@@ -5766,7 +5798,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "id": "db0d149a-7f08-488e-b90f-59e44f1d598d",
     "name": "Lying Leg Curl Single Leg",
     "slug": "lying-leg-curl-single-leg",
-    "description": "Step 1: Lie face down on the leg curl machine with feet hip width apart, abs drawn in and braced and glutes flexed. Ensure setup positions knee close to hinge on the machine and pad resting on lower calf/achilles. Position head in line with the back and lock shoulder blades back and down.\n\nStep 2: Pull toes toward the knees then drive the heel up toward the glutes as far as possible without arching the lower back or lifting the hips off of the pad. Leave one leg lying flat/extended on the pad.\n\nStep 3: Reverse the pattern and lower the weight back to the starting position. Maintain posture throughout.\n\nStep 4: Repeat for the desired number of repetitions. Avoid overarching the lower back, pointing or turning the toes out or letting the head fall toward the pad.",
+    "description": "Step 1: Lie face down on the leg curl machine with feet hip width apart, abs drawn in and braced and glutes flexed. Ensure setup positions knee close to hinge on the machine and pad resting on lower calf/achilles. Position head in line with the back and lock shoulder blades back and down.\n\nStep 2: Pull toes toward the shin of the working leg (dorsiflexion) then drive the heel up toward the glutes as far as possible without arching the lower back or lifting the hips off of the pad. Leave the non-working leg lying extended on the pad.\n\nStep 3: Reverse the pattern and lower the weight back to the starting position. Maintain posture throughout.\n\nStep 4: Repeat for the desired number of repetitions. Avoid overarching the lower back, pointing or turning the toes out or letting the head fall toward the pad.",
     "coachingCues": [],
     "primaryEquipment": [
       "Lying Leg Curl Machine"
@@ -6006,8 +6038,53 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   'incline barbell press': 'incline barbell bench press',
   'bench press': 'barbell bench press',
   'flat bench press': 'barbell bench press',
-  'dumbbell bench press': 'dumbbell flat bench press',
-  'flat dumbbell bench press': 'dumbbell flat bench press',
+  'dumbbell bench press': 'dumbbell bench press',
+  'flat dumbbell bench press': 'dumbbell bench press',
+  'flat db bench press': 'dumbbell bench press',
+  'flat db chest press': 'dumbbell bench press',
+  'flat db chest press with 2s stretch pause': 'dumbbell bench press',
+  'barbell conventional deadlift': 'barbell deadlift',
+  'conventional deadlift': 'barbell deadlift',
+  'double db romanian deadlift': 'dumbbell romanian deadlift',
+  'double db romanian deadlift (rdl)': 'dumbbell romanian deadlift',
+  'db goblet squat': 'goblet squat',
+  'db goblet squat (pause in hole)': 'goblet squat',
+  'cable goblet squat with low pulley': 'goblet squat',
+  'banded single leg bulgarian split squat': 'bulgarian split squat',
+  'banded single-leg bulgarian split squat (bed/chair elevated)': 'bulgarian split squat',
+  'standing dual cable chest press': 'cable crossover',
+  'standing dual-cable chest press': 'cable crossover',
+  'banded deficit push ups': 'push up',
+  'banded deficit push-ups (hands on hotel luggage/books)': 'push up',
+  'standing neutral grip db overhead press': 'dumbbell overhead press',
+  'standing neutral-grip db overhead press': 'dumbbell overhead press',
+  'half kneeling single arm cable overhead press': 'dumbbell overhead press',
+  'half-kneeling single-arm cable overhead press': 'dumbbell overhead press',
+  'standing resistance band overhead press': 'dumbbell overhead press',
+  'barbell bent over row': 'barbell bent over row pronated',
+  'single arm db row': 'supported bent over dumbbell row',
+  'single-arm db row (bench supported)': 'supported bent over dumbbell row',
+  'single arm db row (bench supported)': 'supported bent over dumbbell row',
+  'seated cable row with close grip v bar': 'seated row',
+  'seated cable row with close-grip v-bar': 'seated row',
+  'seated banded row': 'standing tubing row',
+  'seated banded row (loop around hotel room desk/feet)': 'standing tubing row',
+  'heavy banded good mornings single leg bodyweight rdl': 'single leg romanian deadlift',
+  'heavy banded good mornings + single-leg bodyweight rdl': 'single leg romanian deadlift',
+  'overhead press': 'dumbbell overhead press',
+  'lat pulldown': 'pull up',
+  'weighted pull up': 'pull up',
+  'weighted pull-up': 'pull up',
+  'hang clean': 'kettlebell clean',
+  'medicine ball slam': 'medicine ball bent over chest pass',
+  'standing scaption': 'single leg scaption',
+  'tubing squat to overhead press': 'dumbbell squat to overhead press',
+  'prone y raise': 'floor prone cobra',
+  'prone y-raise': 'floor prone cobra',
+  'y raise': 'floor prone cobra',
+  'y-raise': 'floor prone cobra',
+  'dumbbell bent over extension': 'supported bent over dumbbell extension',
+  'dumbbell bent-over extension': 'supported bent over dumbbell extension',
   'cable row': 'seated row',
   'cable rows': 'seated row',
   'seated cable row': 'seated row',
