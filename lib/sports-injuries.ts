@@ -804,7 +804,7 @@ export const COMMON_SPORTS_INJURIES: Record<string, SportsInjuryDefinition> = {
       },
       {
         targetExerciseOrPattern: 'Russian Twist',
-        replacement: 'Standing Pallof Press with Loop Band & Farmer Carries',
+        replacement: 'Paloff Press with Band',
         rationale: 'Develops anti-rotational core stabilization without rotational torque on thoracic vertebrae.',
         coachingCue: 'Lock hips square, brace abdominal wall, breathe steadily.',
       },
@@ -856,6 +856,24 @@ export const COMMON_SPORTS_INJURIES: Record<string, SportsInjuryDefinition> = {
         coachingCue: 'Plant feet firmly, press in scapular plane with elbows at 45°.',
       },
       {
+        targetExerciseOrPattern: 'Flat Dumbbell Bench Press',
+        replacement: 'Incline Dumbbell Chest Press (30° Incline)',
+        rationale: 'Elevates torso above horizontal, preventing inferior vena cava compression and preserving fetal oxygenation.',
+        coachingCue: 'Plant feet firmly, press in scapular plane with elbows at 45°.',
+      },
+      {
+        targetExerciseOrPattern: 'Dumbbell Bench Press',
+        replacement: 'Incline Dumbbell Chest Press (30° Incline)',
+        rationale: 'Elevates torso above horizontal, preventing inferior vena cava compression and preserving fetal oxygenation.',
+        coachingCue: 'Plant feet firmly, press in scapular plane with elbows at 45°.',
+      },
+      {
+        targetExerciseOrPattern: 'Ball Dumbbell Chest Press',
+        replacement: 'Incline Dumbbell Chest Press (30° Incline)',
+        rationale: 'Elevates torso above horizontal, preventing supine hypotension and inferior vena cava compression.',
+        coachingCue: 'Plant feet firmly, press in scapular plane with elbows at 45°.',
+      },
+      {
         targetExerciseOrPattern: 'Prone Cobra',
         replacement: 'Standing Band Face Pull & Wall Angels',
         rationale: 'Strengthens upper back without prone abdominal pressure.',
@@ -863,9 +881,27 @@ export const COMMON_SPORTS_INJURIES: Record<string, SportsInjuryDefinition> = {
       },
       {
         targetExerciseOrPattern: 'Supine Floor Bridge',
-        replacement: 'Supported Quadruped Glute Kickback',
+        replacement: 'Quadruped Leg Raise',
         rationale: 'Strengthens gluteus maximus without supine arterial compression.',
         coachingCue: 'Keep back flat, drive heel toward ceiling without arching lower back.',
+      },
+      {
+        targetExerciseOrPattern: 'Floor Bridge',
+        replacement: 'Quadruped Leg Raise',
+        rationale: 'Strengthens gluteus maximus without supine arterial compression.',
+        coachingCue: 'Keep back flat, drive heel toward ceiling without arching lower back.',
+      },
+      {
+        targetExerciseOrPattern: 'Supine Abdominal Crunches',
+        replacement: 'Quadruped Opposite Arm Leg Raise',
+        rationale: 'Activates core stabilizers in quadruped without supine vena cava compression.',
+        coachingCue: 'Maintain level pelvis, reach opposite arm and leg straight out.',
+      },
+      {
+        targetExerciseOrPattern: 'Prone Iso-Abs',
+        replacement: 'Quadruped Opposite Arm Leg Raise',
+        rationale: 'Strengthens core cylinders without prone abdominal pressure.',
+        coachingCue: 'Brace core in quadruped; maintain neutral spine.',
       },
     ],
     coachingCues: [

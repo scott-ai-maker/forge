@@ -333,10 +333,13 @@ export function checkExerciseContraindications(
         normName.includes(key.toLowerCase()) || key.toLowerCase().includes(normName)
       )
 
+      const fallbackReplacement =
+        Object.values(rule.prescribedSubstitutions)[0]?.replacement || 'Incline Dumbbell Bench Press'
+
       return {
         isContraindicated: true,
         ruleLabel: rule.label,
-        replacement: subEntry ? subEntry[1].replacement : `Safe ${rule.label} modification`,
+        replacement: subEntry ? subEntry[1].replacement : fallbackReplacement,
         rationale: subEntry ? subEntry[1].rationale : rule.generalGuideline,
         coachingCue: subEntry ? subEntry[1].coachingCue : 'Execute with strict joint alignment.',
       }

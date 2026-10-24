@@ -14,12 +14,16 @@ describe('NASM Fuzzy Heuristic Media & Movement Search Engine', () => {
     expect(searchNasmLibraryMedia('BOSU Plank')).not.toBeNull()
     expect(searchNasmLibraryMedia('Single-Leg Single-Arm Scaption')).not.toBeNull()
 
-    expect(searchNasmLibraryMedia('Barbell Flat Bench Press (Strength 1A)')).toBeNull()
+    expect(searchNasmLibraryMedia('Inverted Cable Pec Fly (Strength 1A)')).toBeNull()
     expect(searchNasmLibraryMedia('Barbell Standing Overhead Press')).toBeNull()
     expect(searchNasmLibraryMedia('Squat to Overhead Reach & Scaption')).toBeNull()
   })
 
   it('resolves canonical aliases to official movements to fix client routines', () => {
+    const flatBenchMatch = searchNasmLibraryMedia('Barbell Flat Bench Press (Strength 1A)')
+    expect(flatBenchMatch).not.toBeNull()
+    expect(flatBenchMatch?.record.name).toBe('Barbell Bench Press')
+
     const bridgeMatch = searchNasmLibraryMedia('stability ball hamstring curl')
     expect(bridgeMatch).not.toBeNull()
     expect(bridgeMatch?.record.name).toBe('Stability Ball Hamstring Curl')
