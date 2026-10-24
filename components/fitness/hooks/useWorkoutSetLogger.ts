@@ -43,25 +43,25 @@ export interface SetCelebrationPr {
   diffLbs?: number
 }
 
-function normalizeExerciseName(name: string): string {
+export function normalizeExerciseName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, '')
 }
 
-function exerciseDraftKey(day: number, exerciseName: string): string {
+export function exerciseDraftKey(day: number, exerciseName: string): string {
   return `${day}-${exerciseName}`
 }
 
-function workoutDayTag(day: number): string {
+export function workoutDayTag(day: number): string {
   return `[day:${day}]`
 }
 
-function extractWorkoutDayTag(notes?: string | null): number | null {
+export function extractWorkoutDayTag(notes?: string | null): number | null {
   if (!notes) return null
   const match = notes.match(/\[day:(\d+)\]/)
   return match ? parseInt(match[1], 10) : null
 }
 
-function parseSetTarget(sets: string | number | null | undefined): number {
+export function parseSetTarget(sets: string | number | null | undefined): number {
   if (typeof sets === 'number') return sets
   if (!sets) return 3
   const str = String(sets).trim()
@@ -69,6 +69,29 @@ function parseSetTarget(sets: string | number | null | undefined): number {
   if (rangeMatch) return parseInt(rangeMatch[2], 10)
   const single = parseInt(str, 10)
   return Number.isFinite(single) && single > 0 ? single : 3
+}
+
+export function buildWorkoutSetPayload(
+  draft: InlineSetDraft,
+  exerciseName: string,
+  workoutDay: number,
+  effectiveTempo: string,
+  weightKg?: number,
+  restSeconds = 60
+) {
+  return {
+    sessionDate: draft.sessionDate,
+    exerciseName,
+    setNumber: Number(draft.setNumber),
+    reps: Number(draft.reps),
+    weightKg,
+    restSeconds,
+    rpe: draft.rpe ? Number(draft.rpe) : undefined,
+    rir: draft.rir ? Number(draft.rir) : undefined,
+    isWarmup: draft.isWarmup,
+    tempo: effectiveTempo || undefined,
+    notes: `${workoutDayTag(workoutDay)} ${draft.notes}`.trim() || undefined,
+  }
 }
 
 export function useWorkoutSetLogger(
@@ -242,21 +265,16 @@ export function useWorkoutSetLogger(
 
       // Async persistence
       setBusySetKey(key)
-      try {
-        const payload = {
-          sessionDate: currentDraft.sessionDate,
-          exerciseName: exercise.name,
-          setNumber: Number(currentDraft.setNumber),
-          reps: Number(currentDraft.reps),
-          weightKg,
-          restSeconds: restSecsToSave,
-          rpe: currentDraft.rpe ? Number(currentDraft.rpe) : undefined,
-          rir: currentDraft.rir ? Number(currentDraft.rir) : undefined,
-          isWarmup: currentDraft.isWarmup,
-          tempo: effectiveTempo || undefined,
-          notes: `${workoutDayTag(workoutDay)} ${currentDraft.notes}`.trim() || undefined,
-        }
+      const payload = buildWorkoutSetPayload(
+        currentDraft,
+        exercise.name,
+        workoutDay,
+        effectiveTempo,
+        weightKg,
+        restSecsToSave
+      )
 
+      try {
         const res = await fetch('/api/workouts/log-set', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -264,19 +282,7 @@ export function useWorkoutSetLogger(
         })
 
         if (!res.ok) {
-          enqueueOfflineSet({
-            sessionDate: currentDraft.sessionDate,
-            exerciseName: exercise.name,
-            setNumber: Number(currentDraft.setNumber),
-            reps: Number(currentDraft.reps),
-            weightKg,
-            restSeconds: restSecsToSave,
-            rpe: currentDraft.rpe ? Number(currentDraft.rpe) : undefined,
-            rir: currentDraft.rir ? Number(currentDraft.rir) : undefined,
-            isWarmup: currentDraft.isWarmup,
-            tempo: effectiveTempo || undefined,
-            notes: `${workoutDayTag(workoutDay)} ${currentDraft.notes}`.trim() || undefined,
-          })
+          enqueueOfflineSet(payload, optimisticId)
         } else {
           const json = await res.json()
           if (json.record?.id) {
@@ -284,13 +290,7 @@ export function useWorkoutSetLogger(
           }
         }
       } catch {
-        enqueueOfflineSet({
-          sessionDate: currentDraft.sessionDate,
-          exerciseName: exercise.name,
-          setNumber: Number(currentDraft.setNumber),
-          reps: Number(currentDraft.reps),
-          weightKg,
-        })
+        enqueueOfflineSet(payload, optimisticId)
       } finally {
         setBusySetKey(null)
       }

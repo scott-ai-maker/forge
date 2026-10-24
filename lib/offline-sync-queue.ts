@@ -50,7 +50,8 @@ export interface QueuedSetLogPayload {
   retryCount: number
 }
 
-const STORAGE_KEY = 'sgf_offline_set_queue_v1'
+const FORGE_STORAGE_KEY = 'forge_offline_set_queue_v1'
+const LEGACY_STORAGE_KEY = 'sgf_offline_set_queue_v1'
 const MAX_RETRY_COUNT = 5
 let isFlushingQueue = false
 
@@ -138,7 +139,7 @@ export function getQueuedOfflineSets(): QueuedSetLogPayload[] {
   if (!storage) return []
 
   try {
-    const raw = storage.getItem(STORAGE_KEY)
+    const raw = storage.getItem(LEGACY_STORAGE_KEY) || storage.getItem(FORGE_STORAGE_KEY)
     if (!raw) return []
     return JSON.parse(raw) as QueuedSetLogPayload[]
   } catch {
@@ -147,16 +148,34 @@ export function getQueuedOfflineSets(): QueuedSetLogPayload[] {
 }
 
 /**
- * Save queued sets to localStorage.
+ * Save queued sets to localStorage (persists to both Forge and legacy keys).
  */
 function saveQueuedOfflineSets(queue: QueuedSetLogPayload[]): void {
   const storage = getStorage()
   if (!storage) return
 
   try {
-    storage.setItem(STORAGE_KEY, JSON.stringify(queue))
+    const serialized = JSON.stringify(queue)
+    storage.setItem(FORGE_STORAGE_KEY, serialized)
+    storage.setItem(LEGACY_STORAGE_KEY, serialized)
   } catch (err) {
     console.error('Failed to save offline sets queue to localStorage:', err)
+  }
+}
+
+/**
+ * Safely purge all queued offline sets (e.g. on client logout or test reset).
+ * Adheres to HIPAA (1996) standard: Prevents lingering telemetry on shared gym devices.
+ */
+export function clearOfflineQueue(): void {
+  const storage = getStorage()
+  if (!storage) return
+
+  try {
+    storage.removeItem(FORGE_STORAGE_KEY)
+    storage.removeItem(LEGACY_STORAGE_KEY)
+  } catch (err) {
+    console.error('Failed to clear offline sets queue from localStorage:', err)
   }
 }
 

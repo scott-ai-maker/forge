@@ -763,13 +763,32 @@ export default function FitnessTrackerClient({
   )
   const [isWatchSimulatorOpen, setIsWatchSimulatorOpen] = useState(false)
 
+  const [offlineCachedPlan, setOfflineCachedPlan] = useState<WorkoutPlanRecord | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!latestPlan && allPlans.length === 0) {
+      try {
+        const raw =
+          localStorage.getItem('forge_cached_active_plan_v1') ||
+          localStorage.getItem('gaa_cached_active_plan_v1')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (parsed?.id) {
+            setOfflineCachedPlan(parsed)
+          }
+        }
+      } catch {}
+    }
+  }, [latestPlan, allPlans.length])
+
   const plan = useMemo(() => {
     if (selectedPlanId && allPlans.length > 0) {
       const found = allPlans.find(p => p.id === selectedPlanId)
       if (found) return found
     }
-    return latestPlan || allPlans[0] || null
-  }, [selectedPlanId, allPlans, latestPlan])
+    return latestPlan || allPlans[0] || offlineCachedPlan || null
+  }, [selectedPlanId, allPlans, latestPlan, offlineCachedPlan])
 
   const planWorkouts = useMemo(() => {
     return plan?.plan_json?.workouts ?? []
@@ -1092,18 +1111,38 @@ export default function FitnessTrackerClient({
     return computeExercisePrVault(localSetLogs || [])
   }, [localSetLogs])
 
-  // Instant In-Gym Offline Plan & Telemetry Persistence
+  // Instant In-Gym Offline Plan & Telemetry Persistence (Forge Storage Standard)
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
       if (plan && plan.id) {
+        localStorage.setItem('forge_cached_active_plan_v1', JSON.stringify(plan))
         localStorage.setItem('gaa_cached_active_plan_v1', JSON.stringify(plan))
       }
       if (localSetLogs && localSetLogs.length > 0) {
+        localStorage.setItem('forge_cached_set_logs_v1', JSON.stringify(localSetLogs.slice(0, 120)))
         localStorage.setItem('gaa_cached_set_logs_v1', JSON.stringify(localSetLogs.slice(0, 120)))
       }
     } catch {}
   }, [plan, localSetLogs])
+
+  // Hydrate sets from offline cache when initial network payload is empty
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      if ((!setLogs || setLogs.length === 0) && localSetLogs.length === 0) {
+        const cachedSetsRaw =
+          localStorage.getItem('forge_cached_set_logs_v1') ||
+          localStorage.getItem('gaa_cached_set_logs_v1')
+        if (cachedSetsRaw) {
+          const parsed = JSON.parse(cachedSetsRaw)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setLocalSetLogs(parsed)
+          }
+        }
+      }
+    } catch {}
+  }, [setLogs, localSetLogs.length])
 
 
   const getWorkoutDayCompletion = useCallback((day: number) => {

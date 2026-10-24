@@ -6,6 +6,11 @@ import {
   getPendingQueueCount,
 } from '@/lib/offline-sync-queue'
 
+export function formatSyncSuccessMessage(syncedCount: number): string {
+  if (syncedCount <= 0) return ''
+  return `✓ Synced ${syncedCount} offline workout set${syncedCount > 1 ? 's' : ''} to cloud.`
+}
+
 export function useOfflineSyncManager<TRecord extends { id: string }>(
   onRecordSynced?: (tempId: string, serverRecord: TRecord) => void,
   onStatusMessage?: (msg: string) => void
@@ -19,7 +24,7 @@ export function useOfflineSyncManager<TRecord extends { id: string }>(
     })
     setPendingSyncCount(getPendingQueueCount())
     if (res.synced > 0) {
-      onStatusMessage?.(`✓ Synced ${res.synced} offline workout set${res.synced > 1 ? 's' : ''} to cloud.`)
+      onStatusMessage?.(formatSyncSuccessMessage(res.synced))
     }
     return res
   }, [onRecordSynced, onStatusMessage])
