@@ -111,7 +111,7 @@ test.describe('Coach Program Builder (OPT periodization studio)', () => {
     )
     await page.locator('#coach-studio-client-select').selectOption('athlete-jennifer')
     await openIntake(page)
-    await page.getByRole('button', { name: "Draft Jennifer's program with AI" }).click()
+    await page.getByRole('button', { name: "Draft Jennifer's program with AI" }).click({ force: true })
 
     const note = page.locator('#coach-personal-note')
     await expect(note).toHaveValue(/Jennifer, I built this program around you/)

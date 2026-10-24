@@ -231,7 +231,7 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   const thisMondayDate = new Date(now.getTime() + mondayOffset * 24 * 60 * 60 * 1000)
   const thisWeekStart = thisMondayDate.toISOString().slice(0, 10)
 
-  const isCoachEmpty = params.scenario === 'coach-empty'
+  const isCoachEmpty = params.scenario === 'coach-empty' || params.scenario === 'lab-bodycomp'
   const mockCheckin = isCoachEmpty ? null : {
     id: 'mock-checkin-week',
     week_start: thisWeekStart,

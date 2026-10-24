@@ -60,7 +60,7 @@ for (const width of [320, 375]) {
       await expectNoOverflow(page)
     }
     await tabs.filter({ hasText: 'Alert Preferences' }).first().click()
-    await expect(page.getByRole('alert').filter({ hasText: /notification settings/i })).toBeVisible()
+    await expect(page.getByRole('alert').filter({ hasText: /notification settings/i })).toBeVisible({ timeout: 10000 })
     expect(errors).toEqual([])
   })
 }

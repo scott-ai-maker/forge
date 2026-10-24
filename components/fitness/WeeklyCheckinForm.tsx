@@ -110,10 +110,6 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
     try {
       const res = await fetch('/api/fitness/checkin')
       if (res.status === 401) {
-        if (initialCheckin !== undefined) {
-          setLoaded(true)
-          return
-        }
         console.warn('Weekly check-in requires a signed-in session.')
         setLoadError('Please sign in to load your check-in, then retry.')
         return
@@ -136,18 +132,16 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
             : '',
           notes: thisWeekCheckin.notes ?? '',
         })
+      } else {
+        setExisting(null)
       }
     } catch (error) {
-      if (initialCheckin !== undefined) {
-        setLoaded(true)
-        return
-      }
       console.error('Weekly check-in load failed:', error)
       setLoadError(error instanceof Error ? error.message : 'Could not load your check-in. Please retry.')
     } finally {
       setLoaded(true)
     }
-  }, [thisWeek, preferredUnits, initialCheckin])
+  }, [thisWeek, preferredUnits])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -189,22 +183,6 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
       })
 
       if (res.status === 401) {
-        if (initialCheckin !== undefined) {
-          setSaved(true)
-          setExisting(previous => ({
-            id: previous?.id ?? 'simulated-checkin',
-            week_start: thisWeek,
-            sleep_quality: form.sleep_quality ? Number(form.sleep_quality) : null,
-            stress_level: form.stress_level ? Number(form.stress_level) : null,
-            soreness_level: form.soreness_level ? Number(form.soreness_level) : null,
-            energy_level: form.energy_level ? Number(form.energy_level) : null,
-            weight_kg: weightKg ?? null,
-            notes: form.notes || null,
-            coach_feedback: previous?.coach_feedback ?? null,
-            coach_rating_adjustment: previous?.coach_rating_adjustment ?? null,
-          }))
-          return
-        }
         console.warn('Weekly check-in save requires a signed-in session.')
         setError('Please sign in to save your check-in. Your entries are still here.')
         return

@@ -495,7 +495,7 @@ export default function MobileAppPromoSection({
               onClick={() => handleOpenPlaceholder('pwa')}
               className="tactile-btn"
               style={{
-                minHeight: 38,
+                minHeight: 44,
                 padding: '6px 14px',
                 borderRadius: 6,
                 background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
@@ -519,7 +519,7 @@ export default function MobileAppPromoSection({
               href="/dashboard/fitness?source=pwa"
               className="tactile-btn"
               style={{
-                minHeight: 38,
+                minHeight: 44,
                 padding: '6px 14px',
                 borderRadius: 6,
                 background: 'rgba(255, 255, 255, 0.05)',

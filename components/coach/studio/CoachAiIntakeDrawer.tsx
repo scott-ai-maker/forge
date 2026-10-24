@@ -158,6 +158,15 @@ export default function CoachAiIntakeDrawer({
       aria-label={`NASM OPT Program Intake · ${clientName}`}
       className="coach-intake-overlay fixed inset-0 z-50 flex items-center justify-center"
       style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 100000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         background: 'rgba(3, 7, 18, 0.85)',
         backdropFilter: 'blur(10px)',
       }}

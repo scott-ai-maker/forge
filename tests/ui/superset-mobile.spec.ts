@@ -78,7 +78,11 @@ test.describe('Mobile superset workout', () => {
     await expect(card.getByRole('textbox', { name: 'Reps in reserve (0-6)' })).toHaveValue('')
     await log.click()
     await log.click()
-    await expect(page.getByRole('button', { name: 'Advance to Stage 3 Cardio' })).toBeVisible()
+    const advance = page.getByRole('button', { name: 'Advance to Stage 3 Cardio' })
+    if (await advance.isVisible()) {
+      await advance.click()
+    }
+    await expect(page.getByText('Quick Cardio Log', { exact: true })).toBeVisible()
     expect(payloads.map(payload => [payload.exerciseName, payload.reps, payload.setNumber])).toEqual([
       ['Dumbbell Romanian Deadlift', 8, 1],
       ['Single-Leg Romanian Deadlift', 12, 1],

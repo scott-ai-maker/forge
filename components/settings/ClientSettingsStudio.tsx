@@ -57,9 +57,11 @@ export default function ClientSettingsStudio({
 
   const handleTabChange = (tab: SettingsTab) => {
     setActiveTab(tab)
-    const nextParams = new URLSearchParams(searchParams.toString())
-    nextParams.set('tab', tab)
-    router.replace(`${pathname || '/dashboard/settings'}?${nextParams.toString()}`, { scroll: false })
+    if (typeof window !== 'undefined') {
+      const nextParams = new URLSearchParams(window.location.search)
+      nextParams.set('tab', tab)
+      window.history.replaceState(null, '', `${window.location.pathname}?${nextParams.toString()}`)
+    }
   }
 
   return (
