@@ -30,11 +30,11 @@ const MASTER_DEMO_PLAN_JSON = {
           tempo: '2-0-2-0',
           restSeconds: 60,
           intensityPercentage1RM: 75,
-          supersetPairWith: 'Standing Cable Row',
+          supersetPairWith: 'Standing Tubing Row',
           coachingCues: ['Retract scapulae into bench', 'Drive heels into floor', 'Lower bar with 2s eccentric control'],
         },
         {
-          name: 'Standing Cable Row',
+          name: 'Standing Tubing Row',
           sets: 4,
           reps: '10-12',
           tempo: '2-0-2-0',
@@ -52,7 +52,7 @@ const MASTER_DEMO_PLAN_JSON = {
           coachingCues: ['Chest proud', 'Knees tracking second toe', 'Drive through midfoot'],
         },
         {
-          name: 'Romanian Deadlift (RDL)',
+          name: 'Romanian Deadlift',
           sets: 3,
           reps: '10-12',
           tempo: '3-1-1-0',
@@ -61,16 +61,16 @@ const MASTER_DEMO_PLAN_JSON = {
           coachingCues: ['Hinge hips back toward wall', 'Keep bar glued to thighs', 'Feel high hamstring tension'],
         },
         {
-          name: 'Dumbbell Bicep Curl',
+          name: 'Dumbbell Combination Curl',
           sets: 3,
           reps: '10-12',
           tempo: '2-0-2-0',
           restSeconds: 45,
-          supersetPairWith: 'Cable Tricep Pushdown',
+          supersetPairWith: 'Seated Single Arm Dumbbell Tricep Extension',
           coachingCues: ['Elbows pinned to ribcage', 'Full supination at peak', 'Controlled 2s eccentric'],
         },
         {
-          name: 'Cable Tricep Pushdown',
+          name: 'Seated Single Arm Dumbbell Tricep Extension',
           sets: 3,
           reps: '12-15',
           tempo: '2-0-2-0',
@@ -96,7 +96,7 @@ const MASTER_DEMO_PLAN_JSON = {
       focus: 'Posterior Chain & Unilateral Strength',
       exercises: [
         {
-          name: 'Trap Bar Deadlift',
+          name: 'Barbell Deadlift',
           sets: 4,
           reps: '6-8',
           tempo: '2-1-1-0',
@@ -114,17 +114,17 @@ const MASTER_DEMO_PLAN_JSON = {
           coachingCues: ['Vertical front shin', 'Lower back knee towards mat', 'Drive through front heel'],
         },
         {
-          name: 'Incline Dumbbell Chest Press',
+          name: 'Incline Dumbbell Bench Press',
           sets: 4,
           reps: '8-10',
           tempo: '2-0-2-0',
           restSeconds: 60,
           intensityPercentage1RM: 75,
-          supersetPairWith: 'Wide-Grip Lat Pulldown',
+          supersetPairWith: 'Pull Up',
           coachingCues: ['30-degree bench angle', 'Tuck elbows 45 degrees', 'Press upward in smooth arc'],
         },
         {
-          name: 'Wide-Grip Lat Pulldown',
+          name: 'Pull Up',
           sets: 4,
           reps: '10-12',
           tempo: '2-0-2-0',
@@ -133,7 +133,7 @@ const MASTER_DEMO_PLAN_JSON = {
           coachingCues: ['Drive elbows straight down', 'Chest up to bar', 'Control the 2s stretch'],
         },
         {
-          name: 'Standing Lateral Dumbbell Raise',
+          name: 'Dumbbell Lateral Raise',
           sets: 3,
           reps: '12-15',
           tempo: '2-0-1-1',
@@ -147,7 +147,7 @@ const MASTER_DEMO_PLAN_JSON = {
       focus: 'Athletic Power & Kinetic Armor',
       exercises: [
         {
-          name: 'Standing Dumbbell Push Press',
+          name: 'Dumbbell Push Press',
           sets: 4,
           reps: '6-8',
           tempo: '1-0-X-0',
@@ -156,7 +156,7 @@ const MASTER_DEMO_PLAN_JSON = {
           coachingCues: ['Quick 3-inch knee dip', 'Triple extension drive', 'Lock overhead with ribs locked down'],
         },
         {
-          name: 'Medicine Ball Overhead Slam',
+          name: 'Medicine Ball Bent Over Chest Pass',
           sets: 4,
           reps: '10',
           tempo: '1-0-X-0',
@@ -173,7 +173,7 @@ const MASTER_DEMO_PLAN_JSON = {
           coachingCues: ['Hold dumbbell tight to chest', 'Knees out wide', '1s pause in deep hole'],
         },
         {
-          name: 'McGill Curl-Up & Side Plank Matrix',
+          name: 'Side Plank',
           sets: 3,
           reps: '45s / side',
           tempo: 'Isometric',

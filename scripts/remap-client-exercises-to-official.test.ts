@@ -121,7 +121,7 @@ describe('remap-client-exercises-to-official', () => {
     expect(result.unresolved).toEqual(['Unmapped Exercise'])
   })
 
-  it('parses step instructions and clears coachingCues on snapshots', () => {
+  it('parses step instructions and preserves coachingCues and muscleGroups on snapshots', () => {
     const rawDesc = 'Step 1: Stand with feet shoulder-width apart.\n\nStep 2: Lower into a squat.\n\nStep 3: Explode upward.\n\nStep 4: Land softly.'
     const parsed = parseStepInstructions(rawDesc)
     expect(parsed).toEqual([
@@ -135,15 +135,45 @@ describe('remap-client-exercises-to-official', () => {
       id: 'squat-1',
       name: 'Repeat Squat Jumps',
       description: rawDesc,
-      coaching_cues: ['Old clinical cue'],
+      coaching_cues: ['Keep chest up', 'Land softly on midfoot'],
       primary_equipment: ['Bodyweight'],
+      muscle_groups: ['quadriceps', 'glutes'],
       media_image_url: 'img-url',
       media_video_url: 'vid-url',
     }
-    const snapshot = mapSnapshot({ name: 'Repeat Squat Jumps' }, buildLookup([officialSquat]), [])
+    const snapshot = mapSnapshot(
+      { name: 'Repeat Squat Jumps', supersetPairWith: 'Standing Cable Row' },
+      buildLookup([
+        officialSquat,
+        { id: 'row-1', name: 'Standing Tubing Row', slug: 'standing-tubing-row' },
+      ]),
+      []
+    )
     expect(snapshot.instructions).toEqual(parsed)
-    expect(snapshot.coachingCues).toEqual([])
+    expect(snapshot.coachingCues).toEqual(['Keep chest up', 'Land softly on midfoot'])
+    expect(snapshot.muscleGroups).toEqual(['quadriceps', 'glutes'])
+    expect(snapshot.supersetPairWith).toBe('Standing Tubing Row')
     expect(snapshot.description).toBe(rawDesc)
+  })
+
+  it('maps new client-facing exercise aliases correctly', () => {
+    const lookup = buildLookup([
+      { id: 'row-1', name: 'Standing Tubing Row', slug: 'standing-tubing-row' },
+      { id: 'rdl-1', name: 'Romanian Deadlift', slug: 'romanian-deadlift' },
+      { id: 'curl-1', name: 'Dumbbell Combination Curl', slug: 'dumbbell-combination-curl-0097' },
+      { id: 'tri-1', name: 'Seated Single Arm Dumbbell Tricep Extension', slug: 'seated-single-arm-dumbbell-tricep-extension-0112' },
+      { id: 'press-1', name: 'Incline Dumbbell Bench Press', slug: 'incline-dumbbell-bench-press' },
+      { id: 'pull-1', name: 'Pull Up', slug: 'pull-up' },
+      { id: 'bridge-1', name: 'Stability Ball Loaded Bridge', slug: 'stability-ball-loaded-bridge' },
+    ])
+
+    expect(resolveOfficialExercise({ name: 'Standing Cable Row' }, lookup)?.name).toBe('Standing Tubing Row')
+    expect(resolveOfficialExercise({ name: 'Romanian Deadlift (RDL)' }, lookup)?.name).toBe('Romanian Deadlift')
+    expect(resolveOfficialExercise({ name: 'Dumbbell Bicep Curl' }, lookup)?.name).toBe('Dumbbell Combination Curl')
+    expect(resolveOfficialExercise({ name: 'Cable Tricep Pushdown' }, lookup)?.name).toBe('Seated Single Arm Dumbbell Tricep Extension')
+    expect(resolveOfficialExercise({ name: 'Incline Dumbbell Chest Press' }, lookup)?.name).toBe('Incline Dumbbell Bench Press')
+    expect(resolveOfficialExercise({ name: 'Wide-Grip Lat Pulldown' }, lookup)?.name).toBe('Pull Up')
+    expect(resolveOfficialExercise({ name: 'stability ball bridge' }, lookup)?.name).toBe('Stability Ball Loaded Bridge')
   })
 })
 

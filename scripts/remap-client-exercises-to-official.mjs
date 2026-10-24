@@ -15,11 +15,20 @@ const EXERCISE_ALIASES = {
   'static hip flexor and calves stretch': 'static kneeling hip flexor stretch',
   'floor bridge with band abduction': 'floor bridge',
   'single leg balance to reach': 'single leg balance reach multiplanar',
+  'single leg balance reach': 'single leg balance reach multiplanar',
+  'single leg reach': 'single leg balance reach multiplanar',
   'dumbbell goblet squat to bench': 'goblet squat',
   'standing cable band neutral row': 'standing tubing row',
   'standing cable band row': 'standing tubing row',
+  'standing cable row': 'standing tubing row',
+  'standing cable rows': 'standing tubing row',
+  'cable row': 'standing tubing row',
+  'standing row': 'standing tubing row',
   'standing dumbbell overhead scaption': 'single leg scaption',
   'plank with alternating arm reach': 'plank with arm reach',
+  'plank with arm lift': 'plank with arm reach',
+  'plank arm lift': 'plank with arm reach',
+  'plank arm reach': 'plank with arm reach',
   'smr thoracic spine and latissimus dorsi': 'self myofascial release smr thoracic spine',
   'doorway pectoral stretch': 'static pectoral ball stretch',
   'quadruped bird dog': 'bird dog',
@@ -32,11 +41,76 @@ const EXERCISE_ALIASES = {
   'single leg romanian deadlift to row': 'single leg romanian deadlift',
   'lateral tube walk': 'lateral band walking',
   'incline push up with scapular protraction': 'incline push up',
+  'push up with hands on bench': 'incline push up',
+  'push up hands on bench': 'incline push up',
   'side plank with top leg lift': 'side plank',
+  'mcgill curl up and side plank matrix': 'side plank',
+  'mcgill curl up': 'side plank',
+  'side plank matrix': 'side plank',
   'chest supported dumbbell row': 'supported bent over dumbbell row',
   'dumbbell bent over extention': 'supported bent over dumbbell extension',
+  'dumbbell bent over extension': 'supported bent over dumbbell extension',
   'stability ball hamstring curl': 'floor bridge',
   'stability ball hamstring curls': 'floor bridge',
+  'stability ball bridge': 'stability ball loaded bridge',
+  'stability ball glute bridge': 'stability ball loaded bridge',
+  'romanian deadlift rdl': 'romanian deadlift',
+  'rdl': 'romanian deadlift',
+  'barbell rdl': 'romanian deadlift',
+  'romanian deadlift dumbbell rdl': 'dumbbell romanian deadlift',
+  'dumbbell rdl': 'dumbbell romanian deadlift',
+  'dumbbell romanian deadlifts': 'dumbbell romanian deadlift',
+  'dumbbell bicep curl': 'dumbbell combination curl',
+  'dumbbell bicep curls': 'dumbbell combination curl',
+  'biceps dumbbell curl': 'dumbbell combination curl',
+  'dumbbell curl': 'dumbbell combination curl',
+  'dumbbell curls': 'dumbbell combination curl',
+  'cable tricep pushdown': 'seated single arm dumbbell tricep extension',
+  'cable tricep pushdowns': 'seated single arm dumbbell tricep extension',
+  'cable pushdown': 'seated single arm dumbbell tricep extension',
+  'cable pushdowns': 'seated single arm dumbbell tricep extension',
+  'tricep pushdown': 'seated single arm dumbbell tricep extension',
+  'triceps pushdown': 'seated single arm dumbbell tricep extension',
+  'tricep pushdowns': 'seated single arm dumbbell tricep extension',
+  'cable triceps pushdown': 'seated single arm dumbbell tricep extension',
+  'triceps rope pushdown': 'seated single arm dumbbell tricep extension',
+  'cable rope pushdown': 'seated single arm dumbbell tricep extension',
+  'trap bar deadlift': 'barbell deadlift',
+  'trap bar deadlifts': 'barbell deadlift',
+  'hex bar deadlift': 'barbell deadlift',
+  'incline dumbbell chest press': 'incline dumbbell bench press',
+  'incline dumbbell press': 'incline dumbbell bench press',
+  'incline db bench press': 'incline dumbbell bench press',
+  'barbell flat bench press': 'barbell bench press',
+  'flat barbell bench press': 'barbell bench press',
+  'flat bench press': 'barbell bench press',
+  'wide grip lat pulldown': 'pull up',
+  'wide grip lat pulldowns': 'pull up',
+  'lat pulldown': 'pull up',
+  'lat pulldowns': 'pull up',
+  'cable lat pulldown': 'pull up',
+  'standing lateral dumbbell raise': 'dumbbell lateral raise',
+  'lateral dumbbell raise': 'dumbbell lateral raise',
+  'standing dumbbell lateral raise': 'dumbbell lateral raise',
+  'side lateral raise': 'dumbbell lateral raise',
+  'dumbbell lateral raises': 'dumbbell lateral raise',
+  'standing dumbbell push press': 'dumbbell push press',
+  'standing push press': 'dumbbell push press',
+  'medicine ball overhead slam': 'medicine ball bent over chest pass',
+  'overhead slam': 'medicine ball bent over chest pass',
+  'mb slam': 'medicine ball bent over chest pass',
+  'medicine ball slam': 'medicine ball bent over chest pass',
+  'medicine ball slams': 'medicine ball bent over chest pass',
+  'single leg dumbbell curl to overhead press': 'single leg romanian deadlift curl to overhead press',
+  'single leg curl to overhead press': 'single leg romanian deadlift curl to overhead press',
+  'single leg dumbbell overhead press': 'dumbbell overhead press',
+  'single leg overhead press': 'dumbbell overhead press',
+  'kettlebell deadlift to high pull': 'single arm kettlebell high pull',
+  'kettlebell high pull': 'single arm kettlebell high pull',
+  'cable woodchop': 'half kneeling tubing rotation',
+  'cable woodchops': 'half kneeling tubing rotation',
+  'woodchop': 'half kneeling tubing rotation',
+  'standing cable woodchop': 'half kneeling tubing rotation',
 }
 
 function normalizeKey(value) {
@@ -82,6 +156,14 @@ function buildLookup(records) {
 }
 
 function resolveOfficialExercise(exercise, lookup) {
+  // 1. Direct name or slug match in official catalog
+  for (const value of [exercise?.name, exercise?.slug]) {
+    const key = normalizeKey(value)
+    if (!key) continue
+    if (lookup.byKey.has(key)) return lookup.byKey.get(key)
+  }
+
+  // 2. Exact alias resolution
   for (const value of [exercise?.name, exercise?.slug]) {
     const key = normalizeKey(value)
     if (!key) continue
@@ -89,14 +171,9 @@ function resolveOfficialExercise(exercise, lookup) {
     if (aliased && lookup.byKey.has(aliased)) return lookup.byKey.get(aliased)
   }
 
+  // 3. Match by ID if present
   const id = String(exercise?.libraryExerciseId ?? '').trim()
   if (id && lookup.byId.has(id)) return lookup.byId.get(id)
-
-  for (const value of [exercise?.name, exercise?.slug]) {
-    const key = normalizeKey(value)
-    if (!key) continue
-    if (lookup.byKey.has(key)) return lookup.byKey.get(key)
-  }
 
   return null
 }
@@ -132,6 +209,19 @@ export function mapSnapshot(exercise, lookup, unresolved) {
   }
 
   const instructions = parseStepInstructions(official.description)
+  const coachingCues = (Array.isArray(official.coaching_cues) && official.coaching_cues.length > 0)
+    ? official.coaching_cues
+    : (Array.isArray(exercise.coachingCues) && exercise.coachingCues.length > 0
+      ? exercise.coachingCues
+      : [])
+
+  const muscleGroups = (Array.isArray(official.muscle_groups) && official.muscle_groups.length > 0)
+    ? official.muscle_groups
+    : (Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups : [])
+
+  const nextSuperset = exercise.supersetPairWith
+    ? resolveOfficialExercise({ name: exercise.supersetPairWith }, lookup)?.name || exercise.supersetPairWith
+    : undefined
 
   return {
     ...exercise,
@@ -139,11 +229,13 @@ export function mapSnapshot(exercise, lookup, unresolved) {
     name: official.name,
     description: official.description ?? null,
     instructions: instructions.length > 0 ? instructions : undefined,
-    coachingCues: [],
+    coachingCues,
+    ...(muscleGroups.length > 0 ? { muscleGroups } : {}),
     primaryEquipment: Array.isArray(official.primary_equipment) ? official.primary_equipment : [],
     imageUrl: official.media_image_url ?? exercise.imageUrl ?? null,
     videoUrl: official.media_video_url ?? exercise.videoUrl ?? null,
     openExternallyOnly: Boolean(official.open_externally_only),
+    ...(nextSuperset ? { supersetPairWith: nextSuperset } : {}),
   }
 }
 
@@ -215,7 +307,7 @@ async function main() {
   const officialExercises = await fetchAll((from, to) =>
     admin
       .from('exercise_library_entries')
-      .select('id, name, slug, description, coaching_cues, primary_equipment, media_image_url, media_video_url, open_externally_only')
+      .select('id, name, slug, description, coaching_cues, primary_equipment, muscle_groups, media_image_url, media_video_url, open_externally_only')
       .in('source', OFFICIAL_SOURCES)
       .eq('is_active', true)
       .range(from, to)
