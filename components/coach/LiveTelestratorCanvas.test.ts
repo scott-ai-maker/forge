@@ -89,7 +89,7 @@ describe('Biomechanical Telestrator Geometric Engine', () => {
 
     expect(tools).toContain('protractor')
     expect(tools).toContain('arrow')
-    expect(colors).toContain('#D4AF37') // GAA Signature Gold
+    expect(colors).toContain('#D4AF37') // Forge Signature Gold
     expect(colors).toContain('#10B981') // Green for optimal tracking
     expect(colors).toContain('#EF4444') // Red for valgus/compensation fault
   })

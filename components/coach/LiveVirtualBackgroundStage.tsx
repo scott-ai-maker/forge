@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { CoachBackgroundPreset } from '@/lib/coach-backgrounds-catalog'
-import { GaaIcon } from '@/components/ui/GaaIcon'
+import ForgeIcon from '@/components/ui/ForgeIcon'
 
 interface LiveVirtualBackgroundStageProps {
   stream: MediaStream | null
@@ -318,6 +318,11 @@ export default function LiveVirtualBackgroundStage({
       canvas.removeEventListener('webglcontextlost', onContextLost)
       canvas.removeEventListener('webglcontextrestored', onContextRestored)
       if (gl) {
+        if (glProgramRef.current) {
+          if (glProgramRef.current.frameTex) gl.deleteTexture(glProgramRef.current.frameTex)
+          if (glProgramRef.current.bgTex) gl.deleteTexture(glProgramRef.current.bgTex)
+          if (glProgramRef.current.maskTex) gl.deleteTexture(glProgramRef.current.maskTex)
+        }
         if (vs) gl.deleteShader(vs)
         if (fs) gl.deleteShader(fs)
         if (program) gl.deleteProgram(program)
@@ -556,7 +561,7 @@ export default function LiveVirtualBackgroundStage({
 
       {!isActive && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 10, background: '#080C16', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-          <GaaIcon name="video-studio" size={36} tone="slate" />
+          <ForgeIcon name="video-studio" size={36} tone="slate" />
           <span style={{ fontSize: 13, color: 'var(--gray)', marginTop: 6 }}>Camera Off</span>
         </div>
       )}
@@ -605,7 +610,7 @@ export default function LiveVirtualBackgroundStage({
             gap: 4,
           }}
         >
-          <GaaIcon name="sparkles" size={11} tone="gold" />
+          <ForgeIcon name="sparkles" size={11} tone="gold" />
           <span>{selectedBackground.name} {!isAiReady ? '(Initializing...)' : ''}</span>
         </button>
       )}

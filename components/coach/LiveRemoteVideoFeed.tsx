@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import GaaIcon from '@/components/ui/GaaIcon'
+import ForgeIcon from '@/components/ui/ForgeIcon'
 
 export interface LiveRemoteVideoFeedProps {
   stream: MediaStream | null
@@ -366,7 +366,7 @@ export default function LiveRemoteVideoFeed({
             animation: 'pulse 2s infinite',
           }}
         >
-          <GaaIcon name="volume-x" size={14} tone="slate" />
+          <ForgeIcon name="volume-x" size={14} tone="slate" />
           <span>AUDIO MUTED BY BROWSER · TAP TO UNMUTE</span>
         </div>
       )}
@@ -407,7 +407,7 @@ export default function LiveRemoteVideoFeed({
               boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
             }}
           >
-            <GaaIcon name="play" size={20} tone="slate" />
+            <ForgeIcon name="play" size={20} tone="slate" />
           </div>
           <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.05em', color: 'var(--gold-lt)' }}>
             TAP TO RESUME LIVE VIDEO

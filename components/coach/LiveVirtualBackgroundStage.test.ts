@@ -71,6 +71,43 @@ describe("LiveVirtualBackgroundStage Architecture & Optical Guardrails Suite", (
       expect(stageSource).toContain("vec2 camCoords = u_isMirrored ? vec2(1.0 - uv.x, uv.y) : uv;")
       expect(stageSource).toContain("vec4 frameTex = texture(u_frame, camCoords);")
     })
+
+    it("renders branded typography watermark in true optical orientation", () => {
+      // Must contain strictly 'FORGE ATHLETIC' and 'Private Performance Lab'
+      expect(stageSource).toContain("FORGE ATHLETIC")
+      expect(stageSource).toContain("Private Performance Lab")
+      // Must NOT contain legacy GAA brand strings
+      expect(stageSource).not.toMatch(/GAA ATHLETIC/i)
+      expect(stageSource).not.toMatch(/Gordon Athletic Advisory/i)
+    })
+  })
+
+  describe("Watchdog Fallback & WebGL Resource Management", () => {
+    it("features 1200ms watchdog timeout to prevent freeze or black screen", () => {
+      // Watchdog must detect frame stalls > 1200ms and gracefully fall back to hardware camera
+      expect(stageSource).toContain("now - lastSuccessfulRenderTimeRef.current > 1200")
+      expect(stageSource).toContain("setIsCanvasRendering(false)")
+    })
+
+    it("ensures hardware camera video element is visible when canvas is not actively rendering", () => {
+      // Fallback video opacity condition
+      expect(stageSource).toContain("opacity: isVirtualActive && isAiReady && isCanvasRendering ? 0 : 1")
+    })
+
+    it("disposes WebGL shaders, buffers, and textures on unmount to avoid GPU memory leaks", () => {
+      expect(stageSource).toContain("gl.deleteTexture(glProgramRef.current.frameTex)")
+      expect(stageSource).toContain("gl.deleteTexture(glProgramRef.current.bgTex)")
+      expect(stageSource).toContain("gl.deleteTexture(glProgramRef.current.maskTex)")
+      expect(stageSource).toContain("gl.deleteShader(vs)")
+      expect(stageSource).toContain("gl.deleteShader(fs)")
+      expect(stageSource).toContain("gl.deleteProgram(program)")
+      expect(stageSource).toContain("gl.deleteBuffer(vertexBuffer)")
+    })
+
+    it("uses ForgeIcon component rather than legacy GaaIcon", () => {
+      expect(stageSource).toContain("import ForgeIcon from '@/components/ui/ForgeIcon'")
+      expect(stageSource).not.toContain("import { GaaIcon }")
+    })
   })
 
   describe("Coach Virtual Background Catalog Integrity", () => {
