@@ -655,8 +655,6 @@ export default function ClinicalKineticWarmupModule({
     warmupItems,
     toggleItem,
     markAllComplete,
-    playCountdownPip,
-    speakCoachVoiceCue,
   ])
 
   // Guided Prep Countdown (5-second buffer to get ready for the next stretch)
@@ -681,7 +679,7 @@ export default function ClinicalKineticWarmupModule({
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [guidedModalOpen, prepCountdown, playCountdownPip])
+  }, [guidedModalOpen, prepCountdown])
 
   // Pre-warm Coach Gordon authentic neural voice cues for all warmup items
   useEffect(() => {

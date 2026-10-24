@@ -42,6 +42,7 @@ export default function SanctuaryAudioNotePlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const startPlaybackRef = useRef<() => Promise<void>>(() => Promise.resolve())
 
   const totalDuration = actualDuration || note.durationSeconds || 30
 
@@ -252,6 +253,7 @@ export default function SanctuaryAudioNotePlayer({
     setActiveVoiceMode('webspeech')
     playViaSpeechSynthesis()
   }
+  startPlaybackRef.current = startPlayback
 
   const playViaSpeechSynthesis = () => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -276,9 +278,7 @@ export default function SanctuaryAudioNotePlayer({
       utterance.voice = englishVoice
     }
 
-    let progress = 0
     progressTimerRef.current = setInterval(() => {
-      progress += 1
       setCurrentTime(prev => {
         if (prev >= totalDuration) {
           if (progressTimerRef.current) clearInterval(progressTimerRef.current)
@@ -338,14 +338,14 @@ export default function SanctuaryAudioNotePlayer({
   useEffect(() => {
     if (autoPlayOnMount) {
       const timer = setTimeout(() => {
-        void startPlayback()
+        void startPlaybackRef.current()
       }, 350)
       return () => clearTimeout(timer)
     }
     return () => {
       stopAllAudio()
     }
-  }, [note.id])
+  }, [note.id, autoPlayOnMount])
 
   const progressPercent = Math.min(100, Math.round((currentTime / totalDuration) * 100))
 

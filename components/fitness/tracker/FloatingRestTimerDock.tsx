@@ -68,7 +68,7 @@ export default function FloatingRestTimerDock({
       exerciseName: activeRestState.exerciseName,
       unplayedFirst: true,
     })
-  }, [activeRestState?.exerciseName, activeRestState?.key])
+  }, [activeRestState])
 
   const elapsedRestSecs = activeRestState
     ? Math.max(0, activeRestState.restSeconds - activeRestState.remainingSeconds)
@@ -111,15 +111,7 @@ export default function FloatingRestTimerDock({
         badgeText: activeRestState.badgeText || (hrAdaptation?.isRecoveredEarly ? 'Ready to Lift' : 'Standard Rest'),
       })
     })
-  }, [
-    activeRestState?.isRunning,
-    activeRestState?.remainingSeconds,
-    activeRestState?.restSeconds,
-    activeRestState?.exerciseName,
-    activeRestState?.isBioPaced,
-    activeRestState?.badgeText,
-    hrAdaptation?.isRecoveredEarly,
-  ])
+  }, [activeRestState, hrAdaptation?.isRecoveredEarly])
 
   // Subscribe to rest timer actions performed on the Apple Watch (LIFT, +15s, -15s)
   useEffect(() => {

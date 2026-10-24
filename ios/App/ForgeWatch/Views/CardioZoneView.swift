@@ -74,6 +74,26 @@ public struct CardioZoneView: View {
                         .padding(.vertical, 3)
                         .background(zoneColor(workoutManager.currentZone).opacity(0.18))
                         .cornerRadius(6)
+
+                    if let protocolData = coordinator.workoutState.cardioProtocol {
+                        HStack(spacing: 4) {
+                            Text("TARGET: \(protocolData.targetBpmMin)–\(protocolData.targetBpmMax) BPM")
+                                .font(.system(size: 9, weight: .black, design: .monospaced))
+                                .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                            if workoutManager.currentHeartRate > 0 {
+                                if workoutManager.currentHeartRate >= protocolData.targetBpmMin && workoutManager.currentHeartRate <= protocolData.targetBpmMax {
+                                    Text("✓ IN ZONE")
+                                        .font(.system(size: 7.5, weight: .black))
+                                        .foregroundColor(Color(red: 0.06, green: 0.72, blue: 0.51))
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 1.5)
+                                        .background(Color(red: 0.06, green: 0.72, blue: 0.51).opacity(0.2))
+                                        .cornerRadius(3)
+                                }
+                            }
+                        }
+                        .padding(.top, 1)
+                    }
                 }
 
                 // High-Contrast Segmented Tanaka Stage Gauge

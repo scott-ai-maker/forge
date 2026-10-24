@@ -1612,13 +1612,10 @@ export default function FitnessTrackerClient({
     elapsedWorkoutSeconds,
     activeStepFilter,
     latestAssessment,
-    plan?.id,
-    plan?.nasm_opt_phase,
     microcycleProgress.currentWeek,
     adaptedExercisesByDay,
     localSetLogs,
     inlineSetDrafts,
-    expandedExerciseKey,
     effectiveOpenExerciseKey,
     profile,
     plan,
@@ -2083,6 +2080,9 @@ export default function FitnessTrackerClient({
     await executeSetLog(workout, exercise, draft)
   }
 
+  const executeSetLogRef = useRef(executeSetLog)
+  executeSetLogRef.current = executeSetLog
+
   // Listen for set logging performed directly on Apple Watch (Digital Crown / Action Button)
   useEffect(() => {
     let unsubscribe: (() => void) | null = null
@@ -2119,7 +2119,7 @@ export default function FitnessTrackerClient({
           isWarmup: false,
         }
 
-        void executeSetLog(activeWorkout, matchingEx, constructedDraft)
+        void executeSetLogRef.current(activeWorkout, matchingEx, constructedDraft)
       }).then(cleanup => {
         unsubscribe = cleanup
       })

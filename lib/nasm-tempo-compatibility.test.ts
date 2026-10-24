@@ -3,7 +3,6 @@ import {
   classifyExerciseTempoCategory,
   isExerciseExcludedFromTempo,
   resolveAppropriateTempoAndVolume,
-  NASM_TEMPO_RULES,
 } from './nasm-tempo-compatibility'
 import { enforcePhaseExerciseConstraints } from './nasm-opt-guardrails'
 

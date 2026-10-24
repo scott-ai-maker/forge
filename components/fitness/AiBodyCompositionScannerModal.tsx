@@ -249,7 +249,7 @@ export default function AiBodyCompositionScannerModal({
     if (initialHipCm) {
       setHipInput(units === 'imperial' ? String(Math.round((initialHipCm / 2.54) * 10) / 10) : String(initialHipCm))
     }
-  }, [initialSex, initialHeightCm, initialWeightKg, initialAge, initialWaistCm, initialNeckCm, initialHipCm])
+  }, [initialSex, initialHeightCm, initialWeightKg, initialAge, initialWaistCm, initialNeckCm, initialHipCm, units])
 
   // Sync initial captured photos from live studio session or safe session storage
   useEffect(() => {

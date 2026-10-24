@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import type { EmailOtpType } from '@supabase/supabase-js'
 
@@ -57,7 +56,6 @@ function validatePassword(password: string): string | undefined {
 }
 
 export default function ResetPasswordForm({ forceChange = false, nextPath = '/dashboard' }: ResetPasswordFormProps) {
-  const router = useRouter()
   const [requestEmail, setRequestEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -248,6 +246,7 @@ export default function ResetPasswordForm({ forceChange = false, nextPath = '/da
 
     setTimeout(() => {
       // Hard navigation ensures fresh session cookies reach server components
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = redirectPath
     }, 1200)
   }

@@ -1547,26 +1547,34 @@ public struct WorkoutActiveView: View {
         case .barbell:
             if weight >= barWeight {
                 let perSide = (weight - barWeight) / 2
-                return "\(Int(perSide)) lb/side (\(Int(barWeight)) lb bar)"
+                let perSideStr = perSide.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(perSide))" : String(format: "%.2f", perSide)
+                let barStr = barWeight.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(barWeight))" : String(format: "%.1f", barWeight)
+                return "\(perSideStr) lb/side (\(barStr) lb bar)"
             } else {
-                return "\(Int(weight)) lbs · Barbell"
+                let weightStr = weight.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(weight))" : String(format: "%.1f", weight)
+                return "\(weightStr) lbs · Barbell"
             }
         case .dumbbell:
-            return "\(Int(weight)) lbs / hand"
+            let dStr = weight.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(weight))" : String(format: "%.1f", weight)
+            return "\(dStr) lbs / hand"
         case .cable:
-            return "\(Int(weight)) lbs Stack Pin"
+            let cStr = weight.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(weight))" : String(format: "%.1f", weight)
+            return "\(cStr) lbs Stack Pin"
         case .bands:
             return bandTensionLabel(weight)
         case .bodyweight:
             if weight == 0 {
                 return "Bodyweight (0 lb added)"
             } else if weight > 0 {
-                return "+\(Int(weight)) lb Added Load"
+                let wStr = weight.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(weight))" : String(format: "%.1f", weight)
+                return "+\(wStr) lb Added Load"
             } else {
-                return "\(Int(weight)) lb Assisted"
+                let wStr = weight.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(weight))" : String(format: "%.1f", weight)
+                return "\(wStr) lb Assisted"
             }
         case .kettlebell:
-            return "\(Int(weight)) lb Kettlebell"
+            let kbStr = weight.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(weight))" : String(format: "%.1f", weight)
+            return "\(kbStr) lb Kettlebell"
         }
     }
 
@@ -2335,10 +2343,36 @@ struct BarbellPlateCalculatorSheet: View {
                 VStack(spacing: 4) {
                     HStack(spacing: 4) {
                         Button(action: {
+                            if totalWeightLbs >= barWeight + 5 { totalWeightLbs -= 5; WKInterfaceDevice.current().play(.click) }
+                        }) {
+                            Text("-2.5/sd")
+                                .font(.system(size: 8.5, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color.white.opacity(0.08))
+                                .foregroundColor(.white)
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: {
+                            if totalWeightLbs >= barWeight + 10 { totalWeightLbs -= 10; WKInterfaceDevice.current().play(.click) }
+                        }) {
+                            Text("-5/sd")
+                                .font(.system(size: 8.5, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color.white.opacity(0.08))
+                                .foregroundColor(.white)
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: {
                             if totalWeightLbs >= barWeight + 20 { totalWeightLbs -= 20; WKInterfaceDevice.current().play(.click) }
                         }) {
                             Text("-10/sd")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 8.5, weight: .bold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 4)
                                 .background(Color.white.opacity(0.08))
@@ -2351,7 +2385,7 @@ struct BarbellPlateCalculatorSheet: View {
                             if totalWeightLbs >= barWeight + 50 { totalWeightLbs -= 50; WKInterfaceDevice.current().play(.click) }
                         }) {
                             Text("-25/sd")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 8.5, weight: .bold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 4)
                                 .background(Color.white.opacity(0.08))
@@ -2364,7 +2398,7 @@ struct BarbellPlateCalculatorSheet: View {
                             if totalWeightLbs >= barWeight + 90 { totalWeightLbs -= 90; WKInterfaceDevice.current().play(.click) }
                         }) {
                             Text("-45/sd")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 8.5, weight: .bold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 4)
                                 .background(Color.white.opacity(0.08))
@@ -2375,9 +2409,31 @@ struct BarbellPlateCalculatorSheet: View {
                     }
 
                     HStack(spacing: 4) {
+                        Button(action: { totalWeightLbs += 5; WKInterfaceDevice.current().play(.click) }) {
+                            Text("+2.5/sd")
+                                .font(.system(size: 8.5, weight: .black))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color(red: 0.45, green: 0.45, blue: 0.48).opacity(0.25))
+                                .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.88))
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: { totalWeightLbs += 10; WKInterfaceDevice.current().play(.click) }) {
+                            Text("+5/sd")
+                                .font(.system(size: 8.5, weight: .black))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color(red: 0.85, green: 0.85, blue: 0.88).opacity(0.25))
+                                .foregroundColor(.white)
+                                .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
                         Button(action: { totalWeightLbs += 20; WKInterfaceDevice.current().play(.click) }) {
                             Text("+10/sd")
-                                .font(.system(size: 9, weight: .black))
+                                .font(.system(size: 8.5, weight: .black))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 4)
                                 .background(Color(red: 0.18, green: 0.70, blue: 0.35).opacity(0.25))
@@ -2388,7 +2444,7 @@ struct BarbellPlateCalculatorSheet: View {
 
                         Button(action: { totalWeightLbs += 50; WKInterfaceDevice.current().play(.click) }) {
                             Text("+25/sd")
-                                .font(.system(size: 9, weight: .black))
+                                .font(.system(size: 8.5, weight: .black))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 4)
                                 .background(Color(red: 0.95, green: 0.75, blue: 0.10).opacity(0.25))
@@ -2399,7 +2455,7 @@ struct BarbellPlateCalculatorSheet: View {
 
                         Button(action: { totalWeightLbs += 90; WKInterfaceDevice.current().play(.click) }) {
                             Text("+45/sd")
-                                .font(.system(size: 9, weight: .black))
+                                .font(.system(size: 8.5, weight: .black))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 4)
                                 .background(Color(red: 0.90, green: 0.22, blue: 0.21).opacity(0.25))
@@ -2454,9 +2510,9 @@ struct BarbellPlateCalculatorSheet: View {
     private func calculatePlates(perSide: Double) -> [Double] {
         var remaining = perSide
         var plates: [Double] = []
-        let standard = [45.0, 35.0, 25.0, 10.0, 5.0, 2.5]
+        let standard = [45.0, 35.0, 25.0, 10.0, 5.0, 2.5, 1.25]
         for p in standard {
-            while remaining >= p {
+            while remaining >= (p - 0.001) {
                 plates.append(p)
                 remaining -= p
             }
@@ -2472,7 +2528,7 @@ struct BarbellPlateCalculatorSheet: View {
         let sortedKeys = counts.keys.sorted(by: >)
         let parts = sortedKeys.map { k -> String in
             let count = counts[k]!
-            let label = k == 2.5 ? "2.5" : "\(Int(k))"
+            let label = k == 2.5 ? "2.5" : (k == 1.25 ? "1.25" : "\(Int(k))")
             return "\(count)×\(label) lb"
         }
         return parts.joined(separator: " + ")
@@ -2931,9 +2987,9 @@ struct PlateBumperView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text(weight == 2.5 ? "2.5" : "\(Int(weight))")
-                .font(.system(size: 8, weight: .black))
-                .foregroundColor(.black)
+            Text(weight == 2.5 ? "2.5" : (weight == 1.25 ? "1.25" : "\(Int(weight))"))
+                .font(.system(size: weight == 1.25 ? 6.5 : 8, weight: .black))
+                .foregroundColor(weight == 1.25 ? .white : .black)
                 .rotationEffect(.degrees(-90))
         }
         .frame(width: plateWidth, height: plateHeight)
@@ -2953,6 +3009,7 @@ struct PlateBumperView: View {
         case 10: return 34
         case 5: return 28
         case 2.5: return 24
+        case 1.25: return 20
         default: return 30
         }
     }
@@ -2965,6 +3022,7 @@ struct PlateBumperView: View {
         case 10: return 8
         case 5: return 7
         case 2.5: return 6
+        case 1.25: return 5
         default: return 8
         }
     }
@@ -2977,6 +3035,7 @@ struct PlateBumperView: View {
         case 10: return Color(red: 0.18, green: 0.70, blue: 0.35) // Olympic Green
         case 5: return Color(red: 0.85, green: 0.85, blue: 0.88)  // White
         case 2.5: return Color(red: 0.45, green: 0.45, blue: 0.48) // Metal / Grey
+        case 1.25: return Color(red: 0.28, green: 0.28, blue: 0.30) // Dark Iron / Micro-Plate
         default: return Color.gray
         }
     }

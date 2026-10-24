@@ -164,6 +164,9 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                     lastLocalPhaseSelectionTime = Date()
                     lastLocalPhaseSelected = nextPhase
 
+                    WatchHapticManager.shared.playSuccessKnock()
+                    WKInterfaceDevice.current().play(.success)
+
                     sendToPhone([
                         "type": "phaseSelected",
                         "phase": nextPhase,

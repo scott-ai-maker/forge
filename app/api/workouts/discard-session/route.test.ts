@@ -88,10 +88,6 @@ describe('POST /api/workouts/discard-session', () => {
     mockSelectQuery.like = vi.fn().mockReturnValue(mockSelectQuery)
     mockSelectQuery.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: matchingSets, error: null }).then(resolve)
 
-    const mockDeleteQuery: Record<string, unknown> = {
-      delete: mockDelete,
-    }
-
     vi.mocked(supabaseAdmin).mockReturnValue({
       from: vi.fn((table: string) => {
         if (table === 'workout_set_logs') {

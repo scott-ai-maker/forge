@@ -6,11 +6,8 @@ import {
   getRecoveryColorHex,
   mapExerciseToMuscleZones,
   extractMuscleStrainsFromWorkoutLogs,
-  resolveClientConditioningTier,
   screenRecoverySupplementsForContraindications,
   parseParqMedicationsAndConditions,
-  SUPPLEMENT_RECOVERY_EFFECTS,
-  type MuscleZoneId,
   type RecoverySupplementKey,
   type MuscleTrainingStrain,
 } from '@/lib/muscle-recovery-telemetry'
@@ -214,7 +211,7 @@ describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool
       const quadCoords = MUSCLE_TARGET_COORDINATES.quadriceps.anterior!
       expect(quadCoords).toBeDefined()
       expect(quadCoords.length).toBe(2)
-      quadCoords.forEach(([cx, cy]) => {
+      quadCoords.forEach(([_cx, cy]) => {
         expect(cy).toBeLessThanOrEqual(440) // Calibrated to 437 (above knee joint at ~520)
         expect(cy).toBeGreaterThan(400)
       })
@@ -222,7 +219,7 @@ describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool
       // 2. Gluteals must sit above the inferior gluteal fold (< 390)
       const gluteCoords = MUSCLE_TARGET_COORDINATES.gluteals.posterior!
       expect(gluteCoords).toBeDefined()
-      gluteCoords.forEach(([cx, cy]) => {
+      gluteCoords.forEach(([_cx, cy]) => {
         expect(cy).toBeLessThanOrEqual(390) // Calibrated to 382 (above hamstring origin)
         expect(cy).toBeGreaterThan(340)
       })
@@ -235,7 +232,7 @@ describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool
       // 4. Hamstrings sit between gluteal fold and popliteal fossa (< 480)
       const hamCoords = MUSCLE_TARGET_COORDINATES.hamstrings.posterior!
       expect(hamCoords).toBeDefined()
-      hamCoords.forEach(([cx, cy]) => {
+      hamCoords.forEach(([_cx, cy]) => {
         expect(cy).toBeLessThanOrEqual(480) // Calibrated to 477
         expect(cy).toBeGreaterThan(430)
       })
@@ -243,7 +240,7 @@ describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool
       // 5. Gastrocnemius (calves) sits in the upper diamond heads (< 610)
       const calfCoords = MUSCLE_TARGET_COORDINATES.calves_gastrocnemius.posterior!
       expect(calfCoords).toBeDefined()
-      calfCoords.forEach(([cx, cy]) => {
+      calfCoords.forEach(([_cx, cy]) => {
         expect(cy).toBeLessThanOrEqual(610) // Calibrated to 602 (above Achilles tendon)
         expect(cy).toBeGreaterThan(560)
       })

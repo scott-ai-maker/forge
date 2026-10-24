@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import GaaIcon from '@/components/ui/GaaIcon'
 
 export interface AppleWatchSimulatorModalProps {
   isOpen: boolean
@@ -377,6 +376,26 @@ export default function AppleWatchSimulatorModal({
                       </div>
                     </div>
 
+                    {/* Glanceable Plate Collar / Modality Breakdown */}
+                    {weight >= 45 && (
+                      <div
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.06)',
+                          borderRadius: 6,
+                          padding: '3px 6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          fontSize: 8.5,
+                          fontWeight: 700,
+                          color: '#E2E8F0',
+                        }}
+                      >
+                        <span style={{ color: '#D4A017', fontWeight: 900 }}>BARBELL</span>
+                        <span>{Math.round((weight - 45) / 2)} lb / side (45# bar)</span>
+                      </div>
+                    )}
+
                     {/* LOG SET Button */}
                     <button
                       type="button"
@@ -503,7 +522,7 @@ export default function AppleWatchSimulatorModal({
                 {/* ── TAB 4: 4-2-1-1 TEMPO METRONOME VIEW ── */}
                 {activeTab === 'tempo' && (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
-                    <div style={{ fontSize: 9, fontWeight: 800, color: '#38BDF8' }}>NASM OPT™ TEMPO</div>
+                    <div style={{ fontSize: 9, fontWeight: 800, color: '#38BDF8' }}>NASM OPT™ TEMPO ({tempo})</div>
 
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ fontSize: 9, fontWeight: 900, color: '#D4A017', textTransform: 'uppercase' }}>

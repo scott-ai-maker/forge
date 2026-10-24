@@ -20,7 +20,7 @@ import { enrichExerciseMedia } from './nasm-exercise-video-catalog'
 import { checkExerciseContraindications } from './liability-shield'
 import { parseInjuriesFromText, getInjuryAugmentations } from './sports-injuries'
 import { substituteMissingEquipment, enforcePhaseExerciseConstraints } from './nasm-opt-guardrails'
-import { calculateEstimatedWorkoutDuration, enforceSessionDurationHardCap } from './workout-duration-engine'
+import { enforceSessionDurationHardCap } from './workout-duration-engine'
 
 export interface RagProgramGenerationRequest {
   clientName?: string

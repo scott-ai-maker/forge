@@ -1086,8 +1086,6 @@ export default function ClinicalCoolDownModule({
     coolDownItems,
     toggleItem,
     markAllComplete,
-    playCountdownPip,
-    speakCoachVoiceCue,
   ])
 
   // Guided Prep Countdown (5-second buffer to get ready for the next stretch)
@@ -1112,7 +1110,7 @@ export default function ClinicalCoolDownModule({
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [guidedModalOpen, prepCountdown, playCountdownPip])
+  }, [guidedModalOpen, prepCountdown])
 
   // Pre-warm Coach Gordon authentic neural voice cues for all cool-down items
   useEffect(() => {

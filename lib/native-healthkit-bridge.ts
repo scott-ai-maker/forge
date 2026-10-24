@@ -1138,7 +1138,7 @@ export async function syncRestTimerStateToWatch(timer: WatchRestTimerSyncPayload
       return Boolean(res?.success)
     }
     return false
-  } catch (err) {
+  } catch (_err) {
     return false
   }
 }
@@ -1155,7 +1155,7 @@ export async function checkAppleWatchCompanionStatus(): Promise<{ installed: boo
       return { installed: Boolean(res?.installed), paired: Boolean(res?.paired) }
     }
     return { installed: false, paired: false }
-  } catch (err) {
+  } catch (_err) {
     return { installed: false, paired: false }
   }
 }
@@ -1172,7 +1172,7 @@ export async function syncCnsReadinessToWatch(score: number, restingHeartRate?: 
       return Boolean(res?.success)
     }
     return false
-  } catch (err) {
+  } catch (_err) {
     return false
   }
 }
