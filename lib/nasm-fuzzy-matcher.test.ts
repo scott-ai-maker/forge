@@ -22,7 +22,7 @@ describe('NASM Fuzzy Heuristic Media & Movement Search Engine', () => {
   it('resolves canonical aliases to official movements to fix client routines', () => {
     const bridgeMatch = searchNasmLibraryMedia('stability ball hamstring curl')
     expect(bridgeMatch).not.toBeNull()
-    expect(bridgeMatch?.record.name).toBe('Floor Bridge')
+    expect(bridgeMatch?.record.name).toBe('Stability Ball Hamstring Curl')
     expect(bridgeMatch?.record.videoId).toBe('Z3cY3d3BBo4')
 
     const cobraMatch = searchNasmLibraryMedia('prone cobra on floor')

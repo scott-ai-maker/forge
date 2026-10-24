@@ -4,7 +4,7 @@
  * Strictly presents verified official NASM media; if no exact match exists, explicitly displays "Media Not Available".
  */
 
-import { searchNasmLibraryMedia } from './nasm-fuzzy-matcher'
+import { searchNasmLibraryMedia, EXERCISE_ALIASES } from './nasm-fuzzy-matcher'
 import { cleanExerciseName, resolveExerciseVideoEmbed, extractYouTubeVideoId } from './nasm-exercise-video-catalog'
 import { detectExerciseEquipment } from './nasm-equipment-detector'
 import {
@@ -777,6 +777,282 @@ export const NASM_MOVEMENT_PROFILES: Record<string, Partial<NasmClinicalMovement
       'Control each twist with active oblique contraction rather than momentum.',
     ],
   },
+  'dumbbell bench press': {
+    category: 'Chest',
+    optPhase: 'Phase 1 (Stabilization Endurance), Phase 2 (Strength Endurance), Phase 3 (Hypertrophy)',
+    tempo: '4/2/1 (Phase 1) or 2/0/2 (Phase 2/3)',
+    primeMover: 'Pectoralis Major (Sternal & Clavicular Heads)',
+    synergists: ['Anterior Deltoid', 'Triceps Brachii'],
+    stabilizers: ['Rotator Cuff', 'Serratus Anterior', 'Core LPHC'],
+    antagonists: ['Latissimus Dorsi', 'Posterior Deltoid', 'Rhomboids'],
+    kineticCheckpoints: {
+      feetAnkles: 'Planted firmly on floor, shoulder-width apart, driving into ground.',
+      knees: 'Flexed at 90°, aligned with second/third toes.',
+      lphc: 'Glutes and hips pressed firmly into bench; maintain natural lumbar arch.',
+      shoulders: 'Scapulae retracted and depressed into bench pad; 45° elbow flare.',
+      headNeck: 'Resting flat on bench pad with chin neutral.',
+    },
+    setupInstructions: 'Lie supine on flat bench holding dumbbells at chest level with neutral wrists and elbows at 45° to torso, feet planted firmly.',
+    executionInstructions: 'Press dumbbells upward and slightly inward over mid-chest until arms are extended. Inhale and lower under control (2–3 seconds) until dumbbells reach chest level, maintaining scapular retraction.',
+    clinicalCues: [
+      'Do not allow dumbbells to collide at the top; maintain active tension.',
+      'Keep shoulder blades pinched together into the bench throughout the lift.',
+      'Maintain 45° angle between upper arms and torso to protect rotator cuff.',
+    ],
+  },
+  'single-arm dumbbell press': {
+    category: 'Shoulders',
+    optPhase: 'Phase 1 (Stabilization Endurance), Phase 2 (Strength Endurance)',
+    tempo: '4/2/1 or 2/0/2',
+    primeMover: 'Anterior & Medial Deltoids',
+    synergists: ['Triceps Brachii', 'Upper Trapezius', 'Serratus Anterior'],
+    stabilizers: ['Rotator Cuff', 'Internal & External Obliques (Anti-Lateral Flexion)', 'Transverse Abdominis'],
+    antagonists: ['Latissimus Dorsi', 'Pectoralis Major'],
+    kineticCheckpoints: {
+      feetAnkles: 'Hip-width apart, weight evenly distributed, feet pointing straight ahead.',
+      knees: 'Soft unlocked knees with slight bend.',
+      lphc: 'Pelvis level; core braced against lateral bending or spinal extension.',
+      shoulders: 'Working shoulder packed; elbow tucked ~30° in scapular plane.',
+      headNeck: 'Neutral cervical spine, chin packed, eyes looking forward.',
+    },
+    setupInstructions: 'Stand tall with feet hip-width apart and core braced. Hold a single dumbbell at shoulder level with elbow tucked in scapular plane (30° forward).',
+    executionInstructions: 'Press dumbbell vertically overhead until arm is locked out beside ear while resisting any side-bending or arching of the torso. Inhale and lower with control back to shoulder.',
+    clinicalCues: [
+      'Brace core to prevent lateral flexion or lumbar hyperextension.',
+      'Keep elbow slightly in front of shoulder (scapular plane).',
+      'Avoid shrugging shoulder toward ear during overhead lockout.',
+    ],
+  },
+  'push press': {
+    category: 'Plyometrics',
+    optPhase: 'Phase 5 (Power)',
+    tempo: 'Explosive concentric, controlled eccentric',
+    primeMover: 'Deltoids & Quadriceps / Gluteals (Triple Extension Transfer)',
+    synergists: ['Triceps Brachii', 'Gastrocnemius / Soleus', 'Upper Trapezius'],
+    stabilizers: ['Rotator Cuff', 'Core LPHC', 'Erector Spinae'],
+    antagonists: ['Latissimus Dorsi', 'Hamstrings'],
+    kineticCheckpoints: {
+      feetAnkles: 'Shoulder-width apart, heels grounded through takeoff and landing.',
+      knees: 'Quick 2–3 inch dip tracking directly over second toes; avoid valgus cave.',
+      lphc: 'Vertical torso during dip-drive; no forward chest collapse or spinal arching.',
+      shoulders: 'Barbell or dumbbells racked securely across anterior deltoids.',
+      headNeck: 'Neutral cervical spine; head moves slightly back to clear bar path.',
+    },
+    setupInstructions: 'Stand with feet shoulder-width apart, holding barbell or dumbbells racked at collarbone level with elbows slightly forward and core braced.',
+    executionInstructions: 'Dip hips and knees into a quick 2–3 inch quarter squat (countermovement). Explosively drive through heels and extend hips, transferring leg drive upward into pressing weight vertically overhead to lockout.',
+    clinicalCues: [
+      'Use explosive leg drive to initiate bar momentum before pressing arms.',
+      'Keep torso vertical during the shallow knee dip (avoid forward hinge).',
+      'Lock out weight overhead with biceps next to ears and core braced.',
+    ],
+  },
+  'leg press': {
+    category: 'Legs',
+    optPhase: 'Phase 2 (Strength Endurance), Phase 3 (Hypertrophy), Phase 4 (Max Strength)',
+    tempo: '2/0/2 or 3/0/1',
+    primeMover: 'Quadriceps (Vastus Lateralis, Medialis, Intermedius, Rectus Femoris) & Gluteus Maximus',
+    synergists: ['Adductor Magnus', 'Soleus', 'Gastrocnemius', 'Hamstrings Complex'],
+    stabilizers: ['Transverse Abdominis', 'Hip Abductors/Adductors'],
+    antagonists: ['Hamstrings Complex', 'Iliopsoas'],
+    kineticCheckpoints: {
+      feetAnkles: 'Hip-to-shoulder width on platform, toes straight ahead or slightly turned out.',
+      knees: 'Tracking over second and third toes; strictly avoid inward valgus collapse.',
+      lphc: 'Hips, sacrum, and lower back firmly glued to seat back pad throughout entire ROM.',
+      shoulders: 'Shoulder blades back against seat pad; grip side handles firmly.',
+      headNeck: 'Head resting comfortably against pad, neutral neck.',
+    },
+    setupInstructions: 'Sit securely in machine with lower back and hips firmly against backrest. Place feet hip-to-shoulder width apart on sled platform with toes pointing slightly outward.',
+    executionInstructions: 'Release safety handles. Inhale and lower sled with control (2–3s) until knees reach approximately 90° flexion, ensuring lower back stays pinned to seat. Exhale and press platform away through midfoot and heels without locking knees at top.',
+    clinicalCues: [
+      'Never allow hips or lower back to curl off the seat at bottom depth (prevents lumbar disc herniation).',
+      'Do not hyperextend or forcefully slam knees into lockout at the top.',
+      'Keep knees tracking directly in line with second and third toes.',
+    ],
+  },
+  'stability ball hamstring curl': {
+    category: 'Legs',
+    optPhase: 'Phase 1 (Stabilization Endurance), Phase 2 (Strength Endurance)',
+    tempo: '4/2/1 or 2/0/2',
+    primeMover: 'Hamstrings Complex (Biceps Femoris, Semitendinosus, Semimembranosus)',
+    synergists: ['Gluteus Maximus', 'Gastrocnemius', 'Soleus'],
+    stabilizers: ['Transverse Abdominis', 'Internal Obliques', 'Erector Spinae', 'Quadratus Lumborum'],
+    antagonists: ['Quadriceps Complex'],
+    kineticCheckpoints: {
+      feetAnkles: 'Dorsiflexed, heels pressed into center of stability ball, ankles hip-width.',
+      knees: 'Tracking in line with hips and feet throughout the curl.',
+      lphc: 'Hips held in full extension (straight line from shoulders to knees); no sagging or hyperextension.',
+      shoulders: 'Resting flat on the floor with arms extended out to sides for stable base of support.',
+      headNeck: 'Resting comfortably on the mat with neutral chin.',
+    },
+    setupInstructions: 'Lie supine on the floor with calves and heels resting atop a stability ball, arms extended on floor at 45° for stability. Draw navel inward to brace core.',
+    executionInstructions: 'Bridge hips upward off the floor until body forms a straight rigid line from shoulders to heels. Keeping hips high, flex knees to pull the ball toward glutes. Pause at peak contraction, then slowly extend legs back to the bridged position without letting hips touch the ground.',
+    clinicalCues: [
+      'Keep hips elevated in full extension throughout both the curl and extension.',
+      'Maintain neutral lumbar spine by actively engaging glutes and transverse abdominis.',
+      'Control the eccentric leg extension for 2–3 seconds without letting ball drift laterally.',
+    ],
+  },
+  'front squat': {
+    category: 'Legs',
+    optPhase: 'Phase 2 (Strength Endurance), Phase 3 (Hypertrophy), Phase 4 (Max Strength)',
+    tempo: '2/0/2 or 3/0/1',
+    primeMover: 'Quadriceps (Vastus Lateralis, Medialis, Intermedius, Rectus Femoris) & Gluteus Maximus',
+    synergists: ['Adductor Magnus', 'Soleus', 'Gastrocnemius', 'Hamstrings Complex'],
+    stabilizers: ['Transverse Abdominis', 'Internal Obliques', 'Thoracic Extensors', 'Rhomboids', 'Erector Spinae'],
+    antagonists: ['Hamstrings Complex', 'Iliopsoas'],
+    kineticCheckpoints: {
+      feetAnkles: 'Shoulder-width apart, toes forward or slightly flared (5°–10°), heels flat on ground.',
+      knees: 'Track directly over second and third toes; avoid valgus collapse.',
+      lphc: 'Maintain upright thoracic spine and neutral lumbar lordosis; core braced.',
+      shoulders: 'Elbows driven high and forward parallel to floor in front rack position.',
+      headNeck: 'Neutral cervical spine, chin packed, eyes looking straight forward.',
+    },
+    setupInstructions: 'Rest barbell across anterior deltoids and clavicles with elbows driven high and parallel to floor in clean rack or cross-arm grip. Feet shoulder-width apart.',
+    executionInstructions: 'Inhale, brace core, and sit hips down and back with an upright torso. Descend until thighs are parallel to floor while keeping elbows high. Drive through midfoot and heels to return to standing.',
+    clinicalCues: [
+      'Drive elbows high toward the ceiling throughout the lift to prevent forward torso dump.',
+      'Maintain an upright chest and vertical spine to direct load to quadriceps.',
+      'Keep knees tracking over second toes and heels flat on floor.',
+    ],
+  },
+  'single leg romanian deadlift': {
+    category: 'Legs',
+    optPhase: 'Phase 1 (Stabilization Endurance), Phase 2 (Strength Endurance)',
+    tempo: '4/2/1 or 2/0/2',
+    primeMover: 'Hamstrings Complex & Gluteus Maximus (Stance Leg)',
+    synergists: ['Gluteus Medius / Minimus (Stance Leg)', 'Adductor Magnus', 'Erector Spinae'],
+    stabilizers: ['Transverse Abdominis', 'Internal & External Obliques', 'Peroneals', 'Anterior Tibialis', 'Foot Intrinsic Musculature'],
+    antagonists: ['Quadriceps Complex', 'Iliopsoas'],
+    kineticCheckpoints: {
+      feetAnkles: 'Stance foot straight ahead, active tripod foot pressure (heel, 1st MTP, 5th MTP).',
+      knees: 'Soft 15°–20° bend in stance knee, tracking over second toe.',
+      lphc: 'Pelvis level and square to floor; avoid opening or rotating non-stance hip upward.',
+      shoulders: 'Scapulae retracted and depressed; spine long and neutral.',
+      headNeck: 'Neutral cervical spine, chin packed, gaze 6–8 feet ahead on floor.',
+    },
+    setupInstructions: 'Stand on one leg with a soft knee bend, holding dumbbell in opposite hand or both hands. Square hips and shoulders to the floor.',
+    executionInstructions: 'Hinge forward at the hips while extending non-stance leg straight behind you in a straight line with torso. Lower weight until torso is parallel to floor and stretch is felt in stance hamstring, then contract glute to drive hip forward to standing balance.',
+    clinicalCues: [
+      'Keep floating foot toes pointed straight down toward the floor to prevent pelvic rotation.',
+      'Hinge through hip crease while maintaining flat neutral spine.',
+      'Maintain steady tripod foot contact (heel, 1st MTP, 5th MTP).',
+    ],
+  },
+  'box jump': {
+    category: 'Plyometrics',
+    optPhase: 'Phase 5 (Power) or Phase 1 (Stabilization hold)',
+    tempo: 'Explosive / 3-second landing hold',
+    primeMover: 'Quadriceps, Gluteus Maximus & Gastrocnemius / Soleus (Explosive Triple Extension)',
+    synergists: ['Hamstrings Complex', 'Adductor Magnus', 'Core LPHC'],
+    stabilizers: ['Anterior Tibialis', 'Peroneals', 'Rotator Cuff & Deltoids (Arm Swing)'],
+    antagonists: ['Hip Flexors (Psoas)', 'Tibialis Anterior (during propulsion)'],
+    kineticCheckpoints: {
+      feetAnkles: 'Shoulder-width takeoff; land softly with entire foot (heels and forefeet) on box.',
+      knees: 'Drive knees straight forward over toes; strictly avoid knee valgus (caving inward) on landing.',
+      lphc: 'Absorb landing force in a quarter-to-half squat with neutral spine and chest proud.',
+      shoulders: 'Arms swing aggressively upward to generate vertical momentum.',
+      headNeck: 'Gaze focused on landing zone on top of box, chin neutral.',
+    },
+    setupInstructions: 'Stand facing a sturdy plyometric box at an athletic distance (6–12 inches), feet shoulder-width apart, arms relaxed.',
+    executionInstructions: 'Hinge hips back and swing arms downward into a loaded quarter squat. Explosively drive through the floor extending hips, knees, and ankles (triple extension) while swinging arms forward and up. Land softly on top of box absorbing force in a quiet quarter squat. Stand tall, then step down one foot at a time (never jump down).',
+    clinicalCues: [
+      'Land as softly and quietly as possible to absorb impact through muscles rather than joints.',
+      'Always step down one foot at a time; never jump backward down from the box.',
+      'Ensure knees track directly in line with middle toes upon landing without caving inward (valgus).',
+    ],
+  },
+  'cable row': {
+    category: 'Back',
+    optPhase: 'Phase 1 (Stabilization Endurance), Phase 2 (Strength Endurance)',
+    tempo: '4/2/1 or 2/0/2',
+    primeMover: 'Latissimus Dorsi, Rhomboids & Middle Trapezius',
+    synergists: ['Biceps Brachii', 'Brachialis', 'Posterior Deltoid', 'Teres Major'],
+    stabilizers: ['Erector Spinae', 'Core LPHC', 'Gluteals'],
+    antagonists: ['Pectoralis Major', 'Anterior Deltoid'],
+    kineticCheckpoints: {
+      feetAnkles: 'Hip-to-shoulder width, knees softly bent, feet straight ahead.',
+      knees: 'Slight athletic bend; never hyperextended or locked out.',
+      lphc: 'Neutral spine with tall upright posture; avoid leaning back with momentum.',
+      shoulders: 'Scapulae retracted and depressed into back pockets; chest open.',
+      headNeck: 'Neutral cervical spine in line with torso.',
+    },
+    setupInstructions: 'Stand or sit facing cable pulley with handles attached, arms extended, spine tall and neutral.',
+    executionInstructions: 'Brace core and initiate pull by retracting shoulder blades. Drive elbows straight back toward ribcage, squeezing shoulder blades together firmly at peak contraction. Slowly return under control for 2–3 seconds.',
+    clinicalCues: [
+      'Maintain an upright vertical torso throughout; avoid leaning back with momentum.',
+      'Lead with elbows and initiate with scapular retraction before bending arms.',
+      'Keep shoulders depressed down away from ears.',
+    ],
+  },
+  'medicine ball chest pass': {
+    category: 'Plyometrics',
+    optPhase: 'Phase 5 (Power)',
+    tempo: 'Explosive',
+    primeMover: 'Pectoralis Major & Anterior Deltoid (Explosive Upper Body Push)',
+    synergists: ['Triceps Brachii', 'Serratus Anterior', 'Core LPHC'],
+    stabilizers: ['Rotator Cuff', 'Quadriceps', 'Gluteus Maximus'],
+    antagonists: ['Latissimus Dorsi', 'Posterior Deltoid', 'Rhomboids'],
+    kineticCheckpoints: {
+      feetAnkles: 'Shoulder-width apart or staggered stance, knees softly unlocked.',
+      knees: 'Slight flex to absorb recoil and generate forward drive.',
+      lphc: 'Abdominal brace engaged; avoid hyperextending lumbar spine during throw.',
+      shoulders: 'Elbows at 45° to torso; shoulders packed down.',
+      headNeck: 'Neutral neck, gaze locked on target wall or partner.',
+    },
+    setupInstructions: 'Stand facing a solid concrete/masonry wall or partner with feet shoulder-width apart in athletic stance, holding medicine ball at chest level with both hands.',
+    executionInstructions: 'Engage core, draw ball inward slightly, then explosively push and throw the medicine ball straight into the wall by fully extending arms and stepping forward. Catch rebound or reset for next rep.',
+    clinicalCues: [
+      'Push explosively with maximum velocity on every repetition.',
+      'Maintain athletic posture and braced core to transfer force through kinetic chain.',
+      'Keep elbows tucked at 45° to protect shoulders during release and catch.',
+    ],
+  },
+  'medicine ball slam': {
+    category: 'Plyometrics',
+    optPhase: 'Phase 5 (Power)',
+    tempo: 'Explosive',
+    primeMover: 'Latissimus Dorsi, Rectus Abdominis & Triceps Brachii',
+    synergists: ['Pectoralis Major', 'Teres Major', 'Hip Flexors', 'Quadriceps'],
+    stabilizers: ['Erector Spinae', 'Rotator Cuff', 'Gastrocnemius'],
+    antagonists: ['Deltoids', 'Erector Spinae (during slam phase)'],
+    kineticCheckpoints: {
+      feetAnkles: 'Shoulder-width apart, stable base.',
+      knees: 'Flex into quarter-to-half squat during slam to absorb force.',
+      lphc: 'Power generated from hip hinge and abdominal flexion; maintain neutral spine.',
+      shoulders: 'Arms extend overhead then accelerate aggressively downward.',
+      headNeck: 'Eyes follow ball path toward floor; chin packed.',
+    },
+    setupInstructions: 'Stand tall with feet shoulder-width apart holding a slam ball with both hands in front of body.',
+    executionInstructions: 'Inhale and bring ball up and overhead to full extension, rising onto balls of feet. Explosively hinge at hips and contract abdominals and lats to slam the ball straight down into the floor between your feet. Catch ball on bounce or scoop up and reset.',
+    clinicalCues: [
+      'Drive the slam with core flexion and hip hinge, not just arm swing.',
+      'Follow through into an athletic half-squat to absorb downward momentum.',
+      'Use a non-bouncing slam ball to prevent facial impact on the rebound.',
+    ],
+  },
+  'hang clean': {
+    category: 'Plyometrics',
+    optPhase: 'Phase 5 (Power)',
+    tempo: 'Explosive',
+    primeMover: 'Hamstrings, Gluteus Maximus & Quadriceps (Explosive Triple Extension)',
+    synergists: ['Trapezius (Upper/Middle)', 'Deltoids', 'Gastrocnemius / Soleus', 'Forearm Flexors'],
+    stabilizers: ['Erector Spinae', 'Core LPHC', 'Rotator Cuff'],
+    antagonists: ['Pectoralis Major', 'Anterior Tibialis'],
+    kineticCheckpoints: {
+      feetAnkles: 'Hip-width takeoff, landing in shoulder-width squat stance.',
+      knees: 'Soft unlock in hang, explosive extension, soft athletic catch in quarter squat.',
+      lphc: 'Hips hinged in hang with flat back; forceful hip snap into full extension.',
+      shoulders: 'Bar sweeps against thighs; elbows snap high and forward into front rack.',
+      headNeck: 'Eyes straight ahead, neutral cervical alignment.',
+    },
+    setupInstructions: 'Stand holding barbell with overhand shoulder-width grip, feet hip-width apart. Hinge hips back into hang position with bar resting just above knees and chest over bar.',
+    executionInstructions: 'Explosively extend hips, knees, and ankles (triple extension) while shrugging shoulders violently. As bar rises close to body, rapidly pull yourself under bar, rotating elbows high and forward to catch bar across anterior deltoids in a quarter squat. Stand tall, then lower bar to hips under control.',
+    clinicalCues: [
+      'Keep barbell path brushing close against thighs and shirt throughout pull.',
+      'Generate power from explosive hip and knee extension, not arm pull.',
+      'Snap elbows fast and high under the bar into a solid front rack catch.',
+    ],
+  },
 }
 
 export const GENERATED_EXERCISE_IMAGES: Record<string, string> = VERIFIED_GAA_EXERCISE_IMAGES
@@ -866,7 +1142,25 @@ export function deriveExerciseHowToSteps(
     ]
   }
 
-  if (norm.includes('bench') || norm.includes('chest press') || norm.includes('push up') || norm.includes('push-up') || norm.includes('dip')) {
+  if (norm.includes('hamstring curl') || norm.includes('leg curl') || norm.includes('ball curl') || norm.includes('stability ball curl')) {
+    return [
+      '1. Lie supine on floor with heels placed firmly atop stability ball or machine pad, arms flat at sides.',
+      '2. Bridge hips upward by squeezing glutes until body forms a straight line from shoulders to knees.',
+      '3. Flex knees to pull heels toward glutes, keeping hips fully elevated throughout the curl.',
+      '4. Extend legs under control back to starting bridge position without letting hips sag to the floor.',
+    ]
+  }
+
+  if (norm.includes('jump') || norm.includes('hop') || norm.includes('bound') || norm.includes('slam') || norm.includes('clean') || norm.includes('burpee') || norm.includes('box jump')) {
+    return [
+      '1. Assume athletic stance with feet shoulder-width apart, knees slightly bent, and chest upright.',
+      '2. Hinge hips back into a quarter squat, swinging arms back to load elastic recoil energy.',
+      '3. Explosively extend through hips, knees, and ankles (triple extension) while driving with maximum intent.',
+      '4. Land softly on midfoot absorbing impact in a quiet quarter squat with knees tracking toes, or reset smoothly.',
+    ]
+  }
+
+  if ((norm.includes('bench') || norm.includes('chest press') || norm.includes('push up') || norm.includes('push-up') || norm.includes('dip')) && !norm.includes('leg press')) {
     return [
       '1. Position yourself with shoulder blades pinched back and down, feet planted flat on floor.',
       '2. Inhale and lower weight with control (2–3s descent) toward mid-chest with elbows at a 45° angle to torso.',
@@ -875,7 +1169,16 @@ export function deriveExerciseHowToSteps(
     ]
   }
 
-  if (norm.includes('squat') || norm.includes('leg press') || norm.includes('hack')) {
+  if (norm.includes('leg press')) {
+    return [
+      '1. Sit firmly in leg press machine with hips and lumbar spine glued to backrest, feet shoulder-width on sled.',
+      '2. Release safety bars and lower sled with control (2–3s) until knees reach 90° flexion without lifting lower back.',
+      '3. Drive sled upward forcefully through midfoot and heels, contracting quadriceps and glutes.',
+      '4. Stop just short of knee lockout at the top to preserve continuous muscular tension and joint health.',
+    ]
+  }
+
+  if (norm.includes('squat') || norm.includes('hack')) {
     return [
       '1. Set feet shoulder-width apart with toes pointing forward or slightly outward (5°–10°), core firmly braced.',
       '2. Inhale, break at hips and knees simultaneously, driving knees out in line with second toes.',
@@ -902,12 +1205,21 @@ export function deriveExerciseHowToSteps(
     ]
   }
 
-  if (norm.includes('overhead') || norm.includes('shoulder press') || norm.includes('military') || norm.includes('arnold')) {
+  if (norm.includes('overhead') || norm.includes('shoulder press') || norm.includes('military') || norm.includes('arnold') || norm.includes('push press')) {
     return [
       '1. Stand or sit with core braced and glutes locked; hold dumbbells/barbell at shoulder level with forearms vertical.',
       '2. Press upward in a vertical path, moving head slightly back to clear bar/weight path.',
       '3. Lock arms out overhead with biceps aligned next to ears and shoulder blades stable.',
       '4. Inhale and lower weight with control back to shoulder starting position (2-second descent).',
+    ]
+  }
+
+  if (norm.includes('lateral raise') || norm.includes('scaption') || norm.includes('front raise') || norm.includes('rear delt')) {
+    return [
+      '1. Stand tall with feet hip-width apart, holding weights at sides in scapular plane (30° forward of coronal plane).',
+      '2. Raise arms under control leading with thumbs up/palms facing forward until reaching shoulder height.',
+      '3. Pause briefly at peak abduction without shrugging upper trapezius or hyperextending lumbar spine.',
+      '4. Lower weights slowly (2–3 second tempo) back to starting position maintaining active tension.',
     ]
   }
 
@@ -929,7 +1241,7 @@ export function deriveExerciseHowToSteps(
     ]
   }
 
-  if (norm.includes('curl') || norm.includes('bicep')) {
+  if ((norm.includes('curl') && !norm.includes('hamstring') && !norm.includes('leg curl') && !norm.includes('ball curl')) || norm.includes('bicep')) {
     return [
       '1. Stand tall with elbows pinned firmly against your ribcage as fixed hinges, palms supinated.',
       '2. Curl weight upward toward chest by contracting biceps, keeping upper arms completely stationary.',
@@ -944,6 +1256,15 @@ export function deriveExerciseHowToSteps(
       '2. Extend forearms downward or forward until elbows are fully locked out.',
       '3. Squeeze triceps hard at peak contraction for 1 second.',
       '4. Allow forearms to return under control to the 90° starting position without flaring elbows.',
+    ]
+  }
+
+  if (norm.includes('calf') || norm.includes('heel raise')) {
+    return [
+      '1. Position balls of feet on edge of platform with heels hanging off, knees straight or softly unlocked.',
+      '2. Lower heels under control into a full active stretch at the bottom (2 seconds).',
+      '3. Drive forcefully through balls of big toes to full plantarflexion, contracting gastrocnemius/soleus.',
+      '4. Hold top peak contraction for 1 second, avoiding any bouncing or hip swinging.',
     ]
   }
 
@@ -1008,54 +1329,73 @@ function getNasmClinicalMovementCardUncached(
 ): NasmClinicalMovementCard {
   const cleaned = cleanExerciseName(exerciseName)
   const fuzzyMatch = searchNasmLibraryMedia(exerciseName)
+  const canonicalName = (fuzzyMatch?.record.name || EXERCISE_ALIASES[cleaned] || exerciseName).toLowerCase().trim()
 
   // 1. Search matching profile in biomechanical dictionary
   let matchedProfile: Partial<NasmClinicalMovementCard> | null = null
 
   if (NASM_MOVEMENT_PROFILES[cleaned]) {
     matchedProfile = NASM_MOVEMENT_PROFILES[cleaned]
+  } else if (NASM_MOVEMENT_PROFILES[canonicalName]) {
+    matchedProfile = NASM_MOVEMENT_PROFILES[canonicalName]
   } else {
-    for (const [key, profile] of Object.entries(NASM_MOVEMENT_PROFILES)) {
-      if (cleaned.includes(key) || key.includes(cleaned)) {
-        matchedProfile = profile
+    // Sort keys by descending length so more specific matches (e.g. 'dumbbell bench press') match before 'bench press'
+    const sortedKeys = Object.keys(NASM_MOVEMENT_PROFILES).sort((a, b) => b.length - a.length)
+    for (const key of sortedKeys) {
+      if (cleaned.includes(key) || canonicalName.includes(key) || key.includes(cleaned)) {
+        matchedProfile = NASM_MOVEMENT_PROFILES[key]
         break
       }
     }
   }
 
+  // Cross-reference official muscle groups from library match
+  const mg = (fuzzyMatch?.record.muscleGroups || []).map(m => m.toLowerCase())
+  const hasMg = (term: string) => mg.some(m => m.includes(term))
+
   // Fallback defaults if novel exercise
-  const isFlexOrSmr = cleaned.includes('stretch') || cleaned.includes('roll') || cleaned.includes('smr') || cleaned.includes('foam') || cleaned.includes('breath') || cleaned.includes('mobility') || cleaned.includes('lengthen') || cleaned.includes('inhibit')
-  const isShoulders = cleaned.includes('shoulder') || cleaned.includes('deltoid') || cleaned.includes('overhead') || cleaned.includes('lateral raise') || cleaned.includes('scaption')
-  const isArms = cleaned.includes('curl') || cleaned.includes('tricep') || cleaned.includes('bicep') || cleaned.includes('dip')
-  const isBenchOrPush = cleaned.includes('press') || cleaned.includes('push') || cleaned.includes('fly')
-  const isPullOrRow = cleaned.includes('row') || cleaned.includes('pull') || cleaned.includes('deadlift')
-  const isSquatOrLeg = cleaned.includes('squat') || cleaned.includes('lunge') || cleaned.includes('leg') || cleaned.includes('step') || cleaned.includes('calf') || cleaned.includes('glute')
+  const isFlexOrSmr = cleaned.includes('stretch') || cleaned.includes('roll') || cleaned.includes('smr') || cleaned.includes('foam') || cleaned.includes('breath') || cleaned.includes('mobility') || cleaned.includes('lengthen') || cleaned.includes('inhibit') || cleaned.startsWith('active ') || cleaned.startsWith('static ') || canonicalName.includes('stretch') || canonicalName.includes('foam') || canonicalName.startsWith('active ') || canonicalName.startsWith('static ')
+  const isPlyo = cleaned.includes('jump') || cleaned.includes('hop') || cleaned.includes('bound') || cleaned.includes('slam') || cleaned.includes('box jump') || cleaned.includes('burpee') || cleaned.includes('tuck jump') || cleaned.includes('clean') || cleaned.includes('snatch') || cleaned.includes('throw') || canonicalName.includes('jump') || canonicalName.includes('slam') || canonicalName.includes('clean')
+  const isCore = cleaned.includes('bird-dog') || cleaned.includes('bird dog') || cleaned.includes('dead bug') || cleaned.includes('deadbug') || cleaned.includes('plank') || cleaned.includes('twist') || cleaned.includes('crunch') || canonicalName.includes('bird-dog') || canonicalName.includes('bird dog') || canonicalName.includes('dead bug') || canonicalName.includes('deadbug') || canonicalName.includes('plank') || ((cleaned.includes('ab') || cleaned.includes('core')) && !cleaned.includes('squat') && !cleaned.includes('press'))
+  const isSquatOrLeg = !isCore && (cleaned.includes('squat') || cleaned.includes('lunge') || cleaned.includes('leg') || cleaned.includes('step') || cleaned.includes('calf') || cleaned.includes('glute') || cleaned.includes('hamstring') || cleaned.includes('hip thrust') || cleaned.includes('rdl') || canonicalName.includes('squat') || canonicalName.includes('lunge') || canonicalName.includes('leg') || canonicalName.includes('step') || canonicalName.includes('hamstring') || hasMg('quad') || hasMg('hamstring') || hasMg('glute') || hasMg('calves'))
+  const isPullOrRow = cleaned.includes('row') || cleaned.includes('pull') || cleaned.includes('pulldown') || cleaned.includes('chin') || canonicalName.includes('row') || canonicalName.includes('pulldown') || hasMg('back') || hasMg('lat')
+  const isShoulders = cleaned.includes('shoulder') || cleaned.includes('deltoid') || cleaned.includes('overhead') || cleaned.includes('military') || cleaned.includes('lateral raise') || cleaned.includes('scaption') || cleaned.includes('arnold') || canonicalName.includes('overhead') || canonicalName.includes('shoulder') || canonicalName.includes('deltoid') || (hasMg('shoulder') && !isPullOrRow && !cleaned.includes('press'))
+  const isBenchOrPush = ((cleaned.includes('press') || canonicalName.includes('press')) && !isSquatOrLeg && !isShoulders) || cleaned.includes('push') || cleaned.includes('fly') || hasMg('chest') || hasMg('pectoral')
+  const isArms = !isPullOrRow && !isBenchOrPush && !isSquatOrLeg && (((cleaned.includes('curl') || canonicalName.includes('curl')) && !cleaned.includes('hamstring') && !canonicalName.includes('hamstring')) || cleaned.includes('tricep') || cleaned.includes('bicep') || cleaned.includes('dip') || ((hasMg('bicep') || hasMg('tricep')) && !hasMg('back') && !hasMg('chest')))
 
   const defaultCategory = isFlexOrSmr
     ? 'Flexibility/SMR'
-    : isShoulders
-    ? 'Shoulders'
-    : isArms
-    ? 'Arms'
-    : isBenchOrPush
-    ? 'Chest'
-    : isPullOrRow
-    ? 'Back'
+    : isPlyo
+    ? 'Plyometrics'
+    : isCore
+    ? 'Core'
     : isSquatOrLeg
     ? 'Legs'
+    : isPullOrRow
+    ? 'Back'
+    : isShoulders
+    ? 'Shoulders'
+    : isBenchOrPush
+    ? 'Chest'
+    : isArms
+    ? 'Arms'
     : 'Core'
   const defaultPrimeMover = isFlexOrSmr
     ? 'Target Neuromuscular / Fascial System'
+    : isPlyo
+    ? 'Quadriceps, Gluteus Maximus & Gastrocnemius (Triple Extension)'
+    : isCore
+    ? 'Transverse Abdominis & Deep Core Stabilizers'
+    : isSquatOrLeg
+    ? (cleaned.includes('hamstring') || canonicalName.includes('hamstring') || cleaned.includes('rdl') || canonicalName.includes('rdl') ? 'Hamstrings Complex & Gluteus Maximus' : 'Quadriceps & Gluteus Maximus')
+    : isPullOrRow
+    ? 'Latissimus Dorsi, Rhomboids & Middle Trapezius'
     : isShoulders
     ? 'Deltoids & Upper Trapezius'
-    : isArms
-    ? 'Biceps Brachii / Triceps Brachii'
     : isBenchOrPush
     ? 'Pectoralis Major / Anterior Deltoid'
-    : isPullOrRow
-    ? 'Latissimus Dorsi & Gluteals'
-    : isSquatOrLeg
-    ? 'Quadriceps & Gluteus Maximus'
+    : isArms
+    ? (cleaned.includes('tricep') || canonicalName.includes('tricep') || cleaned.includes('pushdown') || cleaned.includes('dip') ? 'Triceps Brachii' : 'Biceps Brachii')
     : 'Core Musculature'
 
   // Determine description
@@ -1117,6 +1457,9 @@ function getNasmClinicalMovementCardUncached(
     overrides?.instructions
   )
 
+  const derivedSetup = howToSteps[0]?.replace(/^\d+\.\s*/, '')
+  const derivedExecution = howToSteps.slice(1).map(s => s.replace(/^\d+\.\s*/, '')).join(' ')
+
   return {
     name: exerciseName,
     category: matchedProfile?.category || defaultCategory,
@@ -1133,10 +1476,8 @@ function getNasmClinicalMovementCardUncached(
       shoulders: 'Retracted and depressed into athletic posture.',
       headNeck: 'Neutral cervical spine, chin packed.',
     },
-    setupInstructions: officialDesc
-      ? (howToSteps[0]?.replace(/^\d+\.\s*/, '') || officialDesc.split('\n')[0])
-      : (matchedProfile?.setupInstructions || 'Assume standard athletic starting position with stable kinetic alignment.'),
-    executionInstructions: officialDesc || matchedProfile?.executionInstructions || resolvedDescription,
+    setupInstructions: matchedProfile?.setupInstructions || derivedSetup || (officialDesc ? officialDesc.split('\n')[0] : 'Assume standard athletic starting position with stable kinetic alignment.'),
+    executionInstructions: matchedProfile?.executionInstructions || derivedExecution || officialDesc || resolvedDescription,
     howToSteps,
     clinicalCues: overrides?.coachingCues && overrides.coachingCues.length > 0 ? overrides.coachingCues : matchedProfile?.clinicalCues || [
       'Maintain neutral kinetic chain checkpoints throughout.',

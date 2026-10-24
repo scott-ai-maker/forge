@@ -100,12 +100,12 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(floorBridge.howToSteps.length).toBe(4)
     expect(floorBridge.howToSteps[0]).toContain('Lie on your back')
 
-    // 2. Stability Ball Hamstring Curl canonical alias -> Floor Bridge
+    // 2. Stability Ball Hamstring Curl canonical movement card
     const hamstringCurl = getNasmClinicalMovementCard('stability ball hamstring curl')
     expect(hamstringCurl.hasOfficialMedia).toBe(true)
     expect(hamstringCurl.videoUrl).toContain('Z3cY3d3BBo4')
     expect(hamstringCurl.howToSteps.length).toBe(4)
-    expect(hamstringCurl.howToSteps[0]).toContain('Lie on your back')
+    expect(hamstringCurl.howToSteps[0]).toContain('stability ball')
 
     // 3. Unilateral Single-Leg Glute Bridge / Single-Leg Floor Bridge
     const singleLegGluteBridge = getNasmClinicalMovementCard('Single-Leg Glute Bridge')
