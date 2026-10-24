@@ -69,6 +69,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Failed to log workout: ${workoutError.message}` }, { status: 500 })
   }
 
+  // Link unfinalized sets for this workout day and session to the new workout log
+  if (workoutLog?.id) {
+    await admin
+      .from('workout_set_logs')
+      .update({ workout_log_id: workoutLog.id })
+      .eq('user_id', userId)
+      .is('workout_log_id', null)
+      .eq('session_date', sessionDate)
+      .like('notes', `%[workout-day:${workoutDay}]%`)
+  }
+
   // 2. Log Cardio Protocol if present
   let cardioLog = null
   if (cardioData && (Number(cardioData.durationMins) > 0 || cardioData.stage)) {

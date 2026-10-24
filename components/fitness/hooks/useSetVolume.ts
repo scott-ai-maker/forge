@@ -18,6 +18,7 @@ export interface WorkoutSetLogRecord {
   is_warmup?: boolean
   notes?: string | null
   created_at?: string
+  workout_log_id?: string | null
 }
 
 export interface WorkoutLogRecord {

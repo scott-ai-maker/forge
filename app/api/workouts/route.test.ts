@@ -56,9 +56,16 @@ describe('Workout Logging API Routes', () => {
     })
     mockQuery.then = (resolve: (value: unknown) => unknown) => (mockQuery.limit as () => Promise<unknown>)().then(resolve)
 
+    const mockUpdateQuery: Record<string, unknown> = {}
+    mockUpdateQuery.eq = vi.fn().mockReturnValue(mockUpdateQuery)
+    mockUpdateQuery.is = vi.fn().mockReturnValue(mockUpdateQuery)
+    mockUpdateQuery.like = vi.fn().mockReturnValue(mockUpdateQuery)
+    mockUpdateQuery.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ error: null }).then(resolve)
+
     vi.mocked(supabaseAdmin).mockReturnValue({
       from: vi.fn(() => ({
         insert: mockInsert,
+        update: vi.fn().mockReturnValue(mockUpdateQuery),
         select: vi.fn(() => mockQuery),
       })),
     } as unknown as ReturnType<typeof supabaseAdmin>)

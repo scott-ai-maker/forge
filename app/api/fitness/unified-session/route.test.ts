@@ -38,6 +38,14 @@ function makeAdmin(workoutReturn: unknown = { id: 'wl-1' }, cardioReturn: unknow
             },
           }
         },
+        update() {
+          const chain: Record<string, unknown> = {}
+          chain.eq = () => chain
+          chain.is = () => chain
+          chain.like = () => chain
+          chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve({ error: null }).then(resolve)
+          return chain
+        },
       }
     },
   }

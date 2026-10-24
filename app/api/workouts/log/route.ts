@@ -82,6 +82,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Link unfinalized sets for this workout day and session to the new workout log
+  if (data?.id) {
+    const workoutDayMatch = body.notes ? String(body.notes).match(/\[workout-day:(\d+)\]/) : null
+    const workoutDay = workoutDayMatch ? Number(workoutDayMatch[1]) : null
+
+    let updateQuery = supabaseAdmin()
+      .from('workout_set_logs')
+      .update({ workout_log_id: data.id })
+      .eq('user_id', userId)
+      .is('workout_log_id', null)
+      .eq('session_date', sessionDate)
+
+    if (workoutDay) {
+      updateQuery = updateQuery.like('notes', `%[workout-day:${workoutDay}]%`)
+    }
+    await updateQuery
+  }
+
   return NextResponse.json({ success: true, log: data })
 }
 

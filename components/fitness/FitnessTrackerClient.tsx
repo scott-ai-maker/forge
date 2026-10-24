@@ -287,6 +287,7 @@ interface WorkoutSetLogRecord {
   rir?: number
   is_warmup?: boolean
   notes?: string | null
+  workout_log_id?: string | null
 }
 
 interface InlineSetDraft {
@@ -1086,19 +1087,10 @@ export default function FitnessTrackerClient({
   const [labInitialCritique, _setLabInitialCritique] = useState<VideoCritiqueAnalysis | null>(null)
   const [showProofOfWorkModal, setShowProofOfWorkModal] = useState(false)
 
-  const handleClientQuitWorkout = useCallback(() => {
-    handleQuitWorkoutSession()
-    setCompleteModal(null)
-    void import('@/lib/native-healthkit-bridge').then(({ cancelWatchWorkout }) => {
-      void cancelWatchWorkout()
-    })
-    setStatus('Workout session quit without penalty. No workout was recorded.')
-  }, [handleQuitWorkoutSession])
-
   // All-Time Personal Record (PR) Vault
   const exercisePrVault = useMemo(() => {
-    return computeExercisePrVault(setLogs || [])
-  }, [setLogs])
+    return computeExercisePrVault(localSetLogs || [])
+  }, [localSetLogs])
 
   // Instant In-Gym Offline Plan & Telemetry Persistence
   useEffect(() => {
@@ -1136,6 +1128,62 @@ export default function FitnessTrackerClient({
   }, [planWorkouts, planCompletedLogs, localWorkoutLogs, plan?.id, sessionsPerWeek])
 
   const effectiveActiveWorkoutDay = activeWorkoutSessionDay ?? activeWorkoutDay ?? nextUnfinishedDay
+
+  const handleClientQuitWorkout = useCallback(() => {
+    const targetDay = activeWorkoutSessionDay ?? effectiveActiveWorkoutDay
+    const targetWorkout = planWorkouts.find(w => w.day === targetDay)
+    const sessionDate = targetWorkout?.scheduledDate || todayDateOnly()
+
+    // 1. Immediately purge unfinalized sets for this day from local state
+    setLocalSetLogs(prev => prev.filter(s => {
+      const dayTag = extractWorkoutDayTag(s.notes)
+      if (dayTag !== targetDay) return true
+      if (s.workout_log_id) return true
+      return false
+    }))
+
+    // 2. Clear inline drafts for this day
+    setInlineSetDrafts(prev => {
+      const next = { ...prev }
+      for (const k of Object.keys(next)) {
+        if (k.startsWith(`${targetDay}-`)) {
+          delete next[k]
+        }
+      }
+      return next
+    })
+
+    // 3. Clear expanded exercise
+    setExpandedExerciseKey('none')
+
+    // 4. Terminate timer and active session
+    handleQuitWorkoutSession()
+    setCompleteModal(null)
+
+    // 5. Notify Apple Watch to cancel
+    void import('@/lib/native-healthkit-bridge').then(({ cancelWatchWorkout }) => {
+      void cancelWatchWorkout()
+    })
+
+    // 6. Call backend to discard unfinalized sets and roll back PRs in the database
+    void fetch('/api/workouts/discard-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workoutDay: targetDay,
+        workoutPlanId: plan?.id,
+        sessionDate,
+      }),
+    }).then(async (res) => {
+      if (res.ok) {
+        setStatus('Workout session quit. Unfinalized sets and PRs were discarded.')
+      } else {
+        setStatus('Workout session quit without penalty.')
+      }
+    }).catch(() => {
+      setStatus('Workout session quit without penalty.')
+    })
+  }, [activeWorkoutSessionDay, effectiveActiveWorkoutDay, planWorkouts, plan?.id, handleQuitWorkoutSession])
 
   const effectiveOpenExerciseKey = useMemo(() => {
     if (expandedExerciseKey !== null) {
@@ -3521,6 +3569,24 @@ export default function FitnessTrackerClient({
                               setActiveWorkoutDay(workout.day)
                               setActiveStepFilter('warmup')
                               setCollapsedStages(prev => ({ ...prev, [`${workout.day}-warmup`]: false }))
+
+                              // Discard any dangling unfinalized sets from previous aborted attempt on this day
+                              setLocalSetLogs(prev => prev.filter(s => {
+                                const dayTag = extractWorkoutDayTag(s.notes)
+                                if (dayTag !== workout.day) return true
+                                if (s.workout_log_id) return true
+                                return false
+                              }))
+                              void fetch('/api/workouts/discard-session', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  workoutDay: workout.day,
+                                  workoutPlanId: plan?.id,
+                                  sessionDate: workout.scheduledDate || todayDateOnly(),
+                                }),
+                              })
+
                               // Immediately wake & launch companion Apple Watch app via HealthKit
                               const payload = constructWatchWorkoutPayload(workout.day, true, 'warmup')
                               if (payload) {
