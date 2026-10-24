@@ -100,6 +100,9 @@ public struct WatchExerciseInfo: Codable, Identifiable {
     public var setupCue: String?
     public var movementCues: [String]?
     public var coachingTip: String?
+    public var isSuperset: Bool?
+    public var supersetRole: String?
+    public var supersetPartnerIndex: Int?
 
     public var detectedModality: WatchEquipmentModality {
         if let explicit = equipmentModality?.lowercased() {
@@ -156,7 +159,10 @@ public struct WatchExerciseInfo: Codable, Identifiable {
         equipmentModality: String? = nil,
         setupCue: String? = nil,
         movementCues: [String]? = nil,
-        coachingTip: String? = nil
+        coachingTip: String? = nil,
+        isSuperset: Bool? = false,
+        supersetRole: String? = nil,
+        supersetPartnerIndex: Int? = nil
     ) {
         self.exerciseName = exerciseName
         self.block = block
@@ -181,6 +187,9 @@ public struct WatchExerciseInfo: Codable, Identifiable {
         self.setupCue = setupCue
         self.movementCues = movementCues
         self.coachingTip = coachingTip
+        self.isSuperset = isSuperset
+        self.supersetRole = supersetRole
+        self.supersetPartnerIndex = supersetPartnerIndex
     }
 }
 

@@ -15,6 +15,7 @@ private enum WorkoutActiveSheet: Identifiable {
     case loadHelper
     case phases
     case exerciseDetail
+    case confirmSet
 
     var id: String {
         switch self {
@@ -22,6 +23,7 @@ private enum WorkoutActiveSheet: Identifiable {
         case .loadHelper: return "loadHelper"
         case .phases: return "phases"
         case .exerciseDetail: return "exerciseDetail"
+        case .confirmSet: return "confirmSet"
         }
     }
 }
@@ -175,6 +177,23 @@ public struct WorkoutActiveView: View {
             case .exerciseDetail:
                 if let ex = selectedExerciseForDetail ?? coordinator.workoutState.activeExercise {
                     TerseExerciseCardSheet(exercise: ex)
+                }
+            case .confirmSet:
+                if let ex = coordinator.workoutState.activeExercise {
+                    ConfirmSetSheetView(
+                        exercise: ex,
+                        modality: currentModality,
+                        reps: $loggedReps,
+                        weight: $loggedWeight,
+                        rpe: $loggedRpe,
+                        onConfirm: {
+                            activeSheet = nil
+                            handleLogSet()
+                        },
+                        onCancel: {
+                            activeSheet = nil
+                        }
+                    )
                 }
             }
         }
@@ -535,7 +554,21 @@ public struct WorkoutActiveView: View {
 
             // Exercise Title & Terse Glance Bar
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .center) {
+                HStack(alignment: .center, spacing: 5) {
+                    if let ex = coordinator.workoutState.activeExercise, ex.isSuperset == true {
+                        HStack(spacing: 2) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 7, weight: .bold))
+                            Text("1\(ex.supersetRole ?? "A")")
+                                .font(.system(size: 8.5, weight: .black, design: .rounded))
+                        }
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.2))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                        .cornerRadius(4)
+                    }
+
                     Text(coordinator.workoutState.activeExercise?.exerciseName ?? "Bench Press")
                         .font(.system(size: 15, weight: .black, design: .rounded))
                         .foregroundColor(.white)
@@ -933,7 +966,10 @@ public struct WorkoutActiveView: View {
                 }
 
                 // Explicit secondary button for optional bonus sets
-                Button(action: handleLogSet) {
+                Button(action: {
+                    activeSheet = .confirmSet
+                    WKInterfaceDevice.current().play(.click)
+                }) {
                     HStack(spacing: 4) {
                         Image(systemName: "plus.circle")
                             .font(.system(size: 10))
@@ -945,8 +981,11 @@ public struct WorkoutActiveView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             } else {
-                // Hero Full-Bleed "LOG SET" Button with explicit set number
-                Button(action: handleLogSet) {
+                // Hero Full-Bleed "LOG SET" Button with Option B Confirm & Edit Workflow
+                Button(action: {
+                    activeSheet = .confirmSet
+                    WKInterfaceDevice.current().play(.click)
+                }) {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 16, weight: .bold))
@@ -3037,6 +3076,243 @@ struct PlateBumperView: View {
         case 2.5: return Color(red: 0.45, green: 0.45, blue: 0.48) // Metal / Grey
         case 1.25: return Color(red: 0.28, green: 0.28, blue: 0.30) // Dark Iron / Micro-Plate
         default: return Color.gray
+        }
+    }
+}
+
+/**
+ * ConfirmSetSheetView
+ * Option B: Confirm & Edit set logging sheet before committing
+ * Gives gym athlete instant steppers for weight & reps plus RPE confirmation
+ * Forge Athletic
+ */
+struct ConfirmSetSheetView: View {
+    let exercise: WatchExerciseInfo
+    let modality: WatchEquipmentModality
+    @Binding var reps: Double
+    @Binding var weight: Double
+    @Binding var rpe: Double
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    private var isImmediateTransition: Bool {
+        (exercise.isSuperset == true && exercise.supersetRole == "A") || exercise.restSeconds <= 0
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 8) {
+                // Header
+                VStack(spacing: 2) {
+                    if exercise.isSuperset == true {
+                        HStack(spacing: 4) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 8))
+                            Text("SUPERSET 1\(exercise.supersetRole ?? "A")")
+                                .font(.system(size: 8.5, weight: .black, design: .rounded))
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color(red: 0.22, green: 0.74, blue: 0.97).opacity(0.2))
+                        .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                        .cornerRadius(4)
+                    }
+
+                    Text("CONFIRM SET \(exercise.completedSetsCount + 1) OF \(exercise.totalSets)")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+
+                    Text(exercise.exerciseName)
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .padding(.top, 2)
+
+                // Reps Stepper Box
+                HStack(spacing: 6) {
+                    Button(action: {
+                        if reps > 1 {
+                            reps -= 1
+                            WKInterfaceDevice.current().play(.click)
+                        }
+                    }) {
+                        Text("-1")
+                            .font(.system(size: 12, weight: .black))
+                            .foregroundColor(.white)
+                            .frame(width: 32, height: 32)
+                            .background(Color.white.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    VStack(spacing: 0) {
+                        Text("REPS")
+                            .font(.system(size: 8, weight: .black))
+                            .foregroundColor(.gray)
+                        Text("\(Int(reps))")
+                            .font(.system(size: 22, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.22, green: 0.74, blue: 0.97))
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Button(action: {
+                        if reps < 99 {
+                            reps += 1
+                            WKInterfaceDevice.current().play(.click)
+                        }
+                    }) {
+                        Text("+1")
+                            .font(.system(size: 12, weight: .black))
+                            .foregroundColor(.white)
+                            .frame(width: 32, height: 32)
+                            .background(Color.white.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.white.opacity(0.06))
+                .cornerRadius(10)
+
+                // Weight Stepper Box
+                HStack(spacing: 6) {
+                    Button(action: {
+                        let step = modality.stepIncrement
+                        if weight >= step {
+                            weight -= step
+                            WKInterfaceDevice.current().play(.click)
+                        } else if modality == .bodyweight && weight > -50 {
+                            weight -= 5.0
+                            WKInterfaceDevice.current().play(.click)
+                        }
+                    }) {
+                        Text(formatStep(modality.stepIncrement, isMinus: true))
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundColor(.white)
+                            .frame(width: 32, height: 32)
+                            .background(Color.white.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    VStack(spacing: 0) {
+                        Text(modality.weightUnitLabel)
+                            .font(.system(size: 8, weight: .black))
+                            .foregroundColor(.gray)
+                        Text(formatWeight(weight: weight, modality: modality))
+                            .font(.system(size: (modality == .bodyweight && weight == 0) ? 18 : 22, weight: .black, design: .rounded))
+                            .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Button(action: {
+                        let step = modality.stepIncrement
+                        if weight <= 995 {
+                            weight += step
+                            WKInterfaceDevice.current().play(.click)
+                        }
+                    }) {
+                        Text(formatStep(modality.stepIncrement, isMinus: false))
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundColor(.white)
+                            .frame(width: 32, height: 32)
+                            .background(Color.white.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.white.opacity(0.06))
+                .cornerRadius(10)
+
+                // RPE Selector
+                HStack(spacing: 3) {
+                    Text("RPE")
+                        .font(.system(size: 8, weight: .black))
+                        .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
+                    Spacer()
+                    ForEach([7.0, 8.0, 8.5, 9.0, 10.0], id: \.self) { rpeVal in
+                        Button(action: {
+                            rpe = rpeVal
+                            WKInterfaceDevice.current().play(.click)
+                        }) {
+                            Text(rpeVal == 10.0 ? "10" : (rpeVal.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(rpeVal))" : String(format: "%.1f", rpeVal)))
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(rpe == rpeVal ? .black : .white)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 2)
+                                .background(rpe == rpeVal ? Color(red: 0.83, green: 0.63, blue: 0.09) : Color.white.opacity(0.1))
+                                .cornerRadius(4)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+
+                // Large Confirm Button
+                Button(action: {
+                    WKInterfaceDevice.current().play(.click)
+                    onConfirm()
+                }) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 14, weight: .bold))
+                        Text(isImmediateTransition ? "CONFIRM → 1B NEXT" : "CONFIRM & REST (\(exercise.restSeconds)s)")
+                            .font(.system(size: 11.5, weight: .black, design: .rounded))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.06, green: 0.72, blue: 0.51), Color(red: 0.04, green: 0.55, blue: 0.38)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                // Cancel Button
+                Button(action: {
+                    WKInterfaceDevice.current().play(.click)
+                    onCancel()
+                }) {
+                    Text("Cancel")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.gray)
+                        .padding(.vertical, 2)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 6)
+            .padding(.bottom, 8)
+        }
+    }
+
+    private func formatStep(_ step: Double, isMinus: Bool) -> String {
+        let sign = isMinus ? "-" : "+"
+        if step.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(sign)\(Int(step))"
+        } else {
+            return "\(sign)\(String(format: "%.1f", step))"
+        }
+    }
+
+    private func formatWeight(weight: Double, modality: WatchEquipmentModality) -> String {
+        if modality == .bodyweight && weight == 0 {
+            return "BW"
+        }
+        if weight.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(Int(weight))"
+        } else {
+            return String(format: "%.1f", weight)
         }
     }
 }

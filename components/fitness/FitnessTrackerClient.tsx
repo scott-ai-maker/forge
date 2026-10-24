@@ -87,7 +87,7 @@ import RepCadenceMetronome from '@/components/fitness/tracker/RepCadenceMetronom
 import OneRepMaxPercentageMatrix from '@/components/fitness/tracker/OneRepMaxPercentageMatrix'
 import AutoregulationDeloadAdvisor from '@/components/fitness/tracker/AutoregulationDeloadAdvisor'
 import SupersetPairCard, { type SupersetDraftState } from '@/components/fitness/tracker/SupersetPairCard'
-import { type GroupedExerciseEntry } from '@/lib/superset-pairing-engine'
+import { type GroupedExerciseEntry, type ExerciseItemInfo } from '@/lib/superset-pairing-engine'
 import {
   getNasmOptPhaseFeatureRules,
   getDefaultNasmOptTempo,
@@ -1416,6 +1416,30 @@ export default function FitnessTrackerClient({
             !isFoamRollerExercise(ex.name)
         )
 
+    const groupedEntries = groupWorkoutExercises(rawExercises as unknown as ExerciseItemInfo[])
+    const supersetInfoByIndex = new Map<number, { isSuperset: boolean; supersetRole: 'A' | 'B'; supersetPartnerIndex: number; transitionRest: number; compoundRest: number }>()
+    for (const entry of groupedEntries) {
+      if (entry.isSuperset) {
+        const { pair } = entry
+        if (typeof pair.indexA === 'number' && typeof pair.indexB === 'number') {
+          supersetInfoByIndex.set(pair.indexA, {
+            isSuperset: true,
+            supersetRole: 'A',
+            supersetPartnerIndex: pair.indexB,
+            transitionRest: pair.transitionRestSeconds ?? 0,
+            compoundRest: pair.compoundRestSeconds ?? 60,
+          })
+          supersetInfoByIndex.set(pair.indexB, {
+            isSuperset: true,
+            supersetRole: 'B',
+            supersetPartnerIndex: pair.indexA,
+            transitionRest: pair.transitionRestSeconds ?? 0,
+            compoundRest: pair.compoundRestSeconds ?? 60,
+          })
+        }
+      }
+    }
+
     const exercisesList: WatchExerciseItemPayload[] = rawExercises.map((ex, idx) => {
       const setsLogged = (localSetLogs || []).filter(l =>
         normalizeExerciseName(l.exercise_name) === normalizeExerciseName(ex.name) &&
@@ -1477,6 +1501,17 @@ export default function FitnessTrackerClient({
         : ['Control eccentric tempo', 'Maintain core bracing', 'Full active range of motion']
       const coachingTip = movementCard.clinicalCues?.[0] || 'Focus on controlled tempo and stability.'
 
+      const ssInfo = supersetInfoByIndex.get(idx)
+      let resolvedRestSeconds: number
+      if (ssInfo) {
+        resolvedRestSeconds = ssInfo.supersetRole === 'A' ? ssInfo.transitionRest : ssInfo.compoundRest
+      } else {
+        const parsedExRest = parseRestSecondsFromExercise(ex.rest, plan?.nasm_opt_phase || 1, ex.block || 'resistance')
+        resolvedRestSeconds = (draft?.restSeconds !== undefined && draft?.restSeconds !== '' && draft?.restSeconds !== null)
+          ? Number(draft.restSeconds)
+          : parsedExRest
+      }
+
       return {
         exerciseName: ex.name,
         block: ex.block || 'resistance',
@@ -1489,7 +1524,7 @@ export default function FitnessTrackerClient({
         repsDisplay: String(ex.reps || '10'),
         targetRpe: draft?.rpe ? Number(draft.rpe) : 8.0,
         tempo: ex.tempo || '2-0-2-0',
-        restSeconds: draft?.restSeconds ? Number(draft.restSeconds) : 60,
+        restSeconds: resolvedRestSeconds,
         isCompound: isCompoundLift(ex.name),
         isHammerCurl: isHammerCurlMovement(ex.name),
         optPhase: plan?.nasm_opt_phase || 3,
@@ -1501,6 +1536,9 @@ export default function FitnessTrackerClient({
         setupCue,
         movementCues,
         coachingTip,
+        isSuperset: ssInfo?.isSuperset,
+        supersetRole: ssInfo?.supersetRole,
+        supersetPartnerIndex: ssInfo?.supersetPartnerIndex,
       }
     })
 
@@ -1599,6 +1637,9 @@ export default function FitnessTrackerClient({
         setupCue: activeEx.setupCue,
         movementCues: activeEx.movementCues,
         coachingTip: activeEx.coachingTip,
+        isSuperset: activeEx.isSuperset,
+        supersetRole: activeEx.supersetRole,
+        supersetPartnerIndex: activeEx.supersetPartnerIndex,
       } : undefined,
       exercises: exercisesList,
       cardioProtocol: cardioPayload,
@@ -1620,6 +1661,7 @@ export default function FitnessTrackerClient({
     profile,
     plan,
     localCardioLogs,
+    groupWorkoutExercises,
   ])
 
   // Continuous Workout State Synchronization to Apple Watch Companion App
@@ -6830,48 +6872,61 @@ export default function FitnessTrackerClient({
       )}
 
       {/* ── INTERACTIVE APPLE WATCH ULTRA 49MM HARDWARE SIMULATOR ── */}
-      <AppleWatchSimulatorModal
-        isOpen={isWatchSimulatorOpen}
-        onClose={() => setIsWatchSimulatorOpen(false)}
-        currentExerciseName={
-          activeRestState?.exerciseName ||
-          (expandedExerciseKey ? planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.find(e => normalizeExerciseName(e.name) === normalizeExerciseName(getExerciseNameFromKey(expandedExerciseKey) || ''))?.name : undefined) ||
-          planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.[0]?.name ||
-          'Barbell Flat Bench Press'
-        }
-        currentSetNumber={activeRestState ? 2 : 1}
-        currentTotalSets={3}
-        prescribedWeight={185}
-        prescribedReps={10}
-        onSimulateSetLogged={(data) => {
-          const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay) || planWorkouts[0]
-          if (!activeWorkout) return
-          const matchingEx = activeWorkout.exercises?.find(
-            e => normalizeExerciseName(e.name) === normalizeExerciseName(data.exerciseName)
-          ) || activeWorkout.exercises?.[0]
-          if (!matchingEx) return
+      {(() => {
+        const simulatorPayload = isWatchSimulatorOpen ? constructWatchWorkoutPayload(effectiveActiveWorkoutDay) : null
+        return (
+          <AppleWatchSimulatorModal
+            isOpen={isWatchSimulatorOpen}
+            onClose={() => setIsWatchSimulatorOpen(false)}
+            currentExerciseName={
+              activeRestState?.exerciseName ||
+              simulatorPayload?.activeExercise?.exerciseName ||
+              (expandedExerciseKey ? planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.find(e => normalizeExerciseName(e.name) === normalizeExerciseName(getExerciseNameFromKey(expandedExerciseKey) || ''))?.name : undefined) ||
+              planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.[0]?.name ||
+              'Barbell Flat Bench Press'
+            }
+            currentSetNumber={simulatorPayload?.activeExercise?.setNumber || (activeRestState ? 2 : 1)}
+            currentTotalSets={simulatorPayload?.activeExercise?.totalSets || 3}
+            prescribedWeight={simulatorPayload?.activeExercise?.prescribedWeight || 185}
+            prescribedReps={simulatorPayload?.activeExercise?.prescribedReps || 10}
+            tempo={simulatorPayload?.activeExercise?.tempo || '2-0-2-0'}
+            restSeconds={simulatorPayload?.activeExercise?.restSeconds ?? 60}
+            isSuperset={simulatorPayload?.activeExercise?.isSuperset}
+            supersetRole={simulatorPayload?.activeExercise?.supersetRole}
+            exercises={simulatorPayload?.exercises}
+            activeExerciseIndex={simulatorPayload?.activeExerciseIndex}
+            cardioProtocol={simulatorPayload?.cardioProtocol}
+            onSimulateSetLogged={(data) => {
+              const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay) || planWorkouts[0]
+              if (!activeWorkout) return
+              const matchingEx = activeWorkout.exercises?.find(
+                e => normalizeExerciseName(e.name) === normalizeExerciseName(data.exerciseName)
+              ) || activeWorkout.exercises?.[0]
+              if (!matchingEx) return
 
-          const draftKey = exerciseDraftKey(activeWorkout.day, matchingEx.name)
-          const currentDraft = inlineSetDrafts[draftKey] || defaultInlineSetDraft(
-            todayDateOnly(),
-            matchingEx.reps,
-            plan?.nasm_opt_phase,
-            matchingEx.block,
-            matchingEx.rest,
-            matchingEx.tempo,
-            matchingEx.name
-          )
-          const constructedDraft: InlineSetDraft = {
-            ...currentDraft,
-            setNumber: String(data.setIndex || currentDraft.setNumber),
-            reps: String(data.reps),
-            weight: String(data.weightLbs),
-            rpe: data.rpe !== undefined ? String(data.rpe) : currentDraft.rpe,
-            isWarmup: false,
-          }
-          void executeSetLog(activeWorkout, matchingEx, constructedDraft)
-        }}
-      />
+              const draftKey = exerciseDraftKey(activeWorkout.day, matchingEx.name)
+              const currentDraft = inlineSetDrafts[draftKey] || defaultInlineSetDraft(
+                todayDateOnly(),
+                matchingEx.reps,
+                plan?.nasm_opt_phase,
+                matchingEx.block,
+                matchingEx.rest,
+                matchingEx.tempo,
+                matchingEx.name
+              )
+              const constructedDraft: InlineSetDraft = {
+                ...currentDraft,
+                setNumber: String(data.setIndex || currentDraft.setNumber),
+                reps: String(data.reps),
+                weight: String(data.weightLbs),
+                rpe: data.rpe !== undefined ? String(data.rpe) : currentDraft.rpe,
+                isWarmup: false,
+              }
+              void executeSetLog(activeWorkout, matchingEx, constructedDraft)
+            }}
+          />
+        )
+      })()}
 
 
     </>

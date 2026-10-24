@@ -995,6 +995,9 @@ export interface WatchActiveExercisePayload {
   coachingTip?: string
   isCompleted?: boolean
   completedSetsCount?: number
+  isSuperset?: boolean
+  supersetRole?: 'A' | 'B'
+  supersetPartnerIndex?: number
 }
 
 export interface WatchExerciseItemPayload {
@@ -1021,6 +1024,9 @@ export interface WatchExerciseItemPayload {
   setupCue?: string
   movementCues?: string[]
   coachingTip?: string
+  isSuperset?: boolean
+  supersetRole?: 'A' | 'B'
+  supersetPartnerIndex?: number
 }
 
 export interface WatchCardioProtocolPayload {

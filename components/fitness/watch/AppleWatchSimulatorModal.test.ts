@@ -68,4 +68,62 @@ describe('AppleWatchSimulatorModal and watchOS Suite Verification', () => {
     expect(content).toContain('CardioZoneView')
     expect(content).toContain('TempoMetronomeView')
   })
+
+  it('verifies Option B Confirm & Edit and superset transitions in AppleWatchSimulatorModal', () => {
+    const content = fs.readFileSync(modalPath, 'utf8')
+
+    // Option B Confirm & Edit state
+    expect(content).toContain('isConfirmingSet')
+    expect(content).toContain('confirmReps')
+    expect(content).toContain('confirmWeight')
+    expect(content).toContain('confirmRpe')
+    expect(content).toContain('CONFIRM SET')
+    expect(content).toContain('Option B: Confirm & Edit')
+
+    // Superset immediate 0s transition
+    expect(content).toContain('isSupersetA')
+    expect(content).toContain('CONFIRM → 1B NEXT')
+    expect(content).toContain('currentStationIndex')
+    expect(content).toContain('handlePrevStation')
+    expect(content).toContain('handleNextStation')
+  })
+
+  it('verifies Swift WatchSessionCoordinator implements superset alternation and auto-phase advance', () => {
+    const content = fs.readFileSync(coordinatorPath, 'utf8')
+
+    // Immediate 0s transition for 1A
+    expect(content).toContain('isSupersetA')
+    expect(content).toContain('isSupersetB')
+    expect(content).toContain('supersetPartnerIndex')
+    expect(content).toContain('WKInterfaceDevice.current().play(.directionUp)')
+
+    // Rest completion round-robin return to 1A
+    expect(content).toContain('partnerIdx < self.workoutState.exercises.count')
+    expect(content).toContain('partnerA.completedSetsCount < partnerA.totalSets')
+
+    // Auto-advance when all lifts done (e.g. Russian Twists complete)
+    expect(content).toContain('workoutState.exercises.allSatisfy({ $0.isCompleted })')
+    expect(content).toContain('type": "phaseSelected"')
+  })
+
+  it('verifies Swift WorkoutActiveView includes ConfirmSetSheetView and superset badges', () => {
+    const activeViewPath = path.resolve(process.cwd(), 'ios/App/ForgeWatch/Views/WorkoutActiveView.swift')
+    expect(fs.existsSync(activeViewPath)).toBe(true)
+    const content = fs.readFileSync(activeViewPath, 'utf8')
+
+    expect(content).toContain('case confirmSet')
+    expect(content).toContain('ConfirmSetSheetView')
+    expect(content).toContain('activeSheet = .confirmSet')
+    expect(content).toContain('SUPERSET 1')
+  })
+
+  it('verifies native-healthkit-bridge includes superset payload properties', () => {
+    const bridgePath = path.resolve(process.cwd(), 'lib/native-healthkit-bridge.ts')
+    expect(fs.existsSync(bridgePath)).toBe(true)
+    const content = fs.readFileSync(bridgePath, 'utf8')
+
+    expect(content).toContain('isSuperset?: boolean')
+    expect(content).toContain("supersetRole?: 'A' | 'B'")
+    expect(content).toContain('supersetPartnerIndex?: number')
+  })
 })

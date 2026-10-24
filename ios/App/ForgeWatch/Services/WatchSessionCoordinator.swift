@@ -121,6 +121,10 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             current.completedSetsCount += 1
             currentExRestSecs = current.restSeconds
 
+            let isSupersetPair = current.isSuperset == true
+            let isSupersetA = isSupersetPair && (current.supersetRole == "A" || currentExRestSecs <= 0)
+            let isSupersetB = isSupersetPair && current.supersetRole == "B"
+
             if current.completedSetsCount < current.totalSets {
                 current.setNumber = min(current.totalSets, current.completedSetsCount + 1)
                 workoutState.activeExercise = current
@@ -134,18 +138,60 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 if workoutState.activeExerciseIndex < workoutState.exercises.count {
                     workoutState.exercises[workoutState.activeExerciseIndex] = current
                 }
+            }
 
-                // All sets met for this exercise! Smoothly auto-advance to next exercise or next phase
-                if workoutState.activeExerciseIndex < workoutState.exercises.count - 1 {
-                    let nextIndex = workoutState.activeExerciseIndex + 1
-                    workoutState.activeExerciseIndex = nextIndex
-                    workoutState.activeExercise = workoutState.exercises[nextIndex]
+            // CASE 1: Superset 1A completed with 0s transition rest
+            // Immediately advance to partner 1B WITHOUT starting a rest timer
+            if isSupersetA, let partnerIdx = current.supersetPartnerIndex ?? (workoutState.activeExerciseIndex + 1 < workoutState.exercises.count ? workoutState.activeExerciseIndex + 1 : nil), partnerIdx < workoutState.exercises.count {
+                workoutState.activeExerciseIndex = partnerIdx
+                workoutState.activeExercise = workoutState.exercises[partnerIdx]
+                lastLocalExerciseSelectionTime = Date()
+                lastLocalExerciseIndex = partnerIdx
+
+                WKInterfaceDevice.current().play(.directionUp)
+                sendToPhone([
+                    "type": "exerciseSelected",
+                    "exerciseName": workoutState.exercises[partnerIdx].exerciseName,
+                    "timestamp": ISO8601DateFormatter().string(from: Date())
+                ])
+
+                saveCachedWorkoutState()
+
+                // Stay on Tab 1 (Lift view) for immediate execution of 1B
+                DispatchQueue.main.async {
+                    self.selectedTab = 1
+                }
+                return
+            }
+
+            // CASE 2: Both exercises in superset pair completed, or single exercise completed
+            let allSetsDoneForCurrent = current.isCompleted
+            var advanceToNextStation = false
+            var targetNextIndex = workoutState.activeExerciseIndex + 1
+
+            if isSupersetB {
+                let partnerAComplete = current.supersetPartnerIndex != nil && current.supersetPartnerIndex! < workoutState.exercises.count
+                    ? workoutState.exercises[current.supersetPartnerIndex!].isCompleted
+                    : true
+                if allSetsDoneForCurrent && partnerAComplete {
+                    advanceToNextStation = true
+                    targetNextIndex = max(workoutState.activeExerciseIndex, current.supersetPartnerIndex ?? workoutState.activeExerciseIndex) + 1
+                }
+            } else if !isSupersetPair && allSetsDoneForCurrent {
+                advanceToNextStation = true
+                targetNextIndex = workoutState.activeExerciseIndex + 1
+            }
+
+            if advanceToNextStation {
+                if targetNextIndex < workoutState.exercises.count {
+                    workoutState.activeExerciseIndex = targetNextIndex
+                    workoutState.activeExercise = workoutState.exercises[targetNextIndex]
                     lastLocalExerciseSelectionTime = Date()
-                    lastLocalExerciseIndex = nextIndex
+                    lastLocalExerciseIndex = targetNextIndex
 
                     sendToPhone([
                         "type": "exerciseSelected",
-                        "exerciseName": workoutState.exercises[nextIndex].exerciseName,
+                        "exerciseName": workoutState.exercises[targetNextIndex].exerciseName,
                         "timestamp": ISO8601DateFormatter().string(from: Date())
                     ])
                 } else {
@@ -539,6 +585,37 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             } else {
                 self.stopLocalRestTimer()
                 WatchHapticManager.shared.playRestComplete()
+
+                // If in superset round-robin (just rested after 1B), check if 1A has remaining sets!
+                if let active = self.workoutState.activeExercise, active.isSuperset == true, active.supersetRole == "B" {
+                    if let partnerIdx = active.supersetPartnerIndex, partnerIdx < self.workoutState.exercises.count {
+                        let partnerA = self.workoutState.exercises[partnerIdx]
+                        if !partnerA.isCompleted && partnerA.completedSetsCount < partnerA.totalSets {
+                            self.workoutState.activeExerciseIndex = partnerIdx
+                            self.workoutState.activeExercise = partnerA
+                            self.lastLocalExerciseSelectionTime = Date()
+                            self.lastLocalExerciseIndex = partnerIdx
+
+                            self.sendToPhone([
+                                "type": "exerciseSelected",
+                                "exerciseName": partnerA.exerciseName,
+                                "timestamp": ISO8601DateFormatter().string(from: Date())
+                            ])
+                        }
+                    }
+                }
+
+                // If all lifts in workout are finished, ensure next phase is shown (e.g. Russian Twists complete -> Cardio/Cool-Down)
+                if !self.workoutState.exercises.isEmpty && self.workoutState.exercises.allSatisfy({ $0.isCompleted }) {
+                    let nextPhase = (self.workoutState.cardioProtocol != nil && !self.isCardioCompleted && !(self.workoutState.cardioProtocol?.isCompleted ?? false)) ? "cardio" : "cooldown"
+                    self.workoutState.activePhase = nextPhase
+                    self.sendToPhone([
+                        "type": "phaseSelected",
+                        "phase": nextPhase,
+                        "timestamp": ISO8601DateFormatter().string(from: Date())
+                    ])
+                }
+
                 DispatchQueue.main.async {
                     self.selectedTab = 1
                 }
