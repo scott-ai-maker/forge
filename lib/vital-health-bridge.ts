@@ -41,7 +41,7 @@ export function getVitalApiBaseUrl(): string {
 }
 
 /**
- * Creates or retrieves a Vital user for the given GAA client ID.
+ * Creates or retrieves a Vital user for the given Forge client ID.
  */
 export async function getOrCreateVitalUser(clientUserId: string): Promise<string> {
   const apiKey = process.env.VITAL_API_KEY
@@ -124,7 +124,7 @@ export async function generateVitalLinkToken(
 }
 
 /**
- * Normalizes an incoming Vital webhook event payload into a GAA DailyBiometricSummary.
+ * Normalizes an incoming Vital webhook event payload into a Forge DailyBiometricSummary.
  */
 export function normalizeVitalDailyPayload(
   payload: Record<string, unknown>,

@@ -28,7 +28,7 @@ describe('Vital Health Bridge Engine', () => {
     expect(res.isSandbox).toBe(true)
   })
 
-  it('normalizes incoming Vital daily metrics payload into GAA summary', () => {
+  it('normalizes incoming Vital daily metrics payload into Forge summary', () => {
     const payload = {
       event_type: 'daily.data.apple_health.created',
       client_user_id: 'client-999',
