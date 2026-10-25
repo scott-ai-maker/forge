@@ -40,13 +40,13 @@ describe('add-on entitlements', () => {
     const grants = buildMembershipEntitlementGrants(getForgeMembership('forge-pro-athlete')!, 'c1', 'in_1', now)
     expect(grants.map(g => g.feature)).toEqual(['nutrition', 'travel', 'video-review'])
     expect(new Set(grants.map(g => g.stripe_payment_id)).size).toBe(3)
-    expect(grants[2]).toMatchObject({ uses_total: 2, uses_remaining: 2, expires_at: '2026-11-08T00:00:00.000Z' })
+    expect(grants[2]).toMatchObject({ uses_total: 4, uses_remaining: 4, expires_at: '2026-11-08T00:00:00.000Z' })
     expect(buildMembershipEntitlementGrants(getForgeMembership('forge-core')!, 'c1', 'in_2', now)).toEqual([])
 
     const annualGrants = buildMembershipEntitlementGrants(getForgeMembership('forge-pro-athlete')!, 'c1', 'in_3', now, 365)
     expect(annualGrants[2]).toMatchObject({
-      uses_total: 24,
-      uses_remaining: 24,
+      uses_total: 48,
+      uses_remaining: 48,
       expires_at: '2027-10-09T00:00:00.000Z',
     })
   })

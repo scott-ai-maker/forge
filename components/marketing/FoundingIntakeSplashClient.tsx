@@ -372,8 +372,8 @@ export default function FoundingIntakeSplashClient() {
               {
                 icon: 'lock' as const,
                 title: 'Clear membership choices',
-                body: 'Choose Core ($19.99/mo with 7-day trial), Plus ($49/mo), or Coach Support ($199/mo) with straightforward monthly pricing.',
-                value: 'From $19.99/month',
+                body: 'Choose Core ($49/mo with 7-day trial), Plus ($99/mo), or Coach Support ($299/mo) with straightforward monthly pricing.',
+                value: 'From $49/month',
               },
               {
                 icon: 'microscope' as const,

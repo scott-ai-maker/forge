@@ -22,7 +22,7 @@ const PLAN_VISUALS: Record<string, { src: string; alt: string }> = {
 const PLAN_SUBTITLES: Record<string, string> = {
   'forge-core': 'Foundation · Autonomous NASM OPT™ Lab',
   'forge-pro-athlete': 'Guided Asynchronous · Form Lab & Nutrition',
-  'forge-transformation-direct': 'Master Coaching · Direct Access (Cap 25)',
+  'forge-transformation-direct': 'Master Coaching · Direct Access (Cap 15)',
 }
 
 export default function ForgeMembershipPlans() {
@@ -100,7 +100,7 @@ export default function ForgeMembershipPlans() {
           <div className="forge-plan-actions">
             {membership.annualPriceCents !== undefined ? (
               <>
-                <PurchaseButton packageId={membership.id} cadence="monthly" buttonLabel="Start free trial" redirectNext="/packages" showDiscountCode={false} />
+                <PurchaseButton packageId={membership.id} cadence="monthly" buttonLabel={membership.trialDays ? 'Start free trial' : 'Choose monthly'} redirectNext="/packages" showDiscountCode={false} />
                 <PurchaseButton packageId={membership.id} cadence="annual" buttonLabel="Choose annual" redirectNext="/packages" showDiscountCode={false} />
               </>
             ) : (

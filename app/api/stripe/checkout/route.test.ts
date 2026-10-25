@@ -249,13 +249,13 @@ describe('stripe checkout route', () => {
     expect(res.status).toBe(200)
     const createArgs = createSessionMock.mock.calls[0][0]
     expect(createArgs.mode).toBe('subscription')
-    expect(createArgs.line_items[0].price_data.unit_amount).toBe(1999)
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(4900)
     expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'month' })
     expect(createArgs.subscription_data.trial_period_days).toBe(7)
     expect(createArgs.metadata.packageName).toBe('Core')
   })
 
-  it('bills Core annually at $149 with the same seven-day trial', async () => {
+  it('bills Core annually at $399 with the same seven-day trial', async () => {
     const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',
       body: JSON.stringify({ packageId: 'forge-core', cadence: 'annual' }),
@@ -264,16 +264,32 @@ describe('stripe checkout route', () => {
     const res = await POST(req)
     expect(res.status).toBe(200)
     const createArgs = createSessionMock.mock.calls[0][0]
-    expect(createArgs.line_items[0].price_data.unit_amount).toBe(14900)
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(39900)
     expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'year' })
     expect(createArgs.subscription_data.trial_period_days).toBe(7)
     expect(createArgs.metadata.cadence).toBe('annual')
   })
 
+  it('bills Plus annually at $899 without a trial', async () => {
+    createSessionMock.mockClear()
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ packageId: 'forge-pro-athlete', cadence: 'annual' }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+    const createArgs = createSessionMock.mock.calls[0][0]
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(89900)
+    expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'year' })
+    expect(createArgs.subscription_data.trial_period_days).toBeUndefined()
+    expect(createArgs.metadata.cadence).toBe('annual')
+  })
+
   it('creates Pro Athlete and Transformation Direct monthly subscriptions without a trial', async () => {
     for (const [packageId, amount] of [
-      ['forge-pro-athlete', 4900],
-      ['forge-transformation-direct', 19900],
+      ['forge-pro-athlete', 9900],
+      ['forge-transformation-direct', 29900],
     ] as const) {
       createSessionMock.mockClear()
       const req = new NextRequest('http://localhost/api/stripe/checkout', {
@@ -293,7 +309,7 @@ describe('stripe checkout route', () => {
   it('rejects unsupported membership billing cadences', async () => {
     const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',
-      body: JSON.stringify({ packageId: 'forge-pro-athlete', cadence: 'annual' }),
+      body: JSON.stringify({ packageId: 'forge-transformation-direct', cadence: 'annual' }),
     })
 
     const res = await POST(req)

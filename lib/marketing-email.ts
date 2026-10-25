@@ -108,9 +108,9 @@ const sequenceTemplates = [
       text: [
         'Choose the Forge Athletic membership that fits your training goals:',
         '',
-        'Core Membership: $19.99/month or $149/year, with a 7-day free trial. Includes automated periodization, 1RM telemetry, and a 3D AI posture audit.',
-        'Pro Athlete: $49/month. Includes Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.',
-        'Transformation Direct: $199/month. Includes quarterly asynchronous video critiques with Coach Gordon.',
+        'Core Membership: $49/month or $399/year, with a 7-day free trial. Includes automated periodization, 1RM telemetry, and a 3D AI posture audit.',
+        'Pro Athlete: $99/month or $899/year. Includes Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.',
+        'Transformation Direct: $299/month. Includes quarterly asynchronous video critiques with Coach Gordon.',
         '',
         'Memberships renew automatically until cancelled.',
         '',
@@ -118,9 +118,9 @@ const sequenceTemplates = [
       ].join('\n'),
       html: `<p>Choose the Forge Athletic membership that fits your training goals:</p>
 <ol>
-  <li><strong>Core Membership — $19.99/month or $149/year:</strong> 7-day free trial, automated periodization, 1RM telemetry, and a 3D AI posture audit.</li>
-  <li><strong>Pro Athlete — $49/month:</strong> Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.</li>
-  <li><strong>Transformation Direct — $199/month:</strong> Quarterly asynchronous video critiques with Coach Gordon.</li>
+  <li><strong>Core Membership — $49/month or $399/year:</strong> 7-day free trial, automated periodization, 1RM telemetry, and a 3D AI posture audit.</li>
+  <li><strong>Pro Athlete — $99/month or $899/year:</strong> Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.</li>
+  <li><strong>Transformation Direct — $299/month:</strong> Quarterly asynchronous video critiques with Coach Gordon.</li>
 </ol>
 <p>Memberships renew automatically until cancelled.</p>
 <p><a href="${baseUrl}/packages">Compare memberships</a></p>`,
@@ -157,8 +157,8 @@ const sequenceTemplates = [
       text: [
         'Start with practical training tools and add coaching support as your needs change.',
         '',
-        'Core Membership offers a 7-day free trial and starts at $19.99/month, or $149/year.',
-        'Pro Athlete is $49/month. Transformation Direct is $199/month.',
+        'Core Membership offers a 7-day free trial and starts at $49/month, or $399/year.',
+        'Pro Athlete is $99/month. Transformation Direct is $299/month.',
         '',
         'Explore the plans, compare features, and choose the option that fits your goals.',
         '',
@@ -166,7 +166,7 @@ const sequenceTemplates = [
         `Find your starting point: ${baseUrl}/apply`,
       ].join('\n'),
       html: `<p>Start with practical training tools and add coaching support as your needs change.</p>
-<p>Core Membership offers a 7-day free trial and starts at $19.99/month, or $149/year. Pro Athlete is $49/month. Transformation Direct is $199/month.</p>
+<p>Core Membership offers a 7-day free trial and starts at $49/month, or $399/year. Pro Athlete is $99/month. Transformation Direct is $299/month.</p>
 <p>Explore the plans, compare features, and choose the option that fits your goals.</p>
 <p><a href="${baseUrl}/packages">Explore memberships</a> | <a href="${baseUrl}/apply">Find your starting point</a></p>`,
     }),

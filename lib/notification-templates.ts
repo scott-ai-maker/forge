@@ -17,6 +17,7 @@ export const DEFAULT_NOTIFICATION_URLS: Record<NotificationType, string> = {
   live_session_started: '/dashboard/live',
   live_session_recap: '/dashboard/live',
   weekly_checkin_nudge: '/dashboard/fitness',
+  sunday_dossier_ready: '/dashboard/dossier',
   addon_unlocked: '/dashboard/fitness',
   session_credits_added: '/dashboard/book',
   payment_failed: '/dashboard/settings',

@@ -2,7 +2,7 @@
 
 Forge Athletic is a sports-science training platform built on adaptive NASM OPT™ periodization, movement screening, performance telemetry, and coaching workflows.
 
-The current public memberships are Core ($19.99/month or $149/year, with a seven-day free trial), Plus ($49/month), and Coach Support ($199/month). The Core trial is provisioned in Stripe Checkout.
+The current public memberships are Core ($49/month or $399/year, with a seven-day free trial), Plus ($99/month or $899/year), and Coach Support ($299/month). The Core trial is provisioned in Stripe Checkout.
 
 ## Getting Started
 

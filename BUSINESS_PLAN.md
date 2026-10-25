@@ -92,7 +92,7 @@ Forge Athletic adopts the National Academy of Sports Medicine Virtual Coaching S
   * Standalone Nutrition & Metabolic Blueprint
   * Complete Hybrid Coaching (Exercise + Nutrition + 1:1 Live Studio)
 - 3-Month Minimum Subscription Commitment: Mitigates churn, protects Customer Lifetime Value (CLV), and provides sufficient biological runway for meaningful neuromuscular adaptation and body recomposition.
-- Downsell Retention Architecture: If an athlete faces temporary financial constraints, the system automatically routes them to a lower-tier maintenance plan (e.g., Core at $19.99/mo) rather than an outright cancellation, preserving the relationship and CLV.
+- Downsell Retention Architecture: If an athlete faces temporary financial constraints, the system automatically routes them to a lower-tier maintenance plan (e.g., Core at $49/mo) rather than an outright cancellation, preserving the relationship and CLV.
 
 ### Chapter 3: Technology Infrastructure & Digital Virtual Studio Ergonomics
 - The 100% Digital Virtual Studio: Replacing brick-and-mortar physical rooms with an encrypted, broadcast-grade WebRTC 60fps Consultation Studio.
@@ -139,9 +139,9 @@ Forge Athletic employs a dual-funnel product suite calibrated to Scott Gordon’
 ├──────────────────────────────────────┬──────────────────────────────────────┤
 │    SELF-SERVE & GUIDED MEMBERSHIPS   │   HIGH-TOUCH ADVISORY & CORPORATE    │
 ├──────────────────────────────────────┼──────────────────────────────────────┤
-│ • Core ($19.99/mo or $149/yr)        │ • Performance Protocol ($349/mo)     │
-│ • Plus ($49/mo)                      │ • Hybrid Concierge ($649/mo)         │
-│ • Coach Support ($199/mo · Cap 25)   │ • Private Master Advisory ($1,495/mo)│
+│ • Core ($49/mo or $399/yr)           │ • Performance Protocol ($349/mo)     │
+│ • Plus ($99/mo or $899/yr)           │ • Hybrid Concierge ($649/mo)         │
+│ • Coach Support ($299/mo · Cap 15)   │ • Private Master Advisory ($1,495/mo)│
 │ • Modular Add-Ons ($19–$159)         │ • Corporate Retainers ($20k–$135k/yr)│
 │ • Live Session Packs ($180–$1,240)   │                                      │
 └──────────────────────────────────────┴──────────────────────────────────────┘
@@ -151,9 +151,9 @@ Forge Athletic employs a dual-funnel product suite calibrated to Scott Gordon’
 
 | Plan | Price (Monthly) | Annual Option | Deliverables & Feature Inclusions | Target Athlete |
 | :--- | :--- | :--- | :--- | :--- |
-| **Core** | **$19.99** / mo | **$149** / yr *(Save $90)* | • Personalized 5-phase NASM OPT™ training plan<br>• Workout, strength, and personal-record tracking<br>• 33-point posture & movement screening<br>• In-gym tempo pacing, plate calculator & rest timer<br>• **7-Day Free Trial** | Independent lifters wanting science-based periodization without coach messaging. |
-| **Plus** | **$49.00** / mo | — | • Everything in Core<br>• Full Nutrition & Macronutrient Periodization<br>• Travel Training Pass & Hotel Gym Swaps<br>• **2 Form Lab Video Reviews / month**<br>• Audio-guided training & weekly progress summaries | Trainees wanting structured exercise + nutrition and regular technique validation. |
-| **Coach Support** | **$199.00** / mo | — | • Everything in Plus<br>• **Direct messaging with Coach Gordon (24h SLA)**<br>• Master Coach Safety Gate: Plans certified by Scott<br>• **8 Form Lab Video Reviews / month**<br>• Quarterly 1:1 Live WebRTC Strategy Reviews<br>• **Strictly limited to 25 active athletes** | Professionals wanting direct accountability, custom adaptations, and master oversight. |
+| **Core** | **$49.00** / mo | **$399** / yr *(Save $189)* | • Personalized 5-phase NASM OPT™ training plan<br>• Workout, strength, and personal-record tracking<br>• 33-point posture & movement screening<br>• In-gym tempo pacing, plate calculator & rest timer<br>• **7-Day Free Trial** | Independent lifters wanting science-based periodization without coach messaging. |
+| **Plus** | **$99.00** / mo | **$899** / yr *(Save $289)* | • Everything in Core<br>• Full Nutrition & Macronutrient Periodization<br>• Travel Training Pass & Hotel Gym Swaps<br>• **4 Form Lab Video Reviews / month**<br>• Audio-guided training, weekly Proof-of-Work dossiers & monthly async audit | Trainees wanting structured exercise + nutrition, regular technique validation, and accountability. |
+| **Coach Support** | **$299.00** / mo | — | • Everything in Plus<br>• **Direct messaging with Coach Gordon (24h SLA)**<br>• Master Coach Safety Gate: Plans certified by Scott<br>• **8 Form Lab Video Reviews / month**<br>• Quarterly 1:1 Live WebRTC Strategy Reviews<br>• **Strictly limited to 15 active athletes** | Professionals wanting direct accountability, custom adaptations, and master oversight. |
 
 ### 4.2 Private 1:1 Live Sessions with Coach Gordon (100% Remote WebRTC Studio)
 Conducted live in the encrypted 1:1 WebRTC Telehealth Studio during dedicated evening and Saturday advisory windows (48-hour advance notice):

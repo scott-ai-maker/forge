@@ -6,6 +6,7 @@ export type NotificationType =
   | 'live_session_started'
   | 'live_session_recap'
   | 'weekly_checkin_nudge'
+  | 'sunday_dossier_ready'
   | 'addon_unlocked'
   | 'session_credits_added'
   | 'payment_failed'
@@ -30,6 +31,7 @@ export const NOTIFICATION_CATALOG: Record<NotificationType, NotificationDefiniti
   live_session_started: { category: 'sessions', push: true, email: false, sms: true },
   live_session_recap: { category: 'sessions', push: true, email: true, sms: false },
   weekly_checkin_nudge: { category: 'reminders', push: true, email: true, sms: false },
+  sunday_dossier_ready: { category: 'reminders', push: true, email: true, sms: false },
   addon_unlocked: { category: 'billing', push: true, email: true, sms: false },
   session_credits_added: { category: 'billing', push: true, email: true, sms: false },
   payment_failed: { category: 'billing', push: true, email: true, sms: true },

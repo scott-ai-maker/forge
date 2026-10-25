@@ -6,29 +6,33 @@ describe('Forge Athletic membership catalog', () => {
     expect(FORGE_MEMBERSHIPS).toHaveLength(3)
     expect(FORGE_MEMBERSHIPS[0]).toMatchObject({
       id: 'forge-core',
-      monthlyPriceCents: 1999,
-      annualPriceCents: 14900,
+      monthlyPriceCents: 4900,
+      annualPriceCents: 39900,
       trialDays: 7,
     })
     expect(FORGE_MEMBERSHIPS[1]).toMatchObject({
       id: 'forge-pro-athlete',
-      monthlyPriceCents: 4900,
+      monthlyPriceCents: 9900,
+      annualPriceCents: 89900,
     })
     expect(FORGE_MEMBERSHIPS[2]).toMatchObject({
       id: 'forge-transformation-direct',
-      monthlyPriceCents: 19900,
+      monthlyPriceCents: 29900,
     })
     expect(FORGE_MEMBERSHIPS[2].features).toContain('Quarterly video reviews with Coach Gordon')
     expect(FORGE_MEMBERSHIPS[2].features).toContain('Direct messaging with your coach')
   })
 
-  it('provides annual billing only for Core', () => {
+  it('provides annual billing for Core and Plus', () => {
     const core = getForgeMembership('forge-core')
     const pro = getForgeMembership('forge-pro-athlete')
+    const transformation = getForgeMembership('forge-transformation-direct')
     expect(core).toBeDefined()
     expect(pro).toBeDefined()
-    expect(getForgeMembershipPrice(core!, 'annual')).toEqual({ amountCents: 14900, interval: 'year' })
-    expect(getForgeMembershipPrice(pro!, 'annual')).toBeUndefined()
+    expect(transformation).toBeDefined()
+    expect(getForgeMembershipPrice(core!, 'annual')).toEqual({ amountCents: 39900, interval: 'year' })
+    expect(getForgeMembershipPrice(pro!, 'annual')).toEqual({ amountCents: 89900, interval: 'year' })
+    expect(getForgeMembershipPrice(transformation!, 'annual')).toBeUndefined()
   })
 
   it('includes self-serve tools only in Plus and Coach Support', () => {

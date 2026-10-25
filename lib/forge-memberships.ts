@@ -19,8 +19,8 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
   {
     id: 'forge-core',
     name: 'Core',
-    monthlyPriceCents: 1999,
-    annualPriceCents: 14900,
+    monthlyPriceCents: 4900,
+    annualPriceCents: 39900,
     trialDays: 7,
     features: [
       'Personalized NASM OPT™ training plan',
@@ -32,26 +32,29 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
   {
     id: 'forge-pro-athlete',
     name: 'Plus',
-    monthlyPriceCents: 4900,
+    monthlyPriceCents: 9900,
+    annualPriceCents: 89900,
     includedFeatures: [
       { feature: 'nutrition' },
       { feature: 'travel' },
-      { feature: 'video-review', uses: 2 },
+      { feature: 'video-review', uses: 4 },
     ],
     features: [
+      'Everything in Core',
       'Audio-guided training sessions',
       'Movement and recovery insights',
       'Weekly progress summaries',
       'Nutrition planning and travel workout tools',
-      '2 video form reviews per month',
+      '4 video form reviews per month',
+      'Monthly asynchronous coach audit',
     ],
   },
   {
     id: 'forge-transformation-direct',
     name: 'Coach Support',
-    monthlyPriceCents: 19900,
-    seatCap: 25,
-    seatCapLabel: 'Strictly limited to 25 active athletes',
+    monthlyPriceCents: 29900,
+    seatCap: 15,
+    seatCapLabel: 'Strictly limited to 15 active athletes',
     includedFeatures: [
       { feature: 'nutrition' },
       { feature: 'travel' },
@@ -64,7 +67,7 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
       'Direct messaging with your coach',
       'Evening advisory review window (within 1 business day)',
       '8 video form reviews per month in Form Lab',
-      'Strictly limited to 25 active athletes to protect coach focus',
+      'Strictly limited to 15 active athletes to protect coach focus',
     ],
   },
 ]

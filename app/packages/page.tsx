@@ -9,11 +9,11 @@ import ForgeAddons from '@/components/packages/ForgeAddons'
 export const metadata: Metadata = {
   title: 'Online Personal Training Memberships & Pricing | Forge Athletic',
   description:
-    'Transparent, science-led online personal training memberships. Core ($19.99/mo or $149/yr with 7-day trial), Plus ($49/mo), and 1-on-1 Coach Support ($199/mo) with NASM periodization and master coach oversight.',
+    'Transparent, science-led online personal training memberships. Core ($49/mo or $399/yr with 7-day trial), Plus ($99/mo or $899/yr), and 1-on-1 Coach Support ($299/mo) with NASM periodization and master coach oversight.',
   openGraph: {
     title: 'Online Personal Training Memberships & Pricing | Forge Athletic',
     description:
-      'Transparent, science-led online personal training memberships. Core ($19.99/mo), Plus ($49/mo), and Coach Support ($199/mo). Headquartered in Massachusetts, coaching nationwide.',
+      'Transparent, science-led online personal training memberships. Core ($49/mo), Plus ($99/mo), and Coach Support ($299/mo). Headquartered in Massachusetts, coaching nationwide.',
     url: 'https://forge-athletic.app/packages',
     siteName: 'Forge Athletic',
     images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
@@ -34,14 +34,14 @@ const packagesStructuredData = {
   offers: {
     '@type': 'AggregateOffer',
     priceCurrency: 'USD',
-    lowPrice: '19.99',
-    highPrice: '199.00',
+    lowPrice: '49.00',
+    highPrice: '299.00',
     offerCount: '3',
     offers: [
       {
         '@type': 'Offer',
         name: 'Core Membership',
-        price: '19.99',
+        price: '49.00',
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
@@ -50,20 +50,20 @@ const packagesStructuredData = {
       {
         '@type': 'Offer',
         name: 'Plus Membership',
-        price: '49.00',
+        price: '99.00',
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: 'Guided hybrid coaching including full nutrition planning, travel training tools, and 2 video form reviews per month.',
+        description: 'Guided hybrid coaching including full nutrition planning, travel training tools, weekly Proof-of-Work dossiers, and 4 video form reviews per month.',
       },
       {
         '@type': 'Offer',
         name: 'Coach Support Membership',
-        price: '199.00',
+        price: '299.00',
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: 'Direct 1-on-1 messaging with Coach Gordon, quarterly video strategy reviews, 8 video reviews per month in Form Lab, and Master Coach Safety Gate. Strictly capped at 25 athletes.',
+        description: 'Direct 1-on-1 messaging with Coach Gordon, quarterly video strategy reviews, 8 video reviews per month in Form Lab, and Master Coach Safety Gate. Strictly capped at 15 athletes.',
       },
     ],
   },
@@ -115,7 +115,7 @@ const COMPARISON_ROWS = [
   {
     feature: 'Form Lab Technique Video Reviews',
     core: 'Add-on ($49 pack)',
-    plus: '2 reviews / month',
+    plus: '4 reviews / month',
     support: '8 reviews / month (Priority)',
     note: 'Frame-by-frame concentric velocity, bar path, and joint angle breakdown.',
   },
@@ -144,7 +144,7 @@ const COMPARISON_ROWS = [
     feature: 'Athlete Roster Limit',
     core: 'Unlimited',
     plus: 'Open Roster',
-    support: 'Strictly Capped at 25',
+    support: 'Strictly Capped at 15',
     note: 'Roster cap protects coach attention, response speed, and programming depth.',
   },
 ]
@@ -274,13 +274,13 @@ export default function PackagesPage() {
                   Core Feature
                 </th>
                 <th style={{ padding: '1rem', color: 'var(--gold-lt)', fontSize: '1rem', fontWeight: 700 }}>
-                  Core ($19.99/mo)
+                  Core ($49/mo)
                 </th>
                 <th style={{ padding: '1rem', color: '#60A5FA', fontSize: '1rem', fontWeight: 700 }}>
-                  Plus ($49/mo)
+                  Plus ($99/mo)
                 </th>
                 <th style={{ padding: '1rem', color: '#34D399', fontSize: '1rem', fontWeight: 700 }}>
-                  Coach Support ($199/mo)
+                  Coach Support ($299/mo)
                 </th>
               </tr>
             </thead>
