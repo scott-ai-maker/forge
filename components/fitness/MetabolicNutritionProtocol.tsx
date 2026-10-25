@@ -5,6 +5,7 @@ import GaaIcon from '@/components/ui/GaaIcon'
 import {
   calculateEnergyExpenditure,
   calculatePrecisionMacros,
+  calculateHandPortions,
   EXECUTIVE_DINING_PLAYBOOK,
   NasmOptPhase,
   NutritionGoal,
@@ -47,7 +48,7 @@ export default function MetabolicNutritionProtocol({
   savedTargets,
   intake,
 }: MetabolicNutritionProtocolProps) {
-  const [nutritionMode, setNutritionMode] = useState<'macros_dining' | 'supplements'>('macros_dining')
+  const [nutritionMode, setNutritionMode] = useState<'hand_portions' | 'macros_dining' | 'supplements'>('hand_portions')
   const [activePhase, setActivePhase] = useState<NasmOptPhase>('phase1_stabilization')
   const [activeDiningTab, setActiveDiningTab] = useState<string>('steakhouse')
 
@@ -116,6 +117,13 @@ export default function MetabolicNutritionProtocol({
     }
   }, [calculatedMacros, savedTargets])
 
+  const handPortions = useMemo(() => calculateHandPortions({
+    sex,
+    goal: selectedGoal,
+    activityLevel,
+    weightLbs: weight,
+  }), [sex, selectedGoal, activityLevel, weight])
+
   const phases: { key: NasmOptPhase; label: string; badge: string }[] = [
     { key: 'phase1_stabilization', label: 'Phase 1: Stabilization', badge: 'Anti-Inflammatory' },
     { key: 'phase2_strength_endurance', label: 'Phase 2: Strength Endurance', badge: 'Glycogen Fuel' },
@@ -163,10 +171,10 @@ export default function MetabolicNutritionProtocol({
                   borderRadius: 4,
                 }}
               >
-                NASM CPT-7 Ch 9 & Appendix B
+                Precision Nutrition &amp; NASM CPT-7
               </span>
               <span style={{ color: 'var(--gray)', fontSize: 13 }}>
-                Nutrition estimates and macro breakdown
+                Intelligent Fueling, Mindful Portions &amp; Ergogenics
               </span>
             </div>
             <h3
@@ -178,11 +186,34 @@ export default function MetabolicNutritionProtocol({
                 color: 'var(--white)',
               }}
             >
-              NUTRITION & MEAL PLANNING
+              PRECISION NUTRITION &amp; FUELING
             </h3>
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setNutritionMode('hand_portions')}
+              className="tactile-btn"
+              style={{
+                padding: '8px 16px',
+                background: nutritionMode === 'hand_portions' ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
+                border: nutritionMode === 'hand_portions' ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                color: nutritionMode === 'hand_portions' ? 'var(--navy)' : 'var(--white)',
+                fontFamily: 'Raleway, sans-serif',
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: 'pointer',
+                borderRadius: 4,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <GaaIcon name="utensils" size={14} tone={nutritionMode === 'hand_portions' ? 'inherit' : 'gold'} />
+              <span>✋ Hand Portions (PN1)</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setNutritionMode('macros_dining')}
@@ -226,12 +257,16 @@ export default function MetabolicNutritionProtocol({
               }}
             >
               <GaaIcon name="pill" size={14} tone={nutritionMode === 'supplements' ? 'inherit' : 'gold'} />
-              <span>Precision Supplementation</span>
+              <span>Chrono-Nutrition &amp; Supplements</span>
             </button>
           </div>
         </div>
         <p style={{ margin: '8px 0 0', color: 'var(--gray)', fontSize: 14, lineHeight: 1.6, maxWidth: 800 }}>
-          Calibrated using clinical Mifflin-St Jeor & Katch-McArdle energy balance algorithms. Synchronizes exact protein, carbohydrate, fat, and hydration targets to your active OPT™ phase.
+          {nutritionMode === 'hand_portions'
+            ? 'Precision Nutrition (PN1) hand-portion calibration. Calibrates per-meal palms, fists, cupped hands, and thumbs to eliminate food-scale obsession and promote sustainable, mindful eating.'
+            : nutritionMode === 'supplements'
+            ? 'Evidence-based ergogenic compound scheduling. Tiered by daily core vs training-day essentials with strict drug-nutrient safety screening and 1-compound-at-a-time titration.'
+            : 'Calibrated using clinical Mifflin-St Jeor & Katch-McArdle energy balance algorithms. Synchronizes exact protein, carbohydrate, fat, and hydration targets to your active OPT™ phase.'}
         </p>
       </div>
 
@@ -242,6 +277,335 @@ export default function MetabolicNutritionProtocol({
           initialSex={initialSex === 'female' ? 'female' : 'male'}
           intake={intake}
         />
+      ) : nutritionMode === 'hand_portions' ? (
+        <div style={{ display: 'grid', gap: 20 }}>
+          {/* Hand Portions Overview Hero Card */}
+          <div className="glass-card" style={{ padding: '24px 28px', display: 'grid', gap: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span
+                    style={{
+                      fontFamily: 'Raleway, sans-serif',
+                      fontWeight: 700,
+                      fontSize: 11,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.14em',
+                      padding: '4px 10px',
+                      background: 'rgba(197,160,89,0.15)',
+                      color: 'var(--gold-lt)',
+                      border: '1px solid rgba(197,160,89,0.4)',
+                      borderRadius: 4,
+                    }}
+                  >
+                    Precision Nutrition (PN1) System
+                  </span>
+                  <span style={{ color: 'var(--gray)', fontSize: 13 }}>
+                    Visual Hand Portions · Zero Food Scales Required
+                  </span>
+                </div>
+                <h4
+                  style={{
+                    fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
+                    fontSize: 22,
+                    letterSpacing: '0.04em',
+                    margin: '8px 0 0',
+                    color: 'var(--white)',
+                  }}
+                >
+                  YOUR PERSONALIZED HAND-PORTION TARGETS
+                </h4>
+              </div>
+
+              {/* Goal Selector Pill Switcher */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {(
+                  [
+                    { key: 'fat_loss', label: 'Fat Loss' },
+                    { key: 'hypertrophy', label: 'Muscle Gain' },
+                    { key: 'athletic_power', label: 'Athletic Power' },
+                    { key: 'maintenance', label: 'Maintenance' },
+                  ] as const
+                ).map(g => {
+                  const active = selectedGoal === g.key
+                  return (
+                    <button
+                      key={g.key}
+                      type="button"
+                      onClick={() => setSelectedGoal(g.key)}
+                      className="tactile-btn"
+                      style={{
+                        padding: '6px 12px',
+                        background: active ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
+                        border: active ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                        color: active ? 'var(--navy)' : 'var(--white)',
+                        fontFamily: 'Raleway, sans-serif',
+                        fontWeight: 700,
+                        fontSize: 11,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        borderRadius: 4,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {g.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <p style={{ margin: 0, color: 'var(--gray)', fontSize: 13.5, lineHeight: 1.6 }}>
+              Your hand is proportional to your body size, portable wherever you dine, and automatically scales meal portions to your metabolic structure. Based on a standard <strong>{handPortions.mealsPerDay} meals per day</strong> routine (3 core meals + 1 peri-workout or recovery meal).
+            </p>
+
+            {/* 4 Hand Units Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gap: 16,
+              }}
+            >
+              {/* Protein (Palms) */}
+              <div
+                style={{
+                  background: 'rgba(8,14,20,0.7)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  borderRadius: 8,
+                  padding: 18,
+                  display: 'grid',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>✋</span>
+                    <strong style={{ color: '#F87171', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Dense Protein
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase' }}>Palms</span>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 28, fontWeight: 800, color: 'var(--white)' }}>
+                      {handPortions.perMeal.proteinPalms}
+                    </span>
+                    <span style={{ fontSize: 13, color: '#F87171', fontWeight: 700 }}>
+                      Palms / Meal
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--gold-lt)', marginTop: 2 }}>
+                    Total Daily: {handPortions.totalDaily.proteinPalms} Palms (~{Math.round(handPortions.totalDaily.proteinPalms * 25)}g protein)
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--gray-lt)', lineHeight: 1.5, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8 }}>
+                  {handPortions.guide.proteinDescription}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--gray)', lineHeight: 1.4 }}>
+                  <strong style={{ color: 'var(--white)' }}>Top Sources: </strong>
+                  Skinless poultry, wild salmon, 90/10+ lean beef, eggs, egg whites, Greek yogurt, tofu, tempeh, whey isolate.
+                </div>
+              </div>
+
+              {/* Vegetables (Fists) */}
+              <div
+                style={{
+                  background: 'rgba(8,14,20,0.7)',
+                  border: '1px solid rgba(34,197,94,0.3)',
+                  borderRadius: 8,
+                  padding: 18,
+                  display: 'grid',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>✊</span>
+                    <strong style={{ color: '#4ADE80', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Dense Veggies
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase' }}>Fists</span>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 28, fontWeight: 800, color: 'var(--white)' }}>
+                      {handPortions.perMeal.veggieFists}
+                    </span>
+                    <span style={{ fontSize: 13, color: '#4ADE80', fontWeight: 700 }}>
+                      Fists / Meal
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--gold-lt)', marginTop: 2 }}>
+                    Total Daily: {handPortions.totalDaily.veggieFists} Fists (~{handPortions.totalDaily.veggieFists} cups veggies)
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--gray-lt)', lineHeight: 1.5, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8 }}>
+                  {handPortions.guide.veggieDescription}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--gray)', lineHeight: 1.4 }}>
+                  <strong style={{ color: 'var(--white)' }}>Top Sources: </strong>
+                  Broccoli, asparagus, spinach, bell peppers, Brussels sprouts, kale, cauliflower, zucchini, mixed salad greens.
+                </div>
+              </div>
+
+              {/* Carbohydrates (Cupped Hands) */}
+              <div
+                style={{
+                  background: 'rgba(8,14,20,0.7)',
+                  border: '1px solid rgba(234,179,8,0.3)',
+                  borderRadius: 8,
+                  padding: 18,
+                  display: 'grid',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>🤲</span>
+                    <strong style={{ color: '#FACC15', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Smart Carbs
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase' }}>Cupped Hands</span>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 28, fontWeight: 800, color: 'var(--white)' }}>
+                      {handPortions.perMeal.carbCuppedHands}
+                    </span>
+                    <span style={{ fontSize: 13, color: '#FACC15', fontWeight: 700 }}>
+                      Cupped / Meal
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--gold-lt)', marginTop: 2 }}>
+                    Total Daily: {handPortions.totalDaily.carbCuppedHands} Cupped Hands (~{Math.round(handPortions.totalDaily.carbCuppedHands * 25)}g carbs)
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--gray-lt)', lineHeight: 1.5, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8 }}>
+                  {handPortions.guide.carbDescription}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--gray)', lineHeight: 1.4 }}>
+                  <strong style={{ color: 'var(--white)' }}>Top Sources: </strong>
+                  Steel-cut / rolled oats, roasted sweet potatoes, quinoa, brown / wild rice, berries, lentils, black beans.
+                </div>
+              </div>
+
+              {/* Healthy Fats (Thumbs) */}
+              <div
+                style={{
+                  background: 'rgba(8,14,20,0.7)',
+                  border: '1px solid rgba(59,130,246,0.3)',
+                  borderRadius: 8,
+                  padding: 18,
+                  display: 'grid',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>👍</span>
+                    <strong style={{ color: '#60A5FA', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Healthy Fats
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase' }}>Thumbs</span>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 28, fontWeight: 800, color: 'var(--white)' }}>
+                      {handPortions.perMeal.fatThumbs}
+                    </span>
+                    <span style={{ fontSize: 13, color: '#60A5FA', fontWeight: 700 }}>
+                      Thumbs / Meal
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--gold-lt)', marginTop: 2 }}>
+                    Total Daily: {handPortions.totalDaily.fatThumbs} Thumbs (~{Math.round(handPortions.totalDaily.fatThumbs * 9)}g fat)
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--gray-lt)', lineHeight: 1.5, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8 }}>
+                  {handPortions.guide.fatDescription}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--gray)', lineHeight: 1.4 }}>
+                  <strong style={{ color: 'var(--white)' }}>Top Sources: </strong>
+                  Extra virgin olive oil, fresh avocado, raw almonds, walnuts, chia seeds, hemp hearts, natural almond butter.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Precision Nutrition Behavioral Cues Card */}
+          <div className="glass-card" style={{ padding: '24px 28px', display: 'grid', gap: 16 }}>
+            <div>
+              <div style={{ color: 'var(--gold)', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                Habit Coaching &amp; Mindful Satiety
+              </div>
+              <h4 style={{ margin: '4px 0 0', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, color: 'var(--white)', letterSpacing: '0.04em' }}>
+                Precision Nutrition Core Execution Practices
+              </h4>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+              {/* Cue 1: Hara Hachi Bu */}
+              <div style={{ background: 'rgba(8,14,20,0.6)', padding: 16, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, display: 'grid', gap: 6 }}>
+                <div style={{ color: 'var(--gold-lt)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <GaaIcon name="check" size={13} tone="gold" />
+                  <span>The 80% Fullness Cue (Hara Hachi Bu)</span>
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--gray-lt)', lineHeight: 1.6 }}>
+                  {handPortions.guide.fullnessCue}
+                </p>
+              </div>
+
+              {/* Cue 2: Chewing Cadence */}
+              <div style={{ background: 'rgba(8,14,20,0.6)', padding: 16, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, display: 'grid', gap: 6 }}>
+                <div style={{ color: 'var(--gold-lt)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <GaaIcon name="utensils" size={13} tone="gold" />
+                  <span>Slow Cadence &amp; Mindful Chewing</span>
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--gray-lt)', lineHeight: 1.6 }}>
+                  {handPortions.guide.chewingRule}
+                </p>
+              </div>
+
+              {/* Cue 3: Real-World Adjustments */}
+              <div style={{ background: 'rgba(8,14,20,0.6)', padding: 16, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, display: 'grid', gap: 6 }}>
+                <div style={{ color: 'var(--gold-lt)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <GaaIcon name="target" size={13} tone="gold" />
+                  <span>How to Adjust Without Calorie Counting</span>
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--gray-lt)', lineHeight: 1.6 }}>
+                  <strong>If fat loss stalls 2+ weeks:</strong> Remove 1/2 cupped hand of carbs or 1/2 thumb of fat from 1–2 meals daily.
+                  <br />
+                  <strong>If muscle building stalls or energy dips:</strong> Add 1 cupped hand of carbs or 1 palm of protein to your post-workout meal.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Massachusetts Safe Harbor Legal Notice */}
+          <div
+            style={{
+              background: 'rgba(8,14,20,0.85)',
+              border: '1px solid rgba(212,160,23,0.3)',
+              borderRadius: 8,
+              padding: '16px 20px',
+              display: 'grid',
+              gap: 6,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <GaaIcon name="shield-check" size={14} tone="gold" />
+              <span>Massachusetts Non-Medical Nutrition Safe Harbor (M.G.L. c. 112, §§ 196–208)</span>
+            </div>
+            <p style={{ margin: 0, color: 'var(--gray)', fontSize: 11.5, lineHeight: 1.55 }}>
+              Hand-portion targets and nutritional coaching presented here are strictly educational lifestyle and fitness recommendations provided under the Massachusetts Non-Medical Nutrition &amp; Dietetics Safe Harbor and NASM Certified Sports Nutrition Coach (CSNC) scope of practice. Forge Athletic does not diagnose nutritional deficiencies, treat medical conditions, or provide Medical Nutrition Therapy (MNT). Individuals managing medical conditions (including kidney disease, diabetes, cardiovascular disease, gastrointestinal illness, or pregnancy) must obtain approval from their primary care physician or a licensed registered dietitian before making dietary alterations.
+            </p>
+          </div>
+        </div>
       ) : (
       <>
       {/* ── Interactive Energy Balance & BMR Telemetry Bar ──────────── */}

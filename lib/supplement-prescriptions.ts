@@ -47,6 +47,12 @@ export type EvidenceTier =
   | 'Tier A (Irrefutable Clinical RCT Evidence)'
   | 'Tier B (Context-Specific Performance & Longevity)'
 
+export type RoutineTier = 'daily_core' | 'workout_days' | 'conditional_adjunct'
+
+export type DailyFrequency = 'Every Day' | 'Workout Days Only' | 'As Needed / Profile Specific'
+
+export type NecessityLevel = 'essential' | 'performance' | 'conditional'
+
 export type TimingWindow =
   | 'morning_with_breakfast'
   | 'pre_workout_45min'
@@ -58,9 +64,15 @@ export interface PrescribedSupplementItem {
   id: string
   name: string
   evidenceTier: EvidenceTier
+  routineTier: RoutineTier
+  dailyFrequency: DailyFrequency
+  necessityLevel: NecessityLevel
   optimalDosage: string
   timingWindow: TimingWindow
   timingLabel: string
+  mealInstruction: string
+  restDayDirective: string
+  workoutDayOnly: boolean
   biologicalMechanism: string
   clinicalEvidenceSummary: string
   issnCitation: string
@@ -79,26 +91,45 @@ export interface PrescribedSupplementItem {
 
 export type RecommendedSupplementItem = PrescribedSupplementItem
 
+const rawThorneUrl = process.env.NEXT_PUBLIC_THORNE_DISPENSARY_URL
+export const isThorneAccountLinked = Boolean(
+  rawThorneUrl &&
+    rawThorneUrl.trim().length > 0 &&
+    !rawThorneUrl.includes('gordonathletic') &&
+    rawThorneUrl.startsWith('http')
+)
+
 export const DISPENSARY_PARTNER_CONFIG = {
   partnerName: 'Forge Athletic Partner Dispensary',
   platform: 'Fullscript & Thorne Partner Dispensaries',
   discountPercentage: 15,
-  defaultFullscriptUrl: process.env.NEXT_PUBLIC_FULLSCRIPT_DISPENSARY_URL || 'https://us.fullscript.com/welcome/gordonathletic',
-  defaultThorneUrl: process.env.NEXT_PUBLIC_THORNE_DISPENSARY_URL || 'https://www.thorne.com/u/gordonathletic',
+  defaultFullscriptUrl: process.env.NEXT_PUBLIC_FULLSCRIPT_DISPENSARY_URL || 'https://us.fullscript.com',
+  defaultThorneUrl: isThorneAccountLinked ? rawThorneUrl! : 'https://www.thorne.com',
+  isThorneLinked: isThorneAccountLinked,
+  thorneStatusLabel: isThorneAccountLinked
+    ? 'Active Partner Dispensary (15% Athlete Privilege Discount)'
+    : 'Thorne Dispensary Account Linking in Progress (Browse Verified Thorne Catalog)',
   standards: [
     '100% 3rd-Party Lab Verified (NSF for Sport / USP / Informed Choice)',
     'Cold-Chain Temperature Controlled Warehousing & Direct Manufacturer Shipping',
     'Zero Artificial Sweeteners, Fillers, or Heavy Metal Contaminants',
   ],
   affiliateDisclosure:
-    'Forge Athletic is an authorized partner of Fullscript and Thorne professional dispensaries. We provide access to third-party lab-verified supplements (NSF Certified for Sport® / USP Verified®) with an exclusive 15% client courtesy discount. Forge Athletic and Coach Gordon may receive an affiliate commission on qualifying purchases made through these links.',
+    'Forge Athletic is an authorized dispensary partner of Fullscript and an affiliate partner of Thorne. We provide athletes with access to third-party lab-verified supplements (NSF Certified for Sport® / USP Verified®) with an exclusive 15% client courtesy discount. Forge Athletic and Coach Gordon may receive an affiliate commission on qualifying purchases made through these links. Purchasing supplements is 100% voluntary; athletes may source equivalent third-party verified products from any retailer of their choice.',
 }
 
 export function getDispensaryPartnerInfo() {
   return DISPENSARY_PARTNER_CONFIG
 }
 
-export function buildDispensaryItemUrl(dispensarySku?: string): string {
+export function buildDispensaryItemUrl(dispensarySku?: string, brand?: string): string {
+  if (brand?.toLowerCase() === 'thorne') {
+    if (isThorneAccountLinked) {
+      return `${DISPENSARY_PARTNER_CONFIG.defaultThorneUrl}?sku=${encodeURIComponent(dispensarySku || '')}`
+    }
+    // Thorne account not linked yet: provide safe direct catalog navigation
+    return 'https://www.thorne.com/products'
+  }
   const baseUrl = DISPENSARY_PARTNER_CONFIG.defaultFullscriptUrl
   if (!dispensarySku) return baseUrl
   return `${baseUrl}?sku=${encodeURIComponent(dispensarySku)}`
@@ -132,6 +163,21 @@ export interface SupplementStackResult {
   clientProfile: ClientSupplementProfile
   prescribedItems: PrescribedSupplementItem[]
   chronoSchedule: ChronoNutritionSchedule
+  tieredSchedule: {
+    dailyCore: PrescribedSupplementItem[]
+    workoutDays: PrescribedSupplementItem[]
+    conditionalAdjuncts: PrescribedSupplementItem[]
+  }
+  routineSummary: {
+    dailyCoreCount: number
+    workoutDaysCount: number
+    workoutOnlyCount: number
+    conditionalCount: number
+    restDayRoutineText: string
+    workoutDayRoutineText: string
+    titrationSafetyAdvice: string
+    titrationRule: string
+  }
   drugInteractions: DrugSupplementInteractionAlert[]
   flaggedContraindications: {
     condition: string
@@ -145,8 +191,12 @@ export interface SupplementStackResult {
   executiveSummary: string
   legalDisclaimer: string
   scopeOfPracticeNotice: string
+  medicalSupervisionWarning: string
+  wholeFoodFirstNotice: string
+  discontinueAndConsultNotice: string
   ftcAffiliateDisclosure: string
   thirdPartyQualityStandards: string
+  dispensaryInfo: typeof DISPENSARY_PARTNER_CONFIG
 }
 
 export const SUPPLEMENT_DISPENSARY_MAP: Record<
@@ -178,7 +228,7 @@ export function attachDispensaryMeta(item: PrescribedSupplementItem): Prescribed
     item.dispensarySku = meta.sku
     item.retailPriceEstimate = meta.retail
     item.clientDiscountPrice = meta.discount
-    item.dispensaryUrl = buildDispensaryItemUrl(meta.sku)
+    item.dispensaryUrl = buildDispensaryItemUrl(meta.sku, meta.brand)
   }
   return item
 }
@@ -333,9 +383,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'omega_3_mod',
       name: 'Omega-3 Fatty Acids (Moderate Cardiovascular Dose)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'daily_core',
+      dailyFrequency: 'Every Day',
+      necessityLevel: 'essential',
+      workoutDayOnly: false,
       optimalDosage: '1,000 mg combined EPA + DHA (IFOS 5-Star Certified)',
       timingWindow: 'morning_with_breakfast',
       timingLabel: 'Morning with breakfast',
+      mealInstruction: 'Take 1 serving with breakfast or your first meal containing dietary fats.',
+      restDayDirective: 'Take daily (7 days/week) to maintain cardiovascular endothelial protection.',
       biologicalMechanism: 'Cardiovascular endothelial protection and cell membrane fluidity without excessive antiplatelet compounding.',
       clinicalEvidenceSummary: 'Cleared at moderate physiological dose for clients taking anticoagulants with physician concurrence.',
       issnCitation: 'ISSN Position Stand: Nutritional Ergogenics & Recovery (2018)',
@@ -347,9 +403,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'omega_3_high',
       name: 'Ultra-Pure Triglyceride Omega-3 (High EPA/DHA)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'daily_core',
+      dailyFrequency: 'Every Day',
+      necessityLevel: 'essential',
+      workoutDayOnly: false,
       optimalDosage: isMasters ? '2,500–3,000 mg combined EPA + DHA (2:1 EPA:DHA ratio)' : '2,000 mg combined EPA + DHA',
       timingWindow: 'morning_with_breakfast',
       timingLabel: 'Morning with fat-containing meal',
+      mealInstruction: 'Take with breakfast or first meal containing dietary fats for maximum lipid-membrane incorporation.',
+      restDayDirective: 'Take daily (7 days/week) to maintain continuous cellular membrane and anti-inflammatory saturation.',
       biologicalMechanism: 'Inhibits NF-kB inflammatory cascade, lowers circulating triglycerides, and enhances neuromuscular motor unit recovery.',
       clinicalEvidenceSummary: 'Reduces exercise-induced delayed onset muscle soreness (DOMS) and accelerates eccentric muscle damage repair.',
       issnCitation: 'ISSN Position Stand: Omega-3 Fatty Acids in Exercise Performance (2020)',
@@ -363,9 +425,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'vit_d3_pure',
       name: 'Pure Vitamin D3 (K-Free Formula for Anticoagulant Safety)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'daily_core',
+      dailyFrequency: 'Every Day',
+      necessityLevel: 'essential',
+      workoutDayOnly: false,
       optimalDosage: isMasters ? '5,000 IU D3 (Pure Cholecalciferol / Zero Vitamin K)' : '3,000 IU D3 (Zero Vitamin K)',
       timingWindow: 'morning_with_breakfast',
       timingLabel: 'Morning with breakfast',
+      mealInstruction: 'Take in the morning with food. Fat-soluble vitamin requires dietary fats for absorption.',
+      restDayDirective: 'Take daily (7 days/week) to maintain stable serum 25(OH)D levels.',
       biologicalMechanism: 'Nuclear receptor gene transcription for muscular force generation and bone remodeling without Warfarin INR disruption.',
       clinicalEvidenceSummary: 'Provides all musculoskeletal benefits of Vitamin D3 while completely avoiding Vitamin K clotting factor antagonism.',
       issnCitation: 'IOC Consensus Statement on Dietary Supplements and the High-Performance Athlete (2018)',
@@ -377,9 +445,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'vit_d3_k2',
       name: 'Vitamin D3 + K2 (Micro-Encapsulated MK-7)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'daily_core',
+      dailyFrequency: 'Every Day',
+      necessityLevel: 'essential',
+      workoutDayOnly: false,
       optimalDosage: isMasters ? '5,000 IU D3 + 100 mcg K2 (MK-7)' : '2,500–5,000 IU D3 + 100 mcg K2 (MK-7)',
       timingWindow: 'morning_with_breakfast',
       timingLabel: 'Morning with fat-containing meal',
+      mealInstruction: 'Take in the morning with breakfast. Avoid taking at bedtime as Vitamin D can suppress natural melatonin synthesis.',
+      restDayDirective: 'Take daily (7 days/week) to support bone remodeling and immune homeostasis year-round.',
       biologicalMechanism: 'Nuclear receptor gene transcription for muscular force generation, bone mineral remodeling, and immune homeostasis.',
       clinicalEvidenceSummary: 'Optimizes bioavailable serum 25(OH)D levels (>50 ng/mL) to support hormonal synthesis and muscle contractile velocity.',
       issnCitation: 'IOC Consensus Statement on Dietary Supplements and the High-Performance Athlete (2018)',
@@ -396,9 +470,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     id: 'magnesium_glycinate',
     name: 'Magnesium Bisglycinate (Fully Chelated TRAACS®)',
     evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+    routineTier: 'daily_core',
+    dailyFrequency: 'Every Day',
+    necessityLevel: 'essential',
+    workoutDayOnly: false,
     optimalDosage: '200–400 mg elemental magnesium',
     timingWindow: 'night_pre_sleep',
     timingLabel: magnesiumTimingLabel,
+    mealInstruction: 'Take 30–45 minutes prior to sleep with 4–6 oz of water. Fully chelated TRAACS® bisglycinate is gentle on the stomach and non-laxative.',
+    restDayDirective: 'Take daily (7 days/week) to promote parasympathetic nervous system recovery and slow-wave sleep.',
     biologicalMechanism: 'Cofactor for >300 enzymatic reactions, blocks NMDA excitotoxicity, relaxes vascular smooth muscle, and supports slow-wave sleep (SWS).',
     clinicalEvidenceSummary: 'Zero laxative effect compared to magnesium oxide; accelerates parasympathetic nervous system recovery.',
     issnCitation: 'American College of Sports Medicine (ACSM) Nutrition and Athletic Performance Guidelines',
@@ -428,11 +508,17 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'protein_isolate',
       name: 'Cold-Filtered Whey Isolate (or Fermented Pea/Rice Isolate)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'workout_days',
+      dailyFrequency: 'Workout Days Only',
+      necessityLevel: 'performance',
+      workoutDayOnly: true,
       optimalDosage: proteinServing,
       timingWindow: 'post_workout_anabolic',
       timingLabel: healthConditions.takingThyroidHormone
         ? 'Post-workout (≥4h after morning thyroid medication)'
         : 'Within 60 min post-workout (or between meals)',
+      mealInstruction: 'Mix 1 serving with 10–12 oz cold water or milk. Consume within 45–60 minutes after strength training.',
+      restDayDirective: 'Workout days only. On rest days, fulfill your protein goals via whole foods (chicken, fish, eggs, tofu, Greek yogurt).',
       biologicalMechanism: 'Rapid hyperaminoacidemia and mTORC1 intracellular signaling phosphorylation for muscle protein synthesis (MPS).',
       clinicalEvidenceSummary: 'Supports daily target of 1.6–2.2 g/kg bodyweight for optimal lean mass preservation and recovery.',
       issnCitation: 'ISSN Position Stand: Protein and Exercise (2017)',
@@ -457,9 +543,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'creatine_monohydrate',
       name: 'Creatine Monohydrate (Creapure®)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'daily_core',
+      dailyFrequency: 'Every Day',
+      necessityLevel: 'performance',
+      workoutDayOnly: false,
       optimalDosage: creatineDose,
       timingWindow: 'daily_flexible',
       timingLabel: 'Daily with water or post-workout shake (Consistent daily timing)',
+      mealInstruction: 'Mix 3–5g in water, juice, or your post-workout shake. Consistency of daily timing matters more than specific clock time.',
+      restDayDirective: 'Take daily (including rest days) to preserve intramuscular phosphocreatine saturation.',
       biologicalMechanism: 'Expands intracellular phosphocreatine (PCr) substrate stores, accelerating cellular ATP resynthesis during high-intensity contractions.',
       clinicalEvidenceSummary: 'Increases 1RM strength, maximal anaerobic power, training volume density, and provides neuroprotective cognitive resilience.',
       issnCitation: 'ISSN Position Stand: Safety and Efficacy of Creatine Supplementation in Exercise, Sport, and Medicine (2017)',
@@ -477,9 +569,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'l_citrulline_nonstim',
       name: 'Fermented L-Citrulline Malate (2:1 Non-Stimulant Vasodilator)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'workout_days',
+      dailyFrequency: 'Workout Days Only',
+      necessityLevel: 'performance',
+      workoutDayOnly: true,
       optimalDosage: '6,000–8,000 mg',
       timingWindow: 'pre_workout_45min',
       timingLabel: '30–45 min pre-workout in 16 oz water',
+      mealInstruction: 'Mix 6–8g in 16 oz water and drink 30–45 minutes prior to lifting. Non-stimulant nitric oxide booster.',
+      restDayDirective: 'Workout days only. Do NOT take on rest days — not needed when not training.',
       biologicalMechanism: 'Bypasses hepatic metabolism to elevate plasma L-arginine, boosting endothelial nitric oxide (eNOS) and vascular perfusion without cardiac strain.',
       clinicalEvidenceSummary: 'Improves muscular oxygenation, intra-set ATP-CP recovery, and reduces perceived exertion without spiking blood pressure.',
       issnCitation: 'Journal of the International Society of Sports Nutrition (2021)',
@@ -491,9 +589,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'caffeine_theanine',
       name: 'Targeted Caffeine Anhydrous + L-Theanine (2:1 Precision Focus Ratio)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'workout_days',
+      dailyFrequency: 'Workout Days Only',
+      necessityLevel: 'performance',
+      workoutDayOnly: true,
       optimalDosage: '150–200 mg Caffeine + 200 mg L-Theanine',
       timingWindow: 'pre_workout_45min',
       timingLabel: '45 min prior to heavy training (Morning/Afternoon only; avoid within 6h of sleep)',
+      mealInstruction: 'Take 1 serving 45 minutes prior to heavy training sessions. Avoid taking within 6 hours of bedtime.',
+      restDayDirective: 'Workout days only. Skip on rest days to preserve adenosine receptor sensitivity and prevent tolerance build-up.',
       biologicalMechanism: 'Adenosine receptor antagonism combined with GABA/glutamate neuromodulation for sustained alpha-brainwave laser focus.',
       clinicalEvidenceSummary: 'Improves motor unit firing rate, power output, and cognitive reaction time while completely eliminating jitter and post-workout crash.',
       issnCitation: 'ISSN Position Stand: Caffeine and Exercise Performance (2021)',
@@ -507,9 +611,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'low_potassium_hydration',
       name: 'Low-Potassium Isotonic Hydration Matrix (Sodium & Magnesium Focus)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'workout_days',
+      dailyFrequency: 'Workout Days Only',
+      necessityLevel: 'performance',
+      workoutDayOnly: true,
       optimalDosage: '500 mg Sodium, 60 mg Magnesium, ≤50 mg Potassium in 24 oz water',
       timingWindow: 'pre_workout_45min',
       timingLabel: 'Intra-workout hydration',
+      mealInstruction: 'Sip intra-workout during training sessions lasting >45 minutes. Formulated for hyperkalemia prevention.',
+      restDayDirective: 'Workout days only. Plain filtered water is ideal on rest days.',
       biologicalMechanism: 'Supports plasma volume and neuromuscular fluid balance without potassium overload risks.',
       clinicalEvidenceSummary: 'Formulated specifically for clients on ACE inhibitors or potassium-sparing diuretics.',
       issnCitation: 'ACSM Position Stand: Exercise and Fluid Replacement',
@@ -521,9 +631,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'isotonic_electrolytes',
       name: 'Clinical Isotonic Electrolyte Matrix (Sodium/Potassium/Magnesium)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'workout_days',
+      dailyFrequency: 'Workout Days Only',
+      necessityLevel: 'performance',
+      workoutDayOnly: true,
       optimalDosage: '500–800 mg Sodium, 200 mg Potassium, 60 mg Magnesium in 24 oz water',
       timingWindow: 'pre_workout_45min',
       timingLabel: 'Intra-workout or morning hydration',
+      mealInstruction: 'Sip intra-workout during heavy sweating sessions or mix in morning water after high heat/cardio days.',
+      restDayDirective: 'Workout days only (or high-heat sweat days). Standard water and balanced meals suffice on rest days.',
       biologicalMechanism: 'Maintains osmotic plasma volume balance, neuromuscular action potentials, and prevents cramping during heavy sweat output.',
       clinicalEvidenceSummary: 'Maintains power output and prevents dehydration-induced performance declines (>2% bodyweight fluid loss).',
       issnCitation: 'ACSM Position Stand: Exercise and Fluid Replacement',
@@ -542,9 +658,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
         ? 'Ubiquinol (Active CoQ10 200mg - Statin Muscle Protection)'
         : 'Ubiquinol (Active Reduced CoQ10 100–200mg)',
       evidenceTier: 'Tier B (Context-Specific Performance & Longevity)',
+      routineTier: 'conditional_adjunct',
+      dailyFrequency: 'Every Day',
+      necessityLevel: 'conditional',
+      workoutDayOnly: false,
       optimalDosage: isStatinCoPrescription ? '200 mg daily' : '100–200 mg daily',
       timingWindow: 'morning_with_breakfast',
       timingLabel: 'Morning with breakfast',
+      mealInstruction: 'Take with breakfast or morning meal containing dietary fat.',
+      restDayDirective: 'Take daily if taking statins or recommended for masters mitochondrial support.',
       biologicalMechanism: 'Essential lipid-soluble electron carrier in mitochondrial complex I/II for cellular ATP synthesis. Directly counteracts statin-induced CoQ10 synthesis depletion in muscle tissue.',
       clinicalEvidenceSummary: 'Clinically shown to reduce statin-associated muscle symptoms (SAMS) and support myocardial bioenergetics.',
       issnCitation: 'American Journal of Cardiology / Sports Medicine Review',
@@ -566,9 +688,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'methyl_b12',
       name: 'Methylated Vitamin B12 (Methylcobalamin)',
       evidenceTier: 'Tier A (Irrefutable Clinical RCT Evidence)',
+      routineTier: 'conditional_adjunct',
+      dailyFrequency: 'Every Day',
+      necessityLevel: 'conditional',
+      workoutDayOnly: false,
       optimalDosage: '1,000 mcg sublingual or with food',
       timingWindow: 'morning_with_breakfast',
       timingLabel: 'Morning with breakfast',
+      mealInstruction: 'Dissolve sublingually under the tongue or take with morning breakfast.',
+      restDayDirective: 'Take daily if taking Metformin to counteract ileal B12 malabsorption.',
       biologicalMechanism: 'Essential cofactor for methionine synthase, homocysteine metabolism, and myelin sheath maintenance. Directly counteracts Metformin-induced ileal B12 malabsorption.',
       clinicalEvidenceSummary: 'Prevents subclinical B12 deficiency and peripheral neuropathy in patients taking Metformin.',
       issnCitation: 'American Diabetes Association (ADA) Standards of Medical Care',
@@ -583,9 +711,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'collagen_vit_c',
       name: 'Hydrolyzed Collagen Peptides (Types I & III) + Vitamin C',
       evidenceTier: 'Tier B (Context-Specific Performance & Longevity)',
+      routineTier: 'workout_days',
+      dailyFrequency: 'Workout Days Only',
+      necessityLevel: 'conditional',
+      workoutDayOnly: true,
       optimalDosage: '15g Collagen + 50mg Vitamin C',
       timingWindow: 'pre_workout_45min',
       timingLabel: '45–60 min prior to tendon-loading sessions',
+      mealInstruction: 'Consume 45–60 minutes prior to tendon loading or jumping exercises with Vitamin C to stimulate collagen cross-linking.',
+      restDayDirective: 'Workout days only. Synchronized with peak connective tissue blood perfusion during tendon loading.',
       biologicalMechanism: 'Delivers high concentrations of glycine, proline, and hydroxyproline during peak joint vascular perfusion for collagen fibril cross-linking.',
       clinicalEvidenceSummary: 'Clinically proven by UC Davis Davis/Baar lab to double tendon collagen synthesis and improve patellar/Achilles stiffness.',
       issnCitation: 'American Journal of Clinical Nutrition (2017)',
@@ -600,9 +734,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'tart_cherry_curcumin',
       name: 'Montmorency Tart Cherry Extract (Standardized Anthocyanins)',
       evidenceTier: 'Tier B (Context-Specific Performance & Longevity)',
+      routineTier: 'conditional_adjunct',
+      dailyFrequency: 'Every Day',
+      necessityLevel: 'conditional',
+      workoutDayOnly: false,
       optimalDosage: '480–500 mg standardized extract (or 30ml concentrate)',
       timingWindow: 'night_pre_sleep',
       timingLabel: 'Evening with dinner or before bed',
+      mealInstruction: 'Take with evening dinner or 30–60 minutes before bed for joint recovery and natural phytomelatonin sleep support.',
+      restDayDirective: 'Take daily during heavy training cycles or acute joint flare-ups.',
       biologicalMechanism: 'Inhibits COX-1 and COX-2 inflammatory enzymes and provides natural phytomelatonin to enhance sleep efficiency.',
       clinicalEvidenceSummary: 'Significantly accelerates isometric strength recovery and dampens systemic oxidative stress markers post-training without gastrointestinal irritation.',
       issnCitation: 'European Journal of Sport Science (2020)',
@@ -618,9 +758,15 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
       id: 'beta_alanine',
       name: 'Beta-Alanine (CarnoSyn®)',
       evidenceTier: 'Tier B (Context-Specific Performance & Longevity)',
+      routineTier: 'workout_days',
+      dailyFrequency: 'Workout Days Only',
+      necessityLevel: 'conditional',
+      workoutDayOnly: true,
       optimalDosage: '3.2–6.4g daily (Split into 2 doses to avoid harmless paresthesia tingling)',
       timingWindow: 'daily_flexible',
       timingLabel: 'Daily split doses',
+      mealInstruction: 'Divide into two 1.6–3.2g doses taken with meals or 30 minutes before training to avoid harmless skin tingling (paresthesia).',
+      restDayDirective: 'Workout days only (or split daily during the initial 4-week intramuscular carnosine saturation phase).',
       biologicalMechanism: 'Rate-limiting precursor for intra-muscular carnosine synthesis, which buffers hydrogen ion (H+) accumulation during anaerobic glycolysis.',
       clinicalEvidenceSummary: 'Improves exercise capacity and delayed fatigue in high-intensity efforts lasting 60–240 seconds (Phase 2 & 5 OPT protocols).',
       issnCitation: 'ISSN Position Stand: Beta-Alanine (2015)',
@@ -651,16 +797,47 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     dailyFlexible: enrichedItems.filter(i => i.timingWindow === 'daily_flexible'),
   }
 
-  const executiveSummary = `This sports science supplement guide is formulated from your age, profile, athletic goal (${goal.replace(/_/g, ' ')}), and experience level (${fitnessLevel.replace(/_/g, ' ')}). It includes ${enrichedItems.length} evidence-informed options and ${drugInteractions.length} clinical safety checks for potential medication interactions.`
+  // Build 3-Tier Categorization for Crystal Clarity (What to take when)
+  const dailyCore = enrichedItems.filter(i => i.routineTier === 'daily_core')
+  const workoutDays = enrichedItems.filter(i => i.routineTier === 'workout_days')
+  const conditionalAdjuncts = enrichedItems.filter(i => i.routineTier === 'conditional_adjunct')
+
+  const tieredSchedule = {
+    dailyCore,
+    workoutDays,
+    conditionalAdjuncts,
+  }
+
+  const routineSummary = {
+    dailyCoreCount: dailyCore.length,
+    workoutDaysCount: workoutDays.length,
+    workoutOnlyCount: workoutDays.length,
+    conditionalCount: conditionalAdjuncts.length,
+    restDayRoutineText: `On rest days, you take only ${dailyCore.length} foundational supplements: ${dailyCore.map(i => i.name.split(' (')[0]).join(', ')}. No pre-workouts, protein shakes, or intra-workout formulas are needed.`,
+    workoutDayRoutineText: `On training days, take your ${dailyCore.length} foundational supplements PLUS ${workoutDays.length} peri-workout items around your session: ${workoutDays.map(i => i.name.split(' (')[0]).join(', ')}.`,
+    titrationSafetyAdvice: `MANDATORY CLIENT TITRATION RULE: Do NOT start all supplements at once. Introduce ONE compound at a time (1 compound every 7–14 days). Monitor gastrointestinal comfort and individual response before introducing the next compound.`,
+    titrationRule: `Introduce ONE compound at a time (1 compound at a time over 7–14 days) to monitor digestive tolerance and individual response.`,
+  }
+
+  const executiveSummary = `Your sports nutrition plan includes ${dailyCore.length} daily core foundations, ${workoutDays.length} workout-day recovery aids, and ${conditionalAdjuncts.length} conditional adjuncts. You do NOT take all supplements every day. There are ${drugInteractions.length} clinical safety precautions applied to your profile.`
 
   const legalDisclaimer =
-    'MANDATORY FDA & MEDICAL DISCLAIMER: The statements, protocols, and educational materials contained herein have not been evaluated by the Food and Drug Administration (FDA). These dietary supplement recommendations are designed for nutritional support and sports performance optimization only, and are NOT intended to diagnose, treat, cure, or prevent any disease. Forge Athletic coaches are not licensed medical providers and do not prescribe medical treatments. Always consult with your prescribing physician or licensed pharmacist before initiating any dietary supplementation regimen, particularly when co-administering with prescription medications.'
+    'MANDATORY FDA & MEDICAL DISCLAIMER (DSHEA 1994): These statements have not been evaluated by the Food and Drug Administration (FDA). These dietary supplement recommendations are designed strictly for nutritional support and sports conditioning optimization, and are NOT intended to diagnose, treat, cure, or prevent any disease. Forge Athletic does not prescribe medical treatments.'
 
   const scopeOfPracticeNotice =
-    'PROFESSIONAL SCOPE OF PRACTICE NOTICE: Coach Gordon is a Certified Personal Trainer (NASM-CPT®) and Sports Science Consultant. Coach Gordon is not a licensed physician, pharmacist, or registered dietitian. This supplement and nutrient-timing protocol is formulated strictly for educational and athletic performance optimization based on published sports science research (ISSN, ACSM, IOC) for apparently healthy individuals, and does not constitute medical advice, medical nutrition therapy under Massachusetts law (M.G.L. c. 112, §§ 196-208), or prescription medicine.'
+    'PROFESSIONAL SCOPE OF PRACTICE NOTICE (NASM-CPT® & CSNC Track): Coach Gordon is an NCCA-accredited Certified Personal Trainer (NASM-CPT® #1261890687), ASTI CPR/AED certified, and an active candidate on the NASM Master Trainer track across Corrective Exercise (CES), Performance Enhancement (PES), Certified Nutrition Coach (CNC), and Certified Sports Nutrition Coach (CSNC). Coach Gordon is NOT a medical doctor, registered dietitian (RD/RDN), or pharmacist. Under Massachusetts law (M.G.L. c. 112, §§ 196-208), this information is provided exclusively as non-medical, educational sports science guidance for apparently healthy adults. It does NOT constitute medical advice, Medical Nutrition Therapy (MNT), or a medical prescription.'
+
+  const medicalSupervisionWarning =
+    'PHYSICIAN CONSULTATION & DRUG INTERACTION DIRECTIVE: Always consult your primary care physician, cardiologist, endocrinologist, or licensed pharmacist before initiating any dietary supplementation regimen. This is critically important if you take prescription medications (anticoagulants, antihypertensives, thyroid hormone, statins, antidepressants, diabetes medications, antibiotics, or immunosuppressants), have underlying medical conditions, or are pregnant or nursing.'
+
+  const wholeFoodFirstNotice =
+    'WHOLE-FOOD FIRST PHILOSOPHY: Dietary supplements are designed strictly to complement—never replace—a sound, nutrient-dense whole-food diet, consistent progressive training, adequate hydration, and restorative sleep. 80–90% of athletic results stem from whole-food nutrition and consistent training habits.'
+
+  const discontinueAndConsultNotice =
+    'ADVERSE REACTION & IMMEDIATE DISCONTINUATION PROTOCOL: If you experience any adverse effects, including but not limited to gastrointestinal distress, rapid heart rate, palpitations, skin rash, dizziness, or shortness of breath, discontinue supplement use immediately and seek professional medical evaluation.'
 
   const ftcAffiliateDisclosure =
-    'COMMERCIAL & AFFILIATE DISCLOSURE: Forge Athletic partners with Fullscript and Thorne dispensaries to provide athletes with access to third-party verified (NSF for Sport / USP) products at an exclusive 15% discount. Forge Athletic and Coach Gordon may earn an affiliate commission on products purchased through these dispensary links.'
+    'FTC COMMERCIAL & DISPENSARY AFFILIATE DISCLOSURE: Forge Athletic is an authorized partner dispensary with Fullscript and an affiliate partner with Thorne. Athletes receive access to third-party lab-verified formulations (NSF Certified for Sport® / USP Verified®) with an exclusive 15% client courtesy discount. Forge Athletic and Coach Gordon may receive an affiliate commission on qualifying purchases made through these links. Purchasing supplements through dispensary links is completely voluntary; athletes are welcome to source equivalent third-party verified products from any retailer of their choice.'
 
   const thirdPartyQualityStandards =
     'GOLD STANDARD QUALITY ENFORCEMENT: Forge Athletic strictly mandates that all purchased supplements carry independent third-party laboratory verification: NSF Certified for Sport®, Informed Choice / Informed Sport®, or USP Verified®. These certifications guarantee label accuracy and verify the absence of heavy metals, adulterants, microbials, and WADA-banned substances.'
@@ -669,6 +846,8 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     clientProfile: profile,
     prescribedItems: enrichedItems,
     chronoSchedule,
+    tieredSchedule,
+    routineSummary,
     drugInteractions,
     flaggedContraindications,
     ageSpecificAdjustments,
@@ -677,7 +856,11 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     executiveSummary,
     legalDisclaimer,
     scopeOfPracticeNotice,
+    medicalSupervisionWarning,
+    wholeFoodFirstNotice,
+    discontinueAndConsultNotice,
     ftcAffiliateDisclosure,
     thirdPartyQualityStandards,
+    dispensaryInfo: DISPENSARY_PARTNER_CONFIG,
   }
 }

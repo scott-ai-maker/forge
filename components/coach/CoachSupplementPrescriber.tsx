@@ -313,28 +313,74 @@ export default function CoachSupplementPrescriber({
       )}
 
       {/* Protocol Summary Card */}
-      <div className="glass-card-gold" style={{ padding: 18, display: 'grid', gap: 12 }}>
-        <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Generated Supplement Guide Preview ({stack.prescribedItems.length} Evidence-Based Compounds)
+      <div className="glass-card-gold" style={{ padding: 18, display: 'grid', gap: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Generated Supplement Guide Preview ({stack.prescribedItems.length} Evidence-Based Compounds)
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--white)', marginTop: 2 }}>
+              <strong>Routine Schedule:</strong> {stack.routineSummary.dailyCoreCount} Daily Core (Every Day) · {stack.routineSummary.workoutOnlyCount} Workout Days Only · {stack.routineSummary.conditionalCount} Conditional
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span
+              style={{
+                fontSize: 10,
+                padding: '3px 8px',
+                borderRadius: 4,
+                background: stack.dispensaryInfo.isThorneLinked ? 'rgba(74,222,128,0.15)' : 'rgba(251,191,36,0.15)',
+                color: stack.dispensaryInfo.isThorneLinked ? 'var(--success)' : '#FBBF24',
+                border: `1px solid ${stack.dispensaryInfo.isThorneLinked ? 'rgba(74,222,128,0.3)' : 'rgba(251,191,36,0.3)'}`,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+              }}
+            >
+              {stack.dispensaryInfo.isThorneLinked ? 'Thorne: Dispensary Linked' : 'Thorne: Setup Pending (Direct Fallback)'}
+            </span>
+          </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+        {/* Titration Rule Directive Banner */}
+        <div style={{ background: 'rgba(8,14,20,0.6)', border: '1px solid rgba(212,160,23,0.3)', padding: '10px 14px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, color: 'var(--gold-lt)' }}>
+          <GaaIcon name="shield-check" size={13} tone="gold" />
+          <span><strong>Titration Protocol:</strong> {stack.routineSummary.titrationRule}</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
           {stack.prescribedItems.map(item => (
-            <div key={item.id} style={{ background: 'rgba(8,14,20,0.6)', padding: 12, border: '1px solid rgba(255,255,255,0.06)', display: 'grid', gap: 2 }}>
-              <div style={{ fontWeight: 700, color: 'var(--white)', fontSize: 13, display: 'flex', justifyContent: 'space-between' }}>
+            <div key={item.id} style={{ background: 'rgba(8,14,20,0.6)', padding: 12, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, display: 'grid', gap: 4 }}>
+              <div style={{ fontWeight: 700, color: 'var(--white)', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>{item.name}</span>
-                {item.isBeneficialCoPrescription && (
-                  <span style={{ fontSize: 9, color: 'var(--success)', border: '1px solid var(--success)', padding: '1px 4px' }}>ADJUNCT</span>
-                )}
+                <span
+                  style={{
+                    fontSize: 9,
+                    padding: '1px 6px',
+                    borderRadius: 3,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    background: item.routineTier === 'daily_core' ? 'rgba(96,165,250,0.15)' : item.routineTier === 'workout_days' ? 'rgba(234,179,8,0.15)' : 'rgba(168,85,247,0.15)',
+                    color: item.routineTier === 'daily_core' ? '#60A5FA' : item.routineTier === 'workout_days' ? '#FACC15' : '#C084FC',
+                    border: `1px solid ${item.routineTier === 'daily_core' ? 'rgba(96,165,250,0.3)' : item.routineTier === 'workout_days' ? 'rgba(234,179,8,0.3)' : 'rgba(168,85,247,0.3)'}`,
+                  }}
+                >
+                  {item.routineTier === 'daily_core' ? 'Daily Core' : item.routineTier === 'workout_days' ? 'Workout Only' : 'Adjunct'}
+                </span>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--gold-lt)' }}>{item.optimalDosage} · {item.timingLabel.split(' ')[0]}</div>
+              <div style={{ fontSize: 11, color: 'var(--gold-lt)' }}>
+                {item.optimalDosage} · {item.timingLabel.split(' ')[0]}
+              </div>
+              <div style={{ fontSize: 10.5, color: item.workoutDayOnly ? '#FACC15' : 'var(--gray-lt)' }}>
+                {item.restDayDirective} · {item.mealInstruction}
+              </div>
               {item.chronoSeparationNote && (
                 <div style={{ fontSize: 10, color: '#ffc107', display: 'flex', alignItems: 'center', gap: 5 }}>
                   <GaaIcon name="alert-triangle" size={11} tone="amber" />
                   <span>{item.chronoSeparationNote}</span>
                 </div>
               )}
-              <div style={{ fontSize: 11, color: 'var(--gray)' }}>{item.clinicalEvidenceSummary.slice(0, 70)}...</div>
+              <div style={{ fontSize: 11, color: 'var(--gray)' }}>{item.clinicalEvidenceSummary.slice(0, 75)}...</div>
             </div>
           ))}
         </div>

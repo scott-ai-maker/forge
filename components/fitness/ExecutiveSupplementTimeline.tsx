@@ -364,7 +364,7 @@ export default function ExecutiveSupplementTimeline({
               whiteSpace: 'nowrap',
             }}
           >
-            <span>Thorne Dispensary</span>
+            <span>{dispensaryInfo.isThorneLinked ? 'Thorne Dispensary' : 'Thorne (Setup Pending)'}</span>
             <span style={{ fontSize: 10 }}>↗</span>
           </a>
         </div>
@@ -476,9 +476,22 @@ export default function ExecutiveSupplementTimeline({
                     >
                       {/* Left: Info */}
                       <div style={{ display: 'grid', gap: 3 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 13, fontWeight: 800, color: isChecked ? '#6EE7B7' : '#FFFFFF' }}>
                             {item.name}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 9,
+                              padding: '1px 5px',
+                              borderRadius: 3,
+                              background: item.routineTier === 'daily_core' ? 'rgba(212,160,23,0.2)' : 'rgba(52,211,153,0.2)',
+                              color: item.routineTier === 'daily_core' ? 'var(--gold-lt)' : '#34D399',
+                              fontWeight: 800,
+                              border: item.routineTier === 'daily_core' ? '1px solid var(--gold)' : '1px solid var(--success)',
+                            }}
+                          >
+                            {item.routineTier === 'daily_core' ? 'DAILY CORE' : 'WORKOUT DAYS'}
                           </span>
                           {item.nsfCertifiedForSportRecommended && (
                             <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: 'rgba(197, 160, 89, 0.2)', color: 'var(--gold-lt)', fontWeight: 800, border: '1px solid var(--gold)' }}>
@@ -490,6 +503,12 @@ export default function ExecutiveSupplementTimeline({
                         <div style={{ fontSize: 11.5, color: 'var(--gold-lt)', fontFamily: 'monospace', fontWeight: 700 }}>
                           {item.optimalDosage}
                         </div>
+
+                        {item.mealInstruction && (
+                          <div style={{ fontSize: 10.5, color: 'var(--gray)' }}>
+                            {item.mealInstruction}
+                          </div>
+                        )}
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
                           <button

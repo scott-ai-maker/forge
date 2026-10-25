@@ -3,6 +3,7 @@ import {
   calculateEnergyExpenditure,
   calculatePrecisionMacros,
   calculatePhaseMacros,
+  calculateHandPortions,
   EXECUTIVE_DINING_PLAYBOOK,
 } from './metabolic-nutrition'
 
@@ -93,5 +94,35 @@ describe('Precision Metabolic Nutrition & Energy Balance Engine', () => {
     const steakhouse = EXECUTIVE_DINING_PLAYBOOK.find(d => d.venueType === 'steakhouse')
     expect(steakhouse?.recommendedOrders.length).toBeGreaterThan(0)
     expect(steakhouse?.executiveRule).toBeDefined()
+  })
+
+  it('calculates Precision Nutrition (PN1) hand portions for fat loss and hypertrophy goals', () => {
+    const maleFatLoss = calculateHandPortions({
+      sex: 'male',
+      goal: 'fat_loss',
+      weightLbs: 190,
+    })
+
+    expect(maleFatLoss.mealsPerDay).toBe(4)
+    expect(maleFatLoss.perMeal.proteinPalms).toBe(2)
+    expect(maleFatLoss.perMeal.veggieFists).toBe(2)
+    expect(maleFatLoss.perMeal.carbCuppedHands).toBe(1)
+    expect(maleFatLoss.perMeal.fatThumbs).toBe(1)
+    expect(maleFatLoss.totalDaily.proteinPalms).toBe(8)
+    expect(maleFatLoss.totalDaily.veggieFists).toBe(8)
+    expect(maleFatLoss.guide.fullnessCue).toContain('Hara Hachi Bu')
+    expect(maleFatLoss.guide.chewingRule).toContain('Slow Cadence')
+
+    const femaleHypertrophy = calculateHandPortions({
+      sex: 'female',
+      goal: 'hypertrophy',
+      weightLbs: 135,
+    })
+
+    expect(femaleHypertrophy.perMeal.proteinPalms).toBe(1.5)
+    expect(femaleHypertrophy.perMeal.veggieFists).toBe(1.5)
+    expect(femaleHypertrophy.perMeal.carbCuppedHands).toBe(1.5)
+    expect(femaleHypertrophy.perMeal.fatThumbs).toBe(1)
+    expect(femaleHypertrophy.totalDaily.carbCuppedHands).toBe(6)
   })
 })

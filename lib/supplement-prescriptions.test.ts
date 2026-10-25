@@ -176,4 +176,78 @@ describe('supplement-prescriptions & drug-nutrient interactions', () => {
     expect(mag?.dispensarySku).toBe('THORNE-MAG-BISGLYCINATE')
     expect(mag?.clientDiscountPrice).toBe('$39.10')
   })
+
+  it('categorizes supplements into clear tiers with explicit rest-day directives and meal instructions', () => {
+    const res = generateSupplementStack({
+      goal: 'hypertrophy',
+      age: 30,
+      sex: 'male',
+      fitnessLevel: 'intermediate',
+    })
+
+    // Verify tiered schedule breakdown
+    expect(res.tieredSchedule).toBeDefined()
+    expect(res.tieredSchedule.dailyCore.length).toBeGreaterThanOrEqual(2)
+    expect(res.tieredSchedule.workoutDays.length).toBeGreaterThanOrEqual(1)
+
+    // Verify all items have explicit tiers, directives, and meal instructions
+    for (const item of res.prescribedItems) {
+      expect(['daily_core', 'workout_days', 'conditional_adjunct']).toContain(item.routineTier)
+      expect(['Every Day', 'Workout Days Only', 'As Needed / Profile Specific']).toContain(item.dailyFrequency)
+      expect(['essential', 'performance', 'conditional']).toContain(item.necessityLevel)
+      expect(item.restDayDirective).toBeDefined()
+      expect(item.mealInstruction).toBeDefined()
+    }
+
+    // Verify specific rest-day directives
+    const creatine = res.prescribedItems.find(i => i.id === 'creatine_monohydrate')
+    expect(creatine?.routineTier).toBe('daily_core')
+    expect(creatine?.restDayDirective).toContain('Take daily')
+
+    const preWorkout = res.prescribedItems.find(i => i.id === 'caffeine_theanine')
+    if (preWorkout) {
+      expect(preWorkout.routineTier).toBe('workout_days')
+      expect(preWorkout.workoutDayOnly).toBe(true)
+      expect(preWorkout.restDayDirective).toContain('Skip on rest days')
+    }
+
+    // Verify routine summary counts and titration safety rule
+    expect(res.routineSummary.dailyCoreCount).toBe(res.tieredSchedule.dailyCore.length)
+    expect(res.routineSummary.workoutDaysCount).toBe(res.tieredSchedule.workoutDays.length)
+    expect(res.routineSummary.workoutOnlyCount).toBe(res.tieredSchedule.workoutDays.length)
+    expect(res.routineSummary.titrationRule).toContain('1 compound at a time')
+    expect(res.routineSummary.titrationRule).toContain('7–14 days')
+  })
+
+  it('safely handles unlinked Thorne accounts without exposing broken affiliate URLs', () => {
+    const res = generateSupplementStack({
+      goal: 'general_health',
+      age: 40,
+      sex: 'female',
+      fitnessLevel: 'intermediate',
+    })
+
+    const thorneItem = res.prescribedItems.find(i => i.recommendedBrand === 'Thorne')
+    expect(thorneItem).toBeDefined()
+
+    // Thorne link should point to safe verified catalog and never contain legacy gordonathletic handle
+    expect(thorneItem?.dispensaryUrl).not.toContain('gordonathletic')
+    expect(thorneItem?.dispensaryUrl).toContain('thorne.com')
+  })
+
+  it('enforces multi-layer liability statements including DSHEA, Mass Safe Harbor, and physician warnings', () => {
+    const res = generateSupplementStack({
+      goal: 'fat_loss',
+      age: 45,
+      sex: 'male',
+      fitnessLevel: 'intermediate',
+    })
+
+    expect(res.medicalSupervisionWarning).toContain('PHYSICIAN CONSULTATION')
+    expect(res.wholeFoodFirstNotice).toContain('WHOLE-FOOD FIRST')
+    expect(res.discontinueAndConsultNotice).toContain('ADVERSE REACTION')
+    expect(res.scopeOfPracticeNotice).toContain('PROFESSIONAL SCOPE OF PRACTICE NOTICE')
+    expect(res.legalDisclaimer).toContain('MANDATORY FDA & MEDICAL DISCLAIMER')
+    expect(res.legalDisclaimer).toContain('DSHEA 1994')
+  })
 })

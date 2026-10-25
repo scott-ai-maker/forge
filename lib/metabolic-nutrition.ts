@@ -70,6 +70,30 @@ export interface PrecisionMacroPrescription {
   safeHarborNotice?: string
 }
 
+export interface HandPortionTargets {
+  mealsPerDay: number
+  totalDaily: {
+    proteinPalms: number
+    veggieFists: number
+    carbCuppedHands: number
+    fatThumbs: number
+  }
+  perMeal: {
+    proteinPalms: number
+    veggieFists: number
+    carbCuppedHands: number
+    fatThumbs: number
+  }
+  guide: {
+    proteinDescription: string
+    veggieDescription: string
+    carbDescription: string
+    fatDescription: string
+    fullnessCue: string
+    chewingRule: string
+  }
+}
+
 export const NUTRITION_SAFE_HARBOR_NOTICE =
   'Massachusetts Non-Medical Nutrition & Dietetics Safe Harbor (M.G.L. c. 112, §§ 196-208): All metabolic expenditure calculations, macronutrient targets, and nutrient-timing recommendations are provided strictly for educational and athletic conditioning support in apparently healthy individuals. They do not constitute Medical Nutrition Therapy (MNT), medical dietary prescriptions, or treatment for clinical metabolic or eating disorders.'
 
@@ -339,5 +363,73 @@ export function calculatePhaseMacros(
       'Omega-3 Fish Oil (2,000mg EPA/DHA)',
       'Electrolyte Mineral Complex',
     ],
+  }
+}
+
+/**
+ * Calculates Precision Nutrition hand-portion targets without calorie counting.
+ * Based on Precision Nutrition (PN1) hand-measurement heuristics & 80% fullness cues.
+ */
+export function calculateHandPortions(input: {
+  sex?: 'male' | 'female' | 'other'
+  goal?: NutritionGoal
+  activityLevel?: ActivityLevel
+  weightLbs?: number
+}): HandPortionTargets {
+  const isFemale = input.sex === 'female'
+  const goal = input.goal || 'fat_loss'
+  const meals = 4 // typical 3 meals + 1 peri-workout or snack
+
+  // Base per-meal targets
+  // Men: 2 palms protein, 2 fists veggies, 1-2 cupped hands carbs, 1-2 thumbs fats
+  // Women: 1-1.5 palms protein, 1-2 fists veggies, 1 cupped hand carbs, 1 thumb fat
+  let proteinPerMeal = isFemale ? 1.5 : 2
+  let veggiesPerMeal = isFemale ? 1.5 : 2
+  let carbsPerMeal = isFemale ? 1 : 1.5
+  let fatsPerMeal = isFemale ? 1 : 1.5
+
+  if (goal === 'fat_loss') {
+    // Keep protein high to spare lean tissue; trim carbs and added fats moderately
+    carbsPerMeal = isFemale ? 0.75 : 1
+    fatsPerMeal = isFemale ? 0.75 : 1
+  } else if (goal === 'hypertrophy') {
+    // Boost carbs and protein to create muscular surplus
+    proteinPerMeal = isFemale ? 1.5 : 2.5
+    carbsPerMeal = isFemale ? 1.5 : 2.5
+    fatsPerMeal = isFemale ? 1 : 2
+  } else if (goal === 'athletic_power') {
+    carbsPerMeal = isFemale ? 1.25 : 2
+  }
+
+  const totalDaily = {
+    proteinPalms: Math.round(proteinPerMeal * meals * 10) / 10,
+    veggieFists: Math.round(veggiesPerMeal * meals * 10) / 10,
+    carbCuppedHands: Math.round(carbsPerMeal * meals * 10) / 10,
+    fatThumbs: Math.round(fatsPerMeal * meals * 10) / 10,
+  }
+
+  return {
+    mealsPerDay: meals,
+    totalDaily,
+    perMeal: {
+      proteinPalms: proteinPerMeal,
+      veggieFists: veggiesPerMeal,
+      carbCuppedHands: carbsPerMeal,
+      fatThumbs: fatsPerMeal,
+    },
+    guide: {
+      proteinDescription:
+        '1 Palm = ~20–30g dense protein (skinless chicken, wild salmon, lean beef, whole eggs, tofu, tempeh, Greek yogurt). Matches the diameter and thickness of your palm.',
+      veggieDescription:
+        '1 Fist = ~1 cup dense vegetables (broccoli, spinach, bell peppers, asparagus, kale, cauliflower). Delivers essential micronutrients, phytonutrients, and prebiotic fiber.',
+      carbDescription:
+        '1 Cupped Hand = ~20–30g quality complex carbohydrates (rolled oats, baked sweet potato, quinoa, brown rice, berries, legumes). Sustains glycogen and training stamina.',
+      fatDescription:
+        '1 Thumb = ~7–12g healthy fats (extra virgin olive oil, avocado, raw almonds, walnuts, chia seeds). Supports testosterone, cell membranes, and joint cushioning.',
+      fullnessCue:
+        'Hara Hachi Bu (80% Fullness Cue): Stop eating when you feel 80% satisfied—no longer hungry, but light and energetic. It takes 15–20 minutes for satiety signals to register.',
+      chewingRule:
+        'Slow Cadence & Mindful Chewing: Put your fork down between each mouthful. Savor flavor and texture. Eating slowly reduces digestive distress and prevents overconsumption.',
+    },
   }
 }
