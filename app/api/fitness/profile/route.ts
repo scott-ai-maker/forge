@@ -6,6 +6,7 @@ import {
   extractPhotoPathFromLegacyUrl,
   normalizePhotoPath,
 } from '@/lib/fitness-photos'
+import { dispatchCoachOnboardingAlert } from '@/lib/coach-onboarding-alerts'
 
 const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library', 'licensed_import']
 const EXCLUDED_EQUIPMENT_TERMS = ['chains', 'chain', 'safety collar', 'safety collars', 'none', 'no equipment']
@@ -92,10 +93,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   let userId = ''
+  let clientFullName = ''
+  let clientEmail = ''
   try {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['client'])
     userId = authz.user.id
+    clientFullName = authz.client.full_name || ''
+    clientEmail = authz.user.email || ''
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const rawMessage = error instanceof Error ? error.message : 'Unauthorized'
@@ -260,6 +265,22 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (!isDraft) {
+    // Non-blocking real-time alert dispatched to Coach Gordon
+    dispatchCoachOnboardingAlert({
+      userId,
+      clientName: clientFullName || signatureName || 'Athlete',
+      clientEmail: clientEmail || '',
+      goal: payload.fitness_goal,
+      trainingDaysPerWeek: payload.training_days_per_week,
+      equipmentAccess: payload.equipment_access,
+      parqAnyYes,
+      injuriesLimitations: payload.injuries_limitations,
+    }).catch(err => {
+      console.warn('[OnboardingAlert] Non-blocking dispatch failure:', err)
+    })
+  }
 
   return NextResponse.json({ profile: data, draftSaved: isDraft })
 }
