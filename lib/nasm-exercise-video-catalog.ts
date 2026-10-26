@@ -350,7 +350,23 @@ export const NASM_EDGE_OFFICIAL_CATALOG: Record<string, string> = {
   "single leg standing tubing overhead press": "MMjBnEBnZKM",
   "single leg dumbbell bent over row": "DJfQN6xJL28",
   "single leg standing tubing row": "qykwviNOIyc",
-  "single leg dumbbell bent over extension": "kZ-ReOdn2qk"
+  "single leg dumbbell bent over extension": "kZ-ReOdn2qk",
+  "side lying leg raise": "xVSwJhJCsgo",
+  "bent over barbell row supinated": "ZuC7ma4ktm0",
+  "prone ball dumbbell cobra": "2CDihCl3wFQ",
+  "overhead triceps extension": "kZ-ReOdn2qk",
+  "cable pallof press": "CnF9Bf2pm4s",
+  "pallof press": "CnF9Bf2pm4s",
+  "lat pulldown": "B_VkNQS5YLs",
+  "cable lat pulldown": "B_VkNQS5YLs",
+  "triceps pushdown": "kZ-ReOdn2qk",
+  "cable triceps pushdown": "kZ-ReOdn2qk",
+  "child's pose": "_ZX_zTOBgp8",
+  "childs pose": "_ZX_zTOBgp8",
+  "barbell good mornings": "Daq-wJMUnes",
+  "single arm dumbbell bench press": "qFTnmyC-nf4",
+  "squat to cable row": "qZn-_dXCP2s",
+  "single leg floor bridge": "lHXShY-FivU"
 }
 
 // Official NASM Edge Master Fallback (Official NASM Edge Movement Standard)
@@ -519,9 +535,10 @@ export function resolveExerciseVideoEmbed(
     { keywords: ['dumbbell hammer curl', 'single leg hammer curl', 'hammer curl'], videoId: 'nL3SedGG7X0', label: 'Dumbbell Hammer Curl' },
     { keywords: ['dumbbell preacher curl'], videoId: 't2BmBSmcjco', label: 'Dumbbell Preacher Curl' },
     { keywords: ['barbell bicep curl', 'barbell curl'], videoId: 'pQfJR-sSIvA', label: 'Barbell Biceps Curl' },
-    { keywords: ['single-leg dumbbell bent-over extension', 'single-leg dumbbell bent over extension', 'single leg dumbbell bent over extension', 'seated single arm dumbbell tricep extension', 'supine dumbbell extension', 'dumbbell bent over extention', 'dumbbell bent over extension', 'dumbbell bent-over extension'], videoId: 'kZ-ReOdn2qk', label: 'Dumbbell Triceps Extension' },
+    { keywords: ['single-leg dumbbell bent-over extension', 'single-leg dumbbell bent over extension', 'single leg dumbbell bent over extension', 'seated single arm dumbbell tricep extension', 'supine dumbbell extension', 'dumbbell bent over extention', 'dumbbell bent over extension', 'dumbbell bent-over extension', 'triceps pushdown', 'cable triceps pushdown', 'overhead triceps extension'], videoId: 'kZ-ReOdn2qk', label: 'Dumbbell Triceps Extension' },
 
     // Core & Balance
+    { keywords: ['cable pallof press', 'pallof press', 'paloff press with band', 'paloff press'], videoId: 'CnF9Bf2pm4s', label: 'Pallof Press' },
     { keywords: ['russian twist'], videoId: 's0kT80JLCfA', label: 'Russian Twist' },
     { keywords: ['dead bug'], videoId: 'bxn9FBrt4-A', label: 'Dead Bug' },
     { keywords: ['mcgill big 3', 'bird dog', 'quadruped opposite arm leg raise'], videoId: 'ZdAHe9_HeEw', label: 'Bird Dog' },
