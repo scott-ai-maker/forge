@@ -384,7 +384,7 @@ export function calculateHandPortions(input: {
   // Men: 2 palms protein, 2 fists veggies, 1-2 cupped hands carbs, 1-2 thumbs fats
   // Women: 1-1.5 palms protein, 1-2 fists veggies, 1 cupped hand carbs, 1 thumb fat
   let proteinPerMeal = isFemale ? 1.5 : 2
-  let veggiesPerMeal = isFemale ? 1.5 : 2
+  const veggiesPerMeal = isFemale ? 1.5 : 2
   let carbsPerMeal = isFemale ? 1 : 1.5
   let fatsPerMeal = isFemale ? 1 : 1.5
 

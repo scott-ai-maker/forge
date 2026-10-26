@@ -412,67 +412,101 @@ async function grantVipAccess() {
 
     // 8. Grant Premier Best Package: Executive 1:1 Master Indefinitely
     const PREMIER_PACKAGE_NAME = 'Executive 1:1 Master'
-    const { data: premierPkg, error: premierErr } = await admin
+    const { data: existingPremierPkg } = await admin
       .from('client_packages')
-      .insert({
-        client_id: athlete.id,
-        package_name: PREMIER_PACKAGE_NAME,
-        sessions_total: 12,
-        sessions_remaining: 12,
-        source: 'comp',
-        granted_by_coach_id: COACH_ID,
-        grant_note: 'VIP Full Access & Best Package Indefinitely',
-        discount_code: 'ALLACCESS',
-        discount_amount_cents: 149500,
-        purchased_at: new Date(Date.now() + 1000).toISOString(), // Ensure latest timestamp
-        expires_at: null, // Indefinite / Perpetual
-      })
-      .select('id, package_name, sessions_remaining, expires_at')
-      .single()
+      .select('id')
+      .eq('client_id', athlete.id)
+      .eq('package_name', PREMIER_PACKAGE_NAME)
+      .maybeSingle()
 
-    if (premierErr) {
-      console.error(`❌ Failed to grant premier package: ${premierErr.message}`)
+    if (existingPremierPkg) {
+      await admin
+        .from('client_packages')
+        .update({
+          sessions_total: 12,
+          sessions_remaining: 12,
+        })
+        .eq('id', existingPremierPkg.id)
+      console.log(`🌟 PREMIER PACKAGE UPDATED: ${PREMIER_PACKAGE_NAME} (12 sessions)`)
     } else {
-      console.log(`🌟 PREMIER PACKAGE GRANTED:`)
-      console.log(`   Tier: ${premierPkg.package_name}`)
-      console.log(`   Sessions: ${premierPkg.sessions_remaining} consults`)
-      console.log(`   Expiration: INDEFINITE (expires_at = null)`)
+      const { data: premierPkg, error: premierErr } = await admin
+        .from('client_packages')
+        .insert({
+          client_id: athlete.id,
+          package_name: PREMIER_PACKAGE_NAME,
+          sessions_total: 12,
+          sessions_remaining: 12,
+          source: 'comp',
+          granted_by_coach_id: COACH_ID,
+          grant_note: 'VIP Full Access & Best Package Indefinitely',
+          discount_code: 'ALLACCESS',
+          discount_amount_cents: 149500,
+          purchased_at: new Date(Date.now() + 1000).toISOString(), // Ensure latest timestamp
+          expires_at: null, // Indefinite / Perpetual
+        })
+        .select('id, package_name, sessions_remaining, expires_at')
+        .single()
 
-      // Record in comp_session_grants
-      await admin.from('comp_session_grants').insert({
-        client_id: athlete.id,
-        coach_id: COACH_ID,
-        sessions_granted: 12,
-        note: 'Executive 1:1 Master VIP Retainer (Indefinite)',
-        client_package_id: premierPkg.id,
-      })
+      if (premierErr) {
+        console.error(`❌ Failed to grant premier package: ${premierErr.message}`)
+      } else {
+        console.log(`🌟 PREMIER PACKAGE GRANTED:`)
+        console.log(`   Tier: ${premierPkg.package_name}`)
+        console.log(`   Sessions: ${premierPkg.sessions_remaining} consults`)
+        console.log(`   Expiration: INDEFINITE (expires_at = null)`)
+
+        // Record in comp_session_grants
+        await admin.from('comp_session_grants').insert({
+          client_id: athlete.id,
+          coach_id: COACH_ID,
+          sessions_granted: 12,
+          note: 'Executive 1:1 Master VIP Retainer (Indefinite)',
+          client_package_id: premierPkg.id,
+        })
+      }
     }
 
     // 9. Grant All Clinical Performance Add-On Suites Indefinitely
     console.log(`\n🎁 Granting Clinical Performance Add-On Suites Indefinitely:`)
     for (const addon of CLINICAL_ADDON_SUITES) {
-      const { data: addonRow, error: addonErr } = await admin
+      const { data: existingAddon } = await admin
         .from('client_packages')
-        .insert({
-          client_id: athlete.id,
-          package_name: addon.name,
-          sessions_total: addon.sessions,
-          sessions_remaining: addon.sessions,
-          source: 'comp',
-          granted_by_coach_id: COACH_ID,
-          grant_note: addon.note,
-          discount_code: 'ALLACCESS',
-          discount_amount_cents: 14900,
-          purchased_at: nowIso,
-          expires_at: null, // Indefinite / Perpetual
-        })
-        .select('id, package_name')
-        .single()
+        .select('id')
+        .eq('client_id', athlete.id)
+        .eq('package_name', addon.name)
+        .maybeSingle()
 
-      if (addonErr) {
-        console.warn(`   ⚠️ ${addon.name}: ${addonErr.message}`)
+      if (existingAddon) {
+        await admin
+          .from('client_packages')
+          .update({
+            sessions_total: addon.sessions,
+            sessions_remaining: addon.sessions,
+          })
+          .eq('id', existingAddon.id)
+        console.log(`   ✅ ${addon.name} updated (${addon.sessions} passes, perpetual)`)
       } else {
-        console.log(`   ✅ ${addon.name} (100 passes, perpetual)`)
+        const { error: addonErr } = await admin
+          .from('client_packages')
+          .insert({
+            client_id: athlete.id,
+            package_name: addon.name,
+            sessions_total: addon.sessions,
+            sessions_remaining: addon.sessions,
+            source: 'comp',
+            granted_by_coach_id: COACH_ID,
+            grant_note: addon.note,
+            discount_code: 'ALLACCESS',
+            discount_amount_cents: 14900,
+            purchased_at: nowIso,
+            expires_at: null, // Indefinite / Perpetual
+          })
+
+        if (addonErr) {
+          console.warn(`   ⚠️ ${addon.name}: ${addonErr.message}`)
+        } else {
+          console.log(`   ✅ ${addon.name} (${addon.sessions} passes, perpetual)`)
+        }
       }
     }
   }

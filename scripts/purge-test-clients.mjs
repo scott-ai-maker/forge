@@ -32,6 +32,8 @@ const PROTECTED_EMAILS = new Set([
   'rainvilj@hotmail.com',       // Jennifer Rainville
   'connor.gordon2002@gmail.com',// Connor Gordon
   'kalicocat7@yahoo.com',       // Kalli Seabrooke (Beta Tester)
+  'tessadinardo@gmail.com',     // Tessa DiNardo (Beta Tester)
+  'chrisdegreenia7@gmail.com',   // Christine DeGreenia (Beta Tester)
 ])
 
 const MASTER_COACH_ID = 'a896b7f6-5946-4452-a501-ace7feda0e55'

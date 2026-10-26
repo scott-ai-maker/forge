@@ -185,7 +185,7 @@ describe('Mobile & PWA Gym-Floor Offline Sync Stress Test ("Basement Gym Resilie
       // Attempt 1
       const res1 = await flushOfflineQueue()
       expect(res1.failed).toBe(1)
-      let queued = getQueuedOfflineSets()
+      const queued = getQueuedOfflineSets()
       expect(queued[0].retryCount).toBe(1)
       expect(queued[0].status).toBe('failed')
 
