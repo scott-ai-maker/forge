@@ -14,6 +14,7 @@ export interface ClientRecord {
   email: string | null
   status: ClientStatus
   designated_coach_id: string | null
+  full_name?: string | null
 }
 
 export class AuthzError extends Error {
@@ -96,7 +97,7 @@ async function ensureClientRecord(user: User): Promise<ClientRecord> {
   // Defensively fetch existing client without strict column fail
   const { data: existing, error: existingError } = await admin
     .from('clients')
-    .select('id, role, email, designated_coach_id, status')
+    .select('id, role, email, designated_coach_id, status, full_name')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -127,6 +128,7 @@ async function ensureClientRecord(user: User): Promise<ClientRecord> {
       email: existing.email,
       status: resolvedStatus,
       designated_coach_id: existing.designated_coach_id,
+      full_name: (existing as { full_name?: string | null }).full_name ?? null,
     }
   }
 
@@ -144,7 +146,7 @@ async function ensureClientRecord(user: User): Promise<ClientRecord> {
       },
       { onConflict: 'id' }
     )
-    .select('id, role, email, designated_coach_id, status')
+    .select('id, role, email, designated_coach_id, status, full_name')
     .single()
 
   if (error || !inserted) {
@@ -165,6 +167,7 @@ async function ensureClientRecord(user: User): Promise<ClientRecord> {
     email: inserted.email,
     status: (inserted.status as ClientStatus) || 'active',
     designated_coach_id: inserted.designated_coach_id,
+    full_name: (inserted as { full_name?: string | null }).full_name ?? displayName,
   }
 }
 

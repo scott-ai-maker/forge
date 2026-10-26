@@ -99,8 +99,12 @@ export async function POST(req: NextRequest) {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['client'])
     userId = authz.user.id
-    clientFullName = authz.client.full_name || ''
-    clientEmail = authz.user.email || ''
+    clientFullName =
+      (authz.user.user_metadata?.full_name as string) ||
+      (authz.user.user_metadata?.name as string) ||
+      authz.client.full_name ||
+      ''
+    clientEmail = authz.user.email || authz.client.email || ''
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const rawMessage = error instanceof Error ? error.message : 'Unauthorized'
@@ -272,11 +276,11 @@ export async function POST(req: NextRequest) {
       userId,
       clientName: clientFullName || signatureName || 'Athlete',
       clientEmail: clientEmail || '',
-      goal: payload.fitness_goal,
-      trainingDaysPerWeek: payload.training_days_per_week,
-      equipmentAccess: payload.equipment_access,
+      goal: (payload.fitness_goal as string | null) ?? null,
+      trainingDaysPerWeek,
+      equipmentAccess: equipmentAccess.length ? equipmentAccess : ['bodyweight'],
       parqAnyYes,
-      injuriesLimitations: payload.injuries_limitations,
+      injuriesLimitations: (payload.injuries_limitations as string | null) ?? null,
     }).catch(err => {
       console.warn('[OnboardingAlert] Non-blocking dispatch failure:', err)
     })

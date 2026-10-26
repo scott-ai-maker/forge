@@ -365,8 +365,7 @@ export const NASM_EDGE_OFFICIAL_CATALOG: Record<string, string> = {
   "childs pose": "_ZX_zTOBgp8",
   "barbell good mornings": "Daq-wJMUnes",
   "single arm dumbbell bench press": "qFTnmyC-nf4",
-  "squat to cable row": "qZn-_dXCP2s",
-  "single leg floor bridge": "lHXShY-FivU"
+  "squat to cable row": "qZn-_dXCP2s"
 }
 
 // Official NASM Edge Master Fallback (Official NASM Edge Movement Standard)
