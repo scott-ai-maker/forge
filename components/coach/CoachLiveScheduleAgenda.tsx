@@ -123,7 +123,7 @@ export default function CoachLiveScheduleAgenda({ sessions }: CoachLiveScheduleA
                 letterSpacing: '0.08em',
               }}
             >
-              Mindbody Engine Live
+              Forge Session Engine Live
             </span>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: 12.5, color: '#94A3B8', fontFamily: 'Raleway, sans-serif' }}>

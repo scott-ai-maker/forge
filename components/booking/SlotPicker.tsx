@@ -277,7 +277,7 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // CONFIRMATION VIEW (Mindbody Post-Booking Experience with Live Calendar Sync)
+  // CONFIRMATION VIEW (Forge Live Studio Booking Confirmation with Calendar Sync)
   // ───────────────────────────────────────────────────────────────────────────
   if (confirmedBooking) {
     const { slot, packageName } = confirmedBooking
@@ -610,11 +610,11 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // MAIN MINDBODY SELF-SERVE BOOKING INTERFACE
+  // MAIN FORGE LIVE STUDIO SELF-SERVE SCHEDULER
   // ───────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* ── Coach Operating Hours & Mindbody Engine Status ── */}
+      {/* ── Coach Operating Hours & Forge Session Engine Status ── */}
       <div
         style={{
           display: 'flex',
@@ -693,7 +693,7 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
         </div>
       )}
 
-      {/* ── Date Carousel / Rail (Mindbody Style) ── */}
+      {/* ── Kinetic Date Rail (Forge Studio Schedule) ── */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
           <p
