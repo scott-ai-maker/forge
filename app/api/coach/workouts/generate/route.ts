@@ -13,7 +13,7 @@ import { generateIntelligentProgramming, generateWeeklyFrequencyRecommendation }
 import { normalizeEquipmentAccess, doesExerciseMatchEquipment } from '@/lib/nasm-equipment-detector'
 import { calculateEstimatedWorkoutDuration, type WorkoutDurationExerciseInput } from '@/lib/workout-duration-engine'
 
-const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library', 'licensed_import']
+const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library']
 const TRAINING_DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 const STRICT_NASM_VOLUME_BLOCK_MODE = true
 

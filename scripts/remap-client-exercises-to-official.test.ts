@@ -164,7 +164,7 @@ describe('remap-client-exercises-to-official', () => {
       { id: 'tri-1', name: 'Seated Single Arm Dumbbell Tricep Extension', slug: 'seated-single-arm-dumbbell-tricep-extension-0112' },
       { id: 'press-1', name: 'Incline Dumbbell Bench Press', slug: 'incline-dumbbell-bench-press' },
       { id: 'pull-1', name: 'Pull Up', slug: 'pull-up' },
-      { id: 'bridge-1', name: 'Stability Ball Loaded Bridge', slug: 'stability-ball-loaded-bridge' },
+      { id: 'bridge-1', name: 'Floor Bridge', slug: 'floor-bridge' },
     ])
 
     expect(resolveOfficialExercise({ name: 'Standing Cable Row' }, lookup)?.name).toBe('Standing Tubing Row')
@@ -173,7 +173,7 @@ describe('remap-client-exercises-to-official', () => {
     expect(resolveOfficialExercise({ name: 'Cable Tricep Pushdown' }, lookup)?.name).toBe('Seated Single Arm Dumbbell Tricep Extension')
     expect(resolveOfficialExercise({ name: 'Incline Dumbbell Chest Press' }, lookup)?.name).toBe('Incline Dumbbell Bench Press')
     expect(resolveOfficialExercise({ name: 'Wide-Grip Lat Pulldown' }, lookup)?.name).toBe('Pull Up')
-    expect(resolveOfficialExercise({ name: 'stability ball bridge' }, lookup)?.name).toBe('Stability Ball Loaded Bridge')
+    expect(resolveOfficialExercise({ name: 'stability ball bridge' }, lookup)?.name).toBe('Floor Bridge')
   })
 })
 

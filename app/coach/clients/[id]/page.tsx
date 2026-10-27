@@ -68,7 +68,7 @@ import { generateSundayDossier } from '@/lib/sunday-dossier-engine'
 
 export const dynamic = 'force-dynamic'
 
-const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library', 'licensed_import']
+const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library']
 const EXCLUDED_EQUIPMENT_TERMS = ['chains', 'chain', 'safety collar', 'safety collars', 'none', 'no equipment']
 
 interface PageProps {

@@ -102,7 +102,7 @@ async function main() {
 Client Stats & Context:
 - Current: 245 lbs, 55-year-old female, 5'7", sedentary job. Early morning riser.
 - Experience: Beginner with strength training. Has aerobic exercise history with treadmill and brisk walks; genuinely LOVES outdoor walks.
-- Orthopedic & Safety: History of Runner's Knee (patellofemoral pain syndrome / PFPS) with trouble doing lunges. STRICT DIRECTIVE: Do NOT prescribe forward lunges, jumping plyometrics, or movements causing anterior patellar knee shear. Prioritize gluteus medius activation, box squats with vertical shins, stability ball wall squats, glute bridges, band lateral walks, and hamstring curls.
+- Orthopedic & Safety: History of Runner's Knee (patellofemoral pain syndrome / PFPS) with trouble doing lunges. STRICT DIRECTIVE: Do NOT prescribe forward lunges, jumping plyometrics, or movements causing anterior patellar knee shear. Prioritize gluteus medius activation, box squats with vertical shins, floor bridges, band lateral walks, and official NASM movements.
 - Methodology: NASM OPT Phase 1 Stabilization Endurance. Emphasize 4/2/1 tempo (4s eccentric descent, 2s isometric stabilization pause, 1s concentric push), 12-15 reps, 2-3 sets, 60s rest. Proprioceptively rich, joint-friendly, and perfect for building foundational stability, muscular endurance, and posture.
 - Session Length: Medium-length workout: 40-45 minutes total (Warmup 7m, Core/Balance 8m, Resistance 18m, Outdoor Walk / Cardio Flush 10-12m, Cooldown 3m).
 - Cardio Integration: Tanaka Stage 1 Aerobic Base (Zone 1: 105-125 BPM) with prescription for Lisa's favorite: Brisk Morning Outdoor Walk or Incline Treadmill Walk.
@@ -227,7 +227,7 @@ Client Stats & Context:
 Lisa, welcome to your personalized morning foundation program!
 This routine was crafted specifically around your daily rhythm as an early morning riser, your love for brisk outdoor walks, and your goal of healthy, sustained fat loss.
 Because you are beginning your strength training journey, we are utilizing the NASM OPT™ Phase 1 (Stabilization Endurance) model. This phase uses a controlled 4/2/1 tempo (4 seconds down, a 2-second hold at the bottom to build deep joint stability, and 1 smooth second back up). You do not need to lift heavy weights to see incredible changes—this controlled tempo activates and strengthens all the stabilizing muscles around your hips, spine, and knees.
-Orthopedic Protection: Because you have experienced runner's knee (patellofemoral pain) in the past with lunges, we have strictly excluded high-impact forward lunges. Instead, we focus on glute bridges, stability ball wall squats (which keep your shins vertical and protect your kneecaps), band tube walking for your hip stabilizers, and core balance reach movements.
+Orthopedic Protection: Because you have experienced runner's knee (patellofemoral pain) in the past with lunges, we have strictly excluded high-impact forward lunges. Instead, we focus on floor bridges, box squats (which keep your shins vertical and protect your kneecaps), band tube walking for your hip stabilizers, and core balance reach movements.
 Every session finishes with 12-15 minutes of your favorite activity: a brisk, peaceful morning outdoor walk or an easy-paced incline treadmill stroll. This provides gentle, therapeutic fat oxidation without beating up your joints.
 Focus on consistency, breathe naturally, and enjoy the morning sunrise. I'm right here in your corner!`
 

@@ -314,38 +314,6 @@ export const NASM_EDGE_OFFICIAL_CATALOG: Record<string, string> = {
   "dumbbell renegade row to push up": "RuJ9a05aa0A",
   "dumbbell walking lunges": "UInwcEa5BH4",
   "walking lunges": "UInwcEa5BH4",
-  "bosu plank": "C_NM5IbRlqM",
-  "bosu push up": "Wo3viNH3E1c",
-  "bosu single leg balance reach": "I4kiGgKpb58",
-  "bosu single leg balance": "I4kiGgKpb58",
-  "bosu glute bridge": "d28NVu5bQPk",
-  "bosu bird dog": "w75gGKGNsY0",
-  "bosu dome squat": "evJOL2cdmt4",
-  "bosu squat": "evJOL2cdmt4",
-  "bosu dumbbell chest press": "cjTVlA2WwqY",
-  "bosu chest press": "cjTVlA2WwqY",
-  "bosu lunge to balance": "BAC6B69Q70A",
-  "bosu mountain climbers": "iyZHqgsI4Zk",
-  "bosu russian twist": "M2AAcj_K0mg",
-  "bosu lateral bound with stabilization": "vEGpyuTh3zw",
-  "bosu burpee with overhead press": "RbvEl_XAZU0",
-  "bosu burpee": "RbvEl_XAZU0",
-  "stability ball push up": "pxpGo3EtwkM",
-  "stability ball push-up": "pxpGo3EtwkM",
-  "stability ball wall squat": "2TOqw5wSfgE",
-  "stability ball dumbbell chest press": "FfTyQAYrnqM",
-  "stability ball chest press": "FfTyQAYrnqM",
-  "stability ball prone cobra": "Ebv2o_VioHY",
-  "stability ball roll in": "ZquTk8GmA_I",
-  "stability ball roll-in": "ZquTk8GmA_I",
-  "stability ball pike": "ZquTk8GmA_I",
-  "stability ball back extension with rotation": "b_Iri5nayDk",
-  "stability ball back extension": "b_Iri5nayDk",
-  "stability ball loaded bridge": "wgcyPpK60wc",
-  "stability ball bridge": "wgcyPpK60wc",
-  "stability ball russian twist": "t3HhJ_LolVg",
-  "stability ball spinal rotation": "t3HhJ_LolVg",
-  "stability ball prone shoulder press": "VZJ0PHuNrYI",
   "single leg dumbbell overhead press": "MMjBnEBnZKM",
   "single leg standing tubing overhead press": "MMjBnEBnZKM",
   "single leg dumbbell bent over row": "DJfQN6xJL28",
@@ -357,8 +325,8 @@ export const NASM_EDGE_OFFICIAL_CATALOG: Record<string, string> = {
   "overhead triceps extension": "kZ-ReOdn2qk",
   "cable pallof press": "CnF9Bf2pm4s",
   "pallof press": "CnF9Bf2pm4s",
-  "lat pulldown": "B_VkNQS5YLs",
-  "cable lat pulldown": "B_VkNQS5YLs",
+  "lat pulldown": "JGeRYIZdojU",
+  "cable lat pulldown": "JGeRYIZdojU",
   "triceps pushdown": "kZ-ReOdn2qk",
   "cable triceps pushdown": "kZ-ReOdn2qk",
   "child's pose": "_ZX_zTOBgp8",
@@ -426,17 +394,11 @@ export function resolveExerciseVideoEmbed(
   // 2. Exact match in NASM Edge catalog
   if (NASM_EDGE_OFFICIAL_CATALOG[cleaned]) {
     const videoId = NASM_EDGE_OFFICIAL_CATALOG[cleaned]
-    const isBosu = cleaned.includes('bosu')
-    const isTheraband = cleaned.includes('theraband') || videoId === 'FfTyQAYrnqM' || videoId === 'j6D0V742sT8' || videoId === 't3HhJ_LolVg'
     return {
       embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`,
       externalUrl: `https://www.youtube.com/watch?v=${videoId}`,
       isDirectEmbed: true,
-      sourceTitle: isBosu
-        ? `BOSU® Official · ${exerciseName}`
-        : isTheraband
-          ? `TheraBand® Official · ${exerciseName}`
-          : `NASM Edge · ${exerciseName}`,
+      sourceTitle: `NASM Edge · ${exerciseName}`,
       videoId,
     }
   }
@@ -525,7 +487,8 @@ export function resolveExerciseVideoEmbed(
     { keywords: ['seated leg curl'], videoId: '_2Kd0d-JEUM', label: 'Seated Leg Curl' },
     { keywords: ['leg press calf raise', 'tibialis', 'anterior tibialis', 'calf raise', 'soleus', 'rathleff'], videoId: '8k435cj30gc', label: 'Calf Raise' },
     { keywords: ['single-leg glute bridge with hold', 'single leg glute bridge with hold', 'single leg floor bridge'], videoId: 'lHXShY-FivU', label: 'Single-Leg Floor Bridge' },
-    { keywords: ['heavy barbell hip thrust', 'heavy dumbbell hip thrust', 'heavy banded hip thrust', 'floor bridge', 'glute bridge', 'hip thrust', 'banded hip thrust', 'stability ball hamstring curl', 'ball hamstring curl', 'stability ball leg curl', 'ball leg curl'], videoId: 'Z3cY3d3BBo4', label: 'Floor Bridge' },
+    { keywords: ['heavy barbell hip thrust', 'heavy dumbbell hip thrust', 'heavy banded hip thrust', 'floor bridge', 'glute bridge', 'hip thrust', 'banded hip thrust'], videoId: 'Z3cY3d3BBo4', label: 'Floor Bridge' },
+    { keywords: ['stability ball hamstring curl', 'ball hamstring curl', 'stability ball leg curl', 'ball leg curl', 'stability ball hamstring curls', 'ball hamstring curls'], videoId: 'Z3cY3d3BBo4', label: 'Floor Bridge' },
     { keywords: ['good mornings', 'good morning'], videoId: 'Daq-wJMUnes', label: 'Good Mornings' },
     { keywords: ['kettlebell swing', 'banded kettlebell swing', 'single arm kettlebell swing', 'explosive dumbbell / kettlebell hinge swing', 'explosive dumbbell kettlebell hinge swing'], videoId: 'r777bo9KuY4', label: 'Kettlebell Swing' },
 
@@ -579,45 +542,15 @@ export function resolveExerciseVideoEmbed(
     { keywords: ['clamshells', 'side lying clamshell', 'clamshell'], videoId: 'V_AnVxKPFlY', label: 'Clamshells' },
     { keywords: ['supported bent over dumbbell row', 'chest supported incline dumbbell row', 'chest-supported incline dumbbell row'], videoId: 'DmUX88nWClo', label: 'Supported Bent-Over Dumbbell Row' },
     { keywords: ['standing neutral grip db overhead press', 'standing neutral-grip db overhead press', 'overhead press in scapular plane', 'landmine press'], videoId: 'MMjBnEBnZKM', label: 'Dumbbell Overhead Press' },
-    // BOSU Balance Trainer Modality (Official @BOSUOfficial Master Trainer Demonstrations)
-    { keywords: ['bosu plank', 'plank on bosu'], videoId: 'C_NM5IbRlqM', label: 'BOSU Plank' },
-    { keywords: ['bosu push up', 'bosu push-up', 'push up on bosu', 'push-up on bosu'], videoId: 'Wo3viNH3E1c', label: 'BOSU Push-Up' },
-    { keywords: ['bosu single leg balance reach', 'bosu single-leg balance reach', 'bosu single leg balance', 'bosu balance reach'], videoId: 'I4kiGgKpb58', label: 'BOSU Single-Leg Balance Reach' },
-    { keywords: ['bosu glute bridge', 'bosu bridge', 'glute bridge on bosu', 'supine hip lift'], videoId: 'd28NVu5bQPk', label: 'BOSU Glute Bridge' },
-    { keywords: ['bosu bird dog', 'bosu bird-dog', 'bird dog on bosu'], videoId: 'w75gGKGNsY0', label: 'BOSU Bird-Dog' },
-    { keywords: ['bosu dome squat', 'bosu squat', 'squat on bosu'], videoId: 'evJOL2cdmt4', label: 'BOSU Dome Squat' },
-    { keywords: ['bosu dumbbell chest press', 'bosu chest press', 'chest press on bosu'], videoId: 'cjTVlA2WwqY', label: 'BOSU Dumbbell Chest Press' },
-    { keywords: ['bosu lunge to balance', 'lunge to balance on bosu'], videoId: 'BAC6B69Q70A', label: 'BOSU Lunge to Balance' },
-    { keywords: ['bosu mountain climbers', 'mountain climbers on bosu'], videoId: 'iyZHqgsI4Zk', label: 'BOSU Mountain Climbers' },
-    { keywords: ['bosu russian twist', 'russian twist on bosu'], videoId: 'M2AAcj_K0mg', label: 'BOSU Russian Twist' },
-    { keywords: ['bosu lateral bound with stabilization', 'bosu lateral bound', 'lateral bound on bosu', 'bosu lateral jump'], videoId: 'vEGpyuTh3zw', label: 'BOSU Lateral Bound with Stabilization' },
-    { keywords: ['bosu burpee with overhead press', 'bosu burpee', 'burpee on bosu'], videoId: 'RbvEl_XAZU0', label: 'BOSU Burpee with Overhead Press' },
-    // TheraBand® Pro Series SCP & NASM Stability Ball Modality
-    { keywords: ['stability ball push up', 'stability ball push-up', 'push up on stability ball', 'push-up on stability ball', 'push up on ball'], videoId: 'pxpGo3EtwkM', label: 'Stability Ball Push-Up' },
-    { keywords: ['stability ball wall squat', 'stability ball squat', 'squat on stability ball', 'wall squat on ball', 'ball wall squat'], videoId: '2TOqw5wSfgE', label: 'Stability Ball Wall Squat' },
-    { keywords: ['stability ball dumbbell chest press', 'stability ball chest press', 'chest press on ball', 'chest press on stability ball', 'db chest press on ball'], videoId: 'FfTyQAYrnqM', label: 'Stability Ball Dumbbell Chest Press' },
-    { keywords: ['stability ball prone cobra', 'ball cobra', 'prone cobra on ball'], videoId: 'Ebv2o_VioHY', label: 'Stability Ball Prone Cobra' },
-    { keywords: ['stability ball roll in', 'stability ball roll-in', 'stability ball pike', 'ball pike', 'ball roll in'], videoId: 'ZquTk8GmA_I', label: 'Stability Ball Roll-In' },
-    { keywords: ['stability ball back extension', 'stability ball back extension with rotation', 'back extension on ball'], videoId: 'b_Iri5nayDk', label: 'Stability Ball Back Extension with Rotation' },
-    { keywords: ['stability ball loaded bridge', 'stability ball bridge', 'ball bridge loaded', 'bridge on ball'], videoId: 'wgcyPpK60wc', label: 'Stability Ball Loaded Bridge' },
-    { keywords: ['stability ball russian twist', 'stability ball spinal rotation', 'russian twist on ball', 'spinal rotation with ball'], videoId: 't3HhJ_LolVg', label: 'Stability Ball Russian Twist' },
-    { keywords: ['stability ball scapular triad', 'stability ball combo', 'prone w y on ball'], videoId: 'j6D0V742sT8', label: 'Stability Ball Scapular Triad' },
-    { keywords: ['stability ball prone shoulder press', 'activation ball prone shoulder press', 'prone shoulder press on ball'], videoId: 'VZJ0PHuNrYI', label: 'Stability Ball Prone Shoulder Press' },
   ]
 
   for (const entry of KEYWORD_EDGE_MAP) {
     if (entry.keywords.some(kw => cleaned.includes(kw))) {
-      const isBosu = entry.label.toLowerCase().includes('bosu')
-      const isTheraband = entry.label.toLowerCase().includes('theraband') || entry.videoId === 'FfTyQAYrnqM' || entry.videoId === 'j6D0V742sT8' || entry.videoId === 't3HhJ_LolVg'
       return {
         embedUrl: `https://www.youtube-nocookie.com/embed/${entry.videoId}?autoplay=1&rel=0&modestbranding=1`,
         externalUrl: `https://www.youtube.com/watch?v=${entry.videoId}`,
         isDirectEmbed: true,
-        sourceTitle: isBosu
-          ? `BOSU® Official · ${entry.label}`
-          : isTheraband
-            ? `TheraBand® Official · ${entry.label}`
-            : `NASM Edge · ${entry.label}`,
+        sourceTitle: `NASM Edge · ${entry.label}`,
         videoId: entry.videoId,
       }
     }
@@ -626,17 +559,11 @@ export function resolveExerciseVideoEmbed(
   // 4. Check partial key substring in NASM Edge catalog
   for (const [key, id] of Object.entries(NASM_EDGE_OFFICIAL_CATALOG)) {
     if (cleaned.includes(key) || key.includes(cleaned)) {
-      const isBosu = cleaned.includes('bosu') || key.includes('bosu')
-      const isTheraband = cleaned.includes('theraband') || id === 'FfTyQAYrnqM' || id === 'j6D0V742sT8' || id === 't3HhJ_LolVg'
       return {
         embedUrl: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`,
         externalUrl: `https://www.youtube.com/watch?v=${id}`,
         isDirectEmbed: true,
-        sourceTitle: isBosu
-          ? `BOSU® Official · ${exerciseName}`
-          : isTheraband
-            ? `TheraBand® Official · ${exerciseName}`
-            : `NASM Edge · ${exerciseName}`,
+        sourceTitle: `NASM Edge · ${exerciseName}`,
         videoId: id,
       }
     }
@@ -655,7 +582,7 @@ export function resolveExerciseVideoEmbed(
 /**
  * Canonical DRY Media Enricher:
  * Resolves verified 1-to-1 NASM Edge CDN video demos, privacy-enhanced embeds,
- * and high-resolution GAA luxury/YouTube thumbnails on any exercise object.
+ * and high-resolution Forge Athletic luxury/YouTube thumbnails on any exercise object.
  */
 export function enrichExerciseMedia<T extends {
   name: string

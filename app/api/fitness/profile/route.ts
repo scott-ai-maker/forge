@@ -8,7 +8,7 @@ import {
 } from '@/lib/fitness-photos'
 import { dispatchCoachOnboardingAlert } from '@/lib/coach-onboarding-alerts'
 
-const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library', 'licensed_import']
+const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library']
 const EXCLUDED_EQUIPMENT_TERMS = ['chains', 'chain', 'safety collar', 'safety collars', 'none', 'no equipment']
 const TRAINING_DAY_OPTIONS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 

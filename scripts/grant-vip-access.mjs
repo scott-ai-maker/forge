@@ -333,7 +333,7 @@ async function grantVipAccess() {
                 { name: 'Static Pectoral Ball Stretch', sets: '2', reps: '30s', tempo: 'Static' },
                 { name: 'Bird Dog', sets: '3', reps: '12/side', tempo: '3/2/1' },
                 { name: 'Dumbbell Romanian Deadlift', sets: '3', reps: '12-15', tempo: '4/2/1', rest: '60s' },
-                { name: 'Stability Ball Dumbbell Chest Press', sets: '3', reps: '12-15', tempo: '4/2/1', rest: '60s' },
+                { name: 'Dumbbell Bench Press', sets: '3', reps: '12-15', tempo: '4/2/1', rest: '60s' },
                 { name: 'Step Up To Balance Sagital', sets: '3', reps: '10/leg', tempo: 'Controlled' },
                 { name: 'Face Pull', sets: '3', reps: '15', tempo: '3/1/2', rest: '60s' },
               ],

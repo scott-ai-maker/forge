@@ -16,7 +16,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { calculatePrecisionMacros, type NasmOptPhase, type NutritionGoal } from '@/lib/metabolic-nutrition'
 import { normalizeActivity, parseNutritionTargets, type NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 
-const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library', 'licensed_import']
+const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library']
 
 function parsePayload(body: Record<string, unknown>): CoachProgramPayload | null {
   const workouts = Array.isArray(body.workouts) ? body.workouts : []

@@ -323,12 +323,12 @@ async function provisionKalli() {
               coachingCues: ['Hold dumbbell tight to chest', 'Drive knees out over 2nd toes', 'Sit hips between heels'],
             },
             {
-              name: 'Stability Ball Wall Squat',
+              name: 'Box Squat',
               sets: 3,
               reps: '12-15',
               tempo: '2-1-2-0',
               restSeconds: 60,
-              coachingCues: ['Ball centered in lumbar curve', 'Controlled smooth descent', 'Peak quad contraction at top'],
+              coachingCues: ['Sit back onto box with control', 'Keep shins vertical', 'Drive through midfoot to stand'],
             },
             {
               name: 'Romanian Deadlift (Dumbbell RDL)',

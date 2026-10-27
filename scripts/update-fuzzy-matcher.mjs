@@ -31,7 +31,7 @@ async function main() {
   const { data, error } = await supabase
     .from('exercise_library_entries')
     .select('id, name, slug, description, coaching_cues, primary_equipment, muscle_groups, media_image_url, media_video_url, source')
-    .in('source', ['nasm_exercise_library', 'licensed_import'])
+    .in('source', ['nasm_exercise_library'])
     .eq('is_active', true)
 
   if (error) {
@@ -77,8 +77,8 @@ async function main() {
   console.log(`Wrote ${library.length} exercises to scripts/nasm-complete-library.json`)
 
   const code = `/**
- * Gordon Athletic Advisory — NASM Heuristic Media & Movement Search Engine
- * Cross-references the 350+ verified official NASM and licensed exercise catalog.
+ * Forge Athletic — NASM Heuristic Media & Movement Search Engine
+ * Cross-references the 323 verified official NASM Edge exercise catalog.
  * Uses exact canonical name matching to strictly prevent incorrect video/image pairing.
  */
 
@@ -128,6 +128,7 @@ export function normalizeExerciseQuery(name: string): string {
 }
 
 export const EXERCISE_ALIASES: Record<string, string> = {
+  'barbell flat bench press': 'barbell bench press',
   'prone cobra on floor': 'floor prone cobra',
   'squat to neutral overhead dumbbell press': 'dumbbell squat to overhead press',
   'single leg romanian deadlift to row': 'single leg romanian deadlift',
@@ -136,6 +137,12 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   'side plank with top leg lift': 'side plank',
   'chest supported dumbbell row': 'supported bent over dumbbell row',
   'dumbbell bent over extention': 'supported bent over dumbbell extension',
+  'single leg dumbbell overhead press': 'dumbbell overhead press',
+  'single leg standing tubing overhead press': 'dumbbell overhead press',
+  'single leg dumbbell bent over row': 'supported bent over dumbbell row',
+  'single leg dumbbell bent-over extension': 'supported bent over dumbbell extension',
+  'single leg dumbbell bent over extension': 'supported bent over dumbbell extension',
+  'single leg standing tubing row': 'standing tubing row',
   'stability ball hamstring curl': 'floor bridge',
   'stability ball hamstring curls': 'floor bridge',
   'ball hamstring curl': 'floor bridge',
@@ -172,7 +179,7 @@ export function searchNasmLibraryMedia(query: string): FuzzyMatchResult | null {
 `
 
   fs.writeFileSync('lib/nasm-fuzzy-matcher.ts', code)
-  console.log('Successfully wrote lib/nasm-fuzzy-matcher.ts with all 351 official exercises!')
+  console.log(`Successfully wrote lib/nasm-fuzzy-matcher.ts with all ${library.length} official exercises!`)
 }
 
 main().catch(err => {

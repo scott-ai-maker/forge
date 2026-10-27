@@ -11,9 +11,11 @@ describe('NASM Fuzzy Heuristic Media & Movement Search Engine', () => {
   it('matches only exact official canonical NASM movement names', () => {
     expect(searchNasmLibraryMedia('Barbell Bench Press')).not.toBeNull()
     expect(searchNasmLibraryMedia('Dumbbell Hammer Curl')).not.toBeNull()
-    expect(searchNasmLibraryMedia('BOSU Plank')).not.toBeNull()
     expect(searchNasmLibraryMedia('Single-Leg Single-Arm Scaption')).not.toBeNull()
 
+    // Non-NASM custom exercises must return null
+    expect(searchNasmLibraryMedia('BOSU Plank')).toBeNull()
+    expect(searchNasmLibraryMedia('BOSU Dome Squat')).toBeNull()
     expect(searchNasmLibraryMedia('Inverted Cable Pec Fly (Strength 1A)')).toBeNull()
     expect(searchNasmLibraryMedia('Barbell Standing Overhead Press')).toBeNull()
     expect(searchNasmLibraryMedia('Squat to Overhead Reach & Scaption')).toBeNull()
@@ -26,7 +28,7 @@ describe('NASM Fuzzy Heuristic Media & Movement Search Engine', () => {
 
     const bridgeMatch = searchNasmLibraryMedia('stability ball hamstring curl')
     expect(bridgeMatch).not.toBeNull()
-    expect(bridgeMatch?.record.name).toBe('Stability Ball Hamstring Curl')
+    expect(bridgeMatch?.record.name).toBe('Floor Bridge')
     expect(bridgeMatch?.record.videoId).toBe('Z3cY3d3BBo4')
 
     const cobraMatch = searchNasmLibraryMedia('prone cobra on floor')

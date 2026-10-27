@@ -332,7 +332,6 @@ export const RELEASE_LOG: ReleaseLogEntry[] = [
     ],
     relatedLinks: [
       { label: 'Client Training Portal', href: '/dashboard/fitness' },
-      { label: 'Exercise Modalities', href: '/exercises/stability-ball' },
     ],
   },
   {

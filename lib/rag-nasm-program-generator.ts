@@ -1063,8 +1063,8 @@ function buildDistinctOptWorkoutDay(params: {
       exercises.push({
         block: 'resistance',
         name: eq.hasDumbbells
-          ? 'Single-Leg Squat to Box / Bench (Dumbbell Counterbalance)'
-          : 'Single-Leg Squat to Chair / Step (Bodyweight Balance)',
+          ? 'Single Leg Squat'
+          : 'Assisted Single Leg Squat',
         sets: '3',
         reps: '15 per leg',
         tempo: '4/2/1',
@@ -1129,8 +1129,8 @@ function buildDistinctOptWorkoutDay(params: {
       exercises.push({
         block: 'resistance',
         name: eq.hasDumbbells
-          ? 'Multiplanar Step-Up to Balance (Dumbbells)'
-          : 'Multiplanar Lunge to Balance (Bodyweight)',
+          ? 'Step Up To Balance Sagital'
+          : 'Lunge To Balance Sagittal',
         sets: '3',
         reps: '15 per leg',
         tempo: '4/2/1',
@@ -1479,9 +1479,7 @@ function buildDistinctOptWorkoutDay(params: {
         ? 'Heavy Banded Push-Up'
         : 'Tempo Deficit Push-Ups'
 
-      const chestStabilityName = eq.hasStabilityBall
-        ? 'Stability Ball Push-Up'
-        : 'Push-Up with Single-Leg Balance'
+      const chestStabilityName = 'Push-Up'
 
       exercises.push(
         {
@@ -1611,12 +1609,12 @@ function buildDistinctOptWorkoutDay(params: {
       const squatStrengthName = eq.hasBarbell && eq.hasSquatRack
         ? 'Barbell Back Squat'
         : eq.hasDumbbells
-        ? 'Heavy Dumbbell Goblet Squat'
+        ? 'Goblet Squat'
         : eq.hasBands
-        ? 'Heavy Banded Squat'
+        ? 'Goblet Squat'
         : 'Bulgarian Split Squat'
 
-      const squatStabilityName = 'Single-Leg Step-Up to Balance'
+      const squatStabilityName = 'Step Up To Balance Sagital'
 
       exercises.push(
         {

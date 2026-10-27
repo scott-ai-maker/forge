@@ -75,38 +75,14 @@ describe('Master 1-to-1 NASM Edge Exercise Video Resolver', () => {
     expect(enriched.imageUrl).toBeTruthy()
   })
 
-  it('resolves BOSU Balance Trainer movement videos with exact embeds and thumbnails', () => {
-    const pushup = resolveExerciseVideoEmbed('BOSU Push-Up', null)
-    expect(pushup.videoId).toBe('Wo3viNH3E1c')
-    expect(pushup.embedUrl).toContain('Wo3viNH3E1c')
-    expect(pushup.sourceTitle).toContain('BOSU® Official')
-
-    const squat = resolveExerciseVideoEmbed('BOSU Dome Squat', null)
-    expect(squat.videoId).toBe('evJOL2cdmt4')
-    expect(squat.sourceTitle).toContain('BOSU® Official')
-
-    const plank = resolveExerciseVideoEmbed('BOSU Plank (Forearms on Dome)', null)
-    expect(plank.videoId).toBe('C_NM5IbRlqM')
-    expect(plank.sourceTitle).toContain('BOSU® Official')
-
-    const enriched = enrichExerciseMedia({ name: 'BOSU Mountain Climbers' })
-    expect(enriched.videoUrl).toContain('iyZHqgsI4Zk')
-    expect(enriched.imageUrl).toContain('iyZHqgsI4Zk')
-  })
-
-  it('resolves TheraBand Pro Series SCP Stability Ball movement videos with exact embeds and thumbnails', () => {
-    const chestPress = resolveExerciseVideoEmbed('Stability Ball Dumbbell Chest Press', null)
-    expect(chestPress.videoId).toBe('FfTyQAYrnqM')
-    expect(chestPress.embedUrl).toContain('FfTyQAYrnqM')
-    expect(chestPress.sourceTitle).toContain('TheraBand® Official')
-
-    const proneWY = resolveExerciseVideoEmbed('Stability Ball Scapular Triad', null)
-    expect(proneWY.videoId).toBe('j6D0V742sT8')
-    expect(proneWY.sourceTitle).toContain('TheraBand® Official')
-
+  it('resolves official NASM Edge movement videos with exact embeds and attribution', () => {
     const crunch = resolveExerciseVideoEmbed('Stability Ball Crunch', null)
     expect(crunch.videoId).toBe('QFLftqPWjoI')
     expect(crunch.sourceTitle).toContain('NASM Edge')
+
+    const hamstringCurl = resolveExerciseVideoEmbed('Stability Ball Hamstring Curl', null)
+    expect(hamstringCurl.videoId).toBe('Z3cY3d3BBo4')
+    expect(hamstringCurl.sourceTitle).toContain('NASM Edge')
 
     const enriched = enrichExerciseMedia({ name: 'Stability Ball Hamstring Curl' })
     expect(enriched.videoUrl).toContain('Z3cY3d3BBo4')

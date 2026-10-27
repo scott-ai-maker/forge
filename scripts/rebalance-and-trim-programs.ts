@@ -250,7 +250,7 @@ Own your tempo, breathe through your nose, and get back to your day with energy.
         exercises: [
           { name: 'foam roll calves', block: 'warmup', sets: '1', reps: '45s hold', tempo: 'Slow', rest: '0s', coachingCues: ['Roll slowly on lower leg, pause on tender spots to restore ankle dorsiflexion.'] },
           { name: 'static kneeling hip flexor stretch', block: 'warmup', sets: '1', reps: '30s per side', tempo: 'Static', rest: '0s', coachingCues: ['Tuck hips under, gently press forward until gentle front hip stretch.'] },
-          { name: 'stability ball wall squat', block: 'resistance', sets: '2', reps: '10-12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Keep feet out in front so shins stay perfectly vertical. Zero knee pain, 4s down, 2s hold.'] },
+          { name: 'box squat', block: 'resistance', sets: '2', reps: '10-12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Keep feet out in front so shins stay perfectly vertical. Zero knee pain, 4s down, 2s hold.'] },
           { name: 'standing tubing row', block: 'resistance', sets: '2', reps: '12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Stand tall, pull elbows back, squeeze shoulder blades together for 2 seconds.'] },
           { name: 'single leg floor bridge', block: 'resistance', sets: '2', reps: '10 reps per side', tempo: '4/2/1', rest: '60s', coachingCues: ['Drive heel into floor, lift hips, squeeze glute at the top without hyperextending back.'] },
           { name: 'bird dog', block: 'resistance', sets: '2', reps: '10 reps per side', tempo: '4/2/1', rest: '60s', coachingCues: ['Lengthen opposite arm and leg, maintain stable pelvis.'] },
@@ -272,14 +272,14 @@ Own your tempo, breathe through your nose, and get back to your day with energy.
       {
         day: 2,
         focus: 'Multiplanar Balance & Scapular Posture',
-        notes: 'Session 2: Gluteus medius activation with lateral band walks, stability ball chest press, and single leg reach.',
+        notes: 'Session 2: Gluteus medius activation with lateral band walks, dumbbell bench press, and single leg reach.',
         exercises: [
           { name: 'foam roll calves', block: 'warmup', sets: '1', reps: '45s hold', tempo: 'Slow', rest: '0s', coachingCues: ['Hold tender spots 30-45 seconds until tissue softens.'] },
           { name: 'static pectoral ball stretch', block: 'warmup', sets: '1', reps: '30s hold per side', tempo: 'Static', rest: '0s', coachingCues: ['Open chest, breathe deep into diaphragm.'] },
-          { name: 'stability ball dumbbell chest press', block: 'resistance', sets: '2', reps: '10-12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Head and neck resting on ball, bridge hips up, press dumbbells smoothly.'] },
+          { name: 'dumbbell bench press', block: 'resistance', sets: '2', reps: '10-12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Drive through shoulder blades, press dumbbells smoothly in scapular plane.'] },
           { name: 'lateral band walking', block: 'resistance', sets: '2', reps: '10 reps per direction', tempo: '4/2/1', rest: '60s', coachingCues: ['Keep toes pointing straight ahead, step sideways to fire outer hip stabilizers.'] },
           { name: 'single leg balance reach frontal plane', block: 'resistance', sets: '2', reps: '8-10 reps per leg', tempo: '4/2/1', rest: '60s', coachingCues: ['Balance on one foot, reach non-working leg out to the side with control.'] },
-          { name: 'stability ball prone cobra', block: 'resistance', sets: '2', reps: '10-12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Rotate thumbs to ceiling, squeeze shoulder blades down and back.'] },
+          { name: 'ball cobra', block: 'resistance', sets: '2', reps: '10-12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Rotate thumbs to ceiling, squeeze shoulder blades down and back.'] },
           { name: 'static latissimus dorsi ball stretch', block: 'cooldown', sets: '1', reps: '30s hold', tempo: 'Static', rest: '0s', coachingCues: ['Gentle stretch across lats and thoracic spine.'] },
         ].map(e => ({
           ...e,
@@ -298,13 +298,13 @@ Own your tempo, breathe through your nose, and get back to your day with energy.
       {
         day: 3,
         focus: 'Gluteal Dominance & Core Stability',
-        notes: 'Session 3: Bridge variations, wall squats, tubing rows, and dead bug core control.',
+        notes: 'Session 3: Bridge variations, box squats, tubing rows, and dead bug core control.',
         exercises: [
           { name: 'self myofascial release smr tensor fascia latae', block: 'warmup', sets: '1', reps: '45s hold per side', tempo: 'Slow', rest: '0s', coachingCues: ['Release outer hip/TFL tension to protect knees.'] },
           { name: 'static standing adductor stretch', block: 'warmup', sets: '1', reps: '30s hold per side', tempo: 'Static', rest: '0s', coachingCues: ['Wide stance, shift weight to one side, feel inner thigh stretch.'] },
-          { name: 'stability ball bridge', block: 'resistance', sets: '2', reps: '12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Heels on ball, lift hips, squeeze glutes and hamstrings for 2s at the top.'] },
+          { name: 'floor bridge', block: 'resistance', sets: '2', reps: '12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Drive heels into floor, lift hips, squeeze glutes for 2s at the top.'] },
           { name: 'standing tubing row', block: 'resistance', sets: '2', reps: '12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Smooth pulling motion, upright posture.'] },
-          { name: 'stability ball wall squat', block: 'resistance', sets: '2', reps: '10-12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Ball supporting lower back, sit back, vertical shins.'] },
+          { name: 'box squat', block: 'resistance', sets: '2', reps: '10-12 reps', tempo: '4/2/1', rest: '60s', coachingCues: ['Hips back onto box, vertical shins, drive up through heels.'] },
           { name: 'dead bug', block: 'resistance', sets: '2', reps: '10 reps per side', tempo: '4/2/1', rest: '60s', coachingCues: ['Opposite arm and leg reach, back glued to floor.'] },
           { name: 'static seated calf stretch', block: 'cooldown', sets: '1', reps: '30s per leg', tempo: 'Static', rest: '0s', coachingCues: ['Relax into calf stretch to complete the workout.'] },
         ].map(e => ({
