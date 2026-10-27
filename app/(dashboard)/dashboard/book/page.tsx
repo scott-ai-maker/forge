@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
-import { supabaseAdmin } from '@/lib/supabase'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SlotPicker from '@/components/booking/SlotPicker'
 import SiteHeader from '@/components/ui/SiteHeader'
@@ -15,26 +14,6 @@ export default async function BookPage() {
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/auth/login')
-
-  async function activateTestCredits() {
-    'use server'
-    const authClient = await createClient()
-    const {
-      data: { user: currentUser },
-    } = await authClient.auth.getUser()
-    if (!currentUser) return
-    const admin = supabaseAdmin()
-    await admin.from('client_packages').insert({
-      client_id: currentUser.id,
-      package_name: 'Forge Executive Diagnostic Retainer (QA Test Access)',
-      sessions_total: 4,
-      sessions_remaining: 3,
-      source: 'comp',
-      grant_note: 'Developer & QA Calendar Testing Access',
-      discount_amount_cents: 0,
-    })
-    redirect('/dashboard/book')
-  }
 
   const { data: packages } = await supabase
     .from('client_packages')
@@ -193,8 +172,8 @@ export default async function BookPage() {
               style={{
                 marginBottom: 20,
                 padding: '14px 18px',
-                background: 'rgba(212,160,23,0.12)',
-                border: '1px solid rgba(212,160,23,0.4)',
+                background: 'rgba(212,160,23,0.08)',
+                border: '1px solid rgba(212,160,23,0.3)',
                 borderRadius: 8,
                 display: 'flex',
                 alignItems: 'center',
@@ -207,38 +186,35 @@ export default async function BookPage() {
                 <GaaIcon name="ticket" size={20} tone="gold" />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF' }}>
-                    Calendar Preview · 0 Diagnostic Credits Active
+                    0 Diagnostic Credits Active
                   </div>
                   <div style={{ fontSize: 11.5, color: 'var(--gray)' }}>
-                    Browsing live open slots with Coach Gordon. Selecting any slot below will automatically apply complimentary QA credits, or tap to claim now.
+                    Browsing live open slots with Coach Gordon. To book a 1-on-1 kinetic assessment, acquire a diagnostic package.
                   </div>
                 </div>
               </div>
-              <form action={activateTestCredits}>
-                <button
-                  type="submit"
-                  className="tactile-btn"
-                  style={{
-                    padding: '8px 16px',
-                    background: 'linear-gradient(135deg, var(--gold) 0%, #B8860B 100%)',
-                    color: '#080E18',
-                    border: 'none',
-                    borderRadius: 5,
-                    fontFamily: 'Raleway, sans-serif',
-                    fontSize: 11.5,
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <GaaIcon name="ticket" size={13} tone="dark" />
-                  <span>+ Claim 3 QA Test Credits</span>
-                </button>
-              </form>
+              <a
+                href="/packages"
+                className="tactile-btn"
+                style={{
+                  padding: '8px 16px',
+                  background: 'rgba(212, 160, 23, 0.15)',
+                  border: '1px solid rgba(212, 160, 23, 0.5)',
+                  color: 'var(--gold-lt)',
+                  borderRadius: 5,
+                  fontFamily: 'Raleway, sans-serif',
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>View Packages →</span>
+              </a>
             </div>
           )}
 

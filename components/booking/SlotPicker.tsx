@@ -137,42 +137,19 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
 
   async function handleBook() {
     if (!selectedSlot) return
+    if (!selectedPackageId || packages.length === 0) {
+      setError('You have 0 diagnostic credits remaining. Please acquire a session package to lock this appointment.')
+      return
+    }
     setBooking(true)
     setError(null)
-
-    let packageIdToUse = selectedPackageId
-
-    // If user has 0 packages or no selected package, auto-claim testing credit seamlessly
-    if (!packageIdToUse || packages.length === 0) {
-      try {
-        const claimRes = await fetch('/api/sessions/claim-test-credits', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        })
-        if (claimRes.ok) {
-          const claimData = await claimRes.json()
-          if (claimData.package?.id) {
-            packageIdToUse = claimData.package.id
-            setSelectedPackageId(packageIdToUse)
-          }
-        } else {
-          setError('No active diagnostic credits. Please purchase a package or claim testing credits.')
-          setBooking(false)
-          return
-        }
-      } catch {
-        setError('Failed to activate testing credit. Please try again.')
-        setBooking(false)
-        return
-      }
-    }
 
     try {
       const res = await fetch('/api/sessions/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          packageId: packageIdToUse,
+          packageId: selectedPackageId,
           scheduledAt: selectedSlot.datetime,
         }),
       })
@@ -1022,7 +999,9 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
               {selectedPackage ? (
                 <>Deducting 1 credit from: <strong style={{ color: '#FFFFFF' }}>{selectedPackage.package_name}</strong></>
               ) : (
-                <>Applying 1 complimentary test credit: <strong style={{ color: '#FFFFFF' }}>QA Diagnostic Session</strong></>
+                <a href="/packages" style={{ color: 'var(--gold-lt)', textDecoration: 'none' }}>
+                  0 credits active &bull; <span style={{ textDecoration: 'underline' }}>View Packages →</span>
+                </a>
               )}
             </div>
           </div>
