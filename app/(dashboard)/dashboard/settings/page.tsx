@@ -24,7 +24,13 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
 
   if (!user) redirect('/auth/login')
 
-  const [{ data: profile }, { data: latestPackage }, { data: fitnessProfile }, { data: workoutPlan, error: workoutPlanError }] = await Promise.all([
+  const [
+    { data: profile },
+    { data: latestPackage },
+    { data: fitnessProfile },
+    { data: workoutPlan, error: workoutPlanError },
+    { data: scheduledSessions },
+  ] = await Promise.all([
     supabase
       .from('clients')
       .select('email, full_name, phone, role, avatar_path')
@@ -49,10 +55,16 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('sessions')
+      .select('id, scheduled_at, duration_mins, notes, status')
+      .eq('client_id', user.id)
+      .eq('status', 'scheduled')
+      .order('scheduled_at', { ascending: true }),
   ])
 
   if (workoutPlanError) throw new Error(`Could not load workout schedule: ${workoutPlanError.message}`)
-  const workoutSchedule = buildWorkoutSchedule(workoutPlan?.plan_json)
+  const workoutSchedule = buildWorkoutSchedule(workoutPlan?.plan_json, scheduledSessions)
   const avatarUrl = await createSignedFitnessPhotoUrl(supabase, profile?.avatar_path)
 
   const initialProfile = {

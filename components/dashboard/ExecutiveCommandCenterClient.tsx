@@ -10,6 +10,7 @@ import PrescribedToolboxBanner from '@/components/fitness/PrescribedToolboxBanne
 import ReferralDashboardWidget from '@/components/referrals/ReferralDashboardWidget'
 import type { DossierMetrics } from '@/lib/sunday-dossier-engine'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
+import { generateIcsCalendar, downloadIcsFile } from '@/lib/calendar-sync'
 
 export interface ExecutiveCommandCenterClientProps {
   clientName: string
@@ -507,24 +508,55 @@ export default function ExecutiveCommandCenterClient({
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {nextSession ? (
-              <Link
-                href="/dashboard/live"
-                className="tactile-btn"
-                style={{
-                  padding: '7px 14px',
-                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                  color: '#FFFFFF',
-                  borderRadius: 6,
-                  fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                  textTransform: 'uppercase',
-                  fontSize: 11.5,
-                  letterSpacing: '0.06em',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                }}
-              >
-                Enter Live Studio →
-              </Link>
+              <>
+                <Link
+                  href="/dashboard/live"
+                  className="tactile-btn"
+                  style={{
+                    padding: '7px 14px',
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    color: '#FFFFFF',
+                    borderRadius: 6,
+                    fontFamily: 'var(--font-sans, Raleway), sans-serif',
+                    textTransform: 'uppercase',
+                    fontSize: 11.5,
+                    letterSpacing: '0.06em',
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                  }}
+                >
+                  Enter Live Studio →
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ics = generateIcsCalendar({
+                      title: 'Forge Athletic: Live 1-on-1 Studio Session w/ Coach Gordon',
+                      startTime: nextSession.scheduled_at,
+                      durationMins: nextSession.duration_mins || 60,
+                      location: 'https://forge-athletic.app/dashboard/live',
+                    })
+                    downloadIcsFile('forge-live-session', ics)
+                  }}
+                  style={{
+                    padding: '7px 12px',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: 6,
+                    color: '#FFFFFF',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                  title="Add to Apple / Outlook Calendar (.ics)"
+                >
+                  <GaaIcon name="calendar" size={12} tone="gold" />
+                  <span>Sync Calendar</span>
+                </button>
+              </>
             ) : totalRemaining > 0 ? (
               <Link
                 href="/dashboard/book"

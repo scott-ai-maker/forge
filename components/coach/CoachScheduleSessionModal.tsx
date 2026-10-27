@@ -46,13 +46,13 @@ export default function CoachScheduleSessionModal({
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null)
 
-  // Custom date/time fields
+  // Custom date/time fields (defaults to 5:00 PM ET)
   const [customDate, setCustomDate] = useState(() => {
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
     return tomorrow.toISOString().split('T')[0]
   })
-  const [customTime, setCustomTime] = useState('10:00')
+  const [customTime, setCustomTime] = useState('17:00')
 
   // Selected package or comp
   const [selectedPackageId, setSelectedPackageId] = useState<string>('')
@@ -260,7 +260,7 @@ export default function CoachScheduleSessionModal({
                 SCHEDULE 1:1 CONSULTATION
               </h2>
               <div style={{ fontSize: 12, color: 'var(--gray)', marginTop: 2 }}>
-                Athlete: <strong style={{ color: 'var(--gold-lt)' }}>{clientName}</strong>
+                Athlete: <strong style={{ color: 'var(--gold-lt)' }}>{clientName}</strong> &bull; Operating Hours: <span style={{ color: '#FFFFFF' }}>M–F 5pm–8pm ET | Weekends 8am–2pm ET</span>
               </div>
             </div>
           </div>

@@ -20,6 +20,7 @@ import { evaluateClientOnboardingProgression, type ClientProgressionProfile } fr
 import { type ClientStatus } from '@/lib/client-lifecycle'
 import CoachOnboardingWorkflowStudio from '@/components/coach/CoachOnboardingWorkflowStudio'
 import CoachLiveSessionLauncher, { AssignedClientLauncherItem } from '@/components/coach/CoachLiveSessionLauncher'
+import CoachLiveScheduleAgenda, { CoachScheduledSession } from '@/components/coach/CoachLiveScheduleAgenda'
 import { getTeamsForCoach } from '@/lib/teams'
 import SiteHeader from '@/components/ui/SiteHeader'
 import { APP_VERSION } from '@/lib/app-version'
@@ -394,6 +395,19 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
       nextUpcomingSessionByClient[row.client_id] = row.scheduled_at
     }
   }
+
+  const clientNameMap = new Map((assignedClients ?? []).map(c => [c.id, c.full_name ?? 'Assigned Athlete']))
+  const clientEmailMap = new Map((assignedClients ?? []).map(c => [c.id, c.email ?? '']))
+  const coachScheduleSessions: CoachScheduledSession[] = (upcomingSessions ?? [])
+    .map(s => ({
+      id: s.id,
+      clientId: s.client_id,
+      clientName: clientNameMap.get(s.client_id) ?? 'Assigned Athlete',
+      clientEmail: clientEmailMap.get(s.client_id) ?? '',
+      scheduledAt: s.scheduled_at,
+      status: s.status,
+    }))
+    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
 
   const clientMetricsRows = (assignedClients ?? []).map(client => {
     const statsForClient = recentSetStatsByClient[client.id] ?? { sets: 0, reps: 0, volumeKg: 0, rpeSum: 0, rpeCount: 0 }
@@ -1031,6 +1045,9 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
 
         {activeTab === 'overview' && (
           <>
+            {/* ── Coach Gordon Live Calendar & Studio Schedule ── */}
+            <CoachLiveScheduleAgenda sessions={coachScheduleSessions} />
+
             {/* ── 1:1 Live Video Studio & Movement Screen Launcher ── */}
             <CoachLiveSessionLauncher assignedClients={launcherClients} teams={coachTeams} />
 
