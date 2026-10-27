@@ -62,6 +62,14 @@ const homeFaqStructuredData = {
         text: 'Using standard smartphone video and computer vision algorithms, Forge Athletic evaluates 33 kinetic chain anatomical landmarks during an overhead squat assessment, identifying overactive and underactive muscle compensations to formulate targeted corrective exercises.',
       },
     },
+    {
+      '@type': 'Question',
+      name: 'Are live 1-on-1 coaching sessions available with Coach Gordon?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. Live 1-on-1 coaching sessions with Coach Gordon in the high-definition Forge Live Video Studio are available. Because Coach Gordon personally leads each 60-minute session with live telestration, multi-angle form validation, and instantaneous OPT™ adjustments, active athlete seats are strictly limited, and scheduling is dedicated exclusively to nights (evenings) and weekends with advance booking.',
+      },
+    },
   ],
 }
 
@@ -112,9 +120,9 @@ const AUDIENCE_PERSONAS = [
     imageAlt: 'Athletic trainee holding front-rack kettlebell in a high-performance gym facility',
   },
   {
-    tag: 'Train Anywhere',
-    title: 'Hybrid & Remote Video Coaching',
-    description: 'Train at home, apartment gyms, or on the road with clear video guidance, asynchronous form reviews, and direct coaching access whenever you need it.',
+    tag: 'Live 1-on-1 Studio',
+    title: 'Live 1-on-1 Video Coaching (Nights & Weekends)',
+    description: 'Train live 1-on-1 with Coach Gordon in the high-definition Live Video Studio (strictly limited seats; available nights and weekends), or access asynchronous video form reviews and custom training plans anytime.',
     image: '/images/remote-virtual-coaching.jpg',
     imageAlt: 'Client training in a home gym guided by Coach Gordon on a live tablet video consultation',
   },
@@ -432,6 +440,59 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           <p>Start with the tools you need now. Upgrade when you are ready for more coaching.</p>
         </div>
         <ForgeMembershipPlans />
+
+        {/* Live 1:1 Studio Coaching Callout */}
+        <div
+          style={{
+            margin: '2.5rem auto 1.5rem',
+            maxWidth: '1080px',
+            padding: '1.25rem 1.5rem',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%)',
+            border: '1px solid rgba(212, 175, 55, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem',
+          }}
+        >
+          <div style={{ maxWidth: '780px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '10px', fontFamily: 'var(--font-telemetry)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#D4AF37', background: 'rgba(212, 175, 55, 0.18)', border: '1px solid rgba(212, 175, 55, 0.35)', padding: '2px 8px', borderRadius: '4px' }}>
+                STRICTLY LIMITED SEATS
+              </span>
+              <span style={{ fontSize: '10px', fontFamily: 'var(--font-telemetry)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#34D399', background: 'rgba(52, 211, 153, 0.15)', border: '1px solid rgba(52, 211, 153, 0.35)', padding: '2px 8px', borderRadius: '4px' }}>
+                NIGHTS &amp; WEEKENDS ONLY
+              </span>
+            </div>
+            <strong style={{ color: '#FFF', fontSize: '1.08rem', fontFamily: 'var(--font-heading)', letterSpacing: '0.02em', display: 'block' }}>
+              Live 1-on-1 Studio Sessions with Coach Gordon
+            </strong>
+            <p style={{ margin: '4px 0 0', color: '#CBD5E1', fontSize: '0.88rem', lineHeight: 1.5 }}>
+              Connect live in the high-definition Live Video Studio featuring real-time telestration, slow-motion replays, and instant OPT™ adjustments. Limited seat capacity; scheduled exclusively for nights and weekends.
+            </p>
+          </div>
+          <Link
+            href="/packages#live-1-on-1"
+            style={{
+              padding: '9px 18px',
+              borderRadius: '8px',
+              background: 'var(--gold)',
+              color: '#080E14',
+              fontFamily: 'var(--font-heading)',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Explore 1:1 Sessions →
+          </Link>
+        </div>
+
         <p className="forge-billing-note">Secure checkout. Cancel recurring memberships at any time.</p>
       </section>
 

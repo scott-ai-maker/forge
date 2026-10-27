@@ -17,6 +17,31 @@ function AddonCard({ addon }: { addon: ForgeAddon }) {
   return (
     <article className={`forge-plan-card forge-addon-card${addon.popular ? ' forge-plan-card-featured' : ''}`}>
       {addon.popular && <span className="forge-plan-label">Most popular</span>}
+      {addon.seatCapLabel && (
+        <span
+          className="forge-plan-label"
+          style={{
+            background: 'rgba(212, 175, 55, 0.15)',
+            color: '#D4AF37',
+            border: '1px solid rgba(212, 175, 55, 0.35)',
+          }}
+        >
+          {addon.seatCapLabel}
+        </span>
+      )}
+      {addon.availabilityLabel && (
+        <span
+          className="forge-plan-label"
+          style={{
+            background: 'rgba(52, 211, 153, 0.15)',
+            color: '#34D399',
+            border: '1px solid rgba(52, 211, 153, 0.35)',
+            fontSize: '0.72rem',
+          }}
+        >
+          {addon.availabilityLabel}
+        </span>
+      )}
       <h4>{addon.name}</h4>
       <p className="forge-addon-tagline">{addon.tagline}</p>
       <p className="forge-plan-price">

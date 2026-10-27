@@ -65,9 +65,9 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
       'Master Coach Safety Gate: Plans certified by Coach Gordon',
       'Quarterly video reviews with Coach Gordon',
       'Direct messaging with your coach',
-      'Evening advisory review window (within 1 business day)',
+      'Dedicated evening & weekend live review & advisory windows',
       '8 video form reviews per month in Form Lab',
-      'Strictly limited to 15 active athletes to protect coach focus',
+      'Strictly limited to 15 active athlete seats to protect coach focus',
     ],
   },
 ]

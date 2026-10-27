@@ -35,8 +35,8 @@ const packagesStructuredData = {
     '@type': 'AggregateOffer',
     priceCurrency: 'USD',
     lowPrice: '49.00',
-    highPrice: '299.00',
-    offerCount: '3',
+    highPrice: '1240.00',
+    offerCount: '4',
     offers: [
       {
         '@type': 'Offer',
@@ -64,6 +64,15 @@ const packagesStructuredData = {
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
         description: 'Direct 1-on-1 messaging with Coach Gordon, quarterly video strategy reviews, 8 video reviews per month in Form Lab, and Master Coach Safety Gate. Strictly capped at 15 athletes.',
+      },
+      {
+        '@type': 'Offer',
+        name: 'Live 1-on-1 Studio Coaching Sessions',
+        price: '180.00',
+        priceCurrency: 'USD',
+        availability: 'https://schema.org/LimitedAvailability',
+        url: 'https://forge-athletic.app/packages#add-ons',
+        description: 'Real-time 1-on-1 live video coaching with Coach Gordon in the high-definition Live Video Studio. Strictly limited seat roster; availability dedicated exclusively to nights and weekends.',
       },
     ],
   },
@@ -139,6 +148,13 @@ const COMPARISON_ROWS = [
     plus: 'Algorithmic',
     support: 'Certified by Scott Gordon',
     note: 'Every training phase and deload cycle personally validated by Coach Gordon.',
+  },
+  {
+    feature: 'Live 1-on-1 Studio Sessions',
+    core: 'Add-on ($180/ea)',
+    plus: 'Add-on ($180/ea)',
+    support: 'Quarterly + Add-on',
+    note: 'Real-time video coaching in Live Studio. Strictly limited seats; dedicated availability to nights & weekends.',
   },
   {
     feature: 'Athlete Roster Limit',
@@ -311,6 +327,86 @@ export default function PackagesPage() {
             </tbody>
           </table>
         </section>
+
+        {/* Live 1-on-1 Studio Coaching Announcement Banner */}
+        <div
+          id="live-1-on-1"
+          style={{
+            margin: '3rem auto 1.5rem',
+            padding: '1.5rem 1.75rem',
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%)',
+            border: '1px solid rgba(212, 175, 55, 0.35)',
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1.25rem',
+          }}
+        >
+          <div style={{ maxWidth: '820px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#D4AF37',
+                  background: 'rgba(212, 175, 55, 0.18)',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  padding: '3px 9px',
+                  borderRadius: '4px',
+                }}
+              >
+                STRICTLY LIMITED SEATS
+              </span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#34D399',
+                  background: 'rgba(52, 211, 153, 0.15)',
+                  border: '1px solid rgba(52, 211, 153, 0.35)',
+                  padding: '3px 9px',
+                  borderRadius: '4px',
+                }}
+              >
+                NIGHTS &amp; WEEKENDS ONLY
+              </span>
+            </div>
+            <h3 style={{ margin: 0, color: '#FFF', fontSize: '1.25rem', fontFamily: 'var(--font-heading)', letterSpacing: '0.02em' }}>
+              Live 1-on-1 Studio Coaching
+            </h3>
+            <p style={{ margin: '6px 0 0', color: '#CBD5E1', fontSize: '0.92rem', lineHeight: 1.55 }}>
+              Train in real time with Coach Gordon in the high-definition Live Video Studio featuring real-time telestrator form markups, slow-motion replay analysis, and instant NASM OPT™ program updates. To guarantee premier coaching quality and personal attention, active client seats are strictly capped with booking reserved exclusively for evening (night) and weekend training blocks.
+            </p>
+          </div>
+          <a
+            href="#add-ons"
+            style={{
+              padding: '10px 18px',
+              borderRadius: '8px',
+              background: 'var(--gold)',
+              color: '#080E14',
+              fontFamily: 'var(--font-heading)',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 14px rgba(212, 160, 23, 0.25)',
+            }}
+          >
+            View 1:1 Packages ↓
+          </a>
+        </div>
 
         {/* Add-ons & Private Sessions */}
         <ForgeAddons />

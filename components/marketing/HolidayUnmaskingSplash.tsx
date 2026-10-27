@@ -73,9 +73,10 @@ const SNEAK_PEEKS: Array<{
       'Zero commute friction: train live from home, apartment gym, or hotel with Coach Gordon in real time',
       'Dual-camera multi-angle form validation with instantaneous slow-motion replays and telestration',
       'Real-time biometric HUD and corrective cues from Coach Gordon (18+ years experience, NASM-CPT since 2008)',
+      'Strictly limited seat roster: Dedicated booking reserved exclusively for nights and weekends',
     ],
     metric: '1-ON-1',
-    metricLabel: 'Direct Coach Access',
+    metricLabel: 'Nights & Weekends · Limited Seats',
   },
 ]
 

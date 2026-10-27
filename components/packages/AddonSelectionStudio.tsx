@@ -132,6 +132,21 @@ export default function AddonSelectionStudio({
                 {addon.tagline}
               </p>
 
+              {(addon.seatCapLabel || addon.availabilityLabel) && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                  {addon.seatCapLabel && (
+                    <span style={{ fontSize: 9.5, color: '#D4AF37', background: 'rgba(212,175,55,0.15)', border: '1px solid rgba(212,175,55,0.3)', padding: '1px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                      {addon.seatCapLabel}
+                    </span>
+                  )}
+                  {addon.availabilityLabel && (
+                    <span style={{ fontSize: 9.5, color: '#34D399', background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', padding: '1px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                      {addon.availabilityLabel}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div style={{ marginTop: 'auto', paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <div>
                   <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--gold)' }}>
@@ -207,6 +222,20 @@ export default function AddonSelectionStudio({
                   <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.04em' }}>
                     {activeAddon.name}
                   </h3>
+                  {(activeAddon.seatCapLabel || activeAddon.availabilityLabel) && (
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                      {activeAddon.seatCapLabel && (
+                        <span style={{ fontSize: 10, color: '#D4AF37', background: 'rgba(212,175,55,0.15)', border: '1px solid rgba(212,175,55,0.3)', padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                          {activeAddon.seatCapLabel}
+                        </span>
+                      )}
+                      {activeAddon.availabilityLabel && (
+                        <span style={{ fontSize: 10, color: '#34D399', background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                          {activeAddon.availabilityLabel}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <button

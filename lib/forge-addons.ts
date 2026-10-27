@@ -21,6 +21,8 @@ export interface ForgeAddon {
   uses?: number
   includes: readonly string[]
   isParked?: boolean
+  seatCapLabel?: string
+  availabilityLabel?: string
 }
 
 export const FORGE_ADDON_CATEGORIES: readonly { id: ForgeAddonCategory; title: string; blurb: string }[] = [
@@ -28,6 +30,11 @@ export const FORGE_ADDON_CATEGORIES: readonly { id: ForgeAddonCategory; title: s
     id: 'advanced-feature',
     title: 'Performance Upgrades & Diagnostics',
     blurb: 'Targeted tools, asynchronous video reviews, and diagnostic movement screens you can add to any membership. One-time purchases, no new subscription.',
+  },
+  {
+    id: 'private-session',
+    title: 'Live 1-on-1 Studio Sessions',
+    blurb: 'Real-time 1-on-1 coaching with Coach Gordon in the high-definition Forge Live Video Studio. Strictly limited seat capacity; availability dedicated exclusively to nights and weekends.',
   },
 ]
 
@@ -93,49 +100,58 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
       'Jet-lag recovery guidelines',
     ],
   },
-  // Parked 1:1 private session packs (parked while focusing on self-serve + async + occasional testing)
+  // Live 1:1 private session packs (strictly limited seat roster, dedicated to nights & weekends)
   {
     id: 'addon-private-session-single',
     category: 'private-session',
-    name: 'Private Session',
-    tagline: 'One live 1:1 session (evenings & Saturday mornings).',
+    name: 'Live 1-on-1 Private Session',
+    tagline: 'One 60-minute live studio session with Coach Gordon (nights & weekends only).',
     priceCents: 18000,
     sessions: 1,
-    isParked: true,
+    isParked: false,
+    seatCapLabel: 'Strictly limited seats',
+    availabilityLabel: 'Nights & weekends only',
     includes: [
-      '60-minute live video session with Coach Gordon',
-      'Dedicated off-hours booking (evenings & Saturday mornings, 48h advance notice)',
-      'Technique, programming, or goal-setting focus—your choice',
+      '60-minute live video session with Coach Gordon in the high-definition Live Studio',
+      'Dedicated off-hours booking: Evenings & weekends only (48h advance notice)',
+      'Strictly limited seat roster to ensure master-level attention and programming depth',
+      'Real-time form correction, telestrator markups, and instant NASM OPT™ program updates',
     ],
   },
   {
     id: 'addon-private-session-4',
     category: 'private-session',
-    name: '4-Session Private Pack',
-    tagline: 'Four 1:1 coaching sessions across your training cycle.',
+    name: '4-Session Live 1-on-1 Pack',
+    tagline: 'Four 60-minute live sessions across your training cycle (nights & weekends).',
     priceCents: 66000,
     sessions: 4,
     listPriceCents: 72000,
-    isParked: true,
+    isParked: false,
+    seatCapLabel: 'Strictly limited seats',
+    availabilityLabel: 'Nights & weekends only',
     includes: [
-      'Four 60-minute live sessions with Coach Gordon',
-      'Dedicated off-hours booking (evenings & Saturdays, 48h advance notice)',
-      'Plan adjusted after each session',
+      'Four 60-minute live sessions with Coach Gordon in the Live Studio',
+      'Dedicated off-hours booking: Scheduled exclusively for nights and weekends (48h notice)',
+      'Strictly limited seat roster to protect coach responsiveness and personal focus',
+      'Program calibration and kinetic compensation tracking after each session',
     ],
   },
   {
     id: 'addon-private-session-8',
     category: 'private-session',
-    name: '8-Session Private Pack',
-    tagline: 'Sustained 1:1 coaching for a full training block.',
+    name: '8-Session Live 1-on-1 Block',
+    tagline: 'Sustained 1-on-1 coaching for a full 8-week training block (nights & weekends).',
     priceCents: 124000,
     sessions: 8,
     listPriceCents: 144000,
-    isParked: true,
+    isParked: false,
+    seatCapLabel: 'Strictly limited seats',
+    availabilityLabel: 'Nights & weekends only',
     includes: [
-      'Eight 60-minute live sessions with Coach Gordon',
-      'Dedicated off-hours booking (evenings & Saturdays, 48h advance notice)',
-      'Plan adjusted after each session',
+      'Eight 60-minute live sessions with Coach Gordon in the Live Studio',
+      'Dedicated off-hours booking: Scheduled exclusively for nights and weekends (48h notice)',
+      'Strictly limited seat roster to maintain premier coaching stewardship',
+      'Continuous periodized progression, deload management, and weekly biomechanical review',
     ],
   },
 ]
