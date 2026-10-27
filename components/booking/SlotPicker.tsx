@@ -136,16 +136,43 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
   }, [packages, selectedPackageId])
 
   async function handleBook() {
-    if (!selectedSlot || !selectedPackageId) return
+    if (!selectedSlot) return
     setBooking(true)
     setError(null)
+
+    let packageIdToUse = selectedPackageId
+
+    // If user has 0 packages or no selected package, auto-claim testing credit seamlessly
+    if (!packageIdToUse || packages.length === 0) {
+      try {
+        const claimRes = await fetch('/api/sessions/claim-test-credits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+        if (claimRes.ok) {
+          const claimData = await claimRes.json()
+          if (claimData.package?.id) {
+            packageIdToUse = claimData.package.id
+            setSelectedPackageId(packageIdToUse)
+          }
+        } else {
+          setError('No active diagnostic credits. Please purchase a package or claim testing credits.')
+          setBooking(false)
+          return
+        }
+      } catch {
+        setError('Failed to activate testing credit. Please try again.')
+        setBooking(false)
+        return
+      }
+    }
 
     try {
       const res = await fetch('/api/sessions/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          packageId: selectedPackageId,
+          packageId: packageIdToUse,
           scheduledAt: selectedSlot.datetime,
         }),
       })
@@ -155,7 +182,7 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
       if (res.ok) {
         setConfirmedBooking({
           slot: selectedSlot,
-          packageName: selectedPackage?.package_name || 'Active Package',
+          packageName: selectedPackage?.package_name || 'Forge Diagnostic Retainer',
           sessionId: data.session?.id,
         })
         // Refresh server router so upcoming sessions stick to the dashboard and live schedule
@@ -992,7 +1019,11 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
                 fontWeight: 600,
               }}
             >
-              Deducting 1 credit from: <strong style={{ color: '#FFFFFF' }}>{selectedPackage?.package_name}</strong>
+              {selectedPackage ? (
+                <>Deducting 1 credit from: <strong style={{ color: '#FFFFFF' }}>{selectedPackage.package_name}</strong></>
+              ) : (
+                <>Applying 1 complimentary test credit: <strong style={{ color: '#FFFFFF' }}>QA Diagnostic Session</strong></>
+              )}
             </div>
           </div>
 

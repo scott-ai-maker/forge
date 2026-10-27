@@ -566,22 +566,32 @@ export default function ExecutiveCommandCenterClient({
                 Schedule Diagnostic ({totalRemaining} left)
               </Link>
             ) : (
-              <Link
-                href="/dashboard/fitness?workspace=lab"
-                className="tactile-btn"
-                style={{
-                  padding: '7px 14px',
-                  background: 'rgba(212,160,23,0.15)',
-                  border: '1px solid var(--gold-lt)',
-                  borderRadius: 6,
-                  color: 'var(--gold-lt)',
-                  fontSize: 11.5,
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                }}
-              >
-                Open Form Lab →
-              </Link>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Link
+                  href="/dashboard/book"
+                  className="sgf-button sgf-button-primary"
+                  style={{ padding: '7px 14px', fontSize: 11.5, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  <GaaIcon name="calendar" size={13} tone="dark" />
+                  <span>Book Live Session</span>
+                </Link>
+                <Link
+                  href="/dashboard/fitness?workspace=lab"
+                  className="tactile-btn"
+                  style={{
+                    padding: '7px 14px',
+                    background: 'rgba(212,160,23,0.15)',
+                    border: '1px solid var(--gold-lt)',
+                    borderRadius: 6,
+                    color: 'var(--gold-lt)',
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                  }}
+                >
+                  Open Form Lab →
+                </Link>
+              </div>
             )}
 
             <Link

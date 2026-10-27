@@ -188,95 +188,61 @@ export default async function BookPage() {
             boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
           }}
         >
-          {!activePackages || activePackages.length === 0 ? (
+          {(!activePackages || activePackages.length === 0) && (
             <div
               style={{
-                padding: '40px 20px',
-                textAlign: 'center',
+                marginBottom: 20,
+                padding: '14px 18px',
+                background: 'rgba(212,160,23,0.12)',
+                border: '1px solid rgba(212,160,23,0.4)',
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 12,
               }}
             >
-              <GaaIcon name="microscope" size={36} tone="gold" />
-              <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '12px 0 6px', letterSpacing: '0.04em' }}>
-                No diagnostic credits active
-              </h3>
-              <p
-                style={{
-                  fontFamily: 'Raleway, sans-serif',
-                  fontWeight: 300,
-                  fontSize: 14,
-                  color: 'var(--gray)',
-                  maxWidth: 520,
-                  margin: '0 auto 20px',
-                  lineHeight: 1.6,
-                }}
-              >
-                Diagnostic testing is scheduled by appointment or requested through your coach during diagnostic review cycles. If you need technique feedback on a lift, submit your video directly in Form Lab.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <a
-                    href="/dashboard/fitness?workspace=lab"
-                    className="sgf-button sgf-button-primary"
-                    style={{ padding: '12px 22px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-                  >
-                    <GaaIcon name="video-studio" size={15} tone="dark" />
-                    <span>Submit Lift to Form Lab</span>
-                  </a>
-                  <a
-                    href="/dashboard/messages"
-                    className="tactile-btn"
-                    style={{
-                      padding: '12px 22px',
-                      background: 'rgba(255,255,255,0.06)',
-                      border: '1px solid var(--navy-lt)',
-                      borderRadius: 6,
-                      color: 'var(--white)',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <GaaIcon name="message" size={15} tone="gold" />
-                    <span>Message Coach Gordon</span>
-                  </a>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <GaaIcon name="ticket" size={20} tone="gold" />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF' }}>
+                    Calendar Preview · 0 Diagnostic Credits Active
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--gray)' }}>
+                    Browsing live open slots with Coach Gordon. Selecting any slot below will automatically apply complimentary QA credits, or tap to claim now.
+                  </div>
                 </div>
-                <span style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 4 }}>
-                  Diagnostic add-ons and memberships can be explored at <a href="/packages" style={{ color: 'var(--gold-lt)', textDecoration: 'none', fontWeight: 700 }}>forge-athletic.app/packages</a>.
-                </span>
-
-                <form action={activateTestCredits} style={{ marginTop: 8 }}>
-                  <button
-                    type="submit"
-                    className="tactile-btn"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '10px 18px',
-                      borderRadius: 6,
-                      background: 'rgba(212, 160, 23, 0.15)',
-                      border: '1px solid rgba(212, 160, 23, 0.5)',
-                      color: 'var(--gold-lt)',
-                      fontFamily: 'Raleway, sans-serif',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <GaaIcon name="ticket" size={15} tone="gold" />
-                    <span>Activate 3 Test Diagnostic Credits (SlotPicker QA Mode)</span>
-                  </button>
-                </form>
               </div>
+              <form action={activateTestCredits}>
+                <button
+                  type="submit"
+                  className="tactile-btn"
+                  style={{
+                    padding: '8px 16px',
+                    background: 'linear-gradient(135deg, var(--gold) 0%, #B8860B 100%)',
+                    color: '#080E18',
+                    border: 'none',
+                    borderRadius: 5,
+                    fontFamily: 'Raleway, sans-serif',
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <GaaIcon name="ticket" size={13} tone="dark" />
+                  <span>+ Claim 3 QA Test Credits</span>
+                </button>
+              </form>
             </div>
-          ) : (
-            <SlotPicker packages={activePackages} />
           )}
+
+          <SlotPicker packages={activePackages ?? []} />
         </div>
       </div>
     </main>

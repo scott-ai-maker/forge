@@ -985,6 +985,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
         <div className="responsive-tabs-scroll" style={{ display: 'flex', gap: 8, paddingBottom: 6, marginBottom: 20 }}>
           {[
             { key: 'overview' as const, label: 'Overview', icon: null },
+            { key: 'schedule' as const, label: 'Live Calendar', icon: 'calendar' as GaaIconName },
             { key: 'onboarding' as const, label: 'Member Onboarding', icon: 'clipboard' as GaaIconName },
             { key: 'architect' as const, label: 'Program Builder', icon: 'brain' as GaaIconName },
             { key: 'triage' as const, label: 'Member Support', icon: 'lightning' as GaaIconName },
@@ -1040,6 +1041,13 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
         {activeTab === 'triage' && (
           <div style={{ marginBottom: 40 }}>
             <CoachTriageCockpit initialClients={triageSummaries} />
+          </div>
+        )}
+
+        {activeTab === 'schedule' && (
+          <div style={{ marginBottom: 40, display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <CoachLiveScheduleAgenda sessions={coachScheduleSessions} />
+            <CoachLiveSessionLauncher assignedClients={launcherClients} teams={coachTeams} />
           </div>
         )}
 
