@@ -50,15 +50,34 @@ export interface LobbyParticipant {
   joinedAt: number
   cameraActive?: boolean
   micActive?: boolean
+  teamId?: string
+  isSpotlighted?: boolean
+  isSpeaking?: boolean
+  latencyMs?: number
 }
 
 export interface WebRtcSignalPayload {
-  type: 'offer' | 'answer' | 'candidate' | 'join' | 'ready' | 'ready-ack' | 'ping' | 'pong'
+  type:
+    | 'offer'
+    | 'answer'
+    | 'candidate'
+    | 'join'
+    | 'ready'
+    | 'ready-ack'
+    | 'ping'
+    | 'pong'
+    | 'mute'
+    | 'spotlight'
+    | 'team-cue'
+    | 'circuit-timer'
   senderId: string
+  targetUserId?: string
+  senderName?: string
   sdp?: RTCSessionDescriptionInit
   candidate?: RTCIceCandidateInit | null
   timestamp?: number
   rtt?: number
+  data?: unknown
 }
 
 export interface WebRtcBridgeOptions {
@@ -466,7 +485,13 @@ export class WebRtcPeerBridge {
   }
 
   public async handleSignal(payload: WebRtcSignalPayload): Promise<void> {
-    if (this.isDestroyed || !this.pc || payload.senderId === this.options.currentUserId) {
+    if (
+      this.isDestroyed ||
+      !this.pc ||
+      !payload ||
+      payload.senderId === this.options.currentUserId ||
+      (payload.targetUserId && payload.targetUserId !== '*' && payload.targetUserId !== this.options.currentUserId)
+    ) {
       return
     }
 
@@ -612,3 +637,6 @@ export class WebRtcPeerBridge {
     this.pendingCandidates = []
   }
 }
+
+export { WebRtcMultiPeerBridge, type WebRtcMultiPeerBridgeOptions } from './webrtc-multi-peer-bridge'
+

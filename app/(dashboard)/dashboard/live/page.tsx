@@ -4,15 +4,22 @@ import { supabaseAdmin } from '@/lib/supabase'
 import SiteHeader from '@/components/ui/SiteHeader'
 import LogoutButton from '@/components/auth/LogoutButton'
 import LiveVideoCameraHud from '@/components/coach/LiveVideoCameraHud'
+import { getTeamById } from '@/lib/teams'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AthleteLiveSessionPage() {
+interface PageProps {
+  searchParams?: Promise<{ teamId?: string }>
+}
+
+export default async function AthleteLiveSessionPage({ searchParams }: PageProps) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
   const admin = supabaseAdmin()
+  const resolvedParams = searchParams ? await searchParams : {}
+  const targetTeamId = resolvedParams.teamId
 
   // Get active workout plan
   const { data: plan } = await admin
@@ -48,12 +55,20 @@ export default async function AthleteLiveSessionPage() {
     }
   }
 
+  // Resolve Team if teamId query parameter is provided
+  let team = null
+  if (targetTeamId) {
+    team = await getTeamById(targetTeamId, client?.designated_coach_id || undefined)
+  }
+
+  const isTeamSession = Boolean(team)
+  const sessionId = team ? `team-${team.id}` : `live-${user.id}`
   const athleteName = client?.full_name || user.email?.split('@')[0] || 'Athlete'
 
   return (
     <main style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader
-        badgeText="Live Studio"
+        badgeText={isTeamSession ? `Team Live Studio · ${team?.name}` : 'Live Studio'}
         links={[
           { href: '/dashboard', label: 'Today' },
           { href: '/dashboard/fitness', label: 'Training & progress' },
@@ -85,14 +100,16 @@ export default async function AthleteLiveSessionPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                Forge Athletic · Live Telehealth Studio
+                {isTeamSession ? `Forge Athletic · Team Telehealth Studio · ${team?.name}` : 'Forge Athletic · Live Telehealth Studio'}
               </span>
             </div>
             <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 26, letterSpacing: '0.04em', margin: '2px 0 0', color: 'var(--white)' }}>
-              1:1 LIVE COACHING & MOVEMENT HUD
+              {isTeamSession ? `${team?.name.toUpperCase()} · SQUAD LIVE COACHING` : '1:1 LIVE COACHING & MOVEMENT HUD'}
             </h1>
             <p style={{ margin: '2px 0 0', color: 'var(--gray)', fontSize: 13 }}>
-              Direct interactive video feed with {coachName}. Follow live pacing, joint alignment guides, and prescribed set cadences.
+              {isTeamSession
+                ? `Direct interactive squad video feed with ${coachName} and fellow teammates. Follow synchronized interval pacing, tempo pulse, and tactical form cues.`
+                : `Direct interactive video feed with ${coachName}. Follow live pacing, joint alignment guides, and prescribed set cadences.`}
             </p>
           </div>
         </div>
@@ -104,16 +121,20 @@ export default async function AthleteLiveSessionPage() {
             clientName={athleteName}
             exerciseName={
               (plan?.plan_json as { workouts?: Array<{ exercises?: Array<{ name?: string }> }> } | null)?.workouts?.[0]?.exercises?.[0]?.name ||
-              'Overhead Squat Assessment'
+              (isTeamSession ? 'Team Dynamic Movement & Kinetic Assessment' : 'Overhead Squat Assessment')
             }
             optPhase={plan?.phase_name ? `Phase ${plan.nasm_opt_phase}: ${plan.phase_name}` : 'Phase 2: Strength Endurance'}
             currentTempo={
               (plan?.plan_json as { workouts?: Array<{ exercises?: Array<{ tempo?: string }> }> } | null)?.workouts?.[0]?.exercises?.[0]?.tempo ||
               '2-0-2'
             }
-            sessionId={`live-${user.id}`}
+            sessionId={sessionId}
             currentUserId={user.id}
             isCoach={false}
+            isTeamSession={isTeamSession}
+            teamId={team?.id}
+            teamName={team?.name}
+            teamRoster={team?.members}
           />
         </div>
 

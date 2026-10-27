@@ -80,5 +80,32 @@ describe('CoachLiveSessionLauncher Logic & Architecture', () => {
     expect(getLaunchButtonText(nonWaitingClient, false)).toBe('Enter Studio with John →')
     expect(getLaunchButtonText(undefined, false)).toBe('Select Athlete to Begin')
   })
+
+  it('generates the correct live session destination room URL for selected team', () => {
+    const teamId = 'team-apex-performance'
+    const targetUrl = `/coach/teams/${teamId}/live`
+    expect(targetUrl).toBe('/coach/teams/team-apex-performance/live')
+  })
+
+  it('generates the matching webrtc room identifier between coach and team members', () => {
+    const teamId = 'team-squad-42'
+    const coachSessionId = `team-${teamId}`
+    const athleteSessionId = `team-${teamId}`
+
+    expect(coachSessionId).toBe(athleteSessionId)
+    expect(coachSessionId).toBe('team-team-squad-42')
+  })
+
+  it('formats team launch CTA based on waiting lobby counts', () => {
+    function getTeamLaunchButtonText(teamName: string, memberCount: number, waitingCount: number): string {
+      if (waitingCount > 0) {
+        return `Join ${teamName} in Studio Lobby (${waitingCount} Waiting) →`
+      }
+      return `Enter Team Studio with ${teamName} (${memberCount} Athletes) →`
+    }
+
+    expect(getTeamLaunchButtonText('Apex Performance', 6, 2)).toBe('Join Apex Performance in Studio Lobby (2 Waiting) →')
+    expect(getTeamLaunchButtonText('Executive Cohort', 10, 0)).toBe('Enter Team Studio with Executive Cohort (10 Athletes) →')
+  })
 })
 

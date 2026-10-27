@@ -26,8 +26,10 @@ import {
 import {
   getNasmClinicalMovementCard,
 } from '@/lib/nasm-clinical-movement-cards'
+import type { TeamCircuitTimerData } from '@/lib/teams'
+import { speakNasmCue } from '@/lib/nasm-assessments'
 
-export type VideoHudLayout = 'split' | 'pip' | 'focus'
+export type VideoHudLayout = 'split' | 'pip' | 'focus' | 'team_grid' | 'spotlight'
 
 interface LiveVideoCameraHudProps {
   clientName?: string
@@ -41,6 +43,10 @@ interface LiveVideoCameraHudProps {
   sessionId?: string
   currentUserId?: string
   isCoach?: boolean
+  isTeamSession?: boolean
+  teamId?: string
+  teamName?: string
+  teamRoster?: Array<{ id: string; fullName: string; email?: string }>
   onTogglePlumbLine?: (active: boolean) => void
   onToggleMetronome?: () => void
   onOpenPlateCalc?: () => void
@@ -134,6 +140,10 @@ export default function LiveVideoCameraHud({
   sessionId,
   currentUserId,
   isCoach = true,
+  isTeamSession = false,
+  teamId,
+  teamName,
+  teamRoster = [],
   onTogglePlumbLine,
   onToggleMetronome,
   onOpenPlateCalc,
@@ -148,6 +158,12 @@ export default function LiveVideoCameraHud({
   const [showPlumbLine, setShowPlumbLine] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [_streamError, setStreamError] = useState<string | null>(null)
+
+  // ── Team Session State (Athlete View) ──
+  const [teamCircuitTimer, setTeamCircuitTimer] = useState<TeamCircuitTimerData | null>(null)
+  const [isSpotlighted, setIsSpotlighted] = useState(false)
+  const [activeTeamCue, setActiveTeamCue] = useState<string | null>(null)
+  const [teammatesPresence, setTeammatesPresence] = useState<LobbyParticipant[]>([])
 
   // ── WebRTC Remote Stream & Peer Connection State ──
   const [activeRemoteStream, setActiveRemoteStream] = useState<MediaStream | null>(remoteStream ?? null)
@@ -425,6 +441,7 @@ export default function LiveVideoCameraHud({
     const syncPresence = () => {
       const presenceState = channel.presenceState()
       let foundCoach: LobbyParticipant | null = null
+      const teammates: LobbyParticipant[] = []
       for (const key of Object.keys(presenceState)) {
         const presences = presenceState[key] as unknown as (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[]
         for (const p of presences) {
@@ -437,12 +454,20 @@ export default function LiveVideoCameraHud({
               cameraActive: p.cameraActive,
               micActive: p.micActive,
             }
-            break
+          } else if (p.role === 'athlete' && (p.userId || key) !== currentUserId) {
+            teammates.push({
+              userId: p.userId || key,
+              name: p.name || 'Teammate',
+              role: 'athlete',
+              joinedAt: p.joinedAt || Date.now(),
+              cameraActive: p.cameraActive,
+              micActive: p.micActive,
+            })
           }
         }
-        if (foundCoach) break
       }
       setCoachInStudio(foundCoach)
+      setTeammatesPresence(teammates)
     }
 
     channel
@@ -460,6 +485,7 @@ export default function LiveVideoCameraHud({
           })
           showHudToast(`🟢 ${coachName} entered the Live Studio!`, 'emerald')
         }
+        syncPresence()
       })
       .on('presence', { event: 'leave' }, ({ leftPresences }: { leftPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
         const coach = leftPresences?.find(p => p.role === 'coach')
@@ -467,8 +493,28 @@ export default function LiveVideoCameraHud({
           setCoachInStudio(null)
           showHudToast(`${coachName} left the studio room.`, 'amber')
         }
+        syncPresence()
       })
       .on('broadcast', { event: 'webrtc_signal' }, ({ payload }) => {
+        if (payload?.type === 'circuit-timer' && payload.data) {
+          setTeamCircuitTimer(payload.data as TeamCircuitTimerData)
+        } else if (payload?.type === 'team-cue' && payload.data) {
+          const cueText = String(payload.data)
+          setActiveTeamCue(cueText)
+          showHudToast(`🗣️ Coach: "${cueText}"`, 'gold')
+          speakNasmCue(cueText)
+          setTimeout(() => setActiveTeamCue(null), 8000)
+        } else if (payload?.type === 'mute' && payload.data) {
+          const shouldMute = Boolean((payload.data as { muted?: boolean })?.muted)
+          setIsMicMuted(shouldMute)
+          showHudToast(shouldMute ? '🎙️ Squad Microphones Muted by Coach' : '🎙️ Microphone Unmuted', 'amber')
+        } else if (payload?.type === 'spotlight') {
+          const isMe = payload.data === currentUserId
+          setIsSpotlighted(isMe)
+          if (isMe) {
+            showHudToast('★ SPOTLIGHT: Coach brought your camera onto the Main Stage!', 'gold')
+          }
+        }
         void bridge.handleSignal(payload)
       })
       .on('broadcast', { event: STILL_CAMERA_REQUEST_EVENT }, ({ payload }) => {
@@ -533,6 +579,25 @@ export default function LiveVideoCameraHud({
       bridgeRef.current.attachLocalStream(mediaStream)
     }
   }, [mediaStream])
+
+  // Synchronized Circuit Timer Local Countdown (Athlete Side)
+  useEffect(() => {
+    if (!teamCircuitTimer?.isActive) return
+    const interval = setInterval(() => {
+      setTeamCircuitTimer(prev => {
+        if (!prev || !prev.isActive) return prev
+        const currentSeconds = prev.remainingSeconds ?? (prev.phase === 'work' ? prev.workSeconds : prev.restSeconds)
+        if (currentSeconds > 1) {
+          return {
+            ...prev,
+            remainingSeconds: currentSeconds - 1,
+          }
+        }
+        return prev
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [teamCircuitTimer?.isActive])
 
   const startCamera = useCallback(async () => {
     try {
@@ -1967,6 +2032,153 @@ export default function LiveVideoCameraHud({
             <span style={{ fontSize: 11.5, color: '#FFFFFF', fontWeight: 600 }}>
               {hudToast.message}
             </span>
+          </div>
+        )}
+
+        {/* ── Synchronized Team Circuit Timer Floating HUD Widget (Athlete View) ── */}
+        {teamCircuitTimer?.isActive && (
+          <div
+            data-testid="athlete-circuit-timer-overlay"
+            style={{
+              position: 'absolute',
+              top: 14,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 35,
+              background: teamCircuitTimer.phase === 'work' ? 'rgba(16,185,129,0.94)' : 'rgba(245,158,11,0.94)',
+              backdropFilter: 'blur(8px)',
+              border: `2px solid ${teamCircuitTimer.phase === 'work' ? '#34D399' : '#FCD34D'}`,
+              borderRadius: 24,
+              padding: '6px 18px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+              color: '#060A14',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              animation: 'fadeIn 0.2s ease-out',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <GaaIcon name="timer" size={15} tone="dark" />
+              <span style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {teamCircuitTimer.phase === 'work' ? 'WORK INTERVAL' : 'REST & RECOVER'}
+              </span>
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+              {teamCircuitTimer.remainingSeconds ?? (teamCircuitTimer.phase === 'work' ? teamCircuitTimer.workSeconds : teamCircuitTimer.restSeconds)}s
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 800, opacity: 0.85 }}>
+              Round {teamCircuitTimer.currentRound}/{teamCircuitTimer.totalRounds}
+            </div>
+          </div>
+        )}
+
+        {/* ── Active Tactical Coach Cue Banner ── */}
+        {activeTeamCue && (
+          <div
+            data-testid="active-team-cue-banner"
+            style={{
+              position: 'absolute',
+              top: 60,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 35,
+              background: 'rgba(6,10,18,0.94)',
+              backdropFilter: 'blur(10px)',
+              border: '1.5px solid var(--gold)',
+              borderRadius: 20,
+              padding: '6px 16px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.8), 0 0 16px rgba(212,160,23,0.3)',
+              color: 'var(--gold-lt)',
+              fontSize: 12,
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              animation: 'fadeIn 0.2s ease-out',
+            }}
+          >
+            <GaaIcon name="sparkles" size={14} tone="gold" />
+            <span>Coach Gordon: &ldquo;{activeTeamCue}&rdquo;</span>
+          </div>
+        )}
+
+        {/* ── Spotlight Indicator Badge ── */}
+        {isTeamSession && isSpotlighted && (
+          <div
+            data-testid="athlete-spotlight-badge"
+            style={{
+              position: 'absolute',
+              top: 14,
+              right: 14,
+              zIndex: 35,
+              background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
+              color: '#060A14',
+              borderRadius: 20,
+              padding: '4px 12px',
+              fontSize: 10.5,
+              fontWeight: 900,
+              letterSpacing: '0.05em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              boxShadow: '0 0 16px rgba(212,160,23,0.6)',
+            }}
+          >
+            <span>★</span>
+            <span>ON COACH MAIN STAGE</span>
+          </div>
+        )}
+
+        {/* ── Teammates Live Strip in Athlete HUD ── */}
+        {isTeamSession && (teamRoster.length > 0 || teammatesPresence.length > 0) && (
+          <div
+            data-testid="athlete-teammates-strip"
+            style={{
+              position: 'absolute',
+              bottom: 12,
+              left: 12,
+              zIndex: 25,
+              background: 'rgba(6,10,18,0.85)',
+              backdropFilter: 'blur(6px)',
+              borderRadius: 6,
+              border: '1px solid rgba(255,255,255,0.1)',
+              padding: '4px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              maxWidth: 'calc(100% - 24px)',
+              overflowX: 'auto',
+            }}
+          >
+            <span style={{ fontSize: 9.5, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800, whiteSpace: 'nowrap' }}>
+              SQUAD:
+            </span>
+            {(teamRoster.length > 0 ? teamRoster : teammatesPresence).map(rawMember => {
+              const memberId = 'id' in rawMember ? rawMember.id : rawMember.userId
+              const memberName = 'fullName' in rawMember ? rawMember.fullName : rawMember.name || 'Teammate'
+              const isPresent = teammatesPresence.some(p => p.userId === memberId)
+              return (
+                <div
+                  key={memberId}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    background: isPresent ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${isPresent ? '#10B981' : 'rgba(255,255,255,0.08)'}`,
+                    borderRadius: 4,
+                    padding: '2px 6px',
+                    fontSize: 10,
+                    color: isPresent ? '#34D399' : 'rgba(255,255,255,0.6)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: isPresent ? '#34D399' : '#64748B' }} />
+                  <span>{memberName}</span>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>

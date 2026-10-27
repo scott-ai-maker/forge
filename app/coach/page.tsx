@@ -20,6 +20,7 @@ import { evaluateClientOnboardingProgression, type ClientProgressionProfile } fr
 import { type ClientStatus } from '@/lib/client-lifecycle'
 import CoachOnboardingWorkflowStudio from '@/components/coach/CoachOnboardingWorkflowStudio'
 import CoachLiveSessionLauncher, { AssignedClientLauncherItem } from '@/components/coach/CoachLiveSessionLauncher'
+import { getTeamsForCoach } from '@/lib/teams'
 import SiteHeader from '@/components/ui/SiteHeader'
 import { APP_VERSION } from '@/lib/app-version'
 
@@ -267,6 +268,8 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
     email: client.email || '',
     sessionsRemaining: remainingByClient[client.id] ?? 0,
   }))
+
+  const coachTeams = await getTeamsForCoach(user.id, launcherClients)
 
   const recentCheckInsByClient = new Set((recentWorkoutLogs ?? []).map(log => log.user_id))
   const upcomingSessionsByClient = new Set((upcomingSessions ?? []).map(session => session.client_id))
@@ -1029,7 +1032,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
         {activeTab === 'overview' && (
           <>
             {/* ── 1:1 Live Video Studio & Movement Screen Launcher ── */}
-            <CoachLiveSessionLauncher assignedClients={launcherClients} />
+            <CoachLiveSessionLauncher assignedClients={launcherClients} teams={coachTeams} />
 
             {/* ── Coach Gordon Quick Access Banner ── */}
             <div

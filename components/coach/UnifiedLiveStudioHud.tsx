@@ -24,7 +24,13 @@ import {
 } from '@/lib/nasm-assessments'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 import { createClient } from '@/lib/supabase-browser'
-import { WebRtcPeerBridge, type LobbyParticipant } from '@/lib/webrtc-peer-bridge'
+import { WebRtcPeerBridge, WebRtcMultiPeerBridge, type LobbyParticipant } from '@/lib/webrtc-peer-bridge'
+import {
+  TEAM_QUICK_CUES,
+  type TeamQuickCue,
+  type TeamCircuitTimerData,
+  type TeamMember,
+} from '@/lib/teams'
 import LiveRemoteVideoFeed from './LiveRemoteVideoFeed'
 import LiveStillCameraGuidanceModal from './LiveStillCameraGuidanceModal'
 import LiveErapSafetyModal from './LiveErapSafetyModal'
@@ -71,7 +77,7 @@ import {
 
 export { computeConsultationGate, formatConsultationCountdown, CONSULTATION_PLAYBOOK_GATES }
 
-export type VideoHudLayout = 'split' | 'pip' | 'focus'
+export type VideoHudLayout = 'split' | 'pip' | 'focus' | 'team_grid' | 'spotlight'
 
 export interface Exercise {
   name: string
@@ -110,14 +116,18 @@ export interface SetLog {
   rpe?: number | null
 }
 
-interface UnifiedLiveStudioHudProps {
-  clientId: string
-  athleteName: string
+export interface UnifiedLiveStudioHudProps {
+  clientId?: string
+  athleteName?: string
   coachName?: string
   plan: Plan | null
   initialSets: SetLog[]
   today: string
   coachUserId?: string
+  teamId?: string
+  teamName?: string
+  teamRoster?: Array<TeamMember | { id: string; fullName: string; email?: string; avatarUrl?: string }>
+  isTeamSession?: boolean
 }
 
 function parseLowerReps(value: string | null | undefined): string {
@@ -206,13 +216,17 @@ export const ASSESSMENT_CAPTURE_SLOTS: AssessmentSlotMeta[] = [
 ]
 
 export default function UnifiedLiveStudioHud({
-  clientId,
+  clientId = '',
   athleteName = 'Athlete',
   coachName = 'Coach Gordon',
   plan,
   initialSets,
   today,
   coachUserId,
+  teamId,
+  teamName,
+  teamRoster = [],
+  isTeamSession = false,
 }: UnifiedLiveStudioHudProps) {
   const router = useRouter()
   const [workoutsState, setWorkoutsState] = useState<Workout[]>(plan?.plan_json?.workouts ?? [])
@@ -251,13 +265,33 @@ export default function UnifiedLiveStudioHud({
   } | null>(null)
 
   // Video State & Eco Mode
-  const [layout, setLayout] = useState<VideoHudLayout>('split')
+  const [layout, setLayout] = useState<VideoHudLayout>(isTeamSession ? 'team_grid' : 'split')
   const [isStageSwapped, setIsStageSwapped] = useState(false)
   const [isCameraActive, setIsCameraActive] = useState(true)
   const [isMicMuted, setIsMicMuted] = useState(false)
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
   const [_streamError, setStreamError] = useState<string | null>(null)
   const [ecoMode, setEcoMode] = useState(true)
+
+  // ── Team Session State ──
+  const [teamRemoteStreams, setTeamRemoteStreams] = useState<Record<string, MediaStream>>({})
+  const [teamParticipants, setTeamParticipants] = useState<LobbyParticipant[]>([])
+  const [spotlightedAthleteId, setSpotlightedAthleteId] = useState<string | null>(null)
+  const [isTeamMuted, setIsTeamMuted] = useState(false)
+  const [showCircuitTimerModal, setShowCircuitTimerModal] = useState(false)
+  const [showTeamCuesMenu, setShowTeamCuesMenu] = useState(false)
+  const [showTeamRosterDrawer, setShowTeamRosterDrawer] = useState(false)
+  const [teamCircuitTimer, setTeamCircuitTimer] = useState<TeamCircuitTimerData>({
+    workSeconds: 40,
+    restSeconds: 20,
+    totalRounds: 4,
+    currentRound: 1,
+    phase: 'idle',
+    isActive: false,
+    timestamp: Date.now(),
+  })
+  const multiBridgeRef = useRef<WebRtcMultiPeerBridge | null>(null)
+  const [isRingingTeamMembers, setIsRingingTeamMembers] = useState(false)
 
   // Mobile Responsive Detection & View Mode ('both' = video on top + logger below, 'video' = full-screen video, 'workout' = full logger)
   const [isMobile, setIsMobile] = useState<boolean>(false)
@@ -633,12 +667,13 @@ export default function UnifiedLiveStudioHud({
   mediaStreamRef.current = mediaStream
 
   // WebRTC Peer Bridge with Stateful Supabase Realtime Presence
+  // WebRTC Peer Bridge (1:1 Individual or Multi-Peer Team Mesh) with Stateful Supabase Realtime Presence
   useEffect(() => {
-    if (!clientId) return
+    if (!clientId && !teamId) return
     const senderId = coachUserId || 'coach-scott'
 
     const supabase = createClient()
-    const sessionId = `live-${clientId}`
+    const sessionId = isTeamSession && teamId ? `team-${teamId}` : `live-${clientId}`
     const channel = supabase.channel(`webrtc:${sessionId}`, {
       config: {
         presence: { key: senderId },
@@ -646,146 +681,284 @@ export default function UnifiedLiveStudioHud({
     })
     signalingChannelRef.current = channel
 
-    const bridge = new WebRtcPeerBridge({
-      sessionId,
-      currentUserId: senderId,
-      isCoach: true,
-      channel,
-      localStream: mediaStreamRef.current,
-      onRemoteStream: stream => {
-        setActiveRemoteStream(stream)
-      },
-      onConnectionStateChange: state => {
-        setPeerConnectionState(state)
-      },
-      onLatencyChange: rtt => {
-        setPeerLatencyMs(rtt)
-      },
-      onError: err => {
-        console.warn('Coach Live WebRTC peer error:', err)
-      },
-    })
-    bridgeRef.current = bridge
+    if (isTeamSession) {
+      const multiBridge = new WebRtcMultiPeerBridge({
+        sessionId,
+        currentUserId: senderId,
+        currentUserName: coachName || 'Coach Gordon',
+        isCoach: true,
+        channel,
+        localStream: mediaStreamRef.current,
+        onPeerStream: (peerId, stream, participant) => {
+          setTeamRemoteStreams(prev => ({ ...prev, [peerId]: stream }))
+          setActiveRemoteStream(prev => prev || stream)
+        },
+        onPeerLeft: peerId => {
+          setTeamRemoteStreams(prev => {
+            const next = { ...prev }
+            delete next[peerId]
+            return next
+          })
+          setTeamParticipants(prev => prev.filter(p => p.userId !== peerId))
+        },
+        onPeerConnectionStateChange: (peerId, state) => {
+          if (state === 'connected') {
+            setPeerConnectionState('connected')
+          }
+        },
+        onPeerLatencyChange: (peerId, rtt) => {
+          setPeerLatencyMs(rtt)
+        },
+        onError: err => {
+          console.warn('Coach Live WebRTC team mesh peer error:', err)
+        },
+      })
+      multiBridgeRef.current = multiBridge
 
-    const syncLobby = () => {
-      const presenceState = channel.presenceState()
-      let foundAthlete: LobbyParticipant | null = null
-      for (const key of Object.keys(presenceState)) {
-        const presences = presenceState[key] as unknown as (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[]
-        for (const p of presences) {
-          if (p.role === 'athlete') {
-            foundAthlete = {
-              userId: p.userId || key,
-              name: p.name || athleteName,
-              role: 'athlete',
-              joinedAt: p.joinedAt || Date.now(),
-              cameraActive: p.cameraActive,
-              micActive: p.micActive,
+      const syncTeamLobby = () => {
+        const presenceState = channel.presenceState()
+        const participants: LobbyParticipant[] = []
+        for (const key of Object.keys(presenceState)) {
+          const presences = presenceState[key] as unknown as (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[]
+          for (const p of presences) {
+            if (p.role === 'athlete') {
+              participants.push({
+                userId: p.userId || key,
+                name: p.name || 'Teammate',
+                role: 'athlete',
+                joinedAt: p.joinedAt || Date.now(),
+                cameraActive: p.cameraActive,
+                micActive: p.micActive,
+              })
+              multiBridge.getOrCreatePeer(p.userId || key, p.name || 'Teammate', 'athlete')
             }
-            break
           }
         }
-        if (foundAthlete) break
+        setTeamParticipants(participants)
+        if (participants.length > 0) {
+          setAthleteInLobby(participants[0])
+        }
       }
 
-      setAthleteInLobby(prev => {
-        if (!prev && foundAthlete) {
-          playLobbyChime()
-          showHudToast(`🟢 ${athleteName} entered the Studio Lobby!`, 'emerald')
-        }
-        return foundAthlete
-      })
-    }
-
-    channel
-      .on('presence', { event: 'sync' }, syncLobby)
-      .on('presence', { event: 'join' }, ({ newPresences }: { newPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
-        const athlete = newPresences?.find(p => p.role === 'athlete')
-        if (athlete) {
-          setAthleteInLobby({
-            userId: athlete.userId || clientId,
-            name: athlete.name || athleteName,
-            role: 'athlete',
-            joinedAt: athlete.joinedAt || Date.now(),
-            cameraActive: athlete.cameraActive,
-            micActive: athlete.micActive,
+      channel
+        .on('presence', { event: 'sync' }, syncTeamLobby)
+        .on('presence', { event: 'join' }, ({ newPresences }: { newPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
+          const athletes = newPresences?.filter(p => p.role === 'athlete') || []
+          athletes.forEach(a => {
+            multiBridge.getOrCreatePeer(a.userId, a.name, 'athlete')
+            playLobbyChime()
+            showHudToast(`🟢 ${a.name || 'Teammate'} entered Team Studio Lobby!`, 'emerald')
           })
-          playLobbyChime()
-          showHudToast(`🟢 ${athleteName} entered the Studio Lobby!`, 'emerald')
-        }
-      })
-      .on('presence', { event: 'leave' }, ({ leftPresences }: { leftPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
-        const athlete = leftPresences?.find(p => p.role === 'athlete')
-        if (athlete) {
-          setAthleteInLobby(null)
-          showHudToast(`${athleteName} disconnected from the lobby.`, 'amber')
-        }
-      })
-      .on('broadcast', { event: 'webrtc_signal' }, ({ payload }) => {
-        void bridge.handleSignal(payload)
-      })
-      .on('broadcast', { event: STILL_CAMERA_REQUEST_EVENT }, ({ payload }) => {
-        const req = payload as StillCameraRequestPayload
-        setStillCameraRequestedBy(req?.coachName || 'Coach Gordon')
-        setShowStillCameraModal(true)
-      })
-      .subscribe(async status => {
-        if (status === 'SUBSCRIBED') {
-          bridge.init()
-          // Track Coach presence in Studio Lobby
-          try {
-            await channel.track({
-              userId: senderId,
-              name: coachName || 'Coach Gordon',
-              role: 'coach',
-              joinedAt: Date.now(),
-              cameraActive: isCameraActive,
-              micActive: !isMicMuted,
+          syncTeamLobby()
+        })
+        .on('presence', { event: 'leave' }, ({ leftPresences }: { leftPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
+          const athletes = leftPresences?.filter(p => p.role === 'athlete') || []
+          athletes.forEach(a => {
+            multiBridge.removePeer(a.userId)
+            showHudToast(`${a.name || 'Teammate'} disconnected from the team studio.`, 'amber')
+          })
+          syncTeamLobby()
+        })
+        .on('broadcast', { event: 'webrtc_signal' }, ({ payload }) => {
+          void multiBridge.handleSignal(payload)
+        })
+        .on('broadcast', { event: STILL_CAMERA_REQUEST_EVENT }, ({ payload }) => {
+          const req = payload as StillCameraRequestPayload
+          setStillCameraRequestedBy(req?.coachName || 'Coach Gordon')
+          setShowStillCameraModal(true)
+        })
+        .subscribe(async status => {
+          if (status === 'SUBSCRIBED') {
+            multiBridge.init()
+            try {
+              await channel.track({
+                userId: senderId,
+                name: coachName || 'Coach Gordon',
+                role: 'coach',
+                joinedAt: Date.now(),
+                cameraActive: isCameraActive,
+                micActive: !isMicMuted,
+              })
+            } catch {}
+            void channel.send({
+              type: 'broadcast',
+              event: 'webrtc_signal',
+              payload: {
+                type: 'ready',
+                senderId,
+                targetUserId: '*',
+              },
             })
-          } catch {}
-          // Broadcast initial presence ready and join signals
-          void channel.send({
-            type: 'broadcast',
-            event: 'webrtc_signal',
-            payload: {
-              type: 'ready',
-              senderId,
-            },
-          })
-          void channel.send({
-            type: 'broadcast',
-            event: 'webrtc_signal',
-            payload: {
-              type: 'join',
-              senderId,
-            },
-          })
+            void channel.send({
+              type: 'broadcast',
+              event: 'webrtc_signal',
+              payload: {
+                type: 'join',
+                senderId,
+                targetUserId: '*',
+              },
+            })
+          }
+        })
+
+      const pingTimer = setInterval(() => {
+        if (multiBridgeRef.current) {
+          multiBridgeRef.current.sendPingToAll()
         }
-      })
+      }, 6000)
 
-    // Lightweight ping every 6s to keep channel hot & measure RTT latency without renegotiation
-    const pingTimer = setInterval(() => {
-      if (bridgeRef.current) {
-        bridgeRef.current.sendPing()
+      return () => {
+        clearInterval(pingTimer)
+        multiBridge.destroy()
+        multiBridgeRef.current = null
+        signalingChannelRef.current = null
+        void supabase.removeChannel(channel)
       }
-    }, 6000)
+    } else {
+      // 1:1 Individual Athlete WebRtcPeerBridge
+      const bridge = new WebRtcPeerBridge({
+        sessionId,
+        currentUserId: senderId,
+        isCoach: true,
+        channel,
+        localStream: mediaStreamRef.current,
+        onRemoteStream: stream => {
+          setActiveRemoteStream(stream)
+        },
+        onConnectionStateChange: state => {
+          setPeerConnectionState(state)
+        },
+        onLatencyChange: rtt => {
+          setPeerLatencyMs(rtt)
+        },
+        onError: err => {
+          console.warn('Coach Live WebRTC peer error:', err)
+        },
+      })
+      bridgeRef.current = bridge
 
-    return () => {
-      clearInterval(pingTimer)
-      bridge.destroy()
-      bridgeRef.current = null
-      signalingChannelRef.current = null
-      void supabase.removeChannel(channel)
+      const syncLobby = () => {
+        const presenceState = channel.presenceState()
+        let foundAthlete: LobbyParticipant | null = null
+        for (const key of Object.keys(presenceState)) {
+          const presences = presenceState[key] as unknown as (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[]
+          for (const p of presences) {
+            if (p.role === 'athlete') {
+              foundAthlete = {
+                userId: p.userId || key,
+                name: p.name || athleteName,
+                role: 'athlete',
+                joinedAt: p.joinedAt || Date.now(),
+                cameraActive: p.cameraActive,
+                micActive: p.micActive,
+              }
+              break
+            }
+          }
+          if (foundAthlete) break
+        }
+
+        setAthleteInLobby(prev => {
+          if (!prev && foundAthlete) {
+            playLobbyChime()
+            showHudToast(`🟢 ${athleteName} entered the Studio Lobby!`, 'emerald')
+          }
+          return foundAthlete
+        })
+      }
+
+      channel
+        .on('presence', { event: 'sync' }, syncLobby)
+        .on('presence', { event: 'join' }, ({ newPresences }: { newPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
+          const athlete = newPresences?.find(p => p.role === 'athlete')
+          if (athlete) {
+            setAthleteInLobby({
+              userId: athlete.userId || clientId,
+              name: athlete.name || athleteName,
+              role: 'athlete',
+              joinedAt: athlete.joinedAt || Date.now(),
+              cameraActive: athlete.cameraActive,
+              micActive: athlete.micActive,
+            })
+            playLobbyChime()
+            showHudToast(`🟢 ${athleteName} entered the Studio Lobby!`, 'emerald')
+          }
+        })
+        .on('presence', { event: 'leave' }, ({ leftPresences }: { leftPresences?: (LobbyParticipant & { cameraActive?: boolean; micActive?: boolean })[] }) => {
+          const athlete = leftPresences?.find(p => p.role === 'athlete')
+          if (athlete) {
+            setAthleteInLobby(null)
+            showHudToast(`${athleteName} disconnected from the lobby.`, 'amber')
+          }
+        })
+        .on('broadcast', { event: 'webrtc_signal' }, ({ payload }) => {
+          void bridge.handleSignal(payload)
+        })
+        .on('broadcast', { event: STILL_CAMERA_REQUEST_EVENT }, ({ payload }) => {
+          const req = payload as StillCameraRequestPayload
+          setStillCameraRequestedBy(req?.coachName || 'Coach Gordon')
+          setShowStillCameraModal(true)
+        })
+        .subscribe(async status => {
+          if (status === 'SUBSCRIBED') {
+            bridge.init()
+            // Track Coach presence in Studio Lobby
+            try {
+              await channel.track({
+                userId: senderId,
+                name: coachName || 'Coach Gordon',
+                role: 'coach',
+                joinedAt: Date.now(),
+                cameraActive: isCameraActive,
+                micActive: !isMicMuted,
+              })
+            } catch {}
+            // Broadcast initial presence ready and join signals
+            void channel.send({
+              type: 'broadcast',
+              event: 'webrtc_signal',
+              payload: {
+                type: 'ready',
+                senderId,
+              },
+            })
+            void channel.send({
+              type: 'broadcast',
+              event: 'webrtc_signal',
+              payload: {
+                type: 'join',
+                senderId,
+              },
+            })
+          }
+        })
+
+      // Lightweight ping every 6s to keep channel hot & measure RTT latency without renegotiation
+      const pingTimer = setInterval(() => {
+        if (bridgeRef.current) {
+          bridgeRef.current.sendPing()
+        }
+      }, 6000)
+
+      return () => {
+        clearInterval(pingTimer)
+        bridge.destroy()
+        bridgeRef.current = null
+        signalingChannelRef.current = null
+        void supabase.removeChannel(channel)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId, coachUserId, athleteName, coachName, playLobbyChime, showHudToast])
+  }, [clientId, teamId, isTeamSession, coachUserId, athleteName, coachName, playLobbyChime, showHudToast])
 
   // Attach local media stream as soon as it becomes available
   useEffect(() => {
-    if (bridgeRef.current && mediaStream) {
+    if (isTeamSession && multiBridgeRef.current && mediaStream) {
+      multiBridgeRef.current.attachLocalStream(mediaStream)
+    } else if (bridgeRef.current && mediaStream) {
       bridgeRef.current.attachLocalStream(mediaStream)
     }
-  }, [mediaStream])
+  }, [isTeamSession, mediaStream])
 
   // High-Performance Singleton Web Audio Synth
   const playBeep = useCallback((freq = 440, duration = 0.08) => {
@@ -816,6 +989,71 @@ export default function UnifiedLiveStudioHud({
       // Ignore
     }
   }, [])
+
+  // Synchronized Team Circuit Interval Countdown Engine (NASM VCS)
+  useEffect(() => {
+    if (!teamCircuitTimer.isActive) return
+
+    const interval = setInterval(() => {
+      setTeamCircuitTimer(prev => {
+        if (!prev.isActive) return prev
+        const currentSeconds = prev.remainingSeconds ?? (prev.phase === 'work' ? prev.workSeconds : prev.restSeconds)
+
+        if (currentSeconds > 1) {
+          const nextRemaining = currentSeconds - 1
+          if (nextRemaining <= 3) {
+            playBeep(nextRemaining === 1 ? 880 : 440, 0.06)
+          }
+          return {
+            ...prev,
+            remainingSeconds: nextRemaining,
+          }
+        }
+
+        // Seconds reached 0 -> transition phase
+        if (prev.phase === 'work') {
+          playBeep(660, 0.25)
+          const nextState: TeamCircuitTimerData = {
+            ...prev,
+            phase: 'rest',
+            remainingSeconds: prev.restSeconds,
+            timestamp: Date.now(),
+          }
+          multiBridgeRef.current?.broadcastCircuitTimer(nextState)
+          return nextState
+        } else if (prev.phase === 'rest') {
+          if (prev.currentRound < prev.totalRounds) {
+            playBeep(880, 0.25)
+            const nextState: TeamCircuitTimerData = {
+              ...prev,
+              phase: 'work',
+              currentRound: prev.currentRound + 1,
+              remainingSeconds: prev.workSeconds,
+              timestamp: Date.now(),
+            }
+            multiBridgeRef.current?.broadcastCircuitTimer(nextState)
+            return nextState
+          } else {
+            // Completed circuit!
+            playBeep(1046, 0.4)
+            const completedState: TeamCircuitTimerData = {
+              ...prev,
+              phase: 'completed',
+              isActive: false,
+              remainingSeconds: 0,
+              timestamp: Date.now(),
+            }
+            multiBridgeRef.current?.broadcastCircuitTimer(completedState)
+            showHudToast('🏆 Team Circuit Completed!', 'gold')
+            return completedState
+          }
+        }
+        return prev
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [teamCircuitTimer.isActive, playBeep, showHudToast])
 
   // Camera Setup with Thermal-Capped 720p / 24-30 FPS Constraints & Microphone Audio
   const startCamera = useCallback(async () => {
@@ -2008,11 +2246,355 @@ export default function UnifiedLiveStudioHud({
               height: isMobile && mobileViewMode === 'both' ? 320 : undefined,
               minHeight: isMobile ? (mobileViewMode === 'video' ? '70vh' : 280) : 380,
               background: '#000',
-              display: 'grid',
-              gridTemplateColumns: showCompareModel ? '1fr 1fr' : layout === 'split' ? '1fr 1fr' : '1fr',
+              display: isTeamSession && layout === 'team_grid' ? 'flex' : 'grid',
+              flexDirection: isTeamSession && layout === 'team_grid' ? 'column' : undefined,
+              gridTemplateColumns: isTeamSession && layout === 'team_grid' ? undefined : showCompareModel ? '1fr 1fr' : layout === 'split' ? '1fr 1fr' : '1fr',
               overflow: 'hidden',
             }}
           >
+            {isTeamSession && layout !== 'team_grid' && (
+              /* Teammates Live Strip when in Spotlight / Split / Focus in a Team Session */
+              <div
+                data-testid="teammates-live-strip"
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  left: 10,
+                  zIndex: 30,
+                  display: 'flex',
+                  gap: 6,
+                  background: 'rgba(6,10,18,0.85)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  border: '1px solid rgba(212,160,23,0.3)',
+                  maxWidth: 'calc(100% - 220px)',
+                  overflowX: 'auto',
+                }}
+              >
+                <span style={{ fontSize: 10, color: 'var(--gold-lt)', fontWeight: 800, alignSelf: 'center', marginRight: 4, whiteSpace: 'nowrap' }}>
+                  SQUAD:
+                </span>
+                {teamRoster.map(member => {
+                  const isSelected = (spotlightedAthleteId || clientId) === member.id
+                  const hasStream = Boolean(teamRemoteStreams[member.id])
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => {
+                        setSpotlightedAthleteId(member.id)
+                        if (teamRemoteStreams[member.id]) {
+                          setActiveRemoteStream(teamRemoteStreams[member.id])
+                        }
+                        multiBridgeRef.current?.broadcastSpotlight(member.id)
+                        showHudToast(`★ Spotlighted ${member.fullName}`, 'gold')
+                      }}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: 4,
+                        background: isSelected ? 'var(--gold)' : hasStream ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.06)',
+                        color: isSelected ? '#0A0E18' : hasStream ? '#34D399' : 'rgba(255,255,255,0.6)',
+                        border: isSelected ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <span>{isSelected ? '★ ' : ''}{member.fullName}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {isTeamSession && layout === 'team_grid' ? (
+              /* ── SQUAD MULTI-ATHLETE GRID STAGE ── */
+              <div
+                data-testid="team-grid-container"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  width: '100%',
+                  height: '100%',
+                  minHeight: isMobile ? 360 : 420,
+                  background: 'linear-gradient(180deg, #070B14 0%, #03060A 100%)',
+                  padding: 12,
+                  gap: 12,
+                  overflowY: 'auto',
+                }}
+              >
+                {/* Squad Banner */}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: 'rgba(212,160,23,0.06)',
+                    border: '1px solid rgba(212,160,23,0.25)',
+                    borderRadius: 8,
+                    padding: '8px 14px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#FFF', letterSpacing: '0.04em' }}>
+                      {teamName || 'Squad Coaching Session'}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        background: 'rgba(52,211,153,0.15)',
+                        border: '1px solid #10B981',
+                        color: '#34D399',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {teamParticipants.length} Connected · {teamRoster.length} Roster
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !isTeamMuted
+                        setIsTeamMuted(next)
+                        multiBridgeRef.current?.muteAllAthletes(next)
+                        showHudToast(next ? '🔇 Squad Microphones Muted' : '🔊 Squad Microphones Unmuted', 'amber')
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 4,
+                        background: isTeamMuted ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.08)',
+                        border: isTeamMuted ? '1px solid #EF4444' : '1px solid rgba(255,255,255,0.2)',
+                        color: isTeamMuted ? '#FCA5A5' : '#FFF',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <GaaIcon name={isTeamMuted ? 'mic-off' : 'mic'} size={12} tone="inherit" />
+                      <span>{isTeamMuted ? 'Unmute All' : 'Mute Squad'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowCircuitTimerModal(true)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 4,
+                        background: 'rgba(16,185,129,0.18)',
+                        border: '1px solid #10B981',
+                        color: '#6EE7B7',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <GaaIcon name="timer" size={12} tone="inherit" />
+                      <span>{teamCircuitTimer.isActive ? `Round ${teamCircuitTimer.currentRound}/${teamCircuitTimer.totalRounds}` : 'Circuit Timer'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Multi-Peer Video Grid */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: 12,
+                    flex: 1,
+                  }}
+                >
+                  {/* Coach Tile */}
+                  <div
+                    style={{
+                      position: 'relative',
+                      background: '#060A14',
+                      borderRadius: 8,
+                      border: '1px solid rgba(212,160,23,0.3)',
+                      overflow: 'hidden',
+                      minHeight: 200,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div style={{ flex: 1, position: 'relative' }}>
+                      <LiveVirtualBackgroundStage
+                        stream={mediaStream}
+                        isActive={isCameraActive}
+                        isMirrored={facingMode === 'user'}
+                        selectedBackground={selectedBackground}
+                        coachName={coachName}
+                        onOpenPicker={() => setShowBackgroundPicker(true)}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 8,
+                        left: 8,
+                        background: 'rgba(6,10,18,0.85)',
+                        backdropFilter: 'blur(6px)',
+                        padding: '3px 8px',
+                        borderRadius: 4,
+                        border: '1px solid rgba(212,160,23,0.4)',
+                        color: 'var(--gold-lt)',
+                        fontSize: 11,
+                        fontWeight: 800,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        zIndex: 15,
+                      }}
+                    >
+                      <span>Coach (You)</span>
+                      <span style={{ fontSize: 9, color: isMicMuted ? '#EF4444' : '#10B981' }}>
+                        {isMicMuted ? 'MUTED' : 'LIVE'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Athletes Tiles */}
+                  {teamRoster.map(member => {
+                    const remoteStreamForMember = teamRemoteStreams[member.id] || (member.id === clientId ? activeRemoteStream : null)
+                    const participant = teamParticipants.find(p => p.userId === member.id)
+                    const isOnline = Boolean(remoteStreamForMember || participant)
+
+                    return (
+                      <div
+                        key={member.id}
+                        data-testid={`athlete-grid-card-${member.id}`}
+                        style={{
+                          position: 'relative',
+                          background: '#060A14',
+                          borderRadius: 8,
+                          border: isOnline ? '1px solid rgba(52,211,153,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                          overflow: 'hidden',
+                          minHeight: 200,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: isOnline ? 'flex-start' : 'center',
+                          alignItems: isOnline ? 'stretch' : 'center',
+                        }}
+                      >
+                        {remoteStreamForMember ? (
+                          <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 200 }}>
+                            <LiveRemoteVideoFeed
+                              stream={remoteStreamForMember}
+                              participantName={member.fullName}
+                              participantRole="Athlete"
+                              isConnected={true}
+                              isPeerInLobby={true}
+                              lobbyWaitSeconds={0}
+                              peerLatencyMs={peerLatencyMs}
+                            />
+                            {/* Spotlight Action Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSpotlightedAthleteId(member.id)
+                                setActiveRemoteStream(remoteStreamForMember)
+                                setLayout('spotlight')
+                                multiBridgeRef.current?.broadcastSpotlight(member.id)
+                                showHudToast(`★ Spotlighted ${member.fullName} onto Main Stage`, 'gold')
+                              }}
+                              style={{
+                                position: 'absolute',
+                                top: 8,
+                                right: 8,
+                                background: 'rgba(6,10,18,0.85)',
+                                backdropFilter: 'blur(6px)',
+                                border: '1px solid var(--gold)',
+                                color: 'var(--gold-lt)',
+                                padding: '3px 8px',
+                                borderRadius: 4,
+                                fontSize: 10,
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                zIndex: 10,
+                              }}
+                            >
+                              <span>★ SPOTLIGHT</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ padding: 20, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                            <div
+                              style={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: '50%',
+                                background: 'rgba(255,255,255,0.06)',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'var(--gray-lt)',
+                                fontWeight: 800,
+                                fontSize: 15,
+                              }}
+                            >
+                              {member.fullName.charAt(0)}
+                            </div>
+                            <div>
+                              <div style={{ color: '#FFF', fontWeight: 700, fontSize: 13 }}>{member.fullName}</div>
+                              <div style={{ color: 'var(--gray)', fontSize: 11 }}>Awaiting Connection...</div>
+                            </div>
+                            {isOnline && (
+                              <span style={{ fontSize: 10, color: '#34D399', background: 'rgba(52,211,153,0.1)', padding: '2px 8px', borderRadius: 10 }}>
+                                In Studio Lobby
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Athlete Info Bar */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: 8,
+                            left: 8,
+                            background: 'rgba(6,10,18,0.85)',
+                            backdropFilter: 'blur(6px)',
+                            padding: '3px 8px',
+                            borderRadius: 4,
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            color: '#FFF',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            zIndex: 10,
+                          }}
+                        >
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: isOnline ? '#34D399' : '#64748B' }} />
+                          <span>{member.fullName}</span>
+                          {participant?.micActive === false && (
+                            <span style={{ fontSize: 9, color: '#F87171' }}>MUTED</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : (
+              <>
             {/* ── Viewport 1: Left Frame (Coach initially by default, or Athlete when swapped / comparing) ── */}
             {showCompareModel || isStageSwapped ? (
               /* ATHLETE ON LEFT: Either swapped or comparing against NASM Benchmark */
@@ -2977,6 +3559,70 @@ export default function UnifiedLiveStudioHud({
                 </span>
               </div>
             )}
+              </>
+            )}
+
+            {/* ── Synchronized Team Circuit Timer Floating HUD Widget ── */}
+            {teamCircuitTimer.isActive && (
+              <div
+                data-testid="team-circuit-timer-overlay"
+                style={{
+                  position: 'absolute',
+                  top: 14,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: 35,
+                  background: teamCircuitTimer.phase === 'work' ? 'rgba(16,185,129,0.92)' : 'rgba(245,158,11,0.92)',
+                  backdropFilter: 'blur(8px)',
+                  border: `2px solid ${teamCircuitTimer.phase === 'work' ? '#34D399' : '#FCD34D'}`,
+                  borderRadius: 24,
+                  padding: '6px 18px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                  color: '#060A14',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  animation: 'fadeIn 0.2s ease-out',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <GaaIcon name="timer" size={15} tone="dark" />
+                  <span style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {teamCircuitTimer.phase === 'work' ? 'WORK INTERVAL' : 'REST & RECOVER'}
+                  </span>
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                  {teamCircuitTimer.remainingSeconds ?? (teamCircuitTimer.phase === 'work' ? teamCircuitTimer.workSeconds : teamCircuitTimer.restSeconds)}s
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 800, opacity: 0.85 }}>
+                  Round {teamCircuitTimer.currentRound}/{teamCircuitTimer.totalRounds}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTeamCircuitTimer(prev => ({ ...prev, isActive: false }))
+                    multiBridgeRef.current?.broadcastCircuitTimer({ ...teamCircuitTimer, isActive: false })
+                  }}
+                  title="Stop Circuit Timer"
+                  style={{
+                    background: 'rgba(0,0,0,0.25)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 20,
+                    height: 20,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#060A14',
+                    fontWeight: 900,
+                    fontSize: 10,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Quick Verbal Cues Strip */}
@@ -3569,6 +4215,44 @@ export default function UnifiedLiveStudioHud({
 
               {/* Viewport Layout Controls */}
               <div style={{ display: 'flex', gap: 3, alignItems: 'center', background: 'rgba(255,255,255,0.04)', padding: '2px 4px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+                {isTeamSession && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setLayout('team_grid')}
+                      title="Squad Multi-Athlete Grid"
+                      style={{
+                        padding: '3px 7px',
+                        background: layout === 'team_grid' ? 'rgba(212,160,23,0.25)' : 'transparent',
+                        border: layout === 'team_grid' ? '1px solid var(--gold)' : 'none',
+                        color: layout === 'team_grid' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.6)',
+                        borderRadius: 3,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ⊞ GRID
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLayout('spotlight')}
+                      title="Single Athlete Diagnostic Spotlight with Teammate Strip"
+                      style={{
+                        padding: '3px 7px',
+                        background: layout === 'spotlight' ? 'rgba(212,160,23,0.25)' : 'transparent',
+                        border: layout === 'spotlight' ? '1px solid var(--gold)' : 'none',
+                        color: layout === 'spotlight' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.6)',
+                        borderRadius: 3,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ★ SPOTLIGHT
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={() => setLayout('split')}
@@ -3654,6 +4338,103 @@ export default function UnifiedLiveStudioHud({
                 paddingBottom: isMobile ? 2 : 0,
               }}
             >
+              {isTeamSession && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !isTeamMuted
+                      setIsTeamMuted(next)
+                      multiBridgeRef.current?.muteAllAthletes(next)
+                      showHudToast(next ? '🔇 All Athletes Muted (NASM VCS Directive)' : '🔊 All Athletes Unmuted', 'amber')
+                    }}
+                    style={{
+                      padding: '5px 10px',
+                      background: isTeamMuted ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.08)',
+                      border: isTeamMuted ? '1px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                      color: isTeamMuted ? '#FCA5A5' : '#FFF',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                    title={isTeamMuted ? 'Unmute All Athletes' : 'Mute All Athletes (Group Audio Control)'}
+                  >
+                    <GaaIcon name={isTeamMuted ? 'mic-off' : 'mic'} size={12} tone="inherit" />
+                    <span>{isTeamMuted ? 'Unmute All' : 'Mute Squad'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCircuitTimerModal(true)}
+                    style={{
+                      padding: '5px 10px',
+                      background: teamCircuitTimer.isActive ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'rgba(16,185,129,0.15)',
+                      border: teamCircuitTimer.isActive ? '1px solid #10B981' : '1px solid rgba(16,185,129,0.4)',
+                      color: teamCircuitTimer.isActive ? '#080E14' : '#6EE7B7',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                    title="Configure & Broadcast Synchronized Team Circuit Timer"
+                  >
+                    <GaaIcon name="timer" size={12} tone="inherit" />
+                    <span>{teamCircuitTimer.isActive ? `Round ${teamCircuitTimer.currentRound}/${teamCircuitTimer.totalRounds}` : 'Circuit Timer'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowTeamCuesMenu(c => !c)}
+                    style={{
+                      padding: '5px 10px',
+                      background: showTeamCuesMenu ? 'rgba(212,160,23,0.25)' : 'rgba(255,255,255,0.08)',
+                      border: '1px solid var(--gold)',
+                      color: 'var(--gold-lt)',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                    title="Broadcast Tactical Coaching Cues to All Athletes"
+                  >
+                    <GaaIcon name="sparkles" size={12} tone="gold" />
+                    <span>Team Cues</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowTeamRosterDrawer(r => !r)}
+                    style={{
+                      padding: '5px 10px',
+                      background: showTeamRosterDrawer ? 'rgba(59,130,246,0.25)' : 'rgba(255,255,255,0.08)',
+                      border: '1px solid #3B82F6',
+                      color: '#60A5FA',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                    title="Open Squad Roster and Athlete Health Status"
+                  >
+                    <GaaIcon name="users" size={12} tone="inherit" />
+                    <span>Roster ({teamParticipants.length}/{teamRoster.length})</span>
+                  </button>
+                </>
+              )}
+
               <button
                 type="button"
                 onClick={() => setTelestratorActive(t => !t)}
@@ -5366,6 +6147,511 @@ export default function UnifiedLiveStudioHud({
         }}
         onClose={() => setShowBackgroundPicker(false)}
       />
+
+      {/* ── Team Circuit Timer Configuration Modal (NASM VCS) ── */}
+      {showCircuitTimerModal && (
+        <div
+          data-testid="team-circuit-timer-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="circuit-timer-title"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2, 6, 14, 0.88)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: 16,
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+          onClick={e => {
+            if (e.target === e.currentTarget) setShowCircuitTimerModal(false)
+          }}
+        >
+          <div
+            style={{
+              background: '#070B14',
+              border: '1px solid rgba(212, 160, 23, 0.5)',
+              borderRadius: 12,
+              maxWidth: 520,
+              width: '100%',
+              overflow: 'hidden',
+              boxShadow: '0 24px 70px rgba(0,0,0,0.95), 0 0 30px rgba(212, 160, 23, 0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '14px 18px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(212, 160, 23, 0.06)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <div>
+                <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
+                  NASM Virtual Coaching Specialist · Group Conditioning
+                </span>
+                <h3 id="circuit-timer-title" style={{ margin: '2px 0 0', color: '#FFF', fontSize: 16, fontWeight: 800 }}>
+                  Synchronized Squad Circuit Timer
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCircuitTimerModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.6)',
+                  cursor: 'pointer',
+                  fontSize: 18,
+                  padding: 4,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Presets */}
+            <div style={{ padding: '16px 18px 0' }}>
+              <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+                Quick VCS Presets:
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+                {[
+                  { name: 'Tabata Sprint', work: 20, rest: 10, rounds: 8 },
+                  { name: 'HIIT Conditioning', work: 40, rest: 20, rounds: 4 },
+                  { name: 'Strength Circuit', work: 45, rest: 30, rounds: 5 },
+                  { name: 'Power Pacing', work: 30, rest: 45, rounds: 4 },
+                ].map(p => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => {
+                      setTeamCircuitTimer(prev => ({
+                        ...prev,
+                        workSeconds: p.work,
+                        restSeconds: p.rest,
+                        totalRounds: p.rounds,
+                      }))
+                    }}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: 6,
+                      background: teamCircuitTimer.workSeconds === p.work && teamCircuitTimer.restSeconds === p.rest && teamCircuitTimer.totalRounds === p.rounds
+                        ? 'rgba(212,160,23,0.2)'
+                        : 'rgba(255,255,255,0.04)',
+                      border: teamCircuitTimer.workSeconds === p.work && teamCircuitTimer.restSeconds === p.rest && teamCircuitTimer.totalRounds === p.rounds
+                        ? '1px solid var(--gold)'
+                        : '1px solid rgba(255,255,255,0.08)',
+                      color: '#FFF',
+                      fontSize: 11,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ fontWeight: 800, color: 'var(--gold-lt)' }}>{p.name}</div>
+                    <div style={{ fontSize: 10, color: 'var(--gray)' }}>{p.work}s Work · {p.rest}s Rest · {p.rounds} Rds</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Inputs */}
+            <div style={{ padding: '16px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', fontWeight: 700, marginBottom: 4 }}>
+                  WORK (SEC)
+                </label>
+                <input
+                  type="number"
+                  value={teamCircuitTimer.workSeconds}
+                  onChange={e => setTeamCircuitTimer(prev => ({ ...prev, workSeconds: Math.max(5, Number(e.target.value) || 30) }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    background: '#0D1424',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#FFF',
+                    fontSize: 14,
+                    fontWeight: 800,
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', fontWeight: 700, marginBottom: 4 }}>
+                  REST (SEC)
+                </label>
+                <input
+                  type="number"
+                  value={teamCircuitTimer.restSeconds}
+                  onChange={e => setTeamCircuitTimer(prev => ({ ...prev, restSeconds: Math.max(0, Number(e.target.value) || 15) }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    background: '#0D1424',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#FFF',
+                    fontSize: 14,
+                    fontWeight: 800,
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', fontWeight: 700, marginBottom: 4 }}>
+                  ROUNDS
+                </label>
+                <input
+                  type="number"
+                  value={teamCircuitTimer.totalRounds}
+                  onChange={e => setTeamCircuitTimer(prev => ({ ...prev, totalRounds: Math.max(1, Number(e.target.value) || 4) }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    background: '#0D1424',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#FFF',
+                    fontSize: 14,
+                    fontWeight: 800,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div
+              style={{
+                padding: '14px 18px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'rgba(0,0,0,0.3)',
+              }}
+            >
+              {teamCircuitTimer.isActive ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const stopped: TeamCircuitTimerData = {
+                      ...teamCircuitTimer,
+                      isActive: false,
+                      phase: 'idle',
+                    }
+                    setTeamCircuitTimer(stopped)
+                    multiBridgeRef.current?.broadcastCircuitTimer(stopped)
+                    showHudToast('⏱️ Squad Circuit Timer Stopped', 'amber')
+                    setShowCircuitTimerModal(false)
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 6,
+                    background: 'rgba(239,68,68,0.2)',
+                    border: '1px solid #EF4444',
+                    color: '#FCA5A5',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Stop Circuit Timer
+                </button>
+              ) : (
+                <div />
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  const started: TeamCircuitTimerData = {
+                    ...teamCircuitTimer,
+                    isActive: true,
+                    phase: 'work',
+                    currentRound: 1,
+                    remainingSeconds: teamCircuitTimer.workSeconds,
+                    timestamp: Date.now(),
+                  }
+                  setTeamCircuitTimer(started)
+                  multiBridgeRef.current?.broadcastCircuitTimer(started)
+                  playBeep(880, 0.2)
+                  showHudToast(`⏱️ Squad Circuit Started: Round 1/${teamCircuitTimer.totalRounds}`, 'emerald')
+                  setShowCircuitTimerModal(false)
+                }}
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: 6,
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  border: '1px solid #34D399',
+                  color: '#060A14',
+                  fontSize: 12,
+                  fontWeight: 900,
+                  letterSpacing: '0.04em',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(16,185,129,0.4)',
+                }}
+              >
+                ▶ START FOR ENTIRE SQUAD
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Team Quick Cues Popover Menu (NASM VCS) ── */}
+      {showTeamCuesMenu && (
+        <div
+          data-testid="team-cues-popover"
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            bottom: 60,
+            left: 20,
+            maxWidth: 420,
+            width: 'calc(100vw - 40px)',
+            background: 'rgba(6,10,18,0.96)',
+            backdropFilter: 'blur(16px)',
+            border: '1.5px solid var(--gold)',
+            borderRadius: 12,
+            boxShadow: '0 16px 48px rgba(0,0,0,0.9), 0 0 24px rgba(212,160,23,0.25)',
+            zIndex: 10000,
+            padding: 16,
+            animation: 'fadeIn 0.15s ease-out',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <GaaIcon name="sparkles" size={14} tone="gold" />
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>
+                Tactical Squad Verbal Cues
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowTeamCuesMenu(false)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255,255,255,0.6)',
+                cursor: 'pointer',
+                fontSize: 16,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          <div style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {TEAM_QUICK_CUES.map(cue => (
+              <button
+                key={cue.id}
+                type="button"
+                onClick={() => {
+                  multiBridgeRef.current?.broadcastTeamCue(cue.cue)
+                  speakNasmCue(cue.cue)
+                  showHudToast(`🗣️ Broadcast to Squad: "${cue.cue}"`, 'gold')
+                  setShowTeamCuesMenu(false)
+                }}
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: 6,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: '#FFF',
+                  fontSize: 11.5,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span>{cue.cue}</span>
+                <span
+                  style={{
+                    fontSize: 9,
+                    textTransform: 'uppercase',
+                    color: cue.category === 'form' ? 'var(--gold-lt)' : cue.category === 'cadence' ? '#60A5FA' : cue.category === 'breathing' ? '#34D399' : '#F472B6',
+                    fontWeight: 700,
+                  }}
+                >
+                  {cue.category}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Squad Roster & HIPAA Health Safeguard Drawer ── */}
+      {showTeamRosterDrawer && (
+        <div
+          data-testid="team-roster-drawer"
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2, 6, 14, 0.7)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            zIndex: 10000,
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+          onClick={e => {
+            if (e.target === e.currentTarget) setShowTeamRosterDrawer(false)
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 380,
+              height: '100%',
+              background: '#070B14',
+              borderLeft: '1px solid rgba(212,160,23,0.4)',
+              boxShadow: '-10px 0 40px rgba(0,0,0,0.8)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 20,
+              gap: 16,
+              overflowY: 'auto',
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
+                  Forge Athletic · Squad Roster
+                </span>
+                <h3 style={{ margin: '2px 0 0', color: '#FFF', fontSize: 18, fontWeight: 800 }}>
+                  {teamName || 'Squad Members'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTeamRosterDrawer(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.6)',
+                  cursor: 'pointer',
+                  fontSize: 18,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* HIPAA Safeguard Banner */}
+            <div
+              style={{
+                background: 'rgba(59,130,246,0.1)',
+                border: '1px solid rgba(59,130,246,0.3)',
+                borderRadius: 8,
+                padding: '10px 12px',
+                fontSize: 11,
+                color: '#93C5FD',
+                display: 'flex',
+                gap: 8,
+              }}
+            >
+              <GaaIcon name="lock" size={14} tone="inherit" />
+              <div>
+                <strong>HIPAA (1996) Privacy Standard:</strong> Client health histories, PAR-Q+, and orthopedic indicators are strictly confidential to the coach and never shared between teammates.
+              </div>
+            </div>
+
+            {/* Members List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+              {teamRoster.map(member => {
+                const participant = teamParticipants.find(p => p.userId === member.id)
+                const isOnline = Boolean(participant || teamRemoteStreams[member.id])
+                const isSpotlighted = spotlightedAthleteId === member.id
+
+                return (
+                  <div
+                    key={member.id}
+                    style={{
+                      background: isSpotlighted ? 'rgba(212,160,23,0.15)' : 'rgba(255,255,255,0.03)',
+                      border: isSpotlighted ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: 8,
+                      padding: '10px 12px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: '50%',
+                          background: isOnline ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.06)',
+                          border: `1px solid ${isOnline ? '#10B981' : 'rgba(255,255,255,0.15)'}`,
+                          color: isOnline ? '#34D399' : 'var(--gray)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 13,
+                          fontWeight: 800,
+                        }}
+                      >
+                        {member.fullName.charAt(0)}
+                      </div>
+                      <div>
+                        <div style={{ color: '#FFF', fontSize: 13, fontWeight: 700 }}>
+                          {member.fullName}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: isOnline ? '#34D399' : 'var(--gray)' }}>
+                          {isOnline ? '🟢 Connected' : '⚪ Offline'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSpotlightedAthleteId(member.id)
+                        if (teamRemoteStreams[member.id]) {
+                          setActiveRemoteStream(teamRemoteStreams[member.id])
+                        }
+                        setLayout('spotlight')
+                        multiBridgeRef.current?.broadcastSpotlight(member.id)
+                        showHudToast(`★ Spotlighted ${member.fullName}`, 'gold')
+                        setShowTeamRosterDrawer(false)
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 4,
+                        background: isSpotlighted ? 'var(--gold)' : 'rgba(255,255,255,0.08)',
+                        color: isSpotlighted ? '#0A0E18' : '#FFF',
+                        border: isSpotlighted ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.15)',
+                        fontSize: 10,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {isSpotlighted ? 'ACTIVE' : 'SPOTLIGHT'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

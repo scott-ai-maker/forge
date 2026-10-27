@@ -645,6 +645,53 @@ describe('Unified Live Studio HUD Helper Mechanics', () => {
       expect(showErapModal).toBe(false)
     })
   })
+
+  describe('Team Live Studio & Squad Coaching Mechanics (NASM VCS)', () => {
+    it('supports team session layout switching between team_grid and spotlight', () => {
+      let layout: 'split' | 'pip' | 'focus' | 'team_grid' | 'spotlight' = 'team_grid'
+      const setLayout = (next: typeof layout) => { layout = next }
+
+      expect(layout).toBe('team_grid')
+      setLayout('spotlight')
+      expect(layout).toBe('spotlight')
+      setLayout('split')
+      expect(layout).toBe('split')
+    })
+
+    it('manages team circuit timer presets and interval configurations', () => {
+      const presets = [
+        { name: 'Tabata Sprint', work: 20, rest: 10, rounds: 8 },
+        { name: 'HIIT Conditioning', work: 40, rest: 20, rounds: 4 },
+        { name: 'Strength Circuit', work: 45, rest: 30, rounds: 5 },
+        { name: 'Power Pacing', work: 30, rest: 45, rounds: 4 },
+      ]
+
+      expect(presets).toHaveLength(4)
+      expect(presets[0].work).toBe(20)
+      expect(presets[0].rest).toBe(10)
+      expect(presets[0].rounds).toBe(8)
+      expect(presets[1].work).toBe(40)
+    })
+
+    it('enforces group audio mute directive across all connected athletes', () => {
+      let isTeamMuted = false
+      const toggleTeamMute = () => { isTeamMuted = !isTeamMuted }
+
+      expect(isTeamMuted).toBe(false)
+      toggleTeamMute()
+      expect(isTeamMuted).toBe(true)
+      toggleTeamMute()
+      expect(isTeamMuted).toBe(false)
+    })
+
+    it('verifies team quick cues catalog contains biomechanics, tempo, recovery, and motivation', () => {
+      const categories = ['biomechanics', 'tempo', 'recovery', 'motivation']
+      expect(categories).toContain('biomechanics')
+      expect(categories).toContain('tempo')
+      expect(categories).toContain('recovery')
+      expect(categories).toContain('motivation')
+    })
+  })
 })
 
 

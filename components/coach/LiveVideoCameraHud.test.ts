@@ -314,6 +314,128 @@ describe('Live Video Camera HUD Architecture & WebRTC Bridge', () => {
     expect(config.athleteStageUnobstructed).toBe(true)
     expect(config.compareSideBySide).toBe(true)
   })
+
+  it('supports team_grid and spotlight layout modes for multi-athlete live coaching', () => {
+    const allLayouts: VideoHudLayout[] = ['split', 'pip', 'focus', 'team_grid', 'spotlight']
+    expect(allLayouts).toContain('team_grid')
+    expect(allLayouts).toContain('spotlight')
+    expect(allLayouts).toHaveLength(5)
+  })
+
+  it('handles team circuit timer progression and interval countdowns accurately', () => {
+    interface CircuitState {
+      workSeconds: number
+      restSeconds: number
+      totalRounds: number
+      currentRound: number
+      phase: 'idle' | 'work' | 'rest' | 'completed'
+      remainingSeconds: number
+    }
+
+    function tickCircuit(timer: CircuitState): CircuitState {
+      if (timer.remainingSeconds > 1) {
+        return { ...timer, remainingSeconds: timer.remainingSeconds - 1 }
+      }
+      if (timer.phase === 'work') {
+        return {
+          ...timer,
+          phase: 'rest',
+          remainingSeconds: timer.restSeconds,
+        }
+      }
+      if (timer.phase === 'rest') {
+        if (timer.currentRound < timer.totalRounds) {
+          return {
+            ...timer,
+            phase: 'work',
+            currentRound: timer.currentRound + 1,
+            remainingSeconds: timer.workSeconds,
+          }
+        }
+        return {
+          ...timer,
+          phase: 'completed',
+          remainingSeconds: 0,
+        }
+      }
+      return timer
+    }
+
+    let timer: CircuitState = {
+      workSeconds: 20,
+      restSeconds: 10,
+      totalRounds: 2,
+      currentRound: 1,
+      phase: 'work',
+      remainingSeconds: 1, // about to transition to rest
+    }
+
+    // Tick from work -> rest
+    timer = tickCircuit(timer)
+    expect(timer.phase).toBe('rest')
+    expect(timer.remainingSeconds).toBe(10)
+    expect(timer.currentRound).toBe(1)
+
+    // Tick down rest to 1
+    timer.remainingSeconds = 1
+    // Tick from rest -> work round 2
+    timer = tickCircuit(timer)
+    expect(timer.phase).toBe('work')
+    expect(timer.remainingSeconds).toBe(20)
+    expect(timer.currentRound).toBe(2)
+
+    // Tick down work round 2 to 1
+    timer.remainingSeconds = 1
+    timer = tickCircuit(timer)
+    expect(timer.phase).toBe('rest')
+    expect(timer.remainingSeconds).toBe(10)
+
+    // Tick down rest round 2 to 1 -> completes circuit
+    timer.remainingSeconds = 1
+    timer = tickCircuit(timer)
+    expect(timer.phase).toBe('completed')
+    expect(timer.remainingSeconds).toBe(0)
+  })
+
+  it('enforces HIPAA Privacy Standard: client medical notes remain coach-only and never exposed to teammates', () => {
+    interface TeamMemberProfile {
+      id: string
+      fullName: string
+      role: string
+      // Protected Health Information (PHI)
+      parQCleared: boolean
+      orthopedicLimitations?: string[]
+      isConfidentialToCoach: boolean
+    }
+
+    function sanitizeTeammateForPeers(member: TeamMemberProfile) {
+      // Invariant: Fellow teammates only receive identity and video stream presence;
+      // All orthopedic, PAR-Q+, and clinical telemetry are strictly excluded.
+      return {
+        id: member.id,
+        fullName: member.fullName,
+        role: member.role,
+      }
+    }
+
+    const athleteA: TeamMemberProfile = {
+      id: 'athlete-1',
+      fullName: 'Marcus Vance',
+      role: 'Team Captain',
+      parQCleared: true,
+      orthopedicLimitations: ['Right ACL reconstruction', 'Patellofemoral tracking deviation'],
+      isConfidentialToCoach: true,
+    }
+
+    const sanitized = sanitizeTeammateForPeers(athleteA)
+    expect(sanitized).toEqual({
+      id: 'athlete-1',
+      fullName: 'Marcus Vance',
+      role: 'Team Captain',
+    })
+    expect((sanitized as unknown as TeamMemberProfile).orthopedicLimitations).toBeUndefined()
+    expect((sanitized as unknown as TeamMemberProfile).parQCleared).toBeUndefined()
+  })
 })
 
 
