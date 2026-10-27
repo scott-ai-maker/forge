@@ -47,16 +47,23 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
     sessionId?: string
   } | null>(null)
 
-  // Client local timezone detection
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Client local timezone detection (only resolved on client after mount)
   const clientTimeZone = useMemo(() => {
+    if (!mounted) return 'America/New_York'
     try {
       return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'
     } catch {
       return 'America/New_York'
     }
-  }, [])
+  }, [mounted])
 
-  const isDifferentTz = clientTimeZone !== 'America/New_York'
+  const isDifferentTz = mounted && clientTimeZone !== 'America/New_York'
 
   useEffect(() => {
     let cancelled = false
@@ -606,7 +613,7 @@ export default function SlotPicker({ packages }: SlotPickerProps) {
           </div>
         </div>
 
-        <div style={{ fontSize: 11, color: 'var(--gray)' }}>
+        <div style={{ fontSize: 11, color: 'var(--gray)' }} suppressHydrationWarning>
           {isDifferentTz ? `Showing ET & your local time (${clientTimeZone})` : 'All times displayed in Eastern Time (ET)'}
         </div>
       </div>

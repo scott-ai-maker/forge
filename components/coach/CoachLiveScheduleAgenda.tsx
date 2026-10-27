@@ -216,6 +216,7 @@ export default function CoachLiveScheduleAgenda({ sessions }: CoachLiveScheduleA
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                       <span
+                        suppressHydrationWarning
                         style={{
                           fontSize: 10.5,
                           fontWeight: 800,
@@ -246,7 +247,7 @@ export default function CoachLiveScheduleAgenda({ sessions }: CoachLiveScheduleA
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--gold-lt)', fontWeight: 600 }}>
                       <GaaIcon name="clock" size={13} tone="gold" />
-                      <span>{dateEt} at {timeEt} ET</span>
+                      <span suppressHydrationWarning>{dateEt} at {timeEt} ET</span>
                     </div>
                   </div>
 

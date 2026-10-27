@@ -214,7 +214,10 @@ export async function GET(request: NextRequest) {
 
   const targetEmail = isCoach ? COACH_DEMO_EMAIL : DEMO_EMAIL
   const targetPassword = isCoach ? COACH_DEMO_PASSWORD : DEMO_PASSWORD
-  const redirectPath = isCoach ? '/coach' : '/dashboard/fitness?workspace=train'
+  const redirectParam = searchParams.get('redirect')
+  const redirectPath = redirectParam && redirectParam.startsWith('/')
+    ? redirectParam
+    : (isCoach ? '/coach' : '/dashboard/fitness?workspace=train')
 
   const { origin } = new URL(request.url)
   const redirectUrl = new URL(redirectPath, origin)
@@ -340,6 +343,29 @@ export async function GET(request: NextRequest) {
             sessions_per_week: 3,
             estimated_duration_mins: 60,
             plan_json: MASTER_DEMO_PLAN_JSON,
+          })
+        }
+      } catch {
+        // Non-blocking
+      }
+
+      try {
+        const { data: existingPkgs } = await admin
+          .from('client_packages')
+          .select('id, sessions_remaining')
+          .eq('client_id', userId)
+          .gt('sessions_remaining', 0)
+          .limit(1)
+
+        if (!existingPkgs || existingPkgs.length === 0) {
+          await admin.from('client_packages').insert({
+            client_id: userId,
+            package_name: 'Forge Executive Diagnostic Retainer',
+            sessions_total: 4,
+            sessions_remaining: 3,
+            source: 'comp',
+            grant_note: 'VIP Demo All-Access Diagnostics & Movement Screens',
+            discount_amount_cents: 0,
           })
         }
       } catch {

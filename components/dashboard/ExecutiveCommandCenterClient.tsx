@@ -496,9 +496,9 @@ export default function ExecutiveCommandCenterClient({
                 ? 'Diagnostic assessment available'
                 : 'Form Lab & Asynchronous Review'}
             </h3>
-            <p style={{ fontSize: 12, color: '#94A3B8', margin: '4px 0 0', lineHeight: 1.4 }}>
+            <p style={{ fontSize: 12, color: '#94A3B8', margin: '4px 0 0', lineHeight: 1.4 }} suppressHydrationWarning>
               {nextSession
-                ? `${new Date(nextSession.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(nextSession.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                ? `${new Date(nextSession.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' })} at ${new Date(nextSession.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET`
                 : totalRemaining > 0
                 ? 'Occasional kinetic chain movement screen or benchmark evaluation with Coach Gordon.'
                 : 'Submit lift videos for frame-by-frame kinetic chain feedback from Coach Gordon, or message your coach.'
