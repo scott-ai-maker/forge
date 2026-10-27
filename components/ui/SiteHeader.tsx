@@ -106,7 +106,7 @@ export default function SiteHeader({
 
   return (
     <>
-      <header className={`site-header ${fixed ? 'site-header-fixed' : ''}`}>
+      <header className={`site-header ${fixed ? 'site-header-fixed' : ''}`} suppressHydrationWarning>
         <div
           className="site-header-inner"
           style={{

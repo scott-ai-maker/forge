@@ -186,6 +186,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-US" className={`${barlowCondensed.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
+        <meta name="darkreader-lock" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Apple iOS PWA / Standalone Web App Splash Screens */}

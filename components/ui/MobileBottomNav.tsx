@@ -27,6 +27,7 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
       <nav
         className="mobile-bottom-dock"
         aria-label="Mobile Coach Navigation"
+        suppressHydrationWarning
         style={{
           position: 'fixed',
           bottom: 0,
@@ -111,6 +112,7 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
     <nav
       className="mobile-bottom-dock"
       aria-label="Mobile Navigation"
+      suppressHydrationWarning
       style={{
         position: 'fixed',
         bottom: 0,

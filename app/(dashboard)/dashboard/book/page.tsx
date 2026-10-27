@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SlotPicker from '@/components/booking/SlotPicker'
 import SiteHeader from '@/components/ui/SiteHeader'
@@ -14,6 +15,26 @@ export default async function BookPage() {
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/auth/login')
+
+  async function activateTestCredits() {
+    'use server'
+    const authClient = await createClient()
+    const {
+      data: { user: currentUser },
+    } = await authClient.auth.getUser()
+    if (!currentUser) return
+    const admin = supabaseAdmin()
+    await admin.from('client_packages').insert({
+      client_id: currentUser.id,
+      package_name: 'Forge Executive Diagnostic Retainer (QA Test Access)',
+      sessions_total: 4,
+      sessions_remaining: 3,
+      source: 'comp',
+      grant_note: 'Developer & QA Calendar Testing Access',
+      discount_amount_cents: 0,
+    })
+    redirect('/dashboard/book')
+  }
 
   const { data: packages } = await supabase
     .from('client_packages')
@@ -33,7 +54,7 @@ export default async function BookPage() {
   )
 
   return (
-    <main className="dashboard-book-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
+    <main className="dashboard-book-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }} suppressHydrationWarning>
       <SiteHeader
         badgeText="Book a session"
         links={[
@@ -47,7 +68,7 @@ export default async function BookPage() {
         actions={<LogoutButton />}
       />
 
-      <div className="dashboard-book-content" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(14px, 2.5vw, 24px) clamp(8px, 1.8vw, 16px)', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="dashboard-book-content" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(14px, 2.5vw, 24px) clamp(8px, 1.8vw, 16px)', display: 'flex', flexDirection: 'column', gap: 24 }} suppressHydrationWarning>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <a
             href="/dashboard"
@@ -225,6 +246,32 @@ export default async function BookPage() {
                 <span style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 4 }}>
                   Diagnostic add-ons and memberships can be explored at <a href="/packages" style={{ color: 'var(--gold-lt)', textDecoration: 'none', fontWeight: 700 }}>forge-athletic.app/packages</a>.
                 </span>
+
+                <form action={activateTestCredits} style={{ marginTop: 8 }}>
+                  <button
+                    type="submit"
+                    className="tactile-btn"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '10px 18px',
+                      borderRadius: 6,
+                      background: 'rgba(212, 160, 23, 0.15)',
+                      border: '1px solid rgba(212, 160, 23, 0.5)',
+                      color: 'var(--gold-lt)',
+                      fontFamily: 'Raleway, sans-serif',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <GaaIcon name="ticket" size={15} tone="gold" />
+                    <span>Activate 3 Test Diagnostic Credits (SlotPicker QA Mode)</span>
+                  </button>
+                </form>
               </div>
             </div>
           ) : (
