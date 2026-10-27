@@ -37,6 +37,8 @@ interface ChatMessage {
   requiresCoachPing?: boolean
   coachPingReason?: string
   isEmergency911?: boolean
+  engineMode?: 'gemini_ai' | 'openai_fallback' | 'nasm_rag_engine'
+  apiNotice?: string
 }
 
 interface AskCoachGordonModalProps {
@@ -136,6 +138,7 @@ export default function AskCoachGordonModal({
   const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null)
   const [effectiveContraindications, setEffectiveContraindications] = useState<string[]>(contraindicationTags)
   const [actionFeedback, setActionFeedback] = useState<Record<string, string>>({})
+  const [systemBannerNotice, setSystemBannerNotice] = useState<string | null>(null)
 
   // Pre-warm ElevenLabs audio for the initial greeting immediately when modal opens
   useEffect(() => {
@@ -490,6 +493,10 @@ export default function AskCoachGordonModal({
         const data = await res.json()
         const assistantResponse = data?.response
         if (assistantResponse) {
+          if (assistantResponse.apiNotice) {
+            setSystemBannerNotice(assistantResponse.apiNotice)
+          }
+
           const newAssistantMsg: ChatMessage = {
             id: `assistant_${Date.now()}`,
             role: 'assistant',
@@ -501,6 +508,8 @@ export default function AskCoachGordonModal({
             requiresCoachPing: assistantResponse.requiresCoachPing,
             coachPingReason: assistantResponse.coachPingReason,
             isEmergency911: assistantResponse.isEmergency911,
+            engineMode: assistantResponse.engineMode,
+            apiNotice: assistantResponse.apiNotice,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           }
           setMessages(prev => [...prev, newAssistantMsg])
@@ -1072,6 +1081,42 @@ export default function AskCoachGordonModal({
           </div>
         </div>
 
+        {/* System Notice Banner when cloud LLM credits are depleted */}
+        {systemBannerNotice && isCoachUser && (
+          <div
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              borderBottom: '1px solid rgba(245, 158, 11, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+              fontSize: '11px',
+              color: '#fef3c7',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <GaaIcon name="alert-triangle" size={14} tone="amber" />
+              <span>{systemBannerNotice}</span>
+            </div>
+            <a
+              href="https://ai.studio/projects"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: '#fde047',
+                textDecoration: 'underline',
+                fontWeight: 700,
+                fontSize: '11px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Top Up Credits →
+            </a>
+          </div>
+        )}
+
         {/* Message Stream */}
         <div
           style={{
@@ -1180,6 +1225,28 @@ export default function AskCoachGordonModal({
                             >
                               🎙️ ElevenLabs Cloned Voice
                             </span>
+
+                            {msg.engineMode && (
+                              <span
+                                style={{
+                                  fontSize: '10px',
+                                  color: msg.engineMode === 'gemini_ai' ? '#60a5fa' : msg.engineMode === 'openai_fallback' ? '#34d399' : '#f59e0b',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  background: msg.engineMode === 'nasm_rag_engine' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255, 255, 255, 0.04)',
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  border: msg.engineMode === 'nasm_rag_engine' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(255, 255, 255, 0.06)',
+                                }}
+                              >
+                                {msg.engineMode === 'gemini_ai'
+                                  ? '⚡ Gemini 3.8 Flash'
+                                  : msg.engineMode === 'openai_fallback'
+                                  ? '⚡ OpenAI Cloud'
+                                  : '🏛️ Master NASM RAG Engine'}
+                              </span>
+                            )}
                           </div>
 
                           {/* RAG Sources Accordion — Visible only when logged in as Coach */}

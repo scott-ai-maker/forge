@@ -129,4 +129,82 @@ describe('Ask Coach Gordon AI Engine & Multi-Tier Liability Safeguards', () => {
       expect(response.requiresCoachPing).toBe(false)
     })
   })
+
+  describe('Upgraded Local Master NASM Sports Science Engine (Non-Generic Fallback)', () => {
+    it('synthesizes rich exercise technique breakdown with prime movers, tempo, and kinetic checkpoints', async () => {
+      const response = await askCoachGordon({
+        question: 'How do I do dumbbell incline press?',
+        athleteName: 'Scott',
+        nasmOptPhase: 2,
+      })
+
+      expect(response.answerMarkdown).toContain('Incline Dumbbell Bench Press')
+      expect(response.answerMarkdown).toContain('Pectoralis Major (Clavicular Upper Head)')
+      expect(response.answerMarkdown).toContain('2-0-2')
+      expect(response.answerMarkdown).toContain('Master 5 Kinetic Chain Checkpoints')
+      expect(response.answerMarkdown).toContain('30°–45° incline')
+      expect(response.engineMode).toBe('nasm_rag_engine')
+      expect(response.recommendedAction?.type).toBe('view_demo')
+      expect(response.recommendedAction?.targetExerciseName).toBe('Incline Dumbbell Bench Press')
+    })
+
+    it('synthesizes dynamic exercise substitution with biomechanical rationale and 1-tap swap action', async () => {
+      const response = await askCoachGordon({
+        question: 'The lat pulldown is taken, what can I do instead?',
+        athleteName: 'Scott',
+        nasmOptPhase: 2,
+        equipmentAccess: ['Dumbbells', 'Bands'],
+      })
+
+      expect(response.answerMarkdown).toContain('Chest-Supported Dumbbell Row')
+      expect(response.answerMarkdown).toContain('Biomechanical Rationale')
+      expect(response.recommendedAction?.type).toBe('swap_exercise')
+      expect(response.recommendedAction?.targetExerciseName).toContain('Chest-Supported Dumbbell Row')
+      expect(response.recommendedAction?.buttonText).toContain('Swap to Chest-Supported Dumbbell Row')
+    })
+
+    it('synthesizes personalized 30-40g protein pacing and glycogen replenishment', async () => {
+      const response = await askCoachGordon({
+        question: 'What should I eat after my workout?',
+        athleteName: 'Scott',
+        goal: 'hypertrophy',
+        nasmOptPhase: 3,
+      })
+
+      expect(response.answerMarkdown).toContain('30 to 40 grams of high-quality protein')
+      expect(response.answerMarkdown).toContain('leucine')
+      expect(response.answerMarkdown).toContain('mTOR')
+      expect(response.answerMarkdown).toContain('glycogen')
+    })
+
+    it('dynamically computes Tanaka cardiorespiratory target heart rate zones for athlete age', async () => {
+      const response = await askCoachGordon({
+        question: 'How should I pace my cardio on the treadmill today?',
+        athleteName: 'Scott',
+        clientAge: 40,
+        nasmOptPhase: 2,
+      })
+
+      // Tanaka Max HR for 40: 208 - (0.7 * 40) = 180 BPM
+      // Zone 1: 117 to 135 BPM; Zone 2: 137 to 153 BPM; Zone 3: 155 to 171 BPM
+      expect(response.answerMarkdown).toContain('Tanaka Max HR: **180 BPM**')
+      expect(response.answerMarkdown).toContain('Zone 1')
+      expect(response.answerMarkdown).toContain('Zone 2')
+      expect(response.answerMarkdown).toContain('Zone 3')
+    })
+
+    it('prescribes the 4-step NASM Corrective Exercise Continuum for joint tightness', async () => {
+      const response = await askCoachGordon({
+        question: 'My lower back and hips feel tight today',
+        athleteName: 'Scott',
+        nasmOptPhase: 1,
+      })
+
+      expect(response.answerMarkdown).toContain('NASM 4-Step Corrective Continuum')
+      expect(response.answerMarkdown).toContain('Step 1: Inhibit')
+      expect(response.answerMarkdown).toContain('Step 2: Lengthen')
+      expect(response.answerMarkdown).toContain('Step 3: Activate')
+      expect(response.answerMarkdown).toContain('Step 4: Integrate')
+    })
+  })
 })

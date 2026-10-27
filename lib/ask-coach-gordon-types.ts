@@ -58,6 +58,8 @@ export interface AskCoachGordonResponse {
   requiresCoachPing?: boolean
   coachPingReason?: string
   isEmergency911?: boolean
+  engineMode?: 'gemini_ai' | 'openai_fallback' | 'nasm_rag_engine'
+  apiNotice?: string
 }
 
 export type ClinicalUrgencyTier = 'EMERGENCY_911' | 'SERIOUS_MEDICAL_REFERRAL' | 'STANDARD_TRAINING'

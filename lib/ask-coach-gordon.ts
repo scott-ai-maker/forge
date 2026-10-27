@@ -11,6 +11,8 @@ import { sanitizeCoachSpeechText } from './coach-voice-synthesizer'
 import { getSmartSubstitutions } from './nasm-exercise-substitution'
 import { resolveExerciseVideoEmbed } from './nasm-exercise-video-catalog'
 import { CONTRAINDICATION_RULES, checkExerciseContraindications } from './liability-shield'
+import { NASM_MOVEMENT_PROFILES } from './nasm-clinical-movement-cards'
+import { NASM_COMPLETE_LIBRARY } from './nasm-fuzzy-matcher'
 import {
   type AskCoachGordonRequest,
   type AskCoachGordonResponse,
@@ -238,12 +240,15 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
     : ''
 
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
+  let apiFailureReason: string | undefined = undefined
 
   if (apiKey) {
     const modelsToTry = [
       ...(process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : []),
       'gemini-3.8-flash',
+      'gemini-3.5-flash',
       'gemini-flash-latest',
+      'gemini-3.1-flash-lite',
       'gemini-3.1-pro-preview',
       'gemini-pro-latest',
     ]
@@ -314,20 +319,77 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
               suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
               requiresCoachPing: pingCheck.requiresCoachPing,
               coachPingReason: pingCheck.reason,
+              engineMode: 'gemini_ai',
             }
           }
         } else {
           const errBody = await res.text().catch(() => '')
-          console.warn(`[AskCoachGordon] Model ${model} returned HTTP ${res.status}:`, errBody.slice(0, 200))
+          if (res.status === 402) {
+            apiFailureReason = 'Google AI Studio prepayment credits depleted (HTTP 402). Manage balance at https://ai.studio/projects'
+            console.error(`[AskCoachGordon] ⚠️ GEMINI BILLING (402): Prepayment credits depleted. Go to https://ai.studio/projects to top up balance.`)
+          } else {
+            console.warn(`[AskCoachGordon] Model ${model} returned HTTP ${res.status}:`, errBody.slice(0, 200))
+          }
         }
       } catch (err) {
         console.warn(`[AskCoachGordon] Model ${model} failed, attempting next model...`, err)
       }
     }
+
+    // Optional OpenAI secondary cloud provider fallback
+    const openAiKey = process.env.OPENAI_API_KEY
+    if (openAiKey && openAiKey.startsWith('sk-') && openAiKey.length > 20) {
+      try {
+        const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openAiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            temperature: 0.35,
+            messages: [
+              { role: 'system', content: MASTER_COACH_SYSTEM_INSTRUCTION },
+              ...activeConversationHistory.slice(-8).map(h => ({
+                role: h.role === 'user' ? 'user' : 'assistant',
+                content: h.text,
+              })),
+              {
+                role: 'user',
+                content: `${athleteContext}${ragContext}${contraindicationsClause}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going.`,
+              },
+            ],
+          }),
+        })
+
+        if (oaiRes.ok) {
+          const oaiData = await oaiRes.json()
+          const rawText = oaiData?.choices?.[0]?.message?.content
+          if (rawText) {
+            const spokenAudioText = sanitizeCoachSpeechText(rawText)
+            const pingCheck = detectCoachPingNeed(question, rawText)
+            const recommendedAction = deriveRecommendedAction(question.toLowerCase(), currentExerciseName, rawText, nasmOptPhase, equipmentAccess)
+            return {
+              answerMarkdown: rawText,
+              spokenAudioText,
+              relevantCurriculums: curriculumTitles,
+              recommendedAction,
+              suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
+              requiresCoachPing: pingCheck.requiresCoachPing,
+              coachPingReason: pingCheck.reason,
+              engineMode: 'openai_fallback',
+            }
+          }
+        }
+      } catch (oaiErr) {
+        console.warn('[AskCoachGordon] OpenAI secondary fallback failed:', oaiErr)
+      }
+    }
   }
 
-  // Fallback to deterministic sports-science engine
-  return generateDeterministicCoachResponse(request, relevantDocs)
+  // Fallback to local high-EQ Master NASM sports-science RAG engine
+  return generateDeterministicCoachResponse(request, relevantDocs, apiFailureReason)
 }
 
 /**
@@ -367,14 +429,198 @@ export function detectCoachPingNeed(question: string, answerText?: string): { re
   return { requiresCoachPing: false }
 }
 
+interface MatchedExerciseInfo {
+  name: string
+  category?: string
+  primeMover?: string
+  synergists?: string[]
+  stabilizers?: string[]
+  tempo?: string
+  setupInstructions?: string
+  executionInstructions?: string
+  clinicalCues?: string[]
+  kineticCheckpoints?: {
+    feetAnkles?: string
+    knees?: string
+    lphc?: string
+    shoulders?: string
+    headNeck?: string
+  }
+  description?: string
+  videoId?: string | null
+  embedUrl?: string | null
+}
+
+export function resolveExerciseContext(query: string, currentExerciseName?: string): MatchedExerciseInfo | null {
+  const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
+  const q = clean(query)
+  const cur = currentExerciseName ? clean(currentExerciseName) : ''
+
+  const aliasMap: Record<string, string> = {
+    'incline bench': 'incline dumbbell bench press',
+    'incline press': 'incline dumbbell bench press',
+    'dumbbell incline': 'incline dumbbell bench press',
+    'incline dumbbell': 'incline dumbbell bench press',
+    'incline chest press': 'incline dumbbell bench press',
+    'rdl': 'romanian deadlift',
+    'rdls': 'romanian deadlift',
+    'romanian': 'romanian deadlift',
+    'split squat': 'bulgarian split squat',
+    'split squats': 'bulgarian split squat',
+    'bulgarian': 'bulgarian split squat',
+    'bulgarian split': 'bulgarian split squat',
+    'pushup': 'push up',
+    'pushups': 'push up',
+    'push ups': 'push up',
+    'pullup': 'pull up',
+    'pullups': 'pull up',
+    'pull ups': 'pull up',
+    'bicep curl': 'barbell bicep curl',
+    'bicep curls': 'barbell bicep curl',
+    'curls': 'barbell bicep curl',
+    'hammer curl': 'hammer curl',
+    'hammer curls': 'hammer curl',
+    'squat': 'barbell back squat',
+    'squats': 'barbell back squat',
+    'back squat': 'barbell back squat',
+    'front squat': 'front squat',
+    'goblet squat': 'goblet squat',
+    'deadlift': 'barbell deadlift',
+    'deadlifts': 'barbell deadlift',
+    'bench': 'bench press',
+    'bench press': 'bench press',
+    'flat bench': 'bench press',
+    'dumbbell press': 'dumbbell bench press',
+    'overhead press': 'overhead press',
+    'ohp': 'overhead press',
+    'military press': 'overhead press',
+    'shoulder press': 'overhead press',
+    'lateral raise': 'dumbbell lateral raise',
+    'lateral raises': 'dumbbell lateral raise',
+    'side raise': 'dumbbell lateral raise',
+    'hip thrust': 'barbell hip thrust',
+    'hip thrusts': 'barbell hip thrust',
+    'glute bridge': 'dead bug',
+    'lat pull': 'lat pulldown',
+    'lat pulldown': 'lat pulldown',
+    'pulldown': 'lat pulldown',
+    'pulldowns': 'lat pulldown',
+    'bent over row': 'barbell bent-over row',
+    'barbell row': 'barbell bent-over row',
+    'cable row': 'cable row',
+    'seated row': 'seated row',
+    'face pull': 'face pull',
+    'face pulls': 'face pull',
+    'tricep pushdown': 'triceps pushdown',
+    'triceps pushdown': 'triceps pushdown',
+    'tricep extension': 'supported bent over dumbbell extension',
+    'triceps extension': 'supported bent over dumbbell extension',
+    'lunge': 'walking lunge',
+    'lunges': 'walking lunge',
+    'reverse lunge': 'reverse lunge',
+    'plank': 'plank',
+    'planks': 'plank',
+  }
+
+  // 1. Check aliases
+  for (const [alias, canonicalKey] of Object.entries(aliasMap)) {
+    if (q.includes(alias) || cur.includes(alias)) {
+      const profile = NASM_MOVEMENT_PROFILES[canonicalKey]
+      if (profile) {
+        const video = resolveExerciseVideoEmbed(profile.name || canonicalKey)
+        return {
+          name: profile.name || canonicalKey.replace(/\b\w/g, l => l.toUpperCase()),
+          category: profile.category,
+          primeMover: profile.primeMover,
+          synergists: profile.synergists,
+          stabilizers: profile.stabilizers,
+          tempo: profile.tempo,
+          setupInstructions: profile.setupInstructions,
+          executionInstructions: profile.executionInstructions,
+          clinicalCues: profile.clinicalCues,
+          kineticCheckpoints: profile.kineticCheckpoints,
+          videoId: video.videoId || null,
+          embedUrl: video.embedUrl || null,
+        }
+      }
+    }
+  }
+
+  // 2. Direct match against NASM_MOVEMENT_PROFILES keys
+  for (const [key, profile] of Object.entries(NASM_MOVEMENT_PROFILES)) {
+    const kClean = clean(key)
+    if (q.includes(kClean) || cur.includes(kClean)) {
+      const video = resolveExerciseVideoEmbed(profile.name || key)
+      return {
+        name: profile.name || key.replace(/\b\w/g, l => l.toUpperCase()),
+        category: profile.category,
+        primeMover: profile.primeMover,
+        synergists: profile.synergists,
+        stabilizers: profile.stabilizers,
+        tempo: profile.tempo,
+        setupInstructions: profile.setupInstructions,
+        executionInstructions: profile.executionInstructions,
+        clinicalCues: profile.clinicalCues,
+        kineticCheckpoints: profile.kineticCheckpoints,
+        videoId: video.videoId || null,
+        embedUrl: video.embedUrl || null,
+      }
+    }
+  }
+
+  // 3. Multi-word partial match in NASM_MOVEMENT_PROFILES
+  for (const [key, profile] of Object.entries(NASM_MOVEMENT_PROFILES)) {
+    const words = clean(key).split(' ').filter(w => w.length > 3)
+    if (words.length >= 2) {
+      const allFound = words.every(w => q.includes(w) || cur.includes(w))
+      if (allFound) {
+        const video = resolveExerciseVideoEmbed(profile.name || key)
+        return {
+          name: profile.name || key.replace(/\b\w/g, l => l.toUpperCase()),
+          category: profile.category,
+          primeMover: profile.primeMover,
+          synergists: profile.synergists,
+          stabilizers: profile.stabilizers,
+          tempo: profile.tempo,
+          setupInstructions: profile.setupInstructions,
+          executionInstructions: profile.executionInstructions,
+          clinicalCues: profile.clinicalCues,
+          kineticCheckpoints: profile.kineticCheckpoints,
+          videoId: video.videoId || null,
+          embedUrl: video.embedUrl || null,
+        }
+      }
+    }
+  }
+
+  // 4. Complete Library match (323 verified exercises)
+  for (const record of NASM_COMPLETE_LIBRARY) {
+    const norm = clean(record.name)
+    if (q.includes(norm) || (cur && cur.includes(norm))) {
+      return {
+        name: record.name,
+        category: record.muscleGroups?.[0] ? record.muscleGroups[0].toUpperCase() : undefined,
+        primeMover: record.muscleGroups?.slice(0, 2).join(', '),
+        description: record.description || undefined,
+        clinicalCues: record.coachingCues?.length ? record.coachingCues : undefined,
+        videoId: record.videoId || null,
+        embedUrl: record.videoUrl ? record.videoUrl.replace('watch?v=', 'embed/') : null,
+      }
+    }
+  }
+
+  return null
+}
+
 /**
  * Generates an authoritative sports-science response when external APIs are unavailable.
  */
 export function generateDeterministicCoachResponse(
   request: AskCoachGordonRequest,
-  docs: RagDocumentMetadata[]
+  docs: RagDocumentMetadata[],
+  apiNotice?: string
 ): AskCoachGordonResponse {
-  const { question, goal = 'fat_loss', nasmOptPhase = 1, currentExerciseName, contraindicationTags = [], equipmentAccess = [] } = request
+  const { question, goal = 'fat_loss', nasmOptPhase = 1, currentExerciseName, contraindicationTags = [], equipmentAccess = [], clientAge = 35 } = request
   const qLower = question.toLowerCase()
 
   // 1. Clinical Urgency & Scope of Practice Triage FIRST
@@ -390,11 +636,14 @@ export function generateDeterministicCoachResponse(
       requiresCoachPing: true,
       coachPingReason: triage.pingReason,
       isEmergency911: triage.isEmergency911,
+      engineMode: 'nasm_rag_engine',
+      apiNotice,
     }
   }
 
   let answerMarkdown = ''
   let spokenAudioText = ''
+  let dynamicAction: CoachActionRecommendation | undefined = undefined
   const athleteGreeting = request.athleteName && request.athleteName !== 'Athlete' ? request.athleteName : 'team'
 
   // 2. Biomechanical & Orthopedic Contraindication Interception
@@ -435,11 +684,13 @@ How does that feel on your body, and are you ready to lock into this safe moveme
         ],
         requiresCoachPing: false,
         isEmergency911: false,
+        engineMode: 'nasm_rag_engine',
+        apiNotice,
       }
     }
   }
 
-  // Out-of-Scope Detection (Strict Training Scope & RAG Boundary)
+  // 3. Out-of-Scope Detection (Strict Training Scope & RAG Boundary)
   if (isOutOfTrainingScope(question)) {
     answerMarkdown = `Hey ${athleteGreeting}, I'll be completely straight with you—as your coach, my whole focus, expertise, and passion are dialed in 100% on your athletic training, movement mechanics, and physical recovery. That is my entire scope of practice, grounded directly in our sports science curriculum.
 
@@ -455,10 +706,12 @@ Let's redirect that energy right back to your training and your goals. How is yo
       suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
       requiresCoachPing: false,
       isEmergency911: false,
+      engineMode: 'nasm_rag_engine',
+      apiNotice,
     }
   }
 
-  // Friendly Conversational Greetings & Rapport Check-ins
+  // 4. Friendly Conversational Greetings & Rapport Check-ins
   if (qLower.includes('hello') || qLower.includes('good morning') || qLower.includes('good afternoon') || qLower.includes('how are you') || qLower.includes('hey coach') || qLower.includes('ready to crush')) {
     answerMarkdown = `Hey ${athleteGreeting}! Coach Gordon right here with you, and I love that energy. I'm locked in and ready to help you execute today.
 
@@ -474,10 +727,12 @@ How is your body feeling today, and what are we focusing on for today's session?
       suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
       requiresCoachPing: false,
       isEmergency911: false,
+      engineMode: 'nasm_rag_engine',
+      apiNotice,
     }
   }
 
-  // Questions regarding Coach Gordon capabilities, scope, and what can be asked
+  // 5. Questions regarding Coach Gordon capabilities, scope, and what can be asked
   const isCapabilityInquiry =
     qLower.includes('what type of question') ||
     qLower.includes('what kind of question') ||
@@ -515,142 +770,197 @@ What are we working on in the gym today—do you need a quick form check, an exe
       suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
       requiresCoachPing: false,
       isEmergency911: false,
+      engineMode: 'nasm_rag_engine',
+      apiNotice,
     }
   }
 
-  if (qLower.includes('swap') || qLower.includes('replace') || qLower.includes('substitute')) {
-    answerMarkdown = `Hey, no problem at all! When equipment is limited or you need to switch things up, we don't let it slow your momentum down. If you can't do **${currentExerciseName || 'your current exercise'}** today, grab a set of dumbbells or even a resistance band and let's substitute with **DB Goblet Squats with a 2-second pause at the bottom**.
+  // 6. Exercise Substitution & Equipment Workarounds
+  const isSwapIntent =
+    qLower.includes('swap') ||
+    qLower.includes('replace') ||
+    qLower.includes('substitute') ||
+    qLower.includes('alternative') ||
+    qLower.includes('instead of') ||
+    qLower.includes('busy') ||
+    qLower.includes('taken') ||
+    qLower.includes("don't have") ||
+    qLower.includes('dont have') ||
+    qLower.includes('broken') ||
+    qLower.includes('no equipment') ||
+    qLower.includes('crowded')
 
-By adding that 2-second pause in the hole, you'll maximize muscle recruitment and get a tremendous training stimulus without needing a heavy barbell. Focus on keeping your chest proud, setting your core brace, and controlling your descent with a steady **${nasmOptPhase === 1 ? '4-second eccentric tempo' : '2-second tempo'}**.
+  const matchedExercise = resolveExerciseContext(question, currentExerciseName)
 
-Remember our standard: **earn the right to add load by owning the movement first**. Swap it in your workout tracker right now, lock into your tempo, and let's get after it! Do you have a set of dumbbells nearby, or would you rather use a cable station today?`
-  } else if (qLower.includes('sleep') || qLower.includes('tired') || qLower.includes('red eye') || qLower.includes('red-eye') || qLower.includes('jet lag') || qLower.includes('exhausted')) {
-    answerMarkdown = `I understand—work, family, travel, and changing sleep schedules can make training harder to plan.
+  if (isSwapIntent) {
+    const targetExercise = matchedExercise?.name || currentExerciseName || 'your scheduled lift'
+    const smartSubs = getSmartSubstitutions(targetExercise, `Phase ${nasmOptPhase}`, undefined, equipmentAccess)
+    const topSub = smartSubs && smartSubs.length > 0 ? smartSubs[0] : null
 
-On days when sleep was compromised, we **train smarter, not harder**. Do not try to hit personal records today. Instead, auto-regulate:
-1. Keep your working weights **15 to 20% lighter** than usual.
-2. Focus strictly on Phase 1 stabilization, tempo control, and clean movement patterns.
-3. Drink 20 ounces of water with electrolytes right now to rehydrate your central nervous system.
+    if (topSub) {
+      const cleanTargetName = topSub.name.replace(/\(.*\)/, '').trim()
+      answerMarkdown = `Hey ${athleteGreeting}, when gym equipment is taken or you need a smart workaround, we never let it stop your momentum!
 
-You still get the win by showing up, protecting your joints, and stimulating blood flow without crushing your adrenal system. We are training for the next 20 years, not just the next 20 minutes. Own your tempo and let's have a crisp, safe session! How is your energy feeling right now on the gym floor—are you ready to start with a light warm-up?`
-  } else if (qLower.includes('short on time') || qLower.includes('20 min') || qLower.includes('25 min') || qLower.includes('30 min') || qLower.includes('hurry') || qLower.includes('rush') || qLower.includes('condense')) {
-    answerMarkdown = `Let's make every single minute count! When you're in a time crunch, we focus on **high-density compound supersets** and trim out the auxiliary isolation work.
+For **${targetExercise}**, our prescribed evidence-based substitution is **${topSub.name}**.
 
-Here is your 20-minute express execution plan:
-1. Warm up dynamically for 3 minutes (arm circles, bodyweight squats, world's greatest stretch).
-2. Pair your primary lower-body movement with an upper-body pull in an antagonistic superset (e.g. Goblet Squats immediately into Dumbbell Rows).
-3. Take 45 to 60 seconds rest between rounds for 3 to 4 working sets.
+**Biomechanical Rationale:** ${topSub.reasoning}
 
-Lock in, keep your rest intervals sharp, and get in and out with maximum efficiency. Let's execute! What equipment do you have right in front of you so we can pair your first two movements?`
-  } else if (qLower.includes('creatine') || qLower.includes('supplement') || qLower.includes('pre-workout') || qLower.includes('pre workout') || qLower.includes('caffeine')) {
-    answerMarkdown = `When it comes to supplements, we only focus on evidence-based fundamentals that genuinely support your physiology:
+**Phase ${nasmOptPhase} Execution Standard:**
+• **Prescribed Tempo**: Lock into a steady **${topSub.prescribedTempo || (nasmOptPhase === 1 ? '4-2-1' : '2-0-2')}** tempo to match the identical neuromuscular recruitment of your primary lift.
+• **Equipment Match**: Calibrated for ${equipmentAccess.length > 0 ? equipmentAccess.join(', ') : 'available resistance gear'}.
+• **Core Brace**: Set your 360-degree abdominal brace before initiating rep one.
 
-1. **Creatine Monohydrate**: Take **3 to 5 grams daily**. Timing does not make or break results, though post-workout with protein and carbs offers slight absorption benefits. You do not need a high-dose loading phase—consistent daily intake saturates muscle phosphocreatine stores within 3 to 4 weeks.
-2. **Hydration & Electrolytes**: Aim for 16 to 24 ounces of water with sodium, potassium, and magnesium around your training window to prevent cramping and maintain intracellular volume.
-3. **Pre-Workout Caffeine**: If using caffeine, keep it to 100 to 200mg taken 30 to 45 minutes before lifting, and avoid it within 8 hours of bedtime to safeguard your deep REM sleep.
+Remember our golden rule: **earn the right to add load by owning the movement first**. Tap the button below to update your workout tracker right now! Do you have this station ready to go?`
 
-Fuel with purpose, stay consistent, and let's keep building! Do you prefer taking your creatine with a post-workout shake, or do you have it with water in the morning?`
-  } else if (qLower.includes('posture') || qLower.includes('tech neck') || qLower.includes('rounded shoulder') || qLower.includes('forward head') || (qLower.includes('desk') && (qLower.includes('neck') || qLower.includes('posture') || qLower.includes('slouch')))) {
-    answerMarkdown = `Long periods at a desk can leave your neck and shoulders feeling tight.
+      dynamicAction = {
+        type: 'swap_exercise',
+        targetExerciseName: cleanTargetName,
+        currentExerciseName: targetExercise,
+        buttonText: `Swap to ${cleanTargetName} in Workout`,
+        prescribedTempo: topSub.prescribedTempo,
+        reasoning: topSub.reasoning,
+      }
+    } else {
+      answerMarkdown = `Hey ${athleteGreeting}, no problem at all! When equipment is limited or a machine is occupied, we pivot without missing a beat.
 
-Here is our NASM corrective reset to restore your kinetic alignment:
-1. **Inhibit & Lengthen**: Spend 60 seconds using a foam roller, lacrosse ball, or doorway stretch on your pectoralis minor and suboccipitals (base of the skull).
-2. **Activate**: Perform 2 sets of 12 **Prone Cobras** (lying face down, retracting scapulae and rotating thumbs toward the ceiling) and 10 **Chin Tucks** to engage deep cervical stabilizers.
-3. **Integrate**: During your lifting sets today, focus on keeping your shoulder blades pulled down and back into your back pockets.
+If you can't access **${targetExercise}** today, grab a set of dumbbells or even a resistance band and let's substitute with **DB Goblet Squats with a 2-second pause at the bottom** (for lower body) or **Dumbbell Floor Presses** (for upper push).
 
-Try these movements if they feel comfortable, and take regular breaks to move during the day. Stop if you feel pain. How does that neck and shoulder tension feel once you try those first few chin tucks?`
-  } else if (qLower.includes('alcohol') || qLower.includes('wine') || qLower.includes('dinner') || qLower.includes('steakhouse') || qLower.includes('restaurant')) {
-    answerMarkdown = `Meals with friends, family, or coworkers can be part of a healthy, enjoyable routine. You do not need to feel guilty about a single meal.
+By introducing a controlled pause at the bottom of the movement, you maximize motor unit recruitment and create tremendous mechanical tension without needing heavy barbells or specialized machines. Focus on keeping your chest proud, setting your core brace, and controlling your descent with a steady **${nasmOptPhase === 1 ? '4-second eccentric tempo' : '2-second tempo'}**.
 
-Here are a few simple ideas:
-1. **Choose what you enjoy**: Include foods you like and options that help you feel satisfied.
-2. **Drink water too**: Having water with your meal can help you stay hydrated.
-3. **Keep things flexible**: One meal does not undo your progress. Return to your usual routine when it works for you.
+Remember our standard: **earn the right to add load by owning the movement first**. Lock in your tempo and let's get after it! What resistance gear do you have open right beside you?`
 
-Enjoy your meal, relax, and let's stay consistent over the long haul. What does your schedule look like tomorrow—are we hitting a training session?`
-  } else if (qLower.includes('click') || qLower.includes('cracking') || qLower.includes('crepitus') || qLower.includes('pop without pain')) {
-    answerMarkdown = `Joint clicking or popping without any sharp pain or swelling is known as physiological crepitus, and it is usually completely harmless—often just tiny nitrogen gas bubbles moving in the synovial fluid or tendons gliding smoothly over bony landmarks.
+      dynamicAction = {
+        type: 'swap_exercise',
+        targetExerciseName: 'DB Goblet Squats',
+        currentExerciseName: targetExercise,
+        buttonText: 'Swap to DB Goblet Squats in Workout',
+      }
+    }
+  }
 
-Here is how we optimize joint mechanics:
-1. Spend an extra 2 to 3 minutes on dynamic mobility and tissue warm-up (e.g. bodyweight squats with slow tempo).
-2. Focus on joint tracking: ensure your knees track in line with your second and third toes on squats and lunges.
-3. As long as there is zero pain, throbbing, or instability, you are cleared to train with confidence.
+  // 7. Specific Exercise Technique, Biomechanical Cues & Kinetic Checkpoints
+  else if (matchedExercise) {
+    const ex = matchedExercise
+    const phaseTempo = nasmOptPhase === 1 ? '4-2-1 (4s eccentric descent, 2s isometric stabilization pause, 1s concentric drive)'
+      : nasmOptPhase === 2 ? '2-0-2 (2s eccentric descent, 0s pause, 2s concentric drive)'
+      : nasmOptPhase === 3 ? '2-0-2 (controlled muscular development hypertrophy tempo)'
+      : nasmOptPhase === 4 ? '1-1-1 or 2-0-2 (maximal strength force production)'
+      : 'X-0-X (maximal rate of force development explosive tempo)'
 
-Stay mindful of your form, own your tempo, and let's get after it! How does the joint feel right now when you do a slow, controlled bodyweight squat?`
-  } else if (qLower.includes('eat') || qLower.includes('meal') || qLower.includes('protein') || qLower.includes('food') || qLower.includes('nutrition')) {
-    answerMarkdown = `Great question! Remember, food is biological information and fuel to help your body adapt and recover—never something to feel guilty or stressed about. 
+    const checkpointsBlock = ex.kineticCheckpoints
+      ? `\n\n**Master 5 Kinetic Chain Checkpoints:**\n• **Feet & Ankles**: ${ex.kineticCheckpoints.feetAnkles}\n• **Knees**: ${ex.kineticCheckpoints.knees}\n• **LPHC (Core & Pelvis)**: ${ex.kineticCheckpoints.lphc}\n• **Shoulders**: ${ex.kineticCheckpoints.shoulders}\n• **Head & Cervical Spine**: ${ex.kineticCheckpoints.headNeck}`
+      : ''
 
-Right now after your workout, your muscles are primed for recovery. I want you to aim for **30 to 40 grams of high-quality protein**—chicken breast, wild salmon, egg whites, or a clean whey isolate shake—paired with some complex carbohydrates like sweet potatoes, jasmine rice, or oatmeal to replenish your glycogen stores.
+    const cuesBlock = ex.clinicalCues && ex.clinicalCues.length > 0
+      ? `\n\n**Clinical Coaching Cues:**\n${ex.clinicalCues.map(c => `• ${c}`).join('\n')}`
+      : ''
 
-Drink a tall 16 to 24 ounce glass of water with some electrolytes as well to restore intra-cellular hydration. Fuel your body well, enjoy your meal, and let's keep stacking these wins! What are you planning on having for your post-workout meal today?`
-  } else if (qLower.includes('doms') || qLower.includes('soreness') || qLower.includes('delayed onset') || (qLower.includes('sore') && !qLower.includes('throat') && !qLower.includes('back') && !qLower.includes('knee') && !qLower.includes('shoulder'))) {
-    answerMarkdown = `Delayed onset muscle soreness (DOMS) is completely normal when introducing new training stimuli or eccentric overload—it simply reflects microscopic muscular remodeling, not tissue damage.
+    const setupBlock = ex.setupInstructions
+      ? `\n\n**Setup & Alignment:** ${ex.setupInstructions}`
+      : ex.description
+      ? `\n\n**Movement Breakdown:**\n${ex.description}`
+      : ''
 
-Here is your optimal recovery protocol:
-1. **Active Recovery Blood Flow**: Take a 20-minute brisk walk or light spin on the bike. Getting fresh, oxygenated blood into the tissue clears metabolic byproducts twice as fast as sitting still.
-2. **Protein & Intra-Cellular Hydration**: Hit **30 to 40 grams of high-quality protein** every 3 to 4 hours and drink 20 ounces of water with electrolytes to restore fluid balance.
-3. **Contrast Shower or Gentle Foam Rolling**: Spend 60 seconds gently rolling the sore muscle bellies without aggressively mashing tight trigger points.
+    const execBlock = ex.executionInstructions
+      ? `\n\n**Execution & Path of Motion:** ${ex.executionInstructions}`
+      : ''
 
-As long as it's muscular soreness rather than sharp joint pain, you are safe to move. How are your energy levels today—are we doing active recovery or a scheduled training session?`
-  } else if (qLower.includes('back') || qLower.includes('knee') || qLower.includes('shoulder') || qLower.includes('tight') || qLower.includes('pain') || qLower.includes('sore')) {
-    answerMarkdown = `I'm glad you brought this up. We are training for the next 20 years, not just the next 20 minutes, so we never force a lift or sacrifice joint health for ego.
+    answerMarkdown = `Hey ${athleteGreeting}! The **${ex.name}** is a cornerstone movement in your **Phase ${nasmOptPhase}** program${ex.primeMover ? ` for targeting your **${ex.primeMover}**` : ''}${ex.synergists?.length ? ` with support from your **${ex.synergists.join(', ')}**` : ''}.
 
-Let's take 3 minutes right now to run a quick corrective reset:
-1. Grab a foam roller or lacrosse ball and spend 60 seconds releasing the tight area with slow, deep diaphragmatic breaths.
-2. Hold a gentle 30-second stretch (like a kneeling hip flexor or chest stretch) to lengthen tight tissue.
-3. Wake up your stabilizing muscles with 10 to 12 bodyweight glute bridges or prone cobras.
+In **Phase ${nasmOptPhase}**, dial your repetition cadence into our prescribed **${phaseTempo}**. Never rush the stretch—quality and joint integrity always precede load.${setupBlock}${execBlock}${checkpointsBlock}${cuesBlock}
 
-If the joint still feels reactive after this reset, drop your working load by 20% today and focus purely on smooth, pain-free range of motion. Protect your spine, own your positions, and let me know how that feels! Does that 60-second release bring any immediate relief to the joint?`
-  } else if (qLower.includes('cardio') || qLower.includes('interval') || qLower.includes('pace') || qLower.includes('rpe')) {
-    answerMarkdown = `For today's cardio, the goal is smart energy system conditioning that builds your engine without fatiguing your nervous system for lifting.
+Remember our golden rule: **earn the right to add load by owning the movement first**. What weight are you planning for your working sets today, and how do your joints feel as you set your position?`
 
-In **Phase ${nasmOptPhase}**, keep your intensity right around **${nasmOptPhase === 2 ? 'an RPE 6 to 7 during work intervals' : 'a comfortable RPE 3 to 4 steady-state pace'}**. You should be able to maintain smooth, nasal or diaphragmatic breathing and bring your heart rate back down during rest intervals.
+    if (ex.embedUrl || ex.videoId) {
+      dynamicAction = {
+        type: 'view_demo',
+        buttonText: `Watch ${ex.name} Technique Demo`,
+        targetExerciseName: ex.name,
+        videoId: ex.videoId || undefined,
+        embedUrl: ex.embedUrl || undefined,
+      }
+    } else {
+      dynamicAction = {
+        type: 'start_timer',
+        buttonText: 'Start 90s Rest Interval',
+        restSeconds: 90,
+      }
+    }
+  }
 
-Stay tall, keep your posture upright, and log your duration when you finish. You're doing outstanding work—let's bring it home! Are you hitting the treadmill, the bike, or getting outside for this cardio block?`
-  } else if (qLower.includes('golf') || qLower.includes('rotational') || qLower.includes('swing')) {
-    answerMarkdown = `To add effortless clubhead speed without beating up your lower back, the secret is making sure that rotation comes from the right joints. We want rotation happening through your **thoracic spine and hips**, while your lumbar spine stays rock solid like an anchor.
+  // 8. Targeted Nutrition, Protein Pacing & Post-Workout Fueling
+  else if (qLower.includes('eat') || qLower.includes('meal') || qLower.includes('protein') || qLower.includes('food') || qLower.includes('nutrition') || qLower.includes('macro') || qLower.includes('diet') || qLower.includes('pre-workout') || qLower.includes('post-workout') || qLower.includes('fuel') || qLower.includes('snack') || qLower.includes('shake') || qLower.includes('carb')) {
+    const goalTitle = goal === 'hypertrophy' ? 'hypertrophy & lean tissue building' : goal === 'performance' ? 'athletic power & work capacity' : 'metabolic defense & fat loss'
 
-Try hitting standing cable woodchops or rotational medicine ball scoop tosses. Focus on pushing hard into the ground through your back leg, pivoting your trail foot, and transferring that ground force right through your core.
+    answerMarkdown = `Great question on your nutrition, ${athleteGreeting}! Remember, food is biological information and cellular recovery fuel—never something to feel anxious or guilty about.
 
-Give me 3 crisp sets of 8 reps per side with explosive intent, and let's build that rotational power! Do you have a cable stack or medicine balls available in your gym right now?`
-  } else if (qLower.includes('form') || qLower.includes('cue') || qLower.includes('technique') || qLower.includes('bar path') || qLower.includes('depth') || (qLower.includes('squat') && !qLower.includes('swap')) || (qLower.includes('deadlift') && !qLower.includes('swap')) || qLower.includes('bench press') || qLower.includes('overhead press')) {
-    answerMarkdown = `When dialing in your lifting technique, quality always precedes load.
+For your **${goalTitle}** focus in **Phase ${nasmOptPhase}**, here is our evidence-based fueling protocol:
 
-Here are the master biomechanical cues to lock in right now:
-1. **Establish Your Root**: Drive three points of contact through your feet (heel, base of big toe, base of pinky toe) to create an unshakeable ground foundation.
-2. **Lock Your 360-Degree Core Brace**: Inhale diaphragmatically into your ribs and lock your core as if bracing for a light punch—protect your lumbar spine from start to finish.
-3. **Control Your Descent**: Own the eccentric phase with a deliberate **${nasmOptPhase === 1 ? '4-second descent' : '2-second descent'}**. Never dive-bomb into the bottom of a lift.
-4. **Complete The Rep Without Hyperextension**: Finish tall at the top by squeezing your glutes and quads, without arching or leaning backward.
+1. **Protein Pacing (30 to 40 Grams)**: Aim for **30 to 40 grams of high-quality protein** containing approximately 2.5 to 3 grams of leucine (e.g. 6 oz grilled chicken breast, 7 oz wild salmon, 1.5 cups egg whites, 1.5 cups non-fat Greek yogurt, or a clean whey isolate shake). This activates the mTOR pathway to maximize muscle protein synthesis (MPS).
+2. **Glycogen Replenishment**: Pair your protein with **30 to 45 grams of clean complex carbohydrates** (sweet potato, jasmine rice, quinoa, or rolled oats) within 60 to 90 minutes of finishing your lift to replenish intramuscular glycogen stores.
+3. **Intra-Cellular Hydration**: Drink **16 to 24 ounces of water** paired with an electrolyte pinch (sodium, potassium, magnesium) to restore cellular fluid balance lost during sweating.
 
-Earn the right to add weight by making every single repetition look identical. How did that last set feel through your joints?`
-  } else if (qLower.includes('warmup') || qLower.includes('warm up') || qLower.includes('mobility') || qLower.includes('foam roll') || qLower.includes('stretch')) {
-    answerMarkdown = `A smart warmup isn't just about breaking a sweat—it prepares your nervous system and primes joint mechanics for maximum output.
+Fuel with purpose, enjoy your meal, and let's keep building! What are you planning on having for your post-workout meal today?`
+  }
 
-Here is our NASM 3-Step Dynamic Prep:
-1. **Inhibit (1-2 mins)**: Use a foam roller on overactive areas like your calves, lats, and hip flexors for 30 to 60 seconds per spot.
-2. **Lengthen (2 mins)**: Perform dynamic mobility like the World's Greatest Stretch, kneeling hip flexor stretches, and cat-camels.
-3. **Activate (2 mins)**: Wake up your stabilizing muscles with 10 bodyweight glute bridges, band pull-aparts, and prone cobras to lock your alignment before touching a barbell.
+  // 9. Cardiorespiratory Conditioning & Tanaka Targets
+  else if (qLower.includes('cardio') || qLower.includes('treadmill') || qLower.includes('bike') || qLower.includes('rower') || qLower.includes('elliptical') || qLower.includes('interval') || qLower.includes('zone') || qLower.includes('bpm') || qLower.includes('heart rate') || qLower.includes('pace')) {
+    const athleteAge = clientAge || 35
+    const maxHr = Math.round(208 - (0.7 * athleteAge))
+    const z1Min = Math.round(maxHr * 0.65)
+    const z1Max = Math.round(maxHr * 0.75)
+    const z2Min = Math.round(maxHr * 0.76)
+    const z2Max = Math.round(maxHr * 0.85)
+    const z3Min = Math.round(maxHr * 0.86)
+    const z3Max = Math.round(maxHr * 0.95)
 
-Once your core temperature is up and your joints glide smoothly, you are primed to lift. What is the first exercise on your schedule today?`
-  } else if (qLower.includes('hotel') || qLower.includes('travel') || qLower.includes('home workout') || qLower.includes('no gym') || qLower.includes('bands') || qLower.includes('bodyweight') || qLower.includes('no equipment')) {
-    answerMarkdown = `Traveling or away from your home gym? We don't skip a beat. The secret to keeping your gains on the road is **tempo manipulation and mechanical tension**.
+    answerMarkdown = `For your cardiorespiratory conditioning, ${athleteGreeting}, we use the Tanaka sports science formula to prescribe your exact heart rate training zones (calculated for age **${athleteAge}**, Tanaka Max HR: **${maxHr} BPM**):
 
-Here is how we match your Phase ${nasmOptPhase} stimulus with zero equipment or hotel dumbbells:
-1. **Slow Eccentrics (4 seconds down)**: Take 4 seconds to lower on bodyweight pushups, squats, and lunges. This triples the time-under-tension and matches the muscle recruitment of heavy weights.
-2. **1.5-Rep Bulgarian Split Squats**: Drop down, come halfway up, drop back to the bottom, and drive to the top. Your quads and glutes will be fully fatigued with bodyweight alone.
-3. **Antagonistic Pairing**: Alternate an upper-body push (tempo pushups) with a lower-body movement (glute bridges or split squats) to keep your heart rate elevated and burn maximum calories.
+• **Zone 1 (Base Aerobic & Active Recovery: 65%–75%)**: **${z1Min} to ${z1Max} BPM** (RPE 3–4 / Smooth nasal breathing). Ideal for Phase 1 warmups, recovery flushes, and aerobic foundation.
+• **Zone 2 (Aerobic Endurance & Lactate Threshold: 76%–85%)**: **${z2Min} to ${z2Max} BPM** (RPE 6–7 / Talk test challenging). Optimal for Phase 2 cardio intervals (e.g. 1 min work, 1 min active recovery).
+• **Zone 3 (Peak Anaerobic Capacity & EPOC: 86%–95%)**: **${z3Min} to ${z3Max} BPM** (RPE 8–9 / High-intensity conditioning finishers).
 
-Stay consistent, stay hydrated, and let's get this travel session logged! What equipment do you have access to in your hotel or room?`
-  } else if (qLower.includes('plateau') || qLower.includes('stuck') || qLower.includes('progression') || qLower.includes('heavier') || qLower.includes('overload') || qLower.includes('add weight') || qLower.includes('increase weight')) {
-    answerMarkdown = `Hitting a plateau is a natural signal from your body that it has adapted to your current training variables—it just means it's time to apply smart sports science!
+In **Phase ${nasmOptPhase}**, stay tall through your kinetic chain, maintain smooth diaphragmatic breathing, and avoid slouching on the handrails. Are you hitting the treadmill, the stationary bike, or taking your conditioning outside today?`
+  }
 
-Here is our progressive overload checklist:
-1. **The 2-For-2 Rule**: If you can complete 2 extra repetitions on your final set for 2 consecutive workouts with immaculate technique, you've earned the right to increase load by 2.5% to 5%.
-2. **Progress Tempo Before Load**: Before jumping up in weight, try slowing down your eccentric phase (e.g. going from a 2-second to a 4-second descent) or adding a 1-second pause at the bottom.
-3. **Check Your Recovery & Fueling**: Are you hitting at least 7.5 hours of sleep and 30–40g of protein per meal? You cannot out-train under-recovery.
+  // 10. Joint Tightness, Muscle Soreness (DOMS) & Corrective Continuum
+  else if (qLower.includes('sore') || qLower.includes('doms') || qLower.includes('tight') || qLower.includes('mobility') || qLower.includes('foam roll') || qLower.includes('stretching') || qLower.includes('stretch') || qLower.includes('warmup') || qLower.includes('warm up') || qLower.includes('stiff') || qLower.includes('ache') || qLower.includes('knee') || qLower.includes('hip') || qLower.includes('shoulder') || qLower.includes('back') || qLower.includes('neck') || qLower.includes('ankle')) {
+    const area = qLower.includes('knee') ? 'knees and quads'
+      : qLower.includes('hip') ? 'hips and glutes'
+      : qLower.includes('shoulder') ? 'shoulders and upper back'
+      : qLower.includes('back') ? 'lower back and thoracic spine'
+      : qLower.includes('neck') ? 'neck and upper traps'
+      : qLower.includes('ankle') ? 'calves and ankles'
+      : 'muscles and joints'
 
-Tell me which lift feels stuck—is it your squat, bench press, deadlift, or something else?`
-  } else if (qLower.includes('core') || qLower.includes('abs') || qLower.includes('brace') || qLower.includes('bracing') || qLower.includes('breathing') || qLower.includes('valsalva')) {
+    answerMarkdown = `I'm glad you brought this to my attention, ${athleteGreeting}. We are training for the next 20 years, not just the next 20 minutes, so we never force a lift through joint friction or acute tightness.
+
+Let's run our NASM 4-Step Corrective Continuum for your **${area}** right now:
+
+1. **Step 1: Inhibit (SMR / Foam Rolling)**: Spend **30 to 60 seconds** on tender trigger points. Breathe deeply into your diaphragm and allow the autogenic inhibition response (Golgi tendon organs) to relax the overactive tissue.
+2. **Step 2: Lengthen (Static / Neuromuscular Stretching)**: Hold a slow, pain-free stretch for **30 seconds** without bouncing to restore resting muscle sarcomere length.
+3. **Step 3: Activate (Isolated Strengthening)**: Perform **10 to 12 controlled reps** of stabilizing activation (e.g. glute bridges for hips, prone cobras for upper back, band pull-aparts for shoulders) with a 2-second hold at peak contraction.
+4. **Step 4: Integrate**: Execute a slow bodyweight movement (e.g. bodyweight squat or wall slide) to re-educate your neuromuscular system.
+
+If anything feels sharp or pinch-like, stop immediately and message me. How does the area feel once you finish that 60-second foam rolling release?`
+  }
+
+  // 11. Progressive Overload, Progression & RPE
+  else if (qLower.includes('plateau') || qLower.includes('stuck') || qLower.includes('heavier') || qLower.includes('add weight') || qLower.includes('increase weight') || qLower.includes('how much weight') || qLower.includes('rpe') || qLower.includes('rir') || qLower.includes('progression') || qLower.includes('how many sets') || qLower.includes('how many reps')) {
+    answerMarkdown = `Progressive overload is the fundamental driver of physiological adaptation, ${athleteGreeting}, but it's about much more than just slapping more weight on the bar!
+
+Here is our NASM master progression checklist for **Phase ${nasmOptPhase}**:
+
+1. **The NASM 2-for-2 Rule**: If you can complete **2 extra repetitions** with immaculate textbook form on your final set for **2 consecutive workouts**, you've earned the right to advance load by **2.5% to 5%** for upper body or **5% to 10%** for lower body.
+2. **Progress Tempo Before Load**: Before jumping up in weight, increase mechanical tension by slowing your eccentric descent (e.g. shifting from a 2-second to a 4-second descent) or adding a 1-second isometric pause in the hole.
+3. **RPE & Reps in Reserve (RIR)**: In Phase ${nasmOptPhase}, aim for **RPE ${nasmOptPhase === 1 ? '6 to 7 (3 to 4 reps in reserve)' : nasmOptPhase === 2 ? '7 to 8 (2 to 3 reps in reserve)' : '8 to 9 (1 to 2 reps in reserve)'}**. You should always finish every working set feeling like you could execute 1 or 2 more clean reps with zero form breakdown.
+4. **Volume Recovery**: Ensure you are getting at least 7.5 hours of sleep and hitting 30–40g of protein per meal—you can only adapt to the volume you can recover from.
+
+Tell me about the specific exercise you're working on—how did your last set feel, and are you hitting all your target reps with zero compensation?`
+  }
+
+  // 12. Core Bracing & Breathing
+  else if (qLower.includes('core') || qLower.includes('abs') || qLower.includes('brace') || qLower.includes('bracing') || qLower.includes('breathing') || qLower.includes('valsalva')) {
     answerMarkdown = `Your core is the power-transfer bridge between your lower body and upper body. If your core leaks energy, your lifts suffer and your lumbar spine takes unnecessary shear stress.
 
 Here is how we lock down a true 360-degree canister brace:
@@ -659,17 +969,58 @@ Here is how we lock down a true 360-degree canister brace:
 3. **Brace Down**: Contract your external obliques and rectus abdominis as if preparing to take a light jab to the stomach. Keep your ribcage pinned down over your pelvis.
 
 Lock this canister brace in before every single repetition, own your spinal alignment, and let me know: do you feel this brace holding strong throughout your sets?`
-  } else {
-    answerMarkdown = `I'm right here in your corner. In **Phase ${nasmOptPhase} (${goal.replace('_', ' ')})**, our main focus is dialing in movement quality and progressive adaptation.
+  }
 
-Remember our golden rule: **earn the right to add load by owning the movement first**. Keep your deep core braced, control your tempo on the way down, and keep your effort dialed right into your target RPE.
+  // 13. Fatigue, Sleep & Autoregulation
+  else if (qLower.includes('sleep') || qLower.includes('tired') || qLower.includes('exhausted') || qLower.includes('jet lag') || qLower.includes('red eye') || qLower.includes('fatigue')) {
+    answerMarkdown = `I understand completely, ${athleteGreeting}—work, family, travel, and changing sleep schedules can make training harder to plan.
 
-Make sure you hydrate post-workout and prioritize high-quality sleep tonight. You've got everything you need—what exercise or movement are we tackling next?`
+On days when sleep was compromised, our signature standard is: **"A modified workout beats a skipped workout 100% of the time."** We train smarter, not harder. Do not chase personal records today. Instead, auto-regulate:
+1. Keep your working weights **15% to 20% lighter** than usual.
+2. Focus strictly on Phase 1 stabilization, tempo control, and clean movement patterns.
+3. Drink 20 ounces of water with electrolytes right now to rehydrate your central nervous system.
+
+You still get the win by showing up, protecting your joints, and stimulating blood flow without crushing your adrenal system. We are training for the next 20 years, not just the next 20 minutes. Own your tempo and let's have a crisp, safe session! How is your energy feeling right now on the gym floor?`
+
+    dynamicAction = {
+      type: 'auto_regulate_load',
+      loadReductionPercent: 15,
+      buttonText: 'Auto-Regulate: Drop Working Weight 15%',
+    }
+  }
+
+  // 14. Supplements & Creatine
+  else if (qLower.includes('creatine') || qLower.includes('supplement') || qLower.includes('caffeine')) {
+    answerMarkdown = `When it comes to supplements, we only focus on evidence-based fundamentals that genuinely support your physiology:
+
+1. **Creatine Monohydrate**: Take **3 to 5 grams daily**. Timing does not make or break results, though post-workout with protein and carbs offers slight absorption benefits. You do not need a high-dose loading phase—consistent daily intake saturates muscle phosphocreatine stores within 3 to 4 weeks.
+2. **Hydration & Electrolytes**: Aim for 16 to 24 ounces of water with sodium, potassium, and magnesium around your training window to prevent cramping and maintain intracellular volume.
+3. **Pre-Workout Caffeine**: If using caffeine, keep it to 100 to 200mg taken 30 to 45 minutes before lifting, and avoid it within 8 hours of bedtime to safeguard your deep REM sleep.
+
+Fuel with purpose, stay consistent, and let's keep building! Do you prefer taking your creatine with a post-workout shake, or do you have it with water in the morning?`
+  }
+
+  // 15. Dynamic Sports Science RAG Synthesis (Catch-All from matched NASM documents)
+  else {
+    const topDoc = docs.length > 0 ? docs[0] : null
+    const docConcepts = topDoc?.keyConcepts?.slice(0, 4).join(', ') || 'Kinetic alignment, periodization, and progressive neuromuscular adaptation'
+    const docSummary = topDoc?.summary || 'Optimizes biomechanical movement quality and phase-specific training variables.'
+
+    answerMarkdown = `Hey ${athleteGreeting}! Coach Gordon right here in your corner. Regarding your inquiry on **"${question.trim()}"**, here is how we approach this grounded directly in our sports science curriculum:
+
+In **Phase ${nasmOptPhase} (${goal.replace('_', ' ')})**, our foundation is governed by **${docConcepts}**. ${docSummary}
+
+Here is how to apply this directly to your training today:
+1. **Kinetic Chain Integrity**: Own every single millimeter of your movement. Maintain a 360-degree abdominal brace and keep your joints aligned from foot plant through cervical spine.
+2. **Phase-Specific Stimulus**: Respect your Phase ${nasmOptPhase} tempo and target intensity. Quality of motor unit recruitment always trumps sheer ego lifting.
+3. **Recovery & Bioenergetics**: Post-workout, prioritize 30 to 40 grams of protein and hydrate thoroughly to facilitate cellular repair.
+
+We are training for the next 20 years, not just the next 20 minutes. What movement or exercise are you executing next in today's workout?`
   }
 
   spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
   const pingCheck = detectCoachPingNeed(question, answerMarkdown)
-  const recommendedAction = deriveRecommendedAction(qLower, currentExerciseName, answerMarkdown, nasmOptPhase, equipmentAccess)
+  const recommendedAction = dynamicAction || deriveRecommendedAction(qLower, currentExerciseName, answerMarkdown, nasmOptPhase, equipmentAccess)
 
   return {
     answerMarkdown,
@@ -680,6 +1031,8 @@ Make sure you hydrate post-workout and prioritize high-quality sleep tonight. Yo
     requiresCoachPing: pingCheck.requiresCoachPing,
     coachPingReason: pingCheck.reason,
     isEmergency911: false,
+    engineMode: 'nasm_rag_engine',
+    apiNotice,
   }
 }
 
