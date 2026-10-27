@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, AuthzError } from '@/lib/authz'
-import { dispatchTeamLiveSessionAlert } from '@/lib/teams'
+import { dispatchTeamLiveSessionAlert } from '@/lib/teams-server'
 
 export async function POST(
   req: NextRequest,
