@@ -103,7 +103,10 @@ describe('Master 1-to-1 NASM Edge Exercise Video Resolver', () => {
     expect(tubingRow.embedUrl).toContain('qykwviNOIyc')
 
     const ext = resolveExerciseVideoEmbed('Single-Leg Dumbbell Bent-Over Extension', null)
-    expect(ext.embedUrl).toContain('kZ-ReOdn2qk')
+    expect(ext.embedUrl).toContain('iRaoz2hbOXU')
+
+    const dbExt = resolveExerciseVideoEmbed('Dumbbell Bent-Over Extension', null)
+    expect(dbExt.embedUrl).toContain('iRaoz2hbOXU')
   })
 })
 

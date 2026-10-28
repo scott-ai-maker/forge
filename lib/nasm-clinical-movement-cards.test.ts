@@ -232,5 +232,23 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(slAlt.videoUrl).toContain('8o79mSC7ZZQ')
     expect(slAlt.setupInstructions.toLowerCase()).toContain('one leg')
   })
+
+  it('resolves Dumbbell Bent-Over Extension with official video iRaoz2hbOXU and Triceps Brachii prime mover', () => {
+    const card = getNasmClinicalMovementCard('Dumbbell Bent-Over Extension')
+    expect(card.hasOfficialMedia).toBe(true)
+    expect(card.imageUrl).toContain('iRaoz2hbOXU')
+    expect(card.videoUrl).toContain('iRaoz2hbOXU')
+    expect(card.embedUrl).toContain('iRaoz2hbOXU')
+    expect(card.candidateStudioImageUrl).toBe('/images/exercises/dumbbell-bent-over-extension.jpg')
+    expect(card.primeMover).toContain('Triceps Brachii')
+    expect(card.category).toBe('Arms')
+
+    const slCard = getNasmClinicalMovementCard('Single-Leg Dumbbell Bent-Over Extension')
+    expect(slCard.hasOfficialMedia).toBe(true)
+    expect(slCard.imageUrl).toContain('iRaoz2hbOXU')
+    expect(slCard.videoUrl).toContain('iRaoz2hbOXU')
+    expect(slCard.embedUrl).toContain('iRaoz2hbOXU')
+    expect(slCard.primeMover).toContain('Triceps Brachii')
+  })
 })
 
