@@ -109,9 +109,11 @@ export interface UnifiedAiOnboardingSynthesis {
 function evaluateOptPhaseRequirement(
   postureScan: PosturalMeshScanResult | null,
   dexaScan: BodyCompositionScanResult | null,
-  clientGoal?: string
+  clientGoal?: string,
+  experienceLevel?: string
 ): { targetPhase: number; targetPhaseName: string; velocity: AdaptationVelocity } {
   const goalStr = (clientGoal || '').toLowerCase()
+  const expStr = String(experienceLevel || 'beginner').toLowerCase()
   const compensations = postureScan?.detectedCompensations || []
   const syndrome = postureScan?.syndromeDetected
 
@@ -146,6 +148,13 @@ function evaluateOptPhaseRequirement(
 
   // Rule 2: Elevated body fat with mild upper crossed can start Phase 1 or Phase 2 depending on experience
   if (isElevatedBodyFat && !goalStr.includes('power')) {
+    if (expStr.includes('intermediate') || expStr.includes('advanced') || expStr.includes('elite')) {
+      return {
+        targetPhase: 2,
+        targetPhaseName: 'Phase 2: Strength Endurance',
+        velocity: 'standard',
+      }
+    }
     return {
       targetPhase: 1,
       targetPhaseName: 'Phase 1: Stabilization Endurance',
@@ -276,7 +285,8 @@ export function recommendPeriodizationFromScans(params: {
   const evalResult = evaluateOptPhaseRequirement(
     postureScan,
     dexaScan,
-    client.fitnessGoal
+    client.fitnessGoal,
+    client.experienceLevel
   )
   let { targetPhase, targetPhaseName } = evalResult
   const { velocity } = evalResult

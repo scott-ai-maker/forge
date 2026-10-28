@@ -153,7 +153,6 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
       .from('workout_plans')
       .update({
         plan_json: updatedPlanJson,
-        updated_at: new Date().toISOString(),
       })
       .eq('id', latestPlan.id)
 
@@ -367,7 +366,6 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
     sessions_per_week: programPayload.sessionsPerWeek,
     estimated_duration_mins: programPayload.estimatedDurationMins,
     plan_json: finalPlanJson,
-    updated_at: new Date().toISOString(),
   }
 
   let savedPlanId: string

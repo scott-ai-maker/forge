@@ -370,9 +370,12 @@ export default function BaselineFitnessSettingsStudio({
       }
 
       triggerHaptic('success')
+      const planNotice = payload.plan?.phaseName
+        ? ` Protocol calibrated to ${payload.plan.phaseName}.`
+        : ''
       setStatusMessage({
         type: 'success',
-        text: '✓ Baseline fitness profile updated successfully! Calibrations saved.',
+        text: `✓ Baseline fitness profile updated successfully!${planNotice}`,
       })
       router.refresh()
     } catch (err) {
