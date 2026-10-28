@@ -526,6 +526,29 @@
     "videoUrl": "https://www.youtube.com/watch?v=PKjDGnwpB_o"
   },
   {
+    "id": "e4a28f11-9a74-4b53-b91c-1f486a011d82",
+    "name": "Single-Leg Dumbbell Overhead Press",
+    "slug": "single-leg-dumbbell-overhead-press-0105",
+    "description": "Step 1: Setup Stand on one leg with a slight bend in the knee, holding a dumbbell in each hand at shoulder height with your palms facing forward or neutral, elbows bent and forearms vertical, lifting the non-stance foot off the floor.\n\nStep 2: Brace/Position Engage your core with the drawing-in maneuver, level your pelvis by contracting the gluteus medius of the stance leg, and maintain an upright posture with a neutral spine.\n\nStep 3: Execute Press the dumbbells vertically overhead until your arms are fully extended beside your ears, maintaining single-leg balance and avoiding arching your lower back or flaring your ribs.\n\nStep 4: Return/Repeat Lower the dumbbells back to shoulder height in a slow, controlled 4-second motion, then repeat for the desired number of repetitions before switching legs.",
+    "coachingCues": [
+      "Keep lower back neutral and avoid arching lumbar spine during the press",
+      "Maintain level pelvis and avoid letting opposite hip drop",
+      "Drive through the center of the stance foot tripod with a soft knee"
+    ],
+    "primaryEquipment": [
+      "Dumbbells"
+    ],
+    "muscleGroups": [
+      "shoulders",
+      "triceps",
+      "core",
+      "glutes"
+    ],
+    "imageUrl": "https://img.youtube.com/vi/8o79mSC7ZZQ/hqdefault.jpg",
+    "videoId": "8o79mSC7ZZQ",
+    "videoUrl": "https://www.youtube.com/watch?v=8o79mSC7ZZQ"
+  },
+  {
     "id": "3cd75552-990b-4712-aa9b-e7bc06a98dcf",
     "name": "Tuck Jump",
     "slug": "tuck-jump",

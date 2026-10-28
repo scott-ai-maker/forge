@@ -196,5 +196,24 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(hammer.howToSteps.every(s => !s.toLowerCase().includes('supinated'))).toBe(true)
     expect(hammer.clinicalCues.some(c => c.toLowerCase().includes('zero wrist twisting or supination'))).toBe(true)
   })
+
+  it('resolves Single-Leg Dumbbell Overhead Press with Phase 1 stabilization, single-leg checkpoints, and official media', () => {
+    const slPress = getNasmClinicalMovementCard('Single-Leg Dumbbell Overhead Press')
+    expect(slPress.hasOfficialMedia).toBe(true)
+    expect(slPress.imageUrl).toBe('/images/exercises/single-leg-dumbbell-overhead-press.jpg')
+    expect(slPress.videoUrl).toContain('8o79mSC7ZZQ')
+    expect(slPress.optPhase).toContain('Stabilization Endurance')
+    expect(slPress.stabilizers).toEqual(expect.arrayContaining([expect.stringContaining('Gluteus Medius')]))
+    expect(slPress.setupInstructions.toLowerCase()).toContain('one leg')
+    expect(slPress.executionInstructions.toLowerCase()).toContain('overhead')
+    expect(slPress.clinicalCues.some(c => c.toLowerCase().includes('lower back') || c.toLowerCase().includes('lumbar'))).toBe(true)
+    expect(slPress.howToSteps[0].toLowerCase()).toContain('one leg')
+
+    // Contralateral/reordered alias check
+    const slAlt = getNasmClinicalMovementCard('Single Leg Overhead Dumbbell Press')
+    expect(slAlt.imageUrl).toBe('/images/exercises/single-leg-dumbbell-overhead-press.jpg')
+    expect(slAlt.videoUrl).toContain('8o79mSC7ZZQ')
+    expect(slAlt.setupInstructions.toLowerCase()).toContain('one leg')
+  })
 })
 

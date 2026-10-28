@@ -91,7 +91,7 @@ describe('Master 1-to-1 NASM Edge Exercise Video Resolver', () => {
 
   it('resolves Single-Leg Phase 1 upper body movements with video fallback', () => {
     const press = resolveExerciseVideoEmbed('Single-Leg Dumbbell Overhead Press', null)
-    expect(press.embedUrl).toContain('MMjBnEBnZKM')
+    expect(press.embedUrl).toContain('8o79mSC7ZZQ')
 
     const tubingPress = resolveExerciseVideoEmbed('Single-Leg Standing Tubing Overhead Press', null)
     expect(tubingPress.embedUrl).toContain('MMjBnEBnZKM')

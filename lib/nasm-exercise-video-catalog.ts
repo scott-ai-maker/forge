@@ -314,7 +314,12 @@ export const NASM_EDGE_OFFICIAL_CATALOG: Record<string, string> = {
   "dumbbell renegade row to push up": "RuJ9a05aa0A",
   "dumbbell walking lunges": "UInwcEa5BH4",
   "walking lunges": "UInwcEa5BH4",
-  "single leg dumbbell overhead press": "MMjBnEBnZKM",
+  "single leg dumbbell overhead press": "8o79mSC7ZZQ",
+  "single-leg dumbbell overhead press": "8o79mSC7ZZQ",
+  "single leg overhead dumbbell press": "8o79mSC7ZZQ",
+  "single-leg overhead dumbbell press": "8o79mSC7ZZQ",
+  "single leg overhead press": "8o79mSC7ZZQ",
+  "single-leg overhead press": "8o79mSC7ZZQ",
   "single leg standing tubing overhead press": "MMjBnEBnZKM",
   "single leg dumbbell bent over row": "DJfQN6xJL28",
   "single leg standing tubing row": "qykwviNOIyc",
@@ -419,7 +424,8 @@ export function resolveExerciseVideoEmbed(
     { keywords: ['bench dips', 'bench dip'], videoId: 'WVeZDBhZwLA', label: 'Bench Dips' },
 
     // Shoulders
-    { keywords: ['single-leg dumbbell overhead press', 'single leg dumbbell overhead press', 'single-leg standing tubing overhead press', 'single leg standing tubing overhead press', 'seated dumbbell shoulder press', 'seated dumbbell overhead shoulder press', 'dumbbell overhead press', 'dumbbell shoulder press', 'heavy banded overhead press', 'banded overhead press', 'standing neutral grip db overhead press'], videoId: 'MMjBnEBnZKM', label: 'Dumbbell Overhead Press' },
+    { keywords: ['single-leg dumbbell overhead press', 'single leg dumbbell overhead press', 'single leg overhead dumbbell press', 'single-leg overhead dumbbell press', 'single-leg overhead press', 'single leg overhead press', 'single leg dumbbell shoulder press', 'single-leg dumbbell shoulder press'], videoId: '8o79mSC7ZZQ', label: 'Single-Leg Dumbbell Overhead Press' },
+    { keywords: ['single-leg standing tubing overhead press', 'single leg standing tubing overhead press', 'seated dumbbell shoulder press', 'seated dumbbell overhead shoulder press', 'dumbbell overhead press', 'dumbbell shoulder press', 'heavy banded overhead press', 'banded overhead press', 'standing neutral grip db overhead press'], videoId: 'MMjBnEBnZKM', label: 'Dumbbell Overhead Press' },
     { keywords: ['standing barbell overhead press', 'heavy barbell overhead press', 'barbell overhead press', 'standing overhead press', 'military press'], videoId: 'cGnhixvC8uA', label: 'Barbell Overhead Press' },
     { keywords: ['feet-elevated pike push-up', 'feet elevated pike push up', 'pike push up', 'pike push-up'], videoId: 'XckEEwa1BPI', label: 'Pike Push-Up' },
     { keywords: ['dumbbell lateral raise', 'lateral raise'], videoId: 'XPPfnSEATJA', label: 'Dumbbell Lateral Raise' },

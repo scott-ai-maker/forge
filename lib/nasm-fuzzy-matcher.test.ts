@@ -35,10 +35,10 @@ describe('NASM Fuzzy Heuristic Media & Movement Search Engine', () => {
     expect(cobraMatch).not.toBeNull()
     expect(cobraMatch?.record.name).toBe('Floor Prone Cobra')
 
-    // Single-leg upper body balance movements mapped to official parent demonstration videos
+    // Single-leg upper body balance movements mapped to official demonstration videos
     const overheadPressMatch = searchNasmLibraryMedia('Single-Leg Dumbbell Overhead Press')
     expect(overheadPressMatch).not.toBeNull()
-    expect(overheadPressMatch?.record.name).toBe('Dumbbell Overhead Press')
+    expect(overheadPressMatch?.record.name).toBe('Single-Leg Dumbbell Overhead Press')
 
     const bentOverRowMatch = searchNasmLibraryMedia('Single-Leg Dumbbell Bent Over Row')
     expect(bentOverRowMatch).not.toBeNull()
