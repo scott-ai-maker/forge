@@ -392,21 +392,9 @@ export function resolveExerciseVideoEmbed(
   exerciseName: string,
   providedVideoUrl?: string | null
 ): ExerciseVideoResolution {
-  // 1. Direct YouTube video ID provided in record
-  const directYtId = extractYouTubeVideoId(providedVideoUrl)
-  if (directYtId && directYtId.length === 11) {
-    return {
-      embedUrl: `https://www.youtube-nocookie.com/embed/${directYtId}?autoplay=1&rel=0&modestbranding=1`,
-      externalUrl: `https://www.youtube.com/watch?v=${directYtId}`,
-      isDirectEmbed: true,
-      sourceTitle: `NASM Edge · ${exerciseName}`,
-      videoId: directYtId,
-    }
-  }
-
   const cleaned = cleanExerciseName(exerciseName)
 
-  // 2. Exact match in NASM Edge catalog
+  // 1. Exact match in NASM Edge catalog (Canonical standard always takes top precedence)
   if (NASM_EDGE_OFFICIAL_CATALOG[cleaned]) {
     const videoId = NASM_EDGE_OFFICIAL_CATALOG[cleaned]
     return {
@@ -418,7 +406,7 @@ export function resolveExerciseVideoEmbed(
     }
   }
 
-  // 3. Multi-token priority keyword matching to exact 1-to-1 NASM Edge videos
+  // 2. Multi-token priority keyword matching to exact 1-to-1 NASM Edge videos
   const KEYWORD_EDGE_MAP: Array<{ keywords: string[]; videoId: string; label: string }> = [
     // Pushing & Chest
     { keywords: ['incline dumbbell bench press', 'incline dumbbell chest press', 'incline dumbbell press'], videoId: '_NrQUYg7Nlc', label: 'Incline Dumbbell Bench Press' },
@@ -570,6 +558,29 @@ export function resolveExerciseVideoEmbed(
         sourceTitle: `NASM Edge · ${entry.label}`,
         videoId: entry.videoId,
       }
+    }
+  }
+
+  // 3. Direct YouTube video ID provided in record (for novel coach movements or custom video uploads)
+  const directYtId = extractYouTubeVideoId(providedVideoUrl)
+  if (directYtId && directYtId.length === 11) {
+    // Intercept legacy kZ-ReOdn2qk (overhead tricep extension) if passed for a bent-over extension
+    if (directYtId === 'kZ-ReOdn2qk' && (cleaned.includes('bent') || cleaned.includes('kickback'))) {
+      const canonicalId = 'iRaoz2hbOXU'
+      return {
+        embedUrl: `https://www.youtube-nocookie.com/embed/${canonicalId}?autoplay=1&rel=0&modestbranding=1`,
+        externalUrl: `https://www.youtube.com/watch?v=${canonicalId}`,
+        isDirectEmbed: true,
+        sourceTitle: `NASM Edge · Supported Bent-Over Dumbbell Extension`,
+        videoId: canonicalId,
+      }
+    }
+    return {
+      embedUrl: `https://www.youtube-nocookie.com/embed/${directYtId}?autoplay=1&rel=0&modestbranding=1`,
+      externalUrl: `https://www.youtube.com/watch?v=${directYtId}`,
+      isDirectEmbed: true,
+      sourceTitle: `NASM Edge · ${exerciseName}`,
+      videoId: directYtId,
     }
   }
 

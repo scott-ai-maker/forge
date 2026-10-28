@@ -249,6 +249,15 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(slCard.videoUrl).toContain('iRaoz2hbOXU')
     expect(slCard.embedUrl).toContain('iRaoz2hbOXU')
     expect(slCard.primeMover).toContain('Triceps Brachii')
+
+    // Regression: Stale plan in database passing legacy kZ-ReOdn2qk videoUrl and imageUrl
+    const stalePlanCard = getNasmClinicalMovementCard('Dumbbell Bent-Over Extension', {
+      videoUrl: 'https://www.youtube.com/watch?v=kZ-ReOdn2qk',
+      imageUrl: 'https://img.youtube.com/vi/kZ-ReOdn2qk/hqdefault.jpg',
+    })
+    expect(stalePlanCard.imageUrl).toContain('iRaoz2hbOXU')
+    expect(stalePlanCard.videoUrl).toContain('iRaoz2hbOXU')
+    expect(stalePlanCard.embedUrl).toContain('iRaoz2hbOXU')
   })
 })
 

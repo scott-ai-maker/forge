@@ -107,6 +107,11 @@ describe('Master 1-to-1 NASM Edge Exercise Video Resolver', () => {
 
     const dbExt = resolveExerciseVideoEmbed('Dumbbell Bent-Over Extension', null)
     expect(dbExt.embedUrl).toContain('iRaoz2hbOXU')
+
+    // Stale videoUrl override should be superseded by the official video iRaoz2hbOXU
+    const dbExtStale = resolveExerciseVideoEmbed('Dumbbell Bent-Over Extension', 'https://www.youtube.com/watch?v=kZ-ReOdn2qk')
+    expect(dbExtStale.embedUrl).toContain('iRaoz2hbOXU')
+    expect(dbExtStale.videoId).toBe('iRaoz2hbOXU')
   })
 })
 

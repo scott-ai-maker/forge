@@ -1853,7 +1853,13 @@ function getNasmClinicalMovementCardUncached(
     ? `https://img.youtube.com/vi/${directYtId}/hqdefault.jpg`
     : null
 
-  const validCustomOverride = (overrides?.imageUrl && !overrides.imageUrl.startsWith('/images/exercises/'))
+  const isBentOverExtension = cleaned.includes('bent') && (cleaned.includes('extension') || cleaned.includes('kickback'))
+
+  const validCustomOverride = (
+    overrides?.imageUrl &&
+    !overrides.imageUrl.startsWith('/images/exercises/') &&
+    !(isBentOverExtension && overrides.imageUrl.includes('kZ-ReOdn2qk'))
+  )
     ? overrides.imageUrl
     : null
 
@@ -1869,7 +1875,12 @@ function getNasmClinicalMovementCardUncached(
     null
 
   const resolvedVideoUrl = hasOfficialNasmMatch
-    ? (officialVideoResolution.externalUrl || overrides?.videoUrl || (fuzzyMatch ? fuzzyMatch.record.videoUrl : null) || null)
+    ? (
+        officialVideoResolution.externalUrl ||
+        (overrides?.videoUrl && !(isBentOverExtension && overrides.videoUrl.includes('kZ-ReOdn2qk')) ? overrides.videoUrl : null) ||
+        (fuzzyMatch ? fuzzyMatch.record.videoUrl : null) ||
+        null
+      )
     : null
 
   const resolvedEmbedUrl = hasOfficialNasmMatch ? (officialVideoResolution.embedUrl || null) : null
