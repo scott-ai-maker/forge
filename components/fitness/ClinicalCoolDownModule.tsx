@@ -1412,8 +1412,8 @@ export default function ClinicalCoolDownModule({
             description: item.protocol || item.target || item.clinicalRationale,
             coachingCues: [item.clinicalRationale],
           })
-          const gaaImg = isBreathing ? BRAND_LOGO_FALLBACK_IMAGE : resolveGaaExerciseImage(item.name, true)
-          const imgUrl = gaaImg || movementCard.imageUrl || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+          const gaaImg = isBreathing ? BRAND_LOGO_FALLBACK_IMAGE : resolveGaaExerciseImage(item.name, false)
+          const imgUrl = movementCard.imageUrl || gaaImg || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
           const hasVideo = !isBreathing && Boolean(movementCard.embedUrl || movementCard.videoUrl)
 
           return (
@@ -1986,7 +1986,8 @@ export default function ClinicalCoolDownModule({
                     description: activeItem.protocol || activeItem.target || activeItem.clinicalRationale,
                     coachingCues: [activeItem.clinicalRationale],
                   })
-                  const activeImg = resolveGaaExerciseImage(activeItem.name, true) || movementCard.imageUrl || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+                  const gaaImg = resolveGaaExerciseImage(activeItem.name, false)
+                  const activeImg = movementCard.imageUrl || gaaImg || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
                   const hasActiveVideo = Boolean(movementCard.embedUrl || movementCard.videoUrl)
                   return (
                     <div

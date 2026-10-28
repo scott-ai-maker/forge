@@ -4508,8 +4508,8 @@ export default function FitnessTrackerClient({
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                               {/* Visual Media Thumbnail (Forge Movement Photography) */}
                               {(() => {
-                                const gaaImage = resolveGaaExerciseImage(ex.name, true)
-                                const thumbUrl = gaaImage || movementCard.imageUrl || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+                                const gaaImage = resolveGaaExerciseImage(ex.name, false)
+                                const thumbUrl = movementCard.imageUrl || gaaImage || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
                                 const hasVideo = Boolean(ex.videoUrl || movementCard.videoUrl)
                                 const isDone = exLoggedSets >= exTargetSets && exTargetSets > 0
                                 return (
@@ -4634,8 +4634,8 @@ export default function FitnessTrackerClient({
                           <div style={{ padding: '8px 8px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                             {/* High-Definition Visual Movement Demonstration Banner */}
                             {(() => {
-                              const gaaImage = resolveGaaExerciseImage(ex.name, true)
-                              const bannerUrl = gaaImage || movementCard.imageUrl || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+                              const gaaImage = resolveGaaExerciseImage(ex.name, false)
+                              const bannerUrl = movementCard.imageUrl || gaaImage || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
                               const isDone = exLoggedSets >= exTargetSets && exTargetSets > 0
                               return (
                                 <div

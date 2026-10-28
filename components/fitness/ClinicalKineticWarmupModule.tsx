@@ -946,8 +946,8 @@ export default function ClinicalKineticWarmupModule({
               description: item.protocol || item.target,
               coachingCues: item.cues,
             })
-            const gaaImg = resolveGaaExerciseImage(item.name, true)
-            const imgUrl = gaaImg || movementCard.imageUrl || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+            const gaaImg = resolveGaaExerciseImage(item.name, false)
+            const imgUrl = movementCard.imageUrl || gaaImg || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
             const hasVideo = Boolean(movementCard.embedUrl || movementCard.videoUrl)
 
             return (
@@ -1444,7 +1444,8 @@ export default function ClinicalKineticWarmupModule({
                 description: activeItem.protocol || activeItem.target,
                 coachingCues: activeItem.cues || [],
               })
-              const activeImg = resolveGaaExerciseImage(activeItem.name, true) || movementCard.imageUrl || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+              const gaaImg = resolveGaaExerciseImage(activeItem.name, false)
+              const activeImg = movementCard.imageUrl || gaaImg || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
               const hasActiveVideo = Boolean(movementCard.embedUrl || movementCard.videoUrl)
               return (
                 <div

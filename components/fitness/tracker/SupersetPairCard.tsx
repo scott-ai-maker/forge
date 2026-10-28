@@ -138,8 +138,8 @@ export default function SupersetPairCard({
     }
   }
 
-  const thumbImgA = resolveGaaExerciseImage(pair.exerciseA.name, true) || cardA.imageUrl || cardA.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
-  const thumbImgB = resolveGaaExerciseImage(pair.exerciseB.name, true) || cardB.imageUrl || cardB.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+  const thumbImgA = cardA.imageUrl || resolveGaaExerciseImage(pair.exerciseA.name, false) || cardA.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
+  const thumbImgB = cardB.imageUrl || resolveGaaExerciseImage(pair.exerciseB.name, false) || cardB.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
 
   return (
     <div

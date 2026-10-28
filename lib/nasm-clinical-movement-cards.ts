@@ -37,6 +37,7 @@ export interface NasmClinicalMovementCard {
   clinicalCues: string[]
   equipment: string[]
   imageUrl: string | null
+  candidateStudioImageUrl?: string | null
   fallbackImageUrl: string
   videoUrl: string | null
   embedUrl?: string | null
@@ -1810,11 +1811,15 @@ function getNasmClinicalMovementCardUncached(
     ? overrides.imageUrl
     : null
 
+  const candidateStudioImageUrl =
+    (verifiedGaaImage && verifiedGaaImage !== BRAND_LOGO_FALLBACK_IMAGE) ? verifiedGaaImage : null
+
+  // Prioritize authentic default NASM Edge video thumbnail
   const resolvedImageUrl =
-    (verifiedGaaImage && verifiedGaaImage !== BRAND_LOGO_FALLBACK_IMAGE ? verifiedGaaImage : null) ||
     officialNasmThumbnail ||
     (hasOfficialNasmMatch && fuzzyMatch?.record.imageUrl ? fuzzyMatch.record.imageUrl : null) ||
     validCustomOverride ||
+    candidateStudioImageUrl ||
     null
 
   const resolvedVideoUrl = hasOfficialNasmMatch
@@ -1861,6 +1866,7 @@ function getNasmClinicalMovementCardUncached(
     ],
     equipment: resolvedEquipment,
     imageUrl: resolvedImageUrl,
+    candidateStudioImageUrl,
     fallbackImageUrl: BRAND_LOGO_FALLBACK_IMAGE,
     videoUrl: resolvedVideoUrl,
     embedUrl: resolvedEmbedUrl,

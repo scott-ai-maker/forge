@@ -279,8 +279,8 @@ export default function ExerciseVideoModal({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={
-                  resolveGaaExerciseImage(card.name, false) ||
                   card.imageUrl ||
+                  resolveGaaExerciseImage(card.name, false) ||
                   card.fallbackImageUrl ||
                   '/images/exercises/image-not-available.jpg'
                 }

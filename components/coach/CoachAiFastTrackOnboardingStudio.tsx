@@ -12,6 +12,7 @@ import {
 import type { BodyCompositionScanResult } from '@/lib/ai-body-composition-engine'
 import type { PosturalMeshScanResult } from '@/lib/ai-postural-mesh-scanner'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
+import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 
 const AiPostureMeshScannerModal = dynamic(
   () => import('./AiPostureMeshScannerModal'),
@@ -751,7 +752,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                   <div style={{ fontSize: 11, fontWeight: 800, color: '#f87171', textTransform: 'uppercase', marginBottom: 8 }}>1. Inhibit (SMR)</div>
                   <div style={{ display: 'grid', gap: 6 }}>
                     {synthesis.programDesignRecommendation.embeddedCEx.inhibit.map((item, i) => {
-                      const imgUrl = resolveGaaExerciseImage(item, true) || BRAND_LOGO_FALLBACK_IMAGE
+                      const imgUrl = getNasmClinicalMovementCard(item).imageUrl || resolveGaaExerciseImage(item, false) || BRAND_LOGO_FALLBACK_IMAGE
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.25)', padding: '4px 6px', borderRadius: 4 }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -773,7 +774,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                   <div style={{ fontSize: 11, fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', marginBottom: 8 }}>2. Lengthen (Static)</div>
                   <div style={{ display: 'grid', gap: 6 }}>
                     {synthesis.programDesignRecommendation.embeddedCEx.lengthen.map((item, i) => {
-                      const imgUrl = resolveGaaExerciseImage(item, true) || BRAND_LOGO_FALLBACK_IMAGE
+                      const imgUrl = getNasmClinicalMovementCard(item).imageUrl || resolveGaaExerciseImage(item, false) || BRAND_LOGO_FALLBACK_IMAGE
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.25)', padding: '4px 6px', borderRadius: 4 }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -795,7 +796,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                   <div style={{ fontSize: 11, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', marginBottom: 8 }}>3. Activate (Isolated)</div>
                   <div style={{ display: 'grid', gap: 6 }}>
                     {synthesis.programDesignRecommendation.embeddedCEx.activate.map((item, i) => {
-                      const imgUrl = resolveGaaExerciseImage(item, true) || BRAND_LOGO_FALLBACK_IMAGE
+                      const imgUrl = getNasmClinicalMovementCard(item).imageUrl || resolveGaaExerciseImage(item, false) || BRAND_LOGO_FALLBACK_IMAGE
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.25)', padding: '4px 6px', borderRadius: 4 }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -817,7 +818,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                   <div style={{ fontSize: 11, fontWeight: 800, color: '#34d399', textTransform: 'uppercase', marginBottom: 8 }}>4. Integrate (Dynamic)</div>
                   <div style={{ display: 'grid', gap: 6 }}>
                     {synthesis.programDesignRecommendation.embeddedCEx.integrate.map((item, i) => {
-                      const imgUrl = resolveGaaExerciseImage(item, true) || BRAND_LOGO_FALLBACK_IMAGE
+                      const imgUrl = getNasmClinicalMovementCard(item).imageUrl || resolveGaaExerciseImage(item, false) || BRAND_LOGO_FALLBACK_IMAGE
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.25)', padding: '4px 6px', borderRadius: 4 }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -7,6 +7,7 @@ import type {
   GeneratedExerciseItem,
 } from '@/lib/rag-nasm-program-generator'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
+import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { COACH_DISPLAY_NAME, buildCoachPersonalNote } from '@/lib/program-personalization'
 
@@ -682,7 +683,8 @@ export default function CoachProgramPreviewCanvas({
             {/* Exercise Matrix Rows */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {activeWorkout.exercises.map((ex, exIndex) => {
-                const imgUrl = resolveGaaExerciseImage(ex.name) || BRAND_LOGO_FALLBACK_IMAGE
+                const movementCard = getNasmClinicalMovementCard(ex.name)
+                const imgUrl = movementCard.imageUrl || resolveGaaExerciseImage(ex.name, false) || BRAND_LOGO_FALLBACK_IMAGE
                 return (
                   <div
                     key={`${ex.name}-${exIndex}`}

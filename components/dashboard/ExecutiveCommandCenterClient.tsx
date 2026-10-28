@@ -10,6 +10,7 @@ import PrescribedToolboxBanner from '@/components/fitness/PrescribedToolboxBanne
 import ReferralDashboardWidget from '@/components/referrals/ReferralDashboardWidget'
 import type { DossierMetrics } from '@/lib/sunday-dossier-engine'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
+import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import { generateIcsCalendar, downloadIcsFile } from '@/lib/calendar-sync'
 
 export interface ExecutiveCommandCenterClientProps {
@@ -327,7 +328,8 @@ export default function ExecutiveCommandCenterClient({
 
         {(() => {
           const leadExerciseName = activeWorkout?.exercises?.[0]?.name
-          const leadExerciseImg = leadExerciseName ? resolveGaaExerciseImage(leadExerciseName, true) || BRAND_LOGO_FALLBACK_IMAGE : null
+          const leadCard = leadExerciseName ? getNasmClinicalMovementCard(leadExerciseName) : null
+          const leadExerciseImg = leadCard?.imageUrl || (leadExerciseName ? resolveGaaExerciseImage(leadExerciseName, false) : null) || (leadExerciseName ? BRAND_LOGO_FALLBACK_IMAGE : null)
           return (
             <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
               {leadExerciseImg && (
