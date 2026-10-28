@@ -598,6 +598,7 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
       benchmarks: request.knownBenchmarks,
       kineticCompensations: request.kineticCompensations,
       cardioEquipment: request.cardioEquipmentAccess,
+      experienceLevel: request.experienceLevel,
     })
 
     // 1. Strict Equipment Boundary Shield: Enforce client equipment availability & auto-substitute first
@@ -728,8 +729,10 @@ function buildDistinctOptWorkoutDay(params: {
   benchmarks?: Record<string, { weightLbs: number; reps: number }>
   kineticCompensations?: string[]
   hasHeartMedications?: boolean
+  experienceLevel?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
 }): GeneratedWorkoutDay {
-  const { dayIndex, phase, benchmarks, kineticCompensations = [], equipment, cardioEquipment, goal, totalDays, clientAge, cardioBlendStyle, hasHeartMedications = false } = params
+  const { dayIndex, phase, benchmarks, kineticCompensations = [], equipment, cardioEquipment, goal, totalDays, clientAge, cardioBlendStyle, hasHeartMedications = false, experienceLevel } = params
+  const isBeginner = experienceLevel === 'beginner'
   const phaseMeta = NASM_OPT_PHASE_STANDARDS[phase]
   const eq = parseEquipmentCapabilities(equipment)
 
@@ -849,13 +852,15 @@ function buildDistinctOptWorkoutDay(params: {
       } else {
         exercises.push({
           block: 'core_balance',
-          name: 'Single Leg Floor Bridge',
+          name: isBeginner ? 'Floor Bridge' : 'Single Leg Floor Bridge',
           sets: '2',
-          reps: '12 per leg (3s hold)',
+          reps: isBeginner ? '10–12' : '12 per leg (3s hold)',
           tempo: '4/2/1',
           rest: '30s',
-          coachingCues: ['Drive through active heel', 'Keep pelvis level, no rotation'],
-          nasmClinicalSource: 'CPT7_Ch16 (Floor Core Stabilization)',
+          coachingCues: isBeginner
+            ? ['Drive through heels, squeeze glutes at top peak contraction', 'Keep ribs pulled down, avoid lumbar hyperextension']
+            : ['Drive through active heel', 'Keep pelvis level, no rotation'],
+          nasmClinicalSource: isBeginner ? 'CPT7_Ch16 (Floor Bridge Progression)' : 'CPT7_Ch16 (Floor Core Stabilization)',
         })
       }
 
@@ -900,13 +905,17 @@ function buildDistinctOptWorkoutDay(params: {
       } else {
         exercises.push({
           block: 'resistance',
-          name: 'Push Up',
-          sets: '3',
-          reps: '12–15',
-          tempo: '4/2/1',
+          name: isBeginner ? 'Incline Push Up' : 'Push Up',
+          sets: isBeginner ? '2' : '3',
+          reps: isBeginner ? '8–10' : '12–15',
+          tempo: isBeginner ? '3/1/1' : '4/2/1',
           rest: '60s',
-          coachingCues: ['Lower chest to 2 inches from floor in 4 seconds', 'Hold bottom for 2 seconds before pushing'],
-          nasmClinicalSource: 'CPT7_Ch21 (Calisthenic Stabilization Continuum)',
+          coachingCues: isBeginner
+            ? ['Hands on sturdy elevated counter, table, or wall', 'Maintain rigid plank from ears to heels without low back sag']
+            : ['Lower chest to 2 inches from floor in 4 seconds', 'Hold bottom for 2 seconds before pushing'],
+          nasmClinicalSource: isBeginner
+            ? 'CPT7_Ch21 (Calisthenic Regression Continuum)'
+            : 'CPT7_Ch21 (Calisthenic Stabilization Continuum)',
         })
       }
 
@@ -1035,12 +1044,14 @@ function buildDistinctOptWorkoutDay(params: {
       } else {
         exercises.push({
           block: 'resistance',
-          name: 'Plank Walkup',
-          sets: '3',
-          reps: '12–15',
-          tempo: '4/2/1',
+          name: isBeginner ? 'Plank With Knees Down' : 'Plank Walkup',
+          sets: isBeginner ? '2' : '3',
+          reps: isBeginner ? '20–30s hold' : '12–15',
+          tempo: isBeginner ? 'Hold' : '4/2/1',
           rest: '60s',
-          coachingCues: ['From forearm plank, press through palms to extend elbows', 'Control descent back to forearms'],
+          coachingCues: isBeginner
+            ? ['Forearm plank on knees', 'Draw navel inward, breathe steadily without sagging low back']
+            : ['From forearm plank, press through palms to extend elbows', 'Control descent back to forearms'],
           nasmClinicalSource: 'CPT7_Ch16',
         })
       }
@@ -1050,30 +1061,56 @@ function buildDistinctOptWorkoutDay(params: {
       // 1. Balance
       exercises.push({
         block: 'core_balance',
-        name: 'Single Leg Balance Reach Multiplanar',
+        name: isBeginner ? 'Single Leg Balance Reach Frontal Plane' : 'Single Leg Balance Reach Multiplanar',
         sets: '2',
-        reps: '12 per leg',
+        reps: isBeginner ? '8 per leg' : '12 per leg',
         tempo: '4/2/1',
         rest: '30s',
-        coachingCues: ['Reach anterior, lateral, and posterior without foot touchdown'],
+        coachingCues: isBeginner
+          ? ['Stand on one leg with soft knee, reach free foot slowly to the side', 'Keep hips level']
+          : ['Reach anterior, lateral, and posterior without foot touchdown'],
         nasmClinicalSource: 'CPT7_Ch17 (Balance Training Concepts)',
       })
 
       // 2. Unilateral Squat
-      exercises.push({
-        block: 'resistance',
-        name: eq.hasDumbbells
-          ? 'Single Leg Squat'
-          : 'Assisted Single Leg Squat',
-        sets: '3',
-        reps: '15 per leg',
-        tempo: '4/2/1',
-        rest: '60s',
-        intensityPercentage1RM: 0.6,
-        targetLoadLbs: eq.hasDumbbells ? loadFromOneRepMax(rawSquat1RM, 0.45) : undefined,
-        coachingCues: ['Knee stays aligned over 2nd and 3rd toes', '4-second slow descent to gentle tap'],
-        nasmClinicalSource: 'CPT7_Fat_Loss4.pdf & Chapter 21',
-      })
+      if (eq.hasDumbbells) {
+        exercises.push({
+          block: 'resistance',
+          name: 'Single Leg Squat',
+          sets: '3',
+          reps: '15 per leg',
+          tempo: '4/2/1',
+          rest: '60s',
+          intensityPercentage1RM: 0.6,
+          targetLoadLbs: loadFromOneRepMax(rawSquat1RM, 0.45),
+          coachingCues: ['Knee stays aligned over 2nd and 3rd toes', '4-second slow descent to gentle tap'],
+          nasmClinicalSource: 'CPT7_Fat_Loss4.pdf & Chapter 21',
+        })
+      } else if (isBeginner) {
+        exercises.push({
+          block: 'resistance',
+          name: 'Box Squat',
+          sets: '2',
+          reps: '10–12',
+          tempo: '3/2/1',
+          rest: '60s',
+          coachingCues: ['Squat to a standard chair or sturdy bench', 'Tap seat gently, keep knees tracking over 2nd toe, drive up through heels'],
+          nasmClinicalSource: 'CPT7_Ch21 (Squat Regressions)',
+        })
+      } else {
+        exercises.push({
+          block: 'resistance',
+          name: 'Assisted Single Leg Squat',
+          sets: '3',
+          reps: '15 per leg',
+          tempo: '4/2/1',
+          rest: '60s',
+          intensityPercentage1RM: 0.6,
+          targetLoadLbs: eq.hasDumbbells ? loadFromOneRepMax(rawSquat1RM, 0.45) : undefined,
+          coachingCues: ['Knee stays aligned over 2nd and 3rd toes', '4-second slow descent to gentle tap'],
+          nasmClinicalSource: 'CPT7_Fat_Loss4.pdf & Chapter 21',
+        })
+      }
 
       // 3. Unilateral Hinge
       if (eq.hasDumbbells) {
@@ -1099,6 +1136,17 @@ function buildDistinctOptWorkoutDay(params: {
           coachingCues: ['Loop band under front foot', 'Drive hips forward against band tension'],
           nasmClinicalSource: 'CPT7_Ch21',
         })
+      } else if (isBeginner) {
+        exercises.push({
+          block: 'resistance',
+          name: 'Bird Dog',
+          sets: '2',
+          reps: '8 per side',
+          tempo: '4/2/1',
+          rest: '45s',
+          coachingCues: ['Extend opposite arm and leg, hold 2s at top without arching back or rotating pelvis'],
+          nasmClinicalSource: 'CPT7_Ch16',
+        })
       } else {
         exercises.push({
           block: 'resistance',
@@ -1116,8 +1164,8 @@ function buildDistinctOptWorkoutDay(params: {
       exercises.push({
         block: 'resistance',
         name: 'Floor Bridge',
-        sets: '3',
-        reps: '15',
+        sets: isBeginner ? '2' : '3',
+        reps: isBeginner ? '12' : '15',
         tempo: '4/2/1',
         rest: '60s',
         intensityPercentage1RM: 0.6,
@@ -1130,17 +1178,19 @@ function buildDistinctOptWorkoutDay(params: {
         block: 'resistance',
         name: eq.hasDumbbells
           ? 'Step Up To Balance Sagital'
+          : isBeginner
+          ? 'Step Up To Balance Sagital'
           : 'Lunge To Balance Sagittal',
-        sets: '3',
-        reps: '15 per leg',
-        tempo: '4/2/1',
+        sets: isBeginner ? '2' : '3',
+        reps: isBeginner ? '8 per leg' : '15 per leg',
+        tempo: isBeginner ? '3/2/1' : '4/2/1',
         rest: '60s',
         intensityPercentage1RM: 0.5,
         coachingCues: ['Pause at the top for 2 seconds in single-leg balance before stepping down'],
         nasmClinicalSource: 'CPT7_Ch21 (Integrated Step Progressions)',
       })
     } else if (dayIndex === 3) {
-      focus = 'Rotary Power, Back & Vertical Push Stabilization'
+      focus = (phase === 1 && isBeginner) ? 'Postural Endurance, Back & Vertical Push Stabilization' : 'Rotary Power, Back & Vertical Push Stabilization'
 
       // 1. Anti-Rotation Core
       if (eq.hasCables) {
@@ -1164,6 +1214,17 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '30s',
           coachingCues: ['Hold hands at sternum, press directly forward without torso twisting', '2s isometric hold'],
           nasmClinicalSource: 'CPT7_Ch16 (Elastic Anti-Rotation)',
+        })
+      } else if (isBeginner) {
+        exercises.push({
+          block: 'core_balance',
+          name: 'Short Lever Side Plank',
+          sets: '2',
+          reps: '20–30s hold per side',
+          tempo: 'Hold',
+          rest: '45s',
+          coachingCues: ['Side plank on knees with stacked hips', 'Maintain straight diagonal alignment from knees to shoulders'],
+          nasmClinicalSource: 'CPT7_Ch16',
         })
       } else {
         exercises.push({
@@ -1200,6 +1261,17 @@ function buildDistinctOptWorkoutDay(params: {
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Loop band under active foot', 'Press overhead in scapular plane'],
+          nasmClinicalSource: 'CPT7_Ch21',
+        })
+      } else if (isBeginner) {
+        exercises.push({
+          block: 'resistance',
+          name: 'Modified Push Up',
+          sets: '2',
+          reps: '8–10',
+          tempo: '3/1/1',
+          rest: '60s',
+          coachingCues: ['Kneeling push-ups on exercise mat', 'Keep hips tucked and core braced, lower chest with elbows at 45° angle'],
           nasmClinicalSource: 'CPT7_Ch21',
         })
       } else {
@@ -1311,6 +1383,17 @@ function buildDistinctOptWorkoutDay(params: {
           coachingCues: ['Step on band with lead foot', 'Drive diagonal rotation from hips through core'],
           nasmClinicalSource: 'CPT7_Fat_Loss7.pdf (Banded Adaptation)',
         })
+      } else if (isBeginner) {
+        exercises.push({
+          block: 'resistance',
+          name: 'Bird Dog',
+          sets: '2',
+          reps: '8–10 per side',
+          tempo: '4/2/1',
+          rest: '60s',
+          coachingCues: ['Opposite arm and leg extension with strict pelvis stabilization'],
+          nasmClinicalSource: 'CPT7_Ch16',
+        })
       } else {
         exercises.push({
           block: 'resistance',
@@ -1327,16 +1410,29 @@ function buildDistinctOptWorkoutDay(params: {
       focus = 'Integrated Full-Body Functional Stability'
 
       // Core
-      exercises.push({
-        block: 'core_balance',
-        name: 'Plank With Arm Reach',
-        sets: '2',
-        reps: '12 per side',
-        tempo: '4/2/1',
-        rest: '30s',
-        coachingCues: ['Zero pelvic rotation during reaches'],
-        nasmClinicalSource: 'CPT7_Ch16',
-      })
+      if (isBeginner && !eq.hasDumbbells) {
+        exercises.push({
+          block: 'core_balance',
+          name: 'Dead Bug',
+          sets: '2',
+          reps: '8 per side',
+          tempo: '3/1/2',
+          rest: '60s',
+          coachingCues: ['Keep lower back glued to floor throughout', 'Move opposite arm and leg slowly with breathing'],
+          nasmClinicalSource: 'CPT7_Ch16',
+        })
+      } else {
+        exercises.push({
+          block: 'core_balance',
+          name: 'Plank With Arm Reach',
+          sets: '2',
+          reps: '12 per side',
+          tempo: '4/2/1',
+          rest: '30s',
+          coachingCues: ['Zero pelvic rotation during reaches'],
+          nasmClinicalSource: 'CPT7_Ch16',
+        })
+      }
 
       // Squat-to-Press
       if (eq.hasDumbbells) {
@@ -1361,6 +1457,17 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '60s',
           coachingCues: ['Stand on loop band, press overhead at top of squat'],
           nasmClinicalSource: 'CPT7_Fat_Loss8.pdf (Banded Adaptation)',
+        })
+      } else if (isBeginner) {
+        exercises.push({
+          block: 'resistance',
+          name: 'Box Squat',
+          sets: '2',
+          reps: '10–12',
+          tempo: '3/2/1',
+          rest: '60s',
+          coachingCues: ['Touch chair lightly, maintain upright posture, drive up smoothly'],
+          nasmClinicalSource: 'CPT7_Ch21',
         })
       } else {
         exercises.push({
@@ -1415,8 +1522,8 @@ function buildDistinctOptWorkoutDay(params: {
         exercises.push({
           block: 'resistance',
           name: 'Bird Dog',
-          sets: '3',
-          reps: '15 per side',
+          sets: isBeginner ? '2' : '3',
+          reps: isBeginner ? '8–10 per side' : '15 per side',
           tempo: '4/2/1',
           rest: '60s',
           coachingCues: ['Opposite arm and leg extended in horizontal alignment', 'Squeeze glute and lat'],
@@ -1447,6 +1554,17 @@ function buildDistinctOptWorkoutDay(params: {
           rest: '60s',
           coachingCues: ['Step into lunge and curl band at bottom position'],
           nasmClinicalSource: 'CPT7_Fat_Loss9.pdf (Banded Adaptation)',
+        })
+      } else if (isBeginner) {
+        exercises.push({
+          block: 'resistance',
+          name: 'Step Up To Balance Sagital',
+          sets: '2',
+          reps: '8 per leg',
+          tempo: '3/2/1',
+          rest: '60s',
+          coachingCues: ['Step up onto a low 6–8 inch step or curb. Pause in single-leg balance for 2 seconds at the top.'],
+          nasmClinicalSource: 'CPT7_Ch21',
         })
       } else {
         exercises.push({

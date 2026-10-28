@@ -41,7 +41,7 @@ export const IOS_STILL_CAMERA_STEPS: StillCameraGuideStep[] = [
     step: 3,
     title: 'Turn Center Stage OFF',
     instruction: 'Tap "Center Stage" to toggle it OFF. Also make sure "Portrait" mode is OFF.',
-    detail: 'Apple will remember this preference for GAA Live Studio so your camera stays completely still.',
+    detail: 'Apple will remember this preference for Forge Athletic Live Studio so your camera stays completely still.',
   },
 ]
 

@@ -4,12 +4,20 @@ import { useState } from 'react'
 import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 import KineticMobilityRadar from '@/components/fitness/KineticMobilityRadar'
 import { GaaIcon } from '@/components/ui/GaaIcon'
+import MovementScreenInstructionsModal, { MovementScreenGuideCard } from '@/components/fitness/MovementScreenInstructionsModal'
 
 interface NasmAssessmentSummaryProps {
   assessment: NasmAssessmentRecord | null
+  onLaunchVideoUpload?: () => void
+  onLaunchLiveStudio?: () => void
 }
 
-export default function NasmAssessmentSummary({ assessment }: NasmAssessmentSummaryProps) {
+export default function NasmAssessmentSummary({
+  assessment,
+  onLaunchVideoUpload,
+  onLaunchLiveStudio,
+}: NasmAssessmentSummaryProps) {
+  const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'inhibit' | 'lengthen' | 'activate' | 'integrate'>('inhibit')
   const [streakCount, setStreakCount] = useState<number>(() => {
     if (typeof window === 'undefined') return 0
@@ -76,21 +84,17 @@ export default function NasmAssessmentSummary({ assessment }: NasmAssessmentSumm
     return (
       <div style={{ display: 'grid', gap: 18 }}>
         <KineticMobilityRadar assessment={null} />
-        <div
-          style={{
-            border: '1px solid var(--navy-lt)',
-            background: 'var(--navy-mid)',
-            padding: '32px 24px',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, fontWeight: 700, color: 'var(--white)', letterSpacing: '0.04em' }}>
-            No Postural or Movement Assessment on Record
-          </div>
-          <p style={{ margin: '8px auto 0', maxWidth: 450, color: 'var(--gray)', fontSize: 14, lineHeight: 1.5 }}>
-            Your coach has not recorded a NASM kinetic chain movement screen yet. Your personalized corrective homework will appear here once assessed.
-          </p>
-        </div>
+        <MovementScreenGuideCard
+          onOpenModal={() => setIsGuideOpen(true)}
+          onLaunchVideoUpload={onLaunchVideoUpload}
+          onLaunchLiveStudio={onLaunchLiveStudio}
+        />
+        <MovementScreenInstructionsModal
+          isOpen={isGuideOpen}
+          onClose={() => setIsGuideOpen(false)}
+          onLaunchVideoUpload={onLaunchVideoUpload}
+          onLaunchLiveStudio={onLaunchLiveStudio}
+        />
       </div>
     )
   }
@@ -139,27 +143,51 @@ export default function NasmAssessmentSummary({ assessment }: NasmAssessmentSumm
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="tactile-btn"
-            style={{
-              padding: '8px 16px',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'var(--white)',
-              fontSize: 12,
-              fontFamily: 'Raleway, sans-serif',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <GaaIcon name="printer" size={14} tone="gold" />
-            <span>Print / Export PDF</span>
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setIsGuideOpen(true)}
+              className="tactile-btn"
+              style={{
+                padding: '8px 14px',
+                background: 'rgba(212, 175, 55, 0.12)',
+                border: '1px solid var(--gold)',
+                color: 'var(--gold-lt)',
+                fontSize: 12,
+                fontFamily: 'Raleway, sans-serif',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <GaaIcon name="movement-screen" size={14} tone="gold" />
+              <span>Protocol &amp; Instructions</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="tactile-btn"
+              style={{
+                padding: '8px 16px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'var(--white)',
+                fontSize: 12,
+                fontFamily: 'Raleway, sans-serif',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <GaaIcon name="printer" size={14} tone="gold" />
+              <span>Print / Export PDF</span>
+            </button>
+          </div>
         </div>
 
         <h2
@@ -429,6 +457,13 @@ export default function NasmAssessmentSummary({ assessment }: NasmAssessmentSumm
           }
         }
       `}</style>
+
+      <MovementScreenInstructionsModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        onLaunchVideoUpload={onLaunchVideoUpload}
+        onLaunchLiveStudio={onLaunchLiveStudio}
+      />
     </div>
   )
 }

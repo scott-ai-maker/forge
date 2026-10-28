@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 import { GET, POST, PATCH } from './route'
 import { getRequestAuthz } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
+import { autoGenerateOrUpdateClientWorkoutPlan } from '@/lib/client-plan-auto-generator'
 
 vi.mock('@/lib/authz', () => ({
   getRequestAuthz: vi.fn(),
@@ -31,6 +32,22 @@ vi.mock('@/lib/fitness-photos', () => ({
   extractPhotoPathFromLegacyUrl: vi.fn().mockReturnValue(null),
   normalizePhotoPath: vi.fn((path) => path),
 }))
+
+vi.mock('@/lib/client-plan-auto-generator', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/client-plan-auto-generator')>()
+  return {
+    ...actual,
+    autoGenerateOrUpdateClientWorkoutPlan: vi.fn().mockResolvedValue({
+      status: 'generated',
+      planId: 'mock-plan-auto-123',
+      nasmOptPhase: 1,
+      phaseName: 'Phase 1: Stabilization Endurance',
+      sessionsPerWeek: 4,
+      preservedPlan: false,
+      message: 'Workout plan generated immediately based on updated profile.',
+    }),
+  }
+})
 
 describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
   const mockUser = { id: 'client-user-123', email: 'client@example.com' }
@@ -181,7 +198,7 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
       },
     }
 
-    it('submits onboarding profile and legal consents successfully', async () => {
+    it('submits onboarding profile and legal consents successfully and triggers auto-generation', async () => {
       const req = new NextRequest('http://localhost/api/fitness/profile', {
         method: 'POST',
         body: JSON.stringify(validIntakeBody),
@@ -192,6 +209,12 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
 
       expect(res.status).toBe(200)
       expect(data.profile).toBeDefined()
+      expect(data.plan).toBeDefined()
+      expect(data.plan.status).toBe('generated')
+      expect(autoGenerateOrUpdateClientWorkoutPlan).toHaveBeenCalledWith({
+        clientId: 'client-user-123',
+        trigger: 'onboarding',
+      })
     })
 
     it('rejects with 400 when PAR-Q answers are incomplete', async () => {
@@ -252,7 +275,9 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
   })
 
   describe('PATCH /api/fitness/profile', () => {
-    it('updates preferred units to metric', async () => {
+    it('updates preferred units to metric without triggering plan regeneration', async () => {
+      vi.mocked(autoGenerateOrUpdateClientWorkoutPlan).mockClear()
+
       const req = new NextRequest('http://localhost/api/fitness/profile', {
         method: 'PATCH',
         body: JSON.stringify({ preferredUnits: 'metric' }),
@@ -263,9 +288,12 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
 
       expect(res.status).toBe(200)
       expect(data.profile.preferred_units).toBe('metric')
+      expect(autoGenerateOrUpdateClientWorkoutPlan).not.toHaveBeenCalled()
     })
 
-    it('updates biometric vitals and filters out none from equipment access', async () => {
+    it('updates biometric vitals, filters out none from equipment access, and triggers plan regeneration', async () => {
+      vi.mocked(autoGenerateOrUpdateClientWorkoutPlan).mockClear()
+
       const req = new NextRequest('http://localhost/api/fitness/profile', {
         method: 'PATCH',
         body: JSON.stringify({
@@ -281,6 +309,13 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
 
       expect(res.status).toBe(200)
       expect(data.profile).toBeDefined()
+      expect(data.plan).toBeDefined()
+      expect(data.plan.status).toBe('generated')
+      expect(autoGenerateOrUpdateClientWorkoutPlan).toHaveBeenCalledWith({
+        clientId: 'client-user-123',
+        trigger: 'profile_update',
+        updatedFields: expect.arrayContaining(['fitnessGoal', 'equipmentAccess']),
+      })
     })
 
     it('rejects invalid preferredUnits with 400', async () => {

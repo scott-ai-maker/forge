@@ -55,11 +55,17 @@ export default function ProgressPhotoTimeline({
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [latestScanResult, setLatestScanResult] = useState<BodyCompositionScanResult | null>(null)
   const [form, setForm] = useState({ takenAt: new Date().toISOString().slice(0, 10), notes: '', file: null as File | null })
+  const [attireConfirmed, setAttireConfirmed] = useState<boolean>(false)
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (!form.file) {
       setStatus('Select a photo first.')
+      return
+    }
+
+    if (!attireConfirmed) {
+      setStatus('Please verify that your photo complies with Forge Athletic Attire Standards (fitted athletic apparel, visible natural waistline and limb contours).')
       return
     }
 
@@ -91,6 +97,11 @@ export default function ProgressPhotoTimeline({
 
   async function handleEstimateBodyFat() {
     if (!bodyFatInputs) return
+
+    if (!attireConfirmed) {
+      setBodyFatStatus('Please verify that your photo complies with Forge Athletic Attire Standards (fitted athletic apparel, visible waistline, no baggy clothes).')
+      return
+    }
 
     setEstimating(true)
     setBodyFatStatus(null)
@@ -224,6 +235,38 @@ export default function ProgressPhotoTimeline({
             placeholder="Optional notes: lighting, scale weight, pumped vs cold, mood, etc."
             style={{ ...inputStyle, minHeight: 60 }}
           />
+
+          {/* Attire Standards Guidance & Acceptance Policy */}
+          <div
+            style={{
+              padding: '12px 14px',
+              background: 'rgba(212, 175, 55, 0.08)',
+              border: '1px solid rgba(212, 175, 55, 0.28)',
+              borderRadius: 6,
+              fontSize: 11.5,
+              color: 'var(--white)',
+              lineHeight: 1.45,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <GaaIcon name="shield-check" size={14} tone="gold" />
+              <strong style={{ color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 11 }}>
+                Forge Athletic Photo Attire Standards
+              </strong>
+            </div>
+            <div>
+              Fitted athletic apparel required (sports bra + athletic shorts/tights for women; fitted athletic shorts + fitted top for men). <strong>Baggy sweatpants, oversized hoodies, casual street clothing, or inappropriate garments will not be accepted.</strong>
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer', fontSize: 11.5, color: 'var(--gold-lt)', fontWeight: 600 }}>
+              <input
+                type="checkbox"
+                checked={attireConfirmed}
+                onChange={e => setAttireConfirmed(e.target.checked)}
+                style={{ accentColor: 'var(--gold)' }}
+              />
+              <span>I confirm this photo meets Forge Athletic Attire Standards (fitted athletic wear, visible waistline, no baggy clothing).</span>
+            </label>
+          </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button type="submit" disabled={uploading} style={{ ...buttonStyle, flex: 1 }}>

@@ -48,6 +48,7 @@ export interface ClientOnboardingProfileInput {
   cardioEquipmentAccess?: string[]
   injuriesLimitations?: string
   contraindicationTags?: string[]
+  experienceLevel?: 'beginner' | 'intermediate' | 'advanced' | 'elite' | string
 }
 
 export interface AiCoachClinicalRationale {
@@ -414,6 +415,9 @@ export function generateProgramDesignFromScans(params: {
     cardioEquipmentAccess: client.cardioEquipmentAccess,
     contraindicationTags: client.contraindicationTags,
     injuriesLimitations: client.injuriesLimitations,
+    experienceLevel: (['beginner', 'intermediate', 'advanced', 'elite'].includes(String(client.experienceLevel ?? '').toLowerCase())
+      ? (String(client.experienceLevel).toLowerCase() as 'beginner' | 'intermediate' | 'advanced' | 'elite')
+      : undefined),
   })
 
   // Explicitly embed the 4-Phase CEx Warmup Continuum into each workout day

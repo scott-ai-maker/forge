@@ -106,6 +106,10 @@ export interface BodyCompositionScanResult {
   landmarks: BodyCompLandmark[]
   regionalBreakdown: RegionalComposition[]
 
+  // Clinical Attire & Photo Acceptance Status
+  isRejected?: boolean
+  rejectionReason?: string | null
+
   // Photo Diagnostic Quality
   photoQualityAssessment: {
     overallRating: 'optimal' | 'acceptable' | 'suboptimal'
@@ -115,6 +119,11 @@ export interface BodyCompositionScanResult {
     postureCompensationDetected: boolean
     postureCorrectionNote?: string
     multiViewEnhanced: boolean
+    attireValidation?: {
+      adheresToBestPractices: boolean
+      rejectionReason?: string
+      detectedAttireIssues: string[]
+    }
   }
 
   // Recomposition Trajectory
@@ -406,6 +415,11 @@ interface GeminiBodyCompAnalysisRaw {
     clothingOcclusionWarning: boolean
     postureCompensationDetected: boolean
     postureCorrectionNote?: string
+    attireValidation?: {
+      adheresToBestPractices: boolean
+      detectedAttireIssues?: string[]
+      rejectionReason?: string
+    }
   }
   androidGynoidRatio?: number
   visceralFatRisk?: 'Low' | 'Moderate' | 'High' | 'Very High'
@@ -594,10 +608,22 @@ ATHLETE CLINICAL PROFILE:
 - Training Style: ${athleteType}
 - Measured Circumferences: ${inputWaistCm ? `Waist: ${inputWaistCm}cm, ` : ''}${inputNeckCm ? `Neck: ${inputNeckCm}cm, ` : ''}${inputHipCm ? `Hip: ${inputHipCm}cm` : 'Visual extraction only'}
 
-CLOTHING & ATTIRE OCCLUSION HANDLING:
-- The athlete may be wearing clothing (such as gym shorts, t-shirt, sports bra, leggings, sweatpants, or casual wear).
-- Do NOT refuse, fail, or complain about attire. Estimate the body silhouette and circumference contours along apparel boundaries, adjust for garment drape (subtracting ~0.5-1.5cm for fabric thickness), and examine visible uncovered anatomical landmarks (neck, clavicles, wrists/forearms, jawline, ankles, lower calves).
-- If clothing obscures direct subcutaneous skinfold visibility, mark "clothingOcclusionWarning": true in photoQualityAssessment.
+CLINICAL ATTIRE & PHOTO ACCEPTANCE CRITERIA:
+- Forge Athletic strictly enforces clinical DEXA standards. Evaluate whether the athlete's photo adheres to proper attire best practices:
+  1. Approved Attire: Form-fitting athletic apparel (sports bra + fitted athletic shorts/compression tights for women; fitted athletic shorts + fitted athletic top/compression or standard physique assessment wear for men). Natural waistline, abdominal wall contour, and major limb joints must be distinguishable.
+  2. Prohibited Attire (REJECT): Loose/baggy sweatpants, oversized hoodies, loose flannel/cotton shirts, denim/jeans, jackets, or non-athletic streetwear that obscures anatomical landmarks and creates artificial silhouette mass. Complete nudity, lingerie, or underwear is also prohibited.
+- In "photoQualityAssessment.attireValidation":
+  * If the athlete is wearing prohibited/baggy clothing, robes, jeans, or non-athletic wear that occludes the waist or silhouette:
+    - Set "adheresToBestPractices": false
+    - Set "clothingOcclusionWarning": true
+    - Set "overallRating": "suboptimal"
+    - List the detected issues in "detectedAttireIssues" (e.g. ["baggy_clothing", "waistline_occluded", "non_athletic_attire"])
+    - Set "rejectionReason": a clear clinical explanation of why the photo cannot be accepted for DEXA body composition scoring.
+  * If the athlete is wearing compliant fitted athletic wear:
+    - Set "adheresToBestPractices": true
+    - Set "clothingOcclusionWarning": false
+    - Set "detectedAttireIssues": []
+    - Set "rejectionReason": ""
 
 CLINICAL VISUAL INSPECTION INSTRUCTIONS:
 1. Examine anatomical landmarks and silhouette definition:
@@ -683,7 +709,12 @@ Return ONLY valid JSON matching this schema:
     "lightingScore": 90,
     "clothingOcclusionWarning": false,
     "postureCompensationDetected": false,
-    "postureCorrectionNote": "Clean neutral standing posture; optimal sagittal alignment."
+    "postureCorrectionNote": "Clean neutral standing posture; optimal sagittal alignment.",
+    "attireValidation": {
+      "adheresToBestPractices": true,
+      "detectedAttireIssues": [],
+      "rejectionReason": ""
+    }
   },
   "androidGynoidRatio": 0.88,
   "visceralFatRisk": "Low",
@@ -831,29 +862,49 @@ Return ONLY valid JSON matching this schema:
         },
       ]
 
+  // Attire Validation & Rejection Status
+  const rawAttire = visionResult?.photoQualityAssessment?.attireValidation
+  const clothingOccluded = Boolean(visionResult?.photoQualityAssessment?.clothingOcclusionWarning)
+  const adheresToBestPractices = rawAttire ? Boolean(rawAttire.adheresToBestPractices) : !clothingOccluded
+  const isRejected = !adheresToBestPractices || clothingOccluded
+  const rejectionReason = isRejected
+    ? (rawAttire?.rejectionReason || 'Photo rejected: Attire does not adhere to Forge Athletic standards. Loose, baggy, or non-athletic clothing obscures natural silhouette contours and anatomical landmarks.')
+    : null
+
   // Photo Quality Assessment
   const multiViewEnhanced = Boolean(anteriorPhotoBase64 && lateralPhotoBase64)
   const photoQualityAssessment = {
-    overallRating: visionResult?.photoQualityAssessment?.overallRating || (primaryPhoto ? 'optimal' : 'acceptable'),
-    framingScore: visionResult?.photoQualityAssessment?.framingScore ?? 92,
+    overallRating: isRejected ? ('suboptimal' as const) : (visionResult?.photoQualityAssessment?.overallRating || (primaryPhoto ? 'optimal' : 'acceptable')),
+    framingScore: visionResult?.photoQualityAssessment?.framingScore ?? (isRejected ? 40 : 92),
     lightingScore: visionResult?.photoQualityAssessment?.lightingScore ?? 88,
-    clothingOcclusionWarning: visionResult?.photoQualityAssessment?.clothingOcclusionWarning ?? false,
+    clothingOcclusionWarning: clothingOccluded,
     postureCompensationDetected: visionResult?.photoQualityAssessment?.postureCompensationDetected ?? false,
     postureCorrectionNote: visionResult?.photoQualityAssessment?.postureCorrectionNote || 'Standing neutral posture verified.',
     multiViewEnhanced,
+    attireValidation: {
+      adheresToBestPractices: !isRejected,
+      rejectionReason: rejectionReason ?? undefined,
+      detectedAttireIssues: rawAttire?.detectedAttireIssues ?? (clothingOccluded ? ['clothing_occlusion'] : []),
+    },
   }
 
   // Recomposition Trajectory
   const recompositionProjection = generateRecompositionPlan(weightKg, finalBf, sex, targetBodyFatPercent)
 
-  const methodDescription = multiViewEnhanced
-    ? 'DEXA 4C Multi-View AI Spatial Anthropometry (Anterior + Lateral + Posterior) + Cunningham LBM Engine'
-    : (primaryPhoto ? 'DEXA-Calibrated Single-View AI Vision + US Navy Ensemble' : 'Circumference & Anthropometric Mathematical Ensemble')
+  const methodDescription = isRejected
+    ? 'Rejected Scan — Non-Compliant Attire Detected'
+    : (multiViewEnhanced
+      ? 'DEXA 4C Multi-View AI Spatial Anthropometry (Anterior + Lateral + Posterior) + Cunningham LBM Engine'
+      : (primaryPhoto ? 'DEXA-Calibrated Single-View AI Vision + US Navy Ensemble' : 'Circumference & Anthropometric Mathematical Ensemble'))
 
-  const coachSummaryNotes = visionResult?.coachSummaryNotes ||
-    `DEXA-calibrated body composition analysis shows ${finalBf}% body fat (${classification}) with ${leanBodyMassLbs} lbs Lean Body Mass and FFMI of ${ffmi} (${ffmiCategory}). Basal metabolic burn is ${cunninghamBmr} kcal/day.`
+  const coachSummaryNotes = isRejected
+    ? `SCAN REJECTED: ${rejectionReason} Please re-take wearing proper fitted athletic attire (sports bra/shorts or fitted compression top/shorts).`
+    : (visionResult?.coachSummaryNotes ||
+      `DEXA-calibrated body composition analysis shows ${finalBf}% body fat (${classification}) with ${leanBodyMassLbs} lbs Lean Body Mass and FFMI of ${ffmi} (${ffmiCategory}). Basal metabolic burn is ${cunninghamBmr} kcal/day.`)
 
   return {
+    isRejected,
+    rejectionReason,
     estimatedBodyFatPercent: finalBf,
     confidenceIntervalPercent: confidenceInterval,
     confidenceScore,

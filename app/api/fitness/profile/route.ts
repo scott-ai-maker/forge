@@ -7,6 +7,10 @@ import {
   normalizePhotoPath,
 } from '@/lib/fitness-photos'
 import { dispatchCoachOnboardingAlert } from '@/lib/coach-onboarding-alerts'
+import {
+  autoGenerateOrUpdateClientWorkoutPlan,
+  CORE_TRAINING_PROFILE_FIELDS,
+} from '@/lib/client-plan-auto-generator'
 
 const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library']
 const EXCLUDED_EQUIPMENT_TERMS = ['chains', 'chain', 'safety collar', 'safety collars', 'none', 'no equipment']
@@ -270,7 +274,17 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  let autoPlanResult = null
   if (!isDraft) {
+    try {
+      autoPlanResult = await autoGenerateOrUpdateClientWorkoutPlan({
+        clientId: userId,
+        trigger: 'onboarding',
+      })
+    } catch (err: unknown) {
+      console.warn('[ProfileOnboarding] Auto-generate workout plan warning:', err)
+    }
+
     // Non-blocking real-time alert dispatched to Coach Gordon
     dispatchCoachOnboardingAlert({
       userId,
@@ -286,7 +300,7 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  return NextResponse.json({ profile: data, draftSaved: isDraft })
+  return NextResponse.json({ profile: data, draftSaved: isDraft, plan: autoPlanResult })
 }
 
 export async function PATCH(req: NextRequest) {
@@ -364,5 +378,19 @@ export async function PATCH(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ profile: data })
+  const changedCoreFields = CORE_TRAINING_PROFILE_FIELDS.filter(field => field in body)
+  let autoPlanResult = null
+  if (changedCoreFields.length > 0) {
+    try {
+      autoPlanResult = await autoGenerateOrUpdateClientWorkoutPlan({
+        clientId: userId,
+        trigger: 'profile_update',
+        updatedFields: changedCoreFields,
+      })
+    } catch (err: unknown) {
+      console.warn('[ProfilePatch] Auto-update workout plan warning:', err)
+    }
+  }
+
+  return NextResponse.json({ profile: data, plan: autoPlanResult })
 }

@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   })
 
   let insertedData: Record<string, unknown> = {}
-  if (user) {
+  if (user && !scanResult.isRejected) {
     const { data, error } = await supabaseAdmin()
       .from('body_composition_analyses')
       .insert({
@@ -65,7 +65,11 @@ export async function POST(req: NextRequest) {
       ...insertedData,
       estimated_bodyfat_percent: scanResult.estimatedBodyFatPercent,
       scan_result: scanResult,
+      is_rejected: scanResult.isRejected ?? false,
+      rejection_reason: scanResult.rejectionReason ?? null,
     },
     scanResult,
+    isRejected: scanResult.isRejected ?? false,
+    rejectionReason: scanResult.rejectionReason ?? null,
   })
 }

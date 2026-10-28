@@ -4,6 +4,7 @@
  */
 
 export type LiftType =
+  | 'overhead_squat_assessment'
   | 'barbell_back_squat'
   | 'barbell_deadlift'
   | 'barbell_bench_press'
@@ -123,6 +124,11 @@ export function parseYouTubeVideoUrl(url: string | null | undefined): YouTubeVid
 }
 
 export const LIFT_METADATA: Record<LiftType, { name: string; primaryPrimeMover: string; focusJoints: string[] }> = {
+  overhead_squat_assessment: {
+    name: 'Overhead Squat Assessment (OHSA)',
+    primaryPrimeMover: 'Kinetic Chain Dynamic Mobility & Neuromuscular Stabilization',
+    focusJoints: ['Feet & Ankles (Pronation)', 'Knees (Valgus/Varus)', 'LPHC (Lumbar/Pelvis)', 'Shoulder & Cervical Complex'],
+  },
   barbell_back_squat: {
     name: 'Barbell Back Squat',
     primaryPrimeMover: 'Quadriceps & Gluteus Maximus',
@@ -179,7 +185,7 @@ export function analyzeLiftForm(input: VideoFormInput): VideoCritiqueAnalysis {
 
   const hasDeviation = (key: string) => observedDeviations.includes(key)
 
-  if (liftType === 'barbell_back_squat' || liftType === 'single_leg_squat') {
+  if (liftType === 'overhead_squat_assessment' || liftType === 'barbell_back_squat' || liftType === 'single_leg_squat') {
     // 1. Knee Valgus Checkpoint
     if (hasDeviation('knee_valgus')) {
       deductionPoints += 18
@@ -224,22 +230,81 @@ export function analyzeLiftForm(input: VideoFormInput): VideoCritiqueAnalysis {
       })
     }
 
-    // 3. Depth & Hip Flexion
-    if (hasDeviation('cut_high')) {
-      deductionPoints += 12
-      checkpoints.push({
-        name: 'Depth & Range of Motion',
-        status: 'moderate_deviation',
-        observation: 'Squat depth stopped 2-3 inches above parallel (femur not parallel with floor).',
-        prescribedCue: 'Cue: "Open hip capsule and sit between your heels to achieve full parallel depth."',
-      })
+    // OHSA-Specific Checkpoints: Arms Fall Forward, Feet Flatten/Turn Out, Low Back Arches
+    if (liftType === 'overhead_squat_assessment') {
+      if (hasDeviation('arms_fall_forward')) {
+        deductionPoints += 14
+        checkpoints.push({
+          name: 'Shoulder Complex & Overhead Extension',
+          status: 'moderate_deviation',
+          observation: 'Arms fall forward past the plane of the ears, indicating latissimus dorsi and pectoral tightness.',
+          prescribedCue: 'Cue: "Lock elbows straight and squeeze upper back to keep arms in line with your ears."',
+          impairedMuscles: {
+            overactive: ['Latissimus Dorsi', 'Teres Major', 'Pectoralis Major / Minor'],
+            underactive: ['Mid / Lower Trapezius', 'Rhomboids', 'Posterior Deltoid', 'Rotator Cuff'],
+          },
+        })
+      } else {
+        checkpoints.push({
+          name: 'Shoulder Complex & Overhead Extension',
+          status: 'optimal',
+          observation: 'Arms remain locked in alignment with torso throughout descent.',
+          prescribedCue: 'Full shoulder flexion mobility and thoracic extension maintained.',
+        })
+      }
+
+      if (hasDeviation('feet_flatten_turn_out')) {
+        deductionPoints += 14
+        checkpoints.push({
+          name: 'Foot & Ankle Subtalar Complex',
+          status: 'moderate_deviation',
+          observation: 'Foot arches flatten (pronation) or feet rotate outward during the eccentric descent.',
+          prescribedCue: 'Cue: "Keep feet pointed straight ahead and press through the tripod of your feet."',
+          impairedMuscles: {
+            overactive: ['Soleus', 'Lateral Gastrocnemius', 'Peroneal Complex'],
+            underactive: ['Anterior Tibialis', 'Posterior Tibialis', 'Gluteus Medius'],
+          },
+        })
+      } else {
+        checkpoints.push({
+          name: 'Foot & Ankle Subtalar Complex',
+          status: 'optimal',
+          observation: 'Feet remain straight ahead with maintained medial longitudinal arch.',
+          prescribedCue: 'Stable foot-ankle foundation with excellent ankle dorsiflexion.',
+        })
+      }
+
+      if (hasDeviation('low_back_arches')) {
+        deductionPoints += 14
+        checkpoints.push({
+          name: 'Lumbo-Pelvic-Hip Neutrality (Anterior Tilt)',
+          status: 'moderate_deviation',
+          observation: 'Lumbar spine arches excessively into hyperextension during descent.',
+          prescribedCue: 'Cue: "Draw belly button toward spine and engage glutes to keep pelvis in neutral."',
+          impairedMuscles: {
+            overactive: ['Hip Flexor Complex (Psoas, Rectus Femoris)', 'Erector Spinae', 'Latissimus Dorsi'],
+            underactive: ['Gluteus Maximus', 'Hamstring Complex', 'Intrinsic Core Stabilizers'],
+          },
+        })
+      }
     } else {
-      checkpoints.push({
-        name: 'Depth & Range of Motion',
-        status: 'optimal',
-        observation: 'Hip crease descends cleanly below top of the patella without lumbopelvic flexion.',
-        prescribedCue: 'Solid, consistent parallel depth achieved on all repetitions.',
-      })
+      // 3. Depth & Hip Flexion (Loaded Squats)
+      if (hasDeviation('cut_high')) {
+        deductionPoints += 12
+        checkpoints.push({
+          name: 'Depth & Range of Motion',
+          status: 'moderate_deviation',
+          observation: 'Squat depth stopped 2-3 inches above parallel (femur not parallel with floor).',
+          prescribedCue: 'Cue: "Open hip capsule and sit between your heels to achieve full parallel depth."',
+        })
+      } else {
+        checkpoints.push({
+          name: 'Depth & Range of Motion',
+          status: 'optimal',
+          observation: 'Hip crease descends cleanly below top of the patella without lumbopelvic flexion.',
+          prescribedCue: 'Solid, consistent parallel depth achieved on all repetitions.',
+        })
+      }
     }
   } else if (liftType === 'barbell_deadlift' || liftType === 'romanian_deadlift') {
     // Deadlift Checkpoints

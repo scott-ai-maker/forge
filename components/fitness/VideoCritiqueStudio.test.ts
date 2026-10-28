@@ -10,6 +10,9 @@ describe('VideoCritiqueStudio YouTube Integration & Biomechanical Analysis', () 
     expect(inferLiftTypeFromFileName('ohp_strict_press.mp4')).toBe('overhead_press')
     expect(inferLiftTypeFromFileName('barbell_row_back_angle.m4v')).toBe('barbell_row')
     expect(inferLiftTypeFromFileName('romanian_deadlift_tempo.mov')).toBe('romanian_deadlift')
+    expect(inferLiftTypeFromFileName('christine_ohsa_screen.mp4')).toBe('overhead_squat_assessment')
+    expect(inferLiftTypeFromFileName('overhead_squat_assessment_lateral.mov')).toBe('overhead_squat_assessment')
+    expect(inferLiftTypeFromFileName('movement_screen_assessment.webm')).toBe('overhead_squat_assessment')
     expect(inferLiftTypeFromFileName('misc_gym_footage.mp4')).toBeNull()
   })
 
@@ -72,4 +75,30 @@ describe('VideoCritiqueStudio YouTube Integration & Biomechanical Analysis', () 
     expect(shareText).not.toContain('GAA')
     expect(shareText).not.toContain('Gordon Athletic Advisory')
   })
+
+  it('performs biomechanical form critique for NASM Overhead Squat Assessment (OHSA)', () => {
+    const critique = analyzeLiftForm({
+      liftType: 'overhead_squat_assessment',
+      loadLbs: 0,
+      repsCount: 5,
+      observedDeviations: ['knee_valgus', 'excessive_forward_lean', 'arms_fall_forward'],
+      clientNotes: 'Initial client movement screen submission',
+    })
+
+    expect(critique.liftName).toBe('Overhead Squat Assessment (OHSA)')
+    expect(['Needs Improvement', 'High Risk']).toContain(critique.rating)
+    expect(critique.overallFormScore).toBeLessThan(75)
+    expect(critique.checkpoints.length).toBeGreaterThan(0)
+
+    // Verify corrective continuum is populated
+    expect(critique.prescribedCorrectiveContinuum.inhibit.length).toBeGreaterThan(0)
+    expect(critique.prescribedCorrectiveContinuum.lengthen.length).toBeGreaterThan(0)
+    expect(critique.prescribedCorrectiveContinuum.activate.length).toBeGreaterThan(0)
+    expect(critique.prescribedCorrectiveContinuum.integrate.length).toBeGreaterThan(0)
+
+    // Verify Forge Athletic branding is strictly maintained
+    expect(critique.masterCoachSummary).not.toContain('GAA')
+    expect(critique.masterCoachSummary).not.toContain('Gordon Athletic')
+  })
 })
+

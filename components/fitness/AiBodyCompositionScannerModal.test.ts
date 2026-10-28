@@ -93,4 +93,40 @@ describe('AiBodyCompositionScannerModal Biometric Input Engine', () => {
       expect(resolved.age).toBe(32)
     })
   })
+
+  describe('Attire Acceptance Standard & Rejection Guardrails', () => {
+    const fs = require('fs')
+    const path = require('path')
+    const modalFilePath = path.resolve(__dirname, 'AiBodyCompositionScannerModal.tsx')
+    const modalContent = fs.readFileSync(modalFilePath, 'utf-8')
+
+    it('enforces DEXA attire acceptance standard card and guidance', () => {
+      expect(modalContent).toContain('Attire Acceptance Standard (DEXA Precision ±1.0%)')
+      expect(modalContent).toContain('Form-fitting athletic apparel')
+      expect(modalContent).toContain('sports bra + fitted shorts for women; fitted athletic shorts + fitted top for men')
+      expect(modalContent).toContain('Baggy sweatpants, oversized hoodies, loose t-shirts, robes, or casual wear')
+      expect(modalContent).toContain('Photos with obscured contours will be rejected by the DEXA engine')
+    })
+
+    it('requires mandatory client attire confirmation before running scan', () => {
+      expect(modalContent).toContain('attireConfirmed')
+      expect(modalContent).toContain('I confirm this photo complies with Forge Athletic Attire Standards')
+      expect(modalContent).toContain('if (!attireConfirmed)')
+      expect(modalContent).toContain('Please confirm that your photo adheres to Forge Athletic Attire Standards')
+    })
+
+    it('implements prominent rejection banner and blocks saving rejected scans', () => {
+      expect(modalContent).toContain('Scan Rejected — Non-Compliant Attire Detected')
+      expect(modalContent).toContain('Retake Photo in Compliant Fitted Attire')
+      expect(modalContent).toContain('Cannot Save Rejected Scan — Compliant Attire Required')
+      expect(modalContent).toContain('if (!scanResult || scanResult.isRejected) return')
+    })
+
+    it('strictly upholds Forge Athletic brand identity (never GAA)', () => {
+      expect(modalContent).not.toContain('GAA')
+      expect(modalContent).not.toContain('Gordon Athletic Advisory')
+      expect(modalContent).not.toContain('Gordon Athletic')
+      expect(modalContent).toContain('Forge Athletic')
+    })
+  })
 })

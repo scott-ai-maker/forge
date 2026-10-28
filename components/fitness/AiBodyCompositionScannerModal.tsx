@@ -212,6 +212,7 @@ export default function AiBodyCompositionScannerModal({
   const [targetBfSlider, setTargetBfSlider] = useState<number>(12)
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false)
   const [showCircumferenceInputs, setShowCircumferenceInputs] = useState<boolean>(false)
+  const [attireConfirmed, setAttireConfirmed] = useState<boolean>(false)
 
   // Camera stream state
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false)
@@ -352,6 +353,11 @@ export default function AiBodyCompositionScannerModal({
 
   // Trigger Deep Scan
   const handleScan = async () => {
+    if (!attireConfirmed) {
+      setErrorMessage('Please confirm that your photo adheres to Forge Athletic Attire Standards (fitted athletic apparel, visible natural waistline and limb contours).')
+      return
+    }
+
     setIsScanning(true)
     setErrorMessage(null)
     setSaveSuccess(false)
@@ -411,7 +417,7 @@ export default function AiBodyCompositionScannerModal({
 
   // Apply & Save Scan
   const handleApply = () => {
-    if (!scanResult) return
+    if (!scanResult || scanResult.isRejected) return
     onApplyScan?.(scanResult)
     setSaveSuccess(true)
     setTimeout(() => {
@@ -825,18 +831,25 @@ export default function AiBodyCompositionScannerModal({
                   <div
                     style={{
                       background: 'rgba(212, 160, 23, 0.08)',
-                      border: '1px solid rgba(212, 160, 23, 0.25)',
-                      borderRadius: 6,
-                      padding: '6px 10px',
-                      fontSize: 10.5,
-                      color: 'var(--gold-lt)',
+                      border: '1px solid rgba(212, 160, 23, 0.3)',
+                      borderRadius: 8,
+                      padding: '10px 12px',
+                      fontSize: 11,
+                      color: 'var(--white)',
                       marginBottom: 12,
-                      lineHeight: 1.35,
+                      lineHeight: 1.4,
+                      textAlign: 'left',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <GaaIcon name="shirt" size={13} tone="gold" />
-                      <span><strong>Attire Guide:</strong> Fitted athletic wear (sports bra/shorts) yields max optical precision (±1.0%). Clothed photos work seamlessly via 3D silhouette modeling.</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, color: 'var(--gold-lt)', fontWeight: 700, textTransform: 'uppercase', fontSize: 10.5 }}>
+                      <GaaIcon name="shield-check" size={13} tone="gold" />
+                      <span>Attire Acceptance Standard (DEXA Precision ±1.0%)</span>
+                    </div>
+                    <div style={{ color: '#E2E8F0', fontSize: 11 }}>
+                      <strong>Approved:</strong> Form-fitting athletic apparel (sports bra + fitted shorts for women; fitted athletic shorts + fitted top for men). Natural waistline and joint contours must be visible.
+                    </div>
+                    <div style={{ color: '#FCA5A5', fontSize: 10.5, marginTop: 4 }}>
+                      <strong>✕ Prohibited:</strong> Baggy sweatpants, oversized hoodies, loose t-shirts, robes, or casual wear. Photos with obscured contours will be rejected by the DEXA engine.
                     </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
@@ -1052,6 +1065,33 @@ export default function AiBodyCompositionScannerModal({
               )}
             </div>
 
+            {/* Attire Standards Pre-Check Confirmation */}
+            <div
+              style={{
+                padding: '10px 12px',
+                background: 'rgba(212, 175, 55, 0.08)',
+                border: '1px solid rgba(212, 175, 55, 0.28)',
+                borderRadius: 6,
+                fontSize: 11.5,
+                lineHeight: 1.4,
+              }}
+            >
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', color: 'var(--gold-lt)', fontWeight: 600 }}>
+                <input
+                  type="checkbox"
+                  checked={attireConfirmed}
+                  onChange={e => {
+                    setAttireConfirmed(e.target.checked)
+                    if (e.target.checked) setErrorMessage(null)
+                  }}
+                  style={{ accentColor: 'var(--gold)', marginTop: 2 }}
+                />
+                <span style={{ fontSize: 11.5, color: '#E2E8F0' }}>
+                  I confirm this photo complies with Forge Athletic Attire Standards (fitted athletic apparel, visible waistline and joints, no baggy clothing or casual wear).
+                </span>
+              </label>
+            </div>
+
             {/* Scan Trigger CTA Button */}
             <button
               type="button"
@@ -1111,58 +1151,113 @@ export default function AiBodyCompositionScannerModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {scanResult ? (
               <>
-                {/* 1. Hero DEXA Results Banner */}
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(212,160,23,0.15) 0%, rgba(13,27,42,0.95) 100%)',
-                    border: '1px solid rgba(212,160,23,0.4)',
-                    borderRadius: 10,
-                    padding: '16px 18px',
-                    display: 'grid',
-                    gridTemplateColumns: '1.2fr 1fr 1fr',
-                    gap: 12,
-                    alignItems: 'center',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: 10.5, color: 'var(--gold-lt)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
-                      DEXA-Calibrated Body Fat
+                {/* 1. Hero DEXA Results Banner or Rejection Card */}
+                {scanResult.isRejected ? (
+                  <div
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.45)',
+                      borderRadius: 10,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 24 }}>⚠️</span>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#F87171', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Scan Rejected — Non-Compliant Attire Detected
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--white)', marginTop: 2, lineHeight: 1.4 }}>
+                          {scanResult.rejectionReason || 'Loose or non-athletic clothing obscures natural silhouette contours and anatomical landmarks.'}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-                      <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 40, fontWeight: 700, color: '#FFFFFF', lineHeight: 1 }}>
-                        {scanResult.estimatedBodyFatPercent}%
-                      </span>
-                      <span style={{ color: '#38BDF8', fontSize: 13, fontWeight: 700 }}>
-                        ±{scanResult.confidenceIntervalPercent}%
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 11, color: '#10B981', fontWeight: 700, marginTop: 2 }}>
-                      {scanResult.classification}
-                    </div>
-                  </div>
 
-                  {/* Lean Body Mass */}
-                  <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: 12 }}>
-                    <div style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700 }}>Lean Body Mass</div>
-                    <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
-                      {units === 'imperial' ? `${scanResult.leanBodyMassLbs} lbs` : `${scanResult.leanBodyMassKg} kg`}
+                    <div style={{ background: 'rgba(0,0,0,0.35)', borderRadius: 6, padding: '10px 12px', fontSize: 11.5, color: '#CBD5E1', lineHeight: 1.45 }}>
+                      <strong>Forge Athletic Clinical Policy:</strong> In accordance with Coach Gordon&apos;s standards, Forge Athletic does not accept body composition scans taken in baggy clothing, hoodies, sweatpants, or casual wear. Multi-compartment body fat calculation requires unobstructed silhouette contour visibility.
                     </div>
-                    <div style={{ fontSize: 10, color: '#94A3B8' }}>
-                      SMM: {units === 'imperial' ? `${scanResult.skeletalMuscleMassLbs} lbs` : `${scanResult.skeletalMuscleMassKg} kg`}
-                    </div>
-                  </div>
 
-                  {/* FFMI */}
-                  <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: 12 }}>
-                    <div style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700 }}>FFMI (Muscularity)</div>
-                    <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: '#38BDF8', marginTop: 2 }}>
-                      {scanResult.ffmi}
-                    </div>
-                    <div style={{ fontSize: 10, color: '#93C5FD' }}>
-                      {scanResult.ffmiCategory}
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (activeTab === 'anterior') setAnteriorPhoto(null)
+                          else if (activeTab === 'lateral') setLateralPhoto(null)
+                          else if (activeTab === 'posterior') setPosteriorPhoto(null)
+                          setScanResult(null)
+                        }}
+                        className="tactile-btn"
+                        style={{
+                          padding: '8px 16px',
+                          background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                          border: 'none',
+                          color: '#FFF',
+                          borderRadius: 6,
+                          fontWeight: 700,
+                          fontSize: 12,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Retake Photo in Compliant Fitted Attire
+                      </button>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(212,160,23,0.15) 0%, rgba(13,27,42,0.95) 100%)',
+                      border: '1px solid rgba(212,160,23,0.4)',
+                      borderRadius: 10,
+                      padding: '16px 18px',
+                      display: 'grid',
+                      gridTemplateColumns: '1.2fr 1fr 1fr',
+                      gap: 12,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 10.5, color: 'var(--gold-lt)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
+                        DEXA-Calibrated Body Fat
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+                        <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 40, fontWeight: 700, color: '#FFFFFF', lineHeight: 1 }}>
+                          {scanResult.estimatedBodyFatPercent}%
+                        </span>
+                        <span style={{ color: '#38BDF8', fontSize: 13, fontWeight: 700 }}>
+                          ±{scanResult.confidenceIntervalPercent}%
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#10B981', fontWeight: 700, marginTop: 2 }}>
+                        {scanResult.classification}
+                      </div>
+                    </div>
+
+                    {/* Lean Body Mass */}
+                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: 12 }}>
+                      <div style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700 }}>Lean Body Mass</div>
+                      <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
+                        {units === 'imperial' ? `${scanResult.leanBodyMassLbs} lbs` : `${scanResult.leanBodyMassKg} kg`}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#94A3B8' }}>
+                        SMM: {units === 'imperial' ? `${scanResult.skeletalMuscleMassLbs} lbs` : `${scanResult.skeletalMuscleMassKg} kg`}
+                      </div>
+                    </div>
+
+                    {/* FFMI */}
+                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: 12 }}>
+                      <div style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700 }}>FFMI (Muscularity)</div>
+                      <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: '#38BDF8', marginTop: 2 }}>
+                        {scanResult.ffmi}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#93C5FD' }}>
+                        {scanResult.ffmiCategory}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Clothing Occlusion Notice */}
                 {scanResult.photoQualityAssessment.clothingOcclusionWarning && (
@@ -1310,34 +1405,59 @@ export default function AiBodyCompositionScannerModal({
                   </div>
                 </div>
 
-                {/* 6. Save & Apply Button */}
+                {/* 6. Save & Apply Button or Rejection Notice */}
                 <div style={{ display: 'flex', gap: 10, marginTop: 'auto' }}>
-                  <button
-                    type="button"
-                    onClick={handleApply}
-                    style={{
-                      flex: 1,
-                      background: saveSuccess ? '#10B981' : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: 8,
-                      padding: '10px 16px',
-                      fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                      boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
-                    }}
-                  >
-                    <GaaIcon name="check" size={16} />
-                    <span>{saveSuccess ? 'Saved to Profile & Progress Ledger!' : 'Apply & Save to Record'}</span>
-                  </button>
+                  {scanResult.isRejected ? (
+                    <button
+                      type="button"
+                      disabled
+                      style={{
+                        flex: 1,
+                        background: 'rgba(255,255,255,0.06)',
+                        color: '#94A3B8',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        borderRadius: 8,
+                        padding: '10px 16px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <GaaIcon name="shield-alert" size={16} tone="ruby" />
+                      <span>Cannot Save Rejected Scan — Compliant Attire Required</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleApply}
+                      style={{
+                        flex: 1,
+                        background: saveSuccess ? '#10B981' : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '10px 16px',
+                        fontFamily: 'var(--font-sans, Raleway), sans-serif',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
+                      }}
+                    >
+                      <GaaIcon name="check" size={16} />
+                      <span>{saveSuccess ? 'Saved to Profile & Progress Ledger!' : 'Apply & Save to Record'}</span>
+                    </button>
+                  )}
                 </div>
               </>
             ) : (

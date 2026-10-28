@@ -61,8 +61,8 @@ export async function POST(
       targetBodyFatPercent: body.targetBodyFatPercent ? Number(body.targetBodyFatPercent) : profileRecord?.target_bodyfat_percent,
     })
 
-    // Optionally save to database
-    if (body.saveRecord !== false) {
+    // Optionally save to database only if scan is compliant and not rejected
+    if (body.saveRecord !== false && !scanResult.isRejected) {
       await admin.from('body_composition_analyses').insert({
         user_id: clientId,
         photo_data_url: body.photoDataUrl ?? body.anteriorPhotoBase64 ?? null,

@@ -90,6 +90,7 @@ export async function POST(
     cardioEquipmentAccess: Array.isArray(profileRecord?.cardio_equipment_access) ? profileRecord.cardio_equipment_access : [],
     injuriesLimitations: injuries,
     contraindicationTags: detectedInjuries.selectedInjuryIds,
+    experienceLevel: profileRecord?.experience_level || undefined,
   }
 
   // Use passed scan results if provided, or parse from database records

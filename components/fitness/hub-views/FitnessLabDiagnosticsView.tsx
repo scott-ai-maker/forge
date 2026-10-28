@@ -476,7 +476,10 @@ export default function FitnessLabDiagnosticsView({
 
         {activeLabTool === 'assessment' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <NasmAssessmentSummary assessment={latestAssessment ?? null} />
+            <NasmAssessmentSummary
+              assessment={latestAssessment ?? null}
+              onLaunchVideoUpload={() => onSelectTool('video')}
+            />
             <details className="fitness-card-disclosure fitness-lab-panel">
               <summary>Warm-up &amp; corrective exercises</summary>
               <ClinicalKineticWarmupModule latestAssessment={latestAssessment} />

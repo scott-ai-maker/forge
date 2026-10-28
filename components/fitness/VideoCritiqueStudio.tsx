@@ -11,6 +11,7 @@ import {
 } from '@/lib/video-form-analysis'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
+import MovementScreenInstructionsModal from '@/components/fitness/MovementScreenInstructionsModal'
 
 export interface VideoCritiqueStudioProps {
   initialLift?: LiftType
@@ -22,6 +23,13 @@ export interface VideoCritiqueStudioProps {
 }
 
 const COMMON_FAULTS_BY_LIFT: Record<LiftType, { id: string; label: string }[]> = {
+  overhead_squat_assessment: [
+    { id: 'knee_valgus', label: 'Knees Caving Inward (Valgus)' },
+    { id: 'feet_flatten_turn_out', label: 'Feet Flatten / Turn Out' },
+    { id: 'excessive_forward_lean', label: 'Excessive Forward Lean' },
+    { id: 'low_back_arches', label: 'Low Back Arches (Anterior Pelvic Tilt)' },
+    { id: 'arms_fall_forward', label: 'Arms Fall Forward past Ears' },
+  ],
   barbell_back_squat: [
     { id: 'knee_valgus', label: 'Knees Caving In (Valgus)' },
     { id: 'excessive_forward_lean', label: 'Excessive Forward Lean' },
@@ -52,6 +60,7 @@ const COMMON_FAULTS_BY_LIFT: Record<LiftType, { id: string; label: string }[]> =
 
 export function inferLiftTypeFromFileName(fileName: string): LiftType | null {
   const name = fileName.toLowerCase()
+  if (name.includes('ohsa') || name.includes('overhead_squat') || name.includes('movement_screen') || name.includes('screen')) return 'overhead_squat_assessment'
   if (name.includes('rdl') || (name.includes('deadlift') && name.includes('romanian'))) return 'romanian_deadlift'
   if (name.includes('deadlift')) return 'barbell_deadlift'
   if (name.includes('bench') || name.includes('chest')) return 'barbell_bench_press'
@@ -64,7 +73,8 @@ export function inferLiftTypeFromFileName(fileName: string): LiftType | null {
 
 export default function VideoCritiqueStudio({ initialLift, initialCritique, meterUsage = false, onUsageConsumed, onUsageBlocked }: VideoCritiqueStudioProps) {
   const [selectedLift, setSelectedLift] = useState<LiftType>(initialLift ?? 'barbell_back_squat')
-  const [loadLbs, setLoadLbs] = useState<string>('275')
+  const [loadLbs, setLoadLbs] = useState<string>(initialLift === 'overhead_squat_assessment' ? '0' : '275')
+  const [showScreenInstructionsModal, setShowScreenInstructionsModal] = useState<boolean>(false)
   const [repsCount, setRepsCount] = useState<string>('5')
   const [selectedFaults, setSelectedFaults] = useState<string[]>([])
   const [clientNotes, setClientNotes] = useState<string>('')
@@ -1039,9 +1049,76 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
 
       {/* Lift Submission & Parameter Controls */}
       <div className="glass-card" style={{ padding: 24, display: 'grid', gap: 16 }}>
-        <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, color: 'var(--gold-lt)', letterSpacing: '0.03em' }}>
-          Lift Parameters & Biomechanical Screening
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, color: 'var(--gold-lt)', letterSpacing: '0.03em' }}>
+            Lift Parameters & Biomechanical Screening
+          </h3>
+          {selectedLift === 'overhead_squat_assessment' && (
+            <button
+              type="button"
+              onClick={() => setShowScreenInstructionsModal(true)}
+              className="tactile-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                background: 'rgba(212, 175, 55, 0.15)',
+                border: '1px solid rgba(212, 175, 55, 0.4)',
+                color: 'var(--gold-lt)',
+                fontSize: 12,
+                fontWeight: 700,
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+            >
+              <GaaIcon name="movement-screen" size={13} tone="gold" />
+              Movement Screen Protocol & Checklist
+            </button>
+          )}
+        </div>
+
+        {selectedLift === 'overhead_squat_assessment' && (
+          <div
+            style={{
+              padding: '12px 16px',
+              borderRadius: 6,
+              background: 'rgba(212, 175, 55, 0.08)',
+              border: '1px solid rgba(212, 175, 55, 0.28)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 18 }}>📋</span>
+              <div style={{ fontSize: 12, color: 'var(--white)', lineHeight: 1.45 }}>
+                <strong>NASM OHSA Protocol Active:</strong> 5 reps anterior (front), 5 reps lateral (side), 5 reps posterior (back). 4/2/1 tempo, bodyweight (0 lbs) with arms overhead.<br />
+                <span style={{ color: '#FCD34D', fontSize: 11.5 }}>
+                  <strong>Attire Acceptance Standard:</strong> Fitted athletic shorts (knees visible), fitted top, and barefoot/flat socks required. Submissions recorded in baggy sweatpants, hoodies, or thick-soled running shoes will be rejected.
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowScreenInstructionsModal(true)}
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--gold-lt)',
+                background: 'rgba(212, 175, 55, 0.12)',
+                border: '1px solid rgba(212, 175, 55, 0.35)',
+                padding: '6px 12px',
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+            >
+              Camera Setup &amp; Technique Guide →
+            </button>
+          </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
           <div>
@@ -1054,6 +1131,11 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
                 const nextLift = e.target.value as LiftType
                 setSelectedLift(nextLift)
                 setSelectedFaults([])
+                if (nextLift === 'overhead_squat_assessment' && (loadLbs === '275' || loadLbs === '')) {
+                  setLoadLbs('0')
+                } else if (selectedLift === 'overhead_squat_assessment' && loadLbs === '0') {
+                  setLoadLbs('275')
+                }
               }}
               style={{
                 width: '100%',
@@ -1466,6 +1548,11 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
           </div>
         </div>
       )}
+
+      <MovementScreenInstructionsModal
+        isOpen={showScreenInstructionsModal}
+        onClose={() => setShowScreenInstructionsModal(false)}
+      />
     </div>
   )
 }
