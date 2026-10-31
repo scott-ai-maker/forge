@@ -31,7 +31,7 @@ export default function TermsOfServicePage() {
           Terms of Service &amp; Proprietary Rights
         </h1>
         <p style={{ color: '#8A99AA', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
-          Effective &amp; Last Updated: October 8, 2026 · Forge Athletic Performance LLC
+          Effective &amp; Last Updated: October 31, 2026 · Forge Athletic Performance LLC (MA ID #002010312)
         </p>
       </div>
 
@@ -248,7 +248,9 @@ export default function TermsOfServicePage() {
         </p>
         <p style={{ margin: '0.4rem 0 0', fontSize: '0.95rem', color: 'var(--gold-lt)' }}>
           <strong>Forge Athletic Performance LLC</strong><br />
-          Legal &amp; Intellectual Property Department<br />
+          Attn: Legal &amp; Intellectual Property Department<br />
+          82 Wendell Ave., Ste 100<br />
+          Pittsfield, MA 01201<br />
           Email: <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a>
         </p>
       </section>

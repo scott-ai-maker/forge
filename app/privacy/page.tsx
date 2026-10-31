@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
           Privacy Policy
         </h1>
         <p style={{ color: '#8A99AA', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
-          Effective &amp; Last Updated: October 8, 2026 · Forge Athletic Performance LLC
+          Effective &amp; Last Updated: October 31, 2026 · Forge Athletic Performance LLC (MA ID #002010312)
         </p>
       </div>
 
@@ -117,7 +117,9 @@ export default function PrivacyPolicyPage() {
         </p>
         <p style={{ margin: '0.4rem 0 0', fontSize: '0.95rem', color: 'var(--gold-lt)' }}>
           <strong>Forge Athletic Performance LLC</strong><br />
-          Data Protection &amp; Privacy Office<br />
+          Attn: Data Protection &amp; Privacy Office<br />
+          82 Wendell Ave., Ste 100<br />
+          Pittsfield, MA 01201<br />
           Email: <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a>
         </p>
       </section>

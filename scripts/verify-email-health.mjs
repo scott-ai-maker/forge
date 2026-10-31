@@ -277,7 +277,7 @@ const testCompliance = appendComplianceFooter(
 )
 if (
   testCompliance.html.includes('Unsubscribe') &&
-  testCompliance.text.includes('75 Arlington St') &&
+  testCompliance.text.includes('82 Wendell Ave') &&
   testCompliance.unsubUrl.includes(token)
 ) {
   logPass('Compliant CAN-SPAM physical address & one-click unsubscribe links injected')

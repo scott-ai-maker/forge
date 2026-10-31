@@ -240,8 +240,8 @@ export function appendComplianceFooter(html: string, text: string, email: string
   const unsubUrl = getUnsubscribeUrl(email)
   const htmlFooter = `
 <div style="margin-top: 36px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 11px; color: #8899A6; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <p style="margin: 0 0 6px; font-weight: 600; color: #F59E0B;">Forge Athletic · Precision Science For Real Lives</p>
-  <p style="margin: 0 0 6px;">75 Arlington St, Ste 500, Boston, MA 02116 · Membership and training updates</p>
+  <p style="margin: 0 0 6px; font-weight: 600; color: #F59E0B;">Forge Athletic Performance LLC · Precision Science For Real Lives</p>
+  <p style="margin: 0 0 6px;">82 Wendell Ave., Ste 100, Pittsfield, MA 01201 · Membership and training updates</p>
   <p style="margin: 0;">
     You received this advisory transmission because you requested protocol access.
     <a href="${unsubUrl}" style="color: #F59E0B; text-decoration: underline; margin-left: 6px;">Unsubscribe</a>
@@ -251,8 +251,8 @@ export function appendComplianceFooter(html: string, text: string, email: string
   const textFooter = `
 
 ---
-Forge Athletic · Precision Science For Real Lives
-75 Arlington St, Ste 500, Boston, MA 02116
+Forge Athletic Performance LLC · Precision Science For Real Lives
+82 Wendell Ave., Ste 100, Pittsfield, MA 01201
 Unsubscribe: ${unsubUrl}`
 
   return {
@@ -479,7 +479,7 @@ export async function triggerLeadEmailAutomation(
           '',
           'In health and athletic excellence,',
           'Coach Gordon, Head Coach & Founder',
-          'Forge Athletic · 75 Arlington St, Boston, MA',
+          'Forge Athletic Performance LLC · 82 Wendell Ave., Ste 100, Pittsfield, MA 01201',
         ].join('\n'),
         html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #080E18; color: #E2E8F0; padding: 32px 24px; border: 1px solid rgba(197, 160, 89, 0.35); border-radius: 8px;">
   <div style="text-align: center; padding-bottom: 24px; border-bottom: 1px solid rgba(197, 160, 89, 0.2);">
