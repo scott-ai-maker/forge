@@ -10,10 +10,10 @@ import { isCompanionApp, useHelperAppMode } from '@/lib/native-companion'
 const BRAND_LOGO = '/images/brand/forge-crest-mark.png'
 
 const SOCIAL_LINKS = [
-  { name: 'Instagram', href: 'https://instagram.com/forgeathletic', Icon: Camera },
-  { name: 'YouTube', href: 'https://youtube.com/@forgeathletic', Icon: CirclePlay },
-  { name: 'Facebook', href: 'https://facebook.com/forgeathletic', Icon: Users },
-  { name: 'LinkedIn', href: 'https://linkedin.com/company/forgeathletic', Icon: BriefcaseBusiness },
+  { name: 'Instagram', href: 'https://instagram.com/forgeathleticapp', Icon: Camera },
+  { name: 'YouTube', href: 'https://youtube.com/@forgeathleticapp', Icon: CirclePlay },
+  { name: 'Facebook', href: 'https://facebook.com/forgeathleticapp', Icon: Users },
+  { name: 'LinkedIn', href: 'https://linkedin.com/company/forgeathleticapp', Icon: BriefcaseBusiness },
 ]
 
 export default function SiteFooter() {
