@@ -22,6 +22,14 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: [
+          'GPTBot',
+          'ChatGPT-User',
+          'Google-Extended',
+          'ClaudeBot',
+          'anthropic-ai',
+          'PerplexityBot',
+          'ImagesiftBot',
+          'cohere-ai',
           'CCBot',
           'Bytespider',
           'Diffbot',

@@ -41,8 +41,12 @@ export default function ExerciseVideoModal({
     primaryEquipment: exercise.primaryEquipment,
   })
 
-  const [activeMediaTab, setActiveMediaTab] = useState<'photo' | 'video'>(
-    card.imageUrl || card.fallbackImageUrl ? 'photo' : 'video'
+  const [activeMediaTab, setActiveMediaTab] = useState<'studio' | 'photo' | 'video'>(
+    card.studioVideoUrl
+      ? 'studio'
+      : card.imageUrl || card.fallbackImageUrl
+      ? 'photo'
+      : 'video'
   )
 
   useEffect(() => {
@@ -160,8 +164,44 @@ export default function ExerciseVideoModal({
             padding: '16px 20px',
           }}
         >
-          {card.embedUrl && (card.imageUrl || card.fallbackImageUrl) && (
-            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          {(card.studioVideoUrl || (card.embedUrl && (card.imageUrl || card.fallbackImageUrl))) && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+              {card.studioVideoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setActiveMediaTab('studio')}
+                  className="tactile-btn"
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    borderRadius: 4,
+                    border:
+                      activeMediaTab === 'studio'
+                        ? '1px solid rgba(212,160,23,0.75)'
+                        : '1px solid rgba(255,255,255,0.12)',
+                    background:
+                      activeMediaTab === 'studio'
+                        ? 'rgba(212,160,23,0.22)'
+                        : 'rgba(255,255,255,0.04)',
+                    color:
+                      activeMediaTab === 'studio'
+                        ? 'var(--gold-lt)'
+                        : 'var(--gray)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                >
+                  <GaaIcon
+                    name="play"
+                    size={12}
+                    tone={activeMediaTab === 'studio' ? 'gold' : 'slate'}
+                  />
+                  <span>Forge Studio Loop</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setActiveMediaTab('photo')}
@@ -196,42 +236,101 @@ export default function ExerciseVideoModal({
                 />
                 <span>Verified Form Photo</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setActiveMediaTab('video')}
-                className="tactile-btn"
-                style={{
-                  padding: '5px 12px',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  borderRadius: 4,
-                  border:
-                    activeMediaTab === 'video'
-                      ? '1px solid rgba(56,189,248,0.6)'
-                      : '1px solid rgba(255,255,255,0.12)',
-                  background:
-                    activeMediaTab === 'video'
-                      ? 'rgba(56,189,248,0.18)'
-                      : 'rgba(255,255,255,0.04)',
-                  color:
-                    activeMediaTab === 'video' ? '#38BDF8' : 'var(--gray)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                }}
-              >
-                <GaaIcon
-                  name="play"
-                  size={12}
-                  tone={activeMediaTab === 'video' ? 'cyan' : 'slate'}
-                />
-                <span>Video Demonstration</span>
-              </button>
+              {card.embedUrl && (
+                <button
+                  type="button"
+                  onClick={() => setActiveMediaTab('video')}
+                  className="tactile-btn"
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    borderRadius: 4,
+                    border:
+                      activeMediaTab === 'video'
+                        ? '1px solid rgba(56,189,248,0.6)'
+                        : '1px solid rgba(255,255,255,0.12)',
+                    background:
+                      activeMediaTab === 'video'
+                        ? 'rgba(56,189,248,0.18)'
+                        : 'rgba(255,255,255,0.04)',
+                    color:
+                      activeMediaTab === 'video' ? '#38BDF8' : 'var(--gray)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                >
+                  <GaaIcon
+                    name="play"
+                    size={12}
+                    tone={activeMediaTab === 'video' ? 'cyan' : 'slate'}
+                  />
+                  <span>Video Demonstration</span>
+                </button>
+              )}
             </div>
           )}
 
-          {activeMediaTab === 'video' && card.embedUrl ? (
+          {activeMediaTab === 'studio' && card.studioVideoUrl ? (
+            <div
+              onContextMenu={e => e.preventDefault()}
+              style={{
+                width: '100%',
+                aspectRatio: '16 / 9',
+                maxHeight: 'clamp(220px, 38vh, 340px)',
+                height: 'auto',
+                borderRadius: 8,
+                overflow: 'hidden',
+                border: '1px solid rgba(212,160,23,0.45)',
+                background: '#050810',
+                marginBottom: 14,
+                position: 'relative',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+              }}
+            >
+              <video
+                src={card.studioVideoUrl}
+                poster={card.candidateStudioImageUrl || card.imageUrl || undefined}
+                autoPlay
+                loop
+                muted
+                playsInline
+                controls
+                controlsList="nodownload noplaybackrate"
+                disablePictureInPicture
+                onContextMenu={e => e.preventDefault()}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  left: 10,
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  background: 'rgba(5, 8, 16, 0.72)',
+                  border: '1px solid rgba(212, 160, 23, 0.35)',
+                  color: 'rgba(245, 240, 232, 0.78)',
+                  fontSize: 9.5,
+                  fontWeight: 800,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }}
+              >
+                FORGE ATHLETIC™
+              </div>
+            </div>
+          ) : activeMediaTab === 'video' && card.embedUrl ? (
             <div
               style={{
                 position: 'relative',
@@ -262,6 +361,7 @@ export default function ExerciseVideoModal({
             </div>
           ) : card.imageUrl || card.fallbackImageUrl ? (
             <div
+              onContextMenu={e => e.preventDefault()}
               style={{
                 width: '100%',
                 aspectRatio: '16 / 9',
@@ -287,6 +387,8 @@ export default function ExerciseVideoModal({
                 alt={card.name}
                 loading="lazy"
                 decoding="async"
+                draggable={false}
+                onContextMenu={e => e.preventDefault()}
                 onError={e => {
                   ;(e.currentTarget as HTMLImageElement).src =
                     '/images/exercises/image-not-available.jpg'
@@ -297,8 +399,30 @@ export default function ExerciseVideoModal({
                   objectFit: 'cover',
                   objectPosition: 'center',
                   display: 'block',
+                  userSelect: 'none',
                 }}
               />
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  left: 10,
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  background: 'rgba(5, 8, 16, 0.72)',
+                  border: '1px solid rgba(212, 160, 23, 0.35)',
+                  color: 'rgba(245, 240, 232, 0.78)',
+                  fontSize: 9.5,
+                  fontWeight: 800,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }}
+              >
+                FORGE ATHLETIC™
+              </div>
               {card.embedUrl && (
                 <button
                   type="button"

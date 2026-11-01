@@ -65,14 +65,14 @@ export default function TermsOfServicePage() {
         </div>
 
         <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.15rem', color: '#FFFFFF', margin: '1.25rem 0 0.5rem', letterSpacing: '0.03em' }}>
-          2.1 Trademarks &amp; Service Marks
+          2.1 Trademarks, Trade Dress &amp; Visual Brand Identity
         </h3>
         <p style={{ fontSize: '0.95rem' }}>
-          &quot;Forge Athletic&quot;, &quot;Forge&quot;, &quot;GATE&quot;, &quot;Executive Sunday Dossier&quot;, the Forge Architectural Swiss Monogram, and all associated logos, product names, and brand badges are proprietary trademarks and service marks of Forge Athletic Performance LLC. All Rights Reserved. NASM and OPT™ are registered marks of the National Academy of Sports Medicine used under license and standard educational citation.
+          &quot;Forge Athletic™&quot;, &quot;Forge™&quot;, &quot;Forge Athletic Performance™&quot;, &quot;GATE™&quot;, &quot;Executive Sunday Dossier™&quot;, the <strong>Forge Crest &amp; Anvil Mark™</strong>, the Forge Architectural Monogram, our distinctive midnight-obsidian and burnished-gold visual trade dress, custom clinical movement card layouts, and all associated logos, product names, and brand badges are proprietary trademarks, service marks, and trade dress of <strong>Forge Athletic Performance LLC</strong> (Commercial First Use: October 31, 2026). All Rights Reserved. NASM and OPT™ are registered marks of the National Academy of Sports Medicine used under standard educational citation.
         </p>
 
         <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.15rem', color: '#FFFFFF', margin: '1.25rem 0 0.5rem', letterSpacing: '0.03em' }}>
-          2.2 Strict Prohibition Against Reverse Engineering &amp; AI Scraping
+          2.2 Strict Prohibition Against Reverse Engineering, Media Ripping &amp; AI Scraping
         </h3>
         <p style={{ fontSize: '0.95rem' }}>
           You explicitly covenant and agree that you will not, under any circumstances:
@@ -82,10 +82,13 @@ export default function TermsOfServicePage() {
             Decompile, disassemble, reverse engineer, decrypt, extract, or attempt to derive the source code, underlying logic, or trade secret algorithms of the platform;
           </li>
           <li style={{ marginBottom: '0.4rem' }}>
-            Scrape, crawl, harvest, data-mine, or ingest any portion of the platform, training programs, exercise databases, prompt chains, or client telemetry using automated bots, crawlers, or AI systems;
+            Download, screen-record, hotlink, rip, redistribute, or remove watermarks/copyright metadata from any Forge Athletic exercise demonstration video, studio loop, clinical movement card, or original athletic photography;
           </li>
           <li style={{ marginBottom: '0.4rem' }}>
-            Feed, input, or train any third-party artificial intelligence, machine learning model, large language model (LLM), or neural network on Forge Athletic proprietary workout structures, periodization logic, or clinical protocols;
+            Scrape, crawl, harvest, data-mine, or ingest any portion of the platform, training programs, exercise databases, visual assets, prompt chains, or client telemetry using automated bots, crawlers, or AI systems;
+          </li>
+          <li style={{ marginBottom: '0.4rem' }}>
+            Feed, input, or train any third-party artificial intelligence, machine learning model, large language model (LLM), computer vision model, or neural network on Forge Athletic proprietary images, videos, workout structures, periodization logic, or clinical protocols;
           </li>
           <li style={{ marginBottom: '0.4rem' }}>
             Create derivative works, clone software, white-label services, or commercial coaching applications incorporating or copying Forge Athletic’s unique four-pillar advisory structure, live telestrator HUD, or chrono-dosing engines.
@@ -100,10 +103,10 @@ export default function TermsOfServicePage() {
         </p>
 
         <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.15rem', color: '#FFFFFF', margin: '1.25rem 0 0.5rem', letterSpacing: '0.03em' }}>
-          2.4 Legal Remedies &amp; Injunctive Relief
+          2.4 Legal Remedies, Statutory Damages &amp; Injunctive Relief
         </h3>
         <p style={{ fontSize: '0.95rem' }}>
-          You acknowledge that any breach of these Intellectual Property provisions will cause irreparable and immediate harm to Forge Athletic Performance LLC for which monetary damages alone would be inadequate. Accordingly, in addition to all other available legal remedies, Forge Athletic shall be entitled to seek immediate preliminary and permanent injunctive relief against any actual or threatened infringement without the necessity of posting a bond.
+          You acknowledge that any breach of these Intellectual Property provisions will cause irreparable and immediate harm to Forge Athletic Performance LLC for which monetary damages alone would be inadequate. Accordingly, in addition to statutory copyright damages (17 U.S.C. § 504), Lanham Act treble damages (15 U.S.C. § 1117), and attorney&apos;s fees, Forge Athletic shall be entitled to seek immediate preliminary and permanent injunctive relief against any actual or threatened infringement without the necessity of posting a bond.
         </p>
       </section>
 
