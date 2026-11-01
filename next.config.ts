@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['localhost', '127.0.0.1'],
   compress: true,
   poweredByHeader: false,
+  productionBrowserSourceMaps: false,
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -98,6 +99,31 @@ const nextConfig: NextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=86400, stale-while-revalidate=604800',
+          },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'same-origin',
+          },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noai, noimageai',
+          },
+        ],
+      },
+      {
+        source: '/videos/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, stale-while-revalidate=604800',
+          },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'same-origin',
+          },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noai, noimageai',
           },
         ],
       },
