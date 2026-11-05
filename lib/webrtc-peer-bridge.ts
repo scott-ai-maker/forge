@@ -140,6 +140,7 @@ export class WebRtcPeerBridge {
   // Perfect Negotiation State
   private isPolite: boolean
   private makingOffer = false
+  private inFlightOfferPromise: Promise<RTCSessionDescriptionInit | null> | null = null
   private ignoreOffer = false
   private isSettingRemoteAnswerPending = false
   private negotiationPending = false
@@ -185,28 +186,12 @@ export class WebRtcPeerBridge {
 
       // Perfect Negotiation: onnegotiationneeded triggers offer generation automatically
       this.pc.onnegotiationneeded = async () => {
-        if (this.isDestroyed || !this.pc) return
-        try {
-          this.makingOffer = true
-          const offer = await this.pc.createOffer({
-            offerToReceiveAudio: true,
-            offerToReceiveVideo: true,
-          })
-          if (this.pc.signalingState !== 'stable') {
-            this.negotiationPending = true
-            return
-          }
-          await this.pc.setLocalDescription(offer)
-          this.sendSignal({
-            type: 'offer',
-            senderId: this.options.currentUserId,
-            sdp: this.pc.localDescription || offer,
-          })
-        } catch (err) {
-          this.options.onError?.(err instanceof Error ? err : new Error(String(err)))
-        } finally {
-          this.makingOffer = false
+        if (this.isDestroyed || !this.pc || this.isPolite) return
+        if (this.makingOffer || this.pc.signalingState !== 'stable') {
+          this.negotiationPending = true
+          return
         }
+        await this.createOffer()
       }
 
       // Track listeners with live unmute event handling
@@ -447,27 +432,47 @@ export class WebRtcPeerBridge {
 
   public async createOffer(): Promise<RTCSessionDescriptionInit | null> {
     if (!this.pc || this.isDestroyed) return null
-    try {
-      this.makingOffer = true
-      const offer = await this.pc.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true,
-      })
-      if (this.pc.signalingState !== 'stable') return null
-      await this.pc.setLocalDescription(offer)
-
-      this.sendSignal({
-        type: 'offer',
-        senderId: this.options.currentUserId,
-        sdp: this.pc.localDescription || offer,
-      })
-      return offer
-    } catch (err) {
-      this.options.onError?.(err instanceof Error ? err : new Error(String(err)))
-      return null
-    } finally {
-      this.makingOffer = false
+    if (this.inFlightOfferPromise) {
+      return this.inFlightOfferPromise
     }
+    if (this.makingOffer || this.pc.signalingState !== 'stable') {
+      this.negotiationPending = true
+      return null
+    }
+    this.makingOffer = true
+    this.inFlightOfferPromise = (async () => {
+      try {
+        if (!this.pc || this.isDestroyed) return null
+        const hasTransceivers = typeof this.pc.addTransceiver === 'function'
+        const offer = await this.pc.createOffer(
+          hasTransceivers
+            ? undefined
+            : {
+                offerToReceiveAudio: true,
+                offerToReceiveVideo: true,
+              }
+        )
+        if (!this.pc || this.pc.signalingState !== 'stable') {
+          this.negotiationPending = true
+          return null
+        }
+        await this.pc.setLocalDescription(offer)
+
+        this.sendSignal({
+          type: 'offer',
+          senderId: this.options.currentUserId,
+          sdp: this.pc.localDescription || offer,
+        })
+        return offer
+      } catch (err) {
+        this.options.onError?.(err instanceof Error ? err : new Error(String(err)))
+        return null
+      } finally {
+        this.makingOffer = false
+        this.inFlightOfferPromise = null
+      }
+    })()
+    return this.inFlightOfferPromise
   }
 
   private async drainPendingCandidates(): Promise<void> {

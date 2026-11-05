@@ -20,6 +20,15 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req)
   const limit = getPositiveIntEnv('RATE_LIMIT_CORPORATE_MAX', 5)
@@ -74,12 +83,12 @@ export async function POST(req: NextRequest) {
           subject: `[Forge Athletic] Corporate Inquiry: ${payload.companyName?.trim()}`,
           html: `<h3>New Corporate Wellness Inquiry</h3>
 <ul>
-  <li><strong>Company:</strong> ${payload.companyName?.trim()}</li>
-  <li><strong>Contact Name:</strong> ${payload.contactName?.trim()}</li>
-  <li><strong>Contact Email:</strong> ${email}</li>
-  <li><strong>Team Size:</strong> ${payload.teamSize?.trim() || 'Up to 10 executives'}</li>
-  <li><strong>Goals:</strong> ${payload.customGoals?.trim() || 'General executive performance'}</li>
-  <li><strong>Timeline:</strong> ${payload.budgetTimeline?.trim() || 'N/A'}</li>
+  <li><strong>Company:</strong> ${escapeHtml(payload.companyName?.trim() || '')}</li>
+  <li><strong>Contact Name:</strong> ${escapeHtml(payload.contactName?.trim() || '')}</li>
+  <li><strong>Contact Email:</strong> ${escapeHtml(email)}</li>
+  <li><strong>Team Size:</strong> ${escapeHtml(payload.teamSize?.trim() || 'Up to 10 executives')}</li>
+  <li><strong>Goals:</strong> ${escapeHtml(payload.customGoals?.trim() || 'General executive performance')}</li>
+  <li><strong>Timeline:</strong> ${escapeHtml(payload.budgetTimeline?.trim() || 'N/A')}</li>
 </ul>`,
           text: `New Corporate Wellness Inquiry\n\nCompany: ${payload.companyName?.trim()}\nContact: ${payload.contactName?.trim()}\nEmail: ${email}\nTeam Size: ${payload.teamSize?.trim() || 'Up to 10 executives'}\nGoals: ${payload.customGoals?.trim() || 'General executive performance'}\nTimeline: ${payload.budgetTimeline?.trim() || 'N/A'}`,
         })

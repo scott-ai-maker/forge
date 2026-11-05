@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       const candidateId = String(body.user_id || body.client_id || body.userId || body.clientId || '')
       const authHeader = req.headers.get('authorization') || req.headers.get('Authorization')
 
-      let secretValid = true
+      let secretValid = process.env.NODE_ENV !== 'production'
       if (process.env.APPLE_HEALTH_WEBHOOK_SECRET) {
         const { verifyAppleHealthWebhookToken } = await import('@/lib/wearable-webhook-adapters')
         secretValid = verifyAppleHealthWebhookToken(authHeader, process.env.APPLE_HEALTH_WEBHOOK_SECRET)

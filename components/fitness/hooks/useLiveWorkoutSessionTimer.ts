@@ -99,7 +99,7 @@ export function restoreSessionFromStorage(
         day: dayNumber,
         elapsedSeconds: baseElapsed,
         isWorkoutTimerActive: false,
-        stage: (parsed.stage as any) || 'strength',
+        stage: (parsed.stage as RestoredSessionState['stage']) || 'strength',
         shouldClearStorage: false,
       }
     }
@@ -121,7 +121,7 @@ export function restoreSessionFromStorage(
         day: dayNumber,
         elapsedSeconds: totalSec,
         isWorkoutTimerActive: true,
-        stage: (parsed.stage as any) || 'strength',
+        stage: (parsed.stage as RestoredSessionState['stage']) || 'strength',
         shouldClearStorage: false,
       }
     }

@@ -2,11 +2,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   enqueueOfflineSet,
   getQueuedOfflineSets,
-  dequeueOfflineSet,
   getPendingQueueCount,
   flushOfflineQueue,
   clearOfflineQueue,
-  registerAutoSyncOnReconnect,
 } from './offline-sync-queue'
 
 describe('Mobile & PWA Gym-Floor Offline Sync Stress Test ("Basement Gym Resilience")', () => {

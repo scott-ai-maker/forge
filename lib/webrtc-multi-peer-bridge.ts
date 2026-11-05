@@ -169,30 +169,12 @@ export class WebRtcMultiPeerBridge {
 
       // Perfect Negotiation
       pc.onnegotiationneeded = async () => {
-        if (this.isDestroyed || !entry.pc) return
-        try {
-          entry.makingOffer = true
-          const offer = await entry.pc.createOffer({
-            offerToReceiveAudio: true,
-            offerToReceiveVideo: true,
-          })
-          if (entry.pc.signalingState !== 'stable') {
-            entry.negotiationPending = true
-            return
-          }
-          await entry.pc.setLocalDescription(offer)
-          this.sendSignal({
-            type: 'offer',
-            senderId: this.options.currentUserId,
-            senderName: this.options.currentUserName,
-            targetUserId: peerId,
-            sdp: entry.pc.localDescription || offer,
-          })
-        } catch (err) {
-          this.options.onError?.(err instanceof Error ? err : new Error(String(err)))
-        } finally {
-          entry.makingOffer = false
+        if (this.isDestroyed || !entry.pc || entry.isPolite) return
+        if (entry.makingOffer || entry.pc.signalingState !== 'stable') {
+          entry.negotiationPending = true
+          return
         }
+        await this.createOfferForPeer(peerId)
       }
 
       // Track listeners
@@ -321,14 +303,26 @@ export class WebRtcMultiPeerBridge {
   public async createOfferForPeer(peerId: string): Promise<RTCSessionDescriptionInit | null> {
     const entry = this.peers.get(peerId)
     if (!entry || !entry.pc || this.isDestroyed) return null
+    if (entry.makingOffer || entry.pc.signalingState !== 'stable') {
+      entry.negotiationPending = true
+      return null
+    }
 
     try {
       entry.makingOffer = true
-      const offer = await entry.pc.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true,
-      })
-      if (entry.pc.signalingState !== 'stable') return null
+      const hasTransceivers = typeof entry.pc.addTransceiver === 'function'
+      const offer = await entry.pc.createOffer(
+        hasTransceivers
+          ? undefined
+          : {
+              offerToReceiveAudio: true,
+              offerToReceiveVideo: true,
+            }
+      )
+      if (entry.pc.signalingState !== 'stable') {
+        entry.negotiationPending = true
+        return null
+      }
       await entry.pc.setLocalDescription(offer)
 
       this.sendSignal({

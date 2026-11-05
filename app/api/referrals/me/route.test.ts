@@ -43,7 +43,7 @@ describe('GET /api/referrals/me', () => {
     vi.mocked(getRequestAuthz).mockResolvedValue({
       user: { id: 'user-123' },
       client: { role: 'client' },
-    } as any)
+    } as unknown as Awaited<ReturnType<typeof getRequestAuthz>>)
 
     vi.mocked(getClientReferralDashboard).mockResolvedValue({
       code: 'SCOTT-7B3K',
@@ -56,8 +56,8 @@ describe('GET /api/referrals/me', () => {
       refereeDiscountCents: 2000,
       refereeTrialDays: 30,
       milestones: {
-        currentTier: { level: 1, name: 'Recruit' } as any,
-        nextTier: { level: 2, name: 'Lead Athlete' } as any,
+        currentTier: { level: 1, name: 'Recruit' } as unknown as Awaited<ReturnType<typeof getClientReferralDashboard>>['milestones']['currentTier'],
+        nextTier: { level: 2, name: 'Lead Athlete' } as unknown as Awaited<ReturnType<typeof getClientReferralDashboard>>['milestones']['nextTier'],
         progressToNext: 0,
         allTiers: [],
       },

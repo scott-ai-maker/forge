@@ -15,10 +15,9 @@ test.describe('1:1 Coaching & Movement HUD UI & Regression Suite', () => {
     test.describe.configure({ mode: 'serial' })
 
     test.beforeEach(async ({ page }) => {
-      // Establish authenticated session via demo auth endpoint if allowed, or mock session
+      // Establish authenticated session via demo auth endpoint redirecting straight to /dashboard/live
       try {
-        const response = await page.goto('/api/auth/demo')
-        // Ensure session was established
+        const response = await page.goto('/api/auth/demo?redirect=/dashboard/live')
         if (response && response.status() < 400) {
           await page.waitForLoadState('networkidle')
         }
@@ -145,21 +144,30 @@ test.describe('1:1 Coaching & Movement HUD UI & Regression Suite', () => {
       await splitBtn.click()
     })
 
-    test('interactively cycles Virtual Background presets with Forge Athletic Sanctuary flagship preset', async ({ page }) => {
+    test('interactively selects Virtual Background presets from Studio Picker modal', async ({ page }) => {
       await page.goto('/dashboard/live')
       if (page.url().includes('/auth/login')) return
 
       const virtualBgBtn = page.locator('[data-testid="virtual-background-btn"]')
       await expect(virtualBgBtn).toBeVisible()
-      await expect(virtualBgBtn).toContainText(/Sanctuary/i)
+      await expect(virtualBgBtn).toContainText(/Virtual BG: OFF/i)
 
-      // Cycle to Olympic Performance Facility
+      // Open Virtual Background Picker Modal
       await virtualBgBtn.click()
-      await expect(page.locator('[data-testid="hud-toast"]')).toContainText(/Olympic Performance Facility/i)
+      const dialog = page.getByRole('dialog', { name: /Studio Virtual Backgrounds Picker/i })
+      await expect(dialog).toBeVisible()
 
-      // Cycle to Biomechanics Diagnostic Lab
+      // Select Maximal Strength & Olympic Platform
+      await dialog.getByText(/Maximal Strength & Olympic Platform/i).click()
+      await expect(page.locator('[data-testid="hud-toast"]')).toContainText(/Maximal Strength & Olympic Platform/i)
+      await expect(virtualBgBtn).toContainText(/Maximal Strength & Olympic Platform/i)
+
+      // Re-open picker and switch to Biomechanical Movement Screen & Posture Triage
       await virtualBgBtn.click()
-      await expect(page.locator('[data-testid="hud-toast"]')).toContainText(/Biomechanics Diagnostic Lab/i)
+      await expect(dialog).toBeVisible()
+      await dialog.getByText(/Biomechanical Movement Screen & Posture Triage/i).click()
+      await expect(page.locator('[data-testid="hud-toast"]')).toContainText(/Biomechanical Movement Screen & Posture Triage/i)
+      await expect(virtualBgBtn).toContainText(/Biomechanical Movement Screen & Posture Triage/i)
     })
 
     test('verifies quick verbal coaching cues bar renders all 1-tap cues', async ({ page }) => {
@@ -189,7 +197,9 @@ test.describe('1:1 Coaching & Movement HUD UI & Regression Suite', () => {
     })
 
     test('captures diagnostic frames into 4-slot assessment vault with auto-advance and launch buttons', async ({ page }) => {
-      await page.goto('/dashboard/live')
+      if (!page.url().endsWith('/dashboard/live')) {
+        await page.goto('/dashboard/live', { waitUntil: 'networkidle' })
+      }
       if (page.url().includes('/auth/login')) return
 
       const slotSelect = page.locator('[data-testid="capture-slot-select"]')

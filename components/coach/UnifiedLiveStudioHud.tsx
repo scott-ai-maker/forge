@@ -27,7 +27,6 @@ import { createClient } from '@/lib/supabase-browser'
 import { WebRtcPeerBridge, WebRtcMultiPeerBridge, type LobbyParticipant } from '@/lib/webrtc-peer-bridge'
 import {
   TEAM_QUICK_CUES,
-  type TeamQuickCue,
   type TeamCircuitTimerData,
   type TeamMember,
 } from '@/lib/teams'
@@ -291,7 +290,7 @@ export default function UnifiedLiveStudioHud({
     timestamp: Date.now(),
   })
   const multiBridgeRef = useRef<WebRtcMultiPeerBridge | null>(null)
-  const [isRingingTeamMembers, setIsRingingTeamMembers] = useState(false)
+  const [_isRingingTeamMembers, _setIsRingingTeamMembers] = useState(false)
 
   // Mobile Responsive Detection & View Mode ('both' = video on top + logger below, 'video' = full-screen video, 'workout' = full logger)
   const [isMobile, setIsMobile] = useState<boolean>(false)
@@ -689,7 +688,7 @@ export default function UnifiedLiveStudioHud({
         isCoach: true,
         channel,
         localStream: mediaStreamRef.current,
-        onPeerStream: (peerId, stream, participant) => {
+        onPeerStream: (peerId, stream, _participant) => {
           setTeamRemoteStreams(prev => ({ ...prev, [peerId]: stream }))
           setActiveRemoteStream(prev => prev || stream)
         },

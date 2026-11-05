@@ -25,7 +25,7 @@ export default function AppleWatchSimulatorModal({
   isOpen,
   onClose,
   currentExerciseName = 'Barbell Bench Press',
-  currentSetNumber = 1,
+  currentSetNumber: _currentSetNumber = 1,
   currentTotalSets = 3,
   prescribedWeight = 185,
   prescribedReps = 10,
@@ -120,6 +120,7 @@ export default function AppleWatchSimulatorModal({
       })
     }, 1000)
     return () => clearInterval(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRestRunning, currentStationIndex, exercises, completedSetsMap])
 
   // Tempo tick

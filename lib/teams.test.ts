@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   generateCoachDefaultTeams,
   TEAM_QUICK_CUES,
-  type Team,
   type TeamCircuitTimerData,
 } from './teams'
 

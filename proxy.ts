@@ -41,6 +41,13 @@ export async function proxy(request: NextRequest) {
   const isExplicitHelperRequest = Boolean(isCapacitorPlatform || isHelperQuery)
   const isHelperRequest = Boolean(isExplicitHelperRequest || isHelperCookie)
 
+  if (
+    process.env.NODE_ENV === 'production' &&
+    pathname.startsWith('/test-harness')
+  ) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   if (!supabaseUrl || !supabaseAnonKey || !isValidUrl) {
     // Supabase is not configured — protect routes defensively by redirecting
     // unauthenticated requests to login without attempting an auth check.

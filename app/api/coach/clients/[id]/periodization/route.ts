@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestAuthz, AuthzError } from '@/lib/authz'
+import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import {
   generate12WeekMacrocycle,
@@ -15,6 +15,7 @@ export async function GET(
   let userId = ''
   try {
     const authz = await getRequestAuthz(req)
+    requireRole(authz.client.role, ['coach'])
     userId = authz.user.id
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
@@ -129,6 +130,7 @@ export async function POST(
   let userId = ''
   try {
     const authz = await getRequestAuthz(req)
+    requireRole(authz.client.role, ['coach'])
     userId = authz.user.id
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500

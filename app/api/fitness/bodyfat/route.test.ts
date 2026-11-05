@@ -83,5 +83,37 @@ describe('POST /api/fitness/bodyfat', () => {
     expect(json.scanResult.cunninghamBmr).toBeGreaterThan(1500)
     expect(json.scanResult.recompositionProjection).toBeDefined()
   })
+
+  it('rejects unauthenticated requests in production even with a spoofed /test-harness/ referer header', async () => {
+    const { createClient } = await import('@/lib/supabase-server')
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+          error: null,
+        }),
+      },
+    } as unknown as Awaited<ReturnType<typeof createClient>>)
+
+    vi.stubEnv('NODE_ENV', 'production')
+    try {
+      const req = new NextRequest('http://localhost/api/fitness/bodyfat', {
+        method: 'POST',
+        headers: {
+          referer: 'https://attacker.example/test-harness/fake',
+        },
+        body: JSON.stringify({
+          sex: 'male',
+          heightCm: 182,
+          weightKg: 82,
+        }),
+      })
+
+      const res = await POST(req)
+      expect(res!.status).toBe(401)
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
 })
 

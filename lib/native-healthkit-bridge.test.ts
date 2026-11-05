@@ -640,13 +640,16 @@ describe('GAA Native HealthKit & Health Connect Bridge', () => {
 
         const { subscribeToWatchSetLogged } = await import('./native-healthkit-bridge')
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let capturedListener: ((data: any) => void) | null = null
         const mockRemove = vi.fn()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         vi.mocked(GAAHealthKitNative.addListener).mockImplementation(((event: string, listener: any) => {
           if (event === 'onWatchSetLogged') {
             capturedListener = listener
           }
           return Promise.resolve({ remove: mockRemove })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }) as any)
 
         const callback = vi.fn()

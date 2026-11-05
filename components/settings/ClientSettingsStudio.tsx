@@ -47,7 +47,7 @@ export default function ClientSettingsStudio({
   workoutSchedule = [],
 }: ClientSettingsStudioProps) {
   const router = useRouter()
-  const pathname = usePathname()
+  const _pathname = usePathname()
   const searchParams = useSearchParams()
   const isCompanion = isCompanionApp()
   const currentTabQuery = (searchParams.get('tab') as SettingsTab) || initialTab

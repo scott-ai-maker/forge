@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
   const ip = getClientIp(request)
   const rateLimit = await enforceRateLimit({
     key: `auth:demo:${ip}`,
-    limit: 10,
+    limit: 60,
     windowSeconds: 60,
     route: '/api/auth/demo',
     dimension: 'ip',

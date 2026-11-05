@@ -411,4 +411,27 @@ describe('Single Source of Truth Wearables API Endpoints (Apple Health & Google 
       })
     )
   })
+
+  it('rejects unauthenticated webhook payloads in production when webhook secret is missing or invalid', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('APPLE_HEALTH_WEBHOOK_SECRET', 'prod-secret-token')
+    try {
+      const req = new NextRequest('http://localhost/api/wearables/webhook', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer wrong-token',
+        },
+        body: JSON.stringify({
+          user_id: 'client-123',
+          provider: 'apple_health',
+          resting_heart_rate: 52,
+        }),
+      })
+
+      const res = await webhookPost(req)
+      expect(res.status).toBe(401)
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
 })

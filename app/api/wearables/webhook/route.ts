@@ -60,15 +60,25 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Token Verification ──
+    const isProd = process.env.NODE_ENV === 'production'
     const authHeader = req.headers.get('authorization') || req.headers.get('Authorization')
+    const secretHeader = req.headers.get('x-webhook-secret')
 
-    if (provider === 'apple_health' && process.env.APPLE_HEALTH_WEBHOOK_SECRET) {
-      if (!verifyAppleHealthWebhookToken(authHeader, process.env.APPLE_HEALTH_WEBHOOK_SECRET)) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid Apple Health secret' }, { status: 401 })
+    if (provider === 'apple_health') {
+      if (process.env.APPLE_HEALTH_WEBHOOK_SECRET) {
+        if (!verifyAppleHealthWebhookToken(authHeader || secretHeader, process.env.APPLE_HEALTH_WEBHOOK_SECRET)) {
+          return NextResponse.json({ error: 'Unauthorized: Invalid Apple Health secret' }, { status: 401 })
+        }
+      } else if (isProd) {
+        return NextResponse.json({ error: 'Unauthorized: Apple Health webhook secret not configured' }, { status: 401 })
       }
-    } else if (provider === 'google_fit' && process.env.GOOGLE_HEALTH_WEBHOOK_SECRET) {
-      if (!verifyGoogleHealthWebhookToken(authHeader, process.env.GOOGLE_HEALTH_WEBHOOK_SECRET)) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid Google Health secret' }, { status: 401 })
+    } else if (provider === 'google_fit') {
+      if (process.env.GOOGLE_HEALTH_WEBHOOK_SECRET) {
+        if (!verifyGoogleHealthWebhookToken(authHeader || secretHeader, process.env.GOOGLE_HEALTH_WEBHOOK_SECRET)) {
+          return NextResponse.json({ error: 'Unauthorized: Invalid Google Health secret' }, { status: 401 })
+        }
+      } else if (isProd) {
+        return NextResponse.json({ error: 'Unauthorized: Google Health webhook secret not configured' }, { status: 401 })
       }
     }
 

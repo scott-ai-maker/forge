@@ -11,6 +11,7 @@ import {
   VERIFIED_GAA_EXERCISE_IMAGES,
   BRAND_LOGO_FALLBACK_IMAGE,
   resolveGaaExerciseImage,
+  resolveForgeExerciseVideo,
 } from './nasm-generated-images'
 
 export interface NasmKineticCheckpoints {
@@ -38,6 +39,7 @@ export interface NasmClinicalMovementCard {
   equipment: string[]
   imageUrl: string | null
   candidateStudioImageUrl?: string | null
+  studioVideoUrl?: string | null
   fallbackImageUrl: string
   videoUrl: string | null
   embedUrl?: string | null
@@ -1458,6 +1460,54 @@ export const NASM_MOVEMENT_PROFILES: Record<string, Partial<NasmClinicalMovement
       'Perform push-up with elbows at 45 degrees to torso.',
     ],
   },
+  'single leg squat': {
+    category: 'Legs',
+    optPhase: 'Phase 1 (Stabilization Endurance), Phase 2 (Strength Endurance)',
+    tempo: '4/2/1 (Phase 1 Stabilization) or 2/0/2 (Phase 2)',
+    primeMover: 'Quadriceps & Gluteus Maximus (Stance Leg)',
+    synergists: ['Hamstrings Complex', 'Adductor Magnus'],
+    stabilizers: ['Gluteus Medius & Minimus', 'Transverse Abdominis', 'Internal Obliques', 'Multifidus', 'Tibialis Posterior'],
+    antagonists: ['Psoas Major', 'Iliacus'],
+    kineticCheckpoints: {
+      feetAnkles: 'Stance foot pointing straight ahead (0° turnout) with even tripod foot pressure; non-stance foot lifted off floor in front.',
+      knees: 'Stance knee flexes to controlled ~45°–60° mid-squat depth, tracking strictly in line with 2nd and 3rd toes (zero knee valgus).',
+      lphc: 'Pelvis remains level in frontal plane (no contralateral Trendelenburg hip drop); neutral lumbar spine with slight athletic hip hinge.',
+      shoulders: 'Scapulae retracted and depressed; arms extended forward at shoulder height for counterbalance.',
+      headNeck: 'Neutral cervical spine with chin tucked and gaze fixed straight ahead.',
+    },
+    setupInstructions: 'Stand tall on one leg with stance foot pointing straight ahead, non-stance leg lifted slightly in front of body, and arms extended forward at shoulder height. Progress to Pistol Squat once full single-leg stabilization is mastered.',
+    executionInstructions: 'Inhale through the nose as you hinge at the hips and bend the stance knee to lower into a controlled 45°–60° single-leg squat while keeping the knee aligned over the 2nd and 3rd toes. Pause briefly for isometric balance, then exhale through pursed lips and drive through the stance heel to return to tall single-leg standing.',
+    clinicalCues: [
+      'Keep stance knee tracking directly over 2nd and 3rd toes—prevent inward knee valgus collapse.',
+      'Lock gluteus medius on the stance hip to keep pelvis level and prevent opposite hip drop.',
+      'Inhale through the nose on the eccentric descent and exhale through pursed lips on the concentric drive up.',
+      'Master controlled mid-range Single-Leg Squat stability before progressing to full-depth Pistol Squat.',
+    ],
+  },
+  'pistol squat': {
+    category: 'Legs',
+    optPhase: 'Phase 2 (Strength Endurance), Phase 3 (Hypertrophy), Phase 4 (Maximal Unilateral Strength — Progression from Single-Leg Squat)',
+    tempo: '3/1/1 or 2/1/2 (Controlled Full-Depth Unilateral Squat)',
+    primeMover: 'Quadriceps & Gluteus Maximus (Stance Leg)',
+    synergists: ['Hamstrings Complex', 'Adductor Magnus', 'Gastrocnemius / Soleus'],
+    stabilizers: ['Gluteus Medius & Minimus', 'Iliopsoas & Rectus Femoris (Isometric Non-Stance Leg Hold)', 'Transverse Abdominis', 'Erector Spinae'],
+    antagonists: ['Hamstrings (Non-Stance Leg)', 'Gluteus Maximus (Eccentric Control)'],
+    kineticCheckpoints: {
+      feetAnkles: 'Stance foot flat on floor with maximal ankle dorsiflexion; non-stance leg held straight out horizontally in front Clear of floor.',
+      knees: 'Full-depth unilateral knee flexion (thigh parallel or below parallel) tracking directly over 2nd and 3rd toes.',
+      lphc: 'Controlled pelvic stability at full depth; active hip flexor isometric hold on extended non-stance leg.',
+      shoulders: 'Shoulders packed down and back with arms extended forward at shoulder level as a counterbalance.',
+      headNeck: 'Neutral cervical spine, gaze directed forward on a fixed focal point.',
+    },
+    setupInstructions: 'Advanced progression from the foundational NASM Single-Leg Squat. Stand tall balancing on one leg with arms extended forward at shoulder height and non-stance leg lifted straight out in front.',
+    executionInstructions: 'Inhale through the nose and descend under strict eccentric control into a full-depth unilateral squat (hips descending to or below knee crease) while holding the non-stance leg extended horizontally clear of the floor. Pause briefly at the bottom without bouncing, then exhale through pursed lips and drive forcefully through the stance midfoot and heel to stand tall.',
+    clinicalCues: [
+      'Progression from Single-Leg Squat requiring advanced ankle dorsiflexion, hip flexor strength, and unilateral knee stability.',
+      'Keep the entire stance foot planted flat on the floor—do not let the heel lift at the bottom.',
+      'Inhale through the nose during the deep eccentric lowering phase and exhale through pursed lips as you drive back up.',
+      'Prevent inward knee valgus as you transition out of the bottom hole.',
+    ],
+  },
 }
 
 export const GENERATED_EXERCISE_IMAGES: Record<string, string> = VERIFIED_GAA_EXERCISE_IMAGES
@@ -1865,6 +1915,7 @@ function getNasmClinicalMovementCardUncached(
 
   const candidateStudioImageUrl =
     (verifiedGaaImage && verifiedGaaImage !== BRAND_LOGO_FALLBACK_IMAGE) ? verifiedGaaImage : null
+  const studioVideoUrl = resolveForgeExerciseVideo(exerciseName)
 
   // Prioritize authentic default NASM Edge video thumbnail
   const resolvedImageUrl =
@@ -1924,6 +1975,7 @@ function getNasmClinicalMovementCardUncached(
     equipment: resolvedEquipment,
     imageUrl: resolvedImageUrl,
     candidateStudioImageUrl,
+    studioVideoUrl,
     fallbackImageUrl: BRAND_LOGO_FALLBACK_IMAGE,
     videoUrl: resolvedVideoUrl,
     embedUrl: resolvedEmbedUrl,

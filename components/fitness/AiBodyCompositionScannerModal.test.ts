@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
 import {
   convertBiometricInputUnits,
   resolveScanMetricBiometrics,
@@ -95,8 +97,6 @@ describe('AiBodyCompositionScannerModal Biometric Input Engine', () => {
   })
 
   describe('Attire Acceptance Standard & Rejection Guardrails', () => {
-    const fs = require('fs')
-    const path = require('path')
     const modalFilePath = path.resolve(__dirname, 'AiBodyCompositionScannerModal.tsx')
     const modalContent = fs.readFileSync(modalFilePath, 'utf-8')
 

@@ -145,16 +145,11 @@ export default function CoachAnalyticsDashboard() {
       return 0
     })
 
-  function SortButton({
-    k,
-    label,
-  }: {
-    k: SortKey
-    label: string
-  }) {
+  function renderSortButton(k: SortKey, label: string) {
     const active = sortKey === k
     return (
       <button
+        key={k}
         type="button"
         onClick={() => setSortKey(k)}
         style={{
@@ -320,10 +315,10 @@ export default function CoachAnalyticsDashboard() {
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: 11, color: 'var(--gray)' }}>Sort:</span>
-          <SortButton k="compliance" label="Compliance" />
-          <SortButton k="lastWorkout" label="Activity" />
-          <SortButton k="name" label="Name" />
-          <SortButton k="trend" label="Trend" />
+          {renderSortButton('compliance', 'Compliance')}
+          {renderSortButton('lastWorkout', 'Activity')}
+          {renderSortButton('name', 'Name')}
+          {renderSortButton('trend', 'Trend')}
         </div>
       </div>
 

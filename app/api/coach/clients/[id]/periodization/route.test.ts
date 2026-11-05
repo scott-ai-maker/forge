@@ -38,6 +38,13 @@ describe('/api/coach/clients/[id]/periodization', () => {
     expect(res.status).toBe(401)
   })
 
+  it('rejects non-coach roles with 403', async () => {
+    getRequestAuthzMock.mockResolvedValueOnce({ user: { id: 'client-456' }, client: { role: 'client' } })
+    const req = new NextRequest('http://localhost:3000/api/coach/clients/client-456/periodization')
+    const res = await GET(req, { params: Promise.resolve({ id: clientId }) })
+    expect(res.status).toBe(403)
+  })
+
   it('rejects coaches not assigned to the client with 403', async () => {
     supabaseAdminMock.mockReturnValue({
       from: () => ({

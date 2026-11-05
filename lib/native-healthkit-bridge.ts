@@ -68,7 +68,9 @@ export interface GAAHealthKitPluginInterface {
     lastSyncTimestamp?: string
     telemetryReady: boolean
   }>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendWorkoutToWatch?(options: { workout: any }): Promise<{ success: boolean }>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   startWatchWorkout?(options: { workout: any }): Promise<{ success: boolean }>
   updateWatchRestTimer?(options: {
     timer: {
@@ -88,6 +90,7 @@ export interface GAAHealthKitPluginInterface {
   }): Promise<{ success: boolean }>
   addListener(
     eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchCancelWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected' | 'onWatchStartWorkout' | 'onWatchWarmupDrillToggled' | 'onWatchCooldownStretchToggled' | 'onWatchCardioCompleted',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listenerFunc: (data: any) => void
   ): Promise<PluginListenerHandle>
 }

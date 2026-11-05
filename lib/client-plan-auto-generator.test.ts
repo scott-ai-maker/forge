@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   autoGenerateOrUpdateClientWorkoutPlan,
   isPlanCoachCertified,
-  CORE_TRAINING_PROFILE_FIELDS,
 } from './client-plan-auto-generator'
 import { supabaseAdmin } from './supabase'
 
@@ -62,7 +61,7 @@ describe('Client Plan Auto-Generator (lib/client-plan-auto-generator)', () => {
 
   describe('autoGenerateOrUpdateClientWorkoutPlan', () => {
     it('returns skipped when client has no fitness profile', async () => {
-      mockFrom = vi.fn((table: string) => ({
+      mockFrom = vi.fn((_table: string) => ({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),

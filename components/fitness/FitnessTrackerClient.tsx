@@ -2297,6 +2297,7 @@ export default function FitnessTrackerClient({
           setActiveWorkoutDay(data.dayNumber)
         }
         if (data?.phase && ['warmup', 'resistance', 'cardio', 'cooldown'].includes(data.phase)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setActiveStepFilter(data.phase as any)
           if (data.dayNumber) {
             setCollapsedStages(prev => ({ ...prev, [`${data.dayNumber}-${data.phase}`]: false }))
@@ -4990,7 +4991,9 @@ export default function FitnessTrackerClient({
                                     const isUnilateral = isUnilateralMovement({
                                       name: ex.name,
                                       reps: ex.reps || draft.reps,
+                                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                       protocol: (ex as any).protocol,
+                                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                       target: (ex as any).target,
                                       instructions: ex.instructions,
                                       phase: ex.block === 'warmup' || ex.block === 'cooldown' ? 'lengthen' : undefined,
@@ -6848,7 +6851,9 @@ export default function FitnessTrackerClient({
         triggerHaptic={triggerHaptic}
         hasHeartMedications={
           /beta[- ]blocker|hypertension|blood pressure|cardiac|heart med/i.test(profile?.injuries_limitations || '') ||
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (Array.isArray((profile as any)?.injuries) && (profile as any).injuries.includes('cardiovascular_hypertension')) ||
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           Boolean((profile as any)?.hasHeartMedications)
         }
         onOpenWatchSimulator={() => setIsWatchSimulatorOpen(true)}

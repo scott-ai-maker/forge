@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser()
 
   const isDev = process.env.NODE_ENV !== 'production'
-  const isTestHarness = isDev || req.headers.get('referer')?.includes('/test-harness/')
+  const isTestHarness = isDev && Boolean(req.headers.get('referer')?.includes('/test-harness/'))
 
   if (!user && !isTestHarness) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

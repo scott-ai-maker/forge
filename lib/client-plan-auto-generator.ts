@@ -288,7 +288,7 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
   })
 
   // 5. Query exercise & equipment libraries to attach rich media, instructions, and video links
-  const exerciseNames = programRec.macrocyclePlan.workouts.flatMap(w => w.exercises.map(e => e.name))
+  const _exerciseNames = programRec.macrocyclePlan.workouts.flatMap(w => w.exercises.map(e => e.name))
   const [exercisesResult, equipmentResult] = await Promise.all([
     admin
       .from('exercise_library_entries')

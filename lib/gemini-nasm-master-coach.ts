@@ -276,15 +276,18 @@ function toStringArray(val: unknown): string[] {
  * Normalizes raw Gemini or external JSON into a strictly conforming GeneratedMacrocyclePlan structure.
  * Guarantees warmup protocols, coaching cues, and exercise arrays adhere to expected types.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizeGeneratedPlan(plan: any): GeneratedMacrocyclePlan {
   if (!plan || typeof plan !== 'object') {
     throw new Error('Generated plan is not a valid object')
   }
 
   const workouts: GeneratedWorkoutDay[] = Array.isArray(plan.workouts)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ? plan.workouts.map((w: any, idx: number) => {
         const warmup = w.warmupProtocol || {}
         const rawExercises = Array.isArray(w.exercises) ? w.exercises : []
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const exercises: GeneratedExerciseItem[] = rawExercises.map((ex: any) => ({
           block: (ex.block === 'warmup' || ex.block === 'core_balance' || ex.block === 'saq' || ex.block === 'resistance' || ex.block === 'cooldown')
             ? ex.block

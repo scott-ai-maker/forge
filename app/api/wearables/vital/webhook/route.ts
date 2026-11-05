@@ -11,6 +11,20 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const isProd = process.env.NODE_ENV === 'production'
+    const expectedSecret = process.env.VITAL_WEBHOOK_SECRET?.trim()
+    const providedSecret =
+      req.headers.get('x-vital-webhook-secret')?.trim() ||
+      req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
+
+    if (expectedSecret) {
+      if (providedSecret !== expectedSecret) {
+        return NextResponse.json({ error: 'Unauthorized: Invalid Vital webhook secret' }, { status: 401 })
+      }
+    } else if (isProd) {
+      return NextResponse.json({ error: 'Unauthorized: Vital webhook secret not configured' }, { status: 401 })
+    }
+
     const rawText = await req.text()
     let payload: Record<string, unknown>
 

@@ -125,6 +125,7 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   const isWorkoutScenario = Boolean(variety) || params.scenario === 'superset' || params.scenario === 'schedule' || params.scenario === 'train'
   const isProgressScenario = params.scenario === 'progress' || params.scenario === 'analytics' || params.scenario === 'prs'
   const isCoachScenario = params.scenario === 'coach' || params.scenario === 'coach-empty' || params.scenario === 'advisory' || params.scenario === 'checkin'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const effectiveWorkspace = (params.workspace as any) || (
     isWorkoutScenario ? 'train'
       : isProgressScenario ? 'progress'
@@ -141,6 +142,7 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
       : isLabScenario ? 'lab'
       : 'train'
   )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const effectiveTab = (params.tab as any) || (
     params.scenario === 'readiness-acwr' ? 'acwr'
       : params.scenario === 'readiness-deload' ? 'deload'

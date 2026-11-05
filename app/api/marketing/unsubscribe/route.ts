@@ -70,11 +70,22 @@ export async function POST(req: NextRequest) {
   }
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function renderUnsubscribeHtml(params: {
   success: boolean
   email?: string
   message: string
 }) {
+  const safeMessage = escapeHtml(params.message)
+  const safeEmail = params.email ? escapeHtml(params.email) : ''
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -152,8 +163,8 @@ function renderUnsubscribeHtml(params: {
     <div class="brand-title">Forge Athletic</div>
     <div class="status-badge">${params.success ? 'Confirmed' : 'Error'}</div>
     <h1>${params.success ? 'Unsubscribe Confirmed' : 'Request Error'}</h1>
-    <p>${params.message}</p>
-    ${params.email ? `<p style="font-size: 13px; color: #64748B;">Account: <strong>${params.email}</strong></p>` : ''}
+    <p>${safeMessage}</p>
+    ${safeEmail ? `<p style="font-size: 13px; color: #64748B;">Account: <strong>${safeEmail}</strong></p>` : ''}
     <a href="/" class="btn">Return to Forge Athletic Home</a>
   </div>
 </body>

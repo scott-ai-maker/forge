@@ -10,6 +10,7 @@ export function createClient() {
     supabaseUrl,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      isSingleton: true,
       auth: {
         persistSession: true,
         autoRefreshToken: true,
