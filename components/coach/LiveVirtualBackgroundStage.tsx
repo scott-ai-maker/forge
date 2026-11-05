@@ -92,8 +92,8 @@ export default function LiveVirtualBackgroundStage({
               delegate: 'GPU',
             },
             runningMode: 'VIDEO',
-            outputCategoryMask: true,
-            outputConfidenceMasks: false,
+            outputCategoryMask: false,
+            outputConfidenceMasks: true,
           })) as unknown as ImageSegmenterInstance
         } catch (gpuErr) {
           console.warn('MediaPipe GPU segmenter failed, falling back to CPU delegate:', gpuErr)
@@ -103,8 +103,8 @@ export default function LiveVirtualBackgroundStage({
               delegate: 'CPU',
             },
             runningMode: 'VIDEO',
-            outputCategoryMask: true,
-            outputConfidenceMasks: false,
+            outputCategoryMask: false,
+            outputConfidenceMasks: true,
           })) as unknown as ImageSegmenterInstance
         }
 
@@ -188,40 +188,83 @@ export default function LiveVirtualBackgroundStage({
       uniform bool u_hasBgImage;
       out vec4 fragColor;
 
+      float bilateralWeight(vec3 centerCol, vec3 sampleCol, float spatialW) {
+        vec3 dCol = centerCol - sampleCol;
+        float colorDistSq = dot(dCol, dCol);
+        return spatialW * exp(-colorDistSq * 22.0);
+      }
+
       void main() {
         vec2 uv = vec2(v_texCoords.x, 1.0 - v_texCoords.y);
         vec2 camCoords = u_isMirrored ? vec2(1.0 - uv.x, uv.y) : uv;
         vec4 frameTex = texture(u_frame, camCoords);
+        vec3 centerRgb = frameTex.rgb;
 
-        // 3x3 Multi-Tap Stencil across neural field (256x256)
-        vec2 texel = 2.2 / vec2(textureSize(u_mask, 0));
+        // 3x3 Camera-Guided Joint Bilateral Stencil across neural field (256x256)
+        vec2 texel = 1.65 / vec2(textureSize(u_mask, 0));
+
+        vec2 uvL  = camCoords - vec2(texel.x, 0.0);
+        vec2 uvR  = camCoords + vec2(texel.x, 0.0);
+        vec2 uvT  = camCoords - vec2(0.0, texel.y);
+        vec2 uvB  = camCoords + vec2(0.0, texel.y);
+        vec2 uvTL = camCoords + vec2(-texel.x, -texel.y);
+        vec2 uvTR = camCoords + vec2( texel.x, -texel.y);
+        vec2 uvBL = camCoords + vec2(-texel.x,  texel.y);
+        vec2 uvBR = camCoords + vec2( texel.x,  texel.y);
 
         float c  = texture(u_mask, camCoords).r;
-        float l  = texture(u_mask, camCoords - vec2(texel.x, 0.0)).r;
-        float r  = texture(u_mask, camCoords + vec2(texel.x, 0.0)).r;
-        float t  = texture(u_mask, camCoords - vec2(0.0, texel.y)).r;
-        float b  = texture(u_mask, camCoords + vec2(0.0, texel.y)).r;
-        float tl = texture(u_mask, camCoords + vec2(-texel.x, -texel.y)).r;
-        float tr = texture(u_mask, camCoords + vec2( texel.x, -texel.y)).r;
-        float bl = texture(u_mask, camCoords + vec2(-texel.x,  texel.y)).r;
-        float br = texture(u_mask, camCoords + vec2( texel.x,  texel.y)).r;
+        float l  = texture(u_mask, uvL).r;
+        float r  = texture(u_mask, uvR).r;
+        float t  = texture(u_mask, uvT).r;
+        float b  = texture(u_mask, uvB).r;
+        float tl = texture(u_mask, uvTL).r;
+        float tr = texture(u_mask, uvTR).r;
+        float bl = texture(u_mask, uvBL).r;
+        float br = texture(u_mask, uvBR).r;
 
-        // 1. 9-Tap Binomial Gaussian Smoothing:
-        // Converts 256x256 discrete neural network grid blocks into a silky continuous optical gradient
-        float smoothed = (tl + 2.0*t + tr + 2.0*l + 4.0*c + 2.0*r + bl + 2.0*b + br) / 16.0;
+        // 1. Camera-Guided Joint Bilateral Filter:
+        // Weights the 256x256 confidence mask by high-resolution 1080p RGB color similarity
+        // so the silhouette snaps cleanly to hair, ear, and shoulder edges without halo bleed
+        float wC  = 4.0;
+        float wL  = bilateralWeight(centerRgb, texture(u_frame, uvL).rgb,  2.0);
+        float wR  = bilateralWeight(centerRgb, texture(u_frame, uvR).rgb,  2.0);
+        float wT  = bilateralWeight(centerRgb, texture(u_frame, uvT).rgb,  2.0);
+        float wB  = bilateralWeight(centerRgb, texture(u_frame, uvB).rgb,  2.0);
+        float wTL = bilateralWeight(centerRgb, texture(u_frame, uvTL).rgb, 1.0);
+        float wTR = bilateralWeight(centerRgb, texture(u_frame, uvTR).rgb, 1.0);
+        float wBL = bilateralWeight(centerRgb, texture(u_frame, uvBL).rgb, 1.0);
+        float wBR = bilateralWeight(centerRgb, texture(u_frame, uvBR).rgb, 1.0);
 
-        // 2. Gentle Optical Choke (15%):
-        // Gently hugs the hairline and shoulders flush without eroding clothing or torso
+        float wSum = wC + wL + wR + wT + wB + wTL + wTR + wBL + wBR;
+        float smoothed = (wC*c + wL*l + wR*r + wT*t + wB*b + wTL*tl + wTR*tr + wBL*bl + wBR*br) / max(wSum, 0.001);
+
+        // 2. Crisp Optical Choke (28%):
+        // Tightens the outer silhouette boundary to strip residual background fuzz around hair & shoulders
         float minNeighbor = min(min(min(l, r), min(t, b)), min(min(tl, tr), min(bl, br)));
-        float maskVal = mix(smoothed, min(smoothed, minNeighbor), 0.15);
+        float maskVal = mix(smoothed, min(smoothed, minNeighbor), 0.28);
 
-        // 3. Screen-Space Derivative Anti-Aliasing (Industry Standard centered at [0.42, 0.58]):
-        // Background noise (< 0.42) is 100% cutout. Full body & torso (>= 0.58) are 100% solid camera frame.
+        // 3. Tightened Anti-Aliased Edge Matte ([0.50, 0.76]):
+        // Background fuzz (< 0.50) is 100% cutout. Solid coach interior (>= 0.76) is 100% opaque.
         float grad = length(vec2(dFdx(maskVal), dFdy(maskVal)));
-        float edgeSoftness = 1.5;
-        float lowBound = 0.42 - grad * edgeSoftness;
-        float highBound = 0.58 + grad * edgeSoftness;
+        float edgeSoftness = 0.85;
+        float lowBound = 0.50 - grad * edgeSoftness;
+        float highBound = 0.76 + grad * edgeSoftness;
         float alpha = smoothstep(lowBound, highBound, maskVal);
+
+        // 4. Edge Color Despill / Halo Suppression:
+        // Pull semi-transparent boundary RGB slightly inward toward the coach interior along the mask gradient
+        // so bright room walls never create a white/gray halo fringe around the coach's silhouette.
+        vec3 fgRgb = centerRgb;
+        if (alpha > 0.02 && alpha < 0.96) {
+          vec2 maskGrad = vec2(r - l, b - t);
+          float gradLen = length(maskGrad);
+          if (gradLen > 0.01) {
+            vec2 inwardDir = maskGrad / gradLen;
+            vec2 frameTexel = 1.0 / vec2(textureSize(u_frame, 0));
+            vec3 inwardRgb = texture(u_frame, camCoords + inwardDir * frameTexel * 2.5).rgb;
+            fgRgb = mix(inwardRgb, centerRgb, alpha);
+          }
+        }
 
         vec4 bgTex;
         if (u_isBlur) {
@@ -243,7 +286,7 @@ export default function LiveVirtualBackgroundStage({
           bgTex = mix(vec4(0.055, 0.086, 0.157, 1.0), vec4(0.02, 0.03, 0.067, 1.0), uv.y);
         }
 
-        fragColor = mix(bgTex, vec4(frameTex.rgb, 1.0), alpha);
+        fragColor = mix(bgTex, vec4(fgRgb, 1.0), alpha);
       }
     `
 
@@ -404,40 +447,51 @@ export default function LiveVirtualBackgroundStage({
                   prevMaskBufferRef.current = prevMask
                 }
 
-                if (result.categoryMask && typeof result.categoryMask.getAsUint8Array === 'function') {
+                if (result.confidenceMasks && result.confidenceMasks.length > 0) {
+                  const confMask = result.confidenceMasks[0]
+                  if (typeof confMask.getAsFloat32Array === 'function') {
+                    const fData = confMask.getAsFloat32Array()
+                    for (let i = 0; i < totalMask; i++) {
+                      // MUST ALWAYS BE INVERTED per architecture rule: const conf = 1 - rawConf
+                      // Coach foreground = 1.0 (opaque alpha 255, retained), physical room = 0.0 (cutout)
+                      const rawConf = fData[i] ?? 0
+                      const conf = 1 - rawConf
+                      const targetVal = Math.round(conf * 255)
+                      const prevVal = prevMask[i]
+                      const delta = Math.abs(targetVal - prevVal)
+                      // Motion-adaptive temporal EMA: lock stationary edge pixels (delta < 35) to eliminate edge shimmer,
+                      // while snapping fast movement (delta >= 35) immediately without lag
+                      const emaAlpha = delta < 35 ? 0.40 : 0.85
+                      const smoothedVal = Math.round(emaAlpha * targetVal + (1 - emaAlpha) * prevVal)
+                      maskBytes[i] = smoothedVal
+                      prevMask[i] = smoothedVal
+                    }
+                  } else if (typeof confMask.getAsUint8Array === 'function') {
+                    const uData = confMask.getAsUint8Array()
+                    for (let i = 0; i < totalMask; i++) {
+                      // MUST ALWAYS BE INVERTED per architecture rule: coach foreground is 255 (retained), room is 0 (cutout)
+                      const targetVal = 255 - uData[i]
+                      const prevVal = prevMask[i]
+                      const delta = Math.abs(targetVal - prevVal)
+                      const emaAlpha = delta < 35 ? 0.40 : 0.85
+                      const smoothedVal = Math.round(emaAlpha * targetVal + (1 - emaAlpha) * prevVal)
+                      maskBytes[i] = smoothedVal
+                      prevMask[i] = smoothedVal
+                    }
+                  }
+                } else if (result.categoryMask && typeof result.categoryMask.getAsUint8Array === 'function') {
                   const uData = result.categoryMask.getAsUint8Array()
                   for (let i = 0; i < totalMask; i++) {
                     // Multiclass Labels:
                     // 0: background (couch, chair, room, gym, wall) -> cutout
                     // 1: hair, 2: body-skin, 3: face-skin, 4: clothes, 5: others/accessories -> coach foreground
                     const targetVal = uData[i] > 0 ? 255 : 0
-                    // Temporal EMA (80% current, 20% previous) eliminates single-frame edge flicker
-                    const smoothedVal = Math.round(0.80 * targetVal + 0.20 * prevMask[i])
+                    const prevVal = prevMask[i]
+                    const delta = Math.abs(targetVal - prevVal)
+                    const emaAlpha = delta < 35 ? 0.40 : 0.85
+                    const smoothedVal = Math.round(emaAlpha * targetVal + (1 - emaAlpha) * prevVal)
                     maskBytes[i] = smoothedVal
                     prevMask[i] = smoothedVal
-                  }
-                } else if (result.confidenceMasks && result.confidenceMasks.length > 0) {
-                  const confMask = result.confidenceMasks[0]
-                  if (typeof confMask.getAsUint8Array === 'function') {
-                    const uData = confMask.getAsUint8Array()
-                    for (let i = 0; i < totalMask; i++) {
-                      // MUST ALWAYS BE INVERTED per architecture rule: coach foreground is 255 (retained), room is 0 (cutout)
-                      const targetVal = 255 - uData[i]
-                      const smoothedVal = Math.round(0.80 * targetVal + 0.20 * prevMask[i])
-                      maskBytes[i] = smoothedVal
-                      prevMask[i] = smoothedVal
-                    }
-                  } else if (typeof confMask.getAsFloat32Array === 'function') {
-                    const fData = confMask.getAsFloat32Array()
-                    for (let i = 0; i < totalMask; i++) {
-                      // MUST ALWAYS BE INVERTED per architecture rule: const conf = 1 - rawConf
-                      const rawConf = fData[i] ?? 0
-                      const conf = 1 - rawConf
-                      const targetVal = Math.round(conf * 255)
-                      const smoothedVal = Math.round(0.80 * targetVal + 0.20 * prevMask[i])
-                      maskBytes[i] = smoothedVal
-                      prevMask[i] = smoothedVal
-                    }
                   }
                 } else {
                   return

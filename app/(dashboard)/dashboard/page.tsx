@@ -104,7 +104,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect('/coach')
   }
 
-  const [{ data: profile }, { data: intakeForm }, { data: wearableMetric }] = await Promise.all([
+  const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+
+  const [{ data: profile }, { data: intakeForm }, { data: wearableMetric }, { data: recentMessages }] = await Promise.all([
     supabase
       .from('fitness_profiles')
       .select('onboarding_completed_at, fitness_goal, age, height_cm, weight_kg, updated_at')
@@ -122,7 +124,27 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .order('sample_date', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('coach_client_messages')
+      .select('message_body, created_at')
+      .eq('client_id', user.id)
+      .gte('created_at', threeHoursAgo)
+      .order('created_at', { ascending: false })
+      .limit(5),
   ])
+
+  let activeLiveSessionHref: string | null = null
+  for (const msg of recentMessages ?? []) {
+    const body = String(msg.message_body || '')
+    if (body.includes('LIVE SESSION RECAP') || body.includes('POST-SESSION BRIEFING')) {
+      break
+    }
+    const match = body.match(/(\/dashboard\/live(?:\?teamId=[^\s)]+)?)/)
+    if (match) {
+      activeLiveSessionHref = match[1]
+      break
+    }
+  }
 
   const isOnboardingCompleted = Boolean(profile?.onboarding_completed_at)
   const isOnboardingStarted = Boolean(
@@ -272,6 +294,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <SiteHeader
         links={[
           { href: '/dashboard', label: 'Today' },
+          { href: '/dashboard/live', label: 'Live Studio' },
           { href: '/dashboard/fitness', label: 'Training & progress' },
           { href: '/dashboard/dossier', label: 'Progress summary' },
           { href: '/dashboard/book', label: 'Book a session' },
@@ -311,6 +334,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           sessions={(sessions ?? []).map(s => ({ id: s.id, scheduled_at: s.scheduled_at, duration_mins: s.duration_mins, notes: s.notes, status: s.status }))}
           totalRemaining={totalRemaining}
           initialWorkspace={workspace}
+          activeLiveSessionHref={activeLiveSessionHref}
         />
       </div>
     </main>

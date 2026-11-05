@@ -68,12 +68,14 @@ describe('notifyUser', () => {
     expect(smsMock).not.toHaveBeenCalled()
   })
 
-  it('texts time-sensitive items with consent', async () => {
+  it('texts and emails time-sensitive live session start items with consent', async () => {
     const { client } = buildAdmin({
       prefs: { sms_enabled: true, sms_phone: '+16175550100', sms_consent_at: '2026-01-01' },
     })
     adminMock.mockReturnValue(client)
     const res = await notifyUser({ userId: 'u1', type: 'live_session_started', title: 'Live', body: 'Now' })
+    expect(res.channels).toContain('push')
+    expect(res.channels).toContain('email')
     expect(res.channels).toContain('sms')
   })
 

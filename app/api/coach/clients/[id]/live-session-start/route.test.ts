@@ -81,6 +81,18 @@ describe('Live Session Start Alert API', () => {
     const json = await res.json()
     expect(json.success).toBe(true)
     expect(json.pushSent).toBe(true)
-    expect(notifyUser).toHaveBeenCalled()
+    expect(notifyUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'client-456',
+        type: 'live_session_started',
+        url: '/dashboard/live',
+        body: expect.stringContaining('/dashboard/live'),
+        data: expect.objectContaining({
+          clientId: 'client-456',
+          coachId: 'coach-123',
+          url: '/dashboard/live',
+        }),
+      })
+    )
   })
 })

@@ -14,7 +14,7 @@ if (
   })
 }
 
-const VERSION = 'gaa-v1.44.2'
+const VERSION = 'gaa-v1.44.3'
 const OFFLINE_URL = '/offline.html'
 
 const PRECACHE = [
@@ -190,5 +190,44 @@ self.addEventListener('fetch', event => {
   // 5. Default fetch handler
   event.respondWith(
     fetch(request).catch(() => caches.match(request, { ignoreSearch: true }))
+  )
+})
+
+// Push & Notification Click Navigation (opens /dashboard/live or target URL directly)
+self.addEventListener('push', event => {
+  let payload = {}
+  try {
+    payload = event.data ? event.data.json() : {}
+  } catch {
+    payload = { title: 'Forge Athletic', body: event.data ? event.data.text() : '' }
+  }
+  const title = payload.title || (payload.aps && payload.aps.alert && payload.aps.alert.title) || 'Forge Athletic'
+  const body = payload.body || (payload.aps && payload.aps.alert && payload.aps.alert.body) || 'Tap to open your session.'
+  const targetUrl = payload.url || payload.link || '/dashboard/live'
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/images/icon-192.png',
+      badge: '/images/icon-monochrome.png',
+      data: { url: targetUrl },
+    })
+  )
+})
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close()
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/dashboard/live'
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      for (const client of windowClients) {
+        if ('focus' in client && 'navigate' in client) {
+          return client.navigate(targetUrl).then(() => client.focus())
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl)
+      }
+    })
   )
 })

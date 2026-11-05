@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestAuthz, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
 import { notifyUser } from '@/lib/notifications'
+import { getBaseUrl } from '@/lib/marketing-email'
 
 export async function POST(
   req: NextRequest,
@@ -40,9 +41,12 @@ export async function POST(
     .maybeSingle()
 
   const athleteName = clientRow?.full_name || 'Athlete'
+  const baseUrl = typeof getBaseUrl === 'function' ? getBaseUrl() : 'https://forge-athletic.app'
+  const livePath = '/dashboard/live'
+  const liveUrl = `${baseUrl}${livePath}`
 
   // 2. Insert invitation message into Concierge line
-  const inviteMessage = `**1:1 LIVE VIDEO CONSULTATION IN PROGRESS**\n\nCoach Gordon is waiting in your Live Movement Studio. Tap below to join your live coaching stream:\n\n[**Join Live Consultation Room**](/dashboard/live)`
+  const inviteMessage = `**1:1 LIVE VIDEO CONSULTATION IN PROGRESS**\n\nCoach Gordon is waiting in your Live Movement Studio. Tap below to join your live coaching stream:\n\n[**Join Live Consultation Room**](${livePath})\n\nDirect Link: ${liveUrl}`
 
   await admin
     .from('coach_client_messages')
@@ -53,15 +57,21 @@ export async function POST(
       message_body: inviteMessage,
     })
 
-  // 3. Dispatch high-priority Push Notification to athlete
+  // 3. Dispatch high-priority Push, Email & SMS Notification to athlete with direct link
   let pushSent = false
   try {
     const res = await notifyUser({
       userId: clientId,
       type: 'live_session_started',
       title: 'Coach Gordon is Live!',
-      body: 'Your 1:1 Live Movement & Advisory Consultation is starting now. Tap to join.',
-      data: { clientId, coachId: authz.user.id },
+      body: `Your 1:1 Live Movement & Advisory Consultation is starting now. Tap to join: ${liveUrl}`,
+      url: livePath,
+      data: {
+        clientId,
+        coachId: authz.user.id,
+        url: livePath,
+        link: liveUrl,
+      },
     })
     pushSent = res.channels.length > 0
   } catch {

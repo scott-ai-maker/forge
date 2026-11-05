@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.44.0'
-export const APP_RELEASE_DATE = '2026-10-22'
-export const APP_RELEASE_CODENAME = 'Forge Athletic for Apple Watch (watchOS) Companion & Ultra 49mm Hardware Simulator'
+export const APP_VERSION = '1.44.3'
+export const APP_RELEASE_DATE = '2026-11-05'
+export const APP_RELEASE_CODENAME = 'WebGL2 Joint Bilateral Virtual Background Matting & Direct Live Studio Alert Links'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,27 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
+    version: '1.44.3',
+    date: '2026-11-05',
+    codename: APP_RELEASE_CODENAME,
+    category: 'fix',
+    badge: 'WebGL2 Joint Bilateral Edge Matting · Edge Halo Despill · Multi-Channel Live Studio Links',
+    title: 'WebGL2 Camera-Guided Joint Bilateral Silhouette Matting & Actionable Live Session Links',
+    summary: 'Eliminated virtual background silhouette fuzz using continuous MediaPipe confidence masks, motion-adaptive temporal EMA, and a WebGL2 camera-guided joint bilateral filter with inward edge color despill. Added direct clickable /dashboard/live links across push, email, SMS, concierge chat, and the athlete dashboard.',
+    highlights: [
+      'Continuous Confidence Mask Matting: Switched MediaPipe Selfie Segmenter from quantized binary category masks to continuous floating-point confidence masks with strict foreground inversion (1 - rawConf).',
+      'WebGL2 Camera-Guided Joint Bilateral Shader & Edge Despill: Weights the 256x256 neural mask against 1080p camera RGB gradients, applies a 28% optical choke, and samples inward foreground RGB along the mask gradient to suppress bright room halos.',
+      'Direct Live Session Links Across All Channels: Included clickable /dashboard/live links in push/SMS/email payloads, added rich CTA button rendering in MessageThreadClient, added a Live Session Active banner on the athlete dashboard, and wired native iOS push tap navigation in AppDelegate.',
+    ],
+    relatedLinks: [
+      { label: 'Athlete Live Studio', href: '/dashboard/live' },
+      { label: 'Coach Command Studio', href: '/coach' },
+    ],
+  },
+  {
     version: '1.44.0',
     date: '2026-10-22',
-    codename: APP_RELEASE_CODENAME,
+    codename: 'Forge Athletic for Apple Watch (watchOS) Companion & Ultra 49mm Hardware Simulator',
     category: 'feature',
     badge: 'Apple Watch (watchOS) Companion · Digital Crown Set Logging · Bio-Adaptive Rest Haptics · Tanaka Cardio Tracking · Ultra 49mm Simulator',
     title: 'Forge Athletic for Apple Watch (watchOS) Companion & In-Browser Hardware Simulator',

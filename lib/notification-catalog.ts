@@ -28,7 +28,7 @@ export interface NotificationDefinition {
 export const NOTIFICATION_CATALOG: Record<NotificationType, NotificationDefinition> = {
   new_message: { category: 'messages', push: true, email: true, sms: false, throttleMinutes: 30 },
   coach_feedback: { category: 'messages', push: true, email: true, sms: false },
-  live_session_started: { category: 'sessions', push: true, email: false, sms: true },
+  live_session_started: { category: 'sessions', push: true, email: true, sms: true },
   live_session_recap: { category: 'sessions', push: true, email: true, sms: false },
   weekly_checkin_nudge: { category: 'reminders', push: true, email: true, sms: false },
   sunday_dossier_ready: { category: 'reminders', push: true, email: true, sms: false },

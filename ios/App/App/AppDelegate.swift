@@ -1,17 +1,41 @@
 import UIKit
+import UserNotifications
 import Capacitor
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
         // Register Native HealthKit Background Delivery Observers
         GAAHealthSyncManager.shared.registerBackgroundObservers()
         // Activate Apple Watch Bidirectional Connectivity
         ForgeWatchConnectivityManager.shared.activate()
         return true
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .list, .sound, .badge])
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        let userInfo = response.notification.request.content.userInfo
+        let targetPath = (userInfo["url"] as? String) ?? (userInfo["link"] as? String) ?? "/dashboard/live"
+        DispatchQueue.main.async {
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = scene.windows.first?.rootViewController as? CAPBridgeViewController,
+               let webView = rootVC.webView {
+                let escaped = targetPath.replacingOccurrences(of: "'", with: "\\'")
+                webView.evaluateJavaScript("window.location.href = '\(escaped)';", completionHandler: nil)
+            }
+        }
+        completionHandler()
     }
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {

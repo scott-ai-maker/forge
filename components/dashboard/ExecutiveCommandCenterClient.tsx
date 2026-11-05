@@ -40,6 +40,7 @@ export interface ExecutiveCommandCenterClientProps {
   sessions: Array<{ id: string; scheduled_at: string; duration_mins?: number | null; notes?: string | null; status?: string | null }>
   totalRemaining: number
   initialWorkspace?: DashboardWorkspace
+  activeLiveSessionHref?: string | null
 }
 
 export interface BaselineOnboardingBannerState {
@@ -96,6 +97,7 @@ export default function ExecutiveCommandCenterClient({
   packages: _packages,
   sessions,
   totalRemaining,
+  activeLiveSessionHref,
 }: ExecutiveCommandCenterClientProps) {
   const [hasLocalDraft, setHasLocalDraft] = useState(false)
 
@@ -129,6 +131,61 @@ export default function ExecutiveCommandCenterClient({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* ── 0a. Active Live Session Alert Banner ── */}
+      {activeLiveSessionHref && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.22) 0%, rgba(8,14,24,0.96) 100%)',
+            border: '1.5px solid #10B981',
+            borderRadius: 10,
+            padding: '14px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+            boxShadow: '0 0 24px rgba(16, 185, 129, 0.3)',
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#34D399', fontWeight: 800 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+              <span>Live Telehealth Studio Active Now</span>
+            </div>
+            <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 17, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.04em' }}>
+              COACH GORDON IS WAITING IN YOUR LIVE STUDIO
+            </h4>
+            <p style={{ margin: '2px 0 0', fontSize: 12.5, color: '#CBD5E1' }}>
+              Your live 1:1 or team movement consultation is in progress. Tap to join the live video stream immediately.
+            </p>
+          </div>
+          <Link
+            href={activeLiveSessionHref}
+            className="tactile-btn"
+            style={{
+              padding: '10px 18px',
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              color: '#FFFFFF',
+              borderRadius: 8,
+              fontFamily: 'var(--font-sans, Raleway), sans-serif',
+              textTransform: 'uppercase',
+              fontSize: 12,
+              letterSpacing: '0.08em',
+              fontWeight: 800,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+            }}
+            onClick={() => triggerHaptic('tap')}
+          >
+            <GaaIcon name="camera" size={14} tone="inherit" />
+            <span>Join Live Studio Now →</span>
+          </Link>
+        </div>
+      )}
+
       {/* ── 0. Baseline Onboarding Banner ── */}
       {onboardingBannerState && (
         <div
@@ -560,15 +617,53 @@ export default function ExecutiveCommandCenterClient({
                 </button>
               </>
             ) : totalRemaining > 0 ? (
-              <Link
-                href="/dashboard/book"
-                className="sgf-button sgf-button-primary"
-                style={{ padding: '7px 14px', fontSize: 11.5, textDecoration: 'none' }}
-              >
-                Schedule Diagnostic ({totalRemaining} left)
-              </Link>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Link
+                  href="/dashboard/live"
+                  className="tactile-btn"
+                  style={{
+                    padding: '7px 14px',
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    color: '#FFFFFF',
+                    borderRadius: 6,
+                    fontFamily: 'var(--font-sans, Raleway), sans-serif',
+                    textTransform: 'uppercase',
+                    fontSize: 11.5,
+                    letterSpacing: '0.06em',
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                  }}
+                >
+                  Enter Live Studio →
+                </Link>
+                <Link
+                  href="/dashboard/book"
+                  className="sgf-button sgf-button-primary"
+                  style={{ padding: '7px 14px', fontSize: 11.5, textDecoration: 'none' }}
+                >
+                  Schedule Diagnostic ({totalRemaining} left)
+                </Link>
+              </div>
             ) : (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Link
+                  href="/dashboard/live"
+                  className="tactile-btn"
+                  style={{
+                    padding: '7px 14px',
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    color: '#FFFFFF',
+                    borderRadius: 6,
+                    fontFamily: 'var(--font-sans, Raleway), sans-serif',
+                    textTransform: 'uppercase',
+                    fontSize: 11.5,
+                    letterSpacing: '0.06em',
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                  }}
+                >
+                  Enter Live Studio →
+                </Link>
                 <Link
                   href="/dashboard/book"
                   className="sgf-button sgf-button-primary"

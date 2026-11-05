@@ -42,6 +42,92 @@ function parseVoiceNote(body: string): { isVoice: boolean; duration: number; src
   return { isVoice: false, duration: 0, src: '' }
 }
 
+function renderFormattedMessageBody(body: string) {
+  if (!body) return null
+  const tokenRegex = /(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|https?:\/\/[^\s)]+)/g
+  const parts = body.split(tokenRegex)
+
+  return parts.map((part, idx) => {
+    const mdLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+    if (mdLinkMatch) {
+      const rawLabel = mdLinkMatch[1].replace(/\*\*/g, '').trim()
+      const href = mdLinkMatch[2].trim()
+      const isLiveLink = href.includes('/dashboard/live')
+      if (isLiveLink) {
+        return (
+          <Link
+            key={idx}
+            href={href}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 6,
+              marginBottom: 4,
+              padding: '9px 16px',
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              border: '1px solid rgba(52, 211, 153, 0.7)',
+              color: '#FFFFFF',
+              fontFamily: 'var(--font-sans, Raleway), sans-serif',
+              fontSize: 12.5,
+              fontWeight: 800,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+            }}
+          >
+            <GaaIcon name="camera" size={14} tone="inherit" />
+            <span>{rawLabel} →</span>
+          </Link>
+        )
+      }
+      return (
+        <Link
+          key={idx}
+          href={href}
+          style={{
+            color: 'var(--gold-lt)',
+            fontWeight: 700,
+            textDecoration: 'underline',
+          }}
+        >
+          {rawLabel}
+        </Link>
+      )
+    }
+
+    const boldMatch = part.match(/^\*\*([^*]+)\*\*$/)
+    if (boldMatch) {
+      return (
+        <strong key={idx} style={{ fontWeight: 800, color: '#FFFFFF' }}>
+          {boldMatch[1]}
+        </strong>
+      )
+    }
+
+    if (/^https?:\/\/[^\s)]+$/.test(part)) {
+      return (
+        <a
+          key={idx}
+          href={part}
+          style={{
+            color: 'var(--gold-lt)',
+            fontWeight: 700,
+            textDecoration: 'underline',
+            wordBreak: 'break-all',
+          }}
+        >
+          {part}
+        </a>
+      )
+    }
+
+    return <span key={idx}>{part}</span>
+  })
+}
+
 function getDateDividerLabel(dateString: string): string {
   const d = new Date(dateString)
   if (isNaN(d.getTime())) return 'Earlier'
@@ -1026,9 +1112,9 @@ export default function MessageThreadClient({
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <p style={{ margin: 0, fontFamily: 'Raleway, sans-serif', fontSize: 14.5, lineHeight: 1.5, color: '#F8FAFC' }}>
-                            {msg.message_body}
-                          </p>
+                          <div style={{ margin: 0, fontFamily: 'Raleway, sans-serif', fontSize: 14.5, lineHeight: 1.5, color: '#F8FAFC', whiteSpace: 'pre-wrap' }}>
+                            {renderFormattedMessageBody(msg.message_body)}
+                          </div>
 
                           {/* Action Toolbar on text message */}
                           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, alignItems: 'center', marginTop: 2 }}>
