@@ -297,7 +297,8 @@ export default function CoachLiveSessionLauncher({ assignedClients, teams }: Coa
           </div>
         </div>
 
-        {/* 1:1 vs Team Studio Mode Switcher */}
+        {/* 1:1 vs Team Studio Mode Switcher (Team mode disabled in Tier 4 cleanup) */}
+        {Boolean(false) && (
         <div
           data-testid="studio-mode-toggle"
           style={{
@@ -369,6 +370,7 @@ export default function CoachLiveSessionLauncher({ assignedClients, teams }: Coa
             </span>
           </button>
         </div>
+        )}
       </div>
 
       {/* ── Mode 1: 1:1 Live Video Studio ── */}

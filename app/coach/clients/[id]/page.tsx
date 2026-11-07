@@ -613,26 +613,6 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
             >
               Message Member
             </a>
-            <a
-              href={`/coach/clients/${id}/dossier`}
-              className="tactile-btn"
-              style={{
-                padding: '10px 14px',
-                borderRadius: 4,
-                background: 'rgba(56,189,248,0.12)',
-                border: '1px solid rgba(56,189,248,0.4)',
-                color: '#38BDF8',
-                fontSize: 12,
-                fontWeight: 700,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <GaaIcon name="crown" size={13} tone="inherit" />
-              <span>Weekly Progress Report</span>
-            </a>
             <CoachClientAssignmentButton clientId={id} mode="release" />
             <a
               href={`/coach/clients/${id}?tab=lifecycle`}
@@ -1338,7 +1318,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
           </>
         )}
 
-        {activeTab === 'dossier' && (
+        {activeTab === 'dossier' && Boolean(false) && (
           <div style={{ display: 'grid', gap: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
               <h2 style={sectionHeadingStyle}>Weekly Progress Report</h2>

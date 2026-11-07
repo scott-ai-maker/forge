@@ -14,6 +14,7 @@ interface PageProps {
 }
 
 export default async function CoachTeamLiveSessionPage({ params }: PageProps) {
+  if (Boolean(true)) redirect('/coach')
   const supabase = await createClient()
   const {
     data: { user },

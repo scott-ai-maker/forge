@@ -13,6 +13,7 @@ import {
 } from '@/lib/metabolic-nutrition'
 import type { NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 import SupplementAdvisorWidget from '@/components/fitness/SupplementAdvisorWidget'
+import { isDispensaryAndSupplementsEnabled } from '@/lib/supplement-prescriptions'
 
 import { DailyBiometricSummary } from '@/lib/wearables-telemetry'
 
@@ -241,6 +242,7 @@ export default function MetabolicNutritionProtocol({
               type="button"
               onClick={() => setNutritionMode('supplements')}
               className="tactile-btn"
+              title="Thorne Dispensary & Supplements (~5 business days remaining for approval)"
               style={{
                 padding: '8px 16px',
                 background: nutritionMode === 'supplements' ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
@@ -254,10 +256,27 @@ export default function MetabolicNutritionProtocol({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
+                opacity: isDispensaryAndSupplementsEnabled ? 1 : 0.78,
               }}
             >
               <GaaIcon name="pill" size={14} tone={nutritionMode === 'supplements' ? 'inherit' : 'gold'} />
               <span>Chrono-Nutrition &amp; Supplements</span>
+              {!isDispensaryAndSupplementsEnabled && (
+                <span
+                  style={{
+                    fontSize: 9.5,
+                    fontWeight: 800,
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    background: nutritionMode === 'supplements' ? 'rgba(8,14,20,0.85)' : 'rgba(245,158,11,0.18)',
+                    color: nutritionMode === 'supplements' ? '#FBBF24' : 'var(--gold-lt)',
+                    border: '1px solid rgba(245,158,11,0.4)',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  PENDING APPROVAL (~5 DAYS)
+                </span>
+              )}
             </button>
           </div>
         </div>

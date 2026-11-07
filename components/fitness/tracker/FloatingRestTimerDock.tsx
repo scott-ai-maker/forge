@@ -506,8 +506,8 @@ export default function FloatingRestTimerDock({
         )}
       </div>
 
-      {/* ── Coach Gordon Sanctuary In-Ear Audio Note Banner ── */}
-      {relevantCoachAudioNote && !showCoachAudioNote && (
+      {/* ── Coach Gordon Sanctuary In-Ear Audio Note Banner (Disabled in Tier 4 cleanup) ── */}
+      {relevantCoachAudioNote && !showCoachAudioNote && Boolean(false) && (
         <div
           data-testid="coach-rest-audio-banner"
           style={{
@@ -558,8 +558,8 @@ export default function FloatingRestTimerDock({
         </div>
       )}
 
-      {/* ── Expanded Sanctuary Audio Note Player ── */}
-      {showCoachAudioNote && relevantCoachAudioNote && (
+      {/* ── Expanded Sanctuary Audio Note Player (Disabled in Tier 4 cleanup) ── */}
+      {showCoachAudioNote && relevantCoachAudioNote && Boolean(false) && (
         <SanctuaryAudioNotePlayer
           note={relevantCoachAudioNote}
           compact

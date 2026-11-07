@@ -54,7 +54,7 @@ const PILLARS: HubPillar[] = [
     tone: 'emerald',
     tabs: [
       { key: 'shield', label: 'Liability Shield & PAR-Q', icon: 'shield', tone: 'emerald', desc: 'Medical clearance & liability status', badge: 'Clinical' },
-      { key: 'prescriptions', label: 'Toolkits, Cardio & Supplements', icon: 'toolbox', tone: 'emerald', desc: 'AI Voice Cardio, specialized toolboxes & supplement guides', badge: 'Protocols' },
+      { key: 'prescriptions', label: 'Specialized Toolboxes', icon: 'toolbox', tone: 'emerald', desc: 'Targeted movement relief toolkits (Desk, Low Back, Travel, Sleep)', badge: 'Toolkits' },
     ],
   },
   {
@@ -66,7 +66,6 @@ const PILLARS: HubPillar[] = [
     tabs: [
       { key: 'sessions', label: 'Sessions & Schedule', icon: 'sessions', tone: 'slate', desc: 'Completed & upcoming coaching appointments' },
       { key: 'checkins', label: 'Weekly Check-Ins', icon: 'checkins', tone: 'slate', desc: 'Sunday review submissions & photo feedback' },
-      { key: 'dossier', label: 'Sunday Dossier', icon: 'crown', tone: 'gold', desc: 'Boardroom Intelligence Dossier & S.O.A.P. record', badge: 'PDF' },
       { key: 'commerce', label: 'Commerce & Packages', icon: 'commerce', tone: 'slate', desc: 'Stripe packages, comps & invoices' },
       { key: 'lifecycle', label: 'Lifecycle & Audit', icon: 'lifecycle', tone: 'amber', desc: 'Active standing, holds, deactivations & audit trail', badge: 'Audit' },
     ],

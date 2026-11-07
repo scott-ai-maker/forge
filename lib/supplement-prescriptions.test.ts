@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { generateSupplementStack } from './supplement-prescriptions'
+import {
+  DISPENSARY_PARTNER_CONFIG,
+  generateSupplementStack,
+  isDispensaryAndSupplementsEnabled,
+} from './supplement-prescriptions'
 
 describe('supplement-prescriptions & drug-nutrient interactions', () => {
+  it('temporarily disables Thorne dispensary and supplements by default while approval completes (~5 business days left, 50%)', () => {
+    expect(isDispensaryAndSupplementsEnabled).toBe(false)
+    expect(DISPENSARY_PARTNER_CONFIG.isEnabled).toBe(false)
+    expect(DISPENSARY_PARTNER_CONFIG.approvalProgressPercent).toBe(50)
+    expect(DISPENSARY_PARTNER_CONFIG.approvalEstimatedDaysRemaining).toBe(5)
+    expect(DISPENSARY_PARTNER_CONFIG.approvalStatusBanner).toContain('5 Business Days')
+  })
+
   it('generates a gold-standard Tier A foundational stack for a healthy 28yo male athlete', () => {
     const res = generateSupplementStack({
       goal: 'hypertrophy',

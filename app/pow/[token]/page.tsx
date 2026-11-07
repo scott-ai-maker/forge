@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { decodeProofOfWorkToken } from '@/lib/proof-of-work-dossier-engine'
 import ProofOfWorkDossierModal from '@/components/fitness/ProofOfWorkDossierModal'
 
@@ -43,6 +43,7 @@ export async function generateMetadata({ params }: ProofOfWorkPageProps): Promis
 }
 
 export default async function ProofOfWorkSharePage({ params }: ProofOfWorkPageProps) {
+  if (Boolean(true)) redirect('/')
   const resolvedParams = await params
   const dossier = decodeProofOfWorkToken(resolvedParams.token)
 

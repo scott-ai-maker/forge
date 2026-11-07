@@ -9,6 +9,7 @@ import {
   SupplementGoal,
   generateSupplementStack,
   getDispensaryPartnerInfo,
+  isDispensaryAndSupplementsEnabled,
 } from '@/lib/supplement-prescriptions'
 
 interface ExecutiveSupplementTimelineProps {
@@ -293,7 +294,11 @@ export default function ExecutiveSupplementTimeline({
               }}
             >
               <span>✦</span>
-              <span>Shop supplement options · 15% member discount</span>
+              <span>
+                {isDispensaryAndSupplementsEnabled
+                  ? 'Shop supplement options · 15% member discount'
+                  : 'Thorne Dispensary & Supplements · Temporarily Paused (~5 Business Days Left)'}
+              </span>
             </div>
             <h3
               style={{
@@ -305,68 +310,89 @@ export default function ExecutiveSupplementTimeline({
                 margin: '0 0 4px',
               }}
             >
-              EXPLORE SUPPLEMENT OPTIONS
+              {isDispensaryAndSupplementsEnabled
+                ? 'EXPLORE SUPPLEMENT OPTIONS'
+                : 'THORNE DISPENSARY APPROVAL IN PROGRESS (~50% COMPLETE)'}
             </h3>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--gray)', lineHeight: 1.45 }}>
-              Forge Athletic athletes receive wholesale-tier access to cold-chain shipped, 100% 3rd-party lab verified (NSF for Sport / USP) formulations with zero heavy metals or fillers.
+              {isDispensaryAndSupplementsEnabled
+                ? 'Forge Athletic athletes receive wholesale-tier access to cold-chain shipped, 100% 3rd-party lab verified (NSF for Sport / USP) formulations with zero heavy metals or fillers.'
+                : 'Thorne dispensary ordering and supplement fulfillment are temporarily disabled while practitioner account verification completes (~5 business days remaining, halfway complete).'}
             </p>
-            <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
-              Partner Notice: Forge Athletic partners with Fullscript and Thorne to offer third-party verified formulations at a 15% courtesy discount. Forge Athletic may receive an affiliate commission on qualifying purchases.
-            </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <a
-            href={dispensaryInfo.defaultFullscriptUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="tactile-btn"
-            style={{
-              background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-              color: '#080E14',
-              fontFamily: 'var(--font-sans, Raleway), sans-serif',
-              fontSize: 13,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              padding: '10px 20px',
-              borderRadius: 6,
-              textDecoration: 'none',
-              fontWeight: 800,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              boxShadow: '0 4px 15px rgba(197, 160, 89, 0.4)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <span>Order Stack (15% Off)</span>
-            <span>↗</span>
-          </a>
-          <a
-            href={dispensaryInfo.defaultThorneUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="tactile-btn"
-            style={{
-              border: '1px solid rgba(197, 160, 89, 0.5)',
-              background: 'rgba(255, 255, 255, 0.04)',
-              color: 'var(--gold-lt)',
-              fontFamily: 'Raleway, sans-serif',
-              fontSize: 12,
-              fontWeight: 700,
-              padding: '10px 16px',
-              borderRadius: 6,
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <span>{dispensaryInfo.isThorneLinked ? 'Thorne Dispensary' : 'Thorne (Setup Pending)'}</span>
-            <span style={{ fontSize: 10 }}>↗</span>
-          </a>
+          {isDispensaryAndSupplementsEnabled ? (
+            <>
+              <a
+                href={dispensaryInfo.defaultFullscriptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tactile-btn"
+                style={{
+                  background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
+                  color: '#080E14',
+                  fontFamily: 'var(--font-sans, Raleway), sans-serif',
+                  fontSize: 13,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  padding: '10px 20px',
+                  borderRadius: 6,
+                  textDecoration: 'none',
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: '0 4px 15px rgba(197, 160, 89, 0.4)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>Order Stack (15% Off)</span>
+                <span>↗</span>
+              </a>
+              <a
+                href={dispensaryInfo.defaultThorneUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tactile-btn"
+                style={{
+                  border: '1px solid rgba(197, 160, 89, 0.5)',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  color: 'var(--gold-lt)',
+                  fontFamily: 'Raleway, sans-serif',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: '10px 16px',
+                  borderRadius: 6,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>{dispensaryInfo.isThorneLinked ? 'Thorne Dispensary' : 'Thorne (Setup Pending)'}</span>
+                <span style={{ fontSize: 10 }}>↗</span>
+              </a>
+            </>
+          ) : (
+            <span
+              style={{
+                border: '1px solid rgba(245, 158, 11, 0.45)',
+                background: 'rgba(245, 158, 11, 0.12)',
+                color: '#FBBF24',
+                fontFamily: 'var(--font-telemetry, monospace)',
+                fontSize: 11.5,
+                fontWeight: 700,
+                padding: '10px 16px',
+                borderRadius: 6,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              ⏳ Approval ~50% · Est. 5 Business Days
+            </span>
+          )}
         </div>
       </div>
 
@@ -532,7 +558,7 @@ export default function ExecutiveSupplementTimeline({
                             <GaaIcon name="external-link" size={10} tone="slate" />
                           </button>
 
-                          {item.recommendedBrand && (
+                          {item.recommendedBrand && isDispensaryAndSupplementsEnabled && (
                             <a
                               href={item.dispensaryUrl || dispensaryInfo.defaultFullscriptUrl}
                               target="_blank"
@@ -688,7 +714,7 @@ export default function ExecutiveSupplementTimeline({
                 <strong style={{ color: '#FFFFFF', fontFamily: 'monospace' }}>{selectedItemDetail.optimalDosage}</strong>
               </div>
 
-              {selectedItemDetail.recommendedBrand && (
+              {selectedItemDetail.recommendedBrand && isDispensaryAndSupplementsEnabled && (
                 <div style={{ padding: '12px 14px', background: 'rgba(212,160,23,0.1)', border: '1px solid rgba(212,160,23,0.35)', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                   <div>
                     <div style={{ fontSize: 10, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em' }}>

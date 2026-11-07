@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -79,10 +80,15 @@ const PROOFS: ProofData[] = [
 ]
 
 export default function BrandProofsPage() {
+  const router = useRouter()
   const [selectedId, setSelectedId] = useState<number>(1)
   const currentProof = PROOFS.find((p) => p.id === selectedId) || PROOFS[0]
 
-  return (
+  useEffect(() => {
+    router.replace('/')
+  }, [router])
+
+  return Boolean(false) ? (
     <div className="min-h-screen bg-[#080E14] text-[#F8FAFC] p-4 md:p-8 font-sans selection:bg-[#F59E0B] selection:text-[#080E14]">
       {/* Top Banner */}
       <header className="max-w-6xl mx-auto mb-8 border-b border-[#1E293B] pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -224,5 +230,5 @@ export default function BrandProofsPage() {
         </div>
       </main>
     </div>
-  )
+  ) : null
 }

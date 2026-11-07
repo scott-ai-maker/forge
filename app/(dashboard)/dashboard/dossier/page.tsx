@@ -25,6 +25,7 @@ export default async function ExecutiveSundayDossierPage({
 }: {
   searchParams?: DossierPageSearchParams
 }) {
+  if (Boolean(true)) redirect('/dashboard/fitness?workspace=progress')
   const resolvedSearchParams = searchParams ? await searchParams : undefined
   const rawClientId = Array.isArray(resolvedSearchParams?.client_id)
     ? resolvedSearchParams?.client_id[0]

@@ -4874,33 +4874,6 @@ export default function FitnessTrackerClient({
                                       </button>
                                     )
                                   })}
-
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      triggerHaptic('tap')
-                                      setActiveBandChartModal({ exerciseKey, exerciseName: ex.name })
-                                    }}
-                                    className="tactile-btn"
-                                    style={{
-                                      background: 'rgba(212,160,23,0.15)',
-                                      border: '1px solid rgba(212,160,23,0.4)',
-                                      color: 'var(--gold-lt)',
-                                      fontSize: 11,
-                                      fontWeight: 700,
-                                      padding: '5px 12px',
-                                      minHeight: 44,
-                                      borderRadius: 4,
-                                      cursor: 'pointer',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 6,
-                                    }}
-                                    title="Open full Forge Athletic Resistance Band Matrix & Calibration Guide"
-                                  >
-                                    <GaaIcon name="activity" size={12} tone="gold" />
-                                    <span>Matrix &amp; Calibration Chart 📊</span>
-                                  </button>
                                 </div>
                               </details>
                             )}
@@ -5325,33 +5298,6 @@ export default function FitnessTrackerClient({
                                     <GaaIcon name="shield-check" size={12} tone="gold" />
                                     <span>Swap for Joint Relief</span>
                                   </button>
-                                  {isBand && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        triggerHaptic('tap')
-                                        setActiveBandChartModal({ exerciseKey, exerciseName: ex.name })
-                                      }}
-                                      style={{
-                                        fontSize: 11.5,
-                                        background: 'rgba(212,160,23,0.12)',
-                                        border: '1px solid rgba(212,160,23,0.35)',
-                                        color: 'var(--gold-lt)',
-                                        padding: '4px 10px',
-                                        borderRadius: 4,
-                                        cursor: 'pointer',
-                                        fontFamily: 'Raleway, sans-serif',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: 5,
-                                        fontWeight: 700,
-                                      }}
-                                      title="Open Resistance Band Matrix & Weight Equivalent Calibration Chart"
-                                    >
-                                      <GaaIcon name="activity" size={12} tone="gold" />
-                                      <span>Band Matrix Chart</span>
-                                    </button>
-                                  )}
                                   <button
                                     type="button"
                                     onClick={() => setSkipModal({ workoutDay: workout.day, exercise: ex })}
@@ -5895,57 +5841,6 @@ export default function FitnessTrackerClient({
                                     </div>
                                   </div>
 
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const ctx = getSharedAudioContext()
-                                      if (ctx && ctx.state === 'suspended') {
-                                        void ctx.resume()
-                                      }
-                                      const modality = getFirstCardioModality(cardio, 'Treadmill Incline Walk')
-                                      handleStartCardioSession(workout.day, modality, false)
-                                      const watchCardioPayload = constructWatchWorkoutPayload(workout.day, true, 'cardio')
-                                      if (watchCardioPayload) {
-                                        void import('@/lib/native-healthkit-bridge').then(({ startWatchWorkout }) => {
-                                          void startWatchWorkout(watchCardioPayload)
-                                        })
-                                      }
-                                      const patId: CardioPatternId =
-                                        cardio?.stage === 3
-                                          ? 'tabata_micro_bursts'
-                                          : cardio?.stage === 2
-                                          ? 'hiit_1_to_2'
-                                          : 'zone2_aerobic_engine'
-                                      setActiveCardioPlayerSession({
-                                        patternId: patId,
-                                        durationMins: cardio?.durationMins || 20,
-                                        modality,
-                                        autoStart: true,
-                                      })
-                                    }}
-                                    className="tactile-btn"
-                                    style={{
-                                      background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
-                                      border: '1px solid #F59E0B',
-                                      color: '#0A0E18',
-                                      fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                                      textTransform: 'uppercase',
-                                      fontSize: 12.5,
-                                      letterSpacing: '0.08em',
-                                      fontWeight: 700,
-                                      padding: '7px 14px',
-                                      borderRadius: 6,
-                                      cursor: 'pointer',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 6,
-                                      boxShadow: '0 2px 12px rgba(212,160,23,0.35)',
-                                    }}
-                                  >
-                                    <GaaIcon name="headphones" size={14} tone="dark" />
-                                    <span>START COACH GORDON CARDIO</span>
-                                  </button>
-
                                 <button
                                   type="button"
                                   onClick={() => toggleStage(workout.day, 'cardio')}
@@ -6442,78 +6337,6 @@ export default function FitnessTrackerClient({
       {/* ── PROGRESS & PRS HUB ── */}
       {primaryHub === 'progress' && (
         <>
-          {/* Executive Proof of Work Dossier Launcher */}
-          <div
-            style={{
-              maxWidth: 1120,
-              margin: '0 auto 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 12,
-              padding: '14px 20px',
-              background: 'linear-gradient(90deg, rgba(8, 14, 24, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
-              border: '1.5px solid rgba(212, 175, 55, 0.4)',
-              borderRadius: 10,
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(212, 175, 55, 0.15)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 8,
-                  background: 'rgba(212, 175, 55, 0.12)',
-                  border: '1px solid rgba(212, 175, 55, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  flexShrink: 0,
-                }}
-              >
-                📋
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 800, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Clinical Proof of Work Dossier
-                  </span>
-                </div>
-                <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
-                  Export verified 1RM overload curves, ACWR safety index, and progressive overload records for doctors, PTs, or peers.
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowProofOfWorkModal(true)}
-              data-testid="open-proof-of-work-btn"
-              style={{
-                background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
-                border: '1px solid #F3E5AB',
-                color: '#0A0E18',
-                borderRadius: 6,
-                padding: '9px 18px',
-                fontSize: 12,
-                fontWeight: 800,
-                fontFamily: 'var(--font-heading, sans-serif)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: '0 4px 14px rgba(212, 175, 55, 0.35)',
-              }}
-            >
-              <span>📄 View &amp; Export Dossier</span>
-            </button>
-          </div>
-
           <ProgressAnalyticsView
           sessionsPerWeek={sessionsPerWeek}
           optPhase={plan?.nasm_opt_phase}
@@ -6631,8 +6454,8 @@ export default function FitnessTrackerClient({
         />
       )}
 
-      {/* ── CLINICAL PROOF OF WORK PERFORMANCE DOSSIER MODAL ── */}
-      {showProofOfWorkModal && (
+      {/* ── CLINICAL PROOF OF WORK PERFORMANCE DOSSIER MODAL (Disabled in Tier 3 cleanup) ── */}
+      {showProofOfWorkModal && Boolean(false) && (
         <ProofOfWorkDossierModal
           isOpen={showProofOfWorkModal}
           onClose={() => setShowProofOfWorkModal(false)}
@@ -6697,8 +6520,8 @@ export default function FitnessTrackerClient({
         />
       )}
 
-      {/* Resistance Band Matrix & Calibration Modal (Tool #12) */}
-      {activeBandChartModal && (
+      {/* Resistance Band Matrix & Calibration Modal (Disabled in Tier 3 cleanup) */}
+      {activeBandChartModal && Boolean(false) && (
         <BandResistanceChartModal
           isOpen={Boolean(activeBandChartModal)}
           onClose={() => setActiveBandChartModal(null)}
@@ -6735,8 +6558,8 @@ export default function FitnessTrackerClient({
       )}
 
 
-      {/* AI Coach Gordon Voiceover Cardio Training Engine Modal */}
-      {activeCardioPlayerSession && (
+      {/* AI Coach Gordon Voiceover Cardio Training Engine Modal (Disabled in Tier 3 cleanup) */}
+      {activeCardioPlayerSession && Boolean(false) && (
         <div
           role="dialog"
           aria-modal="true"
@@ -6798,8 +6621,8 @@ export default function FitnessTrackerClient({
         </div>
       )}
 
-      {/* Mindful Moment & Parasympathetic Reset Modal */}
-      {activeMindfulSession?.isOpen && (
+      {/* Mindful Moment & Parasympathetic Reset Modal (Disabled in Tier 4 cleanup) */}
+      {activeMindfulSession?.isOpen && Boolean(false) && (
         <MindfulMomentModal
           isOpen={activeMindfulSession.isOpen}
           onClose={() => setActiveMindfulSession(null)}
@@ -6856,7 +6679,6 @@ export default function FitnessTrackerClient({
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           Boolean((profile as any)?.hasHeartMedications)
         }
-        onOpenWatchSimulator={() => setIsWatchSimulatorOpen(true)}
       />
 
       {/* ── FLOATING STICKY LIVE WORKOUT SESSION DOCK (MOBILE & DESKTOP) ── */}
@@ -6872,37 +6694,7 @@ export default function FitnessTrackerClient({
           userWeightKg={profile?.weight_kg || 75}
           onPauseResume={handlePauseResumeWorkoutSession}
           onQuitSession={handleClientQuitWorkout}
-          onOpenWatchSimulator={() => setIsWatchSimulatorOpen(true)}
-          onStartCardio={() => {
-            const ctx = getSharedAudioContext()
-            if (ctx && ctx.state === 'suspended') {
-              void ctx.resume()
-            }
-            const activeWorkout = planWorkouts.find((w: WorkoutDay) => w.day === activeWorkoutSessionDay)
-            if (activeWorkout) {
-              const cardio = resolveWorkoutCardioProtocol(activeWorkout, profile, plan)
-              const modality = getFirstCardioModality(cardio, 'Treadmill Incline Walk')
-              handleStartCardioSession(activeWorkout.day, modality, false)
-              const watchCardioPayload = constructWatchWorkoutPayload(activeWorkout.day, true, 'cardio')
-              if (watchCardioPayload) {
-                void import('@/lib/native-healthkit-bridge').then(({ startWatchWorkout }) => {
-                  void startWatchWorkout(watchCardioPayload)
-                })
-              }
-              const patId: CardioPatternId =
-                cardio?.stage === 3
-                  ? 'tabata_micro_bursts'
-                  : cardio?.stage === 2
-                  ? 'hiit_1_to_2'
-                  : 'zone2_aerobic_engine'
-              setActiveCardioPlayerSession({
-                patternId: patId,
-                durationMins: cardio?.durationMins || 20,
-                modality,
-                autoStart: true,
-              })
-            }
-          }}
+          onStartCardio={() => {}}
           onFinishLifts={() => {
             const activeWorkout = planWorkouts.find((w: WorkoutDay) => w.day === activeWorkoutSessionDay)
             if (activeWorkout) {
@@ -6915,8 +6707,8 @@ export default function FitnessTrackerClient({
         />
       )}
 
-      {/* ── INTERACTIVE APPLE WATCH ULTRA 49MM HARDWARE SIMULATOR ── */}
-      {(() => {
+      {/* ── INTERACTIVE APPLE WATCH ULTRA 49MM HARDWARE SIMULATOR (Disabled in Tier 4 cleanup) ── */}
+      {Boolean(false) && (() => {
         const simulatorPayload = isWatchSimulatorOpen ? constructWatchWorkoutPayload(effectiveActiveWorkoutDay) : null
         return (
           <AppleWatchSimulatorModal
@@ -7232,44 +7024,6 @@ function PostWorkoutFinishModal({
         </div>
 
 
-
-        {/* ── 1-Click Clinical Proof of Work Dossier Action ── */}
-        <button
-          type="button"
-          onClick={() => {
-            if (onOpenProofOfWork) {
-              onOpenProofOfWork()
-            }
-          }}
-          data-testid="post-workout-pow-btn"
-          style={{
-            background: 'rgba(212, 175, 55, 0.08)',
-            border: '1px solid rgba(212, 175, 55, 0.35)',
-            borderRadius: 8,
-            padding: '10px 14px',
-            color: '#FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            cursor: 'pointer',
-            textAlign: 'left',
-            width: '100%',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 16 }}>📋</span>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold-lt, #F3E5AB)' }}>
-                View Clinical Proof of Work Dossier
-              </div>
-              <div style={{ fontSize: 10.5, color: '#94A3B8' }}>
-                Verified 1RM curves, ACWR safety index, and Sanctuary focus records.
-              </div>
-            </div>
-          </div>
-          <span style={{ fontSize: 12, color: 'var(--gold-lt)' }}>➔</span>
-        </button>
 
         {/* ── Apple Health Sync Confirmation Pill ── */}
         <div

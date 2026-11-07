@@ -27,7 +27,7 @@ describe('MobileNavigationDrawer Structure & Unique Keys', () => {
     const memberItems = CLIENT_DRAWER_SECTIONS.flatMap(section => section.items)
     const performanceSection = CLIENT_DRAWER_SECTIONS.find(section => section.title === 'Your Training')
 
-    expect(memberItems).toHaveLength(10)
+    expect(memberItems).toHaveLength(9)
     expect(performanceSection?.items.map(item => item.label)).toEqual([
       'Today',
       'Training',
@@ -37,6 +37,7 @@ describe('MobileNavigationDrawer Structure & Unique Keys', () => {
     expect(memberItems.find(item => item.label === 'Fitness Lab')?.href).toBe('/dashboard/fitness?workspace=lab')
     expect(memberItems.some(item => item.label === '3D Muscle Recovery Matrix')).toBe(false)
     expect(memberItems.some(item => item.label === 'AI Voice Cardio Studio')).toBe(false)
+    expect(memberItems.some(item => item.label === 'Progress Dossier')).toBe(false)
   })
 
   it('retains direct access to human coaching services, diagnostics, and account settings', () => {
@@ -46,7 +47,6 @@ describe('MobileNavigationDrawer Structure & Unique Keys', () => {
       '/dashboard/fitness?workspace=coach',
       '/dashboard/messages',
       '/audit',
-      '/dashboard/dossier',
       '/dashboard/settings',
     ]))
   })

@@ -281,28 +281,6 @@ export default function CoachCheckinReview({
           </div>
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <a
-              href={`/coach/clients/${clientId}/dossier`}
-              className="tactile-btn"
-              style={{
-                padding: '9px 16px',
-                background: 'linear-gradient(135deg, #38BDF8 0%, #0284C7 100%)',
-                color: '#080E14',
-                borderRadius: 6,
-                fontSize: 12,
-                fontWeight: 800,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: '0 4px 12px rgba(56, 189, 248, 0.25)',
-              }}
-            >
-              <GaaIcon name="crown" size={13} tone="inherit" />
-              <span>Launch Sunday Dossier (PDF)</span>
-              <span>➔</span>
-            </a>
-
             <button
               type="button"
               onClick={() => router.push(`/coach/clients/${clientId}?tab=lifecycle#workspace-tab-content`)}

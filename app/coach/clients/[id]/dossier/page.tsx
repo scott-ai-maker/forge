@@ -21,6 +21,9 @@ interface PageProps {
 }
 
 export default async function CoachClientDossierPage({ params }: PageProps) {
+  const { id } = await params
+  if (Boolean(true)) redirect(`/coach/clients/${id}`)
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -28,7 +31,6 @@ export default async function CoachClientDossierPage({ params }: PageProps) {
 
   if (!user) redirect('/auth/login')
 
-  const { id } = await params
   const admin = supabaseAdmin()
 
   // Verify coach privileges

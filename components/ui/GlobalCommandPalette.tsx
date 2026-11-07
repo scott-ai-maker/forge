@@ -42,16 +42,6 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
     badge: 'NASM OPT',
   },
   {
-    id: 'feat-3d-matrix',
-    title: '3D Muscle Recovery View',
-    subtitle: 'Explore muscle soreness and recovery trends',
-    category: 'Features & Tools',
-    icon: 'dna',
-    href: '/dashboard/fitness?workspace=readiness&tab=3d',
-    keywords: ['3d', 'muscle', 'heatmap', 'recovery', 'matrix', 'soreness', 'fatigue', 'time-lapse', 'chest', 'quads', 'back'],
-    badge: 'Live 3D',
-  },
-  {
     id: 'feat-readiness',
     title: 'Daily Readiness & Training Load',
     subtitle: 'Review recovery signals and recent training',
@@ -87,17 +77,7 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
     category: 'Features & Tools',
     icon: 'barbell',
     href: '/dashboard/fitness?workspace=train',
-    keywords: ['workout', 'train', 'exercise', 'sets', 'reps', 'weight', 'rpe', 'log', 'gym', 'tempo', 'plate calculator'],
-  },
-  {
-    id: 'feat-cardio-studio',
-    title: 'AI Voice Cardio Studio (In-Ear Copilot)',
-    subtitle: '6 Tanaka stage protocols, live HR pacing, in-pocket touch shield & music ducking',
-    category: 'Features & Tools',
-    icon: 'headphones',
-    href: '/dashboard/fitness?workspace=train#cardio-studio',
-    keywords: ['cardio', 'voiceover', 'running', 'walking', 'treadmill', 'zone 2', 'hiit', 'tabata', 'music ducking', 'in-ear', 'headphones'],
-    badge: 'Voice AI',
+    keywords: ['workout', 'train', 'exercise', 'sets', 'reps', 'weight', 'rpe', 'log', 'gym', 'tempo'],
   },
   {
     id: 'feat-assessment',
@@ -116,15 +96,6 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
     icon: 'toolbox',
     href: '/dashboard/fitness?workspace=toolboxes',
     keywords: ['toolbox', 'toolboxes', 'desk worker', 'travel', 'low back', 'sleep', 'prescriptions'],
-  },
-  {
-    id: 'feat-supplements',
-    title: 'Supplement Guidance',
-    subtitle: 'Evidence-informed options, timing, and nutrition support',
-    category: 'Features & Tools',
-    icon: 'supplements',
-    href: '/dashboard/fitness?workspace=supplements',
-    keywords: ['supplements', 'creatine', 'whey', 'protein', 'magnesium', 'dosing', 'prescriptions', 'nutrition'],
   },
   {
     id: 'feat-travel',
@@ -192,26 +163,6 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
   },
 
   // ── Coach Operations ──
-  {
-    id: 'coach-corporate-proposal',
-    title: 'Team Wellness Proposal Builder',
-    subtitle: 'Create a workplace wellness plan and shareable proposal',
-    category: 'Coach Operations',
-    icon: 'crown',
-    href: '/corporate/proposal',
-    keywords: ['corporate', 'proposal', 'b2b', 'enterprise', 'seats', 'roi', 'pitch', 'deck', 'pricing', 'boardroom'],
-    badge: 'B2B Suite',
-  },
-  {
-    id: 'coach-sunday-dossier',
-    title: 'Weekly Progress Report',
-    subtitle: 'Review training trends, movement notes, and progress in a printable report',
-    category: 'Coach Operations',
-    icon: 'clipboard',
-    href: '/dashboard/dossier',
-    keywords: ['dossier', 'sunday', 'briefing', 'acwr', 'soap', 'telemetry', 'report', 'boardroom', 'pdf', 'print'],
-    badge: 'Coach',
-  },
   {
     id: 'coach-triage',
     title: 'Daily Member Check-ins',

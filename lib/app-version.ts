@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.44.3'
-export const APP_RELEASE_DATE = '2026-11-05'
-export const APP_RELEASE_CODENAME = 'WebGL2 Joint Bilateral Virtual Background Matting & Direct Live Studio Alert Links'
+export const APP_VERSION = '1.45.0'
+export const APP_RELEASE_DATE = '2026-11-07'
+export const APP_RELEASE_CODENAME = 'Holiday Launch Streamlining, Tier 1–2 Core Focus & HOLIDAY25 Founding Rate Lock'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -33,9 +33,28 @@ export interface ReleaseLogEntry {
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
   {
+    version: '1.45.0',
+    date: '2026-11-07',
+    codename: APP_RELEASE_CODENAME,
+    category: 'feature',
+    badge: 'Holiday Launch Nov 9 · HOLIDAY25 25% Rate Lock · Tier 1–2 Core Coaching Focus · Thorne Dispensary Gate',
+    title: 'Holiday Launch Acceleration (Nov 9), HOLIDAY25 Founding Deal & Core 1-on-1 Coaching Streamlining',
+    summary: 'Moved the official Forge Athletic public go-live date up to Monday, November 9, 2026 (06:00 AM EST) with the HOLIDAY25 25% lifetime rate-lock offer. Streamlined the athlete and coach experience around the 16 highest-rated Tier 1 and Tier 2 clinical coaching pillars while gating the Thorne dispensary and supplement modules behind NEXT_PUBLIC_DISPENSARY_ENABLED pending practitioner approval.',
+    highlights: [
+      'Holiday Go-Live & HOLIDAY25 Rate Lock: Accelerated public go-live to November 9, 2026 and added built-in HOLIDAY25 Stripe checkout promo support (25% off membership tiers + complimentary 60-min movement screen).',
+      'Core Tier 1 & Tier 2 Platform Focus: Consolidated navigation, command palette, Fitness Lab, Readiness, and Coach workspaces exclusively around the 16 top-rated 1-on-1 coaching, NASM OPT periodization, 3D OHSA screening, Live WebRTC Studio, Form Lab, Nutrition, and Travel features.',
+      'Thorne Dispensary & Supplement Approval Gate: Cleanly gated supplement and dispensary surfaces behind NEXT_PUBLIC_DISPENSARY_ENABLED while practitioner approval completes (~5 business days remaining).',
+    ],
+    relatedLinks: [
+      { label: 'Membership Plans & Holiday Deal', href: '/packages' },
+      { label: 'Training & Progress Hub', href: '/dashboard/fitness' },
+      { label: 'Coach Command Cockpit', href: '/coach' },
+    ],
+  },
+  {
     version: '1.44.3',
     date: '2026-11-05',
-    codename: APP_RELEASE_CODENAME,
+    codename: 'WebGL2 Joint Bilateral Virtual Background Matting & Direct Live Studio Alert Links',
     category: 'fix',
     badge: 'WebGL2 Joint Bilateral Edge Matting · Edge Halo Despill · Multi-Channel Live Studio Links',
     title: 'WebGL2 Camera-Guided Joint Bilateral Silhouette Matting & Actionable Live Session Links',

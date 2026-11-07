@@ -10,12 +10,6 @@ import {
 } from '@/lib/readiness-telemetry'
 import { calculateAcwrFromWorkoutLogs } from '@/lib/coach-triage'
 import { DailyBiometricSummary } from '@/lib/wearables-telemetry'
-import dynamic from 'next/dynamic'
-
-const MuscleRecoveryHeatmap3D = dynamic(
-  () => import('@/components/fitness/MuscleRecoveryHeatmap3D'),
-  { ssr: false }
-)
 
 interface ReadinessRecoveryTrackerProps {
   initialSex?: 'male' | 'female'
@@ -49,13 +43,13 @@ export default function ReadinessRecoveryTracker({
   clientGoal,
   intake,
   profile,
-  initialTab = 'heatmap',
+  initialTab = 'gate',
   workoutLogs = [],
   workoutSetLogs = [],
   workoutPlans = [],
   telemetry,
 }: ReadinessRecoveryTrackerProps) {
-  const normalizedInitialTab = initialTab === '3d' ? 'heatmap' : initialTab
+  const normalizedInitialTab = initialTab === '3d' || initialTab === 'heatmap' ? 'gate' : initialTab
   // Biological & Wearable Inputs (calibrated strictly from telemetry or user entry, no fake numbers)
   const [sleepHours, setSleepHours] = useState<number | null>(telemetry?.sleepHours ?? null)
   const [sleepQuality, setSleepQuality] = useState<number | null>(null)
@@ -63,7 +57,7 @@ export default function ReadinessRecoveryTracker({
   const [baselineRhr, setBaselineRhr] = useState<number>(52)
   const [sorenessLevel, setSorenessLevel] = useState<number | null>(null)
   const [stressLevel, setStressLevel] = useState<number | null>(null)
-  const [activeTab, setActiveTab] = useState<'gate' | 'acwr' | 'deload' | 'heatmap'>(normalizedInitialTab)
+  const [activeTab, setActiveTab] = useState<'gate' | 'acwr' | 'deload'>(normalizedInitialTab)
 
   // Real ACWR Workload derived from athlete's actual logged sets
   const realAcwr = useMemo(() => {
@@ -73,7 +67,7 @@ export default function ReadinessRecoveryTracker({
   // Synchronize activeTab if initialTab changes
   React.useEffect(() => {
     if (initialTab) {
-      setActiveTab(initialTab === '3d' ? 'heatmap' : initialTab)
+      setActiveTab(initialTab === '3d' || initialTab === 'heatmap' ? 'gate' : initialTab)
     }
   }, [initialTab])
 
@@ -204,7 +198,6 @@ export default function ReadinessRecoveryTracker({
         {/* Workspace Navigation Tabs */}
         <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
           {[
-            { id: 'heatmap', icon: 'dna' as const, label: 'Muscle recovery' },
             {
               id: 'gate',
               icon: 'target' as const,
@@ -223,7 +216,7 @@ export default function ReadinessRecoveryTracker({
               key={tab.id}
               type="button"
               aria-pressed={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id as 'heatmap' | 'gate' | 'acwr' | 'deload')}
+              onClick={() => setActiveTab(tab.id as 'gate' | 'acwr' | 'deload')}
               style={{
                 background: activeTab === tab.id ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
                 color: activeTab === tab.id ? 'var(--navy)' : 'var(--white)',
@@ -559,21 +552,6 @@ export default function ReadinessRecoveryTracker({
             </div>
           </div>
         </div>
-      )}
-
-      {/* ── TAB 4: 3D MUSCLE RECOVERY HEATMAP ────────────────────────── */}
-      {activeTab === 'heatmap' && (
-        <MuscleRecoveryHeatmap3D
-          initialAge={initialAge}
-          initialSex={initialSex}
-          initialConditioning={initialConditioning}
-          clientGoal={clientGoal}
-          intake={intake}
-          profile={profile}
-          workoutLogs={workoutLogs}
-          workoutSetLogs={workoutSetLogs}
-          workoutPlans={workoutPlans}
-        />
       )}
     </div>
   )

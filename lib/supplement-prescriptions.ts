@@ -99,16 +99,30 @@ export const isThorneAccountLinked = Boolean(
     rawThorneUrl.startsWith('http')
 )
 
+/**
+ * Partner dispensary & supplement features are temporarily disabled while
+ * Thorne / dispensary partner verification completes (~5 business days remaining,
+ * roughly 50% through approval). Set `NEXT_PUBLIC_DISPENSARY_ENABLED=true`
+ * once approval is finalized to immediately unlock across all surfaces.
+ */
+export const isDispensaryAndSupplementsEnabled =
+  process.env.NEXT_PUBLIC_DISPENSARY_ENABLED === 'true'
+
 export const DISPENSARY_PARTNER_CONFIG = {
   partnerName: 'Forge Athletic Partner Dispensary',
-  platform: 'Fullscript & Thorne Partner Dispensaries',
+  platform: 'Thorne & Partner Dispensaries',
   discountPercentage: 15,
+  isEnabled: isDispensaryAndSupplementsEnabled,
+  approvalProgressPercent: 50,
+  approvalEstimatedDaysRemaining: 5,
+  approvalStatusBanner:
+    'Thorne Dispensary & Supplement Portal Temporarily Paused — Partner Verification ~50% Complete (Est. 5 Business Days Remaining)',
   defaultFullscriptUrl: process.env.NEXT_PUBLIC_FULLSCRIPT_DISPENSARY_URL || 'https://us.fullscript.com',
   defaultThorneUrl: isThorneAccountLinked ? rawThorneUrl! : 'https://www.thorne.com',
   isThorneLinked: isThorneAccountLinked,
   thorneStatusLabel: isThorneAccountLinked
     ? 'Active Partner Dispensary (15% Athlete Privilege Discount)'
-    : 'Thorne Dispensary Account Linking in Progress (Browse Verified Thorne Catalog)',
+    : 'Thorne Dispensary Verification ~50% Complete (Est. 5 Business Days Remaining)',
   standards: [
     '100% 3rd-Party Lab Verified (NSF for Sport / USP / Informed Choice)',
     'Cold-Chain Temperature Controlled Warehousing & Direct Manufacturer Shipping',

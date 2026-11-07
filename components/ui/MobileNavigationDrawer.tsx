@@ -48,7 +48,6 @@ export const CLIENT_DRAWER_SECTIONS: DrawerSection[] = [
       { href: '/dashboard/fitness?workspace=coach', label: 'Coach Hub', icon: 'clipboard', desc: 'Check-ins, advice, and session options' },
       { href: '/dashboard/messages', label: 'Message Coach', icon: 'message', desc: 'Private communication with your coach' },
       { href: '/audit', label: 'Movement Audit', icon: 'microscope', desc: 'AI movement screen & posture breakdown' },
-      { href: '/dashboard/dossier', label: 'Progress Dossier', icon: 'chart', desc: 'Proof-of-work telemetry and performance trends' },
     ],
   },
   {

@@ -6,6 +6,7 @@ import {
   SupplementGoal,
   ClientSex,
   FitnessLevel,
+  isDispensaryAndSupplementsEnabled,
 } from '@/lib/supplement-prescriptions'
 import ExecutiveSupplementTimeline from '@/components/fitness/ExecutiveSupplementTimeline'
 import GaaIcon from '@/components/ui/GaaIcon'
@@ -155,29 +156,71 @@ export default function CoachSupplementPrescriber({
         <button
           type="button"
           onClick={handlePrescribe}
-          disabled={isPrescribing}
+          disabled={isPrescribing || !isDispensaryAndSupplementsEnabled}
           className="tactile-btn"
           style={{
             padding: '10px 22px',
-            background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-            border: 'none',
-            color: '#080E14',
+            background: !isDispensaryAndSupplementsEnabled
+              ? 'rgba(255, 255, 255, 0.08)'
+              : 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
+            border: !isDispensaryAndSupplementsEnabled ? '1px solid rgba(245, 158, 11, 0.45)' : 'none',
+            color: !isDispensaryAndSupplementsEnabled ? '#FBBF24' : '#080E14',
             fontFamily: 'var(--font-sans, Raleway), sans-serif',
             fontSize: 12,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             fontWeight: 800,
-            cursor: isPrescribing ? 'not-allowed' : 'pointer',
+            cursor: isPrescribing || !isDispensaryAndSupplementsEnabled ? 'not-allowed' : 'pointer',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
-            boxShadow: '0 4px 14px rgba(197,160,89,0.35)',
+            boxShadow: !isDispensaryAndSupplementsEnabled ? 'none' : '0 4px 14px rgba(197,160,89,0.35)',
           }}
         >
-          <GaaIcon name="supplements" size={16} style={{ color: '#080E14', stroke: '#080E14' }} />
-          <span>{isPrescribing ? 'Publishing Guide...' : 'Publish Guide & Concierge Update'}</span>
+          <GaaIcon
+            name="supplements"
+            size={16}
+            style={{
+              color: !isDispensaryAndSupplementsEnabled ? '#FBBF24' : '#080E14',
+              stroke: !isDispensaryAndSupplementsEnabled ? '#FBBF24' : '#080E14',
+            }}
+          />
+          <span>
+            {!isDispensaryAndSupplementsEnabled
+              ? 'Paused · Thorne Approval (~5 Days Left)'
+              : isPrescribing
+              ? 'Publishing Guide...'
+              : 'Publish Guide & Concierge Update'}
+          </span>
         </button>
       </div>
+
+      {!isDispensaryAndSupplementsEnabled && (
+        <div
+          style={{
+            padding: '14px 18px',
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(15, 23, 42, 0.96) 100%)',
+            border: '1px solid rgba(245, 158, 11, 0.5)',
+            color: '#F8FAFC',
+            fontSize: 13,
+            borderRadius: 8,
+            display: 'grid',
+            gap: 8,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <strong style={{ color: '#FBBF24', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 11.5 }}>
+              ⏳ Thorne Dispensary &amp; Supplements Temporarily Disabled (Approval ~50% Complete)
+            </strong>
+            <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 11.5, color: '#34D399', fontWeight: 700 }}>
+              Est. 5 Business Days Remaining
+            </span>
+          </div>
+          <div style={{ color: '#CBD5E1', lineHeight: 1.5, fontSize: 12.5 }}>
+            Practitioner dispensary verification with Thorne takes another ~5 business days to finalize (about halfway through). Publishing client supplement guides and dispensary fulfillment links is temporarily locked until approval completes.
+          </div>
+        </div>
+      )}
 
       {prescribedSuccess && (
         <div style={{ padding: '12px 16px', background: 'rgba(52,211,153,0.15)', border: '1px solid var(--success)', color: 'var(--white)', fontSize: 14, borderRadius: 6 }}>

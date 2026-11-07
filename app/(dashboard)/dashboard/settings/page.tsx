@@ -119,7 +119,6 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
         links={[
           { href: '/dashboard', label: 'Today' },
           { href: '/dashboard/fitness', label: 'Training & progress' },
-          { href: '/dashboard/dossier', label: 'Progress summary' },
           { href: '/dashboard/book', label: 'Book a session' },
           { href: '/dashboard/messages', label: 'Messages' },
           { href: '/dashboard/settings', label: 'Settings' },

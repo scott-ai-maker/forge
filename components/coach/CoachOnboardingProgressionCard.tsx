@@ -2042,39 +2042,6 @@ export default function CoachOnboardingProgressionCard({
             {/* ── PHASE 8: SUNDAY INTELLIGENCE DOSSIER & TRIAGE ── */}
             {selectedStage.stageNumber === 8 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-                <div style={{ ...infoCardStyle, border: '1px solid rgba(212,160,23,0.35)', background: 'linear-gradient(135deg, rgba(212,160,23,0.12) 0%, rgba(14,24,39,0.98) 100%)' }}>
-                  <div style={infoLabelStyle}>Sunday Intelligence Dossier</div>
-                  <div style={{ ...infoValueStyle, color: 'var(--gold-lt)' }}>
-                    Active Telemetry &amp; S.O.A.P.
-                  </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--gray-lt)', margin: '4px 0 10px' }}>
-                    ACWR workload ratios, kinetic movement pattern distribution, and clinical notes.
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <a
-                      href={`/coach/clients/${profile.clientId}/dossier`}
-                      className="tactile-btn"
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: 4,
-                        background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-                        color: '#080E14',
-                        fontSize: 11,
-                        fontWeight: 800,
-                        textDecoration: 'none',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        boxShadow: '0 2px 8px rgba(212,160,23,0.3)',
-                      }}
-                    >
-                      <GaaIcon name="crown" size={12} tone="inherit" />
-                      <span>Launch Sunday Dossier (PDF)</span>
-                      <span>➔</span>
-                    </a>
-                  </div>
-                </div>
-
                 <div style={infoCardStyle}>
                   <div style={infoLabelStyle}>Weekly Biofeedback Review</div>
                   <div style={{ ...infoValueStyle, color: '#38BDF8' }}>

@@ -32,7 +32,6 @@ import {
 } from './HealthLogos'
 import BluetoothHeartRateMonitor from './BluetoothHeartRateMonitor'
 import AppStorePlaceholderModal, { PlaceholderPlatform } from '@/components/marketing/AppStorePlaceholderModal'
-import AppleWatchSimulatorModal from './watch/AppleWatchSimulatorModal'
 
 interface WearablesDeviceStudioProps {
   onTelemetryUpdate?: (telemetry: DailyBiometricSummary | null) => void
@@ -53,8 +52,6 @@ export default function WearablesDeviceStudio({
   const [showAppModal, setShowAppModal] = useState<boolean>(false)
   const [appModalPlatform, setAppModalPlatform] = useState<PlaceholderPlatform>('ios')
   const [nativeReport, setNativeReport] = useState<NativeTelemetryReadinessReport | null>(null)
-  const [watchCompanion, setWatchCompanion] = useState<{ installed: boolean; paired: boolean }>({ installed: false, paired: false })
-  const [showWatchSimulator, setShowWatchSimulator] = useState<boolean>(false)
 
   const onTelemetryUpdateRef = useRef(onTelemetryUpdate)
   onTelemetryUpdateRef.current = onTelemetryUpdate
@@ -117,13 +114,6 @@ export default function WearablesDeviceStudio({
     if (!native && isIos) {
       setIsIosWeb(true)
     }
-
-    // Check Apple Watch pairing & companion app status
-    void import('@/lib/native-healthkit-bridge').then(({ checkAppleWatchCompanionStatus }) => {
-      void checkAppleWatchCompanionStatus().then(status => {
-        if (isMounted) setWatchCompanion(status)
-      })
-    })
 
     // Retrieve active client ID for webhook configuration
     void (async () => {
@@ -641,129 +631,6 @@ export default function WearablesDeviceStudio({
             ))}
           </div>
         </div>
-
-        {/* ── Dedicated Apple Watch Companion Card (iOS / watchOS) ── */}
-        {!isAndroid && (
-          <div
-            style={{
-              background: 'linear-gradient(135deg, rgba(20,30,48,0.7) 0%, rgba(10,18,30,0.9) 100%)',
-              border: '1.5px solid rgba(56,189,248,0.3)',
-              borderRadius: 12,
-              padding: '16px 18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 10,
-                    background: 'rgba(56,189,248,0.12)',
-                    border: '1px solid rgba(56,189,248,0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 20,
-                  }}
-                >
-                  ⌚
-                </div>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: 13.5, fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.04em' }}>
-                    FORGE ATHLETIC FOR APPLE WATCH (watchOS)
-                  </h4>
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: '#38BDF8', marginTop: 2 }}>
-                    {watchCompanion.installed
-                      ? '✓ Companion App Installed · Live WCSession Sync Ready'
-                      : watchCompanion.paired
-                      ? '⌚ Apple Watch Paired · Companion Available in Watch App'
-                      : 'Standalone & Companion Ready · Ultra & Series 4–10'}
-                  </div>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  padding: '4px 10px',
-                  borderRadius: 6,
-                  background: 'rgba(56,189,248,0.15)',
-                  border: '1px solid rgba(56,189,248,0.35)',
-                  color: '#38BDF8',
-                }}
-              >
-                Ultra &amp; Series 4+
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-              {[
-                { title: 'Digital Crown Set Logger', desc: 'Micro-adjust reps & weight with analog precision without tapping small screens.' },
-                { title: 'Bio-Adaptive Rest Pacer', desc: 'Double-pulse haptics signal when Zone 1 parasympathetic recovery is achieved.' },
-                { title: 'Silent Taptic Metronome', desc: 'Tactile wrist pulses pace prescribed 4-2-1-1 NASM tempos in loud gym environments.' },
-                { title: 'Tanaka Stage Cardio', desc: 'Continuous optical PPG streaming, active calorie accumulation, and zone shift alerts.' },
-              ].map((feat, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: 'rgba(0,0,0,0.3)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 8,
-                    padding: '8px 12px',
-                  }}
-                >
-                  <div style={{ fontSize: 11, fontWeight: 800, color: '#FFFFFF' }}>{feat.title}</div>
-                  <div style={{ fontSize: 10, color: 'var(--gray)', marginTop: 2, lineHeight: 1.4 }}>{feat.desc}</div>
-                </div>
-              ))}
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 10,
-                paddingTop: 10,
-                borderTop: '1px solid rgba(56,189,248,0.15)',
-              }}
-            >
-              <div style={{ fontSize: 11, color: 'var(--gray)' }}>
-                Test Digital Crown logging, Zone 1 bio-adaptive rest haptics, and silent NASM tempo metronome on wrist.
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowWatchSimulator(true)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(56,189,248,0.5)',
-                  borderRadius: 8,
-                  padding: '7px 14px',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(2,132,199,0.3)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>⌚</span>
-                <span>Open Watch Ultra Simulator</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Native Companion & PWA Status Card ── */}
@@ -1113,12 +980,6 @@ export default function WearablesDeviceStudio({
         onClose={() => setShowAppModal(false)}
         initialPlatform={appModalPlatform}
         sourceContext="wearables_device_studio"
-      />
-
-      {/* Interactive Apple Watch Ultra 49mm Hardware Simulator */}
-      <AppleWatchSimulatorModal
-        isOpen={showWatchSimulator}
-        onClose={() => setShowWatchSimulator(false)}
       />
     </div>
   )

@@ -11,6 +11,7 @@ import {
   PrescribedSupplementItem,
   DrugSupplementInteractionAlert,
   getDispensaryPartnerInfo,
+  isDispensaryAndSupplementsEnabled,
   isThorneAccountLinked,
 } from '@/lib/supplement-prescriptions'
 import { parseParqMedicationsAndConditions } from '@/lib/muscle-recovery-telemetry'
@@ -115,6 +116,104 @@ export default function SupplementAdvisorWidget({
     if (activeFilter === 'conditional_adjunct') return stack.tieredSchedule.conditionalAdjuncts
     return stack.prescribedItems.filter(i => i.timingWindow === activeFilter)
   }, [activeFilter, stack])
+
+  if (!isDispensaryAndSupplementsEnabled) {
+    return (
+      <div
+        className="glass-card"
+        style={{
+          padding: '28px 32px',
+          display: 'grid',
+          gap: 18,
+          border: '1.5px solid rgba(245, 158, 11, 0.45)',
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(8, 14, 24, 0.98) 100%)',
+          borderRadius: 12,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span
+              style={{
+                padding: '4px 10px',
+                borderRadius: 4,
+                background: 'rgba(245, 158, 11, 0.18)',
+                border: '1px solid rgba(245, 158, 11, 0.5)',
+                color: '#FBBF24',
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+              }}
+            >
+              TEMPORARILY DISABLED · APPROVAL IN PROGRESS
+            </span>
+            <span style={{ fontSize: 12, color: '#34D399', fontWeight: 700, fontFamily: 'var(--font-telemetry, monospace)' }}>
+              ~50% Complete · Est. 5 Business Days Remaining
+            </span>
+          </div>
+          <span
+            style={{
+              padding: '4px 10px',
+              borderRadius: 4,
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              color: 'var(--gray-lt)',
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            NSF Certified for Sport® / USP
+          </span>
+        </div>
+
+        <div>
+          <h3
+            style={{
+              fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
+              fontSize: 22,
+              fontWeight: 700,
+              letterSpacing: '0.03em',
+              margin: '0 0 8px',
+              color: '#FFFFFF',
+            }}
+          >
+            Thorne Dispensary &amp; Supplements Portal (Verification Halfway Complete)
+          </h3>
+          <p style={{ margin: 0, fontSize: 13.5, color: '#CBD5E1', lineHeight: 1.6, maxWidth: 780 }}>
+            Our clinical partner dispensary and supplement catalog with <strong>Thorne</strong> is currently temporarily paused while practitioner account verification completes. We are approximately <strong>halfway through the approval process</strong> with an estimated <strong>5 business days remaining</strong> before live ordering and 15% member courtesy discounts unlock.
+          </p>
+        </div>
+
+        {/* 50% Approval Progress Bar */}
+        <div style={{ background: 'rgba(8, 14, 20, 0.75)', padding: '14px 18px', borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, fontSize: 11.5 }}>
+            <span style={{ color: 'var(--gold-lt)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Thorne Practitioner Dispensary Approval Status
+            </span>
+            <span style={{ color: '#34D399', fontFamily: 'var(--font-telemetry, monospace)', fontWeight: 700 }}>
+              50% Complete (~5 Business Days Left)
+            </span>
+          </div>
+          <div style={{ height: 8, width: '100%', background: 'rgba(255, 255, 255, 0.08)', borderRadius: 999, overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${dispensaryInfo.approvalProgressPercent}%`,
+                background: 'linear-gradient(90deg, #F59E0B 0%, #34D399 100%)',
+                borderRadius: 999,
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.5 }}>
+          <strong>Whole-Food First Focus:</strong> While supplement ordering and chrono-dosing guides are paused pending final verification, continue using the <strong>Hand Portions (PN1)</strong> and <strong>OPT™ Macros &amp; BMR</strong> tabs above for your daily training nutrition.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'grid', gap: 24 }}>

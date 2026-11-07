@@ -510,7 +510,7 @@ export default function ExecutiveCommandCenterClient({
           </div>
 
           <Link
-            href="/dashboard/dossier"
+            href="/dashboard/fitness?workspace=progress"
             style={{
               fontSize: 11.5,
               color: 'var(--gold-lt)',
@@ -521,7 +521,7 @@ export default function ExecutiveCommandCenterClient({
               gap: 4,
             }}
           >
-            View weekly progress →
+            View training progress →
           </Link>
         </div>
 

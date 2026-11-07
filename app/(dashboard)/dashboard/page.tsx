@@ -296,7 +296,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           { href: '/dashboard', label: 'Today' },
           { href: '/dashboard/live', label: 'Live Studio' },
           { href: '/dashboard/fitness', label: 'Training & progress' },
-          { href: '/dashboard/dossier', label: 'Progress summary' },
           { href: '/dashboard/book', label: 'Book a session' },
           { href: '/dashboard/messages', label: 'Messages' },
           { href: '/dashboard/settings', label: 'Settings' },

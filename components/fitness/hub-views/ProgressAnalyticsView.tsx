@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react'
 import { isTimedStaticStretch, isFoamRollerExercise } from '@/lib/exercise-logging-helpers'
-import WorkoutStreakCard from '@/components/fitness/WorkoutStreakCard'
-import PersonalRecordsBoard from '@/components/fitness/PersonalRecordsBoard'
 import GoalsTracker from '@/components/fitness/GoalsTracker'
 import ProgressPhotoTimeline from '@/components/fitness/ProgressPhotoTimeline'
 import { GaaIcon } from '@/components/ui/GaaIcon'
@@ -206,14 +204,6 @@ export default function ProgressAnalyticsView({
         />
       </section>
 
-      <details className="fitness-card-disclosure fitness-progress-panel">
-        <summary>Training consistency</summary>
-        <WorkoutStreakCard logs={localWorkoutLogs} athleteId={profile?.full_name || 'GAA-EXEC-ATHLETE'} totalVolumeKg={progression.totalVolumeKg} optPhase={optPhase} sessionsPerWeek={sessionsPerWeek} />
-      </details>
-      <details className="fitness-card-disclosure fitness-progress-panel">
-        <summary>Personal records</summary>
-        <PersonalRecordsBoard units={units} />
-      </details>
       <details className="fitness-card-disclosure fitness-progress-panel">
         <summary>Goals</summary>
         <GoalsTracker />

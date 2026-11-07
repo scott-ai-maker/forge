@@ -11,9 +11,7 @@ import MetabolicNutritionProtocol from '@/components/fitness/MetabolicNutritionP
 import { normalizeActivity } from '@/lib/weight-loss-program'
 import ClinicalKineticWarmupModule from '@/components/fitness/ClinicalKineticWarmupModule'
 import NasmAssessmentSummary from '@/components/fitness/NasmAssessmentSummary'
-import PlyometricPowerStudio from '@/components/fitness/PlyometricPowerStudio'
 import AthleticPerformanceStudio from '@/components/fitness/AthleticPerformanceStudio'
-import SportsScienceCalculator from '@/components/fitness/SportsScienceCalculator'
 import ExecutiveSleepBiometricsHud from '@/components/fitness/ExecutiveSleepBiometricsHud'
 import ExecutiveTravelAdapterStudio from '@/components/fitness/ExecutiveTravelAdapterStudio'
 import AiBodyCompositionScannerModal from '@/components/fitness/AiBodyCompositionScannerModal'
@@ -85,8 +83,7 @@ const LAB_TOOLS: { id: FitnessLabTool; title: string; description: string }[] = 
   { id: 'travel', title: 'Travel workouts', description: 'Adapt your workout to the equipment available.' },
   { id: 'assessment', title: 'Movement assessment', description: 'Review your movement screen and warm-up guidance.' },
   { id: 'sleep', title: 'Sleep Biometrics HUD', description: 'Explore sleep metrics, stage hypnograms, and recovery guidance.' },
-  { id: 'performance', title: 'Athletic performance', description: 'Explore power training and performance tests.' },
-  { id: 'calculator', title: 'Fitness calculators', description: 'Estimate lifting loads, cardio fitness, and body composition.' },
+  { id: 'performance', title: 'Athletic performance', description: 'Explore performance tests and benchmarks.' },
 ]
 
 interface FitnessLabDiagnosticsViewProps {
@@ -163,7 +160,7 @@ export default function FitnessLabDiagnosticsView({
     && Number.isFinite(heightCm) && heightCm > 0
     && Number.isFinite(currentBf) && currentBf > 0 && currentBf < 100
   const isMetric = profile?.preferred_units === 'metric'
-  const activeTool = LAB_TOOLS.find(tool => tool.id === activeLabTool)!
+  const activeTool = LAB_TOOLS.find(tool => tool.id === activeLabTool) ?? LAB_TOOLS[0]
 
   const fatMassKg = Math.round(weightKg * (currentBf / 100) * 10) / 10
   const leanMassKg = Math.round((weightKg - fatMassKg) * 10) / 10
@@ -490,13 +487,6 @@ export default function FitnessLabDiagnosticsView({
         {activeLabTool === 'performance' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <details open className="fitness-card-disclosure fitness-lab-panel">
-              <summary>Power training</summary>
-              <PlyometricPowerStudio
-                initialOptPhase={plan?.nasm_opt_phase ?? 1}
-                athleteBodyweightLbs={profile?.weight_kg ? Math.round(profile.weight_kg * 2.20462) : 185}
-              />
-            </details>
-            <details open className="fitness-card-disclosure fitness-lab-panel">
               <summary>Performance tests</summary>
               <AthleticPerformanceStudio
                 initialSex={profile?.sex ?? 'male'}
@@ -504,10 +494,6 @@ export default function FitnessLabDiagnosticsView({
               />
             </details>
           </div>
-        )}
-
-        {activeLabTool === 'calculator' && (
-          <SportsScienceCalculator />
         )}
 
         {activeLabTool === 'travel' && (
