@@ -962,25 +962,29 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
         actions={<LogoutButton />}
       />
 
-      <div className="coach-content" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(14px, 2.5vw, 24px) clamp(8px, 1.8vw, 16px)', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
-        <h1
-          style={{
-            fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-            fontWeight: 700,
-            fontSize: 'clamp(1.8rem, 4.5vw, 2.4rem)',
-            color: 'var(--white)',
-            letterSpacing: '0.04em',
-            marginBottom: 20,
-            overflowWrap: 'break-word',
-            wordBreak: 'break-word',
-          }}
-        >
-          COACH DASHBOARD
-        </h1>
+      <div className="coach-content" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(10px, 2vw, 20px) clamp(8px, 1.8vw, 16px)', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
+              fontWeight: 700,
+              fontSize: 'clamp(1.35rem, 3.5vw, 1.85rem)',
+              color: 'var(--white)',
+              letterSpacing: '0.04em',
+              margin: 0,
+            }}
+          >
+            COACH DASHBOARD
+          </h1>
+          <details className="fitness-card-disclosure" style={{ background: 'rgba(13,27,42,0.9)', border: '1px solid rgba(212,160,23,0.3)', borderRadius: 8, padding: '0 12px' }}>
+            <summary style={{ minHeight: 36, fontSize: 11.5, fontWeight: 700 }}>+ Invite Member Link</summary>
+            <div style={{ paddingBottom: 10 }}>
+              <CoachInviteLinkCard invitePath={coachInvitePath} />
+            </div>
+          </details>
+        </div>
 
-        <CoachInviteLinkCard invitePath={coachInvitePath} />
-
-        <div className="responsive-tabs-scroll" style={{ display: 'flex', gap: 8, paddingBottom: 6, marginBottom: 20 }}>
+        <div className="responsive-tabs-scroll" style={{ display: 'flex', gap: 6, paddingBottom: 4, marginBottom: 14 }}>
           {[
             { key: 'overview' as const, label: 'Overview', icon: null },
             { key: 'schedule' as const, label: 'Live Calendar', icon: 'calendar' as GaaIconName },
@@ -1057,115 +1061,68 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
             {/* ── 1:1 Live Video Studio & Movement Screen Launcher ── */}
             <CoachLiveSessionLauncher assignedClients={launcherClients} teams={coachTeams} />
 
-            {/* ── Coach Gordon Quick Access Banner ── */}
+            {/* ── Compact Quick Action Bar: AI Architect Studio + Onboarding Workflow ── */}
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 16,
-                padding: '16px 20px',
-                marginBottom: 20,
-                background: 'linear-gradient(135deg, rgba(212,160,23,0.18) 0%, rgba(13,27,42,0.95) 100%)',
-                border: '1px solid rgba(212,160,23,0.4)',
-                borderRadius: 8,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gap: 10,
+                marginBottom: 18,
               }}
             >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <GaaIcon name="brain" size={22} tone="gold" />
-                  <span style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 18, color: 'var(--white)', letterSpacing: '0.04em' }}>
-                    Coach Gordon · Master NASM AI Head Coach Studio
-                  </span>
-                </div>
-                <p style={{ margin: '4px 0 0', color: 'var(--gold-lt)', fontSize: 13, fontFamily: 'Raleway, sans-serif' }}>
-                  20+ Yrs Master CPT · Full OPT™ Periodization Engine · 100% Verified NASM Edge CDN Media
-                </p>
-              </div>
               <a
                 href="/coach?tab=architect"
                 className="tactile-btn"
                 style={{
-                  background: 'linear-gradient(135deg, #D4A017, #B8860B)',
-                  color: '#080E18',
-                  fontFamily: 'Raleway, sans-serif',
-                  fontWeight: 800,
-                  fontSize: 12,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  padding: '10px 20px',
-                  borderRadius: 4,
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 14px rgba(212,160,23,0.35)',
-                  display: 'inline-flex',
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: 6,
+                  gap: 10,
+                  padding: '12px 14px',
+                  background: 'linear-gradient(135deg, rgba(212,160,23,0.16) 0%, rgba(13,27,42,0.95) 100%)',
+                  border: '1px solid rgba(212,160,23,0.4)',
+                  borderRadius: 10,
+                  textDecoration: 'none',
                 }}
               >
-                <GaaIcon name="lightning" size={13} tone="inherit" />
-                <span>Open Coach Gordon Studio</span>
-                <GaaIcon name="external-link" size={12} tone="inherit" />
-              </a>
-            </div>
-
-            {/* ── Client Onboarding & Testing Progression Workflow Quick Banner ── */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 16,
-                padding: '16px 20px',
-                marginBottom: 28,
-                background: 'linear-gradient(135deg, rgba(14,24,39,0.98) 0%, rgba(9,15,26,0.98) 100%)',
-                border: '1px solid rgba(212,160,23,0.35)',
-                borderRadius: 8,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <GaaIcon name="clipboard" size={20} tone="gold" />
-                  <span style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 18, color: 'var(--white)', letterSpacing: '0.04em' }}>
-                    Client Onboarding &amp; Testing Progression Workflow
-                  </span>
-                  <span style={{ padding: '2px 8px', borderRadius: 4, background: 'rgba(212,160,23,0.18)', border: '1px solid var(--gold)', color: 'var(--gold-lt)', fontSize: 10, fontWeight: 800 }}>
-                    9-Stage Continuum
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <GaaIcon name="brain" size={18} tone="gold" />
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 14, color: 'var(--white)' }}>
+                      AI Program Architect Studio
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--gold-lt)' }}>OPT™ Periodization &amp; Exercise Engine</div>
+                  </div>
                 </div>
-                <p style={{ color: 'var(--gray)', fontSize: 12.5, margin: '4px 0 0', maxWidth: 700 }}>
-                  Follow each member's onboarding, movement checks, personalized training plan, and weekly progress in one place.
-                </p>
-              </div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--gold-lt)', whiteSpace: 'nowrap' }}>Open ➔</span>
+              </a>
 
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <a
-                  href="/coach?tab=onboarding"
-                  className="tactile-btn"
-                  style={{
-                    background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-                    color: '#080E14',
-                    fontFamily: 'Raleway, sans-serif',
-                    fontWeight: 800,
-                    fontSize: 12,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    padding: '10px 18px',
-                    borderRadius: 4,
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 14px rgba(212,160,23,0.35)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <GaaIcon name="clipboard" size={13} tone="inherit" />
-                  <span>Open Onboarding Workflow Studio</span>
-                  <span>➔</span>
-                </a>
-              </div>
+              <a
+                href="/coach?tab=onboarding"
+                className="tactile-btn"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '12px 14px',
+                  background: 'linear-gradient(135deg, rgba(14,24,39,0.98) 0%, rgba(9,15,26,0.98) 100%)',
+                  border: '1px solid rgba(212,160,23,0.35)',
+                  borderRadius: 10,
+                  textDecoration: 'none',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <GaaIcon name="clipboard" size={18} tone="gold" />
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 14, color: 'var(--white)' }}>
+                      9-Stage Onboarding Workflow
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--gray)' }}>Intake, OHSA screen &amp; weekly check-ins</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--gold-lt)', whiteSpace: 'nowrap' }}>Open ➔</span>
+              </a>
             </div>
 
             {/* ── Glanceable Practice Telemetry & Operations Grid ── */}

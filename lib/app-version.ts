@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.45.0'
+export const APP_VERSION = '1.46.0'
 export const APP_RELEASE_DATE = '2026-11-07'
-export const APP_RELEASE_CODENAME = 'Holiday Launch Streamlining, Tier 1–2 Core Focus & HOLIDAY25 Founding Rate Lock'
+export const APP_RELEASE_CODENAME = 'Mobile-First PWA UI Overhaul, Condensed High-Use Hubs & Zero-Clutter Navigation'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,22 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.46.0',
+    date: '2026-11-07',
+    codename: 'Mobile-First PWA UI Overhaul, Condensed High-Use Hubs & Zero-Clutter Navigation',
+    category: 'feature',
+    badge: 'Mobile PWA Overhaul',
+    title: 'Condensed Mobile-First PWA UI Overhaul Across Athlete & Coach Workspaces',
+    summary:
+      'Overhauls the Forge Athletic UI for compact mobile-first PWA usability: condenses the persistent SiteHeader and MobileBottomNav (<12% viewport height), streamlines the Athlete Today Dashboard and Workout Logger with collapsible <details> disclosures for immediate above-the-fold training access, and converts Coach Client Hub and Settings navigation into single-row horizontal scroll strips.',
+    highlights: [
+      'Navigation Shell & PWA Viewport Optimization: Reduced SiteHeader min-height to 52px (48px on mobile), scaled brand mark to 40x40, hid secondary header clutter on mobile viewports, and tightened MobileBottomNav safe-area padding.',
+      'Athlete "Today" Dashboard Overhaul: Condensed welcome identity into a single row, surfaced 1 primary Today\'s Workout CTA card above the fold, paired compact 7-Day Telemetry with Live Session status, added a 2x2 Quick Tools pill grid, and collapsed secondary toolkits into a <details> disclosure.',
+      'Workout Logger & Fitness Hub Prioritization: Moved the 4-tab hub switcher (Workout | Progress | Fitness Lab | Coach) to the top of the workspace, condensed the telemetry strip, and converted Coach Notes, Nutrition Targets, and Orthopedic Protection Shield into <details> disclosures so active workout sets appear immediately above the fold.',
+      'Coach Cockpit & Client Hub Condensation: Wrapped CoachInviteLinkCard into a compact header <details> disclosure, condensed overview Studio/Onboarding banners, and converted CoachClientHubNavigator and ClientSettingsStudio tabs into single-row horizontal scroll bars.',
+    ],
+  },
   {
     version: '1.45.0',
     date: '2026-11-07',

@@ -130,7 +130,7 @@ export default function ExecutiveCommandCenterClient({
     .join('') || 'SG'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, containerType: 'inline-size' }}>
       {/* ── 0a. Active Live Session Alert Banner ── */}
       {activeLiveSessionHref && (
         <div
@@ -138,50 +138,46 @@ export default function ExecutiveCommandCenterClient({
             background: 'linear-gradient(135deg, rgba(16,185,129,0.22) 0%, rgba(8,14,24,0.96) 100%)',
             border: '1.5px solid #10B981',
             borderRadius: 10,
-            padding: '14px 18px',
+            padding: '12px 14px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: 12,
-            boxShadow: '0 0 24px rgba(16, 185, 129, 0.3)',
+            gap: 10,
+            boxShadow: '0 0 20px rgba(16, 185, 129, 0.25)',
           }}
         >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#34D399', fontWeight: 800 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
-              <span>Live Telehealth Studio Active Now</span>
+          <div style={{ minWidth: 0, flex: '1 1 200px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#34D399', fontWeight: 800 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+              <span>Live Studio Active</span>
             </div>
-            <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 17, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.04em' }}>
-              COACH GORDON IS WAITING IN YOUR LIVE STUDIO
-            </h4>
-            <p style={{ margin: '2px 0 0', fontSize: 12.5, color: '#CBD5E1' }}>
-              Your live 1:1 or team movement consultation is in progress. Tap to join the live video stream immediately.
-            </p>
+            <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 15, color: '#FFFFFF', marginTop: 2, fontWeight: 700 }}>
+              Coach Gordon is in your live studio
+            </div>
           </div>
           <Link
             href={activeLiveSessionHref}
             className="tactile-btn"
             style={{
-              padding: '10px 18px',
+              padding: '9px 14px',
               background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
               color: '#FFFFFF',
-              borderRadius: 8,
+              borderRadius: 6,
               fontFamily: 'var(--font-sans, Raleway), sans-serif',
               textTransform: 'uppercase',
-              fontSize: 12,
-              letterSpacing: '0.08em',
+              fontSize: 11.5,
+              letterSpacing: '0.06em',
               fontWeight: 800,
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 8,
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+              gap: 6,
             }}
             onClick={() => triggerHaptic('tap')}
           >
             <GaaIcon name="camera" size={14} tone="inherit" />
-            <span>Join Live Studio Now →</span>
+            <span>Join Now →</span>
           </Link>
         </div>
       )}
@@ -195,137 +191,96 @@ export default function ExecutiveCommandCenterClient({
               : 'linear-gradient(135deg, rgba(212,160,23,0.14) 0%, rgba(14,23,36,0.95) 100%)',
             border: '1px solid rgba(212,160,23,0.5)',
             borderRadius: 10,
-            padding: '14px 18px',
+            padding: '12px 14px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: 12,
+            gap: 10,
           }}
         >
-          <div>
-            <div style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
+          <div style={{ minWidth: 0, flex: '1 1 200px' }}>
+            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
               {onboardingBannerState.eyebrow}
             </div>
-            <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 17, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.04em' }}>
+            <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 15, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.03em' }}>
               {onboardingBannerState.title}
             </h4>
-            <p style={{ margin: '2px 0 0', fontSize: 12.5, color: 'var(--gray)' }}>
-              {onboardingBannerState.description}
-            </p>
           </div>
           <Link
             href={onboardingBannerState.href}
             className="sgf-button sgf-button-primary"
-            style={{ padding: '8px 16px', fontSize: 12, textDecoration: 'none' }}
+            style={{ padding: '8px 14px', fontSize: 11.5, textDecoration: 'none' }}
           >
             {onboardingBannerState.buttonText}
           </Link>
         </div>
       )}
 
-      {/* ── 1. Member welcome and training status ── */}
+      {/* ── 1. Compact Athlete Identity Bar ── */}
       <div
         style={{
-          background: 'linear-gradient(135deg, rgba(16,22,38,0.95) 0%, rgba(9,13,24,0.95) 100%)',
-          border: '1px solid rgba(212,160,23,0.35)',
-          borderRadius: 12,
-          padding: 'clamp(14px, 2.2vw, 20px) clamp(16px, 2.8vw, 24px)',
+          background: 'rgba(13, 22, 36, 0.9)',
+          border: '1px solid rgba(212,160,23,0.25)',
+          borderRadius: 10,
+          padding: '10px 14px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 14,
-          boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+          gap: 10,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <div
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: 24,
+              width: 38,
+              height: 38,
+              borderRadius: 19,
               background: 'linear-gradient(135deg, #D4AF37 0%, #8A6508 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-              fontSize: 19,
+              fontSize: 15,
               color: '#0A0E18',
               fontWeight: 800,
-              boxShadow: '0 0 15px rgba(212,160,23,0.4)',
               flexShrink: 0,
             }}
           >
             {initials}
           </div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(20px, 3.2vw, 26px)', color: '#FFFFFF', margin: 0, letterSpacing: '0.04em', lineHeight: 1.1 }}>
-                {clientName}
-              </h1>
-              <span
-                style={{
-                  fontSize: 9,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  fontWeight: 800,
-                  background: 'rgba(212,160,23,0.15)',
-                  color: 'var(--gold-lt)',
-                  padding: '2px 7px',
-                  borderRadius: 4,
-                  border: '1px solid rgba(212,160,23,0.4)',
-                }}
-              >
-                Member
-              </span>
-            </div>
-            <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--gray)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {activePackage ? getMembershipDisplayName(activePackage.package_name) : 'Training plan'} · {currentPlanPhase}
+            <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(17px, 2.8vw, 22px)', color: '#FFFFFF', margin: 0, letterSpacing: '0.03em', lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {clientName}
+            </h1>
+            <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--gray)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {currentPlanPhase}{activePackage ? ` · ${getMembershipDisplayName(activePackage.package_name)}` : ''}
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Link
-            href="/dashboard/fitness?workspace=train"
-            className="sgf-button sgf-button-primary"
-            style={{ padding: '8px 18px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}
-            onClick={() => triggerHaptic('tap')}
-          >
-            <GaaIcon name="barbell" size={14} tone="inherit" />
-            <span>
-              {isWorkoutInProgress
-                ? `Resume Day ${activeWorkout?.day || 1} Lifts`
-                : isWorkoutCompleted
-                  ? `Day ${activeWorkout?.day || 1} Complete · View Lab`
-                  : activeWorkout
-                    ? `Start Day ${activeWorkout.day} Lifts`
-                    : 'Open training'}
-            </span>
-          </Link>
-          <Link
-            href="/dashboard/messages"
-            className="tactile-btn"
-            style={{
-              padding: '8px 14px',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              borderRadius: 6,
-              color: 'var(--white)',
-              fontSize: 12,
-              fontWeight: 700,
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-            onClick={() => triggerHaptic('tap')}
-          >
-            <GaaIcon name="message" size={13} tone="gold" />
-            <span>Message your coach</span>
-          </Link>
-        </div>
+        <Link
+          href="/dashboard/messages"
+          className="tactile-btn"
+          style={{
+            padding: '7px 12px',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.16)',
+            borderRadius: 6,
+            color: 'var(--white)',
+            fontSize: 11.5,
+            fontWeight: 700,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            flexShrink: 0,
+          }}
+          onClick={() => triggerHaptic('tap')}
+        >
+          <GaaIcon name="message" size={13} tone="gold" />
+          <span>Coach</span>
+        </Link>
       </div>
 
       {/* ── 2. Today's Primary Training Mission (Hero Action Card) ── */}
@@ -334,53 +289,44 @@ export default function ExecutiveCommandCenterClient({
         className="tactile-btn luxury-card-interactive"
         style={{
           background: isWorkoutCompleted
-            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(8, 14, 24, 0.95) 100%)'
+            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(8, 14, 24, 0.96) 100%)'
             : isWorkoutInProgress
-              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(8, 14, 24, 0.95) 100%)'
-              : 'linear-gradient(135deg, rgba(212, 160, 23, 0.12) 0%, rgba(8, 14, 24, 0.95) 100%)',
+              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(8, 14, 24, 0.96) 100%)'
+              : 'linear-gradient(135deg, rgba(212, 160, 23, 0.14) 0%, rgba(8, 14, 24, 0.96) 100%)',
           border: isWorkoutCompleted
             ? '1.5px solid rgba(52, 211, 153, 0.55)'
             : isWorkoutInProgress
               ? '1.5px solid rgba(245, 158, 11, 0.65)'
-              : '1.5px solid rgba(197, 160, 89, 0.45)',
+              : '1.5px solid rgba(197, 160, 89, 0.5)',
           borderRadius: 12,
-          padding: '18px 20px',
+          padding: '14px 16px',
           textDecoration: 'none',
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
-          boxShadow: isWorkoutCompleted
-            ? '0 0 20px rgba(16, 185, 129, 0.2)'
-            : isWorkoutInProgress
-              ? '0 0 20px rgba(245, 158, 11, 0.25)'
-              : '0 0 20px rgba(197, 160, 89, 0.2)',
         }}
         onClick={() => triggerHaptic('tap')}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <GaaIcon name="barbell" size={20} tone={isWorkoutCompleted ? 'emerald' : isWorkoutInProgress ? 'amber' : 'gold'} />
-            <span style={{ fontFamily: 'Raleway, sans-serif', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: isWorkoutCompleted ? '#34D399' : 'var(--gold-lt)' }}>
-              Primary Training Target
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <GaaIcon name="barbell" size={17} tone={isWorkoutCompleted ? 'emerald' : isWorkoutInProgress ? 'amber' : 'gold'} />
+            <span style={{ fontFamily: 'Raleway, sans-serif', fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: isWorkoutCompleted ? '#34D399' : 'var(--gold-lt)' }}>
+              Today&apos;s Workout
             </span>
           </div>
           {isWorkoutCompleted ? (
-            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#10B981', background: 'rgba(16, 185, 129, 0.18)', border: '1px solid rgba(52, 211, 153, 0.4)', padding: '2px 8px', borderRadius: 4 }}>
-              ✓ DAY {activeWorkout?.day || 1} COMPLETED
+            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#10B981', background: 'rgba(16, 185, 129, 0.18)', border: '1px solid rgba(52, 211, 153, 0.4)', padding: '2px 8px', borderRadius: 4 }}>
+              ✓ Day {activeWorkout?.day || 1} Done
             </span>
           ) : isWorkoutInProgress ? (
-            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.4)', padding: '2px 8px', borderRadius: 4 }}>
-              IN PROGRESS ({activeDayLoggedWorkingSets}/{activeDayTotalTargetSets || '-'} SETS)
+            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.4)', padding: '2px 8px', borderRadius: 4 }}>
+              {activeDayLoggedWorkingSets}/{activeDayTotalTargetSets || '-'} Sets
             </span>
           ) : activeWorkout ? (
-            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#080E14', background: 'var(--gold-lt)', padding: '2px 8px', borderRadius: 4 }}>
-              TODAY&apos;S TARGET · DAY {activeWorkout.day}
+            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#080E14', background: 'var(--gold-lt)', padding: '2px 8px', borderRadius: 4 }}>
+              Day {activeWorkout.day}
             </span>
-          ) : (
-            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 4 }}>
-              TRAIN
-            </span>
-          )}
+          ) : null}
         </div>
 
         {(() => {
@@ -388,20 +334,19 @@ export default function ExecutiveCommandCenterClient({
           const leadCard = leadExerciseName ? getNasmClinicalMovementCard(leadExerciseName) : null
           const leadExerciseImg = leadCard?.imageUrl || (leadExerciseName ? resolveGaaExerciseImage(leadExerciseName, false) : null) || (leadExerciseName ? BRAND_LOGO_FALLBACK_IMAGE : null)
           return (
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               {leadExerciseImg && (
                 <div
                   aria-hidden="true"
                   style={{
                     position: 'relative',
-                    width: 56,
-                    height: 56,
+                    width: 48,
+                    height: 48,
                     borderRadius: 8,
                     overflow: 'hidden',
                     flexShrink: 0,
                     backgroundColor: '#070B14',
                     border: '1px solid rgba(212,160,23,0.35)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
                   }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -424,20 +369,20 @@ export default function ExecutiveCommandCenterClient({
                 </div>
               )}
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 19, color: '#FFFFFF', letterSpacing: '0.04em', lineHeight: 1.25, fontWeight: 700 }}>
-                  {activeWorkout ? `DAY ${activeWorkout.day}: ${activeWorkout.focus.toUpperCase()}` : 'PERIODIZED WORKOUT COMMAND'}
+                <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(16px, 2.8vw, 19px)', color: '#FFFFFF', letterSpacing: '0.03em', lineHeight: 1.2, fontWeight: 700 }}>
+                  {activeWorkout ? `DAY ${activeWorkout.day}: ${activeWorkout.focus.toUpperCase()}` : 'OPEN WORKOUT LOGGER'}
                 </div>
-                <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4, marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.35, marginTop: 2 }}>
                   {activeWorkout ? (
                     isWorkoutCompleted ? (
                       totalVolumeMovedLbs > 0
-                        ? `Session recorded · Moved ${totalVolumeMovedLbs.toLocaleString()} lbs total volume across ${activeDayLoggedWorkingSets} working sets.`
-                        : `Session recorded · ${activeDayExerciseCount} exercises completed.`
+                        ? `${totalVolumeMovedLbs.toLocaleString()} lbs moved · ${activeDayLoggedWorkingSets} working sets`
+                        : `${activeDayExerciseCount} exercises completed`
                     ) : (
-                      `${activeDayExerciseCount} prescribed exercises · ~${activeWorkoutDurationMins || latestPlan?.estimated_duration_mins || 75}m duration.`
+                      `${activeDayExerciseCount} exercises · ~${activeWorkoutDurationMins || latestPlan?.estimated_duration_mins || 60}m`
                     )
                   ) : (
-                    'Personalized 5-Phase NASM OPT™ lifts, verified technique guides, and auto-rest timers.'
+                    'Log sets, track rest timers, and follow your phase plan.'
                   )}
                 </div>
               </div>
@@ -445,424 +390,225 @@ export default function ExecutiveCommandCenterClient({
           )
         })()}
 
-        <div style={{ fontSize: 12, color: isWorkoutCompleted ? '#34D399' : 'var(--gold-lt)', fontWeight: 800, marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
+        <div
+          style={{
+            background: isWorkoutCompleted ? 'rgba(16, 185, 129, 0.16)' : 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
+            color: isWorkoutCompleted ? '#34D399' : '#080E14',
+            borderRadius: 7,
+            padding: '10px 14px',
+            fontSize: 12.5,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            textAlign: 'center',
+          }}
+        >
           {isWorkoutCompleted
             ? `Review Day ${activeWorkout?.day || 1} Summary →`
             : isWorkoutInProgress
-              ? `Resume Day ${activeWorkout?.day || 1} Lifts (${activeDayLoggedWorkingSets}/${activeDayTotalTargetSets} Sets) →`
+              ? `Resume Day ${activeWorkout?.day || 1} Lifts (${activeDayLoggedWorkingSets}/${activeDayTotalTargetSets}) →`
               : activeWorkout
-                ? `Start Day ${activeWorkout.day} Lifts (${activeDayExerciseCount} Exercises) →`
-                : 'Open Workout Command →'
+                ? `Start Day ${activeWorkout.day} Workout →`
+                : 'Open Workout Logger →'
           }
         </div>
       </Link>
 
-      {/* ── 3. Weekly progress and coaching ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: 14 }}>
-        {/* Card A: Weekly progress summary */}
+      {/* ── 3. Compact Weekly Telemetry & Live Session Strip ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 10 }}>
+        {/* Card A: Weekly Progress Strip */}
         <div
           style={{
-            background: 'linear-gradient(135deg, rgba(13,27,42,0.95) 0%, rgba(9,15,26,0.98) 100%)',
-            border: '1px solid rgba(212,160,23,0.3)',
+            background: 'rgba(13, 24, 38, 0.92)',
+            border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 10,
-            padding: '16px 18px',
+            padding: '12px 14px',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: 12,
+            gap: 8,
           }}
         >
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}>
-                <GaaIcon name="shield" size={12} tone="gold" />
-                <span>Weekly progress</span>
-              </div>
-              <span style={{ fontSize: 10, color: 'var(--gray)' }}>Weekly progress</span>
-            </div>
-            <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 17, color: '#FFFFFF', margin: 0, fontWeight: 700, letterSpacing: '0.03em' }}>
-              Weekly progress summary
-            </h3>
-            <p style={{ fontSize: 12, color: '#94A3B8', margin: '4px 0 0', lineHeight: 1.4 }}>
-              Your recent training load, lifting volume, and recovery in one place.
-            </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
+              7-Day Telemetry
+            </span>
+            <Link
+              href="/dashboard/fitness?workspace=progress"
+              style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 700, textDecoration: 'none' }}
+            >
+              Progress →
+            </Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, background: 'rgba(0,0,0,0.3)', padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, background: 'rgba(0,0,0,0.3)', padding: '8px 10px', borderRadius: 6 }}>
             <div>
-              <div style={{ fontSize: 9.5, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700 }}>Weekly Vol</div>
-              <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 15, fontWeight: 700, color: 'var(--gold)', marginTop: 2 }}>
-                {dossier.totalTonnageLbs.toLocaleString()} <span style={{ fontSize: 10 }}>lbs</span>
+              <div style={{ fontSize: 9, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700 }}>Volume</div>
+              <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 14, fontWeight: 700, color: 'var(--gold)', marginTop: 1 }}>
+                {dossier.totalTonnageLbs.toLocaleString()} <span style={{ fontSize: 9.5 }}>lb</span>
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 9.5, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700 }}>ACWR Load</div>
-              <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 15, fontWeight: 700, color: dossier.acwrRatio !== null ? '#34D399' : 'var(--gray)', marginTop: 2 }}>
-                {dossier.acwrRatio !== null && dossier.acwrRatio !== undefined ? dossier.acwrRatio.toFixed(2) : '—'} <span style={{ fontSize: 10 }}>{dossier.acwrZone}</span>
+              <div style={{ fontSize: 9, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700 }}>ACWR</div>
+              <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 14, fontWeight: 700, color: dossier.acwrRatio !== null ? '#34D399' : 'var(--gray)', marginTop: 1 }}>
+                {dossier.acwrRatio !== null && dossier.acwrRatio !== undefined ? dossier.acwrRatio.toFixed(2) : '—'}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 9.5, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700 }}>Recent PRs</div>
-              <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 15, fontWeight: 700, color: '#38BDF8', marginTop: 2 }}>
+              <div style={{ fontSize: 9, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700 }}>PRs</div>
+              <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 14, fontWeight: 700, color: '#38BDF8', marginTop: 1 }}>
                 {dossier.topPrsThisWeek.length}
               </div>
             </div>
           </div>
-
-          <Link
-            href="/dashboard/fitness?workspace=progress"
-            style={{
-              fontSize: 11.5,
-              color: 'var(--gold-lt)',
-              fontWeight: 800,
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            View training progress →
-          </Link>
         </div>
 
-        {/* Card B: Coaching and upcoming sessions */}
+        {/* Card B: Compact Live Session & Booking Bar */}
         <div
           style={{
-            background: 'linear-gradient(135deg, rgba(13,27,42,0.95) 0%, rgba(9,15,26,0.98) 100%)',
-            border: '1px solid rgba(16,185,129,0.35)',
+            background: 'rgba(13, 24, 38, 0.92)',
+            border: '1px solid rgba(16,185,129,0.3)',
             borderRadius: 10,
-            padding: '16px 18px',
+            padding: '12px 14px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            gap: 12,
+            gap: 8,
           }}
         >
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#6EE7B7', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', boxShadow: '0 0 6px #34D399' }} />
-                <span>{nextSession ? 'Diagnostic Studio' : totalRemaining > 0 ? 'Diagnostic Testing' : 'Technique Feedback'}</span>
-              </div>
-              <span style={{ fontSize: 10, color: 'var(--gold-lt)', fontWeight: 700 }}>
-                {totalRemaining > 0 ? `${totalRemaining} ${totalRemaining === 1 ? 'Credit' : 'Credits'} Available` : 'Form Lab Active'}
-              </span>
-            </div>
-            <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 17, color: '#FFFFFF', margin: 0, fontWeight: 700, letterSpacing: '0.03em' }}>
-              {nextSession
-                ? 'Upcoming diagnostic session'
-                : totalRemaining > 0
-                ? 'Diagnostic assessment available'
-                : 'Form Lab & Asynchronous Review'}
-            </h3>
-            <p style={{ fontSize: 12, color: '#94A3B8', margin: '4px 0 0', lineHeight: 1.4 }} suppressHydrationWarning>
-              {nextSession
-                ? `${new Date(nextSession.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' })} at ${new Date(nextSession.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET`
-                : totalRemaining > 0
-                ? 'Occasional kinetic chain movement screen or benchmark evaluation with Coach Gordon.'
-                : 'Submit lift videos for frame-by-frame kinetic chain feedback from Coach Gordon, or message your coach.'
-              }
-            </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6EE7B7', fontWeight: 800 }}>
+              {nextSession ? 'Upcoming Session' : '1:1 Live Coaching'}
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--gold-lt)', fontWeight: 700 }}>
+              {totalRemaining > 0 ? `${totalRemaining} ${totalRemaining === 1 ? 'Credit' : 'Credits'}` : 'Studio Ready'}
+            </span>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            {nextSession ? (
-              <>
-                <Link
-                  href="/dashboard/live"
-                  className="tactile-btn"
-                  style={{
-                    padding: '7px 14px',
-                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                    color: '#FFFFFF',
-                    borderRadius: 6,
-                    fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                    textTransform: 'uppercase',
-                    fontSize: 11.5,
-                    letterSpacing: '0.06em',
-                    fontWeight: 800,
-                    textDecoration: 'none',
-                  }}
-                >
-                  Enter Live Studio →
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const ics = generateIcsCalendar({
-                      title: 'Forge Athletic: Live 1-on-1 Studio Session w/ Coach Gordon',
-                      startTime: nextSession.scheduled_at,
-                      durationMins: nextSession.duration_mins || 60,
-                      location: 'https://forge-athletic.app/dashboard/live',
-                    })
-                    downloadIcsFile('forge-live-session', ics)
-                  }}
-                  style={{
-                    padding: '7px 12px',
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 6,
-                    color: '#FFFFFF',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                  }}
-                  title="Add to Apple / Outlook Calendar (.ics)"
-                >
-                  <GaaIcon name="calendar" size={12} tone="gold" />
-                  <span>Sync Calendar</span>
-                </button>
-              </>
-            ) : totalRemaining > 0 ? (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Link
-                  href="/dashboard/live"
-                  className="tactile-btn"
-                  style={{
-                    padding: '7px 14px',
-                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                    color: '#FFFFFF',
-                    borderRadius: 6,
-                    fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                    textTransform: 'uppercase',
-                    fontSize: 11.5,
-                    letterSpacing: '0.06em',
-                    fontWeight: 800,
-                    textDecoration: 'none',
-                  }}
-                >
-                  Enter Live Studio →
-                </Link>
-                <Link
-                  href="/dashboard/book"
-                  className="sgf-button sgf-button-primary"
-                  style={{ padding: '7px 14px', fontSize: 11.5, textDecoration: 'none' }}
-                >
-                  Schedule Diagnostic ({totalRemaining} left)
-                </Link>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Link
-                  href="/dashboard/live"
-                  className="tactile-btn"
-                  style={{
-                    padding: '7px 14px',
-                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                    color: '#FFFFFF',
-                    borderRadius: 6,
-                    fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                    textTransform: 'uppercase',
-                    fontSize: 11.5,
-                    letterSpacing: '0.06em',
-                    fontWeight: 800,
-                    textDecoration: 'none',
-                  }}
-                >
-                  Enter Live Studio →
-                </Link>
-                <Link
-                  href="/dashboard/book"
-                  className="sgf-button sgf-button-primary"
-                  style={{ padding: '7px 14px', fontSize: 11.5, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                >
-                  <GaaIcon name="calendar" size={13} tone="dark" />
-                  <span>Book Live Session</span>
-                </Link>
-                <Link
-                  href="/dashboard/fitness?workspace=lab"
-                  className="tactile-btn"
-                  style={{
-                    padding: '7px 14px',
-                    background: 'rgba(212,160,23,0.15)',
-                    border: '1px solid var(--gold-lt)',
-                    borderRadius: 6,
-                    color: 'var(--gold-lt)',
-                    fontSize: 11.5,
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                  }}
-                >
-                  Open Form Lab →
-                </Link>
-              </div>
-            )}
+          <div style={{ fontSize: 12, color: '#E2E8F0' }} suppressHydrationWarning>
+            {nextSession
+              ? `${new Date(nextSession.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' })} · ${new Date(nextSession.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET`
+              : 'Join a live 1:1 video session or schedule your next check-in.'}
+          </div>
 
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             <Link
-              href="/dashboard/messages"
+              href="/dashboard/live"
+              className="tactile-btn"
               style={{
-                fontSize: 11.5,
-                color: 'var(--gold-lt)',
-                fontWeight: 700,
+                padding: '6px 12px',
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                color: '#FFFFFF',
+                borderRadius: 6,
+                fontSize: 11,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
                 textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                marginLeft: 'auto',
               }}
             >
-              Message Coach →
+              Live Studio →
             </Link>
+            {nextSession ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const ics = generateIcsCalendar({
+                    title: 'Forge Athletic: Live 1-on-1 Studio Session w/ Coach Gordon',
+                    startTime: nextSession.scheduled_at,
+                    durationMins: nextSession.duration_mins || 60,
+                    location: 'https://forge-athletic.app/dashboard/live',
+                  })
+                  downloadIcsFile('forge-live-session', ics)
+                }}
+                style={{
+                  padding: '6px 10px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  borderRadius: 6,
+                  color: '#FFFFFF',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                + Calendar
+              </button>
+            ) : (
+              <Link
+                href="/dashboard/book"
+                style={{
+                  padding: '6px 10px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  borderRadius: 6,
+                  color: '#FFFFFF',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                Book Session
+              </Link>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── 4. Prescribed Protocol Banner (If applicable) ── */}
-      <PrescribedToolboxBanner toolboxId="desk_worker_posture" />
-
-      {/* ── 4b. Ambassador Referral Engine ── */}
-      <ReferralDashboardWidget />
-
-      {/* ── 5. Flagship Sports Science Diagnostics Launchpad ── */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <span style={{ fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 800 }}>
-            Sports Science &amp; Diagnostics Launchpad
-          </span>
+      {/* ── 4. Compact 2x2 Quick Tools Grid ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 155px), 1fr))', gap: 8 }}>
+        {[
+          { href: '/dashboard/fitness?workspace=readiness&tab=3d', icon: 'dna' as const, tone: 'gold' as const, label: '3D Recovery', sub: 'Muscle heatmap' },
+          { href: '/dashboard/fitness?workspace=video', icon: 'camera' as const, tone: 'cyan' as const, label: 'AI Form Check', sub: 'Video critique' },
+          { href: '/dashboard/fitness?workspace=lab&tool=roadmap', icon: 'periodization' as const, tone: 'gold' as const, label: 'OPT™ Roadmap', sub: '12-wk phases' },
+          { href: '/dashboard/fitness?workspace=coach', icon: 'clipboard' as const, tone: 'gold' as const, label: 'Weekly Check-In', sub: 'Biofeedback' },
+        ].map(item => (
           <Link
-            href="/dashboard/fitness?workspace=lab"
-            style={{ fontSize: 11, color: 'var(--gold-lt)', textDecoration: 'none', fontWeight: 700 }}
-          >
-            Open Full Lab Studio →
-          </Link>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-          {/* Diagnostic 1: 3D Muscle Recovery Matrix */}
-          <Link
-            href="/dashboard/fitness?workspace=readiness&tab=3d"
-            className="tactile-btn luxury-card-interactive"
+            key={item.href}
+            href={item.href}
+            className="tactile-btn"
             style={{
-              background: 'rgba(8, 14, 24, 0.85)',
-              border: '1.5px solid var(--gold)',
+              background: 'rgba(10, 16, 28, 0.88)',
+              border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: 8,
-              padding: '14px 16px',
+              padding: '10px 12px',
               textDecoration: 'none',
               display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-              boxShadow: '0 0 14px rgba(197, 160, 89, 0.2)',
+              alignItems: 'center',
+              gap: 10,
+              minWidth: 0,
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <GaaIcon name="dna" size={20} tone="gold" />
-              <span style={{ fontSize: 8.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#080E14', background: 'var(--gold-lt)', padding: '1px 6px', borderRadius: 3 }}>
-                FLAGSHIP 3D
-              </span>
-            </div>
-            <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 15, color: 'var(--gold-lt)', letterSpacing: '0.04em', fontWeight: 700 }}>
-              3D MUSCLE RECOVERY MATRIX
-            </div>
-            <div style={{ fontSize: 11.5, color: '#CBD5E1', lineHeight: 1.35 }}>
-              Interactive 3D anatomical heatmaps, fatigue distribution &amp; 72-hour recovery time-lapse modeling.
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 700, marginTop: 'auto', paddingTop: 4 }}>
-              Launch 3D Matrix →
+            <GaaIcon name={item.icon} size={18} tone={item.tone} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {item.label}
+              </div>
+              <div style={{ fontSize: 10.5, color: 'var(--gray)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {item.sub}
+              </div>
             </div>
           </Link>
-
-          {/* Diagnostic 2: AI Video Biomechanics */}
-          <Link
-            href="/dashboard/fitness?workspace=video"
-            className="tactile-btn luxury-card-interactive"
-            style={{
-              background: 'rgba(8, 14, 24, 0.85)',
-              border: '1.5px solid rgba(56, 189, 248, 0.5)',
-              borderRadius: 8,
-              padding: '14px 16px',
-              textDecoration: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-              boxShadow: '0 0 14px rgba(56, 189, 248, 0.15)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <GaaIcon name="camera" size={20} tone="cyan" />
-              <span style={{ fontSize: 8.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#080E14', background: '#38BDF8', padding: '1px 6px', borderRadius: 3 }}>
-                AI VISION
-              </span>
-            </div>
-            <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 15, color: '#38BDF8', letterSpacing: '0.04em', fontWeight: 700 }}>
-              AI BIOMECHANICS &amp; FORM
-            </div>
-            <div style={{ fontSize: 11.5, color: '#CBD5E1', lineHeight: 1.35 }}>
-              MediaPipe computer vision bar-path, kinetic joint tracking, and knee valgus screen.
-            </div>
-            <div style={{ fontSize: 11, color: '#38BDF8', fontWeight: 700, marginTop: 'auto', paddingTop: 4 }}>
-              Start Form Check →
-            </div>
-          </Link>
-
-          {/* Diagnostic 3: 12-Week Periodization Roadmap */}
-          <Link
-            href="/dashboard/fitness?workspace=lab&tool=roadmap"
-            className="tactile-btn luxury-card-interactive"
-            style={{
-              background: 'rgba(8, 14, 24, 0.75)',
-              border: '1px solid rgba(197, 160, 89, 0.3)',
-              borderRadius: 8,
-              padding: '14px 16px',
-              textDecoration: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <GaaIcon name="periodization" size={20} tone="gold" />
-              <span style={{ fontSize: 8.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', background: 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: 3 }}>
-                PERIODIZATION
-              </span>
-            </div>
-            <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 15, color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 700 }}>
-              12-WEEK OPT™ ROADMAP
-            </div>
-            <div style={{ fontSize: 11.5, color: '#94A3B8', lineHeight: 1.35 }}>
-              Interactive progression across stabilization, strength development, and power cycles.
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 700, marginTop: 'auto', paddingTop: 4 }}>
-              View Macrocycle Plan →
-            </div>
-          </Link>
-
-          {/* Diagnostic 4: Weekly Coach Check-In */}
-          <Link
-            href="/dashboard/fitness?workspace=coach"
-            className="tactile-btn luxury-card-interactive"
-            style={{
-              background: 'rgba(8, 14, 24, 0.85)',
-              border: '1.5px solid rgba(212, 160, 23, 0.45)',
-              borderRadius: 8,
-              padding: '14px 16px',
-              textDecoration: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-              boxShadow: '0 0 14px rgba(212, 160, 23, 0.15)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <GaaIcon name="clipboard" size={20} tone="gold" />
-              <span style={{ fontSize: 8.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#080E14', background: 'var(--gold)', padding: '1px 6px', borderRadius: 3 }}>
-                WEEKLY TRIAGE
-              </span>
-            </div>
-            <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 15, color: 'var(--gold-lt)', letterSpacing: '0.04em', fontWeight: 700 }}>
-              COACH ADVISORY CHECK-IN
-            </div>
-            <div style={{ fontSize: 11.5, color: '#CBD5E1', lineHeight: 1.35 }}>
-              Weekly biofeedback check-in, bodyweight, sleep, and physique photo updates.
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 700, marginTop: 'auto', paddingTop: 4 }}>
-              Open Weekly Check-In →
-            </div>
-          </Link>
-        </div>
+        ))}
       </div>
+
+      {/* ── 5. Secondary Toolkits & Referrals (Collapsed by Default) ── */}
+      <details
+        className="fitness-card-disclosure"
+        style={{
+          background: 'rgba(10, 16, 28, 0.75)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 8,
+          padding: '0 12px',
+        }}
+      >
+        <summary style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--gray)' }}>
+          Mobility Toolkits &amp; Member Referrals
+        </summary>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 12 }}>
+          <PrescribedToolboxBanner toolboxId="desk_worker_posture" />
+          <ReferralDashboardWidget />
+        </div>
+      </details>
     </div>
   )
 }

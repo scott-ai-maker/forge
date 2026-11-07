@@ -116,8 +116,8 @@ export default function SiteHeader({
             width: '100%',
             maxWidth: 1440,
             margin: '0 auto',
-            minHeight: 64,
-            padding: '0 12px',
+            minHeight: 52,
+            padding: '0 10px',
             boxSizing: 'border-box',
           }}
         >
@@ -128,7 +128,7 @@ export default function SiteHeader({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
+              gap: 10,
               textDecoration: 'none',
               minWidth: 0,
               flexShrink: 1,
@@ -140,15 +140,15 @@ export default function SiteHeader({
               className="site-brand-mark"
               src={BRAND_LOGO}
               alt=""
-              width={54}
-              height={54}
+              width={40}
+              height={40}
               priority
             />
             <span className="site-brand-meta" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-              <span className="site-brand-text font-serif" style={{ fontSize: '1.35rem', letterSpacing: '0.03em', color: '#FFFFFF', whiteSpace: 'nowrap', fontWeight: 700 }}>
+              <span className="site-brand-text font-serif" style={{ fontSize: 'clamp(1.05rem, 2.8vw, 1.25rem)', letterSpacing: '0.03em', color: '#FFFFFF', whiteSpace: 'nowrap', fontWeight: 700 }}>
                 Forge <span style={{ color: 'var(--gold)' }}>Athletic</span>
               </span>
-              <span className="site-brand-subtitle" style={{ fontSize: '0.68rem', letterSpacing: '0.14em', color: 'var(--gray)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+              <span className="site-brand-subtitle" style={{ fontSize: '0.62rem', letterSpacing: '0.14em', color: 'var(--gray)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                 Precision Science For Real Lives
               </span>
             </span>
@@ -229,13 +229,13 @@ export default function SiteHeader({
                   triggerHaptic('tap')
                   setReferralOpen(true)
                 }}
-                className="tactile-btn"
+                className="tactile-btn desktop-header-actions"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  height: 38,
-                  padding: '0 12px',
+                  height: 36,
+                  padding: '0 10px',
                   borderRadius: 6,
                   background: 'rgba(197, 160, 89, 0.15)',
                   border: '1px solid rgba(197, 160, 89, 0.45)',

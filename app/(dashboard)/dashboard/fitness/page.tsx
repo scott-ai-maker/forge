@@ -133,13 +133,10 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
         badgeText="Training & progress"
         actions={<LogoutButton />}
       />
-      <div className="dashboard-fitness-content" style={{ maxWidth: 1440, margin: '0 auto', width: '100%', minWidth: 0, overflowX: 'hidden', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
-          <div>
-            <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(1.8rem, 5vw, 2.4rem)', letterSpacing: '0.04em', margin: 0, overflowWrap: 'break-word', wordBreak: 'break-word' }}>Training &amp; progress</h1>
-            <p style={{ color: 'var(--gray)', margin: '6px 0 0' }}>Follow your training plan, track sessions, and visualize your progress.</p>
-          </div>
-          <a href="/dashboard" className="sgf-shell-back" style={{ marginBottom: 0 }}>← Back to today</a>
+      <div className="dashboard-fitness-content" style={{ maxWidth: 1440, margin: '0 auto', width: '100%', minWidth: 0, overflowX: 'hidden', boxSizing: 'border-box', paddingTop: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+          <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(1.15rem, 3vw, 1.45rem)', letterSpacing: '0.04em', margin: 0 }}>Training &amp; progress</h1>
+          <a href="/dashboard" className="sgf-shell-back" style={{ marginBottom: 0, fontSize: 12 }}>← Today</a>
         </div>
 
         <ClientMembershipStatusBanner

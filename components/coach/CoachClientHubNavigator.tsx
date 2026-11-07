@@ -128,31 +128,31 @@ export default function CoachClientHubNavigator({
         gap: 8,
       }}
     >
-      {/* ── Pillar Switcher & Quick Navigation Bar ── */}
+      {/* ── Pillar Switcher & Quick Navigation Bar (Single-Row Compact Sticky Bar) ── */}
       <div
         className="glass-card"
         style={{
-          padding: '10px 14px',
-          background: 'rgba(8, 14, 24, 0.94)',
+          padding: '8px 10px',
+          background: 'rgba(8, 14, 24, 0.95)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           border: '1px solid rgba(212, 160, 23, 0.35)',
           borderRadius: 10,
-          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7)',
+          boxShadow: '0 6px 24px rgba(0, 0, 0, 0.65)',
           display: 'grid',
-          gap: 10,
+          gap: 6,
         }}
       >
         {/* Top Control Bar: Active Tab Title + Search Filter + Grid Toggle */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <GaaIcon name={activePillar.icon} tone={activePillar.tone} size={16} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <GaaIcon name={activePillar.icon} tone={activePillar.tone} size={14} />
               <span
                 style={{
                   fontFamily: 'Raleway, sans-serif',
                   fontWeight: 700,
-                  fontSize: 12,
+                  fontSize: 11,
                   color: 'var(--gold-lt)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
@@ -160,7 +160,6 @@ export default function CoachClientHubNavigator({
               >
                 {activePillar.title}
               </span>
-              <span style={{ color: 'var(--gray)', fontSize: 13 }}>· Workspace Navigator</span>
             </div>
 
             {/* Current Phase Breadcrumb Pill */}
@@ -170,81 +169,47 @@ export default function CoachClientHubNavigator({
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '3px 10px',
+                  gap: 5,
+                  padding: '2px 8px',
                   borderRadius: 20,
                   background: activeTab === currentStageTab ? 'rgba(212, 160, 23, 0.28)' : 'rgba(212, 160, 23, 0.14)',
                   border: '1px solid var(--gold)',
                   color: 'var(--gold-lt)',
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: 800,
                   textDecoration: 'none',
-                  letterSpacing: '0.04em',
-                  boxShadow: '0 0 10px rgba(212, 160, 23, 0.25)',
+                  letterSpacing: '0.03em',
                 }}
               >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                   {currentStageNumber <= 7 ? (
                     <>
-                      <GaaIcon name="star" size={12} tone="gold" />
+                      <GaaIcon name="star" size={11} tone="gold" />
                       {`Onboarding Phase ${currentStageNumber}: ${currentStageTitle || currentStageTab}`}
                     </>
                   ) : (
                     <>
-                      <GaaIcon name="shield-check" size={12} tone="gold" />
+                      <GaaIcon name="shield-check" size={11} tone="gold" />
                       {`Maintenance & Compliance: Stage ${currentStageNumber} (${currentStageTitle || currentStageTab})`}
                     </>
                   )}
                 </span>
-                {activeTab !== currentStageTab && <span style={{ textDecoration: 'underline', fontSize: 10 }}>Jump ➔</span>}
+                {activeTab !== currentStageTab && <span style={{ textDecoration: 'underline', fontSize: 9.5 }}>Jump ➔</span>}
               </Link>
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {/* Instant Tab Filter Search Input */}
-            <div style={{ position: 'relative', minWidth: 160 }}>
-              <input
-                type="text"
-                placeholder="Filter tools... (e.g. 'period')"
-                value={filterQuery}
-                onChange={e => setFilterQuery(e.target.value)}
-                style={{
-                  padding: '5px 24px 5px 28px',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 6,
-                  color: '#FFFFFF',
-                  fontSize: 11.5,
-                  width: '100%',
-                  boxSizing: 'border-box',
-                }}
-              />
-              <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
-                <GaaIcon name="search" size={12} tone="slate" />
-              </span>
-              {filterQuery && (
-                <button
-                  type="button"
-                  onClick={() => setFilterQuery('')}
-                  style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
-                  aria-label="Clear filter"
-                >
-                  <GaaIcon name="close" size={11} tone="slate" />
-                </button>
-              )}
-            </div>
-
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {/* Hub Directory Grid Expander Button */}
             <button
               type="button"
               onClick={() => setIsGridExpanded(prev => !prev)}
               className="sgf-button sgf-button-secondary"
-              style={{ padding: '5px 12px', fontSize: 11, fontWeight: 700 }}
+              style={{ padding: '4px 10px', fontSize: 10.5, fontWeight: 700 }}
             >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                {isGridExpanded ? <GaaIcon name="chevron-left" size={12} tone="gold" /> : <GaaIcon name="grid" size={12} tone="gold" />}
-                <span>{isGridExpanded ? 'Collapse Hub' : 'All 4 Hubs Grid'}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                {isGridExpanded ? <GaaIcon name="chevron-left" size={11} tone="gold" /> : <GaaIcon name="grid" size={11} tone="gold" />}
+                <span>{isGridExpanded ? 'Close Directory' : 'All Hubs'}</span>
               </span>
             </button>
 
@@ -253,20 +218,20 @@ export default function CoachClientHubNavigator({
               href={`/coach/clients/${clientId}/live`}
               className="tactile-btn"
               style={{
-                padding: '5px 12px',
+                padding: '4px 10px',
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                 color: '#080E14',
-                fontSize: 11,
+                fontSize: 10.5,
                 fontWeight: 800,
                 borderRadius: 4,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5,
+                gap: 4,
               }}
             >
-              <GaaIcon name="camera" size={12} style={{ color: '#080E14', stroke: '#080E14' }} />
-              <span>Live Studio</span>
+              <GaaIcon name="camera" size={11} style={{ color: '#080E14', stroke: '#080E14' }} />
+              <span>Live</span>
             </Link>
           </div>
         </div>
@@ -317,8 +282,8 @@ export default function CoachClientHubNavigator({
           </div>
         )}
 
-        {/* ── Categorized Quick Tabs Row ── */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {/* ── Categorized Quick Tabs Row (Single Horizontal Scroll Row) ── */}
+        <div className="responsive-tabs-scroll" style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', paddingBottom: 2 }}>
           {PILLARS.flatMap(p => p.tabs).map(tab => {
             const isActive = activeTab === tab.key
             const isCurrentPhase = currentStageTab === tab.key

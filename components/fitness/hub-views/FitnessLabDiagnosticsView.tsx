@@ -171,37 +171,8 @@ export default function FitnessLabDiagnosticsView({
   const classification = classifyBodyFat(currentBf, sex)
 
   return (
-    <div className="fitness-lab-view" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12, minWidth: 0 }}>
-      {/* Lab Header */}
-      <div style={{ background: 'linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(13,27,42,0.95) 100%)', border: '1px solid rgba(56,189,248,0.35)', borderRadius: 8, padding: '14px 18px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 8,
-              background: 'rgba(56, 189, 248, 0.15)',
-              border: '1px solid rgba(56, 189, 248, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <GaaIcon name="compass" tone="cyan" size={20} />
-          </div>
-          <div>
-            <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.04em', fontSize: 22, fontWeight: 700, color: '#FFFFFF' }}>
-              Fitness Lab
-            </h2>
-            <p style={{ margin: '2px 0 0', color: '#93C5FD', fontSize: 12 }}>
-              Recovery, assessments, and tools to support your training.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="fitness-lab-selector" onBlur={event => {
+    <div className="fitness-lab-view" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6, minWidth: 0 }}>
+      <div className="fitness-lab-selector" style={{ padding: '8px 10px', background: 'rgba(13,27,42,0.85)', border: '1px solid rgba(56,189,248,0.28)', borderRadius: 8 }} onBlur={event => {
         if (!event.currentTarget.contains(event.relatedTarget)) setIsToolPickerOpen(false)
       }} onKeyDown={event => {
         if (event.key === 'Escape' && isToolPickerOpen) {
@@ -210,38 +181,37 @@ export default function FitnessLabDiagnosticsView({
           toolPickerTrigger.current?.focus()
         }
       }}>
-        <span className="fitness-lab-selector-label">Choose a tool</span>
-        <button
-          ref={toolPickerTrigger}
-          type="button"
-          className="fitness-lab-picker-trigger"
-          aria-label={`Choose a tool: ${activeTool.title}`}
-          aria-expanded={isToolPickerOpen}
-          aria-controls="fitness-lab-tools"
-          aria-describedby="fitness-lab-tool-description"
-          onClick={() => setIsToolPickerOpen(open => !open)}
-        >
-          <span>{activeTool.title}</span>
-          <span aria-hidden="true">{isToolPickerOpen ? '-' : '+'}</span>
-        </button>
-        <div id="fitness-lab-tools" role="group" aria-label="Fitness Lab tools" className="fitness-lab-picker-options" hidden={!isToolPickerOpen}>
-          {LAB_TOOLS.map(tool => (
-            <button
-              key={tool.id}
-              type="button"
-              data-tool={tool.id}
-              aria-pressed={tool.id === activeLabTool}
-              onClick={() => {
-                onSelectTool(tool.id)
-                setIsToolPickerOpen(false)
-                toolPickerTrigger.current?.focus()
-              }}
-            >
-              {tool.title}
-            </button>
-          ))}
+        <div id="fitness-lab-tools" role="group" aria-label="Fitness Lab tools" className="responsive-tabs-scroll" style={{ gap: 6, paddingBottom: 2 }}>
+          {LAB_TOOLS.map(tool => {
+            const active = tool.id === activeLabTool
+            return (
+              <button
+                key={tool.id}
+                type="button"
+                data-tool={tool.id}
+                aria-pressed={active}
+                onClick={() => {
+                  onSelectTool(tool.id)
+                  setIsToolPickerOpen(false)
+                }}
+                className="tactile-btn"
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: 6,
+                  fontSize: 11.5,
+                  fontWeight: active ? 800 : 600,
+                  background: active ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                  border: active ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.1)',
+                  color: active ? '#38BDF8' : '#E2E8F0',
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer',
+                }}
+              >
+                {tool.title}
+              </button>
+            )
+          })}
         </div>
-        <p id="fitness-lab-tool-description">{activeTool.description}</p>
       </div>
 
       {/* Active Lab Tool Container */}

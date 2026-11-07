@@ -34,15 +34,15 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
           left: 0,
           right: 0,
           zIndex: 9999,
-          background: 'rgba(8, 14, 24, 0.94)',
+          background: 'rgba(8, 14, 24, 0.96)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(197, 160, 89, 0.35)',
+          borderTop: '1px solid rgba(197, 160, 89, 0.28)',
           display: 'flex',
           justifyContent: 'space-around',
           alignItems: 'center',
-          padding: '6px 8px calc(6px + env(safe-area-inset-bottom, 8px))',
-          boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(197, 160, 89, 0.08)',
+          padding: '4px 6px calc(4px + env(safe-area-inset-bottom, 6px))',
+          boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.75)',
         }}
       >
         {coachTabs.map(tab => {
@@ -119,15 +119,15 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
         left: 0,
         right: 0,
         zIndex: 9999,
-        background: 'rgba(8, 14, 24, 0.94)',
+        background: 'rgba(8, 14, 24, 0.96)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(197, 160, 89, 0.35)',
+        borderTop: '1px solid rgba(197, 160, 89, 0.28)',
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        padding: '6px 6px calc(6px + env(safe-area-inset-bottom, 8px))',
-        boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(197, 160, 89, 0.08)',
+        padding: '4px 4px calc(4px + env(safe-area-inset-bottom, 6px))',
+        boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.75)',
       }}
     >
       {CLIENT_PRIMARY_NAV.map(tab => {

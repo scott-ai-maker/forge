@@ -158,20 +158,9 @@ export default function ProgressAnalyticsView({
   const trendPoints = [...progression.points].sort((a, b) => a.date.localeCompare(b.date))
   const trendLabel = trend === 'volume' ? `Volume (${units === 'imperial' ? 'lb' : 'kg'})` : trend === 'sets' ? 'Sets per training day' : 'Average effort (RPE)'
   return (
-    <div className="fitness-progress-view" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12, minWidth: 0 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'linear-gradient(180deg, #0A0F1E 0%, #04070E 100%)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: 8 }}>
-        <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.04em', fontSize: 18, fontWeight: 700, color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <GaaIcon name="bar-chart" size={18} tone="gold" />
-          Your progress
-        </h2>
-        <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'var(--font-telemetry, monospace)' }}>
-          Training trends
-        </span>
-      </div>
-
+    <div className="fitness-progress-view" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6, minWidth: 0 }}>
       {/* Volume & Periodization Trends */}
-      <section style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: 'clamp(12px, 2.5vw, 18px)', borderRadius: 8 }}>
+      <section style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: 'clamp(10px, 2vw, 16px)', borderRadius: 8 }}>
         <h3 style={{ margin: '0 0 10px', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.04em', fontSize: 18, fontWeight: 700, color: 'var(--gold-lt)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <GaaIcon name="trending-up" size={18} tone="gold" />
           Training overview

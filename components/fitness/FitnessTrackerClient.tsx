@@ -2913,254 +2913,7 @@ export default function FitnessTrackerClient({
         </div>
       )}
 
-      {/* ── Athlete Metric Strip (Compact 1-Row / 3-Cell Strip for Mobile & Desktop) ── */}
-      <div
-        className="athlete-telemetry-strip"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-          gap: 'clamp(6px, 1.5vw, 12px)',
-          marginBottom: 14,
-          maxWidth: '100%',
-          boxSizing: 'border-box',
-        }}
-      >
-        <div
-          style={{
-            border: '1px solid rgba(212,160,23,0.3)',
-            background: 'linear-gradient(180deg, rgba(20,28,45,0.85) 0%, rgba(12,18,30,0.95) 100%)',
-            padding: 'clamp(6px, 1.5vw, 10px) clamp(8px, 1.8vw, 14px)',
-            borderRadius: 6,
-            minWidth: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ color: 'var(--gray)', fontSize: 'clamp(9px, 1.8vw, 11px)', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <GaaIcon name="target" size={13} tone="gold" />
-            <span>Current Goal</span>
-          </div>
-          <div
-            title={effectiveGoal}
-            style={{
-              fontSize: 'clamp(12px, 2.4vw, 15px)',
-              fontFamily: 'var(--font-sans, Raleway), sans-serif',
-              fontWeight: 600,
-              letterSpacing: '0.02em',
-              color: 'var(--gold-lt)',
-              margin: '2px 0 0',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              lineHeight: 1.2,
-            }}
-          >
-            {effectiveGoal}
-          </div>
-        </div>
-
-        <div
-          style={{
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: 'linear-gradient(180deg, rgba(20,28,45,0.85) 0%, rgba(12,18,30,0.95) 100%)',
-            padding: 'clamp(6px, 1.5vw, 10px) clamp(8px, 1.8vw, 14px)',
-            borderRadius: 6,
-            minWidth: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ color: 'var(--gray)', fontSize: 'clamp(9px, 1.8vw, 11px)', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <GaaIcon name="lightning" size={13} tone="gold" />
-            <span>NASM OPT™</span>
-          </div>
-          <div
-            title={plan ? `Phase ${plan.nasm_opt_phase}: ${plan.phase_name}` : 'Not generated'}
-            style={{
-              fontSize: 'clamp(12px, 2.4vw, 15px)',
-              fontFamily: 'var(--font-telemetry, monospace)',
-              fontWeight: 700,
-              letterSpacing: '0.02em',
-              color: '#FFFFFF',
-              margin: '2px 0 0',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              lineHeight: 1.2,
-            }}
-          >
-            {plan ? `Phase ${plan.nasm_opt_phase} · ${plan.phase_name}` : 'Not Generated'}
-          </div>
-        </div>
-
-        <div
-          style={{
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: 'linear-gradient(180deg, rgba(20,28,45,0.85) 0%, rgba(12,18,30,0.95) 100%)',
-            padding: 'clamp(6px, 1.5vw, 10px) clamp(8px, 1.8vw, 14px)',
-            borderRadius: 6,
-            minWidth: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ color: 'var(--gray)', fontSize: 'clamp(9px, 1.8vw, 11px)', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <GaaIcon name="chart" size={13} tone="emerald" />
-            <span>Est. Body Fat</span>
-          </div>
-          <div
-            style={{
-              fontSize: 'clamp(13px, 2.8vw, 17px)',
-              fontFamily: 'var(--font-telemetry, monospace)',
-              fontWeight: 700,
-              letterSpacing: '0.02em',
-              color: '#34D399',
-              margin: '2px 0 0',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              lineHeight: 1.2,
-            }}
-          >
-            {bodyfatState.estimated ? `~${bodyfatState.estimated}%` : 'Unknown'}
-          </div>
-        </div>
-      </div>
-      {/* ── Personal note from the coach (open by default) ── */}
-      {plan?.plan_json?.coachPersonalNote?.trim() && (
-        <section className="client-coach-note" aria-label="A personal note from Coach Gordon">
-          <div className="client-coach-note-head">
-            <span className="client-coach-note-avatar" aria-hidden="true">G</span>
-            <div>
-              <div className="client-coach-note-kicker">A personal note from Coach Gordon</div>
-              <div className="client-coach-note-sub">Why your program looks the way it does</div>
-            </div>
-          </div>
-          <p className="client-coach-note-body">{plan.plan_json.coachPersonalNote}</p>
-        </section>
-      )}
-
-      {/* ── Coach Gordon Clinical Briefing Memo ── */}
-      {plan?.plan_json?.clinicalRationale && (
-        <details
-          className="fitness-card-disclosure"
-          aria-label="Coach Gordon briefing memo"
-          style={{
-            border: '1px solid rgba(212,160,23,0.4)',
-            background: 'linear-gradient(135deg, rgba(13,27,42,0.98) 0%, rgba(8,16,28,0.98) 100%)',
-            borderRadius: 10,
-            padding: '0 14px',
-            marginBottom: 16,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-          }}
-        >
-          <summary style={{ gap: 8 }}>
-            <span
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
-                background: 'var(--gold, #D4A017)',
-                color: '#0A0E18',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
-                fontSize: 12,
-              }}
-            >
-              G
-            </span>
-            <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
-              {plan?.plan_json?.coachPersonalNote?.trim() ? "Coach's technical rationale" : 'Master Coach Briefing Memo · From Coach Gordon'}
-            </div>
-          </summary>
-          {typeof plan.plan_json.clinicalRationale === 'string' ? (
-            <p
-              style={{
-                margin: '0 0 14px',
-                fontSize: 13,
-                color: '#E2E8F0',
-                lineHeight: 1.6,
-                whiteSpace: 'pre-wrap',
-              }}
-            >
-              {plan.plan_json.clinicalRationale}
-            </p>
-          ) : typeof plan.plan_json.clinicalRationale === 'object' && plan.plan_json.clinicalRationale !== null ? (
-            <div
-              style={{
-                margin: '0 0 14px',
-                fontSize: 13,
-                color: '#E2E8F0',
-                lineHeight: 1.6,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              {Boolean((plan.plan_json.clinicalRationale as { summary?: string }).summary) && (
-                <p style={{ margin: 0, fontWeight: 600, color: 'var(--gold-lt)' }}>
-                  {(plan.plan_json.clinicalRationale as { summary?: string }).summary}
-                </p>
-              )}
-              {Boolean((plan.plan_json.clinicalRationale as { bodyCompAnalysis?: string }).bodyCompAnalysis) && (
-                <div>
-                  <strong style={{ color: 'var(--gold)' }}>Body Composition &amp; Metabolic Baseline: </strong>
-                  <span>{(plan.plan_json.clinicalRationale as { bodyCompAnalysis?: string }).bodyCompAnalysis}</span>
-                </div>
-              )}
-              {Boolean((plan.plan_json.clinicalRationale as { postureOhsaAnalysis?: string }).postureOhsaAnalysis) && (
-                <div>
-                  <strong style={{ color: 'var(--gold)' }}>Kinetic Chain &amp; Movement Diagnostic: </strong>
-                  <span>{(plan.plan_json.clinicalRationale as { postureOhsaAnalysis?: string }).postureOhsaAnalysis}</span>
-                </div>
-              )}
-              {Boolean((plan.plan_json.clinicalRationale as { recommendedStrategy?: string }).recommendedStrategy) && (
-                <div>
-                  <strong style={{ color: 'var(--gold)' }}>Periodization &amp; Loading Strategy: </strong>
-                  <span>{(plan.plan_json.clinicalRationale as { recommendedStrategy?: string }).recommendedStrategy}</span>
-                </div>
-              )}
-              {Boolean((plan.plan_json.clinicalRationale as { weeklyCardioPrescription?: string }).weeklyCardioPrescription) && (
-                <div>
-                  <strong style={{ color: 'var(--gold)' }}>Cardiorespiratory Conditioning Strategy: </strong>
-                  <span>{(plan.plan_json.clinicalRationale as { weeklyCardioPrescription?: string }).weeklyCardioPrescription}</span>
-                </div>
-              )}
-            </div>
-          ) : null}
-        </details>
-      )}
-
-      {plan?.plan_json?.nutritionTargets && (
-        <section
-          aria-label="Daily nutrition targets"
-          style={{
-            border: '1px solid rgba(212,160,23,0.35)',
-            background: 'rgba(13,27,42,0.95)',
-            borderRadius: 10,
-            padding: '12px 14px',
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
-            Your Daily Nutrition Targets · from Coach Gordon
-          </div>
-          <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 22, fontWeight: 700, color: 'var(--white)', margin: '4px 0' }}>
-            {plan.plan_json.nutritionTargets.targetCalories.toLocaleString()} kcal / day
-          </div>
-          <div style={{ color: 'var(--gray)', fontSize: 13 }}>
-            Protein {plan.plan_json.nutritionTargets.proteinGrams}g · Carbs {plan.plan_json.nutritionTargets.carbGrams}g · Fat {plan.plan_json.nutritionTargets.fatGrams}g
-          </div>
-          {plan.plan_json.nutritionTargets.currentWeightLbs != null && plan.plan_json.nutritionTargets.targetWeightLbs != null && (
-            <div style={{ color: 'var(--gray)', fontSize: 13, marginTop: 4 }}>
-              Goal: {plan.plan_json.nutritionTargets.currentWeightLbs} → {plan.plan_json.nutritionTargets.targetWeightLbs} lbs
-              {plan.plan_json.nutritionTargets.weeklyLossLbs != null && ` (~${plan.plan_json.nutritionTargets.weeklyLossLbs} lb/week`}
-              {plan.plan_json.nutritionTargets.estimatedWeeks != null && `, about ${plan.plan_json.nutritionTargets.estimatedWeeks} weeks`}
-              {plan.plan_json.nutritionTargets.weeklyLossLbs != null && ')'}
-            </div>
-          )}
-        </section>
-      )}
-      {/* ── 4 PRIMARY CLIENT HUBS NAVIGATION ── */}
+      {/* ── 4 PRIMARY CLIENT HUBS NAVIGATION (Top-Level Segmented Bar) ── */}
       <section
         className="fitness-hub-navigation"
         aria-label="Training and progress sections"
@@ -3168,16 +2921,16 @@ export default function FitnessTrackerClient({
           border: '1px solid rgba(212,160,23,0.35)',
           background: 'linear-gradient(180deg, rgba(13,27,42,0.95) 0%, rgba(8,16,28,0.98) 100%)',
           borderRadius: 10,
-          padding: '8px 10px',
-          marginBottom: 16,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          padding: '5px 6px',
+          marginBottom: 10,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
         }}
       >
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 6,
+            gap: 5,
           }}
         >
           {[
@@ -3224,29 +2977,26 @@ export default function FitnessTrackerClient({
                     ? 'linear-gradient(135deg, rgba(212,160,23,0.22) 0%, rgba(212,160,23,0.08) 100%)'
                     : 'rgba(255,255,255,0.03)',
                   color: active ? 'var(--gold-lt)' : 'var(--white)',
-                  padding: '10px 4px 8px',
+                  padding: '8px 4px',
                   cursor: 'pointer',
                   textAlign: 'center',
-                  borderRadius: 8,
+                  borderRadius: 7,
                   transition: 'all 0.15s ease',
-                  boxShadow: active ? '0 0 15px rgba(212,160,23,0.2)' : 'none',
+                  boxShadow: active ? '0 0 12px rgba(212,160,23,0.2)' : 'none',
                   minWidth: 0,
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 4,
+                  gap: 6,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 20 }}>
-                  <GaaIcon name={tab.icon} tone={active ? 'gold' : 'slate'} size={18} />
-                </div>
+                <GaaIcon name={tab.icon} tone={active ? 'gold' : 'slate'} size={15} />
                 <div
                   style={{
                     fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-                    letterSpacing: '0.04em',
+                    letterSpacing: '0.03em',
                     fontWeight: 700,
-                    fontSize: 'clamp(12px, 2.2vw, 15px)',
+                    fontSize: 'clamp(11.5px, 2vw, 14px)',
                     whiteSpace: 'nowrap',
                     color: active ? 'var(--gold-lt)' : '#FFFFFF',
                     lineHeight: 1.1,
@@ -3273,6 +3023,260 @@ export default function FitnessTrackerClient({
           })}
         </div>
       </section>
+
+      {/* ── Athlete Metric Strip (Compact 1-Row / 3-Cell Strip for Mobile & Desktop) ── */}
+      <div
+        className="athlete-telemetry-strip"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: 'clamp(4px, 1.2vw, 10px)',
+          marginBottom: 10,
+          maxWidth: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div
+          style={{
+            border: '1px solid rgba(212,160,23,0.28)',
+            background: 'rgba(14, 22, 36, 0.9)',
+            padding: '6px 10px',
+            borderRadius: 6,
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ color: 'var(--gray)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <GaaIcon name="target" size={11} tone="gold" />
+            <span>Goal</span>
+          </div>
+          <div
+            title={effectiveGoal}
+            style={{
+              fontSize: 'clamp(11.5px, 2.2vw, 14px)',
+              fontFamily: 'var(--font-sans, Raleway), sans-serif',
+              fontWeight: 600,
+              color: 'var(--gold-lt)',
+              margin: '1px 0 0',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              lineHeight: 1.2,
+            }}
+          >
+            {effectiveGoal}
+          </div>
+        </div>
+
+        <div
+          style={{
+            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(14, 22, 36, 0.9)',
+            padding: '6px 10px',
+            borderRadius: 6,
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ color: 'var(--gray)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <GaaIcon name="lightning" size={11} tone="gold" />
+            <span>NASM OPT™</span>
+          </div>
+          <div
+            title={plan ? `Phase ${plan.nasm_opt_phase}: ${plan.phase_name}` : 'Not generated'}
+            style={{
+              fontSize: 'clamp(11.5px, 2.2vw, 14px)',
+              fontFamily: 'var(--font-telemetry, monospace)',
+              fontWeight: 700,
+              color: '#FFFFFF',
+              margin: '1px 0 0',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              lineHeight: 1.2,
+            }}
+          >
+            {plan ? `Phase ${plan.nasm_opt_phase} · ${plan.phase_name}` : 'Not Generated'}
+          </div>
+        </div>
+
+        <div
+          style={{
+            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(14, 22, 36, 0.9)',
+            padding: '6px 10px',
+            borderRadius: 6,
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ color: 'var(--gray)', fontSize: 9.5, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <GaaIcon name="chart" size={11} tone="emerald" />
+            <span>Est. Body Fat</span>
+          </div>
+          <div
+            style={{
+              fontSize: 'clamp(12px, 2.4vw, 15px)',
+              fontFamily: 'var(--font-telemetry, monospace)',
+              fontWeight: 700,
+              color: '#34D399',
+              margin: '1px 0 0',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              lineHeight: 1.2,
+            }}
+          >
+            {bodyfatState.estimated ? `~${bodyfatState.estimated}%` : 'Unknown'}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Personal note from the coach (compact collapsible disclosure) ── */}
+      {plan?.plan_json?.coachPersonalNote?.trim() && (
+        <details
+          className="fitness-card-disclosure"
+          aria-label="A personal note from Coach Gordon"
+          style={{
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            background: 'rgba(13, 27, 42, 0.95)',
+            borderRadius: 8,
+            padding: '0 12px',
+            marginBottom: 8,
+          }}
+        >
+          <summary style={{ gap: 8 }}>
+            <span className="client-coach-note-avatar" style={{ width: 22, height: 22, fontSize: 11 }} aria-hidden="true">G</span>
+            <span className="client-coach-note-kicker" style={{ fontSize: 11 }}>Personal Note from Coach Gordon</span>
+          </summary>
+          <p className="client-coach-note-body" style={{ paddingBottom: 12, fontSize: 13.5 }}>{plan.plan_json.coachPersonalNote}</p>
+        </details>
+      )}
+
+      {/* ── Coach Gordon Clinical Briefing Memo ── */}
+      {plan?.plan_json?.clinicalRationale && (
+        <details
+          className="fitness-card-disclosure"
+          aria-label="Coach Gordon briefing memo"
+          style={{
+            border: '1px solid rgba(212,160,23,0.35)',
+            background: 'rgba(13,27,42,0.95)',
+            borderRadius: 8,
+            padding: '0 12px',
+            marginBottom: 8,
+          }}
+        >
+          <summary style={{ gap: 8 }}>
+            <span
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                background: 'var(--gold, #D4A017)',
+                color: '#0A0E18',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 900,
+                fontSize: 11,
+              }}
+            >
+              G
+            </span>
+            <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
+              {plan?.plan_json?.coachPersonalNote?.trim() ? "Coach's technical rationale" : 'Master Coach Briefing Memo · From Coach Gordon'}
+            </div>
+          </summary>
+          {typeof plan.plan_json.clinicalRationale === 'string' ? (
+            <p
+              style={{
+                margin: '0 0 12px',
+                fontSize: 13,
+                color: '#E2E8F0',
+                lineHeight: 1.55,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {plan.plan_json.clinicalRationale}
+            </p>
+          ) : typeof plan.plan_json.clinicalRationale === 'object' && plan.plan_json.clinicalRationale !== null ? (
+            <div
+              style={{
+                margin: '0 0 12px',
+                fontSize: 13,
+                color: '#E2E8F0',
+                lineHeight: 1.55,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+              }}
+            >
+              {Boolean((plan.plan_json.clinicalRationale as { summary?: string }).summary) && (
+                <p style={{ margin: 0, fontWeight: 600, color: 'var(--gold-lt)' }}>
+                  {(plan.plan_json.clinicalRationale as { summary?: string }).summary}
+                </p>
+              )}
+              {Boolean((plan.plan_json.clinicalRationale as { bodyCompAnalysis?: string }).bodyCompAnalysis) && (
+                <div>
+                  <strong style={{ color: 'var(--gold)' }}>Body Composition &amp; Metabolic Baseline: </strong>
+                  <span>{(plan.plan_json.clinicalRationale as { bodyCompAnalysis?: string }).bodyCompAnalysis}</span>
+                </div>
+              )}
+              {Boolean((plan.plan_json.clinicalRationale as { postureOhsaAnalysis?: string }).postureOhsaAnalysis) && (
+                <div>
+                  <strong style={{ color: 'var(--gold)' }}>Kinetic Chain &amp; Movement Diagnostic: </strong>
+                  <span>{(plan.plan_json.clinicalRationale as { postureOhsaAnalysis?: string }).postureOhsaAnalysis}</span>
+                </div>
+              )}
+              {Boolean((plan.plan_json.clinicalRationale as { recommendedStrategy?: string }).recommendedStrategy) && (
+                <div>
+                  <strong style={{ color: 'var(--gold)' }}>Periodization &amp; Loading Strategy: </strong>
+                  <span>{(plan.plan_json.clinicalRationale as { recommendedStrategy?: string }).recommendedStrategy}</span>
+                </div>
+              )}
+              {Boolean((plan.plan_json.clinicalRationale as { weeklyCardioPrescription?: string }).weeklyCardioPrescription) && (
+                <div>
+                  <strong style={{ color: 'var(--gold)' }}>Cardiorespiratory Conditioning Strategy: </strong>
+                  <span>{(plan.plan_json.clinicalRationale as { weeklyCardioPrescription?: string }).weeklyCardioPrescription}</span>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </details>
+      )}
+
+      {plan?.plan_json?.nutritionTargets && (
+        <details
+          className="fitness-card-disclosure"
+          aria-label="Daily nutrition targets"
+          style={{
+            border: '1px solid rgba(212,160,23,0.3)',
+            background: 'rgba(13,27,42,0.95)',
+            borderRadius: 8,
+            padding: '0 12px',
+            marginBottom: 10,
+          }}
+        >
+          <summary style={{ gap: 8 }}>
+            <span style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 800 }}>
+              Daily Nutrition: {plan.plan_json.nutritionTargets.targetCalories.toLocaleString()} kcal ({plan.plan_json.nutritionTargets.proteinGrams}P / {plan.plan_json.nutritionTargets.carbGrams}C / {plan.plan_json.nutritionTargets.fatGrams}F)
+            </span>
+          </summary>
+          <div style={{ paddingBottom: 10, color: 'var(--gray)', fontSize: 12.5 }}>
+            <div>
+              Protein {plan.plan_json.nutritionTargets.proteinGrams}g · Carbs {plan.plan_json.nutritionTargets.carbGrams}g · Fat {plan.plan_json.nutritionTargets.fatGrams}g
+            </div>
+            {plan.plan_json.nutritionTargets.currentWeightLbs != null && plan.plan_json.nutritionTargets.targetWeightLbs != null && (
+              <div style={{ marginTop: 4 }}>
+                Goal: {plan.plan_json.nutritionTargets.currentWeightLbs} → {plan.plan_json.nutritionTargets.targetWeightLbs} lbs
+                {plan.plan_json.nutritionTargets.weeklyLossLbs != null && ` (~${plan.plan_json.nutritionTargets.weeklyLossLbs} lb/week`}
+                {plan.plan_json.nutritionTargets.estimatedWeeks != null && `, about ${plan.plan_json.nutritionTargets.estimatedWeeks} weeks`}
+                {plan.plan_json.nutritionTargets.weeklyLossLbs != null && ')'}
+              </div>
+            )}
+          </div>
+        </details>
+      )}
 
       {primaryHub === 'train' && (
       <>
@@ -4065,62 +4069,56 @@ export default function FitnessTrackerClient({
 
                       {/* Active Orthopedic Protection Shield (Sports Injuries & Biomechanical Limitations) */}
                       {clientInjuries.length > 0 && (
-                        <div
+                        <details
+                          className="fitness-card-disclosure"
                           style={{
-                            marginBottom: 16,
-                            background: 'linear-gradient(135deg, rgba(212,160,23,0.12) 0%, rgba(13,22,41,0.95) 100%)',
-                            border: '1px solid rgba(212,160,23,0.4)',
+                            marginBottom: 10,
+                            background: 'rgba(13,22,41,0.9)',
+                            border: '1px solid rgba(212,160,23,0.35)',
                             borderRadius: 8,
-                            padding: '12px 16px',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                            padding: '0 12px',
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <GaaIcon name="shield-check" size={16} tone="gold" />
-                              <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)' }}>
-                                Orthopedic Protection Shield Active
-                              </span>
-                              <span style={{ fontSize: 10, background: 'rgba(212,160,23,0.2)', color: 'var(--gold)', padding: '2px 6px', borderRadius: 3, fontWeight: 700 }}>
-                                {clientInjuries.length} {clientInjuries.length === 1 ? 'Condition Guarded' : 'Conditions Guarded'}
-                              </span>
-                            </div>
-                            <span style={{ fontSize: 10.5, color: 'var(--gray)' }}>
-                              Contraindicated patterns filtered · Safe regressions loaded
+                          <summary style={{ gap: 8 }}>
+                            <GaaIcon name="shield-check" size={14} tone="gold" />
+                            <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)' }}>
+                              Orthopedic Protection Shield Active ({clientInjuries.length} {clientInjuries.length === 1 ? 'Condition Guarded' : 'Conditions Guarded'})
                             </span>
-                          </div>
+                          </summary>
 
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                            {clientInjuries.map(key => {
-                              const inj = COMMON_SPORTS_INJURIES[key]
-                              if (!inj) return null
-                              return (
-                                <span
-                                  key={key}
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 5,
-                                    fontSize: 11,
-                                    padding: '3px 8px',
-                                    background: 'rgba(0,0,0,0.45)',
-                                    border: '1px solid rgba(212,160,23,0.25)',
-                                    borderRadius: 4,
-                                    color: '#FFFFFF',
-                                  }}
-                                >
-                                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)' }} />
-                                  <strong>{inj.name}</strong>
-                                  <span style={{ color: 'var(--gray)', fontSize: 9.5 }}>({inj.region.replace('_', ' ')})</span>
-                                </span>
-                              )
-                            })}
-                          </div>
+                          <div style={{ paddingBottom: 10 }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                              {clientInjuries.map(key => {
+                                const inj = COMMON_SPORTS_INJURIES[key]
+                                if (!inj) return null
+                                return (
+                                  <span
+                                    key={key}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                      fontSize: 11,
+                                      padding: '3px 8px',
+                                      background: 'rgba(0,0,0,0.45)',
+                                      border: '1px solid rgba(212,160,23,0.25)',
+                                      borderRadius: 4,
+                                      color: '#FFFFFF',
+                                    }}
+                                  >
+                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)' }} />
+                                    <strong>{inj.name}</strong>
+                                    <span style={{ color: 'var(--gray)', fontSize: 9.5 }}>({inj.region.replace('_', ' ')})</span>
+                                  </span>
+                                )
+                              })}
+                            </div>
 
-                          <div style={{ fontSize: 11, color: 'var(--gray)', lineHeight: 1.4 }}>
-                            Warmup SMR and activation drills have been adapted for your joint profile. If any movement causes joint strain, tap <strong style={{ color: 'var(--gold-lt)' }}>Swap for Joint Relief</strong> to substitute with an NASM biomechanically safe regression.
+                            <div style={{ fontSize: 11, color: 'var(--gray)', lineHeight: 1.4 }}>
+                              Warmup SMR and activation drills have been adapted for your joint profile. If any movement causes joint strain, tap <strong style={{ color: 'var(--gold-lt)' }}>Swap for Joint Relief</strong> to substitute with an NASM biomechanically safe regression.
+                            </div>
                           </div>
-                        </div>
+                        </details>
                       )}
 
                       {/* Step 1: Pre-Lift Kinetic Warmup */}

@@ -61,37 +61,35 @@ export default function ClientSettingsStudio({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      {/* ── Executive Header Banner ── */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* ── Compact Profile Identity Header ── */}
       <div
         style={{
           background: 'linear-gradient(135deg, rgba(16,22,38,0.95) 0%, rgba(9,13,24,0.95) 100%)',
-          border: '1px solid rgba(212,160,23,0.35)',
-          borderRadius: 12,
-          padding: '24px 28px',
+          border: '1px solid rgba(212,160,23,0.3)',
+          borderRadius: 10,
+          padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 16,
-          boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+          gap: 12,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div
             style={{
-              width: 54,
-              height: 54,
-              borderRadius: 27,
+              width: 40,
+              height: 40,
+              borderRadius: 20,
               background: 'linear-gradient(135deg, #D4AF37 0%, #8A6508 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-              fontSize: 20,
+              fontSize: 15,
               color: '#0A0E18',
               fontWeight: 700,
-              boxShadow: '0 0 15px rgba(212,160,23,0.4)',
             }}
           >
             {(initialProfile.fullName || initialProfile.email || 'SG')
@@ -102,19 +100,19 @@ export default function ClientSettingsStudio({
               .join('') || 'SG'}
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 22, color: '#FFFFFF', margin: 0, letterSpacing: '0.04em' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', color: '#FFFFFF', margin: 0, letterSpacing: '0.03em' }}>
                 {initialProfile.fullName || initialProfile.email.split('@')[0]}
               </h2>
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 9.5,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
+                  letterSpacing: '0.08em',
                   fontWeight: 800,
                   background: 'rgba(212,160,23,0.15)',
                   color: 'var(--gold-lt)',
-                  padding: '2px 8px',
+                  padding: '2px 6px',
                   borderRadius: 4,
                   border: '1px solid rgba(212,160,23,0.4)',
                 }}
@@ -122,32 +120,32 @@ export default function ClientSettingsStudio({
                 VIP Athlete
               </span>
             </div>
-            <p style={{ margin: '3px 0 0', fontSize: 13, color: 'var(--gray)' }}>
+            <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--gray)' }}>
               {initialProfile.email} · {activePackageName}
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <BillingPortalButton />
         </div>
       </div>
 
-      {/* ── Best-Practice Tabbed Workspace Navigation ── */}
+      {/* ── Compact Horizontal Tabbed Workspace Navigation ── */}
       <div
-        className="settings-tab-strip"
+        className="settings-tab-strip responsive-tabs-scroll"
         role="group"
         aria-label="Settings sections"
         style={{
           display: 'flex',
-          gap: 8,
+          gap: 6,
           overflowX: 'auto',
           paddingBottom: 4,
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}
       >
         {[
-          { key: 'schedule' as const, label: 'Workout Schedule', icon: 'calendar' as GaaIconName },
+          { key: 'schedule' as const, label: 'Schedule', icon: 'calendar' as GaaIconName },
           isNativeAndroid()
             ? {
                 key: 'wearables' as const,
@@ -163,15 +161,15 @@ export default function ClientSettingsStudio({
               },
           {
             key: 'billing' as const,
-            label: isCompanion ? 'Retainer & Membership' : 'Retainer & Add-Ons',
+            label: isCompanion ? 'Membership' : 'Billing',
             icon: 'credit-card' as GaaIconName,
-            badge: isCompanion ? 'Web Managed' : 'Active',
+            badge: isCompanion ? 'Web' : 'Active',
           },
-          { key: 'fitness' as const, label: 'Baseline & Vitals', icon: 'dna' as GaaIconName, badge: 'OPT™ Profile' },
-          { key: 'medical' as const, label: 'Medical Clearance & PAR-Q+', icon: 'shield-check' as GaaIconName, badge: 'Clinical' },
-          { key: 'profile' as const, label: 'Personal Profile', icon: 'user' as GaaIconName },
-          { key: 'security' as const, label: 'Security & Access', icon: 'lock' as GaaIconName },
-          { key: 'notifications' as const, label: 'Alert Preferences', icon: 'bell' as GaaIconName },
+          { key: 'fitness' as const, label: 'Baseline & Vitals', icon: 'dna' as GaaIconName, badge: 'OPT™' },
+          { key: 'medical' as const, label: 'PAR-Q+ & Medical', icon: 'shield-check' as GaaIconName, badge: 'Clinical' },
+          { key: 'profile' as const, label: 'Profile', icon: 'user' as GaaIconName },
+          { key: 'security' as const, label: 'Security', icon: 'lock' as GaaIconName },
+          { key: 'notifications' as const, label: 'Alerts', icon: 'bell' as GaaIconName },
         ].map(tab => {
           const isSelected = activeTab === tab.key
           return (
@@ -181,32 +179,32 @@ export default function ClientSettingsStudio({
               onClick={() => handleTabChange(tab.key)}
               aria-pressed={isSelected}
               style={{
-                minHeight: 44,
-                background: isSelected ? 'rgba(212,160,23,0.12)' : 'rgba(255,255,255,0.02)',
+                minHeight: 38,
+                background: isSelected ? 'rgba(212,160,23,0.14)' : 'rgba(255,255,255,0.02)',
                 border: isSelected ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.08)',
                 borderRadius: 8,
-                padding: '12px 18px',
+                padding: '7px 12px',
                 color: isSelected ? 'var(--gold-lt)' : 'var(--white)',
                 fontFamily: 'Raleway, sans-serif',
-                fontWeight: isSelected ? 800 : 500,
-                fontSize: 13,
+                fontWeight: isSelected ? 800 : 600,
+                fontSize: 12,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 6,
                 whiteSpace: 'nowrap',
                 transition: 'all 0.15s ease',
               }}
             >
-              <GaaIcon name={tab.icon} size={15} tone={isSelected ? 'gold' : 'slate'} />
+              <GaaIcon name={tab.icon} size={13} tone={isSelected ? 'gold' : 'slate'} />
               <span>{tab.label}</span>
               {tab.badge && (
                 <span
                   style={{
                     fontSize: 9,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    padding: '2px 6px',
+                    letterSpacing: '0.06em',
+                    padding: '1.5px 5px',
                     borderRadius: 3,
                     background: isSelected ? 'var(--gold)' : 'rgba(255,255,255,0.08)',
                     color: isSelected ? '#0A0E18' : 'var(--gray)',

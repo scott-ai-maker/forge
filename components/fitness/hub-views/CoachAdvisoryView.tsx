@@ -73,61 +73,47 @@ export default function CoachAdvisoryView({
   )
 
   return (
-    <div className="fitness-coach-view" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
-      {/* Coach Header Banner */}
+    <div className="fitness-coach-view" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
+      {/* Compact Coach Quick Actions Bar */}
       <div
         style={{
-          background: 'linear-gradient(135deg, rgba(212,160,23,0.15) 0%, rgba(13,27,42,0.95) 100%)',
-          border: '1px solid rgba(212,160,23,0.35)',
+          background: 'rgba(13,27,42,0.92)',
+          border: '1px solid rgba(212,160,23,0.3)',
           borderRadius: 8,
-          padding: '16px 20px',
+          padding: '10px 14px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: 12,
+          gap: 10,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <GaaIcon name="award" size={28} tone="gold" />
-          <div>
-            <h2
-              style={{
-                margin: 0,
-                fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-                letterSpacing: '0.04em',
-                fontSize: 22,
-                fontWeight: 700,
-                color: '#FFFFFF',
-              }}
-            >
-              Your coach
-            </h2>
-            <p style={{ margin: '2px 0 0', color: 'var(--gold-lt)', fontSize: 12.5 }}>
-              Check in with Coach Gordon, share updates, or book a session.
-            </p>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <GaaIcon name="award" size={18} tone="gold" />
+          <span style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 16, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.03em' }}>
+            Coach Check-In &amp; Support
+          </span>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <a
             href="/dashboard/messages"
             style={{
-              background: 'rgba(212,160,23,0.2)',
+              background: 'rgba(212,160,23,0.18)',
               border: '1px solid var(--gold)',
               color: 'var(--gold-lt)',
-              fontSize: 12,
+              fontSize: 11.5,
               fontWeight: 700,
-              padding: '8px 14px',
+              padding: '6px 12px',
               borderRadius: 6,
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 5,
             }}
           >
-            <GaaIcon name="message-square" size={13} tone="gold" />
-            Message coach
+            <GaaIcon name="message-square" size={12} tone="gold" />
+            Message
           </a>
           <a
             href="/dashboard/book"
@@ -135,18 +121,18 @@ export default function CoachAdvisoryView({
               background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
               border: 'none',
               color: '#0A0E18',
-              fontSize: 12,
+              fontSize: 11.5,
               fontWeight: 800,
-              padding: '8px 14px',
+              padding: '6px 12px',
               borderRadius: 6,
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 5,
             }}
           >
-            <GaaIcon name="calendar" size={13} tone="dark" />
-            Book a session
+            <GaaIcon name="calendar" size={12} tone="dark" />
+            Book Session
           </a>
         </div>
       </div>

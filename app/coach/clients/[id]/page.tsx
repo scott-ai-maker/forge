@@ -576,40 +576,42 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
         actions={<LogoutButton />}
       />
 
-      <div className="coach-client-content" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(14px, 2.5vw, 24px) clamp(8px, 1.8vw, 16px)', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
-        <a
-          href="/coach"
-          className="sgf-shell-back"
-        >
-          ← Back to Members
-        </a>
+      <div className="coach-client-content" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(10px, 2vw, 18px) clamp(8px, 1.8vw, 16px)', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+          <a
+            href="/coach"
+            className="sgf-shell-back"
+            style={{ marginBottom: 0 }}
+          >
+            ← Back to Members
+          </a>
 
-        <div style={{ marginBottom: 20 }}>
-          <div className="coach-client-top-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="coach-client-top-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <Link
               href={`/coach/clients/${id}/live`}
               className="tactile-btn"
               style={{
-                padding: '10px 18px',
-                borderRadius: 4,
+                padding: '7px 14px',
+                borderRadius: 6,
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                 color: '#080E14',
-                fontSize: 12.5,
+                fontSize: 11.5,
                 fontWeight: 800,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 7,
+                gap: 6,
                 boxShadow: '0 4px 14px rgba(197, 160, 89, 0.35)',
               }}
             >
-              <GaaIcon name="camera" size={15} style={{ color: '#080E14', stroke: '#080E14' }} />
+              <GaaIcon name="camera" size={14} style={{ color: '#080E14', stroke: '#080E14' }} />
               <span>Start Live Coaching</span>
             </Link>
 
             <a
               href={`/coach/clients/${id}/messages`}
               className="sgf-button sgf-button-secondary"
+              style={{ padding: '7px 12px', fontSize: 11.5 }}
             >
               Message Member
             </a>
@@ -618,12 +620,12 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
               href={`/coach/clients/${id}?tab=lifecycle`}
               className="tactile-btn"
               style={{
-                padding: '10px 14px',
-                borderRadius: 4,
+                padding: '7px 12px',
+                borderRadius: 6,
                 background: clientStatus === 'paused' ? 'rgba(245,158,11,0.15)' : clientStatus === 'inactive' ? 'rgba(239,68,68,0.15)' : clientStatus === 'archived' ? 'rgba(148,163,184,0.15)' : 'rgba(16,185,129,0.15)',
                 border: `1px solid ${clientStatus === 'paused' ? '#F59E0B' : clientStatus === 'inactive' ? '#EF4444' : clientStatus === 'archived' ? '#94A3B8' : '#10B981'}`,
                 color: clientStatus === 'paused' ? '#F59E0B' : clientStatus === 'inactive' ? '#EF4444' : clientStatus === 'archived' ? '#94A3B8' : '#10B981',
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: 800,
                 textDecoration: 'none',
                 display: 'inline-flex',
@@ -633,16 +635,16 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                 {clientStatus === 'paused' ? (
-                  <><GaaIcon name="status-paused" size={12} tone="amber" /> PAUSED</>
+                  <><GaaIcon name="status-paused" size={11} tone="amber" /> PAUSED</>
                 ) : clientStatus === 'inactive' ? (
-                  <><GaaIcon name="status-inactive" size={12} tone="ruby" /> INACTIVE</>
+                  <><GaaIcon name="status-inactive" size={11} tone="ruby" /> INACTIVE</>
                 ) : clientStatus === 'archived' ? (
-                  <><GaaIcon name="folder" size={12} tone="slate" /> ARCHIVED</>
+                  <><GaaIcon name="folder" size={11} tone="slate" /> ARCHIVED</>
                 ) : (
-                  <><GaaIcon name="status-active" size={12} tone="emerald" /> ACTIVE</>
+                  <><GaaIcon name="status-active" size={11} tone="emerald" /> ACTIVE</>
                 )}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--gray)', textDecoration: 'underline' }}>Manage Status & Audit ➔</span>
+              <span style={{ fontSize: 10.5, color: 'var(--gray)', textDecoration: 'underline' }}>Status ➔</span>
             </a>
           </div>
         </div>
