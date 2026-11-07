@@ -21,7 +21,7 @@ describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
     const goLiveDate = new Date(DEFAULT_GO_LIVE_DATE_ISO)
     expect(goLiveDate.getFullYear()).toBe(2026)
     expect(goLiveDate.getMonth()).toBe(10) // November (0-indexed)
-    expect(goLiveDate.getDate()).toBe(20) // Friday, Nov 20, 2026
+    expect(goLiveDate.getDate()).toBe(9) // Monday, Nov 9, 2026
     expect(goLiveDate.getHours()).toBe(6) // 06:00 AM EST
 
     // Ensure it falls before Thanksgiving (Nov 26, 2026) and Black Friday (Nov 27, 2026)
@@ -32,11 +32,11 @@ describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
   })
 
   it('validates countdown ticker math correctly decrements towards launch date', () => {
-    const launch = new Date('2026-11-20T06:00:00-05:00')
-    const simulatedNow = new Date('2026-11-10T06:00:00-05:00') // 10 days out
+    const launch = new Date('2026-11-09T06:00:00-05:00')
+    const simulatedNow = new Date('2026-11-07T06:00:00-05:00') // 2 days out
 
     const result = calculateTimeRemaining(launch, simulatedNow)
-    expect(result.days).toBe(10)
+    expect(result.days).toBe(2)
     expect(result.hours).toBe(0)
     expect(result.minutes).toBe(0)
     expect(result.seconds).toBe(0)
@@ -50,8 +50,9 @@ describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
     expect(componentSource).toContain('FORGE-HOLIDAY-2026-')
     expect(componentSource).toContain('holiday_unmasking_drop')
     expect(componentSource).toContain('CLAIM FOUNDING MEMBER PASS')
-    expect(componentSource).toContain('Lifetime Rate Lock')
-    expect(componentSource).toContain('Pre-Holiday 1-on-1 Screening')
+    expect(componentSource).toContain('25% Lifetime Rate Lock')
+    expect(componentSource).toContain('Free 60-Min Pre-Holiday Screening')
+    expect(componentSource).toContain('HOLIDAY_DEAL_PROMO')
     expect(componentSource).toContain('Member Sign In')
     expect(componentSource).toContain('Coach Portal')
     expect(componentSource).toContain('Founding Partner Pass')

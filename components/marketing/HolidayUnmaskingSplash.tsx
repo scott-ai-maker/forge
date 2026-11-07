@@ -7,6 +7,7 @@ import ForgeIcon, { ForgeIconName } from '@/components/ui/ForgeIcon'
 import {
   calculateTimeRemaining,
   getGoLiveDate,
+  HOLIDAY_DEAL_PROMO,
   LAUNCH_CAMPAIGN_INFO,
   TimeRemaining,
 } from '@/lib/launch-config'
@@ -83,18 +84,18 @@ const SNEAK_PEEKS: Array<{
 const FOUNDING_PERKS = [
   {
     icon: 'crown' as ForgeIconName,
-    title: 'Lifetime Rate Lock',
-    description: 'Founding Members permanently retain their pre-launch dues for the entire lifetime of their membership.',
+    title: '25% Lifetime Rate Lock',
+    description: 'Founding Members permanently lock in 25% off any membership tier (Code: HOLIDAY25) for the entire lifetime of their membership.',
   },
   {
     icon: 'assessment' as ForgeIconName,
-    title: 'Pre-Holiday 1-on-1 Screening',
-    description: 'Guaranteed 60-minute remote movement diagnostic and 3D kinetic audit with Coach Gordon before Thanksgiving.',
+    title: 'Free 60-Min Pre-Holiday Screening',
+    description: 'Complimentary 60-minute remote movement diagnostic and 3D kinetic audit with Coach Gordon before Thanksgiving.',
   },
   {
     icon: 'zap' as ForgeIconName,
     title: 'Tier 1 Priority Beta',
-    description: 'Immediate first-day access on Friday, November 20 to the complete Forge web and native mobile coaching suite.',
+    description: 'Immediate first-day access on Monday, November 9 to the complete Forge web and native mobile coaching suite.',
   },
   {
     icon: 'ticket' as ForgeIconName,
@@ -735,14 +736,67 @@ export default function HolidayUnmaskingSplash({
               fontSize: 'clamp(1rem, 2vw, 1.15rem)',
               lineHeight: 1.6,
               color: '#94A3B8',
-              margin: '0 auto 36px',
+              margin: '0 auto 28px',
               maxWidth: 720,
             }}
           >
-            <strong>Don’t wait for January to repair what November broke.</strong> Forge Athletic
-            is opening 50 early Founding Member spots to help everyday people, busy parents,
-            and desk workers build lasting strength, joint resilience, and energy before the holiday rush—delivered 100% remotely to your home gym or workout space with zero commute friction.
+            <strong>Don’t wait for January to repair what November broke.</strong> We pushed up our go-live to <strong>Monday, November 9</strong> and unlocked the <strong>Holiday Founding Deal</strong>: claim one of 50 Founding Member spots for a <strong>25% Lifetime Rate Lock</strong> on any tier plus a <strong>Free 60-Min Pre-Holiday Movement Screen</strong> with Coach Gordon—delivered 100% remotely to your home gym or workout space with zero commute friction.
           </p>
+
+          {/* HOLIDAY DEAL CALLOUT PILL */}
+          <div
+            style={{
+              maxWidth: 760,
+              margin: '0 auto 28px',
+              padding: '14px 20px',
+              borderRadius: 12,
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(15, 23, 42, 0.92) 100%)',
+              border: '1px solid rgba(245, 158, 11, 0.5)',
+              boxShadow: '0 8px 28px rgba(245, 158, 11, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 12,
+              textAlign: 'left',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#080E14',
+                  background: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)',
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                }}
+              >
+                HOLIDAY DEAL UNLOCKED
+              </span>
+              <span style={{ fontSize: 13.5, color: '#F8FAFC', fontWeight: 600 }}>
+                {HOLIDAY_DEAL_PROMO.headline}
+              </span>
+            </div>
+            <span
+              style={{
+                fontFamily: 'var(--font-telemetry)',
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#34D399',
+                background: 'rgba(52, 211, 153, 0.12)',
+                border: '1px solid rgba(52, 211, 153, 0.35)',
+                padding: '4px 10px',
+                borderRadius: 6,
+                letterSpacing: '0.08em',
+              }}
+            >
+              PROMO CODE: {HOLIDAY_DEAL_PROMO.code}
+            </span>
+          </div>
 
           {/* COUNTDOWN TICKER HUD */}
           <div
@@ -849,7 +903,7 @@ export default function HolidayUnmaskingSplash({
             >
               <span style={{ color: '#34D399' }}>✓</span>
               <span>
-                Timed 1 week before Thanksgiving to build momentum before the holiday routine changes.
+                Pushed up 17 days before Thanksgiving so you lock in your 25% Lifetime Rate Lock (Code: {HOLIDAY_DEAL_PROMO.code}) and complete your 1-on-1 movement screen before holiday travel begins.
               </span>
             </div>
           </div>
@@ -1361,7 +1415,7 @@ export default function HolidayUnmaskingSplash({
                         fontWeight: 600,
                       }}
                     >
-                      ● ACTIVE PRIORITY
+                      ● 25% RATE LOCK ({HOLIDAY_DEAL_PROMO.code})
                     </div>
                   </div>
                 </div>
@@ -1436,7 +1490,7 @@ export default function HolidayUnmaskingSplash({
                     color: '#94A3B8',
                   }}
                 >
-                  DROP: NOV 20, 2026
+                  DROP: NOV 9, 2026
                 </div>
               </div>
 
@@ -2124,17 +2178,18 @@ export default function HolidayUnmaskingSplash({
                     Foundation
                   </span>
                   <span style={{ fontSize: 10, color: '#34D399', background: 'rgba(52, 211, 153, 0.12)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
-                    7-Day Free Trial
+                    25% Off · {HOLIDAY_DEAL_PROMO.code}
                   </span>
                 </div>
                 <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
-                  Core Lab
+                  Core
                 </h3>
                 <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
-                  $19.99 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
+                  <span style={{ fontSize: 14, color: '#64748B', textDecoration: 'line-through', marginRight: 6 }}>$49</span>
+                  $36.75 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
                 </div>
                 <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
-                  Autonomous 5-phase NASM OPT™ periodization, 33-point posture screen, and dynamic equipment swaps for home or travel.
+                  Autonomous 5-phase NASM OPT™ periodization, 33-point posture screen, 7-day free trial, and free 60-min pre-holiday movement screen.
                 </p>
               </div>
             </div>
@@ -2158,17 +2213,18 @@ export default function HolidayUnmaskingSplash({
                     Guided Hybrid
                   </span>
                   <span style={{ fontSize: 10, color: '#FBBF24', background: 'rgba(245, 158, 11, 0.15)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
-                    Most Popular
+                    25% Off · Most Popular
                   </span>
                 </div>
                 <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
                   Plus
                 </h3>
                 <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
-                  $49.00 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
+                  <span style={{ fontSize: 14, color: '#64748B', textDecoration: 'line-through', marginRight: 6 }}>$99</span>
+                  $74.25 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
                 </div>
                 <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
-                  Everything in Core + full Nutrition Periodization, Travel Pass hotel swaps, and 2 Form Lab video reviews per month.
+                  Everything in Core + full Nutrition Periodization, Travel Pass hotel swaps, and 4 Form Lab video reviews per month.
                 </p>
               </div>
             </div>
@@ -2191,14 +2247,15 @@ export default function HolidayUnmaskingSplash({
                     Master Coaching
                   </span>
                   <span style={{ fontSize: 10, color: '#F87171', background: 'rgba(239, 68, 68, 0.15)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
-                    Capped at 25
+                    Capped at 15
                   </span>
                 </div>
                 <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
                   Coach Support
                 </h3>
                 <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
-                  $199.00 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
+                  <span style={{ fontSize: 14, color: '#64748B', textDecoration: 'line-through', marginRight: 6 }}>$299</span>
+                  $224.25 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
                 </div>
                 <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
                   Direct messaging with Coach Gordon (24h SLA), custom plan certification, and 8 Form Lab video audits per month.

@@ -306,6 +306,27 @@ describe('stripe checkout route', () => {
     }
   })
 
+  it('applies HOLIDAY25 25% Lifetime Rate Lock discount to Forge memberships', async () => {
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      body: JSON.stringify({
+        packageId: 'forge-core',
+        cadence: 'monthly',
+        discountCode: 'HOLIDAY25',
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+    const createArgs = createSessionMock.mock.calls[0][0]
+    expect(createArgs.mode).toBe('subscription')
+    // $49.00 (4900 cents) - 25% (1225 cents) = 3675 cents ($36.75)
+    expect(createArgs.line_items[0].price_data.unit_amount).toBe(3675)
+    expect(createArgs.line_items[0].price_data.product_data.name).toBe('Core (HOLIDAY25 Rate Lock)')
+    expect(createArgs.metadata.discountCode).toBe('HOLIDAY25')
+    expect(createArgs.metadata.discountAmountCents).toBe('1225')
+  })
+
   it('rejects unsupported membership billing cadences', async () => {
     const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',

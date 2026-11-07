@@ -3,6 +3,7 @@ import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { getTrustedAppBaseUrl } from '@/lib/app-base-url'
 import {
   calculateDiscountAmountCents,
+  getBuiltInPromoCode,
   isDiscountCodeActive,
   isDiscountCodeEligibleForPackage,
   normalizeDiscountCode,
@@ -114,6 +115,51 @@ export async function POST(req: NextRequest) {
         ? referralPromotion.refereeTrialDays
         : forgeMembership.trialDays
 
+      let appliedDiscountCode: string | null = null
+      let appliedDiscountType: 'percent' | 'fixed_amount' | null = null
+      let appliedDiscountValue = 0
+      let discountAmountCents = 0
+
+      if (discountCodeInput) {
+        let discount: DiscountCodeRecord | null = getBuiltInPromoCode(discountCodeInput)
+
+        if (!discount) {
+          const { data: dbDiscount, error: discountError } = await admin
+            .from('discount_codes')
+            .select('id, code, description, discount_type, discount_value, is_active, max_redemptions, redemptions_count, starts_at, expires_at, applies_to_package_ids, restricted_client_id')
+            .eq('code', discountCodeInput)
+            .maybeSingle<DiscountCodeRecord>()
+
+          if (discountError || !dbDiscount) {
+            return NextResponse.json({ error: 'Invalid discount code' }, { status: 400 })
+          }
+          discount = dbDiscount
+        }
+
+        if (!isDiscountCodeActive(discount)) {
+          return NextResponse.json({ error: 'This discount code is inactive or expired' }, { status: 400 })
+        }
+
+        if (discount.restricted_client_id && discount.restricted_client_id !== userId) {
+          return NextResponse.json({ error: 'This discount code is not eligible for your account' }, { status: 403 })
+        }
+
+        if (!isDiscountCodeEligibleForPackage(discount, forgeMembership.id)) {
+          return NextResponse.json({ error: 'This discount code does not apply to this membership' }, { status: 400 })
+        }
+
+        appliedDiscountCode = discount.code
+        appliedDiscountType = discount.discount_type
+        appliedDiscountValue = discount.discount_value
+        discountAmountCents = calculateDiscountAmountCents(
+          membershipPrice.amountCents,
+          discount.discount_type,
+          discount.discount_value
+        )
+      }
+
+      const finalMembershipCents = Math.max(membershipPrice.amountCents - discountAmountCents, 50)
+
       const metadataPayload = {
         clientId: userId,
         packageId: forgeMembership.id,
@@ -121,7 +167,11 @@ export async function POST(req: NextRequest) {
         sessionsTotal: '0',
         cadence: body.cadence,
         basePriceCents: String(membershipPrice.amountCents),
-        finalPriceCents: String(membershipPrice.amountCents),
+        finalPriceCents: String(finalMembershipCents),
+        discountCode: appliedDiscountCode || '',
+        discountType: appliedDiscountType || '',
+        discountValue: String(appliedDiscountValue),
+        discountAmountCents: String(discountAmountCents),
         source: 'forge_membership',
         referralCode: referralPromotion?.code || '',
         referrerId: referralPromotion?.referrerId || '',
@@ -136,11 +186,13 @@ export async function POST(req: NextRequest) {
               price_data: {
                 currency: 'usd',
                 product_data: {
-                  name: forgeMembership.name,
+                  name: appliedDiscountCode
+                    ? `${forgeMembership.name} (${appliedDiscountCode} Rate Lock)`
+                    : forgeMembership.name,
                   description: forgeMembership.features.join(' · '),
                 },
                 recurring: { interval: membershipPrice.interval },
-                unit_amount: membershipPrice.amountCents,
+                unit_amount: finalMembershipCents,
               },
               quantity: 1,
             },
@@ -158,9 +210,9 @@ export async function POST(req: NextRequest) {
           url: session.url,
           pricing: {
             basePriceCents: membershipPrice.amountCents,
-            discountAmountCents: 0,
-            finalPriceCents: membershipPrice.amountCents,
-            discountCode: null,
+            discountAmountCents,
+            finalPriceCents: finalMembershipCents,
+            discountCode: appliedDiscountCode,
             referralCode: referralPromotion?.code || null,
             trialDays: effectiveTrialDays || null,
           },
@@ -340,17 +392,22 @@ export async function POST(req: NextRequest) {
     let discountAmountCents = 0
 
     if (discountCodeInput) {
-      const { supabaseAdmin } = await import('@/lib/supabase')
-      const admin = supabaseAdmin()
+      let discount: DiscountCodeRecord | null = getBuiltInPromoCode(discountCodeInput)
 
-      const { data: discount, error: discountError } = await admin
-        .from('discount_codes')
-        .select('id, code, description, discount_type, discount_value, is_active, max_redemptions, redemptions_count, starts_at, expires_at, applies_to_package_ids, restricted_client_id')
-        .eq('code', discountCodeInput)
-        .maybeSingle<DiscountCodeRecord>()
+      if (!discount) {
+        const { supabaseAdmin } = await import('@/lib/supabase')
+        const admin = supabaseAdmin()
 
-      if (discountError || !discount) {
-        return NextResponse.json({ error: 'Invalid discount code' }, { status: 400 })
+        const { data: dbDiscount, error: discountError } = await admin
+          .from('discount_codes')
+          .select('id, code, description, discount_type, discount_value, is_active, max_redemptions, redemptions_count, starts_at, expires_at, applies_to_package_ids, restricted_client_id')
+          .eq('code', discountCodeInput)
+          .maybeSingle<DiscountCodeRecord>()
+
+        if (discountError || !dbDiscount) {
+          return NextResponse.json({ error: 'Invalid discount code' }, { status: 400 })
+        }
+        discount = dbDiscount
       }
 
       if (!isDiscountCodeActive(discount)) {

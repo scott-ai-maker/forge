@@ -14,6 +14,7 @@ interface PurchaseButtonProps {
   buttonLabel?: string
   redirectNext?: string
   showDiscountCode?: boolean
+  defaultDiscountCode?: string
 }
 
 export default function PurchaseButton({
@@ -25,18 +26,22 @@ export default function PurchaseButton({
   buttonLabel,
   redirectNext,
   showDiscountCode = true,
+  defaultDiscountCode = '',
 }: PurchaseButtonProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
-  const [discountCode, setDiscountCode] = useState('')
+  const [discountCode, setDiscountCode] = useState(() => defaultDiscountCode.trim().toUpperCase())
   const [isCompanion, setIsCompanion] = useState(false)
 
   const targetIdentifier = addonId || productId || packageId || 'unknown'
 
   useEffect(() => {
     setIsCompanion(isCompanionApp())
-  }, [])
+    if (defaultDiscountCode) {
+      setDiscountCode(defaultDiscountCode.trim().toUpperCase())
+    }
+  }, [defaultDiscountCode])
 
   useEffect(() => {
     trackMarketingEvent('plan_tier_viewed', {

@@ -2,27 +2,40 @@
  * Forge Athletic Launch & Unmasking Configuration
  *
  * Target Go-Live Date Strategy:
- * Friday, November 20, 2026 at 06:00:00 EST.
+ * Monday, November 9, 2026 at 06:00:00 EST.
  *
  * Strategic Holiday Rush Timing Rationale:
- * 1. Exactly 6 days before Thanksgiving (Nov 26) and 1 week before Black Friday (Nov 27).
- * 2. Front-runs the high-friction holiday party and travel season, capturing motivated
- *    professionals looking to protect posture, joints, and energy BEFORE holiday disruptions.
- * 3. Provides a 5-week runway to establish structured training habits before the crowded,
+ * 1. Early-week drop (Monday morning) 17 days before Thanksgiving (Nov 26) and 18 days before Black Friday (Nov 27).
+ * 2. Front-runs the entire holiday party and travel season by nearly 3 full weeks, capturing motivated
+ *    people looking to protect posture, joints, and energy BEFORE holiday disruptions.
+ * 3. Provides a 7-week runway to establish structured training habits before the crowded,
  *    high-churn January resolutioner noise.
- * 4. Allows Founding Members to complete their 1-on-1 movement assessments and receive their
- *    custom NASM OPT™ program before Thanksgiving dinner.
+ * 4. Includes the Holiday Founding Member Deal (Code: HOLIDAY25): 25% Lifetime Rate Lock on any tier
+ *    plus a complimentary 60-minute Pre-Holiday Movement Screen with Coach Gordon.
  */
 
-export const DEFAULT_GO_LIVE_DATE_ISO = '2026-11-20T06:00:00-05:00'
+export const DEFAULT_GO_LIVE_DATE_ISO = '2026-11-09T06:00:00-05:00'
+
+export const HOLIDAY_DEAL_PROMO = {
+  code: 'HOLIDAY25',
+  discountPercent: 25,
+  badge: 'HOLIDAY FOUNDING DEAL · 25% LIFETIME RATE LOCK',
+  headline: '25% Lifetime Rate Lock + Free 60-Min Pre-Holiday Movement Screen',
+  summary:
+    'Lock in 25% off any membership tier for life plus a complimentary 60-minute 1-on-1 remote movement screen with Coach Gordon before Thanksgiving.',
+  expiresFormatted: 'Friday, November 27, 2026 at 11:59 PM EST',
+} as const
 
 export const LAUNCH_CAMPAIGN_INFO = {
   title: 'The Holiday Pre-Launch Unmasking',
-  dateFormatted: 'Friday, November 20, 2026',
+  dateFormatted: 'Monday, November 9, 2026',
   timeFormatted: '06:00 AM EST',
   tagline: 'Don’t wait for January to repair what November broke.',
   cohortCap: 50,
   cohortClaimedInitial: 38,
+  promoCode: HOLIDAY_DEAL_PROMO.code,
+  promoDiscountPercent: HOLIDAY_DEAL_PROMO.discountPercent,
+  promoHeadline: HOLIDAY_DEAL_PROMO.headline,
 } as const
 
 /**

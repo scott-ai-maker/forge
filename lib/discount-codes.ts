@@ -17,6 +17,29 @@ export interface DiscountCodeRecord {
 
 const SAFE_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
+export const BUILT_IN_PROMO_CODES: Readonly<Record<string, DiscountCodeRecord>> = {
+  HOLIDAY25: {
+    id: 'builtin-holiday25',
+    code: 'HOLIDAY25',
+    description: '25% Lifetime Rate Lock on any tier + Free 60-Min Pre-Holiday Movement Screen',
+    discount_type: 'percent',
+    discount_value: 25,
+    is_active: true,
+    max_redemptions: null,
+    redemptions_count: 0,
+    starts_at: '2026-11-01T00:00:00-05:00',
+    expires_at: '2026-12-31T23:59:59-05:00',
+    applies_to_package_ids: null,
+    restricted_client_id: null,
+  },
+}
+
+export function getBuiltInPromoCode(raw: string | null | undefined): DiscountCodeRecord | null {
+  const normalized = normalizeDiscountCode(raw)
+  if (!normalized) return null
+  return BUILT_IN_PROMO_CODES[normalized] ?? null
+}
+
 export function normalizeDiscountCode(raw: string | null | undefined) {
   if (!raw) return ''
   return raw.trim().toUpperCase()

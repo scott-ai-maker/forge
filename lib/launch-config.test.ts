@@ -4,6 +4,7 @@ import {
   isSiteUnmasked,
   calculateTimeRemaining,
   DEFAULT_GO_LIVE_DATE_ISO,
+  HOLIDAY_DEAL_PROMO,
 } from './launch-config'
 
 describe('lib/launch-config', () => {
@@ -18,10 +19,17 @@ describe('lib/launch-config', () => {
     vi.useRealTimers()
   })
 
-  it('defaults to Friday November 20, 2026 at 06:00:00 EST', () => {
+  it('defaults to Monday November 9, 2026 at 06:00:00 EST', () => {
     delete process.env.NEXT_PUBLIC_GO_LIVE_DATE
     const date = getGoLiveDate()
     expect(date.toISOString()).toBe(new Date(DEFAULT_GO_LIVE_DATE_ISO).toISOString())
+  })
+
+  it('exposes the HOLIDAY25 25% Lifetime Rate Lock holiday deal promo configuration', () => {
+    expect(HOLIDAY_DEAL_PROMO.code).toBe('HOLIDAY25')
+    expect(HOLIDAY_DEAL_PROMO.discountPercent).toBe(25)
+    expect(HOLIDAY_DEAL_PROMO.headline).toContain('25% Lifetime Rate Lock')
+    expect(HOLIDAY_DEAL_PROMO.headline).toContain('Free 60-Min Pre-Holiday Movement Screen')
   })
 
   it('respects NEXT_PUBLIC_GO_LIVE_DATE when provided', () => {
@@ -44,8 +52,8 @@ describe('lib/launch-config', () => {
   })
 
   it('correctly computes time remaining and triggers isLive when surpassed', () => {
-    const target = new Date('2026-11-20T06:00:00Z')
-    const before = new Date('2026-11-19T05:30:15Z')
+    const target = new Date('2026-11-09T06:00:00Z')
+    const before = new Date('2026-11-08T05:30:15Z')
 
     const remaining = calculateTimeRemaining(target, before)
     expect(remaining.isLive).toBe(false)
@@ -54,7 +62,7 @@ describe('lib/launch-config', () => {
     expect(remaining.minutes).toBe(29)
     expect(remaining.seconds).toBe(45)
 
-    const after = new Date('2026-11-20T06:00:01Z')
+    const after = new Date('2026-11-09T06:00:01Z')
     const expired = calculateTimeRemaining(target, after)
     expect(expired.isLive).toBe(true)
     expect(expired.days).toBe(0)
