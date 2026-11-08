@@ -38,7 +38,7 @@ const appsStructuredData = {
     priceCurrency: 'USD',
   },
   description:
-    'Tactical training companion with offline set logging, barbell plate calculators, Tanaka heart rate pacing, and biometric telemetry for Forge Athletic members.',
+    'Tactical training companion with offline set logging, barbell plate calculators, NASM tempo cadence guidance, and biometric telemetry for Forge Athletic members.',
   publisher: {
     '@type': 'Organization',
     name: 'Forge Athletic',

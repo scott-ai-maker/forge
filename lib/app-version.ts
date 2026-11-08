@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.47.0'
-export const APP_RELEASE_DATE = '2026-11-07'
-export const APP_RELEASE_CODENAME = 'Black Friday Unmasking Event (Nov 27), 1080p 5-Act Brand Showcase Film & Doorbuster Vault'
+export const APP_VERSION = '1.47.1'
+export const APP_RELEASE_DATE = '2026-11-08'
+export const APP_RELEASE_CODENAME = 'Platform-Wide Service Validity & Vernacular Alignment Audit'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.47.1',
+    date: '2026-11-08',
+    codename: 'Platform-Wide Service Validity & Vernacular Alignment Audit',
+    category: 'fix',
+    badge: 'Service Validity & Vernacular Audit',
+    title: 'Platform-Wide Service Validity & Vernacular Alignment Across All Public & Portal Surfaces',
+    summary:
+      'Completes a high-scrutiny validity audit across every public marketing page, membership and Stripe catalog definition, interactive fit quiz, client and coach feature tutorial, automated email sequence, XML sitemap, and coach console surface so that 100% of platform copy accurately reflects active Forge Athletic services and membership deliverables.',
+    highlights: [
+      'Membership & Comparison Table Alignment: Updated app/packages/page.tsx, lib/forge-memberships.ts, PackagesStudioClient.tsx, and lib/stripe.ts to remove references to disabled Proof-of-Work/Sunday Dossiers, 3D Muscle Soreness Heatmaps, AI Voice Cardio Studio, and paused supplement reviews.',
+      'Interactive Quiz & Tutorial Synchronization: Updated ApplyQuiz.tsx and lib/tutorials-data.ts so client and coach interactive walkthroughs highlight active Metabolic Nutrition & Travel Adapter, Strength Analytics & Weekly Check-Ins, and Specialized Relief & Recovery Toolboxes.',
+      'Email Sequences, Sitemap & Command Palette Cleanup: Aligned launch drip emails in lib/marketing-email.ts to Core ($49/mo), Plus ($99/mo), and Coach Support ($299/mo), removed retired /corporate and /async-coaching routes from app/sitemap.ts, and cleaned GlobalCommandPalette.tsx.',
+    ],
+  },
   {
     version: '1.47.0',
     date: '2026-11-07',

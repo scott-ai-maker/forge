@@ -173,7 +173,7 @@ export default function MobileAppPromoSection({
               </span>
             </div>
             <span style={{ fontSize: 11, color: 'var(--gold-lt)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
-              Apple HealthKit · WatchOS · Android Biometrics
+              Apple HealthKit · Garmin &amp; Oura · Android Biometrics
             </span>
           </div>
         </div>

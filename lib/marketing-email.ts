@@ -108,9 +108,9 @@ const sequenceTemplates = [
       text: [
         'Choose the Forge Athletic membership that fits your training goals:',
         '',
-        'Core Membership: $49/month or $399/year, with a 7-day free trial. Includes automated periodization, 1RM telemetry, and a 3D AI posture audit.',
-        'Pro Athlete: $99/month or $899/year. Includes Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.',
-        'Transformation Direct: $299/month. Includes quarterly asynchronous video critiques with Coach Gordon.',
+        'Core Membership: $49/month or $399/year, with a 7-day free trial. Includes personalized NASM OPT™ periodization, 1RM strength tracking, and a 3D AI posture audit.',
+        'Plus Membership: $99/month or $899/year. Includes full nutrition planning, travel workout tools, strength and body composition analytics, and 4 video form reviews per month.',
+        'Coach Support: $299/month. Includes direct coach messaging, weekly program adjustments, unlimited video form reviews, and a monthly 1-on-1 check-in call.',
         '',
         'Memberships renew automatically until cancelled.',
         '',
@@ -118,9 +118,9 @@ const sequenceTemplates = [
       ].join('\n'),
       html: `<p>Choose the Forge Athletic membership that fits your training goals:</p>
 <ol>
-  <li><strong>Core Membership — $49/month or $399/year:</strong> 7-day free trial, automated periodization, 1RM telemetry, and a 3D AI posture audit.</li>
-  <li><strong>Pro Athlete — $99/month or $899/year:</strong> Voice AI training cadences, biomechanical mesh diagnostics, and weekly performance dossiers.</li>
-  <li><strong>Transformation Direct — $299/month:</strong> Quarterly asynchronous video critiques with Coach Gordon.</li>
+  <li><strong>Core Membership — $49/month or $399/year:</strong> 7-day free trial, personalized NASM OPT™ periodization, 1RM strength tracking, and a 3D AI posture audit.</li>
+  <li><strong>Plus Membership — $99/month or $899/year:</strong> Full nutrition planning, travel workout tools, strength and body composition analytics, and 4 video form reviews per month.</li>
+  <li><strong>Coach Support — $299/month:</strong> Direct coach messaging, weekly program adjustments, unlimited video form reviews, and a monthly 1-on-1 check-in call.</li>
 </ol>
 <p>Memberships renew automatically until cancelled.</p>
 <p><a href="${baseUrl}/packages">Compare memberships</a></p>`,
@@ -158,7 +158,7 @@ const sequenceTemplates = [
         'Start with practical training tools and add coaching support as your needs change.',
         '',
         'Core Membership offers a 7-day free trial and starts at $49/month, or $399/year.',
-        'Pro Athlete is $99/month. Transformation Direct is $299/month.',
+        'Plus Membership is $99/month (or $899/year). Coach Support is $299/month.',
         '',
         'Explore the plans, compare features, and choose the option that fits your goals.',
         '',
@@ -166,7 +166,7 @@ const sequenceTemplates = [
         `Find your starting point: ${baseUrl}/apply`,
       ].join('\n'),
       html: `<p>Start with practical training tools and add coaching support as your needs change.</p>
-<p>Core Membership offers a 7-day free trial and starts at $49/month, or $399/year. Pro Athlete is $99/month. Transformation Direct is $299/month.</p>
+<p>Core Membership offers a 7-day free trial and starts at $49/month, or $399/year. Plus Membership is $99/month (or $899/year). Coach Support is $299/month.</p>
 <p>Explore the plans, compare features, and choose the option that fits your goals.</p>
 <p><a href="${baseUrl}/packages">Explore memberships</a> | <a href="${baseUrl}/apply">Find your starting point</a></p>`,
     }),
@@ -465,7 +465,7 @@ export async function triggerLeadEmailAutomation(
           "Thank you for submitting your profile. I am reviewing each applicant's training experience, movement background, and performance goals.",
           '',
           'CREDENTIALING & METHODOLOGY UPDATE:',
-          'In pursuit of unmatched sports science rigor, our advisory methodology is anchored by comprehensive sports science accreditation across 13 NASM® disciplines—including Certified Personal Trainer (CPT), Corrective Exercise Specialist (CES), Performance Enhancement Specialist (PES), Certified Nutrition Coach (CNC), and Certified Sports Nutrition Coach (CSNC).',
+          'In pursuit of unmatched sports science rigor, our advisory methodology is anchored by our 13-point curriculum across 13 NASM® disciplines—led by NASM-CPT® Certified (#1261890687) and Master Trainer Candidate tracks including Corrective Exercise Specialist (CES), Performance Enhancement Specialist (PES), Certified Nutrition Coach (CNC), and Certified Sports Nutrition Coach (CSNC).',
           '',
           'WHAT HAPPENS NEXT:',
           '1. Intake & Biomechanical Review: Your profile answers have been logged into our triage queue.',
@@ -497,7 +497,7 @@ export async function triggerLeadEmailAutomation(
 
   <div style="background: rgba(15, 23, 42, 0.6); border-left: 3px solid #F59E0B; padding: 14px 16px; margin: 20px 0;">
     <p style="margin: 0 0 6px; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #F59E0B; font-weight: 700;">Coach Gordon Briefing Memo</p>
-    <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #E2E8F0;">In pursuit of unmatched sports science rigor, our advisory methodology is anchored by comprehensive sports science accreditation across 13 NASM® disciplines—including CPT, CES, PES, CNC, and CSNC.</p>
+    <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #E2E8F0;">In pursuit of unmatched sports science rigor, our advisory methodology is anchored by our 13-point curriculum across 13 NASM® disciplines—led by NASM-CPT® Certified (#1261890687) and Master Trainer Candidate tracks including CES, PES, CNC, and CSNC.</p>
   </div>
 
   <h3 style="font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: #F59E0B; margin: 24px 0 12px; font-weight: 700;">What Happens Next</h3>

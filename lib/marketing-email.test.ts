@@ -223,8 +223,8 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     const email = sendMock.mock.calls[0][0]
     expect(email.subject).toBe('Choose your Forge Athletic membership')
     expect(email.text).toContain('Core Membership: $49/month or $399/year')
-    expect(email.text).toContain('Pro Athlete: $99/month')
-    expect(email.text).toContain('Transformation Direct: $299/month')
+    expect(email.text).toContain('Plus Membership: $99/month')
+    expect(email.text).toContain('Coach Support: $299/month')
     expect(email.text).not.toContain('$1,495')
     expect(email.text).not.toContain('retainer')
   })

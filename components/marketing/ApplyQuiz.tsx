@@ -51,7 +51,7 @@ const QUESTIONS: Question[] = [
     description: 'Choose the tools and coach feedback that fit your needs.',
     choices: [
       { value: 'program_only', label: 'Self-guided training tools (Core)' },
-      { value: 'program_and_messaging', label: 'Training tools and audio guidance (Plus)' },
+      { value: 'program_and_messaging', label: 'Nutrition, travel tools, and form reviews (Plus)' },
       { value: 'hybrid_monthly_calls', label: 'Movement feedback and progress reviews (Plus)' },
       { value: 'weekly_direct_calls', label: 'One-to-one coaching and video reviews (Coach Support)' },
     ],
@@ -63,7 +63,7 @@ const QUESTIONS: Question[] = [
     choices: [
       { value: 'no_clear_plan', label: 'I do not have a clear training plan' },
       { value: 'inconsistent_accountability', label: 'My schedule changes or I need help staying consistent' },
-      { value: 'nutrition_habits', label: 'I have questions about food or supplements' },
+      { value: 'nutrition_habits', label: 'I want a clear nutrition and meal-timing plan' },
       { value: 'technique_confidence', label: 'I want help with movement or exercise technique' },
     ],
   },

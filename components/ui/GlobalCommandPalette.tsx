@@ -367,16 +367,6 @@ export default function GlobalCommandPalette({
         badge: 'Toolbox',
       })
       items.push({
-        id: `client-supplements-${c.id}`,
-        title: `${c.name} — Supplement Prescriptions`,
-        subtitle: `Prescribe clinical supplements & timing protocols`,
-        category: 'Athletes',
-        icon: 'supplements',
-        href: `/coach/clients/${c.id}?tab=prescriptions&subtab=supplements`,
-        keywords: [c.name.toLowerCase(), 'supplements', 'creatine', 'prescribe'],
-        badge: 'Supplements',
-      })
-      items.push({
         id: `client-messages-${c.id}`,
         title: `${c.name} — Messages`,
         subtitle: `Open direct encrypted message thread & voice notes`,
@@ -544,7 +534,7 @@ export default function GlobalCommandPalette({
                 <GaaIcon name="compass" size={32} tone="slate" />
               </div>
               <p style={{ margin: 0, fontSize: 14, color: '#FFFFFF' }}>No matching features or athletes found</p>
-              <p style={{ margin: '4px 0 0', fontSize: 12 }}>Try searching for &quot;3D&quot;, &quot;Periodization&quot;, &quot;Deload&quot;, &quot;Supplements&quot;, or &quot;Workout&quot;</p>
+              <p style={{ margin: '4px 0 0', fontSize: 12 }}>Try searching for &quot;3D&quot;, &quot;Periodization&quot;, &quot;Deload&quot;, &quot;Nutrition&quot;, or &quot;Workout&quot;</p>
             </div>
           ) : (
             filteredItems.map((item, idx) => {

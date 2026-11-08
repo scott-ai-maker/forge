@@ -24,7 +24,7 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     trialDays: 7,
     features: [
       'Personalized NASM OPT™ training plan',
-      'Workout, strength, and personal-record tracking',
+      'Workout, 1RM strength, and goal progress tracking',
       'Movement screening and practical guidance',
       'Instant exercise cues & 24/7 automated pacing',
     ],
@@ -41,9 +41,9 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     ],
     features: [
       'Everything in Core',
-      'Audio-guided training sessions',
+      'Voice-paced rest timers and tempo cadence guidance',
       'Movement and recovery insights',
-      'Weekly progress summaries',
+      'Strength and body composition analytics',
       'Nutrition planning and travel workout tools',
       '4 video form reviews per month',
       'Monthly asynchronous coach audit',

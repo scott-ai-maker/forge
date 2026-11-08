@@ -833,7 +833,7 @@ export default function CoachCheckinReview({
                           id={`feedback-textarea-${checkin.id}`}
                           value={draft}
                           onChange={e => setFeedbackDrafts(prev => ({ ...prev, [checkin.id]: e.target.value }))}
-                          placeholder="Write personalized weekly feedback for this athlete — they will see this directly in their Sunday Dossier..."
+                          placeholder="Write personalized weekly feedback for this athlete — they will see this directly in their Weekly Check-In & Progress hub..."
                           rows={3}
                           style={{
                             flex: '1 1 300px',

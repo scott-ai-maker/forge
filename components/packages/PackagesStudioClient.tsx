@@ -998,7 +998,7 @@ export default function PackagesStudioClient({
                 <td style={{ padding: '14px 16px', color: 'var(--gold-lt)', fontSize: 13 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <GaaIcon name="check" size={13} tone="gold" />
-                    <span>3D Muscle Soreness Heatmaps & Daily CNS Readiness Scoring</span>
+                    <span>Daily CNS Readiness, Sleep Telemetry &amp; ACWR Load Scoring</span>
                   </span>
                 </td>
                 <td style={{ padding: '14px 16px', color: 'var(--gray)', fontSize: 13 }}>
@@ -1021,12 +1021,12 @@ export default function PackagesStudioClient({
               </tr>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <td style={{ padding: '14px 16px', color: '#FFFFFF', fontSize: 13, fontWeight: 700 }}>
-                  Metabolic Nutrition & Supplements
+                  Metabolic Nutrition &amp; Fueling
                 </td>
                 <td style={{ padding: '14px 16px', color: 'var(--gold-lt)', fontSize: 13 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <GaaIcon name="check" size={13} tone="gold" />
-                    <span>Phase-matched macro cycling & clinical pharmacology screening</span>
+                    <span>Phase-matched OPT™ macro cycling &amp; PN1 hand-portion blueprints</span>
                   </span>
                 </td>
                 <td style={{ padding: '14px 16px', color: 'var(--gray)', fontSize: 13 }}>
@@ -1054,7 +1054,7 @@ export default function PackagesStudioClient({
                 <td style={{ padding: '14px 16px', color: 'var(--gold-lt)', fontSize: 13 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <GaaIcon name="check" size={13} tone="gold" />
-                    <span>Replies within 4 business hours, weekly progress summaries, and audio coach notes</span>
+                    <span>Replies within 4 business hours, structured S.O.A.P. session notes, and direct coach messaging</span>
                   </span>
                 </td>
                 <td style={{ padding: '14px 16px', color: 'var(--gray)', fontSize: 13 }}>

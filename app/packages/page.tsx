@@ -54,7 +54,7 @@ const packagesStructuredData = {
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: 'Guided hybrid coaching including full nutrition planning, travel training tools, weekly Proof-of-Work dossiers, and 4 video form reviews per month.',
+        description: 'Guided hybrid coaching including full nutrition planning, travel training tools, strength and body composition analytics, and 4 video form reviews per month.',
       },
       {
         '@type': 'Offer',
@@ -467,7 +467,7 @@ export default function PackagesPage() {
               <div style={{ background: 'rgba(8, 14, 20, 0.6)', padding: '1.25rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
                 <strong style={{ color: '#60A5FA', display: 'block', marginBottom: '0.35rem' }}>Downsell Retention Safety</strong>
                 <p style={{ color: '#94A3B8', fontSize: '0.86rem', margin: 0, lineHeight: 1.5 }}>
-                  If work or budget tightens, step down to Core rather than quitting entirely. Maintain your strength baseline and workout streak without disruption.
+                  If work or budget tightens, step down to Core rather than quitting entirely. Maintain your strength baseline and training consistency without disruption.
                 </p>
               </div>
               <div style={{ background: 'rgba(8, 14, 20, 0.6)', padding: '1.25rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>

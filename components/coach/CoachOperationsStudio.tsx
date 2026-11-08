@@ -229,7 +229,7 @@ export default function CoachOperationsStudio({
               CREATE PROMOTION / DISCOUNT CODE
             </h3>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--gray)' }}>
-              Issue exclusive percentage or fixed dollar discounts for executive prospects and corporate retainers.
+              Issue exclusive percentage or fixed dollar discounts for prospective members, memberships, and studio sessions.
             </p>
           </div>
 
