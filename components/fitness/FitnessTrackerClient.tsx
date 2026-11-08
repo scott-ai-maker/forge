@@ -61,8 +61,6 @@ import SetProgressionMatrix from '@/components/fitness/tracker/SetProgressionMat
 import PlateAdjustmentPresets from '@/components/fitness/tracker/PlateAdjustmentPresets'
 import { mapRirToRpe } from '@/lib/rpe-exertion-scale'
 import RepCadenceMetronome from '@/components/fitness/tracker/RepCadenceMetronome'
-import OneRepMaxPercentageMatrix from '@/components/fitness/tracker/OneRepMaxPercentageMatrix'
-import AutoregulationDeloadAdvisor from '@/components/fitness/tracker/AutoregulationDeloadAdvisor'
 import SupersetPairCard, { type SupersetDraftState } from '@/components/fitness/tracker/SupersetPairCard'
 import { type GroupedExerciseEntry, type ExerciseItemInfo } from '@/lib/superset-pairing-engine'
 import {
@@ -98,7 +96,7 @@ import {
   getPendingQueueCount,
 } from '@/lib/offline-sync-queue'
 import { playPrecisionTone, playCountdownPip, getSharedAudioContext } from '@/lib/web-audio-cadence-engine'
-import { speakCoachVoiceCue, playNeuralCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
+import { speakCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import { useTrackerTimer } from '@/components/fitness/hooks/useTrackerTimer'
 import ProofOfWorkDossierModal from '@/components/fitness/ProofOfWorkDossierModal'
 import { useSetVolume, parseSetTarget } from '@/components/fitness/hooks/useSetVolume'
@@ -3023,7 +3021,8 @@ export default function FitnessTrackerClient({
         </div>
       </section>
 
-      {/* ── Athlete Metric Strip (Compact 1-Row / 3-Cell Strip for Mobile & Desktop) ── */}
+      {/* ── Athlete Metric Strip (Shown outside active workout logger to keep gym view focused) ── */}
+      {primaryHub !== 'train' && (
       <div
         className="athlete-telemetry-strip"
         style={{
@@ -3130,30 +3129,10 @@ export default function FitnessTrackerClient({
           </div>
         </div>
       </div>
-
-      {/* ── Personal note from the coach (compact collapsible disclosure) ── */}
-      {plan?.plan_json?.coachPersonalNote?.trim() && (
-        <details
-          className="fitness-card-disclosure"
-          aria-label="A personal note from Coach Gordon"
-          style={{
-            border: '1px solid rgba(245, 158, 11, 0.35)',
-            background: 'rgba(13, 27, 42, 0.95)',
-            borderRadius: 8,
-            padding: '0 12px',
-            marginBottom: 8,
-          }}
-        >
-          <summary style={{ gap: 8 }}>
-            <span className="client-coach-note-avatar" style={{ width: 22, height: 22, fontSize: 11 }} aria-hidden="true">G</span>
-            <span className="client-coach-note-kicker" style={{ fontSize: 11 }}>Personal Note from Coach Gordon</span>
-          </summary>
-          <p className="client-coach-note-body" style={{ paddingBottom: 12, fontSize: 13.5 }}>{plan.plan_json.coachPersonalNote}</p>
-        </details>
       )}
 
-      {/* ── Coach Gordon Clinical Briefing Memo ── */}
-      {plan?.plan_json?.clinicalRationale && (
+      {/* ── Unified Coach Gordon Program Briefing Memo (Consolidates personal note, rationale & nutrition) ── */}
+      {(plan?.plan_json?.clinicalRationale || plan?.plan_json?.coachPersonalNote?.trim()) && (
         <details
           className="fitness-card-disclosure"
           aria-label="Coach Gordon briefing memo"
@@ -3183,9 +3162,14 @@ export default function FitnessTrackerClient({
               G
             </span>
             <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
-              {plan?.plan_json?.coachPersonalNote?.trim() ? "Coach's technical rationale" : 'Master Coach Briefing Memo · From Coach Gordon'}
+              Master Coach Briefing Memo · From Coach Gordon
             </div>
           </summary>
+          {plan?.plan_json?.coachPersonalNote?.trim() && (
+            <p className="client-coach-note-body" style={{ margin: '0 0 10px', fontSize: 13.5, color: '#FDE68A' }}>
+              {plan.plan_json.coachPersonalNote}
+            </p>
+          )}
           {typeof plan.plan_json.clinicalRationale === 'string' ? (
             <p
               style={{
@@ -3241,39 +3225,12 @@ export default function FitnessTrackerClient({
               )}
             </div>
           ) : null}
-        </details>
-      )}
-
-      {plan?.plan_json?.nutritionTargets && (
-        <details
-          className="fitness-card-disclosure"
-          aria-label="Daily nutrition targets"
-          style={{
-            border: '1px solid rgba(212,160,23,0.3)',
-            background: 'rgba(13,27,42,0.95)',
-            borderRadius: 8,
-            padding: '0 12px',
-            marginBottom: 10,
-          }}
-        >
-          <summary style={{ gap: 8 }}>
-            <span style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 800 }}>
-              Daily Nutrition: {plan.plan_json.nutritionTargets.targetCalories.toLocaleString()} kcal ({plan.plan_json.nutritionTargets.proteinGrams}P / {plan.plan_json.nutritionTargets.carbGrams}C / {plan.plan_json.nutritionTargets.fatGrams}F)
-            </span>
-          </summary>
-          <div style={{ paddingBottom: 10, color: 'var(--gray)', fontSize: 12.5 }}>
-            <div>
-              Protein {plan.plan_json.nutritionTargets.proteinGrams}g · Carbs {plan.plan_json.nutritionTargets.carbGrams}g · Fat {plan.plan_json.nutritionTargets.fatGrams}g
+          {plan?.plan_json?.nutritionTargets && (
+            <div style={{ paddingBottom: 12, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)', color: 'var(--gray)', fontSize: 12 }}>
+              <strong style={{ color: 'var(--gold-lt)' }}>Daily Nutrition Target: </strong>
+              {plan.plan_json.nutritionTargets.targetCalories.toLocaleString()} kcal ({plan.plan_json.nutritionTargets.proteinGrams}g Protein · {plan.plan_json.nutritionTargets.carbGrams}g Carbs · {plan.plan_json.nutritionTargets.fatGrams}g Fat)
             </div>
-            {plan.plan_json.nutritionTargets.currentWeightLbs != null && plan.plan_json.nutritionTargets.targetWeightLbs != null && (
-              <div style={{ marginTop: 4 }}>
-                Goal: {plan.plan_json.nutritionTargets.currentWeightLbs} → {plan.plan_json.nutritionTargets.targetWeightLbs} lbs
-                {plan.plan_json.nutritionTargets.weeklyLossLbs != null && ` (~${plan.plan_json.nutritionTargets.weeklyLossLbs} lb/week`}
-                {plan.plan_json.nutritionTargets.estimatedWeeks != null && `, about ${plan.plan_json.nutritionTargets.estimatedWeeks} weeks`}
-                {plan.plan_json.nutritionTargets.weeklyLossLbs != null && ')'}
-              </div>
-            )}
-          </div>
+          )}
         </details>
       )}
 
@@ -3600,163 +3557,174 @@ export default function FitnessTrackerClient({
                   return (
                     <div
                       style={{
-                        padding: '11px 16px',
                         background: isSessionActive
                           ? 'linear-gradient(135deg, rgba(16,185,129,0.14) 0%, #04070E 100%)'
                           : 'linear-gradient(180deg, #0A0F1E 0%, #04070E 100%)',
                         borderBottom: isSessionActive ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(212,175,55,0.25)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: 10,
                       }}
                     >
-                      {/* Left: Day Title, Periodization Microcycle Badge, Completion & Exercise Telemetry */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
-                        <span
-                          style={{
-                            fontSize: 10,
-                            fontFamily: 'var(--font-telemetry, monospace)',
-                            background: 'rgba(197,160,89,0.15)',
-                            color: 'var(--gold-lt)',
-                            border: '1px solid rgba(197,160,89,0.4)',
-                            padding: '2px 7px',
-                            borderRadius: 4,
-                            fontWeight: 700,
-                            letterSpacing: '0.06em',
-                            textTransform: 'uppercase',
-                            flexShrink: 0,
-                          }}
-                        >
-                          Week {microcycleProgress.currentWeek} · Workout {workout.day}
-                        </span>
-                        <span style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.04em', fontSize: 17, wordBreak: 'break-word', color: '#F8FAFC', fontWeight: 700 }}>
-                          Day {workout.day}: {workout.focus}
-                        </span>
-                        {completedLog && (
-                          <span style={{ fontSize: 10, background: 'rgba(52,211,153,0.16)', color: '#34D399', border: '1px solid rgba(52,211,153,0.35)', padding: '1px 6px', borderRadius: 3, fontWeight: 700 }}>
-                            ✓ Done
-                          </span>
-                        )}
-                        <span style={{ color: '#94A3B8', fontSize: 11, fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums' }}>
-                          {workout.exercises.length} ex · {Math.round(completionRatio * 100)}%
-                        </span>
-                      </div>
-
-                      {/* Right: Integrated Apple Health Session Tracking Controls */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {!isSessionActive ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              handleStartWorkoutSession(workout.day)
-                              setActiveWorkoutDay(workout.day)
-                              setActiveStepFilter('warmup')
-                              setCollapsedStages(prev => ({ ...prev, [`${workout.day}-warmup`]: false }))
-
-                              // Discard any dangling unfinalized sets from previous aborted attempt on this day
-                              setLocalSetLogs(prev => prev.filter(s => {
-                                const dayTag = extractWorkoutDayTag(s.notes)
-                                if (dayTag !== workout.day) return true
-                                if (s.workout_log_id) return true
-                                return false
-                              }))
-                              void fetch('/api/workouts/discard-session', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  workoutDay: workout.day,
-                                  workoutPlanId: plan?.id,
-                                  sessionDate: workout.scheduledDate || todayDateOnly(),
-                                }),
-                              })
-
-                              // Immediately wake & launch companion Apple Watch app via HealthKit
-                              const payload = constructWatchWorkoutPayload(workout.day, true, 'warmup')
-                              if (payload) {
-                                void import('@/lib/native-healthkit-bridge').then(({ startWatchWorkout }) => {
-                                  void startWatchWorkout(payload)
-                                })
-                              }
-                            }}
-                            className="tactile-btn"
+                      <div
+                        style={{
+                          padding: '11px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: 10,
+                        }}
+                      >
+                        {/* Left: Day Title, Periodization Microcycle Badge, Completion & Exercise Telemetry */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
+                          <span
                             style={{
-                              background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
-                              border: 'none',
-                              color: '#04070E',
+                              fontSize: 10,
                               fontFamily: 'var(--font-telemetry, monospace)',
-                              fontVariantNumeric: 'tabular-nums',
-                              fontSize: 11.5,
+                              background: 'rgba(197,160,89,0.15)',
+                              color: 'var(--gold-lt)',
+                              border: '1px solid rgba(197,160,89,0.4)',
+                              padding: '2px 7px',
+                              borderRadius: 4,
+                              fontWeight: 700,
                               letterSpacing: '0.06em',
-                              fontWeight: 800,
                               textTransform: 'uppercase',
-                              padding: '6px 14px',
-                              minHeight: 44,
-                              borderRadius: 5,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 5,
-                              boxShadow: '0 2px 10px rgba(212,175,55,0.35)',
+                              flexShrink: 0,
                             }}
                           >
-                            <GaaIcon name="play" size={12} tone="dark" />
-                            <span>Start Session</span>
-                          </button>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            Week {microcycleProgress.currentWeek} · Workout {workout.day}
+                          </span>
+                          <span style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.04em', fontSize: 17, wordBreak: 'break-word', color: '#F8FAFC', fontWeight: 700 }}>
+                            Day {workout.day}: {workout.focus}
+                          </span>
+                          {completedLog && (
+                            <span style={{ fontSize: 10, background: 'rgba(52,211,153,0.16)', color: '#34D399', border: '1px solid rgba(52,211,153,0.35)', padding: '1px 6px', borderRadius: 3, fontWeight: 700 }}>
+                              ✓ Done
+                            </span>
+                          )}
+                          <span style={{ color: '#94A3B8', fontSize: 11, fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums' }}>
+                            {workoutProgress.loggedSets}/{workoutProgress.targetSets || workout.exercises.length} sets
+                            {workoutProgress.totalVolumeKg > 0 ? ` · ${formatWeight(workoutProgress.totalVolumeKg, units)}` : ''}
+                            {workout.scheduledDate ? ` · ${new Date(`${workout.scheduledDate}T12:00:00Z`).toLocaleDateString()}` : ''}
+                          </span>
+                        </div>
+
+                        {/* Right: Integrated Apple Health Session Tracking Controls */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {!isSessionActive ? (
                             <button
                               type="button"
-                              onClick={handlePauseResumeWorkoutSession}
+                              onClick={() => {
+                                handleStartWorkoutSession(workout.day)
+                                setActiveWorkoutDay(workout.day)
+                                setActiveStepFilter('warmup')
+                                setCollapsedStages(prev => ({ ...prev, [`${workout.day}-warmup`]: false }))
+
+                                // Discard any dangling unfinalized sets from previous aborted attempt on this day
+                                setLocalSetLogs(prev => prev.filter(s => {
+                                  const dayTag = extractWorkoutDayTag(s.notes)
+                                  if (dayTag !== workout.day) return true
+                                  if (s.workout_log_id) return true
+                                  return false
+                                }))
+                                void fetch('/api/workouts/discard-session', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    workoutDay: workout.day,
+                                    workoutPlanId: plan?.id,
+                                    sessionDate: workout.scheduledDate || todayDateOnly(),
+                                  }),
+                                })
+
+                                // Immediately wake & launch companion Apple Watch app via HealthKit
+                                const payload = constructWatchWorkoutPayload(workout.day, true, 'warmup')
+                                if (payload) {
+                                  void import('@/lib/native-healthkit-bridge').then(({ startWatchWorkout }) => {
+                                    void startWatchWorkout(payload)
+                                  })
+                                }
+                              }}
                               className="tactile-btn"
                               style={{
-                                background: isWorkoutTimerActive ? 'rgba(239,68,68,0.16)' : 'rgba(16,185,129,0.16)',
-                                border: isWorkoutTimerActive ? '1px solid #EF4444' : '1px solid #10B981',
-                                color: isWorkoutTimerActive ? '#FCA5A5' : '#6EE7B7',
-                                fontSize: 11,
-                                fontWeight: 700,
-                                padding: '5px 9px',
-                                borderRadius: 4,
+                                background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
+                                border: 'none',
+                                color: '#04070E',
+                                fontFamily: 'var(--font-telemetry, monospace)',
+                                fontVariantNumeric: 'tabular-nums',
+                                fontSize: 11.5,
+                                letterSpacing: '0.06em',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                padding: '6px 14px',
+                                minHeight: 44,
+                                borderRadius: 5,
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: 4,
-                              }}
-                            >
-                              <GaaIcon name={isWorkoutTimerActive ? 'pause' : 'play'} size={11} tone={isWorkoutTimerActive ? 'ruby' : 'emerald'} />
-                              <span>{isWorkoutTimerActive ? 'Pause' : 'Resume'}</span>
-                            </button>
-                            <span
-                              style={{
-                                fontFamily: 'var(--font-telemetry, monospace)',
-                                fontVariantNumeric: 'tabular-nums',
-                                fontSize: 13,
-                                fontWeight: 700,
-                                color: isWorkoutTimerActive ? '#10B981' : '#FBBF24',
-                                background: 'rgba(0,0,0,0.4)',
-                                padding: '4px 8px',
-                                borderRadius: 4,
-                                border: isWorkoutTimerActive ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(251,191,36,0.4)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
                                 gap: 5,
+                                boxShadow: '0 2px 10px rgba(212,175,55,0.35)',
                               }}
                             >
-                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: isWorkoutTimerActive ? '#10B981' : '#FBBF24', boxShadow: isWorkoutTimerActive ? '0 0 6px #10B981' : '0 0 6px #FBBF24' }} />
-                              <span>{timerDisplay}</span>
-                              {!isWorkoutTimerActive && (
-                                <span style={{ fontSize: 9.5, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.04em', textTransform: 'uppercase' }}>(Paused)</span>
-                              )}
-                            </span>
-                            <HoldToQuitWorkoutButton
-                              onQuit={handleClientQuitWorkout}
-                              label="Quit"
-                              size="sm"
-                              ariaLabel="Press and hold for 1.2 seconds to quit workout session without penalty"
-                            />
-                          </div>
-                        )}
+                              <GaaIcon name="play" size={12} tone="dark" />
+                              <span>Start Session</span>
+                            </button>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <button
+                                type="button"
+                                onClick={handlePauseResumeWorkoutSession}
+                                className="tactile-btn"
+                                style={{
+                                  background: isWorkoutTimerActive ? 'rgba(239,68,68,0.16)' : 'rgba(16,185,129,0.16)',
+                                  border: isWorkoutTimerActive ? '1px solid #EF4444' : '1px solid #10B981',
+                                  color: isWorkoutTimerActive ? '#FCA5A5' : '#6EE7B7',
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  padding: '5px 9px',
+                                  borderRadius: 4,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                }}
+                              >
+                                <GaaIcon name={isWorkoutTimerActive ? 'pause' : 'play'} size={11} tone={isWorkoutTimerActive ? 'ruby' : 'emerald'} />
+                                <span>{isWorkoutTimerActive ? 'Pause' : 'Resume'}</span>
+                              </button>
+                              <span
+                                style={{
+                                  fontFamily: 'var(--font-telemetry, monospace)',
+                                  fontVariantNumeric: 'tabular-nums',
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  color: isWorkoutTimerActive ? '#10B981' : '#FBBF24',
+                                  background: 'rgba(0,0,0,0.4)',
+                                  padding: '4px 8px',
+                                  borderRadius: 4,
+                                  border: isWorkoutTimerActive ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(251,191,36,0.4)',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 5,
+                                }}
+                              >
+                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: isWorkoutTimerActive ? '#10B981' : '#FBBF24', boxShadow: isWorkoutTimerActive ? '0 0 6px #10B981' : '0 0 6px #FBBF24' }} />
+                                <span>{timerDisplay}</span>
+                                {!isWorkoutTimerActive && (
+                                  <span style={{ fontSize: 9.5, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.04em', textTransform: 'uppercase' }}>(Paused)</span>
+                                )}
+                              </span>
+                              <HoldToQuitWorkoutButton
+                                onQuit={handleClientQuitWorkout}
+                                label="Quit"
+                                size="sm"
+                                ariaLabel="Press and hold for 1.2 seconds to quit workout session without penalty"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {/* Integrated Progress Line */}
+                      <div style={{ height: 3, width: '100%', background: 'rgba(255,255,255,0.04)' }}>
+                        <div style={{ height: '100%', width: `${Math.round(completionRatio * 100)}%`, background: 'var(--gold)', transition: 'width 0.25s ease' }} />
                       </div>
                     </div>
                   )
@@ -3765,19 +3733,6 @@ export default function FitnessTrackerClient({
                 <div style={{ padding: 'clamp(4px, 1.5vw, 16px)', maxWidth: '100%', width: '100%', minWidth: 0, boxSizing: 'border-box', overflowX: 'hidden' }}>
                   {/* ── Coach Briefing & Daily Gameplan (Compact Collapsible Strip) ── */}
                   {(() => {
-                    const cardio = resolveWorkoutCardioProtocol(workout, profile, plan)
-                    const durationBreakdown = calculateEstimatedWorkoutDuration({
-                      workout,
-                      cardio,
-                      optPhase: plan?.nasm_opt_phase,
-                    })
-                    const warmupEstMins = durationBreakdown.warmupMins
-                    const resistanceEstMins = durationBreakdown.resistanceMins
-                    const cardioEstMins = durationBreakdown.cardioMins
-                    const coolDownEstMins = durationBreakdown.cooldownMins
-                    const totalEstSessionMins = durationBreakdown.totalDurationMins
-                    const totalWorkingSets = durationBreakdown.totalWorkingSets
-
                     const bullets = deriveClientBriefingBullets(workout.focus, workout.notes)
 
                     return (
@@ -3800,92 +3755,63 @@ export default function FitnessTrackerClient({
                         <summary style={{ padding: '8px 12px' }}>Coach notes</summary>
 
                         <div style={{ padding: '12px 14px 14px', borderTop: '1px solid rgba(255,255,255,0.08)', minWidth: 0 }}>
-                          {/* Audio Voice Briefing & Focus */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 6 }}>
                               <GaaIcon name="target" size={14} tone="gold" />
                               <span>{workout.focus || `Day ${workout.day} Training Focus`}</span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
-                                  const activeExName = getExerciseNameFromKey(expandedExerciseKey) || undefined
-                                  const lastLog = localSetLogs[localSetLogs.length - 1]
-                                  openCoachGordon({
-                                    athleteName: profile?.full_name?.split(' ')[0] || 'Athlete',
-                                    goal: plan?.goal || profile?.fitness_goal || 'general_fitness',
-                                    nasmOptPhase: plan?.nasm_opt_phase || 1,
-                                    currentWorkoutFocus: activeWorkout?.focus || 'Daily Workout',
-                                    currentExerciseName: activeExName,
-                                    equipmentAccess: profile?.equipment_access || undefined,
-                                    cardioEquipmentAccess: profile?.cardio_equipment_access || profile?.equipment_access || undefined,
-                                    kineticCompensations: clientInjuries.length > 0 ? clientInjuries : undefined,
-                                    recentReadinessScore: liveReadinessScore || wearableTelemetry?.cnsStressScore || 82,
-                                    recentSleepHours: wearableTelemetry?.sleepHours ?? undefined,
-                                    recentRpe: lastLog?.rpe ? Number(lastLog.rpe) : undefined,
-                                    lastLoggedSet: lastLog
-                                      ? {
-                                          exerciseName: lastLog.exercise_name,
-                                          weightLbs: lastLog.weight_kg ? Math.round(lastLog.weight_kg * 2.20462) : undefined,
-                                          reps: lastLog.reps,
-                                          rpe: lastLog.rpe ? Number(lastLog.rpe) : undefined,
-                                        }
-                                      : undefined,
-                                    todayWorkoutExercises: (activeWorkout?.exercises || []).map(e => e.name),
-                                  })
-                                }}
-                                className="tactile-btn"
-                                style={{
-                                  background: 'linear-gradient(135deg, rgba(212,160,23,0.2) 0%, rgba(212,160,23,0.08) 100%)',
-                                  border: '1px solid rgba(212,160,23,0.5)',
-                                  color: '#FFFFFF',
-                                  fontSize: 12,
-                                  fontWeight: 800,
-                                  minHeight: 44,
-                                  padding: '8px 12px',
-                                  borderRadius: 6,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 5,
-                                  boxShadow: '0 0 10px rgba(212,160,23,0.2)',
-                                }}
-                              >
-                                <GaaIcon name="message" size={12} tone="gold" />
-                                <span>Ask Coach Gordon</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  triggerHaptic('tap')
-                                  void playNeuralCoachVoiceCue(`Day ${workout.day} Daily Briefing. Focus is ${workout.focus || 'Targeted strength'}. Total estimated session time is ${totalEstSessionMins} minutes (${durationBreakdown.summaryLabel}). ${bullets.join(' ')}`)
-                                }}
-                                style={{
-                                  background: 'rgba(212,160,23,0.15)',
-                                  border: '1px solid rgba(212,160,23,0.4)',
-                                  color: 'var(--gold-lt)',
-                                  fontSize: 12,
-                                  fontWeight: 700,
-                                  minHeight: 44,
-                                  padding: '8px 12px',
-                                  borderRadius: 6,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 5,
-                                }}
-                              >
-                                <GaaIcon name="volume" size={12} tone="gold" />
-                                <span>Listen to Briefing (15s)</span>
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
+                                const activeExName = getExerciseNameFromKey(expandedExerciseKey) || undefined
+                                const lastLog = localSetLogs[localSetLogs.length - 1]
+                                openCoachGordon({
+                                  athleteName: profile?.full_name?.split(' ')[0] || 'Athlete',
+                                  goal: plan?.goal || profile?.fitness_goal || 'general_fitness',
+                                  nasmOptPhase: plan?.nasm_opt_phase || 1,
+                                  currentWorkoutFocus: activeWorkout?.focus || 'Daily Workout',
+                                  currentExerciseName: activeExName,
+                                  equipmentAccess: profile?.equipment_access || undefined,
+                                  cardioEquipmentAccess: profile?.cardio_equipment_access || profile?.equipment_access || undefined,
+                                  kineticCompensations: clientInjuries.length > 0 ? clientInjuries : undefined,
+                                  recentReadinessScore: liveReadinessScore || wearableTelemetry?.cnsStressScore || 82,
+                                  recentSleepHours: wearableTelemetry?.sleepHours ?? undefined,
+                                  recentRpe: lastLog?.rpe ? Number(lastLog.rpe) : undefined,
+                                  lastLoggedSet: lastLog
+                                    ? {
+                                        exerciseName: lastLog.exercise_name,
+                                        weightLbs: lastLog.weight_kg ? Math.round(lastLog.weight_kg * 2.20462) : undefined,
+                                        reps: lastLog.reps,
+                                        rpe: lastLog.rpe ? Number(lastLog.rpe) : undefined,
+                                      }
+                                    : undefined,
+                                  todayWorkoutExercises: (activeWorkout?.exercises || []).map(e => e.name),
+                                })
+                              }}
+                              className="tactile-btn"
+                              style={{
+                                background: 'linear-gradient(135deg, rgba(212,160,23,0.2) 0%, rgba(212,160,23,0.08) 100%)',
+                                border: '1px solid rgba(212,160,23,0.5)',
+                                color: '#FFFFFF',
+                                fontSize: 12,
+                                fontWeight: 800,
+                                minHeight: 44,
+                                padding: '8px 12px',
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 5,
+                              }}
+                            >
+                              <GaaIcon name="message" size={12} tone="gold" />
+                              <span>Ask Coach Gordon</span>
+                            </button>
                           </div>
 
                           {/* Bullet Points - Key Coaching Intent */}
-                          <div style={{ marginBottom: 12, minWidth: 0 }}>
+                          <div style={{ minWidth: 0 }}>
                             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#E2E8F0', lineHeight: 1.55 }}>
                               {bullets.map((bullet, bIdx) => (
                                 <li key={bIdx} style={{ marginBottom: bIdx === bullets.length - 1 ? 0 : 4, wordBreak: 'break-word', overflowWrap: 'break-word' }}>
@@ -3895,60 +3821,12 @@ export default function FitnessTrackerClient({
                             </ul>
                           </div>
 
-                          {/* 4-Step Duration Breakdown Grid */}
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 110px), 1fr))',
-                              gap: 8,
-                              background: 'rgba(0,0,0,0.35)',
-                              padding: '8px 12px',
-                              borderRadius: 6,
-                              border: '1px solid rgba(255,255,255,0.06)',
-                              maxWidth: '100%',
-                              width: '100%',
-                              minWidth: 0,
-                              boxSizing: 'border-box',
-                            }}
-                          >
-                            <div style={{ fontSize: 11, minWidth: 0 }}>
-                              <div style={{ color: 'var(--gold-lt)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <GaaIcon name="flame" size={12} tone="gold" />
-                                <span>1. Warmup</span>
-                              </div>
-                              <div style={{ color: 'var(--white)', fontWeight: 700 }}>~{warmupEstMins} mins</div>
-                              <div style={{ fontSize: 10, color: 'var(--gray)' }}>SMR & mobility prep</div>
+                          {clientInjuries.length > 0 && (
+                            <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)', fontSize: 11.5, color: 'var(--gray)' }}>
+                              <strong style={{ color: 'var(--gold-lt)' }}>Joint Protection Active: </strong>
+                              {clientInjuries.map(key => COMMON_SPORTS_INJURIES[key]?.name).filter(Boolean).join(', ')}
                             </div>
-
-                            <div style={{ fontSize: 11, minWidth: 0 }}>
-                              <div style={{ color: 'var(--gold-lt)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <GaaIcon name="barbell" size={12} tone="gold" />
-                                <span>2. Lifts</span>
-                              </div>
-                              <div style={{ color: 'var(--white)', fontWeight: 700 }}>~{resistanceEstMins} mins</div>
-                              <div style={{ fontSize: 10, color: 'var(--gray)' }}>
-                                {durationBreakdown.totalExercises} exercises · {totalWorkingSets} sets · ~{Math.round(durationBreakdown.totalRestSeconds / 60)}m rest{durationBreakdown.restBufferSeconds > 0 ? ` (incl. ~${Math.max(1, Math.round(durationBreakdown.restBufferSeconds / 60))}m buffer)` : ''}
-                              </div>
-                            </div>
-
-                            <div style={{ fontSize: 11, minWidth: 0 }}>
-                              <div style={{ color: cardio ? '#38BDF8' : 'var(--gray)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <GaaIcon name="heart-rate" size={12} tone="cyan" />
-                                <span>3. Cardio</span>
-                              </div>
-                              <div style={{ color: 'var(--white)', fontWeight: 700 }}>{cardio ? `~${cardioEstMins} mins` : 'Optional / Off'}</div>
-                              <div style={{ fontSize: 10, color: 'var(--gray)' }}>{cardio ? `Stage ${cardio.stage}` : 'Rest day'}</div>
-                            </div>
-
-                            <div style={{ fontSize: 11, minWidth: 0 }}>
-                              <div style={{ color: '#93C5FD', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <GaaIcon name="sleep" size={12} tone="purple" />
-                                <span>4. Cool-Down</span>
-                              </div>
-                              <div style={{ color: 'var(--white)', fontWeight: 700 }}>~{coolDownEstMins} mins</div>
-                              <div style={{ fontSize: 10, color: 'var(--gray)' }}>Stretch & breathing</div>
-                            </div>
-                          </div>
+                          )}
                         </div>
                       </details>
                     )
@@ -3959,7 +3837,7 @@ export default function FitnessTrackerClient({
                     aria-label="Workout stages"
                     role="group"
                     style={{
-                      marginBottom: 14,
+                      marginBottom: 12,
                       backdropFilter: 'blur(16px)',
                       background: 'rgba(9, 14, 26, 0.95)',
                       border: '1px solid rgba(212,160,23,0.35)',
@@ -3971,7 +3849,6 @@ export default function FitnessTrackerClient({
                       { id: 'resistance', label: '2. Lifts', icon: 'dumbbell' as GaaIconName },
                       { id: 'cardio', label: '3. Cardio', icon: 'runner' as GaaIconName },
                       { id: 'cooldown', label: '4. Cool-Down', icon: 'snowflake' as GaaIconName },
-                      { id: 'all', label: 'All Steps', icon: 'eye' as GaaIconName },
                     ].map(step => {
                       const isSelected = activeStepFilter === step.id
                       return (
@@ -4000,20 +3877,6 @@ export default function FitnessTrackerClient({
                         </button>
                       )
                     })}
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8, maxWidth: '100%', minWidth: 0 }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      <span style={workoutStatBadgeStyle}>Sets: {workoutProgress.loggedSets}/{workoutProgress.targetSets || '-'}</span>
-                      <span style={workoutStatBadgeStyle}>Volume: {formatWeight(workoutProgress.totalVolumeKg, units)}</span>
-                    </div>
-                    {workout.scheduledDate && (
-                      <span style={{ color: 'var(--gold-lt)', fontSize: 11.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <GaaIcon name="calendar" size={12} tone="gold" /> Scheduled: {new Date(`${workout.scheduledDate}T12:00:00Z`).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ height: 6, width: '100%', maxWidth: '100%', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', marginBottom: 14 }}>
-                    <div style={{ height: '100%', width: `${Math.round(completionRatio * 100)}%`, background: 'var(--gold)' }} />
                   </div>
                   {/* ── Executive Workout Layout (Full Width, No Right Bars) ── */}
                   <div style={{ minWidth: 0, maxWidth: '100%', width: '100%', overflowX: 'hidden' }}>
@@ -4064,60 +3927,6 @@ export default function FitnessTrackerClient({
                         </div>
                       )}
 
-                      {/* Active Orthopedic Protection Shield (Sports Injuries & Biomechanical Limitations) */}
-                      {clientInjuries.length > 0 && (
-                        <details
-                          className="fitness-card-disclosure"
-                          style={{
-                            marginBottom: 10,
-                            background: 'rgba(13,22,41,0.9)',
-                            border: '1px solid rgba(212,160,23,0.35)',
-                            borderRadius: 8,
-                            padding: '0 12px',
-                          }}
-                        >
-                          <summary style={{ gap: 8 }}>
-                            <GaaIcon name="shield-check" size={14} tone="gold" />
-                            <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)' }}>
-                              Orthopedic Protection Shield Active ({clientInjuries.length} {clientInjuries.length === 1 ? 'Condition Guarded' : 'Conditions Guarded'})
-                            </span>
-                          </summary>
-
-                          <div style={{ paddingBottom: 10 }}>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
-                              {clientInjuries.map(key => {
-                                const inj = COMMON_SPORTS_INJURIES[key]
-                                if (!inj) return null
-                                return (
-                                  <span
-                                    key={key}
-                                    style={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 5,
-                                      fontSize: 11,
-                                      padding: '3px 8px',
-                                      background: 'rgba(0,0,0,0.45)',
-                                      border: '1px solid rgba(212,160,23,0.25)',
-                                      borderRadius: 4,
-                                      color: '#FFFFFF',
-                                    }}
-                                  >
-                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)' }} />
-                                    <strong>{inj.name}</strong>
-                                    <span style={{ color: 'var(--gray)', fontSize: 9.5 }}>({inj.region.replace('_', ' ')})</span>
-                                  </span>
-                                )
-                              })}
-                            </div>
-
-                            <div style={{ fontSize: 11, color: 'var(--gray)', lineHeight: 1.4 }}>
-                              Warmup SMR and activation drills have been adapted for your joint profile. If any movement causes joint strain, tap <strong style={{ color: 'var(--gold-lt)' }}>Swap for Joint Relief</strong> to substitute with an NASM biomechanically safe regression.
-                            </div>
-                          </div>
-                        </details>
-                      )}
-
                       {/* Step 1: Pre-Lift Kinetic Warmup */}
                       {(activeStepFilter === 'all' || activeStepFilter === 'warmup') && (
                         <ClinicalKineticWarmupModule
@@ -4163,84 +3972,13 @@ export default function FitnessTrackerClient({
                           : workout.exercises
 
                         const currentExercises = (rawCurrentExercises || []).filter(ex => !isCardioPseudoExercise(ex.name))
-                        const resistanceWorkingLifts = currentExercises.filter(
-                          ex => ex.block !== 'warmup' && ex.block !== 'cooldown' && !isTimedStaticStretch(ex.name, ex.block, ex.reps) && !isFoamRollerExercise(ex.name)
-                        )
                         const isDedicatedCardioDay =
                           workout.focus?.toLowerCase().includes('cardio') ||
                           workout.focus?.toLowerCase().includes('recovery') ||
                           currentExercises.length === 0
 
                         return (
-                          <div
-                            style={{
-                              marginBottom: 20,
-                              border: isDedicatedCardioDay ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid rgba(212,160,23,0.35)',
-                              background: isDedicatedCardioDay
-                                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, rgba(10,16,28,0.95) 100%)'
-                                : 'linear-gradient(135deg, rgba(212,160,23,0.06) 0%, rgba(10,16,28,0.95) 100%)',
-                              borderRadius: 8,
-                              padding: 'clamp(6px, 1.8vw, 16px)',
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                flexWrap: 'wrap',
-                                gap: 10,
-                                borderBottom: isStageCollapsed(workout.day, 'resistance') ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                                paddingBottom: isStageCollapsed(workout.day, 'resistance') ? 0 : 10,
-                                marginBottom: isStageCollapsed(workout.day, 'resistance') ? 0 : 14,
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                <span style={{
-                                  fontSize: 11,
-                                  background: isDedicatedCardioDay ? 'rgba(56, 189, 248, 0.15)' : 'rgba(212,160,23,0.15)',
-                                  color: isDedicatedCardioDay ? '#38BDF8' : 'var(--gold)',
-                                  fontWeight: 800,
-                                  padding: '2px 8px',
-                                  borderRadius: 4,
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.06em',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 5
-                                }}>
-                                  <GaaIcon name={isDedicatedCardioDay ? 'runner' : 'dumbbell'} size={13} tone={isDedicatedCardioDay ? 'cyan' : 'gold'} />
-                                  <span>{isDedicatedCardioDay ? 'STEP 2: ACTIVE RECOVERY' : 'STEP 2: RESISTANCE TRAINING'}</span>
-                                </span>
-                                <span style={{ color: 'var(--white)', fontSize: 14, fontWeight: 700 }}>
-                                  {isDedicatedCardioDay ? 'Active Recovery · No Lifts Scheduled' : `Working Sets (${resistanceWorkingLifts.length} Exercises)`}
-                                </span>
-                              </div>
-
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => toggleStage(workout.day, 'resistance')}
-                                  className="tactile-btn"
-                                  style={{
-                                    background: 'rgba(255,255,255,0.06)',
-                                    border: '1px solid rgba(255,255,255,0.18)',
-                                    color: isDedicatedCardioDay ? '#38BDF8' : 'var(--gold-lt)',
-                                    borderRadius: 5,
-                                    padding: '6px 12px',
-                                    fontSize: 11.5,
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 5,
-                                  }}
-                                >
-                                  {isStageCollapsed(workout.day, 'resistance') ? '▼ Expand' : '▲ Collapse'}
-                                </button>
-                              </div>
-                            </div>
-
+                          <div style={{ marginBottom: 16 }}>
                             {!isStageCollapsed(workout.day, 'resistance') && (
                               isDedicatedCardioDay ? (
                                 <div
@@ -4628,82 +4366,6 @@ export default function FitnessTrackerClient({
                           </summary>
                           {(isExpanded || activeRestTimerKey === exerciseKey) && (
                           <div style={{ padding: '8px 8px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                            {/* High-Definition Visual Movement Demonstration Banner */}
-                            {(() => {
-                              const gaaImage = resolveGaaExerciseImage(ex.name, false)
-                              const bannerUrl = movementCard.imageUrl || gaaImage || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
-                              const isDone = exLoggedSets >= exTargetSets && exTargetSets > 0
-                              return (
-                                <div
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setActiveVideoExercise(ex)
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                      e.preventDefault()
-                                      e.stopPropagation()
-                                      setActiveVideoExercise(ex)
-                                    }
-                                  }}
-                                  style={{
-                                    position: 'relative',
-                                    width: '100%',
-                                    aspectRatio: '16 / 9',
-                                    maxHeight: 'clamp(180px, 32vh, 260px)',
-                                    borderRadius: 8,
-                                    overflow: 'hidden',
-                                    marginBottom: 12,
-                                    backgroundColor: '#0a0f1d',
-                                    border: isDone ? '1px solid rgba(16,185,129,0.35)' : '1px solid rgba(212,160,23,0.35)',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
-                                  }}
-                                  title={`View form demonstration for ${ex.name}`}
-                                >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={bannerUrl}
-                                    alt={ex.name}
-                                    loading="lazy"
-                                    decoding="async"
-                                    onError={(e) => {
-                                      (e.currentTarget as HTMLImageElement).src = BRAND_LOGO_FALLBACK_IMAGE
-                                    }}
-                                    style={{
-                                      width: '100%',
-                                      height: '100%',
-                                      aspectRatio: '16 / 9',
-                                      objectFit: 'cover',
-                                      objectPosition: 'center',
-                                      display: 'block',
-                                    }}
-                                  />
-                                  <div
-                                    style={{
-                                      position: 'absolute',
-                                      bottom: 8,
-                                      right: 8,
-                                      background: 'rgba(0,0,0,0.8)',
-                                      border: '1px solid rgba(212,160,23,0.55)',
-                                      borderRadius: 4,
-                                      padding: '4px 8px',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 5,
-                                      fontSize: 11,
-                                      fontWeight: 700,
-                                      color: 'var(--gold-lt)',
-                                    }}
-                                  >
-                                    <GaaIcon name="play" size={11} tone="gold" />
-                                    <span>Watch Video Demonstration</span>
-                                  </div>
-                                </div>
-                              )
-                            })()}
                         {ex.personalReason?.trim() && (
                           <p className="client-exercise-why">
                             <span className="client-exercise-why-label">Why this is in your plan</span>
@@ -5267,148 +4929,6 @@ export default function FitnessTrackerClient({
                                 )}
                               </div>
 
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                                <details className="fitness-card-disclosure"><summary>Exercise options</summary>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSwapModalExercise({ workoutDay: workout.day, exercise: ex, initialDiscomfort: primaryDiscomfortArea })}
-                                    style={{
-                                      fontSize: 11.5,
-                                      background: 'rgba(212,160,23,0.12)',
-                                      border: '1px solid rgba(212,160,23,0.35)',
-                                      color: 'var(--gold-lt)',
-                                      padding: '4px 10px',
-                                      borderRadius: 4,
-                                      cursor: 'pointer',
-                                      fontFamily: 'Raleway, sans-serif',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 5,
-                                      fontWeight: 700,
-                                      transition: 'all 0.15s ease',
-                                    }}
-                                    title="Substitute this movement with an NASM safe regression for joint relief or equipment constraints"
-                                  >
-                                    <GaaIcon name="shield-check" size={12} tone="gold" />
-                                    <span>Swap for Joint Relief</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSkipModal({ workoutDay: workout.day, exercise: ex })}
-                                    style={{ fontSize: 12, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--gray)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'Raleway, sans-serif' }}
-                                  >
-                                    Skip Exercise
-                                  </button>
-                                </div>
-                                </details>
-                              </div>
-
-                              {isStrength && !isTimed && (
-                                <OneRepMaxPercentageMatrix
-                                  exerciseName={ex.name}
-                                  currentWeight={draft.weight}
-                                  currentReps={draft.reps}
-                                  historicalMax1RmLbs={exercisePrVault.get(normalizeExerciseNameKey(ex.name))?.allTimeBest1RmLbs ?? null}
-                                  units={units}
-                                  isWarmup={draft.isWarmup}
-                                  isTimed={isTimed}
-                                  onApplyLoad={(targetWeight, targetReps) => {
-                                    setInlineSetDrafts(prev => ({
-                                      ...prev,
-                                      [exerciseKey]: {
-                                        ...draft,
-                                        weight: targetWeight,
-                                        reps: targetReps,
-                                      },
-                                    }))
-                                  }}
-                                  triggerHaptic={triggerHaptic}
-                                />
-                              )}
-
-
-                              {isStrength && !isTimed && (
-                                <AutoregulationDeloadAdvisor
-                                  exerciseName={ex.name}
-                                  currentDraftWeight={draft.weight}
-                                  currentDraftReps={draft.reps}
-                                  targetReps={ex.reps}
-                                  completedSets={(setLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
-                                    .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === Number(workout.day))
-                                    .map((row, idx) => ({
-                                      setNumber: Number(row.set_number) || idx + 1,
-                                      weightLbs: (row.weight_kg != null ? row.weight_kg * 2.20462 : 0),
-                                      weightKg: row.weight_kg ?? 0,
-                                      reps: Number(row.reps) || 0,
-                                      rpe: row.rpe ?? null,
-                                      rir: row.rir ?? null,
-                                      isWarmup: Boolean(row.is_warmup),
-                                      sessionDate: row.session_date,
-                                    }))
-                                    .sort((a, b) => a.setNumber - b.setNumber)}
-                                  allSessionSets={(localSetLogs || [])
-                                    .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === Number(workout.day))
-                                    .map((row, idx) => ({
-                                      setNumber: Number(row.set_number) || idx + 1,
-                                      weightLbs: (row.weight_kg != null ? row.weight_kg * 2.20462 : 0),
-                                      weightKg: row.weight_kg ?? 0,
-                                      reps: Number(row.reps) || 0,
-                                      rpe: row.rpe ?? null,
-                                      rir: row.rir ?? null,
-                                      isWarmup: Boolean(row.is_warmup),
-                                      sessionDate: row.session_date,
-                                    }))
-                                    .sort((a, b) => a.setNumber - b.setNumber)}
-                                  units={units}
-                                  isTimed={isTimed}
-                                  optPhase={plan?.nasm_opt_phase}
-                                  sessionDurationMinutes={Math.max(15, Math.round(elapsedWorkoutSeconds / 60))}
-                                  onApplyDeloadWeight={(newWeight) => {
-                                    setInlineSetDrafts(prev => ({
-                                      ...prev,
-                                      [exerciseKey]: { ...draft, weight: newWeight },
-                                    }))
-                                  }}
-                                  onApplyRepCap={(newReps) => {
-                                    setInlineSetDrafts(prev => ({
-                                      ...prev,
-                                      [exerciseKey]: { ...draft, reps: newReps },
-                                    }))
-                                  }}
-                                  onExtendRestTimer={(extraSecs) => {
-                                    setActiveRestState(prev => prev ? {
-                                      ...prev,
-                                      restSeconds: prev.restSeconds + extraSecs,
-                                      remainingSeconds: prev.remainingSeconds + extraSecs,
-                                    } : null)
-                                  }}
-                                  onApplyClusterSet={(clusterPlan) => {
-                                    const clusterNote = clusterPlan.notesTag
-                                    const existing = (draft.notes || '').replace(/\[Cluster Set:[^\]]+\]/g, '').trim()
-                                    setInlineSetDrafts(prev => ({
-                                      ...prev,
-                                      [exerciseKey]: {
-                                        ...draft,
-                                        notes: existing ? `${existing} ${clusterNote}` : clusterNote,
-                                      },
-                                    }))
-                                  }}
-                                  onApplyMyoReps={(myoPlan) => {
-                                    const myoNote = myoPlan.notesTag
-                                    const existing = (draft.notes || '').replace(/\[Myo-Reps:[^\]]+\]/g, '').trim()
-                                    setInlineSetDrafts(prev => ({
-                                      ...prev,
-                                      [exerciseKey]: {
-                                        ...draft,
-                                        notes: existing ? `${existing} ${myoNote}` : myoNote,
-                                      },
-                                    }))
-                                  }}
-                                  triggerHaptic={triggerHaptic}
-                                />
-                              )}
-
                               <details className="fitness-card-disclosure">
                                 <summary>Edit set details</summary>
                               {/* Workout Date & Set Number Override */}
@@ -5496,6 +5016,50 @@ export default function FitnessTrackerClient({
                                     Warm-up
                                   </label>
                                 </div>
+                              </div>
+
+                              {/* Exercise substitution & skip controls */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setSwapModalExercise({ workoutDay: workout.day, exercise: ex, initialDiscomfort: primaryDiscomfortArea })}
+                                  style={{
+                                    fontSize: 11.5,
+                                    minHeight: 44,
+                                    background: 'rgba(212,160,23,0.12)',
+                                    border: '1px solid rgba(212,160,23,0.35)',
+                                    color: 'var(--gold-lt)',
+                                    padding: '6px 12px',
+                                    borderRadius: 4,
+                                    cursor: 'pointer',
+                                    fontFamily: 'Raleway, sans-serif',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                    fontWeight: 700,
+                                  }}
+                                  title="Substitute this movement with an NASM safe regression for joint relief or equipment constraints"
+                                >
+                                  <GaaIcon name="shield-check" size={12} tone="gold" />
+                                  <span>Swap for Joint Relief</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSkipModal({ workoutDay: workout.day, exercise: ex })}
+                                  style={{
+                                    fontSize: 12,
+                                    minHeight: 44,
+                                    background: 'transparent',
+                                    border: '1px solid rgba(255,255,255,0.12)',
+                                    color: 'var(--gray)',
+                                    padding: '6px 12px',
+                                    borderRadius: 4,
+                                    cursor: 'pointer',
+                                    fontFamily: 'Raleway, sans-serif',
+                                  }}
+                                >
+                                  Skip Exercise
+                                </button>
                               </div>
 
                               </details>
@@ -5676,63 +5240,6 @@ export default function FitnessTrackerClient({
                   )
                 }
 
-                if (activeStepFilter === 'resistance') {
-                  return (
-                    <div
-                      style={{
-                        marginTop: 14,
-                        padding: '12px 16px',
-                        background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(13, 27, 42, 0.9) 100%)',
-                        border: '1px solid rgba(56, 189, 248, 0.3)',
-                        borderRadius: 8,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: 12,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <GaaIcon name="runner" size={20} tone="cyan" />
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#38BDF8' }}>
-                            Next Up After Lifts: Prescribed Cardio ({cardio.durationMins} min)
-                          </div>
-                          <div style={{ fontSize: 12, color: '#E2E8F0', fontWeight: 600, marginTop: 2 }}>
-                            {cardio.title} · {cardio.targetZone}
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic('tap')
-                          setActiveStepFilter('cardio')
-                          setCollapsedStages(prev => ({ ...prev, [`${workout.day}-cardio`]: false }))
-                        }}
-                        className="tactile-btn"
-                        style={{
-                          background: 'rgba(56, 189, 248, 0.15)',
-                          border: '1px solid rgba(56, 189, 248, 0.4)',
-                          color: '#38BDF8',
-                          padding: '7px 12px',
-                          borderRadius: 5,
-                          fontSize: 11.5,
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 6,
-                        }}
-                      >
-                        <span>Open Cardio Session</span>
-                        <span>→</span>
-                      </button>
-                    </div>
-                  )
-                }
-
                 return null
               })()}
               </div>
@@ -5762,12 +5269,12 @@ export default function FitnessTrackerClient({
                           <>
                             <div
                             style={{
-                              marginTop: 18,
-                              marginBottom: 20,
+                              marginTop: 12,
+                              marginBottom: 16,
                               border: '1px solid rgba(56,189,248,0.35)',
                               background: 'linear-gradient(135deg, rgba(56,189,248,0.06) 0%, rgba(10,20,35,0.95) 100%)',
                               borderRadius: 8,
-                              padding: '16px 18px',
+                              padding: '14px 16px',
                               color: '#FFFFFF',
                             }}
                           >
@@ -5780,7 +5287,7 @@ export default function FitnessTrackerClient({
                                 flexWrap: 'wrap',
                                 gap: 10,
                                 borderBottom: isCollapsed ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                                paddingBottom: isCollapsed ? 0 : 12,
+                                paddingBottom: isCollapsed ? 0 : 10,
                                 marginBottom: isCollapsed ? 0 : 12,
                               }}
                             >
@@ -5803,7 +5310,7 @@ export default function FitnessTrackerClient({
                                       }}
                                     >
                                       <GaaIcon name="runner" size={13} tone="cyan" />
-                                      <span>STEP 3: CARDIO & CONDITIONING PROTOCOL</span>
+                                      <span>STEP 3: CARDIO & CONDITIONING</span>
                                     </span>
                                     <span
                                       style={{
@@ -5832,67 +5339,37 @@ export default function FitnessTrackerClient({
                                       {cardio.durationMins} MINS
                                     </div>
                                     <div style={{ fontSize: 11, color: 'var(--gray)' }}>
-                                      {cardio.targetRpe}
+                                      {cardio.targetRpe} · {cardio.workRestRatio || 'Steady State'}
                                     </div>
                                   </div>
 
-                                <button
-                                  type="button"
-                                  onClick={() => toggleStage(workout.day, 'cardio')}
-                                  className="tactile-btn"
-                                  style={{
-                                    background: 'rgba(255,255,255,0.06)',
-                                    border: '1px solid rgba(255,255,255,0.18)',
-                                    color: '#38BDF8',
-                                    borderRadius: 5,
-                                    padding: '6px 12px',
-                                    fontSize: 11.5,
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 5,
-                                  }}
-                                >
-                                  {isCollapsed ? '▼ Expand Cardio' : '▲ Collapse'}
-                                </button>
+                                {isCollapsed && (
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleStage(workout.day, 'cardio')}
+                                    className="tactile-btn"
+                                    style={{
+                                      background: 'rgba(255,255,255,0.06)',
+                                      border: '1px solid rgba(255,255,255,0.18)',
+                                      color: '#38BDF8',
+                                      borderRadius: 5,
+                                      padding: '6px 12px',
+                                      fontSize: 11.5,
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                    }}
+                                  >
+                                    ▼ Expand Cardio
+                                  </button>
+                                )}
                               </div>
                             </div>
 
                             {!isCollapsed && (
                               <>
-                                {/* Quick Metrics Grid */}
-                                <div
-                                  style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 120px), 1fr))',
-                                    gap: 8,
-                                    background: 'rgba(0,0,0,0.3)',
-                                    padding: '10px 12px',
-                                    borderRadius: 6,
-                                    border: '1px solid rgba(255,255,255,0.06)',
-                                    marginBottom: 14,
-                                    fontSize: 11,
-                                  }}
-                                >
-                                  <div>
-                                    <span style={{ color: 'var(--gray)', display: 'block', textTransform: 'uppercase', fontSize: 9.5, letterSpacing: '0.06em' }}>Type & Format</span>
-                                    <strong style={{ color: '#38BDF8', fontSize: 12 }}>{cardio.workRestRatio || 'Steady State'}</strong>
-                                  </div>
-                                  <div>
-                                    <span style={{ color: 'var(--gray)', display: 'block', textTransform: 'uppercase', fontSize: 9.5, letterSpacing: '0.06em' }}>Duration</span>
-                                    <strong style={{ color: '#FFFFFF', fontSize: 13 }}>{cardio.durationMins} mins</strong>
-                                  </div>
-                                  <div>
-                                    <span style={{ color: 'var(--gray)', display: 'block', textTransform: 'uppercase', fontSize: 9.5, letterSpacing: '0.06em' }}>Target RPE</span>
-                                    <strong style={{ color: 'var(--gold-lt)', fontSize: 12 }}>{cardio.targetRpe}</strong>
-                                  </div>
-                                  <div>
-                                    <span style={{ color: 'var(--gray)', display: 'block', textTransform: 'uppercase', fontSize: 9.5, letterSpacing: '0.06em' }}>Target BPM</span>
-                                    <strong style={{ color: '#FFFFFF', fontSize: 12 }}>{cardio.targetBpmRange}</strong>
-                                  </div>
-                                </div>
-
                                 {/* In-Workout Cardio Logging Form */}
                                 <form
                                   className="fitness-cardio-log-form"
@@ -5900,7 +5377,7 @@ export default function FitnessTrackerClient({
                                     e.preventDefault()
                                     handleSaveWorkoutCardio(workout, cardio, draft)
                                   }}
-                                  style={{ display: 'grid', gap: 10, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}
+                                  style={{ display: 'grid', gap: 10 }}
                                 >
                                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
                                     <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
@@ -6843,16 +6320,6 @@ const stepperInputStyle: React.CSSProperties = {
   textAlign: 'center',
   fontWeight: 800,
   fontSize: 16,
-}
-
-const workoutStatBadgeStyle: React.CSSProperties = {
-  border: '1px solid rgba(255,255,255,0.18)',
-  background: 'rgba(255,255,255,0.04)',
-  color: 'var(--white)',
-  padding: '2px 8px',
-  fontSize: 11,
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
 }
 
 const accordionWorkoutStyle: React.CSSProperties = {

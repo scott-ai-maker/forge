@@ -122,6 +122,43 @@ export default function PlateAdjustmentPresets({
           <GaaIcon name="sliders" size={10} tone="gold" />
           <span>{showMilestones ? 'Hide Presets' : 'Presets'}</span>
         </button>
+
+        {plateCalc && (
+          <span
+            style={{
+              fontSize: 10,
+              color: 'var(--gold-lt)',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              background: 'rgba(10, 16, 26, 0.7)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 4,
+              padding: '2px 6px',
+            }}
+          >
+            <span>{plateCalc.weightPerSide > 0 ? `${plateCalc.weightPerSide} lb/side` : '45 lb bar'}</span>
+            {plateCalc.platesPerSide.map((p: PlateCount) =>
+              Array.from({ length: p.count }).map((_, cIdx) => (
+                <span
+                  key={`${p.denomination.weightLbs}-${cIdx}`}
+                  style={{
+                    background: p.denomination.color,
+                    color: p.denomination.textColor,
+                    fontSize: 9,
+                    fontWeight: 900,
+                    padding: '0 4px',
+                    borderRadius: 2,
+                    display: 'inline-block',
+                  }}
+                >
+                  {p.denomination.weightLbs}
+                </span>
+              ))
+            )}
+          </span>
+        )}
       </div>
 
       {/* ── Expandable Milestone Presets Strip ── */}
@@ -134,155 +171,102 @@ export default function PlateAdjustmentPresets({
             border: '1px solid rgba(212,160,23,0.25)',
             borderRadius: 4,
             display: 'flex',
-            flexWrap: 'wrap',
-            gap: 4,
-            alignItems: 'center',
-          }}
-        >
-          <span style={{ fontSize: 9.5, color: 'var(--gray)', fontWeight: 700, textTransform: 'uppercase', marginRight: 2 }}>
-            {config.isBarbell ? 'Barbell Racks:' : 'Dumbbell Rack:'}
-          </span>
-          {config.presets.map(p => {
-            const isCurrent = Math.abs(numWeight - p.weight) < 0.1
-            return (
-              <button
-                key={p.weight}
-                type="button"
-                onClick={() => handleSetExact(p.weight)}
-                className="tactile-btn"
-                style={{
-                  background: isCurrent
-                    ? 'rgba(212,160,23,0.3)'
-                    : p.isMilestone
-                      ? 'rgba(56,189,248,0.12)'
-                      : 'rgba(255,255,255,0.05)',
-                  border: isCurrent
-                    ? '1.5px solid var(--gold)'
-                    : p.isMilestone
-                      ? '1px solid rgba(56,189,248,0.3)'
-                      : '1px solid rgba(255,255,255,0.1)',
-                  color: isCurrent ? 'var(--gold-lt)' : p.isMilestone ? '#7DD3FC' : '#E2E8F0',
-                  fontSize: 10,
-                  fontWeight: p.isMilestone || isCurrent ? 800 : 600,
-                  padding: '2px 6px',
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                }}
-              >
-                {p.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      {/* ── Interactive Barbell Sleeve & Plate Loading Strip ── */}
-      {plateCalc && (
-        <div
-          style={{
-            marginTop: 6,
-            background: 'rgba(10, 16, 26, 0.7)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 5,
-            padding: '6px 8px',
-            display: 'flex',
             flexDirection: 'column',
             gap: 6,
           }}
         >
-          {/* Top Line: Weight per side, badges, and 3D Rack link */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 6,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 10, color: 'var(--gold-lt)', fontWeight: 800 }}>
-                Per side ({plateCalc.weightPerSide} lb):
-              </span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+            <span style={{ fontSize: 9.5, color: 'var(--gray)', fontWeight: 700, textTransform: 'uppercase', marginRight: 2 }}>
+              {config.isBarbell ? 'Barbell:' : 'Dumbbells:'}
+            </span>
+            {config.presets.map(p => {
+              const isCurrent = Math.abs(numWeight - p.weight) < 0.1
+              return (
+                <button
+                  key={p.weight}
+                  type="button"
+                  onClick={() => handleSetExact(p.weight)}
+                  className="tactile-btn"
+                  style={{
+                    background: isCurrent
+                      ? 'rgba(212,160,23,0.3)'
+                      : p.isMilestone
+                        ? 'rgba(56,189,248,0.12)'
+                        : 'rgba(255,255,255,0.05)',
+                    border: isCurrent
+                      ? '1.5px solid var(--gold)'
+                      : p.isMilestone
+                        ? '1px solid rgba(56,189,248,0.3)'
+                        : '1px solid rgba(255,255,255,0.1)',
+                    color: isCurrent ? 'var(--gold-lt)' : p.isMilestone ? '#7DD3FC' : '#E2E8F0',
+                    fontSize: 10.5,
+                    fontWeight: p.isMilestone || isCurrent ? 800 : 600,
+                    padding: '4px 8px',
+                    minHeight: 44,
+                    minWidth: 44,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {p.label}
+                </button>
+              )
+            })}
+          </div>
 
-              {plateCalc.platesPerSide.length === 0 ? (
-                <span style={{ fontSize: 10, color: 'var(--gray)', fontStyle: 'italic' }}>
-                  Empty 45lb Bar
-                </span>
-              ) : (
-                plateCalc.platesPerSide.map((p: PlateCount) =>
-                  Array.from({ length: p.count }).map((_, cIdx) => (
-                    <span
-                      key={`${p.denomination.weightLbs}-${cIdx}`}
-                      style={{
-                        background: p.denomination.color,
-                        color: p.denomination.textColor,
-                        fontSize: 9.5,
-                        fontWeight: 900,
-                        padding: '1px 5px',
-                        borderRadius: 3,
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        display: 'inline-block',
-                      }}
-                    >
-                      {p.denomination.weightLbs}
-                    </span>
-                  ))
-                )
+          {plateCalc && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 9.5, color: 'var(--gray)', fontWeight: 600 }}>
+                +Plate/Side:
+              </span>
+              {[45, 25, 10, 5, 2.5].map(pl => (
+                <button
+                  key={pl}
+                  type="button"
+                  onClick={() => handleAddPlatePerSide(pl)}
+                  className="tactile-btn"
+                  title={`Add ${pl} lb plate to each side (+${pl * 2} lbs total)`}
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#FFFFFF',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: '4px 8px',
+                    minHeight: 44,
+                    minWidth: 44,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  +{pl}
+                </button>
+              ))}
+              {onOpenPlateCalculator && (
+                <button
+                  type="button"
+                  onClick={() => onOpenPlateCalculator(Math.round(weightLbs))}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--gold)',
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    minHeight: 44,
+                    textDecoration: 'underline',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                  }}
+                >
+                  <span>3D Rack</span>
+                  <GaaIcon name="external-link" size={10} tone="gold" />
+                </button>
               )}
             </div>
-
-            {onOpenPlateCalculator && (
-              <button
-                type="button"
-                onClick={() => onOpenPlateCalculator(Math.round(weightLbs))}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--gold)',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  padding: 0,
-                  textDecoration: 'underline',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3,
-                }}
-              >
-                <span>3D Rack</span>
-                <GaaIcon name="external-link" size={10} tone="gold" />
-              </button>
-            )}
-          </div>
-
-          {/* Bottom Line: Quick 1-Tap Plate Addition Shortcuts (+45, +25, +10, +5, +2.5 per side) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 9.5, color: 'var(--gray)', fontWeight: 600 }}>
-              +Plate/Side:
-            </span>
-            {[45, 25, 10, 5, 2.5].map(pl => (
-              <button
-                key={pl}
-                type="button"
-                onClick={() => handleAddPlatePerSide(pl)}
-                className="tactile-btn"
-                title={`Add ${pl} lb plate to each side (+${pl * 2} lbs total)`}
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  color: '#FFFFFF',
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  padding: '1px 5px',
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                }}
-              >
-                +{pl}
-              </button>
-            ))}
-          </div>
+          )}
         </div>
       )}
     </div>

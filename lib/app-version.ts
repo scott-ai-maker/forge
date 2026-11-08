@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.47.1'
+export const APP_VERSION = '1.48.0'
 export const APP_RELEASE_DATE = '2026-11-08'
-export const APP_RELEASE_CODENAME = 'Platform-Wide Service Validity & Vernacular Alignment Audit'
+export const APP_RELEASE_CODENAME = 'Streamlined Gym-First Workout Flow & Progressive Set Logger'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,22 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.48.0',
+    date: '2026-11-08',
+    codename: 'Streamlined Gym-First Workout Flow & Progressive Set Logger',
+    category: 'feature',
+    badge: 'Workout Flow Redesign',
+    title: 'v1.48.0 — Streamlined Gym-First Workout Flow & Progressive Set Logger',
+    summary:
+      'Redesigned the Forge Athletic workout flow across Warm-Up, Resistance Lifts, Cardio, and Cool-Down following modern training companion best practices — eliminating duplicate 16:9 image banners, redundant wrapper headers, and mid-set pop-up bloat for fast, thumb-friendly gym logging.',
+    highlights: [
+      'Consolidated above-the-fold program briefings and workout day telemetry into a unified header with a 3px gold progress bar and 4 focused stage tabs (1. Warm-Up, 2. Lifts, 3. Cardio, 4. Cool-Down).',
+      'Removed duplicate 16:9 demonstration banners inside expanded resistance, warm-up, and cool-down cards — tapping the header movement thumbnail opens the full HD video modal directly, saving ~220px of vertical scroll per expanded card.',
+      'Streamlined the inline set logger by removing auto-popping 1RM percentage matrices and deload advisors, folding exercise swap/skip controls into Edit set details, and compacting plate math into an inline badge with on-demand 44×44px presets.',
+      'Simplified Stage 3 Cardio by removing redundant metric grids and premature pre-cardio banners during active lifting.',
+    ],
+  },
   {
     version: '1.47.1',
     date: '2026-11-08',

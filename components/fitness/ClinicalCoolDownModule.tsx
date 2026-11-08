@@ -1256,7 +1256,7 @@ export default function ClinicalCoolDownModule({
           marginBottom: collapsed ? 0 : 14,
         }}
       >
-        <div style={{ minWidth: 0, flex: '1 1 240px' }}>
+        <div style={{ minWidth: 0, flex: '1 1 200px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span
               style={{
@@ -1281,30 +1281,24 @@ export default function ClinicalCoolDownModule({
               ) : (
                 <>
                   <GaaIcon name="snowflake" size={11} tone="dark" />
-                  <span>STEP 4: CLINICAL COOL-DOWN</span>
+                  <span>Step 4 · Cool-Down</span>
                 </>
               )}
-            </span>
-            <span style={{ fontSize: 11, color: '#93C5FD', fontWeight: 600 }}>
-              NASM Clinical Recovery Protocol (7th Ed. Evidence-Based)
             </span>
           </div>
 
           <h3
             style={{
               fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: 700,
               letterSpacing: '0.04em',
               margin: '4px 0 0',
               color: '#FFFFFF',
             }}
           >
-            Post-Workout Tissue Recovery & Downregulation
+            Post-Workout Recovery &amp; Stretch
           </h3>
-          <p style={{ margin: '2px 0 0', color: 'var(--gray)', fontSize: 12 }}>
-            Restore resting length-tension relationships, accelerate blood clearance, and stimulate parasympathetic nervous recovery.
-          </p>
         </div>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1377,26 +1371,28 @@ export default function ClinicalCoolDownModule({
             </>
           )}
 
-          <button
-            type="button"
-            onClick={handleToggleCollapse}
-            className="tactile-btn"
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              color: '#93C5FD',
-              borderRadius: 5,
-              padding: '6px 12px',
-              fontSize: 11.5,
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-            }}
-          >
-            {collapsed ? '▼ Expand Cool-Down' : '▲ Collapse'}
-          </button>
+          {collapsed && (
+            <button
+              type="button"
+              onClick={handleToggleCollapse}
+              className="tactile-btn"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.18)',
+                color: '#93C5FD',
+                borderRadius: 5,
+                padding: '6px 12px',
+                fontSize: 11.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              ▼ Expand Cool-Down
+            </button>
+          )}
         </div>
       </div>
 
@@ -1582,89 +1578,6 @@ export default function ClinicalCoolDownModule({
 
               {/* Step Expanded Content */}
               <div style={{ padding: '8px 12px 12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ fontSize: 11.5, color: 'var(--gray)', marginBottom: 10, wordBreak: 'break-word' }}>
-                  <strong style={{ color: '#93C5FD' }}>Target: </strong>{item.target}
-                </div>
-
-                {!isBreathing && (
-                  <div
-                    onClick={() => openMovementModal(item)}
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      aspectRatio: '16 / 9',
-                      maxHeight: 'clamp(180px, 32vh, 260px)',
-                      borderRadius: 8,
-                      overflow: 'hidden',
-                      marginBottom: 12,
-                      backgroundColor: '#0a0f1d',
-                      border: isDone ? '1px solid rgba(16,185,129,0.35)' : '1px solid rgba(96,165,250,0.35)',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 18px rgba(0,0,0,0.5)',
-                    }}
-                    title={`View NASM Clinical Form & Demonstration for ${item.name}`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imgUrl}
-                      alt={item.name}
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = BRAND_LOGO_FALLBACK_IMAGE
-                      }}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'center',
-                        display: 'block',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 8,
-                        right: 8,
-                        background: 'rgba(0,0,0,0.78)',
-                        border: '1px solid rgba(96,165,250,0.55)',
-                        color: '#93C5FD',
-                        borderRadius: 5,
-                        padding: '5px 10px',
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        backdropFilter: 'blur(4px)',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
-                      }}
-                    >
-                      <GaaIcon name={hasVideo ? "play" : "book"} size={12} tone="cyan" />
-                      <span>{hasVideo ? "Watch Video Demonstration" : "NASM Form Standards"}</span>
-                    </div>
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 8,
-                        left: 8,
-                        background: 'rgba(7,11,20,0.85)',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        color: '#E2E8F0',
-                        borderRadius: 4,
-                        padding: '3px 8px',
-                        fontSize: 10,
-                        fontWeight: 800,
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                        backdropFilter: 'blur(4px)',
-                      }}
-                    >
-                      {movementCard.category} · {item.phaseLabel}
-                    </div>
-                  </div>
-                )}
-
                 {/* How to do this step instructions */}
                 <div
                   style={{
@@ -1682,7 +1595,7 @@ export default function ClinicalCoolDownModule({
                 >
                   <div style={{ fontSize: 10.5, fontWeight: 700, color: '#93C5FD', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
                     <GaaIcon name="folder" size={11} tone="cyan" />
-                    <span>How to perform:</span>
+                    <span>How to perform ({item.target}):</span>
                   </div>
                   {(item.instructions || []).map((stepText, sIdx) => (
                     <div key={sIdx} style={{ marginBottom: sIdx === (item.instructions?.length ?? 1) - 1 ? 0 : 3, wordBreak: 'break-word' }}>
