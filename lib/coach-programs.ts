@@ -233,6 +233,59 @@ function buildGeneratedDates(startDate: string | null | undefined, count: number
   return Array.from({ length: count }, (_, index) => formatDateOnly(addUtcDays(parsedStart, index * spacing)))
 }
 
+const SEMANTIC_CANONICAL_EXERCISE_MAP: Record<string, string> = {
+  'how to foam roll adductors': 'foam roll adductors',
+  'dumbbell bent over extention': 'supported bent over dumbbell extension',
+  'latissimus dorsi ball stretch': 'static latissimus dorsi ball stretch',
+  'self myofascial release smr latissimus dorsi': 'foam roll latissimus dorsi',
+  'core ball crunch': 'ball crunch',
+  'two arm incline dumbbell chest press': 'incline dumbbell bench press',
+}
+
+function normalizeExerciseIdentityKey(name: string): string {
+  const norm = String(name ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+  return SEMANTIC_CANONICAL_EXERCISE_MAP[norm] || norm
+}
+
+function scoreExerciseLibraryRecord(record: ExerciseLibraryRecord, canonicalKey: string): number {
+  let score = 0
+  const rawNorm = String(record.name ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+  if (rawNorm === canonicalKey) score += 100
+  if (record.media_video_url) score += 20
+  if (record.media_image_url && !record.media_image_url.includes('placeholder')) score += 10
+  if (record.description && record.description.length > 50) {
+    score += Math.min(25, Math.floor(record.description.length / 50))
+  }
+  if (Array.isArray(record.coaching_cues) && record.coaching_cues.length > 0) score += 5
+  if (Array.isArray(record.primary_equipment) && record.primary_equipment.length > 0) score += 5
+  if (Array.isArray(record.muscle_groups) && record.muscle_groups.length > 0) score += 5
+  return score
+}
+
+/**
+ * Deduplicates an array of exercise library records by normalized/canonical exercise name,
+ * retaining the highest-scoring canonical record when duplicates exist.
+ */
+export function deduplicateExerciseLibraryRecords<T extends ExerciseLibraryRecord>(records: T[]): T[] {
+  const byKey = new Map<string, T>()
+  for (const record of records) {
+    if (!record || !record.name) continue
+    const key = normalizeExerciseIdentityKey(record.name)
+    if (!key) continue
+    const existing = byKey.get(key)
+    if (!existing || scoreExerciseLibraryRecord(record, key) > scoreExerciseLibraryRecord(existing, key)) {
+      byKey.set(key, record)
+    }
+  }
+  return Array.from(byKey.values()).sort((a, b) => a.name.localeCompare(b.name))
+}
+
 function findExerciseMatch(
   exercise: CoachProgramExerciseInput,
   byId: Map<string, ExerciseLibraryRecord>,
@@ -240,6 +293,7 @@ function findExerciseMatch(
 ) {
   const id = normalizeOptionalText(exercise.libraryExerciseId)
   const exactName = normalizeText(exercise.name).toLowerCase()
+  const canonicalName = normalizeExerciseIdentityKey(exercise.name)
 
   if (id && byId.has(id)) {
     return byId.get(id) ?? null
@@ -247,6 +301,10 @@ function findExerciseMatch(
 
   if (exactName && byName.has(exactName)) {
     return byName.get(exactName) ?? null
+  }
+
+  if (canonicalName && byName.has(canonicalName)) {
+    return byName.get(canonicalName) ?? null
   }
 
   return null
@@ -257,8 +315,13 @@ export function buildStoredProgramPlan(
   exercises: ExerciseLibraryRecord[],
   equipmentLibrary: EquipmentLibraryRecord[]
 ): StoredProgramPlan {
+  const uniqueExercises = deduplicateExerciseLibraryRecords(exercises)
   const exerciseById = new Map(exercises.map(exercise => [exercise.id, exercise]))
-  const exerciseByName = new Map(exercises.map(exercise => [exercise.name.trim().toLowerCase(), exercise]))
+  const exerciseByName = new Map<string, ExerciseLibraryRecord>()
+  for (const exercise of uniqueExercises) {
+    exerciseByName.set(exercise.name.trim().toLowerCase(), exercise)
+    exerciseByName.set(normalizeExerciseIdentityKey(exercise.name), exercise)
+  }
   const generatedDates = buildGeneratedDates(payload.startDate, payload.workouts.length, payload.sessionsPerWeek)
 
   let generatedDateIndex = 0
@@ -371,7 +434,7 @@ export function buildStoredProgramPlan(
       }
     }),
     librarySummary: {
-      exerciseCount: exercises.length,
+      exerciseCount: uniqueExercises.length,
       equipmentCount: equipmentLibrary.filter(item => equipmentNames.has(item.name.trim().toLowerCase())).length,
     },
   }

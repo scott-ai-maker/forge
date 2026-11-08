@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
+import { deduplicateExerciseLibraryRecords } from '@/lib/coach-programs'
 import { enrichExerciseMedia } from '@/lib/nasm-exercise-video-catalog'
 import { BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
 
@@ -27,7 +28,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to load exercise library' }, { status: 500 })
   }
 
-  const exercises = (data ?? []).map((e) => {
+  const uniqueRows = deduplicateExerciseLibraryRecords(data ?? [])
+
+  const exercises = uniqueRows.map((e) => {
     const enriched = enrichExerciseMedia({
       name: e.name,
       videoUrl: e.media_video_url,

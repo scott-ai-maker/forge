@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
-import type { ExerciseLibraryRecord } from '@/lib/coach-programs'
+import { deduplicateExerciseLibraryRecords, type ExerciseLibraryRecord } from '@/lib/coach-programs'
 
 export interface CategorizedExercise {
   record: ExerciseLibraryRecord
@@ -112,7 +112,8 @@ export function useExerciseLibraryPicker(exercises: ExerciseLibraryRecord[]) {
   } | null>(null)
 
   const categorizedExercises: CategorizedExercise[] = useMemo(() => {
-    return exercises.map(ex => {
+    const uniqueExercises = deduplicateExerciseLibraryRecords(exercises)
+    return uniqueExercises.map(ex => {
       const equip = (ex.primary_equipment || [])[0] || 'bodyweight'
       const cat = (ex.muscle_groups || [])[0] || 'General Strength'
       return {

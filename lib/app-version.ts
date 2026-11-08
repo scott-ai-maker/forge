@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.48.1'
+export const APP_VERSION = '1.48.2'
 export const APP_RELEASE_DATE = '2026-11-08'
-export const APP_RELEASE_CODENAME = 'Coach & Client Analytics Telemetry Pipeline & Schema Alignment'
+export const APP_RELEASE_CODENAME = 'Master Exercise Library Deduplication & Canonical Alias Engine'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.48.2',
+    date: '2026-11-08',
+    codename: 'Master Exercise Library Deduplication & Canonical Alias Engine',
+    category: 'fix',
+    badge: 'Exercise Library Deduplication',
+    title: 'v1.48.2 — Master Exercise Library Deduplication & Canonical Alias Engine',
+    summary:
+      'Deduplicates the entire Exercise Library across Supabase exercise_library_entries, NASM_COMPLETE_LIBRARY, NASM_MOVEMENT_PROFILES, and all API/UI consumers — pruning 57 duplicate rows down to 267 unique canonical movements with zero duplicate names or video IDs.',
+    highlights: [
+      'Supabase Exercise Library Pruning (323 -> 267 Canonical Movements): Removed 51 exact-name duplicate rows across 48 movements and consolidated 6 semantic/typo duplicates (How To Foam Roll Adductors, Dumbbell Bent Over Extention, Latissimus Dorsi Ball Stretch, Self Myofascial Release Smr Latissimus Dorsi, Core Ball Crunch, Two Arm Incline Dumbbell Chest Press) while remapping active workout_plans references.',
+      'Canonical Alias & Movement Profile Consolidation: Updated NASM_COMPLETE_LIBRARY and EXERCISE_ALIASES in lib/nasm-fuzzy-matcher.ts and removed redundant hyphen/word-order duplicate objects in NASM_MOVEMENT_PROFILES.',
+      'Runtime Deduplication Safeguard: Added deduplicateExerciseLibraryRecords in lib/coach-programs.ts and wired it into /api/coach/exercise-library, useExerciseLibraryPicker, and buildStoredProgramPlan.',
+    ],
+  },
   {
     version: '1.48.1',
     date: '2026-11-08',

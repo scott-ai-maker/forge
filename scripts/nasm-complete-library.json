@@ -948,20 +948,6 @@
     "videoUrl": "https://www.youtube.com/watch?v=LJeqLAmJLfs"
   },
   {
-    "id": "c28c4002-3195-4c94-9e34-62ddb1f759bd",
-    "name": "Core Ball Crunch",
-    "slug": "core-ball-crunch-0069",
-    "description": "Step 1: Setup Sit on a stability ball with your feet flat on the floor, hip-width apart, and your lower back supported by the ball.\n\nStep 2: Brace/Position Engage your core by pulling your navel towards your spine and lean back slightly, ensuring your head, neck, and shoulders are aligned with your spine.\n\nStep 3: Execute Contract your abdominal muscles to lift your torso off the ball, curling your upper body towards your hips while exhaling.\n\nStep 4: Return/Repeat Slowly lower your torso back to the starting position, maintaining control, and repeat for the desired number of repetitions.",
-    "coachingCues": [],
-    "primaryEquipment": [],
-    "muscleGroups": [
-      "core"
-    ],
-    "imageUrl": "https://img.youtube.com/vi/lrqfw0n_GXI/hqdefault.jpg",
-    "videoId": "lrqfw0n_GXI",
-    "videoUrl": "https://www.youtube.com/watch?v=lrqfw0n_GXI"
-  },
-  {
     "id": "662dd925-bea0-4a2b-b273-d3514d077cbf",
     "name": "Dead Bug",
     "slug": "dead-bug",
@@ -1117,22 +1103,6 @@
     "imageUrl": "https://img.youtube.com/vi/4_QuyfOCI5U/hqdefault.jpg",
     "videoId": "4_QuyfOCI5U",
     "videoUrl": "https://www.youtube.com/watch?v=4_QuyfOCI5U"
-  },
-  {
-    "id": "d0973d9c-d32e-4f99-9171-41f102785498",
-    "name": "Dumbbell Bent Over Extention",
-    "slug": "dumbbell-bent-over-extention-0095",
-    "description": "Step 1: Setup Stand with your feet shoulder-width apart, holding a dumbbell in each hand, palms facing your body.\n\nStep 2: Brace/Position Hinge at your hips, bending your knees slightly, and lower your torso until it's nearly parallel to the ground, keeping your back flat and core engaged.\n\nStep 3: Execute With a controlled motion, extend your arms straight back, squeezing your shoulder blades together at the top of the movement.\n\nStep 4: Return/Repeat Lower the dumbbells back to the starting position, maintaining control, and repeat for the desired number of repetitions.",
-    "coachingCues": [],
-    "primaryEquipment": [
-      "Dumbbells"
-    ],
-    "muscleGroups": [
-      "back"
-    ],
-    "imageUrl": "https://img.youtube.com/vi/sTkMVkTwcSk/hqdefault.jpg",
-    "videoId": "sTkMVkTwcSk",
-    "videoUrl": "https://www.youtube.com/watch?v=sTkMVkTwcSk"
   },
   {
     "id": "cb486a8a-4ecd-4532-8e8c-d6d71cb57dfd",
@@ -1593,24 +1563,6 @@
     "imageUrl": "https://img.youtube.com/vi/KKumMhxKapw/hqdefault.jpg",
     "videoId": "KKumMhxKapw",
     "videoUrl": "https://www.youtube.com/watch?v=KKumMhxKapw"
-  },
-  {
-    "id": "775c55b1-c479-46bf-b1cf-f965b20796b5",
-    "name": "How To Foam Roll Adductors",
-    "slug": "how-to-foam-roll-adductors-0224",
-    "description": "Step 1: Setup Sit on the floor with your legs extended in front of you, placing a foam roller horizontally under your inner thighs.\n\nStep 2: Brace/Position Lean back slightly on your hands for support, keeping your elbows slightly bent and your core engaged.\n\nStep 3: Execute Slowly roll the foam roller from your groin down to your knees, applying pressure to the adductor muscles, and pause on any tight spots for 15-30 seconds.\n\nStep 4: Return/Repeat Reverse the movement, rolling back up to the groin, and repeat the process for 2-3 sets on each leg.",
-    "coachingCues": [],
-    "primaryEquipment": [
-      "Foam Roller"
-    ],
-    "muscleGroups": [
-      "glutes",
-      "hamstrings",
-      "quadriceps"
-    ],
-    "imageUrl": "https://img.youtube.com/vi/Nqol0T6rKDg/hqdefault.jpg",
-    "videoId": "Nqol0T6rKDg",
-    "videoUrl": "https://www.youtube.com/watch?v=Nqol0T6rKDg"
   },
   {
     "id": "407941bf-8ee5-471b-8f5b-2b9b3075365e",
@@ -2096,20 +2048,6 @@
     "imageUrl": "https://img.youtube.com/vi/M5uxEQH5BUM/hqdefault.jpg",
     "videoId": "M5uxEQH5BUM",
     "videoUrl": "https://www.youtube.com/watch?v=M5uxEQH5BUM"
-  },
-  {
-    "id": "c725120e-70dd-437f-8ea6-8bd258568285",
-    "name": "Latissimus Dorsi Ball Stretch",
-    "slug": "latissimus-dorsi-ball-stretch-0254",
-    "description": "Step 1: Setup Stand next to a stability ball with your feet shoulder-width apart and knees slightly bent.\n\nStep 2: Brace/Position Place one hand on the ball, extending your arm fully while keeping your opposite arm at your side.\n\nStep 3: Execute Gently lean into the ball, allowing your torso to stretch towards the ground while keeping your hips stable.\n\nStep 4: Return/Repeat Hold the stretch for 15-30 seconds, then switch sides and repeat the process.",
-    "coachingCues": [],
-    "primaryEquipment": [],
-    "muscleGroups": [
-      "full body"
-    ],
-    "imageUrl": "https://img.youtube.com/vi/dg_gevWZuQM/hqdefault.jpg",
-    "videoId": "dg_gevWZuQM",
-    "videoUrl": "https://www.youtube.com/watch?v=dg_gevWZuQM"
   },
   {
     "id": "e2c6fe01-befe-4e67-be82-294323549359",
@@ -3104,22 +3042,6 @@
     "imageUrl": "https://img.youtube.com/vi/-Y1ubl6amUg/hqdefault.jpg",
     "videoId": "-Y1ubl6amUg",
     "videoUrl": "https://www.youtube.com/watch?v=-Y1ubl6amUg"
-  },
-  {
-    "id": "ae89ee8b-8411-470d-830b-b025dfa6166f",
-    "name": "Self Myofascial Release Smr Latissimus Dorsi",
-    "slug": "self-myofascial-release-smr-latissimus-dorsi-0227",
-    "description": "Step 1: Setup Sit on the floor with your legs extended in front of you, and place a foam roller horizontally under your left side, positioned just above your hip.\n\nStep 2: Brace/Position Shift your body weight onto the foam roller, ensuring your left arm is extended overhead and your right hand is on the floor for support.\n\nStep 3: Execute Slowly roll the foam roller along your latissimus dorsi, moving from your armpit down to your lower back, pausing on any tight or tender spots for 20-30 seconds.\n\nStep 4: Return/Repeat Shift your body to roll back to the starting position, then repeat the process on the right side.",
-    "coachingCues": [],
-    "primaryEquipment": [],
-    "muscleGroups": [
-      "glutes",
-      "hamstrings",
-      "quadriceps"
-    ],
-    "imageUrl": "https://img.youtube.com/vi/I_76a2fVWc8/hqdefault.jpg",
-    "videoId": "I_76a2fVWc8",
-    "videoUrl": "https://www.youtube.com/watch?v=I_76a2fVWc8"
   },
   {
     "id": "3dbe88df-3d55-48aa-9d90-7c049d350175",
@@ -4137,7 +4059,7 @@
     "id": "f0a8771d-b130-4c45-a71e-2c1a3426ecb8",
     "name": "Static Latissimus Dorsi Ball Stretch",
     "slug": "static-latissimus-dorsi-ball-stretch",
-    "description": "Step 1: Get into quadruped (on all fours) position with hands under shoulders and knees under hips. Draw in the abs and press away from the floor with with the hands to stabilize the shoulder blades.\n\nStep 2: Position one forearm on the physioball with thumb pointing upward.\n\nStep 3: Slowly roll the ball forward/away from the body until a stretch is felt in the latissimus. Hold position for 20-30 seconds.\n\nStep 4: Repeat on the other side. Maintain posture throughout. Keep a relaxed breathing pattern. Keep the back slightly rounded. Avoid letting the head fall toward the ground or arching of the lower back.",
+    "description": "Step 1: Setup Stand next to a stability ball with your feet shoulder-width apart and knees slightly bent.\n\nStep 2: Brace/Position Place one hand on the ball, extending your arm fully while keeping your opposite arm at your side.\n\nStep 3: Execute Gently lean into the ball, allowing your torso to stretch towards the ground while keeping your hips stable.\n\nStep 4: Return/Repeat Hold the stretch for 15-30 seconds, then switch sides and repeat the process.",
     "coachingCues": [],
     "primaryEquipment": [
       "Stability Ball"
@@ -4145,9 +4067,9 @@
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/kEH6jatSVSw/hqdefault.jpg",
-    "videoId": "kEH6jatSVSw",
-    "videoUrl": "https://www.youtube.com/watch?v=kEH6jatSVSw"
+    "imageUrl": "https://img.youtube.com/vi/dg_gevWZuQM/hqdefault.jpg",
+    "videoId": "dg_gevWZuQM",
+    "videoUrl": "https://www.youtube.com/watch?v=dg_gevWZuQM"
   },
   {
     "id": "130568a5-44b3-4108-a84b-ab8d2b0c4cab",
@@ -4516,24 +4438,6 @@
     "imageUrl": "https://img.youtube.com/vi/_x5m-s8xTf0/hqdefault.jpg",
     "videoId": "_x5m-s8xTf0",
     "videoUrl": "https://www.youtube.com/watch?v=_x5m-s8xTf0"
-  },
-  {
-    "id": "78beaaac-8635-46d4-9652-90ec1714fa80",
-    "name": "Two Arm Incline Dumbbell Chest Press",
-    "slug": "two-arm-incline-dumbbell-chest-press",
-    "description": "Step 1: Lie supine with neutral spine on an incline bench with your feet straight and flat on the floor. Draw in and brace the abs and lock the shoulders blades back and down on the bench. Hold the dumbbells at approximately shoulder level to begin slightly out to the sides of the body in line with the chest.\n\nStep 2: Press the dumbbells up and together until the arms are completely extended ending with them directly above the shoulders.\n\nStep 3: Reverse the pattern and return to the starting position.\n\nStep 4: Repeat. Maintain posture throughout. Do not arch the back or jut the head forward. Avoid letting the shoulders round, posture shift or feet lift in the air. Keep the elbows under the dumbbells to maintain balance at all times.",
-    "coachingCues": [],
-    "primaryEquipment": [
-      "Bench",
-      "Dumbbells"
-    ],
-    "muscleGroups": [
-      "chest",
-      "triceps"
-    ],
-    "imageUrl": "https://img.youtube.com/vi/JKnpHchOWPU/hqdefault.jpg",
-    "videoId": "JKnpHchOWPU",
-    "videoUrl": "https://www.youtube.com/watch?v=JKnpHchOWPU"
   },
   {
     "id": "14d4c0d9-f36b-4fbd-b333-6c38f20265b0",

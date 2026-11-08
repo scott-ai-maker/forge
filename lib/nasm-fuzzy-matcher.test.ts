@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { searchNasmLibraryMedia, normalizeExerciseQuery } from './nasm-fuzzy-matcher'
+import { NASM_COMPLETE_LIBRARY, searchNasmLibraryMedia, normalizeExerciseQuery } from './nasm-fuzzy-matcher'
+import { deduplicateExerciseLibraryRecords } from './coach-programs'
 
 describe('NASM Fuzzy Heuristic Media & Movement Search Engine', () => {
   it('normalizes exercise queries properly', () => {
@@ -56,5 +57,32 @@ describe('NASM Fuzzy Heuristic Media & Movement Search Engine', () => {
   it('returns null for completely unrelated or synthetic strings to prevent wrong links', () => {
     const bogus = searchNasmLibraryMedia('Quantum Anti-Gravity Astral Leap 9000')
     expect(bogus).toBeNull()
+  })
+
+  it('guarantees zero duplicate names or video IDs across NASM_COMPLETE_LIBRARY and deduplicateExerciseLibraryRecords', () => {
+    const normalizedNames = new Set<string>()
+    const videoIds = new Set<string>()
+
+    for (const item of NASM_COMPLETE_LIBRARY) {
+      const norm = normalizeExerciseQuery(item.name)
+      expect(normalizedNames.has(norm)).toBe(false)
+      normalizedNames.add(norm)
+
+      if (item.videoId) {
+        expect(videoIds.has(item.videoId)).toBe(false)
+        videoIds.add(item.videoId)
+      }
+    }
+
+    const deduped = deduplicateExerciseLibraryRecords([
+      { id: '1', name: 'Foam Roll Adductors', media_video_url: 'https://www.youtube.com/watch?v=Nqol0T6rKDg' },
+      { id: '2', name: 'How To Foam Roll Adductors', media_video_url: 'https://www.youtube.com/watch?v=Nqol0T6rKDg' },
+      { id: '3', name: 'Single Leg Squat Touchdown', description: 'Short' },
+      { id: '4', name: 'Single Leg Squat Touchdown', description: 'Step 1: Full multi-step clinical instruction with proper depth and alignment cues.', media_video_url: 'https://www.youtube.com/watch?v=pr7y-9YuDak' },
+    ])
+
+    expect(deduped).toHaveLength(2)
+    expect(deduped.find(r => r.name === 'Foam Roll Adductors')?.id).toBe('1')
+    expect(deduped.find(r => r.name === 'Single Leg Squat Touchdown')?.id).toBe('4')
   })
 })
