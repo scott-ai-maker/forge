@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.46.1'
+export const APP_VERSION = '1.47.0'
 export const APP_RELEASE_DATE = '2026-11-07'
-export const APP_RELEASE_CODENAME = 'Full UAT Suite Verification, Hydration Hardening & Mobile Touch Ergonomics'
+export const APP_RELEASE_CODENAME = 'Black Friday Unmasking Event (Nov 27), 1080p 5-Act Brand Showcase Film & Doorbuster Vault'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.47.0',
+    date: '2026-11-07',
+    codename: 'Black Friday Unmasking Event (Nov 27), 1080p 5-Act Brand Showcase Film & Doorbuster Vault',
+    category: 'feature',
+    badge: 'Black Friday Event · 1080p Showcase Film',
+    title: 'Black Friday Go-Live Event (Nov 27), 1080p 5-Act Brand Showcase Film & Doorbuster Vault Package',
+    summary:
+      'Positions the official Forge Athletic public launch for Black Friday, November 27, 2026 (06:00 AM EST), introduces a hyper-realistic 1080p 5-act Brand Showcase Film across the Splash Page and Homepage with interactive chapter scrubbing, and launches the Black Friday Doorbuster Vault promo package (25% Lifetime Rate Lock + $279 in free Founding Member bonuses).',
+    highlights: [
+      'Black Friday Unmasking Event (Nov 27, 2026): Set public go-live to Friday, November 27, 2026 at 06:00 AM EST with a 72-hour priority activation window through Cyber Monday (Nov 30).',
+      '1080p 5-Act Brand Showcase Film: Added forge-black-friday-showcase.mp4 featuring 3D Squat Joint Diagnostics, 100% 3D Spine & Ribcage Alignment Mesh, 1,400W Hex Trap-Bar Velocity Tracking, 1-on-1 Live Coach Smart-Glass Celebration, and the official Forge Athletic Shield Crest reveal.',
+      'Black Friday Doorbuster Vault & Interactive Chapter Bar: Added interactive 5-act video chapter scrubbing and the 3-step Black Friday Lock-In bundle card on both HolidayUnmaskingSplash and BlackFridayShowcaseSection.',
+    ],
+  },
   {
     version: '1.46.1',
     date: '2026-11-07',

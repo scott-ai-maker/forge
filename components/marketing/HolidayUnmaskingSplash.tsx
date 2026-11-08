@@ -22,64 +22,64 @@ const SNEAK_PEEKS: Array<{
   metric: string
   metricLabel: string
 }> = [
-  {
-    id: 'opt-engine',
-    tag: 'Phase 01–05 Architecture',
-    title: 'The Biomechanical OPT™ Engine',
-    icon: 'periodization',
-    subtitle: 'Collegiate-grade NASM periodization adapted dynamically to your daily joint kinematics.',
-    bullets: [
-      'Five-phase progression: Stabilization Endurance through Maximum Power',
-      'Continuous kinetic chain screening detecting hip, knee, and shoulder compensations',
-      'Real-time load and RPE autoregulation tailored to your recovery state',
-    ],
-    metric: '5 PHASES',
-    metricLabel: 'Periodized Science',
-  },
-  {
-    id: 'ai-telemetry',
-    tag: 'Autonomous Vision & Tracking',
-    title: 'Gordon AI Movement Telemetry',
-    icon: 'activity',
-    subtitle: 'Asynchronous video analysis and bar velocity telemetry with zero wearable friction.',
-    bullets: [
-      'Frame-by-frame bar path tracking and concentric velocity profiling',
-      'Joint angle trajectory diagnostics comparing against gold-standard biomechanics',
-      'Voice-guided live workout copilot providing tempo cadence and form cues',
-    ],
-    metric: '< 180ms',
-    metricLabel: 'Telemetry Latency',
-  },
-  {
-    id: 'metabolic-recovery',
-    tag: 'Real Life & Schedule Fit',
-    title: 'Metabolic Health & Sleep Recovery',
-    icon: 'moon',
-    subtitle: 'Engineered for busy workdays, family schedules, and holiday commitments.',
-    bullets: [
-      'Simple metabolic primer routines to stay energized and burn fuel efficiently during holiday meals',
-      'Circadian rhythm and sleep recovery protocols to wake up refreshed without caffeine crashes',
-      'Active-rest cardio pacing to clear fatigue without wrecking joints or overtraining',
-    ],
-    metric: '100% PRACTICAL',
-    metricLabel: 'Schedule & Routine Fit',
-  },
-  {
-    id: 'live-studio',
-    tag: '1-on-1 Personalized Coaching',
-    title: 'Private Coach Gordon Live Studio',
-    icon: 'crosshair',
-    subtitle: 'Encrypted sub-100ms WebRTC interactive video coaching sessions directly into your home gym or workout space.',
-    bullets: [
-      'Zero commute friction: train live from home, apartment gym, or hotel with Coach Gordon in real time',
-      'Dual-camera multi-angle form validation with instantaneous slow-motion replays and telestration',
-      'Real-time biometric HUD and corrective cues from Coach Gordon (18+ years experience, NASM-CPT since 2008)',
-      'Strictly limited seat roster: Dedicated booking reserved exclusively for nights and weekends',
-    ],
-    metric: '1-ON-1',
-    metricLabel: 'Nights & Weekends · Limited Seats',
-  },
-]
+    {
+      id: 'opt-engine',
+      tag: 'Phase 01–05 Architecture',
+      title: 'The Biomechanical OPT™ Engine',
+      icon: 'periodization',
+      subtitle: 'Collegiate-grade NASM periodization adapted dynamically to your daily joint kinematics.',
+      bullets: [
+        'Five-phase progression: Stabilization Endurance through Maximum Power',
+        'Continuous kinetic chain screening detecting hip, knee, and shoulder compensations',
+        'Real-time load and RPE autoregulation tailored to your recovery state',
+      ],
+      metric: '5 PHASES',
+      metricLabel: 'Periodized Science',
+    },
+    {
+      id: 'ai-telemetry',
+      tag: 'Autonomous Vision & Tracking',
+      title: 'Gordon AI Movement Telemetry',
+      icon: 'activity',
+      subtitle: 'Asynchronous video analysis and bar velocity telemetry with zero wearable friction.',
+      bullets: [
+        'Frame-by-frame bar path tracking and concentric velocity profiling',
+        'Joint angle trajectory diagnostics comparing against gold-standard biomechanics',
+        'Voice-guided live workout copilot providing tempo cadence and form cues',
+      ],
+      metric: '< 180ms',
+      metricLabel: 'Telemetry Latency',
+    },
+    {
+      id: 'metabolic-recovery',
+      tag: 'Real Life & Schedule Fit',
+      title: 'Metabolic Health & Sleep Recovery',
+      icon: 'moon',
+      subtitle: 'Engineered for busy workdays, family schedules, and holiday commitments.',
+      bullets: [
+        'Simple metabolic primer routines to stay energized and burn fuel efficiently during holiday meals',
+        'Circadian rhythm and sleep recovery protocols to wake up refreshed without caffeine crashes',
+        'Active-rest cardio pacing to clear fatigue without wrecking joints or overtraining',
+      ],
+      metric: '100% PRACTICAL',
+      metricLabel: 'Schedule & Routine Fit',
+    },
+    {
+      id: 'live-studio',
+      tag: '1-on-1 Personalized Coaching',
+      title: 'Private Coach Gordon Live Studio',
+      icon: 'crosshair',
+      subtitle: 'Encrypted sub-100ms WebRTC interactive video coaching sessions directly into your home gym or workout space.',
+      bullets: [
+        'Zero commute friction: train live from home, apartment gym, or hotel with Coach Gordon in real time',
+        'Dual-camera multi-angle form validation with instantaneous slow-motion replays and telestration',
+        'Real-time biometric HUD and corrective cues from Coach Gordon (18+ years experience, NASM-CPT since 2008)',
+        'Strictly limited seat roster: Dedicated booking reserved exclusively for nights and weekends',
+      ],
+      metric: '1-ON-1',
+      metricLabel: 'Nights & Weekends · Limited Seats',
+    },
+  ]
 
 const FOUNDING_PERKS = [
   {
@@ -95,7 +95,7 @@ const FOUNDING_PERKS = [
   {
     icon: 'zap' as ForgeIconName,
     title: 'Tier 1 Priority Beta',
-    description: 'Immediate first-day access on Monday, November 9 to the complete Forge web and native mobile coaching suite.',
+    description: 'Immediate first-day access on Black Friday, November 27 to the complete Forge web and native mobile coaching suite.',
   },
   {
     icon: 'ticket' as ForgeIconName,
@@ -115,6 +115,9 @@ export default function HolidayUnmaskingSplash({
     calculateTimeRemaining(targetDate)
   )
   const [activePeekIndex, setActivePeekIndex] = useState(0)
+  const [videoMuted, setVideoMuted] = useState(true)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const reservationSectionRef = useRef<HTMLDivElement | null>(null)
 
   // Form State
   const [fullName, setFullName] = useState('')
@@ -694,7 +697,7 @@ export default function HolidayUnmaskingSplash({
                 fontWeight: 600,
               }}
             >
-              EARLY ACCESS // HOLIDAY PRE-LAUNCH
+              EARLY ACCESS // BLACK FRIDAY UNMASKING EVENT
             </span>
           </div>
 
@@ -740,8 +743,274 @@ export default function HolidayUnmaskingSplash({
               maxWidth: 720,
             }}
           >
-            <strong>Don’t wait for January to repair what November broke.</strong> We pushed up our go-live to <strong>Monday, November 9</strong> and unlocked the <strong>Holiday Founding Deal</strong>: claim one of 50 Founding Member spots for a <strong>25% Lifetime Rate Lock</strong> on any tier plus a <strong>Free 60-Min Pre-Holiday Movement Screen</strong> with Coach Gordon—delivered 100% remotely to your home gym or workout space with zero commute friction.
+            <strong>Don’t wait for January to repair what November broke.</strong> Our flagship public launch goes live on <strong>Black Friday, November 27</strong> with the <strong>Holiday Founding Deal</strong>: claim one of 50 Founding Member spots now for a <strong>25% Lifetime Rate Lock</strong> on any tier plus a <strong>Free 60-Min Pre-Holiday Movement Screen</strong> with Coach Gordon—delivered 100% remotely to your home gym or workout space with zero commute friction.
           </p>
+
+          {/* HYPER-REALISTIC BRAND SHOWCASE CINEMA STAGE */}
+          <div
+            style={{
+              maxWidth: 880,
+              margin: '0 auto 32px',
+              borderRadius: 18,
+              overflow: 'hidden',
+              background: '#05080D',
+              border: '1px solid rgba(245, 158, 11, 0.45)',
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.75), 0 0 40px rgba(245, 158, 11, 0.16)',
+              position: 'relative',
+              textAlign: 'left',
+            }}
+          >
+            {/* Cinema Top Telemetry Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 16px',
+                background: 'rgba(8, 14, 24, 0.95)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    backgroundColor: '#EF4444',
+                    boxShadow: '0 0 8px #EF4444',
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: 'var(--font-telemetry)',
+                    fontSize: 11,
+                    letterSpacing: '0.12em',
+                    color: '#F8FAFC',
+                    textTransform: 'uppercase',
+                    fontWeight: 700,
+                  }}
+                >
+                  FORGE ATHLETIC // BLACK FRIDAY SHOWCASE FILM (1080P CINEMA)
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-telemetry)',
+                    fontSize: 10,
+                    letterSpacing: '0.1em',
+                    color: '#38BDF8',
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    padding: '3px 8px',
+                    borderRadius: 6,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  3D Joint Telemetry · 1-on-1 Live Studio
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextMuted = !videoMuted
+                    setVideoMuted(nextMuted)
+                    if (videoRef.current) {
+                      videoRef.current.muted = nextMuted
+                      if (!nextMuted) {
+                        videoRef.current.play().catch(() => { })
+                      }
+                    }
+                  }}
+                  aria-label={videoMuted ? 'Unmute showcase video audio' : 'Mute showcase video audio'}
+                  style={{
+                    background: videoMuted
+                      ? 'rgba(245, 158, 11, 0.18)'
+                      : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                    border: '1px solid rgba(245, 158, 11, 0.5)',
+                    color: videoMuted ? '#FBBF24' : '#080E14',
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontFamily: 'var(--font-telemetry)',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {videoMuted ? '🔇 UNMUTE SOUND' : '🔊 SOUND ON'}
+                </button>
+              </div>
+            </div>
+
+            {/* 16:9 Cinema Video Viewport */}
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                aspectRatio: '16 / 9',
+                backgroundColor: '#05080D',
+                overflow: 'hidden',
+              }}
+            >
+              <video
+                ref={videoRef}
+                autoPlay
+                loop
+                muted={videoMuted}
+                playsInline
+                preload="auto"
+                poster="/images/forge-black-friday-showcase-poster.jpg"
+                aria-label="Forge Athletic Black Friday Brand Showcase Video"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              >
+                <source src="/videos/forge-black-friday-showcase.mp4?v=4" type="video/mp4" />
+                <source src="/videos/gaa-founding-manifesto.mp4" type="video/mp4" />
+              </video>
+
+              {/* Subtle Bottom Vignette & Direct Conversion Overlay */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  padding: '24px 20px 16px',
+                  background: 'linear-gradient(180deg, transparent 0%, rgba(6, 9, 15, 0.85) 60%, rgba(6, 9, 15, 0.96) 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-telemetry)',
+                      fontSize: 10,
+                      letterSpacing: '0.14em',
+                      color: '#FBBF24',
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                    }}
+                  >
+                    BLACK FRIDAY EVENT · {LAUNCH_CAMPAIGN_INFO.dateFormatted}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: '#F8FAFC',
+                    }}
+                  >
+                    Experience collegiate-grade NASM periodization &amp; 1-on-1 video coaching anywhere.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    reservationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    const input = document.getElementById(nameInputId)
+                    if (input) input.focus()
+                  }}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                    color: '#080E14',
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 14,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(245, 158, 11, 0.4)',
+                  }}
+                >
+                  Lock In 25% Off ({HOLIDAY_DEAL_PROMO.code}) &rarr;
+                </button>
+              </div>
+            </div>
+
+            {/* Interactive 5-Act Film Chapter Scrubber Strip */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 6,
+                padding: '10px 14px',
+                background: 'rgba(8, 14, 24, 0.96)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+            >
+              {[
+                { code: '01', label: '3D Squat Diagnostics', timeSec: 0 },
+                { code: '02', label: '100% Spine & Posture Mesh', timeSec: 2.8 },
+                { code: '03', label: '1,400W Peak Velocity', timeSec: 4.8 },
+                { code: '04', label: '1-on-1 Live Coach', timeSec: 7.8 },
+                { code: '05', label: 'The Forge Sanctuary', timeSec: 9.8 },
+              ].map(ch => (
+                <button
+                  key={ch.code}
+                  type="button"
+                  onClick={() => {
+                    if (videoRef.current) {
+                      videoRef.current.currentTime = ch.timeSec
+                      videoRef.current.play().catch(() => {})
+                    }
+                    playTactileTone('tick')
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(245, 158, 11, 0.28)',
+                    borderRadius: 6,
+                    padding: '6px 8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    textAlign: 'left',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-telemetry)',
+                      fontSize: 10,
+                      fontWeight: 800,
+                      color: '#080E14',
+                      background: '#F59E0B',
+                      padding: '1px 5px',
+                      borderRadius: 4,
+                    }}
+                  >
+                    {ch.code}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-telemetry)',
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      color: '#E2E8F0',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {ch.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* HOLIDAY DEAL CALLOUT PILL */}
           <div
@@ -903,14 +1172,289 @@ export default function HolidayUnmaskingSplash({
             >
               <span style={{ color: '#34D399' }}>✓</span>
               <span>
-                Pushed up 17 days before Thanksgiving so you lock in your 25% Lifetime Rate Lock (Code: {HOLIDAY_DEAL_PROMO.code}) and complete your 1-on-1 movement screen before holiday travel begins.
+                Reserve your Founding Member Pass before our Black Friday Unmasking Event (Nov 27) to lock in your 25% Lifetime Rate Lock (Code: {HOLIDAY_DEAL_PROMO.code}) and schedule your free 1-on-1 movement screen.
               </span>
+            </div>
+          </div>
+
+          {/* BLACK FRIDAY DOORBUSTER VAULT: PROMO BRANDING PACKAGE */}
+          <div
+            style={{
+              maxWidth: 880,
+              margin: '28px auto 0',
+              borderRadius: 18,
+              background: 'linear-gradient(145deg, rgba(245, 158, 11, 0.16) 0%, rgba(15, 23, 42, 0.96) 45%, rgba(8, 14, 24, 0.99) 100%)',
+              border: '1px solid rgba(245, 158, 11, 0.55)',
+              boxShadow: '0 20px 56px rgba(0, 0, 0, 0.65), 0 0 32px rgba(245, 158, 11, 0.14)',
+              padding: '28px 24px',
+              textAlign: 'left',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Top Ribbon */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 10,
+                paddingBottom: 16,
+                marginBottom: 20,
+                borderBottom: '1px solid rgba(245, 158, 11, 0.25)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-telemetry)',
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: '#080E14',
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)',
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                  }}
+                >
+                  🔥 BLACK FRIDAY DOORBUSTER VAULT
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-telemetry)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    color: '#FDE68A',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  MUST JOIN ON BLACK FRIDAY (NOV 27) TO UNLOCK DEEP DISCOUNTS
+                </span>
+              </div>
+              <span
+                style={{
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: '#F87171',
+                  background: 'rgba(239, 68, 68, 0.14)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  letterSpacing: '0.08em',
+                }}
+              >
+                STRICTLY 50 PASSES · NEVER REPEATED
+              </span>
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'clamp(1.5rem, 3.2vw, 2.15rem)',
+                  fontWeight: 800,
+                  letterSpacing: '0.03em',
+                  textTransform: 'uppercase',
+                  color: '#FFFFFF',
+                  margin: '0 0 8px',
+                }}
+              >
+                The Only Day All Year We Drop Prices By 25% For Life + Include $279 In Free Bonuses
+              </h2>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                  color: '#CBD5E1',
+                }}
+              >
+                We never discount our coaching during the year. When the doors open on <strong>Black Friday, November 27 at 06:00 AM EST</strong>, Founding Pass holders get a <strong>72-hour priority window</strong> to activate their membership with our deepest discount ever—before rates permanently return to full retail price.
+              </p>
+            </div>
+
+            {/* 3-Pillar Value Bundle Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+                gap: 14,
+                marginBottom: 22,
+              }}
+            >
+              <div
+                style={{
+                  background: 'rgba(8, 14, 24, 0.9)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  borderRadius: 12,
+                  padding: '16px',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: 'var(--font-telemetry)',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: '#FBBF24',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    marginBottom: 6,
+                  }}
+                >
+                  VALUED AT UP TO $900/YR SAVINGS
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    marginBottom: 6,
+                  }}
+                >
+                  1. 25% Lifetime Rate Lock
+                </div>
+                <p style={{ margin: 0, fontSize: 12.5, color: '#94A3B8', lineHeight: 1.5 }}>
+                  Lock in <strong>Core at $36.75/mo</strong> (reg. $49), <strong>Plus at $74.25/mo</strong> (reg. $99), or <strong>Coach Support at $224.25/mo</strong> (reg. $299) for as long as you remain a member.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(8, 14, 24, 0.9)',
+                  border: '1px solid rgba(52, 211, 153, 0.4)',
+                  borderRadius: 12,
+                  padding: '16px',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: 'var(--font-telemetry)',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: '#34D399',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    marginBottom: 6,
+                  }}
+                >
+                  $180 RETAIL VALUE · INCLUDED FREE
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    marginBottom: 6,
+                  }}
+                >
+                  2. Free 60-Min Live Screen
+                </div>
+                <p style={{ margin: 0, fontSize: 12.5, color: '#94A3B8', lineHeight: 1.5 }}>
+                  Private 1-on-1 HD video session with Coach Gordon for a full 33-point 3D posture, spine, and joint assessment before your first workout.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(8, 14, 24, 0.9)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  borderRadius: 12,
+                  padding: '16px',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: 'var(--font-telemetry)',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: '#38BDF8',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    marginBottom: 6,
+                  }}
+                >
+                  $99 RETAIL VALUE · INCLUDED FREE
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    marginBottom: 6,
+                  }}
+                >
+                  3. Free 30-Day Partner Pass
+                </div>
+                <p style={{ margin: 0, fontSize: 12.5, color: '#94A3B8', lineHeight: 1.5 }}>
+                  Receive a complimentary 30-day guest pass on Black Friday to gift to a spouse, family member, or training partner at zero cost.
+                </p>
+              </div>
+            </div>
+
+            {/* 3-Step Black Friday Activation Timeline */}
+            <div
+              style={{
+                padding: '14px 16px',
+                borderRadius: 10,
+                background: 'rgba(15, 23, 42, 0.9)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', fontSize: 12, fontFamily: 'var(--font-telemetry)' }}>
+                <span style={{ color: '#FBBF24', fontWeight: 700 }}>
+                  STEP 1: Reserve Free Pass Today ($0)
+                </span>
+                <span style={{ color: '#64748B' }}>&rarr;</span>
+                <span style={{ color: '#38BDF8', fontWeight: 700 }}>
+                  STEP 2: Get Private Link Thanksgiving Night
+                </span>
+                <span style={{ color: '#64748B' }}>&rarr;</span>
+                <span style={{ color: '#34D399', fontWeight: 700 }}>
+                  STEP 3: Join Black Friday (Nov 27) &amp; Lock In {HOLIDAY_DEAL_PROMO.code}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  reservationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  const input = document.getElementById(nameInputId)
+                  if (input) input.focus()
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 6,
+                  border: '1px solid rgba(245, 158, 11, 0.6)',
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  color: '#FBBF24',
+                  fontFamily: 'var(--font-telemetry)',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                }}
+              >
+                Reserve Spot Now ($0 Today) &darr;
+              </button>
             </div>
           </div>
         </section>
 
         {/* TWO COLUMN GRID: Reservation & Sneak Peek Radar */}
         <div
+          ref={reservationSectionRef}
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
@@ -1490,7 +2034,7 @@ export default function HolidayUnmaskingSplash({
                     color: '#94A3B8',
                   }}
                 >
-                  DROP: NOV 9, 2026
+                  DROP: BLACK FRIDAY, NOV 27
                 </div>
               </div>
 

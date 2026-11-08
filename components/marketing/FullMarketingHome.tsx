@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import ForgeMembershipPlans from '@/components/packages/ForgeMembershipPlans'
 import MobileAppPromoSection from '@/components/marketing/MobileAppPromoSection'
+import BlackFridayShowcaseSection from '@/components/marketing/BlackFridayShowcaseSection'
 
 const FEATURE_PILLARS = [
   {
@@ -142,6 +143,8 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
           </div>
         </div>
       </section>
+
+      <BlackFridayShowcaseSection />
 
       <section className="forge-feature-section" aria-labelledby="forge-features-title">
         <div className="forge-section-intro">

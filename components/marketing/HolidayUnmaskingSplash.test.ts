@@ -17,36 +17,46 @@ describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
     'utf-8'
   )
 
-  it('verifies target go-live date is positioned for optimal holiday rush timing', () => {
+  it('verifies target go-live date is positioned for the Black Friday launch event', () => {
     const goLiveDate = new Date(DEFAULT_GO_LIVE_DATE_ISO)
     expect(goLiveDate.getFullYear()).toBe(2026)
     expect(goLiveDate.getMonth()).toBe(10) // November (0-indexed)
-    expect(goLiveDate.getDate()).toBe(9) // Monday, Nov 9, 2026
+    expect(goLiveDate.getDate()).toBe(27) // Black Friday, Nov 27, 2026
     expect(goLiveDate.getHours()).toBe(6) // 06:00 AM EST
 
-    // Ensure it falls before Thanksgiving (Nov 26, 2026) and Black Friday (Nov 27, 2026)
+    // Ensure it falls right after Thanksgiving (Nov 26, 2026) on Black Friday (Nov 27, 2026)
     const thanksgiving2026 = new Date('2026-11-26T00:00:00-05:00')
-    const blackFriday2026 = new Date('2026-11-27T00:00:00-05:00')
-    expect(goLiveDate.getTime()).toBeLessThan(thanksgiving2026.getTime())
-    expect(goLiveDate.getTime()).toBeLessThan(blackFriday2026.getTime())
+    const cyberMonday2026 = new Date('2026-11-30T23:59:59-05:00')
+    expect(goLiveDate.getTime()).toBeGreaterThan(thanksgiving2026.getTime())
+    expect(goLiveDate.getTime()).toBeLessThan(cyberMonday2026.getTime())
   })
 
   it('validates countdown ticker math correctly decrements towards launch date', () => {
-    const launch = new Date('2026-11-09T06:00:00-05:00')
-    const simulatedNow = new Date('2026-11-07T06:00:00-05:00') // 2 days out
+    const launch = new Date('2026-11-27T06:00:00-05:00')
+    const simulatedNow = new Date('2026-11-07T06:00:00-05:00') // 20 days out
 
     const result = calculateTimeRemaining(launch, simulatedNow)
-    expect(result.days).toBe(2)
+    expect(result.days).toBe(20)
     expect(result.hours).toBe(0)
     expect(result.minutes).toBe(0)
     expect(result.seconds).toBe(0)
     expect(result.isLive).toBe(false)
   })
 
-  it('verifies HolidayUnmaskingSplash contains all key branding, countdown, and pass minting tokens', () => {
+  it('verifies HolidayUnmaskingSplash contains all key branding, showcase video, countdown, and pass minting tokens', () => {
     expect(componentSource).toContain('THE UNMASKING')
     expect(componentSource).toContain('Precision Science. Unbreakable Bodies.')
+    expect(componentSource).toContain('/videos/forge-black-friday-showcase.mp4')
+    expect(componentSource).toContain('/images/forge-black-friday-showcase-poster.jpg')
+    expect(componentSource).toContain('BLACK FRIDAY DOORBUSTER VAULT')
+    expect(componentSource).toContain('MUST JOIN ON BLACK FRIDAY (NOV 27) TO UNLOCK DEEP DISCOUNTS')
     expect(componentSource).toContain('/api/waitlist')
+
+    const showcaseVideoPath = path.resolve(process.cwd(), 'public/videos/forge-black-friday-showcase.mp4')
+    expect(fs.existsSync(showcaseVideoPath)).toBe(true)
+    expect(fs.statSync(showcaseVideoPath).size).toBeGreaterThan(1024 * 1024)
+
+    expect(homePageSource).toContain('BlackFridayShowcaseSection')
     expect(componentSource).toContain('FORGE-HOLIDAY-2026-')
     expect(componentSource).toContain('holiday_unmasking_drop')
     expect(componentSource).toContain('CLAIM FOUNDING MEMBER PASS')

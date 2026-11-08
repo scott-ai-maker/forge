@@ -4,6 +4,7 @@ import Link from 'next/link'
 import ForgeMembershipPlans from '@/components/packages/ForgeMembershipPlans'
 import MobileAppPromoSection from '@/components/marketing/MobileAppPromoSection'
 import HolidayUnmaskingSplash from '@/components/marketing/HolidayUnmaskingSplash'
+import BlackFridayShowcaseSection from '@/components/marketing/BlackFridayShowcaseSection'
 import { isSiteUnmasked } from '@/lib/launch-config'
 
 export const metadata: Metadata = {
@@ -216,6 +217,8 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           </div>
         </div>
       </section>
+
+      <BlackFridayShowcaseSection />
 
       <section className="forge-feature-section" aria-labelledby="forge-features-title">
         <div className="forge-section-intro">

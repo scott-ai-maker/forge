@@ -19,7 +19,7 @@ describe('lib/launch-config', () => {
     vi.useRealTimers()
   })
 
-  it('defaults to Monday November 9, 2026 at 06:00:00 EST', () => {
+  it('defaults to Black Friday November 27, 2026 at 06:00:00 EST', () => {
     delete process.env.NEXT_PUBLIC_GO_LIVE_DATE
     const date = getGoLiveDate()
     expect(date.toISOString()).toBe(new Date(DEFAULT_GO_LIVE_DATE_ISO).toISOString())
