@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
     privacyPractices: Boolean(intake.privacyPractices),
     coachingAgreement: Boolean(intake.coachingAgreement),
     emergencyCare: Boolean(intake.emergencyCare),
-    virtualTelehealth: Boolean(intake.virtualTelehealth ?? intake.liabilityWaiver),
+    virtualTelehealth: Boolean(intake.virtualTelehealth || intake.liabilityWaiver),
   }
 
   if (!isDraft && !Object.values(consents).every(Boolean)) {

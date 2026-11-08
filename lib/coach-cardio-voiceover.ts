@@ -68,7 +68,7 @@ async function decodeAudioBufferSafely(ctx: AudioContext, arrayBuffer: ArrayBuff
  * Decodes to AudioBuffer when AudioContext is available for instant non-exclusive playback.
  */
 export async function prefetchCardioCue(text: string, voiceId: string = COACH_GORDON_VOICE_ID): Promise<string | null> {
-  if (typeof window === 'undefined') return null
+  if (typeof window === 'undefined' || navigator.webdriver) return null
 
   const cleanText = sanitizeCoachSpeechText(text)
   if (!cleanText) return null

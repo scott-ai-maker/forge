@@ -683,7 +683,7 @@ export default function ClinicalKineticWarmupModule({
 
   // Pre-warm Coach Gordon authentic neural voice cues for all warmup items
   useEffect(() => {
-    if (typeof window === 'undefined' || !warmupItems.length) return
+    if (typeof window === 'undefined' || navigator.webdriver || !warmupItems.length) return
 
     void prefetchCoachVoiceCue('Switch sides. Side 2.')
     void prefetchCoachVoiceCue('Side 1')

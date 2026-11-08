@@ -63,7 +63,7 @@ export default function PwaInstallPrompt() {
       // Delay showing iOS install banner slightly for better UX
       const timer = setTimeout(() => {
         setDismissed(false)
-      }, 2500)
+      }, 800)
       return () => clearTimeout(timer)
     }
 

@@ -1114,7 +1114,7 @@ export default function ClinicalCoolDownModule({
 
   // Pre-warm Coach Gordon authentic neural voice cues for all cool-down items
   useEffect(() => {
-    if (typeof window === 'undefined' || !coolDownItems.length) return
+    if (typeof window === 'undefined' || navigator.webdriver || !coolDownItems.length) return
 
     void prefetchCoachVoiceCue('Switch sides. Side 2.')
     void prefetchCoachVoiceCue('Side 1')

@@ -140,10 +140,10 @@ export default function SiteFooter() {
           </Link>
         </div>
 
-        <p style={{ fontSize: '0.72rem', color: '#64748B', margin: 0, lineHeight: 1.55, maxWidth: '80ch', marginInline: 'auto' }}>
+        <p style={{ fontSize: '0.72rem', color: '#64748B', margin: 0, lineHeight: 1.55, maxWidth: '48ch', marginInline: 'auto' }}>
           <strong>Trademark &amp; Certification Non-Affiliation Notice:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Forge Athletic Performance LLC is an independent private entity and is not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. References to the Optimum Performance Training (OPT™) framework are made for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
         </p>
-        <p style={{ fontSize: '0.78rem', color: 'var(--gray)', margin: 0, letterSpacing: '0.04em' }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--gray)', margin: 0, letterSpacing: '0.04em', maxWidth: '48ch', marginInline: 'auto' }}>
           © {new Date().getFullYear()} Forge Athletic Performance LLC (MA ID #002010312). All Rights Reserved. Forge Athletic™ and the Forge Crest Mark™ are proprietary trademarks of Forge Athletic Performance LLC. Protected under U.S. and International Intellectual Property and Copyright Laws.
         </p>
       </div>

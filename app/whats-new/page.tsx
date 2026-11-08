@@ -59,7 +59,7 @@ export default function WhatsNewPage() {
               fontFamily: 'Raleway, sans-serif',
               fontSize: 'clamp(1rem, 2vw, 1.15rem)',
               color: 'var(--gray)',
-              maxWidth: 720,
+              maxWidth: '48ch',
               margin: '0 auto',
               lineHeight: 1.7,
             }}
@@ -122,7 +122,7 @@ export default function WhatsNewPage() {
               </div>
 
               {/* Summary */}
-              <p style={{ fontSize: 15, color: '#CBD5E1', margin: 0, lineHeight: 1.7, maxWidth: '75ch' }}>
+              <p style={{ fontSize: 15, color: '#CBD5E1', margin: 0, lineHeight: 1.7, maxWidth: '48ch' }}>
                 {release.summary}
               </p>
 
@@ -149,7 +149,7 @@ export default function WhatsNewPage() {
                       </h3>
                       <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {sec.items.map((it, iIdx) => (
-                          <li key={iIdx} style={{ fontSize: 12.5, color: '#94A3B8', lineHeight: 1.5, maxWidth: '80ch' }}>
+                          <li key={iIdx} style={{ fontSize: 12.5, color: '#94A3B8', lineHeight: 1.5, maxWidth: '48ch' }}>
                             {it}
                           </li>
                         ))}

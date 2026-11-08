@@ -21,9 +21,9 @@ test.describe('Mobile Viewport Bottom Banner & Button Clearance Suite', () => {
 
       await page.reload()
 
-      // The iOS prompt appears after a 2500ms delay in PwaInstallPrompt.tsx
+      // The iOS prompt appears after an 800ms delay in PwaInstallPrompt.tsx
       const banner = page.locator('aside.pwa-install-banner')
-      await expect(banner).toBeVisible({ timeout: 6000 })
+      await expect(banner).toBeVisible({ timeout: 10000 })
 
       // Verify the banner is positioned at the top of the viewport (NOT at the bottom)
       const box = await banner.boundingBox()

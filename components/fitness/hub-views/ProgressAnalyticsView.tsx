@@ -140,8 +140,8 @@ export default function ProgressAnalyticsView({
   localWorkoutLogs,
   localSetLogs,
   units,
-  optPhase,
-  sessionsPerWeek,
+  optPhase: _optPhase,
+  sessionsPerWeek: _sessionsPerWeek,
   progression,
   progressPhotos,
   profile,
@@ -161,10 +161,15 @@ export default function ProgressAnalyticsView({
     <div className="fitness-progress-view" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6, minWidth: 0 }}>
       {/* Volume & Periodization Trends */}
       <section style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: 'clamp(10px, 2vw, 16px)', borderRadius: 8 }}>
-        <h3 style={{ margin: '0 0 10px', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.04em', fontSize: 18, fontWeight: 700, color: 'var(--gold-lt)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <GaaIcon name="trending-up" size={18} tone="gold" />
-          Training overview
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.03em', fontSize: 18, fontWeight: 700, color: '#FFFFFF' }}>
+            Your progress
+          </h2>
+          <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', letterSpacing: '0.04em', fontSize: 14, fontWeight: 700, color: 'var(--gold-lt)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <GaaIcon name="trending-up" size={15} tone="gold" />
+            Training overview
+          </h3>
+        </div>
         <div className="fitness-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))', gap: 10, marginBottom: 14 }}>
           <Stat label="Total Sets Logged" value={String(progression.totalSets)} />
           <Stat label="Recorded Reps / Seconds" value={progression.totalReps.toLocaleString()} />

@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.46.0'
+export const APP_VERSION = '1.46.1'
 export const APP_RELEASE_DATE = '2026-11-07'
-export const APP_RELEASE_CODENAME = 'Mobile-First PWA UI Overhaul, Condensed High-Use Hubs & Zero-Clutter Navigation'
+export const APP_RELEASE_CODENAME = 'Full UAT Suite Verification, Hydration Hardening & Mobile Touch Ergonomics'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.46.1',
+    date: '2026-11-07',
+    codename: 'Full UAT Suite Verification, Hydration Hardening & Mobile Touch Ergonomics',
+    category: 'fix',
+    badge: 'UAT Hardening & 100% E2E Pass',
+    title: 'Full 205-Test E2E/UAT Suite Hardening, Hydration Stability & Mobile Viewport Polish',
+    summary:
+      'Hardens client-side hydration and form state preservation across Onboarding, Auth, Settings, and the Workout Logger, eliminates mobile sticky-header input occlusion, and achieves 100% pass rates across all 272 Vitest unit suites (1,958 tests) and all 22 Playwright E2E/UAT spec suites.',
+    highlights: [
+      'Onboarding & Auth Hydration Hardening: Added data-hydrated readiness markers and dirty-field live edit preservation in OnboardingForm, AuthForm, ClientSettingsStudio, and FitnessTrackerClient so user inputs are never overwritten by asynchronous profile or localStorage hydration.',
+      'Mobile Workout Logger Viewport Stability: Removed sticky positioning from the Workout stages bar so scrolled inputs and prefill actions are never occluded on compact mobile viewports, and removed global smooth scroll animations.',
+      'Zero-Warning Static & E2E Verification: Resolved all ESLint warnings, replaced mid-session dynamic modal chunk splits with static imports in FitnessTrackerClient and FitnessLabDiagnosticsView, and added Playwright route pre-warming.',
+    ],
+  },
   {
     version: '1.46.0',
     date: '2026-11-07',

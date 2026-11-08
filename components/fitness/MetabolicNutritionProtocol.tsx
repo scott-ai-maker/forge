@@ -49,7 +49,7 @@ export default function MetabolicNutritionProtocol({
   savedTargets,
   intake,
 }: MetabolicNutritionProtocolProps) {
-  const [nutritionMode, setNutritionMode] = useState<'hand_portions' | 'macros_dining' | 'supplements'>('hand_portions')
+  const [nutritionMode, setNutritionMode] = useState<'hand_portions' | 'macros_dining' | 'supplements'>('macros_dining')
   const [activePhase, setActivePhase] = useState<NasmOptPhase>('phase1_stabilization')
   const [activeDiningTab, setActiveDiningTab] = useState<string>('steakhouse')
 
@@ -635,8 +635,6 @@ export default function MetabolicNutritionProtocol({
           border: '1px solid rgba(212,160,23,0.3)',
           borderRadius: 8,
           padding: '18px 22px',
-          display: 'grid',
-          gap: 16,
         }}
       >
         <summary>Nutrition inputs &amp; energy breakdown</summary>

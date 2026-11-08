@@ -64,7 +64,7 @@ test.describe('Launch funnel flow', () => {
 
     // Step 7: Budget Band
     await expect(page.getByRole('heading', { name: /What monthly membership fits your budget\?/i })).toBeVisible()
-    await page.getByRole('button', { name: /Plus \(\$49\/month\)/i }).click()
+    await page.getByRole('button', { name: /Plus \(\$99\/month/i }).click()
     await page.getByRole('button', { name: /^Continue/i }).click()
 
     // Step 8: Readiness

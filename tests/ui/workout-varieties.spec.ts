@@ -15,9 +15,9 @@ for (const width of [320, 393]) {
       await expect(card).toBeVisible()
       if (scenario === 'band') {
         await card.locator('summary').filter({ hasText: 'Band color & resistance' }).click()
-        await card.getByRole('button', { name: 'Green (~35lb)', exact: true }).click()
-        await expect(card.getByRole('textbox', { name: 'Weight in pounds' })).toHaveValue('35')
-        await expect(card.getByRole('button', { name: 'Green (~35lb)', exact: true })).toHaveAttribute('aria-pressed', 'true')
+        await card.getByRole('button', { name: 'Green (~20lb)', exact: true }).click()
+        await expect(card.getByRole('textbox', { name: 'Weight in pounds' })).toHaveValue('20')
+        await expect(card.getByRole('button', { name: 'Green (~20lb)', exact: true })).toHaveAttribute('aria-pressed', 'true')
       }
       if (scenario !== 'power' && scenario !== 'hypertrophy') {
         await card.locator('summary').filter({ hasText: 'Edit set details' }).click()

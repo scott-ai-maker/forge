@@ -334,7 +334,7 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
               set_number: index % 2 + 1,
               rpe: index < 2 ? undefined : 7,
             })) : []}
-            latestAnalysis={isBodyCompScenario ? { estimated_bodyfat_percent: 14.8 } : null}
+            latestAnalysis={isBodyCompScenario ? { estimated_bodyfat_percent: params.scenario === 'lab-bodycomp' ? 20 : 14.8 } : null}
             initialWorkspace={effectiveWorkspace}
             initialTab={effectiveTab}
             initialOpenScanner={params.scenario === 'bodycomp-scanner' || params.openScanner === 'true' || params.scanner === 'true'}

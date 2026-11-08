@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 
@@ -57,7 +57,17 @@ function getDefaultPreferredTrainingDays(count: number) {
   return (patterns[count] ?? patterns[4]).slice(0, Math.max(2, Math.min(7, count)))
 }
 
-export default function OnboardingForm() {
+export interface OnboardingInitialProfile {
+  onboarding_completed_at?: string | null
+  height_cm?: number | null
+  weight_kg?: number | null
+  waist_cm?: number | null
+  neck_cm?: number | null
+  hip_cm?: number | null
+  preferred_units?: Units | null
+}
+
+export default function OnboardingForm({ initialProfile }: { initialProfile?: OnboardingInitialProfile | null } = {}) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -66,17 +76,17 @@ export default function OnboardingForm() {
 
   const [equipmentOptions, setEquipmentOptions] = useState<string[]>(DEFAULT_EQUIPMENT_OPTIONS)
   const [form, setForm] = useState({
-    preferredUnits: 'metric' as Units,
+    preferredUnits: (initialProfile?.preferred_units ?? 'metric') as Units,
     age: '30',
     sex: 'male',
-    heightCm: '',
+    heightCm: initialProfile?.height_cm != null ? String(initialProfile.height_cm) : '',
     heightFt: '',
     heightIn: '',
-    weightKg: '',
+    weightKg: initialProfile?.weight_kg != null ? String(initialProfile.weight_kg) : '',
     weightLb: '',
-    waist: '',
-    neck: '',
-    hip: '',
+    waist: initialProfile?.waist_cm != null ? String(initialProfile.waist_cm) : '',
+    neck: initialProfile?.neck_cm != null ? String(initialProfile.neck_cm) : '',
+    hip: initialProfile?.hip_cm != null ? String(initialProfile.hip_cm) : '',
     activityLevel: 'moderate',
     trainingDaysPerWeek: '4',
     preferredTrainingDays: getDefaultPreferredTrainingDays(4),
@@ -119,15 +129,38 @@ export default function OnboardingForm() {
     legalSignatureName: '',
   })
 
+  const dirtyFieldsRef = useRef<Set<string>>(new Set())
+
+  function persistLocalDraft(nextState: typeof form) {
+    if (isCompleted) return
+    try {
+      localStorage.setItem('gaa_baseline_onboarding_draft', JSON.stringify(nextState))
+    } catch {
+      // ignore storage write errors
+    }
+  }
+
   function updateField(key: string, value: string) {
-    setForm(prev => ({ ...prev, [key]: value }))
+    dirtyFieldsRef.current.add(key)
+    setForm(prev => {
+      const next = { ...prev, [key]: value }
+      persistLocalDraft(next)
+      return next
+    })
   }
 
   function updateBooleanField(key: string, value: boolean) {
-    setForm(prev => ({ ...prev, [key]: value }))
+    dirtyFieldsRef.current.add(key)
+    setForm(prev => {
+      const next = { ...prev, [key]: value }
+      persistLocalDraft(next)
+      return next
+    })
   }
 
   function updateTrainingDaysPerWeek(value: string) {
+    dirtyFieldsRef.current.add('trainingDaysPerWeek')
+    dirtyFieldsRef.current.add('preferredTrainingDays')
     setForm(prev => {
       const normalizedCount = Math.max(2, Math.min(7, Number(value) || 2))
       const nextSelected = [...prev.preferredTrainingDays]
@@ -144,27 +177,54 @@ export default function OnboardingForm() {
         }
       }
 
-      return {
+      const next = {
         ...prev,
         trainingDaysPerWeek: value,
         preferredTrainingDays: nextSelected,
       }
+      persistLocalDraft(next)
+      return next
     })
   }
 
-  const [isCompleted, setIsCompleted] = useState(false)
+  const [isCompleted, setIsCompleted] = useState(Boolean(initialProfile?.onboarding_completed_at))
   const [draftSavedMessage, setDraftSavedMessage] = useState<string | null>(null)
   const [draftSaving, setDraftSaving] = useState(false)
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
+    setIsHydrated(true)
     let active = true
 
-    async function loadProfileAndEquipment() {
-      const res = await fetch('/api/fitness/profile', { method: 'GET' })
-      const payload = await res.json().catch(() => ({}))
+    try {
+      if (!initialProfile?.onboarding_completed_at) {
+        const rawDraft = localStorage.getItem('gaa_baseline_onboarding_draft')
+        if (rawDraft) {
+          const parsedDraft = JSON.parse(rawDraft) as Record<string, unknown>
+          if (parsedDraft && typeof parsedDraft === 'object') {
+            setForm(prev => {
+              const restored = { ...prev }
+              for (const [k, v] of Object.entries(parsedDraft)) {
+                if (v !== '' && v !== false && v !== null && v !== undefined && !dirtyFieldsRef.current.has(k)) {
+                  ;(restored as Record<string, unknown>)[k] = v
+                }
+              }
+              return restored
+            })
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
 
-      if (!res.ok) return
+    async function loadProfileAndEquipment() {
+      try {
+        const res = await fetch('/api/fitness/profile', { method: 'GET' })
+        const payload = await res.json().catch(() => ({}))
+
+        if (!res.ok) return
 
       const rawEquipment: string[] = Array.isArray(payload?.availableEquipment)
         ? payload.availableEquipment.map((item: unknown) => String(item ?? '').trim()).filter(Boolean)
@@ -332,24 +392,41 @@ export default function OnboardingForm() {
           legalSignatureName: intake?.consent_signature_name || prev.legalSignatureName,
         }
 
-        if (localDraft && typeof localDraft === 'object') {
-          // If local draft has values, merge them
-          return {
-            ...merged,
-            ...localDraft,
-            equipmentAccess: Array.isArray(localDraft.equipmentAccess)
-              ? (localDraft.equipmentAccess as string[]).filter((item: string) => normalizedAvailable.has(item.toLowerCase()) && item.toLowerCase() !== 'none' && item.toLowerCase() !== 'no equipment')
-              : merged.equipmentAccess,
-          }
-        }
-
-        return {
+        const nextState = {
           ...merged,
           equipmentAccess: merged.equipmentAccess.filter((item: string) => normalizedAvailable.has(item.toLowerCase())),
         }
-      })
 
-      setHasLoadedInitial(true)
+        if (!profile?.onboarding_completed_at && localDraft && typeof localDraft === 'object') {
+          // Merge non-empty values from local draft without wiping server or live values
+          for (const [key, draftVal] of Object.entries(localDraft)) {
+            if (key === 'equipmentAccess') {
+              if (Array.isArray(draftVal)) {
+                const filtered = (draftVal as string[]).filter(
+                  (item: string) => normalizedAvailable.has(item.toLowerCase()) && item.toLowerCase() !== 'none' && item.toLowerCase() !== 'no equipment'
+                )
+                if (filtered.length > 0) nextState.equipmentAccess = filtered
+              }
+              continue
+            }
+            if (draftVal !== '' && draftVal !== false && draftVal !== null && draftVal !== undefined) {
+              ;(nextState as Record<string, unknown>)[key] = draftVal
+            }
+          }
+        }
+
+        // Always preserve any fields the user has actively edited since mount
+        for (const dirtyKey of dirtyFieldsRef.current) {
+          ;(nextState as Record<string, unknown>)[dirtyKey] = (prev as Record<string, unknown>)[dirtyKey]
+        }
+
+        return nextState
+      })
+      } catch {
+        // ignore initial load error
+      } finally {
+        if (active) setHasLoadedInitial(true)
+      }
     }
 
     void loadProfileAndEquipment()
@@ -357,7 +434,7 @@ export default function OnboardingForm() {
     return () => {
       active = false
     }
-  }, [])
+  }, [initialProfile?.onboarding_completed_at])
 
   // Auto-save draft changes to localStorage after initial load
   useEffect(() => {
@@ -377,34 +454,43 @@ export default function OnboardingForm() {
   }, [equipmentOptions])
 
   function toggleEquipment(key: string) {
+    dirtyFieldsRef.current.add('equipmentAccess')
     setForm(prev => {
       const has = prev.equipmentAccess.includes(key)
-      return {
+      const next = {
         ...prev,
         equipmentAccess: has ? prev.equipmentAccess.filter(item => item !== key) : [...prev.equipmentAccess, key],
       }
+      persistLocalDraft(next)
+      return next
     })
   }
 
   function toggleCardioEquipment(key: string) {
+    dirtyFieldsRef.current.add('cardioEquipmentAccess')
     setForm(prev => {
       const has = prev.cardioEquipmentAccess.includes(key)
-      return {
+      const next = {
         ...prev,
         cardioEquipmentAccess: has ? prev.cardioEquipmentAccess.filter(item => item !== key) : [...prev.cardioEquipmentAccess, key],
       }
+      persistLocalDraft(next)
+      return next
     })
   }
 
   function togglePreferredTrainingDay(key: string) {
+    dirtyFieldsRef.current.add('preferredTrainingDays')
     setForm(prev => {
       const has = prev.preferredTrainingDays.includes(key)
 
       if (has) {
-        return {
+        const next = {
           ...prev,
           preferredTrainingDays: prev.preferredTrainingDays.filter(item => item !== key),
         }
+        persistLocalDraft(next)
+        return next
       }
 
       const limit = Math.max(2, Math.min(7, Number(prev.trainingDaysPerWeek) || 2))
@@ -412,10 +498,12 @@ export default function OnboardingForm() {
         return prev
       }
 
-      return {
+      const next = {
         ...prev,
         preferredTrainingDays: [...prev.preferredTrainingDays, key],
       }
+      persistLocalDraft(next)
+      return next
     })
   }
 
@@ -628,13 +716,18 @@ export default function OnboardingForm() {
     }
 
     router.push('/dashboard/fitness')
-    router.refresh()
   }
 
   async function handleSaveDraft() {
     setDraftSaving(true)
     setError(null)
-    setDraftSavedMessage(null)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('gaa_baseline_onboarding_draft', JSON.stringify(form))
+      } catch {
+        // ignore
+      }
+    }
 
     try {
       const requestBody = buildPayload()
@@ -647,19 +740,12 @@ export default function OnboardingForm() {
         }),
       })
 
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('gaa_baseline_onboarding_draft', JSON.stringify(form))
-      }
-
       if (res.ok) {
         setDraftSavedMessage('✓ Draft saved! Your baseline setup progress is safely stored. You can return anytime.')
       } else {
         setDraftSavedMessage('✓ Progress saved locally to this device.')
       }
     } catch {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('gaa_baseline_onboarding_draft', JSON.stringify(form))
-      }
       setDraftSavedMessage('✓ Progress saved locally to this device.')
     } finally {
       setDraftSaving(false)
@@ -668,7 +754,7 @@ export default function OnboardingForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16 }}>
+    <form onSubmit={onSubmit} noValidate style={{ display: 'grid', gap: 16 }}>
       {isCompleted && (
         <div
           style={{
@@ -1208,7 +1294,7 @@ export default function OnboardingForm() {
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
         <button
           type="submit"
-          disabled={saving || draftSaving}
+          disabled={!isHydrated || saving || draftSaving}
           style={{
             border: 0,
             background: saving ? 'var(--navy-lt)' : 'var(--gold)',
@@ -1229,7 +1315,7 @@ export default function OnboardingForm() {
         <button
           type="button"
           onClick={handleSaveDraft}
-          disabled={saving || draftSaving}
+          disabled={!isHydrated || saving || draftSaving}
           style={{
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.18)',

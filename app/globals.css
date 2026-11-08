@@ -94,13 +94,11 @@
 
 * { box-sizing: border-box; }
 html {
-  scroll-behavior: smooth;
   scroll-padding-bottom: clamp(140px, 20vh, 200px);
   width: 100%;
   overflow-x: clip;
   position: relative;
   background-color: var(--navy);
-  scrollbar-gutter: stable;
 }
 body {
   margin: 0;

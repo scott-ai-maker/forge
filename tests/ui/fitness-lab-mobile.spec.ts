@@ -1,7 +1,7 @@
 import { expect, test, type Locator } from '@playwright/test'
 import { generate12WeekMacrocycle } from '../../lib/periodization-roadmap'
 
-const tools = ['readiness', 'bodycomp', 'roadmap', 'nutrition', 'travel', 'assessment', 'sleep', 'performance', 'calculator', 'video']
+const tools = ['readiness', 'bodycomp', 'roadmap', 'nutrition', 'travel', 'assessment', 'sleep', 'performance', 'video']
 const features = {
   nutrition: { active: true, expiresAt: null, usesRemaining: null },
   travel: { active: true, expiresAt: null, usesRemaining: null },
@@ -35,7 +35,7 @@ for (const width of [320, 393, 768]) {
       const picker = lab.getByRole('button', { name: /^Choose a tool:/ })
       await picker.click()
       const options = lab.getByRole('group', { name: 'Fitness Lab tools' })
-      await expect(options.getByRole('button')).toHaveCount(10)
+      await expect(options.getByRole('button')).toHaveCount(9)
       const menuBox = (await options.boundingBox())!
       const appBox = (await lab.boundingBox())!
       expect(menuBox.x).toBeGreaterThanOrEqual(appBox.x)
@@ -51,16 +51,6 @@ for (const width of [320, 393, 768]) {
         await expect(lab.locator('.fitness-lab-stats')).toHaveCount(0)
         await lab.locator('summary').filter({ hasText: 'How these estimates work' }).click()
       } else if (tool === 'readiness') {
-        await expect(lab.getByRole('heading', { name: /Muscle recovery map/ })).toBeVisible()
-        await lab.getByRole('button', { name: 'Posterior (Back)' }).click()
-        await expect(lab.getByRole('button', { name: 'Posterior (Back)' })).toHaveAttribute('aria-pressed', 'true')
-        await expectControlsToFit(lab, width)
-        await lab.getByRole('button', { name: 'Anterior (Front)' }).click()
-        await expect(lab.getByRole('button', { name: 'Anterior (Front)' })).toHaveAttribute('aria-pressed', 'true')
-        await lab.locator('summary').filter({ hasText: 'Recovery simulation & advanced inputs' }).click()
-        await lab.getByRole('button', { name: '+24h', exact: true }).click()
-        await expect(lab.getByRole('slider', { name: 'Recovery simulation hours ahead' })).toHaveValue('24')
-        await expectControlsToFit(lab, width)
         await lab.getByRole('button', { name: /Daily check-in/ }).click()
         await lab.locator('summary').filter({ hasText: 'Daily check-in inputs' }).click()
         await expect(lab.getByRole('slider', { name: 'Sleep duration' })).toBeVisible()
@@ -70,12 +60,9 @@ for (const width of [320, 393, 768]) {
           await expect(lab.getByRole('button', { name: tab, exact: true })).toHaveAttribute('aria-pressed', 'true')
           await expectControlsToFit(lab, width)
         }
-      } else if (tool === 'calculator') {
-        await lab.locator('summary').filter({ hasText: 'Training loads by phase' }).click()
       } else if (tool === 'nutrition') {
         await lab.locator('summary').filter({ hasText: 'Nutrition inputs' }).click()
       } else if (tool === 'performance') {
-        await lab.locator('summary').filter({ hasText: 'Power training' }).click()
         await lab.locator('summary').filter({ hasText: 'Performance tests' }).click()
       } else if (tool === 'sleep') {
         await expect(lab.getByText(/Example sleep data/)).toBeVisible()
@@ -84,8 +71,8 @@ for (const width of [320, 393, 768]) {
         await expect(lab.getByRole('button', { name: 'Use this travel workout' })).toBeEnabled()
       }
       await expectControlsToFit(lab, width)
-      await chooseTool(lab, tool === 'calculator' ? 'bodycomp' : 'calculator')
-      await expect(page).toHaveURL(new RegExp(`workspace=${tool === 'calculator' ? 'bodycomp' : 'calculator'}`))
+      await chooseTool(lab, tool === 'bodycomp' ? 'sleep' : 'bodycomp')
+      await expect(page).toHaveURL(new RegExp(`workspace=${tool === 'bodycomp' ? 'sleep' : 'bodycomp'}`))
     })
   }
 }
@@ -118,14 +105,14 @@ test('In-app tool picker supports keyboard selection, Escape and focus dismissal
   await expect(options).not.toBeVisible()
   await expect(picker).toBeFocused()
   await page.keyboard.press('Space')
-  await options.locator('button[data-tool="calculator"]').focus()
+  await options.locator('button[data-tool="sleep"]').focus()
   await page.keyboard.press('Enter')
-  await expect(picker).toContainText('Fitness calculators')
+  await expect(picker).toContainText('Sleep Biometrics HUD')
   await expect(picker).toBeFocused()
   await expect(options).not.toBeVisible()
   await picker.click()
-  await expect(options.locator('button[data-tool="calculator"]')).toHaveAttribute('aria-pressed', 'true')
-  await lab.getByRole('button', { name: /1RM & OPT/ }).focus()
+  await expect(options.locator('button[data-tool="sleep"]')).toHaveAttribute('aria-pressed', 'true')
+  await lab.getByRole('button', { name: 'Explore adjustments' }).focus()
   await expect(options).not.toBeVisible()
 })
 
@@ -141,9 +128,9 @@ test('Ungated Lab tools skip access requests and expired sessions show sign-in g
   })
   await page.goto('/test-harness/fitness-mobile?workspace=readiness')
   const lab = page.locator('.fitness-lab-view')
-  await expect(lab.getByRole('heading', { name: 'Muscle recovery map' })).toBeVisible()
-  await chooseTool(lab, 'calculator')
-  await expect(lab.getByRole('button', { name: /1RM & OPT/ })).toBeVisible()
+  await expect(lab.getByRole('button', { name: /Daily check-in/ })).toBeVisible()
+  await chooseTool(lab, 'sleep')
+  await expect(lab.getByRole('button', { name: 'Explore adjustments' })).toBeVisible()
   expect(accessRequests).toBe(0)
   await chooseTool(lab, 'nutrition')
   await expect(lab.getByRole('alert')).toContainText('Please sign in')
@@ -170,36 +157,11 @@ test('Recovery check-in disclosures retain input values with keyboard toggling',
   await expect(slider).toHaveValue('7.6')
 })
 
-test('Calculator tabs retain values and travel uses the actual workout', async ({ page }) => {
+test('Travel workout adapter recalibrates and applies the actual workout', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 850 })
   await page.route('**/api/account/entitlements', route => route.fulfill({ json: { features } }))
-  await page.goto('/test-harness/fitness-mobile?workspace=calculator')
+  await page.goto('/test-harness/fitness-mobile?workspace=travel')
   const lab = page.locator('.fitness-lab-view')
-  await lab.getByRole('slider', { name: 'Reps completed' }).focus()
-  await page.keyboard.press('ArrowRight')
-  await expect(lab.getByRole('slider', { name: 'Reps completed' })).toHaveValue('6')
-  await lab.getByRole('button', { name: /Cardio &/ }).click()
-  await lab.getByRole('button', { name: 'Rockport 1-Mile' }).click()
-  await lab.getByLabel('One-mile walk time in minutes').fill('15')
-  await lab.getByLabel('One-mile walk time in minutes').fill('')
-  await expect(lab.getByText('Enter positive values in every test field to see your estimate.')).toBeVisible()
-  await expect(lab.getByText('Estimated VO₂ Max', { exact: true })).toHaveCount(0)
-  await lab.getByLabel('One-mile walk time in minutes').fill('15')
-  await expect(lab.getByText('Estimated VO₂ Max', { exact: true })).toBeVisible()
-  await lab.getByRole('button', { name: /Body Comp &/ }).click()
-  await lab.getByLabel('Waist circumference in inches').fill('34')
-  await lab.getByLabel('Hip circumference in inches').fill('0')
-  await expect(lab.getByText('Enter positive waist and hip measurements to see your ratio.')).toBeVisible()
-  await lab.getByLabel('Hip circumference in inches').fill('39')
-  for (const control of await lab.locator('input, select, button').all()) {
-    if (!(await control.isVisible())) continue
-    const box = (await control.boundingBox())!
-    expect(box.x + box.width).toBeLessThanOrEqual(320)
-    expect(Number(box.height.toFixed(3))).toBeGreaterThanOrEqual(44)
-  }
-  await lab.getByRole('button', { name: /1RM & OPT/ }).click()
-  await expect(lab.getByRole('slider', { name: 'Reps completed' })).toHaveValue('6')
-  await chooseTool(lab, 'travel')
   await expect(lab.getByText('3 Movements Recalibrated')).toBeVisible()
   await lab.getByRole('button', { name: 'Use this travel workout' }).click()
   await expect(lab.getByText(/Applied .* to your first workout day/)).toBeVisible()

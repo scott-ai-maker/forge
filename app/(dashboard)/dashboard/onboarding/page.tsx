@@ -16,7 +16,7 @@ export default async function OnboardingPage() {
 
   const { data: _profile } = await supabase
     .from('fitness_profiles')
-    .select('onboarding_completed_at')
+    .select('onboarding_completed_at, height_cm, weight_kg, waist_cm, neck_cm, hip_cm, preferred_units')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -44,7 +44,7 @@ export default async function OnboardingPage() {
         </p>
 
         <div style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: 24 }}>
-          <OnboardingForm />
+          <OnboardingForm initialProfile={_profile} />
         </div>
       </div>
     </main>

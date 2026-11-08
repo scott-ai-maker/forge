@@ -146,6 +146,11 @@ export default function AuthForm({
   const [resetEmailSent, setResetEmailSent] = useState(false)
   const [resetCooldownEndsAt, setResetCooldownEndsAt] = useState<number | null>(null)
   const [nowMs, setNowMs] = useState(() => Date.now())
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   useEffect(() => {
     if (!resetCooldownEndsAt) return
@@ -351,7 +356,7 @@ export default function AuthForm({
     }
   }
 
-  const isAnyLoading = loading || oauthLoadingProvider !== null
+  const isAnyLoading = !isHydrated || loading || oauthLoadingProvider !== null
 
   // Reset email sent confirmation screen
   if (resetEmailSent) {

@@ -42,8 +42,11 @@ export default function BluetoothHeartRateMonitor({
   const bluetoothDeviceRef = useRef<BluetoothDeviceRef | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Web Bluetooth capability check
-  const supported = typeof navigator !== 'undefined' && 'bluetooth' in navigator
+  // Web Bluetooth capability check (deferred to effect to avoid SSR/client hydration mismatch)
+  const [supported, setSupported] = useState<boolean>(false)
+  useEffect(() => {
+    setSupported(typeof navigator !== 'undefined' && 'bluetooth' in navigator)
+  }, [])
 
   useEffect(() => {
     let timer: NodeJS.Timeout

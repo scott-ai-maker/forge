@@ -115,14 +115,22 @@ export default function CoachAiIntakeDrawer({
     }
   }, [isOpen, initialData])
 
-  // Escape key listener to close modal
+  // Escape key listener to close modal and lock root/body scroll
   useEffect(() => {
     if (!isOpen) return
+    const prevBodyOverflow = document.body.style.overflow
+    const prevHtmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !isSynthesizing) onClose()
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prevBodyOverflow
+      document.documentElement.style.overflow = prevHtmlOverflow
+      window.removeEventListener('keydown', onKey)
+    }
   }, [isOpen, isSynthesizing, onClose])
 
   const toggleEquipment = (id: string) => {

@@ -476,6 +476,9 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           <Link
             href="/packages#live-1-on-1"
             style={{
+              minHeight: '44px',
+              display: 'inline-flex',
+              alignItems: 'center',
               padding: '9px 18px',
               borderRadius: '8px',
               background: 'var(--gold)',

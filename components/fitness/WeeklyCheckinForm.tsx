@@ -85,6 +85,10 @@ function RatingInput({
 
 export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initialCheckin }: WeeklyCheckinFormProps) {
   const thisWeek = getMonday(new Date())
+  const [isHydrated, setIsHydrated] = useState(false)
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
   const [existing, setExisting] = useState<WeeklyCheckin | null>(initialCheckin ?? null)
   const [loaded, setLoaded] = useState(initialCheckin !== undefined)
   const [saving, setSaving] = useState(false)
@@ -290,6 +294,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
           <input
             id="weight-input"
             type="text"
+            disabled={!isHydrated || saving}
             inputMode="decimal"
             autoComplete="off"
             onFocus={selectOnFocus}
@@ -310,6 +315,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
           </label>
           <textarea
             id="notes-input"
+            disabled={!isHydrated || saving}
             value={form.notes}
             onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
             className="sgf-form-input"
@@ -327,7 +333,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
 
         <button
           type="submit"
-          disabled={saving || !loaded || Boolean(loadError)}
+          disabled={!isHydrated || saving || !loaded || Boolean(loadError)}
           aria-label={existing ? 'Update check-in' : 'Submit check-in'}
           aria-busy={saving}
           style={{

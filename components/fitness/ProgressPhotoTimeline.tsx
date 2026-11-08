@@ -55,7 +55,7 @@ export default function ProgressPhotoTimeline({
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [latestScanResult, setLatestScanResult] = useState<BodyCompositionScanResult | null>(null)
   const [form, setForm] = useState({ takenAt: new Date().toISOString().slice(0, 10), notes: '', file: null as File | null })
-  const [attireConfirmed, setAttireConfirmed] = useState<boolean>(false)
+  const [attireConfirmed, setAttireConfirmed] = useState<boolean>(true)
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()

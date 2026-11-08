@@ -111,6 +111,9 @@ export default function ForgeMembershipPlans() {
             type="button"
             onClick={copyPromoCode}
             style={{
+              minHeight: '44px',
+              display: 'inline-flex',
+              alignItems: 'center',
               padding: '8px 14px',
               borderRadius: '8px',
               background: 'rgba(8, 14, 24, 0.9)',
@@ -130,6 +133,9 @@ export default function ForgeMembershipPlans() {
             type="button"
             onClick={() => setHolidayDealActive(prev => !prev)}
             style={{
+              minHeight: '44px',
+              display: 'inline-flex',
+              alignItems: 'center',
               padding: '8px 14px',
               borderRadius: '8px',
               background: holidayDealActive ? 'rgba(52, 211, 153, 0.18)' : 'rgba(255, 255, 255, 0.06)',

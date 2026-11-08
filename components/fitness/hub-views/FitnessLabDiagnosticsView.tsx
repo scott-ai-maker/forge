@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useRef, useState, useEffect } from 'react'
-import dynamic from 'next/dynamic'
 import GaaIcon from '@/components/ui/GaaIcon'
+import VideoCritiqueStudio from '@/components/fitness/VideoCritiqueStudio'
 import ReadinessRecoveryTracker from '@/components/fitness/ReadinessRecoveryTracker'
 import PeriodizationRoadmapView from '@/components/fitness/PeriodizationRoadmapView'
 import AddonUnlockCard from '@/components/packages/AddonUnlockCard'
@@ -45,22 +45,6 @@ export interface HubProfileData {
   activity_level?: string | null
   injuries_limitations?: string | null
 }
-
-// Dynamic import for heavy MediaPipe AI vision studio
-const VideoCritiqueStudio = dynamic(() => import('@/components/fitness/VideoCritiqueStudio'), {
-  ssr: false,
-  loading: () => (
-    <div style={{ padding: 32, textAlign: 'center', background: 'var(--navy-mid)', border: '1px solid var(--navy-lt)', borderRadius: 8 }}>
-      <div style={{ marginBottom: 8 }}>
-        <GaaIcon name="camera" tone="gold" size={28} />
-      </div>
-      <div style={{ color: 'var(--gold-lt)', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 16, fontWeight: 700, letterSpacing: '0.04em' }}>
-        Loading AI Biomechanical Scanner...
-      </div>
-      <div style={{ color: 'var(--gray)', fontSize: 12 }}>Initializing neural joint models</div>
-    </div>
-  ),
-})
 
 export type FitnessLabTool =
   | 'readiness'
@@ -134,6 +118,11 @@ export default function FitnessLabDiagnosticsView({
   initialOpenScanner,
 }: FitnessLabDiagnosticsViewProps) {
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(Boolean(initialOpenScanner))
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   useEffect(() => {
     if (initialOpenScanner) {
@@ -171,8 +160,8 @@ export default function FitnessLabDiagnosticsView({
   const classification = classifyBodyFat(currentBf, sex)
 
   return (
-    <div className="fitness-lab-view" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6, minWidth: 0 }}>
-      <div className="fitness-lab-selector" style={{ padding: '8px 10px', background: 'rgba(13,27,42,0.85)', border: '1px solid rgba(56,189,248,0.28)', borderRadius: 8 }} onBlur={event => {
+    <div className="fitness-lab-view" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6, minWidth: 0, pointerEvents: isHydrated ? 'auto' : 'none' }}>
+      <div className="fitness-lab-selector" onBlur={event => {
         if (!event.currentTarget.contains(event.relatedTarget)) setIsToolPickerOpen(false)
       }} onKeyDown={event => {
         if (event.key === 'Escape' && isToolPickerOpen) {
@@ -181,7 +170,26 @@ export default function FitnessLabDiagnosticsView({
           toolPickerTrigger.current?.focus()
         }
       }}>
-        <div id="fitness-lab-tools" role="group" aria-label="Fitness Lab tools" className="responsive-tabs-scroll" style={{ gap: 6, paddingBottom: 2 }}>
+        <div className="fitness-lab-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+          <div>
+            <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, fontWeight: 700, color: '#FFFFFF' }}>Fitness Lab</h2>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--gray)' }}>{activeTool.description}</p>
+          </div>
+          <button
+            ref={toolPickerTrigger}
+            type="button"
+            disabled={!isHydrated}
+            className="fitness-lab-picker-trigger"
+            aria-label={isHydrated ? `Choose a tool: ${activeTool.title}` : `Loading tool: ${activeTool.title}`}
+            aria-expanded={isToolPickerOpen}
+            aria-controls="fitness-lab-tools"
+            onClick={() => setIsToolPickerOpen(open => !open)}
+          >
+            <span>Tool: {activeTool.title}</span>
+            <GaaIcon name="sliders" size={15} tone="cyan" />
+          </button>
+        </div>
+        <div id="fitness-lab-tools" role="group" aria-label="Fitness Lab tools" className="fitness-lab-picker-options" hidden={!isToolPickerOpen}>
           {LAB_TOOLS.map(tool => {
             const active = tool.id === activeLabTool
             return (
@@ -193,21 +201,11 @@ export default function FitnessLabDiagnosticsView({
                 onClick={() => {
                   onSelectTool(tool.id)
                   setIsToolPickerOpen(false)
-                }}
-                className="tactile-btn"
-                style={{
-                  padding: '7px 12px',
-                  borderRadius: 6,
-                  fontSize: 11.5,
-                  fontWeight: active ? 800 : 600,
-                  background: active ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
-                  border: active ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.1)',
-                  color: active ? '#38BDF8' : '#E2E8F0',
-                  whiteSpace: 'nowrap',
-                  cursor: 'pointer',
+                  toolPickerTrigger.current?.focus()
                 }}
               >
-                {tool.title}
+                <span className="fitness-lab-option-title">{tool.title}</span>
+                <span className="fitness-lab-option-subtitle">{tool.description}</span>
               </button>
             )
           })}
@@ -368,6 +366,7 @@ export default function FitnessLabDiagnosticsView({
               <a
                 href="/dashboard/settings?tab=wearables"
                 style={{
+                  minHeight: 44,
                   fontSize: 11,
                   color: 'var(--gold-lt)',
                   textDecoration: 'none',

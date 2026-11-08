@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import WeeklyCheckinForm, { WeeklyCheckin } from '@/components/fitness/WeeklyCheckinForm'
 import ProgressPhotoTimeline from '@/components/fitness/ProgressPhotoTimeline'
 import { parseParqMedicationsAndConditions } from '@/lib/muscle-recovery-telemetry'
@@ -72,8 +72,13 @@ export default function CoachAdvisoryView({
     intake?.parq_any_yes
   )
 
+  const [isHydrated, setIsHydrated] = useState(false)
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+
   return (
-    <div className="fitness-coach-view" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
+    <div className="fitness-coach-view" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6, pointerEvents: isHydrated ? 'auto' : 'none' }}>
       {/* Compact Coach Quick Actions Bar */}
       <div
         style={{
@@ -90,15 +95,16 @@ export default function CoachAdvisoryView({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <GaaIcon name="award" size={18} tone="gold" />
-          <span style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 16, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.03em' }}>
-            Coach Check-In &amp; Support
-          </span>
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 16, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.03em' }}>
+            Your coach
+          </h2>
         </div>
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <a
             href="/dashboard/messages"
             style={{
+              minHeight: 44,
               background: 'rgba(212,160,23,0.18)',
               border: '1px solid var(--gold)',
               color: 'var(--gold-lt)',
@@ -113,11 +119,12 @@ export default function CoachAdvisoryView({
             }}
           >
             <GaaIcon name="message-square" size={12} tone="gold" />
-            Message
+            Message coach
           </a>
           <a
             href="/dashboard/book"
             style={{
+              minHeight: 44,
               background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
               border: 'none',
               color: '#0A0E18',
@@ -132,7 +139,7 @@ export default function CoachAdvisoryView({
             }}
           >
             <GaaIcon name="calendar" size={12} tone="dark" />
-            Book Session
+            Book a session
           </a>
         </div>
       </div>
@@ -147,9 +154,6 @@ export default function CoachAdvisoryView({
           background: 'rgba(13,27,42,0.85)',
           borderRadius: 8,
           padding: 'clamp(14px, 2vw, 20px)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 14,
         }}
       >
         <summary>Health &amp; training details on file</summary>
@@ -172,6 +176,7 @@ export default function CoachAdvisoryView({
           <a
             href="/dashboard/settings"
             style={{
+              minHeight: 44,
               color: 'var(--gold-lt)',
               fontSize: 12,
               fontWeight: 700,

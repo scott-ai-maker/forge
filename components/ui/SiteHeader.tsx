@@ -129,6 +129,7 @@ export default function SiteHeader({
               display: 'flex',
               alignItems: 'center',
               gap: 10,
+              minHeight: 44,
               textDecoration: 'none',
               minWidth: 0,
               flexShrink: 1,

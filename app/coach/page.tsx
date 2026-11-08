@@ -23,7 +23,6 @@ import CoachLiveSessionLauncher, { AssignedClientLauncherItem } from '@/componen
 import CoachLiveScheduleAgenda, { CoachScheduledSession } from '@/components/coach/CoachLiveScheduleAgenda'
 import { getTeamsForCoach } from '@/lib/teams'
 import SiteHeader from '@/components/ui/SiteHeader'
-import { APP_VERSION } from '@/lib/app-version'
 
 export const dynamic = 'force-dynamic'
 

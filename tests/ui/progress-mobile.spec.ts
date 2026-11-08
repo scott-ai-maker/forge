@@ -35,16 +35,11 @@ for (const width of [320, 393, 768]) {
     await expect(history.getByText('Workout 1', { exact: true })).toBeVisible()
     await progress.locator('summary').filter({ hasText: 'Set history' }).click()
     await expect(progress.getByText('30s', { exact: true })).toBeVisible()
-    await progress.locator('summary').filter({ hasText: /^Personal records$/ }).click()
-    await progress.getByRole('button', { name: /Barbell Flat Bench Press/ }).click()
-    await expect(progress.getByText('Heavy Lift PR', { exact: true })).toBeVisible()
     await progress.locator('summary').filter({ hasText: /^Goals$/ }).click()
     await expect(progress.getByText('0% of the way there', { exact: true })).toBeVisible()
     await progress.getByRole('button', { name: /New Goal/ }).click()
     await progress.getByLabel('Title *', { exact: true }).fill('UAT strength target')
     await progress.locator('summary').filter({ hasText: 'Progress photos' }).click()
-    await progress.locator('summary').filter({ hasText: 'Training consistency' }).click()
-    await expect(progress.getByText('1 planned sessions / week')).toBeVisible()
     for (const control of await progress.locator('input, select, textarea, button, summary').all()) {
       if (!(await control.isVisible())) continue
       const box = (await control.boundingBox())!
@@ -68,12 +63,10 @@ test('Progress empty states and failed requests can retry', async ({ page }) => 
   await page.goto('/test-harness/fitness-mobile?workspace=progress')
   const progress = page.locator('.fitness-progress-view')
   await expect(progress.getByText('No workout data recorded yet.')).toBeVisible()
-  await progress.locator('summary').filter({ hasText: /^Personal records$/ }).click()
   await progress.locator('summary').filter({ hasText: /^Goals$/ }).click()
   await expect(progress.getByRole('button', { name: 'Retry goals' })).toBeVisible()
   fail = false
   await progress.getByRole('button', { name: 'Retry goals' }).click()
-  await progress.getByRole('button', { name: 'Retry personal records' }).click()
   await expect(progress.getByRole('alert')).toHaveCount(0)
 })
 

@@ -37,16 +37,16 @@ interface ReadinessRecoveryTrackerProps {
 }
 
 export default function ReadinessRecoveryTracker({
-  initialSex = 'male',
-  initialAge = 38,
-  initialConditioning,
-  clientGoal,
-  intake,
-  profile,
+  initialSex: _initialSex = 'male',
+  initialAge: _initialAge = 38,
+  initialConditioning: _initialConditioning,
+  clientGoal: _clientGoal,
+  intake: _intake,
+  profile: _profile,
   initialTab = 'gate',
   workoutLogs = [],
   workoutSetLogs = [],
-  workoutPlans = [],
+  workoutPlans: _workoutPlans = [],
   telemetry,
 }: ReadinessRecoveryTrackerProps) {
   const normalizedInitialTab = initialTab === '3d' || initialTab === 'heatmap' ? 'gate' : initialTab

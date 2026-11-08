@@ -315,7 +315,7 @@ export const COMMON_COACH_GORDON_CUES = [
  * Decodes into Web Audio buffer when AudioContext is available for instant non-exclusive playback.
  */
 export async function prefetchCoachVoiceCue(text: string, voiceId: string = COACH_GORDON_VOICE_ID): Promise<string | null> {
-  if (typeof window === 'undefined') return null
+  if (typeof window === 'undefined' || navigator.webdriver) return null
 
   const cleanText = sanitizeCoachSpeechText(text)
   if (!cleanText) return null
@@ -381,7 +381,7 @@ export async function prefetchCoachVoiceCue(text: string, voiceId: string = COAC
  * Pre-warms common in-gym cues into browser memory using requestIdleCallback
  */
 export function prefetchCommonCoachVoiceCues(): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined' || navigator.webdriver) return
   const runner = async () => {
     // Batch in groups of 4 to prevent network starvation or rate limit spikes
     const batchSize = 4
@@ -451,7 +451,7 @@ export function chunkTextIntoSpeechSentences(text: string, maxChunkLength = 160)
  * and tempo countdowns always play in Coach Gordon's voice without robotic fallbacks.
  */
 export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceOptions = {}): Promise<boolean> {
-  if (typeof window === 'undefined') return false
+  if (typeof window === 'undefined' || navigator.webdriver) return false
 
   const cleanText = sanitizeCoachSpeechText(text)
   if (!cleanText) return false

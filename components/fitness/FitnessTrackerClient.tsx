@@ -8,31 +8,14 @@ import { openCoachGordon } from '@/components/fitness/GlobalCoachGordonHost'
 import type { NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 import type { DailyBiometricSummary } from '@/lib/wearables-telemetry'
 
-const FitnessLabDiagnosticsView = dynamic(
-  () => import('@/components/fitness/hub-views/FitnessLabDiagnosticsView'),
-  { ssr: false }
-)
-const ProgressAnalyticsView = dynamic(
-  () => import('@/components/fitness/hub-views/ProgressAnalyticsView'),
-  { ssr: false }
-)
-const CoachAdvisoryView = dynamic(
-  () => import('@/components/fitness/hub-views/CoachAdvisoryView'),
-  { ssr: false }
-)
-const ClinicalKineticWarmupModule = dynamic(
-  () => import('@/components/fitness/ClinicalKineticWarmupModule'),
-  { ssr: false }
-)
-const ClinicalCoolDownModule = dynamic(
-  () => import('@/components/fitness/ClinicalCoolDownModule'),
-  { ssr: false }
-)
-import {
+import FitnessLabDiagnosticsView from '@/components/fitness/hub-views/FitnessLabDiagnosticsView'
+import ProgressAnalyticsView from '@/components/fitness/hub-views/ProgressAnalyticsView'
+import CoachAdvisoryView from '@/components/fitness/hub-views/CoachAdvisoryView'
+import ClinicalKineticWarmupModule, {
   resolvePrescribedWarmupDrills,
   getWarmupStorageKey,
 } from '@/components/fitness/ClinicalKineticWarmupModule'
-import {
+import ClinicalCoolDownModule, {
   resolvePrescribedCoolDownStretches,
   getCoolDownStorageKey,
 } from '@/components/fitness/ClinicalCoolDownModule'
@@ -44,20 +27,14 @@ import type {
   WatchWarmupDrillPayload,
   WatchCooldownStretchPayload,
 } from '@/lib/native-healthkit-bridge'
+import ExerciseVideoModal from '@/components/fitness/ExerciseVideoModal'
+import SmartExerciseSwapModal from '@/components/coach/SmartExerciseSwapModal'
 const CoachCardioVoiceoverPlayer = dynamic(
   () => import('@/components/fitness/CoachCardioVoiceoverPlayer'),
   { ssr: false }
 )
 const MindfulMomentModal = dynamic(
   () => import('@/components/fitness/MindfulMomentModal'),
-  { ssr: false }
-)
-const ExerciseVideoModal = dynamic(
-  () => import('@/components/fitness/ExerciseVideoModal'),
-  { ssr: false }
-)
-const SmartExerciseSwapModal = dynamic(
-  () => import('@/components/coach/SmartExerciseSwapModal'),
   { ssr: false }
 )
 const BandResistanceChartModal = dynamic(
@@ -1044,7 +1021,7 @@ export default function FitnessTrackerClient({
     activeWorkoutStage,
     handleStartWorkoutSession,
     handleStartStrengthSession: _handleStartStrengthSession,
-    handleStartCardioSession,
+    handleStartCardioSession: _handleStartCardioSession,
     handlePauseResumeWorkoutSession,
     handleStopWorkoutSession,
     handleQuitWorkoutSession,
@@ -1762,11 +1739,21 @@ export default function FitnessTrackerClient({
     }
   }, [units, initialUnits])
 
+  const [isHydrated, setIsHydrated] = useState(false)
+  useEffect(() => {
+    setIsHydrated(true)
+    try {
+      sessionStorage.removeItem('forge_onboarding_redirect_pending')
+    } catch {
+      // ignore
+    }
+  }, [])
+
   const handleHubChange = useCallback((nextHub: PrimaryFitnessHub) => {
     setPrimaryHub(nextHub)
     setWorkspace(nextHub as FitnessWorkspace)
 
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : searchParams.toString())
     if (nextHub === 'train') {
       params.delete('workspace')
     } else {
@@ -1774,7 +1761,11 @@ export default function FitnessTrackerClient({
     }
 
     const query = params.toString()
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+    } else {
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    }
   }, [pathname, router, searchParams])
 
   const handleLabToolChange = useCallback((tool: FitnessLabTool) => {
@@ -1782,11 +1773,15 @@ export default function FitnessTrackerClient({
     setPrimaryHub('lab')
     setWorkspace('lab')
 
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : searchParams.toString())
     params.set('workspace', tool)
 
     const query = params.toString()
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+    } else {
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    }
   }, [pathname, router, searchParams])
 
   const handleWorkspaceChange = useCallback((nextWorkspace: FitnessWorkspace) => {
@@ -1795,7 +1790,7 @@ export default function FitnessTrackerClient({
     setActiveLabTool(resolved.labTool)
     setWorkspace(nextWorkspace)
 
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : searchParams.toString())
     if (nextWorkspace === 'train') {
       params.delete('workspace')
     } else {
@@ -1803,7 +1798,11 @@ export default function FitnessTrackerClient({
     }
 
     const query = params.toString()
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+    } else {
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    }
   }, [pathname, router, searchParams])
 
   const jumpToWorkoutDay = useCallback((day: number) => {
@@ -3960,9 +3959,6 @@ export default function FitnessTrackerClient({
                     aria-label="Workout stages"
                     role="group"
                     style={{
-                      position: 'sticky',
-                      top: 0,
-                      zIndex: 25,
                       marginBottom: 14,
                       backdropFilter: 'blur(16px)',
                       background: 'rgba(9, 14, 26, 0.95)',
@@ -3982,6 +3978,7 @@ export default function FitnessTrackerClient({
                         <button
                           key={step.id}
                           type="button"
+                          disabled={!isHydrated}
                           aria-pressed={isSelected}
                           style={{ minHeight: 44 }}
                           onClick={() => {
@@ -4172,7 +4169,7 @@ export default function FitnessTrackerClient({
                         const isDedicatedCardioDay =
                           workout.focus?.toLowerCase().includes('cardio') ||
                           workout.focus?.toLowerCase().includes('recovery') ||
-                          resistanceWorkingLifts.length === 0
+                          currentExercises.length === 0
 
                         return (
                           <div
@@ -5029,7 +5026,7 @@ export default function FitnessTrackerClient({
                                                   ? `Stop Hold (Side ${activeHoldTimer.currentSide}/2: ${activeHoldTimer.remainingSeconds}s left)`
                                                   : `Stop Hold (${activeHoldTimer.remainingSeconds}s left)`)
                                               : (isUnilateral
-                                                  ? `Start 2×${draft.reps || 30}s Timer (Both Sides)`
+                                                  ? `Start ${draft.reps || 30}s Countdown (Both Sides)`
                                                   : `Start ${draft.reps || 30}s Countdown Timer`)}
                                           </span>
                                         </button>
@@ -5046,7 +5043,7 @@ export default function FitnessTrackerClient({
                                       className="tactile-btn"
                                       style={{
                                         marginTop: 4,
-                                        minHeight: 36,
+                                        minHeight: 44,
                                         background: 'rgba(59,130,246,0.2)',
                                         border: '1px solid #3B82F6',
                                         color: '#60A5FA',
@@ -6290,6 +6287,7 @@ export default function FitnessTrackerClient({
 
                             <button
                               type="button"
+                              disabled={!isHydrated}
                               onClick={() => setCompleteModal(workout)}
                               className="tactile-btn"
                               style={{
@@ -6790,6 +6788,9 @@ const setFieldLabelStyle: React.CSSProperties = {
   fontSize: 11,
   letterSpacing: '0.07em',
   textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 }
 
 const setFieldHintStyle: React.CSSProperties = {
@@ -6896,7 +6897,7 @@ function PostWorkoutFinishModal({
   onFlowToCoolDown,
   onFlowToMindfulness,
   busy,
-  onOpenProofOfWork,
+  onOpenProofOfWork: _onOpenProofOfWork,
 }: {
   workout: WorkoutDay
   cardio?: IntegratedCardioPrescription | null

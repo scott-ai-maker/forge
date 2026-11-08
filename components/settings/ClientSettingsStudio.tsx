@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import GeneralSettingsForm from '@/components/settings/GeneralSettingsForm'
 import WearablesDeviceStudio from '@/components/fitness/WearablesDeviceStudio'
@@ -13,7 +13,6 @@ import { isNativeAndroid } from '@/lib/native-healthkit-bridge'
 import { isCompanionApp } from '@/lib/native-companion'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 import WorkoutCalendarView, { WorkoutCalendarEntry } from '@/components/fitness/WorkoutCalendarView'
-import Link from 'next/link'
 
 export type SettingsTab = 'schedule' | 'wearables' | 'apps' | 'spotify' | 'billing' | 'fitness' | 'medical' | 'profile' | 'security' | 'notifications'
 
@@ -50,6 +49,11 @@ export default function ClientSettingsStudio({
   const rawTabQuery = (searchParams.get('tab') as SettingsTab) || initialTab
   const currentTabQuery: SettingsTab = rawTabQuery === 'apps' || rawTabQuery === 'spotify' ? 'wearables' : rawTabQuery
   const [activeTab, setActiveTab] = useState<SettingsTab>(currentTabQuery)
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   const handleTabChange = (tab: SettingsTab) => {
     setActiveTab(tab)
@@ -133,7 +137,7 @@ export default function ClientSettingsStudio({
 
       {/* ── Compact Horizontal Tabbed Workspace Navigation ── */}
       <div
-        className="settings-tab-strip responsive-tabs-scroll"
+        className="settings-tab-strip"
         role="group"
         aria-label="Settings sections"
         style={{
@@ -145,7 +149,7 @@ export default function ClientSettingsStudio({
         }}
       >
         {[
-          { key: 'schedule' as const, label: 'Schedule', icon: 'calendar' as GaaIconName },
+          { key: 'schedule' as const, label: 'Workout Schedule', icon: 'calendar' as GaaIconName },
           isNativeAndroid()
             ? {
                 key: 'wearables' as const,
@@ -161,7 +165,7 @@ export default function ClientSettingsStudio({
               },
           {
             key: 'billing' as const,
-            label: isCompanion ? 'Membership' : 'Billing',
+            label: isCompanion ? 'Retainer & Membership' : 'Retainer & Add-Ons',
             icon: 'credit-card' as GaaIconName,
             badge: isCompanion ? 'Web' : 'Active',
           },
@@ -169,21 +173,22 @@ export default function ClientSettingsStudio({
           { key: 'medical' as const, label: 'PAR-Q+ & Medical', icon: 'shield-check' as GaaIconName, badge: 'Clinical' },
           { key: 'profile' as const, label: 'Profile', icon: 'user' as GaaIconName },
           { key: 'security' as const, label: 'Security', icon: 'lock' as GaaIconName },
-          { key: 'notifications' as const, label: 'Alerts', icon: 'bell' as GaaIconName },
+          { key: 'notifications' as const, label: 'Alert Preferences', icon: 'bell' as GaaIconName },
         ].map(tab => {
           const isSelected = activeTab === tab.key
           return (
             <button
               key={tab.key}
               type="button"
+              disabled={!isHydrated}
               onClick={() => handleTabChange(tab.key)}
               aria-pressed={isSelected}
               style={{
-                minHeight: 38,
+                minHeight: 44,
                 background: isSelected ? 'rgba(212,160,23,0.14)' : 'rgba(255,255,255,0.02)',
                 border: isSelected ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.08)',
                 borderRadius: 8,
-                padding: '7px 12px',
+                padding: '8px 12px',
                 color: isSelected ? 'var(--gold-lt)' : 'var(--white)',
                 fontFamily: 'Raleway, sans-serif',
                 fontWeight: isSelected ? 800 : 600,
