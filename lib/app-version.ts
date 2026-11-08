@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.48.0'
+export const APP_VERSION = '1.48.1'
 export const APP_RELEASE_DATE = '2026-11-08'
-export const APP_RELEASE_CODENAME = 'Streamlined Gym-First Workout Flow & Progressive Set Logger'
+export const APP_RELEASE_CODENAME = 'Coach & Client Analytics Telemetry Pipeline & Schema Alignment'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.48.1',
+    date: '2026-11-08',
+    codename: 'Coach & Client Analytics Telemetry Pipeline & Schema Alignment',
+    category: 'fix',
+    badge: 'Analytics Pipeline Fix',
+    title: 'v1.48.1 — Coach & Client Analytics Telemetry Pipeline & Schema Alignment',
+    summary:
+      'Repairs data-reading queries and aggregation logic across the Coach Analytics Dashboard, Client Progress & Analytics View, and Weekly Dossier / ACWR telemetry engines so all logged sets, RiR-derived RPE, cardio sessions, and personal records are accurately reflected.',
+    highlights: [
+      'Coach Analytics Roster & Unified Activity Aggregation: Updated /api/coach/analytics to include unassigned clients for Master Coach views, unify workout activity across workout_logs, workout_set_logs, and cardio_logs, look up all-time last workout dates, prorate compliance against each client’s actual weekly target, and compute true consecutive day streaks.',
+      'Client Progress & RiR-to-RPE Analytics: Updated useSetVolume and ProgressAnalyticsView to derive effective RPE from logged RiR (10 - rir), normalize session_date keys, merge session-level workout_logs dates/exertion, and display BW for bodyweight sets.',
+      'PostgreSQL Schema Alignment for Weekly Dossiers & ACWR: Aligned workout_set_logs (weight_kg) and client_personal_records (max_weight_kg, max_weight_reps, max_weight_date) queries across dashboard, coach dossier pages, and ACWR workload calculations.',
+    ],
+  },
   {
     version: '1.48.0',
     date: '2026-11-08',

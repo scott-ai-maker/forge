@@ -91,7 +91,7 @@ export default async function CoachClientDossierPage({ params }: PageProps) {
       .maybeSingle(),
     admin
       .from('workout_set_logs')
-      .select('session_date, weight_lbs, reps, is_warmup, rpe, exercise_name, notes')
+      .select('session_date, weight_kg, reps, is_warmup, rpe, rir, exercise_name, notes')
       .eq('user_id', id)
       .gte('session_date', twentyEightDaysAgoStr)
       .order('session_date', { ascending: false }),
@@ -102,11 +102,11 @@ export default async function CoachClientDossierPage({ params }: PageProps) {
       .gte('session_date', sevenDaysAgoStr)
       .order('session_date', { ascending: false }),
     admin
-      .from('personal_records')
-      .select('exercise_name, weight_lbs, reps, achieved_at')
+      .from('client_personal_records')
+      .select('exercise_name, max_weight_kg, max_weight_reps, max_weight_date')
       .eq('user_id', id)
-      .gte('achieved_at', sevenDaysAgo.toISOString())
-      .order('achieved_at', { ascending: false }),
+      .gte('max_weight_date', sevenDaysAgoStr)
+      .order('max_weight_date', { ascending: false }),
     admin
       .from('athlete_wearable_metrics')
       .select('resting_heart_rate, hrv_rmssd_ms')
@@ -127,7 +127,7 @@ export default async function CoachClientDossierPage({ params }: PageProps) {
   // Split sets into 7-day acute and calculate 28-day chronic weekly average tonnage
   const acuteSetLogs = (allSetLogs ?? []).filter(s => (s.session_date ?? '') >= sevenDaysAgoStr)
   const chronicTonnageSum = (allSetLogs ?? []).reduce(
-    (acc, s) => acc + (s.is_warmup ? 0 : (s.weight_lbs ?? 0) * (s.reps ?? 0)),
+    (acc, s) => acc + (s.is_warmup ? 0 : ((s.weight_kg ?? 0) * 2.20462) * (s.reps ?? 0)),
     0
   )
   const chronicWorkloadTonnage = Math.round(chronicTonnageSum / 4)

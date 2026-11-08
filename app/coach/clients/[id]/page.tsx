@@ -298,7 +298,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
     isDossierTab
       ? admin
           .from('workout_set_logs')
-          .select('session_date, weight_lbs, reps, is_warmup, rpe, exercise_name, notes')
+          .select('session_date, weight_kg, reps, is_warmup, rpe, rir, exercise_name, notes')
           .eq('user_id', id)
           .gte('session_date', new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
           .order('session_date', { ascending: false })
@@ -313,11 +313,11 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
       : Promise.resolve({ data: [] }),
     isDossierTab
       ? admin
-          .from('personal_records')
-          .select('exercise_name, weight_lbs, reps, achieved_at')
+          .from('client_personal_records')
+          .select('exercise_name, max_weight_kg, max_weight_reps, max_weight_date')
           .eq('user_id', id)
-          .gte('achieved_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-          .order('achieved_at', { ascending: false })
+          .gte('max_weight_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+          .order('max_weight_date', { ascending: false })
       : Promise.resolve({ data: [] }),
     isDossierTab
       ? admin
@@ -554,8 +554,8 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
         dossierWearableResult.data?.resting_heart_rate ?? 54,
         dossierWearableResult.data?.hrv_rmssd_ms ?? 68,
         Math.round(
-          ((dossierSetLogsResult.data ?? []) as Array<{ is_warmup?: boolean | null; weight_lbs?: number | null; reps?: number | null }>).reduce(
-            (acc, s) => acc + (s.is_warmup ? 0 : (s.weight_lbs ?? 0) * (s.reps ?? 0)),
+          ((dossierSetLogsResult.data ?? []) as Array<{ is_warmup?: boolean | null; weight_kg?: number | null; reps?: number | null }>).reduce(
+            (acc, s) => acc + (s.is_warmup ? 0 : ((s.weight_kg ?? 0) * 2.20462) * (s.reps ?? 0)),
             0
           ) / 4
         )

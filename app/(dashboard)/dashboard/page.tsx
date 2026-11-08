@@ -69,7 +69,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .maybeSingle(),
     supabase
       .from('workout_set_logs')
-      .select('session_date, weight_lbs, reps, is_warmup, rpe, exercise_name, notes, created_at')
+      .select('session_date, weight_kg, reps, is_warmup, rpe, rir, exercise_name, notes, created_at')
       .eq('user_id', user.id)
       .gte('session_date', sevenDaysAgo.split('T')[0])
       .order('session_date', { ascending: false }),
@@ -80,11 +80,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .gte('session_date', sevenDaysAgo.split('T')[0])
       .order('session_date', { ascending: false }),
     supabase
-      .from('personal_records')
-      .select('exercise_name, weight_lbs, reps, achieved_at')
+      .from('client_personal_records')
+      .select('exercise_name, max_weight_kg, max_weight_reps, max_weight_date, updated_at')
       .eq('user_id', user.id)
-      .gte('achieved_at', sevenDaysAgo)
-      .order('achieved_at', { ascending: false }),
+      .gte('max_weight_date', sevenDaysAgo.split('T')[0])
+      .order('max_weight_date', { ascending: false }),
     supabase
       .from('workout_logs')
       .select('id, session_title, session_date, completed, notes, exertion_rpe, created_at')
@@ -256,7 +256,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           ...s,
           exercise_name: s.exercise_name,
           reps: s.reps,
-          weight_kg: s.weight_lbs ? s.weight_lbs / 2.20462 : null,
+          weight_kg: s.weight_kg ?? null,
           is_warmup: s.is_warmup,
           notes: s.notes,
           session_date: s.session_date,
@@ -277,7 +277,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const activeDayExerciseCount = (activeWorkout?.exercises ?? []).length
   const isWorkoutInProgress = activeDayLoggedWorkingSets > 0 && !isWorkoutCompleted
-  const totalVolumeMovedLbs = activeDaySetLogs.reduce((acc, s) => acc + ((s.weight_lbs ?? 0) * (s.reps ?? 0)), 0)
+  const totalVolumeMovedLbs = Math.round(activeDaySetLogs.reduce((acc, s) => acc + (((s.weight_kg ?? 0) * 2.20462) * (s.reps ?? 0)), 0))
   const activeWorkoutDurationMins = activeWorkout
     ? calculateEstimatedWorkoutDuration({
         workout: activeWorkout,

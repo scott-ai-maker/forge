@@ -16,6 +16,8 @@
 
 import {
   computeKineticDistribution,
+  resolveSetWeightLbs,
+  normalizePersonalRecord,
   type KineticPatternDistribution,
   type RawSetLog,
   type RawCardioLog,
@@ -168,10 +170,10 @@ export function buildProofOfWorkDossier(params: BuildProofOfWorkParams): ProofOf
 
   for (const set of setLogs) {
     if (set.is_warmup) continue
-    const wt = set.weight_lbs || 0
+    const wt = resolveSetWeightLbs(set)
     const reps = set.reps || 0
     if (wt > 0 && reps > 0) {
-      totalTonnageLbs += wt * reps
+      totalTonnageLbs += Math.round(wt * reps)
       totalWorkingSets++
     }
     if (typeof set.rpe === 'number' && set.rpe > 0) {
@@ -261,7 +263,8 @@ export function buildProofOfWorkDossier(params: BuildProofOfWorkParams): ProofOf
   ]
 
   // If user has recorded actual PRs, update compound table dynamically
-  for (const pr of prs) {
+  for (const rawPr of prs) {
+    const pr = normalizePersonalRecord(rawPr)
     const match = compoundLifts.find(c =>
       c.exerciseName.toLowerCase().includes(pr.exercise_name.toLowerCase()) ||
       pr.exercise_name.toLowerCase().includes(c.exerciseName.toLowerCase())

@@ -230,5 +230,32 @@ describe('Sunday Intelligence Dossier Engine', () => {
       expect(dossier.soapRecord.assessment).toContain('within your usual range')
       expect(dossier.soapRecord.plan).toContain('Practice each movement with control')
     })
+
+    it('reads PostgreSQL workout_set_logs weight_kg and client_personal_records max_weight_kg accurately', () => {
+      const sets = [
+        { session_date: '2026-08-18', weight_kg: 100, reps: 5, is_warmup: false, rpe: 8, exercise_name: 'Barbell Squat' },
+      ]
+      const prs = [
+        { exercise_name: 'Barbell Squat', max_weight_kg: 140, max_weight_reps: 3, max_weight_date: '2026-08-18' },
+      ]
+
+      const dossier = generateSundayDossier(
+        'Elena Vance',
+        'Phase 4: Maximal Strength',
+        sets,
+        [],
+        prs,
+        3,
+        54,
+        72
+      )
+
+      // 100 kg -> 220.5 lbs * 5 reps = 1102.5 -> 1103 lbs
+      expect(dossier.totalTonnageLbs).toBe(1103)
+      expect(dossier.topPrsThisWeek).toHaveLength(1)
+      expect(dossier.topPrsThisWeek[0]?.weight_lbs).toBe(309) // round(140 * 2.20462)
+      expect(dossier.topPrsThisWeek[0]?.reps).toBe(3)
+      expect(dossier.topPrsThisWeek[0]?.achieved_at).toBe('2026-08-18')
+    })
   })
 })

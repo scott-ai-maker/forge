@@ -234,18 +234,22 @@ export default function ProgressAnalyticsView({
             Set-by-Set Ledger
           </h3>
           <div style={{ display: 'grid', gap: 6 }}>
-            {sets.slice(0, setLimit).map(row => (
-              <div key={row.id} style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'var(--navy)', padding: '8px 12px', borderRadius: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                <div style={{ fontWeight: 600, color: '#FFFFFF', fontSize: 13 }}>{row.exercise_name}</div>
-                <div style={{ color: 'var(--gray)', fontSize: 12 }}>
-                  Set {row.set_number ?? '-'}{row.is_warmup ? ' · Warm-up' : ''} · <strong style={{ color: 'var(--gold-lt)' }}>
-                    {isTimedStaticStretch(row.exercise_name, null, null) || isFoamRollerExercise(row.exercise_name)
-                      ? `${row.reps}s`
-                      : `${row.reps} reps @ ${formatWeight(row.weight_kg, units)}`}
-                  </strong> · RPE {row.rpe ?? '-'} · {row.session_date}
+            {sets.slice(0, setLimit).map(row => {
+              const effectiveRpe = row.rpe ?? (row.rir !== undefined && row.rir !== null ? Math.max(1, Math.min(10, 10 - Number(row.rir))) : null)
+              const formattedLoad = formatWeight(row.weight_kg, units)
+              return (
+                <div key={row.id} style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'var(--navy)', padding: '8px 12px', borderRadius: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                  <div style={{ fontWeight: 600, color: '#FFFFFF', fontSize: 13 }}>{row.exercise_name}</div>
+                  <div style={{ color: 'var(--gray)', fontSize: 12 }}>
+                    Set {row.set_number ?? '-'}{row.is_warmup ? ' · Warm-up' : ''} · <strong style={{ color: 'var(--gold-lt)' }}>
+                      {isTimedStaticStretch(row.exercise_name, null, null) || isFoamRollerExercise(row.exercise_name)
+                        ? `${row.reps}s`
+                        : `${row.reps} reps @ ${formattedLoad === '-' ? 'BW' : formattedLoad}`}
+                    </strong> · RPE {effectiveRpe ?? '-'}{row.rir !== undefined && row.rir !== null ? ` (RiR ${row.rir})` : ''} · {row.session_date}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
           {setLimit < sets.length && <button type="button" onClick={() => setSetLimit(value => value + 10)}>Show more sets</button>}
         </details>

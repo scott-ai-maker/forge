@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase'
-import { generateSundayDossier } from '@/lib/sunday-dossier-engine'
+import { generateSundayDossier, resolveSetWeightLbs } from '@/lib/sunday-dossier-engine'
 import { buildProofOfWorkDossier, encodeProofOfWorkToken } from '@/lib/proof-of-work-dossier-engine'
 import { notifyUser } from '@/lib/notifications'
 
@@ -72,7 +72,7 @@ export async function dispatchSundayPerformanceDossiers(
       ] = await Promise.all([
         admin
           .from('workout_set_logs')
-          .select('session_date, weight_lbs, reps, is_warmup, rpe, exercise_name, notes')
+          .select('*')
           .eq('user_id', client.id)
           .gte('session_date', twentyEightDaysAgoStr)
           .order('session_date', { ascending: false }),
@@ -84,7 +84,7 @@ export async function dispatchSundayPerformanceDossiers(
           .order('session_date', { ascending: false }),
         admin
           .from('personal_records')
-          .select('exercise_name, weight_lbs, reps, achieved_at')
+          .select('*')
           .eq('user_id', client.id)
           .gte('achieved_at', sevenDaysAgo.toISOString())
           .order('achieved_at', { ascending: false }),
@@ -121,7 +121,7 @@ export async function dispatchSundayPerformanceDossiers(
       // Acute vs Chronic Tonnage calculation
       const acuteSetLogs = (setLogs ?? []).filter(s => (s.session_date ?? '') >= sevenDaysAgoStr)
       const chronicTonnageSum = (setLogs ?? []).reduce(
-        (acc, s) => acc + (s.is_warmup ? 0 : (s.weight_lbs ?? 0) * (s.reps ?? 0)),
+        (acc, s) => acc + (s.is_warmup ? 0 : resolveSetWeightLbs(s) * (s.reps ?? 0)),
         0
       )
       const chronicWorkloadTonnage = Math.round(chronicTonnageSum / 4)

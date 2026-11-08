@@ -1,9 +1,11 @@
 export interface RawSetLog {
   session_date: string
   weight_lbs?: number | null
+  weight_kg?: number | null
   reps?: number | null
   is_warmup?: boolean | null
   rpe?: number | null
+  rir?: number | null
   exercise_name?: string | null
   notes?: string | null
 }
@@ -17,9 +19,41 @@ export interface RawCardioLog {
 
 export interface RawPersonalRecord {
   exercise_name: string
+  weight_lbs?: number
+  max_weight_kg?: number
+  reps?: number
+  max_weight_reps?: number
+  achieved_at?: string
+  max_weight_date?: string
+}
+
+export function resolveSetWeightLbs(set: { weight_lbs?: number | null; weight_kg?: number | null }): number {
+  const lbs = Number(set.weight_lbs)
+  if (Number.isFinite(lbs) && lbs > 0) return lbs
+  const kg = Number(set.weight_kg)
+  if (Number.isFinite(kg) && kg > 0) return Math.round(kg * 2.20462 * 10) / 10
+  return 0
+}
+
+export function normalizePersonalRecord(pr: RawPersonalRecord): {
+  exercise_name: string
   weight_lbs: number
   reps: number
   achieved_at: string
+} {
+  const weightLbs = Number(pr.weight_lbs) > 0
+    ? Number(pr.weight_lbs)
+    : Number(pr.max_weight_kg) > 0
+    ? Math.round(Number(pr.max_weight_kg) * 2.20462)
+    : 0
+  const reps = Number(pr.reps ?? pr.max_weight_reps) || 1
+  const achievedAt = pr.achieved_at || pr.max_weight_date || ''
+  return {
+    exercise_name: pr.exercise_name,
+    weight_lbs: weightLbs,
+    reps,
+    achieved_at: achievedAt,
+  }
 }
 
 export type KineticMovementPattern = 'push' | 'pull' | 'squat' | 'hinge' | 'carry_core'
@@ -163,12 +197,18 @@ export function generateSundayDossier(
 
     if (!set.is_warmup) {
       totalWorkingSets += 1
-      const w = Number(set.weight_lbs) || 0
+      const w = resolveSetWeightLbs(set)
       const r = Number(set.reps) || 0
-      totalTonnageLbs += w * r
+      totalTonnageLbs += Math.round(w * r)
 
-      if (set.rpe && set.rpe > 0) {
-        totalRpeSum += set.rpe
+      const effectiveRpe =
+        set.rpe && set.rpe > 0
+          ? Number(set.rpe)
+          : set.rir !== undefined && set.rir !== null && Number.isFinite(Number(set.rir))
+          ? Math.max(1, Math.min(10, 10 - Number(set.rir)))
+          : 0
+      if (effectiveRpe > 0) {
+        totalRpeSum += effectiveRpe
         rpeCount += 1
       }
     }
@@ -226,9 +266,11 @@ export function generateSundayDossier(
     )
   }
 
-  if (prs.length > 0) {
-    const prDetails = prs.map(p => `${p.exercise_name} (${p.weight_lbs} lbs × ${p.reps} reps)`).join(', ')
-    executiveSummary.push(`You set ${prs.length} new personal record${prs.length === 1 ? '' : 's'}: ${prDetails}.`)
+  const normalizedPrs = prs.map(normalizePersonalRecord).filter(p => p.weight_lbs > 0)
+
+  if (normalizedPrs.length > 0) {
+    const prDetails = normalizedPrs.map(p => `${p.exercise_name} (${p.weight_lbs} lbs × ${p.reps} reps)`).join(', ')
+    executiveSummary.push(`You set ${normalizedPrs.length} new personal record${normalizedPrs.length === 1 ? '' : 's'}: ${prDetails}.`)
   }
 
   if (recoveryIndexScore >= 80) {
@@ -290,7 +332,7 @@ export function generateSundayDossier(
   // 8. Coach notes
   const soapRecord: SoapRecord = {
     subjective: `You completed ${completedSessions} session(s) during ${optPhase}, or ${adherencePct}% of your planned sessions. Your average effort rating was ${avgSessionRpe} out of 10. Your recovery score was ${recoveryIndexScore} out of 100 (${recoveryIndexScore >= 80 ? 'ready to train' : recoveryIndexScore >= 65 ? 'steady recovery' : 'more recovery may help'}).`,
-    objective: `You lifted ${totalTonnageLbs.toLocaleString()} pounds across ${totalWorkingSets} working sets. You logged ${zone2CardioMins} minutes of steady cardio (${totalCardioMins} total cardio minutes). Recent-to-usual workload ratio: ${rawAcwr !== null ? `${rawAcwr.toFixed(2)} (${acwrZone})` : 'not enough data yet'}. Movement patterns: ${kineticDistribution.pushPct}% push, ${kineticDistribution.pullPct}% pull, ${kineticDistribution.squatPct}% squat, ${kineticDistribution.hingePct}% hinge, and ${kineticDistribution.carryCorePct}% carry or core exercises. Personal records: ${prs.length > 0 ? prs.map(p => `${p.exercise_name} (${p.weight_lbs} lbs × ${p.reps} reps)`).join(', ') : 'None logged this week'}.`,
+    objective: `You lifted ${totalTonnageLbs.toLocaleString()} pounds across ${totalWorkingSets} working sets. You logged ${zone2CardioMins} minutes of steady cardio (${totalCardioMins} total cardio minutes). Recent-to-usual workload ratio: ${rawAcwr !== null ? `${rawAcwr.toFixed(2)} (${acwrZone})` : 'not enough data yet'}. Movement patterns: ${kineticDistribution.pushPct}% push, ${kineticDistribution.pullPct}% pull, ${kineticDistribution.squatPct}% squat, ${kineticDistribution.hingePct}% hinge, and ${kineticDistribution.carryCorePct}% carry or core exercises. Personal records: ${normalizedPrs.length > 0 ? normalizedPrs.map(p => `${p.exercise_name} (${p.weight_lbs} lbs × ${p.reps} reps)`).join(', ') : 'None logged this week'}.`,
     assessment: rawAcwr !== null
       ? `Your recent training load is ${rawAcwr >= 0.8 && rawAcwr <= 1.3 ? 'within your usual range' : rawAcwr > 1.49 ? 'much higher than usual, so extra recovery may help' : 'changing'}. Steady cardio can build endurance without replacing strength training.`
       : 'There is not enough training data yet to compare workloads. Keep logging workouts and build up gradually.',
@@ -311,7 +353,7 @@ export function generateSundayDossier(
     totalCardioMins,
     zone2CardioMins,
     avgSessionRpe,
-    topPrsThisWeek: prs,
+    topPrsThisWeek: normalizedPrs,
     recoveryIndexScore,
     executiveSummary,
     nextWeekFocus,

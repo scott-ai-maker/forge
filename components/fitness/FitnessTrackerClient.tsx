@@ -5939,7 +5939,7 @@ export default function FitnessTrackerClient({
             currentMicrocycleWeek: microcycleProgress.currentWeek,
             setLogs: localSetLogs.map(s => ({
               session_date: s.session_date || todayDateOnly(),
-              weight_lbs: units === 'metric' ? Math.round((s.weight_kg || 0) * 2.20462) : s.weight_kg,
+              weight_lbs: Math.round((s.weight_kg || 0) * 2.20462),
               reps: s.reps,
               is_warmup: s.is_warmup,
               rpe: s.rpe,

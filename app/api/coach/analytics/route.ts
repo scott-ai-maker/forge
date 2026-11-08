@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
+import { getRequestAuthz, requireRole, isMasterCoachEmail, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export interface ClientEngagement {
@@ -8,6 +8,8 @@ export interface ClientEngagement {
   email: string
   sessionsRemaining: number
   workoutLogsLast28: number
+  setsLoggedLast28?: number
+  volumeLbsLast28?: number
   workoutCompliancePct: number | null
   checkinsLast8: number
   lastCheckinDate: string | null
@@ -19,10 +21,12 @@ export interface ClientEngagement {
 
 export async function GET(req: NextRequest) {
   let coachId = ''
+  let isMasterCoach = false
   try {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['coach'])
     coachId = authz.user.id
+    isMasterCoach = isMasterCoachEmail(authz.user.email) || authz.user.user_metadata?.surface_role === 'coach'
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
@@ -40,13 +44,20 @@ export async function GET(req: NextRequest) {
   since56.setDate(since56.getDate() - 56)
   const since56Str = since56.toISOString().slice(0, 10)
 
-  // Load assigned clients
-  const { data: clients, error: clientsError } = await admin
+  // Load assigned clients (or assigned + unassigned for Master Coach)
+  let clientsQuery = admin
     .from('clients')
-    .select('id, email, full_name')
-    .eq('designated_coach_id', coachId)
+    .select('id, email, full_name, created_at, designated_coach_id')
     .eq('role', 'client')
     .order('full_name', { ascending: true })
+
+  if (isMasterCoach) {
+    clientsQuery = clientsQuery.or(`designated_coach_id.eq.${coachId},designated_coach_id.is.null`)
+  } else {
+    clientsQuery = clientsQuery.eq('designated_coach_id', coachId)
+  }
+
+  const { data: clients, error: clientsError } = await clientsQuery
 
   if (clientsError) {
     return NextResponse.json({ error: 'Failed to load clients' }, { status: 500 })
@@ -58,31 +69,53 @@ export async function GET(req: NextRequest) {
 
   const clientIds = clients.map((c) => c.id)
 
-  // Parallel data fetch
-  const [packagesRes, workoutLogsRes, workoutLogs56Res, checkinsRes, goalsRes] = await Promise.all([
+  // Parallel data fetch across workout_logs, workout_set_logs, cardio_logs, fitness_profiles, workout_plans, packages, checkins, and goals
+  const [
+    packagesRes,
+    workoutLogsRes,
+    setLogsRes,
+    cardioLogsRes,
+    profilesRes,
+    plansRes,
+    checkinsRes,
+    goalsRes,
+  ] = await Promise.all([
     admin
       .from('client_packages')
-      .select('client_id, sessions_remaining')
+      .select('client_id, sessions_remaining, expires_at')
       .in('client_id', clientIds),
     admin
       .from('workout_logs')
-      .select('user_id, session_date, completed')
+      .select('user_id, session_date, completed, created_at')
       .in('user_id', clientIds)
-      .gte('session_date', since28Str)
-      .eq('completed', true)
-      .order('session_date', { ascending: false }),
+      .order('session_date', { ascending: false })
+      .limit(2000),
     admin
-      .from('workout_logs')
-      .select('user_id, session_date, completed')
+      .from('workout_set_logs')
+      .select('user_id, session_date, reps, weight_kg, is_warmup, created_at')
       .in('user_id', clientIds)
-      .gte('session_date', since56Str)
-      .lt('session_date', since28Str)
-      .eq('completed', true),
+      .order('session_date', { ascending: false })
+      .limit(5000),
+    admin
+      .from('cardio_logs')
+      .select('user_id, session_date, duration_mins, created_at')
+      .in('user_id', clientIds)
+      .order('session_date', { ascending: false })
+      .limit(1000),
+    admin
+      .from('fitness_profiles')
+      .select('user_id, training_days_per_week, onboarding_completed_at')
+      .in('user_id', clientIds),
+    admin
+      .from('workout_plans')
+      .select('user_id, sessions_per_week, plan_json, created_at')
+      .in('user_id', clientIds)
+      .order('created_at', { ascending: false }),
     admin
       .from('weekly_checkins')
       .select('user_id, week_start, created_at')
       .in('user_id', clientIds)
-      .order('week_start', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(clientIds.length * 8),
     admin
       .from('client_goals')
@@ -91,25 +124,67 @@ export async function GET(req: NextRequest) {
       .eq('is_achieved', false),
   ])
 
-  // Build lookup maps
+  // Build active sessions remaining lookup (filtering out expired packages)
   const sessionsMap = new Map<string, number>()
   for (const pkg of packagesRes.data ?? []) {
+    if (pkg.expires_at && new Date(pkg.expires_at) <= now) {
+      continue
+    }
     const current = sessionsMap.get(pkg.client_id) ?? 0
     sessionsMap.set(pkg.client_id, current + (pkg.sessions_remaining ?? 0))
   }
 
-  // Workout logs last 28 days per client
-  const logsLast28Map = new Map<string, string[]>()
-  for (const log of workoutLogsRes.data ?? []) {
-    const existing = logsLast28Map.get(log.user_id) ?? []
-    existing.push(log.session_date)
-    logsLast28Map.set(log.user_id, existing)
+  // Build unified distinct training dates per client across workout_logs, workout_set_logs, and cardio_logs
+  const allDatesByClient = new Map<string, Set<string>>()
+  const recordClientWorkoutDate = (userId: string | null | undefined, rawDate: string | null | undefined) => {
+    if (!userId || !rawDate) return
+    const dateStr = String(rawDate).slice(0, 10)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return
+    const existing = allDatesByClient.get(userId) ?? new Set<string>()
+    existing.add(dateStr)
+    allDatesByClient.set(userId, existing)
   }
 
-  // Workout logs 28-56 days ago (for trend)
-  const logsPrev28Map = new Map<string, number>()
-  for (const log of workoutLogs56Res.data ?? []) {
-    logsPrev28Map.set(log.user_id, (logsPrev28Map.get(log.user_id) ?? 0) + 1)
+  for (const log of workoutLogsRes.data ?? []) {
+    if (log.completed === false) continue
+    recordClientWorkoutDate(log.user_id, log.session_date || log.created_at)
+  }
+
+  const setsLast28Map = new Map<string, number>()
+  const volumeKgLast28Map = new Map<string, number>()
+  for (const setLog of setLogsRes.data ?? []) {
+    const dateStr = String(setLog.session_date || setLog.created_at || '').slice(0, 10)
+    recordClientWorkoutDate(setLog.user_id, dateStr)
+    if (dateStr >= since28Str) {
+      setsLast28Map.set(setLog.user_id, (setsLast28Map.get(setLog.user_id) ?? 0) + 1)
+      if (!setLog.is_warmup) {
+        const volKg = (Number(setLog.reps) || 0) * (Number(setLog.weight_kg) || 0)
+        if (Number.isFinite(volKg) && volKg > 0) {
+          volumeKgLast28Map.set(setLog.user_id, (volumeKgLast28Map.get(setLog.user_id) ?? 0) + volKg)
+        }
+      }
+    }
+  }
+
+  for (const cardioLog of cardioLogsRes.data ?? []) {
+    recordClientWorkoutDate(cardioLog.user_id, cardioLog.session_date || cardioLog.created_at)
+  }
+
+  // Profile & Plan target sessions per week lookup
+  const profileMap = new Map<string, { training_days_per_week?: number | null; onboarding_completed_at?: string | null }>()
+  for (const prof of profilesRes.data ?? []) {
+    profileMap.set(prof.user_id, prof)
+  }
+
+  const latestPlanMap = new Map<string, { sessions_per_week?: number | null; workoutsCount: number }>()
+  for (const plan of plansRes.data ?? []) {
+    if (latestPlanMap.has(plan.user_id)) continue
+    const rawPlanJson = plan.plan_json as { workouts?: unknown[] } | null
+    const workoutsCount = Array.isArray(rawPlanJson?.workouts) ? rawPlanJson.workouts.length : 0
+    latestPlanMap.set(plan.user_id, {
+      sessions_per_week: plan.sessions_per_week,
+      workoutsCount,
+    })
   }
 
   // Check-ins map: last 8 per client
@@ -129,33 +204,61 @@ export async function GET(req: NextRequest) {
   }
 
   const engagement: ClientEngagement[] = clients.map((client) => {
-    const logs28 = logsLast28Map.get(client.id) ?? []
+    const dateSet = allDatesByClient.get(client.id) ?? new Set<string>()
+    const sortedDatesDesc = Array.from(dateSet).sort((a, b) => b.localeCompare(a))
+
+    const logs28 = sortedDatesDesc.filter((d) => d >= since28Str)
+    const logsPrev28 = sortedDatesDesc.filter((d) => d >= since56Str && d < since28Str)
+
     const logCount28 = logs28.length
-    const logCountPrev28 = logsPrev28Map.get(client.id) ?? 0
+    const logCountPrev28 = logsPrev28.length
     const checkins = checkinsByClient.get(client.id) ?? []
-    const lastCheckinDate = checkins[0]?.week_start ?? null
-    const lastWorkoutDate = logs28[0] ?? null
+    const latestCheckin = checkins[0]
+    const lastCheckinDate = latestCheckin
+      ? (latestCheckin.created_at ? String(latestCheckin.created_at).slice(0, 10) : latestCheckin.week_start)
+      : null
+    const lastWorkoutDate = sortedDatesDesc[0] ?? null
     const activeGoals = activeGoalsMap.get(client.id) ?? 0
 
-    // Compliance assumes 4 sessions/week target (~16 per 28 days) as baseline
-    const TARGET_SESSIONS_28 = 16
+    // Resolve client's target sessions per week from plan or fitness profile (default 4)
+    const planInfo = latestPlanMap.get(client.id)
+    const profileInfo = profileMap.get(client.id)
+    const sessionsPerWeek =
+      Number(planInfo?.sessions_per_week) ||
+      Number(profileInfo?.training_days_per_week) ||
+      (planInfo?.workoutsCount && planInfo.workoutsCount > 0 ? planInfo.workoutsCount : 4)
+
+    // Prorate 28-day target if the client joined fewer than 28 days ago
+    const clientCreatedAt = (client as { created_at?: string | null }).created_at
+    const daysSinceJoined = clientCreatedAt
+      ? Math.max(7, Math.min(28, Math.ceil((now.getTime() - new Date(clientCreatedAt).getTime()) / 86_400_000)))
+      : 28
+    const targetSessionsWindow = Math.max(1, Math.round((sessionsPerWeek * daysSinceJoined) / 7))
+
+    const hasOnboardedOrPlan = Boolean(profileInfo?.onboarding_completed_at || planInfo || sortedDatesDesc.length > 0)
     const compliance =
       logCount28 > 0
-        ? Math.min(Math.round((logCount28 / TARGET_SESSIONS_28) * 100), 100)
+        ? Math.min(Math.round((logCount28 / targetSessionsWindow) * 100), 100)
+        : hasOnboardedOrPlan
+        ? 0
         : null
 
-    // Streak: count consecutive days with at least one workout going back from today
-    const workoutDateSet = new Set(logs28)
+    // Streak: count consecutive days with at least one workout going back from today (or yesterday)
     let streak = 0
     const cursor = new Date(now)
+    const todayIso = cursor.toISOString().slice(0, 10)
+    if (!dateSet.has(todayIso)) {
+      // Allow streak to continue from yesterday if today hasn't been logged yet
+      cursor.setDate(cursor.getDate() - 1)
+    }
     for (let i = 0; i < 28; i++) {
       const d = cursor.toISOString().slice(0, 10)
-      if (workoutDateSet.has(d)) {
+      if (dateSet.has(d)) {
         streak++
-      } else if (streak > 0) {
+        cursor.setDate(cursor.getDate() - 1)
+      } else {
         break
       }
-      cursor.setDate(cursor.getDate() - 1)
     }
 
     // Trend
@@ -176,6 +279,8 @@ export async function GET(req: NextRequest) {
       email: client.email,
       sessionsRemaining: sessionsMap.get(client.id) ?? 0,
       workoutLogsLast28: logCount28,
+      setsLoggedLast28: setsLast28Map.get(client.id) ?? 0,
+      volumeLbsLast28: Math.round((volumeKgLast28Map.get(client.id) ?? 0) * 2.20462),
       workoutCompliancePct: compliance,
       checkinsLast8: checkins.length,
       lastCheckinDate,

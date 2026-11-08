@@ -82,17 +82,18 @@ export function calculateAcwrFromWorkoutLogs(
     const dateMs = new Date(rawDate).getTime()
     if (isNaN(dateMs)) continue
 
-    const ageDays = (referenceDate - dateMs) / ONE_DAY_MS
-    if (ageDays < 0 || ageDays > 28) continue
+    const rawAgeDays = (referenceDate - dateMs) / ONE_DAY_MS
+    if (rawAgeDays < -1 || rawAgeDays > 28) continue
+    const ageDays = Math.max(0, rawAgeDays)
 
     if (ageDays > oldestAgeDays) {
       oldestAgeDays = ageDays
     }
 
     const reps = Number(set.reps) || 10
-    const weight = Number(set.weight_lbs || set.weight_kg) || 50
+    const weightLbs = Number(set.weight_lbs) || (Number(set.weight_kg) ? Number(set.weight_kg) * 2.20462 : 0) || 50
     const rpe = Number(set.rpe) || 8
-    const setLoadUnits = Math.round((reps * (weight > 0 ? Math.log10(weight + 10) * 10 : 10) * (rpe / 10)))
+    const setLoadUnits = Math.round((reps * (weightLbs > 0 ? Math.log10(weightLbs + 10) * 10 : 10) * (rpe / 10)))
 
     if (ageDays <= 7) {
       acuteVolume += setLoadUnits
@@ -108,8 +109,9 @@ export function calculateAcwrFromWorkoutLogs(
       const dateMs = new Date(rawDate).getTime()
       if (isNaN(dateMs)) continue
 
-      const ageDays = (referenceDate - dateMs) / ONE_DAY_MS
-      if (ageDays < 0 || ageDays > 28) continue
+      const rawAgeDays = (referenceDate - dateMs) / ONE_DAY_MS
+      if (rawAgeDays < -1 || rawAgeDays > 28) continue
+      const ageDays = Math.max(0, rawAgeDays)
 
       if (ageDays > oldestAgeDays) {
         oldestAgeDays = ageDays

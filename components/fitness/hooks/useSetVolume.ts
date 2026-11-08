@@ -122,30 +122,93 @@ export function formatVolumeDisplay(volumeKg: number, units: 'metric' | 'imperia
   return `${kg.toLocaleString()} kg`
 }
 
-export function computeExerciseProgression(setLogs: WorkoutSetLogRecord[]): ProgressionSummary {
+export function resolveEffectiveSetRpe(row: { rpe?: number | null; rir?: number | null }): number {
+  const rpe = Number(row.rpe)
+  if (Number.isFinite(rpe) && rpe > 0) return rpe
+  if (row.rir !== undefined && row.rir !== null && String(row.rir).trim() !== '') {
+    const rir = Number(row.rir)
+    if (Number.isFinite(rir) && rir >= 0 && rir <= 10) {
+      return Math.max(1, Math.min(10, Math.round((10 - rir) * 10) / 10))
+    }
+  }
+  return 0
+}
+
+export function resolveEffectiveSetWeightKg(row: { weight_kg?: number | null; weight_lbs?: number | null }): number {
+  const kg = Number(row.weight_kg)
+  if (Number.isFinite(kg) && kg > 0) return kg
+  const lbs = Number(row.weight_lbs)
+  if (Number.isFinite(lbs) && lbs > 0) return lbs * 0.45359237
+  return 0
+}
+
+export function computeExerciseProgression(
+  setLogs: WorkoutSetLogRecord[],
+  workoutLogs: WorkoutLogRecord[] = []
+): ProgressionSummary {
   const byDate = new Map<
     string,
     { volume: number; sets: number; avgRpe: number; rpeCount: number }
   >()
 
+  let totalSets = 0
+  let totalReps = 0
+  let totalVolumeKg = 0
+  let totalRpeSum = 0
+  let totalRpeCount = 0
+
   for (const row of setLogs) {
-    const key = row.session_date
+    const key = String(row.session_date || row.created_at || '').slice(0, 10)
+    if (!key) continue
     const current = byDate.get(key) ?? {
       volume: 0,
       sets: 0,
       avgRpe: 0,
       rpeCount: 0,
     }
-    const volume = Number(row.reps ?? 0) * Number(row.weight_kg ?? 0)
+    const reps = Number(row.reps ?? 0)
+    const weightKg = resolveEffectiveSetWeightKg(row as { weight_kg?: number | null; weight_lbs?: number | null })
+    const volume = reps * weightKg
     current.volume += Number.isFinite(volume) ? volume : 0
     current.sets += 1
 
-    const rpe = Number(row.rpe)
-    if (Number.isFinite(rpe) && rpe > 0) {
-      current.avgRpe += rpe
-      current.rpeCount += 1
+    totalSets += 1
+    if (Number.isFinite(reps) && reps > 0) {
+      totalReps += reps
+    }
+    if (Number.isFinite(volume) && volume > 0) {
+      totalVolumeKg += volume
     }
 
+    const rpe = resolveEffectiveSetRpe(row)
+    if (rpe > 0) {
+      current.avgRpe += rpe
+      current.rpeCount += 1
+      totalRpeSum += rpe
+      totalRpeCount += 1
+    }
+
+    byDate.set(key, current)
+  }
+
+  // Incorporate session-level workout_logs RPE and dates when set-level RPE or date is absent
+  for (const log of workoutLogs) {
+    if (log.completed === false) continue
+    const key = String(log.session_date || '').slice(0, 10)
+    if (!key) continue
+    const current = byDate.get(key) ?? {
+      volume: 0,
+      sets: 0,
+      avgRpe: 0,
+      rpeCount: 0,
+    }
+    const sessionRpe = Number(log.exertion_rpe)
+    if (Number.isFinite(sessionRpe) && sessionRpe > 0 && current.rpeCount === 0) {
+      current.avgRpe += sessionRpe
+      current.rpeCount += 1
+      totalRpeSum += sessionRpe
+      totalRpeCount += 1
+    }
     byDate.set(key, current)
   }
 
@@ -161,20 +224,9 @@ export function computeExerciseProgression(setLogs: WorkoutSetLogRecord[]): Prog
     }))
     .sort((a, b) => a.date.localeCompare(b.date))
 
-  const totalSets = setLogs.length
-  const totalReps = setLogs.reduce(
-    (sum, row) => sum + Number(row.reps ?? 0),
-    0
-  )
-  const totalVolumeKg = setLogs.reduce(
-    (sum, row) => sum + Number(row.reps ?? 0) * Number(row.weight_kg ?? 0),
-    0
-  )
-  const rpeRows = setLogs.filter(row => Number(row.rpe ?? 0) > 0)
   const avgRpe =
-    rpeRows.length > 0
-      ? rpeRows.reduce((sum, row) => sum + Number(row.rpe ?? 0), 0) /
-        rpeRows.length
+    totalRpeCount > 0
+      ? totalRpeSum / totalRpeCount
       : 0
 
   return {
@@ -313,8 +365,8 @@ export function useSetVolume({
 
   // 3. Historical volume and RPE progression by session date
   const progression: ProgressionSummary = useMemo(() => {
-    return computeExerciseProgression(localSetLogs)
-  }, [localSetLogs])
+    return computeExerciseProgression(localSetLogs, localWorkoutLogs)
+  }, [localSetLogs, localWorkoutLogs])
 
   // 4. Acute-to-Chronic Workload Ratio (ACWR) Telemetry
   const acwrTelemetry = useMemo(() => {

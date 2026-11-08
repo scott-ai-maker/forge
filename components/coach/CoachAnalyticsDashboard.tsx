@@ -10,6 +10,8 @@ interface ClientEngagement {
   email: string
   sessionsRemaining: number
   workoutLogsLast28: number
+  setsLoggedLast28?: number
+  volumeLbsLast28?: number
   workoutCompliancePct: number | null
   checkinsLast8: number
   lastCheckinDate: string | null
@@ -411,6 +413,11 @@ export default function CoachAnalyticsDashboard() {
                 >
                   {formatRelativeDate(client.lastWorkoutDate)}
                 </span>
+                {(client.setsLoggedLast28 ?? 0) > 0 && (
+                  <div style={{ fontSize: 10, color: 'var(--gray)', marginTop: 2 }}>
+                    {client.setsLoggedLast28} sets · {((client.volumeLbsLast28 ?? 0) / 1000).toFixed(1)}k lb
+                  </div>
+                )}
               </div>
 
               {/* Check-in */}
