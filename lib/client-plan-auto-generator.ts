@@ -30,6 +30,10 @@ import {
 } from './coach-programs'
 import { BodyCompositionScanResult } from './ai-body-composition-engine'
 import { PosturalMeshScanResult } from './ai-postural-mesh-scanner'
+import {
+  type TrainingSplitId,
+  recommendClientTrainingSplits,
+} from './client-training-recommendations'
 
 export const CORE_TRAINING_PROFILE_FIELDS = [
   'experienceLevel',
@@ -40,14 +44,21 @@ export const CORE_TRAINING_PROFILE_FIELDS = [
   'injuriesLimitations',
   'workoutLocation',
   'cardioEquipmentAccess',
+  'trainingSplit',
 ] as const
 
 export type CoreTrainingField = (typeof CORE_TRAINING_PROFILE_FIELDS)[number]
 
 export interface AutoPlanGenerationRequest {
   clientId: string
-  trigger: 'onboarding' | 'profile_update'
+  trigger: 'onboarding' | 'profile_update' | 'client_split_selection'
   updatedFields?: string[]
+  trainingSplit?: TrainingSplitId | 'auto'
+  trainingDaysPerWeek?: number
+  fitnessGoal?: string
+  experienceLevel?: string
+  targetNasmPhase?: number
+  cardioBlendStyle?: 'integrated_finishers' | 'dedicated_conditioning' | 'minimal_flush'
 }
 
 export interface AutoPlanGenerationResult {
@@ -56,6 +67,8 @@ export interface AutoPlanGenerationResult {
   nasmOptPhase?: number
   phaseName?: string
   sessionsPerWeek?: number
+  trainingSplit?: TrainingSplitId
+  trainingSplitLabel?: string
   preservedPlan?: boolean
   message: string
 }
@@ -184,6 +197,13 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
   const injuries = (profileRecord.injuries_limitations || intakeRecord?.surgeries_or_injuries || intakeRecord?.medical_conditions || undefined) as string | undefined
   const detectedInjuries = parseInjuriesFromText(injuries)
 
+  const effectiveGoal = params.fitnessGoal || profileRecord.fitness_goal || 'Body Recomposition & Joint Longevity'
+  const effectiveDays = Math.min(6, Math.max(2, Number(params.trainingDaysPerWeek || profileRecord.training_days_per_week) || 3))
+  const effectiveExperience = params.experienceLevel || profileRecord.experience_level || undefined
+  const effectiveSplit: TrainingSplitId | 'auto' =
+    params.trainingSplit ||
+    ((planJson?.trainingSplit as TrainingSplitId | undefined) ?? 'auto')
+
   const clientInput: ClientOnboardingProfileInput = {
     clientId,
     clientName: clientRecord?.full_name || 'Athlete',
@@ -191,8 +211,9 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
     sex: (profileRecord.sex as 'male' | 'female' | 'other') || 'other',
     heightCm: Number(profileRecord.height_cm) || 170,
     weightKg: Number(profileRecord.weight_kg) || 70,
-    fitnessGoal: profileRecord.fitness_goal || 'Body Recomposition & Joint Longevity',
-    trainingDaysPerWeek: Number(profileRecord.training_days_per_week) || 3,
+    fitnessGoal: effectiveGoal,
+    trainingDaysPerWeek: effectiveDays,
+    trainingSplit: effectiveSplit,
     equipmentAccess: Array.isArray(profileRecord.equipment_access) && profileRecord.equipment_access.length > 0
       ? profileRecord.equipment_access
       : ['bodyweight'],
@@ -201,7 +222,7 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
       : [],
     injuriesLimitations: injuries,
     contraindicationTags: detectedInjuries.selectedInjuryIds,
-    experienceLevel: profileRecord.experience_level || undefined,
+    experienceLevel: effectiveExperience,
   }
 
   const dexaScan: BodyCompositionScanResult | null = latestBodyComp ? {
@@ -280,6 +301,39 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
     postureScan,
   })
 
+  if (params.targetNasmPhase && params.targetNasmPhase >= 1 && params.targetNasmPhase <= 5) {
+    // Respect NASM OPT safety gate for beginners/compensations
+    const isBeginnerOrComp =
+      String(effectiveExperience || '').toLowerCase() === 'beginner' ||
+      (postureScan?.detectedCompensations && postureScan.detectedCompensations.length > 0)
+    const safePhase = params.targetNasmPhase >= 4 && isBeginnerOrComp
+      ? (String(effectiveExperience || '').toLowerCase() === 'beginner' ? 1 : 2)
+      : params.targetNasmPhase
+    const phaseTitleMap: Record<number, string> = {
+      1: 'Phase 1: Stabilization Endurance',
+      2: 'Phase 2: Strength Endurance',
+      3: 'Phase 3: Muscular Development (Hypertrophy)',
+      4: 'Phase 4: Maximal Strength',
+      5: 'Phase 5: Power',
+    }
+    periodizationRec.targetNasmPhase = safePhase
+    periodizationRec.targetPhaseName = phaseTitleMap[safePhase] || periodizationRec.targetPhaseName
+  }
+
+  if (params.cardioBlendStyle) {
+    periodizationRec.cardioBlendStyle = params.cardioBlendStyle
+  }
+
+  const splitRecSummary = recommendClientTrainingSplits({
+    experienceLevel: effectiveExperience,
+    trainingDaysPerWeek: effectiveDays,
+    fitnessGoal: effectiveGoal,
+    equipmentAccess: clientInput.equipmentAccess,
+    injuriesLimitations: injuries,
+    kineticCompensations: postureScan?.detectedCompensations,
+    preferredSplit: effectiveSplit,
+  })
+
   const programRec = generateProgramDesignFromScans({
     client: clientInput,
     dexaScan,
@@ -342,6 +396,15 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
   const finalPlanJson = {
     ...storedPlan,
     sessions: storedPlan.workouts,
+    trainingSplit: programRec.macrocyclePlan.trainingSplit || splitRecSummary.recommendedSplitId,
+    trainingSplitLabel: programRec.macrocyclePlan.trainingSplitLabel || splitRecSummary.recommendedSplitTitle,
+    ragSourcesCited: programRec.macrocyclePlan.ragSourcesCited || splitRecSummary.ragSourcesCited,
+    ragRecommendationSummary: {
+      recommendedSplitId: splitRecSummary.recommendedSplitId,
+      recommendedSplitTitle: splitRecSummary.recommendedSplitTitle,
+      ragHeadline: splitRecSummary.ragHeadline,
+      ragRationale: splitRecSummary.ragRationale,
+    },
     periodizationPlan: periodizationRec.macrocyclePlan,
     embeddedCEx: programRec.embeddedCEx,
     masterCoachCues: programRec.masterCoachCues,
@@ -417,6 +480,8 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
     nasmOptPhase: planRow.nasm_opt_phase,
     phaseName: planRow.phase_name,
     sessionsPerWeek: planRow.sessions_per_week,
+    trainingSplit: finalPlanJson.trainingSplit,
+    trainingSplitLabel: finalPlanJson.trainingSplitLabel,
     preservedPlan: false,
     message: 'Workout plan generated immediately based on updated profile.',
   }

@@ -26,6 +26,7 @@ import {
   generateRagNasmProgram,
   GeneratedMacrocyclePlan,
   GeneratedWorkoutDay,
+  type TrainingSplitId,
 } from './rag-nasm-program-generator'
 import {
   generateCorrectiveExercisePlan,
@@ -44,6 +45,7 @@ export interface ClientOnboardingProfileInput {
   weightKg?: number
   fitnessGoal?: string
   trainingDaysPerWeek?: number
+  trainingSplit?: TrainingSplitId | 'auto'
   equipmentAccess?: string[]
   cardioEquipmentAccess?: string[]
   injuriesLimitations?: string
@@ -419,6 +421,7 @@ export function generateProgramDesignFromScans(params: {
     goal,
     targetNasmPhase: targetPhase,
     trainingDaysPerWeek: daysPerWeek,
+    trainingSplit: client.trainingSplit,
     equipmentAccess: client.equipmentAccess,
     kineticCompensations: postureScan?.detectedCompensations,
     cardioBlendStyle: periodization.cardioBlendStyle,
@@ -455,10 +458,11 @@ export function generateProgramDesignFromScans(params: {
     dexaScan ? `Nutritional synchronization: Maintain protein at 1.0g per lb Lean Body Mass (${Math.round(dexaScan.leanBodyMassLbs)}g/day) to preserve skeletal muscle.` : `Fuel adequately 90 minutes prior to training session.`,
   ]
 
+  const splitTitleBadge = baseProgram.trainingSplitLabel ? ` · ${baseProgram.trainingSplitLabel}` : ''
   const rawEnrichedPlan: GeneratedMacrocyclePlan = {
     ...baseProgram,
     workouts: enrichedWorkouts,
-    planTitle: `${client.clientName} — 4-Phase CEx & OPT Phase ${targetPhase} Protocol`,
+    planTitle: `${client.clientName} — OPT Phase ${targetPhase}${splitTitleBadge} Protocol`,
   }
 
   // Enforce NASM OPT guardrails: 52-min duration hard cap, tempo/set volume bounds, equipment, and injury safety

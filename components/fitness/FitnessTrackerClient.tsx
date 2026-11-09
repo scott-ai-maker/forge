@@ -127,7 +127,9 @@ import {
   parseCardioEquipmentCapabilities,
   buildRecommendedCardioModalities,
   type IntegratedCardioPrescription,
+  type TrainingSplitId,
 } from '@/lib/rag-nasm-program-generator'
+import ClientTrainingSplitSelector from '@/components/fitness/tracker/ClientTrainingSplitSelector'
 import type { ExercisePlanItem } from '@/lib/travel-workout-adapter'
 import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 import {
@@ -157,6 +159,8 @@ interface FitnessProfile {
   hip_cm?: number
   training_days_per_week?: number
   fitness_goal?: string
+  experience_level?: string | null
+  preferred_training_split?: string | null
   target_bodyfat_percent?: number
   before_photo_url?: string
   equipment_access?: string[]
@@ -214,6 +218,8 @@ interface WorkoutPlanRecord {
     coachCertifiedAt?: string
     certifiedBy?: string
     safetyGateCertified?: boolean
+    trainingSplit?: TrainingSplitId
+    trainingSplitLabel?: string
     nutritionTargets?: NutritionTargetsSnapshot
     clinicalRationale?: string | {
       summary?: string
@@ -739,6 +745,7 @@ export default function FitnessTrackerClient({
   const [isWatchSimulatorOpen, setIsWatchSimulatorOpen] = useState(false)
 
   const [offlineCachedPlan, setOfflineCachedPlan] = useState<WorkoutPlanRecord | null>(null)
+  const [clientGeneratedPlan, setClientGeneratedPlan] = useState<WorkoutPlanRecord | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -758,12 +765,13 @@ export default function FitnessTrackerClient({
   }, [latestPlan, allPlans.length])
 
   const plan = useMemo(() => {
+    if (clientGeneratedPlan) return clientGeneratedPlan
     if (selectedPlanId && allPlans.length > 0) {
       const found = allPlans.find(p => p.id === selectedPlanId)
       if (found) return found
     }
     return latestPlan || allPlans[0] || offlineCachedPlan || null
-  }, [selectedPlanId, allPlans, latestPlan, offlineCachedPlan])
+  }, [clientGeneratedPlan, selectedPlanId, allPlans, latestPlan, offlineCachedPlan])
 
   const planWorkouts = useMemo(() => {
     return plan?.plan_json?.workouts ?? []
@@ -3340,6 +3348,7 @@ export default function FitnessTrackerClient({
                 <select
                   value={plan?.id}
                   onChange={(e) => {
+                    setClientGeneratedPlan(null)
                     setSelectedPlanId(e.target.value)
                     setActiveWorkoutDay(null)
                   }}
@@ -3369,7 +3378,31 @@ export default function FitnessTrackerClient({
             </div>
           </div>
 
-
+          <ClientTrainingSplitSelector
+            isCoachCertified={Boolean(
+              plan?.plan_json?.isCertifiedByCoach ||
+              plan?.plan_json?.coachCertifiedAt ||
+              plan?.plan_json?.safetyGateCertified ||
+              plan?.plan_json?.certifiedBy ||
+              plan?.plan_json?.generatedBy === 'coach' ||
+              plan?.plan_json?.generatedByCoachId
+            )}
+            hasActiveWorkouts={planWorkouts.length > 0}
+            currentSplit={plan?.plan_json?.trainingSplit ?? null}
+            initialExperienceLevel={profile?.experience_level ?? 'intermediate'}
+            initialDaysPerWeek={plan?.sessions_per_week ?? profile?.training_days_per_week ?? 4}
+            initialGoal={plan?.goal ?? profile?.fitness_goal ?? 'Fat Loss & Recomposition'}
+            equipmentAccess={profile?.equipment_access ?? ['dumbbell', 'band', 'bodyweight']}
+            injuriesLimitations={profile?.injuries_limitations ?? intake?.surgeries_or_injuries ?? intake?.medical_conditions ?? null}
+            onPlanGenerated={(updatedPlan, statusMsg) => {
+              if (updatedPlan) {
+                setClientGeneratedPlan(updatedPlan as WorkoutPlanRecord)
+              }
+              setActiveWorkoutDay(1)
+              setStatus(statusMsg)
+              router.refresh()
+            }}
+          />
 
           {planWorkouts.length > 0 && (
             <div

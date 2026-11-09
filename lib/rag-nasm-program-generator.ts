@@ -21,6 +21,20 @@ import { checkExerciseContraindications } from './liability-shield'
 import { parseInjuriesFromText, getInjuryAugmentations } from './sports-injuries'
 import { substituteMissingEquipment, enforcePhaseExerciseConstraints } from './nasm-opt-guardrails'
 import { enforceSessionDurationHardCap } from './workout-duration-engine'
+import {
+  type TrainingSplitId,
+  type ClientTrainingSplitOption,
+  type ClientTrainingRecommendationSummary,
+  recommendClientTrainingSplits,
+  buildSplitSpecificExercises,
+} from './client-training-recommendations'
+
+export type {
+  TrainingSplitId,
+  ClientTrainingSplitOption,
+  ClientTrainingRecommendationSummary,
+}
+export { recommendClientTrainingSplits }
 
 export interface RagProgramGenerationRequest {
   clientName?: string
@@ -29,6 +43,7 @@ export interface RagProgramGenerationRequest {
   goal: 'fat_loss' | 'hypertrophy' | 'performance' | 'general_fitness'
   targetNasmPhase?: number // 1, 2, 3, 4, or 5
   trainingDaysPerWeek?: number // 2, 3, 4, 5, or 6
+  trainingSplit?: TrainingSplitId | 'auto'
   experienceLevel?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
   equipmentAccess?: string[]
   knownBenchmarks?: Record<string, { weightLbs: number; reps: number }>
@@ -148,6 +163,8 @@ export interface GeneratedMacrocyclePlan {
   phaseName: string
   totalWeeks: number
   sessionsPerWeek: number
+  trainingSplit?: TrainingSplitId
+  trainingSplitLabel?: string
   ragSourcesCited: string[]
   strengthCardioBlendSummary: StrengthCardioBlendSummary
   workouts: GeneratedWorkoutDay[]
@@ -571,9 +588,36 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
   )
   const injuryAugmentations = getInjuryAugmentations(allContraTags)
 
+  const splitRecommendation = recommendClientTrainingSplits({
+    experienceLevel: request.experienceLevel,
+    trainingDaysPerWeek: daysPerWeek,
+    fitnessGoal: request.goal,
+    equipmentAccess: request.equipmentAccess,
+    injuriesLimitations: request.injuriesLimitations,
+    kineticCompensations: request.kineticCompensations,
+    preferredSplit: request.trainingSplit,
+  })
+  const resolvedSplitId: TrainingSplitId = splitRecommendation.recommendedSplitId
+  const resolvedSplitTitle: string = splitRecommendation.recommendedSplitTitle
+  const useCustomSplitBuilder = Boolean(request.trainingSplit)
+
   const workouts: GeneratedWorkoutDay[] = []
 
   for (let dayIndex = 1; dayIndex <= daysPerWeek; dayIndex++) {
+    const effectiveEquipment = request.equipmentAccess ?? [
+      'barbell',
+      'squat rack',
+      'dumbbell',
+      'cable',
+      'machines',
+      'bench',
+      'band',
+      'pull-up bar',
+      'stability ball',
+      'medicine ball',
+      'bodyweight',
+    ]
+
     const workoutDay = buildDistinctOptWorkoutDay({
       dayIndex,
       totalDays: daysPerWeek,
@@ -582,24 +626,45 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
       clientAge: request.clientAge,
       cardioBlendStyle: request.cardioBlendStyle,
       hasHeartMedications,
-      equipment: request.equipmentAccess ?? [
-        'barbell',
-        'squat rack',
-        'dumbbell',
-        'cable',
-        'machines',
-        'bench',
-        'band',
-        'pull-up bar',
-        'stability ball',
-        'medicine ball',
-        'bodyweight',
-      ],
+      equipment: effectiveEquipment,
       benchmarks: request.knownBenchmarks,
       kineticCompensations: request.kineticCompensations,
       cardioEquipment: request.cardioEquipmentAccess,
       experienceLevel: request.experienceLevel,
     })
+
+    // When a specific training split architecture is requested (or 'auto' resolved for a client),
+    // craft the day's exercise progression and focus according to that split while preserving
+    // dedicated cardio off-days and 4-phase corrective warmups.
+    const isDedicatedCardioDay = request.cardioBlendStyle === 'dedicated_conditioning' && dayIndex % 2 === 0
+    if (useCustomSplitBuilder && !isDedicatedCardioDay) {
+      const splitDay = buildSplitSpecificExercises({
+        splitId: resolvedSplitId,
+        dayIndex,
+        totalDays: daysPerWeek,
+        phase,
+        goal: request.goal,
+        equipment: effectiveEquipment,
+        benchmarks: request.knownBenchmarks,
+        experienceLevel: request.experienceLevel,
+      })
+      workoutDay.focus = splitDay.focus
+      workoutDay.dayName = `Day ${dayIndex}: ${splitDay.focus}`
+      workoutDay.exercises = splitDay.exercises
+      workoutDay.dailyPeriodizationMemo = `[${resolvedSplitTitle} · NASM OPT™ Phase ${phase}: ${phaseMeta.phaseName}] ${workoutDay.dailyPeriodizationMemo}`
+    }
+
+    // Ensure every exercise carries a client-facing whyForYou explanation
+    for (const ex of workoutDay.exercises) {
+      if (!ex.whyForYou) {
+        ex.whyForYou =
+          ex.block === 'cooldown'
+            ? 'Restores tissue length and initiates parasympathetic recovery.'
+            : ex.block === 'core_balance'
+            ? `Primes deep lumbopelvic and single-leg stabilizers for ${workoutDay.focus}.`
+            : `Selected by the NASM RAG Engine for ${workoutDay.focus} in Phase ${phase} (${phaseMeta.phaseName}) using ${eq.summaryLabel}.`
+      }
+    }
 
     // 1. Strict Equipment Boundary Shield: Enforce client equipment availability & auto-substitute first
     if (request.equipmentAccess && request.equipmentAccess.length > 0) {
@@ -691,7 +756,8 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
   else if (eq.isHomeDumbbellOnly) envSuffix = ' (Home Dumbbell & Bands)'
   else if (!eq.hasBarbell) envSuffix = ' (Home Studio)'
 
-  const planTitle = `Executive ${phaseMeta.phaseName} Macrocycle${envSuffix} [${strengthCardioBlendSummary.strengthPct}/${strengthCardioBlendSummary.cardioPct} Strength-Cardio] (${daysPerWeek}-Day Split)`
+  const splitSuffix = useCustomSplitBuilder ? `${resolvedSplitTitle} · ${daysPerWeek}-Day Split` : `${daysPerWeek}-Day Split`
+  const planTitle = `Executive ${phaseMeta.phaseName} Macrocycle${envSuffix} [${strengthCardioBlendSummary.strengthPct}/${strengthCardioBlendSummary.cardioPct} Strength-Cardio] (${splitSuffix})`
 
   const periodizationWeeklyMemos = [
     `Week 1 (${phaseMeta.phaseName} Introduction - ${eq.summaryLabel}): Establish movement quality, strict tempo control (${phaseMeta.tempo}), and baseline neuromuscular stabilization on available equipment. Integrated Cardio: ${strengthCardioBlendSummary.primaryCardioStages}.`,
@@ -707,10 +773,13 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
     phaseName: phaseMeta.phaseName,
     totalWeeks: 4,
     sessionsPerWeek: daysPerWeek,
+    trainingSplit: resolvedSplitId,
+    trainingSplitLabel: resolvedSplitTitle,
     ragSourcesCited,
     strengthCardioBlendSummary,
     workouts,
     periodizationWeeklyMemos,
+    clinicalRationale: splitRecommendation.ragRationale,
   }
 }
 
