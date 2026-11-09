@@ -39,7 +39,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/NadIhI_0u1w/hqdefault.jpg",
+    "imageUrl": "/images/exercises/180-jump-with-stabilization.jpg",
     "videoId": "NadIhI_0u1w",
     "videoUrl": "https://www.youtube.com/watch?v=NadIhI_0u1w"
   },
@@ -53,7 +53,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/N7p0Le1WdJE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/4-point-quadruped-t-drill.jpg",
     "videoId": "N7p0Le1WdJE",
     "videoUrl": "https://www.youtube.com/watch?v=N7p0Le1WdJE"
   },
@@ -67,7 +67,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "calves"
     ],
-    "imageUrl": "https://img.youtube.com/vi/CeFbXhifvvA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-anterior-tibialis.jpg",
     "videoId": "CeFbXhifvvA",
     "videoUrl": "https://www.youtube.com/watch?v=CeFbXhifvvA"
   },
@@ -86,7 +86,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "upper back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Ck26oIpb6tg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-ball-prone-shoulder-ext-rotation.jpg",
     "videoId": "Ck26oIpb6tg",
     "videoUrl": "https://www.youtube.com/watch?v=Ck26oIpb6tg"
   },
@@ -101,7 +101,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/VZJ0PHuNrYI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-ball-prone-shoulder-press.jpg",
     "videoId": "VZJ0PHuNrYI",
     "videoUrl": "https://www.youtube.com/watch?v=VZJ0PHuNrYI"
   },
@@ -116,7 +116,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/qSqFFlidCXo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-ball-prone-wide-row.jpg",
     "videoId": "qSqFFlidCXo",
     "videoUrl": "https://www.youtube.com/watch?v=qSqFFlidCXo"
   },
@@ -130,7 +130,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/gipvE9-iSzU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-medial-gastrocnemius.jpg",
     "videoId": "gipvE9-iSzU",
     "videoUrl": "https://www.youtube.com/watch?v=gipvE9-iSzU"
   },
@@ -146,7 +146,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ksd36rrxgtE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-medial-hamstring.jpg",
     "videoId": "ksd36rrxgtE",
     "videoUrl": "https://www.youtube.com/watch?v=ksd36rrxgtE"
   },
@@ -160,7 +160,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "calves"
     ],
-    "imageUrl": "https://img.youtube.com/vi/O1LxD0L9pR4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-posterior-tibialis.jpg",
     "videoId": "O1LxD0L9pR4",
     "videoUrl": "https://www.youtube.com/watch?v=O1LxD0L9pR4"
   },
@@ -176,7 +176,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/E-_YOEeaIu0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-serratus-push-up.jpg",
     "videoId": "E-_YOEeaIu0",
     "videoUrl": "https://www.youtube.com/watch?v=E-_YOEeaIu0"
   },
@@ -192,7 +192,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/_kHFPUcelRI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-standing-glute-max.jpg",
     "videoId": "_kHFPUcelRI",
     "videoUrl": "https://www.youtube.com/watch?v=_kHFPUcelRI"
   },
@@ -206,7 +206,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/SPeinjTytxM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/activation-standing-shoulder-ext-rotation.jpg",
     "videoId": "SPeinjTytxM",
     "videoUrl": "https://www.youtube.com/watch?v=SPeinjTytxM"
   },
@@ -220,7 +220,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/OJ8qQQRxYz8/hqdefault.jpg",
+    "imageUrl": "/images/exercises/active-kneeling-hip-flexor.jpg",
     "videoId": "OJ8qQQRxYz8",
     "videoUrl": "https://www.youtube.com/watch?v=OJ8qQQRxYz8"
   },
@@ -234,7 +234,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/w_mDsWxtVng/hqdefault.jpg",
+    "imageUrl": "/images/exercises/active-lat-ball.jpg",
     "videoId": "w_mDsWxtVng",
     "videoUrl": "https://www.youtube.com/watch?v=w_mDsWxtVng"
   },
@@ -250,7 +250,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/1opPpdhFabY/hqdefault.jpg",
+    "imageUrl": "/images/exercises/active-standing-adductor.jpg",
     "videoId": "1opPpdhFabY",
     "videoUrl": "https://www.youtube.com/watch?v=1opPpdhFabY"
   },
@@ -266,7 +266,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/VY0FyyIHrPo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/active-standing-hip-flexor.jpg",
     "videoId": "VY0FyyIHrPo",
     "videoUrl": "https://www.youtube.com/watch?v=VY0FyyIHrPo"
   },
@@ -282,7 +282,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/A3fmhDWoSm0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/active-supine-biceps-femoris.jpg",
     "videoId": "A3fmhDWoSm0",
     "videoUrl": "https://www.youtube.com/watch?v=A3fmhDWoSm0"
   },
@@ -296,7 +296,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "full body"
     ],
-    "imageUrl": "https://img.youtube.com/vi/_Tc751vW_lM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/ali-shuffle-ladder-drill.jpg",
     "videoId": "_Tc751vW_lM",
     "videoUrl": "https://www.youtube.com/watch?v=_Tc751vW_lM"
   },
@@ -315,7 +315,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/wOa4YyxyiKI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/alternating-dumbbell-bench-press.jpg",
     "videoId": "wOa4YyxyiKI",
     "videoUrl": "https://www.youtube.com/watch?v=wOa4YyxyiKI"
   },
@@ -331,7 +331,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/IDu6pRAPChg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/archer-push-up.jpg",
     "videoId": "IDu6pRAPChg",
     "videoUrl": "https://www.youtube.com/watch?v=IDu6pRAPChg"
   },
@@ -348,7 +348,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/PkToneYECnY/hqdefault.jpg",
+    "imageUrl": "/images/exercises/assisted-single-leg-squat.jpg",
     "videoId": "PkToneYECnY",
     "videoUrl": "https://www.youtube.com/watch?v=PkToneYECnY"
   },
@@ -362,7 +362,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/2CDihCl3wFQ/hqdefault.jpg",
+    "imageUrl": "/images/exercises/ball-cobra.jpg",
     "videoId": "2CDihCl3wFQ",
     "videoUrl": "https://www.youtube.com/watch?v=2CDihCl3wFQ"
   },
@@ -378,7 +378,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/xb3-dysLHpE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/ball-combo-i.jpg",
     "videoId": "xb3-dysLHpE",
     "videoUrl": "https://www.youtube.com/watch?v=xb3-dysLHpE"
   },
@@ -392,7 +392,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/QFLftqPWjoI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/ball-crunch.jpg",
     "videoId": "QFLftqPWjoI",
     "videoUrl": "https://www.youtube.com/watch?v=QFLftqPWjoI"
   },
@@ -406,7 +406,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/5DKvQPbSHUg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/ball-crunch-arms-crossed.jpg",
     "videoId": "5DKvQPbSHUg",
     "videoUrl": "https://www.youtube.com/watch?v=5DKvQPbSHUg"
   },
@@ -424,7 +424,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/B_VkNQS5YLs/hqdefault.jpg",
+    "imageUrl": "/images/exercises/band-assisted-pull-up.jpg",
     "videoId": "B_VkNQS5YLs",
     "videoUrl": "https://www.youtube.com/watch?v=B_VkNQS5YLs"
   },
@@ -442,7 +442,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/7Xu3D-TKKAw/hqdefault.jpg",
+    "imageUrl": "/images/exercises/band-push-up.jpg",
     "videoId": "7Xu3D-TKKAw",
     "videoUrl": "https://www.youtube.com/watch?v=7Xu3D-TKKAw"
   },
@@ -460,7 +460,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-bJIpOq-LWk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-back-squat.jpg",
     "videoId": "-bJIpOq-LWk",
     "videoUrl": "https://www.youtube.com/watch?v=-bJIpOq-LWk"
   },
@@ -481,7 +481,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/CayG6UYqL8g/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-bench-press.jpg",
     "videoId": "CayG6UYqL8g",
     "videoUrl": "https://www.youtube.com/watch?v=CayG6UYqL8g"
   },
@@ -503,7 +503,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/N4H4o8k9WbE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-bench-press-with-bands.jpg",
     "videoId": "N4H4o8k9WbE",
     "videoUrl": "https://www.youtube.com/watch?v=N4H4o8k9WbE"
   },
@@ -525,7 +525,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/6UKcYcDme-Y/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-bench-press-with-chains.jpg",
     "videoId": "6UKcYcDme-Y",
     "videoUrl": "https://www.youtube.com/watch?v=6UKcYcDme-Y"
   },
@@ -542,7 +542,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/bm0_q9bR_HA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-bent-over-row-pronated.jpg",
     "videoId": "bm0_q9bR_HA",
     "videoUrl": "https://www.youtube.com/watch?v=bm0_q9bR_HA"
   },
@@ -558,7 +558,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/pQfJR-sSIvA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-bicep-curl.jpg",
     "videoId": "pQfJR-sSIvA",
     "videoUrl": "https://www.youtube.com/watch?v=pQfJR-sSIvA"
   },
@@ -576,7 +576,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/yPqv3ejnZvc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-deadlift.jpg",
     "videoId": "yPqv3ejnZvc",
     "videoUrl": "https://www.youtube.com/watch?v=yPqv3ejnZvc"
   },
@@ -596,7 +596,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "quadriceps",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/yr_8VuSqhmM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-front-squat-with-clean-position.jpg",
     "videoId": "yr_8VuSqhmM",
     "videoUrl": "https://www.youtube.com/watch?v=yr_8VuSqhmM"
   },
@@ -614,7 +614,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/W9jJaI4cHJU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-front-squat-with-crossed-arms.jpg",
     "videoId": "W9jJaI4cHJU",
     "videoUrl": "https://www.youtube.com/watch?v=W9jJaI4cHJU"
   },
@@ -631,7 +631,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/cGnhixvC8uA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/barbell-overhead-press.jpg",
     "videoId": "cGnhixvC8uA",
     "videoUrl": "https://www.youtube.com/watch?v=cGnhixvC8uA"
   },
@@ -649,7 +649,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/WVeZDBhZwLA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/bench-dips.jpg",
     "videoId": "WVeZDBhZwLA",
     "videoUrl": "https://www.youtube.com/watch?v=WVeZDBhZwLA"
   },
@@ -665,7 +665,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/21NdvM9pY9g/hqdefault.jpg",
+    "imageUrl": "/images/exercises/bent-elbow-dumbbell-lateral-raise.jpg",
     "videoId": "21NdvM9pY9g",
     "videoUrl": "https://www.youtube.com/watch?v=21NdvM9pY9g"
   },
@@ -680,7 +680,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ZuC7ma4ktm0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/bent-over-barbel-row-supinated.jpg",
     "videoId": "ZuC7ma4ktm0",
     "videoUrl": "https://www.youtube.com/watch?v=ZuC7ma4ktm0"
   },
@@ -696,7 +696,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/kLW7nbw4lcY/hqdefault.jpg",
+    "imageUrl": "/images/exercises/bent-over-dumbbell-rear-fly.jpg",
     "videoId": "kLW7nbw4lcY",
     "videoUrl": "https://www.youtube.com/watch?v=kLW7nbw4lcY"
   },
@@ -712,7 +712,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/aCi_ZhmPQCQ/hqdefault.jpg",
+    "imageUrl": "/images/exercises/bent-over-dumbbell-rear-fly-with-neutral-grip.jpg",
     "videoId": "aCi_ZhmPQCQ",
     "videoUrl": "https://www.youtube.com/watch?v=aCi_ZhmPQCQ"
   },
@@ -728,7 +728,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ZdAHe9_HeEw/hqdefault.jpg",
+    "imageUrl": "/images/exercises/bird-dog.jpg",
     "videoId": "ZdAHe9_HeEw",
     "videoUrl": "https://www.youtube.com/watch?v=ZdAHe9_HeEw"
   },
@@ -747,7 +747,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/eCTwe-Szf8U/hqdefault.jpg",
+    "imageUrl": "/images/exercises/frontal-box-jump-down-to-tuck-jump.jpg",
     "videoId": "eCTwe-Szf8U",
     "videoUrl": "https://www.youtube.com/watch?v=eCTwe-Szf8U"
   },
@@ -767,7 +767,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/757ht_Y-fY0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/box-jump-up-with-stabilization.jpg",
     "videoId": "757ht_Y-fY0",
     "videoUrl": "https://www.youtube.com/watch?v=757ht_Y-fY0"
   },
@@ -787,7 +787,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/624ARptOVDM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/box-jump-up-with-stabilization.jpg",
     "videoId": "624ARptOVDM",
     "videoUrl": "https://www.youtube.com/watch?v=624ARptOVDM"
   },
@@ -807,7 +807,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/z8ks1w0rnxM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/box-jump-up-with-stabilization-transverse.jpg",
     "videoId": "z8ks1w0rnxM",
     "videoUrl": "https://www.youtube.com/watch?v=z8ks1w0rnxM"
   },
@@ -826,7 +826,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/DXu-8TAJwi4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/box-jumps.jpg",
     "videoId": "DXu-8TAJwi4",
     "videoUrl": "https://www.youtube.com/watch?v=DXu-8TAJwi4"
   },
@@ -844,7 +844,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-GaRp6_b2vk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/box-squat.jpg",
     "videoId": "-GaRp6_b2vk",
     "videoUrl": "https://www.youtube.com/watch?v=-GaRp6_b2vk"
   },
@@ -865,7 +865,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ZrOgsfSPpC8/hqdefault.jpg",
+    "imageUrl": "/images/exercises/box-squat-curl-to-overhead-press.jpg",
     "videoId": "ZrOgsfSPpC8",
     "videoUrl": "https://www.youtube.com/watch?v=ZrOgsfSPpC8"
   },
@@ -884,7 +884,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/hbw7hdyOpq0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/bulgarian-split-squat.jpg",
     "videoId": "hbw7hdyOpq0",
     "videoUrl": "https://www.youtube.com/watch?v=hbw7hdyOpq0"
   },
@@ -902,7 +902,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/XY6JrX1wyxk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/cable-crossover.jpg",
     "videoId": "XY6JrX1wyxk",
     "videoUrl": "https://www.youtube.com/watch?v=XY6JrX1wyxk"
   },
@@ -920,7 +920,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/lRo9zZ7EwpM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/chest-press-machine.jpg",
     "videoId": "lRo9zZ7EwpM",
     "videoUrl": "https://www.youtube.com/watch?v=lRo9zZ7EwpM"
   },
@@ -936,7 +936,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/_ZX_zTOBgp8/hqdefault.jpg",
+    "imageUrl": "/images/exercises/childs-pose.jpg",
     "videoId": "_ZX_zTOBgp8",
     "videoUrl": "https://www.youtube.com/watch?v=_ZX_zTOBgp8"
   },
@@ -951,7 +951,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "legs"
     ],
-    "imageUrl": "https://img.youtube.com/vi/V_AnVxKPFlY/hqdefault.jpg",
+    "imageUrl": "/images/exercises/clamshells.jpg",
     "videoId": "V_AnVxKPFlY",
     "videoUrl": "https://www.youtube.com/watch?v=V_AnVxKPFlY"
   },
@@ -969,7 +969,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/LJeqLAmJLfs/hqdefault.jpg",
+    "imageUrl": "/images/exercises/close-grip-bench-press.jpg",
     "videoId": "LJeqLAmJLfs",
     "videoUrl": "https://www.youtube.com/watch?v=LJeqLAmJLfs"
   },
@@ -985,7 +985,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/bxn9FBrt4-A/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dead-bug.jpg",
     "videoId": "bxn9FBrt4-A",
     "videoUrl": "https://www.youtube.com/watch?v=bxn9FBrt4-A"
   },
@@ -1000,7 +1000,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "chest",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/aq2xZxfrQlM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/decline-push-up.jpg",
     "videoId": "aq2xZxfrQlM",
     "videoUrl": "https://www.youtube.com/watch?v=aq2xZxfrQlM"
   },
@@ -1017,7 +1017,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/bMHL5xqKn3E/hqdefault.jpg",
+    "imageUrl": "/images/exercises/depth-jump.jpg",
     "videoId": "bMHL5xqKn3E",
     "videoUrl": "https://www.youtube.com/watch?v=bMHL5xqKn3E"
   },
@@ -1034,7 +1034,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-jUndEGjpig/hqdefault.jpg",
+    "imageUrl": "/images/exercises/depth-jump.jpg",
     "videoId": "-jUndEGjpig",
     "videoUrl": "https://www.youtube.com/watch?v=-jUndEGjpig"
   },
@@ -1051,7 +1051,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/1gwF8c3ZlD0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/depth-jump-transverse.jpg",
     "videoId": "1gwF8c3ZlD0",
     "videoUrl": "https://www.youtube.com/watch?v=1gwF8c3ZlD0"
   },
@@ -1071,7 +1071,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "quadriceps",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Yaelrl1VN20/hqdefault.jpg",
+    "imageUrl": "/images/exercises/double-kettlebell-clean.jpg",
     "videoId": "Yaelrl1VN20",
     "videoUrl": "https://www.youtube.com/watch?v=Yaelrl1VN20"
   },
@@ -1091,7 +1091,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "quadriceps",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/p7Evs2D5aZc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/double-kettlebell-snatch.jpg",
     "videoId": "p7Evs2D5aZc",
     "videoUrl": "https://www.youtube.com/watch?v=p7Evs2D5aZc"
   },
@@ -1107,7 +1107,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Ok46ZtftfhU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-ball-combo-ii.jpg",
     "videoId": "Ok46ZtftfhU",
     "videoUrl": "https://www.youtube.com/watch?v=Ok46ZtftfhU"
   },
@@ -1126,7 +1126,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/4_QuyfOCI5U/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-bench-press.jpg",
     "videoId": "4_QuyfOCI5U",
     "videoUrl": "https://www.youtube.com/watch?v=4_QuyfOCI5U"
   },
@@ -1143,7 +1143,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/DJfQN6xJL28/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-bent-over-row.jpg",
     "videoId": "DJfQN6xJL28",
     "videoUrl": "https://www.youtube.com/watch?v=DJfQN6xJL28"
   },
@@ -1159,7 +1159,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/5l9fg7Cml0Y/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-combination-curl.jpg",
     "videoId": "5l9fg7Cml0Y",
     "videoUrl": "https://www.youtube.com/watch?v=5l9fg7Cml0Y"
   },
@@ -1177,7 +1177,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/hZI8Yy5elZs/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-front-squat.jpg",
     "videoId": "hZI8Yy5elZs",
     "videoUrl": "https://www.youtube.com/watch?v=hZI8Yy5elZs"
   },
@@ -1193,7 +1193,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/nL3SedGG7X0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-hammer-curl.jpg",
     "videoId": "nL3SedGG7X0",
     "videoUrl": "https://www.youtube.com/watch?v=nL3SedGG7X0"
   },
@@ -1209,7 +1209,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/XPPfnSEATJA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-lateral-raise.jpg",
     "videoId": "XPPfnSEATJA",
     "videoUrl": "https://www.youtube.com/watch?v=XPPfnSEATJA"
   },
@@ -1226,7 +1226,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/MMjBnEBnZKM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-overhead-press.jpg",
     "videoId": "MMjBnEBnZKM",
     "videoUrl": "https://www.youtube.com/watch?v=MMjBnEBnZKM"
   },
@@ -1242,7 +1242,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/t2BmBSmcjco/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-preacher-curl.jpg",
     "videoId": "t2BmBSmcjco",
     "videoUrl": "https://www.youtube.com/watch?v=t2BmBSmcjco"
   },
@@ -1263,7 +1263,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/vuaYVK8xyqo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-push-press.jpg",
     "videoId": "vuaYVK8xyqo",
     "videoUrl": "https://www.youtube.com/watch?v=vuaYVK8xyqo"
   },
@@ -1280,7 +1280,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/IA2tycCS8DI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-rack-carry.jpg",
     "videoId": "IA2tycCS8DI",
     "videoUrl": "https://www.youtube.com/watch?v=IA2tycCS8DI"
   },
@@ -1300,7 +1300,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/RuJ9a05aa0A/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-renegade-row-to-push-up.jpg",
     "videoId": "RuJ9a05aa0A",
     "videoUrl": "https://www.youtube.com/watch?v=RuJ9a05aa0A"
   },
@@ -1318,7 +1318,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/V8Hdl1FiNt4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-romanian-deadlift.jpg",
     "videoId": "V8Hdl1FiNt4",
     "videoUrl": "https://www.youtube.com/watch?v=V8Hdl1FiNt4"
   },
@@ -1338,7 +1338,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/9k6IfkGBAVQ/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-squat-to-overhead-press.jpg",
     "videoId": "9k6IfkGBAVQ",
     "videoUrl": "https://www.youtube.com/watch?v=9k6IfkGBAVQ"
   },
@@ -1355,7 +1355,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/eTCBSFlCJ_s/hqdefault.jpg",
+    "imageUrl": "/images/exercises/face-pull.jpg",
     "videoId": "eTCBSFlCJ_s",
     "videoUrl": "https://www.youtube.com/watch?v=eTCBSFlCJ_s"
   },
@@ -1369,7 +1369,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Z3cY3d3BBo4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/floor-bridge.jpg",
     "videoId": "Z3cY3d3BBo4",
     "videoUrl": "https://www.youtube.com/watch?v=Z3cY3d3BBo4"
   },
@@ -1383,7 +1383,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/keErJXdp2lE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/floor-prone-cobra.jpg",
     "videoId": "keErJXdp2lE",
     "videoUrl": "https://www.youtube.com/watch?v=keErJXdp2lE"
   },
@@ -1401,7 +1401,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Nqol0T6rKDg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/foam-roll-adductors.jpg",
     "videoId": "Nqol0T6rKDg",
     "videoUrl": "https://www.youtube.com/watch?v=Nqol0T6rKDg"
   },
@@ -1419,7 +1419,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/6f2LO5EeB0I/hqdefault.jpg",
+    "imageUrl": "/images/exercises/foam-roll-calves.jpg",
     "videoId": "6f2LO5EeB0I",
     "videoUrl": "https://www.youtube.com/watch?v=6f2LO5EeB0I"
   },
@@ -1435,7 +1435,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "chest"
     ],
-    "imageUrl": "https://img.youtube.com/vi/5S2suclGl7o/hqdefault.jpg",
+    "imageUrl": "/images/exercises/foam-roll-latissimus-dorsi.jpg",
     "videoId": "5S2suclGl7o",
     "videoUrl": "https://www.youtube.com/watch?v=5S2suclGl7o"
   },
@@ -1451,7 +1451,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/9aLcb5a7390/hqdefault.jpg",
+    "imageUrl": "/images/exercises/forward-and-back-band-walking.jpg",
     "videoId": "9aLcb5a7390",
     "videoUrl": "https://www.youtube.com/watch?v=9aLcb5a7390"
   },
@@ -1470,7 +1470,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/NX-sjAtZco0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/frontal-box-jump-down-to-tuck-jump.jpg",
     "videoId": "NX-sjAtZco0",
     "videoUrl": "https://www.youtube.com/watch?v=NX-sjAtZco0"
   },
@@ -1488,7 +1488,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/nfX7IFK9UNI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/goblet-squat.jpg",
     "videoId": "nfX7IFK9UNI",
     "videoUrl": "https://www.youtube.com/watch?v=nfX7IFK9UNI"
   },
@@ -1505,7 +1505,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Daq-wJMUnes/hqdefault.jpg",
+    "imageUrl": "/images/exercises/good-mornings.jpg",
     "videoId": "Daq-wJMUnes",
     "videoUrl": "https://www.youtube.com/watch?v=Daq-wJMUnes"
   },
@@ -1523,7 +1523,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/WradwGWo554/hqdefault.jpg",
+    "imageUrl": "/images/exercises/half-get-up-with-kettlebell.jpg",
     "videoId": "WradwGWo554",
     "videoUrl": "https://www.youtube.com/watch?v=WradwGWo554"
   },
@@ -1537,7 +1537,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/WX6YNwM5ycU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/half-kneeling-throw-and-catch.jpg",
     "videoId": "WX6YNwM5ycU",
     "videoUrl": "https://www.youtube.com/watch?v=WX6YNwM5ycU"
   },
@@ -1551,7 +1551,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/CnF9Bf2pm4s/hqdefault.jpg",
+    "imageUrl": "/images/exercises/half-kneeling-tubing-rotation.jpg",
     "videoId": "CnF9Bf2pm4s",
     "videoUrl": "https://www.youtube.com/watch?v=CnF9Bf2pm4s"
   },
@@ -1566,7 +1566,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "biceps",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/4P6tmzTV01A/hqdefault.jpg",
+    "imageUrl": "/images/exercises/hammer-curl-to-lateral-raise.jpg",
     "videoId": "4P6tmzTV01A",
     "videoUrl": "https://www.youtube.com/watch?v=4P6tmzTV01A"
   },
@@ -1586,7 +1586,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "quadriceps",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/KKumMhxKapw/hqdefault.jpg",
+    "imageUrl": "/images/exercises/hand-to-hand-kettlebell-swing.jpg",
     "videoId": "KKumMhxKapw",
     "videoUrl": "https://www.youtube.com/watch?v=KKumMhxKapw"
   },
@@ -1601,7 +1601,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ViVoHbYwT-Y/hqdefault.jpg",
+    "imageUrl": "/images/exercises/ice-skater-with-stabilization.jpg",
     "videoId": "ViVoHbYwT-Y",
     "videoUrl": "https://www.youtube.com/watch?v=ViVoHbYwT-Y"
   },
@@ -1615,7 +1615,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "full body"
     ],
-    "imageUrl": "https://img.youtube.com/vi/HibORUkPckg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/in-in-out-out-crossover-ladder-drill.jpg",
     "videoId": "HibORUkPckg",
     "videoUrl": "https://www.youtube.com/watch?v=HibORUkPckg"
   },
@@ -1629,7 +1629,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/SybJ4cCnR64/hqdefault.jpg",
+    "imageUrl": "/images/exercises/in-in-out-out-ladder-drill.jpg",
     "videoId": "SybJ4cCnR64",
     "videoUrl": "https://www.youtube.com/watch?v=SybJ4cCnR64"
   },
@@ -1649,7 +1649,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "chest",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/BjGLs6KGWUc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/incline-barbell-bench-press.jpg",
     "videoId": "BjGLs6KGWUc",
     "videoUrl": "https://www.youtube.com/watch?v=BjGLs6KGWUc"
   },
@@ -1667,7 +1667,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "chest",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/_NrQUYg7Nlc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/incline-dumbbell-bench-press.jpg",
     "videoId": "_NrQUYg7Nlc",
     "videoUrl": "https://www.youtube.com/watch?v=_NrQUYg7Nlc"
   },
@@ -1685,7 +1685,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "chest",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/0dT4L6Lsi80/hqdefault.jpg",
+    "imageUrl": "/images/exercises/incline-dumbbell-curl.jpg",
     "videoId": "0dT4L6Lsi80",
     "videoUrl": "https://www.youtube.com/watch?v=0dT4L6Lsi80"
   },
@@ -1700,7 +1700,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "chest",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Gvm5Q29UHbk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/incline-push-up.jpg",
     "videoId": "Gvm5Q29UHbk",
     "videoUrl": "https://www.youtube.com/watch?v=Gvm5Q29UHbk"
   },
@@ -1715,7 +1715,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "chest",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Yylb-sLWdm8/hqdefault.jpg",
+    "imageUrl": "/images/exercises/incline-push-up-with-rotation.jpg",
     "videoId": "Yylb-sLWdm8",
     "videoUrl": "https://www.youtube.com/watch?v=Yylb-sLWdm8"
   },
@@ -1732,7 +1732,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/OE5ZvGOpGTY/hqdefault.jpg",
+    "imageUrl": "/images/exercises/incline-stance-curl-to-overhead-press.jpg",
     "videoId": "OE5ZvGOpGTY",
     "videoUrl": "https://www.youtube.com/watch?v=OE5ZvGOpGTY"
   },
@@ -1749,7 +1749,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "chest",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Od9m9NVkA8g/hqdefault.jpg",
+    "imageUrl": "/images/exercises/incline-stance-row.jpg",
     "videoId": "Od9m9NVkA8g",
     "videoUrl": "https://www.youtube.com/watch?v=Od9m9NVkA8g"
   },
@@ -1766,7 +1766,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "chest",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-eKoynNqlfo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/incline-stance-single-arm-row.jpg",
     "videoId": "-eKoynNqlfo",
     "videoUrl": "https://www.youtube.com/watch?v=-eKoynNqlfo"
   },
@@ -1782,7 +1782,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/M0hMndCrkI4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/inverted-push-up.jpg",
     "videoId": "M0hMndCrkI4",
     "videoUrl": "https://www.youtube.com/watch?v=M0hMndCrkI4"
   },
@@ -1800,7 +1800,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/uBEXsoMclPY/hqdefault.jpg",
+    "imageUrl": "/images/exercises/iron-cross.jpg",
     "videoId": "uBEXsoMclPY",
     "videoUrl": "https://www.youtube.com/watch?v=uBEXsoMclPY"
   },
@@ -1819,7 +1819,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/uLVt6u15L98/hqdefault.jpg",
+    "imageUrl": "/images/exercises/jumping-jacks.jpg",
     "videoId": "uLVt6u15L98",
     "videoUrl": "https://www.youtube.com/watch?v=uLVt6u15L98"
   },
@@ -1835,7 +1835,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/WtqAD5-Re18/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-arm-bar.jpg",
     "videoId": "WtqAD5-Re18",
     "videoUrl": "https://www.youtube.com/watch?v=WtqAD5-Re18"
   },
@@ -1855,7 +1855,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "quadriceps",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/aoCikYYQ6pI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-clean.jpg",
     "videoId": "aoCikYYQ6pI",
     "videoUrl": "https://www.youtube.com/watch?v=aoCikYYQ6pI"
   },
@@ -1875,7 +1875,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "quadriceps",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/km3f8_rpDdg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-clean-to-press.jpg",
     "videoId": "km3f8_rpDdg",
     "videoUrl": "https://www.youtube.com/watch?v=km3f8_rpDdg"
   },
@@ -1894,7 +1894,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/BPGOyQKy9R0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-crush-curl-with-squat.jpg",
     "videoId": "BPGOyQKy9R0",
     "videoUrl": "https://www.youtube.com/watch?v=BPGOyQKy9R0"
   },
@@ -1912,7 +1912,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/LnIMaf-XOpM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-deadlift.jpg",
     "videoId": "LnIMaf-XOpM",
     "videoUrl": "https://www.youtube.com/watch?v=LnIMaf-XOpM"
   },
@@ -1928,7 +1928,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/yXstm050X84/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-floor-press.jpg",
     "videoId": "yXstm050X84",
     "videoUrl": "https://www.youtube.com/watch?v=yXstm050X84"
   },
@@ -1946,7 +1946,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-TeEMXoHQPM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-front-squat.jpg",
     "videoId": "-TeEMXoHQPM",
     "videoUrl": "https://www.youtube.com/watch?v=-TeEMXoHQPM"
   },
@@ -1964,7 +1964,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/MWHIs0zxkCU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/goblet-squat.jpg",
     "videoId": "MWHIs0zxkCU",
     "videoUrl": "https://www.youtube.com/watch?v=MWHIs0zxkCU"
   },
@@ -1982,7 +1982,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/9NFkYaviXgk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-jerk.jpg",
     "videoId": "9NFkYaviXgk",
     "videoUrl": "https://www.youtube.com/watch?v=9NFkYaviXgk"
   },
@@ -1999,7 +1999,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/X-uFqWtjpGI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-overhead-press.jpg",
     "videoId": "X-uFqWtjpGI",
     "videoUrl": "https://www.youtube.com/watch?v=X-uFqWtjpGI"
   },
@@ -2020,7 +2020,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/k4q6HkT99iA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-push-press.jpg",
     "videoId": "k4q6HkT99iA",
     "videoUrl": "https://www.youtube.com/watch?v=k4q6HkT99iA"
   },
@@ -2037,7 +2037,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/NNTpBlHRcA4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/kettlebell-renegade-row.jpg",
     "videoId": "NNTpBlHRcA4",
     "videoUrl": "https://www.youtube.com/watch?v=NNTpBlHRcA4"
   },
@@ -2054,7 +2054,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/pCsAq0HuVqM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/ladder-jumping-jacks.jpg",
     "videoId": "pCsAq0HuVqM",
     "videoUrl": "https://www.youtube.com/watch?v=pCsAq0HuVqM"
   },
@@ -2071,7 +2071,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "legs"
     ],
-    "imageUrl": "https://img.youtube.com/vi/M5uxEQH5BUM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/lateral-band-walking.jpg",
     "videoId": "M5uxEQH5BUM",
     "videoUrl": "https://www.youtube.com/watch?v=M5uxEQH5BUM"
   },
@@ -2087,7 +2087,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/nPHtf8q5PxM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/leg-circuit.jpg",
     "videoId": "nPHtf8q5PxM",
     "videoUrl": "https://www.youtube.com/watch?v=nPHtf8q5PxM"
   },
@@ -2103,7 +2103,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/hV6ozNZJyWA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/leg-circuit-frontal.jpg",
     "videoId": "hV6ozNZJyWA",
     "videoUrl": "https://www.youtube.com/watch?v=hV6ozNZJyWA"
   },
@@ -2121,7 +2121,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/cDGOn-yfKJA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/leg-press.jpg",
     "videoId": "cDGOn-yfKJA",
     "videoUrl": "https://www.youtube.com/watch?v=cDGOn-yfKJA"
   },
@@ -2140,7 +2140,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/8k435cj30gc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/leg-press-calf-raise.jpg",
     "videoId": "8k435cj30gc",
     "videoUrl": "https://www.youtube.com/watch?v=8k435cj30gc"
   },
@@ -2154,7 +2154,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/YkEu2Hs3gw8/hqdefault.jpg",
+    "imageUrl": "/images/exercises/long-lever-ball-crunch.jpg",
     "videoId": "YkEu2Hs3gw8",
     "videoUrl": "https://www.youtube.com/watch?v=YkEu2Hs3gw8"
   },
@@ -2173,7 +2173,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/_5kDxC0flg0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/lunge-jump.jpg",
     "videoId": "_5kDxC0flg0",
     "videoUrl": "https://www.youtube.com/watch?v=_5kDxC0flg0"
   },
@@ -2190,7 +2190,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/UInwcEa5BH4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/lunge-to-balance.jpg",
     "videoId": "UInwcEa5BH4",
     "videoUrl": "https://www.youtube.com/watch?v=UInwcEa5BH4"
   },
@@ -2207,7 +2207,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/WFmIGf0kyEs/hqdefault.jpg",
+    "imageUrl": "/images/exercises/lunge-to-balance-frontal.jpg",
     "videoId": "WFmIGf0kyEs",
     "videoUrl": "https://www.youtube.com/watch?v=WFmIGf0kyEs"
   },
@@ -2224,7 +2224,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/UG2Sf8ck1WI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/lunge-to-balance-transverse.jpg",
     "videoId": "UG2Sf8ck1WI",
     "videoUrl": "https://www.youtube.com/watch?v=UG2Sf8ck1WI"
   },
@@ -2241,7 +2241,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Dq5y4WEcqqo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/lying-leg-curl.jpg",
     "videoId": "Dq5y4WEcqqo",
     "videoUrl": "https://www.youtube.com/watch?v=Dq5y4WEcqqo"
   },
@@ -2259,7 +2259,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/kGIfh3hHY0w/hqdefault.jpg",
+    "imageUrl": "/images/exercises/lying-leg-curl-single-leg.jpg",
     "videoId": "kGIfh3hHY0w",
     "videoUrl": "https://www.youtube.com/watch?v=kGIfh3hHY0w"
   },
@@ -2277,7 +2277,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/_7sVQlruVZc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/lying-leg-curl-two-leg-concentric-single-leg-eccentric.jpg",
     "videoId": "_7sVQlruVZc",
     "videoUrl": "https://www.youtube.com/watch?v=_7sVQlruVZc"
   },
@@ -2291,7 +2291,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/iVmIrVNlKjI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/mb-figure-8.jpg",
     "videoId": "iVmIrVNlKjI",
     "videoUrl": "https://www.youtube.com/watch?v=iVmIrVNlKjI"
   },
@@ -2309,7 +2309,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/6Uuxb4h2N5I/hqdefault.jpg",
+    "imageUrl": "/images/exercises/medicine-ball-bent-over-chest-pass.jpg",
     "videoId": "6Uuxb4h2N5I",
     "videoUrl": "https://www.youtube.com/watch?v=6Uuxb4h2N5I"
   },
@@ -2327,7 +2327,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/pxpGo3EtwkM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/medicine-ball-push-up-to-3-point.jpg",
     "videoId": "pxpGo3EtwkM",
     "videoUrl": "https://www.youtube.com/watch?v=pxpGo3EtwkM"
   },
@@ -2346,7 +2346,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-nuCpkC0I7s/hqdefault.jpg",
+    "imageUrl": "/images/exercises/medicine-ball-step-over-push-up.jpg",
     "videoId": "-nuCpkC0I7s",
     "videoUrl": "https://www.youtube.com/watch?v=-nuCpkC0I7s"
   },
@@ -2364,7 +2364,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/PDr5B2jLUOw/hqdefault.jpg",
+    "imageUrl": "/images/exercises/modified-push-up.jpg",
     "videoId": "PDr5B2jLUOw",
     "videoUrl": "https://www.youtube.com/watch?v=PDr5B2jLUOw"
   },
@@ -2378,7 +2378,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/em63lCvm9CM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/one-ins-ladder-drill.jpg",
     "videoId": "em63lCvm9CM",
     "videoUrl": "https://www.youtube.com/watch?v=em63lCvm9CM"
   },
@@ -2394,7 +2394,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/XckEEwa1BPI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/pike-push-up.jpg",
     "videoId": "XckEEwa1BPI",
     "videoUrl": "https://www.youtube.com/watch?v=XckEEwa1BPI"
   },
@@ -2408,7 +2408,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/xhk1JkbF2lg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/plank.jpg",
     "videoId": "xhk1JkbF2lg",
     "videoUrl": "https://www.youtube.com/watch?v=xhk1JkbF2lg"
   },
@@ -2424,7 +2424,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/6Tv4xTRPtUc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/plank-walkup.jpg",
     "videoId": "6Tv4xTRPtUc",
     "videoUrl": "https://www.youtube.com/watch?v=6Tv4xTRPtUc"
   },
@@ -2438,7 +2438,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/rFwsard85T8/hqdefault.jpg",
+    "imageUrl": "/images/exercises/plank-with-arm-reach.jpg",
     "videoId": "rFwsard85T8",
     "videoUrl": "https://www.youtube.com/watch?v=rFwsard85T8"
   },
@@ -2452,7 +2452,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Q2MbIzmkcho/hqdefault.jpg",
+    "imageUrl": "/images/exercises/plank-with-knees-down.jpg",
     "videoId": "Q2MbIzmkcho",
     "videoUrl": "https://www.youtube.com/watch?v=Q2MbIzmkcho"
   },
@@ -2470,7 +2470,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/MH4gcTKQiEc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/plyometric-push-up.jpg",
     "videoId": "MH4gcTKQiEc",
     "videoUrl": "https://www.youtube.com/watch?v=MH4gcTKQiEc"
   },
@@ -2488,7 +2488,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/UCsdLEqtWSg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/power-step-up.jpg",
     "videoId": "UCsdLEqtWSg",
     "videoUrl": "https://www.youtube.com/watch?v=UCsdLEqtWSg"
   },
@@ -2504,7 +2504,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/dC0yGLZwxas/hqdefault.jpg",
+    "imageUrl": "/images/exercises/prisoner-squat.jpg",
     "videoId": "dC0yGLZwxas",
     "videoUrl": "https://www.youtube.com/watch?v=dC0yGLZwxas"
   },
@@ -2521,7 +2521,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Xz0PPBZO2xc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/prisoner-squat-calf-raise.jpg",
     "videoId": "Xz0PPBZO2xc",
     "videoUrl": "https://www.youtube.com/watch?v=Xz0PPBZO2xc"
   },
@@ -2538,7 +2538,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/9yVGh3XbJ34/hqdefault.jpg",
+    "imageUrl": "/images/exercises/pull-up.jpg",
     "videoId": "9yVGh3XbJ34",
     "videoUrl": "https://www.youtube.com/watch?v=9yVGh3XbJ34"
   },
@@ -2559,7 +2559,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ODwyDtlXnXk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/push-press.jpg",
     "videoId": "ODwyDtlXnXk",
     "videoUrl": "https://www.youtube.com/watch?v=ODwyDtlXnXk"
   },
@@ -2575,7 +2575,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/7NUICnha_Hk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/push-up.jpg",
     "videoId": "7NUICnha_Hk",
     "videoUrl": "https://www.youtube.com/watch?v=7NUICnha_Hk"
   },
@@ -2591,7 +2591,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/qw-9P3R37vU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/push-up-plus.jpg",
     "videoId": "qw-9P3R37vU",
     "videoUrl": "https://www.youtube.com/watch?v=qw-9P3R37vU"
   },
@@ -2607,7 +2607,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/yvuyGj9g6WQ/hqdefault.jpg",
+    "imageUrl": "/images/exercises/push-up-to-3-point-stance.jpg",
     "videoId": "yvuyGj9g6WQ",
     "videoUrl": "https://www.youtube.com/watch?v=yvuyGj9g6WQ"
   },
@@ -2623,7 +2623,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/miN74vJbE_w/hqdefault.jpg",
+    "imageUrl": "/images/exercises/push-up-with-rotation.jpg",
     "videoId": "miN74vJbE_w",
     "videoUrl": "https://www.youtube.com/watch?v=miN74vJbE_w"
   },
@@ -2639,7 +2639,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/miMPlHvDwxc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/push-up-with-staggered-hands.jpg",
     "videoId": "miMPlHvDwxc",
     "videoUrl": "https://www.youtube.com/watch?v=miMPlHvDwxc"
   },
@@ -2653,7 +2653,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/PSytregUBZY/hqdefault.jpg",
+    "imageUrl": "/images/exercises/quadruped-arm-raise.jpg",
     "videoId": "PSytregUBZY",
     "videoUrl": "https://www.youtube.com/watch?v=PSytregUBZY"
   },
@@ -2668,7 +2668,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/TJbnvoFkLKI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/quadruped-leg-raise.jpg",
     "videoId": "TJbnvoFkLKI",
     "videoUrl": "https://www.youtube.com/watch?v=TJbnvoFkLKI"
   },
@@ -2682,7 +2682,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-atsQczv7N4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/quadruped-march.jpg",
     "videoId": "-atsQczv7N4",
     "videoUrl": "https://www.youtube.com/watch?v=-atsQczv7N4"
   },
@@ -2697,7 +2697,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/GJ34tTJyWz8/hqdefault.jpg",
+    "imageUrl": "/images/exercises/quadruped-opposite-arm-leg-raise.jpg",
     "videoId": "GJ34tTJyWz8",
     "videoUrl": "https://www.youtube.com/watch?v=GJ34tTJyWz8"
   },
@@ -2714,7 +2714,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/1nem81AsHC4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/reciprocating-kettlebell-overhead-press.jpg",
     "videoId": "1nem81AsHC4",
     "videoUrl": "https://www.youtube.com/watch?v=1nem81AsHC4"
   },
@@ -2731,7 +2731,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/LBiNOM5_-j4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/repeat-hurdle-jump-frontal.jpg",
     "videoId": "LBiNOM5_-j4",
     "videoUrl": "https://www.youtube.com/watch?v=LBiNOM5_-j4"
   },
@@ -2748,7 +2748,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/til5WR9ko4c/hqdefault.jpg",
+    "imageUrl": "/images/exercises/repeat-hurdle-jumps.jpg",
     "videoId": "til5WR9ko4c",
     "videoUrl": "https://www.youtube.com/watch?v=til5WR9ko4c"
   },
@@ -2765,7 +2765,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Io5gmVqO_sA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/repeat-hurdle-jumps-transverse.jpg",
     "videoId": "Io5gmVqO_sA",
     "videoUrl": "https://www.youtube.com/watch?v=Io5gmVqO_sA"
   },
@@ -2781,7 +2781,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/yRM27bTe868/hqdefault.jpg",
+    "imageUrl": "/images/exercises/repeat-ice-skater.jpg",
     "videoId": "yRM27bTe868",
     "videoUrl": "https://www.youtube.com/watch?v=yRM27bTe868"
   },
@@ -2798,7 +2798,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/dsEgOcunkvY/hqdefault.jpg",
+    "imageUrl": "/images/exercises/repeat-squat-jumps.jpg",
     "videoId": "dsEgOcunkvY",
     "videoUrl": "https://www.youtube.com/watch?v=dsEgOcunkvY"
   },
@@ -2815,7 +2815,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/k9Yt7ohA_rE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/repeat-squat-jumps-frontal.jpg",
     "videoId": "k9Yt7ohA_rE",
     "videoUrl": "https://www.youtube.com/watch?v=k9Yt7ohA_rE"
   },
@@ -2832,7 +2832,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/FC7EUiJleTQ/hqdefault.jpg",
+    "imageUrl": "/images/exercises/repeat-squat-jumps-multiplanar.jpg",
     "videoId": "FC7EUiJleTQ",
     "videoUrl": "https://www.youtube.com/watch?v=FC7EUiJleTQ"
   },
@@ -2849,7 +2849,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/wfbn8QUHqo0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/repeat-squat-jumps-transverse.jpg",
     "videoId": "wfbn8QUHqo0",
     "videoUrl": "https://www.youtube.com/watch?v=wfbn8QUHqo0"
   },
@@ -2866,7 +2866,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/KMr7gzm_wf4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/repeat-tuck-jumps.jpg",
     "videoId": "KMr7gzm_wf4",
     "videoUrl": "https://www.youtube.com/watch?v=KMr7gzm_wf4"
   },
@@ -2882,7 +2882,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/wtKWBzDwfIM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/reverse-crunch-to-knee-up-with-rotation.jpg",
     "videoId": "wtKWBzDwfIM",
     "videoUrl": "https://www.youtube.com/watch?v=wtKWBzDwfIM"
   },
@@ -2899,7 +2899,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/lKhZvT_NkOs/hqdefault.jpg",
+    "imageUrl": "/images/exercises/reverse-lunge-to-balance.jpg",
     "videoId": "lKhZvT_NkOs",
     "videoUrl": "https://www.youtube.com/watch?v=lKhZvT_NkOs"
   },
@@ -2917,7 +2917,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/dcs7-vejMAY/hqdefault.jpg",
+    "imageUrl": "/images/exercises/reverse-lunge-to-row.jpg",
     "videoId": "dcs7-vejMAY",
     "videoUrl": "https://www.youtube.com/watch?v=dcs7-vejMAY"
   },
@@ -2935,7 +2935,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/erYh7wR3P2Y/hqdefault.jpg",
+    "imageUrl": "/images/exercises/reverse-lunge-to-single-arm-row.jpg",
     "videoId": "erYh7wR3P2Y",
     "videoUrl": "https://www.youtube.com/watch?v=erYh7wR3P2Y"
   },
@@ -2951,7 +2951,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/2bmuYtv4HbQ/hqdefault.jpg",
+    "imageUrl": "/images/exercises/dumbbell-romanian-deadlift.jpg",
     "videoId": "2bmuYtv4HbQ",
     "videoUrl": "https://www.youtube.com/watch?v=2bmuYtv4HbQ"
   },
@@ -2967,7 +2967,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/s0kT80JLCfA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/russian-twist.jpg",
     "videoId": "s0kT80JLCfA",
     "videoUrl": "https://www.youtube.com/watch?v=s0kT80JLCfA"
   },
@@ -2984,7 +2984,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/_2Kd0d-JEUM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/seated-leg-curl.jpg",
     "videoId": "_2Kd0d-JEUM",
     "videoUrl": "https://www.youtube.com/watch?v=_2Kd0d-JEUM"
   },
@@ -3002,7 +3002,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "biceps",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/k0cTJCfxa0Y/hqdefault.jpg",
+    "imageUrl": "/images/exercises/seated-machine-row-close-grip.jpg",
     "videoId": "k0cTJCfxa0Y",
     "videoUrl": "https://www.youtube.com/watch?v=k0cTJCfxa0Y"
   },
@@ -3017,7 +3017,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/0R9ZQd3aM6s/hqdefault.jpg",
+    "imageUrl": "/images/exercises/seated-row.jpg",
     "videoId": "0R9ZQd3aM6s",
     "videoUrl": "https://www.youtube.com/watch?v=0R9ZQd3aM6s"
   },
@@ -3033,7 +3033,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/kZ-ReOdn2qk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/overhead-triceps-extension.jpg",
     "videoId": "kZ-ReOdn2qk",
     "videoUrl": "https://www.youtube.com/watch?v=kZ-ReOdn2qk"
   },
@@ -3049,7 +3049,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/_M29fhv3LoI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/self-myofascial-release-smr-hamstrings.jpg",
     "videoId": "_M29fhv3LoI",
     "videoUrl": "https://www.youtube.com/watch?v=_M29fhv3LoI"
   },
@@ -3065,7 +3065,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-Y1ubl6amUg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/self-myofascial-release-smr-lateral-thigh.jpg",
     "videoId": "-Y1ubl6amUg",
     "videoUrl": "https://www.youtube.com/watch?v=-Y1ubl6amUg"
   },
@@ -3081,7 +3081,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/o0sqnX6FMzk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/self-myofascial-release-smr-peroneals.jpg",
     "videoId": "o0sqnX6FMzk",
     "videoUrl": "https://www.youtube.com/watch?v=o0sqnX6FMzk"
   },
@@ -3097,7 +3097,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/XS5hY6vBi6g/hqdefault.jpg",
+    "imageUrl": "/images/exercises/self-myofascial-release-smr-piriformis.jpg",
     "videoId": "XS5hY6vBi6g",
     "videoUrl": "https://www.youtube.com/watch?v=XS5hY6vBi6g"
   },
@@ -3111,7 +3111,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/vUzmXO56jDI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/self-myofascial-release-smr-quadriceps.jpg",
     "videoId": "vUzmXO56jDI",
     "videoUrl": "https://www.youtube.com/watch?v=vUzmXO56jDI"
   },
@@ -3127,7 +3127,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/NfWjVK7agTM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/self-myofascial-release-smr-tensor-fascia-latae.jpg",
     "videoId": "NfWjVK7agTM",
     "videoUrl": "https://www.youtube.com/watch?v=NfWjVK7agTM"
   },
@@ -3141,7 +3141,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/xKmqizOqshI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/self-myofascial-release-smr-thoracic-spine.jpg",
     "videoId": "xKmqizOqshI",
     "videoUrl": "https://www.youtube.com/watch?v=xKmqizOqshI"
   },
@@ -3155,7 +3155,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/y_WW7_c4O8k/hqdefault.jpg",
+    "imageUrl": "/images/exercises/short-lever-side-plank.jpg",
     "videoId": "y_WW7_c4O8k",
     "videoUrl": "https://www.youtube.com/watch?v=y_WW7_c4O8k"
   },
@@ -3169,7 +3169,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/xVSwJhJCsgo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/side-lying-leg-raise.jpg",
     "videoId": "xVSwJhJCsgo",
     "videoUrl": "https://www.youtube.com/watch?v=xVSwJhJCsgo"
   },
@@ -3183,7 +3183,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ZpBJIRLGEgg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/side-plank.jpg",
     "videoId": "ZpBJIRLGEgg",
     "videoUrl": "https://www.youtube.com/watch?v=ZpBJIRLGEgg"
   },
@@ -3202,7 +3202,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/qFTnmyC-nf4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-arm-dumbbell-chest-press.jpg",
     "videoId": "qFTnmyC-nf4",
     "videoUrl": "https://www.youtube.com/watch?v=qFTnmyC-nf4"
   },
@@ -3220,7 +3220,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "chest",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/iJ-GwVeUuCg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-arm-incline-dumbbell-chest-press.jpg",
     "videoId": "iJ-GwVeUuCg",
     "videoUrl": "https://www.youtube.com/watch?v=iJ-GwVeUuCg"
   },
@@ -3238,7 +3238,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/mP1BHxBeAEM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-arm-kettlebell-high-pull.jpg",
     "videoId": "mP1BHxBeAEM",
     "videoUrl": "https://www.youtube.com/watch?v=mP1BHxBeAEM"
   },
@@ -3258,7 +3258,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "quadriceps",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/r777bo9KuY4/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-arm-kettlebell-swing.jpg",
     "videoId": "r777bo9KuY4",
     "videoUrl": "https://www.youtube.com/watch?v=r777bo9KuY4"
   },
@@ -3274,7 +3274,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/K88He59YVto/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-arm-standing-chest-press.jpg",
     "videoId": "K88He59YVto",
     "videoUrl": "https://www.youtube.com/watch?v=K88He59YVto"
   },
@@ -3289,7 +3289,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/8fAJEs3L110/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-arm-standing-row-with-rotation.jpg",
     "videoId": "8fAJEs3L110",
     "videoUrl": "https://www.youtube.com/watch?v=8fAJEs3L110"
   },
@@ -3306,7 +3306,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/UrB5wA7B3hI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-balance-reach-frontal-plane.jpg",
     "videoId": "UrB5wA7B3hI",
     "videoUrl": "https://www.youtube.com/watch?v=UrB5wA7B3hI"
   },
@@ -3321,7 +3321,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Mo4P9Y_AQt8/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-balance-reach-multiplanar.jpg",
     "videoId": "Mo4P9Y_AQt8",
     "videoUrl": "https://www.youtube.com/watch?v=Mo4P9Y_AQt8"
   },
@@ -3336,7 +3336,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/V8n50DGrxfI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-balance-reach-transverse.jpg",
     "videoId": "V8n50DGrxfI",
     "videoUrl": "https://www.youtube.com/watch?v=V8n50DGrxfI"
   },
@@ -3352,7 +3352,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/fY64Qk6IfMk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-cobra-to-hip-extension.jpg",
     "videoId": "fY64Qk6IfMk",
     "videoUrl": "https://www.youtube.com/watch?v=fY64Qk6IfMk"
   },
@@ -3367,7 +3367,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/lHXShY-FivU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-floor-bridge.jpg",
     "videoId": "lHXShY-FivU",
     "videoUrl": "https://www.youtube.com/watch?v=lHXShY-FivU"
   },
@@ -3383,7 +3383,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/unRU3oVX3PU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-hammer-curl.jpg",
     "videoId": "unRU3oVX3PU",
     "videoUrl": "https://www.youtube.com/watch?v=unRU3oVX3PU"
   },
@@ -3401,7 +3401,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/6BkwOUl3fAw/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-hop-stabilization-level-1.jpg",
     "videoId": "6BkwOUl3fAw",
     "videoUrl": "https://www.youtube.com/watch?v=6BkwOUl3fAw"
   },
@@ -3419,7 +3419,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/cps6tCcJNJA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-hop-stabilization-level-2.jpg",
     "videoId": "cps6tCcJNJA",
     "videoUrl": "https://www.youtube.com/watch?v=cps6tCcJNJA"
   },
@@ -3437,7 +3437,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/YGU8ONAmjIE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-lift-and-chop.jpg",
     "videoId": "YGU8ONAmjIE",
     "videoUrl": "https://www.youtube.com/watch?v=YGU8ONAmjIE"
   },
@@ -3456,7 +3456,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/3aYsOsBA7ZE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-press.jpg",
     "videoId": "3aYsOsBA7ZE",
     "videoUrl": "https://www.youtube.com/watch?v=3aYsOsBA7ZE"
   },
@@ -3471,7 +3471,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/1sbENKqlslg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-reach-sagittal.jpg",
     "videoId": "1sbENKqlslg",
     "videoUrl": "https://www.youtube.com/watch?v=1sbENKqlslg"
   },
@@ -3488,7 +3488,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/6pEL3KxnlEo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-romanian-deadlift.jpg",
     "videoId": "6pEL3KxnlEo",
     "videoUrl": "https://www.youtube.com/watch?v=6pEL3KxnlEo"
   },
@@ -3508,7 +3508,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/CqLKOZCOFLU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-romanian-deadlift-curl-to-overhead-press.jpg",
     "videoId": "CqLKOZCOFLU",
     "videoUrl": "https://www.youtube.com/watch?v=CqLKOZCOFLU"
   },
@@ -3528,7 +3528,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/SKl4_fSJeh0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-romanian-deadlift-single-arm-curl-to-overhead-press.jpg",
     "videoId": "SKl4_fSJeh0",
     "videoUrl": "https://www.youtube.com/watch?v=SKl4_fSJeh0"
   },
@@ -3545,7 +3545,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ZmI4DRACNTg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-romanian-deadlift-to-pnf-pattern-1.jpg",
     "videoId": "ZmI4DRACNTg",
     "videoUrl": "https://www.youtube.com/watch?v=ZmI4DRACNTg"
   },
@@ -3562,7 +3562,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/znQ41ErG4Wk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-romanian-deadlift-to-pnf-pattern-1.jpg",
     "videoId": "znQ41ErG4Wk",
     "videoUrl": "https://www.youtube.com/watch?v=znQ41ErG4Wk"
   },
@@ -3582,7 +3582,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "rotator cuff",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/PKjDGnwpB_o/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-scaption.jpg",
     "videoId": "PKjDGnwpB_o",
     "videoUrl": "https://www.youtube.com/watch?v=PKjDGnwpB_o"
   },
@@ -3600,7 +3600,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "glutes",
       "hamstrings"
     ],
-    "imageUrl": "https://img.youtube.com/vi/PXNJ71rksvU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-seated-leg-curl.jpg",
     "videoId": "PXNJ71rksvU",
     "videoUrl": "https://www.youtube.com/watch?v=PXNJ71rksvU"
   },
@@ -3620,7 +3620,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "rotator cuff",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ikMg_3_jAWE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-single-arm-scaption.jpg",
     "videoId": "ikMg_3_jAWE",
     "videoUrl": "https://www.youtube.com/watch?v=ikMg_3_jAWE"
   },
@@ -3639,7 +3639,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/sSXnaFyhiZs/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-squat.jpg",
     "videoId": "sSXnaFyhiZs",
     "videoUrl": "https://www.youtube.com/watch?v=sSXnaFyhiZs"
   },
@@ -3660,7 +3660,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/LmGbrgGJS6E/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-squat-to-row.jpg",
     "videoId": "LmGbrgGJS6E",
     "videoUrl": "https://www.youtube.com/watch?v=LmGbrgGJS6E"
   },
@@ -3677,7 +3677,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/aFttN9JV0Rg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-squat-touchdown.jpg",
     "videoId": "aFttN9JV0Rg",
     "videoUrl": "https://www.youtube.com/watch?v=aFttN9JV0Rg"
   },
@@ -3692,7 +3692,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-MK4_rmVQqs/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-throw-and-catch-transverse.jpg",
     "videoId": "-MK4_rmVQqs",
     "videoUrl": "https://www.youtube.com/watch?v=-MK4_rmVQqs"
   },
@@ -3707,7 +3707,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/TLgyE-Flcws/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-throw-and-catch-frontal.jpg",
     "videoId": "TLgyE-Flcws",
     "videoUrl": "https://www.youtube.com/watch?v=TLgyE-Flcws"
   },
@@ -3722,7 +3722,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/w1shWW8WCN0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-throw-and-catch-transverse.jpg",
     "videoId": "w1shWW8WCN0",
     "videoUrl": "https://www.youtube.com/watch?v=w1shWW8WCN0"
   },
@@ -3737,7 +3737,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-zKoJj4nJ9k/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-throw-and-catch-transverse.jpg",
     "videoId": "-zKoJj4nJ9k",
     "videoUrl": "https://www.youtube.com/watch?v=-zKoJj4nJ9k"
   },
@@ -3760,7 +3760,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "core",
       "glutes"
     ],
-    "imageUrl": "https://img.youtube.com/vi/8o79mSC7ZZQ/hqdefault.jpg",
+    "imageUrl": "/images/exercises/single-leg-dumbbell-overhead-press.jpg",
     "videoId": "8o79mSC7ZZQ",
     "videoUrl": "https://www.youtube.com/watch?v=8o79mSC7ZZQ"
   },
@@ -3774,7 +3774,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/O6Jf7gcxYdU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/slalom.jpg",
     "videoId": "O6Jf7gcxYdU",
     "videoUrl": "https://www.youtube.com/watch?v=O6Jf7gcxYdU"
   },
@@ -3790,7 +3790,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/UcYVQWjygSw/hqdefault.jpg",
+    "imageUrl": "/images/exercises/split-jerk.jpg",
     "videoId": "UcYVQWjygSw",
     "videoUrl": "https://www.youtube.com/watch?v=UcYVQWjygSw"
   },
@@ -3805,7 +3805,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/AV3CzcOcGls/hqdefault.jpg",
+    "imageUrl": "/images/exercises/split-stance-row.jpg",
     "videoId": "AV3CzcOcGls",
     "videoUrl": "https://www.youtube.com/watch?v=AV3CzcOcGls"
   },
@@ -3824,7 +3824,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/tZSYZdtbONc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/squat-jump-with-stabilization.jpg",
     "videoId": "tZSYZdtbONc",
     "videoUrl": "https://www.youtube.com/watch?v=tZSYZdtbONc"
   },
@@ -3842,7 +3842,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Vv9Cd8AwYZ0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/squat-jump-with-stabilization.jpg",
     "videoId": "Vv9Cd8AwYZ0",
     "videoUrl": "https://www.youtube.com/watch?v=Vv9Cd8AwYZ0"
   },
@@ -3860,7 +3860,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/6YK8WXP2gww/hqdefault.jpg",
+    "imageUrl": "/images/exercises/squat-jump-with-stabilization-frontal.jpg",
     "videoId": "6YK8WXP2gww",
     "videoUrl": "https://www.youtube.com/watch?v=6YK8WXP2gww"
   },
@@ -3878,7 +3878,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/SEM9l4KNM-I/hqdefault.jpg",
+    "imageUrl": "/images/exercises/squat-jump-with-stabilization-multiplanar.jpg",
     "videoId": "SEM9l4KNM-I",
     "videoUrl": "https://www.youtube.com/watch?v=SEM9l4KNM-I"
   },
@@ -3896,7 +3896,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/zLsI2C0VuQM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/squat-jump-with-stabilization-transverse.jpg",
     "videoId": "zLsI2C0VuQM",
     "videoUrl": "https://www.youtube.com/watch?v=zLsI2C0VuQM"
   },
@@ -3916,7 +3916,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/Ny8JWqh4lNg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/squat-thrust-burpees.jpg",
     "videoId": "Ny8JWqh4lNg",
     "videoUrl": "https://www.youtube.com/watch?v=Ny8JWqh4lNg"
   },
@@ -3934,7 +3934,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/qZn-_dXCP2s/hqdefault.jpg",
+    "imageUrl": "/images/exercises/squat-to-row.jpg",
     "videoId": "qZn-_dXCP2s",
     "videoUrl": "https://www.youtube.com/watch?v=qZn-_dXCP2s"
   },
@@ -3952,7 +3952,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/dSf1abuGONU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/squat-to-single-arm-row.jpg",
     "videoId": "dSf1abuGONU",
     "videoUrl": "https://www.youtube.com/watch?v=dSf1abuGONU"
   },
@@ -3967,7 +3967,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/qykwviNOIyc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/standing-tubing-row.jpg",
     "videoId": "qykwviNOIyc",
     "videoUrl": "https://www.youtube.com/watch?v=qykwviNOIyc"
   },
@@ -3983,7 +3983,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/mOBSK4JKwlk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-3d-kneeling-hip-flexor-stretch.jpg",
     "videoId": "mOBSK4JKwlk",
     "videoUrl": "https://www.youtube.com/watch?v=mOBSK4JKwlk"
   },
@@ -3999,7 +3999,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/thQiAEIskCI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-3d-standing-hip-flexor-stretch.jpg",
     "videoId": "thQiAEIskCI",
     "videoUrl": "https://www.youtube.com/watch?v=thQiAEIskCI"
   },
@@ -4015,7 +4015,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/h_8VHKvi1zo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-3d-standing-tfl-stretch.jpg",
     "videoId": "h_8VHKvi1zo",
     "videoUrl": "https://www.youtube.com/watch?v=h_8VHKvi1zo"
   },
@@ -4031,7 +4031,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/h_yZV27H684/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-90-90-hamstring-stretch.jpg",
     "videoId": "h_yZV27H684",
     "videoUrl": "https://www.youtube.com/watch?v=h_yZV27H684"
   },
@@ -4047,7 +4047,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/v4OLkxi5-Q0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-butterfly-stretch.jpg",
     "videoId": "v4OLkxi5-Q0",
     "videoUrl": "https://www.youtube.com/watch?v=v4OLkxi5-Q0"
   },
@@ -4061,7 +4061,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/04vmlwoDEgE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-erector-spinae-stretch.jpg",
     "videoId": "04vmlwoDEgE",
     "videoUrl": "https://www.youtube.com/watch?v=04vmlwoDEgE"
   },
@@ -4077,7 +4077,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/UU7Nqd_Dric/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-kneeling-hip-flexor-stretch.jpg",
     "videoId": "UU7Nqd_Dric",
     "videoUrl": "https://www.youtube.com/watch?v=UU7Nqd_Dric"
   },
@@ -4093,7 +4093,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/dg_gevWZuQM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-latissimus-dorsi-ball-stretch.jpg",
     "videoId": "dg_gevWZuQM",
     "videoUrl": "https://www.youtube.com/watch?v=dg_gevWZuQM"
   },
@@ -4107,7 +4107,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/U-rAhZajTLs/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-levator-scapulae-stretch.jpg",
     "videoId": "U-rAhZajTLs",
     "videoUrl": "https://www.youtube.com/watch?v=U-rAhZajTLs"
   },
@@ -4123,7 +4123,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ujsKpEYYCSo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-pectoral-ball-stretch.jpg",
     "videoId": "ujsKpEYYCSo",
     "videoUrl": "https://www.youtube.com/watch?v=ujsKpEYYCSo"
   },
@@ -4137,7 +4137,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/BnmRb-Egz14/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-posterior-shoulder-stretch.jpg",
     "videoId": "BnmRb-Egz14",
     "videoUrl": "https://www.youtube.com/watch?v=BnmRb-Egz14"
   },
@@ -4153,7 +4153,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/83G00Fwlqqw/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-seated-calf-stretch.jpg",
     "videoId": "83G00Fwlqqw",
     "videoUrl": "https://www.youtube.com/watch?v=83G00Fwlqqw"
   },
@@ -4169,7 +4169,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/sfiFzNlHLyk/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-standing-adductor-magnus.jpg",
     "videoId": "sfiFzNlHLyk",
     "videoUrl": "https://www.youtube.com/watch?v=sfiFzNlHLyk"
   },
@@ -4185,7 +4185,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/IzHUoWs0maQ/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-standing-adductor-stretch.jpg",
     "videoId": "IzHUoWs0maQ",
     "videoUrl": "https://www.youtube.com/watch?v=IzHUoWs0maQ"
   },
@@ -4199,7 +4199,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/XBLIiQS5RQI/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-standing-quadriceps-stretch.jpg",
     "videoId": "XBLIiQS5RQI",
     "videoUrl": "https://www.youtube.com/watch?v=XBLIiQS5RQI"
   },
@@ -4214,7 +4214,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "shoulders"
     ],
-    "imageUrl": "https://img.youtube.com/vi/RNTlUaKeuXE/hqdefault.jpg",
+    "imageUrl": "/images/exercises/static-upper-trapezius-stretch.jpg",
     "videoId": "RNTlUaKeuXE",
     "videoUrl": "https://www.youtube.com/watch?v=RNTlUaKeuXE"
   },
@@ -4233,7 +4233,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/fVRKGAp1iHw/hqdefault.jpg",
+    "imageUrl": "/images/exercises/step-up-to-balance-frontal.jpg",
     "videoId": "fVRKGAp1iHw",
     "videoUrl": "https://www.youtube.com/watch?v=fVRKGAp1iHw"
   },
@@ -4255,7 +4255,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/gjigcqa_ufo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/step-up-to-balance-frontal-curl-to-overhead-press.jpg",
     "videoId": "gjigcqa_ufo",
     "videoUrl": "https://www.youtube.com/watch?v=gjigcqa_ufo"
   },
@@ -4274,7 +4274,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/k0_42mij5Fc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/step-up-to-balance.jpg",
     "videoId": "k0_42mij5Fc",
     "videoUrl": "https://www.youtube.com/watch?v=k0_42mij5Fc"
   },
@@ -4288,7 +4288,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "full body"
     ],
-    "imageUrl": "https://img.youtube.com/vi/s_TdSVFpLdg/hqdefault.jpg",
+    "imageUrl": "/images/exercises/sternocleidomastoid-stretch.jpg",
     "videoId": "s_TdSVFpLdg",
     "videoUrl": "https://www.youtube.com/watch?v=s_TdSVFpLdg"
   },
@@ -4306,7 +4306,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "biceps",
       "core"
     ],
-    "imageUrl": "https://img.youtube.com/vi/MDxfAuBbHHA/hqdefault.jpg",
+    "imageUrl": "/images/exercises/straight-arm-plank.jpg",
     "videoId": "MDxfAuBbHHA",
     "videoUrl": "https://www.youtube.com/watch?v=MDxfAuBbHHA"
   },
@@ -4322,7 +4322,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/xO8CZWtfKDU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/active-supine-biceps-femoris.jpg",
     "videoId": "xO8CZWtfKDU",
     "videoUrl": "https://www.youtube.com/watch?v=xO8CZWtfKDU"
   },
@@ -4338,7 +4338,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/fwExa2A1Plc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/supine-dumbbell-extension.jpg",
     "videoId": "fwExa2A1Plc",
     "videoUrl": "https://www.youtube.com/watch?v=fwExa2A1Plc"
   },
@@ -4354,7 +4354,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/iRaoz2hbOXU/hqdefault.jpg",
+    "imageUrl": "/images/exercises/supported-bent-over-dumbbell-extension.jpg",
     "videoId": "iRaoz2hbOXU",
     "videoUrl": "https://www.youtube.com/watch?v=iRaoz2hbOXU"
   },
@@ -4371,7 +4371,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "back",
       "biceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/DmUX88nWClo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/supported-bent-over-dumbbell-row.jpg",
     "videoId": "DmUX88nWClo",
     "videoUrl": "https://www.youtube.com/watch?v=DmUX88nWClo"
   },
@@ -4390,7 +4390,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/tYfXItmoX1s/hqdefault.jpg",
+    "imageUrl": "/images/exercises/transverse-box-jump-down-to-tuck-jump.jpg",
     "videoId": "tYfXItmoX1s",
     "videoUrl": "https://www.youtube.com/watch?v=tYfXItmoX1s"
   },
@@ -4404,7 +4404,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/rTWU9qDQNgo/hqdefault.jpg",
+    "imageUrl": "/images/exercises/transverse-slalom.jpg",
     "videoId": "rTWU9qDQNgo",
     "videoUrl": "https://www.youtube.com/watch?v=rTWU9qDQNgo"
   },
@@ -4423,7 +4423,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/-bnJGikRGsM/hqdefault.jpg",
+    "imageUrl": "/images/exercises/tuck-jump-with-stabilization.jpg",
     "videoId": "-bnJGikRGsM",
     "videoUrl": "https://www.youtube.com/watch?v=-bnJGikRGsM"
   },
@@ -4441,7 +4441,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "hamstrings",
       "quadriceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/hIEV3C4zaT8/hqdefault.jpg",
+    "imageUrl": "/images/exercises/tuck-jump-with-stabilization.jpg",
     "videoId": "hIEV3C4zaT8",
     "videoUrl": "https://www.youtube.com/watch?v=hIEV3C4zaT8"
   },
@@ -4461,7 +4461,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
       "shoulders",
       "triceps"
     ],
-    "imageUrl": "https://img.youtube.com/vi/_x5m-s8xTf0/hqdefault.jpg",
+    "imageUrl": "/images/exercises/two-arm-dumbbell-chest-press-with-band.jpg",
     "videoId": "_x5m-s8xTf0",
     "videoUrl": "https://www.youtube.com/watch?v=_x5m-s8xTf0"
   },
@@ -4477,7 +4477,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/XNf6TBErGys/hqdefault.jpg",
+    "imageUrl": "/images/exercises/two-arm-standing-cable-fly.jpg",
     "videoId": "XNf6TBErGys",
     "videoUrl": "https://www.youtube.com/watch?v=XNf6TBErGys"
   },
@@ -4491,7 +4491,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "full body"
     ],
-    "imageUrl": "https://img.youtube.com/vi/GKDY4urn2kQ/hqdefault.jpg",
+    "imageUrl": "/images/exercises/two-ins-ladder-drill.jpg",
     "videoId": "GKDY4urn2kQ",
     "videoUrl": "https://www.youtube.com/watch?v=GKDY4urn2kQ"
   },
@@ -4505,7 +4505,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "back"
     ],
-    "imageUrl": "https://img.youtube.com/vi/6rkW1Mmz4Ak/hqdefault.jpg",
+    "imageUrl": "/images/exercises/w-in-in-out-out.jpg",
     "videoId": "6rkW1Mmz4Ak",
     "videoUrl": "https://www.youtube.com/watch?v=6rkW1Mmz4Ak"
   },
@@ -4519,7 +4519,7 @@ export const NASM_COMPLETE_LIBRARY: NasmLibraryRecord[] = [
     "muscleGroups": [
       "chest"
     ],
-    "imageUrl": "https://img.youtube.com/vi/ayCcERnpVCc/hqdefault.jpg",
+    "imageUrl": "/images/exercises/zig-zag-shuffle.jpg",
     "videoId": "ayCcERnpVCc",
     "videoUrl": "https://www.youtube.com/watch?v=ayCcERnpVCc"
   }

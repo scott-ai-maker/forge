@@ -86,7 +86,7 @@ describe('Master 1-to-1 NASM Edge Exercise Video Resolver', () => {
 
     const enriched = enrichExerciseMedia({ name: 'Stability Ball Hamstring Curl' })
     expect(enriched.videoUrl).toContain('Z3cY3d3BBo4')
-    expect(enriched.imageUrl).toContain('Z3cY3d3BBo4')
+    expect(enriched.imageUrl).toBe('/images/exercises/floor-bridge.jpg')
   })
 
   it('resolves Single-Leg Phase 1 upper body movements with video fallback', () => {

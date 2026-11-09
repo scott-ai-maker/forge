@@ -1749,12 +1749,12 @@ function getNasmClinicalMovementCardUncached(
     (verifiedGaaImage && verifiedGaaImage !== BRAND_LOGO_FALLBACK_IMAGE) ? verifiedGaaImage : null
   const studioVideoUrl = resolveForgeExerciseVideo(exerciseName)
 
-  // Prioritize authentic default NASM Edge video thumbnail
+  // Prioritize verified Forge Athletic studio photography first, falling back to official NASM Edge video thumbnail
   const resolvedImageUrl =
+    candidateStudioImageUrl ||
     officialNasmThumbnail ||
     (hasOfficialNasmMatch && fuzzyMatch?.record.imageUrl ? fuzzyMatch.record.imageUrl : null) ||
     validCustomOverride ||
-    candidateStudioImageUrl ||
     null
 
   const resolvedVideoUrl = hasOfficialNasmMatch

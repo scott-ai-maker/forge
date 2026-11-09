@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.48.2'
+export const APP_VERSION = '1.48.3'
 export const APP_RELEASE_DATE = '2026-11-08'
-export const APP_RELEASE_CODENAME = 'Master Exercise Library Deduplication & Canonical Alias Engine'
+export const APP_RELEASE_CODENAME = 'Forge Athletic Studio Exercise Photography & Loop Promotion'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.48.3',
+    date: '2026-11-08',
+    codename: 'Forge Athletic Studio Exercise Photography & Loop Promotion',
+    category: 'feature',
+    badge: 'Studio Exercise Photography',
+    title: 'Primary Forge Athletic Studio Photography & Full 267-Movement Media Sync',
+    summary:
+      'Promotes custom Forge Athletic studio exercise photography (/images/exercises/*.jpg) as the primary thumbnail across all workout cards, exercise library pickers, warmup/cooldown modules, and Supabase exercise_library_entries, alongside Waves 15–22 studio video loops.',
+    highlights: [
+      'Promoted all 267 canonical Forge Athletic studio exercise photographs (/images/exercises/*.jpg) to primary display across client workouts, supersets, warmups, cooldowns, and coach program builders.',
+      'Synchronized all 267 Supabase exercise_library_entries rows and NASM_COMPLETE_LIBRARY records to serve verified studio photography and Waves 15–22 studio loop videos.',
+      'Preserved side-by-side comparison in the Exercise Audit Studio (/exercise-audit.html) for ongoing visual review and iterative refinement.',
+    ],
+  },
   {
     version: '1.48.2',
     date: '2026-11-08',

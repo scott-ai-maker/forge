@@ -434,7 +434,7 @@ describe('rag-nasm-program-generator', () => {
       const day2 = plan.workouts[1]
       const hamstringExercise = day2.exercises.find(e => e.name === 'Floor Bridge')
       expect(hamstringExercise).toBeDefined()
-      expect(hamstringExercise?.imageUrl).toContain('img.youtube.com')
+      expect(hamstringExercise?.imageUrl).toBe('/images/exercises/floor-bridge.jpg')
       expect(hamstringExercise?.videoUrl).toBeDefined()
     })
   })

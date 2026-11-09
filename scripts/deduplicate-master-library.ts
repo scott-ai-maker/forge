@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { createClient } from '@supabase/supabase-js'
 import { NASM_EDGE_OFFICIAL_CATALOG } from '../lib/nasm-exercise-video-catalog'
+import { resolveGaaExerciseImage } from '../lib/nasm-generated-images'
 
 interface NasmLibraryRecord {
   id: string
@@ -110,7 +111,10 @@ async function main() {
       best.videoUrl = `https://www.youtube.com/watch?v=${officialVideo}`
     }
 
-    if (best.videoId) {
+    const studioImg = resolveGaaExerciseImage(best.name, false)
+    if (studioImg) {
+      best.imageUrl = studioImg
+    } else if (best.videoId) {
       best.imageUrl = `https://img.youtube.com/vi/${best.videoId}/hqdefault.jpg`
     }
 
@@ -193,9 +197,11 @@ async function main() {
   console.log(`Found ${dbRows.length} rows in Supabase exercise_library_entries (${duplicateRowIds.length} duplicate rows to prune).`)
 
   // Upsert any canonical records missing from DB (or update existing canonical records)
-  const dbIdSet = new Set(dbRows.map(r => r.id))
+  const dbRowById = new Map(dbRows.map(r => [r.id, r]))
+  let updatedMediaCount = 0
   for (const canon of canonicalRecords) {
-    if (!dbIdSet.has(canon.id)) {
+    const existingRow = dbRowById.get(canon.id)
+    if (!existingRow) {
       console.log(`Inserting missing canonical exercise into DB: "${canon.name}" (${canon.id})`)
       const { error: insErr } = await supabase.from('exercise_library_entries').insert({
         id: canon.id,
@@ -213,7 +219,11 @@ async function main() {
         is_active: true,
       })
       if (insErr) console.error(`Failed to insert ${canon.name}:`, insErr.message)
-    } else if (resolveCanonicalKey(canon.name) === 'static latissimus dorsi ball stretch') {
+    } else if (
+      existingRow.media_image_url !== canon.imageUrl ||
+      existingRow.media_video_url !== canon.videoUrl ||
+      resolveCanonicalKey(canon.name) === 'static latissimus dorsi ball stretch'
+    ) {
       await supabase
         .from('exercise_library_entries')
         .update({
@@ -223,7 +233,11 @@ async function main() {
           media_video_url: canon.videoUrl,
         })
         .eq('id', canon.id)
+      updatedMediaCount++
     }
+  }
+  if (updatedMediaCount > 0) {
+    console.log(`Updated media_image_url / media_video_url on ${updatedMediaCount} Supabase exercise_library_entries rows.`)
   }
 
   // Remap any references to duplicate IDs or semantic duplicate names in workout_plans & workout_program_templates

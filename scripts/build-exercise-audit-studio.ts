@@ -754,10 +754,10 @@ async function build() {
     <div class="header-top">
       <div class="brand-title">
         <h1>Forge Athletic — Master Exercise Library Audit Studio</h1>
-        <span class="brand-badge">273 Canonical Movements</span>
+        <span class="brand-badge">${exercises.length} Canonical Movements</span>
       </div>
       <div class="stats-bar">
-        <div class="stat-pill baseline">Default Baseline: <strong id="stat-baseline">273 Video Frames</strong></div>
+        <div class="stat-pill baseline">Default Baseline: <strong id="stat-baseline">${exercises.length} Video Frames</strong></div>
         <div class="stat-pill kept">Keep Video: <strong id="stat-kept">0</strong></div>
         <div class="stat-pill approved">Photos Approved: <strong id="stat-approved">0</strong></div>
         <div class="stat-pill flagged">Flagged: <strong id="stat-flagged">0</strong></div>
@@ -769,8 +769,8 @@ async function build() {
         <input type="text" id="search-input" placeholder="Search exercises, equipment, muscles, or YouTube titles..." autofocus>
       </div>
       <select id="filter-status">
-        <option value="all">All Movements (273)</option>
-        <option value="unreviewed">Unreviewed / In Progress</option>
+        <option value="all">All Movements (${exercises.length})</option>
+        <option value="unreviewed">Unreviewed / What's Left</option>
         <option value="kept-video">Keep Video Default</option>
         <option value="approved-photo">Approved Studio Photo</option>
         <option value="flagged">Flagged Issues / Needs Reshoot</option>
@@ -790,6 +790,7 @@ async function build() {
       <button class="btn-toggle-all" id="btn-toggle-all" title="Toggle between Video Frame and Candidate Photo for all visible cards">
         Toggle All to Photos
       </button>
+      <button class="btn-export" id="btn-reset" title="Reset all review statuses back to Unreviewed">↺ Reset All Reviews</button>
       <button class="btn-export" id="btn-export">Export Decisions (JSON)</button>
       <button class="btn-primary" id="btn-save">Save Progress</button>
     </div>
@@ -818,20 +819,8 @@ async function build() {
 
   <script>
     const EXERCISES = ${JSON.stringify(exercises)};
-    const STORAGE_KEY = 'forge_exercise_audit_state_v2';
-    // Migrate from v1 if present
-    const legacyState = JSON.parse(localStorage.getItem('forge_exercise_audit_state_v1') || '{}');
+    const STORAGE_KEY = 'forge_exercise_audit_state_v3';
     let auditState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    
-    // Seed legacy state if v2 is empty
-    if (Object.keys(auditState).length === 0 && Object.keys(legacyState).length > 0) {
-      for (const [k, v] of Object.entries(legacyState)) {
-        auditState[k] = {
-          status: v.status === 'APPROVED' ? 'APPROVE_PHOTO' : v.status,
-          notes: v.notes || '',
-        };
-      }
-    }
 
     // Active image view mode per card ('video' or 'photo')
     const viewModes = {};
@@ -1158,6 +1147,13 @@ async function build() {
       a.href = url;
       a.download = \`forge-exercise-audit-decisions-\${new Date().toISOString().slice(0, 10)}.json\`;
       a.click();
+    });
+
+    // Reset button
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      auditState = {};
+      saveState();
+      renderExercises();
     });
 
     // Save button

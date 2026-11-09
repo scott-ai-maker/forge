@@ -627,7 +627,7 @@ export function enrichExerciseMedia<T extends {
   const gaaImage = resolveGaaExerciseImage(exercise.name, false)
   return {
     ...exercise,
-    imageUrl: officialThumbnail || gaaImage || exercise.imageUrl || null,
+    imageUrl: gaaImage || officialThumbnail || exercise.imageUrl || null,
     videoUrl: videoRes.externalUrl,
     embedUrl: videoRes.embedUrl,
   }
