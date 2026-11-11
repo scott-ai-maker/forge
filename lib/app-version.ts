@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.48.3'
-export const APP_RELEASE_DATE = '2026-11-08'
-export const APP_RELEASE_CODENAME = 'Forge Athletic Studio Exercise Photography & Loop Promotion'
+export const APP_VERSION = '1.49.1'
+export const APP_RELEASE_DATE = '2026-11-11'
+export const APP_RELEASE_CODENAME = '267-Movement NASM Biomechanical Video Alignment & AI Loop Safety Disclaimers'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.49.1',
+    date: '2026-11-11',
+    codename: '267-Movement NASM Biomechanical Video Alignment & AI Loop Safety Disclaimers',
+    category: 'feature',
+    badge: 'Biomechanics & Form Safety',
+    title: 'v1.49.1 — Complete 267-Movement Studio Video Alignment & AI Loop Form Safety Disclaimers',
+    summary:
+      'Completes Waves 23–32 of the 267-exercise biomechanical video and photography audit against official NASM Edge YouTube references (100% coverage across all 267 movements) and adds prominent AI-generated branding loop & Official NASM form safety disclaimers across all client workout surfaces.',
+    highlights: [
+      'Complete 267-Movement Studio Video & Photography Alignment (Waves 23–32): Regenerated and re-sliced 82+ exercise videos and start/peak thumbnails so all 267 canonical NASM movements feature dedicated Forge Athletic studio loops aligned with official NASM body positions, equipment, and F0 -> F60 concentric range of motion.',
+      'AI-Generated Branding Loop & Injury-Prevention Form Disclaimers: Added high-visibility safety disclaimers and 1-tap "Watch Official NASM Form Video" buttons across ExerciseVideoModal, FitnessTrackerClient (top-of-workout banner and expanded set cards), SupersetPairCard, ClinicalKineticWarmupModule, and ClinicalCoolDownModule.',
+      'Dedicated Mobility & Unilateral Video Mapping: Mapped all 21 newly generated flexibility, mobility, and unilateral studio video loops in VERIFIED_FORGE_EXERCISE_VIDEOS.',
+    ],
+  },
   {
     version: '1.48.3',
     date: '2026-11-08',

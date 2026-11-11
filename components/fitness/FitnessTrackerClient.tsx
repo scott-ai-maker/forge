@@ -4133,13 +4133,44 @@ export default function FitnessTrackerClient({
                                   <span style={{ fontSize: 8.5, opacity: 0.8, background: 'rgba(255,255,255,0.08)', padding: '1px 4px', borderRadius: 3 }}>
                                     {phaseRules.supersetBadgeLabel}
                                   </span>
-                                </button>
-                              )
-                            })()}
-                          </div>
+                                  </button>
+                                )
+                              })()}
+                            </div>
 
-                          {(() => {
-                            const groupedEntries: GroupedExerciseEntry[] = groupWorkoutExercises(currentExercises)
+                            {/* Exercise Loop & Form Safety Disclaimer Banner */}
+                            <div
+                              role="note"
+                              aria-label="Exercise Loop Form & Injury Prevention Disclaimer"
+                              data-testid="workout-ai-loop-disclaimer"
+                              style={{
+                                background: 'rgba(245, 158, 11, 0.11)',
+                                border: '1px solid rgba(245, 158, 11, 0.42)',
+                                borderLeft: '3px solid #F59E0B',
+                                borderRadius: 6,
+                                padding: '8px 11px',
+                                marginBottom: 10,
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 8,
+                                fontSize: 11.5,
+                                lineHeight: 1.45,
+                                color: '#FDE68A',
+                              }}
+                            >
+                              <div style={{ marginTop: 1, flexShrink: 0 }}>
+                                <GaaIcon name="shield-alert" size={14} tone="gold" />
+                              </div>
+                              <div>
+                                <strong style={{ color: '#FBBF24' }}>Form &amp; Safety Disclaimer (AI Branding Loops):</strong>{' '}
+                                While Forge Studio exercise loops are engineered to be as accurate as possible, they are{' '}
+                                <strong>AI-generated for branding purposes</strong> and may have minor visual flaws. To protect yourself from injury, do not copy the AI loop verbatim—always tap any exercise to watch the{' '}
+                                <strong>actual Official NASM Video Demonstration</strong> and follow the written NASM execution cues for form guidance.
+                              </div>
+                            </div>
+
+                            {(() => {
+                              const groupedEntries: GroupedExerciseEntry[] = groupWorkoutExercises(currentExercises)
 
                             return groupedEntries.map((entry, entryIdx) => {
                               if (entry.isSuperset) {
@@ -4399,6 +4430,50 @@ export default function FitnessTrackerClient({
                           </summary>
                           {(isExpanded || activeRestTimerKey === exerciseKey) && (
                           <div style={{ padding: '8px 8px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div
+                          role="note"
+                          style={{
+                            background: 'rgba(245, 158, 11, 0.1)',
+                            border: '1px solid rgba(245, 158, 11, 0.38)',
+                            borderRadius: 5,
+                            padding: '6px 9px',
+                            marginBottom: 8,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: 6,
+                            fontSize: 11,
+                            color: '#FDE68A',
+                          }}
+                        >
+                          <span style={{ flex: 1, minWidth: 200 }}>
+                            <strong style={{ color: '#FBBF24' }}>⚠️ AI Loop Disclaimer:</strong> Studio loops are AI-generated for branding and may have minor flaws. Use the{' '}
+                            <strong>actual Official NASM Video</strong> &amp; written cues for safe form guidance.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setActiveVideoExercise(ex)}
+                            className="tactile-btn"
+                            style={{
+                              background: 'rgba(56, 189, 248, 0.18)',
+                              border: '1px solid rgba(56, 189, 248, 0.55)',
+                              color: '#7DD3FC',
+                              borderRadius: 4,
+                              padding: '3px 8px',
+                              fontSize: 10.5,
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              flexShrink: 0,
+                            }}
+                          >
+                            <GaaIcon name="play" size={10} tone="cyan" />
+                            <span>Official NASM Video &amp; Cues</span>
+                          </button>
+                        </div>
                         {ex.personalReason?.trim() && (
                           <p className="client-exercise-why">
                             <span className="client-exercise-why-label">Why this is in your plan</span>

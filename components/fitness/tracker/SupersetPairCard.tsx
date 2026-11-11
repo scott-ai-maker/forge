@@ -439,12 +439,61 @@ export default function SupersetPairCard({
                 }}
               >
                 <GaaIcon name="play" size={11} tone="cyan" />
-                <span>Watch Video Demonstration</span>
+                <span>Watch Official NASM Form Video</span>
               </div>
             )}
           </div>
         )
       })()}
+
+      {/* AI Branding Loop & NASM Form Guidance Disclaimer */}
+      <div
+        role="note"
+        aria-label="Superset Exercise Loop Form & Safety Disclaimer"
+        style={{
+          background: 'rgba(245, 158, 11, 0.1)',
+          border: '1px solid rgba(245, 158, 11, 0.4)',
+          borderRadius: 5,
+          padding: '6px 9px',
+          marginBottom: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 6,
+          fontSize: 11,
+          color: '#FDE68A',
+        }}
+      >
+        <span style={{ flex: 1, minWidth: 200 }}>
+          <strong style={{ color: '#FBBF24' }}>⚠️ AI Loop Disclaimer:</strong> Studio loops are AI-generated for branding and may have minor flaws. Use the{' '}
+          <strong>actual Official NASM Video</strong> &amp; written cues for safe form guidance.
+        </span>
+        {onOpenVideoModal && (
+          <button
+            type="button"
+            onClick={() => onOpenVideoModal(currentEx.name)}
+            className="tactile-btn"
+            style={{
+              background: 'rgba(56, 189, 248, 0.18)',
+              border: '1px solid rgba(56, 189, 248, 0.55)',
+              color: '#7DD3FC',
+              borderRadius: 4,
+              padding: '3px 8px',
+              fontSize: 10.5,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              flexShrink: 0,
+            }}
+          >
+            <GaaIcon name="play" size={10} tone="cyan" />
+            <span>Official NASM Video</span>
+          </button>
+        )}
+      </div>
 
       {/* ── Active Sub-Exercise Set Progression Matrix ── */}
       <SetProgressionMatrix

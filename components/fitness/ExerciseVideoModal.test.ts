@@ -47,5 +47,25 @@ describe('ExerciseVideoModal & Exercise Card Instruction Hierarchy', () => {
     expect(actionRowIndex).toBeGreaterThan(0)
     expect(instructionsIndex).toBeLessThan(actionRowIndex)
   })
+
+  it('displays the AI-generated branding loop & Official NASM form safety disclaimer across all client workout surfaces', () => {
+    const modalContent = fs.readFileSync(modalFilePath, 'utf-8')
+    const clientContent = fs.readFileSync(clientFilePath, 'utf-8')
+    const warmupContent = fs.readFileSync(warmupFilePath, 'utf-8')
+    const cooldownContent = fs.readFileSync(cooldownFilePath, 'utf-8')
+    const supersetFilePath = path.resolve(process.cwd(), 'components/fitness/tracker/SupersetPairCard.tsx')
+    const supersetContent = fs.readFileSync(supersetFilePath, 'utf-8')
+
+    expect(modalContent).toContain('ai-exercise-loop-disclaimer')
+    expect(modalContent).toContain('AI-generated for branding and movement recognition')
+    expect(modalContent).toContain('actual Official NASM Video Demonstration')
+
+    expect(clientContent).toContain('workout-ai-loop-disclaimer')
+    expect(clientContent).toContain('AI-generated for branding')
+
+    expect(supersetContent).toContain('Studio loops are AI-generated for branding')
+    expect(warmupContent).toContain('Studio loops are AI-generated for branding')
+    expect(cooldownContent).toContain('Studio loops are AI-generated for branding')
+  })
 })
 

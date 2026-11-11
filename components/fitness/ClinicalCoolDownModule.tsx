@@ -1602,6 +1602,21 @@ export default function ClinicalCoolDownModule({
                       {stepText}
                     </div>
                   ))}
+                  {!isBreathing && (
+                    <div
+                      role="note"
+                      style={{
+                        marginTop: 6,
+                        paddingTop: 6,
+                        borderTop: '1px solid rgba(245, 158, 11, 0.28)',
+                        fontSize: 10.5,
+                        color: '#FDE68A',
+                      }}
+                    >
+                      <strong style={{ color: '#FBBF24' }}>⚠️ Form Safety Disclaimer:</strong> Studio loops are AI-generated for branding and may have minor flaws. Always use the{' '}
+                      <strong>actual Official NASM Video</strong> and written cues above for safe form guidance.
+                    </div>
+                  )}
                 </div>
 
                 {isBreathing ? (
@@ -1903,6 +1918,7 @@ export default function ClinicalCoolDownModule({
                   const activeImg = movementCard.imageUrl || gaaImg || movementCard.fallbackImageUrl || BRAND_LOGO_FALLBACK_IMAGE
                   const hasActiveVideo = Boolean(movementCard.embedUrl || movementCard.videoUrl)
                   return (
+                    <>
                     <div
                       onClick={() => openMovementModal(activeItem)}
                       style={{
@@ -1980,8 +1996,25 @@ export default function ClinicalCoolDownModule({
                         {movementCard.category} · {activeItem.phaseLabel}
                       </div>
                     </div>
-                  )
-                })()}
+                    <div
+                      role="note"
+                      style={{
+                        background: 'rgba(245, 158, 11, 0.1)',
+                        border: '1px solid rgba(245, 158, 11, 0.4)',
+                        borderRadius: 5,
+                        padding: '6px 9px',
+                        marginBottom: 12,
+                        fontSize: 11,
+                        color: '#FDE68A',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <strong style={{ color: '#FBBF24' }}>⚠️ AI Loop Disclaimer:</strong> Studio loops are AI-generated for branding and may have minor flaws. Tap above to watch the{' '}
+                      <strong>actual Official NASM Video</strong> for exact form guidance.
+                    </div>
+                  </>
+                )
+              })()}
 
                 {(() => {
                   const activeIsUnilateral = activeItem ? (activeItem.isUnilateral ?? isUnilateralMovement(activeItem)) : false
