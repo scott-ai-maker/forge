@@ -4,14 +4,19 @@ import React, { useState } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import CoachToolboxAssigner from './CoachToolboxAssigner'
 import CoachSupplementPrescriber from './CoachSupplementPrescriber'
+import EquipmentDispensaryWidget from '@/components/fitness/EquipmentDispensaryWidget'
 import { ClientSex } from '@/lib/supplement-prescriptions'
+import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 
 interface CoachPrescriptionsWorkspaceProps {
   clientId: string
   clientName?: string
   clientAge?: number
   clientSex?: ClientSex
-  initialSubtab?: 'toolboxes' | 'supplements' | 'cardio'
+  latestAssessment?: NasmAssessmentRecord | null
+  ownedEquipment?: string[] | null
+  optPhase?: number | null
+  initialSubtab?: 'toolboxes' | 'supplements' | 'equipment' | 'cardio'
 }
 
 export default function CoachPrescriptionsWorkspace({
@@ -19,10 +24,17 @@ export default function CoachPrescriptionsWorkspace({
   clientName = 'Client',
   clientAge = 35,
   clientSex = 'male',
+  latestAssessment = null,
+  ownedEquipment = null,
+  optPhase = null,
   initialSubtab = 'toolboxes',
 }: CoachPrescriptionsWorkspaceProps) {
-  const [activeSubtab, setActiveSubtab] = useState<'toolboxes' | 'supplements'>(
-    initialSubtab === 'supplements' ? 'supplements' : 'toolboxes'
+  const [activeSubtab, setActiveSubtab] = useState<'toolboxes' | 'supplements' | 'equipment'>(
+    initialSubtab === 'supplements'
+      ? 'supplements'
+      : initialSubtab === 'equipment'
+      ? 'equipment'
+      : 'toolboxes'
   )
 
   return (
@@ -148,6 +160,32 @@ export default function CoachPrescriptionsWorkspace({
             <GaaIcon name="supplements" size={14} tone={activeSubtab === 'supplements' ? 'gold' : 'slate'} />
             <span>Sports Supplements (Thorne)</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubtab('equipment')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 6,
+              background: activeSubtab === 'equipment'
+                ? 'linear-gradient(135deg, rgba(212, 160, 23, 0.28) 0%, rgba(170, 130, 10, 0.18) 100%)'
+                : 'transparent',
+              border: activeSubtab === 'equipment'
+                ? '1px solid var(--gold)'
+                : '1px solid transparent',
+              color: activeSubtab === 'equipment' ? 'var(--gold-lt)' : 'var(--gray-lt)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <GaaIcon name="dumbbell" size={14} tone={activeSubtab === 'equipment' ? 'gold' : 'slate'} />
+            <span>Corrective &amp; Home-Gym Gear</span>
+          </button>
         </div>
       </div>
 
@@ -159,6 +197,15 @@ export default function CoachPrescriptionsWorkspace({
             clientName={clientName}
             clientAge={clientAge}
             clientSex={clientSex}
+          />
+        ) : activeSubtab === 'equipment' ? (
+          <EquipmentDispensaryWidget
+            variant="full"
+            assessment={latestAssessment}
+            ownedEquipment={ownedEquipment}
+            optPhase={optPhase}
+            athleteName={clientName}
+            coachClientId={clientId}
           />
         ) : (
           <CoachToolboxAssigner clientId={clientId} clientName={clientName} />

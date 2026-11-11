@@ -439,6 +439,9 @@ export default function FitnessLabDiagnosticsView({
             savedTargets={plan?.plan_json?.nutritionTargets}
             telemetry={telemetry}
             intake={intake}
+            latestAssessment={latestAssessment ?? null}
+            ownedEquipment={profile?.equipment_access ?? null}
+            optPhase={plan?.nasm_opt_phase ?? null}
             initialMode={initialNutritionMode}
           />
         ))}
@@ -447,6 +450,8 @@ export default function FitnessLabDiagnosticsView({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <NasmAssessmentSummary
               assessment={latestAssessment ?? null}
+              ownedEquipment={profile?.equipment_access ?? null}
+              optPhase={plan?.nasm_opt_phase ?? null}
               onLaunchVideoUpload={() => onSelectTool('video')}
             />
             <details className="fitness-card-disclosure fitness-lab-panel">

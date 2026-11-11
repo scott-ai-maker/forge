@@ -5,15 +5,20 @@ import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 import KineticMobilityRadar from '@/components/fitness/KineticMobilityRadar'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import MovementScreenInstructionsModal, { MovementScreenGuideCard } from '@/components/fitness/MovementScreenInstructionsModal'
+import EquipmentDispensaryWidget from '@/components/fitness/EquipmentDispensaryWidget'
 
 interface NasmAssessmentSummaryProps {
   assessment: NasmAssessmentRecord | null
+  ownedEquipment?: string[] | null
+  optPhase?: number | null
   onLaunchVideoUpload?: () => void
   onLaunchLiveStudio?: () => void
 }
 
 export default function NasmAssessmentSummary({
   assessment,
+  ownedEquipment = null,
+  optPhase = null,
   onLaunchVideoUpload,
   onLaunchLiveStudio,
 }: NasmAssessmentSummaryProps) {
@@ -88,6 +93,12 @@ export default function NasmAssessmentSummary({
           onOpenModal={() => setIsGuideOpen(true)}
           onLaunchVideoUpload={onLaunchVideoUpload}
           onLaunchLiveStudio={onLaunchLiveStudio}
+        />
+        <EquipmentDispensaryWidget
+          variant="compact_assessment"
+          assessment={null}
+          ownedEquipment={ownedEquipment}
+          optPhase={optPhase}
         />
         <MovementScreenInstructionsModal
           isOpen={isGuideOpen}
@@ -398,6 +409,14 @@ export default function NasmAssessmentSummary({
           )}
         </div>
       </div>
+
+      {/* Prescribed Corrective Hardware Kit (Perform Better & Crossover Symmetry) */}
+      <EquipmentDispensaryWidget
+        variant="compact_assessment"
+        assessment={assessment}
+        ownedEquipment={ownedEquipment}
+        optPhase={optPhase}
+      />
 
       {/* Client Printable Corrective Handout */}
       <div className="cex-print-sheet" style={{ display: 'none' }}>

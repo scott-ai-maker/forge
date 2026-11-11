@@ -1275,9 +1275,13 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
             clientName={client.full_name ?? 'Client'}
             clientAge={Number(fitnessProfileResult.data?.age) || 35}
             clientSex={(fitnessProfileResult.data?.sex as 'male' | 'female' | 'other') || 'male'}
+            latestAssessment={(nasmAssessmentsResult.data?.[0] as NasmAssessmentRecord | undefined) ?? null}
+            ownedEquipment={(fitnessProfileResult.data?.equipment_access as string[] | undefined) ?? null}
             initialSubtab={
               rawSubTab === 'cardio' || resolvedSearchParams.tab === 'cardio'
                 ? 'cardio'
+                : rawSubTab === 'equipment'
+                ? 'equipment'
                 : rawSubTab === 'supplements' || resolvedSearchParams.tab === 'supplements'
                 ? 'supplements'
                 : 'toolboxes'

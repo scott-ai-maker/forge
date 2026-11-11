@@ -13,7 +13,10 @@ import {
 } from '@/lib/metabolic-nutrition'
 import type { NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 import SupplementAdvisorWidget from '@/components/fitness/SupplementAdvisorWidget'
+import EquipmentDispensaryWidget from '@/components/fitness/EquipmentDispensaryWidget'
 import { isDispensaryAndSupplementsEnabled } from '@/lib/supplement-prescriptions'
+import { isEquipmentDispensaryEnabled } from '@/lib/equipment-prescriptions'
+import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 
 import { DailyBiometricSummary } from '@/lib/wearables-telemetry'
 
@@ -35,7 +38,10 @@ interface MetabolicNutritionProtocolProps {
     surgeries_or_injuries?: string | null
     allergies?: string | null
   } | null
-  initialMode?: 'hand_portions' | 'macros_dining' | 'supplements'
+  latestAssessment?: NasmAssessmentRecord | null
+  ownedEquipment?: string[] | null
+  optPhase?: number | null
+  initialMode?: 'hand_portions' | 'macros_dining' | 'supplements' | 'equipment'
 }
 
 export default function MetabolicNutritionProtocol({
@@ -49,9 +55,12 @@ export default function MetabolicNutritionProtocol({
   telemetry,
   savedTargets,
   intake,
+  latestAssessment = null,
+  ownedEquipment = null,
+  optPhase = null,
   initialMode = 'macros_dining',
 }: MetabolicNutritionProtocolProps) {
-  const [nutritionMode, setNutritionMode] = useState<'hand_portions' | 'macros_dining' | 'supplements'>(initialMode)
+  const [nutritionMode, setNutritionMode] = useState<'hand_portions' | 'macros_dining' | 'supplements' | 'equipment'>(initialMode)
   const [activePhase, setActivePhase] = useState<NasmOptPhase>('phase1_stabilization')
   const [activeDiningTab, setActiveDiningTab] = useState<string>('steakhouse')
 
@@ -280,6 +289,46 @@ export default function MetabolicNutritionProtocol({
                 </span>
               )}
             </button>
+
+            {isEquipmentDispensaryEnabled && (
+              <button
+                type="button"
+                onClick={() => setNutritionMode('equipment')}
+                className="tactile-btn"
+                title="Prescribed Corrective & Home-Gym Gear (Perform Better & Crossover Symmetry)"
+                style={{
+                  padding: '8px 16px',
+                  background: nutritionMode === 'equipment' ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
+                  border: nutritionMode === 'equipment' ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                  color: nutritionMode === 'equipment' ? 'var(--navy)' : 'var(--white)',
+                  fontFamily: 'Raleway, sans-serif',
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  borderRadius: 4,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <GaaIcon name="dumbbell" size={14} tone={nutritionMode === 'equipment' ? 'inherit' : 'gold'} />
+                <span>Prescribed Gear &amp; Home Gym</span>
+                <span
+                  style={{
+                    fontSize: 9.5,
+                    fontWeight: 800,
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    background: nutritionMode === 'equipment' ? 'rgba(8,14,20,0.85)' : 'rgba(52,211,153,0.16)',
+                    color: '#34D399',
+                    border: '1px solid rgba(52,211,153,0.4)',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  10–15% OFF
+                </span>
+              </button>
+            )}
           </div>
         </div>
         <p style={{ margin: '8px 0 0', color: 'var(--gray)', fontSize: 14, lineHeight: 1.6, maxWidth: 800 }}>
@@ -287,17 +336,38 @@ export default function MetabolicNutritionProtocol({
             ? 'Precision Nutrition (PN1) hand-portion calibration. Calibrates per-meal palms, fists, cupped hands, and thumbs to eliminate food-scale obsession and promote sustainable, mindful eating.'
             : nutritionMode === 'supplements'
             ? 'Evidence-based ergogenic compound scheduling. Tiered by daily core vs training-day essentials with strict drug-nutrient safety screening and 1-compound-at-a-time titration.'
+            : nutritionMode === 'equipment'
+            ? 'Clinical corrective mobility, scapular/hip stabilization, and home-gym strength hardware direct-shipped via Perform Better (10% off) and Crossover Symmetry (15% off).'
             : 'Calibrated using clinical Mifflin-St Jeor & Katch-McArdle energy balance algorithms. Synchronizes exact protein, carbohydrate, fat, and hydration targets to your active OPT™ phase.'}
         </p>
       </div>
 
-      {nutritionMode === 'supplements' ? (
-        <SupplementAdvisorWidget
-          initialGoal={selectedGoal === 'hypertrophy' ? 'hypertrophy' : selectedGoal === 'fat_loss' ? 'fat_loss' : 'general_health'}
-          initialAge={initialAge}
-          initialSex={initialSex === 'female' ? 'female' : 'male'}
-          intake={intake}
+      {nutritionMode === 'equipment' ? (
+        <EquipmentDispensaryWidget
+          variant="full"
+          assessment={latestAssessment}
+          ownedEquipment={ownedEquipment}
+          optPhase={optPhase}
+          goal={selectedGoal}
         />
+      ) : nutritionMode === 'supplements' ? (
+        <div style={{ display: 'grid', gap: 24 }}>
+          <SupplementAdvisorWidget
+            initialGoal={selectedGoal === 'hypertrophy' ? 'hypertrophy' : selectedGoal === 'fat_loss' ? 'fat_loss' : 'general_health'}
+            initialAge={initialAge}
+            initialSex={initialSex === 'female' ? 'female' : 'male'}
+            intake={intake}
+          />
+          {isEquipmentDispensaryEnabled && (
+            <EquipmentDispensaryWidget
+              variant="full"
+              assessment={latestAssessment}
+              ownedEquipment={ownedEquipment}
+              optPhase={optPhase}
+              goal={selectedGoal}
+            />
+          )}
+        </div>
       ) : nutritionMode === 'hand_portions' ? (
         <div style={{ display: 'grid', gap: 20 }}>
           {/* Hand Portions Overview Hero Card */}
