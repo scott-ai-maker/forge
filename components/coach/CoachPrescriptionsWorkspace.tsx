@@ -1,7 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
+import GaaIcon from '@/components/ui/GaaIcon'
 import CoachToolboxAssigner from './CoachToolboxAssigner'
+import CoachSupplementPrescriber from './CoachSupplementPrescriber'
 import { ClientSex } from '@/lib/supplement-prescriptions'
 
 interface CoachPrescriptionsWorkspaceProps {
@@ -15,10 +17,17 @@ interface CoachPrescriptionsWorkspaceProps {
 export default function CoachPrescriptionsWorkspace({
   clientId,
   clientName = 'Client',
+  clientAge = 35,
+  clientSex = 'male',
+  initialSubtab = 'toolboxes',
 }: CoachPrescriptionsWorkspaceProps) {
+  const [activeSubtab, setActiveSubtab] = useState<'toolboxes' | 'supplements'>(
+    initialSubtab === 'supplements' ? 'supplements' : 'toolboxes'
+  )
+
   return (
     <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* ── Header ──────────────────────────────── */}
+      {/* ── Header & Mode Switcher ──────────────────────────────── */}
       <div
         style={{
           background: 'linear-gradient(135deg, rgba(14, 22, 36, 0.96) 0%, rgba(8, 14, 24, 0.96) 100%)',
@@ -57,7 +66,7 @@ export default function CoachPrescriptionsWorkspace({
                 border: '1px solid rgba(52, 211, 153, 0.3)',
               }}
             >
-              Specialized Toolboxes
+              Thorne Dispensary Live
             </span>
           </div>
           <h2
@@ -70,17 +79,90 @@ export default function CoachPrescriptionsWorkspace({
               color: 'var(--white)',
             }}
           >
-            SPECIALIZED RELIEF &amp; RECOVERY TOOLBOXES
+            TOOLBOXES &amp; SPORTS SUPPLEMENTS
           </h2>
           <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--gray)' }}>
-            Configure targeted movement relief toolkits (Desk Worker, Low Back, Travel, and Sleep) for this athlete.
+            Configure targeted movement relief toolkits and evidence-based Thorne supplement guides (15% member discount).
           </p>
+        </div>
+
+        {/* In-Tab Mode Switcher Pills */}
+        <div
+          style={{
+            display: 'inline-flex',
+            padding: 4,
+            borderRadius: 8,
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            gap: 4,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveSubtab('toolboxes')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 6,
+              background: activeSubtab === 'toolboxes'
+                ? 'linear-gradient(135deg, rgba(52, 211, 153, 0.25) 0%, rgba(16, 185, 129, 0.15) 100%)'
+                : 'transparent',
+              border: activeSubtab === 'toolboxes'
+                ? '1px solid #10B981'
+                : '1px solid transparent',
+              color: activeSubtab === 'toolboxes' ? '#34D399' : 'var(--gray-lt)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <GaaIcon name="toolbox" size={14} tone={activeSubtab === 'toolboxes' ? 'emerald' : 'slate'} />
+            <span>Specialized Toolboxes</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubtab('supplements')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 6,
+              background: activeSubtab === 'supplements'
+                ? 'linear-gradient(135deg, rgba(212, 160, 23, 0.28) 0%, rgba(170, 130, 10, 0.18) 100%)'
+                : 'transparent',
+              border: activeSubtab === 'supplements'
+                ? '1px solid var(--gold)'
+                : '1px solid transparent',
+              color: activeSubtab === 'supplements' ? 'var(--gold-lt)' : 'var(--gray-lt)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <GaaIcon name="supplements" size={14} tone={activeSubtab === 'supplements' ? 'gold' : 'slate'} />
+            <span>Sports Supplements (Thorne)</span>
+          </button>
         </div>
       </div>
 
       {/* ── Active Sub-Workspace ─────────────────────────────────── */}
       <div>
-        <CoachToolboxAssigner clientId={clientId} clientName={clientName} />
+        {activeSubtab === 'supplements' ? (
+          <CoachSupplementPrescriber
+            clientId={clientId}
+            clientName={clientName}
+            clientAge={clientAge}
+            clientSex={clientSex}
+          />
+        ) : (
+          <CoachToolboxAssigner clientId={clientId} clientName={clientName} />
+        )}
       </div>
     </div>
   )

@@ -91,7 +91,11 @@ export interface PrescribedSupplementItem {
 
 export type RecommendedSupplementItem = PrescribedSupplementItem
 
-const rawThorneUrl = process.env.NEXT_PUBLIC_THORNE_DISPENSARY_URL
+export const DEFAULT_THORNE_DISPENSARY_URL = 'https://www.thorne.com/u/forgeathletic'
+
+const rawThorneUrl =
+  process.env.NEXT_PUBLIC_THORNE_DISPENSARY_URL?.trim() || DEFAULT_THORNE_DISPENSARY_URL
+
 export const isThorneAccountLinked = Boolean(
   rawThorneUrl &&
     rawThorneUrl.trim().length > 0 &&
@@ -100,53 +104,47 @@ export const isThorneAccountLinked = Boolean(
 )
 
 /**
- * Partner dispensary & supplement features are temporarily disabled while
- * Thorne / dispensary partner verification completes (~5 business days remaining,
- * roughly 50% through approval). Set `NEXT_PUBLIC_DISPENSARY_ENABLED=true`
- * once approval is finalized to immediately unlock across all surfaces.
+ * Forge Athletic's Thorne Practitioner Dispensary (`https://www.thorne.com/u/forgeathletic`)
+ * is approved and live by default across all client and coach surfaces.
+ * Set `NEXT_PUBLIC_DISPENSARY_ENABLED=false` only if an emergency pause is required.
  */
 export const isDispensaryAndSupplementsEnabled =
-  process.env.NEXT_PUBLIC_DISPENSARY_ENABLED === 'true'
+  process.env.NEXT_PUBLIC_DISPENSARY_ENABLED !== 'false'
 
 export const DISPENSARY_PARTNER_CONFIG = {
-  partnerName: 'Forge Athletic Partner Dispensary',
-  platform: 'Thorne & Partner Dispensaries',
+  partnerName: 'Forge Athletic × Thorne Dispensary',
+  platform: 'Thorne Practitioner Dispensary',
   discountPercentage: 15,
   isEnabled: isDispensaryAndSupplementsEnabled,
-  approvalProgressPercent: 50,
-  approvalEstimatedDaysRemaining: 5,
+  approvalProgressPercent: 100,
+  approvalEstimatedDaysRemaining: 0,
   approvalStatusBanner:
-    'Thorne Dispensary & Supplement Portal Temporarily Paused — Partner Verification ~50% Complete (Est. 5 Business Days Remaining)',
-  defaultFullscriptUrl: process.env.NEXT_PUBLIC_FULLSCRIPT_DISPENSARY_URL || 'https://us.fullscript.com',
-  defaultThorneUrl: isThorneAccountLinked ? rawThorneUrl! : 'https://www.thorne.com',
+    'Thorne Practitioner Dispensary Live — Exclusive 15% Forge Athletic Member Discount Active',
+  defaultThorneUrl: isThorneAccountLinked ? rawThorneUrl : 'https://www.thorne.com',
   isThorneLinked: isThorneAccountLinked,
   thorneStatusLabel: isThorneAccountLinked
-    ? 'Active Partner Dispensary (15% Athlete Privilege Discount)'
-    : 'Thorne Dispensary Verification ~50% Complete (Est. 5 Business Days Remaining)',
+    ? 'Active Thorne Partner Dispensary (15% Athlete Privilege Discount)'
+    : 'Browse Verified Thorne Catalog',
   standards: [
-    '100% 3rd-Party Lab Verified (NSF for Sport / USP / Informed Choice)',
-    'Cold-Chain Temperature Controlled Warehousing & Direct Manufacturer Shipping',
-    'Zero Artificial Sweeteners, Fillers, or Heavy Metal Contaminants',
+    '100% 3rd-Party Lab Verified (NSF Certified for Sport® / Third-Party Tested)',
+    'Cold-Chain Temperature Controlled Warehousing & Direct Thorne Facility Shipping',
+    'Zero Artificial Sweeteners, Fillers, WADA-Banned Substances, or Heavy Metal Contaminants',
   ],
   affiliateDisclosure:
-    'Forge Athletic is an authorized dispensary partner of Fullscript and an affiliate partner of Thorne. We provide athletes with access to third-party lab-verified supplements (NSF Certified for Sport® / USP Verified®) with an exclusive 15% client courtesy discount. Forge Athletic and Coach Gordon may receive an affiliate commission on qualifying purchases made through these links. Purchasing supplements is 100% voluntary; athletes may source equivalent third-party verified products from any retailer of their choice.',
+    'Forge Athletic is an authorized practitioner dispensary partner with Thorne. We provide athletes with access to third-party lab-verified supplements (NSF Certified for Sport®) with an exclusive 15% client courtesy discount at thorne.com/u/forgeathletic. Forge Athletic and Coach Gordon may receive an affiliate commission on qualifying purchases made through dispensary links. Purchasing supplements is 100% voluntary; athletes may source equivalent third-party verified products from any retailer of their choice.',
 }
 
 export function getDispensaryPartnerInfo() {
   return DISPENSARY_PARTNER_CONFIG
 }
 
-export function buildDispensaryItemUrl(dispensarySku?: string, brand?: string): string {
-  if (brand?.toLowerCase() === 'thorne') {
-    if (isThorneAccountLinked) {
-      return `${DISPENSARY_PARTNER_CONFIG.defaultThorneUrl}?sku=${encodeURIComponent(dispensarySku || '')}`
-    }
-    // Thorne account not linked yet: provide safe direct catalog navigation
-    return 'https://www.thorne.com/products'
+export function buildDispensaryItemUrl(dispensarySku?: string, _brand?: string): string {
+  if (isThorneAccountLinked) {
+    if (!dispensarySku) return DISPENSARY_PARTNER_CONFIG.defaultThorneUrl
+    const separator = DISPENSARY_PARTNER_CONFIG.defaultThorneUrl.includes('?') ? '&' : '?'
+    return `${DISPENSARY_PARTNER_CONFIG.defaultThorneUrl}${separator}sku=${encodeURIComponent(dispensarySku)}`
   }
-  const baseUrl = DISPENSARY_PARTNER_CONFIG.defaultFullscriptUrl
-  if (!dispensarySku) return baseUrl
-  return `${baseUrl}?sku=${encodeURIComponent(dispensarySku)}`
+  return 'https://www.thorne.com/products'
 }
 
 export interface ChronoNutritionSchedule {
@@ -217,22 +215,22 @@ export const SUPPLEMENT_DISPENSARY_MAP: Record<
   string,
   { brand: string; sku: string; retail: string; discount: string }
 > = {
-  omega_3_mod: { brand: 'Thorne', sku: 'THORNE-SUPER-EPA', retail: '$38.00', discount: '$32.30' },
-  omega_3_high: { brand: 'Thorne', sku: 'THORNE-SUPER-EPA-PRO', retail: '$48.00', discount: '$40.80' },
-  vit_d3_pure: { brand: 'Pure Encapsulations', sku: 'PE-VIT-D3-LIQUID', retail: '$24.00', discount: '$20.40' },
-  vit_d3_k2: { brand: 'Thorne', sku: 'THORNE-D3-K2-LIQUID', retail: '$29.00', discount: '$24.65' },
-  magnesium_glycinate: { brand: 'Thorne', sku: 'THORNE-MAG-BISGLYCINATE', retail: '$46.00', discount: '$39.10' },
-  protein_isolate: { brand: 'Momentous', sku: 'MOMENTOUS-100-WHEY-ISOLATE', retail: '$58.00', discount: '$49.30' },
-  creatine_monohydrate: { brand: 'Momentous', sku: 'MOMENTOUS-CREAPURE', retail: '$42.00', discount: '$35.70' },
-  l_citrulline_nonstim: { brand: 'Designs for Health', sku: 'DFH-L-CITRULLINE', retail: '$36.00', discount: '$30.60' },
-  caffeine_theanine: { brand: 'Pure Encapsulations', sku: 'PE-ENERGY-XTRA', retail: '$32.00', discount: '$27.20' },
-  low_potassium_hydration: { brand: 'Thorne', sku: 'THORNE-CATALYTE-MOD', retail: '$38.00', discount: '$32.30' },
-  isotonic_electrolytes: { brand: 'Thorne', sku: 'THORNE-CATALYTE-SPORT', retail: '$38.00', discount: '$32.30' },
-  ubiquinol_coq10: { brand: 'Pure Encapsulations', sku: 'PE-UBIQUINOL-VESISORB', retail: '$56.00', discount: '$47.60' },
-  methyl_b12: { brand: 'Thorne', sku: 'THORNE-METHYL-B12', retail: '$22.00', discount: '$18.70' },
-  collagen_vit_c: { brand: 'Momentous', sku: 'MOMENTOUS-COLLAGEN-PEPTIDES', retail: '$52.00', discount: '$44.20' },
-  tart_cherry_curcumin: { brand: 'Thorne', sku: 'THORNE-CURCUMIN-PHYTOSOME', retail: '$44.00', discount: '$37.40' },
-  beta_alanine: { brand: 'Thorne', sku: 'THORNE-BETA-ALANINE-SR', retail: '$40.00', discount: '$34.00' },
+  omega_3_mod: { brand: 'Thorne', sku: 'SP608NC', retail: '$41.00', discount: '$34.85' },
+  omega_3_high: { brand: 'Thorne', sku: 'SP608', retail: '$45.00', discount: '$38.25' },
+  vit_d3_pure: { brand: 'Thorne', sku: 'D138', retail: '$20.00', discount: '$17.00' },
+  vit_d3_k2: { brand: 'Thorne', sku: 'D188', retail: '$30.00', discount: '$25.50' },
+  magnesium_glycinate: { brand: 'Thorne', sku: 'M204', retail: '$52.00', discount: '$44.20' },
+  protein_isolate: { brand: 'Thorne', sku: 'SP110', retail: '$65.00', discount: '$55.25' },
+  creatine_monohydrate: { brand: 'Thorne', sku: 'SF903', retail: '$44.00', discount: '$37.40' },
+  l_citrulline_nonstim: { brand: 'Thorne', sku: 'SA525', retail: '$44.00', discount: '$37.40' },
+  caffeine_theanine: { brand: 'Thorne', sku: 'SP689', retail: '$55.00', discount: '$46.75' },
+  low_potassium_hydration: { brand: 'Thorne', sku: 'SF908P', retail: '$40.00', discount: '$34.00' },
+  isotonic_electrolytes: { brand: 'Thorne', sku: 'SF911P', retail: '$40.00', discount: '$34.00' },
+  ubiquinol_coq10: { brand: 'Thorne', sku: 'SP627', retail: '$78.00', discount: '$66.30' },
+  methyl_b12: { brand: 'Thorne', sku: 'B134', retail: '$34.00', discount: '$28.90' },
+  collagen_vit_c: { brand: 'Thorne', sku: 'SP686', retail: '$56.00', discount: '$47.60' },
+  tart_cherry_curcumin: { brand: 'Thorne', sku: 'SF814N', retail: '$68.00', discount: '$57.80' },
+  beta_alanine: { brand: 'Thorne', sku: 'SF907', retail: '$46.00', discount: '$39.10' },
 }
 
 export function attachDispensaryMeta(item: PrescribedSupplementItem): PrescribedSupplementItem {
@@ -851,7 +849,7 @@ export function generateSupplementStack(profile: ClientSupplementProfile): Suppl
     'ADVERSE REACTION & IMMEDIATE DISCONTINUATION PROTOCOL: If you experience any adverse effects, including but not limited to gastrointestinal distress, rapid heart rate, palpitations, skin rash, dizziness, or shortness of breath, discontinue supplement use immediately and seek professional medical evaluation.'
 
   const ftcAffiliateDisclosure =
-    'FTC COMMERCIAL & DISPENSARY AFFILIATE DISCLOSURE: Forge Athletic is an authorized partner dispensary with Fullscript and an affiliate partner with Thorne. Athletes receive access to third-party lab-verified formulations (NSF Certified for Sport® / USP Verified®) with an exclusive 15% client courtesy discount. Forge Athletic and Coach Gordon may receive an affiliate commission on qualifying purchases made through these links. Purchasing supplements through dispensary links is completely voluntary; athletes are welcome to source equivalent third-party verified products from any retailer of their choice.'
+    'FTC COMMERCIAL & DISPENSARY AFFILIATE DISCLOSURE: Forge Athletic is an authorized practitioner dispensary partner with Thorne (thorne.com/u/forgeathletic). Athletes receive access to third-party lab-verified formulations (NSF Certified for Sport® / Third-Party Tested) with an exclusive 15% client courtesy discount. Forge Athletic and Coach Gordon may receive an affiliate commission on qualifying purchases made through these links. Purchasing supplements through dispensary links is completely voluntary; athletes are welcome to source equivalent third-party verified products from any retailer of their choice.'
 
   const thirdPartyQualityStandards =
     'GOLD STANDARD QUALITY ENFORCEMENT: Forge Athletic strictly mandates that all purchased supplements carry independent third-party laboratory verification: NSF Certified for Sport®, Informed Choice / Informed Sport®, or USP Verified®. These certifications guarantee label accuracy and verify the absence of heavy metals, adulterants, microbials, and WADA-banned substances.'

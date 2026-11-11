@@ -296,8 +296,8 @@ export default function ExecutiveSupplementTimeline({
               <span>✦</span>
               <span>
                 {isDispensaryAndSupplementsEnabled
-                  ? 'Shop supplement options · 15% member discount'
-                  : 'Thorne Dispensary & Supplements · Temporarily Paused (~5 Business Days Left)'}
+                  ? 'Forge Athletic × Thorne Dispensary · 15% member discount'
+                  : 'Thorne Dispensary & Supplements · Offline'}
               </span>
             </div>
             <h3
@@ -311,71 +311,45 @@ export default function ExecutiveSupplementTimeline({
               }}
             >
               {isDispensaryAndSupplementsEnabled
-                ? 'EXPLORE SUPPLEMENT OPTIONS'
-                : 'THORNE DISPENSARY APPROVAL IN PROGRESS (~50% COMPLETE)'}
+                ? 'OFFICIAL THORNE PRACTITIONER DISPENSARY'
+                : 'THORNE DISPENSARY TEMPORARILY PAUSED'}
             </h3>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--gray)', lineHeight: 1.45 }}>
               {isDispensaryAndSupplementsEnabled
-                ? 'Forge Athletic athletes receive wholesale-tier access to cold-chain shipped, 100% 3rd-party lab verified (NSF for Sport / USP) formulations with zero heavy metals or fillers.'
-                : 'Thorne dispensary ordering and supplement fulfillment are temporarily disabled while practitioner account verification completes (~5 business days remaining, halfway complete).'}
+                ? 'Forge Athletic athletes receive direct practitioner access to cold-chain shipped, third-party lab verified (NSF Certified for Sport®) Thorne formulations with an exclusive 15% courtesy discount.'
+                : 'Supplement ordering and dispensary fulfillment are temporarily paused for maintenance.'}
             </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           {isDispensaryAndSupplementsEnabled ? (
-            <>
-              <a
-                href={dispensaryInfo.defaultFullscriptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="tactile-btn"
-                style={{
-                  background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-                  color: '#080E14',
-                  fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                  fontSize: 13,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  padding: '10px 20px',
-                  borderRadius: 6,
-                  textDecoration: 'none',
-                  fontWeight: 800,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  boxShadow: '0 4px 15px rgba(197, 160, 89, 0.4)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <span>Order Stack (15% Off)</span>
-                <span>↗</span>
-              </a>
-              <a
-                href={dispensaryInfo.defaultThorneUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="tactile-btn"
-                style={{
-                  border: '1px solid rgba(197, 160, 89, 0.5)',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  color: 'var(--gold-lt)',
-                  fontFamily: 'Raleway, sans-serif',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  padding: '10px 16px',
-                  borderRadius: 6,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <span>{dispensaryInfo.isThorneLinked ? 'Thorne Dispensary' : 'Thorne (Setup Pending)'}</span>
-                <span style={{ fontSize: 10 }}>↗</span>
-              </a>
-            </>
+            <a
+              href={dispensaryInfo.defaultThorneUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tactile-btn"
+              style={{
+                background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
+                color: '#080E14',
+                fontFamily: 'var(--font-sans, Raleway), sans-serif',
+                fontSize: 13,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                padding: '10px 20px',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 4px 15px rgba(197, 160, 89, 0.4)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span>Shop Thorne Dispensary (15% Off)</span>
+              <span>↗</span>
+            </a>
           ) : (
             <span
               style={{
@@ -390,7 +364,7 @@ export default function ExecutiveSupplementTimeline({
                 whiteSpace: 'nowrap',
               }}
             >
-              ⏳ Approval ~50% · Est. 5 Business Days
+              Dispensary Offline
             </span>
           )}
         </div>
@@ -560,7 +534,7 @@ export default function ExecutiveSupplementTimeline({
 
                           {item.recommendedBrand && isDispensaryAndSupplementsEnabled && (
                             <a
-                              href={item.dispensaryUrl || dispensaryInfo.defaultFullscriptUrl}
+                              href={item.dispensaryUrl || dispensaryInfo.defaultThorneUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="tactile-btn"
@@ -640,7 +614,7 @@ export default function ExecutiveSupplementTimeline({
             {stack.legalDisclaimer}
           </p>
           <p style={{ margin: '8px 0 0', fontSize: 10.5, color: 'rgba(255, 255, 255, 0.45)', lineHeight: 1.4 }}>
-            {stack.ftcAffiliateDisclosure || 'Partner Notice: Forge Athletic partners with Fullscript and Thorne dispensaries to provide athletes with access to third-party verified products at a 15% discount. Forge Athletic may receive an affiliate commission on qualifying purchases.'}
+            {stack.ftcAffiliateDisclosure || 'Partner Notice: Forge Athletic is an authorized practitioner dispensary partner with Thorne (thorne.com/u/forgeathletic), providing athletes with third-party verified products at a 15% courtesy discount. Forge Athletic may receive an affiliate commission on qualifying purchases.'}
           </p>
         </div>
       </div>
@@ -732,7 +706,7 @@ export default function ExecutiveSupplementTimeline({
                     </div>
                   </div>
                   <a
-                    href={selectedItemDetail.dispensaryUrl || dispensaryInfo.defaultFullscriptUrl}
+                    href={selectedItemDetail.dispensaryUrl || dispensaryInfo.defaultThorneUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="tactile-btn"
@@ -750,7 +724,7 @@ export default function ExecutiveSupplementTimeline({
                       gap: 4,
                     }}
                   >
-                    <span>Shop supplements</span>
+                    <span>Order on Thorne</span>
                     <span>↗</span>
                   </a>
                 </div>

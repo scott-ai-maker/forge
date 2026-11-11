@@ -1,17 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DEFAULT_THORNE_DISPENSARY_URL,
   DISPENSARY_PARTNER_CONFIG,
+  SUPPLEMENT_DISPENSARY_MAP,
   generateSupplementStack,
   isDispensaryAndSupplementsEnabled,
+  isThorneAccountLinked,
 } from './supplement-prescriptions'
 
 describe('supplement-prescriptions & drug-nutrient interactions', () => {
-  it('temporarily disables Thorne dispensary and supplements by default while approval completes (~5 business days left, 50%)', () => {
-    expect(isDispensaryAndSupplementsEnabled).toBe(false)
-    expect(DISPENSARY_PARTNER_CONFIG.isEnabled).toBe(false)
-    expect(DISPENSARY_PARTNER_CONFIG.approvalProgressPercent).toBe(50)
-    expect(DISPENSARY_PARTNER_CONFIG.approvalEstimatedDaysRemaining).toBe(5)
-    expect(DISPENSARY_PARTNER_CONFIG.approvalStatusBanner).toContain('5 Business Days')
+  it('enables the live Forge Athletic × Thorne dispensary by default with 15% member discount', () => {
+    expect(isDispensaryAndSupplementsEnabled).toBe(true)
+    expect(isThorneAccountLinked).toBe(true)
+    expect(DEFAULT_THORNE_DISPENSARY_URL).toBe('https://www.thorne.com/u/forgeathletic')
+    expect(DISPENSARY_PARTNER_CONFIG.isEnabled).toBe(true)
+    expect(DISPENSARY_PARTNER_CONFIG.discountPercentage).toBe(15)
+    expect(DISPENSARY_PARTNER_CONFIG.approvalProgressPercent).toBe(100)
+    expect(DISPENSARY_PARTNER_CONFIG.approvalEstimatedDaysRemaining).toBe(0)
+    expect(DISPENSARY_PARTNER_CONFIG.defaultThorneUrl).toContain('thorne.com/u/')
   })
 
   it('generates a gold-standard Tier A foundational stack for a healthy 28yo male athlete', () => {
@@ -161,7 +167,7 @@ describe('supplement-prescriptions & drug-nutrient interactions', () => {
     expect(res.drugInteractions.some(d => d.medicationCategory.includes('Immunosuppressants'))).toBe(true)
   })
 
-  it('attaches clinical partner dispensary metadata, SKUs, and 15% client discount pricing to all items', () => {
+  it('attaches Thorne-exclusive dispensary metadata, SKUs, and exact 15% client discount pricing to all items', () => {
     const res = generateSupplementStack({
       goal: 'hypertrophy',
       age: 32,
@@ -171,22 +177,29 @@ describe('supplement-prescriptions & drug-nutrient interactions', () => {
 
     expect(res.prescribedItems.length).toBeGreaterThan(0)
     for (const item of res.prescribedItems) {
-      expect(item.recommendedBrand).toBeDefined()
-      expect(typeof item.recommendedBrand).toBe('string')
-      expect(item.dispensarySku).toBeDefined()
+      expect(item.recommendedBrand).toBe('Thorne')
+      expect(item.dispensarySku).toMatch(/^[A-Z]{1,3}\d{3}[A-Z0-9]*$/)
       expect(item.clientDiscountPrice).toContain('$')
-      expect(item.dispensaryUrl).toContain('http')
+      expect(item.dispensaryUrl).toContain('thorne.com/u/')
+    }
+
+    for (const meta of Object.values(SUPPLEMENT_DISPENSARY_MAP)) {
+      expect(meta.brand).toBe('Thorne')
+      expect(meta.sku).toMatch(/^[A-Z]{1,3}\d{3}[A-Z0-9]*$/)
+      const retailNum = Number(meta.retail.replace('$', ''))
+      const expectedDiscount = `$${(retailNum * 0.85).toFixed(2)}`
+      expect(meta.discount).toBe(expectedDiscount)
     }
 
     const creatine = res.prescribedItems.find(i => i.id === 'creatine_monohydrate')
-    expect(creatine?.recommendedBrand).toBe('Momentous')
-    expect(creatine?.dispensarySku).toBe('MOMENTOUS-CREAPURE')
-    expect(creatine?.clientDiscountPrice).toBe('$35.70')
+    expect(creatine?.recommendedBrand).toBe('Thorne')
+    expect(creatine?.dispensarySku).toBe('SF903')
+    expect(creatine?.clientDiscountPrice).toBe('$37.40')
 
     const mag = res.prescribedItems.find(i => i.id === 'magnesium_glycinate')
     expect(mag?.recommendedBrand).toBe('Thorne')
-    expect(mag?.dispensarySku).toBe('THORNE-MAG-BISGLYCINATE')
-    expect(mag?.clientDiscountPrice).toBe('$39.10')
+    expect(mag?.dispensarySku).toBe('M204')
+    expect(mag?.clientDiscountPrice).toBe('$44.20')
   })
 
   it('categorizes supplements into clear tiers with explicit rest-day directives and meal instructions', () => {

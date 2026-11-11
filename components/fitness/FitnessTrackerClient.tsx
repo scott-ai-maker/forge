@@ -5878,6 +5878,11 @@ export default function FitnessTrackerClient({
           initialLift={labInitialLift}
           initialCritique={labInitialCritique}
           initialTab={initialTab || (searchParams?.get('tab') as 'heatmap' | 'gate' | 'acwr' | 'deload' | '3d' | null) || undefined}
+          initialNutritionMode={
+            initialWorkspace === 'supplements' || searchParams?.get('workspace') === 'supplements'
+              ? 'supplements'
+              : undefined
+          }
           initialOpenScanner={isScannerRequested}
           onApplyTravelPlan={(scenario, adapted) => {
             if (planWorkouts.length > 0) {

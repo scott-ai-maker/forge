@@ -54,7 +54,7 @@ const PILLARS: HubPillar[] = [
     tone: 'emerald',
     tabs: [
       { key: 'shield', label: 'Liability Shield & PAR-Q', icon: 'shield', tone: 'emerald', desc: 'Medical clearance & liability status', badge: 'Clinical' },
-      { key: 'prescriptions', label: 'Specialized Toolboxes', icon: 'toolbox', tone: 'emerald', desc: 'Targeted movement relief toolkits (Desk, Low Back, Travel, Sleep)', badge: 'Toolkits' },
+      { key: 'prescriptions', label: 'Toolboxes & Supplements', icon: 'toolbox', tone: 'emerald', desc: 'Specialized movement relief toolkits & Thorne 15%-off supplement guides', badge: 'Protocols' },
     ],
   },
   {

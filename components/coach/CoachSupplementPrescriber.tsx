@@ -187,7 +187,7 @@ export default function CoachSupplementPrescriber({
           />
           <span>
             {!isDispensaryAndSupplementsEnabled
-              ? 'Paused · Thorne Approval (~5 Days Left)'
+              ? 'Dispensary Offline'
               : isPrescribing
               ? 'Publishing Guide...'
               : 'Publish Guide & Concierge Update'}
@@ -204,21 +204,9 @@ export default function CoachSupplementPrescriber({
             color: '#F8FAFC',
             fontSize: 13,
             borderRadius: 8,
-            display: 'grid',
-            gap: 8,
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-            <strong style={{ color: '#FBBF24', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 11.5 }}>
-              ⏳ Thorne Dispensary &amp; Supplements Temporarily Disabled (Approval ~50% Complete)
-            </strong>
-            <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 11.5, color: '#34D399', fontWeight: 700 }}>
-              Est. 5 Business Days Remaining
-            </span>
-          </div>
-          <div style={{ color: '#CBD5E1', lineHeight: 1.5, fontSize: 12.5 }}>
-            Practitioner dispensary verification with Thorne takes another ~5 business days to finalize (about halfway through). Publishing client supplement guides and dispensary fulfillment links is temporarily locked until approval completes.
-          </div>
+          Supplement publishing is currently paused via environment configuration.
         </div>
       )}
 
@@ -368,7 +356,10 @@ export default function CoachSupplementPrescriber({
           </div>
 
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <span
+            <a
+              href={stack.dispensaryInfo.defaultThorneUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 fontSize: 10,
                 padding: '3px 8px',
@@ -378,10 +369,11 @@ export default function CoachSupplementPrescriber({
                 border: `1px solid ${stack.dispensaryInfo.isThorneLinked ? 'rgba(74,222,128,0.3)' : 'rgba(251,191,36,0.3)'}`,
                 fontWeight: 700,
                 textTransform: 'uppercase',
+                textDecoration: 'none',
               }}
             >
-              {stack.dispensaryInfo.isThorneLinked ? 'Thorne: Dispensary Linked' : 'Thorne: Setup Pending (Direct Fallback)'}
-            </span>
+              {stack.dispensaryInfo.isThorneLinked ? 'Thorne Dispensary Live · 15% Off ↗' : 'Thorne Catalog ↗'}
+            </a>
           </div>
         </div>
 
@@ -438,7 +430,7 @@ export default function CoachSupplementPrescriber({
           type="text"
           value={customCoachNote}
           onChange={e => setCustomCoachNote(e.target.value)}
-          placeholder="e.g. Ensure Thorne or Momentous brand is purchased for third-party NSF verification."
+          placeholder="e.g. Select Thorne NSF Certified for Sport® formulations via your 15%-off Forge Athletic dispensary link."
           style={{ width: '100%', padding: '10px 12px', background: 'rgba(8,14,20,0.8)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--white)', fontSize: 13, borderRadius: 4 }}
         />
       </div>

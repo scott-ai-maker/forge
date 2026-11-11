@@ -95,6 +95,7 @@ interface FitnessLabDiagnosticsViewProps {
   initialCritique?: VideoCritiqueAnalysis | null
   onUpdateBodyfat?: (newVal: number) => void
   initialTab?: 'heatmap' | 'gate' | 'acwr' | 'deload' | '3d'
+  initialNutritionMode?: 'hand_portions' | 'macros_dining' | 'supplements'
   initialOpenScanner?: boolean
 }
 
@@ -115,6 +116,7 @@ export default function FitnessLabDiagnosticsView({
   initialCritique,
   onUpdateBodyfat,
   initialTab,
+  initialNutritionMode,
   initialOpenScanner,
 }: FitnessLabDiagnosticsViewProps) {
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(Boolean(initialOpenScanner))
@@ -437,6 +439,7 @@ export default function FitnessLabDiagnosticsView({
             savedTargets={plan?.plan_json?.nutritionTargets}
             telemetry={telemetry}
             intake={intake}
+            initialMode={initialNutritionMode}
           />
         ))}
 

@@ -133,7 +133,11 @@ ${postWorkoutList || '• High-protein whole meal'}
 **Night Sleep Architecture (Pre-Bed):**
 ${nightList || '• Relaxation & dim lighting'}
 
-${customCoachNote ? `**Coach Gordon's Directives & Notes:**\n"${customCoachNote}"\n\n` : ''}*Educational & Scope Notice: Formulated for athletic performance support based on published ISSN & IOC sports science consensus data. Coach Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, prescriptions, or medical nutrition therapy. Always review all dietary supplements with your prescribing healthcare provider before starting, especially if taking prescription medications.*
+${customCoachNote ? `**Coach Gordon's Directives & Notes:**\n"${customCoachNote}"\n\n` : ''}**Forge Athletic × Thorne Practitioner Dispensary (Optional 15% Member Discount):**
+${stack.dispensaryInfo.defaultThorneUrl}
+*Partner Notice: Purchasing through the Forge Athletic × Thorne dispensary is 100% voluntary and unlocks a 15% courtesy discount on NSF Certified for Sport® formulations (Forge Athletic may receive an affiliate commission).*
+
+*Educational & Scope Notice: Formulated for athletic performance support based on published ISSN & IOC sports science consensus data. Coach Gordon is a Certified Personal Trainer (NASM-CPT) and does not provide medical diagnoses, prescriptions, or medical nutrition therapy. Always review all dietary supplements with your prescribing healthcare provider before starting, especially if taking prescription medications.*
 
 Open your **Fitness Hub** to track your daily chrono-dosing adherence.`
 

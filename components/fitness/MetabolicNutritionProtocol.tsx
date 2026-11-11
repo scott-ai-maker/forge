@@ -35,6 +35,7 @@ interface MetabolicNutritionProtocolProps {
     surgeries_or_injuries?: string | null
     allergies?: string | null
   } | null
+  initialMode?: 'hand_portions' | 'macros_dining' | 'supplements'
 }
 
 export default function MetabolicNutritionProtocol({
@@ -48,8 +49,9 @@ export default function MetabolicNutritionProtocol({
   telemetry,
   savedTargets,
   intake,
+  initialMode = 'macros_dining',
 }: MetabolicNutritionProtocolProps) {
-  const [nutritionMode, setNutritionMode] = useState<'hand_portions' | 'macros_dining' | 'supplements'>('macros_dining')
+  const [nutritionMode, setNutritionMode] = useState<'hand_portions' | 'macros_dining' | 'supplements'>(initialMode)
   const [activePhase, setActivePhase] = useState<NasmOptPhase>('phase1_stabilization')
   const [activeDiningTab, setActiveDiningTab] = useState<string>('steakhouse')
 
@@ -242,7 +244,7 @@ export default function MetabolicNutritionProtocol({
               type="button"
               onClick={() => setNutritionMode('supplements')}
               className="tactile-btn"
-              title="Thorne Dispensary & Supplements (~5 business days remaining for approval)"
+              title="Chrono-Nutrition & Thorne Dispensary (15% Member Discount)"
               style={{
                 padding: '8px 16px',
                 background: nutritionMode === 'supplements' ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
@@ -261,20 +263,20 @@ export default function MetabolicNutritionProtocol({
             >
               <GaaIcon name="pill" size={14} tone={nutritionMode === 'supplements' ? 'inherit' : 'gold'} />
               <span>Chrono-Nutrition &amp; Supplements</span>
-              {!isDispensaryAndSupplementsEnabled && (
+              {isDispensaryAndSupplementsEnabled && (
                 <span
                   style={{
                     fontSize: 9.5,
                     fontWeight: 800,
                     padding: '2px 6px',
                     borderRadius: 4,
-                    background: nutritionMode === 'supplements' ? 'rgba(8,14,20,0.85)' : 'rgba(245,158,11,0.18)',
-                    color: nutritionMode === 'supplements' ? '#FBBF24' : 'var(--gold-lt)',
-                    border: '1px solid rgba(245,158,11,0.4)',
+                    background: nutritionMode === 'supplements' ? 'rgba(8,14,20,0.85)' : 'rgba(52,211,153,0.16)',
+                    color: '#34D399',
+                    border: '1px solid rgba(52,211,153,0.4)',
                     letterSpacing: '0.06em',
                   }}
                 >
-                  PENDING APPROVAL (~5 DAYS)
+                  THORNE · 15% OFF
                 </span>
               )}
             </button>

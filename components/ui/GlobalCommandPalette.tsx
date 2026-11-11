@@ -98,6 +98,16 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
     keywords: ['toolbox', 'toolboxes', 'desk worker', 'travel', 'low back', 'sleep', 'prescriptions'],
   },
   {
+    id: 'feat-supplements',
+    title: 'Supplement Guidance & Thorne Dispensary',
+    subtitle: 'Chrono-dosing protocols, medication screening & 15%-off Thorne storefront',
+    category: 'Features & Tools',
+    icon: 'supplements',
+    href: '/dashboard/fitness?workspace=supplements',
+    keywords: ['supplements', 'thorne', 'dispensary', 'creatine', 'whey', 'protein', 'magnesium', 'dosing', 'prescriptions', 'nutrition'],
+    badge: '15% Off',
+  },
+  {
     id: 'feat-travel',
     title: 'Hotel & Travel Workout Generator',
     subtitle: 'Instant bodyweight, dumbbell, and resistance band adaptations on the road',
