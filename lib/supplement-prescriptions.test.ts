@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DEFAULT_THORNE_AFFILIATE_ID,
   DEFAULT_THORNE_DISPENSARY_URL,
   DISPENSARY_PARTNER_CONFIG,
   SUPPLEMENT_DISPENSARY_MAP,
+  THORNE_SKU_PRODUCT_PATHS,
+  buildDispensaryItemUrl,
   generateSupplementStack,
   isDispensaryAndSupplementsEnabled,
   isThorneAccountLinked,
@@ -167,7 +170,7 @@ describe('supplement-prescriptions & drug-nutrient interactions', () => {
     expect(res.drugInteractions.some(d => d.medicationCategory.includes('Immunosuppressants'))).toBe(true)
   })
 
-  it('attaches Thorne-exclusive dispensary metadata, SKUs, and exact 15% client discount pricing to all items', () => {
+  it('attaches Thorne-exclusive dispensary metadata, SKUs, direct product URLs, and exact 15% client discount pricing to all items', () => {
     const res = generateSupplementStack({
       goal: 'hypertrophy',
       age: 32,
@@ -180,26 +183,37 @@ describe('supplement-prescriptions & drug-nutrient interactions', () => {
       expect(item.recommendedBrand).toBe('Thorne')
       expect(item.dispensarySku).toMatch(/^[A-Z]{1,3}\d{3}[A-Z0-9]*$/)
       expect(item.clientDiscountPrice).toContain('$')
-      expect(item.dispensaryUrl).toContain('thorne.com/u/')
+      expect(item.dispensaryUrl).toContain('https://www.thorne.com/products/dp/')
+      expect(item.dispensaryUrl).toContain(`?affid=${DEFAULT_THORNE_AFFILIATE_ID}`)
+      expect(item.dispensaryUrl).not.toContain('thorne.com/u/')
     }
 
     for (const meta of Object.values(SUPPLEMENT_DISPENSARY_MAP)) {
       expect(meta.brand).toBe('Thorne')
       expect(meta.sku).toMatch(/^[A-Z]{1,3}\d{3}[A-Z0-9]*$/)
+      expect(meta.productPath).toMatch(/^\/products\/dp\/[a-z0-9-]+$/)
+      expect(THORNE_SKU_PRODUCT_PATHS[meta.sku]).toBe(meta.productPath)
+      expect(buildDispensaryItemUrl(meta.sku)).toBe(
+        `https://www.thorne.com${meta.productPath}?affid=${DEFAULT_THORNE_AFFILIATE_ID}`
+      )
       const retailNum = Number(meta.retail.replace('$', ''))
       const expectedDiscount = `$${(retailNum * 0.85).toFixed(2)}`
       expect(meta.discount).toBe(expectedDiscount)
     }
 
+    expect(buildDispensaryItemUrl()).toBe('https://www.thorne.com/u/forgeathletic')
+
     const creatine = res.prescribedItems.find(i => i.id === 'creatine_monohydrate')
     expect(creatine?.recommendedBrand).toBe('Thorne')
     expect(creatine?.dispensarySku).toBe('SF903')
     expect(creatine?.clientDiscountPrice).toBe('$37.40')
+    expect(creatine?.dispensaryUrl).toBe('https://www.thorne.com/products/dp/creatine?affid=PR2650699')
 
     const mag = res.prescribedItems.find(i => i.id === 'magnesium_glycinate')
     expect(mag?.recommendedBrand).toBe('Thorne')
     expect(mag?.dispensarySku).toBe('M204')
     expect(mag?.clientDiscountPrice).toBe('$44.20')
+    expect(mag?.dispensaryUrl).toBe('https://www.thorne.com/products/dp/magnesium-bisglycinate?affid=PR2650699')
   })
 
   it('categorizes supplements into clear tiers with explicit rest-day directives and meal instructions', () => {

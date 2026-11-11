@@ -92,9 +92,13 @@ export interface PrescribedSupplementItem {
 export type RecommendedSupplementItem = PrescribedSupplementItem
 
 export const DEFAULT_THORNE_DISPENSARY_URL = 'https://www.thorne.com/u/forgeathletic'
+export const DEFAULT_THORNE_AFFILIATE_ID = 'PR2650699'
 
 const rawThorneUrl =
   process.env.NEXT_PUBLIC_THORNE_DISPENSARY_URL?.trim() || DEFAULT_THORNE_DISPENSARY_URL
+
+const rawThorneAffiliateId =
+  process.env.NEXT_PUBLIC_THORNE_AFFILIATE_ID?.trim() || DEFAULT_THORNE_AFFILIATE_ID
 
 export const isThorneAccountLinked = Boolean(
   rawThorneUrl &&
@@ -138,8 +142,37 @@ export function getDispensaryPartnerInfo() {
   return DISPENSARY_PARTNER_CONFIG
 }
 
-export function buildDispensaryItemUrl(dispensarySku?: string, _brand?: string): string {
+export const THORNE_SKU_PRODUCT_PATHS: Record<string, string> = {
+  SP608NC: '/products/dp/super-epa-sp608nc',
+  SP608: '/products/dp/super-epa',
+  D138: '/products/dp/d-5-000-vitamin-d-capsule',
+  D188: '/products/dp/vitamin-d-k2',
+  M204: '/products/dp/magnesium-bisglycinate',
+  SP110: '/products/dp/whey-protein-isolate-chocolate',
+  SF903: '/products/dp/creatine',
+  SA525: '/products/dp/perfusia-sr-reg',
+  SP689: '/products/dp/advanced-pre-workout-rainbow-sherbet-flavor',
+  SF908P: '/products/dp/daily-electrolytes-watermelon-flavored-drink-mix',
+  SF911P: '/products/dp/daily-electrolytes-30-stick-variety-pack',
+  SP627: '/products/dp/ubiquinol',
+  B134: '/products/dp/vitamin-b12-90',
+  SP686: '/products/dp/collagen-fit',
+  SF814N: '/products/dp/meriva-500-sf-nsf',
+  SF907: '/products/dp/beta-alanine-sr',
+}
+
+export function buildDispensaryItemUrl(
+  dispensarySku?: string,
+  _brand?: string,
+  productPath?: string
+): string {
   if (isThorneAccountLinked) {
+    const resolvedPath =
+      productPath || (dispensarySku ? THORNE_SKU_PRODUCT_PATHS[dispensarySku] : undefined)
+    if (resolvedPath) {
+      const normalizedPath = resolvedPath.startsWith('/') ? resolvedPath : `/${resolvedPath}`
+      return `https://www.thorne.com${normalizedPath}?affid=${encodeURIComponent(rawThorneAffiliateId)}`
+    }
     if (!dispensarySku) return DISPENSARY_PARTNER_CONFIG.defaultThorneUrl
     const separator = DISPENSARY_PARTNER_CONFIG.defaultThorneUrl.includes('?') ? '&' : '?'
     return `${DISPENSARY_PARTNER_CONFIG.defaultThorneUrl}${separator}sku=${encodeURIComponent(dispensarySku)}`
@@ -213,24 +246,24 @@ export interface SupplementStackResult {
 
 export const SUPPLEMENT_DISPENSARY_MAP: Record<
   string,
-  { brand: string; sku: string; retail: string; discount: string }
+  { brand: string; sku: string; productPath: string; retail: string; discount: string }
 > = {
-  omega_3_mod: { brand: 'Thorne', sku: 'SP608NC', retail: '$41.00', discount: '$34.85' },
-  omega_3_high: { brand: 'Thorne', sku: 'SP608', retail: '$45.00', discount: '$38.25' },
-  vit_d3_pure: { brand: 'Thorne', sku: 'D138', retail: '$20.00', discount: '$17.00' },
-  vit_d3_k2: { brand: 'Thorne', sku: 'D188', retail: '$30.00', discount: '$25.50' },
-  magnesium_glycinate: { brand: 'Thorne', sku: 'M204', retail: '$52.00', discount: '$44.20' },
-  protein_isolate: { brand: 'Thorne', sku: 'SP110', retail: '$65.00', discount: '$55.25' },
-  creatine_monohydrate: { brand: 'Thorne', sku: 'SF903', retail: '$44.00', discount: '$37.40' },
-  l_citrulline_nonstim: { brand: 'Thorne', sku: 'SA525', retail: '$44.00', discount: '$37.40' },
-  caffeine_theanine: { brand: 'Thorne', sku: 'SP689', retail: '$55.00', discount: '$46.75' },
-  low_potassium_hydration: { brand: 'Thorne', sku: 'SF908P', retail: '$40.00', discount: '$34.00' },
-  isotonic_electrolytes: { brand: 'Thorne', sku: 'SF911P', retail: '$40.00', discount: '$34.00' },
-  ubiquinol_coq10: { brand: 'Thorne', sku: 'SP627', retail: '$78.00', discount: '$66.30' },
-  methyl_b12: { brand: 'Thorne', sku: 'B134', retail: '$34.00', discount: '$28.90' },
-  collagen_vit_c: { brand: 'Thorne', sku: 'SP686', retail: '$56.00', discount: '$47.60' },
-  tart_cherry_curcumin: { brand: 'Thorne', sku: 'SF814N', retail: '$68.00', discount: '$57.80' },
-  beta_alanine: { brand: 'Thorne', sku: 'SF907', retail: '$46.00', discount: '$39.10' },
+  omega_3_mod: { brand: 'Thorne', sku: 'SP608NC', productPath: THORNE_SKU_PRODUCT_PATHS.SP608NC, retail: '$41.00', discount: '$34.85' },
+  omega_3_high: { brand: 'Thorne', sku: 'SP608', productPath: THORNE_SKU_PRODUCT_PATHS.SP608, retail: '$45.00', discount: '$38.25' },
+  vit_d3_pure: { brand: 'Thorne', sku: 'D138', productPath: THORNE_SKU_PRODUCT_PATHS.D138, retail: '$20.00', discount: '$17.00' },
+  vit_d3_k2: { brand: 'Thorne', sku: 'D188', productPath: THORNE_SKU_PRODUCT_PATHS.D188, retail: '$30.00', discount: '$25.50' },
+  magnesium_glycinate: { brand: 'Thorne', sku: 'M204', productPath: THORNE_SKU_PRODUCT_PATHS.M204, retail: '$52.00', discount: '$44.20' },
+  protein_isolate: { brand: 'Thorne', sku: 'SP110', productPath: THORNE_SKU_PRODUCT_PATHS.SP110, retail: '$65.00', discount: '$55.25' },
+  creatine_monohydrate: { brand: 'Thorne', sku: 'SF903', productPath: THORNE_SKU_PRODUCT_PATHS.SF903, retail: '$44.00', discount: '$37.40' },
+  l_citrulline_nonstim: { brand: 'Thorne', sku: 'SA525', productPath: THORNE_SKU_PRODUCT_PATHS.SA525, retail: '$44.00', discount: '$37.40' },
+  caffeine_theanine: { brand: 'Thorne', sku: 'SP689', productPath: THORNE_SKU_PRODUCT_PATHS.SP689, retail: '$55.00', discount: '$46.75' },
+  low_potassium_hydration: { brand: 'Thorne', sku: 'SF908P', productPath: THORNE_SKU_PRODUCT_PATHS.SF908P, retail: '$40.00', discount: '$34.00' },
+  isotonic_electrolytes: { brand: 'Thorne', sku: 'SF911P', productPath: THORNE_SKU_PRODUCT_PATHS.SF911P, retail: '$40.00', discount: '$34.00' },
+  ubiquinol_coq10: { brand: 'Thorne', sku: 'SP627', productPath: THORNE_SKU_PRODUCT_PATHS.SP627, retail: '$78.00', discount: '$66.30' },
+  methyl_b12: { brand: 'Thorne', sku: 'B134', productPath: THORNE_SKU_PRODUCT_PATHS.B134, retail: '$34.00', discount: '$28.90' },
+  collagen_vit_c: { brand: 'Thorne', sku: 'SP686', productPath: THORNE_SKU_PRODUCT_PATHS.SP686, retail: '$56.00', discount: '$47.60' },
+  tart_cherry_curcumin: { brand: 'Thorne', sku: 'SF814N', productPath: THORNE_SKU_PRODUCT_PATHS.SF814N, retail: '$68.00', discount: '$57.80' },
+  beta_alanine: { brand: 'Thorne', sku: 'SF907', productPath: THORNE_SKU_PRODUCT_PATHS.SF907, retail: '$46.00', discount: '$39.10' },
 }
 
 export function attachDispensaryMeta(item: PrescribedSupplementItem): PrescribedSupplementItem {
@@ -240,7 +273,7 @@ export function attachDispensaryMeta(item: PrescribedSupplementItem): Prescribed
     item.dispensarySku = meta.sku
     item.retailPriceEstimate = meta.retail
     item.clientDiscountPrice = meta.discount
-    item.dispensaryUrl = buildDispensaryItemUrl(meta.sku, meta.brand)
+    item.dispensaryUrl = buildDispensaryItemUrl(meta.sku, meta.brand, meta.productPath)
   }
   return item
 }
