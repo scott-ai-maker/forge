@@ -654,7 +654,7 @@ function deriveClientBriefingBullets(workoutFocus?: string | null, notes?: strin
 }
 
 export type PrimaryFitnessHub = 'train' | 'progress' | 'lab' | 'coach'
-export type FitnessLabTool = 'readiness' | 'sleep' | 'roadmap' | 'video' | 'nutrition' | 'assessment' | 'performance' | 'calculator' | 'travel' | 'bodycomp'
+export type FitnessLabTool = 'readiness' | 'sleep' | 'roadmap' | 'video' | 'nutrition' | 'assessment' | 'performance' | 'calculator' | 'travel' | 'bodycomp' | 'home_gym'
 export type FitnessWorkspace =
   | 'train'
   | 'workouts'
@@ -674,6 +674,7 @@ export type FitnessWorkspace =
   | 'checkin'
   | 'toolboxes'
   | 'supplements'
+  | 'home_gym'
   | 'travel'
   | 'bodycomp'
 
@@ -686,6 +687,9 @@ function resolveInitialHubState(ws: FitnessWorkspace): {
   }
   if (ws === 'travel') {
     return { hub: 'lab', labTool: 'travel' }
+  }
+  if (ws === 'home_gym') {
+    return { hub: 'lab', labTool: 'home_gym' }
   }
   if (ws === 'bodycomp') {
     return { hub: 'lab', labTool: 'bodycomp' }

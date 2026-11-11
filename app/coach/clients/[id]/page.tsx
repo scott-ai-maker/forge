@@ -1269,7 +1269,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
           </div>
         )}
 
-        {(activeTab === 'prescriptions' || activeTab === 'toolbox' || activeTab === 'supplements' || activeTab === 'cardio') && (
+        {(activeTab === 'prescriptions' || activeTab === 'toolbox' || activeTab === 'supplements' || activeTab === 'equipment' || activeTab === 'cardio') && (
           <CoachPrescriptionsWorkspace
             clientId={id}
             clientName={client.full_name ?? 'Client'}
@@ -1277,10 +1277,11 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
             clientSex={(fitnessProfileResult.data?.sex as 'male' | 'female' | 'other') || 'male'}
             latestAssessment={(nasmAssessmentsResult.data?.[0] as NasmAssessmentRecord | undefined) ?? null}
             ownedEquipment={(fitnessProfileResult.data?.equipment_access as string[] | undefined) ?? null}
+            optPhase={latestPlansResult.data?.[0]?.nasm_opt_phase ?? null}
             initialSubtab={
               rawSubTab === 'cardio' || resolvedSearchParams.tab === 'cardio'
                 ? 'cardio'
-                : rawSubTab === 'equipment'
+                : rawSubTab === 'equipment' || resolvedSearchParams.tab === 'equipment'
                 ? 'equipment'
                 : rawSubTab === 'supplements' || resolvedSearchParams.tab === 'supplements'
                 ? 'supplements'

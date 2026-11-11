@@ -58,6 +58,7 @@ export const FitnessWorkspaceSchema = z.enum([
   'performance',
   'toolboxes',
   'supplements',
+  'home_gym',
   'travel',
   'bodycomp',
 ])
@@ -121,6 +122,7 @@ export const CoachClientTabSchema = z.enum([
   'shield',
   'toolbox',
   'supplements',
+  'equipment',
   'cardio',
   'prescriptions',
   'commerce',

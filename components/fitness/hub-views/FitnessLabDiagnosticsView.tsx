@@ -15,6 +15,7 @@ import AthleticPerformanceStudio from '@/components/fitness/AthleticPerformanceS
 import ExecutiveSleepBiometricsHud from '@/components/fitness/ExecutiveSleepBiometricsHud'
 import ExecutiveTravelAdapterStudio from '@/components/fitness/ExecutiveTravelAdapterStudio'
 import AiBodyCompositionScannerModal from '@/components/fitness/AiBodyCompositionScannerModal'
+import EquipmentDispensaryWidget from '@/components/fitness/EquipmentDispensaryWidget'
 
 import { DailyBiometricSummary } from '@/lib/wearables-telemetry'
 import type { ExercisePlanItem, TravelLocationScenario } from '@/lib/travel-workout-adapter'
@@ -57,12 +58,14 @@ export type FitnessLabTool =
   | 'calculator'
   | 'travel'
   | 'bodycomp'
+  | 'home_gym'
 
 const LAB_TOOLS: { id: FitnessLabTool; title: string; description: string }[] = [
   { id: 'readiness', title: 'Recovery & readiness', description: 'Check recovery, workload, and muscle readiness.' },
   { id: 'bodycomp', title: 'Body composition', description: 'Review estimates or start a body-composition scan.' },
   { id: 'video', title: 'Form review', description: 'Review exercise technique and corrective cues.' },
   { id: 'roadmap', title: 'Training roadmap', description: 'Explore your training phases and weekly plan.' },
+  { id: 'home_gym', title: 'Home-Gym Builder & Gear', description: 'Design a custom NASM RAG home gym & view prescribed corrective gear.' },
   { id: 'nutrition', title: 'Nutrition', description: 'Review calorie targets, macros, and meal guidance.' },
   { id: 'travel', title: 'Travel workouts', description: 'Adapt your workout to the equipment available.' },
   { id: 'assessment', title: 'Movement assessment', description: 'Review your movement screen and warm-up guidance.' },
@@ -471,6 +474,17 @@ export default function FitnessLabDiagnosticsView({
               />
             </details>
           </div>
+        )}
+
+        {activeLabTool === 'home_gym' && (
+          <EquipmentDispensaryWidget
+            variant="full"
+            assessment={latestAssessment ?? null}
+            ownedEquipment={profile?.equipment_access ?? null}
+            optPhase={plan?.nasm_opt_phase ?? null}
+            goal={profile?.fitness_goal ?? null}
+            injuriesLimitations={intake?.surgeries_or_injuries ?? null}
+          />
         )}
 
         {activeLabTool === 'travel' && (

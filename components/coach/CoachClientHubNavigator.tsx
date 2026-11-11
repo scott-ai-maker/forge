@@ -55,6 +55,7 @@ const PILLARS: HubPillar[] = [
     tabs: [
       { key: 'shield', label: 'Liability Shield & PAR-Q', icon: 'shield', tone: 'emerald', desc: 'Medical clearance & liability status', badge: 'Clinical' },
       { key: 'prescriptions', label: 'Toolboxes & Supplements', icon: 'toolbox', tone: 'emerald', desc: 'Specialized movement relief toolkits & Thorne 15%-off supplement guides', badge: 'Protocols' },
+      { key: 'equipment', label: 'Home-Gym Builder & Gear', icon: 'dumbbell', tone: 'gold', desc: 'NASM RAG Home-Gym Architect, REP Fitness, Crossover Symmetry & Perform Better', badge: 'RAG' },
     ],
   },
   {
