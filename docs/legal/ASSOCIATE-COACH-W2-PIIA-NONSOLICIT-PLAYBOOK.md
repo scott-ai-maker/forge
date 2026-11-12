@@ -47,13 +47,13 @@ Covers Forge Athletic's periodization heuristics, kinetic-chain prompt engineeri
 
 The engineering and contractual foundation is live in the repository. Execute these external administrative filings to complete 360-degree brand armor:
 
-### A. USCO DMCA Designated Agent & USPTO Federal Principal Register Filings
+### A. USCO Copyright, DMCA Safe Harbor & USPTO Federal Principal Register Filings
 - [x] **U.S. Copyright Office DMCA Designated Agent (`17 U.S.C. § 512(c)`):** **FILED & PAID** on November 11, 2026 for `Forge Athletic Performance LLC` (Agency Tracking ID `P-124571` · Pay.gov Tracking ID `287O3J8K` · Agent Phone `413-242-6370` · Email `scott@forge-athletic.app`). **Mandatory 3-Year Renewal Due Before:** `November 11, 2029`.
-- [ ] **USPTO Clearance Search (`teas.uspto.gov` / `tmcenter.uspto.gov`):** Conduct comprehensive knockout & common-law clearance search in International Classes **009** and **041** (existing fitness apparel/gym registrations frequently share "FORGE" formatives).
-2. File Principal Register applications owned by **Forge Athletic Performance LLC**:
-   - **Word Mark:** `FORGE ATHLETIC` (Classes **009** downloadable/mobile fitness & biomechanics software; **041** personal coaching & movement instruction; **042** AI SaaS athletic performance & pose telemetry platform; **044** sports nutrition & wellness advisory).
-   - **Design Mark:** The Forge Athletic anvil-crest / shield emblem (`public/images/forge-logo-master.png`).
-3. Defensive domain & social handle lockup (`forgeathletic.com`, `forge-athletic.com`, `@forgeathletic` across Instagram, YouTube, X, LinkedIn, TikTok).
+- [x] **U.S. Copyright Office Software Source Code Registration (`17 U.S.C. § 408` / `§ 410(d)`):** **FILED, PAID & DEPOSIT UPLOADED** on November 12, 2026 (`eCO Case #: 1-15302787651` · Work Title: `Forge Athletic Platform` · Type: `Literary Work — Computer Program` with Circular 61 / `37 C.F.R. § 202.20(c)(2)(vii)(A)(2)` trade-secret redactions · Claimant: `Forge Athletic Performance LLC`).
+- [ ] **USPTO Clearance & Principal Register Filing (`tmcenter.uspto.gov`):** Conduct knockout & common-law clearance search and file Principal Register applications owned by **Forge Athletic Performance LLC**:
+  - **Word Mark:** `FORGE ATHLETIC` (Classes **009** downloadable/mobile fitness & biomechanics software; **041** personal coaching & movement instruction; **042** AI SaaS athletic performance & pose telemetry platform; **044** sports nutrition & wellness advisory).
+  - **Design Mark:** The Forge Athletic anvil-crest / shield emblem (`public/images/forge-logo-master.png`).
+  - **Defensive Domain & Handle Lockup:** `forgeathletic.com`, `forge-athletic.com`, `@forgeathletic` across Instagram, YouTube, X, LinkedIn, TikTok.
 
 ### B. Commercial Insurance Portfolio Verification
 Confirm with your commercial broker that `Forge Athletic Performance LLC` is the Named Insured across:
