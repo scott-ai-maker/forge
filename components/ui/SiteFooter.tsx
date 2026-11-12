@@ -80,6 +80,8 @@ export default function SiteFooter() {
           <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)' }}>Legal &amp; IP</span>
           <Link href="/terms" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Terms &amp; Proprietary Rights</Link>
           <Link href="/privacy" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Privacy Policy</Link>
+          <Link href="/health-privacy" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Consumer Health Data Privacy</Link>
+          <Link href="/accessibility" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Accessibility Statement</Link>
         </nav>
 
         <div className="site-footer-column">

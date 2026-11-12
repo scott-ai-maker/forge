@@ -63,6 +63,7 @@ test.describe('Signup form validation (no backend required)', () => {
     await expect(page).toHaveURL(/\/auth\/signup/)
     await expect(page.getByText(/valid email|invalid email/i).first()).toBeVisible()
     await expect(page.getByText(/at least 8 characters/i)).toBeVisible()
+    await expect(page.locator('#legal-consent-error')).toBeVisible()
 
     await password.fill('alllowercase1')
     await password.blur()
@@ -104,6 +105,7 @@ test.describe.serial('Full athlete journey (live Supabase)', () => {
     await page.goto('/auth/signup')
     await page.locator('#email-input').fill(ATHLETE_EMAIL)
     await page.locator('#password-input').fill(ATHLETE_PASSWORD)
+    await page.locator('#legal-consent-checkbox').check()
     await page.getByRole('button', { name: /create account/i }).click()
 
     // Wait briefly for public signup; fall back to admin.createUser if public SMTP rate limit is active

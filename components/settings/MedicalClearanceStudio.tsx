@@ -24,13 +24,13 @@ const DEFAULT_ANSWERS: ParqAnswers = {
   hasChronicSpinalOrDiscCondition: false,
   hasRecentSurgeryOrInjury: false,
   reportedConditionsNotes: '',
-  signedWaiverName: 'Verified Athlete',
-  signedAt: new Date().toISOString(),
+  signedWaiverName: '',
+  signedAt: undefined,
 }
 
 export default function MedicalClearanceStudio({
   initialAnswers,
-  clientName = 'VIP Athlete',
+  clientName = '',
 }: MedicalClearanceStudioProps) {
   const [answers, setAnswers] = useState<ParqAnswers>(() => {
     if (initialAnswers) return initialAnswers
@@ -40,9 +40,13 @@ export default function MedicalClearanceStudio({
         if (stored) return JSON.parse(stored)
       } catch {}
     }
+    const cleanInitialName =
+      clientName && !['vip athlete', 'verified athlete', 'athlete'].includes(clientName.trim().toLowerCase())
+        ? clientName.trim()
+        : ''
     return {
       ...DEFAULT_ANSWERS,
-      signedWaiverName: clientName || 'Verified Athlete',
+      signedWaiverName: cleanInitialName,
     }
   })
 
@@ -89,7 +93,14 @@ export default function MedicalClearanceStudio({
       const res = await fetch('/api/account/parq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newAnswers),
+        body: JSON.stringify({
+          ...newAnswers,
+          consentLiabilityWaiver: true,
+          consentInformedConsent: true,
+          consentPrivacyPractices: true,
+          consentCoachingAgreement: true,
+          consentEmergencyCare: true,
+        }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))

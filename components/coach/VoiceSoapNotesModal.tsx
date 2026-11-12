@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import GaaMasterWatermarkSeal from '@/components/ui/GaaMasterWatermarkSeal'
 import { StructuredSoapOutput, SoapNotesMode } from '@/lib/ai-soap-notes'
+import { ALL_PARTY_RECORDING_NOTICE } from '@/lib/legal-compliance'
 
 interface VoiceSoapNotesModalProps {
   isOpen: boolean
@@ -270,6 +271,21 @@ export default function VoiceSoapNotesModal({
           >
             <GaaIcon name="close" size={16} tone="slate" />
           </button>
+        </div>
+
+        {/* All-Party Recording & AI S.O.A.P. Transcription Consent Notice (M.G.L. c. 272, § 99) */}
+        <div
+          style={{
+            padding: '10px 12px',
+            borderRadius: 8,
+            background: 'rgba(15, 23, 42, 0.9)',
+            border: '1px solid rgba(148, 163, 184, 0.32)',
+            fontSize: 11,
+            color: '#CBD5E1',
+            lineHeight: 1.45,
+          }}
+        >
+          {ALL_PARTY_RECORDING_NOTICE}
         </div>
 
         {/* Mode Selector */}

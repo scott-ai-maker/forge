@@ -21,6 +21,11 @@ export async function generateMetadata({ params }: ProofOfWorkPageProps): Promis
   return {
     title,
     description,
+    robots: {
+      index: false,
+      follow: false,
+      nocache: true,
+    },
     openGraph: {
       title,
       description,

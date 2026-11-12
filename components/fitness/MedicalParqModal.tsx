@@ -304,28 +304,32 @@ export default function MedicalParqModal({
             {evaluation.legalDisclaimer}
           </p>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginTop: 4 }}>
+          <label htmlFor="parq-waiver-checkbox" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginTop: 4 }}>
             <input
+              id="parq-waiver-checkbox"
               type="checkbox"
               checked={agreedToWaiver}
               onChange={e => setAgreedToWaiver(e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: 'var(--gold)' }}
+              style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, accentColor: 'var(--gold)' }}
             />
-            <span style={{ fontSize: 13, color: 'var(--white)', fontWeight: 600 }}>
-              I have read and voluntarily agree to the informed consent terms and liability waiver.
+            <span style={{ fontSize: 12.5, color: 'var(--white)', fontWeight: 600, lineHeight: 1.5 }}>
+              I confirm that I am at least 18 years old, have disclosed all relevant medical/orthopedic conditions, and voluntarily agree to the Athletic Assumption of Risk, Release of Liability, and ESIGN Electronic Signature terms.
             </span>
           </label>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 12, marginTop: 6 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4 }}>
-                Full Digital Signature
+              <label htmlFor="parq-legal-signature" style={{ display: 'block', fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4 }}>
+                Full Legal Electronic Signature (ESIGN / M.G.L. c. 110G)
               </label>
               <input
+                id="parq-legal-signature"
+                name="signedWaiverName"
                 type="text"
+                autoComplete="name"
                 value={signature}
                 onChange={e => setSignature(e.target.value)}
-                placeholder="Type your legal full name"
+                placeholder="Type your full legal name"
                 style={{
                   width: '100%',
                   padding: '9px 12px',

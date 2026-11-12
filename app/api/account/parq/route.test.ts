@@ -147,6 +147,44 @@ describe('/api/account/parq', () => {
       expect(profileUpdatePayload).toBeDefined()
       expect(coachMessagePayload).toBeDefined()
     })
+
+    it('rejects blank or placeholder waiver signatures with 400 under ESIGN/UETA validation', async () => {
+      const reqBlank = new NextRequest('http://localhost:3000/api/account/parq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hasHeartCondition: false,
+          signedWaiverName: '',
+        }),
+      })
+      const resBlank = await POST(reqBlank)
+      expect(resBlank.status).toBe(400)
+
+      const reqPlaceholder = new NextRequest('http://localhost:3000/api/account/parq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hasHeartCondition: false,
+          signedWaiverName: 'Verified Athlete',
+        }),
+      })
+      const resPlaceholder = await POST(reqPlaceholder)
+      expect(resPlaceholder.status).toBe(400)
+    })
+
+    it('rejects explicit liability waiver refusal with 400', async () => {
+      const reqRefused = new NextRequest('http://localhost:3000/api/account/parq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hasHeartCondition: false,
+          signedWaiverName: 'John Doe',
+          consentLiabilityWaiver: false,
+        }),
+      })
+      const resRefused = await POST(reqRefused)
+      expect(resRefused.status).toBe(400)
+    })
   })
 })
 

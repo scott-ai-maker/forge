@@ -14,6 +14,12 @@ import {
   getClientIp,
   getPositiveIntEnv,
 } from '@/lib/rate-limit'
+import {
+  MINIMUM_ATHLETE_AGE,
+  PREDICT_LOOK_SIMULATION_DISCLAIMER,
+  extractRequestIp,
+  recordLegalConsentAudit,
+} from '@/lib/legal-compliance'
 
 function retryAfterSeconds(resetAt: string) {
   const ms = new Date(resetAt).getTime() - Date.now()
@@ -88,8 +94,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 400 })
   }
 
+  if (typeof profile.age === 'number' && profile.age < MINIMUM_ATHLETE_AGE) {
+    return NextResponse.json(
+      {
+        error: `AI physique concept visualization is strictly restricted to adults aged ${MINIMUM_ATHLETE_AGE} and older.`,
+      },
+      { status: 403 }
+    )
+  }
+
   const body = await req.json()
-  const { targetBodyfatPercent, fitnessGoal, notes } = body ?? {}
+  const { targetBodyfatPercent, fitnessGoal, notes, biometricSimulationConsent } = body ?? {}
+
+  if (biometricSimulationConsent === false) {
+    return NextResponse.json(
+      { error: 'Explicit consent is required prior to encrypted AI image synthesis.' },
+      { status: 400 }
+    )
+  }
 
   if (!targetBodyfatPercent || !fitnessGoal) {
     return NextResponse.json({ error: 'targetBodyfatPercent and fitnessGoal are required' }, { status: 400 })
@@ -124,7 +146,9 @@ export async function POST(req: NextRequest) {
     'Preserve the same person identity, face structure, skin tone, and body frame from the source photo.',
     'Natural realistic human anatomy, no exaggerated bodybuilding proportions.',
     'Studio-quality photograph with professional lighting.',
-    'Wearing dark athletic wear.',
+    profile.sex === 'male'
+      ? 'Wearing a fitted dark charcoal or black athletic crewneck performance t-shirt and training shorts, shirt kept on at all times, never shirtless.'
+      : 'Wearing dark athletic performance wear.',
     'Natural human features, realistic skin tone, confident posture.',
     'Sharp focus, clean neutral background.',
     sanitizedNotes ? `Context: ${sanitizedNotes}.` : '',
@@ -162,10 +186,25 @@ export async function POST(req: NextRequest) {
 
     const imageUrl = await generatePredictionImage(prompt, initImageId)
     const beforePhotoUrl = await createSignedFitnessPhotoUrl(supabase, beforePhotoPath)
+
+    await recordLegalConsentAudit({
+      adminClient: supabaseAdmin(),
+      userId: user.id,
+      documentTypes: ['predict_look_ai_simulation_consent'],
+      ipAddress: extractRequestIp(req.headers),
+      userAgent: req.headers.get('user-agent'),
+      metadata: {
+        usedBeforePhoto: Boolean(initImageId),
+        fitnessGoal,
+        targetBodyfatPercent,
+      },
+    })
+
     return NextResponse.json({ 
       imageUrl, 
       prompt,
       beforePhotoUrl,
+      simulationDisclaimer: PREDICT_LOOK_SIMULATION_DISCLAIMER,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to generate prediction image'

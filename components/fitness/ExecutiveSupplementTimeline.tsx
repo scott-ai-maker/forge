@@ -3,6 +3,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import GaaIcon, { GaaIconName, GaaTone } from '@/components/ui/GaaIcon'
 import {
+  FTC_AFFILIATE_DISCLOSURE,
+  FDA_DSHEA_SUPPLEMENT_DISCLAIMER,
+} from '@/lib/legal-compliance'
+import {
   SupplementStackResult,
   PrescribedSupplementItem,
   TimingWindow,
@@ -370,6 +374,26 @@ export default function ExecutiveSupplementTimeline({
         </div>
       </div>
 
+      {/* FTC 16 CFR Part 255 Affiliate & FDA DSHEA / WADA Compliance Disclosure */}
+      <aside
+        aria-label="Supplement regulatory and affiliate disclosures"
+        style={{
+          padding: '12px 16px',
+          background: 'rgba(15, 23, 42, 0.9)',
+          border: '1px solid rgba(148, 163, 184, 0.35)',
+          borderRadius: 8,
+          display: 'grid',
+          gap: 6,
+        }}
+      >
+        <p style={{ margin: 0, fontSize: 11.5, color: '#E2E8F0', lineHeight: 1.5 }}>
+          {FTC_AFFILIATE_DISCLOSURE}
+        </p>
+        <p style={{ margin: 0, fontSize: 11, color: '#CBD5E1', lineHeight: 1.5 }}>
+          {FDA_DSHEA_SUPPLEMENT_DISCLAIMER}
+        </p>
+      </aside>
+
       {/* Medication Safety Screening & Clinical Precautions Banner */}
       {stack.drugInteractions && stack.drugInteractions.length > 0 && (
         <div
@@ -701,8 +725,8 @@ export default function ExecutiveSupplementTimeline({
                       Client Privilege Price: <strong>{selectedItemDetail.clientDiscountPrice}</strong>{' '}
                       <span style={{ textDecoration: 'line-through', color: 'var(--gray)', fontSize: 10.5 }}>{selectedItemDetail.retailPriceEstimate}</span>
                     </div>
-                    <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.4)', marginTop: 3 }}>
-                      15% courtesy discount · Partner dispensary (affiliate link)
+                    <div style={{ fontSize: 10.5, color: '#CBD5E1', marginTop: 3 }}>
+                      15% courtesy discount · Partner dispensary (affiliate commission link; optional sourcing)
                     </div>
                   </div>
                   <a

@@ -157,6 +157,9 @@ export default function EquipmentDispensaryWidget({
               Direct-shipped clinical tools from <strong>Crossover Symmetry</strong> (15% off) and{' '}
               <strong>Perform Better</strong> (10% off) mapped directly to your NASM movement screen findings.
             </p>
+            <p style={{ margin: '6px 0 0', fontSize: 11.5, color: '#CBD5E1', lineHeight: 1.45 }}>
+              <strong>Affiliate Disclosure:</strong> {prescription.ftcAffiliateDisclosure} {prescription.voluntarySourcingNotice}
+            </p>
           </div>
 
           <div
@@ -233,7 +236,7 @@ export default function EquipmentDispensaryWidget({
           </div>
         )}
 
-        <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.45 }}>
+        <p style={{ margin: 0, fontSize: 11.5, color: '#CBD5E1', lineHeight: 1.45 }}>
           {prescription.ftcAffiliateDisclosure} {prescription.voluntarySourcingNotice}
         </p>
       </section>
@@ -316,6 +319,22 @@ export default function EquipmentDispensaryWidget({
               {prescription.hasActiveAssessmentMapping
                 ? 'Automatically calibrated to your latest NASM Overhead Squat & Kinetic Chain Assessment—pairing clinical corrective tools with REP Fitness commercial home-gym strength hardware.'
                 : 'Direct-shipped clinical corrective tools (10%–15% member privilege) paired with REP Fitness commercial home-gym strength equipment (free US shipping & zero inventory markups).'}
+            </p>
+            <p
+              style={{
+                margin: '8px 0 0',
+                padding: '8px 12px',
+                borderRadius: 6,
+                background: 'rgba(15, 23, 42, 0.85)',
+                border: '1px solid rgba(148, 163, 184, 0.3)',
+                color: '#CBD5E1',
+                fontSize: 11.5,
+                lineHeight: 1.5,
+                maxWidth: 820,
+              }}
+            >
+              <strong style={{ color: '#F8FAFC' }}>FTC Affiliate &amp; Voluntary Sourcing Disclosure:</strong>{' '}
+              {prescription.ftcAffiliateDisclosure} {prescription.voluntarySourcingNotice}
             </p>
           </div>
 

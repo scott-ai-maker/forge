@@ -11,12 +11,18 @@ import {
 } from '@/lib/discount-codes'
 import { getForgeMembership, getForgeMembershipPrice } from '@/lib/forge-memberships'
 import { getForgeAddon } from '@/lib/forge-addons'
+import { LEGAL_DOCUMENTS } from '@/lib/legal-compliance'
 
 export async function POST(req: NextRequest) {
   try {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['client', 'coach'])
     const userId = authz.user.id
+    const automaticTaxOption =
+      process.env.STRIPE_AUTOMATIC_TAX_ENABLED === 'true'
+        ? { automatic_tax: { enabled: true as const } }
+        : {}
+    const legalTermsVersion = LEGAL_DOCUMENTS.terms_of_service.version
 
     // Zero In-App Purchase Compliance: In accordance with Apple App Store Guideline 3.1.3,
     // Google Play multiplatform policies, and PWA companion guidelines, purchases cannot occur on companion apps.
@@ -175,12 +181,14 @@ export async function POST(req: NextRequest) {
         source: 'forge_membership',
         referralCode: referralPromotion?.code || '',
         referrerId: referralPromotion?.referrerId || '',
+        legalTermsVersion,
       }
 
       try {
         const session = await stripe.checkout.sessions.create({
           mode: 'subscription',
           client_reference_id: userId,
+          ...automaticTaxOption,
           line_items: [
             {
               price_data: {
@@ -253,12 +261,14 @@ export async function POST(req: NextRequest) {
         basePriceCents: String(addon.priceCents),
         finalPriceCents: String(addon.priceCents),
         source: 'forge_addon',
+        legalTermsVersion,
       }
 
       try {
         const session = await stripe.checkout.sessions.create({
           mode: 'payment',
           client_reference_id: userId,
+          ...automaticTaxOption,
           line_items: [
             {
               price_data: {
@@ -322,6 +332,7 @@ export async function POST(req: NextRequest) {
         basePriceCents: String(product.priceCents),
         finalPriceCents: String(product.priceCents),
         source: 'audit_purchase',
+        legalTermsVersion,
       }
 
       let session
@@ -329,6 +340,7 @@ export async function POST(req: NextRequest) {
         session = await stripe.checkout.sessions.create({
           mode: 'payment',
           client_reference_id: userId,
+          ...automaticTaxOption,
           line_items: [
             {
               price_data: {
@@ -573,6 +585,7 @@ export async function POST(req: NextRequest) {
       discountValue: String(appliedDiscountValue),
       discountAmountCents: String(discountAmountCents),
       selectedAddonIds: validAddons.map(a => a.id).join(','),
+      legalTermsVersion,
     }
 
     if (!process.env.STRIPE_SECRET_KEY || !stripe) {
@@ -586,6 +599,7 @@ export async function POST(req: NextRequest) {
       session = await stripe.checkout.sessions.create({
         mode: isPif ? 'payment' : 'subscription',
         client_reference_id: userId,
+        ...automaticTaxOption,
         line_items: lineItems,
         ...(isPif
           ? {}

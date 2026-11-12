@@ -22,7 +22,6 @@
     "client:new": "node --env-file=.env.local scripts/create-test-client.mjs",
     "client:test": "node --env-file=.env.local scripts/create-test-client.mjs",
     "exercises:seed": "node --env-file=.env.local scripts/seed-exercise-library.mjs",
-    "exercises:enrich-youtube": "node --env-file=.env.local scripts/enrich-youtube-videos-headless.mjs",
     "exercises:enrich-ai": "node --env-file=.env.local scripts/enrich-exercises-openai.mjs",
     "exercises:backfill-muscles": "node --env-file=.env.local scripts/backfill-muscle-groups.mjs",
     "workouts:backfill-day-tags": "node --env-file=.env.local scripts/backfill-workout-day-tags.mjs",

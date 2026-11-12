@@ -384,4 +384,26 @@ describe('stripe checkout route', () => {
     const resCompanionHeader = await POST(reqCompanionHeader)
     expect(resCompanionHeader.status).toBe(403)
   })
+
+  it('enables Stripe automatic_tax and attaches canonical legalTermsVersion metadata when STRIPE_AUTOMATIC_TAX_ENABLED=true', async () => {
+    const previousTaxEnv = process.env.STRIPE_AUTOMATIC_TAX_ENABLED
+    process.env.STRIPE_AUTOMATIC_TAX_ENABLED = 'true'
+    try {
+      const req = new NextRequest('http://localhost/api/stripe/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ packageId: 'forge-core', cadence: 'monthly' }),
+      })
+      const res = await POST(req)
+      expect(res.status).toBe(200)
+      const createArgs = createSessionMock.mock.calls[0][0]
+      expect(createArgs.automatic_tax).toEqual({ enabled: true })
+      expect(createArgs.metadata.legalTermsVersion).toBe('tos-2026.11.11')
+    } finally {
+      if (previousTaxEnv === undefined) {
+        delete process.env.STRIPE_AUTOMATIC_TAX_ENABLED
+      } else {
+        process.env.STRIPE_AUTOMATIC_TAX_ENABLED = previousTaxEnv
+      }
+    }
+  })
 })

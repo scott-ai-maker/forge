@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { LEGAL_DOCUMENTS } from '@/lib/legal-compliance'
 
 type Mode = 'login' | 'signup' | 'reset'
 
@@ -16,6 +17,7 @@ interface AuthFormProps {
 interface ValidationErrors {
   email?: string
   password?: string
+  legalConsent?: string
 }
 
 function formatAuthErrorMessage(rawMessage: string, provider?: 'google' | 'apple') {
@@ -139,6 +141,7 @@ export default function AuthForm({
   const [mode, setMode] = useState<Mode>(initialMode)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [acceptedLegalTerms, setAcceptedLegalTerms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<'google' | 'apple' | null>(null)
   const [error, setError] = useState<string | null>(initialError ? formatAuthErrorMessage(initialError) : null)
@@ -147,6 +150,10 @@ export default function AuthForm({
   const [resetCooldownEndsAt, setResetCooldownEndsAt] = useState<number | null>(null)
   const [nowMs, setNowMs] = useState(() => Date.now())
   const [isHydrated, setIsHydrated] = useState(false)
+
+  const emailInputRef = useRef<HTMLInputElement | null>(null)
+  const passwordInputRef = useRef<HTMLInputElement | null>(null)
+  const legalCheckboxRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     setIsHydrated(true)
@@ -178,7 +185,19 @@ export default function AuthForm({
       if (passwordError) newErrors.password = passwordError
     }
 
+    if (mode === 'signup' && !acceptedLegalTerms) {
+      newErrors.legalConsent =
+        'You must confirm you are 18+ and accept the Terms of Service, Liability Release, Arbitration Agreement, Privacy Policy, and Consumer Health & Biometric Policy.'
+    }
+
     setFieldErrors(newErrors)
+    if (newErrors.email) {
+      emailInputRef.current?.focus()
+    } else if (newErrors.password) {
+      passwordInputRef.current?.focus()
+    } else if (newErrors.legalConsent) {
+      legalCheckboxRef.current?.focus()
+    }
     return Object.keys(newErrors).length === 0
   }
 
@@ -249,8 +268,10 @@ export default function AuthForm({
     const cleanEmail = email.trim().toLowerCase()
 
     if (mode === 'signup') {
+      const consentedAt = new Date().toISOString()
       const callbackUrl = new URL('/auth/callback', window.location.origin)
       callbackUrl.searchParams.set('next', redirectPath)
+      callbackUrl.searchParams.set('consent', '1')
       if (coachId) {
         callbackUrl.searchParams.set('coach', coachId)
       }
@@ -260,6 +281,14 @@ export default function AuthForm({
         password,
         options: {
           emailRedirectTo: callbackUrl.toString(),
+          data: {
+            age_verified_18_plus: true,
+            legal_terms_accepted: true,
+            legal_consented_at: consentedAt,
+            legal_terms_version: LEGAL_DOCUMENTS.terms_of_service.version,
+            legal_privacy_version: LEGAL_DOCUMENTS.privacy_policy.version,
+            legal_health_biometric_version: LEGAL_DOCUMENTS.consumer_health_biometric_policy.version,
+          },
         },
       })
       if (error) {
@@ -325,6 +354,16 @@ export default function AuthForm({
   }
 
   async function handleOAuth(provider: 'google' | 'apple') {
+    if (mode === 'signup' && !acceptedLegalTerms) {
+      setFieldErrors(prev => ({
+        ...prev,
+        legalConsent:
+          'Please confirm you are 18+ and check the agreement box before creating an account with Google or Apple.',
+      }))
+      legalCheckboxRef.current?.focus()
+      return
+    }
+
     const supabase = createClient()
     setError(null)
     setFieldErrors({})
@@ -333,6 +372,9 @@ export default function AuthForm({
     try {
       const callbackUrl = new URL('/auth/callback', window.location.origin)
       callbackUrl.searchParams.set('next', redirectPath)
+      if (mode === 'signup') {
+        callbackUrl.searchParams.set('consent', '1')
+      }
       if (coachId) {
         callbackUrl.searchParams.set('coach', coachId)
       }
@@ -536,8 +578,14 @@ export default function AuthForm({
             Email Address {fieldErrors.email && '*'}
           </label>
           <input
+            ref={emailInputRef}
             id="email-input"
+            name="email"
             type="email"
+            autoComplete="email"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
             value={email}
             disabled={isAnyLoading}
             onChange={e => {
@@ -575,8 +623,11 @@ export default function AuthForm({
               Password {fieldErrors.password && '*'}
             </label>
             <input
+              ref={passwordInputRef}
               id="password-input"
+              name="password"
               type="password"
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               value={password}
               disabled={isAnyLoading}
               onChange={e => {
@@ -614,6 +665,64 @@ export default function AuthForm({
           </div>
         )}
 
+        {mode === 'signup' && (
+          <div>
+            <div
+              className="forge-legal-consent-row"
+              data-invalid={fieldErrors.legalConsent ? 'true' : undefined}
+            >
+              <input
+                ref={legalCheckboxRef}
+                id="legal-consent-checkbox"
+                name="legalConsent"
+                type="checkbox"
+                className="forge-legal-checkbox"
+                checked={acceptedLegalTerms}
+                disabled={isAnyLoading}
+                onChange={e => {
+                  setAcceptedLegalTerms(e.target.checked)
+                  if (e.target.checked && fieldErrors.legalConsent) {
+                    const rest = { ...fieldErrors }
+                    delete rest.legalConsent
+                    setFieldErrors(rest)
+                  }
+                }}
+                aria-invalid={!!fieldErrors.legalConsent}
+                aria-describedby={fieldErrors.legalConsent ? 'legal-consent-error' : undefined}
+              />
+              <label
+                htmlFor="legal-consent-checkbox"
+                style={{
+                  fontFamily: 'Raleway, sans-serif',
+                  fontSize: 12.5,
+                  color: '#E2E8F0',
+                  lineHeight: 1.5,
+                  cursor: 'pointer',
+                }}
+              >
+                I confirm that I am at least <strong>18 years of age</strong> (or the age of legal majority in my jurisdiction) and I affirmatively agree to the Forge Athletic{' '}
+                <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                  Terms of Service
+                </a>{' '}
+                (including the <strong>Athletic Liability Release</strong>, <strong>Mandatory Binding Individual Arbitration</strong>, and <strong>Class Action Waiver</strong>),{' '}
+                <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                  Privacy Policy
+                </a>
+                , and{' '}
+                <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                  Consumer Health &amp; Biometric Data Policy
+                </a>
+                .
+              </label>
+            </div>
+            {fieldErrors.legalConsent && (
+              <div id="legal-consent-error" role="alert" style={errorMessageStyle}>
+                {fieldErrors.legalConsent}
+              </div>
+            )}
+          </div>
+        )}
+
         {mode === 'login' && (
           <div style={{ textAlign: 'right' }}>
             <button
@@ -643,15 +752,15 @@ export default function AuthForm({
 
         <button
           type="submit"
-          disabled={isAnyLoading || Object.keys(fieldErrors).length > 0 || isResetCooldownActive}
+          disabled={isAnyLoading || isResetCooldownActive}
           style={{
             padding: '13px',
             background:
-              isAnyLoading || Object.keys(fieldErrors).length > 0 || isResetCooldownActive
+              isAnyLoading || isResetCooldownActive
                 ? 'var(--navy-lt)'
                 : 'var(--gold)',
             color:
-              isAnyLoading || Object.keys(fieldErrors).length > 0 || isResetCooldownActive
+              isAnyLoading || isResetCooldownActive
                 ? 'var(--gray)'
                 : '#0D1B2A',
             border: 'none',
@@ -662,7 +771,7 @@ export default function AuthForm({
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             cursor:
-              isAnyLoading || Object.keys(fieldErrors).length > 0 || isResetCooldownActive
+              isAnyLoading || isResetCooldownActive
                 ? 'not-allowed'
                 : 'pointer',
             transition: 'background 0.15s',
@@ -743,21 +852,28 @@ export default function AuthForm({
             style={{
               textAlign: 'center',
               fontFamily: 'Raleway, sans-serif',
-              fontSize: 11,
-              color: 'rgba(197, 160, 89, 0.7)',
+              fontSize: 11.5,
+              color: '#94A3B8',
               lineHeight: 1.5,
               margin: '6px 0 0',
             }}
           >
-            By continuing, you agree to Forge Athletic&apos;s{' '}
+            Legal Documents:{' '}
             <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
-              Privacy Policy
+              Terms
             </a>
-            .
+            {' · '}
+            <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+              Privacy
+            </a>
+            {' · '}
+            <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+              Health &amp; Biometric Data
+            </a>
+            {' · '}
+            <a href="/accessibility" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+              Accessibility
+            </a>
           </p>
         </>
       )}

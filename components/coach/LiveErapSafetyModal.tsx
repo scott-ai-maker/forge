@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
+import { ALL_PARTY_RECORDING_NOTICE } from '@/lib/legal-compliance'
 
 export interface ClientErapData {
   clientId: string
@@ -560,6 +561,21 @@ export default function LiveErapSafetyModal({
             <div style={{ fontSize: 11, color: '#FDE68A', lineHeight: 1.5 }}>
               <strong>Video Loss Fail-Safe Protocol:</strong> In accordance with NASM Virtual Coaching guidelines, if WebRTC video or audio latency drops or disconnects during a heavy compound lift, the athlete has agreed to <em>immediately rack all weights safely</em>. Virtual coaches cannot spot from afar.
             </div>
+          </div>
+
+          {/* Massachusetts M.G.L. c. 272, § 99 All-Party Recording & AI Telestrator Notice */}
+          <div
+            style={{
+              padding: 12,
+              borderRadius: 8,
+              background: 'rgba(15, 23, 42, 0.88)',
+              border: '1px solid rgba(148, 163, 184, 0.32)',
+              fontSize: 11,
+              color: '#CBD5E1',
+              lineHeight: 1.5,
+            }}
+          >
+            {ALL_PARTY_RECORDING_NOTICE}
           </div>
 
           {/* Telehealth Legal Consent Status */}

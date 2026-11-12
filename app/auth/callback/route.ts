@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { attributeReferralSignup, getOrCreateClientReferralCode } from '@/lib/referrals'
+import { extractRequestIp, recordLegalConsentAudit } from '@/lib/legal-compliance'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -160,6 +161,25 @@ export async function GET(request: NextRequest) {
           },
         })
       }
+
+      if (searchParams.get('consent') === '1' || user.user_metadata?.legal_terms_accepted === true) {
+        await recordLegalConsentAudit({
+          adminClient: admin,
+          userId: user.id,
+          documentTypes: ['terms_of_service', 'privacy_policy', 'consumer_health_biometric_policy'],
+          typedSignature: displayName,
+          ipAddress: extractRequestIp(request.headers),
+          userAgent: request.headers.get('user-agent'),
+          consentedAt:
+            typeof user.user_metadata?.legal_consented_at === 'string'
+              ? user.user_metadata.legal_consented_at
+              : new Date().toISOString(),
+          metadata: {
+            flow: 'signup_clickwrap_callback',
+            ageVerified18Plus: true,
+          },
+        })
+      }
     } else {
       // Create first-time profiles as clients (or coach if master coach) without mutating pre-existing rows.
       await admin
@@ -180,6 +200,25 @@ export async function GET(request: NextRequest) {
           user_metadata: {
             ...(user.user_metadata ?? {}),
             surface_role: resolvedRole,
+          },
+        })
+      }
+
+      if (searchParams.get('consent') === '1' || user.user_metadata?.legal_terms_accepted === true) {
+        await recordLegalConsentAudit({
+          adminClient: admin,
+          userId: user.id,
+          documentTypes: ['terms_of_service', 'privacy_policy', 'consumer_health_biometric_policy'],
+          typedSignature: displayName,
+          ipAddress: extractRequestIp(request.headers),
+          userAgent: request.headers.get('user-agent'),
+          consentedAt:
+            typeof user.user_metadata?.legal_consented_at === 'string'
+              ? user.user_metadata.legal_consented_at
+              : new Date().toISOString(),
+          metadata: {
+            flow: 'signup_clickwrap_callback',
+            ageVerified18Plus: true,
           },
         })
       }

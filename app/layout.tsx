@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
-import { GoogleAnalytics } from '@next/third-parties/google'
 import './globals.css'
 import MobilePortraitLock from '@/components/ui/MobilePortraitLock'
 import ServiceWorkerRegistrar from '@/components/ui/ServiceWorkerRegistrar'
@@ -181,8 +180,6 @@ const forgeStructuredData = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-
   return (
     <html lang="en-US" className={`${barlowCondensed.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
@@ -222,7 +219,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegistrar />
         <PwaInstallPrompt />
         {children}
-        {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
   )
