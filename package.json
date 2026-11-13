@@ -1,6 +1,6 @@
 {
   "name": "forge-athletic",
-  "version": "1.50.1",
+  "version": "1.51.0",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -36,6 +36,7 @@
     "smoke:auth": "node --env-file=.env.local scripts/authenticated-smoke-harness.mjs",
     "emails:dispatch": "node --env-file=.env.local scripts/dispatch-marketing-emails.mjs",
     "emails:verify": "node --env-file=.env.local scripts/verify-email-health.mjs",
+    "emails:test-launch": "node scripts/test-launch-emails.mjs",
     "generate-images": "node scripts/generate-images.mjs",
     "cap:sync": "npm run sync:sw && cap sync",
     "cap:open": "cap open ios",

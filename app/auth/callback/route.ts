@@ -247,12 +247,25 @@ export async function GET(request: NextRequest) {
       searchParams.get('referral') ||
       request.cookies.get('forge_referral_code')?.value
 
+    if (!existingProfile) {
+      try {
+        const { suppressOnAccountActivated } = await import('@/lib/automations/launchSequence')
+        await suppressOnAccountActivated(admin, {
+          userId: user.id,
+          email: userEmail || user.email || null,
+        })
+      } catch (err) {
+        console.warn('[auth:callback] Account activation suppression warning:', err)
+      }
+    }
+
     if (rawReferral && !existingProfile) {
       try {
         await attributeReferralSignup(admin, {
           code: rawReferral,
           refereeId: user.id,
           refereeEmail: userEmail,
+          refereeFirstName: displayName,
           source: 'signup_callback',
         })
       } catch (err) {

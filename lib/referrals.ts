@@ -439,12 +439,14 @@ export async function attributeReferralSignup(
     code: string
     refereeId: string
     refereeEmail: string
+    refereeFirstName?: string | null
     source?: string
     ipHash?: string
     userAgent?: string
   }
 ): Promise<{ success: boolean; error?: string }> {
-  const { valid, referrerId, code } = await validateReferralCode(admin, params.code)
+  const { valid, referrerId, referrerName, refereeTrialDays, code } =
+    await validateReferralCode(admin, params.code)
   if (!valid || !referrerId || !code) {
     return { success: false, error: 'Invalid referral code' }
   }
@@ -510,6 +512,22 @@ export async function attributeReferralSignup(
     })
   } catch (notifyErr) {
     console.warn('[referrals:attributeSignup] Notification warn:', notifyErr)
+  }
+
+  // Trigger Immediate Founding Partner Pass Guest Welcome Email (Template 07)
+  try {
+    const { triggerPartnerPassGuestWelcome } = await import('@/lib/automations/launchSequence')
+    await triggerPartnerPassGuestWelcome(admin, {
+      guestUserId: params.refereeId,
+      guestEmail: params.refereeEmail,
+      guestFirstName: params.refereeFirstName,
+      referrerId,
+      referrerFirstName:
+        referrerName && referrerName !== 'A Forge Athlete' ? referrerName : null,
+      trialDays: refereeTrialDays || 30,
+    })
+  } catch (welcomeErr) {
+    console.warn('[referrals:attributeSignup] Guest pass welcome warn:', welcomeErr)
   }
 
   return { success: true }

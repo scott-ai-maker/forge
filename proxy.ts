@@ -43,7 +43,7 @@ export async function proxy(request: NextRequest) {
 
   if (
     process.env.NODE_ENV === 'production' &&
-    pathname.startsWith('/test-harness')
+    (pathname.startsWith('/test-harness') || pathname.startsWith('/api/test-harness'))
   ) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }

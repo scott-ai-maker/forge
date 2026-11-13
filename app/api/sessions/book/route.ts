@@ -167,5 +167,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to book session' }, { status: 500 })
   }
 
+  // Immediately suppress 48-Hour 1-on-1 Screening Reminder (Template 03) once booked
+  try {
+    const { suppressOnScreeningBooked } = await import('@/lib/automations/launchSequence')
+    await suppressOnScreeningBooked(admin, { userId: clientTargetId })
+  } catch {
+    // Non-blocking suppression hook
+  }
+
   return NextResponse.json({ success: true, session })
 }

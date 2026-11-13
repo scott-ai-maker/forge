@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.50.1'
+export const APP_VERSION = '1.51.0'
 export const APP_RELEASE_DATE = '2026-11-13'
-export const APP_RELEASE_CODENAME = 'Holistic Coaching Brand Film & Coach Likeness Alignment'
+export const APP_RELEASE_CODENAME = 'Launch, Rescue, Referral & Retention Automation Suite'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.51.0',
+    date: '2026-11-13',
+    codename: 'Launch, Rescue, Referral & Retention Automation Suite',
+    category: 'feature',
+    badge: 'Growth & Lifecycle Automations',
+    title: 'v1.51.0 — Launch, Rescue, Referral & Retention Email/SMS Automation Suite',
+    summary:
+      'Delivers the 8-step Founding Cohort Email & SMS lifecycle suite spanning November 20, 2026 through January 1, 2027, including simultaneous Launch Blast, 48-hour Unclaimed Pass Rescue, Screening Reminders, Holiday Travel & Rhythm Resets, Day-30 Posture Scan Milestones, immediate Partner Pass Guest Welcomes, and New Year Phase 02 transitions.',
+    highlights: [
+      'Centralized 10-Template Email & SMS Engine (launchSequence.ts): Strict personalization interpolation, zero-unresolved-variable enforcement, IANA local-timezone wall-clock & Day-30 scheduling, CAN-SPAM List-Unsubscribe headers, and TCPA SMS STOP compliance.',
+      'Real-Time Lifecycle & Suppression Hooks: Immediate Partner Pass Guest Welcome on /invite/[code] redemption, automatic rescue cancellation on account activation, screening reminder suppression on session/calendar booking, and inbound "PASS" standby spot release via Twilio.',
+      'Cron Runner, Portal Redirects & Dev Email Studio: Added /api/internal/automations/launch-sequence cron dispatcher, /portal and /portal/screening campaign routes, and local /test-harness/launch-emails visual preview + test-send studio.',
+    ],
+  },
   {
     version: '1.50.1',
     date: '2026-11-13',

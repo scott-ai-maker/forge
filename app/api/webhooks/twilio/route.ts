@@ -48,6 +48,17 @@ export async function POST(req: NextRequest) {
       .eq('sms_phone', phone)
     return twiml('Forge Athletic: text alerts are back on. Reply STOP to opt out.')
   }
+  if (keyword === 'PASS') {
+    try {
+      const { releaseWaitlistPassOnReply } = await import('@/lib/automations/launchSequence')
+      await releaseWaitlistPassOnReply(admin, { phone })
+    } catch {
+      // Non-blocking standby release
+    }
+    return twiml(
+      'Forge Athletic: Got it — your Founding Member spot has been released to standby. Reply START anytime if your schedule opens up.'
+    )
+  }
   if (keyword === 'HELP') {
     return twiml('Forge Athletic: alerts about your coaching account. Manage in Settings. Reply STOP to opt out. Msg&data rates may apply.')
   }

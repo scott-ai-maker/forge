@@ -667,6 +667,64 @@ export async function dispatchPendingSequenceEmails(
 
     const template = sequenceTemplates.find(t => t.key === row.template_key)
     if (!template) {
+      const {
+        LAUNCH_AUTOMATION_TEMPLATES,
+        renderAutomationTemplate,
+      } = await import('@/lib/automations/launchSequence')
+      const launchDef =
+        LAUNCH_AUTOMATION_TEMPLATES[
+          row.template_key as keyof typeof LAUNCH_AUTOMATION_TEMPLATES
+        ]
+
+      if (launchDef && launchDef.channel === 'email') {
+        try {
+          const rendered = renderAutomationTemplate(launchDef.id, {
+            email: row.email,
+            firstName: row.first_name,
+            guestFirstName: row.first_name,
+            account_activated: true,
+            screening_booked: false,
+            guest_pass_redeemed: launchDef.id === 'partner_pass_guest_07_email',
+            sms_opt_in: false,
+          })
+          if (rendered.channel !== 'email') {
+            throw new Error(`Expected email channel for ${row.template_key}`)
+          }
+
+          const sendResult = await sendEmail({
+            to: rendered.to,
+            subject: rendered.subject,
+            html: rendered.html,
+            text: rendered.text,
+            headers: rendered.headers,
+          })
+
+          await supabase
+            .from('marketing_email_queue')
+            .update({
+              status: 'sent',
+              attempts: 1,
+              provider_message_id: sendResult.skipped ? null : sendResult.id,
+              sent_at: new Date().toISOString(),
+              last_error: null,
+            })
+            .eq('id', row.id)
+
+          sent += 1
+        } catch (err) {
+          failed += 1
+          await supabase
+            .from('marketing_email_queue')
+            .update({
+              status: 'failed',
+              attempts: 1,
+              last_error: err instanceof Error ? err.message : 'Unknown email error',
+            })
+            .eq('id', row.id)
+        }
+        continue
+      }
+
       failed += 1
       await supabase
         .from('marketing_email_queue')
