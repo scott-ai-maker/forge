@@ -825,7 +825,7 @@ export default function HolidayUnmaskingSplash({
                     textTransform: 'uppercase',
                   }}
                 >
-                  3D Joint Telemetry · 1-on-1 Live Studio
+                  Posture Relief · 20m Home &amp; Travel · 1-on-1 Coaching
                 </span>
                 <button
                   type="button"
@@ -877,8 +877,8 @@ export default function HolidayUnmaskingSplash({
                 muted={videoMuted}
                 playsInline
                 preload="auto"
-                poster="/images/forge-black-friday-showcase-poster.jpg"
-                aria-label="Forge Athletic Black Friday Brand Showcase Video"
+                poster="/images/forge-black-friday-showcase-poster.jpg?v=7"
+                aria-label="Forge Athletic Holistic Coaching Showcase Video"
                 style={{
                   width: '100%',
                   height: '100%',
@@ -886,7 +886,7 @@ export default function HolidayUnmaskingSplash({
                   display: 'block',
                 }}
               >
-                <source src="/videos/forge-black-friday-showcase.mp4?v=4" type="video/mp4" />
+                <source src="/videos/forge-black-friday-showcase.mp4?v=7" type="video/mp4" />
                 <source src="/videos/gaa-founding-manifesto.mp4" type="video/mp4" />
               </video>
 
@@ -926,7 +926,7 @@ export default function HolidayUnmaskingSplash({
                       color: '#F8FAFC',
                     }}
                   >
-                    Experience collegiate-grade NASM periodization &amp; 1-on-1 video coaching anywhere.
+                    Desk posture relief, joint-friendly 20m home &amp; travel strength, nutrition, and 1-on-1 coaching anywhere.
                   </div>
                 </div>
                 <button
@@ -968,11 +968,11 @@ export default function HolidayUnmaskingSplash({
               }}
             >
               {[
-                { code: '01', label: '3D Squat Diagnostics', timeSec: 0 },
-                { code: '02', label: '100% Spine & Posture Mesh', timeSec: 2.8 },
-                { code: '03', label: '1,400W Peak Velocity', timeSec: 4.8 },
-                { code: '04', label: '1-on-1 Live Coach', timeSec: 7.8 },
-                { code: '05', label: 'The Forge Sanctuary', timeSec: 9.8 },
+                { code: '01', label: 'Desk Posture & Ergonomics', timeSec: 0 },
+                { code: '02', label: 'Joint-First Home Strength', timeSec: 2.5 },
+                { code: '03', label: '20-Min Travel & Recovery', timeSec: 5.0 },
+                { code: '04', label: '1-on-1 Live Coaching', timeSec: 8.2 },
+                { code: '05', label: 'The Forge Sanctuary', timeSec: 10.7 },
               ].map(ch => (
                 <button
                   key={ch.code}

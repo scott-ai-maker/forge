@@ -5,17 +5,17 @@ import Link from 'next/link'
 import { HOLIDAY_DEAL_PROMO, LAUNCH_CAMPAIGN_INFO } from '@/lib/launch-config'
 
 const SHOWCASE_CHAPTERS = [
-  { id: 'squat', code: '01', label: '3D Squat Diagnostics', timeSec: 0 },
-  { id: 'spine', code: '02', label: '100% Spine & Posture Mesh', timeSec: 2.8 },
-  { id: 'power', code: '03', label: '1,400W Peak Velocity', timeSec: 4.8 },
-  { id: 'coach', code: '04', label: '1-on-1 Live Master Coach', timeSec: 7.8 },
-  { id: 'crest', code: '05', label: 'The Forge Sanctuary', timeSec: 9.8 },
+  { id: 'desk', code: '01', label: 'Desk Posture & Ergonomics', timeSec: 0 },
+  { id: 'home', code: '02', label: 'Joint-First Home Strength', timeSec: 2.5 },
+  { id: 'travel', code: '03', label: '20-Min Travel & Recovery', timeSec: 5.0 },
+  { id: 'coach', code: '04', label: '1-on-1 Live Coaching', timeSec: 8.2 },
+  { id: 'crest', code: '05', label: 'The Forge Sanctuary', timeSec: 10.7 },
 ] as const
 
 export default function BlackFridayShowcaseSection() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [videoMuted, setVideoMuted] = useState(true)
-  const [activeChapter, setActiveChapter] = useState<string>('squat')
+  const [activeChapter, setActiveChapter] = useState<string>('desk')
 
   const jumpToChapter = (id: string, timeSec: number) => {
     setActiveChapter(id)
@@ -107,7 +107,7 @@ export default function BlackFridayShowcaseSection() {
               margin: '0 0 10px',
             }}
           >
-            See Why Athletes Are Switching To Forge Athletic
+            Built For Real Life, Pain-Free Strength &amp; Longevity
           </h2>
           <p
             style={{
@@ -118,7 +118,7 @@ export default function BlackFridayShowcaseSection() {
               lineHeight: 1.6,
             }}
           >
-            Real-time 3D joint and spinal alignment diagnostics, 1,400W bar-velocity tracking, and live 1-on-1 master coaching—engineered into one zero-distraction training sanctuary.
+            From 5-minute desk ergonomics resets and joint-friendly 20-minute home or hotel workouts to personalized NASM OPT™ progression, nutrition periodization, and 1-on-1 live coaching with Coach Gordon.
           </p>
         </div>
 
@@ -138,8 +138,8 @@ export default function BlackFridayShowcaseSection() {
             muted={videoMuted}
             playsInline
             preload="auto"
-            poster="/images/forge-black-friday-showcase-poster.jpg"
-            aria-label="Forge Athletic Black Friday Brand Showcase Film"
+            poster="/images/forge-black-friday-showcase-poster.jpg?v=7"
+            aria-label="Forge Athletic Holistic Coaching Showcase Film"
             style={{
               width: '100%',
               height: '100%',
@@ -147,7 +147,7 @@ export default function BlackFridayShowcaseSection() {
               display: 'block',
             }}
           >
-            <source src="/videos/forge-black-friday-showcase.mp4?v=4" type="video/mp4" />
+            <source src="/videos/forge-black-friday-showcase.mp4?v=7" type="video/mp4" />
             <source src="/videos/gaa-founding-manifesto.mp4" type="video/mp4" />
           </video>
 

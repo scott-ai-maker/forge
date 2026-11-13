@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.50.0'
+export const APP_VERSION = '1.50.1'
 export const APP_RELEASE_DATE = '2026-11-13'
-export const APP_RELEASE_CODENAME = 'Founding Launch Diagnostics, Partner Pass & Interactive Lab Sandbox'
+export const APP_RELEASE_CODENAME = 'Holistic Coaching Brand Film & Coach Likeness Alignment'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,20 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.50.1',
+    date: '2026-11-13',
+    codename: 'Holistic Coaching Brand Film & Coach Likeness Alignment',
+    category: 'feature',
+    badge: 'Brand & Media Alignment',
+    title: 'v1.50.1 — Holistic 5-Act Brand Showcase Film & Coach Gordon Live Studio Likeness',
+    summary:
+      'Replaced the CrossFit-heavy showcase video and interactive chapter scrubbers with a 5-act 1080p brand film highlighting desk ergonomics relief, joint-first home strength, 20-minute hotel travel consistency, and live 1-on-1 coaching featuring Coach Gordon.',
+    highlights: [
+      'New 1080p 5-act brand showcase film covering Desk Posture & Ergonomics, Joint-First Home Strength, 20-Min Travel & Recovery, 1-on-1 Live Coaching with Coach Gordon, and the Forge Athletic crest reveal.',
+      'Updated hero poster frame and interactive chapter scrubbers across HolidayUnmaskingSplash and BlackFridayShowcaseSection.',
+    ],
+  },
   {
     version: '1.50.0',
     date: '2026-11-13',
