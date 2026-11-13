@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.51.0'
+export const APP_VERSION = '1.52.0'
 export const APP_RELEASE_DATE = '2026-11-13'
-export const APP_RELEASE_CODENAME = 'Launch, Rescue, Referral & Retention Automation Suite'
+export const APP_RELEASE_CODENAME = 'Live Studio Microsoft Teams Responsive Shell & Low-Bandwidth Resilience'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.52.0',
+    date: '2026-11-13',
+    codename: 'Live Studio Microsoft Teams Responsive Shell & Low-Bandwidth Resilience',
+    category: 'feature',
+    badge: 'Live Studio & Telehealth UX',
+    title: 'v1.52.0 — Microsoft Teams Responsive Live Studio & Low-Bandwidth Coaching Suite',
+    summary:
+      'Upgrades both the Coach Live Cockpit and Athlete Live Studio into a container-query driven Microsoft Teams meeting shell across mobile, split-screen windows, and widescreen desktops, paired with 4-tier adaptive WebRTC bitrate and zero-black-screen Audio + Form Snapshot training.',
+    highlights: [
+      'Microsoft Teams Responsive Meeting Shell (live-studio-teams.css): Container-query 2-up gallery cards that automatically stack vertically on narrow (<640px) stages, fluid aspect-ratio PiP tiles, balanced command bar clusters, and a collapsible right Workout & Set Logger side pane / slide-over drawer.',
+      '4-Tier Adaptive Low-Bandwidth Engine (hd / sd / low_data / audio_first): Dynamic WebRTC RTCRtpSender bitrate & DegradationPreference tuning, automatic 2G/3G/Data-Saver step-down, and grace-window connection telemetry.',
+      'Zero-Black-Screen Audio + Form Snapshot Coaching: LiveRemoteVideoFeed retains the last valid video frame or renders ~10 KB periodic JPEG form snapshots alongside sub-300B live exercise, tempo, rest countdown, and verbal cue sync.',
+    ],
+  },
   {
     version: '1.51.0',
     date: '2026-11-13',

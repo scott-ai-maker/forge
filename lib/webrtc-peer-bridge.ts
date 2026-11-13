@@ -1,4 +1,15 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import {
+  BANDWIDTH_PROFILES,
+  detectBrowserNetworkHint,
+  evaluateNetworkQuality,
+  resolveEffectiveBandwidthTier,
+  type BandwidthMode,
+  type CoachingSyncPayload,
+  type NetworkHealthSample,
+  type NetworkQualityGrade,
+  type ResolvedBandwidthTier,
+} from './live-bandwidth-profiles'
 
 export function getIceServers(): RTCIceServer[] {
   const servers: RTCIceServer[] = [
@@ -70,6 +81,10 @@ export interface WebRtcSignalPayload {
     | 'spotlight'
     | 'team-cue'
     | 'circuit-timer'
+    | 'bandwidth-mode'
+    | 'form-snapshot'
+    | 'request-snapshot'
+    | 'coaching-sync'
   senderId: string
   targetUserId?: string
   senderName?: string
@@ -87,10 +102,21 @@ export interface WebRtcBridgeOptions {
   isPolite?: boolean
   channel?: RealtimeChannel | null
   localStream?: MediaStream | null
+  initialBandwidthMode?: BandwidthMode
   onRemoteStream?: (stream: MediaStream) => void
   onConnectionStateChange?: (state: RTCPeerConnectionState) => void
   onIceConnectionStateChange?: (state: RTCIceConnectionState) => void
   onLatencyChange?: (rttMs: number) => void
+  onNetworkQualityChange?: (
+    quality: NetworkQualityGrade,
+    effectiveTier: ResolvedBandwidthTier,
+    sample: NetworkHealthSample
+  ) => void
+  onBandwidthModeSignal?: (mode: BandwidthMode, senderId: string) => void
+  onFormSnapshot?: (dataUrl: string, timestamp: number, senderId: string) => void
+  onSnapshotRequested?: (senderId: string) => void
+  onCoachingSync?: (sync: CoachingSyncPayload) => void
+  onSignalHeartbeat?: (timestamp: number) => void
   onError?: (err: Error) => void
 }
 
@@ -151,10 +177,29 @@ export class WebRtcPeerBridge {
   private lastPingTimestamp = 0
   private latencyMs: number | null = null
 
+  // Adaptive Bandwidth & Network Telemetry State
+  private bandwidthMode: BandwidthMode = 'auto'
+  private effectiveTier: ResolvedBandwidthTier = 'hd'
+  private networkQuality: NetworkQualityGrade = 'excellent'
+  private consecutiveDegradedSamples = 0
+  private prevPacketsReceived = 0
+  private prevPacketsLost = 0
+
   constructor(options: WebRtcBridgeOptions) {
     this.options = options
     // Athlete is polite (yields on offer glare), Coach is impolite (assertive).
     this.isPolite = options.isPolite ?? !options.isCoach
+    this.bandwidthMode = options.initialBandwidthMode ?? 'auto'
+
+    const initialHint = detectBrowserNetworkHint()
+    const initialQuality = evaluateNetworkQuality({
+      rttMs: initialHint.rttMs ?? null,
+      saveData: initialHint.saveData,
+      effectiveType: initialHint.effectiveType,
+      downlinkMbps: initialHint.downlinkMbps,
+    })
+    this.networkQuality = initialQuality
+    this.effectiveTier = resolveEffectiveBandwidthTier(this.bandwidthMode, initialQuality, 1)
   }
 
   public init(): RTCPeerConnection | null {
@@ -335,7 +380,9 @@ export class WebRtcPeerBridge {
         }
         void transceiver.sender.replaceTrack(track).catch(() => {})
         if (track.kind === 'video') {
-          this.optimizeVideoSender(transceiver.sender)
+          this.optimizeVideoSender(transceiver.sender, this.effectiveTier)
+        } else if (track.kind === 'audio') {
+          this.optimizeAudioSender(transceiver.sender, this.effectiveTier)
         }
         return
       }
@@ -346,13 +393,17 @@ export class WebRtcPeerBridge {
       if (existing) {
         void existing.replaceTrack(track).catch(() => {})
         if (track.kind === 'video') {
-          this.optimizeVideoSender(existing)
+          this.optimizeVideoSender(existing, this.effectiveTier)
+        } else if (track.kind === 'audio') {
+          this.optimizeAudioSender(existing, this.effectiveTier)
         }
       } else {
         try {
           const sender = this.pc?.addTrack(track, stream)
           if (sender && track.kind === 'video') {
-            this.optimizeVideoSender(sender)
+            this.optimizeVideoSender(sender, this.effectiveTier)
+          } else if (sender && track.kind === 'audio') {
+            this.optimizeAudioSender(sender, this.effectiveTier)
           }
         } catch {
           // Track already added to peer connection
@@ -369,19 +420,214 @@ export class WebRtcPeerBridge {
     }
   }
 
-  private optimizeVideoSender(sender: RTCRtpSender): void {
+  private optimizeVideoSender(sender: RTCRtpSender, tier: ResolvedBandwidthTier = this.effectiveTier): void {
     try {
+      const spec = BANDWIDTH_PROFILES[tier]
       const params = sender.getParameters()
       if (!params.encodings || params.encodings.length === 0) {
         params.encodings = [{}]
       }
-      // Cap at 2.0 Mbps to prevent bufferbloat and packet drops on fluctuating networks
-      params.encodings[0].maxBitrate = 2000000
-      ;(params as RTCRtpSendParameters & { degradationPreference?: string }).degradationPreference = 'maintain-framerate'
+      params.encodings[0].maxBitrate = spec.maxVideoBitrate
+      if (tier !== 'hd') {
+        params.encodings[0].active = spec.videoEnabled
+        if (spec.maxFramerate > 0) {
+          params.encodings[0].maxFramerate = spec.maxFramerate
+        }
+        params.encodings[0].scaleResolutionDownBy = spec.scaleResolutionDownBy
+      } else {
+        params.encodings[0].active = true
+        params.encodings[0].maxFramerate = 30
+        params.encodings[0].scaleResolutionDownBy = 1
+      }
+      ;(params as RTCRtpSendParameters & { degradationPreference?: string }).degradationPreference =
+        spec.degradationPreference
       void sender.setParameters(params).catch(() => {})
     } catch {
       // Optional browser optimization
     }
+  }
+
+  private optimizeAudioSender(sender: RTCRtpSender, tier: ResolvedBandwidthTier = this.effectiveTier): void {
+    try {
+      const spec = BANDWIDTH_PROFILES[tier]
+      const params = sender.getParameters()
+      if (!params.encodings || params.encodings.length === 0) {
+        params.encodings = [{}]
+      }
+      params.encodings[0].active = true
+      params.encodings[0].maxBitrate = spec.maxAudioBitrate
+      void sender.setParameters(params).catch(() => {})
+    } catch {
+      // Optional browser optimization
+    }
+  }
+
+  public getBandwidthMode(): BandwidthMode {
+    return this.bandwidthMode
+  }
+
+  public getEffectiveTier(): ResolvedBandwidthTier {
+    return this.effectiveTier
+  }
+
+  public getNetworkQuality(): NetworkQualityGrade {
+    return this.networkQuality
+  }
+
+  public applyBandwidthTier(tier: ResolvedBandwidthTier): void {
+    this.effectiveTier = tier
+    if (!this.pc || this.isDestroyed) return
+
+    try {
+      const senders = typeof this.pc.getSenders === 'function' ? this.pc.getSenders() : []
+      senders.forEach(sender => {
+        if (sender.track?.kind === 'video') {
+          this.optimizeVideoSender(sender, tier)
+        } else if (sender.track?.kind === 'audio') {
+          this.optimizeAudioSender(sender, tier)
+        }
+      })
+    } catch {
+      // Graceful fallback
+    }
+  }
+
+  public setBandwidthMode(mode: BandwidthMode, broadcastToPeer = true): ResolvedBandwidthTier {
+    this.bandwidthMode = mode
+    const nextTier = resolveEffectiveBandwidthTier(mode, this.networkQuality, this.consecutiveDegradedSamples || 1)
+    this.applyBandwidthTier(nextTier)
+
+    if (broadcastToPeer) {
+      this.sendSignal({
+        type: 'bandwidth-mode',
+        senderId: this.options.currentUserId,
+        data: {
+          mode,
+          effectiveTier: nextTier,
+        },
+      })
+    }
+    return nextTier
+  }
+
+  public sendFormSnapshot(dataUrl: string): void {
+    if (!dataUrl || this.isDestroyed) return
+    this.sendSignal({
+      type: 'form-snapshot',
+      senderId: this.options.currentUserId,
+      timestamp: Date.now(),
+      data: { dataUrl },
+    })
+  }
+
+  public requestPeerSnapshot(): void {
+    if (this.isDestroyed) return
+    this.sendSignal({
+      type: 'request-snapshot',
+      senderId: this.options.currentUserId,
+      timestamp: Date.now(),
+    })
+  }
+
+  public sendCoachingSync(sync: Omit<CoachingSyncPayload, 'timestamp'>): void {
+    if (this.isDestroyed) return
+    this.sendSignal({
+      type: 'coaching-sync',
+      senderId: this.options.currentUserId,
+      timestamp: Date.now(),
+      data: {
+        ...sync,
+        timestamp: Date.now(),
+      } satisfies CoachingSyncPayload,
+    })
+  }
+
+  /**
+   * Samples RTCPeerConnection WebRTC RTP telemetry + browser network hints to grade link health
+   * and auto-adapt bitrate/resolution before packet starvation triggers blackouts.
+   */
+  public async sampleNetworkHealth(): Promise<NetworkHealthSample | null> {
+    if (this.isDestroyed || !this.pc) return null
+
+    const browserHint = detectBrowserNetworkHint()
+    let packetLossRatio: number | null = null
+    let availableOutgoingBitrate: number | null = null
+    let framesPerSecond: number | null = null
+    let qualityLimitationReason: string | null = null
+    let statsRttMs: number | null = null
+
+    if (typeof this.pc.getStats === 'function') {
+      try {
+        const report = await this.pc.getStats()
+        report.forEach((stat: Record<string, unknown>) => {
+          if (stat.type === 'candidate-pair' && stat.state === 'succeeded') {
+            if (typeof stat.currentRoundTripTime === 'number') {
+              statsRttMs = Math.round(stat.currentRoundTripTime * 1000)
+            }
+            if (typeof stat.availableOutgoingBitrate === 'number') {
+              availableOutgoingBitrate = stat.availableOutgoingBitrate
+            }
+          } else if (stat.type === 'inbound-rtp' && stat.kind === 'video') {
+            const received = typeof stat.packetsReceived === 'number' ? stat.packetsReceived : 0
+            const lost = typeof stat.packetsLost === 'number' ? Math.max(0, stat.packetsLost) : 0
+            const deltaRecv = received - this.prevPacketsReceived
+            const deltaLost = lost - this.prevPacketsLost
+            if (deltaRecv + deltaLost > 10 && deltaRecv >= 0 && deltaLost >= 0) {
+              packetLossRatio = deltaLost / (deltaRecv + deltaLost)
+            }
+            this.prevPacketsReceived = received
+            this.prevPacketsLost = lost
+            if (typeof stat.framesPerSecond === 'number') {
+              framesPerSecond = stat.framesPerSecond
+            }
+          } else if (stat.type === 'outbound-rtp' && stat.kind === 'video') {
+            if (typeof stat.qualityLimitationReason === 'string' && stat.qualityLimitationReason !== 'none') {
+              qualityLimitationReason = stat.qualityLimitationReason
+            }
+          }
+        })
+      } catch {
+        // Ignore getStats errors on unsupported environments
+      }
+    }
+
+    const rttMs = this.latencyMs ?? statsRttMs ?? browserHint.rttMs ?? null
+    const sample: NetworkHealthSample = {
+      rttMs,
+      packetLossRatio,
+      availableOutgoingBitrate,
+      framesPerSecond,
+      qualityLimitationReason,
+      saveData: browserHint.saveData,
+      effectiveType: browserHint.effectiveType,
+      downlinkMbps: browserHint.downlinkMbps,
+    }
+
+    const nextQuality = evaluateNetworkQuality(sample)
+    if (nextQuality === 'constrained' || nextQuality === 'critical') {
+      this.consecutiveDegradedSamples = Math.min(10, this.consecutiveDegradedSamples + 1)
+    } else if (nextQuality === 'good') {
+      this.consecutiveDegradedSamples = Math.max(1, this.consecutiveDegradedSamples)
+    } else {
+      this.consecutiveDegradedSamples = 0
+    }
+
+    const nextTier = resolveEffectiveBandwidthTier(
+      this.bandwidthMode,
+      nextQuality,
+      Math.max(1, this.consecutiveDegradedSamples)
+    )
+
+    const changed = nextQuality !== this.networkQuality || nextTier !== this.effectiveTier
+    this.networkQuality = nextQuality
+    if (nextTier !== this.effectiveTier) {
+      this.applyBandwidthTier(nextTier)
+    }
+
+    if (changed) {
+      this.options.onNetworkQualityChange?.(this.networkQuality, this.effectiveTier, sample)
+    }
+    return sample
   }
 
   public sendPing(): void {
@@ -501,6 +747,38 @@ export class WebRtcPeerBridge {
     }
 
     try {
+      this.options.onSignalHeartbeat?.(Date.now())
+
+      // Bidirectional Adaptive Bandwidth Mode Synchronization
+      if (payload.type === 'bandwidth-mode' && payload.data) {
+        const incoming = payload.data as { mode?: BandwidthMode }
+        if (incoming.mode) {
+          this.setBandwidthMode(incoming.mode, false)
+          this.options.onBandwidthModeSignal?.(incoming.mode, payload.senderId)
+        }
+        return
+      }
+
+      // Low-Bandwidth Periodic Form Snapshot Delivery
+      if (payload.type === 'form-snapshot' && payload.data) {
+        const snap = payload.data as { dataUrl?: string }
+        if (snap.dataUrl) {
+          this.options.onFormSnapshot?.(snap.dataUrl, payload.timestamp || Date.now(), payload.senderId)
+        }
+        return
+      }
+
+      if (payload.type === 'request-snapshot') {
+        this.options.onSnapshotRequested?.(payload.senderId)
+        return
+      }
+
+      // Lightweight Coaching Exercise / Tempo / Rest Telemetry Sync (<300B)
+      if (payload.type === 'coaching-sync' && payload.data) {
+        this.options.onCoachingSync?.(payload.data as CoachingSyncPayload)
+        return
+      }
+
       // Lightweight Ping/Pong for RTT latency measurement without triggering renegotiation
       if (payload.type === 'ping') {
         this.sendSignal({

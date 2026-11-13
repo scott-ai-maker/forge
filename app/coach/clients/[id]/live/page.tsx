@@ -78,7 +78,7 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
         actions={<LogoutButton />}
       />
 
-      <div className="w-full max-w-[1440px] mx-auto p-0 md:px-5 md:py-4 pb-[calc(76px+env(safe-area-inset-bottom,16px))] md:pb-8">
+      <div className="w-full max-w-[1760px] mx-auto p-0 md:px-3 md:py-2.5 pb-[calc(76px+env(safe-area-inset-bottom,16px))] md:pb-5">
         <LiveSessionClient
           clientId={clientId}
           coachUserId={user.id}

@@ -486,4 +486,155 @@ describe('lib/webrtc-peer-bridge', () => {
       cleanup()
     }
   })
+
+  it('adapts RTCRtpSender encodings and relays low-bandwidth coaching signals (bandwidth-mode, form-snapshot, coaching-sync)', async () => {
+    const { mockSender, cleanup } = setupMockWebRtc()
+
+    try {
+      const channelMock = {
+        send: vi.fn().mockResolvedValue(undefined),
+      }
+      const onBandwidthModeSignal = vi.fn()
+      const onFormSnapshot = vi.fn()
+      const onSnapshotRequested = vi.fn()
+      const onCoachingSync = vi.fn()
+
+      const bridge = new WebRtcPeerBridge({
+        sessionId: 'session-low-bw',
+        currentUserId: 'coach-1',
+        isCoach: true,
+        channel: channelMock as unknown as BridgeChannel,
+        onBandwidthModeSignal,
+        onFormSnapshot,
+        onSnapshotRequested,
+        onCoachingSync,
+      })
+      bridge.init()
+
+      // Switch to low_data (~140 kbps, quarter-res 12fps)
+      const lowTier = bridge.setBandwidthMode('low_data', true)
+      expect(lowTier).toBe('low_data')
+      expect(mockSender.setParameters).toHaveBeenCalledWith(
+        expect.objectContaining({
+          encodings: [
+            expect.objectContaining({
+              active: true,
+              maxBitrate: 140_000,
+              maxFramerate: 12,
+              scaleResolutionDownBy: 3,
+            }),
+          ],
+          degradationPreference: 'maintain-resolution',
+        })
+      )
+      expect(channelMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            type: 'bandwidth-mode',
+            data: expect.objectContaining({ mode: 'low_data' }),
+          }),
+        })
+      )
+
+      // Switch to audio_first (~36 kbps voice priority + periodic snapshots, video RTP active=false)
+      mockSender.setParameters.mockClear()
+      const audioTier = bridge.setBandwidthMode('audio_first', false)
+      expect(audioTier).toBe('audio_first')
+      expect(mockSender.setParameters).toHaveBeenCalledWith(
+        expect.objectContaining({
+          encodings: [
+            expect.objectContaining({
+              active: false,
+              maxBitrate: 45_000,
+              maxFramerate: 5,
+              scaleResolutionDownBy: 4,
+            }),
+          ],
+        })
+      )
+
+      // Outgoing form snapshot, snapshot request & coaching sync
+      bridge.sendFormSnapshot('data:image/jpeg;base64,abc123')
+      expect(channelMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            type: 'form-snapshot',
+            data: expect.objectContaining({ dataUrl: 'data:image/jpeg;base64,abc123' }),
+          }),
+        })
+      )
+
+      bridge.requestPeerSnapshot()
+      expect(channelMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            type: 'request-snapshot',
+          }),
+        })
+      )
+
+      bridge.sendCoachingSync({
+        exerciseName: 'Goblet Squat',
+        tempo: '4-2-1',
+        restRemaining: 60,
+        quickCue: 'Drive through heels',
+      })
+      expect(channelMock.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            type: 'coaching-sync',
+            data: expect.objectContaining({
+              exerciseName: 'Goblet Squat',
+              tempo: '4-2-1',
+              restRemaining: 60,
+              quickCue: 'Drive through heels',
+            }),
+          }),
+        })
+      )
+
+      // Incoming low-bandwidth signals from peer
+      await bridge.handleSignal({
+        type: 'bandwidth-mode',
+        senderId: 'athlete-1',
+        data: { mode: 'low_data' },
+      })
+      expect(onBandwidthModeSignal).toHaveBeenCalledWith('low_data', 'athlete-1')
+
+      await bridge.handleSignal({
+        type: 'form-snapshot',
+        senderId: 'athlete-1',
+        timestamp: 1700000123,
+        data: { dataUrl: 'data:image/jpeg;base64,peerframe' },
+      })
+      expect(onFormSnapshot).toHaveBeenCalledWith('data:image/jpeg;base64,peerframe', 1700000123, 'athlete-1')
+
+      await bridge.handleSignal({
+        type: 'request-snapshot',
+        senderId: 'athlete-1',
+      })
+      expect(onSnapshotRequested).toHaveBeenCalledWith('athlete-1')
+
+      await bridge.handleSignal({
+        type: 'coaching-sync',
+        senderId: 'athlete-1',
+        data: {
+          exerciseName: 'Romanian Deadlift',
+          tempo: '3-1-1',
+          restRemaining: null,
+          timestamp: 1700000456,
+        },
+      })
+      expect(onCoachingSync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          exerciseName: 'Romanian Deadlift',
+          tempo: '3-1-1',
+        })
+      )
+
+      bridge.destroy()
+    } finally {
+      cleanup()
+    }
+  })
 })

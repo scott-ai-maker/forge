@@ -45,6 +45,24 @@ import {
   getNasmClinicalMovementCard,
   type NasmClinicalMovementCard,
 } from '@/lib/nasm-clinical-movement-cards'
+import {
+  BANDWIDTH_PROFILES,
+  SIGNALING_HEARTBEAT_TTL_MS,
+  applyCameraBandwidthConstraints,
+  detectBrowserNetworkHint,
+  evaluateConnectionBannerState,
+  evaluateNetworkQuality,
+  getNavigatorConnection,
+  resolveEffectiveBandwidthTier,
+  type BandwidthMode,
+  type NetworkQualityGrade,
+  type ResolvedBandwidthTier,
+} from '@/lib/live-bandwidth-profiles'
+import {
+  LiveAdaptiveConnectionBanner,
+  LiveBandwidthSelectorPill,
+} from './LiveBandwidthStatusControls'
+import './live-studio-teams.css'
 
 export { getNasmClinicalMovementCard, type NasmClinicalMovementCard }
 
@@ -292,21 +310,30 @@ export default function UnifiedLiveStudioHud({
   const multiBridgeRef = useRef<WebRtcMultiPeerBridge | null>(null)
   const [_isRingingTeamMembers, _setIsRingingTeamMembers] = useState(false)
 
-  // Mobile Responsive Detection & View Mode ('both' = video on top + logger below, 'video' = full-screen video, 'workout' = full logger)
+  // Responsive Form-Factor & Microsoft Teams Collapsible Workout Side-Pane State
+  // ('both' = video on top + logger below, 'video' = full-screen video, 'workout' = full logger on <768px phones)
   const [isMobile, setIsMobile] = useState<boolean>(false)
   const [mobileViewMode, setMobileViewMode] = useState<'both' | 'video' | 'workout'>('both')
+  const [isSidePaneOpen, setIsSidePaneOpen] = useState<boolean>(true)
+  const initializedPaneRef = useRef<boolean>(false)
 
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 1024
+    const checkViewport = () => {
+      const width = window.innerWidth
+      const mobile = width < 768
       setIsMobile(mobile)
       if (mobile) {
         setLayout(prev => (prev === 'split' ? 'pip' : prev))
       }
+      if (!initializedPaneRef.current) {
+        initializedPaneRef.current = true
+        // Default side-pane open on wide screens (>=920px), collapsed on split-screen/tablet (768-919px) for full Teams stage
+        setIsSidePaneOpen(width >= 920)
+      }
     }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    checkViewport()
+    window.addEventListener('resize', checkViewport)
+    return () => window.removeEventListener('resize', checkViewport)
   }, [])
 
   // Telestrator & Overlays
@@ -492,6 +519,27 @@ export default function UnifiedLiveStudioHud({
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null)
   const bridgeRef = useRef<WebRtcPeerBridge | null>(null)
 
+  // Adaptive Low-Bandwidth & Athlete Form Snapshot State
+  const [bandwidthMode, setBandwidthMode] = useState<BandwidthMode>('auto')
+  const [networkQuality, setNetworkQuality] = useState<NetworkQualityGrade>(() => {
+    const hint = detectBrowserNetworkHint()
+    return evaluateNetworkQuality({
+      rttMs: hint.rttMs ?? null,
+      saveData: hint.saveData,
+      effectiveType: hint.effectiveType,
+      downlinkMbps: hint.downlinkMbps,
+    })
+  })
+  const [effectiveTier, setEffectiveTier] = useState<ResolvedBandwidthTier>(() =>
+    resolveEffectiveBandwidthTier('auto', networkQuality, 1)
+  )
+  const [remoteSnapshot, setRemoteSnapshot] = useState<{ url: string; capturedAt: number } | null>(null)
+  const remoteSnapshotRef = useRef<{ url: string; capturedAt: number } | null>(null)
+  remoteSnapshotRef.current = remoteSnapshot
+  const [disconnectedSince, setDisconnectedSince] = useState<number | null>(null)
+  const [disconnectTick, setDisconnectTick] = useState(0)
+  const [lastSignalAt, setLastSignalAt] = useState<number>(0)
+
   // 1-Click High-Res Video Frame Grabber with 4-Slot Targeting & Auto-Advance
   const captureClientFrame = useCallback((targetSlot?: AssessmentCaptureSlot): string | null => {
     const slot = targetSlot || selectedCaptureSlot
@@ -542,6 +590,12 @@ export default function UnifiedLiveStudioHud({
       } catch (err) {
         console.warn('Canvas frame capture error on client stream:', err)
       }
+    }
+
+    // Low-bandwidth client snapshot ingest: when athlete is in Audio-First / Snapshot mode,
+    // ingest the latest real athlete form snapshot directly into the 4-slot Assessment Vault!
+    if (remoteSnapshotRef.current?.url) {
+      return recordCapture(remoteSnapshotRef.current.url)
     }
 
     // Fallback: Diagnostic wireframe for athlete (used when client camera is not yet streaming or in automated tests)
@@ -665,6 +719,75 @@ export default function UnifiedLiveStudioHud({
   const mediaStreamRef = useRef(mediaStream)
   mediaStreamRef.current = mediaStream
 
+  const handleChangeBandwidthMode = useCallback(
+    (nextMode: BandwidthMode, broadcast = true) => {
+      setBandwidthMode(nextMode)
+      let nextTier: ResolvedBandwidthTier
+      if (isTeamSession && multiBridgeRef.current) {
+        nextTier = multiBridgeRef.current.setBandwidthMode(nextMode, broadcast)
+      } else if (bridgeRef.current) {
+        nextTier = bridgeRef.current.setBandwidthMode(nextMode, broadcast)
+      } else {
+        nextTier = resolveEffectiveBandwidthTier(nextMode, networkQuality, 1)
+      }
+      setEffectiveTier(nextTier)
+      void applyCameraBandwidthConstraints(streamRef.current, nextTier)
+      const spec = BANDWIDTH_PROFILES[nextTier]
+      showHudToast(
+        nextMode === 'auto'
+          ? `Bandwidth: Auto Adapt (${spec.shortLabel} · ${spec.estimatedKbps})`
+          : `Bandwidth Mode synced with ${athleteName}: ${spec.label} (${spec.estimatedKbps})`,
+        nextTier === 'audio_first' || nextTier === 'low_data' ? 'emerald' : 'gold'
+      )
+      if (nextTier === 'audio_first' || nextTier === 'low_data') {
+        bridgeRef.current?.requestPeerSnapshot()
+        multiBridgeRef.current?.requestAllSnapshots()
+      }
+    },
+    [athleteName, isTeamSession, networkQuality, showHudToast]
+  )
+
+  const handleReconnectStream = useCallback(() => {
+    if (bridgeRef.current) {
+      void bridgeRef.current.restartIce()
+      void bridgeRef.current.announcePresence()
+    }
+    showHudToast('Re-stabilizing athlete live link…', 'emerald')
+  }, [showHudToast])
+
+  const handleRequestClientSnapshot = useCallback(() => {
+    if (isTeamSession && multiBridgeRef.current) {
+      multiBridgeRef.current.requestAllSnapshots()
+    } else {
+      bridgeRef.current?.requestPeerSnapshot()
+    }
+    showHudToast('Requested instant form-check snapshot from athlete', 'gold')
+  }, [isTeamSession, showHudToast])
+
+  // Disconnection grace-window tracker (prevents hair-trigger red NASM banners on brief cellular dips)
+  useEffect(() => {
+    if (peerConnectionState === 'disconnected' || peerConnectionState === 'failed') {
+      setDisconnectedSince(prev => prev ?? Date.now())
+      const timer = setInterval(() => setDisconnectTick(t => t + 1), 1000)
+      return () => clearInterval(timer)
+    }
+    setDisconnectedSince(null)
+  }, [peerConnectionState])
+
+  const connectionBannerState = useMemo(() => {
+    void disconnectTick
+    const now = Date.now()
+    const disconnectedDurationMs = disconnectedSince ? Math.max(0, now - disconnectedSince) : 0
+    const hasRecentSignalingHeartbeat = lastSignalAt > 0 && now - lastSignalAt < SIGNALING_HEARTBEAT_TTL_MS
+    return evaluateConnectionBannerState({
+      peerConnectionState,
+      disconnectedDurationMs,
+      effectiveTier,
+      networkQuality,
+      hasRecentSignalingHeartbeat,
+    })
+  }, [peerConnectionState, disconnectedSince, disconnectTick, effectiveTier, networkQuality, lastSignalAt])
+
   // WebRTC Peer Bridge with Stateful Supabase Realtime Presence
   // WebRTC Peer Bridge (1:1 Individual or Multi-Peer Team Mesh) with Stateful Supabase Realtime Presence
   useEffect(() => {
@@ -707,6 +830,19 @@ export default function UnifiedLiveStudioHud({
         },
         onPeerLatencyChange: (peerId, rtt) => {
           setPeerLatencyMs(rtt)
+          setLastSignalAt(Date.now())
+        },
+        onFormSnapshot: (dataUrl, ts) => {
+          setRemoteSnapshot({ url: dataUrl, capturedAt: ts })
+          setLastSignalAt(Date.now())
+        },
+        onBandwidthModeSignal: mode => {
+          setBandwidthMode(mode)
+          const nextTier = resolveEffectiveBandwidthTier(mode, networkQuality, 1)
+          setEffectiveTier(nextTier)
+          void applyCameraBandwidthConstraints(streamRef.current, nextTier)
+          const spec = BANDWIDTH_PROFILES[nextTier]
+          showHudToast(`⚡ Squad switched to ${spec.label} (${spec.estimatedKbps})`, 'emerald')
         },
         onError: err => {
           console.warn('Coach Live WebRTC team mesh peer error:', err)
@@ -821,6 +957,7 @@ export default function UnifiedLiveStudioHud({
         isCoach: true,
         channel,
         localStream: mediaStreamRef.current,
+        initialBandwidthMode: bandwidthMode,
         onRemoteStream: stream => {
           setActiveRemoteStream(stream)
         },
@@ -829,6 +966,25 @@ export default function UnifiedLiveStudioHud({
         },
         onLatencyChange: rtt => {
           setPeerLatencyMs(rtt)
+        },
+        onNetworkQualityChange: (quality, tier) => {
+          setNetworkQuality(quality)
+          setEffectiveTier(tier)
+          void applyCameraBandwidthConstraints(streamRef.current, tier)
+        },
+        onBandwidthModeSignal: mode => {
+          setBandwidthMode(mode)
+          const nextTier = bridge.getEffectiveTier()
+          setEffectiveTier(nextTier)
+          void applyCameraBandwidthConstraints(streamRef.current, nextTier)
+          const spec = BANDWIDTH_PROFILES[nextTier]
+          showHudToast(`⚡ ${athleteName} switched to ${spec.label} (${spec.estimatedKbps})`, 'emerald')
+        },
+        onFormSnapshot: (dataUrl, ts) => {
+          setRemoteSnapshot({ url: dataUrl, capturedAt: ts })
+        },
+        onSignalHeartbeat: ts => {
+          setLastSignalAt(ts)
         },
         onError: err => {
           console.warn('Coach Live WebRTC peer error:', err)
@@ -932,15 +1088,25 @@ export default function UnifiedLiveStudioHud({
           }
         })
 
-      // Lightweight ping every 6s to keep channel hot & measure RTT latency without renegotiation
+      // Lightweight ping & network health check every 6s without triggering SDP renegotiation
       const pingTimer = setInterval(() => {
         if (bridgeRef.current) {
           bridgeRef.current.sendPing()
+          void bridgeRef.current.sampleNetworkHealth()
         }
       }, 6000)
 
+      const conn = getNavigatorConnection()
+      const handleNetworkChange = () => {
+        if (bridgeRef.current) {
+          void bridgeRef.current.sampleNetworkHealth()
+        }
+      }
+      conn?.addEventListener?.('change', handleNetworkChange)
+
       return () => {
         clearInterval(pingTimer)
+        conn?.removeEventListener?.('change', handleNetworkChange)
         bridge.destroy()
         bridgeRef.current = null
         signalingChannelRef.current = null
@@ -1054,7 +1220,10 @@ export default function UnifiedLiveStudioHud({
     return () => clearInterval(interval)
   }, [teamCircuitTimer.isActive, playBeep, showHudToast])
 
-  // Camera Setup with Thermal-Capped 720p / 24-30 FPS Constraints & Microphone Audio
+  const effectiveTierRef = useRef<ResolvedBandwidthTier>(effectiveTier)
+  effectiveTierRef.current = effectiveTier
+
+  // Camera Setup with Adaptive Bandwidth Profile & Microphone Audio
   const startCamera = useCallback(async () => {
     try {
       setStreamError(null)
@@ -1068,15 +1237,17 @@ export default function UnifiedLiveStudioHud({
         return
       }
 
-      // Instant Studio HD Hardware Camera Startup with Microphone
+      const camSpec = BANDWIDTH_PROFILES[effectiveTierRef.current]
+
+      // Instant Studio Camera Startup with Microphone
       let stream: MediaStream
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode,
-            width: { ideal: 1280, min: 640 },
-            height: { ideal: 720, min: 480 },
-            frameRate: { ideal: 30, min: 24 },
+            width: { ideal: camSpec.cameraWidthIdeal, min: 320 },
+            height: { ideal: camSpec.cameraHeightIdeal, min: 180 },
+            frameRate: { ideal: camSpec.cameraFrameRateIdeal, min: 8 },
           },
           audio: true,
         })
@@ -1196,11 +1367,40 @@ export default function UnifiedLiveStudioHud({
     }
   }, [startCamera])
 
+  // Broadcast ultra-lightweight (<300B) exercise, tempo & OPT phase sync to athlete HUD (works even in Audio-First ~36 kbps mode)
+  const restRemainingRef = useRef<number | null>(restRemaining)
+  restRemainingRef.current = restRemaining
+  useEffect(() => {
+    const syncPayload = {
+      exerciseName: activeExercise?.name,
+      optPhase: plan?.nasm_opt_phase ? `Phase ${plan.nasm_opt_phase}` : undefined,
+      tempo: activeExercise?.tempo ?? '2-0-2',
+      restRemaining: restRemainingRef.current,
+    }
+    if (isTeamSession) {
+      multiBridgeRef.current?.broadcastCoachingSync(syncPayload)
+    } else {
+      bridgeRef.current?.sendCoachingSync(syncPayload)
+    }
+  }, [activeExercise?.name, activeExercise?.tempo, plan?.nasm_opt_phase, isTeamSession, peerConnectionState])
+
   // Rest Timer Controller
   const startRestTimer = useCallback((seconds: number) => {
     if (restTimerRef.current) clearInterval(restTimerRef.current)
     setRestInitial(seconds)
     setRestRemaining(seconds)
+
+    const syncPayload = {
+      exerciseName: activeExercise?.name,
+      optPhase: plan?.nasm_opt_phase ? `Phase ${plan.nasm_opt_phase}` : undefined,
+      tempo: activeExercise?.tempo ?? '2-0-2',
+      restRemaining: seconds,
+    }
+    if (isTeamSession) {
+      multiBridgeRef.current?.broadcastCoachingSync(syncPayload)
+    } else {
+      bridgeRef.current?.sendCoachingSync(syncPayload)
+    }
 
     if (voiceEnabled) speakNasmCue(`Rest interval: ${seconds} seconds.`)
 
@@ -1215,12 +1415,23 @@ export default function UnifiedLiveStudioHud({
         return prev - 1
       })
     }, 1000)
-  }, [voiceEnabled, playBeep])
+  }, [voiceEnabled, playBeep, activeExercise?.name, activeExercise?.tempo, plan?.nasm_opt_phase, isTeamSession])
 
   const stopRestTimer = useCallback(() => {
     if (restTimerRef.current) clearInterval(restTimerRef.current)
     setRestRemaining(null)
-  }, [])
+    const syncPayload = {
+      exerciseName: activeExercise?.name,
+      optPhase: plan?.nasm_opt_phase ? `Phase ${plan.nasm_opt_phase}` : undefined,
+      tempo: activeExercise?.tempo ?? '2-0-2',
+      restRemaining: null,
+    }
+    if (isTeamSession) {
+      multiBridgeRef.current?.broadcastCoachingSync(syncPayload)
+    } else {
+      bridgeRef.current?.sendCoachingSync(syncPayload)
+    }
+  }, [activeExercise?.name, activeExercise?.tempo, plan?.nasm_opt_phase, isTeamSession])
 
   // Metronome Controller
   const toggleMetronome = useCallback((ex?: Exercise) => {
@@ -1476,19 +1687,7 @@ export default function UnifiedLiveStudioHud({
   return (
     <div
       ref={containerRef}
-      className="unified-live-studio-hud"
-      style={{
-        background: '#050811',
-        border: '1px solid rgba(212,160,23,0.45)',
-        borderRadius: 14,
-        overflow: 'hidden',
-        boxShadow: '0 25px 80px rgba(0,0,0,0.95)',
-        color: '#FFFFFF',
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '86vh',
-        position: 'relative',
-      }}
+      className="unified-live-studio-hud teams-studio-shell teams-coach-cockpit"
     >
       {/* ── 1. Top HUD Ribbon: Brand, Athlete Telemetry & Session Actions ── */}
       {isMobile ? (
@@ -1674,6 +1873,14 @@ export default function UnifiedLiveStudioHud({
                 ))}
               </div>
 
+              <LiveBandwidthSelectorPill
+                bandwidthMode={bandwidthMode}
+                effectiveTier={effectiveTier}
+                networkQuality={networkQuality}
+                onChangeMode={mode => handleChangeBandwidthMode(mode, true)}
+                compact
+              />
+
               <button
                 type="button"
                 onClick={() => setEcoMode(prev => !prev)}
@@ -1694,25 +1901,13 @@ export default function UnifiedLiveStudioHud({
           </div>
         </div>
       ) : (
-        <div
-          style={{
-            background: 'linear-gradient(90deg, #0A0F1D 0%, #0D162B 100%)',
-            borderBottom: '1px solid rgba(212,160,23,0.3)',
-            padding: '10px 18px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 10,
-            zIndex: 30,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div className="teams-top-bar">
+          <div className="teams-header-cluster">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 30,
+                  height: 30,
                   borderRadius: 6,
                   backgroundImage: "url('/images/brand/forge-crest-mark.png')",
                   backgroundSize: 'contain',
@@ -1725,24 +1920,26 @@ export default function UnifiedLiveStudioHud({
                 }}
               />
               <div>
-                <div className="font-serif" style={{ fontSize: 18, letterSpacing: '0.08em', color: 'var(--gold-lt)', lineHeight: 1, fontWeight: 700 }}>
+                <div className="font-serif" style={{ fontSize: 17, letterSpacing: '0.08em', color: 'var(--gold-lt)', lineHeight: 1, fontWeight: 700 }}>
                   FORGE ATHLETIC
+                  <span className="sr-only"> LIVE COCKPIT</span>
                 </div>
-                <div style={{ fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#34D399', fontWeight: 800, marginTop: 2 }}>
-                  ● SOVEREIGN BIOMECHANICAL SUITE
+                <div className="teams-hide-compact" style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#34D399', fontWeight: 800, marginTop: 2 }}>
+                  ● LIVE STUDIO SUITE
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--gray)' }}>
+            <div className="teams-divider" />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--gray)', flexWrap: 'wrap' }}>
               <span>Athlete: <strong style={{ color: '#FFFFFF' }}>{athleteName}</strong></span>
-              <span>·</span>
               <span
                 style={{
-                  fontSize: 10.5,
+                  fontSize: 10,
                   background: 'rgba(212,160,23,0.15)',
                   color: 'var(--gold-lt)',
-                  padding: '2px 8px',
+                  padding: '2px 7px',
                   borderRadius: 4,
                   border: '1px solid rgba(212,160,23,0.3)',
                   fontWeight: 800,
@@ -1834,6 +2031,14 @@ export default function UnifiedLiveStudioHud({
                 {ringFeedback}
               </span>
             )}
+
+            {/* Adaptive Bandwidth Mode Selector (HD / SD / Low Data / Audio-First) */}
+            <LiveBandwidthSelectorPill
+              bandwidthMode={bandwidthMode}
+              effectiveTier={effectiveTier}
+              networkQuality={networkQuality}
+              onChangeMode={mode => handleChangeBandwidthMode(mode, true)}
+            />
 
             {/* Low-CPU Eco Mode Toggle */}
             <button
@@ -1941,6 +2146,29 @@ export default function UnifiedLiveStudioHud({
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsSidePaneOpen(prev => !prev)}
+              data-testid="toggle-workout-pane-btn"
+              title={isSidePaneOpen ? 'Hide Workout & Set Logger Side Pane (Expand Video Stage)' : 'Open Workout & Set Logger Side Pane'}
+              style={{
+                padding: '6px 12px',
+                background: isSidePaneOpen ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.07)',
+                border: isSidePaneOpen ? '1px solid var(--gold)' : '1px solid rgba(255, 255, 255, 0.18)',
+                color: isSidePaneOpen ? 'var(--gold-lt)' : '#FFFFFF',
+                borderRadius: 6,
+                fontSize: 11.5,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <GaaIcon name="barbell" size={12} tone={isSidePaneOpen ? 'gold' : 'inherit'} />
+              <span>{isSidePaneOpen ? 'Workout Pane' : 'Open Workout'}</span>
+            </button>
 
             <button
               type="button"
@@ -2095,18 +2323,12 @@ export default function UnifiedLiveStudioHud({
       {/* ── Studio Lobby Presence & Diagnostic Telemetry Bar ── */}
       <div
         data-testid="live-studio-lobby-banner"
+        className="teams-lobby-bar"
         style={{
           background: athleteInLobby
             ? 'linear-gradient(90deg, rgba(16,185,129,0.18) 0%, rgba(6,78,59,0.25) 50%, rgba(7,11,20,0.95) 100%)'
             : 'linear-gradient(90deg, rgba(212,160,23,0.12) 0%, rgba(138,101,8,0.18) 50%, rgba(7,11,20,0.95) 100%)',
           borderBottom: athleteInLobby ? '1px solid rgba(52, 211, 153, 0.45)' : '1px solid rgba(212,160,23,0.3)',
-          padding: '8px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 10,
-          zIndex: 20,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2120,6 +2342,7 @@ export default function UnifiedLiveStudioHud({
               borderRadius: '50%',
               background: athleteInLobby ? 'rgba(16,185,129,0.2)' : 'rgba(212,160,23,0.15)',
               border: athleteInLobby ? '1.5px solid #10B981' : '1.5px solid var(--gold)',
+              flexShrink: 0,
             }}
           >
             <span
@@ -2135,7 +2358,7 @@ export default function UnifiedLiveStudioHud({
           </span>
 
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: athleteInLobby ? '#34D399' : 'var(--gold-lt)', letterSpacing: '0.04em' }}>
                 {athleteInLobby ? 'ATHLETE IN LOBBY (READY TO CONNECT)' : 'AWAITING ATHLETE IN LOBBY'}
               </span>
@@ -2171,7 +2394,7 @@ export default function UnifiedLiveStudioHud({
               )}
             </div>
 
-            <p style={{ margin: '1px 0 0', fontSize: 11.5, color: athleteInLobby ? 'rgba(255,255,255,0.85)' : 'var(--gray)' }}>
+            <p className="teams-hide-compact" style={{ margin: '1px 0 0', fontSize: 11.5, color: athleteInLobby ? 'rgba(255,255,255,0.85)' : 'var(--gray)' }}>
               {athleteInLobby
                 ? `${athleteName} has entered your live studio room and is waiting for your coaching instruction.`
                 : `${athleteName} is not yet in the room. A direct live consultation link and push alert can be dispatched.`}
@@ -2213,42 +2436,31 @@ export default function UnifiedLiveStudioHud({
         </div>
       </div>
 
-      {/* ── 2. Main Broadcast Stage (Left Video 70% ⇄ Right Cockpit Panel 30%) ── */}
+      {/* ── 2. Main Broadcast Stage (Microsoft Teams Adaptive Stage + Collapsible Side Pane) ── */}
       <div
+        className={`teams-workspace-grid ${!isMobile && isSidePaneOpen ? 'has-side-pane' : 'side-pane-collapsed'}`}
         style={{
-          display: isMobile ? 'flex' : 'grid',
-          flexDirection: isMobile ? 'column' : undefined,
-          gridTemplateColumns: isMobile ? undefined : 'minmax(0, 1fr) 340px',
-          flex: 1,
-          minHeight: isMobile ? 'auto' : 520,
-          width: '100%',
+          minHeight: isMobile ? 'auto' : 500,
         }}
       >
-{/* ── Left Stage: Video Stream, Telestrator, Floating Timers ── */}
+        {/* ── Left Stage: Video Stream, Telestrator, Floating Timers ── */}
         <div
+          className="teams-stage-column"
           style={{
-            position: 'relative',
-            background: '#04070E',
-            borderRight: isMobile ? 'none' : '1px solid rgba(255,255,255,0.08)',
+            borderRight: !isMobile && isSidePaneOpen ? '1px solid rgba(255,255,255,0.08)' : 'none',
             borderBottom: isMobile ? '1px solid rgba(255,255,255,0.08)' : undefined,
-            display: mobileViewMode === 'workout' ? 'none' : 'flex',
-            flexDirection: 'column',
-            width: '100%',
+            display: isMobile && mobileViewMode === 'workout' ? 'none' : 'flex',
           }}
         >
           {/* Main Dual Video View */}
           <div
+            className="teams-video-grid"
+            data-dual={(!isTeamSession || layout !== 'team_grid') && (showCompareModel || layout === 'split') ? 'true' : 'false'}
             style={{
-              position: 'relative',
               flex: isMobile && mobileViewMode === 'both' ? '0 0 auto' : 1,
-              width: '100%',
-              height: isMobile && mobileViewMode === 'both' ? 320 : undefined,
-              minHeight: isMobile ? (mobileViewMode === 'video' ? '70vh' : 280) : 380,
-              background: '#000',
-              display: isTeamSession && layout === 'team_grid' ? 'flex' : 'grid',
+              minHeight: isMobile ? (mobileViewMode === 'video' ? '68dvh' : 300) : undefined,
+              display: isTeamSession && layout === 'team_grid' ? 'flex' : undefined,
               flexDirection: isTeamSession && layout === 'team_grid' ? 'column' : undefined,
-              gridTemplateColumns: isTeamSession && layout === 'team_grid' ? undefined : showCompareModel ? '1fr 1fr' : layout === 'split' ? '1fr 1fr' : '1fr',
-              overflow: 'hidden',
             }}
           >
             {isTeamSession && layout !== 'team_grid' && (
@@ -2497,6 +2709,8 @@ export default function UnifiedLiveStudioHud({
                               isPeerInLobby={true}
                               lobbyWaitSeconds={0}
                               peerLatencyMs={peerLatencyMs}
+                              effectiveTier={effectiveTier}
+                              networkQuality={networkQuality}
                             />
                             {/* Spotlight Action Button */}
                             <button
@@ -2599,28 +2813,12 @@ export default function UnifiedLiveStudioHud({
               /* ATHLETE ON LEFT: Either swapped or comparing against NASM Benchmark */
               <div
                 data-testid="athlete-video-container"
-                style={{
-                  position: layout === 'pip' && isStageSwapped ? 'absolute' : 'relative',
-                  bottom: layout === 'pip' && isStageSwapped ? (isMobile ? 10 : 16) : undefined,
-                  right: layout === 'pip' && isStageSwapped ? (isMobile ? 10 : 16) : undefined,
-                  width: layout === 'pip' && isStageSwapped ? (isMobile ? 110 : 220) : '100%',
-                  height: layout === 'pip' && isStageSwapped ? (isMobile ? 85 : 150) : '100%',
-                  minHeight: layout === 'split' || showCompareModel ? (isMobile ? 260 : 380) : undefined,
-                  background: 'linear-gradient(135deg, #0D1629 0%, #060A14 100%)',
-                  border: layout === 'pip' && isStageSwapped ? '2px solid var(--gold)' : 'none',
-                  borderRadius: layout === 'pip' && isStageSwapped ? 8 : 0,
-                  boxShadow: layout === 'pip' && isStageSwapped ? '0 10px 30px rgba(0,0,0,0.8)' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  zIndex: layout === 'pip' && isStageSwapped ? 25 : 1,
-                  overflow: 'hidden',
-                }}
+                className={`teams-stage-tile ${layout === 'pip' && isStageSwapped ? 'teams-pip-tile pip-end' : ''} ${activeRemoteStream ? 'is-live-connected' : ''}`}
               >
                 {/* ── Quick Diagnostic Frame Capture Controller ── */}
                 <div
                   data-testid="athlete-video-capture-bar"
+                  className="teams-capture-pill"
                   style={{
                     position: 'absolute',
                     top: 10,
@@ -2710,6 +2908,15 @@ export default function UnifiedLiveStudioHud({
                   isPeerInLobby={Boolean(athleteInLobby)}
                   lobbyWaitSeconds={lobbyWaitSeconds}
                   peerLatencyMs={peerLatencyMs}
+                  effectiveTier={effectiveTier}
+                  networkQuality={networkQuality}
+                  snapshotFrameUrl={remoteSnapshot?.url}
+                  snapshotTimestamp={remoteSnapshot?.capturedAt}
+                  activeExerciseName={activeExercise?.name}
+                  activeTempo={activeExercise?.tempo ?? '2-0-2'}
+                  restRemaining={restRemaining}
+                  onRequestSnapshot={handleRequestClientSnapshot}
+                  onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
                   onVideoRef={el => {
                     remoteVideoRef.current = el
                   }}
@@ -2752,7 +2959,9 @@ export default function UnifiedLiveStudioHud({
                   />
                   <span>
                     {athleteName}{' '}
-                    {activeRemoteStream
+                    {effectiveTier === 'audio_first' && (athleteInLobby || peerConnectionState === 'connected')
+                      ? '(Voice + Snapshots)'
+                      : activeRemoteStream
                       ? '(Live Video)'
                       : athleteInLobby
                       ? `(In Lobby · ${Math.floor(lobbyWaitSeconds / 60)}m ${lobbyWaitSeconds % 60}s)`
@@ -2762,35 +2971,16 @@ export default function UnifiedLiveStudioHud({
                   </span>
                 </div>
 
-                {/* NASM VCS Disconnection / Immediate Rack Fail-Safe Notice */}
-                {(peerConnectionState === 'disconnected' || peerConnectionState === 'failed') && (
-                  <div
-                    data-testid="nasm-connection-failsafe-banner"
-                    style={{
-                      position: 'absolute',
-                      bottom: 12,
-                      left: 12,
-                      right: 12,
-                      background: 'rgba(239, 68, 68, 0.94)',
-                      border: '1px solid #FCA5A5',
-                      borderRadius: 6,
-                      padding: '8px 12px',
-                      color: '#FFFFFF',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      zIndex: 25,
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-                    }}
-                  >
-                    <GaaIcon name="alert-triangle" size={16} tone="inherit" />
-                    <span>
-                      <strong>NASM Fail-Safe:</strong> Video link interrupted. Instruct athlete to safely rack weights immediately. Do not perform working sets unmonitored.
-                    </span>
-                  </div>
-                )}
+                {/* Adaptive Connection Status & NASM VCS Fail-Safe Banner */}
+                <LiveAdaptiveConnectionBanner
+                  bannerState={connectionBannerState}
+                  effectiveTier={effectiveTier}
+                  isCoach={true}
+                  failsafeTestId="nasm-connection-failsafe-banner"
+                  onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
+                  onReconnect={handleReconnectStream}
+                  onSendOrRequestSnapshot={handleRequestClientSnapshot}
+                />
 
                 {/* Biomechanical Plumb Line Grid (Strictly Athlete's Video only — never overlays coach's video) */}
                 {showPlumbLine && (
@@ -2913,19 +3103,7 @@ export default function UnifiedLiveStudioHud({
               ) : (
                 <div
                   data-testid="coach-video-container"
-                  style={{
-                    position: layout === 'pip' ? 'absolute' : 'relative',
-                    bottom: layout === 'pip' ? (isMobile ? 10 : 16) : undefined,
-                    left: layout === 'pip' ? (isMobile ? 10 : 16) : undefined,
-                    width: layout === 'pip' ? (isMobile ? 110 : 220) : '100%',
-                    height: layout === 'pip' ? (isMobile ? 85 : 150) : '100%',
-                    minHeight: layout === 'split' ? (isMobile ? 260 : 380) : undefined,
-                    border: layout === 'pip' ? '2px solid var(--gold)' : 'none',
-                    borderRadius: layout === 'pip' ? 8 : 0,
-                    boxShadow: layout === 'pip' ? '0 10px 30px rgba(0,0,0,0.8)' : 'none',
-                    zIndex: layout === 'pip' ? 25 : 1,
-                    overflow: 'hidden',
-                  }}
+                  className={`teams-stage-tile ${layout === 'pip' ? 'teams-pip-tile pip-start' : ''}`}
                 >
                   <LiveVirtualBackgroundStage
                     stream={mediaStream}
@@ -2990,7 +3168,17 @@ export default function UnifiedLiveStudioHud({
 
             {/* ── Viewport 2: Right Frame (Athlete initially by default, Coach if swapped, or Model Compare) ── */}
             {showCompareModel ? (
-              <div style={{ position: 'relative', width: '100%', height: '100%', background: '#090F1E', padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', gap: 8, overflowY: 'auto' }}>
+              <div
+                className="teams-stage-tile"
+                style={{
+                  background: '#090F1E',
+                  padding: 16,
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  gap: 8,
+                  overflowY: 'auto',
+                }}
+              >
                 <div style={{ fontSize: 10.5, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>
                   Gold-Standard NASM Benchmark
                 </div>
@@ -3111,22 +3299,12 @@ export default function UnifiedLiveStudioHud({
               /* ATHLETE ON RIGHT (DEFAULT): Right Frame in Split mode or Full Stage in PiP/Focus */
               <div
                 data-testid="athlete-video-container"
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  height: '100%',
-                  minHeight: layout === 'split' ? (isMobile ? 260 : 380) : undefined,
-                  background: 'linear-gradient(135deg, #0D1629 0%, #060A14 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  overflow: 'hidden',
-                }}
+                className={`teams-stage-tile ${activeRemoteStream ? 'is-live-connected' : ''}`}
               >
                 {/* ── Quick Diagnostic Frame Capture Controller ── */}
                 <div
                   data-testid="athlete-video-capture-bar"
+                  className="teams-capture-pill"
                   style={{
                     position: 'absolute',
                     top: 10,
@@ -3216,6 +3394,15 @@ export default function UnifiedLiveStudioHud({
                   isPeerInLobby={Boolean(athleteInLobby)}
                   lobbyWaitSeconds={lobbyWaitSeconds}
                   peerLatencyMs={peerLatencyMs}
+                  effectiveTier={effectiveTier}
+                  networkQuality={networkQuality}
+                  snapshotFrameUrl={remoteSnapshot?.url}
+                  snapshotTimestamp={remoteSnapshot?.capturedAt}
+                  activeExerciseName={activeExercise?.name}
+                  activeTempo={activeExercise?.tempo ?? '2-0-2'}
+                  restRemaining={restRemaining}
+                  onRequestSnapshot={handleRequestClientSnapshot}
+                  onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
                   onVideoRef={el => {
                     remoteVideoRef.current = el
                   }}
@@ -3258,7 +3445,9 @@ export default function UnifiedLiveStudioHud({
                   />
                   <span>
                     {athleteName}{' '}
-                    {activeRemoteStream
+                    {effectiveTier === 'audio_first' && (athleteInLobby || peerConnectionState === 'connected')
+                      ? '(Voice + Snapshots)'
+                      : activeRemoteStream
                       ? '(Live Video)'
                       : athleteInLobby
                       ? `(In Lobby · ${Math.floor(lobbyWaitSeconds / 60)}m ${lobbyWaitSeconds % 60}s)`
@@ -3268,35 +3457,16 @@ export default function UnifiedLiveStudioHud({
                   </span>
                 </div>
 
-                {/* NASM VCS Disconnection / Immediate Rack Fail-Safe Notice */}
-                {(peerConnectionState === 'disconnected' || peerConnectionState === 'failed') && (
-                  <div
-                    data-testid="nasm-connection-failsafe-banner-dual"
-                    style={{
-                      position: 'absolute',
-                      bottom: 12,
-                      left: 12,
-                      right: 12,
-                      background: 'rgba(239, 68, 68, 0.94)',
-                      border: '1px solid #FCA5A5',
-                      borderRadius: 6,
-                      padding: '8px 12px',
-                      color: '#FFFFFF',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      zIndex: 25,
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-                    }}
-                  >
-                    <GaaIcon name="alert-triangle" size={16} tone="inherit" />
-                    <span>
-                      <strong>NASM Fail-Safe:</strong> Video link interrupted. Instruct athlete to safely rack weights immediately. Do not perform working sets unmonitored.
-                    </span>
-                  </div>
-                )}
+                {/* Adaptive Connection Status & NASM VCS Fail-Safe Banner */}
+                <LiveAdaptiveConnectionBanner
+                  bannerState={connectionBannerState}
+                  effectiveTier={effectiveTier}
+                  isCoach={true}
+                  failsafeTestId="nasm-connection-failsafe-banner-dual"
+                  onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
+                  onReconnect={handleReconnectStream}
+                  onSendOrRequestSnapshot={handleRequestClientSnapshot}
+                />
 
                 {/* Biomechanical Plumb Line Grid (Strictly Athlete's Video only — never overlays coach's video) */}
                 {showPlumbLine && (
@@ -3384,13 +3554,7 @@ export default function UnifiedLiveStudioHud({
               /* COACH ON RIGHT (SWAPPED): Coach Stage (Demo Mode) — STRICTLY NO PLUMB LINE */
               <div
                 data-testid="coach-video-container"
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  height: '100%',
-                  minHeight: layout === 'split' ? (isMobile ? 260 : 380) : undefined,
-                  overflow: 'hidden',
-                }}
+                className="teams-stage-tile"
               >
                 <LiveVirtualBackgroundStage
                   stream={mediaStream}
@@ -3625,17 +3789,7 @@ export default function UnifiedLiveStudioHud({
           </div>
 
           {/* Quick Verbal Cues Strip */}
-          <div
-            style={{
-              background: 'rgba(0,0,0,0.85)',
-              padding: '6px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              overflowX: 'auto',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
+          <div className="teams-cues-strip">
             <span style={{ fontSize: 10, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <GaaIcon name="volume" size={11} tone="gold" />
               <span>Quick Cues:</span>
@@ -3652,7 +3806,23 @@ export default function UnifiedLiveStudioHud({
                 type="button"
                 onClick={() => {
                   speakNasmCue(cue)
-                  showHudToast(`Audio Cue Synthesized: "${cue}"`, 'gold')
+                  if (isTeamSession) {
+                    multiBridgeRef.current?.broadcastTeamCue(cue)
+                    multiBridgeRef.current?.broadcastCoachingSync({
+                      exerciseName: activeExercise?.name,
+                      tempo: activeExercise?.tempo ?? '2-0-2',
+                      restRemaining,
+                      quickCue: cue,
+                    })
+                  } else {
+                    bridgeRef.current?.sendCoachingSync({
+                      exerciseName: activeExercise?.name,
+                      tempo: activeExercise?.tempo ?? '2-0-2',
+                      restRemaining,
+                      quickCue: cue,
+                    })
+                  }
+                  showHudToast(`Coaching Cue Dispatched: "${cue}"`, 'gold')
                 }}
                 style={{
                   background: 'rgba(255,255,255,0.06)',
@@ -4098,245 +4268,213 @@ export default function UnifiedLiveStudioHud({
             </div>
           )}
 
-          {/* Left Stage Bottom Control Bar */}
-          <div
-            style={{
-              background: 'rgba(8,12,22,0.96)',
-              padding: isMobile ? '8px 10px' : '8px 16px',
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
-              justifyContent: 'space-between',
-              alignItems: isMobile ? 'stretch' : 'center',
-              borderTop: '1px solid rgba(255,255,255,0.08)',
-              flexWrap: isMobile ? 'nowrap' : 'wrap',
-              gap: isMobile ? 8 : 6,
-            }}
-          >
-            {/* Row 1 on Mobile: Hardware Media Controls + Viewport Layout Buttons */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 6,
-                width: isMobile ? '100%' : 'auto',
-                overflowX: isMobile ? 'auto' : 'visible',
-              }}
-            >
-              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                <button
-                  type="button"
-                  onClick={toggleMic}
-                  style={{
-                    padding: '5px 10px',
-                    background: isMicMuted ? '#EF4444' : 'rgba(255,255,255,0.08)',
-                    color: '#FFF',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 4,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  <GaaIcon name={isMicMuted ? 'mic-off' : 'mic'} size={12} tone="inherit" />
-                  <span>{isMicMuted ? 'Unmute' : 'Mic'}</span>
-                </button>
+          {/* Left Stage Bottom Control Bar (Microsoft Teams Unified Meeting Command Bar) */}
+          <div className="teams-command-bar">
+            {/* Cluster 1: Media Hardware & Leave */}
+            <div className="teams-dock-cluster">
+              <button
+                type="button"
+                onClick={toggleMic}
+                style={{
+                  padding: '5px 10px',
+                  background: isMicMuted ? '#EF4444' : 'rgba(255,255,255,0.08)',
+                  color: '#FFF',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 5,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <GaaIcon name={isMicMuted ? 'mic-off' : 'mic'} size={12} tone="inherit" />
+                <span>{isMicMuted ? 'Unmute' : 'Mic'}</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={toggleCamera}
-                  style={{
-                    padding: '5px 10px',
-                    background: isCameraActive ? 'rgba(255,255,255,0.08)' : '#EF4444',
-                    color: '#FFF',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 4,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  <GaaIcon name={isCameraActive ? 'video-studio' : 'stop'} size={12} tone="inherit" />
-                  <span>{isCameraActive ? 'Cam' : 'Cam Off'}</span>
-                </button>
+              <button
+                type="button"
+                onClick={toggleCamera}
+                style={{
+                  padding: '5px 10px',
+                  background: isCameraActive ? 'rgba(255,255,255,0.08)' : '#EF4444',
+                  color: '#FFF',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 5,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <GaaIcon name={isCameraActive ? 'video-studio' : 'stop'} size={12} tone="inherit" />
+                <span>{isCameraActive ? 'Cam' : 'Cam Off'}</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setFacingMode(f => (f === 'user' ? 'environment' : 'user'))}
-                  style={{
-                    padding: '5px 8px',
-                    background: 'rgba(255,255,255,0.08)',
-                    color: '#FFF',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 4,
-                    fontSize: 11,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3,
-                  }}
-                >
-                  <GaaIcon name="rotate-ccw" size={11} tone="inherit" />
-                  <span>Flip</span>
-                </button>
+              <button
+                type="button"
+                onClick={() => setFacingMode(f => (f === 'user' ? 'environment' : 'user'))}
+                style={{
+                  padding: '5px 8px',
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#FFF',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 5,
+                  fontSize: 11,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3,
+                }}
+              >
+                <GaaIcon name="rotate-ccw" size={11} tone="inherit" />
+                <span>Flip</span>
+              </button>
 
-                {/* Bottom Dock Exit Cockpit Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowExitModal(true)}
-                  data-testid="dock-exit-cockpit-btn"
-                  title="Exit Live Command Cockpit (Esc)"
-                  style={{
-                    padding: '5px 10px',
-                    background: 'rgba(239, 68, 68, 0.18)',
-                    border: '1px solid rgba(239, 68, 68, 0.45)',
-                    color: '#FCA5A5',
-                    borderRadius: 4,
-                    fontSize: 11,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <GaaIcon name="close" size={11} tone="ruby" />
-                  <span>Exit Cockpit</span>
-                </button>
-              </div>
-
-              {/* Viewport Layout Controls */}
-              <div style={{ display: 'flex', gap: 3, alignItems: 'center', background: 'rgba(255,255,255,0.04)', padding: '2px 4px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
-                {isTeamSession && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setLayout('team_grid')}
-                      title="Squad Multi-Athlete Grid"
-                      style={{
-                        padding: '3px 7px',
-                        background: layout === 'team_grid' ? 'rgba(212,160,23,0.25)' : 'transparent',
-                        border: layout === 'team_grid' ? '1px solid var(--gold)' : 'none',
-                        color: layout === 'team_grid' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.6)',
-                        borderRadius: 3,
-                        fontSize: 10,
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      ⊞ GRID
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLayout('spotlight')}
-                      title="Single Athlete Diagnostic Spotlight with Teammate Strip"
-                      style={{
-                        padding: '3px 7px',
-                        background: layout === 'spotlight' ? 'rgba(212,160,23,0.25)' : 'transparent',
-                        border: layout === 'spotlight' ? '1px solid var(--gold)' : 'none',
-                        color: layout === 'spotlight' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.6)',
-                        borderRadius: 3,
-                        fontSize: 10,
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      ★ SPOTLIGHT
-                    </button>
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setLayout('split')}
-                  title="Side-by-side split screen"
-                  style={{
-                    padding: '3px 7px',
-                    background: layout === 'split' ? 'rgba(212,160,23,0.25)' : 'transparent',
-                    border: layout === 'split' ? '1px solid var(--gold)' : 'none',
-                    color: layout === 'split' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.6)',
-                    borderRadius: 3,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  SPLIT
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLayout('pip')}
-                  title="Picture-in-picture mode"
-                  style={{
-                    padding: '3px 7px',
-                    background: layout === 'pip' ? 'rgba(212,160,23,0.25)' : 'transparent',
-                    border: layout === 'pip' ? '1px solid var(--gold)' : 'none',
-                    color: layout === 'pip' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.6)',
-                    borderRadius: 3,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  PiP
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLayout('focus')}
-                  title="Full-stage focus on Athlete"
-                  style={{
-                    padding: '3px 7px',
-                    background: layout === 'focus' ? 'rgba(212,160,23,0.25)' : 'transparent',
-                    border: layout === 'focus' ? '1px solid var(--gold)' : 'none',
-                    color: layout === 'focus' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.6)',
-                    borderRadius: 3,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  STAGE
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsStageSwapped(prev => !prev)}
-                  title="Swap Main Stage between Athlete and Coach"
-                  style={{
-                    padding: '3px 7px',
-                    background: isStageSwapped ? 'rgba(59,130,246,0.25)' : 'transparent',
-                    border: isStageSwapped ? '1px solid #3B82F6' : 'none',
-                    color: isStageSwapped ? '#60A5FA' : 'rgba(255,255,255,0.6)',
-                    borderRadius: 3,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3,
-                  }}
-                >
-                  <span>⇄ SWAP</span>
-                </button>
-              </div>
+              {/* Bottom Dock Exit Cockpit Button */}
+              <button
+                type="button"
+                onClick={() => setShowExitModal(true)}
+                data-testid="dock-exit-cockpit-btn"
+                title="Exit Live Command Cockpit (Esc)"
+                style={{
+                  padding: '5px 10px',
+                  background: 'rgba(239, 68, 68, 0.18)',
+                  border: '1px solid rgba(239, 68, 68, 0.45)',
+                  color: '#FCA5A5',
+                  borderRadius: 5,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <GaaIcon name="close" size={11} tone="ruby" />
+                <span>Exit Cockpit</span>
+              </button>
             </div>
 
-            {/* Row 2: Tactical Studio Tools */}
-            <div
-              style={{
-                display: 'flex',
-                gap: 6,
-                flexWrap: isMobile ? 'nowrap' : 'wrap',
-                overflowX: isMobile ? 'auto' : 'visible',
-                width: isMobile ? '100%' : 'auto',
-                paddingBottom: isMobile ? 2 : 0,
-              }}
-            >
+            {/* Cluster 2: Stage Gallery & Layout Controls */}
+            <div className="teams-dock-cluster">
+              {isTeamSession && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setLayout('team_grid')}
+                    title="Squad Multi-Athlete Grid"
+                    style={{
+                      padding: '4px 8px',
+                      background: layout === 'team_grid' ? 'rgba(212,160,23,0.25)' : 'transparent',
+                      border: layout === 'team_grid' ? '1px solid var(--gold)' : '1px solid transparent',
+                      color: layout === 'team_grid' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.72)',
+                      borderRadius: 5,
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ⊞ GRID
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLayout('spotlight')}
+                    title="Single Athlete Diagnostic Spotlight with Teammate Strip"
+                    style={{
+                      padding: '4px 8px',
+                      background: layout === 'spotlight' ? 'rgba(212,160,23,0.25)' : 'transparent',
+                      border: layout === 'spotlight' ? '1px solid var(--gold)' : '1px solid transparent',
+                      color: layout === 'spotlight' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.72)',
+                      borderRadius: 5,
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ★ SPOTLIGHT
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => setLayout('split')}
+                title="Side-by-side split screen"
+                style={{
+                  padding: '4px 8px',
+                  background: layout === 'split' ? 'rgba(212,160,23,0.25)' : 'transparent',
+                  border: layout === 'split' ? '1px solid var(--gold)' : '1px solid transparent',
+                  color: layout === 'split' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.72)',
+                  borderRadius: 5,
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                SPLIT
+              </button>
+              <button
+                type="button"
+                onClick={() => setLayout('pip')}
+                title="Picture-in-picture mode"
+                style={{
+                  padding: '4px 8px',
+                  background: layout === 'pip' ? 'rgba(212,160,23,0.25)' : 'transparent',
+                  border: layout === 'pip' ? '1px solid var(--gold)' : '1px solid transparent',
+                  color: layout === 'pip' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.72)',
+                  borderRadius: 5,
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                PiP
+              </button>
+              <button
+                type="button"
+                onClick={() => setLayout('focus')}
+                title="Full-stage focus on Athlete"
+                style={{
+                  padding: '4px 8px',
+                  background: layout === 'focus' ? 'rgba(212,160,23,0.25)' : 'transparent',
+                  border: layout === 'focus' ? '1px solid var(--gold)' : '1px solid transparent',
+                  color: layout === 'focus' ? 'var(--gold-lt)' : 'rgba(255,255,255,0.72)',
+                  borderRadius: 5,
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                STAGE
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsStageSwapped(prev => !prev)}
+                title="Swap Main Stage between Athlete and Coach"
+                style={{
+                  padding: '4px 8px',
+                  background: isStageSwapped ? 'rgba(59,130,246,0.25)' : 'transparent',
+                  border: isStageSwapped ? '1px solid #3B82F6' : '1px solid transparent',
+                  color: isStageSwapped ? '#60A5FA' : 'rgba(255,255,255,0.72)',
+                  borderRadius: 5,
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3,
+                }}
+              >
+                <span>⇄ SWAP</span>
+              </button>
+            </div>
+
+            {/* Cluster 3: Tactical Studio Tools */}
+            <div className="teams-dock-cluster">
               {isTeamSession && (
                 <>
                   <button
@@ -4584,20 +4722,8 @@ export default function UnifiedLiveStudioHud({
               </button>
             </div>
 
-            {/* ── Movement Screen & Assessment Quick Strip ── */}
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                flexWrap: isMobile ? 'nowrap' : 'wrap',
-                overflowX: isMobile ? 'auto' : 'visible',
-                borderTop: '1px solid rgba(255,255,255,0.08)',
-                paddingTop: 8,
-                marginTop: 4,
-              }}
-            >
+            {/* Cluster 4: Movement Screen, Clinical Diagnostics & Safety */}
+            <div className="teams-dock-cluster">
               <span
                 style={{
                   fontSize: 10,
@@ -4606,6 +4732,7 @@ export default function UnifiedLiveStudioHud({
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
                   marginRight: 2,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 Assess:
@@ -4747,21 +4874,71 @@ export default function UnifiedLiveStudioHud({
           </div>
         </div>
 
-        {/* ── Right Stage: 1-Touch Set Logger, Movement Queue & Voice Co-Pilot ── */}
+        {/* ── Right Stage: Collapsible Teams Side Pane (1-Touch Set Logger, Movement Queue & Co-Pilot) ── */}
         <div
+          data-testid="live-workout-side-pane"
+          className="teams-side-pane"
           style={{
-            background: 'linear-gradient(180deg, #0A0F1D 0%, #060913 100%)',
-            display: mobileViewMode === 'video' ? 'none' : 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: isMobile ? '14px 14px calc(80px + env(safe-area-inset-bottom, 16px)) 14px' : 16,
-            gap: 12,
-            overflowY: 'auto',
-            width: isMobile ? '100%' : 340,
-            minWidth: isMobile ? '100%' : 340,
-            maxWidth: isMobile ? '100%' : 340,
+            display: isMobile
+              ? mobileViewMode === 'video'
+                ? 'none'
+                : 'flex'
+              : isSidePaneOpen
+              ? 'flex'
+              : 'none',
+            paddingBottom: isMobile ? 'calc(80px + env(safe-area-inset-bottom, 16px))' : 16,
           }}
         >
+          {/* Teams-Style Collapsible Side Pane Title Header (Desktop & Split-Screen Drawer) */}
+          {!isMobile && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingBottom: 8,
+                borderBottom: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  letterSpacing: '0.09em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.75)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <GaaIcon name="barbell" size={12} tone="gold" />
+                <span>Workout &amp; Set Logger</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsSidePaneOpen(false)}
+                title="Collapse Workout Side Pane for Full-Width Theater Stage"
+                aria-label="Close Workout Pane"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: 'rgba(255,255,255,0.75)',
+                  borderRadius: 5,
+                  width: 24,
+                  height: 24,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {/* Active Movement Header & Queue Switcher */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>

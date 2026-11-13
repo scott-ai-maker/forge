@@ -5,6 +5,13 @@ import {
   type LobbyParticipant,
   type WebRtcSignalPayload,
 } from './webrtc-peer-bridge'
+import {
+  BANDWIDTH_PROFILES,
+  resolveEffectiveBandwidthTier,
+  type BandwidthMode,
+  type CoachingSyncPayload,
+  type ResolvedBandwidthTier,
+} from './live-bandwidth-profiles'
 
 function getRTCPeerConnectionConstructor(): typeof RTCPeerConnection | undefined {
   if (typeof window !== 'undefined' && window.RTCPeerConnection) {
@@ -49,6 +56,8 @@ export interface WebRtcMultiPeerBridgeOptions {
   onSpotlightChange?: (spotlightUserId: string | null) => void
   onMuteDirective?: (muted: boolean) => void
   onCircuitTimerSync?: (data: unknown) => void
+  onFormSnapshot?: (dataUrl: string, timestamp: number, senderId: string) => void
+  onBandwidthModeSignal?: (mode: BandwidthMode, senderId: string) => void
   onError?: (err: Error) => void
 }
 
@@ -420,6 +429,23 @@ export class WebRtcMultiPeerBridge {
         return
       }
 
+      if (payload.type === 'bandwidth-mode' && payload.data) {
+        const incoming = payload.data as { mode?: BandwidthMode }
+        if (incoming.mode) {
+          this.setBandwidthMode(incoming.mode, false)
+          this.options.onBandwidthModeSignal?.(incoming.mode, payload.senderId)
+        }
+        return
+      }
+
+      if (payload.type === 'form-snapshot' && payload.data) {
+        const snap = payload.data as { dataUrl?: string }
+        if (snap.dataUrl) {
+          this.options.onFormSnapshot?.(snap.dataUrl, payload.timestamp || Date.now(), payload.senderId)
+        }
+        return
+      }
+
       // 2. Latency Ping / Pong
       if (payload.type === 'ping') {
         this.sendSignal({
@@ -580,6 +606,65 @@ export class WebRtcMultiPeerBridge {
       senderId: this.options.currentUserId,
       targetUserId: '*',
       data: timerData,
+    })
+  }
+
+  public setBandwidthMode(mode: BandwidthMode, broadcast = true): ResolvedBandwidthTier {
+    const tier = resolveEffectiveBandwidthTier(mode, 'excellent', 1)
+    const spec = BANDWIDTH_PROFILES[tier]
+    for (const entry of this.peers.values()) {
+      try {
+        const senders = typeof entry.pc.getSenders === 'function' ? entry.pc.getSenders() : []
+        senders.forEach(sender => {
+          const params = sender.getParameters()
+          if (!params.encodings || params.encodings.length === 0) params.encodings = [{}]
+          if (sender.track?.kind === 'video') {
+            params.encodings[0].active = spec.videoEnabled
+            params.encodings[0].maxBitrate = spec.maxVideoBitrate
+            if (spec.maxFramerate > 0) params.encodings[0].maxFramerate = spec.maxFramerate
+            params.encodings[0].scaleResolutionDownBy = spec.scaleResolutionDownBy
+            ;(params as RTCRtpSendParameters & { degradationPreference?: string }).degradationPreference =
+              spec.degradationPreference
+            void sender.setParameters(params).catch(() => {})
+          } else if (sender.track?.kind === 'audio') {
+            params.encodings[0].active = true
+            params.encodings[0].maxBitrate = spec.maxAudioBitrate
+            void sender.setParameters(params).catch(() => {})
+          }
+        })
+      } catch {
+        // Optional browser sender tuning
+      }
+    }
+    if (broadcast) {
+      this.sendSignal({
+        type: 'bandwidth-mode',
+        senderId: this.options.currentUserId,
+        targetUserId: '*',
+        data: { mode, effectiveTier: tier },
+      })
+    }
+    return tier
+  }
+
+  public broadcastCoachingSync(sync: Omit<CoachingSyncPayload, 'timestamp'>): void {
+    this.sendSignal({
+      type: 'coaching-sync',
+      senderId: this.options.currentUserId,
+      targetUserId: '*',
+      data: {
+        ...sync,
+        timestamp: Date.now(),
+      } satisfies CoachingSyncPayload,
+    })
+  }
+
+  public requestAllSnapshots(): void {
+    this.sendSignal({
+      type: 'request-snapshot',
+      senderId: this.options.currentUserId,
+      targetUserId: '*',
+      timestamp: Date.now(),
     })
   }
 

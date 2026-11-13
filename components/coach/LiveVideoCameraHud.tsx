@@ -28,6 +28,25 @@ import {
 } from '@/lib/nasm-clinical-movement-cards'
 import type { TeamCircuitTimerData } from '@/lib/teams'
 import { speakNasmCue } from '@/lib/nasm-assessments'
+import {
+  BANDWIDTH_PROFILES,
+  SIGNALING_HEARTBEAT_TTL_MS,
+  applyCameraBandwidthConstraints,
+  captureLowBandwidthSnapshot,
+  detectBrowserNetworkHint,
+  evaluateConnectionBannerState,
+  evaluateNetworkQuality,
+  getNavigatorConnection,
+  resolveEffectiveBandwidthTier,
+  type BandwidthMode,
+  type NetworkQualityGrade,
+  type ResolvedBandwidthTier,
+} from '@/lib/live-bandwidth-profiles'
+import {
+  LiveAdaptiveConnectionBanner,
+  LiveBandwidthSelectorPill,
+} from './LiveBandwidthStatusControls'
+import './live-studio-teams.css'
 
 export type VideoHudLayout = 'split' | 'pip' | 'focus' | 'team_grid' | 'spotlight'
 
@@ -173,6 +192,30 @@ export default function LiveVideoCameraHud({
   const [peerLatencyMs, setPeerLatencyMs] = useState<number | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null)
 
+  // ── Adaptive Low-Bandwidth & Synchronized Coaching State ──
+  const [bandwidthMode, setBandwidthMode] = useState<BandwidthMode>('auto')
+  const [networkQuality, setNetworkQuality] = useState<NetworkQualityGrade>(() => {
+    const hint = detectBrowserNetworkHint()
+    return evaluateNetworkQuality({
+      rttMs: hint.rttMs ?? null,
+      saveData: hint.saveData,
+      effectiveType: hint.effectiveType,
+      downlinkMbps: hint.downlinkMbps,
+    })
+  })
+  const [effectiveTier, setEffectiveTier] = useState<ResolvedBandwidthTier>(() =>
+    resolveEffectiveBandwidthTier('auto', networkQuality, 1)
+  )
+  const [remoteSnapshot, setRemoteSnapshot] = useState<{ url: string; capturedAt: number } | null>(null)
+  const [disconnectedSince, setDisconnectedSince] = useState<number | null>(null)
+  const [disconnectTick, setDisconnectTick] = useState(0)
+  const [lastSignalAt, setLastSignalAt] = useState<number>(0)
+  const [syncedExerciseName, setSyncedExerciseName] = useState<string | null>(null)
+  const [syncedOptPhase, setSyncedOptPhase] = useState<string | null>(null)
+  const [syncedTempo, setSyncedTempo] = useState<string | null>(null)
+  const [syncedRestRemaining, setSyncedRestRemaining] = useState<number | null>(null)
+  const [syncedCoachCue, setSyncedCoachCue] = useState<string | null>(null)
+
   // ── Telestrator State ──
   const [telestratorActive, setTelestratorActive] = useState(false)
   const [telestratorTool, setTelestratorTool] = useState<TelestratorTool>('pen')
@@ -222,12 +265,15 @@ export default function LiveVideoCameraHud({
 
   // ── Reference Technique Model Comparison & Visual Guide ──
   const [showCompareModel, setShowCompareModel] = useState(false)
+  const activeExerciseLabel = syncedExerciseName || exerciseName
+  const activeTempoLabel = syncedTempo || currentTempo
+  const activeOptPhaseLabel = syncedOptPhase || optPhase
   const resolvedExerciseName = useMemo(() => {
-    if (!exerciseName || exerciseName.toLowerCase().startsWith('phase ')) {
+    if (!activeExerciseLabel || activeExerciseLabel.toLowerCase().startsWith('phase ')) {
       return 'Overhead Squat Assessment'
     }
-    return exerciseName
-  }, [exerciseName])
+    return activeExerciseLabel
+  }, [activeExerciseLabel])
 
   const movementCard = useMemo(() => {
     return getNasmClinicalMovementCard(resolvedExerciseName)
@@ -383,6 +429,46 @@ export default function LiveVideoCameraHud({
   const bridgeRef = useRef<WebRtcPeerBridge | null>(null)
   const mediaStreamRef = useRef(mediaStream)
   mediaStreamRef.current = mediaStream
+  const isCameraActiveRef = useRef(isCameraActive)
+  isCameraActiveRef.current = isCameraActive
+
+  const sendImmediateFormSnapshot = useCallback(() => {
+    if (!isCameraActiveRef.current) return
+    const snap = captureLowBandwidthSnapshot(localVideoRef.current, 360, 0.5)
+    if (snap && bridgeRef.current) {
+      bridgeRef.current.sendFormSnapshot(snap)
+    }
+  }, [])
+
+  const handleChangeBandwidthMode = useCallback(
+    (nextMode: BandwidthMode, broadcast = true) => {
+      setBandwidthMode(nextMode)
+      const nextTier = bridgeRef.current
+        ? bridgeRef.current.setBandwidthMode(nextMode, broadcast)
+        : resolveEffectiveBandwidthTier(nextMode, networkQuality, 1)
+      setEffectiveTier(nextTier)
+      void applyCameraBandwidthConstraints(streamRef.current, nextTier)
+      const spec = BANDWIDTH_PROFILES[nextTier]
+      showHudToast(
+        nextMode === 'auto'
+          ? `Bandwidth: Auto Adapt (${spec.shortLabel} · ${spec.estimatedKbps})`
+          : `Bandwidth Mode: ${spec.label} (${spec.estimatedKbps})`,
+        nextTier === 'audio_first' || nextTier === 'low_data' ? 'emerald' : 'gold'
+      )
+      if (nextTier === 'audio_first' || nextTier === 'low_data') {
+        setTimeout(() => sendImmediateFormSnapshot(), 250)
+      }
+    },
+    [networkQuality, sendImmediateFormSnapshot, showHudToast]
+  )
+
+  const handleReconnectStream = useCallback(() => {
+    if (bridgeRef.current) {
+      void bridgeRef.current.restartIce()
+      void bridgeRef.current.announcePresence()
+      showHudToast('Re-stabilizing live coaching stream…', 'emerald')
+    }
+  }, [showHudToast])
 
   // Synchronize remoteStream prop
   useEffect(() => {
@@ -423,6 +509,7 @@ export default function LiveVideoCameraHud({
       isCoach,
       channel,
       localStream: mediaStreamRef.current,
+      initialBandwidthMode: bandwidthMode,
       onRemoteStream: stream => {
         setActiveRemoteStream(stream)
       },
@@ -431,6 +518,42 @@ export default function LiveVideoCameraHud({
       },
       onLatencyChange: rtt => {
         setPeerLatencyMs(rtt)
+      },
+      onNetworkQualityChange: (quality, tier) => {
+        setNetworkQuality(quality)
+        setEffectiveTier(tier)
+        void applyCameraBandwidthConstraints(streamRef.current, tier)
+      },
+      onBandwidthModeSignal: mode => {
+        setBandwidthMode(mode)
+        const nextTier = bridge.getEffectiveTier()
+        setEffectiveTier(nextTier)
+        void applyCameraBandwidthConstraints(streamRef.current, nextTier)
+        const spec = BANDWIDTH_PROFILES[nextTier]
+        showHudToast(`⚡ Stream adapted to ${spec.label} (${spec.estimatedKbps})`, 'emerald')
+      },
+      onFormSnapshot: (dataUrl, ts) => {
+        setRemoteSnapshot({ url: dataUrl, capturedAt: ts })
+      },
+      onSnapshotRequested: () => {
+        sendImmediateFormSnapshot()
+      },
+      onCoachingSync: sync => {
+        if (sync.exerciseName) setSyncedExerciseName(sync.exerciseName)
+        if (sync.optPhase) setSyncedOptPhase(sync.optPhase)
+        if (sync.tempo) setSyncedTempo(sync.tempo)
+        if (sync.restRemaining !== undefined) setSyncedRestRemaining(sync.restRemaining)
+        if (sync.quickCue) {
+          setSyncedCoachCue(sync.quickCue)
+          showHudToast(`🗣️ ${coachName}: "${sync.quickCue}"`, 'gold')
+          speakNasmCue(sync.quickCue)
+          setTimeout(() => {
+            setSyncedCoachCue(curr => (curr === sync.quickCue ? null : curr))
+          }, 8000)
+        }
+      },
+      onSignalHeartbeat: ts => {
+        setLastSignalAt(ts)
       },
       onError: err => {
         console.warn('Live WebRTC peer error:', err)
@@ -556,15 +679,25 @@ export default function LiveVideoCameraHud({
         }
       })
 
-    // Periodic ping every 6s to keep signaling channel warm & measure latency without renegotiation
+    // Periodic ping & adaptive network health check every 6s without triggering SDP renegotiation
     const pingTimer = setInterval(() => {
       if (bridgeRef.current) {
         bridgeRef.current.sendPing()
+        void bridgeRef.current.sampleNetworkHealth()
       }
     }, 6000)
 
+    const conn = getNavigatorConnection()
+    const handleNetworkChange = () => {
+      if (bridgeRef.current) {
+        void bridgeRef.current.sampleNetworkHealth()
+      }
+    }
+    conn?.addEventListener?.('change', handleNetworkChange)
+
     return () => {
       clearInterval(pingTimer)
+      conn?.removeEventListener?.('change', handleNetworkChange)
       bridge.destroy()
       bridgeRef.current = null
       signalingChannelRef.current = null
@@ -579,6 +712,53 @@ export default function LiveVideoCameraHud({
       bridgeRef.current.attachLocalStream(mediaStream)
     }
   }, [mediaStream])
+
+  // Synchronized Rest Countdown (from Coach Coaching-Sync)
+  useEffect(() => {
+    if (syncedRestRemaining == null || syncedRestRemaining <= 0) return
+    const interval = setInterval(() => {
+      setSyncedRestRemaining(prev => (prev != null && prev > 1 ? prev - 1 : null))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [syncedRestRemaining])
+
+  // Disconnection grace-window tracker (prevents hair-trigger red NASM banners on brief cellular dips)
+  useEffect(() => {
+    if (peerConnectionState === 'disconnected' || peerConnectionState === 'failed') {
+      setDisconnectedSince(prev => prev ?? Date.now())
+      const timer = setInterval(() => setDisconnectTick(t => t + 1), 1000)
+      return () => clearInterval(timer)
+    }
+    setDisconnectedSince(null)
+  }, [peerConnectionState])
+
+  // Periodic Low-Bandwidth Form Snapshot Transmitter (~10 KB JPEG every 4.5-6s in low_data / audio_first)
+  useEffect(() => {
+    const intervalMs = BANDWIDTH_PROFILES[effectiveTier].snapshotIntervalMs
+    if (!intervalMs || !isCameraActive) return
+    const initial = setTimeout(() => sendImmediateFormSnapshot(), 600)
+    const timer = setInterval(() => {
+      sendImmediateFormSnapshot()
+    }, intervalMs)
+    return () => {
+      clearTimeout(initial)
+      clearInterval(timer)
+    }
+  }, [effectiveTier, isCameraActive, sendImmediateFormSnapshot])
+
+  const connectionBannerState = useMemo(() => {
+    void disconnectTick
+    const now = Date.now()
+    const disconnectedDurationMs = disconnectedSince ? Math.max(0, now - disconnectedSince) : 0
+    const hasRecentSignalingHeartbeat = lastSignalAt > 0 && now - lastSignalAt < SIGNALING_HEARTBEAT_TTL_MS
+    return evaluateConnectionBannerState({
+      peerConnectionState,
+      disconnectedDurationMs,
+      effectiveTier,
+      networkQuality,
+      hasRecentSignalingHeartbeat,
+    })
+  }, [peerConnectionState, disconnectedSince, disconnectTick, effectiveTier, networkQuality, lastSignalAt])
 
   // Synchronized Circuit Timer Local Countdown (Athlete Side)
   useEffect(() => {
@@ -599,6 +779,9 @@ export default function LiveVideoCameraHud({
     return () => clearInterval(interval)
   }, [teamCircuitTimer?.isActive])
 
+  const effectiveTierRef = useRef<ResolvedBandwidthTier>(effectiveTier)
+  effectiveTierRef.current = effectiveTier
+
   const startCamera = useCallback(async () => {
     try {
       setStreamError(null)
@@ -614,15 +797,16 @@ export default function LiveVideoCameraHud({
         return
       }
 
-      // Hardware Camera & Microphone Startup with Enhanced Audio Processing
+      // Hardware Camera & Microphone Startup with Adaptive Bandwidth Resolution & Enhanced Audio Processing
+      const camSpec = BANDWIDTH_PROFILES[effectiveTierRef.current]
       let stream: MediaStream
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode,
-            width: { ideal: 1280, min: 640 },
-            height: { ideal: 720, min: 480 },
-            frameRate: { ideal: 30, min: 24 },
+            width: { ideal: camSpec.cameraWidthIdeal, min: 320 },
+            height: { ideal: camSpec.cameraHeightIdeal, min: 180 },
+            frameRate: { ideal: camSpec.cameraFrameRateIdeal, min: 8 },
           },
           audio: {
             echoCancellation: true,
@@ -785,33 +969,11 @@ export default function LiveVideoCameraHud({
   return (
     <div
       ref={containerRef}
-      className="live-video-hud-container"
-      style={{
-        background: '#060A12',
-        border: '1px solid rgba(212,160,23,0.4)',
-        borderRadius: 14,
-        overflow: 'hidden',
-        position: 'relative',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
+      className="live-video-hud-container teams-studio-shell"
     >
-      {/* ── Top HUD Status Ribbon ── */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'rgba(8,12,22,0.96)',
-          padding: '10px 16px',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-          zIndex: 30,
-          flexWrap: 'wrap',
-          gap: 8,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* ── Top HUD Status Ribbon (Microsoft Teams Compact Meeting Header) ── */}
+      <div className="teams-top-bar">
+        <div className="teams-header-cluster">
           {/* Back / Exit Studio Navigation Button */}
           <button
             type="button"
@@ -824,8 +986,8 @@ export default function LiveVideoCameraHud({
             title={isCoach ? 'Exit Cockpit to Coach Hub' : 'Exit Studio to Dashboard'}
             style={{
               padding: '5px 10px',
-              background: 'rgba(239, 68, 68, 0.12)',
-              border: '1px solid rgba(239, 68, 68, 0.35)',
+              background: 'rgba(239, 68, 68, 0.14)',
+              border: '1px solid rgba(239, 68, 68, 0.38)',
               color: '#FCA5A5',
               borderRadius: 6,
               fontSize: 11,
@@ -843,8 +1005,8 @@ export default function LiveVideoCameraHud({
 
           <div
             style={{
-              width: 26,
-              height: 26,
+              width: 24,
+              height: 24,
               borderRadius: 5,
               backgroundImage: "url('/images/brand/forge-crest-mark.png')",
               backgroundSize: 'contain',
@@ -856,17 +1018,17 @@ export default function LiveVideoCameraHud({
               flexShrink: 0,
             }}
           />
-          <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
+          <span className="teams-hide-compact" style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
             LIVE 1:1 BIOMECHANICS LAB
           </span>
-          <span style={{ fontSize: 11, color: 'var(--gray)' }}>·</span>
-          <span style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 600 }}>
+          <span className="teams-hide-compact" style={{ fontSize: 11, color: 'var(--gray)' }}>·</span>
+          <span style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 700 }}>
             {coachName} ⇄ {clientName}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {exerciseName && (
+        <div className="teams-header-cluster">
+          {activeExerciseLabel && (
             <span
               style={{
                 fontSize: 11,
@@ -882,9 +1044,34 @@ export default function LiveVideoCameraHud({
               }}
             >
               <GaaIcon name="barbell" size={12} tone="gold" />
-              {exerciseName} ({currentTempo})
+              {activeExerciseLabel} ({activeTempoLabel})
             </span>
           )}
+
+          {syncedRestRemaining != null && syncedRestRemaining > 0 && (
+            <span
+              data-testid="athlete-synced-rest-pill"
+              style={{
+                fontSize: 11,
+                background: 'rgba(16, 185, 129, 0.16)',
+                color: '#34D399',
+                padding: '2px 8px',
+                borderRadius: 4,
+                border: '1px solid rgba(52, 211, 153, 0.4)',
+                fontWeight: 800,
+                fontFamily: 'monospace',
+              }}
+            >
+              ⏱ Rest {syncedRestRemaining}s
+            </span>
+          )}
+
+          <LiveBandwidthSelectorPill
+            bandwidthMode={bandwidthMode}
+            effectiveTier={effectiveTier}
+            networkQuality={networkQuality}
+            onChangeMode={mode => handleChangeBandwidthMode(mode, true)}
+          />
 
           {/* Still Camera Mode Guidance Badge */}
           <button
@@ -985,17 +1172,12 @@ export default function LiveVideoCameraHud({
       {!isCoach && !activeRemoteStream && (
         <div
           data-testid="athlete-lobby-banner"
+          className="teams-lobby-bar"
           style={{
             background: coachInStudio
               ? 'linear-gradient(90deg, rgba(16,185,129,0.2) 0%, rgba(6,78,59,0.3) 100%)'
               : 'linear-gradient(90deg, rgba(212,160,23,0.15) 0%, rgba(138,101,8,0.2) 100%)',
             borderBottom: coachInStudio ? '1px solid rgba(52,211,153,0.45)' : '1px solid rgba(212,160,23,0.3)',
-            padding: '8px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 10,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1007,6 +1189,7 @@ export default function LiveVideoCameraHud({
                 background: coachInStudio ? '#10B981' : '#D4AF37',
                 boxShadow: coachInStudio ? '0 0 10px #10B981' : 'none',
                 animation: 'pulse 2s infinite',
+                flexShrink: 0,
               }}
             />
             <div>
@@ -1015,7 +1198,7 @@ export default function LiveVideoCameraHud({
                   ? `🟢 ${coachName.toUpperCase()} IS IN THE STUDIO · CONNECTING LIVE PEER FEED`
                   : `🟢 YOU ARE IN THE LIVE STUDIO LOBBY · WAITING FOR ${coachName.toUpperCase()}`}
               </div>
-              <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#E2E8F0' }}>
+              <p className="teams-hide-compact" style={{ margin: '2px 0 0', fontSize: 11.5, color: '#E2E8F0' }}>
                 {coachInStudio
                   ? 'Connecting direct peer video feed. Please keep your device steady.'
                   : `Your camera and mic are active. ${coachName} has been notified you are waiting in the room.`}
@@ -1040,41 +1223,18 @@ export default function LiveVideoCameraHud({
         </div>
       )}
 
-      {/* ── Main Video Stage & Overlays ── */}
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          minHeight: 380,
-          background: '#04070D',
-          display: 'grid',
-          gridTemplateColumns: showCompareModel ? '1fr 1fr' : layout === 'split' ? '1fr 1fr' : '1fr',
-          gap: layout === 'split' || showCompareModel ? 2 : 0,
-        }}
-      >
+      {/* ── Main Video Stage & Overlays (Microsoft Teams Container-Query Gallery) ── */}
+      <div className="teams-stage-column">
+        <div
+          className="teams-video-grid is-athlete-standalone"
+          data-dual={showCompareModel || layout === 'split' ? 'true' : 'false'}
+        >
         {/* ── Viewport 1: Left Frame (Coach initially by default, or Athlete when swapped / comparing) ── */}
         {showCompareModel || isStageSwapped ? (
           /* ATHLETE ON LEFT: Swapped for demo or comparing form */
           <div
             data-testid="athlete-video-container"
-            style={{
-              position: layout === 'pip' && isStageSwapped ? 'absolute' : 'relative',
-              bottom: layout === 'pip' && isStageSwapped ? 16 : undefined,
-              right: layout === 'pip' && isStageSwapped ? 16 : undefined,
-              width: layout === 'pip' && isStageSwapped ? 220 : '100%',
-              height: layout === 'pip' && isStageSwapped ? 150 : '100%',
-              minHeight: layout === 'split' || showCompareModel ? 380 : undefined,
-              background: '#080C16',
-              border: layout === 'pip' && isStageSwapped ? '2px solid var(--gold)' : 'none',
-              borderRadius: layout === 'pip' && isStageSwapped ? 8 : 0,
-              boxShadow: layout === 'pip' && isStageSwapped ? '0 10px 30px rgba(0,0,0,0.8)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              zIndex: layout === 'pip' && isStageSwapped ? 25 : 1,
-              overflow: 'hidden',
-            }}
+            className={`teams-stage-tile ${layout === 'pip' && isStageSwapped ? 'teams-pip-tile pip-end' : ''}`}
           >
             {isCoach ? (
               <LiveRemoteVideoFeed
@@ -1084,6 +1244,16 @@ export default function LiveVideoCameraHud({
                 isConnected={peerConnectionState === 'connected' || isRemoteConnected}
                 isPeerInLobby={Boolean(coachInStudio)}
                 peerLatencyMs={peerLatencyMs}
+                effectiveTier={effectiveTier}
+                networkQuality={networkQuality}
+                snapshotFrameUrl={remoteSnapshot?.url}
+                snapshotTimestamp={remoteSnapshot?.capturedAt}
+                activeExerciseName={activeExerciseLabel}
+                activeTempo={activeTempoLabel}
+                activeCoachCue={syncedCoachCue || activeTeamCue}
+                restRemaining={syncedRestRemaining}
+                onRequestSnapshot={() => bridgeRef.current?.requestPeerSnapshot()}
+                onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
                 onVideoRef={el => {
                   remoteVideoRef.current = el
                 }}
@@ -1152,6 +1322,7 @@ export default function LiveVideoCameraHud({
             {/* 4-Slot Assessment Capture Dropdown & Button Bar */}
             <div
               data-testid="athlete-video-capture-bar"
+              className="teams-capture-pill"
               style={{
                 position: 'absolute',
                 top: 12,
@@ -1281,24 +1452,7 @@ export default function LiveVideoCameraHud({
           ) : (
             <div
               data-testid="coach-video-container"
-              style={{
-                position: layout === 'pip' ? 'absolute' : 'relative',
-                bottom: layout === 'pip' ? 16 : undefined,
-                left: layout === 'pip' ? 16 : undefined,
-                width: layout === 'pip' ? 220 : '100%',
-                height: layout === 'pip' ? 150 : '100%',
-                minHeight: layout === 'split' ? 380 : undefined,
-                background: 'linear-gradient(135deg, #0D1628 0%, #060A14 100%)',
-                border: layout === 'pip' ? '2px solid var(--gold)' : 'none',
-                borderRadius: layout === 'pip' ? 8 : 0,
-                boxShadow: layout === 'pip' ? '0 10px 30px rgba(0,0,0,0.8)' : 'none',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: layout === 'pip' ? 25 : 1,
-                overflow: 'hidden',
-              }}
+              className={`teams-stage-tile ${layout === 'pip' ? 'teams-pip-tile pip-start' : ''} ${activeRemoteStream ? 'is-live-connected' : ''}`}
             >
               {isCoach ? (
                 /* When Coach is viewing HUD, coach's self-view is local webcam */
@@ -1344,6 +1498,15 @@ export default function LiveVideoCameraHud({
                   isConnected={peerConnectionState === 'connected' || isRemoteConnected}
                   isPeerInLobby={Boolean(coachInStudio)}
                   peerLatencyMs={peerLatencyMs}
+                  effectiveTier={effectiveTier}
+                  networkQuality={networkQuality}
+                  snapshotFrameUrl={remoteSnapshot?.url}
+                  snapshotTimestamp={remoteSnapshot?.capturedAt}
+                  activeExerciseName={activeExerciseLabel}
+                  activeTempo={activeTempoLabel}
+                  activeCoachCue={syncedCoachCue || activeTeamCue}
+                  restRemaining={syncedRestRemaining}
+                  onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
                   onVideoRef={el => {
                     remoteVideoRef.current = el
                   }}
@@ -1387,7 +1550,9 @@ export default function LiveVideoCameraHud({
                 />
                 <span>
                   {coachName}{' '}
-                  {activeRemoteStream
+                  {effectiveTier === 'audio_first' && (coachInStudio || peerConnectionState === 'connected')
+                    ? '(Voice + Cues)'
+                    : activeRemoteStream
                     ? '(Live Video)'
                     : coachInStudio
                     ? '(In Studio)'
@@ -1397,35 +1562,16 @@ export default function LiveVideoCameraHud({
                 </span>
               </div>
 
-              {/* NASM VCS Disconnection / Immediate Rack Fail-Safe Notice */}
-              {(peerConnectionState === 'disconnected' || peerConnectionState === 'failed') && (
-                <div
-                  data-testid="nasm-connection-failsafe-banner-client"
-                  style={{
-                    position: 'absolute',
-                    bottom: 12,
-                    left: 12,
-                    right: 12,
-                    background: 'rgba(239, 68, 68, 0.94)',
-                    border: '1px solid #FCA5A5',
-                    borderRadius: 6,
-                    padding: '8px 12px',
-                    color: '#FFFFFF',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    zIndex: 25,
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-                  }}
-                >
-                  <GaaIcon name="alert-triangle" size={16} tone="inherit" />
-                  <span>
-                    <strong>NASM Fail-Safe:</strong> Video stream interrupted. Safely rack weights immediately. Do not attempt unmonitored working reps.
-                  </span>
-                </div>
-              )}
+              {/* Adaptive Low-Bandwidth & Tiered NASM Fail-Safe Notice */}
+              <LiveAdaptiveConnectionBanner
+                bannerState={connectionBannerState}
+                effectiveTier={effectiveTier}
+                isCoach={isCoach}
+                failsafeTestId="nasm-connection-failsafe-banner-client"
+                onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
+                onReconnect={handleReconnectStream}
+                onSendOrRequestSnapshot={sendImmediateFormSnapshot}
+              />
 
               {/* 1-Click Swap Button in PiP */}
               {layout === 'pip' && (
@@ -1462,14 +1608,12 @@ export default function LiveVideoCameraHud({
         {/* ── Viewport 2: Right Frame (Athlete initially by default, Coach if swapped, or Model Compare) ── */}
         {showCompareModel ? (
           <div
+            className="teams-stage-tile"
             style={{
-              position: 'relative',
-              width: '100%',
-              minHeight: 380,
               background: 'linear-gradient(180deg, #090F1C 0%, #040812 100%)',
-              borderLeft: '1px solid rgba(212,160,23,0.3)',
-              display: 'flex',
-              flexDirection: 'column',
+              border: '1px solid rgba(212,160,23,0.35)',
+              alignItems: 'stretch',
+              justifyContent: 'flex-start',
               padding: 16,
               boxSizing: 'border-box',
             }}
@@ -1604,7 +1748,7 @@ export default function LiveVideoCameraHud({
               )}
 
               <div style={{ fontSize: 11, color: 'var(--gray)' }}>
-                Target Cadence: <strong style={{ color: 'var(--gold-lt)' }}>{currentTempo}</strong> · OPT™ Phase: {optPhase}
+                Target Cadence: <strong style={{ color: 'var(--gold-lt)' }}>{activeTempoLabel}</strong> · OPT™ Phase: {activeOptPhaseLabel}
               </div>
 
               {movementCard?.embedUrl && (
@@ -1640,17 +1784,7 @@ export default function LiveVideoCameraHud({
           /* ATHLETE ON RIGHT (DEFAULT): Right Frame in Split mode or Full Stage in PiP/Focus */
           <div
             data-testid="athlete-video-container"
-            style={{
-              position: 'relative',
-              width: '100%',
-              height: '100%',
-              minHeight: 380,
-              background: '#080C16',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-            }}
+            className="teams-stage-tile"
           >
             {isCoach ? (
               /* When Coach is viewing HUD, athlete is the remote WebRTC feed */
@@ -1661,6 +1795,16 @@ export default function LiveVideoCameraHud({
                 isConnected={peerConnectionState === 'connected' || isRemoteConnected}
                 isPeerInLobby={Boolean(coachInStudio)}
                 peerLatencyMs={peerLatencyMs}
+                effectiveTier={effectiveTier}
+                networkQuality={networkQuality}
+                snapshotFrameUrl={remoteSnapshot?.url}
+                snapshotTimestamp={remoteSnapshot?.capturedAt}
+                activeExerciseName={activeExerciseLabel}
+                activeTempo={activeTempoLabel}
+                activeCoachCue={syncedCoachCue || activeTeamCue}
+                restRemaining={syncedRestRemaining}
+                onRequestSnapshot={() => bridgeRef.current?.requestPeerSnapshot()}
+                onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
                 onVideoRef={el => {
                   remoteVideoRef.current = el
                 }}
@@ -1730,6 +1874,7 @@ export default function LiveVideoCameraHud({
             {/* 4-Slot Assessment Capture Dropdown & Button Bar */}
             <div
               data-testid="athlete-video-capture-bar"
+              className="teams-capture-pill"
               style={{
                 position: 'absolute',
                 top: 12,
@@ -1824,17 +1969,7 @@ export default function LiveVideoCameraHud({
           /* COACH ON RIGHT (SWAPPED): Coach Stage for Demonstration — STRICTLY NO PLUMB LINE */
           <div
             data-testid="coach-video-container"
-            style={{
-              position: 'relative',
-              width: '100%',
-              height: '100%',
-              minHeight: 380,
-              background: '#080C16',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-            }}
+            className={`teams-stage-tile ${activeRemoteStream ? 'is-live-connected' : ''}`}
           >
             {isCoach ? (
               isCameraActive ? (
@@ -1878,6 +2013,15 @@ export default function LiveVideoCameraHud({
                 isConnected={peerConnectionState === 'connected' || isRemoteConnected}
                 isPeerInLobby={Boolean(coachInStudio)}
                 peerLatencyMs={peerLatencyMs}
+                effectiveTier={effectiveTier}
+                networkQuality={networkQuality}
+                snapshotFrameUrl={remoteSnapshot?.url}
+                snapshotTimestamp={remoteSnapshot?.capturedAt}
+                activeExerciseName={activeExerciseLabel}
+                activeTempo={activeTempoLabel}
+                activeCoachCue={syncedCoachCue || activeTeamCue}
+                restRemaining={syncedRestRemaining}
+                onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
                 onVideoRef={el => {
                   remoteVideoRef.current = el
                 }}
@@ -1921,7 +2065,9 @@ export default function LiveVideoCameraHud({
               />
               <span>
                 {coachName}{' '}
-                {activeRemoteStream
+                {effectiveTier === 'audio_first' && (coachInStudio || peerConnectionState === 'connected')
+                  ? '(Voice + Cues)'
+                  : activeRemoteStream
                   ? '(Live Video)'
                   : coachInStudio
                   ? '(In Studio)'
@@ -1931,35 +2077,16 @@ export default function LiveVideoCameraHud({
               </span>
             </div>
 
-            {/* NASM VCS Disconnection / Immediate Rack Fail-Safe Notice */}
-            {(peerConnectionState === 'disconnected' || peerConnectionState === 'failed') && (
-              <div
-                data-testid="nasm-connection-failsafe-banner-swapped"
-                style={{
-                  position: 'absolute',
-                  bottom: 12,
-                  left: 12,
-                  right: 12,
-                  background: 'rgba(239, 68, 68, 0.94)',
-                  border: '1px solid #FCA5A5',
-                  borderRadius: 6,
-                  padding: '8px 12px',
-                  color: '#FFFFFF',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  zIndex: 25,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-                }}
-              >
-                <GaaIcon name="alert-triangle" size={16} tone="inherit" />
-                <span>
-                  <strong>NASM Fail-Safe:</strong> Video stream interrupted. Safely rack weights immediately. Do not attempt unmonitored working reps.
-                </span>
-              </div>
-            )}
+            {/* Adaptive Low-Bandwidth & Tiered NASM Fail-Safe Notice */}
+            <LiveAdaptiveConnectionBanner
+              bannerState={connectionBannerState}
+              effectiveTier={effectiveTier}
+              isCoach={isCoach}
+              failsafeTestId="nasm-connection-failsafe-banner-swapped"
+              onSwitchBandwidthMode={mode => handleChangeBandwidthMode(mode, true)}
+              onReconnect={handleReconnectStream}
+              onSendOrRequestSnapshot={sendImmediateFormSnapshot}
+            />
 
             {/* Swap Stage Return Button */}
             <button
@@ -2181,6 +2308,7 @@ export default function LiveVideoCameraHud({
             })}
           </div>
         )}
+        </div>
       </div>
 
       {/* ── Telestrator Active Controls Strip (when Telestrator is ON) ── */}
@@ -2732,33 +2860,10 @@ export default function LiveVideoCameraHud({
         </div>
       )}
 
-      {/* ── Bottom HUD Control Bar (Categorized Precision Docks) ── */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'rgba(8,12,22,0.96)',
-          backdropFilter: 'blur(16px)',
-          padding: '10px 16px',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
-          zIndex: 30,
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
+      {/* ── Bottom HUD Control Bar (Microsoft Teams Unified Meeting Command Bar) ── */}
+      <div className="teams-command-bar">
         {/* Dock 1: Hardware & AV Transmission */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'rgba(255,255,255,0.03)',
-            padding: '4px 6px',
-            borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.06)',
-          }}
-        >
+        <div className="teams-dock-cluster">
           <button
             type="button"
             onClick={toggleMic}
@@ -2874,18 +2979,7 @@ export default function LiveVideoCameraHud({
         </div>
 
         {/* Dock 2: Kinematics & Biomechanical Diagnostics */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            flexWrap: 'wrap',
-            background: 'rgba(255,255,255,0.03)',
-            padding: '4px 6px',
-            borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.06)',
-          }}
-        >
+        <div className="teams-dock-cluster">
           {/* Virtual Background Preset Cycler */}
           <button
             type="button"
@@ -3028,17 +3122,7 @@ export default function LiveVideoCameraHud({
 
         {/* Dock 3: Pacing & Tactical Load (when handlers provided) */}
         {(onToggleMetronome || onOpenPlateCalc) && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'rgba(255,255,255,0.03)',
-              padding: '4px 6px',
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
+          <div className="teams-dock-cluster">
             {onToggleMetronome && (
               <button
                 type="button"
@@ -3089,17 +3173,7 @@ export default function LiveVideoCameraHud({
       </div>
 
       {/* ── Fast 1-Tap Verbal Audio Coaching Cues Strip ── */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: 'rgba(4,7,14,0.95)',
-          padding: '8px 14px',
-          overflowX: 'auto',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
+      <div className="teams-cues-strip">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           <span style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             <GaaIcon name="volume" size={12} tone="gold" />

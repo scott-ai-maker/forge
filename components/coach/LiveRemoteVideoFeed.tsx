@@ -2,6 +2,14 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import ForgeIcon from '@/components/ui/ForgeIcon'
+import {
+  BANDWIDTH_PROFILES,
+  captureLowBandwidthSnapshot,
+  formatSnapshotAge,
+  type BandwidthMode,
+  type NetworkQualityGrade,
+  type ResolvedBandwidthTier,
+} from '@/lib/live-bandwidth-profiles'
 
 export interface LiveRemoteVideoFeedProps {
   stream: MediaStream | null
@@ -11,6 +19,16 @@ export interface LiveRemoteVideoFeedProps {
   isPeerInLobby?: boolean
   lobbyWaitSeconds?: number
   peerLatencyMs?: number | null
+  effectiveTier?: ResolvedBandwidthTier
+  networkQuality?: NetworkQualityGrade
+  snapshotFrameUrl?: string | null
+  snapshotTimestamp?: number | null
+  activeExerciseName?: string
+  activeTempo?: string
+  activeCoachCue?: string | null
+  restRemaining?: number | null
+  onRequestSnapshot?: () => void
+  onSwitchBandwidthMode?: (mode: BandwidthMode) => void
   style?: React.CSSProperties
   onVideoRef?: (el: HTMLVideoElement | null) => void
   mirrored?: boolean
@@ -18,12 +36,12 @@ export interface LiveRemoteVideoFeedProps {
 }
 
 /**
- * Enterprise Remote WebRTC Video Player for Live 1:1 Coach Gordon Studio.
+ * Enterprise Remote WebRTC Video & Low-Bandwidth Audio-First Player for Forge Athletic Live Studio.
  * Guaranteed live playback across iOS Safari, WKWebView, Chrome, and Desktop:
+ * - Eliminates black screens when bandwidth drops by tracking true unmuted decoded video frames
+ *   separately from Opus voice tracks and holding a Last-Good-Frame / Periodic Form Snapshot buffer.
+ * - Seamlessly transitions into Audio-First + Form Snapshot Coaching Mode (~36 kbps) on constrained cellular.
  * - Automatically recovers from iOS unmuted autoplay policies by falling back to muted play + tap-to-unmute.
- * - Listens for track onunmute to unfreeze initial video frames immediately upon arrival.
- * - Self-heals when video stalls or pauses unexpectedly.
- * - Displays active lobby waiting room presence when peer is in studio lobby.
  */
 export default function LiveRemoteVideoFeed({
   stream,
@@ -33,6 +51,16 @@ export default function LiveRemoteVideoFeed({
   isPeerInLobby = false,
   lobbyWaitSeconds,
   peerLatencyMs,
+  effectiveTier = 'hd',
+  networkQuality = 'excellent',
+  snapshotFrameUrl = null,
+  snapshotTimestamp = null,
+  activeExerciseName,
+  activeTempo,
+  activeCoachCue,
+  restRemaining,
+  onRequestSnapshot,
+  onSwitchBandwidthMode,
   style,
   onVideoRef,
   mirrored = false,
@@ -42,31 +70,39 @@ export default function LiveRemoteVideoFeed({
   const [isPlaying, setIsPlaying] = useState(false)
   const [isAudioBlocked, setIsAudioBlocked] = useState(false)
   const [hasActiveTracks, setHasActiveTracks] = useState(false)
+  const [hasLiveVideoTrack, setHasLiveVideoTrack] = useState(false)
+  const [hasLiveAudioTrack, setHasLiveAudioTrack] = useState(false)
+  const [hasDecodedFrame, setHasDecodedFrame] = useState(false)
+  const [lastGoodFrame, setLastGoodFrame] = useState<{ url: string; capturedAt: number } | null>(null)
+  const [ageTick, setAgeTick] = useState(0)
 
-  // Safe playback function that gracefully degrades to muted video if iOS/WebKit blocks unmuted audio
+  // Safe playback function that gracefully degrades to muted playback if iOS/WebKit blocks unmuted audio
   const attemptPlay = useCallback(async () => {
     const video = videoRef.current
     if (!video || !stream) return
 
-    // Ensure srcObject is bound
     if (video.srcObject !== stream) {
       video.srcObject = stream
     }
 
     try {
-      // First attempt unmuted playback
       await video.play()
       setIsPlaying(true)
       setIsAudioBlocked(false)
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        setHasDecodedFrame(true)
+      }
     } catch (err: unknown) {
       const errorName = (err as { name?: string })?.name || ''
-      // Browser autoplay policy rejected unmuted video (typical on mobile Safari)
       if (errorName === 'NotAllowedError' || errorName === 'AbortError') {
         try {
           video.muted = true
           await video.play()
           setIsPlaying(true)
           setIsAudioBlocked(true)
+          if (video.videoWidth > 0 && video.videoHeight > 0) {
+            setHasDecodedFrame(true)
+          }
         } catch {
           setIsPlaying(false)
         }
@@ -87,38 +123,54 @@ export default function LiveRemoteVideoFeed({
       setIsAudioBlocked(false)
       setIsPlaying(true)
     } catch {
-      // Keep muted if browser still resists
       video.muted = true
     }
   }, [])
 
-  // Bind stream and listen to track arrivals / unmuting
+  // Bind stream and inspect audio vs video track readiness/mute state
   useEffect(() => {
     const video = videoRef.current
     if (!video || !stream) {
       setHasActiveTracks(false)
+      setHasLiveVideoTrack(false)
+      setHasLiveAudioTrack(false)
+      setHasDecodedFrame(false)
       setIsPlaying(false)
       return
     }
 
     const checkTracks = () => {
       const tracks = stream.getTracks()
-      const active = tracks.some(t => t.readyState === 'live')
-      setHasActiveTracks(active)
-      if (active) {
+      const anyLive = tracks.some(t => t.readyState === 'live')
+      const liveVideo = tracks.some(
+        t => t.kind === 'video' && t.readyState === 'live' && t.enabled !== false && !t.muted
+      )
+      const liveAudio = tracks.some(
+        t => t.kind === 'audio' && t.readyState === 'live' && t.enabled !== false
+      )
+
+      setHasActiveTracks(anyLive)
+      setHasLiveVideoTrack(liveVideo)
+      setHasLiveAudioTrack(liveAudio)
+
+      if (!liveVideo) {
+        setHasDecodedFrame(false)
+      } else if (video.videoWidth > 0 && video.videoHeight > 0) {
+        setHasDecodedFrame(true)
+      }
+
+      if (anyLive) {
         void attemptPlay()
       }
     }
 
     checkTracks()
 
-    // Bind stream to element
     if (video.srcObject !== stream) {
       video.srcObject = stream
     }
     void attemptPlay()
 
-    // Event listeners on stream tracks
     const handleTrackEvent = () => {
       checkTracks()
     }
@@ -144,17 +196,52 @@ export default function LiveRemoteVideoFeed({
     }
   }, [stream, attemptPlay])
 
-  // Periodic liveness check to auto-recover from transient pauses or mobile sleep stalls
+  // Periodic liveness check + Last-Good-Frame freeze buffer so bandwidth dips never flash black
   useEffect(() => {
-    if (!isConnected || !stream) return
+    if (!isConnected && !stream && !snapshotFrameUrl) return
     const interval = setInterval(() => {
+      setAgeTick(t => t + 1)
       const video = videoRef.current
-      if (video && video.paused && hasActiveTracks) {
+      if (video && stream && video.paused && hasActiveTracks) {
         void attemptPlay()
       }
-    }, 2500)
+      if (video && hasLiveVideoTrack && video.videoWidth > 0 && video.videoHeight > 0 && !video.paused) {
+        setHasDecodedFrame(true)
+        const snap = captureLowBandwidthSnapshot(video, 360, 0.5)
+        if (snap) {
+          setLastGoodFrame({ url: snap, capturedAt: Date.now() })
+        }
+      }
+    }, 3000)
     return () => clearInterval(interval)
-  }, [isConnected, stream, hasActiveTracks, attemptPlay])
+  }, [isConnected, stream, snapshotFrameUrl, hasActiveTracks, hasLiveVideoTrack, attemptPlay])
+
+  const isAudioFirstTier = effectiveTier === 'audio_first'
+  const showLiveVideo = Boolean(
+    stream && !isAudioFirstTier && hasLiveVideoTrack && hasDecodedFrame
+  )
+
+  // Pick freshest available fallback keyframe (incoming low-bandwidth snapshot vs cached last video frame)
+  const activeFallbackSnapshot = (() => {
+    if (snapshotFrameUrl && lastGoodFrame) {
+      return (snapshotTimestamp || 0) >= lastGoodFrame.capturedAt
+        ? { url: snapshotFrameUrl, capturedAt: snapshotTimestamp || Date.now() }
+        : lastGoodFrame
+    }
+    if (snapshotFrameUrl) {
+      return { url: snapshotFrameUrl, capturedAt: snapshotTimestamp || Date.now() }
+    }
+    return lastGoodFrame
+  })()
+
+  const isLowBandwidthSession =
+    isAudioFirstTier ||
+    effectiveTier === 'low_data' ||
+    networkQuality === 'constrained' ||
+    networkQuality === 'critical' ||
+    Boolean(!showLiveVideo && (hasLiveAudioTrack || activeFallbackSnapshot || (isConnected && hasActiveTracks)))
+
+  const tierSpec = BANDWIDTH_PROFILES[effectiveTier]
 
   const initials =
     participantName
@@ -162,6 +249,9 @@ export default function LiveRemoteVideoFeed({
       .slice(0, 2)
       .map(p => p[0]?.toUpperCase())
       .join('') || (participantRole === 'Coach' ? 'CG' : 'AT')
+
+  // Reference ageTick so relative snapshot timestamp refreshes smoothly
+  void ageTick
 
   return (
     <div
@@ -181,7 +271,8 @@ export default function LiveRemoteVideoFeed({
       }}
       className={className}
     >
-      {/* Video Element */}
+      {/* Keep <video> mounted whenever stream exists so Opus audio plays & WebRTC video decoder stays warm,
+          while hiding unrendered/muted black frames behind opacity: 0 */}
       {stream ? (
         <video
           ref={el => {
@@ -195,21 +286,313 @@ export default function LiveRemoteVideoFeed({
           data-testid="remote-video-element"
           autoPlay
           playsInline
-          onPlaying={() => setIsPlaying(true)}
+          onLoadedData={e => {
+            const v = e.currentTarget
+            if (v.videoWidth > 0 && v.videoHeight > 0) {
+              setHasDecodedFrame(true)
+            }
+          }}
+          onResize={e => {
+            const v = e.currentTarget
+            if (v.videoWidth > 0 && v.videoHeight > 0) {
+              setHasDecodedFrame(true)
+            }
+          }}
+          onPlaying={e => {
+            setIsPlaying(true)
+            const v = e.currentTarget
+            if (v.videoWidth > 0 && v.videoHeight > 0) {
+              setHasDecodedFrame(true)
+            }
+          }}
           onPause={() => setIsPlaying(false)}
           onWaiting={() => setIsPlaying(false)}
           style={{
+            position: 'absolute',
+            inset: 0,
             width: '100%',
             height: '100%',
             objectFit: 'cover',
             transform: mirrored ? 'scaleX(-1)' : 'none',
-            display: hasActiveTracks ? 'block' : 'none',
+            opacity: showLiveVideo ? 1 : 0,
+            pointerEvents: showLiveVideo ? 'auto' : 'none',
+            transition: 'opacity 0.25s ease',
           }}
         />
       ) : null}
 
-      {/* Standby / Connecting / Lobby Avatar when stream is not active */}
-      {(!stream || !hasActiveTracks) && (
+      {/* Periodic Form Keyframe / Last-Good-Frame Backdrop (Zero Black Screen on Low Bandwidth!) */}
+      {!showLiveVideo && activeFallbackSnapshot && (
+        <div
+          data-testid="low-bandwidth-snapshot-stage"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={activeFallbackSnapshot.url}
+            alt={`${participantName} live form check snapshot`}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: mirrored ? 'scaleX(-1)' : 'none',
+              filter: 'brightness(0.92) contrast(1.03)',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background:
+                'linear-gradient(180deg, rgba(4,7,14,0.35) 0%, rgba(4,7,14,0.08) 45%, rgba(4,7,14,0.78) 100%)',
+              pointerEvents: 'none',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 54,
+              right: 10,
+              background: 'rgba(6, 10, 18, 0.88)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(212, 160, 23, 0.45)',
+              borderRadius: 16,
+              padding: '3px 10px',
+              fontSize: 10,
+              fontWeight: 800,
+              color: 'var(--gold-lt)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: '#10B981',
+                boxShadow: '0 0 6px #10B981',
+              }}
+            />
+            <span>Form Snapshot · {formatSnapshotAge(activeFallbackSnapshot.capturedAt)}</span>
+            {onRequestSnapshot && (
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation()
+                  onRequestSnapshot()
+                }}
+                style={{
+                  marginLeft: 4,
+                  background: 'rgba(212, 160, 23, 0.2)',
+                  border: '1px solid rgba(212, 160, 23, 0.5)',
+                  borderRadius: 10,
+                  color: '#FFF',
+                  fontSize: 9.5,
+                  fontWeight: 800,
+                  padding: '1px 6px',
+                  cursor: 'pointer',
+                }}
+              >
+                Refresh
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Low-Bandwidth / Audio-First Coaching Stage (when video is throttled/starved so client & coach keep training) */}
+      {!showLiveVideo && isLowBandwidthSession && (
+        <div
+          data-testid="low-bandwidth-stage-overlay"
+          style={{
+            position: activeFallbackSnapshot ? 'absolute' : 'relative',
+            bottom: activeFallbackSnapshot ? 10 : undefined,
+            left: activeFallbackSnapshot ? 10 : undefined,
+            right: activeFallbackSnapshot ? 10 : undefined,
+            zIndex: 3,
+            maxWidth: activeFallbackSnapshot ? undefined : 380,
+            margin: activeFallbackSnapshot ? 0 : '0 16px',
+            padding: activeFallbackSnapshot ? '8px 12px' : '18px 20px',
+            borderRadius: 12,
+            background: activeFallbackSnapshot
+              ? 'rgba(6, 10, 18, 0.9)'
+              : 'linear-gradient(145deg, rgba(10, 17, 30, 0.96) 0%, rgba(6, 10, 18, 0.98) 100%)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(16, 185, 129, 0.4)',
+            boxShadow: '0 10px 28px rgba(0,0,0,0.65)',
+            display: 'flex',
+            flexDirection: activeFallbackSnapshot ? 'row' : 'column',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: activeFallbackSnapshot ? 10 : 12,
+            textAlign: activeFallbackSnapshot ? 'left' : 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          {!activeFallbackSnapshot && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #10B981 0%, #065F46 100%)',
+                  border: '2px solid #34D399',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
+                  fontSize: 18,
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  boxShadow: '0 0 18px rgba(16, 185, 129, 0.45)',
+                  flexShrink: 0,
+                }}
+              >
+                {initials}
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 16, color: '#FFF' }}>
+                  {participantName}
+                </div>
+                <div style={{ fontSize: 11, color: '#34D399', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', boxShadow: '0 0 8px #34D399' }} />
+                  <span>
+                    {hasLiveAudioTrack
+                      ? `Live Voice Active · ${tierSpec.shortLabel} (${tierSpec.estimatedKbps})`
+                      : `Low-Bandwidth Coaching · ${tierSpec.shortLabel}`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeFallbackSnapshot && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#10B981',
+                  boxShadow: '0 0 8px #10B981',
+                  flexShrink: 0,
+                }}
+              />
+              <div style={{ fontSize: 11, color: '#E2E8F0', fontWeight: 700 }}>
+                <strong style={{ color: '#34D399' }}>Voice Priority Active</strong> · {tierSpec.shortLabel} ({tierSpec.estimatedKbps})
+              </div>
+            </div>
+          )}
+
+          {/* Synchronized Exercise / Tempo / Rest Telemetry so client trains smoothly without HD video */}
+          {(activeExerciseName || restRemaining != null || activeCoachCue) && (
+            <div
+              style={{
+                width: activeFallbackSnapshot ? 'auto' : '100%',
+                background: 'rgba(212, 160, 23, 0.09)',
+                border: '1px solid rgba(212, 160, 23, 0.3)',
+                borderRadius: 8,
+                padding: activeFallbackSnapshot ? '4px 10px' : '8px 12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+              }}
+            >
+              {activeExerciseName && (
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--gold-lt)' }}>
+                  {activeExerciseName} {activeTempo ? `· Tempo ${activeTempo}` : ''}
+                </div>
+              )}
+              {restRemaining != null && restRemaining > 0 && (
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#34D399', fontFamily: 'monospace' }}>
+                  ⏱ Rest Interval: {restRemaining}s remaining
+                </div>
+              )}
+              {activeCoachCue && (
+                <div style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 600 }}>
+                  &ldquo;{activeCoachCue}&rdquo;
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Action Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {onRequestSnapshot && (
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation()
+                  onRequestSnapshot()
+                }}
+                style={{
+                  padding: '5px 10px',
+                  background: 'rgba(212, 160, 23, 0.18)',
+                  border: '1px solid rgba(212, 160, 23, 0.5)',
+                  borderRadius: 6,
+                  color: 'var(--gold-lt)',
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                Snap Form Check
+              </button>
+            )}
+            {onSwitchBandwidthMode && !isAudioFirstTier && (
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation()
+                  onSwitchBandwidthMode('audio_first')
+                }}
+                style={{
+                  padding: '5px 10px',
+                  background: 'rgba(16, 185, 129, 0.18)',
+                  border: '1px solid rgba(52, 211, 153, 0.5)',
+                  borderRadius: 6,
+                  color: '#34D399',
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                Lock Audio-First
+              </button>
+            )}
+            {onSwitchBandwidthMode && isAudioFirstTier && (
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation()
+                  onSwitchBandwidthMode('auto')
+                }}
+                style={{
+                  padding: '5px 10px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#E2E8F0',
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Resume Auto Video
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Standby / Connecting / Lobby Avatar when peer has not started streaming yet */}
+      {!showLiveVideo && !isLowBandwidthSession && (
         <div style={{ textAlign: 'center', padding: 20, zIndex: 2 }}>
           <div
             style={{
@@ -219,7 +602,6 @@ export default function LiveRemoteVideoFeed({
               margin: '0 auto 14px',
             }}
           >
-            {/* Animated pulsing halo when peer is waiting in lobby */}
             {isPeerInLobby && (
               <div
                 style={{
@@ -304,7 +686,7 @@ export default function LiveRemoteVideoFeed({
               {isPeerInLobby
                 ? `In Studio Lobby Waiting ${lobbyWaitSeconds !== undefined && lobbyWaitSeconds > 0 ? `(${Math.floor(lobbyWaitSeconds / 60)}m ${lobbyWaitSeconds % 60}s)` : ''}`
                 : isConnected
-                ? 'Signal Connected · Awaiting Camera'
+                ? 'Signal Connected · Synchronizing Stream'
                 : 'Standby · Awaiting Remote Stream'}
             </span>
           </div>
@@ -312,7 +694,7 @@ export default function LiveRemoteVideoFeed({
       )}
 
       {/* Live Connection Telemetry Pill */}
-      {hasActiveTracks && peerLatencyMs != null && (
+      {(hasActiveTracks || isLowBandwidthSession) && peerLatencyMs != null && (
         <div
           style={{
             position: 'absolute',
@@ -326,14 +708,23 @@ export default function LiveRemoteVideoFeed({
             fontFamily: 'monospace',
             color: peerLatencyMs < 100 ? '#34D399' : peerLatencyMs < 250 ? '#FBBF24' : '#F87171',
             fontWeight: 700,
-            zIndex: 3,
+            zIndex: 4,
             display: 'flex',
             alignItems: 'center',
             gap: 4,
           }}
         >
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: peerLatencyMs < 100 ? '#34D399' : '#FBBF24' }} />
-          <span>{peerLatencyMs}ms RTT</span>
+          <span
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              background: peerLatencyMs < 100 ? '#34D399' : peerLatencyMs < 250 ? '#FBBF24' : '#F87171',
+            }}
+          />
+          <span>
+            {peerLatencyMs}ms · {tierSpec.shortLabel}
+          </span>
         </div>
       )}
 
@@ -372,7 +763,7 @@ export default function LiveRemoteVideoFeed({
       )}
 
       {/* Stalled Video 1-Tap Resume Overlay */}
-      {!isPlaying && hasActiveTracks && stream && (
+      {!isPlaying && showLiveVideo && stream && (
         <button
           type="button"
           onClick={e => {
@@ -417,4 +808,3 @@ export default function LiveRemoteVideoFeed({
     </div>
   )
 }
-

@@ -79,42 +79,62 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
         actions={<LogoutButton />}
       />
 
-      <div style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(14px, 2.5vw, 24px) clamp(8px, 1.8vw, 16px)' }}>
-        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 12,
-              backgroundImage: "url('/images/brand/forge-crest-mark.png')",
-              backgroundSize: 'contain',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              backgroundColor: '#060A14',
-              border: '2px solid var(--gold)',
-              boxShadow: '0 0 20px rgba(197,160,89,0.45)',
-              flexShrink: 0,
-            }}
-          />
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                {isTeamSession ? `Forge Athletic · Team Telehealth Studio · ${team?.name}` : 'Forge Athletic · Live Telehealth Studio'}
-              </span>
+      <div style={{ maxWidth: 1720, margin: '0 auto', padding: 'clamp(8px, 1.5vw, 16px) clamp(6px, 1.4vw, 16px)' }}>
+        <div
+          style={{
+            marginBottom: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 10,
+                backgroundImage: "url('/images/brand/forge-crest-mark.png')",
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundColor: '#060A14',
+                border: '1.5px solid var(--gold)',
+                boxShadow: '0 0 16px rgba(197,160,89,0.4)',
+                flexShrink: 0,
+              }}
+            />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
+                  {isTeamSession ? `Forge Athletic · Team Telehealth Studio · ${team?.name}` : 'Forge Athletic · Live Telehealth Studio'}
+                </span>
+              </div>
+              <h1
+                style={{
+                  fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
+                  fontSize: 'clamp(1.05rem, 0.85rem + 1vw, 1.5rem)',
+                  letterSpacing: '0.04em',
+                  margin: '1px 0 0',
+                  color: 'var(--white)',
+                  lineHeight: 1.2,
+                }}
+              >
+                {isTeamSession ? `${team?.name.toUpperCase()} · SQUAD LIVE COACHING` : '1:1 LIVE COACHING & MOVEMENT HUD'}
+              </h1>
+              <p style={{ margin: '2px 0 0', color: 'var(--gray)', fontSize: 12, lineHeight: 1.35 }}>
+                {isTeamSession
+                  ? `Direct interactive squad video feed with ${coachName} and fellow teammates. Follow synchronized interval pacing, tempo pulse, and tactical form cues.`
+                  : `Direct interactive video feed with ${coachName}. Follow live pacing, joint alignment guides, and prescribed set cadences.`}
+              </p>
             </div>
-            <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 26, letterSpacing: '0.04em', margin: '2px 0 0', color: 'var(--white)' }}>
-              {isTeamSession ? `${team?.name.toUpperCase()} · SQUAD LIVE COACHING` : '1:1 LIVE COACHING & MOVEMENT HUD'}
-            </h1>
-            <p style={{ margin: '2px 0 0', color: 'var(--gray)', fontSize: 13 }}>
-              {isTeamSession
-                ? `Direct interactive squad video feed with ${coachName} and fellow teammates. Follow synchronized interval pacing, tempo pulse, and tactical form cues.`
-                : `Direct interactive video feed with ${coachName}. Follow live pacing, joint alignment guides, and prescribed set cadences.`}
-            </p>
           </div>
         </div>
 
         {/* Live Video Camera HUD */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 16 }}>
           <LiveVideoCameraHud
             coachName={coachName}
             clientName={athleteName}

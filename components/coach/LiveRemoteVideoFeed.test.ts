@@ -136,5 +136,70 @@ describe('components/coach/LiveRemoteVideoFeed', () => {
     expect(getLatencyColor(250)).toBe('#F87171')
     expect(getLatencyColor(450)).toBe('#F87171')
   })
+
+  it('prevents black screens when remote video track is bandwidth-muted or in audio_first mode while audio stays live', () => {
+    function computeFeedVisibility({
+      videoReady,
+      videoMuted,
+      videoEnabled,
+      hasDecodedFrame,
+      effectiveTier,
+    }: {
+      videoReady: boolean
+      videoMuted: boolean
+      videoEnabled: boolean
+      hasDecodedFrame: boolean
+      effectiveTier: 'hd' | 'sd' | 'low_data' | 'audio_first'
+    }) {
+      const hasLiveVideoTrack = videoReady && !videoMuted && videoEnabled
+      const isAudioFirstMode = effectiveTier === 'audio_first'
+      const showLiveVideo = hasLiveVideoTrack && hasDecodedFrame && !isAudioFirstMode
+      return { hasLiveVideoTrack, showLiveVideo }
+    }
+
+    // Healthy HD stream with decoded frames -> show live video
+    expect(
+      computeFeedVisibility({
+        videoReady: true,
+        videoMuted: false,
+        videoEnabled: true,
+        hasDecodedFrame: true,
+        effectiveTier: 'hd',
+      }).showLiveVideo
+    ).toBe(true)
+
+    // Bandwidth-starved track (WebRTC sets track.muted = true while readyState stays 'live') -> hide black video, show coaching/snapshot stage
+    expect(
+      computeFeedVisibility({
+        videoReady: true,
+        videoMuted: true,
+        videoEnabled: true,
+        hasDecodedFrame: true,
+        effectiveTier: 'low_data',
+      }).showLiveVideo
+    ).toBe(false)
+
+    // Stream attached before first frame decoded (videoWidth === 0) -> hide black video
+    expect(
+      computeFeedVisibility({
+        videoReady: true,
+        videoMuted: false,
+        videoEnabled: true,
+        hasDecodedFrame: false,
+        effectiveTier: 'sd',
+      }).showLiveVideo
+    ).toBe(false)
+
+    // Intentional Audio-First (~36 kbps) mode -> hide paused video element, show Audio + Snapshot Coaching Stage
+    expect(
+      computeFeedVisibility({
+        videoReady: true,
+        videoMuted: false,
+        videoEnabled: true,
+        hasDecodedFrame: true,
+        effectiveTier: 'audio_first',
+      }).showLiveVideo
+    ).toBe(false)
+  })
 })
 

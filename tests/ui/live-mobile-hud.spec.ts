@@ -58,4 +58,42 @@ test.describe('Mobile 1:1 Live Coaching Studio HUD Responsive Suite', () => {
     await expect(page.getByRole('button', { name: /LOG SET/i })).toBeVisible()
     await page.screenshot({ path: 'test-results/mobile-live-studio-workout.png' })
   })
+
+  test('adapts Microsoft Teams responsive shell across mobile split-stack, half-screen window, and widescreen collapsible Workout Pane', async ({ page }) => {
+    // 1. Mobile 393px in SPLIT mode: stacks both participant cards full-width vertically instead of 180px slivers
+    await page.setViewportSize({ width: 393, height: 852 })
+    await page.goto('/test-harness/live-mobile')
+    await expect(page.getByText('LIVE COCKPIT')).toBeVisible({ timeout: 15000 })
+
+    await page.getByRole('button', { name: 'SPLIT', exact: true }).click()
+    const coachMobileBox = await page.locator('[data-testid="coach-video-container"]').boundingBox()
+    const athleteMobileBox = await page.locator('[data-testid="athlete-video-container"]').boundingBox()
+    expect(coachMobileBox!.width).toBeGreaterThan(350)
+    expect(athleteMobileBox!.width).toBeGreaterThan(350)
+    expect(athleteMobileBox!.y).toBeGreaterThan(coachMobileBox!.y + 100)
+
+    // 2. Half-screen / Tablet Split Window (820x900): Workout Pane auto-collapses so stage gets full width, and toggles as slide-over drawer
+    await page.setViewportSize({ width: 820, height: 900 })
+    const sidePane = page.locator('[data-testid="live-workout-side-pane"]')
+    const paneToggleBtn = page.locator('[data-testid="toggle-workout-pane-btn"]')
+    await expect(paneToggleBtn).toBeVisible()
+    await expect(sidePane).not.toBeVisible()
+
+    // Open slide-over Workout Pane on 820px split-screen without shrinking video stage width
+    const stageBeforeDrawer = await page.locator('.teams-stage-column').boundingBox()
+    await paneToggleBtn.click()
+    await expect(sidePane).toBeVisible()
+    const stageDuringDrawer = await page.locator('.teams-stage-column').boundingBox()
+    expect(stageDuringDrawer!.width).toBeGreaterThanOrEqual(stageBeforeDrawer!.width - 4)
+
+    // 3. Widescreen Desktop (1440x900): Side-by-side 2-up gallery + docked Workout Pane that collapses to full theater width
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await expect(sidePane).toBeVisible()
+    const stageDocked = await page.locator('.teams-stage-column').boundingBox()
+
+    await paneToggleBtn.click()
+    await expect(sidePane).not.toBeVisible()
+    const stageTheater = await page.locator('.teams-stage-column').boundingBox()
+    expect(stageTheater!.width).toBeGreaterThan(stageDocked!.width + 250)
+  })
 })
