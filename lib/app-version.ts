@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.49.1'
-export const APP_RELEASE_DATE = '2026-11-11'
-export const APP_RELEASE_CODENAME = '267-Movement NASM Biomechanical Video Alignment & AI Loop Safety Disclaimers'
+export const APP_VERSION = '1.50.0'
+export const APP_RELEASE_DATE = '2026-11-13'
+export const APP_RELEASE_CODENAME = 'Founding Launch Diagnostics, Partner Pass & Interactive Lab Sandbox'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.50.0',
+    date: '2026-11-13',
+    codename: 'Founding Launch Diagnostics, Partner Pass & Interactive Lab Sandbox',
+    category: 'feature',
+    badge: 'Pre-Launch Release',
+    title: 'v1.50.0 — Desk Ergonomics Audit, 30s Readiness Bridge, Partner Pass & Interactive Lab Sandbox',
+    summary:
+      'Delivers the complete Forge Athletic Founding Launch suite ahead of Friday, November 20, 2026: 33-point Desk Ergonomics Camera Audit, Pre-Workout 30-Second Readiness Check with warm-up auto-injection, Founding Partner Pass viral invites, centralized tier entitlements with contextual upgrade triggers, 375px mobile dashboard polish, and an interactive 4-tab browser sandbox.',
+    highlights: [
+      'Signature Vision Diagnostics & Partner Pass: Added <DeskErgonomicsAudit /> (4 seated landmark angles, plumb line, 0–100 score, and 5-Min Desk Reset flag sync), <CameraReadinessCheck /> nested in the Pre-Workout Overview with 90s Express warm-up auto-injection, and <PartnerPassModal /> + /invite/[code] 30-day guest pass claims.',
+      'Value-First Tier Gating & Contextual Upgrade Triggers: Centralized Core Lab ($19.99/mo), Plus ($49/mo), and Coach Support ($199/mo, capped at 25) entitlements with <TierPreviewSwitcher /> and <TierUpgradeModal /> across all 5 high-intent milestones.',
+      '375px Mobile Dashboard & Interactive Landing CRO: Enforced <=230px above-the-fold Hero + collapsible Joint Comfort Score strip, full-screen touch-isolated Posture Comparison modal, snap-scroll 5-Phase OPT™ Roadmap, 4-tab <AppSneakPeekShowcase /> hardware bezel, Founding Rate Lock pricing suite, and verified member outcome cards.',
+    ],
+  },
   {
     version: '1.49.1',
     date: '2026-11-11',

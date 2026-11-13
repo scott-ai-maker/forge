@@ -1,17 +1,48 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Monitor,
+  Plane,
+  ScanLine,
+  ShieldCheck,
+  Sparkles,
+  Video,
+  X,
+  Zap,
+} from 'lucide-react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import type { DashboardWorkspace } from '@/lib/validation'
 import { getMembershipDisplayName } from '@/lib/forge-memberships'
-import PrescribedToolboxBanner from '@/components/fitness/PrescribedToolboxBanner'
-import ReferralDashboardWidget from '@/components/referrals/ReferralDashboardWidget'
 import type { DossierMetrics } from '@/lib/sunday-dossier-engine'
-import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from '@/lib/nasm-generated-images'
-import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import { generateIcsCalendar, downloadIcsFile } from '@/lib/calendar-sync'
+import DeskErgonomicsAudit from '@/components/fitness/DeskErgonomicsAudit'
+import DeskResetModal, { DeskResetSlotCard } from '@/components/fitness/DeskResetModal'
+import JointComfortScoreStrip from '@/components/fitness/JointComfortScoreStrip'
+import PostureComparisonCard from '@/components/fitness/PostureComparisonCard'
+import OptPhaseRoadmap from '@/components/fitness/OptPhaseRoadmap'
+import PartnerPassModal from '@/components/referrals/PartnerPassModal'
+import TierUpgradeModal from '@/components/packages/TierUpgradeModal'
+import TierPreviewSwitcher from '@/components/settings/TierPreviewSwitcher'
+import { usePartnerPass } from '@/lib/partner-pass'
+import {
+  ENVIRONMENT_PROFILE_META,
+  EnvironmentProfileId,
+  ErgonomicFlag,
+  loadPostureProfileState,
+  POSTURE_PROFILE_EVENT,
+  recordEnvironmentSelection,
+  setExpressModeActive,
+} from '@/lib/posture-profile-state'
+import {
+  getUpgradeTriggerCopy,
+  UpgradeTriggerId,
+  useTierAccess,
+} from '@/lib/tierEntitlements'
 
 export interface ExecutiveCommandCenterClientProps {
   clientName: string
@@ -36,8 +67,21 @@ export interface ExecutiveCommandCenterClientProps {
   isOnboardingCompleted?: boolean
   isOnboardingStarted?: boolean
   dossier: DossierMetrics
-  packages: Array<{ id: string; package_name: string; purchased_at: string; sessions_remaining: number; sessions_total: number; expires_at?: string | null }>
-  sessions: Array<{ id: string; scheduled_at: string; duration_mins?: number | null; notes?: string | null; status?: string | null }>
+  packages: Array<{
+    id: string
+    package_name: string
+    purchased_at: string
+    sessions_remaining: number
+    sessions_total: number
+    expires_at?: string | null
+  }>
+  sessions: Array<{
+    id: string
+    scheduled_at: string
+    duration_mins?: number | null
+    notes?: string | null
+    status?: string | null
+  }>
   totalRemaining: number
   initialWorkspace?: DashboardWorkspace
   activeLiveSessionHref?: string | null
@@ -76,6 +120,13 @@ export function getBaselineOnboardingBannerState(params: {
   }
 }
 
+const ENVIRONMENT_OPTIONS: EnvironmentProfileId[] = [
+  'home_gym',
+  'full_gym',
+  'hotel_travel',
+  'bodyweight_only',
+]
+
 export default function ExecutiveCommandCenterClient({
   clientName,
   activePackage,
@@ -100,17 +151,53 @@ export default function ExecutiveCommandCenterClient({
   activeLiveSessionHref,
 }: ExecutiveCommandCenterClientProps) {
   const [hasLocalDraft, setHasLocalDraft] = useState(false)
+  const [expressMode, setExpressMode] = useState(false)
+  const [environmentProfile, setEnvironmentProfile] = useState<EnvironmentProfileId>('home_gym')
+
+  // Modal states
+  const [deskAuditOpen, setDeskAuditOpen] = useState(false)
+  const [deskResetOpen, setDeskResetOpen] = useState(false)
+  const [deskResetFlags, setDeskResetFlags] = useState<ErgonomicFlag[] | undefined>(undefined)
+  const [postureCheckOpen, setPostureCheckOpen] = useState(false)
+  const [partnerPassOpen, setPartnerPassOpen] = useState(false)
+  const [upgradeTrigger, setUpgradeTrigger] = useState<UpgradeTriggerId | null>(null)
+
+  const deskAuditDialogRef = useRef<HTMLDialogElement | null>(null)
+  const deskAuditHeadingId = useId()
+
+  const { tierId, entitlements, remainingFormLabCredits, shouldShowTrigger } = useTierAccess()
+  const { tileStatusLabel: partnerPassStatusLabel } = usePartnerPass(clientName)
 
   useEffect(() => {
     try {
-      const draft = typeof window !== 'undefined' ? localStorage.getItem('gaa_baseline_onboarding_draft') : null
-      if (draft) {
-        setHasLocalDraft(true)
-      }
+      const draft =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('gaa_baseline_onboarding_draft')
+          : null
+      if (draft) setHasLocalDraft(true)
     } catch {
-      // ignore storage check errors
+      // ignore
     }
+
+    const sync = () => {
+      const state = loadPostureProfileState()
+      setExpressMode(state.expressModeActive)
+      setEnvironmentProfile(state.environmentProfile)
+    }
+    sync()
+    window.addEventListener(POSTURE_PROFILE_EVENT, sync)
+    return () => window.removeEventListener(POSTURE_PROFILE_EVENT, sync)
   }, [])
+
+  useEffect(() => {
+    const dialog = deskAuditDialogRef.current
+    if (!dialog) return
+    if (deskAuditOpen && !dialog.open) {
+      dialog.showModal()
+    } else if (!deskAuditOpen && dialog.open) {
+      dialog.close()
+    }
+  }, [deskAuditOpen])
 
   const onboardingBannerState = getBaselineOnboardingBannerState({
     isOnboardingCompleted,
@@ -119,496 +206,469 @@ export default function ExecutiveCommandCenterClient({
     hasLocalDraft,
   })
 
-  const nextSession = sessions && sessions.length > 0
-    ? sessions.find(s => s.status === 'scheduled' && new Date(s.scheduled_at) >= new Date()) || sessions[0]
-    : null
+  const nextSession =
+    sessions && sessions.length > 0
+      ? sessions.find(s => s.status === 'scheduled' && new Date(s.scheduled_at) >= new Date()) ||
+        sessions[0]
+      : null
 
-  const initials = clientName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p: string) => p[0]?.toUpperCase())
-    .join('') || 'SG'
+  const promoteDeskResetToHero = !activeWorkout || isWorkoutCompleted
+  const estimatedMins = expressMode
+    ? 20
+    : activeWorkoutDurationMins || latestPlan?.estimated_duration_mins || 45
+
+  const handleToggleExpress = () => {
+    const next = !expressMode
+    setExpressMode(next)
+    setExpressModeActive(next)
+    triggerHaptic('tap')
+  }
+
+  const handleEnvironmentChange = (nextEnv: EnvironmentProfileId) => {
+    setEnvironmentProfile(nextEnv)
+    const { triggeredConsecutiveTravel } = recordEnvironmentSelection(nextEnv)
+    if (
+      triggeredConsecutiveTravel &&
+      !entitlements.multiDayTravelPass &&
+      shouldShowTrigger('consecutive_travel_swaps')
+    ) {
+      setUpgradeTrigger('consecutive_travel_swaps')
+    }
+  }
+
+  const handleScheduleMultiDayTrip = () => {
+    if (!entitlements.multiDayTravelPass) {
+      setUpgradeTrigger('consecutive_travel_swaps')
+      return
+    }
+    setEnvironmentProfile('hotel_travel')
+    recordEnvironmentSelection('hotel_travel')
+  }
+
+  const postScanCopy = getUpgradeTriggerCopy('post_scan_flag', tierId)
+
+  const TodayWorkoutHeroCard = (
+    <section
+      aria-label="Today's Workout"
+      className="rounded-xl border border-amber-400/45 p-3.5 text-slate-100 shadow-lg"
+      style={{
+        maxHeight: 228,
+        background:
+          'linear-gradient(135deg, rgba(212, 160, 23, 0.16) 0%, rgba(8, 14, 24, 0.97) 100%)',
+      }}
+    >
+      {/* Top Row: Eyebrow + 20m Express + Environment Profile Pill */}
+      <div className="flex flex-wrap items-center justify-between gap-1.5">
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.11em] text-amber-300">
+          <GaaIcon name="barbell" size={14} tone="gold" />
+          Today&apos;s Workout
+        </span>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-pressed={expressMode}
+            onClick={handleToggleExpress}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider transition ${
+              expressMode
+                ? 'bg-amber-400 text-slate-950'
+                : 'border border-white/20 bg-white/5 text-slate-200 hover:bg-white/10'
+            }`}
+          >
+            <Zap size={10} /> 20m Express
+          </button>
+
+          <select
+            value={environmentProfile}
+            onChange={e => handleEnvironmentChange(e.target.value as EnvironmentProfileId)}
+            aria-label="Training environment profile"
+            style={{ fontSize: 16 }}
+            className="h-6 rounded-full border border-white/20 bg-slate-950/90 px-2 text-xs font-bold text-slate-200"
+          >
+            {ENVIRONMENT_OPTIONS.map(opt => (
+              <option key={opt} value={opt}>
+                {ENVIRONMENT_PROFILE_META[opt].shortLabel}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Middle Row: Focus Title & Compact Meta */}
+      <div className="mt-2 flex items-baseline justify-between gap-2">
+        <h1 className="truncate font-serif text-base font-bold tracking-wide text-white sm:text-lg">
+          {activeWorkout
+            ? `Day ${activeWorkout.day}: ${activeWorkout.focus}`
+            : 'Full-Body Joint-First Strength'}
+        </h1>
+        <span className="shrink-0 font-mono text-[11px] text-slate-300">
+          {activeDayExerciseCount || 5} lifts · ~{estimatedMins}m
+        </span>
+      </div>
+
+      <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-slate-400">
+        <span className="truncate">
+          {currentPlanPhase}
+          {activePackage ? ` · ${getMembershipDisplayName(activePackage.package_name)}` : ''}
+        </span>
+        <button
+          type="button"
+          onClick={handleScheduleMultiDayTrip}
+          className="inline-flex shrink-0 items-center gap-1 font-semibold text-sky-300 hover:underline"
+        >
+          <Plane size={11} /> Schedule Multi-Day Trip
+        </button>
+      </div>
+
+      {/* Primary Start Workout CTA -> Opens Pre-Workout Overview w/ Readiness Check */}
+      <Link
+        href="/dashboard/fitness?workspace=train&startWorkout=1"
+        onClick={() => triggerHaptic('tap')}
+        className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-400 px-3.5 py-2.5 text-xs font-extrabold uppercase tracking-wider text-slate-950 transition hover:bg-amber-300"
+      >
+        {isWorkoutInProgress
+          ? `Resume Workout (${activeDayLoggedWorkingSets}/${activeDayTotalTargetSets || '-'})`
+          : 'Start Workout'}
+        <ArrowRight size={14} />
+      </Link>
+    </section>
+  )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, containerType: 'inline-size' }}>
-      {/* ── 0a. Active Live Session Alert Banner ── */}
-      {activeLiveSessionHref && (
-        <div
-          style={{
-            background: 'linear-gradient(135deg, rgba(16,185,129,0.22) 0%, rgba(8,14,24,0.96) 100%)',
-            border: '1.5px solid #10B981',
-            borderRadius: 10,
-            padding: '12px 14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 10,
-            boxShadow: '0 0 20px rgba(16, 185, 129, 0.25)',
-          }}
-        >
-          <div style={{ minWidth: 0, flex: '1 1 200px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#34D399', fontWeight: 800 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
-              <span>Live Studio Active</span>
-            </div>
-            <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 15, color: '#FFFFFF', marginTop: 2, fontWeight: 700 }}>
-              Coach Gordon is in your live studio
-            </div>
+    <div
+      className="flex flex-col gap-3 pb-24"
+      style={{
+        containerType: 'inline-size',
+        paddingBottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))',
+      }}
+    >
+      {/* Active Live Studio Alert (only when coach is live) */}
+      {activeLiveSessionHref ? (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-400 bg-emerald-500/15 px-3 py-2 text-slate-100">
+          <div className="min-w-0 text-xs font-bold text-emerald-200">
+            Live Studio Active · Coach Gordon is ready
           </div>
           <Link
             href={activeLiveSessionHref}
-            className="tactile-btn"
-            style={{
-              padding: '9px 14px',
-              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-              color: '#FFFFFF',
-              borderRadius: 6,
-              fontFamily: 'var(--font-sans, Raleway), sans-serif',
-              textTransform: 'uppercase',
-              fontSize: 11.5,
-              letterSpacing: '0.06em',
-              fontWeight: 800,
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-            onClick={() => triggerHaptic('tap')}
+            className="shrink-0 rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-extrabold uppercase text-slate-950"
           >
-            <GaaIcon name="camera" size={14} tone="inherit" />
-            <span>Join Now →</span>
+            Join →
           </Link>
         </div>
+      ) : null}
+
+      {/* Tier 1: Above-the-Fold Hero (<=230px on 375px) + Dynamic Rest-Day Slot */}
+      {promoteDeskResetToHero ? (
+        <>
+          <DeskResetSlotCard
+            promotedHero
+            onLaunchReset={() => {
+              setDeskResetFlags(undefined)
+              setDeskResetOpen(true)
+            }}
+          />
+          <JointComfortScoreStrip />
+          {activeWorkout && isWorkoutCompleted ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-slate-100">
+              <span>
+                <strong className="text-emerald-300">✓ Day {activeWorkout.day} Complete</strong>
+                {totalVolumeMovedLbs > 0 ? ` · ${totalVolumeMovedLbs.toLocaleString()} lbs` : ''}
+              </span>
+              <Link
+                href="/dashboard/fitness?workspace=train"
+                className="font-bold text-emerald-300 hover:underline"
+              >
+                Summary →
+              </Link>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <>
+          {TodayWorkoutHeroCard}
+          {/* Immediately followed by Collapsible 1-Row Joint Comfort Score Strip */}
+          <JointComfortScoreStrip />
+          {/* Compact Horizontal Desk Reset Banner on Active Pre-Workout Days */}
+          <DeskResetSlotCard
+            promotedHero={false}
+            onLaunchReset={() => {
+              setDeskResetFlags(undefined)
+              setDeskResetOpen(true)
+            }}
+          />
+        </>
       )}
 
-      {/* ── 0. Baseline Onboarding Banner ── */}
-      {onboardingBannerState && (
-        <div
-          style={{
-            background: onboardingBannerState.title.startsWith('CONTINUE')
-              ? 'linear-gradient(135deg, rgba(212,160,23,0.18) 0%, rgba(14,23,36,0.95) 100%)'
-              : 'linear-gradient(135deg, rgba(212,160,23,0.14) 0%, rgba(14,23,36,0.95) 100%)',
-            border: '1px solid rgba(212,160,23,0.5)',
-            borderRadius: 10,
-            padding: '12px 14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 10,
-          }}
-        >
-          <div style={{ minWidth: 0, flex: '1 1 200px' }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
+      {/* Optional Baseline Setup Banner */}
+      {onboardingBannerState ? (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3.5 py-2.5 text-slate-100">
+          <div className="min-w-0">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
               {onboardingBannerState.eyebrow}
             </div>
-            <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 15, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.03em' }}>
+            <div className="truncate text-xs font-bold text-white">
               {onboardingBannerState.title}
-            </h4>
+            </div>
           </div>
           <Link
             href={onboardingBannerState.href}
-            className="sgf-button sgf-button-primary"
-            style={{ padding: '8px 14px', fontSize: 11.5, textDecoration: 'none' }}
+            className="shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950"
           >
             {onboardingBannerState.buttonText}
           </Link>
         </div>
-      )}
+      ) : null}
 
-      {/* ── 1. Compact Athlete Identity Bar ── */}
-      <div
-        style={{
-          background: 'rgba(13, 22, 36, 0.9)',
-          border: '1px solid rgba(212,160,23,0.25)',
-          borderRadius: 10,
-          padding: '10px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 10,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 19,
-              background: 'linear-gradient(135deg, #D4AF37 0%, #8A6508 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-              fontSize: 15,
-              color: '#0A0E18',
-              fontWeight: 800,
-              flexShrink: 0,
-            }}
+      {/* Tier 2: Static Posture Delta Summary Card (Tapping opens Full-Screen Touch Modal) */}
+      <PostureComparisonCard
+        externalModalOpen={postureCheckOpen}
+        onExternalModalClose={() => setPostureCheckOpen(false)}
+      />
+
+      {/* Tier 3: Horizontal Snap-Scroll 5-Phase OPT Roadmap (min-w-[132px] per node) */}
+      <OptPhaseRoadmap
+        activePhaseNumber={latestPlan?.nasm_opt_phase || 2}
+        unlockedThroughPhase={Math.max(2, latestPlan?.nasm_opt_phase || 2)}
+      />
+
+      {/* Tier 4: Quick Utility Tiles in grid-cols-2 gap-3 */}
+      <section aria-label="Quick Diagnostic & Partner Tools">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-slate-400">
+            Quick Tools &amp; Diagnostics
+          </span>
+          <span className="text-[11px] font-semibold text-amber-300">{entitlements.name}</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {/* Tile 1: Desk Ergonomics Audit */}
+          <button
+            type="button"
+            onClick={() => setDeskAuditOpen(true)}
+            className="flex flex-col items-start justify-between rounded-xl border border-white/10 bg-[#0A121E] p-3 text-left transition hover:border-amber-400/40"
           >
-            {initials}
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(17px, 2.8vw, 22px)', color: '#FFFFFF', margin: 0, letterSpacing: '0.03em', lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {clientName}
-            </h1>
-            <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--gray)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {currentPlanPhase}{activePackage ? ` · ${getMembershipDisplayName(activePackage.package_name)}` : ''}
-            </p>
-          </div>
-        </div>
-
-        <Link
-          href="/dashboard/messages"
-          className="tactile-btn"
-          style={{
-            padding: '7px 12px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.16)',
-            borderRadius: 6,
-            color: 'var(--white)',
-            fontSize: 11.5,
-            fontWeight: 700,
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            flexShrink: 0,
-          }}
-          onClick={() => triggerHaptic('tap')}
-        >
-          <GaaIcon name="message" size={13} tone="gold" />
-          <span>Coach</span>
-        </Link>
-      </div>
-
-      {/* ── 2. Today's Primary Training Mission (Hero Action Card) ── */}
-      <Link
-        href="/dashboard/fitness?workspace=train"
-        className="tactile-btn luxury-card-interactive"
-        style={{
-          background: isWorkoutCompleted
-            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(8, 14, 24, 0.96) 100%)'
-            : isWorkoutInProgress
-              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(8, 14, 24, 0.96) 100%)'
-              : 'linear-gradient(135deg, rgba(212, 160, 23, 0.14) 0%, rgba(8, 14, 24, 0.96) 100%)',
-          border: isWorkoutCompleted
-            ? '1.5px solid rgba(52, 211, 153, 0.55)'
-            : isWorkoutInProgress
-              ? '1.5px solid rgba(245, 158, 11, 0.65)'
-              : '1.5px solid rgba(197, 160, 89, 0.5)',
-          borderRadius: 12,
-          padding: '14px 16px',
-          textDecoration: 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-        }}
-        onClick={() => triggerHaptic('tap')}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <GaaIcon name="barbell" size={17} tone={isWorkoutCompleted ? 'emerald' : isWorkoutInProgress ? 'amber' : 'gold'} />
-            <span style={{ fontFamily: 'Raleway, sans-serif', fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: isWorkoutCompleted ? '#34D399' : 'var(--gold-lt)' }}>
-              Today&apos;s Workout
-            </span>
-          </div>
-          {isWorkoutCompleted ? (
-            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#10B981', background: 'rgba(16, 185, 129, 0.18)', border: '1px solid rgba(52, 211, 153, 0.4)', padding: '2px 8px', borderRadius: 4 }}>
-              ✓ Day {activeWorkout?.day || 1} Done
-            </span>
-          ) : isWorkoutInProgress ? (
-            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.4)', padding: '2px 8px', borderRadius: 4 }}>
-              {activeDayLoggedWorkingSets}/{activeDayTotalTargetSets || '-'} Sets
-            </span>
-          ) : activeWorkout ? (
-            <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#080E14', background: 'var(--gold-lt)', padding: '2px 8px', borderRadius: 4 }}>
-              Day {activeWorkout.day}
-            </span>
-          ) : null}
-        </div>
-
-        {(() => {
-          const leadExerciseName = activeWorkout?.exercises?.[0]?.name
-          const leadCard = leadExerciseName ? getNasmClinicalMovementCard(leadExerciseName) : null
-          const leadExerciseImg = leadCard?.imageUrl || (leadExerciseName ? resolveGaaExerciseImage(leadExerciseName, false) : null) || (leadExerciseName ? BRAND_LOGO_FALLBACK_IMAGE : null)
-          return (
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              {leadExerciseImg && (
-                <div
-                  aria-hidden="true"
-                  style={{
-                    position: 'relative',
-                    width: 48,
-                    height: 48,
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                    backgroundColor: '#070B14',
-                    border: '1px solid rgba(212,160,23,0.35)',
-                  }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={leadExerciseImg}
-                    alt={leadExerciseName || 'Exercise'}
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = BRAND_LOGO_FALLBACK_IMAGE
-                    }}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center',
-                      display: 'block',
-                    }}
-                  />
-                </div>
-              )}
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(16px, 2.8vw, 19px)', color: '#FFFFFF', letterSpacing: '0.03em', lineHeight: 1.2, fontWeight: 700 }}>
-                  {activeWorkout ? `DAY ${activeWorkout.day}: ${activeWorkout.focus.toUpperCase()}` : 'OPEN WORKOUT LOGGER'}
-                </div>
-                <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.35, marginTop: 2 }}>
-                  {activeWorkout ? (
-                    isWorkoutCompleted ? (
-                      totalVolumeMovedLbs > 0
-                        ? `${totalVolumeMovedLbs.toLocaleString()} lbs moved · ${activeDayLoggedWorkingSets} working sets`
-                        : `${activeDayExerciseCount} exercises completed`
-                    ) : (
-                      `${activeDayExerciseCount} exercises · ~${activeWorkoutDurationMins || latestPlan?.estimated_duration_mins || 60}m`
-                    )
-                  ) : (
-                    'Log sets, track rest timers, and follow your phase plan.'
-                  )}
-                </div>
+            <Monitor size={18} className="text-emerald-300" />
+            <div className="mt-2 min-w-0 w-full">
+              <div className="truncate text-xs font-bold text-white">Desk Ergonomics Audit</div>
+              <div className="truncate text-[11px] text-slate-400">
+                Seated angle scan &amp; 3 fixes
               </div>
             </div>
-          )
-        })()}
+          </button>
 
-        <div
-          style={{
-            background: isWorkoutCompleted ? 'rgba(16, 185, 129, 0.16)' : 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-            color: isWorkoutCompleted ? '#34D399' : '#080E14',
-            borderRadius: 7,
-            padding: '10px 14px',
-            fontSize: 12.5,
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            textAlign: 'center',
-          }}
-        >
-          {isWorkoutCompleted
-            ? `Review Day ${activeWorkout?.day || 1} Summary →`
-            : isWorkoutInProgress
-              ? `Resume Day ${activeWorkout?.day || 1} Lifts (${activeDayLoggedWorkingSets}/${activeDayTotalTargetSets}) →`
-              : activeWorkout
-                ? `Start Day ${activeWorkout.day} Workout →`
-                : 'Open Workout Logger →'
-          }
-        </div>
-      </Link>
-
-      {/* ── 3. Compact Weekly Telemetry & Live Session Strip ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 10 }}>
-        {/* Card A: Weekly Progress Strip */}
-        <div
-          style={{
-            background: 'rgba(13, 24, 38, 0.92)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 10,
-            padding: '12px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-              7-Day Telemetry
-            </span>
-            <Link
-              href="/dashboard/fitness?workspace=progress"
-              style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 700, textDecoration: 'none' }}
-            >
-              Progress →
-            </Link>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, background: 'rgba(0,0,0,0.3)', padding: '8px 10px', borderRadius: 6 }}>
-            <div>
-              <div style={{ fontSize: 9, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700 }}>Volume</div>
-              <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 14, fontWeight: 700, color: 'var(--gold)', marginTop: 1 }}>
-                {dossier.totalTonnageLbs.toLocaleString()} <span style={{ fontSize: 9.5 }}>lb</span>
+          {/* Tile 2: 2-Min Posture Check */}
+          <button
+            type="button"
+            onClick={() => setPostureCheckOpen(true)}
+            className="flex flex-col items-start justify-between rounded-xl border border-white/10 bg-[#0A121E] p-3 text-left transition hover:border-amber-400/40"
+          >
+            <ScanLine size={18} className="text-amber-300" />
+            <div className="mt-2 min-w-0 w-full">
+              <div className="truncate text-xs font-bold text-white">2-Min Posture Check</div>
+              <div className="truncate text-[11px] text-slate-400">
+                33-point AI delta overlay
               </div>
             </div>
-            <div>
-              <div style={{ fontSize: 9, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700 }}>ACWR</div>
-              <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 14, fontWeight: 700, color: dossier.acwrRatio !== null ? '#34D399' : 'var(--gray)', marginTop: 1 }}>
-                {dossier.acwrRatio !== null && dossier.acwrRatio !== undefined ? dossier.acwrRatio.toFixed(2) : '—'}
+          </button>
+
+          {/* Tile 3: Founding Partner Pass (Live Status) */}
+          <button
+            type="button"
+            onClick={() => setPartnerPassOpen(true)}
+            className="flex flex-col items-start justify-between rounded-xl border border-amber-400/35 bg-amber-500/[0.08] p-3 text-left transition hover:border-amber-400/60"
+          >
+            <ShieldCheck size={18} className="text-amber-300" />
+            <div className="mt-2 min-w-0 w-full">
+              <div className="truncate text-xs font-bold text-white">Founding Partner Pass</div>
+              <div className="truncate text-[11px] font-semibold text-amber-200">
+                {partnerPassStatusLabel}
               </div>
             </div>
-            <div>
-              <div style={{ fontSize: 9, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 700 }}>PRs</div>
-              <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 14, fontWeight: 700, color: '#38BDF8', marginTop: 1 }}>
-                {dossier.topPrsThisWeek.length}
-              </div>
-            </div>
-          </div>
-        </div>
+          </button>
 
-        {/* Card B: Compact Live Session & Booking Bar */}
-        <div
-          style={{
-            background: 'rgba(13, 24, 38, 0.92)',
-            border: '1px solid rgba(16,185,129,0.3)',
-            borderRadius: 10,
-            padding: '12px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: 8,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6EE7B7', fontWeight: 800 }}>
-              {nextSession ? 'Upcoming Session' : '1:1 Live Coaching'}
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--gold-lt)', fontWeight: 700 }}>
-              {totalRemaining > 0 ? `${totalRemaining} ${totalRemaining === 1 ? 'Credit' : 'Credits'}` : 'Studio Ready'}
-            </span>
-          </div>
-
-          <div style={{ fontSize: 12, color: '#E2E8F0' }} suppressHydrationWarning>
-            {nextSession
-              ? `${new Date(nextSession.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' })} · ${new Date(nextSession.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET`
-              : 'Join a live 1:1 video session or schedule your next check-in.'}
-          </div>
-
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Link
-              href="/dashboard/live"
-              className="tactile-btn"
-              style={{
-                padding: '6px 12px',
-                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                color: '#FFFFFF',
-                borderRadius: 6,
-                fontSize: 11,
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                textDecoration: 'none',
-              }}
-            >
-              Live Studio →
-            </Link>
-            {nextSession ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const ics = generateIcsCalendar({
-                    title: 'Forge Athletic: Live 1-on-1 Studio Session w/ Coach Gordon',
-                    startTime: nextSession.scheduled_at,
-                    durationMins: nextSession.duration_mins || 60,
-                    location: 'https://forge-athletic.app/dashboard/live',
-                  })
-                  downloadIcsFile('forge-live-session', ics)
-                }}
-                style={{
-                  padding: '6px 10px',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  borderRadius: 6,
-                  color: '#FFFFFF',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                + Calendar
-              </button>
-            ) : (
-              <Link
-                href="/dashboard/book"
-                style={{
-                  padding: '6px 10px',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  borderRadius: 6,
-                  color: '#FFFFFF',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                }}
-              >
-                Book Session
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── 4. Compact 2x2 Quick Tools Grid ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 155px), 1fr))', gap: 8 }}>
-        {[
-          { href: '/dashboard/fitness?workspace=readiness&tab=3d', icon: 'dna' as const, tone: 'gold' as const, label: '3D Recovery', sub: 'Muscle heatmap' },
-          { href: '/dashboard/fitness?workspace=video', icon: 'camera' as const, tone: 'cyan' as const, label: 'AI Form Check', sub: 'Video critique' },
-          { href: '/dashboard/fitness?workspace=lab&tool=roadmap', icon: 'periodization' as const, tone: 'gold' as const, label: 'OPT™ Roadmap', sub: '12-wk phases' },
-          { href: '/dashboard/fitness?workspace=coach', icon: 'clipboard' as const, tone: 'gold' as const, label: 'Weekly Check-In', sub: 'Biofeedback' },
-        ].map(item => (
+          {/* Tile 4: Form Lab Video Critique */}
           <Link
-            key={item.href}
-            href={item.href}
-            className="tactile-btn"
-            style={{
-              background: 'rgba(10, 16, 28, 0.88)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 8,
-              padding: '10px 12px',
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              minWidth: 0,
-            }}
+            href="/dashboard/fitness?workspace=video"
+            className="flex flex-col items-start justify-between rounded-xl border border-white/10 bg-[#0A121E] p-3 text-left transition hover:border-sky-400/40"
           >
-            <GaaIcon name={item.icon} size={18} tone={item.tone} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {item.label}
-              </div>
-              <div style={{ fontSize: 10.5, color: 'var(--gray)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {item.sub}
+            <Video size={18} className="text-sky-300" />
+            <div className="mt-2 min-w-0 w-full">
+              <div className="truncate text-xs font-bold text-white">Form Lab Critique</div>
+              <div className="truncate text-[11px] text-slate-400">
+                {remainingFormLabCredits} monthly {remainingFormLabCredits === 1 ? 'credit' : 'credits'} left
               </div>
             </div>
           </Link>
-        ))}
+        </div>
+      </section>
+
+      {/* Compact Weekly Telemetry & 1:1 Coaching Bar */}
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <div className="rounded-xl border border-white/10 bg-[#0A121E] p-3 text-slate-100">
+          <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+            <span>7-Day Volume &amp; Readiness</span>
+            <Link href="/dashboard/fitness?workspace=progress" className="text-amber-300">
+              Progress →
+            </Link>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+            <div>
+              <span className="block text-[10px] text-slate-400">Volume</span>
+              <span className="font-mono font-bold text-amber-300">
+                {dossier.totalTonnageLbs.toLocaleString()} lb
+              </span>
+            </div>
+            <div>
+              <span className="block text-[10px] text-slate-400">ACWR</span>
+              <span className="font-mono font-bold text-emerald-300">
+                {dossier.acwrRatio !== null && dossier.acwrRatio !== undefined
+                  ? dossier.acwrRatio.toFixed(2)
+                  : '—'}
+              </span>
+            </div>
+            <div>
+              <span className="block text-[10px] text-slate-400">PRs</span>
+              <span className="font-mono font-bold text-sky-300">
+                {dossier.topPrsThisWeek.length}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-between gap-2 rounded-xl border border-emerald-400/25 bg-[#0A121E] p-3 text-slate-100">
+          <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">
+            <span>{nextSession ? 'Upcoming 1:1 Session' : 'Live Studio Coaching'}</span>
+            <span>{totalRemaining > 0 ? `${totalRemaining} Credits` : 'Studio Ready'}</span>
+          </div>
+          <div className="flex items-center justify-between gap-2 text-xs text-slate-300" suppressHydrationWarning>
+            <span className="truncate">
+              {nextSession
+                ? new Date(nextSession.scheduled_at).toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })
+                : '1-on-1 Coach Gordon Studio'}
+            </span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Link
+                href="/dashboard/live"
+                className="rounded-md bg-emerald-500 px-2.5 py-1 text-[11px] font-extrabold text-slate-950"
+              >
+                Studio →
+              </Link>
+              {nextSession ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ics = generateIcsCalendar({
+                      title: 'Forge Athletic: Live 1-on-1 Studio Session w/ Coach Gordon',
+                      startTime: nextSession.scheduled_at,
+                      durationMins: nextSession.duration_mins || 60,
+                      location: 'https://forge-athletic.app/dashboard/live',
+                    })
+                    downloadIcsFile('forge-live-session', ics)
+                  }}
+                  className="rounded-md border border-white/15 px-2 py-1 text-[11px] font-semibold text-white"
+                >
+                  +ICS
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* ── 5. Secondary Toolkits & Referrals (Collapsed by Default) ── */}
-      <details
-        className="fitness-card-disclosure"
-        style={{
-          background: 'rgba(10, 16, 28, 0.75)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 8,
-          padding: '0 12px',
+      {/* Compact QA Tier Switcher */}
+      <TierPreviewSwitcher compact />
+
+      {/* Desk Ergonomics Audit Modal (with Trigger 1 Post-Scan & Trigger 2 Second Workstation Gate) */}
+      <dialog
+        ref={deskAuditDialogRef}
+        aria-labelledby={deskAuditHeadingId}
+        onClose={() => setDeskAuditOpen(false)}
+        onClick={e => {
+          if (e.target === e.currentTarget) setDeskAuditOpen(false)
         }}
+        className="m-0 h-dvh max-h-dvh w-screen max-w-none overscroll-contain bg-[#070B12] p-0 text-slate-100 sm:m-auto sm:h-auto sm:max-h-[92dvh] sm:w-[min(95vw,760px)] sm:rounded-2xl sm:border sm:border-white/15"
       >
-        <summary style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--gray)' }}>
-          Mobility Toolkits &amp; Member Referrals
-        </summary>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 12 }}>
-          <PrescribedToolboxBanner toolboxId="desk_worker_posture" />
-          <ReferralDashboardWidget />
+        <div className="max-h-dvh overflow-y-auto overscroll-contain p-4 sm:max-h-[90dvh] sm:p-6">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 id={deskAuditHeadingId} className="font-serif text-lg font-bold text-white">
+              Desk Ergonomics Camera Audit
+            </h2>
+            <button
+              type="button"
+              onClick={() => setDeskAuditOpen(false)}
+              aria-label="Close Desk Ergonomics Audit"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-200 transition hover:bg-white/10"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <DeskErgonomicsAudit
+            maxSavedProfiles={entitlements.maxWorkstationProfiles}
+            onUpgradeWorkstationLimit={() => {
+              setDeskAuditOpen(false)
+              setUpgradeTrigger('second_workstation_audit')
+            }}
+            onLaunchDeskReset={flags => {
+              setDeskAuditOpen(false)
+              setDeskResetFlags(flags)
+              setDeskResetOpen(true)
+            }}
+            renderPostScanBanner={result => {
+              if (
+                result.overallStrain === 'optimal' ||
+                !shouldShowTrigger('post_scan_flag')
+              ) {
+                return null
+              }
+              return (
+                <div className="mt-3 flex flex-col justify-between gap-2.5 rounded-xl border border-amber-400/35 bg-amber-500/10 p-3 text-slate-100 sm:flex-row sm:items-center">
+                  <div className="flex items-start gap-2 text-xs text-amber-100">
+                    <Sparkles size={15} className="mt-0.5 shrink-0 text-amber-300" />
+                    <span>{postScanCopy.bannerCopy}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeskAuditOpen(false)
+                      setUpgradeTrigger('post_scan_flag')
+                    }}
+                    className="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-950"
+                  >
+                    Upgrade to Plus <ArrowUpRight size={13} />
+                  </button>
+                </div>
+              )
+            }}
+          />
         </div>
-      </details>
+      </dialog>
+
+      {/* Targeted 5-Min Desk Reset Modal */}
+      <DeskResetModal
+        open={deskResetOpen}
+        onClose={() => setDeskResetOpen(false)}
+        overrideFlags={deskResetFlags}
+      />
+
+      {/* Founding Partner Pass Share Modal */}
+      <PartnerPassModal
+        open={partnerPassOpen}
+        onClose={() => setPartnerPassOpen(false)}
+        memberName={clientName}
+      />
+
+      {/* Contextual Tier Upgrade Modal */}
+      <TierUpgradeModal
+        open={upgradeTrigger !== null}
+        triggerContext={upgradeTrigger}
+        currentTier={tierId}
+        onClose={() => setUpgradeTrigger(null)}
+      />
     </div>
   )
 }

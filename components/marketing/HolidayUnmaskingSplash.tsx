@@ -4,6 +4,11 @@ import React, { useState, useEffect, useRef, useId } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import ForgeIcon, { ForgeIconName } from '@/components/ui/ForgeIcon'
+import AppSneakPeekShowcase from '@/components/marketing/AppSneakPeekShowcase'
+import ClientOutcomesShowcase from '@/components/marketing/ClientOutcomesShowcase'
+import FoundingRateLockPricingGrid from '@/components/packages/FoundingRateLockPricingGrid'
+import { COACH_GORDON_TRUST_PROFILE } from '@/lib/landingSocialProof'
+import { useSfxMuted } from '@/lib/sfx-audio'
 import {
   calculateTimeRemaining,
   getGoLiveDate,
@@ -130,9 +135,10 @@ export default function HolidayUnmaskingSplash({
   const [assignedPassNumber, setAssignedPassNumber] = useState<number>(42)
   const [copiedSerial, setCopiedSerial] = useState(false)
 
-  // Sound design state (Web Audio API)
-  const [soundEnabled, setSoundEnabled] = useState(false)
-  const audioCtxRef = useRef<AudioContext | null>(null)
+  // Global SFX Muted state (strictly defaults to SFX MUTED = true)
+  const { sfxMuted, soundEnabled, toggleSfxMuted, playTone } = useSfxMuted()
+  const [showSmsInput, setShowSmsInput] = useState(false)
+  const [portraitLoadFailed, setPortraitLoadFailed] = useState(false)
 
   const mountTimeRef = useRef<number>(0)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -159,65 +165,8 @@ export default function HolidayUnmaskingSplash({
     return () => clearInterval(timer)
   }, [])
 
-  // Web Audio Synthesizer (subtle, elegant audio feedback)
   const playTactileTone = (type: 'tick' | 'chime' | 'success') => {
-    if (!soundEnabled) return
-    try {
-      if (!audioCtxRef.current) {
-        const AudioContextClass =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-        audioCtxRef.current = new AudioContextClass()
-      }
-      const ctx = audioCtxRef.current
-      if (ctx.state === 'suspended') {
-        ctx.resume()
-      }
-
-      const now = ctx.currentTime
-
-      if (type === 'tick') {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(540, now)
-        osc.frequency.exponentialRampToValueAtTime(320, now + 0.04)
-        gain.gain.setValueAtTime(0.04, now)
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04)
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start(now)
-        osc.stop(now + 0.04)
-      } else if (type === 'chime') {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'triangle'
-        osc.frequency.setValueAtTime(440, now)
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12)
-        gain.gain.setValueAtTime(0.06, now)
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15)
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start(now)
-        osc.stop(now + 0.15)
-      } else if (type === 'success') {
-        // Warm two-tone harmonic chime
-        ;[523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
-          const osc = ctx.createOscillator()
-          const gain = ctx.createGain()
-          osc.type = 'sine'
-          osc.frequency.setValueAtTime(freq, now + i * 0.08)
-          gain.gain.setValueAtTime(0.08, now + i * 0.08)
-          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.5)
-          osc.connect(gain)
-          gain.connect(ctx.destination)
-          osc.start(now + i * 0.08)
-          osc.stop(now + i * 0.08 + 0.5)
-        })
-      }
-    } catch {
-      // AudioContext unavailable or restricted; silently fall back
-    }
+    playTone(type)
   }
 
   // Interactive Kinetic Spark Canvas
@@ -543,16 +492,32 @@ export default function HolidayUnmaskingSplash({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {/* Audio Toggle */}
+          {/* Smooth-Scroll Anchor Navigation + Audio & Auth Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <nav
+              aria-label="Primary landing page sections"
+              className="hidden items-center gap-4 text-xs font-semibold text-slate-300 md:flex"
+            >
+              <a href="#sneak-peek" className="transition hover:text-amber-300">
+                Sneak Peek
+              </a>
+              <a href="#how-it-works" className="transition hover:text-amber-300">
+                How It Works
+              </a>
+              <a href="#coach" className="transition hover:text-amber-300">
+                Coach
+              </a>
+              <a href="#pricing" className="transition hover:text-amber-300">
+                Pricing
+              </a>
+            </nav>
+
+            {/* Audio Toggle (Strictly defaults to SFX MUTED) */}
             <button
               type="button"
-              onClick={() => {
-                const next = !soundEnabled
-                setSoundEnabled(next)
-                if (next) playTactileTone('chime')
-              }}
-              aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
+              onClick={toggleSfxMuted}
+              aria-label={sfxMuted ? 'Sound effects muted. Activate sound effects' : 'Mute sound effects'}
+              aria-pressed={soundEnabled}
               title={soundEnabled ? 'Audio feedback enabled' : 'Click to enable audio feedback'}
               style={{
                 background: soundEnabled ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.05)',
@@ -572,7 +537,7 @@ export default function HolidayUnmaskingSplash({
               }}
             >
               <ForgeIcon name={soundEnabled ? 'flame' : 'lock'} size={14} />
-              <span>{soundEnabled ? 'SFX ON' : 'SFX MUTED'}</span>
+              <span>{sfxMuted ? 'SFX MUTED' : 'SFX ON'}</span>
             </button>
 
             {/* Direct Member Entrance */}
@@ -616,6 +581,25 @@ export default function HolidayUnmaskingSplash({
             </Link>
           </div>
         </header>
+
+        {/* Mobile Smooth-Scroll Anchor Strip (375px / 430px viewports) */}
+        <nav
+          aria-label="Mobile section navigation"
+          className="mb-6 flex items-center justify-between gap-2 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-semibold text-slate-300 md:hidden"
+        >
+          <a href="#sneak-peek" className="shrink-0 hover:text-amber-300">
+            Sneak Peek
+          </a>
+          <a href="#how-it-works" className="shrink-0 hover:text-amber-300">
+            How It Works
+          </a>
+          <a href="#coach" className="shrink-0 hover:text-amber-300">
+            Coach
+          </a>
+          <a href="#pricing" className="shrink-0 hover:text-amber-300">
+            Pricing
+          </a>
+        </nav>
 
         {/* Preview Banner if explicitly previewing */}
         {previewMode && (
@@ -727,11 +711,24 @@ export default function HolidayUnmaskingSplash({
               color: '#FBBF24',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
-              margin: '0 0 20px',
+              margin: '0 0 12px',
               fontWeight: 700,
             }}
           >
-            Precision Science. Unbreakable Bodies.
+            Pain-Free Joints, Desk Posture Relief &amp; 20-Minute Home Workouts
+          </p>
+
+          <p
+            style={{
+              fontFamily: 'var(--font-telemetry)',
+              fontSize: 12,
+              color: '#E2E8F0',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              margin: '0 0 16px',
+            }}
+          >
+            Precision Science. Unbreakable Bodies. · Launch: Friday, November 20, 2026 · 06:00 AM EST
           </p>
 
           <p
@@ -739,12 +736,30 @@ export default function HolidayUnmaskingSplash({
               fontSize: 'clamp(1rem, 2vw, 1.15rem)',
               lineHeight: 1.6,
               color: '#94A3B8',
-              margin: '0 auto 28px',
+              margin: '0 auto 18px',
               maxWidth: 720,
             }}
           >
-            <strong>Don’t wait for January to repair what November broke.</strong> Our flagship public launch goes live on <strong>Black Friday, November 27</strong> with the <strong>Holiday Founding Deal</strong>: claim one of 50 Founding Member spots now for a <strong>25% Lifetime Rate Lock</strong> on any tier plus a <strong>Free 60-Min Pre-Holiday Movement Screen</strong> with Coach Gordon—delivered 100% remotely to your home gym or workout space with zero commute friction.
+            <strong>Don’t wait for January to repair what November broke.</strong> Undo desk neck and lower-back stiffness in 5 minutes, build real strength at home or in hotel gyms in 20 minutes, and lock in permanent <strong>Founding Member Lifetime Rate Lock</strong> pricing plus a <strong>Free 60-Min Pre-Holiday Movement Screen</strong> with Coach Gordon ahead of our <strong>Friday, November 20, 2026 · 06:00 AM EST</strong> launch.
           </p>
+
+          {/* Collapsible "How the Science Works" Accordion (Plain-English First, Deep NASM Science On Demand) */}
+          <details
+            className="forge-science-accordion mx-auto mb-7 max-w-2xl rounded-xl border border-white/15 bg-slate-950/75 text-left"
+          >
+            <summary className="flex items-center justify-between px-4 py-3 text-xs font-bold uppercase tracking-wider text-amber-300">
+              <span>How the Science Works (NASM OPT™ &amp; 33-Point Vision)</span>
+              <span aria-hidden="true" className="text-slate-400">+</span>
+            </summary>
+            <div className="space-y-2 border-t border-white/10 px-4 py-3.5 text-xs leading-relaxed text-slate-300">
+              <p>
+                <strong>33-Point Computer-Vision Screening:</strong> Using your phone or laptop camera locally, Forge measures craniovertebral head angle, shoulder protraction, hip depth, and knee tracking so tightness is addressed before heavy loading.
+              </p>
+              <p>
+                <strong>5-Phase NASM OPT™ Progression:</strong> Every plan starts by stabilizing joints and deep core musculature (Phase 01), then progresses systematically through Strength Endurance (Phase 02), Hypertrophy (Phase 03), Maximal Strength (Phase 04), and Power (Phase 05).
+              </p>
+            </div>
+          </details>
 
           {/* HYPER-REALISTIC BRAND SHOWCASE CINEMA STAGE */}
           <div
@@ -1452,6 +1467,9 @@ export default function HolidayUnmaskingSplash({
           </div>
         </section>
 
+        {/* INTERACTIVE 4-TAB SNEAK PEEK SHOWCASE (100% Read-Only Sandbox) */}
+        <AppSneakPeekShowcase />
+
         {/* TWO COLUMN GRID: Reservation & Sneak Peek Radar */}
         <div
           ref={reservationSectionRef}
@@ -1583,7 +1601,7 @@ export default function HolidayUnmaskingSplash({
                         background: 'rgba(8, 14, 24, 0.9)',
                         border: '1px solid rgba(255, 255, 255, 0.15)',
                         color: '#FFFFFF',
-                        fontSize: 14,
+                        fontSize: 16,
                         outline: 'none',
                         transition: 'border-color 0.2s',
                       }}
@@ -1622,7 +1640,7 @@ export default function HolidayUnmaskingSplash({
                         background: 'rgba(8, 14, 24, 0.9)',
                         border: '1px solid rgba(255, 255, 255, 0.15)',
                         color: '#FFFFFF',
-                        fontSize: 14,
+                        fontSize: 16,
                         outline: 'none',
                         transition: 'border-color 0.2s',
                       }}
@@ -1658,7 +1676,7 @@ export default function HolidayUnmaskingSplash({
                         background: '#0B1320',
                         border: '1px solid rgba(255, 255, 255, 0.15)',
                         color: '#FFFFFF',
-                        fontSize: 14,
+                        fontSize: 16,
                         outline: 'none',
                         cursor: 'pointer',
                       }}
@@ -1670,39 +1688,52 @@ export default function HolidayUnmaskingSplash({
                     </select>
                   </div>
 
-                  {/* Optional Mobile Phone for SMS Drop Notice */}
-                  <div style={{ marginBottom: 24 }}>
-                    <label
-                      htmlFor={phoneInputId}
-                      style={{
-                        display: 'block',
-                        fontFamily: 'var(--font-telemetry)',
-                        fontSize: 11,
-                        letterSpacing: '0.1em',
-                        color: '#94A3B8',
-                        textTransform: 'uppercase',
-                        marginBottom: 6,
-                      }}
+                  {/* Collapsible Optional SMS Launch Alert Toggle (Friction Reduction) */}
+                  <div style={{ marginBottom: 22 }}>
+                    <button
+                      type="button"
+                      aria-expanded={showSmsInput}
+                      onClick={() => setShowSmsInput(prev => !prev)}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-300 underline-offset-4 hover:underline"
                     >
-                      Mobile Phone (Optional for launch text alert)
-                    </label>
-                    <input
-                      id={phoneInputId}
-                      type="tel"
-                      value={phone}
-                      onChange={e => setPhone(e.target.value)}
-                      placeholder="+1 (555) 000-0000"
-                      style={{
-                        width: '100%',
-                        padding: '12px 14px',
-                        borderRadius: 8,
-                        background: 'rgba(8, 14, 24, 0.9)',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        color: '#FFFFFF',
-                        fontSize: 14,
-                        outline: 'none',
-                      }}
-                    />
+                      <span>{showSmsInput ? '− Hide SMS launch alert' : '+ Add SMS launch alert (optional)'}</span>
+                    </button>
+
+                    {showSmsInput ? (
+                      <div style={{ marginTop: 10 }}>
+                        <label
+                          htmlFor={phoneInputId}
+                          style={{
+                            display: 'block',
+                            fontFamily: 'var(--font-telemetry)',
+                            fontSize: 11,
+                            letterSpacing: '0.1em',
+                            color: '#94A3B8',
+                            textTransform: 'uppercase',
+                            marginBottom: 6,
+                          }}
+                        >
+                          Mobile Phone (Optional for Nov 20 launch text)
+                        </label>
+                        <input
+                          id={phoneInputId}
+                          type="tel"
+                          value={phone}
+                          onChange={e => setPhone(e.target.value)}
+                          placeholder="+1 (555) 000-0000"
+                          style={{
+                            width: '100%',
+                            padding: '12px 14px',
+                            borderRadius: 8,
+                            background: 'rgba(8, 14, 24, 0.9)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            color: '#FFFFFF',
+                            fontSize: 16,
+                            outline: 'none',
+                          }}
+                        />
+                      </div>
+                    ) : null}
                   </div>
 
                   {errorMessage && (
@@ -2253,8 +2284,71 @@ export default function HolidayUnmaskingSplash({
           </div>
         </div>
 
-        {/* BRAND MANIFESTO: The Zero-Distraction Sanctuary */}
+        {/* HUMAN TRUST & CLIENT OUTCOMES GRID (#coach) */}
         <section
+          id="coach"
+          className="mb-16 scroll-mt-24 rounded-2xl border border-amber-400/30 bg-[#0A111C] p-6 shadow-2xl sm:p-8"
+          aria-labelledby="coach-trust-heading"
+        >
+          <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-[200px_1fr]">
+            {/* Portrait Frame (aspect-square + 'CG' Monogram Fallback) */}
+            <div className="mx-auto w-40 sm:w-48 lg:mx-0 lg:w-full">
+              <div className="relative aspect-square w-full overflow-hidden rounded-2xl border-2 border-amber-400/50 bg-slate-900 shadow-lg">
+                {!portraitLoadFailed ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={COACH_GORDON_TRUST_PROFILE.portraitSrc}
+                    alt="Coach Gordon — NASM-CPT Since 2008"
+                    onError={() => setPortraitLoadFailed(true)}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-800 to-slate-950 font-serif text-4xl font-bold tracking-widest text-amber-300">
+                    {COACH_GORDON_TRUST_PROFILE.monogram}
+                  </div>
+                )}
+                <span className="absolute bottom-2 left-2 rounded-md border border-amber-400/40 bg-slate-950/85 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300">
+                  {COACH_GORDON_TRUST_PROFILE.monogram}
+                </span>
+              </div>
+            </div>
+
+            {/* Coach Gordon Verification & 3-Sentence Philosophy */}
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-emerald-200">
+                  ✓ {COACH_GORDON_TRUST_PROFILE.verificationBadge}
+                </span>
+                <span className="text-xs text-slate-400">
+                  {COACH_GORDON_TRUST_PROFILE.secondaryCredentials}
+                </span>
+              </div>
+
+              <h2
+                id="coach-trust-heading"
+                className="mt-3 font-serif text-2xl font-bold text-white sm:text-3xl"
+              >
+                Joint-First Coaching Led Directly by {COACH_GORDON_TRUST_PROFILE.name}
+              </h2>
+
+              <div className="mt-3 space-y-2 text-sm leading-relaxed text-slate-200">
+                {COACH_GORDON_TRUST_PROFILE.philosophySentences.map((sentence, idx) => (
+                  <p key={idx}>{sentence}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 3-Card Client Outcomes Grid */}
+          <div className="mt-8 border-t border-white/10 pt-4">
+            <ClientOutcomesShowcase />
+          </div>
+        </section>
+
+        {/* BRAND MANIFESTO: The Zero-Distraction Sanctuary (#how-it-works) */}
+        <section
+          id="how-it-works"
+          className="scroll-mt-24"
           style={{
             marginBottom: 64,
             background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(8, 14, 24, 0.98) 100%)',
@@ -2645,8 +2739,10 @@ export default function HolidayUnmaskingSplash({
           </div>
         </section>
 
-        {/* 100% REMOTE PERFORMANCE OFFERINGS ARCHITECTURE */}
+        {/* 100% REMOTE PERFORMANCE OFFERINGS ARCHITECTURE (#pricing) */}
         <section
+          id="pricing"
+          className="scroll-mt-24"
           style={{
             marginBottom: 64,
             background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(8, 14, 24, 0.95) 100%)',
@@ -2668,7 +2764,7 @@ export default function HolidayUnmaskingSplash({
                 marginBottom: 8,
               }}
             >
-              Asset-Light · 100% Remote Performance Model
+              Founding Member Lifetime Rate Lock · Zero Commute Remote Coaching
             </div>
             <h2
               id="remote-offerings-title"
@@ -2682,7 +2778,7 @@ export default function HolidayUnmaskingSplash({
                 color: '#FFFFFF',
               }}
             >
-              Zero Commute. Master Coaching Anywhere.
+              Lock In Founding Pricing Before November 20 Launch
             </h2>
             <p
               style={{
@@ -2692,153 +2788,17 @@ export default function HolidayUnmaskingSplash({
                 margin: 0,
               }}
             >
-              We operate without physical gym overhead so you get master-level coaching at superior value. Train in your private home gym, apartment fitness center, or hotel while traveling—with personalized periodization, computer-vision movement audits, and encrypted WebRTC video.
+              Founding Members lock in pre-launch pricing for life—your monthly rate never increases after launch day. Train at home, in an apartment gym, or on the road.
             </p>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: 16,
-              marginBottom: 28,
-            }}
-          >
-            {/* Core Tier Card */}
-            <div
-              style={{
-                background: 'rgba(8, 14, 20, 0.85)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 12,
-                padding: '20px 18px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
+          <div style={{ marginBottom: 28 }}>
+            <FoundingRateLockPricingGrid
+              mode="prelaunch"
+              onPrelaunchClaimClick={() => {
+                reservationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
               }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'var(--font-telemetry)', fontSize: 10, color: '#38BDF8', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
-                    Foundation
-                  </span>
-                  <span style={{ fontSize: 10, color: '#34D399', background: 'rgba(52, 211, 153, 0.12)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
-                    25% Off · {HOLIDAY_DEAL_PROMO.code}
-                  </span>
-                </div>
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
-                  Core
-                </h3>
-                <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
-                  <span style={{ fontSize: 14, color: '#64748B', textDecoration: 'line-through', marginRight: 6 }}>$49</span>
-                  $36.75 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
-                </div>
-                <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
-                  Autonomous 5-phase NASM OPT™ periodization, 33-point posture screen, 7-day free trial, and free 60-min pre-holiday movement screen.
-                </p>
-              </div>
-            </div>
-
-            {/* Plus Tier Card */}
-            <div
-              style={{
-                background: 'rgba(8, 14, 20, 0.85)',
-                border: '1px solid rgba(245, 158, 11, 0.4)',
-                borderRadius: 12,
-                padding: '20px 18px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                position: 'relative',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'var(--font-telemetry)', fontSize: 10, color: '#FBBF24', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
-                    Guided Hybrid
-                  </span>
-                  <span style={{ fontSize: 10, color: '#FBBF24', background: 'rgba(245, 158, 11, 0.15)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
-                    25% Off · Most Popular
-                  </span>
-                </div>
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
-                  Plus
-                </h3>
-                <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
-                  <span style={{ fontSize: 14, color: '#64748B', textDecoration: 'line-through', marginRight: 6 }}>$99</span>
-                  $74.25 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
-                </div>
-                <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
-                  Everything in Core + full Nutrition Periodization, Travel Pass hotel swaps, and 4 Form Lab video reviews per month.
-                </p>
-              </div>
-            </div>
-
-            {/* Coach Support Card */}
-            <div
-              style={{
-                background: 'rgba(8, 14, 20, 0.85)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 12,
-                padding: '20px 18px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'var(--font-telemetry)', fontSize: 10, color: '#F472B6', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
-                    Master Coaching
-                  </span>
-                  <span style={{ fontSize: 10, color: '#F87171', background: 'rgba(239, 68, 68, 0.15)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
-                    Capped at 15
-                  </span>
-                </div>
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
-                  Coach Support
-                </h3>
-                <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
-                  <span style={{ fontSize: 14, color: '#64748B', textDecoration: 'line-through', marginRight: 6 }}>$299</span>
-                  $224.25 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ mo</span>
-                </div>
-                <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
-                  Direct messaging with Coach Gordon (24h SLA), custom plan certification, and 8 Form Lab video audits per month.
-                </p>
-              </div>
-            </div>
-
-            {/* 1:1 Live Telehealth Studio Card */}
-            <div
-              style={{
-                background: 'rgba(8, 14, 20, 0.85)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 12,
-                padding: '20px 18px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'var(--font-telemetry)', fontSize: 10, color: '#34D399', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
-                    1:1 Telehealth
-                  </span>
-                  <span style={{ fontSize: 10, color: '#38BDF8', background: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-telemetry)' }}>
-                    WebRTC 60fps
-                  </span>
-                </div>
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '0 0 4px' }}>
-                  Live Studio
-                </h3>
-                <div style={{ fontFamily: 'var(--font-telemetry)', fontSize: 22, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>
-                  $180 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>/ session</span>
-                </div>
-                <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5, margin: 0 }}>
-                  Private 60-min live virtual coaching with slow-mo telestration. 4-session pack at $660 ($165/ea) or 8-pack at $1,240 ($155/ea).
-                </p>
-              </div>
-            </div>
+            />
           </div>
 
           <div style={{ textAlign: 'center' }}>

@@ -23,6 +23,7 @@ type SignupPageSearchParams = Promise<{
   coach?: string | string[] | undefined
   ref?: string | string[] | undefined
   referral?: string | string[] | undefined
+  pass?: string | string[] | undefined
   error?: string | string[] | undefined
   error_description?: string | string[] | undefined
 }>
@@ -37,6 +38,9 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
 
   const rawReferral = resolvedSearchParams.ref || resolvedSearchParams.referral
   const referralCode = Array.isArray(rawReferral) ? rawReferral[0] : rawReferral
+  const rawPass = resolvedSearchParams.pass
+  const passParam = Array.isArray(rawPass) ? rawPass[0] : rawPass
+  const isPartnerPass = passParam === '30day'
 
   const rawError = resolvedSearchParams.error_description || resolvedSearchParams.error
   const initialError = Array.isArray(rawError) ? rawError[0] : rawError
@@ -123,7 +127,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
             backdropFilter: 'blur(2px)',
           }}
         >
-          <ReferralSignupBanner initialCode={referralCode} />
+          <ReferralSignupBanner initialCode={referralCode} initialPartnerPass={isPartnerPass} />
           <AuthForm mode="signup" coachId={inviteCoachId} coachName={inviteCoachName} initialError={initialError} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.55rem', marginTop: '1rem' }}>

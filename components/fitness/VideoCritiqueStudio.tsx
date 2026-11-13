@@ -12,6 +12,7 @@ import {
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
 import MovementScreenInstructionsModal from '@/components/fitness/MovementScreenInstructionsModal'
+import FormLabRecorder from '@/components/fitness/FormLabRecorder'
 
 export interface VideoCritiqueStudioProps {
   initialLift?: LiftType
@@ -348,6 +349,9 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
           Upload lift footage or screen kinetic joint deviations to diagnose movement compensations, map overactive/underactive muscle imbalances, and prescribe 4-phase NASM corrective protocols.
         </p>
       </div>
+
+      {/* Monthly Form Lab Credit Meter & Coach Review Submission */}
+      <FormLabRecorder selectedLiftLabel={LIFT_METADATA[selectedLift]?.name || 'Primary Compound Lift'} />
 
       {/* Input Mode Selector Tabs */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

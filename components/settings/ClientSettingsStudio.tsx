@@ -13,6 +13,7 @@ import { isNativeAndroid } from '@/lib/native-healthkit-bridge'
 import { isCompanionApp } from '@/lib/native-companion'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 import WorkoutCalendarView, { WorkoutCalendarEntry } from '@/components/fitness/WorkoutCalendarView'
+import TierPreviewSwitcher from '@/components/settings/TierPreviewSwitcher'
 
 export type SettingsTab = 'schedule' | 'wearables' | 'apps' | 'spotify' | 'billing' | 'fitness' | 'medical' | 'profile' | 'security' | 'notifications'
 
@@ -134,6 +135,9 @@ export default function ClientSettingsStudio({
           <BillingPortalButton />
         </div>
       </div>
+
+      {/* ── Tier Entitlements Preview Switcher (Core Lab / Plus / Coach Support) ── */}
+      <TierPreviewSwitcher />
 
       {/* ── Compact Horizontal Tabbed Workspace Navigation ── */}
       <div

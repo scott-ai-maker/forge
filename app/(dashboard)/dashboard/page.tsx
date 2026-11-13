@@ -303,7 +303,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         actions={<LogoutButton />}
       />
 
-      <div className="dashboard-content" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(12px, 2.2vw, 22px) clamp(8px, 1.8vw, 16px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="dashboard-content pb-24" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(10px, 2vw, 20px) clamp(8px, 1.8vw, 16px) calc(6rem + env(safe-area-inset-bottom, 0px))', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {showSuccess && <SuccessBanner />}
 
         <ClientMembershipStatusBanner

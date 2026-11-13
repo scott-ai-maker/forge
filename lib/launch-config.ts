@@ -13,21 +13,21 @@
  *    plus a complimentary 60-minute Pre-Holiday Movement Screen with Coach Gordon.
  */
 
-export const DEFAULT_GO_LIVE_DATE_ISO = '2026-11-27T06:00:00-05:00'
+export const DEFAULT_GO_LIVE_DATE_ISO = '2026-11-20T06:00:00-05:00'
 
 export const HOLIDAY_DEAL_PROMO = {
   code: 'HOLIDAY25',
   discountPercent: 25,
-  badge: 'BLACK FRIDAY FOUNDING DEAL · 25% LIFETIME RATE LOCK',
+  badge: 'FOUNDING MEMBER LAUNCH · LIFETIME RATE LOCK',
   headline: '25% Lifetime Rate Lock + Free 60-Min Pre-Holiday Movement Screen',
   summary:
-    'Lock in 25% off any membership tier for life plus a complimentary 60-minute 1-on-1 remote movement screen with Coach Gordon.',
+    'Lock in Founding Member Lifetime Rate Lock pricing on any tier plus a complimentary 60-minute 1-on-1 remote movement screen with Coach Gordon.',
   expiresFormatted: 'Cyber Monday, November 30, 2026 at 11:59 PM EST',
 } as const
 
 export const LAUNCH_CAMPAIGN_INFO = {
-  title: 'The Black Friday Pre-Launch Unmasking',
-  dateFormatted: 'Black Friday, November 27, 2026',
+  title: 'The Forge Athletic Founding Launch',
+  dateFormatted: 'Friday, November 20, 2026',
   timeFormatted: '06:00 AM EST',
   tagline: 'Don’t wait for January to repair what November broke.',
   cohortCap: 50,

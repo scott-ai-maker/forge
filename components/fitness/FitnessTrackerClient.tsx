@@ -29,6 +29,7 @@ import type {
 } from '@/lib/native-healthkit-bridge'
 import ExerciseVideoModal from '@/components/fitness/ExerciseVideoModal'
 import SmartExerciseSwapModal from '@/components/coach/SmartExerciseSwapModal'
+import PreWorkoutReadinessBridge from '@/components/fitness/PreWorkoutReadinessBridge'
 const CoachCardioVoiceoverPlayer = dynamic(
   () => import('@/components/fitness/CoachCardioVoiceoverPlayer'),
   { ssr: false }
@@ -747,6 +748,7 @@ export default function FitnessTrackerClient({
     latestPlan?.id ?? (allPlans[0]?.id ?? null)
   )
   const [isWatchSimulatorOpen, setIsWatchSimulatorOpen] = useState(false)
+  const [preWorkoutReadinessSignal, setPreWorkoutReadinessSignal] = useState(0)
 
   const [offlineCachedPlan, setOfflineCachedPlan] = useState<WorkoutPlanRecord | null>(null)
   const [clientGeneratedPlan, setClientGeneratedPlan] = useState<WorkoutPlanRecord | null>(null)
@@ -3650,6 +3652,7 @@ export default function FitnessTrackerClient({
                             <button
                               type="button"
                               onClick={() => {
+                                setPreWorkoutReadinessSignal(s => s + 1)
                                 handleStartWorkoutSession(workout.day)
                                 setActiveWorkoutDay(workout.day)
                                 setActiveStepFilter('warmup')
@@ -3768,6 +3771,12 @@ export default function FitnessTrackerClient({
                 })()}
 
                 <div style={{ padding: 'clamp(4px, 1.5vw, 16px)', maxWidth: '100%', width: '100%', minWidth: 0, boxSizing: 'border-box', overflowX: 'hidden' }}>
+                  {/* ── Pre-Workout Overview & Auto-Injected Readiness Corrective Warm-Up Block ── */}
+                  <PreWorkoutReadinessBridge
+                    openSignal={preWorkoutReadinessSignal}
+                    workoutTitle={workout.focus || `Day ${workout.day} Strength Session`}
+                  />
+
                   {/* ── Coach Briefing & Daily Gameplan (Compact Collapsible Strip) ── */}
                   {(() => {
                     const bullets = deriveClientBriefingBullets(workout.focus, workout.notes)

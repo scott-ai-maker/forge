@@ -17,18 +17,15 @@ describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
     'utf-8'
   )
 
-  it('verifies target go-live date is positioned for the Black Friday launch event', () => {
+  it('verifies target go-live date is positioned for Friday, November 20, 2026 at 06:00 AM EST', () => {
     const goLiveDate = new Date(DEFAULT_GO_LIVE_DATE_ISO)
     expect(goLiveDate.getFullYear()).toBe(2026)
     expect(goLiveDate.getMonth()).toBe(10) // November (0-indexed)
-    expect(goLiveDate.getDate()).toBe(27) // Black Friday, Nov 27, 2026
+    expect(goLiveDate.getDate()).toBe(20) // Friday, Nov 20, 2026
     expect(goLiveDate.getHours()).toBe(6) // 06:00 AM EST
 
-    // Ensure it falls right after Thanksgiving (Nov 26, 2026) on Black Friday (Nov 27, 2026)
     const thanksgiving2026 = new Date('2026-11-26T00:00:00-05:00')
-    const cyberMonday2026 = new Date('2026-11-30T23:59:59-05:00')
-    expect(goLiveDate.getTime()).toBeGreaterThan(thanksgiving2026.getTime())
-    expect(goLiveDate.getTime()).toBeLessThan(cyberMonday2026.getTime())
+    expect(goLiveDate.getTime()).toBeLessThan(thanksgiving2026.getTime())
   })
 
   it('validates countdown ticker math correctly decrements towards launch date', () => {

@@ -1,11 +1,15 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import ForgeMembershipPlans from '@/components/packages/ForgeMembershipPlans'
 import MobileAppPromoSection from '@/components/marketing/MobileAppPromoSection'
 import HolidayUnmaskingSplash from '@/components/marketing/HolidayUnmaskingSplash'
 import BlackFridayShowcaseSection from '@/components/marketing/BlackFridayShowcaseSection'
-import { isSiteUnmasked } from '@/lib/launch-config'
+import AppSneakPeekShowcase from '@/components/marketing/AppSneakPeekShowcase'
+import ClientOutcomesShowcase from '@/components/marketing/ClientOutcomesShowcase'
+import FoundingRateLockPricingGrid from '@/components/packages/FoundingRateLockPricingGrid'
+import LandingHeaderSfxToggle from '@/components/marketing/LandingHeaderSfxToggle'
+import { COACH_GORDON_TRUST_PROFILE } from '@/lib/landingSocialProof'
+import { isSiteUnmasked, LAUNCH_CAMPAIGN_INFO } from '@/lib/launch-config'
 
 export const metadata: Metadata = {
   title: 'Forge Athletic | Online Personal Training, NASM Periodization & 3D Movement Screening',
@@ -163,8 +167,20 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           />
           <span>Forge Athletic</span>
         </Link>
-        <nav aria-label="Account">
-          <Link href="/credentials">Credentials</Link>
+        <nav aria-label="Primary landing page sections and account" className="flex flex-wrap items-center gap-3">
+          <a href="#sneak-peek" className="hidden text-xs font-semibold text-slate-300 transition hover:text-amber-300 md:inline">
+            Sneak Peek
+          </a>
+          <a href="#how-it-works" className="hidden text-xs font-semibold text-slate-300 transition hover:text-amber-300 md:inline">
+            How It Works
+          </a>
+          <a href="#coach" className="hidden text-xs font-semibold text-slate-300 transition hover:text-amber-300 md:inline">
+            Coach
+          </a>
+          <a href="#pricing" className="hidden text-xs font-semibold text-slate-300 transition hover:text-amber-300 md:inline">
+            Pricing
+          </a>
+          <LandingHeaderSfxToggle />
           <Link href="/auth/login">Log in</Link>
           <Link className="forge-header-cta" href="/auth/signup">Get started</Link>
         </nav>
@@ -172,13 +188,23 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
 
       <section className="forge-hero" aria-labelledby="forge-hero-title">
         <div className="forge-hero-copy">
-          <p className="forge-eyebrow"><span />Performance built on science</p>
-          <h1 id="forge-hero-title">Personal Training, Built Around You.</h1>
-          <p className="forge-hero-tagline">Personal trainer since 2008. NASM-CPT · NASM Master Trainer Candidate · Massachusetts &amp; Nationwide.</p>
-          <p className="forge-hero-description">
-            Whatever your goal, get a plan shaped around your starting point and schedule—with
-            practical coaching, clinical sports science, and progress you can measure.
+          <p className="forge-eyebrow">
+            <span />
+            Launching {LAUNCH_CAMPAIGN_INFO.dateFormatted} · {LAUNCH_CAMPAIGN_INFO.timeFormatted}
           </p>
+          <h1 id="forge-hero-title">Pain-free joints, desk posture relief, and 20-minute home workouts.</h1>
+          <p className="forge-hero-tagline font-semibold text-amber-300">{LAUNCH_CAMPAIGN_INFO.tagline}</p>
+          <p className="forge-hero-description">
+            Fix stiff desk posture in 5 minutes, build lasting strength in 20 minutes from home or a hotel gym, and keep your neck, shoulders, hips, and knees feeling strong every week.
+          </p>
+          <details className="forge-science-accordion my-3 rounded-xl border border-slate-800 bg-slate-950/75 px-4 py-3 text-left">
+            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-amber-300">
+              How the Science Works
+            </summary>
+            <p className="mt-2 text-xs leading-relaxed text-slate-300">
+              Powered by 33-point smartphone pose tracking and the 5-Phase NASM Optimum Performance Training (OPT™) model—starting with Stabilization Endurance and corrective mobility before layering hypertrophy, maximal strength, and power.
+            </p>
+          </details>
           <div className="forge-hero-actions">
             <Link className="forge-primary-link" href="/packages">Explore memberships</Link>
             <Link className="forge-secondary-link" href="/auth/login">Member sign in <span aria-hidden="true">→</span></Link>
@@ -220,11 +246,15 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
 
       <BlackFridayShowcaseSection />
 
-      <section className="forge-feature-section" aria-labelledby="forge-features-title">
+      <div className="px-4">
+        <AppSneakPeekShowcase />
+      </div>
+
+      <section id="how-it-works" className="forge-feature-section scroll-mt-20" aria-labelledby="forge-features-title">
         <div className="forge-section-intro">
-          <p className="forge-eyebrow">The Forge system</p>
-          <h2 id="forge-features-title">A stronger foundation for every rep.</h2>
-          <p>One focused system for better training, better movement, and measurable progress.</p>
+          <p className="forge-eyebrow">How It Works</p>
+          <h2 id="forge-features-title">Move better at your desk. Build strength in 20 minutes.</h2>
+          <p>One focused system for pain-free joints, quick mobility resets, and workouts that fit real life.</p>
         </div>
         <div className="forge-feature-grid">
           {FEATURE_PILLARS.map(feature => (
@@ -248,6 +278,8 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
             </article>
           ))}
         </div>
+
+        <ClientOutcomesShowcase />
       </section>
 
       {/* Audience Showcase: Who We Train */}
@@ -436,13 +468,14 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
         </div>
       </section>
 
-      <section className="forge-pricing-section" id="memberships" aria-labelledby="forge-pricing-title">
+      <section className="forge-pricing-section scroll-mt-20" id="pricing" aria-labelledby="forge-pricing-title">
         <div className="forge-section-intro">
-          <p className="forge-eyebrow">Simple membership options</p>
-          <h2 id="forge-pricing-title">Choose your next step.</h2>
-          <p>Start with the tools you need now. Upgrade when you are ready for more coaching.</p>
+          <p className="forge-eyebrow">Founding Member Lifetime Rate Lock</p>
+          <h2 id="forge-pricing-title">Lock in your Founding Member rate permanently.</h2>
+          <p>Post-launch rates apply after our Founding Cohort fills. Your rate never increases while active.</p>
         </div>
-        <ForgeMembershipPlans />
+
+        <FoundingRateLockPricingGrid mode="live" />
 
         {/* Live 1:1 Studio Coaching Callout */}
         <div
@@ -502,31 +535,38 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
         <p className="forge-billing-note">Secure checkout. Cancel recurring memberships at any time.</p>
       </section>
 
-      <section className="forge-founder-section" aria-labelledby="forge-founder-title">
+      <section id="coach" className="forge-founder-section scroll-mt-20" aria-labelledby="forge-founder-title">
         <div className="forge-founder-photo-wrap">
-          <Image
-            src="/images/hero-personal-coaching-45wk-goal.jpg"
-            alt="Coach Gordon, NASM-CPT and Founder of Forge Athletic"
-            width={440}
-            height={550}
-            loading="lazy"
-            sizes="(max-width: 760px) 200px, 220px"
-            className="forge-founder-photo"
-          />
+          <div className="relative aspect-square w-52 overflow-hidden rounded-2xl border border-amber-400/35 bg-slate-900 sm:w-56">
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 flex items-center justify-center font-mono text-4xl font-extrabold text-amber-400/40"
+            >
+              {COACH_GORDON_TRUST_PROFILE.monogram}
+            </span>
+            <Image
+              src={COACH_GORDON_TRUST_PROFILE.portraitSrc}
+              alt="Coach Gordon, NASM-CPT and Founder of Forge Athletic"
+              width={440}
+              height={440}
+              loading="lazy"
+              sizes="(max-width: 760px) 208px, 224px"
+              className="relative z-10 h-full w-full object-cover"
+            />
+          </div>
           <div className="forge-founder-experience-badge">
             <span className="forge-founder-badge-num">18+</span>
             <span className="forge-founder-badge-lbl">Years Coaching</span>
           </div>
         </div>
         <div>
-          <p className="forge-eyebrow">A coach who gets the climb</p>
-          <h2 id="forge-founder-title">Built from lived experience.</h2>
-          <p>
-            A personal trainer since 2008 and NASM Master Trainer candidate (active NASM-CPT), Coach Gordon was Fitness Director
-            at Bally Total Fitness before launching his independent coaching practice in 2011. Having previously owned and operated a physical personal training studio, he deliberately evolved Forge Athletic into a 100% remote virtual performance model. Based in Massachusetts,
-            he brings an AI engineer’s analytical mindset to training—and the empathy to meet
-            every client where they are. Expect kindness and understanding, not drill-sergeant
-            pressure; when your goals call for a firmer push, he can bring that too.
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-500/35 bg-emerald-500/10 px-3 py-1 font-mono text-xs font-bold text-emerald-300">
+            <span>✓ {COACH_GORDON_TRUST_PROFILE.verificationBadge}</span>
+          </div>
+          <p className="forge-eyebrow">Joint-First Personal Coaching</p>
+          <h2 id="forge-founder-title">{COACH_GORDON_TRUST_PROFILE.name}</h2>
+          <p className="space-y-1 text-slate-200">
+            {COACH_GORDON_TRUST_PROFILE.philosophySentences.join(' ')}
           </p>
 
           {/* Verified Credentials & Digital Badges Spotlight */}
@@ -644,7 +684,8 @@ export default async function Home({ searchParams }: HomePageProps) {
         ? rawPreview[0]
         : null
 
-  const unmasked = isSiteUnmasked(previewParam)
+  const forceSplash = resolvedParams.splash === '1' || resolvedParams.splash === 'true'
+  const unmasked = forceSplash ? false : isSiteUnmasked(previewParam)
 
   return (
     <>

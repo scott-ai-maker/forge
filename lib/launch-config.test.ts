@@ -19,10 +19,11 @@ describe('lib/launch-config', () => {
     vi.useRealTimers()
   })
 
-  it('defaults to Black Friday November 27, 2026 at 06:00:00 EST', () => {
+  it('defaults to Friday, November 20, 2026 at 06:00:00 EST', () => {
     delete process.env.NEXT_PUBLIC_GO_LIVE_DATE
     const date = getGoLiveDate()
     expect(date.toISOString()).toBe(new Date(DEFAULT_GO_LIVE_DATE_ISO).toISOString())
+    expect(date.getDate()).toBe(20)
   })
 
   it('exposes the HOLIDAY25 25% Lifetime Rate Lock holiday deal promo configuration', () => {

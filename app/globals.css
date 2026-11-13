@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/theme.css";
 
 :root {
   /* Forge carbon surfaces */
@@ -38,6 +36,8 @@
   --safe-area-left: env(safe-area-inset-left, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
 }
+
+@tailwind utilities;
 
 @font-face {
   font-family: 'Raleway';
@@ -93,6 +93,7 @@
 }
 
 * { box-sizing: border-box; }
+:where(*, ::before, ::after) { border-color: rgba(148, 163, 184, 0.22); }
 html {
   scroll-padding-bottom: clamp(140px, 20vh, 200px);
   width: 100%;
@@ -158,13 +159,15 @@ h1, h2, h3, h4, h5, h6 {
   color: #F8FAFC;
 }
 
-/* Universal Base Reset for Buttons & Controls (Prevents browser white buttonface default) */
-button,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-a,
-[role="button"] {
+/* Universal Base Reset for Buttons & Controls (Prevents browser white buttonface default without overriding utility or component classes) */
+:where(
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  a,
+  [role="button"]
+) {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
@@ -4682,3 +4685,49 @@ aside.first-visit-dock,
     font-size: 0.9rem;
   }
 }
+
+/* Native <dialog> modal scroll containment (prevents background page scroll chaining without mutating root overflow) */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgba(4, 8, 15, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Smooth anchor scrolling for marketing navigation when reduced-motion is not requested */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Accessible tab underline indicator that survives forced-colors mode */
+.forge-sneak-tab[role="tab"] {
+  position: relative;
+}
+
+.forge-sneak-tab[role="tab"][aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 8px 0 8px;
+  border-block-end: 3px solid var(--gold, #F59E0B);
+}
+
+/* Science disclosure summary marker styling */
+details.forge-science-accordion > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.6ch;
+  cursor: pointer;
+}
+
+details.forge-science-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
