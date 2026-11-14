@@ -27,6 +27,8 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
 
   if (!user) redirect('/auth/login')
 
+  const admin = supabaseAdmin()
+
   const [
     { data: profile },
     { data: plans },
@@ -61,14 +63,14 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
       .eq('user_id', user.id)
       .order('taken_at', { ascending: false })
       .limit(24),
-    supabase
+    admin
       .from('nasm_assessments')
       .select('*')
       .eq('client_id', user.id)
       .order('assessment_date', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase
+    admin
       .from('clients')
       .select('id, email')
       .eq('id', user.id)

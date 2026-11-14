@@ -1533,9 +1533,11 @@ export default function CoachOnboardingProgressionCard({
                     </div>
                     <div style={infoCardStyle}>
                       <div style={infoLabelStyle}>Active Package / Tier</div>
-                      <div style={infoValueStyle}>{packagesData[0]?.package_name || 'Individual Coaching'}</div>
+                      <div style={infoValueStyle}>
+                        {(packagesData.find(p => (p.sessions_remaining ?? 0) > 0) ?? packagesData[0])?.package_name || 'Individual Coaching'}
+                      </div>
                       <div style={{ fontSize: 12, color: '#34D399', marginTop: 2, fontWeight: 700 }}>
-                        {packagesData[0]?.sessions_remaining ?? 0} Sessions Remaining
+                        {packagesData.reduce((sum, p) => sum + Math.max(0, p.sessions_remaining ?? 0), 0)} Sessions Remaining
                       </div>
                     </div>
                     <div style={infoCardStyle}>
