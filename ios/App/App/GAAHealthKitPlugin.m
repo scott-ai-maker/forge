@@ -18,5 +18,8 @@ CAP_PLUGIN(GAAHealthKitPlugin, "GAAHealthKit",
     CAP_PLUGIN_METHOD(updateWatchRestTimer, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(isWatchAppInstalled, CAPPluginReturnPromise);
     CAP_PLUGIN_METHOD(sendCnsReadinessToWatch, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(getWatchSyncDiagnostics, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(sendCameraRemoteToWatch, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(sendCompanionSummaryToWatch, CAPPluginReturnPromise);
 )
 

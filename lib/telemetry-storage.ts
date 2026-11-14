@@ -38,6 +38,20 @@ export interface JointComfortSparklinePoint {
   label: string
 }
 
+export interface SafetyFlagSnapshotRecord {
+  eventId: string
+  timestamp: string
+  severity: 'emergency_911' | 'clinical_stop' | 'joint_regression'
+  triggerSource: string
+  exerciseName: string | null
+  swappedToExercise: string | null
+  jointArea: string
+  painLevel5: number | null
+  comfortScore100: number | null
+  matchedKeywords: string[]
+  actionTaken: string
+}
+
 export interface ClientTelemetrySnapshot {
   userId: string
   latestReadinessScore: number | null
@@ -61,7 +75,9 @@ export interface ClientTelemetrySnapshot {
     pelvicSymmetryDeg?: number | null
     scanMode?: string | null
     checkedAt?: string | null
+    _safetyFlags?: SafetyFlagSnapshotRecord[]
   }
+  safetyFlags?: SafetyFlagSnapshotRecord[]
   injectedWarmupDrills: Array<{ id: string; title: string; duration_sec: number }>
   optPhase: number | null
   expressModeActive: boolean
@@ -98,6 +114,7 @@ function createEmptySnapshot(userId: string): ClientTelemetrySnapshot {
     deskAngles: {},
     deskAuditedAt: null,
     postureDelta: {},
+    safetyFlags: [],
     injectedWarmupDrills: [],
     optPhase: null,
     expressModeActive: false,
@@ -151,6 +168,9 @@ function mapRowToSnapshot(userId: string, row: Record<string, unknown>): ClientT
       row.posture_delta && typeof row.posture_delta === 'object'
         ? (row.posture_delta as ClientTelemetrySnapshot['postureDelta'])
         : {},
+    safetyFlags: Array.isArray((row.posture_delta as Record<string, unknown> | null)?._safetyFlags)
+      ? ((row.posture_delta as { _safetyFlags: SafetyFlagSnapshotRecord[] })._safetyFlags)
+      : [],
     injectedWarmupDrills: Array.isArray(row.injected_warmup_drills)
       ? (row.injected_warmup_drills as Array<{ id: string; title: string; duration_sec: number }>)
       : [],
@@ -182,6 +202,7 @@ export function applyEventsToSnapshot(
     deskStrainFlags: [...current.deskStrainFlags],
     deskAngles: { ...current.deskAngles },
     postureDelta: { ...current.postureDelta },
+    safetyFlags: [...(current.safetyFlags || current.postureDelta?._safetyFlags || [])],
     injectedWarmupDrills: [...current.injectedWarmupDrills],
     lastSyncedAt: syncedAtIso,
   }
@@ -257,12 +278,49 @@ export function applyEventsToSnapshot(
 
       case 'posture_scan_completed': {
         next.postureDelta = {
+          ...next.postureDelta,
           overallPostureScore: clampScore(p.overall_posture_score),
           forwardHeadTiltDeg: finiteOrNull(p.forward_head_tilt_deg),
           shoulderSymmetryDeg: finiteOrNull(p.shoulder_symmetry_deg),
           pelvicSymmetryDeg: finiteOrNull(p.pelvic_symmetry_deg),
           scanMode: typeof p.scan_mode === 'string' ? p.scan_mode : 'quick_check',
           checkedAt: eventTimeIso,
+        }
+        break
+      }
+
+      case 'safety_flag': {
+        const currentFlags = next.safetyFlags ?? []
+        if (!currentFlags.some(f => f.eventId === ev.event_id)) {
+          const sevRaw = String(p.severity || 'joint_regression')
+          const severity: SafetyFlagSnapshotRecord['severity'] =
+            sevRaw === 'emergency_911' || sevRaw === 'clinical_stop' ? sevRaw : 'joint_regression'
+          const record: SafetyFlagSnapshotRecord = {
+            eventId: ev.event_id,
+            timestamp: eventTimeIso,
+            severity,
+            triggerSource: typeof p.trigger_source === 'string' ? p.trigger_source : 'in_set_pinchy_button',
+            exerciseName: typeof p.exercise_name === 'string' ? p.exercise_name : null,
+            swappedToExercise: typeof p.swapped_to_exercise === 'string' ? p.swapped_to_exercise : null,
+            jointArea: typeof p.joint_area === 'string' && p.joint_area ? p.joint_area : 'Unspecified Joint',
+            painLevel5: clampScore(p.pain_level_5, 1, 5),
+            comfortScore100: clampScore(p.comfort_score_100, 0, 100),
+            matchedKeywords: Array.isArray(p.matched_keywords)
+              ? p.matched_keywords.filter((k): k is string => typeof k === 'string')
+              : [],
+            actionTaken:
+              typeof p.action_taken === 'string' && p.action_taken
+                ? p.action_taken
+                : 'Movement paused & regressed',
+          }
+          const updatedFlags = [...currentFlags, record]
+            .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+            .slice(0, 10)
+          next.safetyFlags = updatedFlags
+          next.postureDelta = {
+            ...next.postureDelta,
+            _safetyFlags: updatedFlags,
+          }
         }
         break
       }

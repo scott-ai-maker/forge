@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
+import type { AskCoachGordonSafetyCard } from '@/lib/ask-coach-gordon-types'
 
 export interface CoachGordonContext {
   athleteName?: string
@@ -18,6 +19,7 @@ export interface CoachGordonContext {
   recentReadinessScore?: number
   recentSleepHours?: number
   recentRpe?: number
+  recentRpeHistory?: number[]
   lastLoggedSet?: {
     weightLbs?: number
     reps?: number
@@ -27,6 +29,8 @@ export interface CoachGordonContext {
   todayWorkoutExercises?: string[]
   contraindicationTags?: string[]
   isCoachUser?: boolean
+  initialPrompt?: string
+  initialSafetyCard?: AskCoachGordonSafetyCard | null
 }
 
 /**
@@ -61,8 +65,8 @@ export function closeCoachGordon() {
   window.dispatchEvent(new CustomEvent('close-coach-gordon'))
 }
 
-const AskCoachGordonModal = dynamic(
-  () => import('@/components/fitness/AskCoachGordonModal'),
+const CoachGordonAssistant = dynamic(
+  () => import('@/components/coach-gordon/CoachGordonAssistant'),
   { ssr: false }
 )
 
@@ -223,7 +227,7 @@ export default function GlobalCoachGordonHost() {
           }}
           className="tactile-btn global-coach-gordon-fab"
           aria-label="Ask Coach Gordon a question"
-          title="Ask Coach Gordon"
+          data-testid="global-ask-coach-gordon-fab"
         >
           <div style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
             <Image
@@ -239,15 +243,15 @@ export default function GlobalCoachGordonHost() {
         </button>
       )}
 
-      {/* Ask Coach Gordon Interactive AI & Voice Modal */}
+      {/* Coach Gordon AI Persistent Personal Trainer Drawer */}
       {isOpen && (
-        <AskCoachGordonModal
+        <CoachGordonAssistant
           isOpen={isOpen}
           onClose={handleClose}
           athleteName={context.athleteName || 'Member'}
           goal={context.goal || 'general_fitness'}
-          nasmOptPhase={context.nasmOptPhase || 1}
-          currentWorkoutFocus={context.currentWorkoutFocus || 'General fitness'}
+          nasmOptPhase={context.nasmOptPhase || 2}
+          currentWorkoutFocus={context.currentWorkoutFocus || 'Scheduled Workout'}
           currentExerciseName={context.currentExerciseName}
           equipmentAccess={context.equipmentAccess}
           cardioEquipmentAccess={context.cardioEquipmentAccess}
@@ -255,10 +259,12 @@ export default function GlobalCoachGordonHost() {
           recentReadinessScore={context.recentReadinessScore || 82}
           recentSleepHours={context.recentSleepHours}
           recentRpe={context.recentRpe}
+          recentRpeHistory={context.recentRpeHistory}
           lastLoggedSet={context.lastLoggedSet}
           todayWorkoutExercises={context.todayWorkoutExercises}
           contraindicationTags={context.contraindicationTags}
-          isCoachUser={context.isCoachUser}
+          initialPrompt={context.initialPrompt}
+          initialSafetyCard={context.initialSafetyCard}
           onApplyExerciseSwap={handleApplyExerciseSwap}
           onStartRestTimer={handleStartRestTimer}
           onAutoRegulateLoad={handleAutoRegulateLoad}

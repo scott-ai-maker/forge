@@ -151,14 +151,15 @@ import UIKit
             return
         }
 
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
             self.healthStore.requestAuthorization(toShare: self.writeTypes, read: self.readTypes) { [weak self] success, error in
                 if success {
-                    self?.enableBackgroundDelivery { bgSuccess, bgError in
+                    self?.enableBackgroundDelivery { _, bgError in
                         if let bgError = bgError {
-                            print("[GAA HealthKit] Background delivery warning: \(bgError.localizedDescription)")
+                            print("[Forge HealthKit] Background delivery warning: \(bgError.localizedDescription)")
                         } else {
-                            print("[GAA HealthKit] Background delivery enabled successfully.")
+                            print("[Forge HealthKit] Background delivery enabled successfully.")
                         }
                     }
                     self?.registerBackgroundObservers()
@@ -826,7 +827,22 @@ import UIKit
 
         let workoutPredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
 
+        // Deduplication window: check if our watchOS HKWorkoutSession already recorded this workout
+        // with "ForgeAthletic_Source" == "watchOS" so Apple Health never double-counts sessions!
+        let dedupePredicate = HKQuery.predicateForSamples(
+            withStart: startDate.addingTimeInterval(-600),
+            end: endDate.addingTimeInterval(600),
+            options: []
+        )
+        var watchWorkoutAlreadySaved = false
+
         func finalizeWorkoutSave(effectiveCalories: Double, hrSamples: [HKSample]) {
+            if watchWorkoutAlreadySaved {
+                print("[Forge HealthKit] Skipping duplicate iOS HKWorkout save — watchOS HKWorkoutSession already recorded this session.")
+                completion(true, nil)
+                return
+            }
+
             let energyBurned = HKQuantity(unit: .kilocalorie(), doubleValue: effectiveCalories)
             var distanceQuantity: HKQuantity? = nil
             if let distance = distanceMiles, distance > 0 {
@@ -834,9 +850,11 @@ import UIKit
             }
 
             var metadata: [String: Any] = [
-                HKMetadataKeyIndoorWorkout: false
+                HKMetadataKeyIndoorWorkout: true,
+                "ForgeAthletic_Source": "iOS"
             ]
             if let hr = avgHeartRate, hr > 0 {
+                metadata["ForgeAthletic_AvgBPM"] = Int(round(hr))
                 metadata["GAA_AverageHeartRateBpm"] = Int(round(hr))
             }
 
@@ -858,7 +876,7 @@ import UIKit
                 if success && !hrSamples.isEmpty {
                     self.healthStore.add(hrSamples, to: workout) { _, addError in
                         if let addError = addError {
-                            print("[GAA HealthKit] Notice attaching HR samples to workout: \(addError.localizedDescription)")
+                            print("[Forge HealthKit] Notice attaching HR samples to workout: \(addError.localizedDescription)")
                         }
                         completion(success, error)
                     }
@@ -868,10 +886,29 @@ import UIKit
             }
         }
 
-        // Query true active energy and HR samples recorded during the workout window
+        // Query existing watchOS workouts + true active energy and HR samples recorded during the workout window
         var finalCalories = activeCaloriesKcal
         var finalHrSamples: [HKSample] = []
         let dispatchGroup = DispatchGroup()
+
+        dispatchGroup.enter()
+        let existingWorkoutQuery = HKSampleQuery(
+            sampleType: HKObjectType.workoutType(),
+            predicate: dedupePredicate,
+            limit: 10,
+            sortDescriptors: nil
+        ) { _, samples, _ in
+            if let workouts = samples as? [HKWorkout] {
+                for existing in workouts {
+                    if let source = existing.metadata?["ForgeAthletic_Source"] as? String, source == "watchOS" {
+                        watchWorkoutAlreadySaved = true
+                        break
+                    }
+                }
+            }
+            dispatchGroup.leave()
+        }
+        self.healthStore.execute(existingWorkoutQuery)
 
         if let activeEnergyType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
             dispatchGroup.enter()

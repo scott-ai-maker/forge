@@ -65,7 +65,7 @@ const LAB_TOOLS: { id: FitnessLabTool; title: string; description: string }[] = 
   { id: 'bodycomp', title: 'Body composition', description: 'Review estimates or start a body-composition scan.' },
   { id: 'video', title: 'Form review', description: 'Review exercise technique and corrective cues.' },
   { id: 'roadmap', title: 'Training roadmap', description: 'Explore your training phases and weekly plan.' },
-  { id: 'home_gym', title: 'Home-Gym Builder & Gear', description: 'Design a custom NASM RAG home gym & view prescribed corrective gear.' },
+  { id: 'home_gym', title: 'Home-Gym Builder & Gear', description: 'Design a custom home gym for your space & view recommended training gear.' },
   { id: 'nutrition', title: 'Nutrition', description: 'Review calorie targets, macros, and meal guidance.' },
   { id: 'travel', title: 'Travel workouts', description: 'Adapt your workout to the equipment available.' },
   { id: 'assessment', title: 'Movement assessment', description: 'Review your movement screen and warm-up guidance.' },

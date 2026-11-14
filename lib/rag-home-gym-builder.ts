@@ -775,7 +775,7 @@ export function buildRagHomeGymBlueprint(
   const firstName = (input.athleteName || 'Athlete').trim().split(' ')[0]
   const blueprintTitle = `${firstName}'s ${spaceLabel} · OPT™ Phase ${effectiveOptPhase} Blueprint`
 
-  const architectSummaryMemo = `Designed via Forge Athletic's NASM Home Gym Design (HGD) & OPT™ RAG Knowledge Base for a ${spaceLabel.toLowerCase()} within your ${formatUsd(
+  const architectSummaryMemo = `Tailored via the Forge Athletic Home-Gym Planning System for a ${spaceLabel.toLowerCase()} within your ${formatUsd(
     resolvedBudgetCapUsd
   )} target budget. ${
     ownedCoreAssets.length > 0

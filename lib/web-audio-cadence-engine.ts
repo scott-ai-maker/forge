@@ -6,6 +6,8 @@
  * tempo tick tones (eccentric, isometric, concentric), rest countdown bells, and harmonic PR fanfares.
  */
 
+import { isSfxMuted } from './sfx-audio'
+
 let sharedAudioContext: AudioContext | null = null
 
 /**
@@ -83,6 +85,7 @@ export interface ToneOptions {
  * Synthesizes a precise tone with an exponential anti-click attack/release envelope.
  */
 export function playPrecisionTone(options: ToneOptions): void {
+  if (isSfxMuted()) return
   const ctx = getSharedAudioContext()
   if (!ctx) return
 

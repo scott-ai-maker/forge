@@ -4,7 +4,7 @@ import HealthKit
 
 /**
  * GAAHealthKitPlugin
- * Capacitor Native Plugin for Gordon Athletic Advisory
+ * Capacitor Native HealthKit & WatchConnectivity Plugin for Forge Athletic
  */
 @objc(GAAHealthKitPlugin)
 public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -26,7 +26,10 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "startWatchWorkout", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "updateWatchRestTimer", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "isWatchAppInstalled", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "sendCnsReadinessToWatch", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "sendCnsReadinessToWatch", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getWatchSyncDiagnostics", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "sendCameraRemoteToWatch", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "sendCompanionSummaryToWatch", returnType: CAPPluginReturnPromise)
     ]
 
     override public func load() {
@@ -39,19 +42,37 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         ForgeWatchConnectivityManager.shared.onSetLoggedFromWatch = { [weak self] setData in
             self?.notifyListeners("onWatchSetLogged", data: setData)
         }
+        ForgeWatchConnectivityManager.shared.onRpeUpdatedFromWatch = { [weak self] rpeData in
+            self?.notifyListeners("onWatchRpeUpdated", data: rpeData)
+        }
         ForgeWatchConnectivityManager.shared.onRestActionFromWatch = { [weak self] actionData in
             self?.notifyListeners("onWatchRestAction", data: actionData)
         }
-        ForgeWatchConnectivityManager.shared.onHeartRateFromWatch = { [weak self] bpm, timestamp in
-            self?.notifyListeners("onWatchHeartRateUpdate", data: [
-                "heartRate": bpm,
-                "timestamp": timestamp
-            ])
+        ForgeWatchConnectivityManager.shared.onHeartRateTelemetryFromWatch = { [weak self] hrTelemetry in
+            self?.notifyListeners("onWatchHeartRateUpdate", data: hrTelemetry)
         }
         ForgeWatchConnectivityManager.shared.onWatchSessionStateChanged = { [weak self] installed in
             self?.notifyListeners("onWatchStateChanged", data: [
                 "isWatchAppInstalled": installed
             ])
+        }
+        ForgeWatchConnectivityManager.shared.onWatchSyncDiagnosticsChanged = { [weak self] syncDiag in
+            self?.notifyListeners("onWatchSyncStateChanged", data: syncDiag)
+        }
+        ForgeWatchConnectivityManager.shared.onCameraRemoteCommandFromWatch = { [weak self] cmdData in
+            self?.notifyListeners("onWatchCameraCommand", data: cmdData)
+        }
+        ForgeWatchConnectivityManager.shared.onExpressModeToggledFromWatch = { [weak self] expressData in
+            self?.notifyListeners("onWatchExpressModeToggled", data: expressData)
+        }
+        ForgeWatchConnectivityManager.shared.onWarmupBatchActionFromWatch = { [weak self] warmupData in
+            self?.notifyListeners("onWatchWarmupBatchAction", data: warmupData)
+        }
+        ForgeWatchConnectivityManager.shared.onDeskResetCompletedFromWatch = { [weak self] deskData in
+            self?.notifyListeners("onWatchDeskResetCompleted", data: deskData)
+        }
+        ForgeWatchConnectivityManager.shared.onJointComfortLoggedFromWatch = { [weak self] comfortData in
+            self?.notifyListeners("onWatchJointComfortLogged", data: comfortData)
         }
         ForgeWatchConnectivityManager.shared.onEndWorkoutFromWatch = { [weak self] in
             self?.notifyListeners("onWatchEndWorkout", data: [:])
@@ -304,19 +325,47 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc public func getTelemetryDiagnostics(_ call: CAPPluginCall) {
         GAAHealthSyncManager.shared.getTelemetryDiagnostics { diag in
-            call.resolve(diag)
+            var enriched = diag
+            enriched["watchSync"] = ForgeWatchConnectivityManager.shared.getSyncDiagnostics()
+            call.resolve(enriched)
         }
     }
 
     // MARK: - Apple Watch Companion Bridge
 
+    @objc public func getWatchSyncDiagnostics(_ call: CAPPluginCall) {
+        call.resolve(ForgeWatchConnectivityManager.shared.getSyncDiagnostics())
+    }
+
     @objc public func isWatchAppInstalled(_ call: CAPPluginCall) {
+        let diag = ForgeWatchConnectivityManager.shared.getSyncDiagnostics()
         let installed = ForgeWatchConnectivityManager.shared.isWatchAppInstalled
         let paired = ForgeWatchConnectivityManager.shared.isWatchPaired
         call.resolve([
             "installed": installed,
-            "paired": paired
+            "paired": paired,
+            "reachable": (diag["reachable"] as? Bool) ?? false,
+            "activationState": (diag["activationState"] as? String) ?? "notActivated",
+            "lastWatchTelemetryTimestamp": diag["lastWatchTelemetryTimestamp"] ?? NSNull()
         ])
+    }
+
+    @objc public func sendCameraRemoteToWatch(_ call: CAPPluginCall) {
+        guard let cameraObject = call.getObject("cameraRemote") ?? (call.options as? [String: Any]) else {
+            call.reject("Missing required cameraRemote payload.")
+            return
+        }
+        ForgeWatchConnectivityManager.shared.sendCameraRemoteState(cameraData: cameraObject)
+        call.resolve(["success": true])
+    }
+
+    @objc public func sendCompanionSummaryToWatch(_ call: CAPPluginCall) {
+        guard let summaryObject = call.getObject("companionSummary") ?? (call.options as? [String: Any]) else {
+            call.reject("Missing required companionSummary payload.")
+            return
+        }
+        ForgeWatchConnectivityManager.shared.sendCompanionSummary(summaryData: summaryObject)
+        call.resolve(["success": true])
     }
 
     @objc public func sendWorkoutToWatch(_ call: CAPPluginCall) {

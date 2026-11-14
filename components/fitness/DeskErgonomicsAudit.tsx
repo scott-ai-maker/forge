@@ -19,6 +19,18 @@ import {
   type SavedWorkstationProfile,
   type StrainLevel,
 } from '@/lib/posture-profile-state'
+import {
+  subscribeToWatchCameraCommand,
+  syncCameraRemoteStateToWatch,
+} from '@/lib/native-healthkit-bridge'
+import { Mail, Smartphone, Volume2 } from 'lucide-react'
+import { useTierAccess } from '@/lib/tierEntitlements'
+import CoachEscalationModal from '@/components/coach-gordon/CoachEscalationModal'
+import {
+  buildPostScanDiagnosticSummary,
+  playCoachStaticCue,
+  speakCoachDynamicText,
+} from '@/src/lib/audio/coachVoiceEngine'
 
 export interface DeskErgonomicsAuditProps {
   /** Render read-only preloaded sample in landing page Sneak Peek bezel with zero protected calls */
@@ -63,6 +75,9 @@ export default function DeskErgonomicsAudit({
   renderPostScanBanner,
 }: DeskErgonomicsAuditProps) {
   const { sfxMuted, toggleSfxMuted, playTone } = useSfxMuted()
+  const { tierId } = useTierAccess()
+  const isCoachSupport = tierId === 'coach_support'
+  const [escalationOpen, setEscalationOpen] = useState(false)
 
   const [scanResult, setScanResult] = useState<DeskErgonomicsScanResult | null>(() =>
     sandboxMode ? evaluateDeskErgonomicsFromLandmarks(SAMPLE_DESK_LANDMARKS.typical_strain) : null
@@ -117,7 +132,20 @@ export default function DeskErgonomicsAudit({
     (result: DeskErgonomicsScanResult, imageDataUrl: string | null, autoPersist = true) => {
       setScanResult(result)
       setCapturedImageSrc(imageDataUrl)
-      playTone('success')
+      playCoachStaticCue('calibration_locked')
+
+      if (!sandboxMode) {
+        const flaggedAngle = result.angles.find(a => a.status !== 'optimal')
+        const spokenSummary = buildPostScanDiagnosticSummary({
+          scanType: 'desk_ergonomics',
+          score: result.score,
+          primaryFinding: flaggedAngle
+            ? `${flaggedAngle.title.toLowerCase()} (${flaggedAngle.measuredDegrees} degrees)`
+            : 'clean ergonomic alignment',
+          actionableFix: result.adjustments[0]?.headline,
+        })
+        void speakCoachDynamicText(spokenSummary, { moment: 'post_scan_summary' })
+      }
 
       if (!sandboxMode && autoPersist) {
         const craniovertebralDeg =
@@ -170,7 +198,7 @@ export default function DeskErgonomicsAudit({
         )
       }
     },
-    [maxSavedProfiles, playTone, sandboxMode, savedProfiles.length, workstationLabel]
+    [maxSavedProfiles, sandboxMode, savedProfiles.length, workstationLabel]
   )
 
   const detectPoseOrFallback = useCallback(
@@ -236,6 +264,7 @@ export default function DeskErgonomicsAudit({
       })
       setCameraActive(true)
       setCountdownSec(5)
+      playCoachStaticCue('calibration_framing')
 
       requestAnimationFrame(() => {
         if (videoRef.current) {
@@ -340,6 +369,62 @@ export default function DeskErgonomicsAudit({
   })
 
   const isLockedFrame = (countdownSec ?? 5) <= 2
+
+  // Bidirectional Apple Watch Wrist Camera Remote sync (Desk Ergonomics Audit)
+  useEffect(() => {
+    if (sandboxMode) return
+    const isActive = !scanResult
+    void syncCameraRemoteStateToWatch({
+      isActive,
+      mode: 'desk_audit',
+      modeTitle: 'Desk Ergonomics Audit',
+      framingStatus: isLockedFrame && cameraActive ? 'locked' : cameraActive ? 'recording' : 'framing',
+      isRecording: cameraActive,
+      countdownSeconds: countdownSec ?? 0,
+      repCount: 0,
+      targetReps: 1,
+      statusHint:
+        isLockedFrame && cameraActive
+          ? 'Locked · Emerald — capturing seated profile'
+          : cameraActive
+            ? `Hold natural seated posture (${countdownSec ?? 5}s)`
+            : 'Prop iPhone 6–8 ft at 90° side view',
+    })
+  }, [cameraActive, countdownSec, isLockedFrame, sandboxMode, scanResult])
+
+  useEffect(() => {
+    if (sandboxMode) return
+    let cleanupWatchSub: (() => void) | null = null
+    void subscribeToWatchCameraCommand(cmd => {
+      if (cmd.command === 'startTimer5s' || cmd.command === 'recordRep') {
+        if (!cameraActive) {
+          if (typeof navigator !== 'undefined' && typeof navigator.mediaDevices?.getUserMedia === 'function') {
+            void startLiveFiveSecondAudit()
+          } else {
+            handleLoadSample('typical_strain')
+          }
+        }
+      } else if (cmd.command === 'stopAndReview') {
+        stopCamera()
+        handleLoadSample('typical_strain')
+      } else if (cmd.command === 'dismissRemote') {
+        stopCamera()
+      }
+    }).then(unsub => {
+      cleanupWatchSub = unsub
+    })
+
+    return () => {
+      cleanupWatchSub?.()
+      void syncCameraRemoteStateToWatch({
+        isActive: false,
+        mode: 'desk_audit',
+        modeTitle: 'Desk Ergonomics Audit',
+        framingStatus: 'framing',
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cameraActive, handleLoadSample, sandboxMode, stopCamera])
 
   return (
     <div
@@ -1038,7 +1123,60 @@ export default function DeskErgonomicsAudit({
               >
                 + Audit Another Desk
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const flaggedAngle = scanResult.angles.find(a => a.status !== 'optimal')
+                  const spokenSummary = buildPostScanDiagnosticSummary({
+                    scanType: 'desk_ergonomics',
+                    score: scanResult.score,
+                    primaryFinding: flaggedAngle
+                      ? `${flaggedAngle.title.toLowerCase()} (${flaggedAngle.measuredDegrees} degrees)`
+                      : 'clean ergonomic alignment',
+                    actionableFix: scanResult.adjustments[0]?.headline,
+                  })
+                  void speakCoachDynamicText(spokenSummary, {
+                    moment: 'post_scan_summary',
+                    forceUnlockVoiceOnTap: true,
+                  })
+                }}
+                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-white/12 bg-[#181B22] px-3.5 py-2 text-xs font-bold text-zinc-100 hover:bg-[#1D212A]"
+              >
+                <Volume2 size={14} className="text-emerald-300" aria-hidden="true" />
+                <span>Listen to Coach Gordon</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEscalationOpen(true)}
+                data-testid="desk-audit-message-real-coach-btn"
+                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/12 px-3.5 py-2 text-xs font-bold text-emerald-200 hover:bg-emerald-500/20"
+              >
+                {isCoachSupport ? (
+                  <Smartphone size={14} aria-hidden="true" />
+                ) : (
+                  <Mail size={14} aria-hidden="true" />
+                )}
+                <span>
+                  {isCoachSupport
+                    ? 'Text Real Coach Gordon (24h SLA)'
+                    : 'Message Real Coach Gordon'}
+                </span>
+              </button>
             </div>
+          )}
+
+          {!sandboxMode && (
+            <CoachEscalationModal
+              open={escalationOpen}
+              onClose={() => setEscalationOpen(false)}
+              sourceContext="post_scan_results"
+              initialQuestion={`Hi Coach Gordon — my Desk Ergonomics Audit scored ${scanResult.score}/100 (${scanResult.ergonomicFlags.join(', ') || 'optimal'}). Any daily mobility cues to pair with my setup?`}
+              telemetryOverride={{
+                postureFlags: scanResult.ergonomicFlags.map(f => f.replace(/_/g, ' ')),
+              }}
+            />
           )}
 
           {/* Contextual Upgrade Slot (Trigger 1: Post-Scan Amber/Coral Flag) */}

@@ -440,10 +440,10 @@ export default function EquipmentDispensaryWidget({
           ))}
         </div>
 
-        {/* Workspace Mode Switcher: Interactive RAG Home-Gym Builder vs. Turnkey Catalog */}
+        {/* Workspace Mode Switcher: Custom Home-Gym Planner vs. Turnkey Catalog */}
         <div
           role="group"
-          aria-label="Choose between Custom RAG Home-Gym Builder or Full Equipment Catalog"
+          aria-label="Choose between Custom Home-Gym Planner or Full Equipment Catalog"
           style={{
             display: 'flex',
             gap: 10,
@@ -479,7 +479,7 @@ export default function EquipmentDispensaryWidget({
             }}
           >
             <GaaIcon name="building" size={14} tone={activeWorkspaceMode === 'rag_builder' ? 'gold' : 'slate'} />
-            <span>Custom RAG Home-Gym Needs Builder</span>
+            <span>Custom Home-Gym Planner</span>
           </button>
 
           <button

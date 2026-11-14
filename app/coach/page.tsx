@@ -14,6 +14,7 @@ import CoachInviteLinkCard from '@/components/coach/CoachInviteLinkCard'
 import CoachClientPipeline from '@/components/coach/CoachClientPipeline'
 import CoachAnalyticsDashboard from '@/components/coach/CoachAnalyticsDashboard'
 import CoachTriageCockpit from '@/components/coach/CoachTriageCockpit'
+import CoachPrioritySafetyAndSyncPanel from '@/components/coach/CoachPrioritySafetyAndSyncPanel'
 import CoachDashboardPeriodizationStudio, { type ClientSummaryOption } from '@/components/coach/CoachDashboardPeriodizationStudio'
 import { evaluateClientTriage, calculateAcwrFromWorkoutLogs } from '@/lib/coach-triage'
 import { evaluateClientOnboardingProgression, type ClientProgressionProfile } from '@/lib/coach-onboarding-progression'
@@ -1041,6 +1042,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
 
         {activeTab === 'triage' && (
           <div style={{ marginBottom: 40 }}>
+            <CoachPrioritySafetyAndSyncPanel />
             <CoachTriageCockpit initialClients={triageSummaries} />
           </div>
         )}
@@ -1054,6 +1056,9 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
 
         {activeTab === 'overview' && (
           <>
+            {/* ── Priority Safety Alerts, 24h SLA Escalations & Coaching Library Sync ── */}
+            <CoachPrioritySafetyAndSyncPanel />
+
             {/* ── Coach Gordon Live Calendar & Studio Schedule ── */}
             <CoachLiveScheduleAgenda sessions={coachScheduleSessions} />
 

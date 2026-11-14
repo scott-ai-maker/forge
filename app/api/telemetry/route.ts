@@ -29,7 +29,9 @@ const ALLOWED_EVENT_TYPES = [
   'desk_reset_completed',
   'form_lab_uploaded',
   'live_studio_telemetry',
+  'watch_biometrics_stream',
   'client_runtime_diagnostic',
+  'safety_flag',
 ] as const
 
 const TelemetryEnvelopeSchema = z.object({

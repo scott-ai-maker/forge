@@ -144,6 +144,14 @@ export interface TelemetryEventMap {
     studio_lut_preset: string
     background_mode: string
   }
+  watch_biometrics_stream: {
+    heart_rate_bpm: number
+    active_calories_kcal?: number | null
+    peak_bpm?: number | null
+    avg_bpm?: number | null
+    recovery_delta_bpm?: number | null
+    source: 'apple_watch'
+  }
   client_runtime_diagnostic: {
     diagnostic_kind:
       | 'camera_permission'
@@ -161,11 +169,25 @@ export interface TelemetryEventMap {
     component_context?: string | null
     ping_tag?: string | null
   }
+  safety_flag: {
+    severity: 'emergency_911' | 'clinical_stop' | 'joint_regression'
+    trigger_source: 'in_set_pinchy_button' | 'joint_comfort_log' | 'ai_chat_red_flag'
+    exercise_name?: string | null
+    swapped_to_exercise?: string | null
+    joint_area: string
+    pain_level_5?: number | null
+    comfort_score_100?: number | null
+    matched_keywords?: string[]
+    opt_phase?: number | null
+    action_taken: string
+    client_note?: string | null
+  }
 }
 
 export type TelemetryEventType = keyof TelemetryEventMap
 
 export const HIGH_PRIORITY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventType> = new Set([
+  'safety_flag',
   'workout_completed',
   'posture_scan_completed',
   'desk_ergonomics_completed',

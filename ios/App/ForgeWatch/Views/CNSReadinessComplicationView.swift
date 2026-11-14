@@ -70,21 +70,21 @@ public struct CNSReadinessCardView: View {
                 }
             }
         }
-        .padding(10)
+        .padding(9)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.06))
+                .fill(Color(red: 0.078, green: 0.090, blue: 0.122)) // #14171F Elevated Tactile Card
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(scoreColor.opacity(0.3), lineWidth: 1)
+                .stroke(scoreColor.opacity(0.35), lineWidth: 1)
         )
     }
 
     private var scoreColor: Color {
-        if cns.score >= 80 { return Color(red: 0.06, green: 0.72, blue: 0.51) } // Emerald Green
-        if cns.score >= 60 { return Color(red: 0.83, green: 0.63, blue: 0.09) } // Forge Gold
-        return Color(red: 0.97, green: 0.44, blue: 0.44) // Crimson Red
+        if cns.score >= 80 { return Color(red: 0.063, green: 0.725, blue: 0.506) } // Emerald
+        if cns.score >= 60 { return Color(red: 0.961, green: 0.620, blue: 0.043) } // Amber
+        return Color(red: 0.957, green: 0.247, blue: 0.369) // Coral
     }
 }
 

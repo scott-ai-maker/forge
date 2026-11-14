@@ -1,6 +1,8 @@
 import Foundation
 import WatchKit
 import WatchConnectivity
+import WidgetKit
+import HealthKit
 import Combine
 
 /**
@@ -14,11 +16,16 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     @Published public var workoutState: WatchWorkoutState = WatchWorkoutState()
     @Published public var restTimer: WatchRestTimerState = WatchRestTimerState()
     @Published public var cnsReadiness: WatchCnsReadiness = WatchCnsReadiness()
+    @Published public var cameraRemote: WatchCameraRemoteState = WatchCameraRemoteState()
+    @Published public var companionSummary: WatchCompanionSummary = WatchCompanionSummary()
     @Published public var isPhoneReachable: Bool = false
     @Published public var selectedTab: Int = 1
     @Published public var isCardioIntervalRunning: Bool = false
     @Published public var cardioElapsedSeconds: Int = 0
     @Published public var isCardioCompleted: Bool = false
+    @Published public var activeDeepLinkSheet: String? = nil
+    @Published public var pendingOfflineTransfersCount: Int = 0
+    @Published public var lastPhoneSyncAt: Date? = nil
 
     private var localTimer: Timer?
     private var cardioTimer: Timer?
@@ -33,11 +40,38 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     private var localStretchOverrides: [String: (isCompleted: Bool, timestamp: Date)] = [:]
 
     private let cachedWorkoutKey = "forge_cached_workout_state"
+    private let cachedCompanionKey = "forge_cached_companion_summary"
 
     private override init() {
         super.init()
         restoreCachedWorkoutState()
+        restoreCachedCompanionSummary()
         activateSession()
+    }
+
+    public func saveCachedCompanionSummary() {
+        do {
+            let data = try JSONEncoder().encode(self.companionSummary)
+            let defaults = UserDefaults.standard
+            defaults.set(data, forKey: cachedCompanionKey)
+            defaults.set(self.companionSummary.optPhase, forKey: "forge_opt_phase")
+            defaults.set(self.companionSummary.optPhaseLabel, forKey: "forge_opt_phase_label")
+            defaults.set(self.companionSummary.dailyStreak, forKey: "forge_daily_streak")
+            defaults.set(self.companionSummary.jointComfortScore, forKey: "forge_joint_comfort_score")
+            defaults.set(self.companionSummary.comfortStatusLabel, forKey: "forge_joint_comfort_label")
+            defaults.set(self.cnsReadiness.score, forKey: "forge_cns_score")
+            defaults.set(self.cnsReadiness.tierLabel, forKey: "forge_cns_tier")
+            WidgetCenter.shared.reloadAllTimelines()
+        } catch {
+            print("[WatchSessionCoordinator] Error caching companion summary: \(error.localizedDescription)")
+        }
+    }
+
+    public func restoreCachedCompanionSummary() {
+        guard let data = UserDefaults.standard.data(forKey: cachedCompanionKey) else { return }
+        if let decoded = try? JSONDecoder().decode(WatchCompanionSummary.self, from: data) {
+            self.companionSummary = decoded
+        }
     }
 
     public func saveCachedWorkoutState() {
@@ -516,12 +550,22 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     }
 
     /**
-     * Streams optical heart rate samples to iPhone.
+     * Streams optical heart rate samples and session recovery metrics to iPhone.
      */
-    public func streamLiveHeartRate(bpm: Int) {
+    public func streamLiveHeartRate(
+        bpm: Int,
+        activeCalories: Double = 0,
+        peakBpm: Int = 0,
+        avgBpm: Int = 0,
+        recoveryDeltaBpm: Int = 0
+    ) {
         let payload: [String: Any] = [
             "type": "liveHeartRate",
             "bpm": bpm,
+            "activeCalories": activeCalories,
+            "peakBpm": peakBpm,
+            "avgBpm": avgBpm,
+            "recoveryDeltaBpm": recoveryDeltaBpm,
             "timestamp": ISO8601DateFormatter().string(from: Date())
         ]
 
@@ -539,6 +583,162 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
         }
     }
 
+    /**
+     * Updates RPE on the just-completed set from the Digital Crown Plain-English RPE Picker
+     * and syncs directly to the iPhone's autoregulation engine.
+     */
+    public func submitPostSetPlainRpe(exerciseName: String, setIndex: Int, rpe: Double) {
+        let rir = max(0.0, 10.0 - rpe)
+        let opt = WatchPlainRpeOption.nearest(to: rpe)
+        let payload: [String: Any] = [
+            "type": "rpeUpdated",
+            "exerciseName": exerciseName,
+            "setIndex": setIndex,
+            "rpe": rpe,
+            "rir": rir,
+            "plainLabel": opt.badgeTitle,
+            "timestamp": ISO8601DateFormatter().string(from: Date())
+        ]
+        sendToPhone(payload)
+
+        // Autoregulate active rest timer on wrist if effort was Hard (9) or Max (10)
+        if restTimer.isRunning && rpe >= 9.0 && !restTimer.isBioPaced {
+            let extraRest = rpe >= 10.0 ? 30 : 15
+            restTimer.remainingSeconds += extraRest
+            restTimer.totalRestSeconds += extraRest
+            restTimer.isBioPaced = true
+            restTimer.badgeText = "RPE \(Int(rpe)) +\(extraRest)s"
+        }
+    }
+
+    /**
+     * Triggers remote camera shutter / rep recording / stop & review on the propped iPhone.
+     */
+    public func sendCameraRemoteCommand(_ command: String) {
+        if command == "startTimer5s" {
+            cameraRemote.countdownSeconds = 5
+            WatchHapticManager.shared.playCameraCountdownTick()
+        } else if command == "recordRep" {
+            cameraRemote.isRecording = true
+            cameraRemote.repCount += 1
+            WatchHapticManager.shared.playSetLoggedConfirmation()
+        } else if command == "stopAndReview" {
+            cameraRemote.isRecording = false
+            WatchHapticManager.shared.playSuccessKnock()
+        } else if command == "dismissRemote" {
+            cameraRemote.isActive = false
+        }
+
+        let payload: [String: Any] = [
+            "type": "cameraRemoteCommand",
+            "command": command,
+            "mode": cameraRemote.mode,
+            "timestamp": ISO8601DateFormatter().string(from: Date())
+        ]
+        sendToPhone(payload)
+    }
+
+    /**
+     * Toggles 20-Minute Express Workout mode directly from the wrist.
+     */
+    public func toggleExpress20mMode() {
+        let nextVal = !workoutState.expressModeActive
+        workoutState.expressModeActive = nextVal
+        companionSummary.expressModeActive = nextVal
+        WKInterfaceDevice.current().play(.click)
+        saveCachedWorkoutState()
+        saveCachedCompanionSummary()
+
+        sendToPhone([
+            "type": "expressModeToggled",
+            "expressModeActive": nextVal,
+            "timestamp": ISO8601DateFormatter().string(from: Date())
+        ])
+    }
+
+    /**
+     * Skips or batch-completes auto-injected Readiness Warm-Up drills from the wrist and advances to Set 1.
+     */
+    public func skipOrCompleteReadinessWarmup(markCompleted: Bool) {
+        for idx in workoutState.warmupDrills.indices {
+            workoutState.warmupDrills[idx].isCompleted = markCompleted
+            localDrillOverrides[workoutState.warmupDrills[idx].name] = (isCompleted: markCompleted, timestamp: Date())
+        }
+        workoutState.activePhase = "resistance"
+        lastLocalPhaseSelectionTime = Date()
+        lastLocalPhaseSelected = "resistance"
+        WKInterfaceDevice.current().play(.directionUp)
+        saveCachedWorkoutState()
+
+        sendToPhone([
+            "type": "warmupBatchAction",
+            "action": markCompleted ? "completeAll" : "skipAll",
+            "timestamp": ISO8601DateFormatter().string(from: Date())
+        ])
+    }
+
+    /**
+     * Standalone 5-Minute Desk Reset completion on wrist (works offline via FIFO transferUserInfo).
+     */
+    public func completeDeskResetSession(durationSec: Int, drillsCompleted: Int) {
+        if !companionSummary.deskResetDoneToday {
+            companionSummary.dailyStreak = max(1, companionSummary.dailyStreak + 1)
+            companionSummary.deskResetDoneToday = true
+        }
+        workoutState.dailyStreak = companionSummary.dailyStreak
+        WatchHapticManager.shared.playSuccessKnock()
+        saveCachedCompanionSummary()
+        saveCachedWorkoutState()
+
+        let payload: [String: Any] = [
+            "type": "deskResetCompleted",
+            "durationSec": durationSec,
+            "drillsCompleted": drillsCompleted,
+            "dailyStreak": companionSummary.dailyStreak,
+            "ergonomicFlags": companionSummary.ergonomicFlags,
+            "completedAt": ISO8601DateFormatter().string(from: Date())
+        ]
+        // Always enqueue via transferUserInfo for guaranteed FIFO offline streak delivery, plus instant sendMessage if reachable
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(payload, replyHandler: nil) { [weak self] _ in
+                self?.transferUserInfo(payload)
+            }
+        } else {
+            transferUserInfo(payload)
+        }
+    }
+
+    /**
+     * Logs daily 10-second Digital Crown Joint Comfort Check-In (Neck, Lower Back, Hips 1–5)
+     * and pushes to iPhone + Coach Gordon's Coach Portal.
+     */
+    public func logJointComfortCheckIn(neck: Int, lowerBack: Int, hips: Int) {
+        let score = WatchCompanionSummary.computeComfortScore(neck: neck, lowerBack: lowerBack, hips: hips)
+        companionSummary.neckRating = neck
+        companionSummary.lowerBackRating = lowerBack
+        companionSummary.hipsRating = hips
+        companionSummary.jointComfortScore = score
+        companionSummary.updatedAt = ISO8601DateFormatter().string(from: Date())
+        WatchHapticManager.shared.playSuccessKnock()
+        saveCachedCompanionSummary()
+
+        var painFlags: [String] = []
+        if neck <= 2 { painFlags.append("neck_tightness") }
+        if lowerBack <= 2 { painFlags.append("lumbar_stiffness") }
+        if hips <= 2 { painFlags.append("hip_tightness") }
+
+        let payload: [String: Any] = [
+            "type": "jointComfortLogged",
+            "jointComfortScore": score,
+            "neck": neck,
+            "lowerBack": lowerBack,
+            "hips": hips,
+            "painFlags": painFlags,
+            "loggedAt": companionSummary.updatedAt
+        ]
+        sendToPhone(payload)
+    }
+
     private func sendToPhone(_ payload: [String: Any]) {
         let session = WCSession.default
         if session.isReachable {
@@ -553,7 +753,11 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     }
 
     private func transferUserInfo(_ payload: [String: Any]) {
+        guard WCSession.isSupported() else { return }
         let transfer = WCSession.default.transferUserInfo(payload)
+        DispatchQueue.main.async {
+            self.pendingOfflineTransfersCount = WCSession.default.outstandingUserInfoTransfers.count
+        }
         let typeStr = (payload["type"] as? String) ?? "unknown"
         print("[WatchSessionCoordinator] Queued offline sync packet '\(typeStr)' (isTransferring=\(transfer.isTransferring), outstanding=\(WCSession.default.outstandingUserInfoTransfers.count))")
     }
@@ -664,6 +868,10 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
     public func handleIncomingMessage(_ dict: [String: Any]) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            self.lastPhoneSyncAt = Date()
+            if WCSession.isSupported() {
+                self.pendingOfflineTransfersCount = WCSession.default.outstandingUserInfoTransfers.count
+            }
 
             // Cancel Workout Signal from iPhone
             if let type = dict["type"] as? String, type == "cancelWorkout" {
@@ -675,6 +883,18 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             if let type = dict["type"] as? String, type == "endWorkout" {
                 self.finishSession(notifyPhone: false)
                 return
+            }
+
+            // Live Wrist Camera Remote Update from iPhone (Quick Posture, Readiness Check, Desk Audit, Form Lab)
+            if let camDict = dict["cameraRemote"] as? [String: Any] {
+                self.parseCameraRemote(camDict)
+            } else if let type = dict["type"] as? String, type == "cameraRemoteState" {
+                self.parseCameraRemote(dict)
+            }
+
+            // Companion Summary Update (OPT Phase, Daily Streak, Joint Comfort, Express Mode)
+            if let compDict = dict["companionSummary"] as? [String: Any] {
+                self.parseCompanionSummary(compDict)
             }
 
             // Workout State Update from iPhone (nested under "workout" or passed top-level)
@@ -696,8 +916,64 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 let hrv = cnsDict["hrv"] as? Int ?? 70
                 let date = cnsDict["date"] as? String ?? ""
                 self.cnsReadiness = WatchCnsReadiness(score: score, restingHeartRate: rhr, hrvRmssd: hrv, date: date)
+                self.saveCachedCompanionSummary()
             }
         }
+    }
+
+    private func parseCameraRemote(_ dict: [String: Any]) {
+        let wasLocked = self.cameraRemote.isLockedEmerald
+        let isActive = dict["isActive"] as? Bool ?? false
+        let mode = dict["mode"] as? String ?? "quick_posture"
+        let modeTitle = dict["modeTitle"] as? String ?? "Camera Scan"
+        let framingStatus = dict["framingStatus"] as? String ?? "framing"
+        let isRecording = dict["isRecording"] as? Bool ?? false
+        let countdownSeconds = dict["countdownSeconds"] as? Int ?? 0
+        let repCount = dict["repCount"] as? Int ?? 0
+        let targetReps = dict["targetReps"] as? Int ?? 3
+        let statusHint = dict["statusHint"] as? String ?? "Step 6–8 ft back into frame"
+
+        let nextState = WatchCameraRemoteState(
+            isActive: isActive,
+            mode: mode,
+            modeTitle: modeTitle,
+            framingStatus: framingStatus,
+            isRecording: isRecording,
+            countdownSeconds: countdownSeconds,
+            repCount: repCount,
+            targetReps: targetReps,
+            statusHint: statusHint
+        )
+        self.cameraRemote = nextState
+
+        if isActive && nextState.isLockedEmerald && !wasLocked {
+            WatchHapticManager.shared.playCameraLockedEmerald()
+        }
+    }
+
+    private func parseCompanionSummary(_ dict: [String: Any]) {
+        if let opt = dict["optPhase"] as? Int {
+            companionSummary.optPhase = opt
+            companionSummary.optPhaseLabel = (dict["optPhaseLabel"] as? String) ?? WatchCompanionSummary.optPhaseShortName(opt)
+        }
+        if let streak = dict["dailyStreak"] as? Int {
+            companionSummary.dailyStreak = streak
+        }
+        if let comfort = dict["jointComfortScore"] as? Int {
+            companionSummary.jointComfortScore = comfort
+        }
+        if let express = dict["expressModeActive"] as? Bool {
+            companionSummary.expressModeActive = express
+            workoutState.expressModeActive = express
+        }
+        if let deskDone = dict["deskResetDoneToday"] as? Bool {
+            companionSummary.deskResetDoneToday = deskDone
+        }
+        if let flags = dict["ergonomicFlags"] as? [String] {
+            companionSummary.ergonomicFlags = flags
+        }
+        companionSummary.updatedAt = ISO8601DateFormatter().string(from: Date())
+        saveCachedCompanionSummary()
     }
 
     /**
@@ -825,6 +1101,9 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 let setupCue = exDict["setupCue"] as? String
                 let movementCues = exDict["movementCues"] as? [String]
                 let coachingTip = exDict["coachingTip"] as? String
+                let isSuperset = exDict["isSuperset"] as? Bool
+                let supersetRole = exDict["supersetRole"] as? String
+                let supersetPartnerIndex = exDict["supersetPartnerIndex"] as? Int
 
                 parsedExercises.append(
                     WatchExerciseInfo(
@@ -850,7 +1129,10 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                         equipmentModality: equipmentModality,
                         setupCue: setupCue,
                         movementCues: movementCues,
-                        coachingTip: coachingTip
+                        coachingTip: coachingTip,
+                        isSuperset: isSuperset,
+                        supersetRole: supersetRole,
+                        supersetPartnerIndex: supersetPartnerIndex
                     )
                 )
             }
@@ -865,6 +1147,9 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             let setupCue = exDict["setupCue"] as? String
             let movementCues = exDict["movementCues"] as? [String]
             let coachingTip = exDict["coachingTip"] as? String
+            let isSuperset = exDict["isSuperset"] as? Bool
+            let supersetRole = exDict["supersetRole"] as? String
+            let supersetPartnerIndex = exDict["supersetPartnerIndex"] as? Int
 
             activeEx = WatchExerciseInfo(
                 exerciseName: exDict["exerciseName"] as? String ?? "Exercise",
@@ -889,7 +1174,10 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
                 equipmentModality: equipmentModality,
                 setupCue: setupCue,
                 movementCues: movementCues,
-                coachingTip: coachingTip
+                coachingTip: coachingTip,
+                isSuperset: isSuperset,
+                supersetRole: supersetRole,
+                supersetPartnerIndex: supersetPartnerIndex
             )
         } else if !parsedExercises.isEmpty {
             let safeIdx = min(max(0, activeExIndex), parsedExercises.count - 1)
@@ -1004,6 +1292,19 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             effectiveActiveEx = activeEx ?? parsedExercises.first
         }
 
+        let resolvedOptPhase = (dict["optPhase"] as? Int) ?? effectiveActiveEx?.optPhase ?? self.companionSummary.optPhase
+        let resolvedExpressMode = (dict["expressModeActive"] as? Bool) ?? self.workoutState.expressModeActive
+        let resolvedStreak = (dict["dailyStreak"] as? Int) ?? self.companionSummary.dailyStreak
+        let resolvedInjectedCount = (dict["injectedWarmupCount"] as? Int) ?? self.workoutState.injectedWarmupCount
+        if let jointComfort = dict["jointComfortScore"] as? Int {
+            self.companionSummary.jointComfortScore = jointComfort
+        }
+        self.companionSummary.optPhase = resolvedOptPhase
+        self.companionSummary.optPhaseLabel = WatchCompanionSummary.optPhaseShortName(resolvedOptPhase)
+        self.companionSummary.dailyStreak = resolvedStreak
+        self.companionSummary.expressModeActive = resolvedExpressMode
+        saveCachedCompanionSummary()
+
         self.workoutState = WatchWorkoutState(
             workoutId: effectiveWorkoutId,
             dayNumber: dayNumber,
@@ -1018,7 +1319,11 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
             completedSetsCount: completed,
             totalSetsCount: total,
             isSessionActive: isActive,
-            startedAt: ISO8601DateFormatter().string(from: Date())
+            startedAt: ISO8601DateFormatter().string(from: Date()),
+            optPhase: resolvedOptPhase,
+            expressModeActive: resolvedExpressMode,
+            dailyStreak: resolvedStreak,
+            injectedWarmupCount: resolvedInjectedCount
         )
 
         // Persist to offline cache on watch so session remains intact if phone stays in locker
@@ -1026,7 +1331,11 @@ public final class WatchSessionCoordinator: NSObject, ObservableObject, WCSessio
 
         // Ensure background HKWorkoutSession is active to keep optical HR reading when session is active
         if isActive && !WatchWorkoutManager.shared.isWorkoutActive {
-            WatchWorkoutManager.shared.startWorkout()
+            WatchWorkoutManager.shared.startWorkout(
+                activityType: .traditionalStrengthTraining,
+                workoutId: effectiveWorkoutId,
+                sessionKind: "strength"
+            )
         }
     }
 

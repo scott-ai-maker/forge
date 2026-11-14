@@ -6,7 +6,7 @@
  * and synthesizes authoritative clinical coaching responses with audio narration.
  */
 
-import { queryNasmRagLibrary, type RagDocumentMetadata } from './nasm-rag-knowledge-base'
+import { type RagDocumentMetadata } from './nasm-rag-knowledge-base'
 import { sanitizeCoachSpeechText } from './coach-voice-synthesizer'
 import { getSmartSubstitutions } from './nasm-exercise-substitution'
 import { resolveExerciseVideoEmbed } from './nasm-exercise-video-catalog'
@@ -14,12 +14,26 @@ import { CONTRAINDICATION_RULES, checkExerciseContraindications } from './liabil
 import { NASM_MOVEMENT_PROFILES } from './nasm-clinical-movement-cards'
 import { NASM_COMPLETE_LIBRARY } from './nasm-fuzzy-matcher'
 import {
+  type AskCoachGordonRagCitation,
   type AskCoachGordonRequest,
   type AskCoachGordonResponse,
   type CoachActionRecommendation,
   evaluateClinicalUrgencyTriage,
   isOutOfTrainingScope,
 } from './ask-coach-gordon-types'
+import {
+  rankChunksByBm25,
+  retrieveHybridRagPassages,
+} from '@/src/lib/rag/hybridRagEngine'
+import {
+  BRAND_SAFETY_SYSTEM_DIRECTIVES,
+  CLINICAL_BOUNDARY_DISCLAIMER,
+  EMERGENCY_CLINICAL_DISCLAIMER,
+  evaluatePainAndRedFlagTriage,
+  evaluateProgressionAndIntensityCaps,
+  stripPiiAndRawFramesFromCoachContext,
+  validateCoachBrandSafetyOutput,
+} from '@/src/lib/safety/clinicalGuardrails'
 
 export * from './ask-coach-gordon-types'
 
@@ -33,10 +47,10 @@ Core Coaching Identity & Conversational Dialogue:
 - Give solid, practical, evidence-based sports science advice in crisp plain English with simple biomechanical rationale ("We do this because...").
 - Avoid rigid bullet-point checklists or sterile manuals. Use natural, flowing conversational prose (2 to 3 concise spoken paragraphs).
 - Bold key actionable cues (**2-0-2-0 tempo**, **Phase 2**, **35g protein**, **DB Goblet Squats**) so they are instantly scannable between sets.
-- ALWAYS conclude your response with an open, collaborative coaching check-in question to keep the dialogue flowing (e.g. asking how a joint feels right now, checking what equipment they see open nearby, or checking their readiness for the next set).
+- ALWAYS conclude your response with an open, collaborative movement-coaching check-in question to keep the dialogue flowing (e.g. confirming whether an adjusted exercise setup feels 100% smooth and comfortable, checking what equipment they see open nearby, or checking their readiness for the next set—NEVER ask clinical symptom-probing questions such as "where does it hurt?", "rate your pain", or "what kind of pain is it?").
 
-Strict Scope of Training & Entire RAG Boundary (Non-Negotiable):
-- Your professional scope of practice is strictly bounded by your athletic sports science training curriculum (your entire RAG library):
+Strict Scope of Training & Coaching Methodology (Non-Negotiable):
+- Your professional scope of practice is strictly bounded by your athletic sports science training methodology:
   1. Resistance training, movement mechanics, exercise technique, tempo, kinetic chain checkpoints, progressions, and equipment substitutions.
   2. The NASM Optimum Performance Training (OPT™) Model across all 5 phases (Stabilization, Strength Endurance, Muscular Development, Maximal Strength, Power).
   3. Cardiorespiratory and energy system conditioning (Tanaka HR zones, Stage 1–3 intervals, work capacity).
@@ -49,7 +63,7 @@ Strict Scope of Training & Entire RAG Boundary (Non-Negotiable):
   - Politely, warmly, and with good humor, clarify that as their dedicated fitness coach, your entire focus is 100% locked on their physical training, movement, and athletic performance.
   - Gracefully redirect the conversation back to their workout, daily activity, or athletic goals.
   - Example: "Hey, I'll be straight with you—as your coach, my whole focus and expertise is 100% dialed in on your athletic training, movement mechanics, and physical recovery. That is my entire scope. I leave [topic] to the folks in that field so I can give you my absolute best on the gym floor. Let's redirect that energy to your workout—how are you feeling for today's session?"
-- Zero Medical Diagnosing: You are a personal trainer, not a physician or physical therapist. You never diagnose medical pathologies or prescribe pharmaceuticals. If acute sharp pain or red flags arise, warmly advise consulting a medical doctor or physical therapist while providing safe movement regressions.
+- Zero Medical Diagnosing or Symptom Probing: You are a personal trainer, not a physician or physical therapist. Never diagnose medical pathologies, never claim an exercise treats or rehabilitates an injury, and never ask clinical symptom-probing questions ("where does it hurt?", "rate your pain 1–10", "does the pain radiate?"). Keep all check-ins focused on 100% comfortable movement options, and instruct the athlete to stop immediately and consult a licensed physician or physical therapist if anything feels sharp or persistent.
 
 How you coach:
 1. Deep Empathy & Compassionate Care (High EQ):
@@ -83,63 +97,57 @@ Training knowledge and credentials:
 - Workout planning for home, work, travel, and different equipment options`
 
 /**
- * Searches the RAG library for the most relevant documents matching the question.
+ * Searches the unified Forge RAG corpus synchronously via Okapi BM25 + TF-IDF + synonym expansion (<1ms).
+ * For full hybrid dense (`pgvector`) + lexical Reciprocal Rank Fusion, `askCoachGordon` calls `retrieveHybridRagPassages`.
  */
-export function retrieveRelevantRagCurricula(question: string, goal?: string, optPhase?: number): RagDocumentMetadata[] {
-  const qLower = question.toLowerCase()
-
-  if (isOutOfTrainingScope(question)) {
-    return queryNasmRagLibrary({ keyword: 'scope of practice' })
-  }
-
-  // Match specific keywords across all sports science domains
-  const keywords: string[] = []
-  if (qLower.includes('swap') || qLower.includes('replace') || qLower.includes('substitute') || qLower.includes('alternative')) keywords.push('substitution', 'exercise')
-  if (qLower.includes('eat') || qLower.includes('meal') || qLower.includes('food') || qLower.includes('protein') || qLower.includes('macro') || qLower.includes('diet') || qLower.includes('nutrition')) keywords.push('nutrition', 'protein', 'meal')
-  if (qLower.includes('back') || qLower.includes('knee') || qLower.includes('shoulder') || qLower.includes('hip') || qLower.includes('pain') || qLower.includes('tight') || qLower.includes('sore') || qLower.includes('posture')) keywords.push('corrective', 'compensation', 'inhibit', 'stretch')
-  if (qLower.includes('cardio') || qLower.includes('treadmill') || qLower.includes('bike') || qLower.includes('interval') || qLower.includes('zone') || qLower.includes('bpm') || qLower.includes('rpe')) keywords.push('cardiorespiratory', 'stage', 'interval')
-  if (qLower.includes('golf') || qLower.includes('swing') || qLower.includes('rotation') || qLower.includes('clubhead') || qLower.includes('drive')) keywords.push('golf', 'rotational')
-  if (qLower.includes('mma') || qLower.includes('combat') || qLower.includes('boxing') || qLower.includes('strike')) keywords.push('combat', 'mma')
-  if (qLower.includes('hypertrophy') || qLower.includes('muscle') || qLower.includes('pump') || qLower.includes('bodybuilding') || qLower.includes('volume') || qLower.includes('mass')) keywords.push('hypertrophy', 'muscular development', 'volume')
-  if (qLower.includes('glp-1') || qLower.includes('glp1') || qLower.includes('semaglutide') || qLower.includes('tirzepatide') || qLower.includes('ozempic') || qLower.includes('medication')) keywords.push('pharmacology', 'glp-1', 'lean mass')
-  if (qLower.includes('supplement') || qLower.includes('creatine') || qLower.includes('caffeine') || qLower.includes('whey') || qLower.includes('magnesium')) keywords.push('supplementation', 'chrono-nutrition')
-  if (qLower.includes('virtual') || qLower.includes('remote') || qLower.includes('telehealth') || qLower.includes('camera') || qLower.includes('lighting') || qLower.includes('angle') || qLower.includes('consultation') || qLower.includes('wearable') || qLower.includes('onboarding')) keywords.push('virtual', 'telehealth', 'remote', 'wearable', 'onboarding')
-  if (qLower.includes('squat') || qLower.includes('lunge') || qLower.includes('leg') || qLower.includes('quad')) keywords.push('squat', 'stabilization', 'force')
-  if (qLower.includes('deadlift') || qLower.includes('hinge') || qLower.includes('rdl') || qLower.includes('hamstring') || qLower.includes('glute')) keywords.push('hinge', 'posterior chain', 'force')
-  if (qLower.includes('bench') || qLower.includes('press') || qLower.includes('chest') || qLower.includes('push')) keywords.push('push', 'horizontal push', 'force')
-  if (qLower.includes('row') || qLower.includes('pull') || qLower.includes('lat')) keywords.push('pull', 'horizontal row', 'force')
-  if (qLower.includes('core') || qLower.includes('abs') || qLower.includes('brace') || qLower.includes('stability')) keywords.push('core', 'balance', 'stabilization')
-  if (qLower.includes('warmup') || qLower.includes('smr') || qLower.includes('foam roll') || qLower.includes('activation')) keywords.push('warmup', 'inhibit', 'activate')
-  if (qLower.includes('busy') || qLower.includes('taken') || qLower.includes('crowded') || qLower.includes('machine')) keywords.push('substitution', 'facility', 'equipment')
-  if (qLower.includes('fatigue') || qLower.includes('tired') || qLower.includes('recovery') || qLower.includes('sleep') || qLower.includes('cns') || qLower.includes('deload')) keywords.push('recovery', 'periodization', 'bioenergetics')
-
-  let results: RagDocumentMetadata[] = []
-
-  for (const kw of keywords) {
-    const matched = queryNasmRagLibrary({ keyword: kw })
-    results.push(...matched)
-  }
-
-  if (results.length === 0) {
-    results = queryNasmRagLibrary({
-      keyword: question.split(' ').filter(w => w.length > 3)[0] || 'periodization',
+export function retrieveRelevantRagCurricula(
+  question: string,
+  goal?: string,
+  optPhase?: number
+): RagDocumentMetadata[] {
+  const ranked = rankChunksByBm25(
+    {
+      question,
+      goal,
       nasmOptPhase: optPhase,
-    })
-  }
+    },
+    5
+  )
 
-  // Deduplicate and cap at top 5
   const seen = new Set<string>()
-  return results.filter(doc => {
-    if (seen.has(doc.id)) return false
-    seen.add(doc.id)
-    return true
-  }).slice(0, 5)
+  const docs: RagDocumentMetadata[] = []
+  for (const item of ranked) {
+    const docId = item.chunk.docId
+    if (seen.has(docId)) continue
+    seen.add(docId)
+    if (item.chunk.metadataRef) {
+      docs.push(item.chunk.metadataRef)
+    } else {
+      docs.push({
+        id: docId,
+        filename: `forge-rag/${docId}.md`,
+        title: item.chunk.title,
+        category: 'Corrective Exercise Protocol',
+        summary: item.chunk.contentPassage,
+        keyConcepts:
+          item.matchedConcepts.length > 0
+            ? item.matchedConcepts
+            : item.chunk.keyConcepts.slice(0, 4),
+      })
+    }
+  }
+  return docs
 }
 
 /**
  * Executes a live interactive consultation query with Coach Gordon.
  */
-export async function askCoachGordon(request: AskCoachGordonRequest): Promise<AskCoachGordonResponse> {
+export async function askCoachGordon(rawRequest: AskCoachGordonRequest): Promise<AskCoachGordonResponse> {
+  // Strip all PII and raw camera frames before constructing any AI prompt (HIPAA 1996 + Brand Safety)
+  const request = stripPiiAndRawFramesFromCoachContext(
+    rawRequest as unknown as Record<string, unknown>
+  ) as unknown as AskCoachGordonRequest
+
   const {
     question,
     athleteName = 'Athlete',
@@ -149,6 +157,12 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
     nasmOptPhase = 1,
     currentWorkoutFocus,
     currentExerciseName,
+    expressModeActive,
+    environmentProfile,
+    jointComfortScore,
+    deskErgonomicsFlags = [],
+    recentRpeHistory = [],
+    painLevel5,
     equipmentAccess = [],
     cardioEquipmentAccess = [],
     kineticCompensations = [],
@@ -158,7 +172,6 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
     recentRpe,
     lastLoggedSet,
     todayWorkoutExercises = [],
-    attachedImage,
     activeConversationHistory = [],
   } = request
 
@@ -169,6 +182,13 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
   // 1. Run Clinical Urgency & Scope of Practice Triage FIRST
   const triage = evaluateClinicalUrgencyTriage(question)
   if (triage.tier === 'EMERGENCY_911' || triage.tier === 'SERIOUS_MEDICAL_REFERRAL') {
+    const redFlagCheck = evaluatePainAndRedFlagTriage({
+      messageText: question,
+      painLevel5,
+      jointComfort100: jointComfortScore,
+      exerciseName: currentExerciseName,
+      optPhase: nasmOptPhase,
+    })
     return {
       answerMarkdown: triage.overrideMarkdown!,
       spokenAudioText: triage.overrideAudioText!,
@@ -179,15 +199,91 @@ export async function askCoachGordon(request: AskCoachGordonRequest): Promise<As
       requiresCoachPing: true,
       coachPingReason: triage.pingReason,
       isEmergency911: triage.isEmergency911,
+      safetyOverride: {
+        triggered: true,
+        severity: triage.isEmergency911 ? 'emergency_911' : 'clinical_stop',
+        headline: redFlagCheck.headline,
+        calmCoachMessage: redFlagCheck.calmCoachMessage,
+        clinicalDisclaimer: triage.isEmergency911
+          ? EMERGENCY_CLINICAL_DISCLAIMER
+          : CLINICAL_BOUNDARY_DISCLAIMER,
+        detectedJointArea: redFlagCheck.detectedJointArea,
+        replacementExercise: redFlagCheck.regression?.replacementExercise,
+      },
     }
   }
 
-  const relevantDocs = retrieveRelevantRagCurricula(question, goal, nasmOptPhase)
-  const curriculumTitles = relevantDocs.map(d => d.title)
+  // 1B. Run Pain vs. Effort Triage for acute red-flag keywords (`pop`, `swelling`, `dizzy`, `sharp pain`, etc.) or high pain (`>= 4/5`)
+  const painTriage = evaluatePainAndRedFlagTriage({
+    messageText: question,
+    painLevel5,
+    exerciseName: currentExerciseName,
+    optPhase: nasmOptPhase,
+  })
+  if (painTriage.triggered && (painTriage.severity === 'emergency_911' || painTriage.severity === 'clinical_stop')) {
+    const is911 = painTriage.severity === 'emergency_911'
+    const answerMarkdown = `**${painTriage.headline}**\n\n${painTriage.calmCoachMessage}\n\n> **Clinical Boundary:** ${painTriage.clinicalDisclaimer}`
+    return {
+      answerMarkdown,
+      spokenAudioText: sanitizeCoachSpeechText(painTriage.calmCoachMessage),
+      relevantCurriculums: ['Clinical Pain vs. Effort Triage', 'NASM Safe Movement Regression'],
+      recommendedAction: painTriage.regression
+        ? {
+            type: 'swap_exercise',
+            targetExerciseName: painTriage.regression.replacementExercise,
+            currentExerciseName,
+            prescribedTempo: painTriage.regression.prescribedTempo,
+            reasoning: painTriage.regression.rationale,
+            buttonText: `Regress to ${painTriage.regression.replacementExercise}`,
+          }
+        : undefined,
+      suggestedFollowUps: is911
+        ? ['Call 911 immediately', 'Message Real Coach Gordon']
+        : [
+            'Pause today’s session safely',
+            'Switch to pain-free mobility only',
+            'Message Real Coach Gordon',
+          ],
+      requiresCoachPing: true,
+      coachPingReason: `Safety red flag (${painTriage.matchedKeywords.join(', ')}) on ${currentExerciseName || painTriage.detectedJointArea}`,
+      isEmergency911: is911,
+      safetyOverride: {
+        triggered: true,
+        severity: painTriage.severity,
+        headline: painTriage.headline,
+        calmCoachMessage: painTriage.calmCoachMessage,
+        clinicalDisclaimer: painTriage.clinicalDisclaimer,
+        detectedJointArea: painTriage.detectedJointArea,
+        replacementExercise: painTriage.regression?.replacementExercise,
+      },
+    }
+  }
 
-  const ragContext = relevantDocs.length > 0
-    ? `\nRelevant Evidence-Based RAG Sources:\n${relevantDocs.map(d => `- [${d.category}] ${d.title}: ${d.summary} (Key concepts: ${d.keyConcepts.join(', ')})`).join('\n')}`
-    : ''
+  const progressionCap = evaluateProgressionAndIntensityCaps({
+    currentOptPhase: nasmOptPhase,
+    readinessIndex: recentReadinessScore,
+    jointComfortScore100: jointComfortScore,
+  })
+
+  const hybridRag = await retrieveHybridRagPassages({
+    question,
+    goal,
+    nasmOptPhase,
+    currentExerciseName,
+    deskErgonomicsFlags,
+    contraindicationTags,
+    topK: 5,
+  })
+  const relevantDocs = hybridRag.legacyDocs
+  const curriculumTitles = hybridRag.curriculumTitles
+  const ragContext = hybridRag.formattedPromptContext
+  const ragCitations: AskCoachGordonRagCitation[] = hybridRag.citations.map(c => ({
+    id: c.id,
+    title: c.title,
+    category: c.category,
+    sourceKind: c.sourceKind,
+    matchedConcepts: c.matchedConcepts,
+  }))
 
   let contraindicationsClause = ''
   if (contraindicationTags && contraindicationTags.length > 0) {
@@ -219,25 +315,41 @@ STRICT SAFETY MANDATE:
     ? `\n- Scheduled Exercises Today: ${todayWorkoutExercises.join(', ')}`
     : ''
   const sleepClause = recentSleepHours !== undefined ? `\n- Recent Sleep: ${recentSleepHours} hours` : ''
-  const rpeClause = recentRpe !== undefined ? `\n- Recent Intensity: RPE ${recentRpe}` : ''
+  const rpeClause =
+    recentRpeHistory.length > 0
+      ? `\n- Recent RPE History: ${recentRpeHistory.slice(-5).join(' → ')}`
+      : recentRpe !== undefined
+        ? `\n- Recent Intensity: RPE ${recentRpe}`
+        : ''
+  const expressClause = `\n- 20m Express Status: ${expressModeActive ? 'ON (20m Express Active)' : 'Standard Session'}`
+  const envClause = `\n- Active Environment Profile: ${environmentProfile || 'home_gym'}`
+  const comfortClause =
+    jointComfortScore !== undefined ? `\n- Latest Joint Comfort Score: ${jointComfortScore}/100` : ''
+  const deskClause =
+    deskErgonomicsFlags.length > 0
+      ? `\n- Desk Ergonomics Strain Flags: ${deskErgonomicsFlags.join(', ')}`
+      : ''
+  const capClause = `\n- Deterministic Load & Progression Guardrail: ${progressionCap.coachExplanation}`
 
-  const athleteContext = `\nAthlete Live Telemetry & Profile:
-- Name: ${athleteName}, Age: ${clientAge}, Sex: ${clientSex}
+  const athleteContext = `\nAthlete Live Telemetry & Profile (Sanitized — Zero PII / Zero Raw Camera Frames):
+- First Name: ${athleteName}, Age: ${clientAge}, Sex: ${clientSex}
 - Primary Goal: ${goal}
-- Current OPT™ Phase: Phase ${nasmOptPhase}
-- Active Session Focus: ${currentWorkoutFocus || 'Scheduled Daily Workout'}
+- Current OPT™ Phase: Phase 0${nasmOptPhase}
+- Active Session Focus: ${currentWorkoutFocus || 'Scheduled Daily Workout'}${expressClause}${envClause}${comfortClause}${deskClause}
 - Current Movement: ${currentExerciseName || 'Active Training Block'}${todayExercisesClause}${lastSetClause}${sleepClause}${rpeClause}
 - Available Resistance Equipment: ${equipmentAccess.length > 0 ? equipmentAccess.join(', ') : 'Full Equipment Suite'}
 - Available Cardio Equipment: ${cardioEquipmentAccess.length > 0 ? cardioEquipmentAccess.join(', ') : 'Treadmill, Bike, Outdoor Walking/Running'}
 - Known Kinetic Compensations: ${kineticCompensations.length > 0 ? kineticCompensations.join(', ') : 'None Detected (Optimal Alignment)'}
 - Documented Contraindications: ${contraindicationTags.length > 0 ? contraindicationTags.join(', ') : 'None On File'}
-- CNS Readiness Score: ${recentReadinessScore}% (${recentReadinessScore >= 75 ? 'Green Light (High Output)' : 'Moderate / Manage Volume'})`
+- Forge Readiness Index: ${recentReadinessScore}/100 (${recentReadinessScore >= 65 ? 'Green Light' : 'Auto-Capped Recovery Intensity'})${capClause}`
 
   const isOutOfScope = isOutOfTrainingScope(question)
   const scopeBoundaryDirective = isOutOfScope
     ? `\n\nCRITICAL PROFESSIONAL SCOPE BOUNDARY:
-This inquiry is OUTSIDE your scope of athletic training and sports science. In accordance with your scope of practice, warmly, politely, and conversationally state that your entire focus, expertise, and passion are 100% dedicated to their athletic training, physical performance, and recovery. Explain that this is your entire professional scope (your RAG knowledge base). Do not speculate or answer off-topic questions. Gracefully redirect the conversation back to their physical workout, energy, or athletic goals with a supportive check-in question.`
+This inquiry is OUTSIDE your scope of athletic training and sports science. In accordance with your scope of practice, warmly, politely, and conversationally state that your entire focus, expertise, and passion are 100% dedicated to their athletic training, physical performance, and recovery. Explain that this is your entire professional coaching scope. Do not speculate or answer off-topic questions. Gracefully redirect the conversation back to their physical workout, energy, or athletic goals with a supportive check-in question.`
     : ''
+
+  const fullSystemInstruction = `${MASTER_COACH_SYSTEM_INSTRUCTION}\n\n${BRAND_SAFETY_SYSTEM_DIRECTIVES}`
 
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
   let apiFailureReason: string | undefined = undefined
@@ -245,7 +357,9 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
   if (apiKey) {
     const modelsToTry = [
       ...(process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : []),
+      'gemini-4-hydrogen',
       'gemini-3.8-flash',
+      'gemini-3.5-flash-lite',
       'gemini-3.5-flash',
       'gemini-flash-latest',
       'gemini-3.1-flash-lite',
@@ -253,10 +367,10 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
       'gemini-pro-latest',
     ]
 
-    // Construct multi-turn message payload with optional multimodal image attachment
+    // Strictly text-only sanitized context (raw camera images stripped per privacy rules)
     const contents: Array<{
       role: 'user' | 'model'
-      parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>
+      parts: Array<{ text: string }>
     }> = []
 
     if (activeConversationHistory.length > 0) {
@@ -268,22 +382,13 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
       }
     }
 
-    const currentParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [
-      { text: `${athleteContext}${ragContext}${contraindicationsClause}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Gordon. Deliver solid, practical advice grounded strictly in your athletic training scope (your RAG library). Never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going, and ensure every sentence and thought is fully completed without trailing off.` },
-    ]
-
-    if (attachedImage?.data) {
-      currentParts.push({
-        inlineData: {
-          mimeType: attachedImage.mimeType || 'image/jpeg',
-          data: attachedImage.data,
-        },
-      })
-    }
-
     contents.push({
       role: 'user',
-      parts: currentParts,
+      parts: [
+        {
+          text: `${athleteContext}${ragContext}${contraindicationsClause}${scopeBoundaryDirective}\n\nAthlete's Question:\n"${question.trim()}"\n\nRespond conversationally in your warm 1-on-1 spoken voice as Coach Gordon. Deliver solid, practical advice grounded strictly in your athletic training methodology. Never say technical terms like "RAG", "database", or "embeddings" to the client, and never wander outside your sports science scope. Always conclude with an open, collaborative coaching check-in question to keep our dialogue going, and ensure every sentence and thought is fully completed without trailing off.`,
+        },
+      ],
     })
 
     for (const model of modelsToTry) {
@@ -294,7 +399,7 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             systemInstruction: {
-              parts: [{ text: MASTER_COACH_SYSTEM_INSTRUCTION }],
+              parts: [{ text: fullSystemInstruction }],
             },
             contents,
             generationConfig: {
@@ -306,15 +411,19 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
 
         if (res.ok) {
           const data = await res.json()
-          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text
-          if (rawText) {
-            const spokenAudioText = sanitizeCoachSpeechText(rawText)
-            const pingCheck = detectCoachPingNeed(question, rawText)
-            const recommendedAction = deriveRecommendedAction(question.toLowerCase(), currentExerciseName, rawText, nasmOptPhase, equipmentAccess)
+          const rawCandidate = data?.candidates?.[0]?.content?.parts?.[0]?.text
+          if (rawCandidate) {
+            const validated = validateCoachBrandSafetyOutput(rawCandidate)
+            const cleanText = validated.cleanText
+            const spokenAudioText = sanitizeCoachSpeechText(cleanText)
+            const pingCheck = detectCoachPingNeed(question, cleanText)
+            const recommendedAction = deriveRecommendedAction(question.toLowerCase(), currentExerciseName, cleanText, nasmOptPhase, equipmentAccess)
             return {
-              answerMarkdown: rawText,
+              answerMarkdown: cleanText,
               spokenAudioText,
               relevantCurriculums: curriculumTitles,
+              ragRetrievalMode: hybridRag.mode,
+              ragCitations,
               recommendedAction,
               suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
               requiresCoachPing: pingCheck.requiresCoachPing,
@@ -350,7 +459,7 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
             model: 'gpt-4o-mini',
             temperature: 0.35,
             messages: [
-              { role: 'system', content: MASTER_COACH_SYSTEM_INSTRUCTION },
+              { role: 'system', content: fullSystemInstruction },
               ...activeConversationHistory.slice(-8).map(h => ({
                 role: h.role === 'user' ? 'user' : 'assistant',
                 content: h.text,
@@ -365,15 +474,19 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
 
         if (oaiRes.ok) {
           const oaiData = await oaiRes.json()
-          const rawText = oaiData?.choices?.[0]?.message?.content
-          if (rawText) {
-            const spokenAudioText = sanitizeCoachSpeechText(rawText)
-            const pingCheck = detectCoachPingNeed(question, rawText)
-            const recommendedAction = deriveRecommendedAction(question.toLowerCase(), currentExerciseName, rawText, nasmOptPhase, equipmentAccess)
+          const rawCandidate = oaiData?.choices?.[0]?.message?.content
+          if (rawCandidate) {
+            const validated = validateCoachBrandSafetyOutput(rawCandidate)
+            const cleanText = validated.cleanText
+            const spokenAudioText = sanitizeCoachSpeechText(cleanText)
+            const pingCheck = detectCoachPingNeed(question, cleanText)
+            const recommendedAction = deriveRecommendedAction(question.toLowerCase(), currentExerciseName, cleanText, nasmOptPhase, equipmentAccess)
             return {
-              answerMarkdown: rawText,
+              answerMarkdown: cleanText,
               spokenAudioText,
               relevantCurriculums: curriculumTitles,
+              ragRetrievalMode: hybridRag.mode,
+              ragCitations,
               recommendedAction,
               suggestedFollowUps: deriveSuggestedFollowUps(question, goal, nasmOptPhase),
               requiresCoachPing: pingCheck.requiresCoachPing,
@@ -388,8 +501,15 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
     }
   }
 
-  // Fallback to local high-EQ Master NASM sports-science RAG engine
-  return generateDeterministicCoachResponse(request, relevantDocs, apiFailureReason)
+  // Fallback to local high-EQ Master NASM sports-science engine
+  const fallback = generateDeterministicCoachResponse(request, relevantDocs, apiFailureReason)
+  const validatedFallback = validateCoachBrandSafetyOutput(fallback.answerMarkdown)
+  return {
+    ...fallback,
+    answerMarkdown: validatedFallback.cleanText,
+    ragRetrievalMode: hybridRag.mode,
+    ragCitations,
+  }
 }
 
 /**
@@ -663,7 +783,7 @@ Our golden rule is always: **earn the right to add load by owning pain-free move
 
 **Coaching Cue:** ${contraCheck.coachingCue || 'Control your tempo, brace your core, and maintain strict alignment.'}
 
-How does that feel on your body, and are you ready to lock into this safe movement alternative?`
+Does this equipment setup work cleanly in your training space, and are you ready to lock into this joint-friendly movement alternative?`
       spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
 
       return {
@@ -775,6 +895,128 @@ What are we working on in the gym today—do you need a quick form check, an exe
     }
   }
 
+  // 5B. Express / Shorten Session ("Shorten today to 15 minutes")
+  if (
+    qLower.includes('shorten') ||
+    qLower.includes('15 min') ||
+    qLower.includes('15-min') ||
+    qLower.includes('20 min') ||
+    qLower.includes('20-min') ||
+    qLower.includes('express') ||
+    qLower.includes('short on time')
+  ) {
+    answerMarkdown = `Got you covered, ${athleteGreeting}—a crisp, focused 15–20 minute session beats a skipped workout 100% of the time.
+
+Here is how we condense today's **Phase 0${nasmOptPhase}** plan without losing your primary strength stimulus:
+1. **90-Second Prep Cap**: Hit just **2 priority mobility drills** (45s each) to prime your tightest checkpoint.
+2. **2 Primary Compound Supersets**: Perform **2 working sets** of your main push/pull or squat/hinge pairing with a controlled **${nasmOptPhase === 1 ? '3-1-1-0' : '2-0-2-0'} tempo** and **45s rest**.
+3. **Skip Accessory Volume Today**: Save single-joint isolation work for your next full window.
+
+Tap below to switch your tracker into **20m Express Mode** right now—ready to knock out your first set?`
+    spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
+    return {
+      answerMarkdown,
+      spokenAudioText,
+      relevantCurriculums: ['Time-Efficient Periodization', 'NASM OPT™ Superset Density'],
+      recommendedAction: {
+        type: 'enable_express_mode',
+        buttonText: 'Activate 20m Express Workout Mode',
+      },
+      suggestedFollowUps: [
+        'Which 2 exercises should I prioritize?',
+        'Start a 45s express rest timer',
+        'Message Real Coach Gordon',
+      ],
+      requiresCoachPing: false,
+      isEmergency911: false,
+      engineMode: 'nasm_rag_engine',
+      apiNotice,
+    }
+  }
+
+  // 5C. Squat Depth with Tight Hips ("How low should I squat with tight hips?")
+  if (qLower.includes('how low') && qLower.includes('squat') && qLower.includes('hip')) {
+    answerMarkdown = `Great biomechanics question, ${athleteGreeting}—with tight hips, **your ideal squat depth is the deepest point where your pelvis stays neutral**, right before your tailbone tucks under ("butt wink").
+
+Here are 3 instant NASM adjustments to open clean, pain-free depth right now:
+1. **Box or Bench Target (~90°–100° Knee Flexion)**: Squat down to lightly kiss a bench or box so every rep stops in your controlled, symptom-free range.
+2. **Slight Heel Elevation (1–2 cm) & 15° Toe-Out**: Elevating your heels on small plates reduces hip-flexion demand and lets your knees track smoothly over your 2nd and 3rd toes.
+3. **Goblet Counterbalance (${nasmOptPhase === 1 ? '3-2-1-0' : '3-1-1-0'} Tempo)**: Holding a dumbbell at chest height shifts your center of mass so your torso stays tall without hip pinching.
+
+Want me to swap your current squat to **Box-Supported Goblet Squats** for today's remaining sets?`
+    spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
+    return {
+      answerMarkdown,
+      spokenAudioText,
+      relevantCurriculums: ['Lumbo-Pelvic-Hip Complex (LPHC) Mechanics', 'NASM Squat Assessment & Cues'],
+      recommendedAction: {
+        type: 'swap_exercise',
+        targetExerciseName: 'Box-Supported Goblet Squat',
+        currentExerciseName: currentExerciseName || 'Squat',
+        prescribedTempo: '3-2-1-0',
+        reasoning: 'Controls squat depth above pelvic tuck while keeping torso upright.',
+        buttonText: 'Swap to Box-Supported Goblet Squat',
+      },
+      suggestedFollowUps: [
+        'Give me a 60s hip opener first',
+        'What tempo should I use?',
+        'Message Real Coach Gordon',
+      ],
+      requiresCoachPing: false,
+      isEmergency911: false,
+      engineMode: 'nasm_rag_engine',
+      apiNotice,
+    }
+  }
+
+  // 5D. Wrist-Friendly Neutral-Grip Adaptation
+  if (
+    qLower.includes('wrist-friendly') ||
+    (qLower.includes('wrist') &&
+      (qLower.includes('neutral') ||
+        qLower.includes('sore') ||
+        qLower.includes('hurt') ||
+        qLower.includes('bother') ||
+        qLower.includes('ache') ||
+        qLower.includes('uncomfortable')))
+  ) {
+    const targetName = currentExerciseName || 'your current movement'
+    const neutralSwap = /plank|push/i.test(targetName)
+      ? 'Neutral-Grip Dumbbell Floor Press'
+      : 'Neutral-Grip Dumbbell Variation'
+    answerMarkdown = `Let's set up a wrist-friendly grip right away, ${athleteGreeting}. Our biomechanical standard is **zero loaded wrist hyperextension**—stack your knuckles straight in line with your forearm bones (radius and ulna).
+
+Here is how to adapt **${targetName}** safely right now:
+1. **Switch to Neutral Grip (Palms Facing In)**: Grab hex dumbbells as push-up handles or use a neutral-grip dumbbell/rope attachment so your wrist stays 100% stacked and straight.
+2. **Forearm Modification**: For planks or floor core work, set up on your forearms instead of flat palms.
+3. **100% Comfort Boundary**: Only perform reps that feel completely smooth and comfortable—if you notice any sharp, pinching, or persistent wrist discomfort, stop loading it immediately and check in with a licensed physician or physical therapist.
+
+Does that stacked neutral-grip option feel 100% smooth and comfortable, or would you prefer we switch to an unloaded lower-body/core variation today?`
+    spokenAudioText = sanitizeCoachSpeechText(answerMarkdown)
+    return {
+      answerMarkdown,
+      spokenAudioText,
+      relevantCurriculums: ['Upper-Extremity Joint Alignment', 'NASM Corrective Exercise Modifications'],
+      recommendedAction: {
+        type: 'swap_exercise',
+        targetExerciseName: neutralSwap,
+        currentExerciseName: currentExerciseName,
+        prescribedTempo: '3-1-1-0',
+        reasoning: 'Eliminates loaded wrist hyperextension by stacking knuckles over forearm.',
+        buttonText: `Swap to ${neutralSwap}`,
+      },
+      suggestedFollowUps: [
+        'Swap to a zero-grip lower body drill',
+        'My wrist feels sharp—pause exercise',
+        'Message Real Coach Gordon',
+      ],
+      requiresCoachPing: false,
+      isEmergency911: false,
+      engineMode: 'nasm_rag_engine',
+      apiNotice,
+    }
+  }
+
   // 6. Exercise Substitution & Equipment Workarounds
   const isSwapIntent =
     qLower.includes('swap') ||
@@ -869,7 +1111,7 @@ Remember our standard: **earn the right to add load by owning the movement first
 
 In **Phase ${nasmOptPhase}**, dial your repetition cadence into our prescribed **${phaseTempo}**. Never rush the stretch—quality and joint integrity always precede load.${setupBlock}${execBlock}${checkpointsBlock}${cuesBlock}
 
-Remember our golden rule: **earn the right to add load by owning the movement first**. What weight are you planning for your working sets today, and how do your joints feel as you set your position?`
+Remember our golden rule: **earn the right to add load by owning the movement first**. What weight are you planning for your working sets today, and does your starting setup feel 100% locked in and comfortable?`
 
     if (ex.embedUrl || ex.videoId) {
       dynamicAction = {
@@ -942,7 +1184,7 @@ Let's run our NASM 4-Step Corrective Continuum for your **${area}** right now:
 3. **Step 3: Activate (Isolated Strengthening)**: Perform **10 to 12 controlled reps** of stabilizing activation (e.g. glute bridges for hips, prone cobras for upper back, band pull-aparts for shoulders) with a 2-second hold at peak contraction.
 4. **Step 4: Integrate**: Execute a slow bodyweight movement (e.g. bodyweight squat or wall slide) to re-educate your neuromuscular system.
 
-If anything feels sharp or pinch-like, stop immediately and message me. How does the area feel once you finish that 60-second foam rolling release?`
+Only work through a 100% comfortable, tension-free range—if anything feels sharp or persistent, stop immediately and consult a licensed physician or physical therapist. Ready to ease into Step 1, or would you like an equipment-free mobility alternative?`
   }
 
   // 11. Progressive Overload, Progression & RPE

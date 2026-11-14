@@ -2,6 +2,11 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import {
+  getAppleWatchSyncDiagnostics,
+  subscribeToWatchSyncStateChanged,
+  type WatchSyncDiagnostics,
+} from '@/lib/native-healthkit-bridge'
+import {
   flushTelemetry,
   getTelemetryHealth,
   sendTelemetryDiagnosticPing,
@@ -33,6 +38,23 @@ function formatSwBadge(
   }
 }
 
+function formatWatchActivationLabel(
+  state: WatchSyncDiagnostics['activationState']
+): { label: string; tone: 'emerald' | 'amber' | 'slate' } {
+  switch (state) {
+    case 'activated':
+      return { label: 'WCSession Activated', tone: 'emerald' }
+    case 'inactive':
+      return { label: 'WCSession Inactive', tone: 'amber' }
+    case 'notActivated':
+      return { label: 'WCSession Not Activated', tone: 'amber' }
+    case 'web_companion':
+      return { label: 'Web Companion (Native iOS Bridge Ready)', tone: 'slate' }
+    default:
+      return { label: 'WCSession Unsupported', tone: 'slate' }
+  }
+}
+
 export function TelemetryDiagnosticsPanel({
   onClose,
   headingId,
@@ -40,15 +62,49 @@ export function TelemetryDiagnosticsPanel({
   const fallbackId = useId()
   const resolvedHeadingId = headingId || fallbackId
   const [health, setHealth] = useState<TelemetryHealthSnapshot>(() => getTelemetryHealth())
+  const [watchSync, setWatchSync] = useState<WatchSyncDiagnostics>({
+    supported: false,
+    activationState: 'web_companion',
+    paired: false,
+    installed: false,
+    reachable: false,
+    outstandingTransfers: 0,
+    lastWatchTelemetryTimestamp: null,
+    lastWatchEventType: null,
+    lastHeartRateBpm: null,
+  })
   const [isFlushing, setIsFlushing] = useState(false)
   const [isPinging, setIsPinging] = useState(false)
   const [pingResult, setPingResult] = useState<TelemetryDiagnosticPingResult | null>(null)
 
   useEffect(() => {
     setHealth(getTelemetryHealth())
-    return subscribeTelemetryHealth(next => {
+    let active = true
+    let removeWatchSub: (() => void) | null = null
+
+    void getAppleWatchSyncDiagnostics().then(diag => {
+      if (active) setWatchSync(diag)
+    })
+
+    void subscribeToWatchSyncStateChanged(partial => {
+      if (!active) return
+      setWatchSync(prev => ({
+        ...prev,
+        ...partial,
+      }))
+    }).then(cleanup => {
+      removeWatchSub = cleanup
+    })
+
+    const unsubHealth = subscribeTelemetryHealth(next => {
       setHealth(next)
     })
+
+    return () => {
+      active = false
+      unsubHealth()
+      removeWatchSub?.()
+    }
   }, [])
 
   const handleManualFlush = async () => {
@@ -270,6 +326,86 @@ export function TelemetryDiagnosticsPanel({
           </div>
         </div>
       </div>
+
+      {/* Apple Watch Companion WCSession Sync Status Pill */}
+      {(() => {
+        const actBadge = formatWatchActivationLabel(watchSync.activationState)
+        return (
+          <div
+            data-testid="telemetry-watch-sync-pill"
+            className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-[#14171F] px-3.5 py-2.5"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-zinc-400">
+                Apple Watch Sync
+              </span>
+              <span
+                data-testid="telemetry-watch-activation-state"
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                  actBadge.tone === 'emerald'
+                    ? 'bg-emerald-500/15 text-emerald-300'
+                    : actBadge.tone === 'amber'
+                      ? 'bg-amber-500/15 text-amber-300'
+                      : 'bg-white/10 text-zinc-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-1.5 w-1.5 rounded-full ${
+                    actBadge.tone === 'emerald'
+                      ? 'bg-emerald-400'
+                      : actBadge.tone === 'amber'
+                        ? 'bg-amber-400'
+                        : 'bg-zinc-400'
+                  }`}
+                />
+                {actBadge.label}
+              </span>
+              <span
+                data-testid="telemetry-watch-paired-status"
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  watchSync.paired
+                    ? 'bg-emerald-500/15 text-emerald-300'
+                    : 'bg-white/5 text-zinc-400'
+                }`}
+              >
+                {watchSync.paired ? 'Paired' : 'Unpaired'}
+              </span>
+              <span
+                data-testid="telemetry-watch-reachable-status"
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  watchSync.reachable
+                    ? 'bg-emerald-500/15 text-emerald-300'
+                    : 'bg-amber-500/10 text-amber-300'
+                }`}
+              >
+                {watchSync.reachable ? 'Reachable · Live' : 'FIFO Queue Standby'}
+              </span>
+              {watchSync.outstandingTransfers > 0 && (
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-bold tabular-nums text-amber-300">
+                  {watchSync.outstandingTransfers} queued
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+              {watchSync.lastHeartRateBpm !== null && (
+                <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums text-emerald-300">
+                  {watchSync.lastHeartRateBpm} BPM
+                </span>
+              )}
+              <span>Last Watch Telemetry:</span>
+              <span
+                data-testid="telemetry-watch-last-timestamp"
+                className="font-mono font-semibold tabular-nums text-zinc-200"
+              >
+                {watchSync.lastWatchTelemetryTimestamp
+                  ? new Date(watchSync.lastWatchTelemetryTimestamp).toLocaleTimeString()
+                  : 'Awaiting packet'}
+              </span>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Round-Trip Store-Launch Verification Action */}
       <div className="rounded-xl border border-amber-400/25 bg-gradient-to-br from-[#121826] to-[#0B0F18] p-4">

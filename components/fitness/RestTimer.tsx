@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import { isSfxMuted } from '@/lib/sfx-audio'
+import { playCoachStaticCue } from '@/src/lib/audio/coachVoiceEngine'
 
 interface RestTimerProps {
   defaultSeconds?: number
@@ -116,10 +117,14 @@ export default function RestTimer({ defaultSeconds = 90, autoStart = false, onDo
           if (prev === null || prev <= 1) {
             setRunning(false)
             onDone?.()
+            playCoachStaticCue('rest_timer_go')
             void playDoneSound()
             return 0
           }
           const next = prev - 1
+          if (next === 10) {
+            playCoachStaticCue('rest_timer_10s_warning')
+          }
           if (next === 3 || next === 2 || next === 1) {
             void playWarningPip()
           }

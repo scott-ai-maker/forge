@@ -151,18 +151,63 @@ export function useWearableTelemetrySync(): UseWearableTelemetrySyncResult {
       void runSync()
     }, 5 * 60 * 1000)
 
-    // Subscribe to live optical heart rate streaming from Apple Watch HKWorkoutSession
+    // Subscribe to live optical heart rate & recovery streaming from Apple Watch HKWorkoutSession
     let unsubscribeWatchHr: (() => void) | null = null
+    let lastWatchStreamTelemetryMs = 0
     void import('@/lib/native-healthkit-bridge').then(({ subscribeToWatchHeartRate }) => {
       void subscribeToWatchHeartRate((data) => {
         if (isMounted && data.heartRate && data.heartRate > 30) {
           setWearableTelemetry((prev) => {
-            if (!prev) return prev
+            const todayIso = new Date().toISOString().slice(0, 10)
+            if (!prev) {
+              return {
+                date: todayIso,
+                provider: 'apple_health',
+                currentHeartRate: data.heartRate,
+                restingHeartRate: null,
+                hrvRmssdMs: null,
+                cnsStressScore: null,
+                sleepHours: null,
+                deepSleepHours: null,
+                bedtime: null,
+                wakeTime: null,
+                stepsCount: null,
+                activeCaloriesKcal:
+                  typeof data.activeCalories === 'number' && data.activeCalories > 0
+                    ? Math.round(data.activeCalories)
+                    : null,
+                nutrition: null,
+                updatedAt: data.timestamp || new Date().toISOString(),
+              }
+            }
             return {
               ...prev,
               currentHeartRate: data.heartRate,
+              activeCaloriesKcal:
+                typeof data.activeCalories === 'number' && data.activeCalories > 0
+                  ? Math.max(prev.activeCaloriesKcal ?? 0, Math.round(data.activeCalories))
+                  : prev.activeCaloriesKcal,
+              updatedAt: data.timestamp || prev.updatedAt,
             }
           })
+
+          // Stream throttled cardiovascular effort + recovery metrics into telemetryClient for Coach Portal
+          const nowMs = Date.now()
+          if (nowMs - lastWatchStreamTelemetryMs >= 15_000) {
+            lastWatchStreamTelemetryMs = nowMs
+            void import('@/src/lib/telemetry/telemetryClient').then(({ trackEvent }) => {
+              void trackEvent('watch_biometrics_stream', {
+                heart_rate_bpm: data.heartRate,
+                active_calories_kcal:
+                  typeof data.activeCalories === 'number' ? Math.round(data.activeCalories) : null,
+                peak_bpm: typeof data.peakBpm === 'number' ? data.peakBpm : null,
+                avg_bpm: typeof data.avgBpm === 'number' ? data.avgBpm : null,
+                recovery_delta_bpm:
+                  typeof data.recoveryDeltaBpm === 'number' ? data.recoveryDeltaBpm : null,
+                source: 'apple_watch',
+              })
+            })
+          }
         }
       }).then(cleanup => {
         unsubscribeWatchHr = cleanup

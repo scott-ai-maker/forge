@@ -15,7 +15,19 @@ import {
   recordDailyReadinessAndComfort,
   type InjectedReadinessDrill,
 } from '@/lib/posture-profile-state'
+import {
+  subscribeToWatchCameraCommand,
+  syncCameraRemoteStateToWatch,
+} from '@/lib/native-healthkit-bridge'
 import { TELEMETRY_CAMERA_RELEASE_EVENT, trackEvent } from '@/src/lib/telemetry/telemetryClient'
+import { Mail, Smartphone, Volume2 } from 'lucide-react'
+import { useTierAccess } from '@/lib/tierEntitlements'
+import CoachEscalationModal from '@/components/coach-gordon/CoachEscalationModal'
+import {
+  buildPostScanDiagnosticSummary,
+  playCoachStaticCue,
+  speakCoachDynamicText,
+} from '@/src/lib/audio/coachVoiceEngine'
 
 export interface CameraReadinessCheckProps {
   expressModeActive?: boolean
@@ -55,6 +67,9 @@ export default function CameraReadinessCheck({
   onSkip,
 }: CameraReadinessCheckProps) {
   const { sfxMuted, toggleSfxMuted, playTone } = useSfxMuted()
+  const { tierId } = useTierAccess()
+  const isCoachSupport = tierId === 'coach_support'
+  const [escalationOpen, setEscalationOpen] = useState(false)
 
   const [screenMode, setScreenMode] = useState<ReadinessScreenMode>('overhead_squat')
   const [selectedPreset, setSelectedPreset] = useState<ReadinessPresetId>('tight_hips_ankles')
@@ -100,7 +115,21 @@ export default function CameraReadinessCheck({
         expressModeActive,
       })
       setResult(evaluated)
-      playTone('success')
+      playCoachStaticCue('calibration_locked')
+
+      const primaryFlagCheck = evaluated.checks.find(c => c.status !== 'optimal')
+      const spokenSummary = buildPostScanDiagnosticSummary({
+        scanType: 'camera_readiness_30s',
+        score: evaluated.readinessScore,
+        primaryFinding: primaryFlagCheck
+          ? `${primaryFlagCheck.label.toLowerCase()} at ${primaryFlagCheck.measuredDeg} degrees`
+          : 'balanced bilateral joint range',
+        actionableFix:
+          evaluated.injectedDrills.length > 0
+            ? `I queued ${evaluated.injectedDrills[0].name} into your warm-up so Set 1 feels smooth.`
+            : 'All joint checkpoints look clean—you are cleared for Set 1.',
+      })
+      void speakCoachDynamicText(spokenSummary, { moment: 'post_scan_summary' })
 
       recordDailyReadinessAndComfort({
         readinessScore: evaluated.readinessScore,
@@ -140,7 +169,7 @@ export default function CameraReadinessCheck({
         express_mode_active: expressModeActive,
       })
     },
-    [expressModeActive, playTone]
+    [expressModeActive]
   )
 
   const startThirtySecondCheck = async () => {
@@ -171,7 +200,10 @@ export default function CameraReadinessCheck({
       setCameraNotice('Live camera stream unavailable in this browser — running hands-free cadence.')
     }
 
-    playTone('countdown')
+    playCoachStaticCue('calibration_framing')
+    window.setTimeout(() => {
+      playCoachStaticCue('readiness_rep_1_3')
+    }, 900)
     let rep = 1
     repIntervalRef.current = setInterval(() => {
       rep += 1
@@ -197,6 +229,57 @@ export default function CameraReadinessCheck({
   }
 
   const isRepLocked = currentRep === 3
+
+  // Bidirectional Apple Watch Wrist Camera Remote sync (30-Second Camera Readiness Check)
+  useEffect(() => {
+    const isActive = !result
+    void syncCameraRemoteStateToWatch({
+      isActive,
+      mode: 'readiness_check',
+      modeTitle: '30s Readiness Check',
+      framingStatus: isRepLocked ? 'locked' : isScanning ? 'recording' : 'framing',
+      isRecording: isScanning,
+      countdownSeconds: 0,
+      repCount: isScanning ? currentRep : 0,
+      targetReps: 3,
+      statusHint: isRepLocked
+        ? 'Locked · Emerald — 33-point ROM captured'
+        : isScanning
+          ? `Rep ${currentRep} of 3 in progress`
+          : 'Step 6–8 ft back · Tap Start 5s Timer on Watch',
+    })
+  }, [currentRep, isRepLocked, isScanning, result])
+
+  useEffect(() => {
+    let cleanupWatchSub: (() => void) | null = null
+    void subscribeToWatchCameraCommand(cmd => {
+      if (cmd.command === 'startTimer5s' || cmd.command === 'recordRep') {
+        if (!isScanning && !result) {
+          void startThirtySecondCheck()
+        }
+      } else if (cmd.command === 'stopAndReview') {
+        cleanupCamera()
+        const inferredPreset: ReadinessPresetId =
+          screenMode === 'scapular_wall_slides' ? 'stiff_upper_back' : selectedPreset
+        commitEvaluation(screenMode, inferredPreset)
+      } else if (cmd.command === 'dismissRemote') {
+        cleanupCamera()
+      }
+    }).then(unsub => {
+      cleanupWatchSub = unsub
+    })
+
+    return () => {
+      cleanupWatchSub?.()
+      void syncCameraRemoteStateToWatch({
+        isActive: false,
+        mode: 'readiness_check',
+        modeTitle: '30s Readiness Check',
+        framingStatus: 'framing',
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleanupCamera, commitEvaluation, isScanning, result, screenMode, selectedPreset])
 
   return (
     <section
@@ -582,6 +665,61 @@ export default function CameraReadinessCheck({
               Re-Scan
             </button>
           </div>
+
+          <div className="flex flex-wrap items-center gap-2 border-t border-white/[0.07] pt-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                const primaryFlagCheck = result.checks.find(c => c.status !== 'optimal')
+                const spokenSummary = buildPostScanDiagnosticSummary({
+                  scanType: 'camera_readiness_30s',
+                  score: result.readinessScore,
+                  primaryFinding: primaryFlagCheck
+                    ? `${primaryFlagCheck.label.toLowerCase()} at ${primaryFlagCheck.measuredDeg} degrees`
+                    : 'balanced bilateral joint range',
+                  actionableFix: result.coachSummary,
+                })
+                void speakCoachDynamicText(spokenSummary, {
+                  moment: 'post_scan_summary',
+                  forceUnlockVoiceOnTap: true,
+                })
+              }}
+              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-white/12 bg-[#181B22] px-3 py-2 text-xs font-bold text-zinc-100 hover:bg-[#1D212A]"
+            >
+              <Volume2 size={14} className="text-emerald-300" aria-hidden="true" />
+              <span>Listen to Coach Gordon</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setEscalationOpen(true)}
+              data-testid="readiness-message-real-coach-btn"
+              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/12 px-3 py-2 text-xs font-bold text-emerald-200 hover:bg-emerald-500/20"
+            >
+              {isCoachSupport ? (
+                <Smartphone size={14} aria-hidden="true" />
+              ) : (
+                <Mail size={14} aria-hidden="true" />
+              )}
+              <span>
+                {isCoachSupport
+                  ? 'Text Real Coach Gordon (24h SLA)'
+                  : 'Message Real Coach Gordon'}
+              </span>
+            </button>
+          </div>
+
+          <CoachEscalationModal
+            open={escalationOpen}
+            onClose={() => setEscalationOpen(false)}
+            sourceContext="post_scan_results"
+            initialQuestion={`Hi Coach Gordon — my 30s Camera Readiness Check came in at ${result.readinessScore}/100 (${result.restrictionFlags.join(', ') || 'clean checkpoints'}). Any form cue to prioritize today?`}
+            telemetryOverride={{
+              readinessIndex: result.readinessScore,
+              postureFlags: result.restrictionFlags,
+              expressModeActive,
+            }}
+          />
         </div>
       )}
     </section>

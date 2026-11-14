@@ -19,6 +19,7 @@ export interface CoachVoiceOptions {
 }
 
 import { configureAudioSession, getSharedAudioContext } from './web-audio-cadence-engine'
+import { getCoachAudioMode } from './sfx-audio'
 
 let cachedCoachVoice: SpeechSynthesisVoice | null = null
 
@@ -37,7 +38,16 @@ const MALE_COACH_NAMES = [
 let activeAudioElement: HTMLAudioElement | null = null
 let activeBufferSource: AudioBufferSourceNode | null = null
 let activeGainNode: GainNode | null = null
-let activeUtterances: SpeechSynthesisUtterance[] = []
+const pinnedUtterances = new Set<SpeechSynthesisUtterance>()
+let activeWebSpeechKeepalive: number | null = null
+let activeWebSpeechGeneration = 0
+
+function clearWebSpeechKeepaliveTimer(): void {
+  if (activeWebSpeechKeepalive !== null && typeof window !== 'undefined') {
+    window.clearInterval(activeWebSpeechKeepalive)
+    activeWebSpeechKeepalive = null
+  }
+}
 
 export const preloadedAudioBuffers = new Map<string, AudioBuffer>()
 
@@ -64,6 +74,8 @@ async function decodeAudioBufferSafely(ctx: AudioContext, arrayBuffer: ArrayBuff
  */
 export function stopCoachVoiceCue(): void {
   if (typeof window === 'undefined') return
+  activeWebSpeechGeneration += 1
+  clearWebSpeechKeepaliveTimer()
 
   if (activeBufferSource) {
     try {
@@ -97,7 +109,7 @@ export function stopCoachVoiceCue(): void {
   if ('speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel()
-      activeUtterances = []
+      pinnedUtterances.clear()
     } catch {
       // Ignore speech synthesis cancel errors
     }
@@ -159,6 +171,26 @@ export function sanitizeCoachSpeechText(raw: string): string {
   text = text.trim()
 
   return text
+}
+
+/**
+ * Safely caps ultra-long speech text at a clean sentence boundary (default 4,800 chars)
+ * so full multi-paragraph coaching & exercise descriptions never cut off mid-thought.
+ */
+export function truncateSpeechAtSentenceBoundary(text: string, maxChars: number = 4800): string {
+  if (!text || text.length <= maxChars) return text
+  const windowSlice = text.slice(0, maxChars)
+  const lastSentenceEnd = Math.max(
+    windowSlice.lastIndexOf('. '),
+    windowSlice.lastIndexOf('? '),
+    windowSlice.lastIndexOf('! '),
+    windowSlice.lastIndexOf('.')
+  )
+  if (lastSentenceEnd > Math.floor(maxChars * 0.6)) {
+    return windowSlice.slice(0, lastSentenceEnd + 1).trim()
+  }
+  const lastSpace = windowSlice.lastIndexOf(' ')
+  return (lastSpace > 0 ? windowSlice.slice(0, lastSpace) : windowSlice).trim()
 }
 
 /**
@@ -517,8 +549,26 @@ export async function playNeuralCoachVoiceCue(text: string, options: CoachVoiceO
           await ctx.resume()
         }
 
+        // Pad 200ms of silence on the tail so Bluetooth / CoreAudio / WebKit DAC buffers
+        // flush the final consonant completely before onended disconnects the node.
+        let playbackBuffer = buffer
+        try {
+          const extraFrames = Math.max(1, Math.ceil(buffer.sampleRate * 0.2))
+          const padded = ctx.createBuffer(
+            buffer.numberOfChannels,
+            buffer.length + extraFrames,
+            buffer.sampleRate
+          )
+          for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+            padded.getChannelData(ch).set(buffer.getChannelData(ch), 0)
+          }
+          playbackBuffer = padded
+        } catch {
+          playbackBuffer = buffer
+        }
+
         const source = ctx.createBufferSource()
-        source.buffer = buffer
+        source.buffer = playbackBuffer
 
         const gainNode = ctx.createGain()
         gainNode.gain.setValueAtTime(options.volume ?? 1.0, ctx.currentTime)
@@ -631,49 +681,76 @@ export function speakWebSpeechCoachVoiceCue(text: string, options: CoachVoiceOpt
     }
 
     if (options.interrupPrevious !== false) {
+      activeWebSpeechGeneration += 1
+      clearWebSpeechKeepaliveTimer()
       window.speechSynthesis.cancel()
-      activeUtterances = []
+      pinnedUtterances.clear()
     }
     window.speechSynthesis.resume()
 
-    const chunks = chunkTextIntoSpeechSentences(cleanText)
+    const chunks = chunkTextIntoSpeechSentences(cleanText, 165)
     if (chunks.length === 0) return
 
     const coachVoice = getAuthoritativeCoachVoice()
-    activeUtterances = []
+    const myGeneration = activeWebSpeechGeneration
+    pinnedUtterances.clear()
 
-    chunks.forEach((chunk, index) => {
-      const isFirst = index === 0
-      const isLast = index === chunks.length - 1
+    // Keepalive prevents Chrome/Safari from auto-pausing speechSynthesis after ~14s on long descriptions
+    clearWebSpeechKeepaliveTimer()
+    activeWebSpeechKeepalive = window.setInterval(() => {
+      if (myGeneration !== activeWebSpeechGeneration) {
+        clearWebSpeechKeepaliveTimer()
+        return
+      }
+      try {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.resume()
+        }
+      } catch {
+        // Ignore resume errors
+      }
+    }, 9000)
 
-      const utterance = new SpeechSynthesisUtterance(chunk)
+    const speakChunkSequentially = (index: number) => {
+      if (myGeneration !== activeWebSpeechGeneration) return
+      if (index >= chunks.length) {
+        clearWebSpeechKeepaliveTimer()
+        pinnedUtterances.clear()
+        options.onEnded?.()
+        return
+      }
+
+      const utterance = new SpeechSynthesisUtterance(chunks[index])
       utterance.pitch = options.pitch ?? 0.92 // Authoritative, grounded athletic baritone
-      utterance.rate = options.rate ?? 1.08 // Decisive, crisp cadence
+      utterance.rate = options.rate ?? 1.04 // Decisive, crisp cadence
       utterance.volume = options.volume ?? 1.0
       if (coachVoice) {
         utterance.voice = coachVoice
       }
 
-      if (isFirst && options.onStart) {
+      if (index === 0 && options.onStart) {
         utterance.onstart = () => options.onStart!()
       }
 
-      if (isLast) {
-        utterance.onend = () => {
-          activeUtterances = []
-          if (options.onEnded) options.onEnded()
-        }
-        utterance.onerror = () => {
-          activeUtterances = []
-          if (options.onEnded) options.onEnded()
-        }
+      utterance.onend = () => {
+        pinnedUtterances.delete(utterance)
+        speakChunkSequentially(index + 1)
+      }
+      utterance.onerror = () => {
+        clearWebSpeechKeepaliveTimer()
+        pinnedUtterances.clear()
+        options.onEnded?.()
       }
 
-      activeUtterances.push(utterance)
+      // Pin active utterance in module scope so V8 GC never collects it mid-sentence
+      pinnedUtterances.add(utterance)
       window.speechSynthesis.speak(utterance)
-    })
+    }
+
+    speakChunkSequentially(0)
   } catch {
-    activeUtterances = []
+    clearWebSpeechKeepaliveTimer()
+    pinnedUtterances.clear()
     if (options.onEnded) options.onEnded()
   }
 }
@@ -684,6 +761,11 @@ export function speakWebSpeechCoachVoiceCue(text: string, options: CoachVoiceOpt
  * matching the cardio training engine. Seamlessly falls back to local Web Speech API if offline or rate limited.
  */
 export function speakCoachVoiceCue(text: string, options: CoachVoiceOptions = {}): void {
+  if (getCoachAudioMode() !== 'voice_and_chimes') {
+    options.onEnded?.()
+    return
+  }
+
   if (options.forceWebSpeech) {
     speakWebSpeechCoachVoiceCue(text, options)
     return

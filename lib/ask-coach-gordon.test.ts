@@ -206,5 +206,21 @@ describe('Ask Coach Gordon AI Engine & Multi-Tier Liability Safeguards', () => {
       expect(response.answerMarkdown).toContain('Step 3: Activate')
       expect(response.answerMarkdown).toContain('Step 4: Integrate')
     })
+
+    it('prescribes neutral-grip wrist comfort adaptations without clinical symptom-probing questions', async () => {
+      const response = await askCoachGordon({
+        question: 'Wrist-friendly neutral-grip options for this lift',
+        athleteName: 'Scott',
+        currentExerciseName: 'Push-Up',
+        nasmOptPhase: 1,
+      })
+
+      expect(response.answerMarkdown).toContain('Switch to Neutral Grip')
+      expect(response.answerMarkdown).toContain('100% Comfort Boundary')
+      expect(response.answerMarkdown.toLowerCase()).not.toContain('where does it hurt')
+      expect(response.answerMarkdown.toLowerCase()).not.toContain('rate your pain')
+      expect(response.recommendedAction?.type).toBe('swap_exercise')
+      expect(response.recommendedAction?.targetExerciseName).toBe('Neutral-Grip Dumbbell Floor Press')
+    })
   })
 })

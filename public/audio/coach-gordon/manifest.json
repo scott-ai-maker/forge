@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "platform": "Forge Athletic",
+  "voicePersona": "Coach Gordon (NASM-CPT Since 2008)",
+  "modelId": "eleven_turbo_v2_5",
+  "outputFormat": "mp3_44100_128",
+  "voiceSettings": {
+    "stability": 0.62,
+    "similarity_boost": 0.86,
+    "style": 0.18,
+    "use_speaker_boost": true
+  },
+  "cues": {
+    "calibration_framing": {
+      "filename": "calibration_framing.mp3",
+      "path": "/audio/coach-gordon/calibration_framing.mp3",
+      "script": "Step back until your full frame is inside the brackets—ears, shoulders, hips, and ankles.",
+      "priority": "normal"
+    },
+    "calibration_locked": {
+      "filename": "calibration_locked.mp3",
+      "path": "/audio/coach-gordon/calibration_locked.mp3",
+      "script": "Locked in. Hold steady right there.",
+      "priority": "normal"
+    },
+    "readiness_rep_1_3": {
+      "filename": "readiness_rep_1_3.mp3",
+      "path": "/audio/coach-gordon/readiness_rep_1_3.mp3",
+      "script": "Give me three smooth reps at your natural depth—rep one of three, nice and controlled.",
+      "priority": "normal"
+    },
+    "tempo_3_1_1_eccentric": {
+      "filename": "tempo_3_1_1_eccentric.mp3",
+      "path": "/audio/coach-gordon/tempo_3_1_1_eccentric.mp3",
+      "script": "Three seconds down—three, two, one—pause at the bottom, drive up.",
+      "priority": "normal"
+    },
+    "set_complete_great_work": {
+      "filename": "set_complete_great_work.mp3",
+      "path": "/audio/coach-gordon/set_complete_great_work.mp3",
+      "script": "Set locked. Clean work—breathe through your nose and let your heart rate settle.",
+      "priority": "normal"
+    },
+    "rest_timer_10s_warning": {
+      "filename": "rest_timer_10s_warning.mp3",
+      "path": "/audio/coach-gordon/rest_timer_10s_warning.mp3",
+      "script": "Ten seconds—hands on the implements, tall ribcage.",
+      "priority": "normal"
+    },
+    "rest_timer_go": {
+      "filename": "rest_timer_go.mp3",
+      "path": "/audio/coach-gordon/rest_timer_go.mp3",
+      "script": "Time's up—own the first rep.",
+      "priority": "normal"
+    },
+    "desk_reset_transition": {
+      "filename": "desk_reset_transition.mp3",
+      "path": "/audio/coach-gordon/desk_reset_transition.mp3",
+      "script": "Nice release. Reset your posture and flow into the next mobility drill.",
+      "priority": "normal"
+    },
+    "safety_pause_check": {
+      "filename": "safety_pause_check.mp3",
+      "path": "/audio/coach-gordon/safety_pause_check.mp3",
+      "script": "Pause right there—we never push through sharp or pinchy joint pain. Let's check in and protect that joint.",
+      "priority": "safety"
+    }
+  }
+}

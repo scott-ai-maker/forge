@@ -215,7 +215,7 @@ export default function RagHomeGymBuilder({
     })
     setBlueprint(next)
     setStatusMessage(
-      `Updated RAG Home-Gym Blueprint: ${next.phase1ImmediateBuild.length} Phase 1 items (${next.phase1MemberFormatted}) unlocking ${next.optUnlockPercentage}% of NASM OPT™ capabilities.`
+      `Updated Home-Gym Blueprint: ${next.phase1ImmediateBuild.length} Phase 1 items (${next.phase1MemberFormatted}) unlocking ${next.optUnlockPercentage}% of NASM OPT™ capabilities.`
     )
   }
 
@@ -299,7 +299,7 @@ export default function RagHomeGymBuilder({
                 borderRadius: 4,
               }}
             >
-              NASM HGD RAG Architect
+              Forge Home-Gym Planner
             </span>
             <span
               style={{
@@ -331,7 +331,7 @@ export default function RagHomeGymBuilder({
             Custom Home-Gym Needs &amp; Site Discovery Builder
           </h4>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--gray)', lineHeight: 1.55, maxWidth: 820 }}>
-            Powered by Forge Athletic&apos;s NASM Home Gym Design (HGD) &amp; OPT™ RAG Knowledge Base. Enter your room dimensions, ceiling clearance, budget, and training priorities to synthesize a conflict-free buildout across <strong>REP Fitness</strong>, <strong>Crossover Symmetry</strong>, and <strong>Perform Better</strong>.
+            Tailored to your room dimensions, ceiling clearance, budget, and training priorities to build a conflict-free setup across <strong>REP Fitness</strong>, <strong>Crossover Symmetry</strong>, and <strong>Perform Better</strong>.
           </p>
         </div>
 
@@ -795,7 +795,7 @@ export default function RagHomeGymBuilder({
                 cursor: 'pointer',
               }}
             >
-              Generate Custom RAG Home-Gym Blueprint
+              Build My Custom Home-Gym Plan
             </button>
 
             {coachClientId && (
@@ -1053,7 +1053,7 @@ export default function RagHomeGymBuilder({
           </div>
         )}
 
-        {/* Cited NASM RAG Knowledge Provenance */}
+        {/* Coaching Design Principles */}
         <div
           style={{
             borderTop: '1px solid rgba(255,255,255,0.08)',
@@ -1063,7 +1063,7 @@ export default function RagHomeGymBuilder({
           }}
         >
           <div style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Retrieved NASM RAG Knowledge Base Citations ({blueprint.ragCitations.length} Sources)
+            Coaching Design Principles
           </div>
           <div
             style={{

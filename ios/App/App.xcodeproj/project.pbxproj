@@ -32,6 +32,9 @@
 		FW3B7A630276181B39ED0E01 /* CardioZoneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW9EED7929C215B419CDC601 /* CardioZoneView.swift */; };
 		FWDAE87EC77CE6E13EF14E01 /* TempoMetronomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FW56E621A686EEBFF0A4BD01 /* TempoMetronomeView.swift */; };
 		FW5FD564A97F9FDE7FB06C01 /* CNSReadinessComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FWD1EB09472734C814890201 /* CNSReadinessComplicationView.swift */; };
+		FWCA11002026111400000001 /* CameraRemoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FWCA11002026111400000002 /* CameraRemoteView.swift */; };
+		FWDR11002026111400000003 /* DeskResetWristView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FWDR11002026111400000004 /* DeskResetWristView.swift */; };
+		FWJC11002026111400000005 /* JointComfortCheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FWJC11002026111400000006 /* JointComfortCheckInView.swift */; };
 		FWB1202C7A8238826DC78201 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FWD7A955E5F260D10039C701 /* Assets.xcassets */; };
 		FWA009BB2F38F415DCEA8701 /* ForgeWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = FWA278F7D1DBA0AAB0DC6101 /* ForgeWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -80,6 +83,9 @@
 		FW9EED7929C215B419CDC601 /* CardioZoneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioZoneView.swift; sourceTree = "<group>"; };
 		FW56E621A686EEBFF0A4BD01 /* TempoMetronomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempoMetronomeView.swift; sourceTree = "<group>"; };
 		FWD1EB09472734C814890201 /* CNSReadinessComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CNSReadinessComplicationView.swift; sourceTree = "<group>"; };
+		FWCA11002026111400000002 /* CameraRemoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraRemoteView.swift; sourceTree = "<group>"; };
+		FWDR11002026111400000004 /* DeskResetWristView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskResetWristView.swift; sourceTree = "<group>"; };
+		FWJC11002026111400000006 /* JointComfortCheckInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JointComfortCheckInView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 
@@ -183,6 +189,9 @@
 				FW9EED7929C215B419CDC601 /* CardioZoneView.swift */,
 				FW56E621A686EEBFF0A4BD01 /* TempoMetronomeView.swift */,
 				FWD1EB09472734C814890201 /* CNSReadinessComplicationView.swift */,
+				FWCA11002026111400000002 /* CameraRemoteView.swift */,
+				FWDR11002026111400000004 /* DeskResetWristView.swift */,
+				FWJC11002026111400000006 /* JointComfortCheckInView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -342,6 +351,9 @@
 				FW3B7A630276181B39ED0E01 /* CardioZoneView.swift in Sources */,
 				FWDAE87EC77CE6E13EF14E01 /* TempoMetronomeView.swift in Sources */,
 				FW5FD564A97F9FDE7FB06C01 /* CNSReadinessComplicationView.swift in Sources */,
+				FWCA11002026111400000001 /* CameraRemoteView.swift in Sources */,
+				FWDR11002026111400000003 /* DeskResetWristView.swift in Sources */,
+				FWJC11002026111400000005 /* JointComfortCheckInView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -503,14 +515,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.44.0;
+				MARKETING_VERSION = 1.55.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.gordonathletic.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -526,14 +538,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.44.0;
+				MARKETING_VERSION = 1.55.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gordonathletic.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
@@ -548,12 +560,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = ForgeWatch/ForgeWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = V9M3B8F9P2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ForgeWatch/Info.plist;
-				MARKETING_VERSION = 1.44.0;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				MARKETING_VERSION = 1.55.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.gordonathletic.app.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -564,6 +577,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+				WK_COMPANION_APP_BUNDLE_IDENTIFIER = com.gordonathletic.app;
 			};
 			name = Debug;
 		};
@@ -573,12 +587,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = ForgeWatch/ForgeWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = V9M3B8F9P2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ForgeWatch/Info.plist;
-				MARKETING_VERSION = 1.44.0;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				MARKETING_VERSION = 1.55.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.gordonathletic.app.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -589,6 +604,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+				WK_COMPANION_APP_BUNDLE_IDENTIFIER = com.gordonathletic.app;
 			};
 			name = Release;
 		};

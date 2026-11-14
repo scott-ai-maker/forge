@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { playCountdownPip, playPrFanfare } from '@/lib/web-audio-cadence-engine'
-import { speakCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
+import { playCoachStaticCue } from '@/src/lib/audio/coachVoiceEngine'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import { updateLockScreenSessionTelemetry, clearLockScreenSessionTelemetry } from '@/lib/media-session-telemetry'
 import {
@@ -57,9 +57,14 @@ export function useExerciseRestTimer() {
         if (prev.remainingSeconds <= 1) {
           playCountdownPip(0)
           playPrFanfare()
-          speakCoachVoiceCue("Rest complete! Let's get this set.")
+          playCoachStaticCue('rest_timer_go')
           triggerHaptic('timer')
           return { ...prev, remainingSeconds: 0, isRunning: false }
+        }
+
+        const nextRemaining = prev.remainingSeconds - 1
+        if (nextRemaining === 10) {
+          playCoachStaticCue('rest_timer_10s_warning')
         }
 
         if (prev.remainingSeconds <= 4 && prev.remainingSeconds >= 2) {
@@ -67,7 +72,7 @@ export function useExerciseRestTimer() {
           triggerHaptic('tap')
         }
 
-        return { ...prev, remainingSeconds: prev.remainingSeconds - 1 }
+        return { ...prev, remainingSeconds: nextRemaining }
       })
     }, 1000)
 

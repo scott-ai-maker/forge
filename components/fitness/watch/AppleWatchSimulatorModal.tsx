@@ -575,28 +575,44 @@ export default function AppleWatchSimulatorModal({
                           </button>
                         </div>
 
-                        {/* Quick RPE Pills */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-                          <span style={{ fontSize: 7.5, fontWeight: 900, color: '#D4A017' }}>RPE:</span>
-                          {[7.0, 8.0, 8.5, 9.0, 10.0].map((rVal) => (
-                            <button
-                              key={rVal}
-                              type="button"
-                              onClick={() => setConfirmRpe(rVal)}
-                              style={{
-                                background: confirmRpe === rVal ? '#D4A017' : 'rgba(255,255,255,0.08)',
-                                border: 'none',
-                                borderRadius: 4,
-                                color: confirmRpe === rVal ? '#000' : '#FFF',
-                                fontSize: 8,
-                                fontWeight: 800,
-                                padding: '2px 4px',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              {rVal === 10 ? '10' : rVal}
-                            </button>
-                          ))}
+                        {/* Digital Crown Plain-English RPE Picker */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 7, fontWeight: 900, color: '#10B981' }}>EFFORT (CROWN):</span>
+                            <span style={{ fontSize: 7.5, fontWeight: 900, color: '#E2E8F0', fontVariantNumeric: 'tabular-nums' }}>
+                              {confirmRpe <= 6
+                                ? 'Easy · 6'
+                                : confirmRpe <= 7
+                                  ? 'Moderate · 7'
+                                  : confirmRpe <= 8.5
+                                    ? 'Challenging · 8'
+                                    : confirmRpe < 10
+                                      ? 'Hard · 9'
+                                      : 'Max · 10'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+                            {[6.0, 7.0, 8.0, 9.0, 10.0].map((rVal) => (
+                              <button
+                                key={rVal}
+                                type="button"
+                                onClick={() => setConfirmRpe(rVal)}
+                                style={{
+                                  background: confirmRpe === rVal ? '#10B981' : '#14171F',
+                                  border: confirmRpe === rVal ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                                  borderRadius: 4,
+                                  color: confirmRpe === rVal ? '#000' : '#FFF',
+                                  fontSize: 8,
+                                  fontWeight: 800,
+                                  fontVariantNumeric: 'tabular-nums',
+                                  padding: '2px 5px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {rVal}
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
                         {/* Large Primary Confirm Button */}
@@ -926,30 +942,54 @@ export default function AppleWatchSimulatorModal({
                   </div>
                 )}
 
-                {/* ── TAB 5: WATCH FACE COMPLICATION VIEW ── */}
+                {/* ── TAB 5: WATCH FACE & SMART STACK COMPLICATIONS ── */}
                 {activeTab === 'face' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1 }}>
-                    <div
-                      style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: '50%',
-                        border: '3px solid #10B981',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'rgba(16, 185, 129, 0.1)',
-                      }}
-                    >
-                      <span style={{ fontSize: 15, fontWeight: 900, color: '#FFFFFF', lineHeight: 1 }}>88%</span>
-                      <span style={{ fontSize: 6.5, fontWeight: 900, color: '#38BDF8' }}>CNS</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 4, flex: 1 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                      <div style={{ background: '#14171F', border: '1px solid rgba(16,185,129,0.35)', borderRadius: 8, padding: '4px 5px' }}>
+                        <div style={{ fontSize: 6.5, fontWeight: 900, color: '#10B981' }}>OPT PHASE 01</div>
+                        <div style={{ fontSize: 10.5, fontWeight: 900, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>🔥 7d Streak</div>
+                      </div>
+                      <div style={{ background: '#14171F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '4px 5px' }}>
+                        <div style={{ fontSize: 6.5, fontWeight: 900, color: '#94A3B8' }}>COMFORT</div>
+                        <div style={{ fontSize: 10.5, fontWeight: 900, color: '#10B981', fontVariantNumeric: 'tabular-nums' }}>84/100</div>
+                      </div>
                     </div>
 
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 8.5, fontWeight: 800, color: '#10B981' }}>PEAK RECOVERY</div>
-                      <div style={{ fontSize: 7.5, color: '#94A3B8' }}>HRV 76ms · RHR 54bpm</div>
+                    <div
+                      style={{
+                        background: '#14171F',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 8,
+                        padding: '4px 6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: 7.5, fontWeight: 900, color: '#10B981' }}>PEAK RECOVERY · 88% CNS</div>
+                        <div style={{ fontSize: 6.8, color: '#94A3B8', fontVariantNumeric: 'tabular-nums' }}>HRV 76ms · RHR 54bpm</div>
+                      </div>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setToastMessage('Launched 5-Min Desk Reset on Apple Watch')}
+                      style={{
+                        background: '#10B981',
+                        border: 'none',
+                        borderRadius: 7,
+                        color: '#000',
+                        fontSize: 8.5,
+                        fontWeight: 900,
+                        padding: '5px 6px',
+                        cursor: 'pointer',
+                        width: '100%',
+                      }}
+                    >
+                      ▶ 5-Min Desk Reset
+                    </button>
                   </div>
                 )}
               </div>

@@ -118,6 +118,7 @@ export default function CoachClientTelemetrySyncCard({
   const comfortPoints = snapshot?.jointComfortHistory ?? []
   const latestComfort =
     comfortPoints.length > 0 ? comfortPoints[comfortPoints.length - 1] : null
+  const safetyFlags = snapshot?.safetyFlags ?? snapshot?.postureDelta?._safetyFlags ?? []
 
   return (
     <section
@@ -156,6 +157,55 @@ export default function CoachClientTelemetrySyncCard({
           </span>
         </div>
       </div>
+
+      {/* High-Priority Safety Flag Alerts (Pain Triage / Red-Flag Overrides) */}
+      {safetyFlags.length > 0 && (
+        <div
+          role="alert"
+          data-testid="coach-portal-safety-flag-banner"
+          className="mt-4 rounded-xl border border-rose-500/45 bg-rose-500/10 p-3.5 text-rose-100"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-2 font-mono text-[11px] font-extrabold uppercase tracking-[0.12em] text-rose-300">
+              <span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_8px_#fb7185]" />
+              Client Safety Flag Alert ({safetyFlags.length} recent)
+            </span>
+            <span className="font-mono text-[11px] text-rose-200/80">
+              Latest:{' '}
+              {new Date(safetyFlags[0].timestamp).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              })}
+            </span>
+          </div>
+          <div className="mt-2 space-y-1.5 text-xs">
+            {safetyFlags.slice(0, 3).map(flag => (
+              <div
+                key={flag.eventId}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rose-400/20 bg-[#090A0D]/70 px-3 py-2"
+              >
+                <div>
+                  <strong className="text-white">
+                    {flag.jointArea}
+                    {flag.exerciseName ? ` · ${flag.exerciseName}` : ''}
+                  </strong>
+                  <span className="ml-2 text-rose-200/90">→ {flag.actionTaken}</span>
+                  {flag.swappedToExercise ? (
+                    <span className="ml-1.5 font-semibold text-emerald-300">
+                      (Swapped to {flag.swappedToExercise})
+                    </span>
+                  ) : null}
+                </div>
+                <span className="rounded-full border border-rose-400/35 bg-rose-500/20 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-rose-200">
+                  {flag.severity.replace(/_/g, ' ')}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 4-Column Live Telemetry Metrics */}
       <div className="mt-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">

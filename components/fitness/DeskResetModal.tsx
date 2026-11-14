@@ -7,8 +7,10 @@ import {
   EnvironmentProfileId,
   loadPostureProfileState,
   POSTURE_PROFILE_EVENT,
+  recordDeskResetCompletedOnDate,
 } from '@/lib/posture-profile-state'
 import { playForgeTactileTone, useSfxMuted } from '@/lib/sfx-audio'
+import { playCoachStaticCue } from '@/src/lib/audio/coachVoiceEngine'
 import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 export interface DeskResetDrill {
@@ -98,13 +100,14 @@ export function DeskResetGuidedPlayer({
         const nextIdx = currentIndex + 1
         if (nextIdx < drills.length) {
           setCurrentIndex(nextIdx)
-          playForgeTactileTone('cue')
+          playCoachStaticCue('desk_reset_transition')
           return drills[nextIdx].durationSec
         }
         setRunning(false)
         setCompleted(true)
         playForgeTactileTone('success')
         if (!sandboxMode) {
+          recordDeskResetCompletedOnDate()
           const totalDurationSec = drills.reduce((acc, d) => acc + d.durationSec, 0)
           void trackEvent('desk_reset_completed', {
             duration_sec: totalDurationSec,

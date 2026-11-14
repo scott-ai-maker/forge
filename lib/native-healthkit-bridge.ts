@@ -82,14 +82,56 @@ export interface GAAHealthKitPluginInterface {
       badgeText?: string
     }
   }): Promise<{ success: boolean }>
-  isWatchAppInstalled?(): Promise<{ installed: boolean; paired: boolean }>
+  isWatchAppInstalled?(): Promise<{
+    installed: boolean
+    paired: boolean
+    reachable?: boolean
+    activationState?: string
+    lastWatchTelemetryTimestamp?: string | null
+  }>
+  getWatchSyncDiagnostics?(): Promise<{
+    supported: boolean
+    activationState: 'activated' | 'inactive' | 'notActivated' | 'unsupported' | string
+    activationStateRaw?: number
+    paired: boolean
+    installed: boolean
+    reachable: boolean
+    outstandingTransfers?: number
+    lastWatchTelemetryTimestamp?: string | null
+    lastWatchEventType?: string | null
+    lastHeartRateBpm?: number | null
+  }>
   sendCnsReadinessToWatch?(options: {
     score: number
     restingHeartRate?: number
     hrvRmssd?: number
   }): Promise<{ success: boolean }>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sendCameraRemoteToWatch?(options: { cameraRemote: any }): Promise<{ success: boolean }>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sendCompanionSummaryToWatch?(options: { companionSummary: any }): Promise<{ success: boolean }>
   addListener(
-    eventName: 'onTelemetryUpdate' | 'onWatchSetLogged' | 'onWatchRestAction' | 'onWatchHeartRateUpdate' | 'onWatchStateChanged' | 'onWatchEndWorkout' | 'onWatchCancelWorkout' | 'onWatchExerciseSelected' | 'onWatchPhaseSelected' | 'onWatchStartWorkout' | 'onWatchWarmupDrillToggled' | 'onWatchCooldownStretchToggled' | 'onWatchCardioCompleted',
+    eventName:
+      | 'onTelemetryUpdate'
+      | 'onWatchSetLogged'
+      | 'onWatchRpeUpdated'
+      | 'onWatchRestAction'
+      | 'onWatchHeartRateUpdate'
+      | 'onWatchStateChanged'
+      | 'onWatchSyncStateChanged'
+      | 'onWatchCameraCommand'
+      | 'onWatchExpressModeToggled'
+      | 'onWatchWarmupBatchAction'
+      | 'onWatchDeskResetCompleted'
+      | 'onWatchJointComfortLogged'
+      | 'onWatchEndWorkout'
+      | 'onWatchCancelWorkout'
+      | 'onWatchExerciseSelected'
+      | 'onWatchPhaseSelected'
+      | 'onWatchStartWorkout'
+      | 'onWatchWarmupDrillToggled'
+      | 'onWatchCooldownStretchToggled'
+      | 'onWatchCardioCompleted',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listenerFunc: (data: any) => void
   ): Promise<PluginListenerHandle>
@@ -1070,8 +1112,148 @@ export interface WatchWorkoutSyncPayload {
   cardioProtocol?: WatchCardioProtocolPayload
   warmupDrills?: WatchWarmupDrillPayload[]
   cooldownStretches?: WatchCooldownStretchPayload[]
+  optPhase?: number
+  expressModeActive?: boolean
+  dailyStreak?: number
+  jointComfortScore?: number
+  injectedWarmupCount?: number
   isCancelled?: boolean
   action?: 'cancelWorkout' | 'finishWorkout' | 'sync'
+}
+
+export interface WatchCameraRemotePayload {
+  isActive: boolean
+  mode: 'quick_posture' | 'readiness_check' | 'desk_audit' | 'form_lab'
+  modeTitle: string
+  framingStatus: 'framing' | 'locked' | 'recording' | 'review'
+  isRecording?: boolean
+  countdownSeconds?: number
+  repCount?: number
+  targetReps?: number
+  statusHint?: string
+}
+
+export interface WatchCompanionSummaryPayload {
+  optPhase: number
+  optPhaseLabel?: string
+  dailyStreak: number
+  jointComfortScore: number
+  expressModeActive?: boolean
+  deskResetDoneToday?: boolean
+  ergonomicFlags?: string[]
+  updatedAt?: string
+}
+
+export interface WatchSyncDiagnostics {
+  supported: boolean
+  activationState: 'activated' | 'inactive' | 'notActivated' | 'unsupported' | 'web_companion'
+  paired: boolean
+  installed: boolean
+  reachable: boolean
+  outstandingTransfers: number
+  lastWatchTelemetryTimestamp: string | null
+  lastWatchEventType: string | null
+  lastHeartRateBpm: number | null
+}
+
+export interface WatchRpeUpdatedPayload {
+  exerciseName: string
+  setIndex: number
+  rpe: number
+  rir?: number
+  plainLabel?: string
+  timestamp?: string
+}
+
+export interface WatchCameraCommandPayload {
+  command: 'startTimer5s' | 'recordRep' | 'stopAndReview' | 'dismissRemote' | string
+  mode?: string
+  timestamp?: string
+}
+
+export interface WatchDeskResetCompletedPayload {
+  durationSec: number
+  drillsCompleted: number
+  dailyStreak?: number
+  ergonomicFlags?: string[]
+  completedAt?: string
+}
+
+export interface WatchJointComfortLoggedPayload {
+  jointComfortScore: number
+  neck: number
+  lowerBack: number
+  hips: number
+  painFlags?: string[]
+  loggedAt?: string
+}
+
+export interface WatchHeartRateTelemetryPayload {
+  heartRate: number
+  activeCalories?: number
+  peakBpm?: number
+  avgBpm?: number
+  recoveryDeltaBpm?: number
+  timestamp?: string
+}
+
+const WATCH_LAST_TELEMETRY_STORAGE_KEY = 'forge_watch_last_telemetry_ts_v1'
+const WATCH_LAST_EVENT_STORAGE_KEY = 'forge_watch_last_event_type_v1'
+let cachedLastWatchTelemetryTs: string | null = null
+let cachedLastWatchEventType: string | null = null
+let cachedLastWatchBpm: number | null = null
+
+export function recordClientWatchTelemetryTimestamp(
+  eventType: string,
+  timestamp?: string | null,
+  bpm?: number | null
+): string {
+  const resolvedTs =
+    timestamp && Number.isFinite(new Date(timestamp).getTime())
+      ? timestamp
+      : new Date().toISOString()
+  cachedLastWatchTelemetryTs = resolvedTs
+  cachedLastWatchEventType = eventType
+  if (typeof bpm === 'number' && Number.isFinite(bpm) && bpm > 0) {
+    cachedLastWatchBpm = Math.round(bpm)
+  }
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      window.localStorage.setItem(WATCH_LAST_TELEMETRY_STORAGE_KEY, resolvedTs)
+      window.localStorage.setItem(WATCH_LAST_EVENT_STORAGE_KEY, eventType)
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('forge:watch-telemetry-received', {
+          detail: { eventType, timestamp: resolvedTs, bpm: cachedLastWatchBpm },
+        })
+      )
+    }
+  } catch {
+    // Ignore storage access errors in sandboxed frames
+  }
+  return resolvedTs
+}
+
+function readCachedWatchTelemetryMeta(): {
+  timestamp: string | null
+  eventType: string | null
+} {
+  if (cachedLastWatchTelemetryTs) {
+    return { timestamp: cachedLastWatchTelemetryTs, eventType: cachedLastWatchEventType }
+  }
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      const ts = window.localStorage.getItem(WATCH_LAST_TELEMETRY_STORAGE_KEY)
+      const ev = window.localStorage.getItem(WATCH_LAST_EVENT_STORAGE_KEY)
+      if (ts) cachedLastWatchTelemetryTs = ts
+      if (ev) cachedLastWatchEventType = ev
+      return { timestamp: ts, eventType: ev }
+    }
+  } catch {
+    // Ignore storage access errors
+  }
+  return { timestamp: null, eventType: null }
 }
 
 export interface WatchRestTimerSyncPayload {
@@ -1170,6 +1352,144 @@ export async function checkAppleWatchCompanionStatus(): Promise<{ installed: boo
 }
 
 /**
+ * Queries live WatchConnectivity WCSession activation, pairing, reachability, and last Watch telemetry timestamp
+ * for the ?debug=telemetry diagnostic drawer.
+ */
+export async function getAppleWatchSyncDiagnostics(): Promise<WatchSyncDiagnostics> {
+  const localMeta = readCachedWatchTelemetryMeta()
+
+  if (!isNativeIOS()) {
+    return {
+      supported: false,
+      activationState: 'web_companion',
+      paired: false,
+      installed: false,
+      reachable: false,
+      outstandingTransfers: 0,
+      lastWatchTelemetryTimestamp: localMeta.timestamp,
+      lastWatchEventType: localMeta.eventType,
+      lastHeartRateBpm: cachedLastWatchBpm,
+    }
+  }
+
+  try {
+    const plugin = getNativeHealthPlugin()
+    if (plugin.getWatchSyncDiagnostics) {
+      const res = await plugin.getWatchSyncDiagnostics()
+      const actRaw = res?.activationState || 'notActivated'
+      const normalizedAct: WatchSyncDiagnostics['activationState'] =
+        actRaw === 'activated' ||
+        actRaw === 'inactive' ||
+        actRaw === 'notActivated' ||
+        actRaw === 'unsupported'
+          ? actRaw
+          : 'notActivated'
+
+      const nativeTs =
+        typeof res?.lastWatchTelemetryTimestamp === 'string' && res.lastWatchTelemetryTimestamp
+          ? res.lastWatchTelemetryTimestamp
+          : localMeta.timestamp
+
+      return {
+        supported: Boolean(res?.supported),
+        activationState: normalizedAct,
+        paired: Boolean(res?.paired),
+        installed: Boolean(res?.installed),
+        reachable: Boolean(res?.reachable),
+        outstandingTransfers:
+          typeof res?.outstandingTransfers === 'number' ? res.outstandingTransfers : 0,
+        lastWatchTelemetryTimestamp: nativeTs ?? null,
+        lastWatchEventType:
+          (typeof res?.lastWatchEventType === 'string' ? res.lastWatchEventType : null) ??
+          localMeta.eventType,
+        lastHeartRateBpm:
+          typeof res?.lastHeartRateBpm === 'number' ? res.lastHeartRateBpm : cachedLastWatchBpm,
+      }
+    }
+
+    if (plugin.isWatchAppInstalled) {
+      const res = await plugin.isWatchAppInstalled()
+      return {
+        supported: true,
+        activationState: res?.paired || res?.installed ? 'activated' : 'notActivated',
+        paired: Boolean(res?.paired),
+        installed: Boolean(res?.installed),
+        reachable: Boolean(res?.reachable),
+        outstandingTransfers: 0,
+        lastWatchTelemetryTimestamp:
+          (typeof res?.lastWatchTelemetryTimestamp === 'string'
+            ? res.lastWatchTelemetryTimestamp
+            : null) ?? localMeta.timestamp,
+        lastWatchEventType: localMeta.eventType,
+        lastHeartRateBpm: cachedLastWatchBpm,
+      }
+    }
+  } catch {
+    // Fallback below
+  }
+
+  return {
+    supported: true,
+    activationState: 'notActivated',
+    paired: false,
+    installed: false,
+    reachable: false,
+    outstandingTransfers: 0,
+    lastWatchTelemetryTimestamp: localMeta.timestamp,
+    lastWatchEventType: localMeta.eventType,
+    lastHeartRateBpm: cachedLastWatchBpm,
+  }
+}
+
+/**
+ * Pushes live Wrist Camera Remote state (Quick Posture, 30s Readiness Check, Desk Ergonomics Audit, Form Lab)
+ * so the Watch automatically surfaces Framing... -> Locked · Emerald and Start 5s Timer / Stop & Review.
+ */
+export async function syncCameraRemoteStateToWatch(
+  payload: WatchCameraRemotePayload
+): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('forge:watch-camera-remote-state', { detail: payload })
+      )
+    } catch {
+      // Ignore in non-DOM contexts
+    }
+  }
+  if (!isNativeIOS()) return false
+  try {
+    const plugin = getNativeHealthPlugin()
+    if (plugin.sendCameraRemoteToWatch) {
+      const res = await plugin.sendCameraRemoteToWatch({ cameraRemote: payload })
+      return Boolean(res?.success)
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Pushes OPT Phase, Daily Streak, Joint Comfort Score, and Ergonomic Flags to Watch complications & Smart Stack.
+ */
+export async function syncCompanionSummaryToWatch(
+  payload: WatchCompanionSummaryPayload
+): Promise<boolean> {
+  if (!isNativeIOS()) return false
+  try {
+    const plugin = getNativeHealthPlugin()
+    if (plugin.sendCompanionSummaryToWatch) {
+      const res = await plugin.sendCompanionSummaryToWatch({ companionSummary: payload })
+      return Boolean(res?.success)
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
+/**
  * Pushes daily CNS Readiness score to Apple Watch face complications.
  */
 export async function syncCnsReadinessToWatch(score: number, restingHeartRate?: number, hrvRmssd?: number): Promise<boolean> {
@@ -1196,6 +1516,7 @@ export async function subscribeToWatchSetLogged(
   try {
     const plugin = getNativeHealthPlugin()
     const handle = await plugin.addListener('onWatchSetLogged', (data: WatchSetLoggedPayload) => {
+      recordClientWatchTelemetryTimestamp('setLogged', data?.loggedAt)
       callback(data)
     })
     return () => {
@@ -1203,6 +1524,215 @@ export async function subscribeToWatchSetLogged(
     }
   } catch {
     return null
+  }
+}
+
+/**
+ * Subscribes to Digital Crown Plain-English RPE updates from Apple Watch ('Easy · 6' -> 'Max · 10').
+ */
+export async function subscribeToWatchRpeUpdated(
+  callback: (data: WatchRpeUpdatedPayload) => void
+): Promise<(() => void) | null> {
+  let domCleanup: (() => void) | null = null
+  if (typeof window !== 'undefined') {
+    const domHandler = (e: Event) => {
+      const detail = (e as CustomEvent<WatchRpeUpdatedPayload>).detail
+      if (detail) {
+        recordClientWatchTelemetryTimestamp('rpeUpdated', detail.timestamp)
+        callback(detail)
+      }
+    }
+    window.addEventListener('forge:watch-rpe-updated', domHandler)
+    domCleanup = () => window.removeEventListener('forge:watch-rpe-updated', domHandler)
+  }
+
+  if (!isNativeIOS()) return domCleanup
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener('onWatchRpeUpdated', (data: WatchRpeUpdatedPayload) => {
+      recordClientWatchTelemetryTimestamp('rpeUpdated', data?.timestamp)
+      callback(data)
+    })
+    return () => {
+      domCleanup?.()
+      handle.remove()
+    }
+  } catch {
+    return domCleanup
+  }
+}
+
+/**
+ * Subscribes to remote camera shutter / rep recording / stop & review commands sent from Apple Watch.
+ */
+export async function subscribeToWatchCameraCommand(
+  callback: (data: WatchCameraCommandPayload) => void
+): Promise<(() => void) | null> {
+  let domCleanup: (() => void) | null = null
+  if (typeof window !== 'undefined') {
+    const domHandler = (e: Event) => {
+      const detail = (e as CustomEvent<WatchCameraCommandPayload>).detail
+      if (detail?.command) {
+        recordClientWatchTelemetryTimestamp('cameraRemoteCommand', detail.timestamp)
+        callback(detail)
+      }
+    }
+    window.addEventListener('forge:watch-camera-command', domHandler)
+    domCleanup = () => window.removeEventListener('forge:watch-camera-command', domHandler)
+  }
+
+  if (!isNativeIOS()) return domCleanup
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener(
+      'onWatchCameraCommand',
+      (data: WatchCameraCommandPayload) => {
+        if (data?.command) {
+          recordClientWatchTelemetryTimestamp('cameraRemoteCommand', data.timestamp)
+          callback(data)
+        }
+      }
+    )
+    return () => {
+      domCleanup?.()
+      handle.remove()
+    }
+  } catch {
+    return domCleanup
+  }
+}
+
+/**
+ * Subscribes to 20-Minute Express Mode toggles from Apple Watch.
+ */
+export async function subscribeToWatchExpressModeToggled(
+  callback: (data: { expressModeActive: boolean; timestamp?: string }) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener(
+      'onWatchExpressModeToggled',
+      (data: { expressModeActive: boolean; timestamp?: string }) => {
+        recordClientWatchTelemetryTimestamp('expressModeToggled', data?.timestamp)
+        callback(data)
+      }
+    )
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to Readiness Warm-Up batch skip/complete actions from Apple Watch.
+ */
+export async function subscribeToWatchWarmupBatchAction(
+  callback: (data: { action: 'completeAll' | 'skipAll' | string; timestamp?: string }) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener(
+      'onWatchWarmupBatchAction',
+      (data: { action: string; timestamp?: string }) => {
+        recordClientWatchTelemetryTimestamp('warmupBatchAction', data?.timestamp)
+        callback(data)
+      }
+    )
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to standalone 5-Minute Desk Reset completions synced from Apple Watch (online or FIFO offline).
+ */
+export async function subscribeToWatchDeskResetCompleted(
+  callback: (data: WatchDeskResetCompletedPayload) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener(
+      'onWatchDeskResetCompleted',
+      (data: WatchDeskResetCompletedPayload) => {
+        recordClientWatchTelemetryTimestamp('deskResetCompleted', data?.completedAt)
+        callback(data)
+      }
+    )
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to 10-Second Digital Crown Joint Comfort check-ins from Apple Watch.
+ */
+export async function subscribeToWatchJointComfortLogged(
+  callback: (data: WatchJointComfortLoggedPayload) => void
+): Promise<(() => void) | null> {
+  if (!isNativeIOS()) return null
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener(
+      'onWatchJointComfortLogged',
+      (data: WatchJointComfortLoggedPayload) => {
+        recordClientWatchTelemetryTimestamp('jointComfortLogged', data?.loggedAt)
+        callback(data)
+      }
+    )
+    return () => {
+      handle.remove()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Subscribes to live WCSession diagnostics updates for the ?debug=telemetry Watch Sync Status pill.
+ */
+export async function subscribeToWatchSyncStateChanged(
+  callback: (diag: Partial<WatchSyncDiagnostics>) => void
+): Promise<(() => void) | null> {
+  let domCleanup: (() => void) | null = null
+  if (typeof window !== 'undefined') {
+    const domHandler = (e: Event) => {
+      const detail = (e as CustomEvent<{ eventType?: string; timestamp?: string; bpm?: number }>).detail
+      callback({
+        lastWatchTelemetryTimestamp: detail?.timestamp ?? null,
+        lastWatchEventType: detail?.eventType ?? null,
+        lastHeartRateBpm: detail?.bpm ?? null,
+      })
+    }
+    window.addEventListener('forge:watch-telemetry-received', domHandler)
+    domCleanup = () => window.removeEventListener('forge:watch-telemetry-received', domHandler)
+  }
+
+  if (!isNativeIOS()) return domCleanup
+  try {
+    const plugin = getNativeHealthPlugin()
+    const handle = await plugin.addListener(
+      'onWatchSyncStateChanged',
+      (data: Partial<WatchSyncDiagnostics>) => {
+        callback(data)
+      }
+    )
+    return () => {
+      domCleanup?.()
+      handle.remove()
+    }
+  } catch {
+    return domCleanup
   }
 }
 
@@ -1216,6 +1746,7 @@ export async function subscribeToWatchRestAction(
   try {
     const plugin = getNativeHealthPlugin()
     const handle = await plugin.addListener('onWatchRestAction', (data: { action: string; timestamp?: string }) => {
+      recordClientWatchTelemetryTimestamp('restAction', data?.timestamp)
       callback(data)
     })
     return () => {
@@ -1227,17 +1758,21 @@ export async function subscribeToWatchRestAction(
 }
 
 /**
- * Subscribes to continuous optical heart rate updates streamed from Apple Watch HKWorkoutSession.
+ * Subscribes to continuous optical heart rate and session recovery metrics streamed from Apple Watch HKWorkoutSession.
  */
 export async function subscribeToWatchHeartRate(
-  callback: (data: { heartRate: number; timestamp?: string }) => void
+  callback: (data: WatchHeartRateTelemetryPayload) => void
 ): Promise<(() => void) | null> {
   if (!isNativeIOS()) return null
   try {
     const plugin = getNativeHealthPlugin()
-    const handle = await plugin.addListener('onWatchHeartRateUpdate', (data: { heartRate: number; timestamp?: string }) => {
-      callback(data)
-    })
+    const handle = await plugin.addListener(
+      'onWatchHeartRateUpdate',
+      (data: WatchHeartRateTelemetryPayload) => {
+        recordClientWatchTelemetryTimestamp('liveHeartRate', data?.timestamp, data?.heartRate)
+        callback(data)
+      }
+    )
     return () => {
       handle.remove()
     }

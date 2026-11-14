@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
   Video,
+  Volume2,
   X,
   Zap,
 } from 'lucide-react'
@@ -33,6 +34,7 @@ import {
   ENVIRONMENT_PROFILE_META,
   EnvironmentProfileId,
   ErgonomicFlag,
+  getTodayIsoDate,
   loadPostureProfileState,
   POSTURE_PROFILE_EVENT,
   recordEnvironmentSelection,
@@ -43,6 +45,12 @@ import {
   UpgradeTriggerId,
   useTierAccess,
 } from '@/lib/tierEntitlements'
+import HumanBackedGuaranteeBadge from '@/components/coach-gordon/HumanBackedGuaranteeBadge'
+import { openCoachGordon } from '@/components/fitness/GlobalCoachGordonHost'
+import {
+  buildPreWorkoutPersonalBriefing,
+  speakCoachDynamicText,
+} from '@/src/lib/audio/coachVoiceEngine'
 
 export interface ExecutiveCommandCenterClientProps {
   clientName: string
@@ -311,13 +319,38 @@ export default function ExecutiveCommandCenterClient({
           {currentPlanPhase}
           {activePackage ? ` · ${getMembershipDisplayName(activePackage.package_name)}` : ''}
         </span>
-        <button
-          type="button"
-          onClick={handleScheduleMultiDayTrip}
-          className="forge-tactile-press inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-lg px-2 py-1 font-semibold text-sky-300 hover:bg-white/[0.04] hover:underline"
-        >
-          <Plane size={12} strokeWidth={1.75} aria-hidden="true" /> Schedule Multi-Day Trip
-        </button>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              const state = loadPostureProfileState()
+              const todayLog = state.dailyLogs[getTodayIsoDate()]
+              const briefing = buildPreWorkoutPersonalBriefing({
+                memberFirstName: clientName,
+                optPhase: latestPlan?.nasm_opt_phase || 2,
+                jointComfortScore100: todayLog?.jointComfortScore ?? null,
+                readinessScore: todayLog?.readinessScore ?? null,
+                environmentLabel: ENVIRONMENT_PROFILE_META[environmentProfile]?.label,
+                expressModeActive: expressMode,
+              })
+              void speakCoachDynamicText(briefing, {
+                moment: 'pre_workout_briefing',
+                forceUnlockVoiceOnTap: true,
+              })
+            }}
+            data-testid="hero-listen-preworkout-briefing-btn"
+            className="forge-tactile-press inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 font-semibold text-emerald-200 hover:bg-emerald-500/20"
+          >
+            <Volume2 size={12} strokeWidth={1.75} aria-hidden="true" /> Listen to Briefing
+          </button>
+          <button
+            type="button"
+            onClick={handleScheduleMultiDayTrip}
+            className="forge-tactile-press inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-lg px-2 py-1 font-semibold text-sky-300 hover:bg-white/[0.04] hover:underline"
+          >
+            <Plane size={12} strokeWidth={1.75} aria-hidden="true" /> Schedule Multi-Day Trip
+          </button>
+        </div>
       </div>
 
       {/* Primary Start Workout CTA -> Opens Pre-Workout Overview w/ Readiness Check */}
@@ -400,6 +433,18 @@ export default function ExecutiveCommandCenterClient({
           />
         </>
       )}
+
+      {/* Subtle Human-Backed Guarantee Badge ("AI guides every rep · Coach Gordon is 1 tap away") */}
+      <HumanBackedGuaranteeBadge
+        optPhase={latestPlan?.nasm_opt_phase || 2}
+        onOpenCoachAssistant={() =>
+          openCoachGordon({
+            athleteName: clientName?.split(' ')[0] || 'Athlete',
+            nasmOptPhase: latestPlan?.nasm_opt_phase || 2,
+            currentWorkoutFocus: activeWorkout?.focus || 'Daily Workout',
+          })
+        }
+      />
 
       {/* Optional Baseline Setup Banner */}
       {onboardingBannerState ? (

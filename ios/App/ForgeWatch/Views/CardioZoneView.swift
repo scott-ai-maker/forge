@@ -247,6 +247,7 @@ public struct CardioZoneView: View {
             .padding(.horizontal, 4)
             .padding(.bottom, 2)
         }
+        .background(Color.black.ignoresSafeArea())
     }
 
     private func formatElapsed(_ totalSeconds: Int) -> String {

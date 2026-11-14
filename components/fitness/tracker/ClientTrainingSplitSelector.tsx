@@ -165,7 +165,7 @@ export default function ClientTrainingSplitSelector({
       setIsGenerating(false)
       onPlanGenerated(
         data.plan,
-        `✓ Built your custom ${splitTitle} (${daysPerWeek} Days/Week · Phase ${recommendation.recommendedNasmPhase}) via the Forge NASM RAG Engine.`
+        `✓ Built your custom ${splitTitle} (${daysPerWeek} Days/Week · Phase ${recommendation.recommendedNasmPhase}) with your Coach Gordon Training System.`
       )
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Network error generating workout routine.')
@@ -221,7 +221,7 @@ export default function ClientTrainingSplitSelector({
                   fontWeight: 800,
                 }}
               >
-                Forge RAG Split Architect
+                Forge Program Builder
               </span>
               <span
                 style={{
@@ -432,7 +432,7 @@ export default function ClientTrainingSplitSelector({
             </div>
           </div>
 
-          {/* Step 2: Personalized RAG Recommendation Banner */}
+          {/* Step 2: Personalized Program Recommendation Banner */}
           <div
             style={{
               background: 'rgba(212, 160, 23, 0.08)',
@@ -443,7 +443,7 @@ export default function ClientTrainingSplitSelector({
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--gold-lt, #FDE68A)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                ★ NASM RAG Recommendation for Your Profile
+                ★ Recommended Program for Your Profile
               </span>
               <span style={{ fontSize: 11, color: '#34D399', fontWeight: 700, fontFamily: 'var(--font-telemetry, monospace)' }}>
                 Target: OPT™ Phase {recommendation.recommendedNasmPhase} ({recommendation.recommendedPhaseName})
@@ -452,7 +452,7 @@ export default function ClientTrainingSplitSelector({
             <p style={{ margin: 0, fontSize: 12.5, color: '#E2E8F0', lineHeight: 1.5 }}>
               Based on your <strong>{experienceLevel}</strong> experience level, <strong>{daysPerWeek} days/week</strong> schedule,{' '}
               <strong>{recommendation.equipmentSummaryLabel}</strong> access, and <strong>{goal.replace(/_/g, ' ')}</strong> goal, we recommend the{' '}
-              <strong style={{ color: '#FDE68A' }}>{recommendation.recommendedSplitTitle}</strong>. Select it below or choose any alternative training split architecture—our RAG engine will craft your unique exercise selection, sets, reps, and tempo automatically.
+              <strong style={{ color: '#FDE68A' }}>{recommendation.recommendedSplitTitle}</strong>. Select it below or choose any alternative training split—Coach Gordon&apos;s training system will tailor your exercise selection, sets, reps, and tempo automatically.
             </p>
           </div>
 
@@ -593,7 +593,7 @@ export default function ClientTrainingSplitSelector({
           {/* Action Bar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <div style={{ fontSize: 11, color: '#94A3B8' }}>
-              RAG Knowledge Base: <strong style={{ color: '#CBD5E1' }}>{activeSplitOption.ragCitation}</strong>
+              Training Focus: <strong style={{ color: '#CBD5E1' }}>{activeSplitOption.title} · OPT™ Phase {recommendation.recommendedNasmPhase}</strong>
             </div>
 
             <button
@@ -611,7 +611,7 @@ export default function ClientTrainingSplitSelector({
               }}
             >
               {isGenerating
-                ? 'Crafting Your Custom RAG Routine...'
+                ? 'Building Your Custom Routine...'
                 : `Build My ${activeSplitOption.title} (${daysPerWeek} Days/Wk) →`}
             </button>
           </div>

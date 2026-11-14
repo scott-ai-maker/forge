@@ -9,6 +9,7 @@ import {
   markAudioNoteListened,
 } from '@/lib/sanctuary-audio-notes-engine'
 import { configureAudioSession } from '@/lib/web-audio-cadence-engine'
+import { chunkTextIntoSpeechSentences } from '@/lib/coach-voice-synthesizer'
 
 // Module-level audio blob cache for zero-latency ElevenLabs playback
 const elevenLabsBlobCache = new Map<string, string>()
@@ -263,22 +264,23 @@ export default function SanctuaryAudioNotePlayer({
     }
 
     setIsSynthesizing(true)
-    const utterance = new SpeechSynthesisUtterance(note.transcript)
-    speechUtteranceRef.current = utterance
-
-    // Coach Gordon Voice Tuning: Authoritative, steady, measured
-    utterance.rate = 0.96
-    utterance.pitch = 0.94
-    utterance.volume = 1.0
+    const chunks = chunkTextIntoSpeechSentences(note.transcript, 165)
+    if (chunks.length === 0) {
+      setIsPlaying(false)
+      setIsSynthesizing(false)
+      return
+    }
 
     // Try to pick natural English voice
     const voices = window.speechSynthesis.getVoices?.() || []
     const englishVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Premium') || v.name.includes('Daniel') || v.name.includes('Male')))
-    if (englishVoice) {
-      utterance.voice = englishVoice
-    }
 
     progressTimerRef.current = setInterval(() => {
+      try {
+        if (window.speechSynthesis?.speaking) {
+          window.speechSynthesis.resume()
+        }
+      } catch {}
       setCurrentTime(prev => {
         if (prev >= totalDuration) {
           if (progressTimerRef.current) clearInterval(progressTimerRef.current)
@@ -288,22 +290,42 @@ export default function SanctuaryAudioNotePlayer({
       })
     }, 1000)
 
-    utterance.onend = () => {
-      setIsPlaying(false)
-      setIsSynthesizing(false)
-      setCurrentTime(totalDuration)
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current)
-      triggerHaptic?.('success')
-      onMarkDone?.()
+    const speakChunkAt = (idx: number) => {
+      if (idx >= chunks.length) {
+        setIsPlaying(false)
+        setIsSynthesizing(false)
+        setCurrentTime(totalDuration)
+        if (progressTimerRef.current) clearInterval(progressTimerRef.current)
+        triggerHaptic?.('success')
+        onMarkDone?.()
+        return
+      }
+
+      const utterance = new SpeechSynthesisUtterance(chunks[idx])
+      speechUtteranceRef.current = utterance
+
+      // Coach Gordon Voice Tuning: Authoritative, steady, measured
+      utterance.rate = 0.96
+      utterance.pitch = 0.94
+      utterance.volume = 1.0
+      if (englishVoice) {
+        utterance.voice = englishVoice
+      }
+
+      utterance.onend = () => {
+        speakChunkAt(idx + 1)
+      }
+
+      utterance.onerror = () => {
+        setIsPlaying(false)
+        setIsSynthesizing(false)
+        if (progressTimerRef.current) clearInterval(progressTimerRef.current)
+      }
+
+      window.speechSynthesis.speak(utterance)
     }
 
-    utterance.onerror = () => {
-      setIsPlaying(false)
-      setIsSynthesizing(false)
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current)
-    }
-
-    window.speechSynthesis.speak(utterance)
+    speakChunkAt(0)
   }
 
   const simulateMockProgress = () => {

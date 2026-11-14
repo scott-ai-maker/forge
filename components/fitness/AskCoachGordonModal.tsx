@@ -73,7 +73,7 @@ const _PRESET_TOPIC_CHIPS: Array<{ iconName: GaaIconName; label: string; prompt:
   { iconName: 'lightbulb', label: 'Swap this exercise', prompt: 'I need an alternative exercise for my current movement based on my available equipment.' },
   { iconName: 'camera', label: 'Form Check', prompt: 'Can you check my squat form and bar path depth?' },
   { iconName: 'nutrition', label: 'Post-workout meal', prompt: 'What should I eat for my post-workout meal to maximize protein synthesis and recovery?' },
-  { iconName: 'lightning', label: 'Joint tightness / soreness', prompt: 'My joints and muscles feel tight today. What corrective warmup or foam rolling should I do?' },
+  { iconName: 'lightning', label: 'Mobility & warm-up prep', prompt: 'My muscles feel stiff before starting. What dynamic warm-up or mobility prep should I run?' },
   { iconName: 'heart-rate', label: 'Cardio interval pacing', prompt: 'How should I pace my cardio session and intervals today?' },
   { iconName: 'message', label: 'Message Coach Gordon 1-on-1', prompt: 'I have a sensitive medical / rehab question and would like Coach Gordon to review my training file directly.' },
 ]
@@ -1241,15 +1241,15 @@ export default function AskCoachGordonModal({
                                 }}
                               >
                                 {msg.engineMode === 'gemini_ai'
-                                  ? '⚡ Gemini 3.8 Flash'
+                                  ? '⚡ Coach Gordon Live AI'
                                   : msg.engineMode === 'openai_fallback'
-                                  ? '⚡ OpenAI Cloud'
-                                  : '🏛️ Master NASM RAG Engine'}
+                                  ? '⚡ Coach Gordon Cloud'
+                                  : '🏛️ Coach Gordon Training System'}
                               </span>
                             )}
                           </div>
 
-                          {/* RAG Sources Accordion — Visible only when logged in as Coach */}
+                          {/* Coaching References Accordion — Visible only when logged in as Coach */}
                           {isCoachUser && msg.curriculums && msg.curriculums.length > 0 && (
                             <details style={{ cursor: 'pointer' }}>
                               <summary
@@ -1267,7 +1267,7 @@ export default function AskCoachGordonModal({
                                   borderRadius: '4px',
                                 }}
                               >
-                                <span>RAG Sources ({msg.curriculums.length})</span>
+                                <span>Coaching References ({msg.curriculums.length})</span>
                                 <GaaIcon name="chevron-down" size={10} tone="slate" />
                               </summary>
                               <div

@@ -16,6 +16,7 @@ private enum WorkoutActiveSheet: Identifiable {
     case phases
     case exerciseDetail
     case confirmSet
+    case plainRpePicker
 
     var id: String {
         switch self {
@@ -24,6 +25,7 @@ private enum WorkoutActiveSheet: Identifiable {
         case .phases: return "phases"
         case .exerciseDetail: return "exerciseDetail"
         case .confirmSet: return "confirmSet"
+        case .plainRpePicker: return "plainRpePicker"
         }
     }
 }
@@ -35,6 +37,8 @@ public struct WorkoutActiveView: View {
     @State private var loggedReps: Double = 10.0
     @State private var loggedWeight: Double = 135.0
     @State private var loggedRpe: Double = 8.0
+    @State private var lastCompletedExerciseName: String = ""
+    @State private var lastCompletedSetIndex: Int = 1
     @State private var isCrownFocusedOnReps: Bool = true
     @State private var currentModality: WatchEquipmentModality = .barbell
     @State private var barbellBarWeight: Double = 45.0
@@ -52,12 +56,29 @@ public struct WorkoutActiveView: View {
     public var body: some View {
         ScrollView {
             VStack(spacing: 8) {
-                // 1. Top Glance Header: Workout Day, Focus & Heart Rate
-                HStack(alignment: .center) {
+                // 1. Top Glance Header: Workout Day, 20m Express Toggle & Live Heart Rate
+                HStack(alignment: .center, spacing: 5) {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("DAY \(coordinator.workoutState.dayNumber)")
-                            .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09)) // Gold
+                        HStack(spacing: 4) {
+                            Text("DAY \(coordinator.workoutState.dayNumber)")
+                                .font(.system(size: 9.5, weight: .black, design: .monospaced))
+                                .monospacedDigit()
+                                .foregroundColor(Color(red: 0.063, green: 0.725, blue: 0.506))
+
+                            Button(action: {
+                                coordinator.toggleExpress20mMode()
+                            }) {
+                                Text(coordinator.workoutState.expressModeActive ? "⚡20m ON" : "20m")
+                                    .font(.system(size: 8, weight: .black, design: .monospaced))
+                                    .monospacedDigit()
+                                    .padding(.horizontal, 4.5)
+                                    .padding(.vertical, 1.5)
+                                    .background(coordinator.workoutState.expressModeActive ? Color(red: 0.063, green: 0.725, blue: 0.506) : Color(red: 0.078, green: 0.090, blue: 0.122))
+                                    .foregroundColor(coordinator.workoutState.expressModeActive ? .black : .gray)
+                                    .cornerRadius(4)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
 
                         Text(coordinator.workoutState.focus)
                             .font(.system(size: 11, weight: .bold, design: .rounded))
@@ -65,20 +86,21 @@ public struct WorkoutActiveView: View {
                             .lineLimit(1)
                     }
 
-                    Spacer()
+                    Spacer(minLength: 2)
 
-                    // Optical HR Badge
+                    // Optical HR Badge (#14171F Tactile Card + Tabular Numerals)
                     HStack(spacing: 3) {
                         Image(systemName: "heart.fill")
                             .font(.system(size: 10))
                             .foregroundColor(heartRateColor)
                         Text(workoutManager.currentHeartRate > 0 ? "\(workoutManager.currentHeartRate)" : "--")
                             .font(.system(size: 13, weight: .black, design: .monospaced))
+                            .monospacedDigit()
                             .foregroundColor(.white)
                     }
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(Color.white.opacity(0.08))
+                    .background(Color(red: 0.078, green: 0.090, blue: 0.122))
                     .cornerRadius(8)
                 }
                 .padding(.horizontal, 4)
@@ -132,16 +154,17 @@ public struct WorkoutActiveView: View {
             }
             .padding(.horizontal, 4)
         }
+        .background(Color.black.ignoresSafeArea())
         .onAppear {
             syncStateFromCoordinator()
         }
-        .onChange(of: coordinator.workoutState.activeExerciseIndex) { _ in
+        .onChange(of: coordinator.workoutState.activeExerciseIndex) { _, _ in
             syncStateFromCoordinator()
         }
-        .onChange(of: coordinator.workoutState.activeExercise?.exerciseName) { _ in
+        .onChange(of: coordinator.workoutState.activeExercise?.exerciseName) { _, _ in
             syncStateFromCoordinator()
         }
-        .onChange(of: coordinator.workoutState.activeExercise?.equipmentModality) { _ in
+        .onChange(of: coordinator.workoutState.activeExercise?.equipmentModality) { _, _ in
             syncStateFromCoordinator()
         }
         .onDisappear {
@@ -195,6 +218,20 @@ public struct WorkoutActiveView: View {
                         }
                     )
                 }
+            case .plainRpePicker:
+                PlainEnglishRpeCrownSheet(
+                    exerciseName: lastCompletedExerciseName,
+                    setIndex: lastCompletedSetIndex,
+                    selectedRpe: $loggedRpe,
+                    onSubmit: { chosenRpe in
+                        coordinator.submitPostSetPlainRpe(
+                            exerciseName: lastCompletedExerciseName,
+                            setIndex: lastCompletedSetIndex,
+                            rpe: chosenRpe
+                        )
+                        activeSheet = nil
+                    }
+                )
             }
         }
         .confirmationDialog("Cancel Workout?", isPresented: $showCancelConfirmation, titleVisibility: .visible) {
@@ -223,9 +260,9 @@ public struct WorkoutActiveView: View {
     private var warmupPhaseView: some View {
         VStack(spacing: 8) {
             HStack {
-                Text("PRE-LIFT MOBILITY")
-                    .font(.system(size: 11, weight: .black, design: .rounded))
-                    .foregroundColor(Color(red: 0.97, green: 0.58, blue: 0.11))
+                Text("READINESS WARM-UP")
+                    .font(.system(size: 10.5, weight: .black, design: .rounded))
+                    .foregroundColor(Color(red: 0.961, green: 0.620, blue: 0.043))
                 Spacer()
                 Button(action: { activeSheet = .phases }) {
                     Image(systemName: "list.bullet")
@@ -234,6 +271,35 @@ public struct WorkoutActiveView: View {
                 .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 4)
+
+            // Quick 1-Tap Complete / Skip Auto-Injected Readiness Warm-Up Controls
+            HStack(spacing: 6) {
+                Button(action: {
+                    coordinator.skipOrCompleteReadinessWarmup(markCompleted: true)
+                }) {
+                    Text("Complete All")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.20))
+                        .foregroundColor(Color(red: 0.063, green: 0.725, blue: 0.506))
+                        .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                Button(action: {
+                    coordinator.skipOrCompleteReadinessWarmup(markCompleted: false)
+                }) {
+                    Text("Skip Warm-Up")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(Color(red: 0.078, green: 0.090, blue: 0.122))
+                        .foregroundColor(.gray)
+                        .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
 
             ForEach(coordinator.workoutState.warmupDrills) { drill in
                 HStack(spacing: 8) {
@@ -646,6 +712,51 @@ public struct WorkoutActiveView: View {
                     }
                 }
 
+                // Wrist HUD Prescription Strip: Set Counter + Target Reps + Tactile Tempo Shortcut
+                if let activeEx = coordinator.workoutState.activeExercise {
+                    let curSetNum = min(activeEx.totalSets, activeEx.completedSetsCount + 1)
+                    HStack(spacing: 6) {
+                        Text("Set \(curSetNum) of \(activeEx.totalSets)")
+                            .font(.system(size: 10, weight: .black, design: .monospaced))
+                            .monospacedDigit()
+                            .foregroundColor(Color(red: 0.063, green: 0.725, blue: 0.506))
+
+                        Text("·")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.gray)
+
+                        Text("\(activeEx.repsDisplay) reps")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .monospacedDigit()
+                            .foregroundColor(.white)
+
+                        Spacer(minLength: 2)
+
+                        Button(action: {
+                            coordinator.selectedTab = 4
+                            WKInterfaceDevice.current().play(.click)
+                        }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "waveform.path")
+                                    .font(.system(size: 8.5, weight: .bold))
+                                Text(activeEx.tempo ?? "3-1-1")
+                                    .font(.system(size: 9.5, weight: .black, design: .monospaced))
+                                    .monospacedDigit()
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2.5)
+                            .background(Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.18))
+                            .foregroundColor(Color(red: 0.063, green: 0.725, blue: 0.506))
+                            .cornerRadius(5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(Color(red: 0.078, green: 0.090, blue: 0.122))
+                    .cornerRadius(8)
+                }
+
                 // Glanceable 1-Line Form / Setup Cue
                 if let cue = coordinator.workoutState.activeExercise?.coachingTip ?? coordinator.workoutState.activeExercise?.setupCue, !cue.isEmpty {
                     Button(action: {
@@ -981,32 +1092,44 @@ public struct WorkoutActiveView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             } else {
-                // Hero Full-Bleed "LOG SET" Button with Option B Confirm & Edit Workflow
+                // Primary 1-Tap Emerald "Complete Set" CTA -> Digital Crown Plain-English RPE Picker
                 Button(action: {
-                    activeSheet = .confirmSet
-                    WKInterfaceDevice.current().play(.click)
+                    lastCompletedExerciseName = coordinator.workoutState.activeExercise?.exerciseName ?? "Set"
+                    lastCompletedSetIndex = completedSets + 1
+                    handleLogSet()
+                    activeSheet = .plainRpePicker
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 16, weight: .bold))
-                        Text("LOG SET \(completedSets + 1) OF \(totalSets)")
-                            .font(.system(size: 15, weight: .black, design: .rounded))
+                        Text("Complete Set")
+                            .font(.system(size: 14.5, weight: .black, design: .rounded))
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(red: 0.06, green: 0.72, blue: 0.51), Color(red: 0.04, green: 0.55, blue: 0.38)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .foregroundColor(.white)
+                    .background(Color(red: 0.063, green: 0.725, blue: 0.506)) // Emerald #10B981
+                    .foregroundColor(.black)
                     .cornerRadius(12)
-                    .shadow(color: Color(red: 0.06, green: 0.72, blue: 0.51).opacity(0.5), radius: 6, y: 2)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.top, 2)
+
+                // Secondary Option B Confirm & Edit Load/Reps Sheet Trigger
+                Button(action: {
+                    activeSheet = .confirmSet
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 9.5, weight: .bold))
+                        Text("Edit Reps / Load · Set \(completedSets + 1) of \(totalSets)")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .monospacedDigit()
+                    }
+                    .foregroundColor(.gray)
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
 
             // Tactile Cancel Workout Button at bottom of scroll
@@ -1734,7 +1857,7 @@ struct PhaseTabButton: View {
  */
 struct TerseExerciseCardSheet: View {
     let exercise: WatchExerciseInfo
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
@@ -1755,7 +1878,7 @@ struct TerseExerciseCardSheet: View {
                     Spacer()
 
                     Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                     .font(.system(size: 11, weight: .bold))
                 }
@@ -1896,7 +2019,7 @@ struct TerseExerciseCardSheet: View {
 
                 // Bottom Dismiss Action
                 Button(action: {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }) {
                     Text("BACK TO WORKOUT")
                         .font(.system(size: 11, weight: .black, design: .rounded))
@@ -1922,7 +2045,7 @@ struct WorkoutPhasesSheet: View {
     @ObservedObject var coordinator = WatchSessionCoordinator.shared
     let onSelectExercise: (String) -> Void
     var onInspectExercise: ((WatchExerciseInfo) -> Void)? = nil
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
@@ -1934,7 +2057,7 @@ struct WorkoutPhasesSheet: View {
                         .foregroundColor(Color(red: 0.83, green: 0.63, blue: 0.09))
                     Spacer()
                     Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                     .font(.system(size: 11, weight: .bold))
                 }
@@ -1987,7 +2110,7 @@ struct WorkoutPhasesSheet: View {
                             HStack(spacing: 4) {
                                 Button(action: {
                                     onSelectExercise(ex.exerciseName)
-                                    presentationMode.wrappedValue.dismiss()
+                                    dismiss()
                                 }) {
                                     HStack(spacing: 6) {
                                         Image(systemName: ex.isCompleted ? "checkmark.circle.fill" : "circle")
@@ -2101,7 +2224,7 @@ struct WorkoutPhasesSheet: View {
                 // 5. Explicit Session Completion & Discard Actions
                 VStack(spacing: 6) {
                     Button(action: {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                         coordinator.finishSession()
                     }) {
                         HStack(spacing: 5) {
@@ -2119,7 +2242,7 @@ struct WorkoutPhasesSheet: View {
                     .buttonStyle(PlainButtonStyle())
 
                     Button(action: {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                         coordinator.cancelSession()
                     }) {
                         HStack(spacing: 5) {
@@ -2151,7 +2274,7 @@ struct WorkoutPhasesSheet: View {
 struct EquipmentModalityPickerSheet: View {
     let selectedModality: WatchEquipmentModality
     let onSelect: (WatchEquipmentModality) -> Void
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
@@ -2171,7 +2294,7 @@ struct EquipmentModalityPickerSheet: View {
                     Button(action: {
                         onSelect(modality)
                         WKInterfaceDevice.current().play(.click)
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }) {
                         HStack(spacing: 8) {
                             ZStack {
@@ -2274,7 +2397,7 @@ struct DynamicLoadHelperSheet: View {
 struct BarbellPlateCalculatorSheet: View {
     @Binding var totalWeightLbs: Double
     @Binding var barWeight: Double
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     private let availableBars: [(name: String, weight: Double)] = [
         ("45 lb Standard", 45.0),
@@ -2533,7 +2656,7 @@ struct BarbellPlateCalculatorSheet: View {
                 .padding(.horizontal, 2)
 
                 Button("Done") {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }
                 .font(.system(size: 13, weight: .bold))
                 .frame(maxWidth: .infinity)
@@ -2580,7 +2703,7 @@ struct BarbellPlateCalculatorSheet: View {
  */
 struct DumbbellRackSheet: View {
     @Binding var selectedWeight: Double
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     private let weights: [Double] = [
         5, 7.5, 10,
@@ -2624,7 +2747,7 @@ struct DumbbellRackSheet: View {
                         Button(action: {
                             selectedWeight = w
                             WKInterfaceDevice.current().play(.click)
-                            presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         }) {
                             Text(w.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(w))" : String(format: "%.1f", w))
                                 .font(.system(size: 12, weight: isSelected ? .black : .bold, design: .rounded))
@@ -2653,7 +2776,7 @@ struct DumbbellRackSheet: View {
  */
 struct BandSelectorSheet: View {
     @Binding var selectedTension: Double
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     private struct BandTier: Identifiable {
         let id: String
@@ -2696,7 +2819,7 @@ struct BandSelectorSheet: View {
                     Button(action: {
                         selectedTension = tier.tensionLbs
                         WKInterfaceDevice.current().play(.click)
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }) {
                         HStack(spacing: 8) {
                             Circle()
@@ -2744,7 +2867,7 @@ struct BandSelectorSheet: View {
  */
 struct CableStackSheet: View {
     @Binding var selectedWeight: Double
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     private let pinWeights: [Double] = [
         10, 15, 20,
@@ -2786,7 +2909,7 @@ struct CableStackSheet: View {
                         Button(action: {
                             selectedWeight = w
                             WKInterfaceDevice.current().play(.click)
-                            presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         }) {
                             Text("\(Int(w))")
                                 .font(.system(size: 12, weight: isSelected ? .black : .bold, design: .rounded))
@@ -2815,7 +2938,7 @@ struct CableStackSheet: View {
  */
 struct BodyweightAdjusterSheet: View {
     @Binding var selectedLoad: Double
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     private let addedWeights: [Double] = [5, 10, 15, 20, 25, 35, 45, 55]
     private let assistedWeights: [Double] = [-10, -20, -30, -40, -50]
@@ -2849,7 +2972,7 @@ struct BodyweightAdjusterSheet: View {
                 Button(action: {
                     selectedLoad = 0.0
                     WKInterfaceDevice.current().play(.click)
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }) {
                     HStack {
                         Image(systemName: "figure.walk")
@@ -2886,7 +3009,7 @@ struct BodyweightAdjusterSheet: View {
                             Button(action: {
                                 selectedLoad = w
                                 WKInterfaceDevice.current().play(.click)
-                                presentationMode.wrappedValue.dismiss()
+                                dismiss()
                             }) {
                                 Text("+\(Int(w))")
                                     .font(.system(size: 11, weight: isSelected ? .black : .bold, design: .rounded))
@@ -2913,7 +3036,7 @@ struct BodyweightAdjusterSheet: View {
                             Button(action: {
                                 selectedLoad = w
                                 WKInterfaceDevice.current().play(.click)
-                                presentationMode.wrappedValue.dismiss()
+                                dismiss()
                             }) {
                                 Text("\(Int(w))")
                                     .font(.system(size: 11, weight: isSelected ? .black : .bold, design: .rounded))
@@ -2939,7 +3062,7 @@ struct BodyweightAdjusterSheet: View {
  */
 struct KettlebellPickerSheet: View {
     @Binding var selectedWeight: Double
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     private struct KettlebellOption: Identifiable {
         let id: Int
@@ -2983,7 +3106,7 @@ struct KettlebellPickerSheet: View {
                     Button(action: {
                         selectedWeight = opt.lbs
                         WKInterfaceDevice.current().play(.click)
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }) {
                         HStack(spacing: 8) {
                             Text("\(Int(opt.lbs))#")
@@ -3314,5 +3437,136 @@ struct ConfirmSetSheetView: View {
         } else {
             return String(format: "%.1f", weight)
         }
+    }
+}
+
+/**
+ * PlainEnglishRpeCrownSheet
+ * Digital Crown Plain-English RPE Picker surfaced immediately after completing a set:
+ * - Easy · 6
+ * - Moderate · 7
+ * - Challenging · 8
+ * - Hard · 9
+ * - Max · 10
+ * Syncs directly to the iPhone's autoregulation engine.
+ */
+struct PlainEnglishRpeCrownSheet: View {
+    let exerciseName: String
+    let setIndex: Int
+    @Binding var selectedRpe: Double
+    let onSubmit: (Double) -> Void
+
+    @State private var crownValue: Double = 8.0
+
+    private let cardSurface = Color(red: 0.078, green: 0.090, blue: 0.122) // #14171F
+    private let emeraldPrimary = Color(red: 0.063, green: 0.725, blue: 0.506) // #10B981
+    private let amberBadge = Color(red: 0.961, green: 0.620, blue: 0.043) // #F59E0B
+    private let coralBadge = Color(red: 0.957, green: 0.247, blue: 0.369) // #F43F5E
+
+    var body: some View {
+        let currentOption = WatchPlainRpeOption.nearest(to: crownValue)
+        let accent = colorFor(currentOption.rpe)
+
+        VStack(spacing: 6) {
+            HStack {
+                Text("SET \(setIndex) EFFORT")
+                    .font(.system(size: 9.5, weight: .black, design: .monospaced))
+                    .monospacedDigit()
+                    .foregroundColor(emeraldPrimary)
+                Spacer()
+                Text("CROWN")
+                    .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                    .foregroundColor(.gray)
+            }
+            .padding(.horizontal, 4)
+
+            // Active Plain-English Selection Card
+            VStack(spacing: 3) {
+                Text(currentOption.badgeTitle)
+                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundColor(accent)
+
+                Text(currentOption.coachingDetail)
+                    .font(.system(size: 9.5, weight: .medium))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 6)
+            .background(cardSurface)
+            .cornerRadius(11)
+            .overlay(
+                RoundedRectangle(cornerRadius: 11)
+                    .stroke(accent.opacity(0.65), lineWidth: 1.5)
+            )
+            .focusable(true)
+            .digitalCrownRotation(
+                $crownValue,
+                from: 6.0,
+                through: 10.0,
+                by: 1.0,
+                sensitivity: .low,
+                isContinuous: false,
+                isHapticFeedbackEnabled: true
+            )
+            .onChange(of: crownValue) { _, next in
+                selectedRpe = Double(min(10, max(6, Int(round(next)))))
+            }
+
+            // Quick-Tap Plain-English Chips (6..10)
+            HStack(spacing: 4) {
+                ForEach(WatchPlainRpeOption.allOptions) { opt in
+                    let active = Int(round(crownValue)) == Int(opt.rpe)
+                    Button(action: {
+                        crownValue = opt.rpe
+                        selectedRpe = opt.rpe
+                        WKInterfaceDevice.current().play(.click)
+                    }) {
+                        Text("\(Int(opt.rpe))")
+                            .font(.system(size: 11, weight: .black, design: .monospaced))
+                            .monospacedDigit()
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 5)
+                            .background(active ? colorFor(opt.rpe) : cardSurface)
+                            .foregroundColor(active ? .black : .white)
+                            .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+
+            Button(action: {
+                let finalRpe = Double(min(10, max(6, Int(round(crownValue)))))
+                selectedRpe = finalRpe
+                WKInterfaceDevice.current().play(.click)
+                onSubmit(finalRpe)
+            }) {
+                Text("Sync \(currentOption.badgeTitle)")
+                    .font(.system(size: 12.5, weight: .black, design: .rounded))
+                    .monospacedDigit()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+                    .background(emeraldPrimary)
+                    .foregroundColor(.black)
+                    .cornerRadius(10)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.horizontal, 4)
+        .background(Color.black.ignoresSafeArea())
+        .onAppear {
+            let clamped = Double(min(10, max(6, Int(round(selectedRpe)))))
+            crownValue = clamped
+        }
+    }
+
+    private func colorFor(_ rpe: Double) -> Color {
+        if rpe <= 7.0 { return emeraldPrimary }
+        if rpe <= 8.0 { return Color(red: 0.22, green: 0.74, blue: 0.97) }
+        if rpe <= 9.0 { return amberBadge }
+        return coralBadge
     }
 }

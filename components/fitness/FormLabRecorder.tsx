@@ -1,10 +1,14 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { ArrowUpRight, Camera, CheckCircle2, Lock, Sparkles, Video } from 'lucide-react'
 import { useTierAccess } from '@/lib/tierEntitlements'
 import TierUpgradeModal from '@/components/packages/TierUpgradeModal'
 import { playForgeTactileTone } from '@/lib/sfx-audio'
+import {
+  subscribeToWatchCameraCommand,
+  syncCameraRemoteStateToWatch,
+} from '@/lib/native-healthkit-bridge'
 import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 export interface FormLabRecorderProps {
@@ -23,46 +27,120 @@ export default function FormLabRecorder({
   >([])
   const [submittedConfirmation, setSubmittedConfirmation] = useState<string | null>(null)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
+  const [watchRecordingActive, setWatchRecordingActive] = useState(false)
+  const [watchFramingLocked, setWatchFramingLocked] = useState(false)
+  const [watchRepCount, setWatchRepCount] = useState(0)
 
   const outOfCredits = remainingFormLabCredits <= 0
   const nextTierName = tierId === 'core_lab' ? 'Plus ($49/mo)' : 'Coach Support ($199/mo)'
 
+  const commitClipSubmission = useCallback(
+    (overrideNote?: string) => {
+      if (outOfCredits) {
+        setUpgradeModalOpen(true)
+        return
+      }
+      const result = spendFormLabCredit()
+      if (!result.allowed) {
+        setUpgradeModalOpen(true)
+        return
+      }
+      playForgeTactileTone('success')
+      const statusLabel = entitlements.priority24hSla ? '24h Priority Queue' : 'Telestrator Queue'
+      const trimmedNote = (overrideNote ?? clipNotes).trim()
+      void trackEvent('form_lab_uploaded', {
+        lift_name: selectedLiftLabel,
+        camera_angle: 'front_45',
+        priority_sla: Boolean(entitlements.priority24hSla),
+        has_notes: trimmedNote.length > 0,
+      })
+      setSubmittedClips(prev => [
+        {
+          id: `${Date.now()}`,
+          lift: selectedLiftLabel,
+          note: trimmedNote || '45° front-diagonal working set (3–5 reps)',
+          status: statusLabel,
+        },
+        ...prev,
+      ])
+      setSubmittedConfirmation(
+        entitlements.priority24hSla
+          ? `Priority 24h Form Lab review queued for Coach Gordon (${result.remaining} monthly credits left).`
+          : `Form Lab clip queued for Coach Gordon telestrator review (${result.remaining} credits left).`
+      )
+      setClipNotes('')
+      setWatchRecordingActive(false)
+      setWatchRepCount(0)
+      onSubmitted?.()
+    },
+    [
+      clipNotes,
+      entitlements.priority24hSla,
+      onSubmitted,
+      outOfCredits,
+      selectedLiftLabel,
+      spendFormLabCredit,
+    ]
+  )
+
+  // Bidirectional Apple Watch Wrist Camera Remote sync (Form Lab Video Recorder)
+  useEffect(() => {
+    void syncCameraRemoteStateToWatch({
+      isActive: true,
+      mode: 'form_lab',
+      modeTitle: 'Form Lab Recorder',
+      framingStatus: watchFramingLocked ? 'locked' : watchRecordingActive ? 'recording' : 'framing',
+      isRecording: watchRecordingActive,
+      countdownSeconds: 0,
+      repCount: watchRepCount,
+      targetReps: 5,
+      statusHint: watchFramingLocked
+        ? 'Locked · Emerald — 45° working set ready'
+        : 'Prop iPhone 6–8 ft at 45° · Tap Record Rep on Watch',
+    })
+  }, [watchFramingLocked, watchRecordingActive, watchRepCount])
+
+  useEffect(() => {
+    const lockTimer = setTimeout(() => setWatchFramingLocked(true), 1200)
+    let cleanupWatchSub: (() => void) | null = null
+    void subscribeToWatchCameraCommand(cmd => {
+      if (cmd.command === 'startTimer5s') {
+        setWatchFramingLocked(true)
+        setWatchRecordingActive(true)
+        playForgeTactileTone('countdown')
+      } else if (cmd.command === 'recordRep') {
+        setWatchFramingLocked(true)
+        setWatchRecordingActive(true)
+        setWatchRepCount(prev => prev + 1)
+        playForgeTactileTone('rep_complete')
+      } else if (cmd.command === 'stopAndReview') {
+        setWatchRecordingActive(false)
+        commitClipSubmission(
+          clipNotes.trim() ||
+            `45° ${selectedLiftLabel} (${Math.max(3, watchRepCount)} reps captured via Watch Remote)`
+        )
+      } else if (cmd.command === 'dismissRemote') {
+        setWatchRecordingActive(false)
+      }
+    }).then(unsub => {
+      cleanupWatchSub = unsub
+    })
+
+    return () => {
+      clearTimeout(lockTimer)
+      cleanupWatchSub?.()
+      void syncCameraRemoteStateToWatch({
+        isActive: false,
+        mode: 'form_lab',
+        modeTitle: 'Form Lab Recorder',
+        framingStatus: 'framing',
+      })
+    }
+  }, [clipNotes, commitClipSubmission, selectedLiftLabel, watchRepCount])
+
   const handleSubmitForCoachReview = (e: React.FormEvent) => {
     e.preventDefault()
-    if (outOfCredits) {
-      setUpgradeModalOpen(true)
-      return
-    }
-    const result = spendFormLabCredit()
-    if (!result.allowed) {
-      setUpgradeModalOpen(true)
-      return
-    }
-    playForgeTactileTone('success')
-    const statusLabel = entitlements.priority24hSla ? '24h Priority Queue' : 'Telestrator Queue'
-    const trimmedNote = clipNotes.trim()
-    void trackEvent('form_lab_uploaded', {
-      lift_name: selectedLiftLabel,
-      camera_angle: 'front_45',
-      priority_sla: Boolean(entitlements.priority24hSla),
-      has_notes: trimmedNote.length > 0,
-    })
-    setSubmittedClips(prev => [
-      {
-        id: `${Date.now()}`,
-        lift: selectedLiftLabel,
-        note: trimmedNote || '45° front-diagonal working set (3–5 reps)',
-        status: statusLabel,
-      },
-      ...prev,
-    ])
-    setSubmittedConfirmation(
-      entitlements.priority24hSla
-        ? `Priority 24h Form Lab review queued for Coach Gordon (${result.remaining} monthly credits left).`
-        : `Form Lab clip queued for Coach Gordon telestrator review (${result.remaining} credits left).`
-    )
-    setClipNotes('')
-    onSubmitted?.()
+    commitClipSubmission()
   }
 
   return (

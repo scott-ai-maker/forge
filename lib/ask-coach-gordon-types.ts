@@ -6,7 +6,13 @@
  */
 
 export interface CoachActionRecommendation {
-  type: 'swap_exercise' | 'start_timer' | 'form_critique' | 'auto_regulate_load' | 'view_demo'
+  type:
+    | 'swap_exercise'
+    | 'start_timer'
+    | 'form_critique'
+    | 'auto_regulate_load'
+    | 'view_demo'
+    | 'enable_express_mode'
   targetExerciseName?: string
   currentExerciseName?: string
   restSeconds?: number
@@ -28,6 +34,12 @@ export interface AskCoachGordonRequest {
   nasmOptPhase?: number
   currentWorkoutFocus?: string
   currentExerciseName?: string
+  expressModeActive?: boolean
+  environmentProfile?: string
+  jointComfortScore?: number
+  deskErgonomicsFlags?: string[]
+  recentRpeHistory?: number[]
+  painLevel5?: number
   equipmentAccess?: string[]
   cardioEquipmentAccess?: string[]
   kineticCompensations?: string[]
@@ -49,15 +61,36 @@ export interface AskCoachGordonRequest {
   activeConversationHistory?: Array<{ role: 'user' | 'assistant'; text: string }>
 }
 
+export interface AskCoachGordonSafetyCard {
+  triggered: boolean
+  severity: 'emergency_911' | 'clinical_stop' | 'joint_regression'
+  headline: string
+  calmCoachMessage: string
+  clinicalDisclaimer: string
+  detectedJointArea: string
+  replacementExercise?: string
+}
+
+export interface AskCoachGordonRagCitation {
+  id: string
+  title: string
+  category: string
+  sourceKind: 'nasm_curriculum' | 'movement_biomechanics' | 'contraindication_protocol'
+  matchedConcepts: string[]
+}
+
 export interface AskCoachGordonResponse {
   answerMarkdown: string
   spokenAudioText: string
   relevantCurriculums: string[]
+  ragRetrievalMode?: 'hybrid_pgvector_rrf' | 'bm25_tfidf_lexical'
+  ragCitations?: AskCoachGordonRagCitation[]
   recommendedAction?: CoachActionRecommendation
   suggestedFollowUps: string[]
   requiresCoachPing?: boolean
   coachPingReason?: string
   isEmergency911?: boolean
+  safetyOverride?: AskCoachGordonSafetyCard
   engineMode?: 'gemini_ai' | 'openai_fallback' | 'nasm_rag_engine'
   apiNotice?: string
 }

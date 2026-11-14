@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.55.0'
-export const APP_RELEASE_DATE = '2026-11-13'
-export const APP_RELEASE_CODENAME = 'Unified Cross-Platform Client Telemetry & Store-Launch Diagnostics'
+export const APP_VERSION = '1.56.0'
+export const APP_RELEASE_DATE = '2026-11-14'
+export const APP_RELEASE_CODENAME = 'Coach Gordon AI, Hybrid ElevenLabs Voice & Clinical Safety Guardrails'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.56.0',
+    date: '2026-11-14',
+    codename: 'Coach Gordon AI, Hybrid ElevenLabs Voice & Clinical Safety Guardrails',
+    category: 'intelligence',
+    badge: 'Coach Gordon AI & Clinical Safety',
+    title: 'v1.56.0 — Coach Gordon AI Sidekick, Hybrid ElevenLabs Voice Engine, Clinical Safety Guardrails & Tier Escalation',
+    summary:
+      'Upgrades Forge Athletic with a proactive context-aware Coach Gordon AI assistant, two-tier cloned ElevenLabs voice synthesis (9 zero-latency static MP3 cues + SHA-256 cached dynamic briefings), strict clinical & brand safety guardrails with zero symptom-probing, hybrid sports-science retrieval, and tier-aware Email / Direct SMS human escalation to Coach Gordon.',
+    highlights: [
+      'Hybrid ElevenLabs Coach Gordon Voice Engine: Pre-seeded zero-latency static MP3 cues in /public/audio/coach-gordon/ plus full-length dynamic /api/voice/synthesize briefings with SHA-256 server + IndexedDB caching, 200ms hardware buffer tail padding, and strict Muted-by-default 3-mode audio compliance.',
+      'Proactive Coach Gordon AI & 1-Tap Mid-Workout Adaptations: Context-aware drawer and in-set trainer buttons (Joint Feels Pinchy, Too Easy / Too Hard, Equipment Taken / Swap) backed by plain-English Coaching Focus cards and hybrid semantic + lexical retrieval.',
+      'Clinical & Brand Safety Guardrails + Tier-Aware Human Escalation: Immediate acute red-flag safety overrides, deterministic progression caps, strict zero clinical symptom-probing enforcement, Coach Portal priority safety queue, and 1-tap Core Lab / Plus Direct Email and Coach Support ($199) Direct SMS + 24h SLA escalation.',
+    ],
+  },
   {
     version: '1.55.0',
     date: '2026-11-13',

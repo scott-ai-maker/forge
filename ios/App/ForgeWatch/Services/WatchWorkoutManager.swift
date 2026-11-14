@@ -17,21 +17,32 @@ public final class WatchWorkoutManager: NSObject, ObservableObject, HKWorkoutSes
 
     @Published public var isWorkoutActive: Bool = false
     @Published public var currentHeartRate: Int = 0
+    @Published public var peakHeartRate: Int = 0
+    @Published public var averageHeartRate: Int = 0
+    @Published public var recoveryDeltaBpm: Int = 0
     @Published public var activeCalories: Double = 0.0
     @Published public var elapsedSeconds: Int = 0
     @Published public var currentZone: Int = 1 // 1: Recovery, 2: Aerobic, 3: Peak
+    @Published public var activeSessionKind: String = "strength"
 
     private var timer: Timer?
+    private var hrSampleSum: Int = 0
+    private var hrSampleCount: Int = 0
+    private var activeWorkoutIdentifier: String = "active-session"
 
     private override init() {
         super.init()
     }
 
     public func requestPermissions(completion: @escaping (Bool) -> Void) {
-        let typesToShare: Set = [
-            HKQuantityType.workoutType()
+        var typesToShare: Set<HKSampleType> = [
+            HKObjectType.workoutType()
         ]
-        let typesToRead: Set = [
+        if let activeEnergy = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
+            typesToShare.insert(activeEnergy)
+        }
+        let typesToRead: Set<HKObjectType> = [
+            HKObjectType.workoutType(),
             HKQuantityType.quantityType(forIdentifier: .heartRate)!,
             HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
             HKQuantityType.quantityType(forIdentifier: .restingHeartRate)!,
@@ -45,12 +56,24 @@ public final class WatchWorkoutManager: NSObject, ObservableObject, HKWorkoutSes
         }
     }
 
-    public func startWorkout(activityType: HKWorkoutActivityType = .traditionalStrengthTraining) {
+    public func startWorkout(
+        activityType: HKWorkoutActivityType = .traditionalStrengthTraining,
+        workoutId: String = "active-session",
+        sessionKind: String = "strength"
+    ) {
         guard session == nil else { return }
 
         let configuration = HKWorkoutConfiguration()
         configuration.activityType = activityType
         configuration.locationType = .indoor
+
+        activeWorkoutIdentifier = workoutId
+        activeSessionKind = sessionKind
+        peakHeartRate = 0
+        averageHeartRate = 0
+        recoveryDeltaBpm = 0
+        hrSampleSum = 0
+        hrSampleCount = 0
 
         do {
             session = try HKWorkoutSession(healthStore: healthStore, configuration: configuration)
@@ -61,8 +84,17 @@ public final class WatchWorkoutManager: NSObject, ObservableObject, HKWorkoutSes
             builder?.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: configuration)
 
             let startDate = Date()
+            let metadata: [String: Any] = [
+                HKMetadataKeyIndoorWorkout: true,
+                HKMetadataKeyExternalUUID: "\(workoutId)-\(Int(startDate.timeIntervalSince1970))",
+                "ForgeAthletic_Source": "watchOS",
+                "ForgeAthletic_WorkoutID": workoutId,
+                "ForgeAthletic_SessionKind": sessionKind
+            ]
+            builder?.addMetadata(metadata) { _, _ in }
+
             session?.startActivity(with: startDate)
-            builder?.beginCollection(withStart: startDate) { [weak self] success, error in
+            builder?.beginCollection(withStart: startDate) { [weak self] success, _ in
                 DispatchQueue.main.async {
                     if success {
                         self?.isWorkoutActive = true
@@ -110,8 +142,16 @@ public final class WatchWorkoutManager: NSObject, ObservableObject, HKWorkoutSes
 
         isPaused = false
         stopElapsedTimer()
+        let finishMetadata: [String: Any] = [
+            "ForgeAthletic_Source": "watchOS",
+            "ForgeAthletic_WorkoutID": activeWorkoutIdentifier,
+            "ForgeAthletic_SessionKind": activeSessionKind,
+            "ForgeAthletic_PeakBPM": peakHeartRate,
+            "ForgeAthletic_AvgBPM": averageHeartRate
+        ]
+        builder.addMetadata(finishMetadata) { _, _ in }
         session.end()
-        builder.endCollection(withEnd: Date()) { [weak self] success, error in
+        builder.endCollection(withEnd: Date()) { [weak self] _, _ in
             builder.finishWorkout { _, _ in
                 DispatchQueue.main.async {
                     self?.isWorkoutActive = false
@@ -193,10 +233,25 @@ public final class WatchWorkoutManager: NSObject, ObservableObject, HKWorkoutSes
                     if let sample = statistics?.mostRecentQuantity() {
                         let bpm = Int(round(sample.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))))
                         self.currentHeartRate = bpm
+                        if bpm > self.peakHeartRate {
+                            self.peakHeartRate = bpm
+                        }
+                        if bpm > 0 {
+                            self.hrSampleSum += bpm
+                            self.hrSampleCount += 1
+                            self.averageHeartRate = Int(round(Double(self.hrSampleSum) / Double(max(1, self.hrSampleCount))))
+                            self.recoveryDeltaBpm = max(0, self.peakHeartRate - bpm)
+                        }
                         self.updateCardioZone(bpm: bpm)
 
-                        // Stream real-time heart rate to iPhone session coordinator
-                        WatchSessionCoordinator.shared.streamLiveHeartRate(bpm: bpm)
+                        // Stream real-time heart rate + session recovery metrics to iPhone session coordinator
+                        WatchSessionCoordinator.shared.streamLiveHeartRate(
+                            bpm: bpm,
+                            activeCalories: self.activeCalories,
+                            peakBpm: self.peakHeartRate,
+                            avgBpm: self.averageHeartRate,
+                            recoveryDeltaBpm: self.recoveryDeltaBpm
+                        )
                     }
                 }
 

@@ -57,6 +57,7 @@ export interface PersistedPostureProfileState {
   expressModeActive: boolean
   environmentProfile: EnvironmentProfileId
   environmentSwapDates: string[] // YYYY-MM-DD dates when hotel_travel or bodyweight_only was selected
+  deskResetCompletedDates?: string[] // YYYY-MM-DD dates when 5-Min Desk Reset completed (iPhone or Watch)
   injectedWarmupDrills: InjectedReadinessDrill[]
   injectedWarmupRemovedForDate?: string | null
   dailyLogs: Record<string, DailyReadinessComfortLog>
@@ -279,6 +280,48 @@ export function removeInjectedWarmupForToday(dateKey = getTodayIsoDate()): Persi
     injectedWarmupDrills: [],
     injectedWarmupRemovedForDate: dateKey,
   }))
+}
+
+export function recordDeskResetCompletedOnDate(dateKey = getTodayIsoDate()): PersistedPostureProfileState {
+  return savePostureProfileState(prev => {
+    const existingDates = Array.isArray(prev.deskResetCompletedDates)
+      ? prev.deskResetCompletedDates
+      : []
+    return {
+      ...prev,
+      deskResetCompletedDates: Array.from(new Set([...existingDates, dateKey])).sort(),
+    }
+  })
+}
+
+export function computePostureDailyStreak(
+  state: PersistedPostureProfileState = loadPostureProfileState(),
+  referenceDate = getTodayIsoDate()
+): number {
+  const activeDates = new Set<string>([
+    ...Object.keys(state.dailyLogs || {}),
+    ...(Array.isArray(state.deskResetCompletedDates) ? state.deskResetCompletedDates : []),
+  ])
+  if (activeDates.size === 0) return 0
+
+  let streak = 0
+  const cursor = new Date(`${referenceDate}T00:00:00Z`)
+  // Allow streak to continue if yesterday was logged and today is still in progress
+  const todayStr = cursor.toISOString().split('T')[0]
+  if (!activeDates.has(todayStr)) {
+    cursor.setUTCDate(cursor.getUTCDate() - 1)
+  }
+
+  for (let i = 0; i < 365; i += 1) {
+    const iso = cursor.toISOString().split('T')[0]
+    if (activeDates.has(iso)) {
+      streak += 1
+      cursor.setUTCDate(cursor.getUTCDate() - 1)
+    } else {
+      break
+    }
+  }
+  return streak
 }
 
 export function runQuickPostureCheckDelta(): PostureDeltaSummary {

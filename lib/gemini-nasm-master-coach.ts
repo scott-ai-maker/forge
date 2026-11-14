@@ -428,7 +428,7 @@ export async function generateMasterNasmOptProgram(
 ${request.injuriesLimitations ? `- Clinical Sports Injuries & Limitations: ${request.injuriesLimitations}\n` : ''}${request.contraindicationTags && request.contraindicationTags.length > 0 ? `- Biomechanical Contraindication Tags: ${request.contraindicationTags.join(', ')}\n` : ''}${hasHeartMedications ? '- Cardiorespiratory Intensity Protocol: ⚠️ CLIENT ON HEART/HYPERTENSION MEDICATION (BETA-BLOCKERS) — Autonomic HR blunted. Govern all cardio conditioning strictly by RPE & Talk Test, NOT BPM targets.\n' : `- Cardiorespiratory Tanaka Target Zones: Zone 1 (${cardioZones.zone1.minBpm}-${cardioZones.zone1.maxBpm} BPM), Zone 2 (${cardioZones.zone2.minBpm}-${cardioZones.zone2.maxBpm} BPM), Zone 3 (${cardioZones.zone3.minBpm}-${cardioZones.zone3.maxBpm} BPM)\n`}- Cardiorespiratory Blend Style: ${request.cardioBlendStyle || 'integrated_finishers'}
 - Additional Coach Notes: ${request.coachGuidanceNotes || 'Optimize for strict OPT periodization, joint longevity, and neuromuscular control.'}
 
-RAG Sports Science Context:
+Sports Science Coaching Context:
 ${citedDocs.map(d => `[${d.title}]: ${d.summary} (Key concepts: ${d.keyConcepts.join(', ')})`).join('\n')}
 
 STRICT EXERCISE & EQUIPMENT SELECTION INSTRUCTION:

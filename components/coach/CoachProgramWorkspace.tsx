@@ -270,7 +270,7 @@ export default function CoachProgramWorkspace({
               <strong>Reported Limitations / Red Flags:</strong> {contraindicationNotes.join(' · ') || 'Client reported health screening conditions requiring movement adaptations.'}
             </p>
             <p style={{ margin: '4px 0 0', color: 'var(--gray)', fontSize: 12 }}>
-              Use the RAG Program Studio below to generate a safe protocol with automatic joint/vascular substitutions and overwrite the client's preexisting routine.
+              Use the Program Studio below to generate a safe protocol with automatic joint/vascular substitutions and overwrite the client&apos;s preexisting routine.
             </p>
           </div>
 

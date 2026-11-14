@@ -358,7 +358,7 @@ export function recommendClientTrainingSplits(
   const selectedOption = options.find(o => o.id === topId) || options[0]
 
   const ragHeadline = `Recommended for Your Profile: ${selectedOption.title} · NASM OPT™ Phase ${phase} (${phaseName})`
-  const ragRationale = `Based on your ${level} experience level, ${days} training days/week, ${eq.summaryLabel} access, and ${goal.replace(/_/g, ' ')} goal, the Forge NASM RAG Engine recommends the **${selectedOption.title}** in **Phase ${phase}: ${phaseName}**. ${selectedOption.whyForYou}${hasCompensations ? ' Your routine automatically embeds corrective warm-ups and orthopedic exercise substitutions for joint protection.' : ''}`
+  const ragRationale = `Based on your ${level} experience level, ${days} training days/week, ${eq.summaryLabel} access, and ${goal.replace(/_/g, ' ')} goal, the Coach Gordon Training System recommends the **${selectedOption.title}** in **Phase ${phase}: ${phaseName}**. ${selectedOption.whyForYou}${hasCompensations ? ' Your routine automatically embeds corrective warm-ups and orthopedic exercise substitutions for joint protection.' : ''}`
 
   return {
     recommendedSplitId: selectedOption.id,

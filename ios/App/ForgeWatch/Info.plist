@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.gordonathletic.app.watchkitapp</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -20,14 +20,29 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>WKApplication</key>
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
-	<string>com.gordonathletic.app</string>
+	<string>$(WK_COMPANION_APP_BUNDLE_IDENTIFIER)</string>
+	<key>WKRunsIndependentlyOfCompanionApp</key>
+	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.forgeathletic.watch.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>forgewatch</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Forge Athletic streams optical heart rate and HRV telemetry from Apple Watch to autoregulate in-gym rest intervals, monitor Tanaka cardio stages, and assess CNS recovery readiness.</string>
+	<string>Forge Athletic reads live heart rate, active energy, resting heart rate, and HRV from Apple Watch to pace rest intervals, track cardiovascular recovery, and compute daily readiness.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Forge Athletic records completed strength training and cardio sessions directly into Apple Health with true active calories and heart rate samples.</string>
+	<string>Forge Athletic saves completed strength workouts, cardio intervals, and 5-Minute Desk Reset mobility sessions to Apple Health to close your Exercise and Move rings accurately.</string>
 	<key>WKBackgroundModes</key>
 	<array>
 		<string>workout-processing</string>

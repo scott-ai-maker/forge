@@ -662,7 +662,7 @@ export function generateRagNasmProgram(request: RagProgramGenerationRequest): Ge
             ? 'Restores tissue length and initiates parasympathetic recovery.'
             : ex.block === 'core_balance'
             ? `Primes deep lumbopelvic and single-leg stabilizers for ${workoutDay.focus}.`
-            : `Selected by the NASM RAG Engine for ${workoutDay.focus} in Phase ${phase} (${phaseMeta.phaseName}) using ${eq.summaryLabel}.`
+            : `Selected for ${workoutDay.focus} in Phase ${phase} (${phaseMeta.phaseName}) using ${eq.summaryLabel}.`
       }
     }
 

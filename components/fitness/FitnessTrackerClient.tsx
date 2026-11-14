@@ -30,7 +30,16 @@ import type {
 import ExerciseVideoModal from '@/components/fitness/ExerciseVideoModal'
 import SmartExerciseSwapModal from '@/components/coach/SmartExerciseSwapModal'
 import PreWorkoutReadinessBridge from '@/components/fitness/PreWorkoutReadinessBridge'
-import { loadPostureProfileState } from '@/lib/posture-profile-state'
+import {
+  computePostureDailyStreak,
+  getTodayIsoDate,
+  loadPostureProfileState,
+  POSTURE_PROFILE_EVENT,
+  recordDailyReadinessAndComfort,
+  recordDeskResetCompletedOnDate,
+  removeInjectedWarmupForToday,
+  setExpressModeActive,
+} from '@/lib/posture-profile-state'
 import {
   generateTelemetryUuid,
   getTelemetryAuthHeaders,
@@ -104,6 +113,8 @@ import {
 } from '@/lib/offline-sync-queue'
 import { playPrecisionTone, playCountdownPip, getSharedAudioContext } from '@/lib/web-audio-cadence-engine'
 import { speakCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
+import { playCoachStaticCue } from '@/src/lib/audio/coachVoiceEngine'
+import InSetCoachAdaptationsBar from '@/components/fitness/tracker/InSetCoachAdaptationsBar'
 import { useTrackerTimer } from '@/components/fitness/hooks/useTrackerTimer'
 import ProofOfWorkDossierModal from '@/components/fitness/ProofOfWorkDossierModal'
 import { useSetVolume, parseSetTarget } from '@/components/fitness/hooks/useSetVolume'
@@ -1047,7 +1058,7 @@ export default function FitnessTrackerClient({
     handleQuitWorkoutSession,
     setElapsedWorkoutSeconds: _setElapsedWorkoutSeconds,
     setActiveWorkoutStage: _setActiveWorkoutStage,
-    setIsWorkoutTimerActive: _setIsWorkoutTimerActive,
+    setIsWorkoutTimerActive,
     setActiveWorkoutSessionDay: _setActiveWorkoutSessionDay,
     activeRestState,
     setActiveRestState,
@@ -1330,16 +1341,38 @@ export default function FitnessTrackerClient({
       setStatus(`⚡ Coach Gordon Auto-Regulation: Applied -${reduction}% load reduction to safeguard CNS & joints`)
     }
 
+    const handleCoachSafetyPause = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        exerciseName?: string
+        replacementExercise?: string
+        jointArea?: string
+      }>
+      setIsWorkoutTimerActive(false)
+      setActiveRestState(prev => (prev ? { ...prev, isRunning: false } : null))
+      const pausedEx =
+        customEvent.detail?.exerciseName ||
+        getExerciseNameFromKey(expandedExerciseKey) ||
+        'active movement'
+      const areaLabel = customEvent.detail?.jointArea
+        ? ` (${customEvent.detail.jointArea})`
+        : ''
+      setStatus(
+        `🛡️ Safety Pause Active: Stopped ${pausedEx}${areaLabel} — never push through sharp or pinchy joint pain.`
+      )
+    }
+
     window.addEventListener('forge-apply-exercise-swap', handleCoachSwap)
     window.addEventListener('forge-start-rest-timer', handleCoachRestTimer)
     window.addEventListener('forge-auto-regulate-load', handleCoachAutoRegulate)
+    window.addEventListener('forge-safety-pause-workout', handleCoachSafetyPause)
 
     return () => {
       window.removeEventListener('forge-apply-exercise-swap', handleCoachSwap)
       window.removeEventListener('forge-start-rest-timer', handleCoachRestTimer)
       window.removeEventListener('forge-auto-regulate-load', handleCoachAutoRegulate)
+      window.removeEventListener('forge-safety-pause-workout', handleCoachSafetyPause)
     }
-  }, [effectiveActiveWorkoutDay, adaptedExercisesByDay, planWorkouts, expandedExerciseKey, handleExerciseSwap, setActiveRestState, setActiveRestTimerKey])
+  }, [effectiveActiveWorkoutDay, adaptedExercisesByDay, planWorkouts, expandedExerciseKey, handleExerciseSwap, setActiveRestState, setActiveRestTimerKey, setIsWorkoutTimerActive])
 
   // Continuous Context Synchronization to GlobalCoachGordonHost
   useEffect(() => {
@@ -1348,6 +1381,10 @@ export default function FitnessTrackerClient({
     const activeExName = getExerciseNameFromKey(expandedExerciseKey) || undefined
     const exercisesList = (activeWorkout?.exercises || []).map(e => e.name)
     const lastLog = localSetLogs[localSetLogs.length - 1]
+    const recentRpeHistory = localSetLogs
+      .map(row => (row.rpe != null ? Number(row.rpe) : NaN))
+      .filter(val => Number.isFinite(val) && val > 0)
+      .slice(-6)
 
     window.dispatchEvent(
       new CustomEvent('forge-update-coach-context', {
@@ -1363,6 +1400,7 @@ export default function FitnessTrackerClient({
           recentReadinessScore: liveReadinessScore || wearableTelemetry?.cnsStressScore || 82,
           recentSleepHours: wearableTelemetry?.sleepHours ?? undefined,
           recentRpe: lastLog?.rpe ? Number(lastLog.rpe) : undefined,
+          recentRpeHistory,
           lastLoggedSet: lastLog
             ? {
                 exerciseName: lastLog.exercise_name,
@@ -1683,6 +1721,17 @@ export default function FitnessTrackerClient({
       cardioProtocol: cardioPayload,
       warmupDrills,
       cooldownStretches,
+      optPhase: plan?.nasm_opt_phase ?? 1,
+      expressModeActive: Boolean(loadPostureProfileState().expressModeActive),
+      dailyStreak: computePostureDailyStreak(),
+      jointComfortScore: (() => {
+        const ps = loadPostureProfileState()
+        const todayEntry = ps.dailyLogs[getTodayIsoDate()]
+        return typeof todayEntry?.jointComfortScore === 'number'
+          ? Math.min(100, todayEntry.jointComfortScore <= 10 ? todayEntry.jointComfortScore * 10 : todayEntry.jointComfortScore)
+          : 82
+      })(),
+      injectedWarmupCount: loadPostureProfileState().injectedWarmupDrills.length,
     }
   }, [
     planWorkouts,
@@ -1922,10 +1971,9 @@ export default function FitnessTrackerClient({
     // Haptic pulse on set completion
     triggerHaptic('success')
 
-    // 1. IMMEDIATELY trigger coach audio chime & speech synthesis in user gesture context!
+    // 1. IMMEDIATELY trigger coach audio chime & static cached Coach Gordon cue in user gesture context!
     if (restSecsToSave > 0) {
-      playCoachChime(659.25, 0.22, 'triangle')
-      speakCoachVoiceCue(bioPacedResult.coachVoiceCue)
+      playCoachStaticCue('set_complete_great_work')
     } else {
       playCoachChime(880, 0.15, 'sine')
       speakCoachVoiceCue('Set complete. Immediate transition to paired exercise.')
@@ -2596,6 +2644,247 @@ export default function FitnessTrackerClient({
       window.removeEventListener('forge:cooldown-stretch-toggled-local', handleLocalDrillToggle)
     }
   }, [effectiveActiveWorkoutDay, constructWatchWorkoutPayload])
+
+  // Sync Companion Summary (OPT Phase, Daily Streak, Joint Comfort, Express Mode, Ergonomic Flags) to Apple Watch widgets
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const pushSummaryToWatch = () => {
+      const ps = loadPostureProfileState()
+      const todayKey = getTodayIsoDate()
+      const todayEntry = ps.dailyLogs[todayKey]
+      const rawComfort = todayEntry?.jointComfortScore
+      const normalizedComfort =
+        typeof rawComfort === 'number'
+          ? Math.min(100, rawComfort <= 10 ? rawComfort * 10 : rawComfort)
+          : 82
+      const doneToday = Array.isArray(ps.deskResetCompletedDates)
+        ? ps.deskResetCompletedDates.includes(todayKey)
+        : false
+
+      void import('@/lib/native-healthkit-bridge').then(({ syncCompanionSummaryToWatch }) => {
+        void syncCompanionSummaryToWatch({
+          optPhase: plan?.nasm_opt_phase ?? 1,
+          dailyStreak: computePostureDailyStreak(ps, todayKey),
+          jointComfortScore: normalizedComfort,
+          expressModeActive: Boolean(ps.expressModeActive),
+          deskResetDoneToday: doneToday,
+          ergonomicFlags: ps.ergonomicFlags,
+          updatedAt: ps.updatedAt,
+        })
+      })
+    }
+
+    pushSummaryToWatch()
+    window.addEventListener(POSTURE_PROFILE_EVENT, pushSummaryToWatch)
+    return () => {
+      window.removeEventListener(POSTURE_PROFILE_EVENT, pushSummaryToWatch)
+    }
+  }, [plan?.nasm_opt_phase])
+
+  // Listen for Digital Crown Plain-English RPE updates ('Easy · 6' -> 'Max · 10') from Apple Watch
+  // and sync directly to the iPhone's Bio-Adaptive Autoregulation Engine + logged set record
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null
+    void import('@/lib/native-healthkit-bridge').then(
+      ({ subscribeToWatchRpeUpdated, syncRestTimerStateToWatch }) => {
+        void subscribeToWatchRpeUpdated(data => {
+          if (!data?.exerciseName || typeof data.rpe !== 'number') return
+          const normalizedTarget = normalizeExerciseName(data.exerciseName)
+          const rirVal = typeof data.rir === 'number' ? data.rir : Math.max(0, 10 - data.rpe)
+
+          // Update most recent matching working set in localSetLogs
+          setLocalSetLogs(prev => {
+            const idx = prev.findIndex(
+              s =>
+                normalizeExerciseName(s.exercise_name) === normalizedTarget &&
+                !s.is_warmup &&
+                (data.setIndex ? s.set_number === data.setIndex : true)
+            )
+            if (idx === -1) return prev
+            const updated = [...prev]
+            updated[idx] = {
+              ...updated[idx],
+              rpe: data.rpe,
+              rir: rirVal,
+            }
+            return updated
+          })
+
+          // Autoregulate active rest timer on iPhone when RPE is updated on wrist
+          setActiveRestState(prev => {
+            if (!prev || !prev.isRunning) return prev
+            const adapted = calculateBioAdaptiveRestInterval({
+              exerciseName: data.exerciseName,
+              baseRestSeconds: prev.restSeconds,
+              rpe: data.rpe,
+              rir: rirVal,
+              isWarmup: false,
+              optPhase: plan?.nasm_opt_phase,
+            })
+            const deltaAdjust = adapted.finalRestSeconds - prev.restSeconds
+            const nextRemaining = Math.max(5, prev.remainingSeconds + deltaAdjust)
+            void syncRestTimerStateToWatch({
+              isRunning: true,
+              remainingSeconds: nextRemaining,
+              restSeconds: adapted.finalRestSeconds,
+              exerciseName: prev.exerciseName,
+              isBioPaced: adapted.isBioPaced,
+              badgeText: adapted.badgeText,
+            })
+            return {
+              ...prev,
+              restSeconds: adapted.finalRestSeconds,
+              remainingSeconds: nextRemaining,
+              isBioPaced: adapted.isBioPaced,
+              bioPacedDelta: adapted.deltaSeconds,
+              bioPacedReason: adapted.adaptationReason,
+              badgeText: adapted.badgeText,
+            }
+          })
+
+          setStatus(
+            `✓ Apple Watch Effort Synced: ${data.plainLabel || `RPE ${data.rpe}`} on ${data.exerciseName}`
+          )
+        }).then(cleanup => {
+          unsubscribe = cleanup
+        })
+      }
+    )
+    return () => {
+      unsubscribe?.()
+    }
+  }, [plan?.nasm_opt_phase, setActiveRestState])
+
+  // Listen for 20m Express Mode toggles, Warm-Up skip/complete, Desk Resets, and Joint Comfort check-ins from Apple Watch
+  useEffect(() => {
+    let unsubExpress: (() => void) | null = null
+    let unsubWarmupBatch: (() => void) | null = null
+    let unsubDeskReset: (() => void) | null = null
+    let unsubComfort: (() => void) | null = null
+
+    void import('@/lib/native-healthkit-bridge').then(
+      ({
+        subscribeToWatchExpressModeToggled,
+        subscribeToWatchWarmupBatchAction,
+        subscribeToWatchDeskResetCompleted,
+        subscribeToWatchJointComfortLogged,
+        syncWorkoutStateToWatch,
+      }) => {
+        void subscribeToWatchExpressModeToggled(data => {
+          const active = Boolean(data?.expressModeActive)
+          setExpressModeActive(active)
+          setStatus(
+            active
+              ? '⚡ 20m Express Mode enabled from Apple Watch'
+              : 'Standard session duration restored from Apple Watch'
+          )
+          const updatedPayload = constructWatchWorkoutPayload(effectiveActiveWorkoutDay)
+          if (updatedPayload) void syncWorkoutStateToWatch(updatedPayload)
+        }).then(c => {
+          unsubExpress = c
+        })
+
+        void subscribeToWatchWarmupBatchAction(data => {
+          const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)
+          if (data?.action === 'skipAll') {
+            removeInjectedWarmupForToday()
+          } else if (activeWorkout) {
+            const warmupItems = resolvePrescribedWarmupDrills(latestAssessment, activeWorkout.focus)
+            const warmupKey = getWarmupStorageKey(
+              plan?.id,
+              microcycleProgress.currentWeek,
+              activeWorkout.day,
+              resolveEffectiveWorkoutSessionDate(activeWorkout.scheduledDate, todayDateOnly())
+            )
+            try {
+              const record: Record<string, boolean> = {}
+              for (const item of warmupItems) record[item.id] = true
+              localStorage.setItem(warmupKey, JSON.stringify(record))
+            } catch {
+              // ignore storage errors
+            }
+          }
+          activeWatchPhaseRef.current = 'resistance'
+          setActiveStepFilter('resistance')
+          setCollapsedStages(prev => ({
+            ...prev,
+            [`${effectiveActiveWorkoutDay}-resistance`]: false,
+          }))
+          const updatedPayload = constructWatchWorkoutPayload(effectiveActiveWorkoutDay)
+          if (updatedPayload) void syncWorkoutStateToWatch(updatedPayload)
+        }).then(c => {
+          unsubWarmupBatch = c
+        })
+
+        void subscribeToWatchDeskResetCompleted(data => {
+          const completedDate = data?.completedAt
+            ? String(data.completedAt).slice(0, 10)
+            : getTodayIsoDate()
+          const nextState = recordDeskResetCompletedOnDate(completedDate)
+          const nextStreak = computePostureDailyStreak(nextState)
+          setStatus(
+            `✓ 5-Min Desk Reset synced from Apple Watch · ${nextStreak}-day streak!`
+          )
+          void import('@/src/lib/telemetry/telemetryClient').then(({ trackEvent }) => {
+            void trackEvent('desk_reset_completed', {
+              duration_sec: data?.durationSec || 300,
+              drills_completed: data?.drillsCompleted || 6,
+              strain_flags_targeted: Array.isArray(data?.ergonomicFlags)
+                ? data.ergonomicFlags
+                : nextState.ergonomicFlags,
+              environment_profile: nextState.environmentProfile,
+            })
+          })
+        }).then(c => {
+          unsubDeskReset = c
+        })
+
+        void subscribeToWatchJointComfortLogged(data => {
+          if (typeof data?.jointComfortScore !== 'number') return
+          const score100 = Math.max(20, Math.min(100, Math.round(data.jointComfortScore)))
+          const score10 = Math.max(1, Math.min(10, Math.round(score100 / 10)))
+          const comfortLabel =
+            score100 >= 80
+              ? 'Feeling Loose & Ready'
+              : score100 >= 60
+                ? 'Mild Desk Stiffness'
+                : 'Needs Gentle Mobility'
+          const logDate = data?.loggedAt ? String(data.loggedAt).slice(0, 10) : getTodayIsoDate()
+          recordDailyReadinessAndComfort({
+            date: logDate,
+            jointComfortScore: score10,
+            comfortLabel,
+            restrictionFlags: Array.isArray(data.painFlags) ? data.painFlags : undefined,
+          })
+          setStatus(`✓ Joint Comfort (${score100}/100 · ${comfortLabel}) synced from Apple Watch`)
+          void import('@/src/lib/telemetry/telemetryClient').then(({ trackEvent }) => {
+            void trackEvent('joint_comfort_logged', {
+              comfort_score: score100,
+              comfort_label: comfortLabel,
+              joint_region: `neck:${data.neck}/5,lower_back:${data.lowerBack}/5,hips:${data.hips}/5`,
+              notes: 'Logged via Apple Watch Digital Crown Check-In',
+            })
+          })
+        }).then(c => {
+          unsubComfort = c
+        })
+      }
+    )
+
+    return () => {
+      unsubExpress?.()
+      unsubWarmupBatch?.()
+      unsubDeskReset?.()
+      unsubComfort?.()
+    }
+  }, [
+    constructWatchWorkoutPayload,
+    effectiveActiveWorkoutDay,
+    latestAssessment,
+    microcycleProgress.currentWeek,
+    plan?.id,
+    planWorkouts,
+  ])
 
   async function handleSkipExercise(workout: WorkoutDay, exercise: WorkoutExercise, reason: string, _notes: string) {
     await fetch('/api/fitness/skip-exercise', {
@@ -4552,6 +4841,46 @@ export default function FitnessTrackerClient({
                             {ex.personalReason}
                           </p>
                         )}
+                        <InSetCoachAdaptationsBar
+                          exerciseName={ex.name}
+                          optPhase={plan?.nasm_opt_phase || 1}
+                          currentTempo={draft.tempo || ex.tempo || null}
+                          currentWeightInput={draft.weight}
+                          units={units}
+                          readinessScore={liveReadinessScore}
+                          profileEquipment={profile?.equipment_access}
+                          onApplySubstitution={sub => {
+                            handleExerciseSwap(workout.day, ex, sub)
+                          }}
+                          onAdjustLoadAndTempo={({ weightDeltaPct, prescribedTempo, coachSummary }) => {
+                            setInlineSetDrafts(prev => {
+                              const currentWeightNum = Number(draft.weight)
+                              let nextWeight = draft.weight
+                              if (
+                                Number.isFinite(currentWeightNum) &&
+                                currentWeightNum > 0 &&
+                                weightDeltaPct !== 0
+                              ) {
+                                const step = units === 'imperial' ? 2.5 : 1.25
+                                const adjusted =
+                                  Math.round(
+                                    (currentWeightNum * (1 + weightDeltaPct / 100)) / step
+                                  ) * step
+                                nextWeight = String(Math.max(step, adjusted))
+                              }
+                              return {
+                                ...prev,
+                                [exerciseKey]: {
+                                  ...draft,
+                                  weight: nextWeight,
+                                  tempo: prescribedTempo,
+                                },
+                              }
+                            })
+                            triggerHaptic('success')
+                            setStatus(`🎯 Coach Gordon: ${coachSummary}`)
+                          }}
+                        />
                         <form onSubmit={event => handleInlineSetLog(event, workout, ex)} style={{ border: '1px solid rgba(255,255,255,0.08)', padding: '8px 8px', background: 'rgba(13,27,42,0.55)', borderRadius: 6, marginTop: 0 }}>
                             <SetProgressionMatrix
                               targetSets={ex.sets}

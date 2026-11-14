@@ -8,10 +8,13 @@ import {
   Columns,
   GripVertical,
   Layers,
+  Mail,
   Maximize2,
   ScanLine,
+  Smartphone,
   Sparkles,
   UserCheck,
+  Volume2,
   X,
 } from 'lucide-react'
 import {
@@ -22,10 +25,21 @@ import {
 import { getUpgradeTriggerCopy, useTierAccess } from '@/lib/tierEntitlements'
 import TierUpgradeModal from '@/components/packages/TierUpgradeModal'
 import { playForgeTactileTone } from '@/lib/sfx-audio'
+import {
+  subscribeToWatchCameraCommand,
+  syncCameraRemoteStateToWatch,
+} from '@/lib/native-healthkit-bridge'
 import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
+import CoachEscalationModal from '@/components/coach-gordon/CoachEscalationModal'
+import {
+  buildPostScanDiagnosticSummary,
+  playCoachStaticCue,
+  speakCoachDynamicText,
+} from '@/src/lib/audio/coachVoiceEngine'
 
 export interface PostureComparisonViewerProps {
   sandboxMode?: boolean
+  remoteActive?: boolean
   onRequestUpgrade?: () => void
   showPostScanBanner?: boolean
 }
@@ -221,15 +235,21 @@ function PostureSilhouetteSvg({
 
 export function PostureComparisonInteractiveStage({
   sandboxMode = false,
+  remoteActive = false,
   onRequestUpgrade,
   showPostScanBanner = false,
 }: PostureComparisonViewerProps) {
+  const { tierId } = useTierAccess()
+  const isCoachSupport = tierId === 'coach_support'
+  const [escalationOpen, setEscalationOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'overlay' | 'side_by_side' | 'day1_preview'>('overlay')
   const [splitPct, setSplitPct] = useState(54)
   const [delta, setDelta] = useState(() => loadPostureProfileState().postureDelta)
   const [day30ReminderArmed, setDay30ReminderArmed] = useState(false)
+  const [remoteCountdownSec, setRemoteCountdownSec] = useState<number>(0)
   const stageRef = useRef<HTMLDivElement | null>(null)
   const draggingRef = useRef(false)
+  const remoteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     try {
@@ -247,8 +267,15 @@ export function PostureComparisonInteractiveStage({
     if (viewMode === 'day1_preview') {
       setViewMode('overlay')
     }
-    playForgeTactileTone('success')
+    playCoachStaticCue('calibration_locked')
     if (!sandboxMode) {
+      const spokenSummary = buildPostScanDiagnosticSummary({
+        scanType: 'posture_2min',
+        score: updated.overallPostureScore,
+        primaryFinding: `forward-head delta ${updated.forwardHeadDeltaDeg.toFixed(1)} degrees and pelvic drift ${updated.pelvicTiltDeltaDeg.toFixed(1)} degrees`,
+      })
+      void speakCoachDynamicText(spokenSummary, { moment: 'post_scan_summary' })
+
       void trackEvent('posture_scan_completed', {
         scan_mode: 'quick_check',
         overall_posture_score: updated.overallPostureScore,
@@ -263,6 +290,84 @@ export function PostureComparisonInteractiveStage({
       })
     }
   }
+
+  // Bidirectional Apple Watch Wrist Camera Remote sync (2-Minute Quick Posture Check)
+  useEffect(() => {
+    if (sandboxMode || !remoteActive) return
+    const locked = remoteCountdownSec > 0 && remoteCountdownSec <= 2
+    void syncCameraRemoteStateToWatch({
+      isActive: true,
+      mode: 'quick_posture',
+      modeTitle: '2-Min Posture Check',
+      framingStatus: locked ? 'locked' : remoteCountdownSec > 0 ? 'recording' : 'locked',
+      isRecording: remoteCountdownSec > 0,
+      countdownSeconds: remoteCountdownSec,
+      repCount: 0,
+      targetReps: 1,
+      statusHint:
+        remoteCountdownSec > 0
+          ? `Hold tall posture (${remoteCountdownSec}s)`
+          : 'Locked · Emerald — Tap Start 5s Timer on Watch',
+    })
+  }, [remoteActive, remoteCountdownSec, sandboxMode])
+
+  useEffect(() => {
+    if (sandboxMode || !remoteActive) return
+    let cleanupWatchSub: (() => void) | null = null
+
+    void subscribeToWatchCameraCommand(cmd => {
+      if (cmd.command === 'startTimer5s' || cmd.command === 'recordRep') {
+        if (remoteTimerRef.current) clearInterval(remoteTimerRef.current)
+        let rem = 5
+        setRemoteCountdownSec(5)
+        playForgeTactileTone('countdown')
+        remoteTimerRef.current = setInterval(() => {
+          rem -= 1
+          if (rem > 0) {
+            setRemoteCountdownSec(rem)
+            playForgeTactileTone('countdown')
+          } else {
+            if (remoteTimerRef.current) {
+              clearInterval(remoteTimerRef.current)
+              remoteTimerRef.current = null
+            }
+            setRemoteCountdownSec(0)
+            handleRunQuickScan()
+          }
+        }, 1000)
+      } else if (cmd.command === 'stopAndReview') {
+        if (remoteTimerRef.current) {
+          clearInterval(remoteTimerRef.current)
+          remoteTimerRef.current = null
+        }
+        setRemoteCountdownSec(0)
+        handleRunQuickScan()
+      } else if (cmd.command === 'dismissRemote') {
+        if (remoteTimerRef.current) {
+          clearInterval(remoteTimerRef.current)
+          remoteTimerRef.current = null
+        }
+        setRemoteCountdownSec(0)
+      }
+    }).then(unsub => {
+      cleanupWatchSub = unsub
+    })
+
+    return () => {
+      if (remoteTimerRef.current) {
+        clearInterval(remoteTimerRef.current)
+        remoteTimerRef.current = null
+      }
+      cleanupWatchSub?.()
+      void syncCameraRemoteStateToWatch({
+        isActive: false,
+        mode: 'quick_posture',
+        modeTitle: '2-Min Posture Check',
+        framingStatus: 'framing',
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteActive, sandboxMode])
 
   const handleArmDay30Reminder = () => {
     const next = !day30ReminderArmed
@@ -520,6 +625,62 @@ export function PostureComparisonInteractiveStage({
           </button>
         </div>
       ) : null}
+      {!sandboxMode ? (
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              const spokenSummary = buildPostScanDiagnosticSummary({
+                scanType: 'posture_2min',
+                score: delta.overallPostureScore,
+                primaryFinding: `forward-head delta ${delta.forwardHeadDeltaDeg.toFixed(1)} degrees and pelvic drift ${delta.pelvicTiltDeltaDeg.toFixed(1)} degrees`,
+              })
+              void speakCoachDynamicText(spokenSummary, {
+                moment: 'post_scan_summary',
+                forceUnlockVoiceOnTap: true,
+              })
+            }}
+            className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-white/12 bg-[#181B22] px-3.5 py-2 text-xs font-bold text-zinc-100 hover:bg-[#1D212A]"
+          >
+            <Volume2 size={14} className="text-emerald-300" aria-hidden="true" />
+            <span>Listen to Coach Gordon</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setEscalationOpen(true)}
+            data-testid="posture-scan-message-real-coach-btn"
+            className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/12 px-3.5 py-2 text-xs font-bold text-emerald-200 hover:bg-emerald-500/20"
+          >
+            {isCoachSupport ? (
+              <Smartphone size={14} aria-hidden="true" />
+            ) : (
+              <Mail size={14} aria-hidden="true" />
+            )}
+            <span>
+              {isCoachSupport
+                ? 'Text Real Coach Gordon (24h SLA)'
+                : 'Message Real Coach Gordon'}
+            </span>
+          </button>
+        </div>
+      ) : null}
+
+      {!sandboxMode ? (
+        <CoachEscalationModal
+          open={escalationOpen}
+          onClose={() => setEscalationOpen(false)}
+          sourceContext="post_scan_results"
+          initialQuestion={`Hi Coach Gordon — my 2-Min Posture Check scored ${delta.overallPostureScore}/100 (Forward Head ${delta.forwardHeadDeltaDeg.toFixed(1)}°, Pelvic Drift ${delta.pelvicTiltDeltaDeg.toFixed(1)}°). Any corrective drill you want me to prioritize?`}
+          telemetryOverride={{
+            postureFlags: [
+              `Posture ${delta.overallPostureScore}/100`,
+              `Forward Head ${delta.forwardHeadDeltaDeg.toFixed(1)}°`,
+              `Pelvic Drift ${delta.pelvicTiltDeltaDeg.toFixed(1)}°`,
+            ],
+          }}
+        />
+      ) : null}
     </div>
   )
 }
@@ -678,6 +839,7 @@ export default function PostureComparisonCard({
           </div>
 
           <PostureComparisonInteractiveStage
+            remoteActive={isDialogShown}
             showPostScanBanner={showPostScanBanner}
             onRequestUpgrade={() => {
               closeFullScreenModal()

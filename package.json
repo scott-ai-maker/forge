@@ -1,6 +1,6 @@
 {
   "name": "forge-athletic",
-  "version": "1.55.0",
+  "version": "1.56.0",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -33,6 +33,8 @@
     "workouts:remap-official-exercises:apply": "node --env-file=.env.local scripts/remap-client-exercises-to-official.mjs --apply",
     "workouts:report-day-tags:untagged:json": "node --env-file=.env.local scripts/report-workout-day-tags.mjs --only-untagged --json",
     "templates:seed:nasm": "node --env-file=.env.local scripts/seed-nasm-opt-templates.mjs",
+    "rag:seed": "node --env-file=.env.local scripts/seed-hybrid-rag-vectors.mjs",
+    "voice:seed": "node --env-file=.env.local scripts/generate-coach-voice-cues.mjs",
     "smoke:auth": "node --env-file=.env.local scripts/authenticated-smoke-harness.mjs",
     "emails:dispatch": "node --env-file=.env.local scripts/dispatch-marketing-emails.mjs",
     "emails:verify": "node --env-file=.env.local scripts/verify-email-health.mjs",

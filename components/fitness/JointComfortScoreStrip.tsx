@@ -1,7 +1,15 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Activity, Check, ChevronDown, ChevronUp } from 'lucide-react'
+import {
+  Activity,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Mail,
+  ShieldAlert,
+  Smartphone,
+} from 'lucide-react'
 import {
   getTodayIsoDate,
   loadPostureProfileState,
@@ -10,6 +18,14 @@ import {
 } from '@/lib/posture-profile-state'
 import { playForgeTactileTone } from '@/lib/sfx-audio'
 import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
+import {
+  dispatchSafetyFlagTelemetry,
+  evaluatePainAndRedFlagTriage,
+  type SafetyOverrideDecision,
+} from '@/src/lib/safety/clinicalGuardrails'
+import { playCoachStaticCue } from '@/src/lib/audio/coachVoiceEngine'
+import { useTierAccess } from '@/lib/tierEntitlements'
+import CoachEscalationModal from '@/components/coach-gordon/CoachEscalationModal'
 
 const RATING_STEPS = [
   { rating: 1, points: 2, label: 'Stiff' },
@@ -20,6 +36,9 @@ const RATING_STEPS = [
 ] as const
 
 export default function JointComfortScoreStrip() {
+  const { tierId } = useTierAccess()
+  const isCoachSupport = tierId === 'coach_support'
+
   const [expanded, setExpanded] = useState(false)
   const [neckShoulders, setNeckShoulders] = useState(8)
   const [lowerBack, setLowerBack] = useState(8)
@@ -27,6 +46,8 @@ export default function JointComfortScoreStrip() {
   const [savedScore, setSavedScore] = useState<number | null>(null)
   const [todayReadiness, setTodayReadiness] = useState<number | null>(null)
   const [justLogged, setJustLogged] = useState(false)
+  const [safetyOverride, setSafetyOverride] = useState<SafetyOverrideDecision | null>(null)
+  const [escalationOpen, setEscalationOpen] = useState(false)
 
   useEffect(() => {
     const sync = () => {
@@ -46,6 +67,13 @@ export default function JointComfortScoreStrip() {
   const computedScore = Math.round(((neckShoulders + lowerBack + hipsKnees) / 30) * 100)
   const displayScore = savedScore ?? computedScore
 
+  const resolveLowestRegionLabel = () => {
+    const minVal = Math.min(neckShoulders, lowerBack, hipsKnees)
+    if (lowerBack === minVal) return 'Lower Back (Lumbar)'
+    if (neckShoulders === minVal) return 'Neck & Shoulders'
+    return 'Hips & Knees'
+  }
+
   const handleSave = () => {
     const comfortLabel =
       computedScore >= 80 ? 'Fluid' : computedScore >= 60 ? 'Moderate' : 'Tight / Stiff'
@@ -60,6 +88,34 @@ export default function JointComfortScoreStrip() {
     })
     setSavedScore(computedScore)
     setJustLogged(true)
+
+    const minRegionPoints = Math.min(neckShoulders, lowerBack, hipsKnees)
+    const impliedPain5 = minRegionPoints <= 2 ? 4 : 0
+    const lowestRegion = resolveLowestRegionLabel()
+
+    const triage = evaluatePainAndRedFlagTriage({
+      painLevel5: impliedPain5 > 0 ? impliedPain5 : null,
+      jointComfort100: computedScore,
+      jointAreaHint: lowestRegion,
+    })
+
+    if (triage.triggered) {
+      setSafetyOverride(triage)
+      playCoachStaticCue('safety_pause_check')
+      void dispatchSafetyFlagTelemetry({
+        decision: triage,
+        triggerSource: 'joint_comfort_log',
+        comfortScore100: computedScore,
+        painLevel5: impliedPain5 || null,
+        clientNote: `Daily Joint Comfort logged at ${computedScore}/100 (${lowestRegion} flagged).`,
+      })
+      window.setTimeout(() => {
+        setJustLogged(false)
+      }, 900)
+      return
+    }
+
+    setSafetyOverride(null)
     playForgeTactileTone('success')
     window.setTimeout(() => {
       setJustLogged(false)
@@ -179,8 +235,58 @@ export default function JointComfortScoreStrip() {
               )}
             </button>
           </div>
+
+          {safetyOverride ? (
+            <div
+              role="alert"
+              data-testid="joint-comfort-safety-override-card"
+              className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 text-xs text-amber-50"
+            >
+              <div className="flex items-center gap-1.5 font-extrabold text-amber-200">
+                <ShieldAlert size={14} aria-hidden="true" />
+                <span>{safetyOverride.headline}</span>
+              </div>
+              <p className="mt-1.5 leading-relaxed text-zinc-200">
+                {safetyOverride.calmCoachMessage}
+              </p>
+              <p className="mt-2 rounded-lg border border-white/10 bg-black/30 px-2.5 py-2 text-[11px] leading-relaxed text-amber-100/90">
+                {safetyOverride.clinicalDisclaimer}
+              </p>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEscalationOpen(true)}
+                  data-testid="joint-comfort-message-real-coach-btn"
+                  className="forge-tactile-press inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-bold text-emerald-100 hover:bg-emerald-500/25"
+                >
+                  {isCoachSupport ? (
+                    <Smartphone size={13} aria-hidden="true" />
+                  ) : (
+                    <Mail size={13} aria-hidden="true" />
+                  )}
+                  <span>
+                    {isCoachSupport
+                      ? 'Text Real Coach Gordon (24h SLA)'
+                      : 'Message Real Coach Gordon'}
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
+
+      <CoachEscalationModal
+        open={escalationOpen}
+        onClose={() => setEscalationOpen(false)}
+        sourceContext="safety_override"
+        initialQuestion={`Hi Coach Gordon — my Joint Comfort logged at ${displayScore}/100 today (${resolveLowestRegionLabel()} feels stiff/uncomfortable). Should I modify this week's sessions?`}
+        telemetryOverride={{
+          jointComfortScore: displayScore,
+          readinessIndex: todayReadiness,
+          safetyFlagActive: true,
+        }}
+      />
     </section>
   )
 }
