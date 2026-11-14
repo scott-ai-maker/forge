@@ -124,7 +124,18 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
   }))
 
   return (
-    <main className="dashboard-fitness-page" style={{ minHeight: '100dvh', background: 'var(--navy)', padding: 'clamp(8px, 1.5vw, 18px) clamp(6px, 1.5vw, 16px) calc(140px + env(safe-area-inset-bottom, 16px))', maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}>
+    <main
+      className="dashboard-fitness-page forge-obsidian-canvas"
+      style={{
+        minHeight: '100dvh',
+        backgroundColor: '#090A0D',
+        padding:
+          'clamp(8px, 1.5vw, 18px) clamp(10px, 2vw, 20px) calc(120px + env(safe-area-inset-bottom, 16px))',
+        maxWidth: '100%',
+        overflowX: 'hidden',
+        boxSizing: 'border-box',
+      }}
+    >
       <SiteHeader
         links={[
           { href: '/dashboard', label: 'Today' },
@@ -136,10 +147,10 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
         badgeText="Training & progress"
         actions={<LogoutButton />}
       />
-      <div className="dashboard-fitness-content" style={{ maxWidth: 1440, margin: '0 auto', width: '100%', minWidth: 0, overflowX: 'hidden', boxSizing: 'border-box', paddingTop: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
-          <h1 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(1.15rem, 3vw, 1.45rem)', letterSpacing: '0.04em', margin: 0 }}>Training &amp; progress</h1>
-          <a href="/dashboard" className="sgf-shell-back" style={{ marginBottom: 0, fontSize: 12 }}>← Today</a>
+      <div className="dashboard-fitness-content" style={{ maxWidth: 1440, margin: '0 auto', width: '100%', minWidth: 0, overflowX: 'hidden', boxSizing: 'border-box', paddingTop: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+          <h1 className="tracking-tight text-white" style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', margin: 0 }}>Training &amp; progress</h1>
+          <a href="/dashboard" className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-white/10 bg-[#181B22] px-3.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-white/15 hover:bg-[#1D212A]">← Today</a>
         </div>
 
         <ClientMembershipStatusBanner

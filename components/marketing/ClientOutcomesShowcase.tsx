@@ -50,9 +50,9 @@ export default function ClientOutcomesShowcase() {
               flexDirection: 'column',
               overflow: 'hidden',
               borderRadius: 16,
-              background: 'linear-gradient(155deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 14, 20, 0.99) 100%)',
-              border: '1px solid rgba(148, 163, 184, 0.22)',
-              boxShadow: '0 18px 44px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+              background: '#111318',
+              border: '1px solid rgba(255, 255, 255, 0.07)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 44px rgba(0, 0, 0, 0.52)',
               textAlign: 'left',
             }}
           >

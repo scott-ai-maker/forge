@@ -113,14 +113,14 @@ export function DeskResetGuidedPlayer({
   const currentDrill = drills[currentIndex] ?? drills[0]
 
   return (
-    <div className="space-y-3 text-slate-100">
+    <div className="space-y-3.5 text-zinc-100">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-200">
-            <Clock size={11} /> 5-Min Desk Reset
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
+            <Clock size={12} strokeWidth={1.75} /> 5-Min Desk Reset
           </span>
           {activeFlags.length > 0 ? (
-            <span className="rounded-full border border-amber-400/35 bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-bold text-amber-200">
+            <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-[10.5px] font-semibold text-amber-300">
               Targeted for {activeFlags.map(f => f.replace(/_/g, ' ')).join(', ')}
             </span>
           ) : null}
@@ -129,25 +129,34 @@ export function DeskResetGuidedPlayer({
         <button
           type="button"
           onClick={toggleSfxMuted}
-          aria-label={sfxMuted ? 'Audio cues muted. Activate sound cues' : 'Mute audio cues'}
-          className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300 transition hover:bg-white/10"
+          aria-label="Desk reset audio cues"
+          aria-pressed={!sfxMuted}
+          className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border px-3 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+            sfxMuted
+              ? 'border-white/10 bg-[#181B22] text-zinc-400 hover:border-white/15 hover:bg-[#1D212A] hover:text-zinc-200'
+              : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15'
+          }`}
         >
-          {sfxMuted ? <VolumeX size={12} /> : <Volume2 size={12} className="text-emerald-300" />}
+          {sfxMuted ? (
+            <VolumeX size={13} strokeWidth={1.75} />
+          ) : (
+            <Volume2 size={13} strokeWidth={1.75} className="text-emerald-300" />
+          )}
           {sfxMuted ? 'SFX MUTED' : 'SFX LIVE'}
         </button>
       </div>
 
       {/* Sandbox Express & Hotel Travel Toggles (used in Landing Sneak Peek Tab 4) */}
       {sandboxMode ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[#111318] p-2.5">
           <button
             type="button"
             aria-pressed={expressMode}
             onClick={() => onToggleExpress?.(!expressMode)}
-            className={`rounded-lg px-2.5 py-1.5 text-[11px] font-extrabold uppercase tracking-wider transition ${
+            className={`forge-tactile-press min-h-[44px] rounded-xl px-3.5 py-2 text-xs font-bold uppercase tracking-wider tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
               expressMode
-                ? 'bg-amber-400 text-slate-950'
-                : 'border border-white/15 bg-slate-900 text-slate-300 hover:bg-white/10'
+                ? 'border border-amber-400/40 bg-amber-400 text-zinc-950'
+                : 'border border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
             }`}
           >
             ⚡ 20m Express {expressMode ? 'ON (18m Total)' : 'OFF (45m Standard)'}
@@ -159,10 +168,10 @@ export function DeskResetGuidedPlayer({
             onClick={() =>
               onChangeEnvironment?.(environmentProfile === 'hotel_travel' ? 'home_gym' : 'hotel_travel')
             }
-            className={`rounded-lg px-2.5 py-1.5 text-[11px] font-extrabold uppercase tracking-wider transition ${
+            className={`forge-tactile-press min-h-[44px] rounded-xl px-3.5 py-2 text-xs font-bold uppercase tracking-wider transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
               environmentProfile === 'hotel_travel'
-                ? 'bg-sky-400 text-slate-950'
-                : 'border border-white/15 bg-slate-900 text-slate-300 hover:bg-white/10'
+                ? 'border border-emerald-400/40 bg-emerald-500/20 text-emerald-200'
+                : 'border border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
             }`}
           >
             ✈️ {environmentProfile === 'hotel_travel' ? 'Hotel Travel Active' : 'Switch to Hotel Travel'}
@@ -171,22 +180,24 @@ export function DeskResetGuidedPlayer({
       ) : null}
 
       {/* Active Guided Drill Stage */}
-      <div className="rounded-xl border border-emerald-400/30 bg-slate-950/90 p-3.5">
-        <div className="flex items-center justify-between gap-2">
+      <div className="rounded-2xl border border-emerald-500/25 bg-[#111318] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] tabular-nums text-emerald-300">
               Drill {currentIndex + 1} of {drills.length}
               {currentDrill.targetFlag ? ' · Priority Desk Fix' : ''}
             </div>
-            <div className="mt-0.5 text-sm font-bold text-white">{currentDrill.name}</div>
+            <div className="mt-1 text-sm font-bold tracking-tight text-white sm:text-base">
+              {currentDrill.name}
+            </div>
           </div>
-          <div className="font-mono text-2xl font-extrabold text-emerald-300">
+          <div className="font-mono text-2xl font-extrabold tabular-nums text-emerald-300 sm:text-3xl">
             {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
           </div>
         </div>
-        <p className="mt-2 text-xs leading-relaxed text-slate-300">{currentDrill.cue}</p>
+        <p className="mt-2 text-xs leading-relaxed text-zinc-300 sm:text-sm">{currentDrill.cue}</p>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-3.5 flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => {
@@ -197,15 +208,15 @@ export function DeskResetGuidedPlayer({
               }
               setRunning(prev => !prev)
             }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-400 px-3.5 py-2 text-xs font-extrabold uppercase tracking-wider text-slate-950 transition hover:bg-emerald-300"
+            className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-400 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
           >
             {running ? (
               <>
-                <Pause size={13} /> Pause Drill
+                <Pause size={14} strokeWidth={1.75} /> Pause Drill
               </>
             ) : (
               <>
-                <Play size={13} /> {completed ? 'Restart 5-Min Reset' : 'Start Guided Timer'}
+                <Play size={14} strokeWidth={1.75} /> {completed ? 'Restart 5-Min Reset' : 'Start Guided Timer'}
               </>
             )}
           </button>
@@ -218,7 +229,7 @@ export function DeskResetGuidedPlayer({
                 setCurrentIndex(next)
                 setSecondsLeft(drills[next].durationSec)
               }}
-              className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+              className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-white/10 bg-[#181B22] px-3.5 py-2 text-xs font-semibold text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               Next Drill →
             </button>
@@ -233,21 +244,21 @@ export function DeskResetGuidedPlayer({
               setCompleted(false)
             }}
             aria-label="Reset timer"
-            className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-white/5 p-2 text-slate-300 transition hover:bg-white/10"
+            className="forge-tactile-press inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-[#181B22] text-zinc-300 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
           >
-            <RotateCcw size={13} />
+            <RotateCcw size={15} strokeWidth={1.75} />
           </button>
         </div>
 
         {completed ? (
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-400/35 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-200">
-            <CheckCircle2 size={14} /> 5-Min Desk Reset complete — thoracic &amp; hip posture refreshed!
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-semibold text-emerald-200">
+            <CheckCircle2 size={15} strokeWidth={1.75} /> 5-Min Desk Reset complete — thoracic &amp; hip posture refreshed!
           </div>
         ) : null}
       </div>
 
       {/* Ordered Drill Queue */}
-      <ol className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+      <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {drills.map((d, idx) => {
           const active = idx === currentIndex
           return (
@@ -258,16 +269,18 @@ export function DeskResetGuidedPlayer({
                   setCurrentIndex(idx)
                   setSecondsLeft(d.durationSec)
                 }}
-                className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-left text-xs transition ${
+                className={`forge-tactile-press flex min-h-[44px] w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-xs transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
                   active
-                    ? 'border-emerald-400/50 bg-emerald-500/15 text-white'
-                    : 'border-white/10 bg-white/[0.02] text-slate-300 hover:bg-white/[0.05]'
+                    ? 'border-emerald-500/35 bg-emerald-500/10 text-white'
+                    : 'border-white/10 bg-[#181B22] text-zinc-300 hover:border-white/15 hover:bg-[#1D212A]'
                 }`}
               >
-                <span className="truncate font-semibold">
+                <span className="truncate font-semibold tabular-nums">
                   {idx + 1}. {d.name}
                 </span>
-                <span className="ml-2 shrink-0 font-mono text-[11px] text-slate-400">{d.durationSec}s</span>
+                <span className="ml-2 shrink-0 font-mono text-[11px] tabular-nums text-zinc-400">
+                  {d.durationSec}s
+                </span>
               </button>
             </li>
           )
@@ -295,24 +308,24 @@ export function DeskResetSlotCard({ promotedHero = false, onLaunchReset }: DeskR
   if (promotedHero) {
     return (
       <section
-        className="rounded-xl border border-emerald-400/45 p-3.5 text-slate-100 shadow-lg"
+        className="forge-surface-card rounded-2xl border border-emerald-500/30 p-4 text-zinc-100 sm:p-6"
         style={{
           background:
-            'radial-gradient(circle at 90% 10%, rgba(16,185,129,0.22), transparent 55%), linear-gradient(145deg, #0D1B1E 0%, #080E16 100%)',
+            'radial-gradient(ellipse at top right, rgba(16, 185, 129, 0.12), transparent 60%), #111318',
         }}
       >
-        <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-emerald-300">
-            <Sparkles size={12} /> Active Recovery Hero · 5-Min Desk Reset
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
+            <Sparkles size={13} strokeWidth={1.75} /> Active Recovery Hero · 5-Min Desk Reset
           </span>
-          <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-200">
+          <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10.5px] font-semibold text-emerald-300">
             No Sweat · At Your Desk
           </span>
         </div>
-        <h2 className="mt-1.5 font-serif text-base font-bold text-white sm:text-lg">
+        <h2 className="mt-2 font-serif text-lg font-bold tracking-tight text-white sm:text-xl">
           Unwind Neck, Shoulder &amp; Hip Tightness in 5 Minutes
         </h2>
-        <p className="mt-0.5 text-xs text-slate-300">
+        <p className="mt-1 text-xs leading-relaxed text-zinc-300 sm:text-sm">
           {flags.length > 0
             ? `Pre-loaded for your latest audit: ${flags.map(f => f.replace(/_/g, ' ')).join(', ')}.`
             : '4 calm, guided posture mobility drills between meetings or on recovery days.'}
@@ -320,21 +333,21 @@ export function DeskResetSlotCard({ promotedHero = false, onLaunchReset }: DeskR
         <button
           type="button"
           onClick={onLaunchReset}
-          className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-400 px-3.5 py-2.5 text-xs font-extrabold uppercase tracking-wider text-slate-950 transition hover:bg-emerald-300"
+          className="forge-tactile-press mt-3.5 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
         >
-          Start 5-Min Desk Reset <ArrowRight size={14} />
+          Start 5-Min Desk Reset <ArrowRight size={14} strokeWidth={1.75} />
         </button>
       </section>
     )
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-400/25 bg-[#0A131F] px-3 py-2.5 text-slate-100">
+    <div className="forge-surface-card flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-zinc-100">
       <div className="min-w-0">
-        <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-emerald-300">
-          <Clock size={12} /> 5-Min Desk Reset
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
+          <Clock size={13} strokeWidth={1.75} /> 5-Min Desk Reset
         </div>
-        <p className="truncate text-[11px] text-slate-400">
+        <p className="mt-0.5 truncate text-xs text-zinc-400">
           {flags.length > 0
             ? `Targeted drills ready (${flags.length} desk strain flags)`
             : 'Stiff between calls? Run a 5-min seated mobility reset'}
@@ -343,9 +356,9 @@ export function DeskResetSlotCard({ promotedHero = false, onLaunchReset }: DeskR
       <button
         type="button"
         onClick={onLaunchReset}
-        className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-bold text-emerald-200 transition hover:bg-emerald-500/25"
+        className="forge-tactile-press inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-bold text-emerald-300 transition-colors duration-150 hover:bg-emerald-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
       >
-        Start 5m <ArrowRight size={13} />
+        Start 5m <ArrowRight size={14} strokeWidth={1.75} />
       </button>
     </div>
   )
@@ -388,20 +401,23 @@ export default function DeskResetModal({ open, onClose, overrideFlags }: DeskRes
       onClick={e => {
         if (e.target === e.currentTarget) onClose()
       }}
-      className="m-auto w-[min(94vw,540px)] rounded-2xl border border-emerald-400/35 bg-[#090E16] p-0 text-slate-100 shadow-2xl"
+      className="forge-glass-modal m-auto w-[min(94vw,560px)] rounded-2xl p-0 text-zinc-100 backdrop:bg-black/75 backdrop:backdrop-blur-sm"
     >
-      <div className="p-5">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 id={headingId} className="font-serif text-lg font-bold text-white">
-            Targeted 5-Minute Desk Reset
-          </h2>
+      <div className="p-4 sm:p-6">
+        <div className="mb-3.5 flex items-center justify-between gap-3">
+          <div>
+            <div className="forge-eyebrow-micro text-emerald-300">Active Posture Recovery</div>
+            <h2 id={headingId} className="mt-0.5 font-serif text-lg font-bold tracking-tight text-white sm:text-xl">
+              Targeted 5-Minute Desk Reset
+            </h2>
+          </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close 5-Min Desk Reset"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-300 transition hover:bg-white/10"
+            className="forge-tactile-press inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#181B22] text-zinc-300 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
           >
-            <X size={15} />
+            <X size={16} strokeWidth={1.75} />
           </button>
         </div>
 

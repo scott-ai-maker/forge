@@ -406,6 +406,7 @@ export default function StudioVideoControls({
 
   const activeBgSpec = STUDIO_BACKGROUND_MODES[pipeline.backgroundMode]
   const activeLutSpec = STUDIO_LIGHTING_PRESETS[pipeline.lightingPreset]
+  const isLutActive = pipeline.lightingPreset !== 'raw'
   const showLowLightNudge = pipeline.isLowLightDetected && !pipeline.lowLightBoostEnabled
 
   return (
@@ -421,7 +422,7 @@ export default function StudioVideoControls({
     >
       <style>{`
         .forge-studio-fx-root {
-          --studio-target-min: 28px;
+          --studio-target-min: 32px;
         }
         @media (pointer: coarse) {
           .forge-studio-fx-root {
@@ -431,39 +432,43 @@ export default function StudioVideoControls({
         .forge-studio-fx-btn {
           min-inline-size: var(--studio-target-min);
           min-block-size: var(--studio-target-min);
-          border-radius: 6px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(255, 255, 255, 0.06);
-          color: #E2E8F0;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: #181B22;
+          color: #E4E4E7;
           font-size: 11px;
           font-weight: 700;
-          padding: 5px 9px;
+          font-variant-numeric: tabular-nums;
+          padding: 6px 10px;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 5px;
+          gap: 6px;
           text-align: left;
         }
         .forge-studio-fx-btn:focus-visible {
-          outline: 2px solid #F59E0B;
+          outline: 2px solid rgba(52, 211, 153, 0.78);
           outline-offset: 2px;
         }
         .forge-studio-fx-btn[aria-pressed="true"] {
-          background: rgba(212, 175, 55, 0.24);
-          border-color: #D4AF37;
-          color: #FDE68A;
-          box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.45);
+          background: rgba(16, 185, 129, 0.14);
+          border-color: rgba(52, 211, 153, 0.42);
+          color: #6EE7B7;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
         @media (hover: hover) {
           .forge-studio-fx-btn:hover:not([aria-pressed="true"]) {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.26);
+            background: #1D212A;
+            border-color: rgba(255, 255, 255, 0.18);
           }
         }
         @media (prefers-reduced-motion: no-preference) {
           .forge-studio-fx-btn {
-            transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+            transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+          }
+          .forge-studio-fx-btn:active {
+            transform: scale(0.98);
           }
         }
         @media (forced-colors: active) {
@@ -494,7 +499,7 @@ export default function StudioVideoControls({
         {statusMessage}
       </p>
 
-      {/* Collapsible In-Call "Studio FX" Pill */}
+      {/* Collapsible In-Call Broadcast "Studio FX" Floating Pill + Live Audio Waveform Bars */}
       <button
         type="button"
         data-testid="studio-fx-pill"
@@ -508,36 +513,75 @@ export default function StudioVideoControls({
         className="forge-studio-fx-btn"
         style={{
           borderRadius: 999,
-          padding: '5px 12px',
+          padding: '6px 12px',
           background: isOpen
-            ? 'linear-gradient(135deg, rgba(212,175,55,0.32) 0%, rgba(161,120,24,0.24) 100%)'
-            : 'rgba(15, 23, 42, 0.85)',
+            ? 'rgba(16, 185, 129, 0.18)'
+            : 'rgba(17, 19, 24, 0.82)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           border: isOpen
-            ? '1px solid #D4AF37'
-            : '1px solid rgba(212, 175, 55, 0.42)',
+            ? '1px solid rgba(52, 211, 153, 0.5)'
+            : '1px solid rgba(255, 255, 255, 0.12)',
           color: '#F8FAFC',
           fontWeight: 800,
           whiteSpace: 'nowrap',
-          boxShadow: isOpen ? '0 0 14px rgba(212,175,55,0.3)' : 'none',
+          boxShadow: isOpen
+            ? '0 0 16px rgba(16, 185, 129, 0.22)'
+            : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
         }}
       >
-        <ForgeIcon name="sparkles" size={12} tone="gold" />
+        <ForgeIcon name="sparkles" size={12} tone="emerald" />
         <span>Studio FX</span>
         {!compact && (
           <span
             style={{
               fontSize: 9.5,
-              color: '#FDE68A',
-              background: 'rgba(212, 175, 55, 0.16)',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
+              color: isLutActive ? '#6EE7B7' : '#A1A1AA',
+              background: isLutActive ? 'rgba(16, 185, 129, 0.14)' : 'rgba(255, 255, 255, 0.06)',
+              border: isLutActive
+                ? '1px solid rgba(52, 211, 153, 0.32)'
+                : '1px solid rgba(255, 255, 255, 0.12)',
               borderRadius: 999,
-              padding: '1px 6px',
-              fontWeight: 800,
+              padding: '1px 7px',
+              fontWeight: 700,
+              letterSpacing: '0.04em',
             }}
           >
-            {activeBgSpec.shortLabel} · {activeLutSpec.shortLabel}
+            {isLutActive ? 'HD · Studio LUT Active' : `${activeBgSpec.shortLabel} · ${activeLutSpec.shortLabel}`}
           </span>
         )}
+        {/* Real-Time Mini Audio Waveform Bars */}
+        <span
+          aria-hidden="true"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'flex-end',
+            gap: 2,
+            height: 12,
+            marginLeft: 2,
+          }}
+        >
+          {[14, 32, 54, 72, 42].map((thresh, idx) => {
+            const barHeights = [5, 9, 12, 8, 6]
+            const active = !pipeline.isMicMuted && pipeline.micLevel >= thresh
+            return (
+              <span
+                key={idx}
+                style={{
+                  width: 2.2,
+                  height: active ? barHeights[idx] : 3,
+                  borderRadius: 999,
+                  background: pipeline.isMicMuted
+                    ? 'rgba(251, 113, 133, 0.5)'
+                    : active
+                      ? '#34D399'
+                      : 'rgba(255, 255, 255, 0.22)',
+                  transition: 'height 90ms ease, background-color 90ms ease',
+                }}
+              />
+            )
+          })}
+        </span>
       </button>
 
       {/* Smart Auto-Light 1-Tap Boost Chip when dark room (< 75 luminance) is detected */}
@@ -575,13 +619,14 @@ export default function StudioVideoControls({
             ...(placement === 'dock'
               ? { bottom: 'calc(100% + 10px)', right: 0 }
               : { top: 'calc(100% + 8px)', right: 0 }),
-            width: 'min(400px, calc(100vw - 24px))',
-            background: 'rgba(8, 12, 22, 0.96)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(212, 175, 55, 0.45)',
-            borderRadius: 12,
-            padding: 14,
-            boxShadow: '0 16px 42px rgba(0, 0, 0, 0.82)',
+            width: 'min(410px, calc(100vw - 24px))',
+            background: 'rgba(17, 19, 24, 0.88)',
+            backdropFilter: 'blur(24px) saturate(165%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(165%)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: 16,
+            padding: 16,
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 64px rgba(0, 0, 0, 0.78)',
             zIndex: 60,
             display: 'flex',
             flexDirection: 'column',
@@ -993,10 +1038,12 @@ export function StudioGreenRoomPreview({
           width: 'min(980px, 100%)',
           maxHeight: '94dvh',
           overflowY: 'auto',
-          background: 'linear-gradient(180deg, #0B1120 0%, #060913 100%)',
-          border: '1px solid rgba(212, 175, 55, 0.45)',
-          borderRadius: 14,
-          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.85)',
+          background: 'rgba(17, 19, 24, 0.86)',
+          backdropFilter: 'blur(24px) saturate(165%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(165%)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          borderRadius: 16,
+          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 28px 72px rgba(0, 0, 0, 0.82)',
           padding: 'clamp(16px, 2.5vw, 24px)',
           display: 'flex',
           flexDirection: 'column',
@@ -1016,20 +1063,21 @@ export function StudioGreenRoomPreview({
           <div>
             <div
               style={{
-                fontSize: 10.5,
-                fontWeight: 800,
+                fontSize: 11,
+                fontWeight: 700,
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                color: '#D4AF37',
+                color: '#34D399',
               }}
             >
               FORGE ATHLETIC · PRE-CALL GREEN ROOM CHECK
             </div>
             <h2
               style={{
-                margin: '3px 0 0',
+                margin: '4px 0 0',
                 fontSize: 'clamp(18px, 2.4vw, 22px)',
                 fontWeight: 800,
+                letterSpacing: '-0.015em',
                 color: '#FFFFFF',
                 textWrap: 'balance',
               }}
@@ -1038,29 +1086,32 @@ export function StudioGreenRoomPreview({
             </h2>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span
               style={{
                 fontSize: 10.5,
                 fontWeight: 700,
-                padding: '4px 10px',
+                padding: '5px 11px',
                 borderRadius: 999,
-                background: 'rgba(16, 185, 129, 0.14)',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(52, 211, 153, 0.32)',
                 color: '#6EE7B7',
+                fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {pipeline.captureResolutionLabel} · 2.5 Mbps HD Ready
+              {pipeline.lightingPreset !== 'raw'
+                ? `HD · Studio LUT Active (${pipeline.captureResolutionLabel})`
+                : `${pipeline.captureResolutionLabel} · 2.5 Mbps HD Ready`}
             </span>
             <span
               style={{
                 fontSize: 10.5,
                 fontWeight: 700,
-                padding: '4px 10px',
+                padding: '5px 11px',
                 borderRadius: 999,
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.14)',
-                color: '#CBD5E1',
+                background: '#181B22',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: '#A1A1AA',
               }}
             >
               UI SFX: {sfxMuted ? 'Muted' : 'Active'}
@@ -1077,7 +1128,7 @@ export function StudioGreenRoomPreview({
             alignItems: 'stretch',
           }}
         >
-          {/* Left: Live Processed Mirror Stage + Framing Guide + Mic Level Meter */}
+          {/* Left: Live Processed Mirror Stage + Framing Guide + Broadcast Floating Audio Dock */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div
               data-testid="green-room-mirror-stage"
@@ -1085,10 +1136,11 @@ export function StudioGreenRoomPreview({
                 position: 'relative',
                 width: '100%',
                 aspectRatio: '16 / 9',
-                background: '#05080F',
-                borderRadius: 10,
+                background: '#090A0D',
+                borderRadius: 16,
                 overflow: 'hidden',
-                border: '1px solid rgba(212, 175, 55, 0.38)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1110,8 +1162,6 @@ export function StudioGreenRoomPreview({
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    // Output stream canvas already mirrors ONLY the foreground subject while keeping
-                    // studio backdrops & brand marks in true optical left-to-right orientation.
                     transform: pipeline.isPipelineRendering
                       ? 'none'
                       : pipeline.isMirrored
@@ -1120,11 +1170,37 @@ export function StudioGreenRoomPreview({
                   }}
                 />
               ) : (
-                <div style={{ textAlign: 'center', padding: 24, color: '#94A3B8' }}>
+                <div style={{ textAlign: 'center', padding: 24, maxWidth: 340, color: '#A1A1AA' }}>
                   <ForgeIcon name="video-off" size={30} tone="slate" />
-                  <div style={{ marginTop: 8, fontSize: 13, fontWeight: 700, color: '#E2E8F0' }}>
+                  <div style={{ marginTop: 10, fontSize: 13.5, fontWeight: 700, color: '#F4F4F5' }}>
                     {pipeline.streamError || `${participantName} — Camera Paused`}
                   </div>
+                  <div style={{ marginTop: 6, fontSize: 11.5, lineHeight: 1.45, color: '#A1A1AA' }}>
+                    Check browser camera permissions or tap below to re-enable your live mirror feed before joining.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerStudioTick()
+                      pipeline.toggleCamera()
+                    }}
+                    style={{
+                      marginTop: 12,
+                      minBlockSize: 44,
+                      padding: '8px 16px',
+                      borderRadius: 12,
+                      border: '1px solid rgba(52, 211, 153, 0.35)',
+                      background: 'rgba(16, 185, 129, 0.14)',
+                      color: '#6EE7B7',
+                      fontSize: 11.5,
+                      fontWeight: 800,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Enable Camera Preview
+                  </button>
                 </div>
               )}
 
@@ -1134,14 +1210,15 @@ export function StudioGreenRoomPreview({
               <div
                 style={{
                   position: 'absolute',
-                  top: 10,
-                  left: 10,
+                  top: 12,
+                  left: 12,
                   zIndex: 20,
-                  background: 'rgba(6, 10, 18, 0.82)',
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  borderRadius: 6,
-                  padding: '3px 9px',
+                  background: 'rgba(17, 19, 24, 0.82)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 999,
+                  padding: '4px 11px',
                   fontSize: 11,
                   fontWeight: 700,
                   color: '#FFFFFF',
@@ -1149,9 +1226,33 @@ export function StudioGreenRoomPreview({
               >
                 ● {participantName} · Studio Preview
               </div>
+
+              {pipeline.lightingPreset !== 'raw' && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    zIndex: 20,
+                    background: 'rgba(17, 19, 24, 0.82)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border: '1px solid rgba(52, 211, 153, 0.32)',
+                    borderRadius: 999,
+                    padding: '4px 10px',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: '#6EE7B7',
+                  }}
+                >
+                  HD · Studio LUT Active
+                </div>
+              )}
             </div>
 
-            {/* Hardware & Voice Isolation Mic Level Meter Bar */}
+            {/* Broadcast-Grade Floating Audio & Hardware Dock */}
             <div
               style={{
                 display: 'flex',
@@ -1159,13 +1260,16 @@ export function StudioGreenRoomPreview({
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
                 gap: 10,
-                background: 'rgba(15, 23, 42, 0.7)',
+                background: 'rgba(17, 19, 24, 0.84)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 8,
-                padding: '8px 12px',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                borderRadius: 16,
+                padding: '10px 12px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   aria-pressed={!pipeline.isMicMuted}
@@ -1174,21 +1278,25 @@ export function StudioGreenRoomPreview({
                     pipeline.toggleMic()
                   }}
                   style={{
-                    minBlockSize: 34,
-                    padding: '6px 12px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    background: pipeline.isMicMuted ? '#EF4444' : 'rgba(16, 185, 129, 0.18)',
-                    color: '#FFFFFF',
+                    minBlockSize: 44,
+                    padding: '8px 13px',
+                    borderRadius: 12,
+                    border: pipeline.isMicMuted
+                      ? '1px solid rgba(251, 113, 133, 0.45)'
+                      : '1px solid rgba(52, 211, 153, 0.35)',
+                    background: pipeline.isMicMuted
+                      ? 'rgba(244, 63, 94, 0.18)'
+                      : 'rgba(16, 185, 129, 0.14)',
+                    color: pipeline.isMicMuted ? '#FDA4AF' : '#6EE7B7',
                     fontSize: 11.5,
                     fontWeight: 800,
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 5,
+                    gap: 6,
                   }}
                 >
-                  <ForgeIcon name={pipeline.isMicMuted ? 'mic-off' : 'mic'} size={13} tone="white" />
+                  <ForgeIcon name={pipeline.isMicMuted ? 'mic-off' : 'mic'} size={13} tone="inherit" />
                   <span>{pipeline.isMicMuted ? 'Mic Muted' : 'Mic Live'}</span>
                 </button>
 
@@ -1200,21 +1308,23 @@ export function StudioGreenRoomPreview({
                     pipeline.toggleCamera()
                   }}
                   style={{
-                    minBlockSize: 34,
-                    padding: '6px 12px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    background: pipeline.isCameraActive ? 'rgba(255,255,255,0.08)' : '#EF4444',
-                    color: '#FFFFFF',
+                    minBlockSize: 44,
+                    padding: '8px 13px',
+                    borderRadius: 12,
+                    border: pipeline.isCameraActive
+                      ? '1px solid rgba(255,255,255,0.12)'
+                      : '1px solid rgba(251, 113, 133, 0.45)',
+                    background: pipeline.isCameraActive ? '#181B22' : 'rgba(244, 63, 94, 0.18)',
+                    color: pipeline.isCameraActive ? '#F4F4F5' : '#FDA4AF',
                     fontSize: 11.5,
                     fontWeight: 800,
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 5,
+                    gap: 6,
                   }}
                 >
-                  <ForgeIcon name={pipeline.isCameraActive ? 'video-studio' : 'video-off'} size={13} tone="white" />
+                  <ForgeIcon name={pipeline.isCameraActive ? 'video-studio' : 'video-off'} size={13} tone="inherit" />
                   <span>{pipeline.isCameraActive ? 'Cam Live' : 'Cam Off'}</span>
                 </button>
 
@@ -1226,12 +1336,14 @@ export function StudioGreenRoomPreview({
                     pipeline.toggleMirror()
                   }}
                   style={{
-                    minBlockSize: 34,
-                    padding: '6px 10px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    background: pipeline.isMirrored ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.08)',
-                    color: pipeline.isMirrored ? '#FDE68A' : '#FFFFFF',
+                    minBlockSize: 44,
+                    padding: '8px 12px',
+                    borderRadius: 12,
+                    border: pipeline.isMirrored
+                      ? '1px solid rgba(52, 211, 153, 0.35)'
+                      : '1px solid rgba(255,255,255,0.12)',
+                    background: pipeline.isMirrored ? 'rgba(16, 185, 129, 0.12)' : '#181B22',
+                    color: pipeline.isMirrored ? '#6EE7B7' : '#F4F4F5',
                     fontSize: 11.5,
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -1245,37 +1357,38 @@ export function StudioGreenRoomPreview({
                 </button>
               </div>
 
-              {/* Segmented 48kHz Voice Level Meter */}
+              {/* Real-Time 14-Bar Broadcast Audio Waveform Meter */}
               <div
                 data-testid="green-room-mic-meter"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  flex: '1 1 140px',
+                  gap: 8,
+                  flex: '1 1 150px',
                   justifyContent: 'flex-end',
                 }}
               >
-                <span style={{ fontSize: 10.5, color: '#94A3B8', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                  Voice Isolation:
+                <span style={{ fontSize: 10.5, color: '#A1A1AA', fontWeight: 700, whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>
+                  48kHz Voice:
                 </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                  {Array.from({ length: 12 }).map((_, idx) => {
-                    const threshold = (idx + 1) * 8
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2.5, height: 20 }}>
+                  {Array.from({ length: 14 }).map((_, idx) => {
+                    const threshold = (idx + 1) * 7
                     const active = !pipeline.isMicMuted && pipeline.micLevel >= threshold
+                    const waveHeights = [7, 10, 14, 18, 13, 19, 16, 20, 15, 18, 14, 17, 12, 9]
                     return (
                       <span
                         key={idx}
                         style={{
-                          width: 5,
-                          height: 14,
-                          borderRadius: 2,
+                          width: 3.5,
+                          height: active ? waveHeights[idx] : 5,
+                          borderRadius: 999,
                           background: active
-                            ? idx >= 9
-                              ? '#F59E0B'
-                              : '#10B981'
-                            : 'rgba(255,255,255,0.12)',
-                          transition: 'background-color 0.08s ease',
+                            ? idx >= 11
+                              ? '#FBBF24'
+                              : '#34D399'
+                            : 'rgba(255,255,255,0.14)',
+                          transition: 'height 0.08s ease, background-color 0.08s ease',
                         }}
                       />
                     )
@@ -1292,23 +1405,24 @@ export function StudioGreenRoomPreview({
               flexDirection: 'column',
               justifyContent: 'space-between',
               gap: 14,
-              background: 'rgba(15, 23, 42, 0.55)',
-              border: '1px solid rgba(255, 255, 255, 0.09)',
-              borderRadius: 10,
-              padding: 14,
+              background: '#111318',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+              borderRadius: 16,
+              padding: 16,
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Framing Guide Selector */}
               <div>
                 <div
                   style={{
-                    fontSize: 10.5,
-                    fontWeight: 800,
+                    fontSize: 11,
+                    fontWeight: 700,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: '#D4AF37',
-                    marginBottom: 6,
+                    letterSpacing: '0.12em',
+                    color: '#A1A1AA',
+                    marginBottom: 8,
                   }}
                 >
                   5-Second Camera Framing Guide
@@ -1327,18 +1441,18 @@ export function StudioGreenRoomPreview({
                           pipeline.setFramingGuide(fg.id)
                         }}
                         style={{
-                          minBlockSize: 36,
-                          padding: '6px 8px',
-                          borderRadius: 6,
+                          minBlockSize: 44,
+                          padding: '8px 10px',
+                          borderRadius: 10,
                           border: selected
-                            ? '1px solid #D4AF37'
-                            : '1px solid rgba(255,255,255,0.14)',
+                            ? '1px solid rgba(52, 211, 153, 0.42)'
+                            : '1px solid rgba(255,255,255,0.1)',
                           background: selected
-                            ? 'rgba(212, 175, 55, 0.22)'
-                            : 'rgba(255,255,255,0.05)',
-                          color: selected ? '#FDE68A' : '#E2E8F0',
+                            ? 'rgba(16, 185, 129, 0.14)'
+                            : '#181B22',
+                          color: selected ? '#6EE7B7' : '#E4E4E7',
                           fontSize: 11,
-                          fontWeight: 800,
+                          fontWeight: 700,
                           cursor: 'pointer',
                         }}
                       >
@@ -1353,12 +1467,12 @@ export function StudioGreenRoomPreview({
               <div>
                 <div
                   style={{
-                    fontSize: 10.5,
-                    fontWeight: 800,
+                    fontSize: 11,
+                    fontWeight: 700,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: '#D4AF37',
-                    marginBottom: 6,
+                    letterSpacing: '0.12em',
+                    color: '#A1A1AA',
+                    marginBottom: 8,
                   }}
                 >
                   Studio Background Mode
@@ -1377,16 +1491,16 @@ export function StudioGreenRoomPreview({
                           pipeline.setBackgroundMode(bg.id)
                         }}
                         style={{
-                          minBlockSize: 38,
-                          padding: '7px 10px',
-                          borderRadius: 6,
+                          minBlockSize: 44,
+                          padding: '8px 11px',
+                          borderRadius: 10,
                           border: selected
-                            ? '1px solid #D4AF37'
-                            : '1px solid rgba(255,255,255,0.14)',
+                            ? '1px solid rgba(52, 211, 153, 0.42)'
+                            : '1px solid rgba(255,255,255,0.1)',
                           background: selected
-                            ? 'rgba(212, 175, 55, 0.22)'
-                            : 'rgba(255,255,255,0.05)',
-                          color: selected ? '#FDE68A' : '#E2E8F0',
+                            ? 'rgba(16, 185, 129, 0.14)'
+                            : '#181B22',
+                          color: selected ? '#6EE7B7' : '#E4E4E7',
                           fontSize: 11.5,
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -1407,16 +1521,18 @@ export function StudioGreenRoomPreview({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    marginBottom: 6,
+                    gap: 8,
+                    flexWrap: 'wrap',
+                    marginBottom: 8,
                   }}
                 >
                   <span
                     style={{
-                      fontSize: 10.5,
-                      fontWeight: 800,
+                      fontSize: 11,
+                      fontWeight: 700,
                       textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      color: '#D4AF37',
+                      letterSpacing: '0.12em',
+                      color: '#A1A1AA',
                     }}
                   >
                     Forge Studio Lighting Filter
@@ -1430,17 +1546,18 @@ export function StudioGreenRoomPreview({
                       pipeline.toggleLowLightBoost()
                     }}
                     style={{
-                      padding: '3px 9px',
+                      minBlockSize: 36,
+                      padding: '5px 11px',
                       borderRadius: 999,
                       border: pipeline.lowLightBoostEnabled
-                        ? '1px solid #10B981'
-                        : '1px solid rgba(245, 158, 11, 0.5)',
+                        ? '1px solid rgba(52, 211, 153, 0.42)'
+                        : '1px solid rgba(245, 158, 11, 0.4)',
                       background: pipeline.lowLightBoostEnabled
-                        ? 'rgba(16, 185, 129, 0.2)'
-                        : 'rgba(245, 158, 11, 0.14)',
+                        ? 'rgba(16, 185, 129, 0.14)'
+                        : 'rgba(245, 158, 11, 0.12)',
                       color: pipeline.lowLightBoostEnabled ? '#6EE7B7' : '#FCD34D',
                       fontSize: 10.5,
-                      fontWeight: 800,
+                      fontWeight: 700,
                       cursor: 'pointer',
                     }}
                   >
@@ -1462,16 +1579,16 @@ export function StudioGreenRoomPreview({
                           pipeline.setLightingPreset(lut.id)
                         }}
                         style={{
-                          minBlockSize: 38,
-                          padding: '7px 10px',
-                          borderRadius: 6,
+                          minBlockSize: 44,
+                          padding: '8px 11px',
+                          borderRadius: 10,
                           border: selected
-                            ? '1px solid #D4AF37'
-                            : '1px solid rgba(255,255,255,0.14)',
+                            ? '1px solid rgba(52, 211, 153, 0.42)'
+                            : '1px solid rgba(255,255,255,0.1)',
                           background: selected
-                            ? 'rgba(212, 175, 55, 0.22)'
-                            : 'rgba(255,255,255,0.05)',
-                          color: selected ? '#FDE68A' : '#E2E8F0',
+                            ? 'rgba(16, 185, 129, 0.14)'
+                            : '#181B22',
+                          color: selected ? '#6EE7B7' : '#E4E4E7',
                           fontSize: 11.5,
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -1494,23 +1611,24 @@ export function StudioGreenRoomPreview({
                 triggerStudioTick()
                 onJoinStudio()
               }}
+              className="forge-tactile-press"
               style={{
-                minBlockSize: 46,
+                minBlockSize: 48,
                 width: '100%',
-                borderRadius: 8,
+                borderRadius: 12,
                 border: 'none',
-                background: 'linear-gradient(135deg, #D4AF37 0%, #F5D061 100%)',
-                color: '#080E14',
-                fontSize: 13.5,
+                background: '#34D399',
+                color: '#090A0D',
+                fontSize: 13,
                 fontWeight: 900,
-                letterSpacing: '0.05em',
+                letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
-                boxShadow: '0 8px 24px rgba(212, 175, 55, 0.35)',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 10px 28px rgba(16, 185, 129, 0.25)',
               }}
             >
               <ForgeIcon name="video-studio" size={15} tone="dark" />

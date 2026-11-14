@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.53.1'
+export const APP_VERSION = '1.54.0'
 export const APP_RELEASE_DATE = '2026-11-13'
-export const APP_RELEASE_CODENAME = 'Multi-Week Workout Recording & Client Package RLS Safeguard'
+export const APP_RELEASE_CODENAME = 'Obsidian & Brushed Steel UI/UX & Visual Craft Polish'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.54.0',
+    date: '2026-11-13',
+    codename: 'Obsidian & Brushed Steel UI/UX & Visual Craft Polish',
+    category: 'feature',
+    badge: 'Design Engineering & Craft Polish',
+    title: 'v1.54.0 — Obsidian & Brushed Steel Platform UI/UX & Visual Craft Polish Pass',
+    summary:
+      'Elevates the entire Forge Athletic experience across Landing Page, Member Dashboard, Workout Player, 33-Point Computer-Vision HUDs, Form Lab, and Live Studio with a 4-tier Obsidian & Brushed Steel dark surface hierarchy, tabular telemetry typography, spring micro-interactions, bespoke skeleton/empty states, and cross-viewport accessibility polish.',
+    highlights: [
+      '4-Tier Obsidian & Brushed Steel Surface System: Unified #090A0D base canvas with radial emerald top-glow, #111318 specular-bordered cards, #181B22 interactive controls, floating backdrop-blur-xl glass modals/HUD pills, and WCAG AA semantic status badges.',
+      'Tabular Telemetry Typography & Animated Score Rings: Enforced font-variant-numeric: tabular-nums across every timer, rep counter, degree readout, and score index, paired with animated <TelemetryRingGauge /> arcs and brushed metallic Founding Partner Pass credentials.',
+      '33-Point Vision HUD, Live Studio Dock & Zero-Shift Skeletons: Upgraded pose skeletons with glowing vector strokes and dual-ring landmark nodes, high-contrast anatomical degree pills, broadcast Live Studio audio meters, zero-CLS dark shimmer skeletons, and 44x44 safe-area touch ergonomics.',
+    ],
+  },
   {
     version: '1.53.1',
     date: '2026-11-13',

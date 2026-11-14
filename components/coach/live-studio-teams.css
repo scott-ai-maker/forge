@@ -1,22 +1,23 @@
 /* ==========================================================================
-   Forge Athletic Live Studio — Microsoft Teams Responsive Meeting Shell
+   Forge Athletic Live Studio — Broadcast-Grade Responsive Meeting Shell
    Built with CSS Container Queries, Dynamic Viewport Units (dvh),
-   Intrinsic Grid Tracks, and Safe-Area / Coarse-Pointer Adaptation.
+   Obsidian & Brushed Steel Elevation, and Safe-Area / Coarse-Pointer Adaptation.
    ========================================================================== */
 
 .teams-studio-shell {
   container: studio-shell / inline-size;
-  background: #090D16;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
-  color: #F8FAFC;
+  background: #090A0D;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 64px rgba(0, 0, 0, 0.72);
+  color: #F4F4F5;
   display: flex;
   flex-direction: column;
   inline-size: 100%;
   min-inline-size: 0;
   position: relative;
   overflow: clip;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (min-width: 1024px) {
@@ -27,7 +28,7 @@
 
 @media (max-width: 640px) {
   .teams-studio-shell {
-    border-radius: 8px;
+    border-radius: 14px;
   }
 }
 
@@ -42,12 +43,15 @@
   min-inline-size: 0;
 }
 
-/* ── 1. Top Meeting Header Bar (Teams-style compact chrome) ── */
+/* ── 1. Top Meeting Header Bar (Obsidian & Brushed Steel Chrome) ── */
 .teams-top-bar {
-  background: linear-gradient(180deg, #111827 0%, #0B101D 100%);
-  border-block-end: 1px solid rgba(255, 255, 255, 0.09);
-  padding-block: 8px;
-  padding-inline: clamp(10px, 1.6cqi, 18px);
+  background: rgba(17, 19, 24, 0.88);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-block-end: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding-block: 10px;
+  padding-inline: clamp(12px, 1.6cqi, 20px);
   display: flex;
   flex-wrap: wrap;
   flex-wrap: balance;
@@ -68,7 +72,7 @@
 .teams-divider {
   inline-size: 1px;
   block-size: 20px;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
 }
 
@@ -100,7 +104,7 @@
 /* ── 2. Lobby / Connection Telemetry Strip ── */
 .teams-lobby-bar {
   padding-block: 6px;
-  padding-inline: clamp(10px, 1.6cqi, 18px);
+  padding-inline: clamp(12px, 1.6cqi, 20px);
   display: flex;
   flex-wrap: wrap;
   align-items: safe center;
@@ -109,7 +113,7 @@
   z-index: 20;
 }
 
-/* ── 3. Main Teams Workspace (Left Stage + Collapsible Right Side Pane) ── */
+/* ── 3. Main Studio Workspace (Left Stage + Collapsible Right Side Pane) ── */
 .teams-workspace-grid {
   display: flex;
   flex-direction: column;
@@ -119,7 +123,6 @@
   position: relative;
 }
 
-/* Fallback media query for browsers without container queries */
 @media (min-width: 980px) {
   .teams-workspace-grid.has-side-pane {
     display: grid;
@@ -140,7 +143,6 @@
     }
   }
 
-  /* Wide Studio Container: Side-by-side Stage + Collapsible Right Pane */
   @container studio-shell (inline-size >= 920px) {
     .teams-workspace-grid.has-side-pane {
       display: grid;
@@ -153,8 +155,6 @@
     }
   }
 
-  /* Split-Screen / Tablet Studio Container (768px - 919px):
-     Keep video stage 100% wide and render open Workout Pane as a sleek Teams slide-over drawer! */
   @container studio-shell (inline-size >= 768px) and (inline-size < 920px) {
     .teams-workspace-grid.has-side-pane .teams-side-pane {
       position: absolute;
@@ -164,7 +164,7 @@
       min-inline-size: 0;
       max-inline-size: min(360px, 88cqi);
       z-index: 38;
-      border-inline-start: 1px solid rgba(245, 158, 11, 0.4);
+      border-inline-start: 1px solid rgba(255, 255, 255, 0.14);
       box-shadow: -16px 0 40px rgba(0, 0, 0, 0.82);
     }
   }
@@ -174,7 +174,7 @@
 .teams-stage-column {
   container: video-stage / inline-size;
   position: relative;
-  background: #080B13;
+  background: #090A0D;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -187,9 +187,9 @@
   flex: 1 1 auto;
   inline-size: 100%;
   min-block-size: clamp(280px, 54dvh, 660px);
-  background: #060911;
-  padding: clamp(4px, 0.9cqi, 10px);
-  gap: clamp(6px, 1cqi, 10px);
+  background: #090A0D;
+  padding: clamp(6px, 1cqi, 12px);
+  gap: clamp(8px, 1cqi, 12px);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   overflow: clip;
@@ -199,13 +199,11 @@
   min-block-size: clamp(320px, 60dvh, 720px);
 }
 
-/* Default safe stacked layout for 2-up Split / Compare Form on narrow stages */
 .teams-video-grid[data-dual="true"] {
   grid-template-columns: minmax(0, 1fr);
   grid-auto-rows: minmax(185px, 1fr);
 }
 
-/* Media query fallback for 2-up gallery */
 @media (min-width: 720px) {
   .teams-video-grid[data-dual="true"] {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -213,7 +211,6 @@
   }
 }
 
-/* Container-aware 2-up gallery: adapts to actual stage width (e.g. half-screen window or open side pane!) */
 @supports (container-type: inline-size) {
   @media (min-width: 720px) {
     .teams-video-grid[data-dual="true"] {
@@ -230,16 +227,16 @@
   }
 }
 
-/* Rounded Microsoft Teams Participant Stage Card */
+/* Rounded Broadcast Participant Stage Card */
 .teams-stage-tile {
   position: relative;
   inline-size: 100%;
   block-size: 100%;
   min-block-size: 200px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(145deg, #0E1627 0%, #070B14 100%);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.05), transparent 60%), #111318;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 32px rgba(0, 0, 0, 0.5);
   overflow: clip;
   display: flex;
   flex-direction: column;
@@ -249,42 +246,42 @@
 }
 
 .teams-stage-tile.is-live-connected {
-  border-color: rgba(52, 211, 153, 0.38);
+  border-color: rgba(52, 211, 153, 0.36);
 }
 
-/* Responsive Picture-in-Picture Self-View Card */
+/* Clean Picture-in-Picture Self-View Card (rounded-2xl / 16px) */
 .teams-pip-tile {
   position: absolute !important;
-  inset-block-end: clamp(10px, 2cqi, 18px);
-  inline-size: clamp(112px, 22cqi, 220px) !important;
+  inset-block-end: clamp(12px, 2cqi, 20px);
+  inline-size: clamp(118px, 22cqi, 224px) !important;
   aspect-ratio: 16 / 10;
   block-size: auto !important;
   min-block-size: 0 !important;
-  border-radius: 10px !important;
-  border: 1.5px solid rgba(245, 158, 11, 0.78) !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.82) !important;
-  background: linear-gradient(145deg, #0E1627 0%, #070B14 100%);
+  border-radius: 16px !important;
+  border: 1.5px solid rgba(52, 211, 153, 0.45) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 16px 40px rgba(0, 0, 0, 0.82) !important;
+  background: #111318;
   z-index: 26 !important;
   overflow: clip;
 }
 
 .teams-pip-tile.pip-start {
-  inset-inline-start: clamp(10px, 2cqi, 18px);
+  inset-inline-start: clamp(12px, 2cqi, 20px);
 }
 
 .teams-pip-tile.pip-end {
-  inset-inline-end: clamp(10px, 2cqi, 18px);
+  inset-inline-end: clamp(12px, 2cqi, 20px);
 }
 
 /* ── 5. Right Side Pane (Workout & Set Logger Drawer) ── */
 .teams-side-pane {
-  background: linear-gradient(180deg, #0D1322 0%, #080C17 100%);
-  border-inline-start: 1px solid rgba(255, 255, 255, 0.09);
+  background: #111318;
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 12px;
-  padding: 14px;
+  padding: 16px;
   inline-size: 100%;
   min-inline-size: 0;
   overflow-y: auto;
@@ -300,13 +297,16 @@
   }
 }
 
-/* ── 6. Unified Microsoft Teams Bottom Meeting Command Bar ── */
+/* ── 6. Broadcast-Grade Floating Glass Bottom Command Dock ── */
 .teams-command-bar {
-  background: linear-gradient(180deg, rgba(15, 21, 35, 0.98) 0%, rgba(10, 14, 24, 0.99) 100%);
-  border-block-start: 1px solid rgba(255, 255, 255, 0.09);
-  padding-block-start: 8px;
-  padding-block-end: max(8px, env(safe-area-inset-bottom, 0px));
-  padding-inline: clamp(8px, 1.5cqi, 16px);
+  background: rgba(17, 19, 24, 0.84);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-block-start: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  padding-block-start: 10px;
+  padding-block-end: max(10px, env(safe-area-inset-bottom, 0px));
+  padding-inline: clamp(10px, 1.5cqi, 18px);
   display: flex;
   flex-wrap: wrap;
   flex-wrap: balance;
@@ -321,19 +321,20 @@
   flex-wrap: wrap;
   align-items: safe center;
   justify-content: center;
-  gap: 5px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 9px;
-  padding: 4px 6px;
+  gap: 6px;
+  background: rgba(24, 27, 34, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 5px 7px;
   max-inline-size: 100%;
 }
 
 /* Horizontal pill strip for Quick Verbal Cues */
 .teams-cues-strip {
-  background: rgba(6, 9, 17, 0.96);
+  background: #090A0D;
   border-block-start: 1px solid rgba(255, 255, 255, 0.06);
-  padding-block: 6px;
+  padding-block: 7px;
   padding-inline: clamp(10px, 1.5cqi, 16px);
   display: flex;
   align-items: center;
@@ -343,21 +344,21 @@
   scrollbar-width: thin;
 }
 
-/* Coarse-pointer touch target adaptation (WCAG 2.5.8 / mobile ergonomics) */
+/* Coarse-pointer touch target adaptation (44px × 44px minimum tap area) */
 @media (pointer: coarse) {
   .teams-command-bar button,
   .teams-top-bar button {
-    min-block-size: 36px;
-    min-inline-size: 36px;
+    min-block-size: 44px;
+    min-inline-size: 44px;
   }
 }
 
-/* Mobile compact dock ergonomics: balanced compact button clusters without clipping or overflow */
+/* Mobile compact dock ergonomics */
 @container studio-shell (inline-size < 620px) {
   .teams-command-bar {
     justify-content: center;
     gap: 6px;
-    padding-inline: 6px;
+    padding-inline: 8px;
   }
 
   .teams-dock-cluster {
@@ -365,18 +366,17 @@
     flex-wrap: wrap;
     flex-wrap: balance;
     justify-content: center;
-    gap: 4px;
-    padding: 4px 5px;
+    gap: 5px;
+    padding: 5px 6px;
   }
 
   .teams-command-bar button {
-    padding: 5px 8px !important;
-    font-size: 10.5px !important;
+    padding: 6px 9px !important;
+    font-size: 11px !important;
   }
 
-  /* Keep top-right capture pill compact so it never collides with participant badge */
   .teams-capture-pill {
-    padding: 2px 5px !important;
+    padding: 2px 6px !important;
     gap: 4px !important;
   }
 }

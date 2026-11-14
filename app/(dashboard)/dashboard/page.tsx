@@ -292,7 +292,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const workspace = normalizeDashboardWorkspace(params.workspace)
 
   return (
-    <main className="dashboard-page" style={{ minHeight: '100dvh', background: 'var(--navy)' }} suppressHydrationWarning>
+    <main className="dashboard-page forge-obsidian-canvas" style={{ minHeight: '100dvh', backgroundColor: '#090A0D' }} suppressHydrationWarning>
       <SiteHeader
         links={[
           { href: '/dashboard', label: 'Today' },
@@ -305,7 +305,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         actions={<LogoutButton />}
       />
 
-      <div className="dashboard-content pb-24" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(10px, 2vw, 20px) clamp(8px, 1.8vw, 16px) calc(6rem + env(safe-area-inset-bottom, 0px))', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="dashboard-content pb-24" style={{ maxWidth: 1440, margin: '0 auto', padding: 'clamp(12px, 2vw, 22px) clamp(12px, 2vw, 20px) calc(6rem + env(safe-area-inset-bottom, 0px))', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {showSuccess && <SuccessBanner />}
 
         <ClientMembershipStatusBanner

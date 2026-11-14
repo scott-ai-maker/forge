@@ -97,31 +97,31 @@ export default function PreWorkoutReadinessBridge({
   return (
     <>
       {/* Pre-Workout Overview Trigger Bar + Express Mode Toggle */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#0A1320] px-3 py-2 text-slate-100">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/[0.07] bg-[#111318] px-4 py-3 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/15 px-2.5 py-1.5 text-xs font-extrabold text-amber-200 transition hover:bg-amber-400/25"
+            className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2 text-xs font-bold text-emerald-300 transition-colors duration-150 hover:border-emerald-400/40 hover:bg-emerald-500/18"
           >
-            <Sparkles size={13} /> 30s Pre-Workout Readiness Check
+            <Sparkles size={14} strokeWidth={1.75} aria-hidden="true" /> 30s Pre-Workout Readiness Check
           </button>
 
           <button
             type="button"
             aria-pressed={expressMode}
             onClick={handleToggleExpress}
-            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-extrabold transition ${
+            className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-colors duration-150 ${
               expressMode
-                ? 'bg-amber-400 text-slate-950'
-                : 'border border-white/15 bg-white/5 text-slate-300 hover:bg-white/10'
+                ? 'border border-amber-400/50 bg-amber-400 text-[#090A0D]'
+                : 'border border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
             }`}
           >
-            <Zap size={12} /> 20m Express {expressMode ? 'Active' : 'Off'}
+            <Zap size={13} strokeWidth={1.75} aria-hidden="true" /> 20m Express {expressMode ? 'Active' : 'Off'}
           </button>
         </div>
 
-        <span className="text-[11px] text-slate-400">
+        <span className="text-[11px] tabular-nums text-zinc-400">
           {cappedDrills.length > 0
             ? `${cappedDrills.length} targeted drills ready (${totalInjectedSec}s)`
             : 'Auto-adapts warm-up before Set 1'}
@@ -130,14 +130,14 @@ export default function PreWorkoutReadinessBridge({
 
       {/* Prepended Targeted Corrective Warm-Up Block right before Set 1 */}
       {cappedDrills.length > 0 ? (
-        <section className="mb-3 rounded-xl border border-emerald-400/40 bg-[#09161B] p-3.5 text-slate-100">
+        <section className="mb-3 rounded-2xl border border-emerald-500/25 bg-[#111318] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-200">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
                 Injected from Readiness Check
               </span>
-              <span className="inline-flex items-center gap-1 font-mono text-xs font-bold text-slate-300">
-                <Clock size={12} className="text-emerald-300" /> {totalInjectedSec}s
+              <span className="inline-flex items-center gap-1 font-mono text-xs font-bold tabular-nums text-zinc-300">
+                <Clock size={12} strokeWidth={1.75} className="text-emerald-300" aria-hidden="true" /> {totalInjectedSec}s
                 {expressMode ? ' (90s Express Cap)' : ''}
               </span>
             </div>
@@ -148,32 +148,32 @@ export default function PreWorkoutReadinessBridge({
                 removeInjectedWarmupForToday()
                 setRawDrills([])
               }}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-300 transition hover:bg-rose-500/20 hover:text-rose-200"
+              className="forge-tactile-press inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-white/10 bg-[#181B22] px-3 py-1.5 text-[11px] font-semibold text-zinc-300 transition-colors duration-150 hover:border-rose-500/35 hover:bg-rose-500/15 hover:text-rose-200"
             >
-              <Trash2 size={12} /> Remove
+              <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" /> Remove
             </button>
           </div>
 
-          <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {cappedDrills.map(drill => {
               const done = completedDrillIds.includes(drill.id)
               return (
                 <div
                   key={drill.id}
-                  className={`flex items-start justify-between gap-2 rounded-lg border p-2.5 ${
+                  className={`flex items-start justify-between gap-2.5 rounded-xl border p-3 ${
                     done
-                      ? 'border-emerald-400/40 bg-emerald-500/10'
-                      : 'border-white/10 bg-slate-950/75'
+                      ? 'border-emerald-500/35 bg-emerald-500/10'
+                      : 'border-white/[0.07] bg-[#181B22]'
                   }`}
                 >
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-white">
                       {drill.name}{' '}
-                      <span className="font-mono text-[11px] text-emerald-300">
+                      <span className="font-mono text-[11px] tabular-nums text-emerald-300">
                         ({drill.durationSec}s)
                       </span>
                     </div>
-                    <p className="mt-0.5 text-[11px] text-slate-300">{drill.cue}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-zinc-300">{drill.cue}</p>
                   </div>
                   <button
                     type="button"
@@ -185,13 +185,14 @@ export default function PreWorkoutReadinessBridge({
                       )
                     }
                     aria-label={`Mark ${drill.name} completed`}
-                    className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
+                    aria-pressed={done}
+                    className={`forge-tactile-press inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors duration-150 ${
                       done
-                        ? 'border-emerald-400 bg-emerald-400 text-slate-950'
-                        : 'border-white/20 bg-white/5 text-slate-400'
+                        ? 'border-emerald-400 bg-emerald-400 text-[#090A0D]'
+                        : 'border-white/15 bg-[#090A0D] text-zinc-400 hover:border-white/25 hover:text-white'
                     }`}
                   >
-                    <CheckCircle2 size={14} />
+                    <CheckCircle2 size={17} strokeWidth={1.75} aria-hidden="true" />
                   </button>
                 </div>
               )
@@ -208,15 +209,15 @@ export default function PreWorkoutReadinessBridge({
         onClick={e => {
           if (e.target === e.currentTarget) setModalOpen(false)
         }}
-        className="m-auto w-[min(95vw,640px)] overscroll-contain rounded-2xl border border-amber-400/35 bg-[#070B12] p-0 text-slate-100 shadow-2xl"
+        className="forge-glass-modal m-auto w-[min(95vw,660px)] overscroll-contain rounded-2xl p-0 text-zinc-100"
       >
         <div className="max-h-[90dvh] overflow-y-auto overscroll-contain p-4 sm:p-6">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-300">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
                 Pre-Workout Overview · {workoutTitle}
               </span>
-              <h2 id={headingId} className="mt-0.5 font-serif text-lg font-bold text-white sm:text-xl">
+              <h2 id={headingId} className="mt-0.5 font-serif text-lg font-bold tracking-tight text-white sm:text-xl">
                 30-Second Camera Readiness Check
               </h2>
             </div>
@@ -227,9 +228,9 @@ export default function PreWorkoutReadinessBridge({
                 onProceedToWorkout?.()
               }}
               aria-label="Close Pre-Workout Overview"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-300 transition hover:bg-white/10"
+              className="forge-tactile-press inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-[#181B22] text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A]"
             >
-              <X size={15} />
+              <X size={18} strokeWidth={1.75} aria-hidden="true" />
             </button>
           </div>
 

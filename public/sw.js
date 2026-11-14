@@ -14,7 +14,7 @@ if (
   })
 }
 
-const VERSION = 'gaa-v1.53.1'
+const VERSION = 'gaa-v1.54.0'
 const OFFLINE_URL = '/offline.html'
 
 const PRECACHE = [
@@ -80,14 +80,20 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const { request } = event
-
-  // Only handle GET requests
-  if (request.method !== 'GET') return
-
   const url = new URL(request.url)
 
   // Ignore cross-origin requests
   if (url.origin !== self.location.origin) return
+
+  // Strict NetworkOnly bypass for `/api/telemetry*`, all `/api/*` endpoints, and all non-GET mutations
+  // Ensures keepalive packets, Authorization headers, and round-trip verifiers are never intercepted or stale-cached
+  if (
+    request.method !== 'GET' ||
+    url.pathname.startsWith('/api/telemetry') ||
+    url.pathname.startsWith('/api/')
+  ) {
+    return
+  }
 
   // Never intercept or cache requests in localhost or dev environments, or webpack hot reload assets
   if (
@@ -230,4 +236,80 @@ self.addEventListener('notificationclick', event => {
       }
     })
   )
+})
+
+// Background Sync handler for offline workout & biomechanical telemetry (`forge-telemetry-sync`)
+async function flushIndexedDbTelemetryFromWorker() {
+  if (typeof indexedDB === 'undefined') return
+
+  const db = await new Promise((resolve, reject) => {
+    const req = indexedDB.open('forge_telemetry_db_v1', 1)
+    req.onupgradeneeded = () => {
+      const database = req.result
+      if (!database.objectStoreNames.contains('pending_events')) {
+        database.createObjectStore('pending_events', { keyPath: 'event_id' })
+      }
+    }
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  }).catch(() => null)
+
+  if (!db) return
+
+  try {
+    const pending = await new Promise((resolve, reject) => {
+      const tx = db.transaction('pending_events', 'readonly')
+      const req = tx.objectStore('pending_events').getAll()
+      req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : [])
+      req.onerror = () => reject(req.error)
+    })
+
+    if (!pending.length) return
+
+    const batch = pending.slice(0, 50)
+    const response = await fetch('/api/telemetry', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events: batch }),
+    })
+
+    if (response.ok) {
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('pending_events', 'readwrite')
+        const store = tx.objectStore('pending_events')
+        for (const item of batch) {
+          if (item && item.event_id) {
+            store.delete(item.event_id)
+          }
+        }
+        tx.oncomplete = () => resolve(true)
+        tx.onerror = () => reject(tx.error)
+      })
+    }
+  } finally {
+    try {
+      db.close()
+    } catch {
+      // ignore close error
+    }
+  }
+}
+
+self.addEventListener('sync', event => {
+  if (event.tag === 'forge-telemetry-sync') {
+    event.waitUntil(
+      self.clients
+        .matchAll({ type: 'window', includeUncontrolled: false })
+        .then(async windowClients => {
+          if (windowClients.length > 0) {
+            for (const client of windowClients) {
+              client.postMessage({ type: 'FORGE_SW_FLUSH_TELEMETRY' })
+            }
+            return
+          }
+          await flushIndexedDbTelemetryFromWorker()
+        })
+    )
+  }
 })

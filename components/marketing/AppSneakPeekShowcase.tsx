@@ -78,21 +78,21 @@ export default function AppSneakPeekShowcase() {
     <section
       id="sneak-peek"
       aria-labelledby={`${baseId}-heading`}
-      className="relative mx-auto my-14 max-w-5xl scroll-mt-24 text-slate-100"
+      className="relative mx-auto my-14 max-w-5xl scroll-mt-24 text-zinc-100"
     >
       {/* Ambient Radial Stage Spotlight */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
-          top: 40,
+          top: 32,
           left: '50%',
           transform: 'translateX(-50%)',
           width: '88%',
           maxWidth: 880,
-          height: 360,
+          height: 340,
           background:
-            'radial-gradient(ellipse at center, rgba(245, 158, 11, 0.14) 0%, rgba(56, 189, 248, 0.08) 45%, transparent 72%)',
+            'radial-gradient(ellipse at top, rgba(16, 185, 129, 0.09) 0%, rgba(245, 158, 11, 0.06) 45%, transparent 70%)',
           filter: 'blur(48px)',
           pointerEvents: 'none',
           zIndex: 0,
@@ -100,54 +100,26 @@ export default function AppSneakPeekShowcase() {
       />
 
       <div className="relative z-10 mb-6 text-center">
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '5px 14px',
-            borderRadius: 9999,
-            background: 'rgba(245, 158, 11, 0.12)',
-            border: '1px solid rgba(245, 158, 11, 0.4)',
-            color: '#FDE68A',
-            fontFamily: 'var(--font-telemetry)',
-            fontSize: 11,
-            fontWeight: 800,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-          }}
-        >
+        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
           <span
-            style={{
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              background: '#34D399',
-              boxShadow: '0 0 8px #34D399',
-            }}
+            aria-hidden="true"
+            className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.75)]"
           />
           Interactive Sandbox · Try Inside Your Browser
         </span>
         <h2
           id={`${baseId}-heading`}
-          style={{
-            margin: '0.85rem 0 0.5rem',
-            fontFamily: 'var(--font-heading)',
-            fontSize: 'clamp(1.85rem, 3.6vw, 2.75rem)',
-            fontWeight: 800,
-            letterSpacing: '0.02em',
-            color: '#FFFFFF',
-          }}
+          className="mt-3.5 mb-2 font-serif text-3xl font-extrabold tracking-tight text-white sm:text-4xl"
         >
           Test-Drive the Forge Lab Before Launch Day
         </h2>
-        <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-300">
+        <p className="mx-auto max-w-2xl text-sm leading-relaxed text-zinc-300">
           Explore real interactive modules—from 33-point posture deltas and seated desk audits to
           20-minute express workouts—with zero login required.
         </p>
       </div>
 
-      {/* Accessible 4-Tab Bar (Underline Border Indicator for WCAG 1.4.1 & Forced-Colors) */}
+      {/* Accessible 4-Tab Bar (Spring Underline Indicator for WCAG 1.4.1 & Forced-Colors) */}
       <div
         role="tablist"
         aria-label="Interactive Forge Athletic product previews"
@@ -171,36 +143,25 @@ export default function AppSneakPeekShowcase() {
               aria-controls={panelId}
               tabIndex={selected ? 0 : -1}
               onClick={() => setSelectedIndex(index)}
-              className="forge-sneak-tab relative flex items-center justify-center gap-2 rounded-xl px-3 py-3.5 text-xs font-extrabold tracking-wide transition"
-              style={{
-                background: selected
-                  ? 'linear-gradient(145deg, rgba(245, 158, 11, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)'
-                  : 'linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(8, 14, 20, 0.95) 100%)',
-                border: selected
-                  ? '1px solid rgba(251, 191, 36, 0.65)'
-                  : '1px solid rgba(148, 163, 184, 0.2)',
-                color: selected ? '#FEF3C7' : '#CBD5E1',
-                boxShadow: selected
-                  ? '0 10px 26px rgba(245, 158, 11, 0.16), inset 0 1px 0 rgba(251, 191, 36, 0.28)'
-                  : '0 6px 16px rgba(0, 0, 0, 0.35)',
-              }}
+              className={`forge-sneak-tab forge-tactile-press relative flex min-h-[46px] items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-bold tracking-wide focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+                selected
+                  ? 'border-emerald-500/35 bg-[#181B22] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_26px_rgba(0,0,0,0.45)]'
+                  : 'border-white/[0.07] bg-[#111318] text-zinc-400 hover:border-white/15 hover:bg-[#181B22] hover:text-zinc-200'
+              }`}
             >
               <span
-                style={{
-                  fontFamily: 'var(--font-telemetry)',
-                  fontSize: 10,
-                  padding: '2px 5px',
-                  borderRadius: 4,
-                  background: selected ? 'rgba(245, 158, 11, 0.28)' : 'rgba(255, 255, 255, 0.06)',
-                  color: selected ? '#FBBF24' : '#94A3B8',
-                }}
+                className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums ${
+                  selected
+                    ? 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
+                    : 'bg-white/[0.05] text-zinc-400'
+                }`}
               >
                 {tab.step}
               </span>
-              {index === 0 ? <Layers size={14} className="shrink-0" /> : null}
-              {index === 1 ? <Monitor size={14} className="shrink-0" /> : null}
-              {index === 2 ? <Route size={14} className="shrink-0" /> : null}
-              {index === 3 ? <Clock size={14} className="shrink-0" /> : null}
+              {index === 0 ? <Layers size={15} strokeWidth={1.75} className="shrink-0" aria-hidden="true" /> : null}
+              {index === 1 ? <Monitor size={15} strokeWidth={1.75} className="shrink-0" aria-hidden="true" /> : null}
+              {index === 2 ? <Route size={15} strokeWidth={1.75} className="shrink-0" aria-hidden="true" /> : null}
+              {index === 3 ? <Clock size={15} strokeWidth={1.75} className="shrink-0" aria-hidden="true" /> : null}
               <span className="hidden lg:inline">{tab.label}</span>
               <span className="lg:hidden">{tab.shortLabel}</span>
             </button>
@@ -208,68 +169,43 @@ export default function AppSneakPeekShowcase() {
         })}
       </div>
 
-      {/* Machined Anodized Carbon Hardware Bezel */}
+      {/* Machined Anodized Obsidian & Brushed Steel Bezel */}
       <div
-        className="relative z-10 p-3 sm:p-6"
+        className="relative z-10 rounded-2xl border border-white/[0.08] bg-[#111318] p-4 sm:p-6"
         style={{
-          borderRadius: 28,
-          background: 'linear-gradient(180deg, #0D1524 0%, #050911 100%)',
-          border: '1px solid rgba(245, 158, 11, 0.34)',
           boxShadow:
-            '0 32px 84px rgba(0, 0, 0, 0.8), 0 0 40px rgba(245, 158, 11, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.14)',
+            'inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 32px 84px rgba(0, 0, 0, 0.78)',
         }}
       >
         {/* Top Hardware Sensor Pill */}
         <div className="mb-3 flex justify-center" aria-hidden="true">
-          <div
-            style={{
-              width: 108,
-              height: 20,
-              borderRadius: 9999,
-              background: '#020409',
-              border: '1px solid rgba(148, 163, 184, 0.18)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              paddingRight: 8,
-            }}
-          >
+          <div className="flex h-5 w-28 items-center justify-end rounded-full border border-white/10 bg-[#090A0D] pr-2">
             <span
+              className="h-2 w-2 rounded-full"
               style={{
-                width: 7,
-                height: 7,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, #38BDF8 0%, #0F172A 75%)',
+                background: 'radial-gradient(circle, #34D399 0%, #090A0D 80%)',
               }}
             />
           </div>
         </div>
 
         {/* Bezel Telemetry Status Bar */}
-        <div
-          className="mb-3 flex flex-wrap items-center justify-between gap-2 pb-3 text-[11px]"
-          style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.16)' }}
-        >
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] pb-3 text-[11px]">
           <div className="flex items-center gap-2">
             <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: '#34D399',
-                boxShadow: '0 0 8px #34D399',
-              }}
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.75)]"
             />
-            <span className="font-mono font-bold uppercase tracking-wider text-amber-300">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-200">
               FORGE LAB // {activeTab.label}
             </span>
           </div>
-          <span className="font-mono text-[10.5px] uppercase tracking-wider text-slate-400">
+          <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
             SANDBOX ACTIVE · ZERO CLOUD UPLOAD
           </span>
         </div>
 
-        <p className="mb-4 text-xs leading-relaxed text-slate-300">{activeTab.subtitle}</p>
+        <p className="mb-4 text-xs leading-relaxed text-zinc-300">{activeTab.subtitle}</p>
 
         {/* Tab Panels */}
         {SNEAK_TABS.map(tab => {
@@ -283,11 +219,7 @@ export default function AppSneakPeekShowcase() {
               role="tabpanel"
               aria-labelledby={tabId}
               hidden={!selected}
-              className="rounded-2xl p-2.5 sm:p-4"
-              style={{
-                background: 'linear-gradient(180deg, rgba(8, 13, 22, 0.95) 0%, rgba(5, 8, 15, 0.98) 100%)',
-                border: '1px solid rgba(148, 163, 184, 0.14)',
-              }}
+              className="rounded-xl border border-white/[0.06] bg-[#090A0D] p-3 sm:p-4"
             >
               {selected && tab.id === 'posture-mesh' ? (
                 <PostureComparisonCard sandboxMode />

@@ -1,11 +1,26 @@
 @import "tailwindcss/theme.css";
 
 :root {
-  /* Forge carbon surfaces */
-  --navy:     #080E14;
-  --navy-mid: #0F172A;
-  --navy-lt:  #1E293B;
-  --slate-700:#334155;
+  color-scheme: dark;
+
+  /* 4-Tier Obsidian & Brushed Steel Surface Hierarchy */
+  --bg-obsidian: #090A0D;
+  --surface-card: #111318;
+  --surface-interactive: #181B22;
+  --surface-interactive-hover: #1D212A;
+  --surface-glass: rgba(17, 19, 24, 0.82);
+  --border-card: rgba(255, 255, 255, 0.07);
+  --border-interactive: rgba(255, 255, 255, 0.15);
+  --specular-top: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --target-size: 24px;
+  --target-size-touch: 44px;
+
+  /* Forge carbon surfaces (mapped to Obsidian & Brushed Steel) */
+  --navy:     #090A0D;
+  --navy-mid: #111318;
+  --navy-lt:  #181B22;
+  --slate-700:#272B36;
 
   /* Forge flame and telemetry accents */
   --gold:     #F59E0B;
@@ -15,7 +30,7 @@
 
   /* High-contrast text and telemetry */
   --white:    #F8FAFC;
-  --gray:     #CBD5E1;
+  --gray:     #D4D4D8;
 
   /* Forge typography */
   --font-heading: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
@@ -25,9 +40,10 @@
   --font-sans: var(--font-body);
   --font-telemetry: 'SF Mono', 'Geist Mono', 'Roboto Mono', Menlo, Monaco, Consolas, monospace;
 
-  /* Telemetry Status Tokens */
+  /* Telemetry Status Tokens (WCAG AA on #090A0D / #111318) */
   --success:  #34D399;
-  --error:    #F87171;
+  --warning:  #FBBF24;
+  --error:    #FB7185;
 
   /* PWA & Responsive Tokens */
   --app-height: 100dvh;
@@ -54,6 +70,7 @@
 
 .font-telemetry {
   font-family: var(--font-telemetry);
+  font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' on, 'zero' on;
 }
 
@@ -133,6 +150,14 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+p, li {
+  text-wrap: pretty;
 }
 
 /* 📜 Bespoke Luxury Scrollbars & Velvet Selection */
@@ -217,30 +242,43 @@ input, textarea {
   }
 }
 
-/* ♿ 10/10 Accessibility: Universal Focus Halo */
+/* ♿ Accessibility: Crisp Obsidian & Emerald Focus Indicator (survives forced-colors) */
 :focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid rgba(52, 211, 153, 0.78);
   outline-offset: 2px;
-  box-shadow: 0 0 12px rgba(197, 160, 89, 0.45);
+  box-shadow: 0 0 0 2px #090A0D, 0 0 12px rgba(52, 211, 153, 0.35);
 }
 
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--gold);
+a:focus-visible,
+[role="tab"]:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgba(52, 211, 153, 0.78);
   outline-offset: 2px;
 }
 
+/* Dampen spatial movement & continuous animations on reduced motion while preserving smooth color/opacity transitions */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  html {
     scroll-behavior: auto !important;
+  }
+
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce,
+  .forge-shimmer,
+  .forge-ring-arc {
+    animation: none !important;
+  }
+
+  .forge-tactile-press:active,
+  .forge-feature-card:hover,
+  .forge-persona-card:hover,
+  .forge-hero-image-wrapper:hover .forge-hero-main-img {
+    transform: none !important;
   }
 }
 
@@ -2482,7 +2520,8 @@ a:focus-visible {
 }
 
 .foundation-home {
-  background: var(--navy);
+  background-color: var(--bg-obsidian);
+  background-image: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.06), transparent 60%);
   color: var(--white);
   padding: 0 clamp(1.25rem, 5vw, 5rem);
 }
@@ -2784,9 +2823,10 @@ a:focus-visible {
 
 .forge-feature-card,
 .forge-plan-card {
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(8, 14, 20, 0.95));
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  background: var(--surface-card);
+  box-shadow: var(--specular-top), 0 14px 36px rgba(0, 0, 0, 0.45);
 }
 
 .forge-feature-card {
@@ -2794,7 +2834,7 @@ a:focus-visible {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.25s var(--ease-spring), border-color 0.15s ease, box-shadow 0.25s var(--ease-spring);
 }
 
 .forge-feature-card:hover {
@@ -2880,13 +2920,14 @@ a:focus-visible {
 }
 
 .forge-persona-card {
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(8, 14, 20, 0.95));
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  background: var(--surface-card);
+  box-shadow: var(--specular-top), 0 14px 36px rgba(0, 0, 0, 0.45);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.25s var(--ease-spring), border-color 0.15s ease, box-shadow 0.25s var(--ease-spring);
 }
 
 .forge-persona-card:hover {
@@ -4709,13 +4750,24 @@ dialog::backdrop {
 /* Accessible tab underline indicator that survives forced-colors mode */
 .forge-sneak-tab[role="tab"] {
   position: relative;
+  min-height: 44px;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-spring);
+}
+
+.forge-sneak-tab[role="tab"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 10px 0 10px;
+  border-block-end: 3px solid transparent;
+  transform: scaleX(0.6);
+  opacity: 0;
+  transition: transform 240ms var(--ease-spring), opacity 180ms ease, border-color 180ms ease;
 }
 
 .forge-sneak-tab[role="tab"][aria-selected="true"]::after {
-  content: "";
-  position: absolute;
-  inset: auto 8px 0 8px;
-  border-block-end: 3px solid var(--gold, #F59E0B);
+  border-block-end-color: #34D399;
+  transform: scaleX(1);
+  opacity: 1;
 }
 
 /* Science disclosure summary marker styling */
@@ -4723,6 +4775,7 @@ details.forge-science-accordion > summary {
   list-style: none;
   display: flex;
   align-items: center;
+  min-height: 44px;
   gap: 0.6ch;
   cursor: pointer;
 }
@@ -4730,4 +4783,147 @@ details.forge-science-accordion > summary {
 details.forge-science-accordion > summary::-webkit-details-marker {
   display: none;
 }
+
+/* ============================================================================
+   OBSIDIAN & BRUSHED STEEL DESIGN SYSTEM TOKENS & UTILITIES
+   4-Tier Dark Surface Hierarchy · Editorial Telemetry · Tactile Motion
+   ============================================================================ */
+
+.forge-obsidian-canvas {
+  background-color: var(--bg-obsidian);
+  background-image: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.06), transparent 60%);
+}
+
+.forge-surface-card {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--specular-top), 0 14px 36px rgba(0, 0, 0, 0.42);
+  border-radius: 1rem;
+}
+
+.forge-surface-interactive {
+  background-color: var(--surface-interactive);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 100ms var(--ease-spring);
+}
+
+.forge-surface-interactive:hover {
+  background-color: var(--surface-interactive-hover);
+  border-color: var(--border-interactive);
+}
+
+.forge-glass-modal {
+  background: var(--surface-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 32px 84px rgba(0, 0, 0, 0.78);
+}
+
+.forge-glass-pill {
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+
+.forge-eyebrow-micro {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #A1A1AA;
+}
+
+.forge-metallic-pass {
+  position: relative;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(17, 19, 24, 0.96) 38%, rgba(24, 27, 34, 0.98) 70%, rgba(16, 185, 129, 0.1) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.36);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(245, 158, 11, 0.16),
+    0 20px 50px rgba(0, 0, 0, 0.65);
+}
+
+.forge-shimmer {
+  background-color: #14171F;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .forge-tactile-press {
+    transition: transform 100ms var(--ease-spring), background-color 150ms ease, border-color 150ms ease;
+  }
+
+  .forge-tactile-press:active {
+    transform: scale(0.98);
+  }
+
+  @keyframes forge-shimmer-sweep {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  .forge-shimmer {
+    background-image: linear-gradient(
+      105deg,
+      #111318 25%,
+      #1B1F29 50%,
+      #111318 75%
+    );
+    background-size: 200% 100%;
+    animation: forge-shimmer-sweep 1.8s ease-in-out infinite;
+  }
+
+  @keyframes forge-ring-reveal {
+    from {
+      stroke-dashoffset: var(--ring-circumference, 200);
+    }
+    to {
+      stroke-dashoffset: var(--ring-offset, 0);
+    }
+  }
+
+  .forge-ring-arc {
+    animation: forge-ring-reveal 750ms var(--ease-spring) both;
+    transition: stroke-dashoffset 500ms var(--ease-spring);
+  }
+
+  @keyframes forge-modal-spring-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  dialog[open].forge-glass-modal {
+    animation: forge-modal-spring-in 240ms var(--ease-spring) both;
+  }
+}
+
+@media (forced-colors: active) {
+  .forge-surface-card,
+  .forge-surface-interactive,
+  .forge-glass-modal,
+  .forge-glass-pill,
+  .forge-metallic-pass {
+    border: 1px solid CanvasText;
+  }
+
+  .forge-sneak-tab[role="tab"][aria-selected="true"]::after {
+    border-block-end-color: Highlight;
+  }
+}
+
 

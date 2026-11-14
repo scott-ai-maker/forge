@@ -34,15 +34,15 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
           left: 0,
           right: 0,
           zIndex: 9999,
-          background: 'rgba(8, 14, 24, 0.96)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(197, 160, 89, 0.28)',
+          background: 'rgba(17, 19, 24, 0.88)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           justifyContent: 'space-around',
           alignItems: 'center',
-          padding: '4px 6px calc(4px + env(safe-area-inset-bottom, 6px))',
-          boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.75)',
+          padding: '6px 8px max(8px, calc(4px + env(safe-area-inset-bottom, 0px)))',
+          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 -10px 30px rgba(0, 0, 0, 0.72)',
         }}
       >
         {coachTabs.map(tab => {
@@ -53,7 +53,7 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
               href={tab.href}
               aria-current={isActive ? 'page' : undefined}
               onClick={() => triggerHaptic('tap')}
-              className="tactile-btn"
+              className="forge-tactile-press"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -61,15 +61,16 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
                 justifyContent: 'center',
                 gap: 3,
                 textDecoration: 'none',
-                color: isActive ? 'var(--gold)' : 'var(--gray)',
+                color: isActive ? '#34D399' : '#A1A1AA',
                 minWidth: 64,
                 minHeight: 48,
-                padding: '4px 0',
+                padding: '4px 6px',
+                borderRadius: 12,
                 position: 'relative',
-                transition: 'all 0.15s ease',
+                transition: 'color 0.15s ease, background-color 0.15s ease',
               }}
             >
-              <div style={{ transform: isActive ? 'scale(1.12)' : 'scale(1)', transition: 'transform 0.15s ease' }}>
+              <div style={{ transform: isActive ? 'scale(1.08)' : 'scale(1)', transition: 'transform 0.2s var(--ease-spring)' }}>
                 <GaaIcon
                   name={tab.icon}
                   size={19}
@@ -78,12 +79,12 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
               </div>
               <span
                 style={{
-                  fontFamily: 'Raleway, sans-serif',
-                  fontSize: 9.5,
-                  fontWeight: isActive ? 800 : 600,
-                  letterSpacing: '0.04em',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 10,
+                  fontWeight: isActive ? 700 : 600,
+                  letterSpacing: '0.05em',
                   textTransform: 'uppercase',
-                  color: isActive ? 'var(--gold-lt)' : 'var(--gray)',
+                  color: isActive ? '#F8FAFC' : '#A1A1AA',
                 }}
               >
                 {tab.label}
@@ -92,12 +93,12 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
                 <div
                   style={{
                     position: 'absolute',
-                    bottom: 0,
+                    bottom: 1,
                     width: 20,
                     height: 2,
-                    borderRadius: 1,
-                    background: 'var(--gold)',
-                    boxShadow: '0 0 8px var(--gold)',
+                    borderRadius: 9999,
+                    background: '#34D399',
+                    boxShadow: '0 0 8px rgba(52, 211, 153, 0.7)',
                   }}
                 />
               )}
@@ -119,15 +120,15 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
         left: 0,
         right: 0,
         zIndex: 9999,
-        background: 'rgba(8, 14, 24, 0.96)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(197, 160, 89, 0.28)',
+        background: 'rgba(17, 19, 24, 0.88)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        padding: '4px 4px calc(4px + env(safe-area-inset-bottom, 6px))',
-        boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.75)',
+        padding: '6px 6px max(8px, calc(4px + env(safe-area-inset-bottom, 0px)))',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 -10px 30px rgba(0, 0, 0, 0.72)',
       }}
     >
       {CLIENT_PRIMARY_NAV.map(tab => {
@@ -138,7 +139,7 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
             href={tab.href}
             aria-current={isActive ? 'page' : undefined}
             onClick={() => triggerHaptic('tap')}
-            className="tactile-btn"
+            className="forge-tactile-press"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -146,15 +147,16 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
               justifyContent: 'center',
               gap: 3,
               textDecoration: 'none',
-              color: isActive ? 'var(--gold)' : 'var(--gray)',
+              color: isActive ? '#34D399' : '#A1A1AA',
               minWidth: 58,
               minHeight: 48,
-              padding: '4px 0',
+              padding: '4px 6px',
+              borderRadius: 12,
               position: 'relative',
-              transition: 'all 0.15s ease',
+              transition: 'color 0.15s ease, background-color 0.15s ease',
             }}
           >
-            <div style={{ transform: isActive ? 'scale(1.12)' : 'scale(1)', transition: 'transform 0.15s ease' }}>
+            <div style={{ transform: isActive ? 'scale(1.08)' : 'scale(1)', transition: 'transform 0.2s var(--ease-spring)' }}>
               <GaaIcon
                 name={tab.icon}
                 size={19}
@@ -163,12 +165,12 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
             </div>
             <span
               style={{
-                fontFamily: 'Raleway, sans-serif',
-                fontSize: 9.5,
-                fontWeight: isActive ? 800 : 600,
-                letterSpacing: '0.04em',
+                fontFamily: 'var(--font-body)',
+                fontSize: 10,
+                fontWeight: isActive ? 700 : 600,
+                letterSpacing: '0.05em',
                 textTransform: 'uppercase',
-                color: isActive ? 'var(--gold-lt)' : 'var(--gray)',
+                color: isActive ? '#F8FAFC' : '#A1A1AA',
               }}
             >
               {tab.label}
@@ -177,12 +179,12 @@ export default function MobileBottomNav({ role = 'client' }: MobileBottomNavProp
               <div
                 style={{
                   position: 'absolute',
-                  bottom: 0,
+                  bottom: 1,
                   width: 20,
                   height: 2,
-                  borderRadius: 1,
-                  background: 'var(--gold)',
-                  boxShadow: '0 0 8px var(--gold)',
+                  borderRadius: 9999,
+                  background: '#34D399',
+                  boxShadow: '0 0 8px rgba(52, 211, 153, 0.7)',
                 }}
               />
             )}

@@ -250,32 +250,32 @@ export default function ExecutiveCommandCenterClient({
   const TodayWorkoutHeroCard = (
     <section
       aria-label="Today's Workout"
-      className="rounded-xl border border-amber-400/45 p-3.5 text-slate-100 shadow-lg"
+      className="rounded-2xl border border-white/[0.09] bg-[#111318] p-4 text-zinc-100 sm:p-6"
       style={{
-        maxHeight: 228,
-        background:
-          'linear-gradient(135deg, rgba(212, 160, 23, 0.16) 0%, rgba(8, 14, 24, 0.97) 100%)',
+        backgroundImage:
+          'radial-gradient(ellipse at top left, rgba(16, 185, 129, 0.08), transparent 65%), radial-gradient(ellipse at bottom right, rgba(245, 158, 11, 0.08), transparent 65%)',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 18px 42px rgba(0, 0, 0, 0.5)',
       }}
     >
       {/* Top Row: Eyebrow + 20m Express + Environment Profile Pill */}
-      <div className="flex flex-wrap items-center justify-between gap-1.5">
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.11em] text-amber-300">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
           <GaaIcon name="barbell" size={14} tone="gold" />
           Today&apos;s Workout
         </span>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           <button
             type="button"
             aria-pressed={expressMode}
             onClick={handleToggleExpress}
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider transition ${
+            className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors duration-150 ${
               expressMode
-                ? 'bg-amber-400 text-slate-950'
-                : 'border border-white/20 bg-white/5 text-slate-200 hover:bg-white/10'
+                ? 'border border-amber-400/50 bg-amber-400 text-[#090A0D] shadow-[0_0_16px_rgba(251,191,36,0.25)]'
+                : 'border border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
             }`}
           >
-            <Zap size={10} /> 20m Express
+            <Zap size={12} strokeWidth={1.75} aria-hidden="true" /> 20m Express
           </button>
 
           <select
@@ -283,7 +283,7 @@ export default function ExecutiveCommandCenterClient({
             onChange={e => handleEnvironmentChange(e.target.value as EnvironmentProfileId)}
             aria-label="Training environment profile"
             style={{ fontSize: 16 }}
-            className="h-6 rounded-full border border-white/20 bg-slate-950/90 px-2 text-xs font-bold text-slate-200"
+            className="min-h-[44px] rounded-full border border-white/10 bg-[#181B22] px-3 text-xs font-bold text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A]"
           >
             {ENVIRONMENT_OPTIONS.map(opt => (
               <option key={opt} value={opt}>
@@ -295,28 +295,28 @@ export default function ExecutiveCommandCenterClient({
       </div>
 
       {/* Middle Row: Focus Title & Compact Meta */}
-      <div className="mt-2 flex items-baseline justify-between gap-2">
-        <h1 className="truncate font-serif text-base font-bold tracking-wide text-white sm:text-lg">
+      <div className="mt-2.5 flex items-baseline justify-between gap-2">
+        <h1 className="min-w-0 font-serif text-lg font-bold tracking-tight text-white sm:text-xl">
           {activeWorkout
             ? `Day ${activeWorkout.day}: ${activeWorkout.focus}`
             : 'Full-Body Joint-First Strength'}
         </h1>
-        <span className="shrink-0 font-mono text-[11px] text-slate-300">
+        <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-zinc-300">
           {activeDayExerciseCount || 5} lifts · ~{estimatedMins}m
         </span>
       </div>
 
-      <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-slate-400">
-        <span className="truncate">
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
+        <span className="min-w-0 truncate">
           {currentPlanPhase}
           {activePackage ? ` · ${getMembershipDisplayName(activePackage.package_name)}` : ''}
         </span>
         <button
           type="button"
           onClick={handleScheduleMultiDayTrip}
-          className="inline-flex shrink-0 items-center gap-1 font-semibold text-sky-300 hover:underline"
+          className="forge-tactile-press inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-lg px-2 py-1 font-semibold text-sky-300 hover:bg-white/[0.04] hover:underline"
         >
-          <Plane size={11} /> Schedule Multi-Day Trip
+          <Plane size={12} strokeWidth={1.75} aria-hidden="true" /> Schedule Multi-Day Trip
         </button>
       </div>
 
@@ -324,12 +324,14 @@ export default function ExecutiveCommandCenterClient({
       <Link
         href="/dashboard/fitness?workspace=train&startWorkout=1"
         onClick={() => triggerHaptic('tap')}
-        className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-400 px-3.5 py-2.5 text-xs font-extrabold uppercase tracking-wider text-slate-950 transition hover:bg-amber-300"
+        className="forge-tactile-press mt-3 inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-[#090A0D] shadow-[0_8px_24px_rgba(52,211,153,0.22)] transition-colors duration-150 hover:bg-emerald-300"
       >
-        {isWorkoutInProgress
-          ? `Resume Workout (${activeDayLoggedWorkingSets}/${activeDayTotalTargetSets || '-'})`
-          : 'Start Workout'}
-        <ArrowRight size={14} />
+        <span className="tabular-nums">
+          {isWorkoutInProgress
+            ? `Resume Workout (${activeDayLoggedWorkingSets}/${activeDayTotalTargetSets || '-'})`
+            : 'Start Workout'}
+        </span>
+        <ArrowRight size={15} strokeWidth={1.75} aria-hidden="true" />
       </Link>
     </section>
   )
@@ -434,10 +436,12 @@ export default function ExecutiveCommandCenterClient({
       {/* Tier 4: Quick Utility Tiles in grid-cols-2 gap-3 */}
       <section aria-label="Quick Diagnostic & Partner Tools">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-slate-400">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
             Quick Tools &amp; Diagnostics
           </span>
-          <span className="text-[11px] font-semibold text-amber-300">{entitlements.name}</span>
+          <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300">
+            {entitlements.name}
+          </span>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -445,12 +449,12 @@ export default function ExecutiveCommandCenterClient({
           <button
             type="button"
             onClick={() => setDeskAuditOpen(true)}
-            className="flex flex-col items-start justify-between rounded-xl border border-white/10 bg-[#0A121E] p-3 text-left transition hover:border-amber-400/40"
+            className="forge-tactile-press flex min-h-[88px] flex-col items-start justify-between rounded-2xl border border-white/[0.07] bg-[#111318] p-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-colors duration-150 hover:border-white/15 hover:bg-[#181B22]"
           >
-            <Monitor size={18} className="text-emerald-300" />
-            <div className="mt-2 min-w-0 w-full">
+            <Monitor size={19} strokeWidth={1.75} className="text-emerald-300" aria-hidden="true" />
+            <div className="mt-2.5 min-w-0 w-full">
               <div className="truncate text-xs font-bold text-white">Desk Ergonomics Audit</div>
-              <div className="truncate text-[11px] text-slate-400">
+              <div className="truncate text-[11px] text-zinc-400">
                 Seated angle scan &amp; 3 fixes
               </div>
             </div>
@@ -460,25 +464,25 @@ export default function ExecutiveCommandCenterClient({
           <button
             type="button"
             onClick={() => setPostureCheckOpen(true)}
-            className="flex flex-col items-start justify-between rounded-xl border border-white/10 bg-[#0A121E] p-3 text-left transition hover:border-amber-400/40"
+            className="forge-tactile-press flex min-h-[88px] flex-col items-start justify-between rounded-2xl border border-white/[0.07] bg-[#111318] p-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-colors duration-150 hover:border-white/15 hover:bg-[#181B22]"
           >
-            <ScanLine size={18} className="text-amber-300" />
-            <div className="mt-2 min-w-0 w-full">
+            <ScanLine size={19} strokeWidth={1.75} className="text-amber-300" aria-hidden="true" />
+            <div className="mt-2.5 min-w-0 w-full">
               <div className="truncate text-xs font-bold text-white">2-Min Posture Check</div>
-              <div className="truncate text-[11px] text-slate-400">
+              <div className="truncate text-[11px] text-zinc-400">
                 33-point AI delta overlay
               </div>
             </div>
           </button>
 
-          {/* Tile 3: Founding Partner Pass (Live Status) */}
+          {/* Tile 3: Founding Partner Pass (Live Status + Metallic Credential Sheen) */}
           <button
             type="button"
             onClick={() => setPartnerPassOpen(true)}
-            className="flex flex-col items-start justify-between rounded-xl border border-amber-400/35 bg-amber-500/[0.08] p-3 text-left transition hover:border-amber-400/60"
+            className="forge-metallic-pass forge-tactile-press flex min-h-[88px] flex-col items-start justify-between rounded-2xl p-4 text-left transition-colors duration-150 hover:border-amber-400/60"
           >
-            <ShieldCheck size={18} className="text-amber-300" />
-            <div className="mt-2 min-w-0 w-full">
+            <ShieldCheck size={19} strokeWidth={1.75} className="text-amber-300" aria-hidden="true" />
+            <div className="mt-2.5 min-w-0 w-full">
               <div className="truncate text-xs font-bold text-white">Founding Partner Pass</div>
               <div className="truncate text-[11px] font-semibold text-amber-200">
                 {partnerPassStatusLabel}
@@ -489,12 +493,12 @@ export default function ExecutiveCommandCenterClient({
           {/* Tile 4: Form Lab Video Critique */}
           <Link
             href="/dashboard/fitness?workspace=video"
-            className="flex flex-col items-start justify-between rounded-xl border border-white/10 bg-[#0A121E] p-3 text-left transition hover:border-sky-400/40"
+            className="forge-tactile-press flex min-h-[88px] flex-col items-start justify-between rounded-2xl border border-white/[0.07] bg-[#111318] p-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-colors duration-150 hover:border-white/15 hover:bg-[#181B22]"
           >
-            <Video size={18} className="text-sky-300" />
-            <div className="mt-2 min-w-0 w-full">
+            <Video size={19} strokeWidth={1.75} className="text-sky-300" aria-hidden="true" />
+            <div className="mt-2.5 min-w-0 w-full">
               <div className="truncate text-xs font-bold text-white">Form Lab Critique</div>
-              <div className="truncate text-[11px] text-slate-400">
+              <div className="truncate text-[11px] tabular-nums text-zinc-400">
                 {remainingFormLabCredits} monthly {remainingFormLabCredits === 1 ? 'credit' : 'credits'} left
               </div>
             </div>
@@ -503,44 +507,44 @@ export default function ExecutiveCommandCenterClient({
       </section>
 
       {/* Compact Weekly Telemetry & 1:1 Coaching Bar */}
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-        <div className="rounded-xl border border-white/10 bg-[#0A121E] p-3 text-slate-100">
-          <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-white/[0.07] bg-[#111318] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-5">
+          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
             <span>7-Day Volume &amp; Readiness</span>
-            <Link href="/dashboard/fitness?workspace=progress" className="text-amber-300">
+            <Link href="/dashboard/fitness?workspace=progress" className="text-emerald-300 hover:underline">
               Progress →
             </Link>
           </div>
-          <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+          <div className="mt-2.5 grid grid-cols-3 gap-2 text-xs">
             <div>
-              <span className="block text-[10px] text-slate-400">Volume</span>
-              <span className="font-mono font-bold text-amber-300">
+              <span className="block text-[10px] uppercase tracking-wider text-zinc-400">Volume</span>
+              <span className="font-mono font-bold tabular-nums text-amber-300">
                 {dossier.totalTonnageLbs.toLocaleString()} lb
               </span>
             </div>
             <div>
-              <span className="block text-[10px] text-slate-400">ACWR</span>
-              <span className="font-mono font-bold text-emerald-300">
+              <span className="block text-[10px] uppercase tracking-wider text-zinc-400">ACWR</span>
+              <span className="font-mono font-bold tabular-nums text-emerald-300">
                 {dossier.acwrRatio !== null && dossier.acwrRatio !== undefined
                   ? dossier.acwrRatio.toFixed(2)
                   : '—'}
               </span>
             </div>
             <div>
-              <span className="block text-[10px] text-slate-400">PRs</span>
-              <span className="font-mono font-bold text-sky-300">
+              <span className="block text-[10px] uppercase tracking-wider text-zinc-400">PRs</span>
+              <span className="font-mono font-bold tabular-nums text-sky-300">
                 {dossier.topPrsThisWeek.length}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col justify-between gap-2 rounded-xl border border-emerald-400/25 bg-[#0A121E] p-3 text-slate-100">
-          <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">
+        <div className="flex flex-col justify-between gap-2.5 rounded-2xl border border-emerald-500/25 bg-[#111318] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-5">
+          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
             <span>{nextSession ? 'Upcoming 1:1 Session' : 'Live Studio Coaching'}</span>
-            <span>{totalRemaining > 0 ? `${totalRemaining} Credits` : 'Studio Ready'}</span>
+            <span className="tabular-nums">{totalRemaining > 0 ? `${totalRemaining} Credits` : 'Studio Ready'}</span>
           </div>
-          <div className="flex items-center justify-between gap-2 text-xs text-slate-300" suppressHydrationWarning>
+          <div className="flex items-center justify-between gap-2 text-xs text-zinc-300" suppressHydrationWarning>
             <span className="truncate">
               {nextSession
                 ? new Date(nextSession.scheduled_at).toLocaleDateString('en-US', {
@@ -548,12 +552,12 @@ export default function ExecutiveCommandCenterClient({
                     month: 'short',
                     day: 'numeric',
                   })
-                : '1-on-1 Coach Gordon Studio'}
+                : '1-on-1 Coach Gordon Studio ($180/session)'}
             </span>
             <div className="flex shrink-0 items-center gap-1.5">
               <Link
                 href="/dashboard/live"
-                className="rounded-md bg-emerald-500 px-2.5 py-1 text-[11px] font-extrabold text-slate-950"
+                className="forge-tactile-press inline-flex min-h-[38px] items-center rounded-xl bg-emerald-400 px-3 py-1.5 text-[11px] font-extrabold text-[#090A0D] transition-colors hover:bg-emerald-300"
               >
                 Studio →
               </Link>
@@ -569,7 +573,7 @@ export default function ExecutiveCommandCenterClient({
                     })
                     downloadIcsFile('forge-live-session', ics)
                   }}
-                  className="rounded-md border border-white/15 px-2 py-1 text-[11px] font-semibold text-white"
+                  className="forge-tactile-press inline-flex min-h-[38px] items-center rounded-xl border border-white/15 bg-[#181B22] px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#1D212A]"
                 >
                   +ICS
                 </button>
@@ -590,20 +594,25 @@ export default function ExecutiveCommandCenterClient({
         onClick={e => {
           if (e.target === e.currentTarget) setDeskAuditOpen(false)
         }}
-        className="m-0 h-dvh max-h-dvh w-screen max-w-none overscroll-contain bg-[#070B12] p-0 text-slate-100 sm:m-auto sm:h-auto sm:max-h-[92dvh] sm:w-[min(95vw,760px)] sm:rounded-2xl sm:border sm:border-white/15"
+        className="forge-glass-modal m-0 h-dvh max-h-dvh w-screen max-w-none overscroll-contain p-0 text-zinc-100 sm:m-auto sm:h-auto sm:max-h-[92dvh] sm:w-[min(95vw,760px)] sm:rounded-2xl"
       >
         <div className="max-h-dvh overflow-y-auto overscroll-contain p-4 sm:max-h-[90dvh] sm:p-6">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 id={deskAuditHeadingId} className="font-serif text-lg font-bold text-white">
-              Desk Ergonomics Camera Audit
-            </h2>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+                33-Point Workstation Diagnostics
+              </div>
+              <h2 id={deskAuditHeadingId} className="font-serif text-lg font-bold tracking-tight text-white">
+                Desk Ergonomics Camera Audit
+              </h2>
+            </div>
             <button
               type="button"
               onClick={() => setDeskAuditOpen(false)}
               aria-label="Close Desk Ergonomics Audit"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-200 transition hover:bg-white/10"
+              className="forge-tactile-press inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-[#181B22] text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A]"
             >
-              <X size={16} />
+              <X size={18} strokeWidth={1.75} aria-hidden="true" />
             </button>
           </div>
 

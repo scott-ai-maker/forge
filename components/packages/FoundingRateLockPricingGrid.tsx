@@ -120,7 +120,7 @@ export default function FoundingRateLockPricingGrid({
         </button>
       </div>
 
-      {/* 4-Card Luxury Carbon & Gold Pricing Grid */}
+      {/* 4-Card Obsidian & Brushed Steel Pricing Grid */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {FOUNDING_PRICING_CARDS.map(tier => {
           const isFeatured = Boolean(tier.featured)
@@ -133,15 +133,13 @@ export default function FoundingRateLockPricingGrid({
                 flexDirection: 'column',
                 overflow: 'hidden',
                 borderRadius: 16,
-                background: isFeatured
-                  ? 'linear-gradient(160deg, rgba(22, 32, 52, 0.97) 0%, rgba(8, 14, 22, 0.99) 100%)'
-                  : 'linear-gradient(160deg, rgba(15, 23, 42, 0.94) 0%, rgba(8, 14, 20, 0.98) 100%)',
+                background: '#111318',
                 border: isFeatured
-                  ? '1px solid rgba(245, 158, 11, 0.72)'
-                  : '1px solid rgba(148, 163, 184, 0.22)',
+                  ? '1px solid rgba(245, 158, 11, 0.6)'
+                  : '1px solid rgba(255, 255, 255, 0.07)',
                 boxShadow: isFeatured
-                  ? '0 24px 56px rgba(0, 0, 0, 0.65), 0 0 36px rgba(245, 158, 11, 0.14), inset 0 1px 0 rgba(251, 191, 36, 0.3)'
-                  : '0 16px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                  ? 'inset 0 1px 0 rgba(251, 191, 36, 0.28), 0 24px 56px rgba(0, 0, 0, 0.68), 0 0 32px rgba(245, 158, 11, 0.1)'
+                  : 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 16px 40px rgba(0, 0, 0, 0.5)',
                 textAlign: 'left',
               }}
             >
@@ -344,18 +342,19 @@ export default function FoundingRateLockPricingGrid({
                     <button
                       type="button"
                       onClick={onPrelaunchClaimClick}
+                      className="forge-tactile-press"
                       style={{
                         width: '100%',
                         minHeight: 46,
                         padding: '0.7rem 1rem',
-                        borderRadius: 10,
+                        borderRadius: 12,
                         border: isFeatured
                           ? '1px solid #FBBF24'
-                          : '1px solid rgba(245, 158, 11, 0.55)',
+                          : '1px solid rgba(255, 255, 255, 0.12)',
                         background: isFeatured
                           ? 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)'
-                          : 'rgba(245, 158, 11, 0.12)',
-                        color: isFeatured ? '#080E14' : '#FDE68A',
+                          : '#181B22',
+                        color: isFeatured ? '#090A0D' : '#F8FAFC',
                         fontFamily: 'var(--font-heading)',
                         fontSize: '0.92rem',
                         fontWeight: 800,
@@ -369,6 +368,7 @@ export default function FoundingRateLockPricingGrid({
                   ) : (
                     <Link
                       href={tier.ctaHref}
+                      className="forge-tactile-press"
                       style={{
                         width: '100%',
                         minHeight: 46,
@@ -376,14 +376,14 @@ export default function FoundingRateLockPricingGrid({
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: '0.7rem 1rem',
-                        borderRadius: 10,
+                        borderRadius: 12,
                         border: isFeatured
                           ? '1px solid #FBBF24'
-                          : '1px solid rgba(245, 158, 11, 0.55)',
+                          : '1px solid rgba(255, 255, 255, 0.12)',
                         background: isFeatured
                           ? 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)'
-                          : 'rgba(245, 158, 11, 0.12)',
-                        color: isFeatured ? '#080E14' : '#FDE68A',
+                          : '#181B22',
+                        color: isFeatured ? '#090A0D' : '#F8FAFC',
                         fontFamily: 'var(--font-heading)',
                         fontSize: '0.92rem',
                         fontWeight: 800,

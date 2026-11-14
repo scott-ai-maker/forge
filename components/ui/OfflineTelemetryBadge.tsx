@@ -40,7 +40,7 @@ export default function OfflineTelemetryBadge() {
 
     const handleOnline = () => {
       setIsOnline(true)
-      attemptSync()
+      void attemptSync()
     }
 
     const handleOffline = () => {
@@ -60,7 +60,6 @@ export default function OfflineTelemetryBadge() {
     }
   }, [attemptSync, checkPending])
 
-  // Don't render anything if online and no pending offline sets and no notice
   if (isOnline && pendingCount === 0 && !showSyncedNotice && !isSyncing) {
     return null
   }
@@ -74,87 +73,53 @@ export default function OfflineTelemetryBadge() {
         top: 'calc(12px + env(safe-area-inset-top, 0px))',
         right: 'max(clamp(12px, 2.5vw, 24px), env(safe-area-inset-right, 12px))',
         zIndex: 99999,
-        animation: 'fadeIn 0.25s ease-out',
         pointerEvents: 'auto',
       }}
     >
       <div
-        className="glass-card"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '6px 12px',
-          borderRadius: 20,
-          background: !isOnline
-            ? 'rgba(245, 158, 11, 0.16)'
+        className={`forge-glass-pill inline-flex min-h-[44px] items-center gap-2.5 rounded-full px-3.5 py-1.5 ${
+          !isOnline
+            ? 'border-amber-500/35'
             : showSyncedNotice
-              ? 'rgba(16, 185, 129, 0.18)'
-              : 'rgba(14, 23, 36, 0.92)',
-          border: !isOnline
-            ? '1px solid rgba(245, 158, 11, 0.5)'
-            : showSyncedNotice
-              ? '1px solid rgba(52, 211, 153, 0.5)'
-              : '1px solid rgba(197, 160, 89, 0.4)',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-        }}
+              ? 'border-emerald-500/35'
+              : 'border-white/15'
+        }`}
       >
         <span
-          style={{
-            width: 7,
-            height: 7,
-            borderRadius: '50%',
-            background: !isOnline ? '#F59E0B' : '#34D399',
-            boxShadow: `0 0 8px ${!isOnline ? '#F59E0B' : '#34D399'}`,
-          }}
+          className={`h-2 w-2 rounded-full ${
+            !isOnline ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.7)]' : 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]'
+          }`}
         />
 
         <span
-          style={{
-            fontFamily: 'Raleway, sans-serif',
-            fontSize: 11,
-            fontWeight: 800,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            color: !isOnline ? '#FDE68A' : showSyncedNotice ? '#A7F3D0' : 'var(--gold-lt)',
-          }}
+          className={`font-mono text-[11px] font-bold uppercase tracking-[0.1em] tabular-nums ${
+            !isOnline ? 'text-amber-200' : showSyncedNotice ? 'text-emerald-200' : 'text-zinc-200'
+          }`}
         >
           {!isOnline ? (
             pendingCount > 0
-              ? `Offline · ${pendingCount} Set${pendingCount > 1 ? 's' : ''} Queued`
-              : 'Offline Mode'
+              ? `Offline · ${pendingCount} Set${pendingCount > 1 ? 's' : ''} Saved Locally`
+              : 'Offline Mode · Sets Cached Locally'
           ) : isSyncing ? (
-            'Syncing Telemetry...'
+            'Syncing Telemetry…'
           ) : showSyncedNotice ? (
             '✓ Telemetry Synced'
           ) : pendingCount > 0 ? (
-            `${pendingCount} Set${pendingCount > 1 ? 's' : ''} Pending Sync`
+            `${pendingCount} Set${pendingCount > 1 ? 's' : ''} Ready to Sync`
           ) : null}
         </span>
 
         {isOnline && pendingCount > 0 && !isSyncing && (
           <button
             type="button"
-            onClick={attemptSync}
+            onClick={() => void attemptSync()}
             aria-label="Sync offline sets now"
-            style={{
-              padding: '2px 6px',
-              borderRadius: 4,
-              background: 'var(--gold)',
-              color: '#080E14',
-              fontSize: 10,
-              fontWeight: 800,
-              cursor: 'pointer',
-              border: 'none',
-            }}
+            className="forge-tactile-press min-h-[32px] rounded-full bg-emerald-400 px-3 py-1 text-[10.5px] font-extrabold uppercase tracking-wider text-zinc-950 transition-colors hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
           >
-            Sync
+            Sync Now
           </button>
         )}
       </div>
     </div>
   )
 }
-

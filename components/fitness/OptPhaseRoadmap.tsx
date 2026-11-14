@@ -105,23 +105,23 @@ export default function OptPhaseRoadmap({
     shouldShowTrigger('phase_02_load_milestone')
 
   return (
-    <section className="rounded-xl border border-white/10 bg-[#0A121E] p-3.5 text-slate-100">
-      <div className="mb-2.5 flex items-center justify-between gap-2">
+    <section className="rounded-2xl border border-white/[0.07] bg-[#111318] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-6">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-amber-300">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
             5-Phase NASM OPT™ Progression Roadmap
           </div>
-          <div className="text-xs text-slate-400">
+          <div className="mt-0.5 text-xs text-zinc-300 tabular-nums">
             Swipe phases · Currently in Phase 0{normalizedActive}
           </div>
         </div>
-        <span className="rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold text-emerald-200">
+        <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-300">
           Joint-First Engine
         </span>
       </div>
 
       {/* Horizontal Snap-Scroll Nodes (min-w-[132px] per node) */}
-      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2">
+      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 [touch-action:pan-x_pan-y]">
         {OPT_PHASES.map(item => {
           const isCurrent = item.phase === normalizedActive
           const isSelected = item.phase === selectedPhase
@@ -133,54 +133,56 @@ export default function OptPhaseRoadmap({
               type="button"
               onClick={() => setSelectedPhase(item.phase)}
               aria-pressed={isSelected}
-              className={`min-w-[132px] shrink-0 snap-start rounded-xl border p-2.5 text-left transition ${
+              className={`forge-tactile-press min-h-[76px] min-w-[132px] shrink-0 snap-start rounded-xl border p-3 text-left transition-colors duration-150 ${
                 isSelected
-                  ? 'border-amber-400 bg-amber-400/15 text-white'
+                  ? 'border-emerald-500/40 bg-[#181B22] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                   : isCurrent
-                    ? 'border-emerald-400/50 bg-emerald-500/10 text-slate-100'
-                    : 'border-white/10 bg-slate-950/75 text-slate-300 hover:bg-white/[0.04]'
+                    ? 'border-emerald-500/25 bg-emerald-500/10 text-zinc-100'
+                    : 'border-white/[0.07] bg-[#090A0D] text-zinc-300 hover:border-white/15 hover:bg-[#181B22]'
               }`}
             >
               <div className="flex items-center justify-between gap-1">
-                <span className="font-mono text-[10px] font-extrabold tracking-wider text-amber-300">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] tabular-nums text-zinc-400">
                   {item.code}
                 </span>
                 {isUnlocked ? (
-                  <CheckCircle2 size={12} className="text-emerald-400" />
+                  <CheckCircle2 size={13} strokeWidth={1.75} className="text-emerald-400" aria-hidden="true" />
                 ) : (
-                  <Lock size={11} className="text-slate-500" />
+                  <Lock size={12} strokeWidth={1.75} className="text-zinc-500" aria-hidden="true" />
                 )}
               </div>
               <div className="mt-1 text-xs font-bold leading-snug text-white">{item.shortTitle}</div>
-              <div className="mt-1 text-[10px] text-slate-400">{item.repsAndSets.split('·')[1]?.trim()}</div>
+              <div className="mt-1 font-mono text-[10px] tabular-nums text-zinc-400">
+                {item.repsAndSets.split('·')[1]?.trim()}
+              </div>
             </button>
           )
         })}
       </div>
 
       {/* Selected Phase Detail Strip */}
-      <div className="mt-2 rounded-lg border border-white/10 bg-black/35 p-3">
+      <div className="mt-2.5 rounded-xl border border-white/[0.07] bg-[#181B22] p-3.5">
         <div className="flex flex-wrap items-center justify-between gap-1.5">
           <span className="text-xs font-bold text-white">
-            {activeSpec.code}: {activeSpec.outcomeHeadline}
+            {activeSpec.code} · {activeSpec.outcomeHeadline}
           </span>
-          <span className="font-mono text-[10px] text-amber-300">
+          <span className="font-mono text-[11px] font-semibold tabular-nums text-emerald-300">
             {activeSpec.repsAndSets} · {activeSpec.restInterval}
           </span>
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-slate-300">{activeSpec.plainEnglishSummary}</p>
+        <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">{activeSpec.plainEnglishSummary}</p>
       </div>
 
       {/* Trigger 5: Subtle Coach-Card Banner upon unlocking Phase 02 (Plus -> Coach Support) */}
       {showCoachMilestoneBanner ? (
-        <div className="mt-2.5 flex flex-col justify-between gap-2 rounded-xl border border-amber-400/35 bg-amber-500/10 p-3 sm:flex-row sm:items-center">
-          <div className="flex items-start gap-2 text-xs text-slate-200">
-            <ShieldCheck size={16} className="mt-0.5 shrink-0 text-amber-300" />
+        <div className="mt-3 flex flex-col justify-between gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3.5 sm:flex-row sm:items-center">
+          <div className="flex items-start gap-2.5 text-xs text-zinc-200">
+            <ShieldCheck size={17} strokeWidth={1.75} className="mt-0.5 shrink-0 text-amber-300" aria-hidden="true" />
             <div>
-              <div className="font-bold text-amber-200">
+              <div className="font-bold tabular-nums text-amber-200">
                 Phase 02 Load Milestone Unlocked · {coachSpotsLeft} of {coachRosterCap} Coach Support Spots Open
               </div>
-              <div className="text-[11px] text-slate-300">
+              <div className="mt-0.5 text-[11px] leading-relaxed text-zinc-300">
                 Add 1-on-1 Coach Gordon chat (24h SLA), bespoke load calibration &amp; 8 Form Lab reviews/mo.
               </div>
             </div>
@@ -188,9 +190,10 @@ export default function OptPhaseRoadmap({
           <button
             type="button"
             onClick={() => setUpgradeOpen(true)}
-            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-950 transition hover:bg-amber-300"
+            className="forge-tactile-press inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-xl bg-amber-400 px-3.5 py-2 text-xs font-extrabold uppercase tracking-wider text-[#090A0D] transition-colors duration-150 hover:bg-amber-300"
           >
-            Claim Spot ({coachSpotsLeft}/{coachRosterCap}) <ArrowUpRight size={13} />
+            <span className="tabular-nums">Claim Spot ({coachSpotsLeft}/{coachRosterCap})</span>{' '}
+            <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
       ) : null}

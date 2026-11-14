@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
+import TelemetryRingGauge from '@/components/ui/TelemetryRingGauge'
 import { useSfxMuted } from '@/lib/sfx-audio'
 import {
   evaluateCameraReadiness,
@@ -118,10 +119,10 @@ export default function CameraReadinessCheck({
           void videoRef.current.play().catch(() => {})
         }
       } catch {
-        setCameraNotice('Hands-free simulation active (camera permission optional).')
+        setCameraNotice('Camera permission unavailable — running hands-free biomechanics cadence.')
       }
     } else {
-      setCameraNotice('Hands-free simulation active in current browser.')
+      setCameraNotice('Live camera stream unavailable in this browser — running hands-free cadence.')
     }
 
     playTone('countdown')
@@ -149,104 +150,53 @@ export default function CameraReadinessCheck({
     commitEvaluation(targetMode, preset)
   }
 
+  const isRepLocked = currentRep === 3
+
   return (
     <section
       data-testid="camera-readiness-check"
       aria-label="30-Second Pre-Workout Camera Readiness Check"
-      style={{
-        background: 'linear-gradient(180deg, rgba(13, 23, 38, 0.97) 0%, rgba(7, 12, 22, 0.99) 100%)',
-        border: '1.5px solid rgba(56, 189, 248, 0.42)',
-        borderRadius: 12,
-        padding: '14px 16px',
-        marginBottom: 12,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-      }}
+      className="forge-surface-card mb-3 space-y-3.5 rounded-2xl p-4 text-zinc-100 sm:p-5"
     >
       {/* Top Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span
-              style={{
-                fontFamily: 'var(--font-telemetry, monospace)',
-                fontSize: 10,
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: '#38BDF8',
-                background: 'rgba(56, 189, 248, 0.14)',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                padding: '2px 7px',
-                borderRadius: 4,
-              }}
-            >
-              Pre-Workout Overview · 30s Check
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
+              33-Point Readiness · 30s Check
             </span>
             {expressModeActive && (
-              <span
-                style={{
-                  fontFamily: 'var(--font-telemetry, monospace)',
-                  fontSize: 10,
-                  fontWeight: 800,
-                  color: '#FBBF24',
-                  background: 'rgba(245, 158, 11, 0.15)',
-                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                  padding: '2px 7px',
-                  borderRadius: 4,
-                }}
-              >
+              <span className="inline-flex items-center rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums text-amber-300">
                 20m Express Cap: Max 90s Warm-Up
               </span>
             )}
           </div>
           <h3
-            style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: 19,
-              fontWeight: 800,
-              letterSpacing: '0.03em',
-              textTransform: 'uppercase',
-              color: '#FFFFFF',
-              margin: '4px 0 0',
-            }}
+            className="mt-1.5 text-lg font-bold tracking-tight text-white sm:text-xl"
+            style={{ fontFamily: 'var(--font-heading)', textTransform: 'uppercase' }}
           >
             30-Second Camera Readiness Check
           </h3>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={toggleSfxMuted}
-            aria-label={sfxMuted ? 'Unmute readiness audio cues (currently SFX MUTED)' : 'Mute readiness audio cues'}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.14)',
-              color: sfxMuted ? '#94A3B8' : '#FBBF24',
-              borderRadius: 6,
-              padding: '6px 9px',
-              fontSize: 10.5,
-              fontFamily: 'var(--font-telemetry, monospace)',
-              cursor: 'pointer',
-            }}
+            aria-label="Readiness audio cues"
+            aria-pressed={!sfxMuted}
+            className={`forge-tactile-press inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border px-3 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+              sfxMuted
+                ? 'border-white/10 bg-[#181B22] text-zinc-400 hover:border-white/15 hover:bg-[#1D212A] hover:text-zinc-200'
+                : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15'
+            }`}
           >
             {sfxMuted ? 'SFX MUTED' : 'SFX ON'}
           </button>
           <button
             type="button"
             onClick={onSkip}
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              color: '#E2E8F0',
-              borderRadius: 6,
-              padding: '6px 11px',
-              fontSize: 11.5,
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
+            className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-white/10 bg-[#181B22] px-3.5 text-xs font-semibold text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
           >
             Skip to Workout →
           </button>
@@ -256,28 +206,19 @@ export default function CameraReadinessCheck({
       {/* Screen Selector */}
       {!isScanning && !result && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             <button
               type="button"
               onClick={() => setScreenMode('overhead_squat')}
-              style={{
-                textAlign: 'left',
-                padding: '10px 12px',
-                borderRadius: 8,
-                cursor: 'pointer',
-                background:
-                  screenMode === 'overhead_squat'
-                    ? 'rgba(56, 189, 248, 0.16)'
-                    : 'rgba(8, 14, 24, 0.85)',
-                border:
-                  screenMode === 'overhead_squat'
-                    ? '1.5px solid #38BDF8'
-                    : '1px solid rgba(255,255,255,0.1)',
-                color: '#F8FAFC',
-              }}
+              aria-pressed={screenMode === 'overhead_squat'}
+              className={`forge-tactile-press min-h-[44px] rounded-xl border p-3 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+                screenMode === 'overhead_squat'
+                  ? 'border-emerald-500/35 bg-emerald-500/10 text-white'
+                  : 'border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
+              }`}
             >
-              <div style={{ fontSize: 12.5, fontWeight: 800 }}>3 Bodyweight Overhead Squats</div>
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+              <div className="text-xs font-bold tabular-nums text-white">3 Bodyweight Overhead Squats</div>
+              <div className="mt-1 text-[11px] leading-snug text-zinc-400">
                 Ankle dorsiflexion · Hip depth · Knee valgus · Torso lean
               </div>
             </button>
@@ -285,24 +226,15 @@ export default function CameraReadinessCheck({
             <button
               type="button"
               onClick={() => setScreenMode('scapular_wall_slides')}
-              style={{
-                textAlign: 'left',
-                padding: '10px 12px',
-                borderRadius: 8,
-                cursor: 'pointer',
-                background:
-                  screenMode === 'scapular_wall_slides'
-                    ? 'rgba(56, 189, 248, 0.16)'
-                    : 'rgba(8, 14, 24, 0.85)',
-                border:
-                  screenMode === 'scapular_wall_slides'
-                    ? '1.5px solid #38BDF8'
-                    : '1px solid rgba(255,255,255,0.1)',
-                color: '#F8FAFC',
-              }}
+              aria-pressed={screenMode === 'scapular_wall_slides'}
+              className={`forge-tactile-press min-h-[44px] rounded-xl border p-3 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+                screenMode === 'scapular_wall_slides'
+                  ? 'border-emerald-500/35 bg-emerald-500/10 text-white'
+                  : 'border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
+              }`}
             >
-              <div style={{ fontSize: 12.5, fontWeight: 800 }}>3 Scapular Wall Slides</div>
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+              <div className="text-xs font-bold tabular-nums text-white">3 Scapular Wall Slides</div>
+              <div className="mt-1 text-[11px] leading-snug text-zinc-400">
                 Thoracic extension · Shoulder flexion · Cervical drift
               </div>
             </button>
@@ -316,68 +248,42 @@ export default function CameraReadinessCheck({
                 }
                 setScreenMode('dual_screen')
               }}
-              style={{
-                textAlign: 'left',
-                padding: '10px 12px',
-                borderRadius: 8,
-                cursor: 'pointer',
-                background:
-                  screenMode === 'dual_screen'
-                    ? 'rgba(245, 158, 11, 0.16)'
-                    : 'rgba(8, 14, 24, 0.85)',
-                border:
-                  screenMode === 'dual_screen'
-                    ? '1.5px solid #F59E0B'
-                    : '1px solid rgba(255,255,255,0.1)',
-                color: '#F8FAFC',
-              }}
+              aria-pressed={screenMode === 'dual_screen'}
+              className={`forge-tactile-press min-h-[44px] rounded-xl border p-3 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+                screenMode === 'dual_screen'
+                  ? 'border-amber-500/35 bg-amber-500/10 text-white'
+                  : 'border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
+              }`}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 12.5, fontWeight: 800 }}>Dual-Screen Full Check</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-white">Dual-Screen Full Check</span>
                 {!allowDualScreen && (
-                  <span style={{ fontSize: 9, fontFamily: 'var(--font-telemetry, monospace)', color: '#FBBF24', background: 'rgba(245,158,11,0.18)', padding: '1px 5px', borderRadius: 4 }}>
+                  <span className="rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 font-mono text-[9.5px] font-bold uppercase tracking-wider text-amber-300">
                     PLUS
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+              <div className="mt-1 text-[11px] leading-snug text-zinc-400">
                 Lower + Upper kinetic chain + trend alerts
               </div>
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
               onClick={() => void startThirtySecondCheck()}
-              className="tactile-btn"
-              style={{
-                padding: '10px 16px',
-                minHeight: 44,
-                borderRadius: 8,
-                border: 'none',
-                background: 'linear-gradient(135deg, #38BDF8 0%, #0284C7 100%)',
-                color: '#041019',
-                fontFamily: 'var(--font-heading)',
-                fontSize: 14,
-                fontWeight: 800,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
+              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               <GaaIcon name="camera" size={14} tone="dark" />
               <span>Start 3-Rep Camera Check</span>
             </button>
 
             {/* Dev / Preview Simulate Readiness Check Selector */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <div className="flex flex-wrap items-center gap-2">
               <label
                 htmlFor="simulate-readiness-preset"
-                style={{ fontSize: 11, fontFamily: 'var(--font-telemetry, monospace)', color: '#94A3B8' }}
+                className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400"
               >
                 Simulate Readiness Check:
               </label>
@@ -385,15 +291,7 @@ export default function CameraReadinessCheck({
                 id="simulate-readiness-preset"
                 value={selectedPreset}
                 onChange={e => handleSimulatePreset(e.target.value as ReadinessPresetId)}
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: 7,
-                  background: '#080E18',
-                  border: '1px solid rgba(255,255,255,0.16)',
-                  color: '#F8FAFC',
-                  fontSize: 16,
-                  cursor: 'pointer',
-                }}
+                className="min-h-[44px] cursor-pointer rounded-xl border border-white/10 bg-[#181B22] px-3 py-2 text-base text-white transition-colors duration-150 hover:border-white/15 focus:border-emerald-400/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
               >
                 {(Object.keys(READINESS_PRESET_LABELS) as ReadinessPresetId[]).map(presetKey => (
                   <option key={presetKey} value={presetKey}>
@@ -404,17 +302,7 @@ export default function CameraReadinessCheck({
               <button
                 type="button"
                 onClick={() => handleSimulatePreset(selectedPreset)}
-                style={{
-                  padding: '8px 11px',
-                  minHeight: 40,
-                  borderRadius: 7,
-                  background: 'rgba(245, 158, 11, 0.14)',
-                  border: '1px solid rgba(245, 158, 11, 0.4)',
-                  color: '#FBBF24',
-                  fontSize: 11.5,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
+                className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-300 transition-colors duration-150 hover:bg-amber-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
               >
                 Run Preset
               </button>
@@ -423,114 +311,186 @@ export default function CameraReadinessCheck({
         </>
       )}
 
-      {/* Active 3-Rep HUD */}
+      {/* Active 3-Rep Computer-Vision HUD */}
       {isScanning && (
         <div
-          style={{
-            position: 'relative',
-            borderRadius: 10,
-            overflow: 'hidden',
-            background: '#050A14',
-            border: '1.5px solid #38BDF8',
-            padding: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-          }}
+          className={`relative overflow-hidden rounded-2xl border bg-[#090A0D] p-3.5 transition-colors duration-300 ${
+            isRepLocked ? 'border-emerald-400/70' : 'border-amber-400/70'
+          }`}
         >
-          <video
-            ref={videoRef}
-            muted
-            playsInline
-            style={{
-              width: '100%',
-              maxHeight: 210,
-              objectFit: 'cover',
-              borderRadius: 8,
-              background: '#080E18',
-            }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-            <span
+          <div className="relative overflow-hidden rounded-xl bg-[#090A0D]">
+            <video
+              ref={videoRef}
+              muted
+              playsInline
               style={{
-                fontFamily: 'var(--font-telemetry, monospace)',
-                fontSize: 13,
-                fontWeight: 800,
-                color: '#38BDF8',
+                width: '100%',
+                height: 215,
+                objectFit: 'cover',
+                display: 'block',
+                background: '#090A0D',
               }}
+            />
+
+            {/* Frosted-Glass Top Instruction Pill */}
+            <div className="forge-glass-pill absolute inset-x-2.5 top-2.5 z-10 flex items-center justify-between gap-2 rounded-full px-3 py-1.5 text-[11.5px] text-zinc-100">
+              <span className="truncate font-medium">
+                Frame full body in lens · <strong className="tabular-nums text-white">Rep {currentRep} of 3</strong>
+              </span>
+              <span
+                className={`shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors duration-300 ${
+                  isRepLocked
+                    ? 'border-emerald-500/35 bg-emerald-500/15 text-emerald-300'
+                    : 'border-amber-500/35 bg-amber-500/15 text-amber-300'
+                }`}
+              >
+                {isRepLocked ? 'LOCKED' : 'TRACKING'}
+              </span>
+            </div>
+
+            {/* Corner Framing Brackets + Glowing Vector Skeleton Overlay */}
+            <svg
+              viewBox="0 0 100 60"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 h-full w-full"
+            >
+              <defs>
+                <filter id="readiness-hud-glow" x="-25%" y="-25%" width="150%" height="150%">
+                  <feGaussianBlur stdDeviation="0.7" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <path
+                d="M 5 16 L 5 9 L 13 9 M 87 9 L 95 9 L 95 16 M 5 48 L 5 55 L 13 55 M 87 55 L 95 55 L 95 48"
+                fill="none"
+                stroke={isRepLocked ? '#34D399' : '#FBBF24'}
+                strokeWidth="0.9"
+                strokeLinecap="round"
+                style={{ transition: 'stroke 260ms ease' }}
+              />
+              <g filter="url(#readiness-hud-glow)" opacity="0.88">
+                <line x1="50" y1="16" x2="50" y2="33" stroke={isRepLocked ? '#34D399' : '#FBBF24'} strokeWidth="0.75" />
+                <line x1="42" y1="21" x2="58" y2="21" stroke={isRepLocked ? '#34D399' : '#FBBF24'} strokeWidth="0.75" />
+                <line x1="42" y1="21" x2="38" y2="12" stroke="#34D399" strokeWidth="0.65" />
+                <line x1="58" y1="21" x2="62" y2="12" stroke="#34D399" strokeWidth="0.65" />
+                <line x1="45" y1="33" x2="55" y2="33" stroke={isRepLocked ? '#34D399' : '#FBBF24'} strokeWidth="0.75" />
+                <line x1="45" y1="33" x2="43" y2="49" stroke="#34D399" strokeWidth="0.75" />
+                <line x1="55" y1="33" x2="57" y2="49" stroke="#34D399" strokeWidth="0.75" />
+              </g>
+              {[
+                { x: 50, y: 15 },
+                { x: 42, y: 21 },
+                { x: 58, y: 21 },
+                { x: 45, y: 33 },
+                { x: 55, y: 33 },
+                { x: 43, y: 49 },
+                { x: 57, y: 49 },
+              ].map((pt, i) => (
+                <g key={i} opacity={0.94 - i * 0.03}>
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r="2.1"
+                    fill={isRepLocked ? 'rgba(52,211,153,0.2)' : 'rgba(251,191,36,0.2)'}
+                    stroke={isRepLocked ? 'rgba(52,211,153,0.5)' : 'rgba(251,191,36,0.5)'}
+                    strokeWidth="0.35"
+                  />
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r="1.05"
+                    fill="#090A0D"
+                    stroke="#FFFFFF"
+                    strokeWidth="0.55"
+                  />
+                </g>
+              ))}
+            </svg>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <span
+              className={`font-mono text-xs font-extrabold uppercase tracking-wider tabular-nums ${
+                isRepLocked ? 'text-emerald-300' : 'text-amber-300'
+              }`}
             >
               Rep {currentRep} of 3
             </span>
-            <div style={{ display: 'flex', gap: 5 }}>
+            <div className="flex gap-1.5">
               {[1, 2, 3].map(r => (
                 <span
                   key={r}
-                  style={{
-                    width: 28,
-                    height: 6,
-                    borderRadius: 999,
-                    background: r <= currentRep ? '#38BDF8' : 'rgba(255,255,255,0.14)',
-                  }}
+                  className={`h-1.5 w-8 rounded-full transition-colors duration-200 ${
+                    r <= currentRep
+                      ? isRepLocked
+                        ? 'bg-emerald-400'
+                        : 'bg-amber-400'
+                      : 'bg-white/10'
+                  }`}
                 />
               ))}
             </div>
           </div>
-          <div style={{ fontSize: 13, color: '#F8FAFC', fontWeight: 600 }}>
+
+          <div className="mt-2 text-xs font-medium leading-relaxed text-zinc-100 sm:text-sm">
             {REP_CUES[screenMode][currentRep - 1]}
           </div>
-          {cameraNotice && <div style={{ fontSize: 11, color: '#94A3B8' }}>{cameraNotice}</div>}
+
+          {cameraNotice && (
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#181B22] px-3 py-2 text-xs text-zinc-300">
+              <span>{cameraNotice}</span>
+              <button
+                type="button"
+                onClick={() => handleSimulatePreset(selectedPreset)}
+                className="forge-tactile-press min-h-[44px] rounded-xl border border-emerald-500/30 bg-emerald-500/15 px-3 text-[11px] font-bold uppercase tracking-wider text-emerald-300 transition-colors hover:bg-emerald-500/25"
+              >
+                Run Demo Scan
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Evaluated Readiness Score & Warm-Up Preview */}
       {result && (
-        <div
-          style={{
-            background: 'rgba(8, 14, 24, 0.88)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 10,
-            padding: '12px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontSize: 10.5, fontFamily: 'var(--font-telemetry, monospace)', color: '#94A3B8', textTransform: 'uppercase' }}>
-                Forge Readiness Score
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-telemetry, monospace)',
-                  fontSize: 24,
-                  fontWeight: 800,
-                  color: result.readinessScore >= 85 ? '#34D399' : '#FBBF24',
-                }}
-              >
-                {result.readinessScore}/100
+        <div className="space-y-3 rounded-2xl border border-white/10 bg-[#181B22]/90 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <TelemetryRingGauge
+                score={result.readinessScore}
+                max={100}
+                size={60}
+                strokeWidth={4.5}
+                showMax
+                tone={result.readinessScore >= 85 ? 'emerald' : 'amber'}
+                label={`Forge Readiness Score ${result.readinessScore} out of 100`}
+              />
+              <div>
+                <div className="forge-eyebrow-micro">Forge Readiness Score</div>
+                <div
+                  className={`mt-0.5 font-mono text-2xl font-extrabold tabular-nums ${
+                    result.readinessScore >= 85 ? 'text-emerald-300' : 'text-amber-300'
+                  }`}
+                >
+                  {result.readinessScore}
+                  <span className="text-xs font-medium text-zinc-400">/100</span>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div className="flex flex-wrap gap-1.5">
               {result.checks.map(chk => (
                 <span
                   key={chk.id}
-                  style={{
-                    fontSize: 10.5,
-                    fontFamily: 'var(--font-telemetry, monospace)',
-                    padding: '3px 7px',
-                    borderRadius: 5,
-                    background:
-                      chk.status === 'optimal'
-                        ? 'rgba(16, 185, 129, 0.14)'
-                        : 'rgba(245, 158, 11, 0.15)',
-                    border:
-                      chk.status === 'optimal'
-                        ? '1px solid rgba(16, 185, 129, 0.35)'
-                        : '1px solid rgba(245, 158, 11, 0.4)',
-                    color: chk.status === 'optimal' ? '#6EE7B7' : '#FDE68A',
-                  }}
+                  className={`rounded-full border px-2.5 py-1 font-mono text-[10.5px] font-semibold tabular-nums ${
+                    chk.status === 'optimal'
+                      ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300'
+                      : 'border-amber-500/25 bg-amber-500/10 text-amber-300'
+                  }`}
                 >
                   {chk.label}: {chk.measuredDeg}°
                 </span>
@@ -538,22 +498,13 @@ export default function CameraReadinessCheck({
             </div>
           </div>
 
-          <p style={{ margin: 0, fontSize: 12.5, color: '#CBD5E1', lineHeight: 1.45 }}>
+          <p className="text-xs leading-relaxed text-zinc-300 sm:text-sm">
             {result.coachSummary}
           </p>
 
           {result.injectedDrills.length > 0 && (
-            <div
-              style={{
-                background: 'rgba(245, 158, 11, 0.08)',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
-                borderRadius: 8,
-                padding: '8px 10px',
-                fontSize: 12,
-                color: '#FDE68A',
-              }}
-            >
-              <strong>
+            <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-200">
+              <strong className="tabular-nums text-amber-100">
                 Auto-Injecting {result.injectedDrills.length} Corrective Drills ({result.totalInjectedDurationSec}s
                 {expressModeActive ? ' · 20m Express Capped' : ''}):
               </strong>{' '}
@@ -561,7 +512,7 @@ export default function CameraReadinessCheck({
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap gap-2.5">
             <button
               type="button"
               onClick={() =>
@@ -571,22 +522,7 @@ export default function CameraReadinessCheck({
                   restrictionFlags: result.restrictionFlags,
                 })
               }
-              className="tactile-btn"
-              style={{
-                flex: '1 1 200px',
-                minHeight: 44,
-                padding: '10px 14px',
-                borderRadius: 8,
-                border: 'none',
-                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                color: '#080E14',
-                fontFamily: 'var(--font-heading)',
-                fontSize: 14,
-                fontWeight: 800,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-              }}
+              className="forge-tactile-press min-h-[44px] flex-1 basis-52 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               {result.injectedDrills.length > 0
                 ? 'Apply Warm-Up & Begin Set 1 →'
@@ -595,16 +531,7 @@ export default function CameraReadinessCheck({
             <button
               type="button"
               onClick={() => setResult(null)}
-              style={{
-                minHeight: 44,
-                padding: '8px 12px',
-                borderRadius: 8,
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#CBD5E1',
-                fontSize: 12,
-                cursor: 'pointer',
-              }}
+              className="forge-tactile-press min-h-[44px] rounded-xl border border-white/10 bg-[#090A0D] px-4 py-2.5 text-xs font-semibold text-zinc-300 transition-colors duration-150 hover:border-white/15 hover:bg-[#111318] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               Re-Scan
             </button>
@@ -614,4 +541,3 @@ export default function CameraReadinessCheck({
     </section>
   )
 }
-

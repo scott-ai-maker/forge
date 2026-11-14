@@ -16,90 +16,34 @@ export default function DashboardError({ error, reset }: ErrorProps) {
   return (
     <main
       id="main-content"
-      style={{
-        minHeight: '100dvh',
-        background: 'radial-gradient(ellipse at 50% 20%, rgba(197, 160, 89, 0.08) 0%, transparent 70%), var(--navy)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-      }}
+      className="forge-obsidian-canvas flex min-h-dvh items-center justify-center p-6"
     >
-      <div
-        style={{
-          maxWidth: '520px',
-          width: '100%',
-          textAlign: 'center',
-          background: 'rgba(14, 23, 36, 0.85)',
-          border: '1px solid rgba(197, 160, 89, 0.3)',
-          borderRadius: '8px',
-          padding: '40px 28px',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(197, 160, 89, 0.05)',
-        }}
-      >
+      <div className="forge-surface-card w-full max-w-lg rounded-2xl p-6 text-center sm:p-8">
+        <span className="inline-flex items-center rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-300">
+          Telemetry Sync Interrupted
+        </span>
         <h1
-          style={{
-            fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-            fontSize: 'clamp(24px, 5vw, 32px)',
-            color: 'var(--white)',
-            letterSpacing: '0.04em',
-            marginBottom: '12px',
-            lineHeight: 1.2,
-          }}
+          className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl"
+          style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif' }}
         >
-          DASHBOARD ERROR
+          Dashboard Connection Paused
         </h1>
-        <p
-          style={{
-            fontFamily: 'Raleway, sans-serif',
-            fontSize: '15px',
-            color: 'var(--gray)',
-            marginBottom: '28px',
-            lineHeight: '1.6',
-          }}
-        >
-          Failed to load your athlete dashboard. This might be a temporary telemetry sync or network issue.
+        <p className="mt-2.5 text-sm leading-relaxed text-zinc-300">
+          We couldn&apos;t load your latest training telemetry. Your offline workout queue and saved posture scans remain safe on your device.
         </p>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button
+            type="button"
             onClick={reset}
-            className="tactile-btn"
-            style={{
-              background: 'var(--gold)',
-              color: '#080E14',
-              fontFamily: 'Raleway, sans-serif',
-              fontWeight: 700,
-              fontSize: '14px',
-              letterSpacing: '0.04em',
-              padding: '12px 24px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              border: 'none',
-              boxShadow: '0 4px 15px rgba(197, 160, 89, 0.3)',
-            }}
+            className="forge-tactile-press inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-400 px-5 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
           >
-            Try Again
+            Retry Connection
           </button>
           <Link
             href="/"
-            className="tactile-btn"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(255, 255, 255, 0.06)',
-              color: 'var(--white)',
-              border: '1px solid rgba(197, 160, 89, 0.35)',
-              fontFamily: 'Raleway, sans-serif',
-              fontWeight: 600,
-              fontSize: '14px',
-              letterSpacing: '0.04em',
-              padding: '12px 24px',
-              borderRadius: '4px',
-              textDecoration: 'none',
-            }}
+            className="forge-tactile-press inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/10 bg-[#181B22] px-5 py-2.5 text-xs font-semibold text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
           >
-            Go Home
+            Return to Home
           </Link>
         </div>
       </div>

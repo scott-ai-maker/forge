@@ -10,6 +10,7 @@ import {
   YouTubeVideoInfo,
 } from '@/lib/video-form-analysis'
 import { GaaIcon } from '@/components/ui/GaaIcon'
+import TelemetryRingGauge from '@/components/ui/TelemetryRingGauge'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
 import MovementScreenInstructionsModal from '@/components/fitness/MovementScreenInstructionsModal'
 import FormLabRecorder from '@/components/fitness/FormLabRecorder'
@@ -306,46 +307,31 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
   return (
     <div style={{ display: 'grid', gap: 20 }}>
       {/* Studio Header Toolbar */}
-      <div className="glass-card" style={{ padding: '24px 28px' }}>
+      <div className="forge-surface-card rounded-2xl p-4 sm:p-6">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span
-                style={{
-                  fontFamily: 'Raleway, sans-serif',
-                  fontWeight: 700,
-                  fontSize: 11,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.14em',
-                  padding: '4px 10px',
-                  background: 'rgba(56,189,248,0.15)',
-                  color: '#38BDF8',
-                  border: '1px solid rgba(56,189,248,0.4)',
-                }}
-              >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
                 NASM Biomechanical Diagnostic · OPT™ Corrective Continuum
               </span>
-              <span style={{ color: 'var(--gray)', fontSize: 13 }}>
-                Kinetic Chain & Corrective Engine
+              <span className="text-xs font-medium text-zinc-400">
+                Kinetic Chain &amp; Corrective Engine
               </span>
             </div>
             <h2
+              className="mt-2 text-xl font-bold tracking-tight text-white sm:text-2xl"
               style={{
                 fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-                fontSize: 24,
-                letterSpacing: '0.03em',
-                margin: '8px 0 0',
-                color: 'var(--white)',
               }}
             >
-              Kinetic Form Diagnostics & Correctives Studio
+              Kinetic Form Diagnostics &amp; Correctives Studio
             </h2>
             {usageError && (
               <p role="alert" style={{ margin: '8px 0 0', color: 'var(--error)', fontSize: 13 }}>{usageError}</p>
             )}
           </div>
         </div>
-        <p style={{ margin: '8px 0 0', color: 'var(--gray)', fontSize: 14, lineHeight: 1.6, maxWidth: 840 }}>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-300">
           Upload lift footage or screen kinetic joint deviations to diagnose movement compensations, map overactive/underactive muscle imbalances, and prescribe 4-phase NASM corrective protocols.
         </p>
       </div>
@@ -354,63 +340,39 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
       <FormLabRecorder selectedLiftLabel={LIFT_METADATA[selectedLift]?.name || 'Primary Compound Lift'} />
 
       {/* Input Mode Selector Tabs */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => setActiveInputTab('video_upload')}
-          className="tactile-btn"
-          style={{
-            padding: '8px 16px',
-            background: activeInputTab === 'video_upload' ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.04)',
-            border: activeInputTab === 'video_upload' ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.1)',
-            color: activeInputTab === 'video_upload' ? '#38BDF8' : 'var(--gray)',
-            fontSize: 12.5,
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
+          className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 ${
+            activeInputTab === 'video_upload'
+              ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300'
+              : 'border-white/10 bg-[#181B22] text-zinc-300 hover:border-white/15 hover:bg-[#1D212A]'
+          }`}
         >
-          <GaaIcon name="video-studio" size={14} tone={activeInputTab === 'video_upload' ? 'cyan' : 'slate'} /> Video Footage Upload & Dropzone
+          <GaaIcon name="video-studio" size={14} tone={activeInputTab === 'video_upload' ? 'emerald' : 'slate'} /> Video Footage Upload &amp; Dropzone
         </button>
 
         <button
           type="button"
           onClick={() => setActiveInputTab('youtube_link')}
-          className="tactile-btn"
-          style={{
-            padding: '8px 16px',
-            background: activeInputTab === 'youtube_link' ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.04)',
-            border: activeInputTab === 'youtube_link' ? '1px solid #EF4444' : '1px solid rgba(255,255,255,0.1)',
-            color: activeInputTab === 'youtube_link' ? '#F87171' : 'var(--gray)',
-            fontSize: 12.5,
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
+          className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 ${
+            activeInputTab === 'youtube_link'
+              ? 'border-rose-500/35 bg-rose-500/10 text-rose-300'
+              : 'border-white/10 bg-[#181B22] text-zinc-300 hover:border-white/15 hover:bg-[#1D212A]'
+          }`}
         >
-          <span style={{ color: '#EF4444', fontWeight: 900 }}>▶</span> Share YouTube Video
+          <span className="font-black text-rose-400">▶</span> Share YouTube Video
         </button>
 
         <button
           type="button"
           onClick={() => setActiveInputTab('manual_diagnostic')}
-          className="tactile-btn"
-          style={{
-            padding: '8px 16px',
-            background: activeInputTab === 'manual_diagnostic' ? 'rgba(197,160,89,0.2)' : 'rgba(255,255,255,0.04)',
-            border: activeInputTab === 'manual_diagnostic' ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)',
-            color: activeInputTab === 'manual_diagnostic' ? 'var(--gold-lt)' : 'var(--gray)',
-            fontSize: 12.5,
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
+          className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 ${
+            activeInputTab === 'manual_diagnostic'
+              ? 'border-amber-500/35 bg-amber-500/10 text-amber-300'
+              : 'border-white/10 bg-[#181B22] text-zinc-300 hover:border-white/15 hover:bg-[#1D212A]'
+          }`}
         >
           <GaaIcon name="gear" size={14} tone={activeInputTab === 'manual_diagnostic' ? 'gold' : 'slate'} /> Biomechanical Fault Screener
         </button>
@@ -1298,9 +1260,8 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
         <div style={{ display: 'grid', gap: 18 }}>
           {/* Scorecard Hero */}
           <div
-            className="glass-card-gold"
+            className="forge-surface-card rounded-2xl p-4 sm:p-6"
             style={{
-              padding: '24px 28px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -1308,30 +1269,41 @@ export default function VideoCritiqueStudio({ initialLift, initialCritique, mete
               gap: 16,
             }}
           >
-            <div>
-              <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-                Technical Execution Score
-              </div>
-              <div className="tabular-nums" style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 4 }}>
-                <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 44, fontWeight: 700, color: 'var(--white)', lineHeight: 1 }}>
-                  {critique.overallFormScore}
-                  <span style={{ fontSize: 22, color: 'var(--gold)' }}>/100</span>
-                </span>
-                <span
-                  style={{
-                    padding: '4px 10px',
-                    background: critique.rating === 'Mastery' ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)',
-                    border: `1px solid ${critique.rating === 'Mastery' ? 'var(--success)' : 'var(--error)'}`,
-                    color: critique.rating === 'Mastery' ? 'var(--success)' : 'var(--error)',
-                    fontFamily: 'var(--font-sans, Raleway), sans-serif',
-                    fontWeight: 700,
-                    fontSize: 12,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                  }}
-                >
-                  {critique.rating}
-                </span>
+            <div className="flex items-center gap-4">
+              <TelemetryRingGauge
+                score={critique.overallFormScore}
+                max={100}
+                size={68}
+                strokeWidth={5}
+                showMax
+                tone={
+                  critique.overallFormScore >= 85
+                    ? 'emerald'
+                    : critique.overallFormScore >= 70
+                      ? 'amber'
+                      : 'coral'
+                }
+                label={`Technical Execution Score ${critique.overallFormScore} out of 100`}
+              />
+              <div>
+                <div className="forge-eyebrow-micro">
+                  Technical Execution Score
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2.5 tabular-nums">
+                  <span className="font-mono text-3xl font-extrabold leading-none text-white sm:text-4xl">
+                    {critique.overallFormScore}
+                    <span className="text-base font-medium text-zinc-400">/100</span>
+                  </span>
+                  <span
+                    className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] ${
+                      critique.rating === 'Mastery'
+                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                        : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                    }`}
+                  >
+                    {critique.rating}
+                  </span>
+                </div>
               </div>
             </div>
 

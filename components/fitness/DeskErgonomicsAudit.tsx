@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
+import TelemetryRingGauge from '@/components/ui/TelemetryRingGauge'
 import { useSfxMuted } from '@/lib/sfx-audio'
 import {
   evaluateDeskErgonomicsFromLandmarks,
@@ -168,12 +169,28 @@ export default function DeskErgonomicsAudit({
     [finalizeScan]
   )
 
+  const handleLoadSample = useCallback(
+    (variant: 'typical_strain' | 'optimal_setup' = 'typical_strain') => {
+      setSampleVariant(variant)
+      setCameraError(null)
+      const result = evaluateDeskErgonomicsFromLandmarks(SAMPLE_DESK_LANDMARKS[variant])
+      finalizeScan(result, null, !sandboxMode)
+      if (!sandboxMode) {
+        setStatusNote(
+          variant === 'typical_strain'
+            ? 'Sample Desk Scan loaded · Ergonomic flags synced to 5-Min Desk Reset.'
+            : 'Optimal Workstation reference loaded.'
+        )
+      }
+    },
+    [finalizeScan, sandboxMode]
+  )
+
   const startLiveFiveSecondAudit = async () => {
     setCameraError(null)
     setStatusNote(null)
     if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      setCameraError('Camera unavailable in this browser. Loaded sample desk profile instead.')
-      handleLoadSample('typical_strain')
+      setCameraError('Camera stream unavailable on this browser or device.')
       return
     }
 
@@ -203,7 +220,6 @@ export default function DeskErgonomicsAudit({
             clearInterval(countdownTimerRef.current)
             countdownTimerRef.current = null
           }
-          // Capture frame from video
           const video = videoRef.current
           if (video && video.videoWidth > 0 && video.videoHeight > 0) {
             const canvas = document.createElement('canvas')
@@ -223,7 +239,7 @@ export default function DeskErgonomicsAudit({
         }
       }, 1000)
     } catch {
-      setCameraError('Camera permission declined. Use photo upload or Load Sample Desk Scan.')
+      setCameraError('Camera permission was declined or blocked by browser settings.')
       stopCamera()
     }
   }
@@ -248,20 +264,6 @@ export default function DeskErgonomicsAudit({
     reader.readAsDataURL(file)
   }
 
-  const handleLoadSample = (variant: 'typical_strain' | 'optimal_setup' = 'typical_strain') => {
-    setSampleVariant(variant)
-    setCameraError(null)
-    const result = evaluateDeskErgonomicsFromLandmarks(SAMPLE_DESK_LANDMARKS[variant])
-    finalizeScan(result, null, !sandboxMode)
-    if (!sandboxMode) {
-      setStatusNote(
-        variant === 'typical_strain'
-          ? 'Sample Desk Scan loaded · Ergonomic flags synced to 5-Min Desk Reset.'
-          : 'Optimal Workstation reference loaded.'
-      )
-    }
-  }
-
   const handleAuditAnotherDesk = () => {
     if (
       !sandboxMode &&
@@ -281,113 +283,79 @@ export default function DeskErgonomicsAudit({
     color: STRAIN_COLORS[status],
     bg:
       status === 'optimal'
-        ? 'rgba(16, 185, 129, 0.14)'
+        ? 'rgba(16, 185, 129, 0.12)'
         : status === 'amber'
-          ? 'rgba(245, 158, 11, 0.16)'
-          : 'rgba(251, 113, 133, 0.16)',
+          ? 'rgba(245, 158, 11, 0.12)'
+          : 'rgba(251, 113, 133, 0.12)',
     border:
       status === 'optimal'
-        ? 'rgba(16, 185, 129, 0.42)'
+        ? 'rgba(16, 185, 129, 0.30)'
         : status === 'amber'
-          ? 'rgba(245, 158, 11, 0.45)'
-          : 'rgba(251, 113, 133, 0.48)',
+          ? 'rgba(245, 158, 11, 0.32)'
+          : 'rgba(251, 113, 133, 0.34)',
   })
+
+  const isLockedFrame = (countdownSec ?? 5) <= 2
 
   return (
     <div
       data-testid="desk-ergonomics-audit"
+      className={`forge-surface-card rounded-2xl text-zinc-100 ${
+        sandboxMode ? 'p-3.5 sm:p-4' : 'p-4 sm:p-6'
+      }`}
       style={{
-        background: 'linear-gradient(180deg, rgba(13, 22, 36, 0.96) 0%, rgba(7, 12, 22, 0.99) 100%)',
-        border: '1px solid rgba(245, 158, 11, 0.3)',
-        borderRadius: 12,
-        padding: sandboxMode ? '14px' : '16px',
-        color: '#F8FAFC',
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap: 14,
       }}
     >
       {/* Header Row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span
-              style={{
-                fontFamily: 'var(--font-telemetry, monospace)',
-                fontSize: 10,
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: '#FBBF24',
-                background: 'rgba(245, 158, 11, 0.14)',
-                border: '1px solid rgba(245, 158, 11, 0.35)',
-                padding: '2px 7px',
-                borderRadius: 4,
-              }}
-            >
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-300">
               33-Point Side-Profile Vision
             </span>
             {!sandboxMode && savedProfiles.length > 0 && (
-              <span
-                style={{
-                  fontFamily: 'var(--font-telemetry, monospace)',
-                  fontSize: 10,
-                  color: '#94A3B8',
-                }}
-              >
+              <span className="font-mono text-[11px] font-semibold tabular-nums text-zinc-400">
                 {savedProfiles.length} {savedProfiles.length === 1 ? 'Desk Saved' : 'Desks Saved'}
               </span>
             )}
           </div>
           <h3
-            style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: sandboxMode ? 18 : 20,
-              fontWeight: 800,
-              letterSpacing: '0.03em',
-              textTransform: 'uppercase',
-              margin: '4px 0 0',
-              color: '#FFFFFF',
-            }}
+            className={`mt-1.5 font-bold tracking-tight text-white ${
+              sandboxMode ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'
+            }`}
+            style={{ fontFamily: 'var(--font-heading)', textTransform: 'uppercase' }}
           >
             Desk Ergonomics Camera Audit
           </h3>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="flex items-center gap-2">
           {sandboxMode ? (
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#090A0D] p-1">
               <button
                 type="button"
                 onClick={() => handleLoadSample('typical_strain')}
-                style={{
-                  padding: '5px 9px',
-                  borderRadius: 6,
-                  fontSize: 10.5,
-                  fontFamily: 'var(--font-telemetry, monospace)',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  background: sampleVariant === 'typical_strain' ? 'rgba(251, 113, 133, 0.18)' : 'rgba(255,255,255,0.05)',
-                  border: sampleVariant === 'typical_strain' ? '1px solid #FB7185' : '1px solid rgba(255,255,255,0.12)',
-                  color: sampleVariant === 'typical_strain' ? '#FDA4AF' : '#94A3B8',
-                }}
+                aria-pressed={sampleVariant === 'typical_strain'}
+                className={`forge-tactile-press min-h-[44px] rounded-lg px-3 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+                  sampleVariant === 'typical_strain'
+                    ? 'border border-rose-500/35 bg-rose-500/15 text-rose-200'
+                    : 'text-zinc-400 hover:bg-[#181B22] hover:text-zinc-200'
+                }`}
               >
                 Before Fix
               </button>
               <button
                 type="button"
                 onClick={() => handleLoadSample('optimal_setup')}
-                style={{
-                  padding: '5px 9px',
-                  borderRadius: 6,
-                  fontSize: 10.5,
-                  fontFamily: 'var(--font-telemetry, monospace)',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  background: sampleVariant === 'optimal_setup' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255,255,255,0.05)',
-                  border: sampleVariant === 'optimal_setup' ? '1px solid #10B981' : '1px solid rgba(255,255,255,0.12)',
-                  color: sampleVariant === 'optimal_setup' ? '#6EE7B7' : '#94A3B8',
-                }}
+                aria-pressed={sampleVariant === 'optimal_setup'}
+                className={`forge-tactile-press min-h-[44px] rounded-lg px-3 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+                  sampleVariant === 'optimal_setup'
+                    ? 'border border-emerald-500/35 bg-emerald-500/15 text-emerald-300'
+                    : 'text-zinc-400 hover:bg-[#181B22] hover:text-zinc-200'
+                }`}
               >
                 Optimal Desk
               </button>
@@ -396,17 +364,13 @@ export default function DeskErgonomicsAudit({
             <button
               type="button"
               onClick={toggleSfxMuted}
-              aria-label={sfxMuted ? 'Unmute timer sound effects (currently SFX MUTED)' : 'Mute timer sound effects'}
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 6,
-                padding: '5px 9px',
-                fontSize: 10.5,
-                fontFamily: 'var(--font-telemetry, monospace)',
-                color: sfxMuted ? '#94A3B8' : '#FBBF24',
-                cursor: 'pointer',
-              }}
+              aria-label="Desk timer sound effects"
+              aria-pressed={!sfxMuted}
+              className={`forge-tactile-press inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border px-3 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+                sfxMuted
+                  ? 'border-white/10 bg-[#181B22] text-zinc-400 hover:border-white/15 hover:bg-[#1D212A] hover:text-zinc-200'
+                  : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15'
+              }`}
             >
               {sfxMuted ? 'SFX MUTED' : 'SFX ON'}
             </button>
@@ -416,46 +380,20 @@ export default function DeskErgonomicsAudit({
 
       {/* Input Controls (hidden in compact sandbox mode) */}
       {!sandboxMode && !cameraActive && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="text"
               value={workstationLabel}
               onChange={e => setWorkstationLabel(e.target.value)}
               aria-label="Workstation profile name"
               placeholder="Workstation name (e.g. Home Desk)"
-              style={{
-                flex: '1 1 150px',
-                minWidth: 0,
-                padding: '8px 11px',
-                borderRadius: 7,
-                background: 'rgba(8, 14, 24, 0.9)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#FFFFFF',
-                fontSize: 16,
-              }}
+              className="min-h-[44px] min-w-0 flex-1 basis-40 rounded-xl border border-white/10 bg-[#181B22] px-3.5 py-2 text-base text-white placeholder:text-zinc-500 transition-colors duration-150 hover:border-white/15 focus:border-emerald-400/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
             />
             <button
               type="button"
               onClick={() => void startLiveFiveSecondAudit()}
-              className="tactile-btn"
-              style={{
-                padding: '9px 13px',
-                minHeight: 42,
-                borderRadius: 7,
-                border: 'none',
-                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                color: '#080E14',
-                fontFamily: 'var(--font-heading)',
-                fontWeight: 800,
-                fontSize: 13,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
+              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-400 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               <GaaIcon name="camera" size={14} tone="dark" />
               <span>5s Camera Timer</span>
@@ -464,21 +402,7 @@ export default function DeskErgonomicsAudit({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="tactile-btn"
-              style={{
-                padding: '9px 12px',
-                minHeight: 42,
-                borderRadius: 7,
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.16)',
-                color: '#F8FAFC',
-                fontSize: 12.5,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
+              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-white/10 bg-[#181B22] px-3.5 py-2 text-xs font-semibold text-zinc-100 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               <GaaIcon name="upload" size={14} tone="gold" />
               <span>Upload Side Photo</span>
@@ -495,56 +419,50 @@ export default function DeskErgonomicsAudit({
             <button
               type="button"
               onClick={() => handleLoadSample('typical_strain')}
-              style={{
-                padding: '9px 12px',
-                minHeight: 42,
-                borderRadius: 7,
-                background: 'rgba(56, 189, 248, 0.12)',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                color: '#7DD3FC',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
+              className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 transition-colors duration-150 hover:bg-emerald-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               Load Sample Desk Scan
             </button>
           </div>
 
+          {/* Graceful Hardware / Permission Recovery Card */}
           {cameraError && (
             <div
               role="status"
-              style={{
-                fontSize: 12,
-                color: '#FDE68A',
-                background: 'rgba(245, 158, 11, 0.12)',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
-                borderRadius: 6,
-                padding: '7px 10px',
-              }}
+              className="rounded-xl border border-amber-500/30 bg-[#181B22] p-3.5 text-xs text-zinc-200"
             >
-              {cameraError}
+              <div className="flex flex-wrap items-center justify-between gap-2.5">
+                <div className="space-y-1">
+                  <div className="font-semibold text-amber-300">{cameraError}</div>
+                  <p className="text-[11.5px] leading-relaxed text-zinc-400">
+                    Allow camera access in your browser address bar, upload a seated side photo, or preview the 33-point telemetry right now.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleLoadSample('typical_strain')}
+                  className="forge-tactile-press inline-flex min-h-[44px] shrink-0 items-center rounded-xl border border-emerald-500/30 bg-emerald-500/15 px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-emerald-200 transition-colors duration-150 hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+                >
+                  Run Demo Scan
+                </button>
+              </div>
             </div>
           )}
+
           {statusNote && (
-            <div style={{ fontSize: 11.5, color: '#6EE7B7', fontFamily: 'var(--font-telemetry, monospace)' }}>
+            <div className="font-mono text-xs text-emerald-300">
               ✓ {statusNote}
             </div>
           )}
         </div>
       )}
 
-      {/* Live 5-Second Camera Alignment Viewport */}
+      {/* Live 5-Second Camera Alignment Viewfinder */}
       {cameraActive && (
         <div
-          style={{
-            position: 'relative',
-            borderRadius: 10,
-            overflow: 'hidden',
-            border: '1.5px solid #F59E0B',
-            background: '#05080F',
-            aspectRatio: '4 / 3',
-          }}
+          className={`relative aspect-[4/3] overflow-hidden rounded-2xl border bg-[#090A0D] transition-colors duration-300 ${
+            isLockedFrame ? 'border-emerald-400/70' : 'border-amber-400/70'
+          }`}
         >
           <video
             ref={videoRef}
@@ -552,86 +470,126 @@ export default function DeskErgonomicsAudit({
             playsInline
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
-          {/* Seated Ear -> Shoulder -> Hip -> Knee Guide Overlay */}
+
+          {/* Frosted-Glass Top Instruction Pill */}
+          <div className="forge-glass-pill absolute inset-x-3 top-3 z-10 flex flex-wrap items-center justify-between gap-2 rounded-full px-3.5 py-2 text-xs text-zinc-100">
+            <span className="truncate font-medium">
+              Align seated side profile: <strong className="text-white">Ear → Shoulder → Hip → Knee</strong>
+            </span>
+            <span
+              className={`rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors duration-300 ${
+                isLockedFrame
+                  ? 'border-emerald-500/35 bg-emerald-500/15 text-emerald-300'
+                  : 'border-amber-500/35 bg-amber-500/15 text-amber-300'
+              }`}
+            >
+              {isLockedFrame ? 'LOCKED' : 'CALIBRATION HOLD'}
+            </span>
+          </div>
+
+          {/* Corner Framing Brackets (Amber -> Emerald Lock-In) + Dual-Ring Seated Guide */}
           <svg
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
             aria-hidden="true"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
           >
-            <line x1="36" y1="12" x2="36" y2="88" stroke="#FBBF24" strokeWidth="0.6" strokeDasharray="2 2" />
-            <polyline
-              points="36,20 36,36 36,64 62,65"
+            <defs>
+              <filter id="desk-live-glow" x="-25%" y="-25%" width="150%" height="150%">
+                <feGaussianBlur stdDeviation="0.9" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* Animated Corner Framing Brackets */}
+            <path
+              d="M 6 20 L 6 12 L 14 12 M 86 12 L 94 12 L 94 20 M 6 80 L 6 88 L 14 88 M 86 88 L 94 88 L 94 80"
               fill="none"
-              stroke="rgba(56, 189, 248, 0.85)"
-              strokeWidth="0.9"
+              stroke={isLockedFrame ? '#34D399' : '#FBBF24'}
+              strokeWidth="0.95"
+              strokeLinecap="round"
+              style={{ transition: 'stroke 260ms ease' }}
+            />
+
+            <line
+              x1="36"
+              y1="16"
+              x2="36"
+              y2="84"
+              stroke={isLockedFrame ? '#34D399' : '#FBBF24'}
+              strokeWidth="0.55"
+              strokeDasharray="2 2"
+            />
+            <polyline
+              points="36,24 36,40 36,65 62,66"
+              fill="none"
+              stroke={isLockedFrame ? '#34D399' : '#38BDF8'}
+              strokeWidth="1.05"
               strokeDasharray="2.5 1.5"
+              filter="url(#desk-live-glow)"
             />
             {[
-              { x: 36, y: 20, lbl: 'EAR' },
-              { x: 36, y: 36, lbl: 'SHOULDER' },
-              { x: 36, y: 64, lbl: 'HIP' },
-              { x: 62, y: 65, lbl: 'KNEE' },
+              { x: 36, y: 24, lbl: 'EAR' },
+              { x: 36, y: 40, lbl: 'SHOULDER' },
+              { x: 36, y: 65, lbl: 'HIP' },
+              { x: 62, y: 66, lbl: 'KNEE' },
             ].map(pt => (
               <g key={pt.lbl}>
-                <circle cx={pt.x} cy={pt.y} r="2.2" fill="#080E14" stroke="#38BDF8" strokeWidth="0.8" />
-                <text x={pt.x + 3.2} y={pt.y + 1} fill="#E2E8F0" fontSize="3.2" fontWeight="700">
+                <circle
+                  cx={pt.x}
+                  cy={pt.y}
+                  r="3.4"
+                  fill={isLockedFrame ? 'rgba(52,211,153,0.18)' : 'rgba(251,191,36,0.18)'}
+                  stroke={isLockedFrame ? 'rgba(52,211,153,0.45)' : 'rgba(251,191,36,0.45)'}
+                  strokeWidth="0.45"
+                />
+                <circle
+                  cx={pt.x}
+                  cy={pt.y}
+                  r="1.65"
+                  fill="#090A0D"
+                  stroke={isLockedFrame ? '#34D399' : '#FBBF24'}
+                  strokeWidth="0.85"
+                />
+                <rect x={pt.x + 2.8} y={pt.y - 2.3} width={pt.lbl.length * 2.3 + 2.4} height="4.4" rx="1.2" fill="rgba(9,10,13,0.82)" />
+                <text x={pt.x + 4} y={pt.y + 0.8} fill="#F8FAFC" fontSize="2.7" fontWeight="700">
                   {pt.lbl}
                 </text>
               </g>
             ))}
           </svg>
-          <div
-            style={{
-              position: 'absolute',
-              inset: 'auto 10px 10px 10px',
-              background: 'rgba(8, 14, 24, 0.9)',
-              border: '1px solid rgba(245,158,11,0.45)',
-              borderRadius: 8,
-              padding: '8px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8,
-            }}
-          >
-            <div style={{ fontSize: 12, color: '#F8FAFC' }}>
-              Align seated side profile: <strong>Ear → Shoulder → Hip → Knee</strong>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+
+          {/* Bottom Timer & Cancel Pill */}
+          <div className="forge-glass-pill absolute inset-x-3 bottom-3 z-10 flex items-center justify-between gap-3 rounded-xl px-3.5 py-2">
+            <div className="flex items-center gap-2">
               <span
-                style={{
-                  fontFamily: 'var(--font-telemetry, monospace)',
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: '#FBBF24',
-                }}
+                className={`font-mono text-xl font-extrabold tabular-nums ${
+                  isLockedFrame ? 'text-emerald-300' : 'text-amber-300'
+                }`}
               >
                 {countdownSec ?? 5}s
               </span>
-              <button
-                type="button"
-                onClick={stopCamera}
-                style={{
-                  padding: '4px 9px',
-                  borderRadius: 5,
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'rgba(255,255,255,0.08)',
-                  color: '#FFF',
-                  fontSize: 11,
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
+              <span className="text-xs text-zinc-300">
+                {isLockedFrame ? 'Hold still — capturing seated mesh…' : 'Settle into natural desk posture'}
+              </span>
             </div>
+            <button
+              type="button"
+              onClick={stopCamera}
+              className="forge-tactile-press min-h-[44px] rounded-xl border border-white/15 bg-[#181B22]/90 px-3.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
 
       {/* Results & SVG Joint Angle Overlay */}
       {scanResult && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="space-y-3.5">
           <div
             style={{
               display: 'grid',
@@ -642,14 +600,10 @@ export default function DeskErgonomicsAudit({
               alignItems: 'start',
             }}
           >
-            {/* Left: Captured / Sample Seated Silhouette + Joint Angle Arcs + Hip-to-Shoulder Plumb Line */}
+            {/* Left: Captured / Sample Seated Silhouette + Glowing Vector Skeleton + Landmark Pill Badges */}
             <div
+              className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#090A0D]"
               style={{
-                position: 'relative',
-                borderRadius: 10,
-                overflow: 'hidden',
-                background: 'radial-gradient(circle at 50% 35%, #132038 0%, #070C16 100%)',
-                border: '1px solid rgba(255,255,255,0.12)',
                 aspectRatio: sandboxMode ? '16 / 10' : '4 / 3',
               }}
             >
@@ -658,7 +612,7 @@ export default function DeskErgonomicsAudit({
                 <img
                   src={capturedImageSrc}
                   alt="Captured side-profile workstation posture"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.85 }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.86 }}
                 />
               ) : (
                 <div
@@ -667,7 +621,7 @@ export default function DeskErgonomicsAudit({
                     position: 'absolute',
                     inset: 0,
                     background:
-                      'radial-gradient(ellipse at 52% 45%, rgba(56, 189, 248, 0.1) 0%, rgba(15, 23, 42, 0.65) 48%, rgba(5, 8, 15, 0.98) 100%)',
+                      'radial-gradient(ellipse at 50% 32%, rgba(16, 185, 129, 0.09) 0%, rgba(17, 19, 24, 0.85) 52%, #090A0D 100%)',
                   }}
                 />
               )}
@@ -683,48 +637,58 @@ export default function DeskErgonomicsAudit({
                   height: '100%',
                 }}
               >
+                <defs>
+                  <filter id="desk-skeleton-glow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="0.85" result="glowBlur" />
+                    <feMerge>
+                      <feMergeNode in="glowBlur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
                 {/* Desk & Chair Subtle Reference Geometry when in sample mode */}
                 {!capturedImageSrc && (
-                  <g opacity="0.72">
-                    {/* LiDAR grid lines */}
+                  <g opacity="0.76">
                     {[20, 40, 60, 80].map(pos => (
                       <g key={`g-${pos}`}>
-                        <line x1="4" y1={pos} x2="96" y2={pos} stroke="rgba(56,189,248,0.08)" strokeWidth="0.28" />
-                        <line x1={pos} y1="6" x2={pos} y2="94" stroke="rgba(56,189,248,0.08)" strokeWidth="0.28" />
+                        <line x1="4" y1={pos} x2="96" y2={pos} stroke="rgba(255,255,255,0.045)" strokeWidth="0.26" />
+                        <line x1={pos} y1="6" x2={pos} y2="94" stroke="rgba(255,255,255,0.045)" strokeWidth="0.26" />
                       </g>
                     ))}
                     {/* Optical corner viewfinder brackets */}
                     <path
                       d="M 5 12 L 5 6 L 11 6 M 89 6 L 95 6 L 95 12 M 5 88 L 5 94 L 11 94 M 89 94 L 95 94 L 95 88"
                       fill="none"
-                      stroke="rgba(148,163,184,0.4)"
-                      strokeWidth="0.55"
+                      stroke={scanResult.overallStrain === 'optimal' ? 'rgba(52,211,153,0.6)' : 'rgba(251,191,36,0.5)'}
+                      strokeWidth="0.65"
+                      strokeLinecap="round"
                     />
                     {/* Ergonomic task chair backrest, lumbar & base */}
                     <path
                       d="M 27 30 Q 30 48 29 67 L 56 67 M 41 67 L 41 90 M 31 90 L 51 90"
                       fill="none"
-                      stroke="#475569"
+                      stroke="#3F3F46"
                       strokeWidth="1.35"
                       strokeLinecap="round"
                     />
                     {/* Desk surface & display bezel */}
-                    <line x1="56" y1="56" x2="93" y2="56" stroke="#64748B" strokeWidth="1.4" strokeLinecap="round" />
-                    <line x1="84" y1="56" x2="84" y2="90" stroke="#475569" strokeWidth="1.2" />
+                    <line x1="56" y1="56" x2="93" y2="56" stroke="#52525B" strokeWidth="1.4" strokeLinecap="round" />
+                    <line x1="84" y1="56" x2="84" y2="90" stroke="#3F3F46" strokeWidth="1.2" />
                     <rect
                       x="75.5"
                       y={sampleVariant === 'optimal_setup' ? '18' : '27'}
                       width="2.8"
                       height="20"
                       rx="0.9"
-                      fill="#94A3B8"
+                      fill="#A1A1AA"
                     />
                     <line
                       x1="76.9"
                       y1={sampleVariant === 'optimal_setup' ? '38' : '47'}
                       x2="76.9"
                       y2="56"
-                      stroke="#64748B"
+                      stroke="#52525B"
                       strokeWidth="0.95"
                     />
                     {/* Eye-to-Screen Sightline */}
@@ -733,17 +697,17 @@ export default function DeskErgonomicsAudit({
                       y1={scanResult.landmarks.ear.y}
                       x2="75.2"
                       y2={sampleVariant === 'optimal_setup' ? '26' : '36'}
-                      stroke="rgba(251,191,36,0.38)"
+                      stroke="rgba(52,211,153,0.42)"
                       strokeWidth="0.4"
                       strokeDasharray="1.5 1.2"
                     />
-                    {/* Seated Athlete Silhouette wearing fitted charcoal performance crewneck t-shirt & shorts */}
+                    {/* Seated Athlete Silhouette wearing fitted charcoal performance crewneck t-shirt & athletic shorts */}
                     <circle
                       cx={scanResult.landmarks.ear.x + 1}
                       cy={scanResult.landmarks.ear.y - 0.5}
                       r="4.8"
-                      fill="#1E293B"
-                      stroke="rgba(148,163,184,0.35)"
+                      fill="#181B22"
+                      stroke="rgba(255,255,255,0.22)"
                       strokeWidth="0.5"
                     />
                     <path
@@ -752,9 +716,16 @@ export default function DeskErgonomicsAudit({
                             ${scanResult.landmarks.hip.x - 4.5} ${scanResult.landmarks.hip.y + 2}
                           L ${scanResult.landmarks.hip.x + 6} ${scanResult.landmarks.hip.y + 2}
                           L ${scanResult.landmarks.shoulder.x + 5.5} ${scanResult.landmarks.shoulder.y + 1} Z`}
-                      fill="#1E293B"
-                      stroke="rgba(148,163,184,0.35)"
-                      strokeWidth="0.6"
+                      fill="#27272A"
+                      stroke="rgba(255,255,255,0.22)"
+                      strokeWidth="0.55"
+                    />
+                    {/* Short-sleeve crewneck sleeve detail */}
+                    <path
+                      d={`M ${scanResult.landmarks.shoulder.x - 1.5} ${scanResult.landmarks.shoulder.y - 0.5}
+                          L ${scanResult.landmarks.shoulder.x + 4.5} ${scanResult.landmarks.shoulder.y + 6.5}
+                          L ${scanResult.landmarks.shoulder.x + 1.2} ${scanResult.landmarks.shoulder.y + 8} Z`}
+                      fill="#3F3F46"
                     />
                   </g>
                 )}
@@ -765,155 +736,210 @@ export default function DeskErgonomicsAudit({
                   y1="10"
                   x2={scanResult.plumbLineX}
                   y2="90"
-                  stroke="#38BDF8"
-                  strokeWidth="0.65"
+                  stroke="#34D399"
+                  strokeOpacity="0.65"
+                  strokeWidth="0.55"
                   strokeDasharray="2.2 1.8"
                 />
+                <rect x={scanResult.plumbLineX + 1.2} y="9.8" width="19.5" height="4.6" rx="1.3" fill="rgba(9,10,13,0.82)" />
                 <text
-                  x={scanResult.plumbLineX + 1.5}
-                  y="13.5"
-                  fill="#7DD3FC"
-                  fontSize="3.1"
+                  x={scanResult.plumbLineX + 2.6}
+                  y="13"
+                  fill="#6EE7B7"
+                  fontSize="2.65"
                   fontWeight="700"
+                  letterSpacing="0.06em"
                 >
                   PLUMB LINE
                 </text>
 
-                {/* Joint Angle Wedge Arcs (Emerald / Amber / Coral) */}
+                {/* Joint Angle Wedge Arcs + Anti-Aliased Glowing Vector Skeleton + Dual-Ring Nodes + Dark Pill Degree Badges */}
                 {(() => {
-                  const { ear, shoulder, elbow, wrist, hip, knee } = scanResult.landmarks
+                  const { ear, shoulder, elbow, wrist, hip, knee, ankle } = scanResult.landmarks
                   const cvMetric = scanResult.angles.find(a => a.id === 'craniovertebral')!
                   const shoulderMetric = scanResult.angles.find(a => a.id === 'shoulder_protraction')!
                   const elbowMetric = scanResult.angles.find(a => a.id === 'elbow_wrist')!
                   const hipMetric = scanResult.angles.find(a => a.id === 'seated_hip')!
 
+                  const landmarkBadges = [
+                    {
+                      key: 'cv',
+                      x: ear.x - 19,
+                      y: ear.y - 3.5,
+                      text: `${cvMetric.measuredDegrees}°`,
+                      stroke: cvMetric.colorHex,
+                    },
+                    {
+                      key: 'elbow',
+                      x: elbow.x - 15.5,
+                      y: elbow.y + 2.2,
+                      text: `${elbowMetric.measuredDegrees}°`,
+                      stroke: elbowMetric.colorHex,
+                    },
+                    {
+                      key: 'hip',
+                      x: hip.x - 16.5,
+                      y: hip.y - 2.5,
+                      text: `${hipMetric.measuredDegrees}°`,
+                      stroke: hipMetric.colorHex,
+                    },
+                  ]
+
                   return (
                     <>
-                      {/* Forward head arc at shoulder vs vertical plumb */}
+                      {/* Wedge arcs */}
                       <path
                         d={buildJointArcPath(shoulder, { x: shoulder.x, y: shoulder.y - 16 }, ear, 8)}
                         fill={cvMetric.colorHex}
-                        fillOpacity="0.28"
+                        fillOpacity="0.24"
                         stroke={cvMetric.colorHex}
                         strokeWidth="0.7"
                       />
-                      {/* Elbow desk angle arc */}
                       <path
                         d={buildJointArcPath(elbow, shoulder, wrist, 7)}
                         fill={elbowMetric.colorHex}
-                        fillOpacity="0.28"
+                        fillOpacity="0.24"
                         stroke={elbowMetric.colorHex}
                         strokeWidth="0.7"
                       />
-                      {/* Seated hip angle arc */}
                       <path
                         d={buildJointArcPath(hip, shoulder, knee, 8)}
                         fill={hipMetric.colorHex}
-                        fillOpacity="0.28"
+                        fillOpacity="0.24"
                         stroke={hipMetric.colorHex}
                         strokeWidth="0.7"
                       />
 
-                      {/* Kinetic chain bone segments */}
-                      <line x1={ear.x} y1={ear.y} x2={shoulder.x} y2={shoulder.y} stroke={cvMetric.colorHex} strokeWidth="1.3" />
-                      <line x1={shoulder.x} y1={shoulder.y} x2={hip.x} y2={hip.y} stroke={shoulderMetric.colorHex} strokeWidth="1.4" />
-                      <line x1={shoulder.x} y1={shoulder.y} x2={elbow.x} y2={elbow.y} stroke={elbowMetric.colorHex} strokeWidth="1.2" />
-                      <line x1={elbow.x} y1={elbow.y} x2={wrist.x} y2={wrist.y} stroke={elbowMetric.colorHex} strokeWidth="1.2" />
-                      <line x1={hip.x} y1={hip.y} x2={knee.x} y2={knee.y} stroke={hipMetric.colorHex} strokeWidth="1.4" />
-                      <line x1={knee.x} y1={knee.y} x2={scanResult.landmarks.ankle.x} y2={scanResult.landmarks.ankle.y} stroke="#94A3B8" strokeWidth="1.1" />
+                      {/* Glowing Kinetic Chain Vector Strokes */}
+                      <g filter="url(#desk-skeleton-glow)" strokeLinecap="round">
+                        <line x1={ear.x} y1={ear.y} x2={shoulder.x} y2={shoulder.y} stroke={cvMetric.colorHex} strokeWidth="1.35" />
+                        <line x1={shoulder.x} y1={shoulder.y} x2={hip.x} y2={hip.y} stroke={shoulderMetric.colorHex} strokeWidth="1.45" />
+                        <line x1={shoulder.x} y1={shoulder.y} x2={elbow.x} y2={elbow.y} stroke={elbowMetric.colorHex} strokeWidth="1.25" />
+                        <line x1={elbow.x} y1={elbow.y} x2={wrist.x} y2={wrist.y} stroke={elbowMetric.colorHex} strokeWidth="1.25" />
+                        <line x1={hip.x} y1={hip.y} x2={knee.x} y2={knee.y} stroke={hipMetric.colorHex} strokeWidth="1.45" />
+                        <line x1={knee.x} y1={knee.y} x2={ankle.x} y2={ankle.y} stroke="#A1A1AA" strokeWidth="1.15" />
+                      </g>
 
-                      {/* Landmark nodes */}
-                      {Object.values(scanResult.landmarks).map(pt => (
-                        <circle
-                          key={pt.id}
-                          cx={pt.x}
-                          cy={pt.y}
-                          r="1.9"
-                          fill="#080E14"
-                          stroke="#F8FAFC"
-                          strokeWidth="0.8"
-                        />
+                      {/* Dual-Ring Landmark Nodes with Confidence-Based Opacity */}
+                      {Object.values(scanResult.landmarks).map((pt, idx) => {
+                        const confOpacity = Math.max(0.68, 0.98 - idx * 0.03)
+                        return (
+                          <g key={pt.id} opacity={confOpacity}>
+                            <circle
+                              cx={pt.x}
+                              cy={pt.y}
+                              r="3.2"
+                              fill="rgba(52, 211, 153, 0.14)"
+                              stroke="rgba(255, 255, 255, 0.32)"
+                              strokeWidth="0.4"
+                            />
+                            <circle
+                              cx={pt.x}
+                              cy={pt.y}
+                              r="1.55"
+                              fill="#090A0D"
+                              stroke="#FFFFFF"
+                              strokeWidth="0.8"
+                            />
+                          </g>
+                        )
+                      })}
+
+                      {/* Crisp Legible Degree Badges Over Anatomical Landmarks */}
+                      {landmarkBadges.map(b => (
+                        <g key={b.key}>
+                          <rect
+                            x={b.x}
+                            y={b.y}
+                            width="13.8"
+                            height="5.4"
+                            rx="2.2"
+                            fill="rgba(9, 10, 13, 0.82)"
+                            stroke={b.stroke}
+                            strokeOpacity="0.65"
+                            strokeWidth="0.45"
+                          />
+                          <text
+                            x={b.x + 6.9}
+                            y={b.y + 3.7}
+                            textAnchor="middle"
+                            fill="#F8FAFC"
+                            fontSize="3.1"
+                            fontWeight="800"
+                            style={{ fontVariantNumeric: 'tabular-nums' }}
+                          >
+                            {b.text}
+                          </text>
+                        </g>
                       ))}
                     </>
                   )
                 })()}
               </svg>
 
-              {/* Score Pill Overlay */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  background: 'rgba(8, 14, 24, 0.92)',
-                  border: `1px solid ${STRAIN_COLORS[scanResult.overallStrain]}`,
-                  borderRadius: 8,
-                  padding: '6px 10px',
-                  textAlign: 'right',
-                }}
-              >
-                <div style={{ fontSize: 9, fontFamily: 'var(--font-telemetry, monospace)', color: '#94A3B8', textTransform: 'uppercase' }}>
-                  Ergonomics Score
+              {/* Animated Workstation Score Ring Pill Overlay */}
+              <div className="forge-glass-pill absolute right-2.5 top-2.5 flex items-center gap-2.5 rounded-2xl px-2.5 py-2">
+                <div className="text-right">
+                  <div className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+                    Workstation Score
+                  </div>
+                  <div
+                    className="mt-0.5 text-[10.5px] font-bold uppercase tracking-wider"
+                    style={{ color: STRAIN_COLORS[scanResult.overallStrain] }}
+                  >
+                    {STRAIN_LABELS[scanResult.overallStrain]}
+                  </div>
                 </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-telemetry, monospace)',
-                    fontSize: 20,
-                    fontWeight: 800,
-                    lineHeight: 1.1,
-                    color: STRAIN_COLORS[scanResult.overallStrain],
-                  }}
-                >
-                  {scanResult.score}
-                  <span style={{ fontSize: 11, color: '#94A3B8' }}>/100</span>
-                </div>
+                <TelemetryRingGauge
+                  score={scanResult.score}
+                  max={100}
+                  size={sandboxMode ? 48 : 54}
+                  strokeWidth={4}
+                  showMax
+                  tone={
+                    scanResult.overallStrain === 'optimal'
+                      ? 'emerald'
+                      : scanResult.overallStrain === 'amber'
+                        ? 'amber'
+                        : 'coral'
+                  }
+                  label={`Workstation Score ${scanResult.score} out of 100`}
+                />
               </div>
             </div>
 
             {/* Right: 4 Joint Angle Metrics */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+            <div className="grid grid-cols-2 gap-2.5">
               {scanResult.angles.map(angle => {
                 const tone = badgeTone(angle.status)
                 return (
                   <div
                     key={angle.id}
+                    className="rounded-xl p-3 transition-colors duration-150"
                     style={{
-                      background: 'rgba(8, 14, 24, 0.85)',
+                      background: '#181B22',
                       border: `1px solid ${tone.border}`,
-                      borderRadius: 8,
-                      padding: '8px 10px',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-                      <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, lineHeight: 1.2 }}>
+                    <div className="flex items-start justify-between gap-1.5">
+                      <span className="text-[11px] font-semibold leading-snug text-zinc-300">
                         {angle.title}
                       </span>
                       <span
+                        className="shrink-0 rounded-full px-2 py-0.5 font-mono text-[9.5px] font-bold uppercase tracking-wider"
                         style={{
-                          fontSize: 9,
-                          fontFamily: 'var(--font-telemetry, monospace)',
-                          fontWeight: 800,
                           color: tone.color,
                           background: tone.bg,
-                          padding: '1px 5px',
-                          borderRadius: 4,
-                          flexShrink: 0,
+                          border: `1px solid ${tone.border}`,
                         }}
                       >
                         {STRAIN_LABELS[angle.status]}
                       </span>
                     </div>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-telemetry, monospace)',
-                        fontSize: 16,
-                        fontWeight: 800,
-                        color: '#F8FAFC',
-                        marginTop: 4,
-                      }}
-                    >
+                    <div className="mt-2 font-mono text-lg font-extrabold tabular-nums text-white">
                       {angle.measuredDegrees}°{' '}
-                      <span style={{ fontSize: 10, color: '#64748B', fontWeight: 500 }}>
+                      <span className="text-[10.5px] font-medium text-zinc-400">
                         ({angle.neutralRangeLabel})
                       </span>
                     </div>
@@ -924,61 +950,23 @@ export default function DeskErgonomicsAudit({
           </div>
 
           {/* 3 Concrete Workstation Adjustments */}
-          <div
-            style={{
-              background: 'rgba(8, 14, 24, 0.78)',
-              border: '1px solid rgba(255,255,255,0.09)',
-              borderRadius: 10,
-              padding: '10px 12px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-telemetry, monospace)',
-                fontSize: 10,
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                color: '#FBBF24',
-                textTransform: 'uppercase',
-              }}
-            >
+          <div className="rounded-xl border border-white/10 bg-[#181B22]/85 p-3.5">
+            <div className="forge-eyebrow-micro text-amber-300">
               3 Concrete Workstation Adjustments
             </div>
-            <div style={{ display: 'grid', gap: 6 }}>
+            <div className="mt-2.5 grid gap-2">
               {scanResult.adjustments.map(adj => (
                 <div
                   key={adj.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 8,
-                    fontSize: 12,
-                    lineHeight: 1.4,
-                  }}
+                  className="flex items-start gap-2.5 text-xs leading-relaxed"
                 >
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-telemetry, monospace)',
-                      fontSize: 10,
-                      fontWeight: 800,
-                      background: 'rgba(245, 158, 11, 0.18)',
-                      color: '#FBBF24',
-                      border: '1px solid rgba(245, 158, 11, 0.4)',
-                      borderRadius: 4,
-                      padding: '1px 5px',
-                      flexShrink: 0,
-                      marginTop: 1,
-                    }}
-                  >
+                  <span className="mt-0.5 shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-extrabold tabular-nums text-amber-300">
                     0{adj.priority}
                   </span>
                   <div>
-                    <strong style={{ color: '#F8FAFC' }}>{adj.headline}</strong>
+                    <strong className="font-semibold text-white">{adj.headline}</strong>
                     {!sandboxMode && (
-                      <span style={{ color: '#94A3B8', display: 'block', fontSize: 11.5 }}>
+                      <span className="mt-0.5 block text-[11.5px] leading-relaxed text-zinc-300">
                         {adj.instruction}
                       </span>
                     )}
@@ -990,26 +978,11 @@ export default function DeskErgonomicsAudit({
 
           {/* Action Loop Row */}
           {!sandboxMode && (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => onLaunchDeskReset?.(scanResult.ergonomicFlags)}
-                className="tactile-btn"
-                style={{
-                  flex: '1 1 220px',
-                  minHeight: 44,
-                  padding: '10px 14px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                  color: '#04120C',
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 14,
-                  fontWeight: 800,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                }}
+                className="forge-tactile-press min-h-[44px] flex-1 basis-56 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
               >
                 Launch Targeted 5-Min Desk Reset →
               </button>
@@ -1017,18 +990,7 @@ export default function DeskErgonomicsAudit({
               <button
                 type="button"
                 onClick={handleAuditAnotherDesk}
-                className="tactile-btn"
-                style={{
-                  minHeight: 44,
-                  padding: '10px 13px',
-                  borderRadius: 8,
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.16)',
-                  color: '#E2E8F0',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
+                className="forge-tactile-press min-h-[44px] rounded-xl border border-white/10 bg-[#181B22] px-4 py-2.5 text-xs font-semibold text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
               >
                 + Audit Another Desk
               </button>
@@ -1042,4 +1004,3 @@ export default function DeskErgonomicsAudit({
     </div>
   )
 }
-

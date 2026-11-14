@@ -66,7 +66,14 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
   const athleteName = client?.full_name || user.email?.split('@')[0] || 'Athlete'
 
   return (
-    <main style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
+    <main
+      className="forge-obsidian-canvas"
+      style={{
+        minHeight: '100dvh',
+        backgroundColor: '#090A0D',
+        paddingBottom: 'calc(104px + env(safe-area-inset-bottom, 16px))',
+      }}
+    >
       <SiteHeader
         badgeText={isTeamSession ? `Team Live Studio · ${team?.name}` : 'Live Studio'}
         links={[
@@ -79,7 +86,7 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
         actions={<LogoutButton />}
       />
 
-      <div style={{ maxWidth: 1720, margin: '0 auto', padding: 'clamp(8px, 1.5vw, 16px) clamp(6px, 1.4vw, 16px)' }}>
+      <div style={{ maxWidth: 1720, margin: '0 auto', padding: 'clamp(8px, 1.5vw, 16px) clamp(10px, 1.8vw, 20px)' }}>
         <div
           style={{
             marginBottom: 12,
@@ -158,44 +165,22 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
         </div>
 
         {/* Live Diagnostic Telemetry Info */}
-        <div
-          style={{
-            background: 'rgba(212,160,23,0.06)',
-            border: '1px solid rgba(212,160,23,0.3)',
-            borderRadius: 10,
-            padding: '16px 20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 12,
-          }}
-        >
+        <div className="forge-surface-card flex flex-wrap items-center justify-between gap-4 rounded-2xl p-4 sm:p-6">
           <div>
-            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
+            <div className="forge-eyebrow-micro text-emerald-300">
               Tactical Video Instructions · Still Camera Protocol
             </div>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#FFFFFF', lineHeight: 1.45 }}>
+            <p className="mt-1.5 text-sm leading-relaxed text-zinc-200">
               Position your camera 6–8 feet away at hip height so full body extension (overhead to ankles) remains statically visible for kinetic chain diagnostics.
             </p>
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--gold-lt)', lineHeight: 1.4 }}>
+            <p className="mt-1.5 text-xs leading-relaxed text-amber-300">
               💡 <strong>Mobile Athletes (iPhone / Android):</strong> Ensure Apple Center Stage or Samsung Auto-framing is turned <strong>OFF</strong> so your camera stays completely still and does not zoom or follow your movement.
             </p>
           </div>
 
           <a
             href="/dashboard/fitness"
-            className="tactile-btn"
-            style={{
-              padding: '8px 16px',
-              background: 'linear-gradient(135deg, #D4AF37 0%, #8A6508 100%)',
-              color: '#0A0E18',
-              borderRadius: 6,
-              fontSize: 12,
-              fontWeight: 800,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-            }}
+            className="forge-tactile-press inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
           >
             Open training →
           </a>

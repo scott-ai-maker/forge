@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
+import { isSfxMuted } from '@/lib/sfx-audio'
 
 interface RestTimerProps {
   defaultSeconds?: number
@@ -26,8 +27,12 @@ export default function RestTimer({ defaultSeconds = 90, autoStart = false, onDo
   }, [defaultSeconds, autoStart])
 
   async function playDoneSound() {
+    triggerHaptic('timer')
+    if (isSfxMuted()) return
     try {
-      const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
       if (!AudioContextClass) return
 
       if (!audioContextRef.current) {
@@ -60,15 +65,18 @@ export default function RestTimer({ defaultSeconds = 90, autoStart = false, onDo
 
       playBeep(880, now, 0.18)
       playBeep(1047, now + 0.24, 0.22)
-      triggerHaptic('timer')
     } catch {
       // Ignore audio failures (e.g., autoplay restrictions) and keep timer behavior intact.
     }
   }
 
   async function playWarningPip() {
+    triggerHaptic('tap')
+    if (isSfxMuted()) return
     try {
-      const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
       if (!AudioContextClass) return
 
       if (!audioContextRef.current) {
@@ -96,7 +104,6 @@ export default function RestTimer({ defaultSeconds = 90, autoStart = false, onDo
 
       oscillator.start(now)
       oscillator.stop(now + 0.08)
-      triggerHaptic('tap')
     } catch {
       // Ignore audio failures
     }
@@ -152,72 +159,60 @@ export default function RestTimer({ defaultSeconds = 90, autoStart = false, onDo
   const done = remaining === 0
 
   const timerColor = done
-    ? 'var(--success)'
+    ? '#34D399'
     : remaining !== null && remaining < 15
-      ? 'var(--error)'
-      : 'var(--gold)'
+      ? '#FB7185'
+      : '#FBBF24'
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '8px 0' }}>
-      <div
-        style={{
-          position: 'relative',
-          width: 52,
-          height: 52,
-          flexShrink: 0,
-        }}
-      >
-        <svg width={52} height={52} style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx={26} cy={26} r={22} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={4} />
+    <div className="flex flex-wrap items-center gap-3 py-2">
+      <div className="relative h-14 w-14 shrink-0">
+        <svg width={56} height={56} style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx={28} cy={28} r={23} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={4} />
           <circle
-            cx={26}
-            cy={26}
-            r={22}
+            cx={28}
+            cy={28}
+            r={23}
             fill="none"
             stroke={timerColor}
             strokeWidth={4}
-            strokeDasharray={`${2 * Math.PI * 22}`}
-            strokeDashoffset={`${2 * Math.PI * 22 * (1 - pct)}`}
+            strokeLinecap="round"
+            strokeDasharray={`${2 * Math.PI * 23}`}
+            strokeDashoffset={`${2 * Math.PI * 23 * (1 - pct)}`}
             style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
           />
         </svg>
         <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'var(--font-telemetry, monospace)',
-            fontWeight: 700,
-            fontSize: 12.5,
-            color: timerColor,
-          }}
+          className="absolute inset-0 flex items-center justify-center font-mono text-xs font-bold tabular-nums"
+          style={{ color: timerColor }}
         >
           {done ? <GaaIcon name="check" size={16} tone="emerald" /> : `${mins}:${String(secs).padStart(2, '0')}`}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <p style={{ margin: 0, fontSize: 11, color: 'var(--gray)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+      <div className="flex flex-col gap-1.5">
+        <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
           Rest Timer
         </p>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <div className="flex flex-wrap items-center gap-2">
           {!running && (
             <>
               <select
                 value={targetSeconds}
+                aria-label="Rest timer duration"
                 onChange={e => setTargetSeconds(Number(e.target.value))}
-                style={{ padding: '3px 6px', background: 'var(--navy)', border: '1px solid var(--navy-lt)', color: 'var(--white)', fontSize: 12, fontFamily: 'Raleway, sans-serif' }}
+                className="min-h-[44px] cursor-pointer rounded-xl border border-white/10 bg-[#181B22] px-3 py-1.5 font-mono text-sm font-semibold tabular-nums text-white transition-colors duration-150 hover:border-white/15 focus:border-emerald-400/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
               >
                 {[30, 45, 60, 90, 120, 150, 180, 240, 300].map(s => (
-                  <option key={s} value={s}>{Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</option>
+                  <option key={s} value={s}>
+                    {Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}
+                  </option>
                 ))}
               </select>
               <button
                 type="button"
                 onClick={start}
-                style={{ padding: '4px 10px', background: 'var(--gold)', color: '#0D1B2A', border: 'none', fontFamily: 'var(--font-sans, Raleway), sans-serif', textTransform: 'uppercase', fontSize: 11, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.08em' }}
+                className="forge-tactile-press min-h-[44px] rounded-xl bg-emerald-400 px-3.5 py-2 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
               >
                 Start
               </button>
@@ -227,7 +222,7 @@ export default function RestTimer({ defaultSeconds = 90, autoStart = false, onDo
             <button
               type="button"
               onClick={stop}
-              style={{ padding: '4px 10px', background: 'transparent', color: 'var(--error)', border: '1px solid var(--error)', fontFamily: 'var(--font-sans, Raleway), sans-serif', textTransform: 'uppercase', fontSize: 11, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.08em' }}
+              className="forge-tactile-press min-h-[44px] rounded-xl border border-rose-500/35 bg-rose-500/10 px-3.5 py-2 text-xs font-bold uppercase tracking-[0.08em] text-rose-300 transition-colors duration-150 hover:bg-rose-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               Stop
             </button>
@@ -236,7 +231,7 @@ export default function RestTimer({ defaultSeconds = 90, autoStart = false, onDo
             <button
               type="button"
               onClick={start}
-              style={{ padding: '4px 10px', background: 'var(--gold)', color: '#0D1B2A', border: 'none', fontFamily: 'var(--font-sans, Raleway), sans-serif', textTransform: 'uppercase', fontSize: 11, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.08em' }}
+              className="forge-tactile-press min-h-[44px] rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-bold uppercase tracking-[0.08em] text-emerald-300 transition-colors duration-150 hover:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               Restart
             </button>

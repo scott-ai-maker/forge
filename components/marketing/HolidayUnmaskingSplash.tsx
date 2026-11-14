@@ -341,15 +341,15 @@ export default function HolidayUnmaskingSplash({
 
   return (
     <div
-      className="holiday-unmasking-wrapper"
+      className="holiday-unmasking-wrapper forge-obsidian-canvas"
       style={{
         minHeight: '100dvh',
-        backgroundColor: '#06090F',
+        backgroundColor: '#090A0D',
         color: '#F8FAFC',
         position: 'relative',
         overflowX: 'clip',
         fontFamily: 'var(--font-body)',
-        paddingBottom: 80,
+        paddingBottom: 96,
       }}
     >
       {/* Background Interactive Constellation Canvas */}
@@ -364,7 +364,7 @@ export default function HolidayUnmaskingSplash({
           height: '100%',
           pointerEvents: 'none',
           zIndex: 0,
-          opacity: 0.65,
+          opacity: 0.55,
         }}
       />
 
@@ -373,13 +373,13 @@ export default function HolidayUnmaskingSplash({
         aria-hidden="true"
         style={{
           position: 'fixed',
-          top: '-15%',
+          top: '-12%',
           left: '50%',
           transform: 'translateX(-50%)',
           width: '90vw',
           maxWidth: 1200,
-          height: 600,
-          background: 'radial-gradient(ellipse at center, rgba(245, 158, 11, 0.16) 0%, rgba(56, 189, 248, 0.04) 45%, transparent 70%)',
+          height: 560,
+          background: 'radial-gradient(ellipse at top, rgba(16, 185, 129, 0.08) 0%, rgba(245, 158, 11, 0.08) 42%, transparent 68%)',
           filter: 'blur(60px)',
           pointerEvents: 'none',
           zIndex: 0,
@@ -516,24 +516,27 @@ export default function HolidayUnmaskingSplash({
             <button
               type="button"
               onClick={toggleSfxMuted}
-              aria-label={sfxMuted ? 'Sound effects muted. Activate sound effects' : 'Mute sound effects'}
+              aria-label="Sound effects"
               aria-pressed={soundEnabled}
               title={soundEnabled ? 'Audio feedback enabled' : 'Click to enable audio feedback'}
+              className="forge-tactile-press"
               style={{
-                background: soundEnabled ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                minHeight: 44,
+                minWidth: 44,
+                background: soundEnabled ? 'rgba(16, 185, 129, 0.12)' : '#181B22',
                 border: soundEnabled
-                  ? '1px solid rgba(245, 158, 11, 0.4)'
-                  : '1px solid rgba(255, 255, 255, 0.12)',
-                color: soundEnabled ? '#FBBF24' : '#94A3B8',
-                borderRadius: 8,
-                padding: '8px 12px',
+                  ? '1px solid rgba(52, 211, 153, 0.35)'
+                  : '1px solid rgba(255, 255, 255, 0.1)',
+                color: soundEnabled ? '#6EE7B7' : '#A1A1AA',
+                borderRadius: 12,
+                padding: '10px 14px',
                 fontSize: 12,
                 fontFamily: 'var(--font-telemetry)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                transition: 'all 0.2s ease',
+                transition: 'background-color 0.15s ease, border-color 0.15s ease',
               }}
             >
               <ForgeIcon name={soundEnabled ? 'flame' : 'lock'} size={14} />
@@ -543,17 +546,21 @@ export default function HolidayUnmaskingSplash({
             {/* Direct Member Entrance */}
             <Link
               href="/auth/login"
+              className="forge-tactile-press"
               style={{
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
                 textDecoration: 'none',
-                color: '#E2E8F0',
+                color: '#E4E4E7',
                 fontSize: 13,
                 fontFamily: 'var(--font-body)',
                 fontWeight: 500,
-                padding: '8px 14px',
-                borderRadius: 8,
-                background: 'rgba(255, 255, 255, 0.04)',
+                padding: '10px 15px',
+                borderRadius: 12,
+                background: '#181B22',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                transition: 'all 0.2s ease',
+                transition: 'background-color 0.15s ease, border-color 0.15s ease',
               }}
             >
               Member Sign In
@@ -562,19 +569,22 @@ export default function HolidayUnmaskingSplash({
             {/* Coach Portal Link */}
             <Link
               href="/coach"
+              className="forge-tactile-press"
               style={{
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
                 textDecoration: 'none',
-                color: '#080E14',
+                color: '#090A0D',
                 fontSize: 13,
                 fontFamily: 'var(--font-heading)',
                 fontWeight: 700,
                 letterSpacing: '0.05em',
                 textTransform: 'uppercase',
-                padding: '8px 16px',
-                borderRadius: 8,
+                padding: '10px 16px',
+                borderRadius: 12,
                 background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)',
-                transition: 'transform 0.15s ease',
+                boxShadow: '0 2px 12px rgba(245, 158, 11, 0.3)',
               }}
             >
               Coach Portal
@@ -585,18 +595,18 @@ export default function HolidayUnmaskingSplash({
         {/* Mobile Smooth-Scroll Anchor Strip (375px / 430px viewports) */}
         <nav
           aria-label="Mobile section navigation"
-          className="mb-6 flex items-center justify-between gap-2 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-semibold text-slate-300 md:hidden"
+          className="mb-6 flex items-center justify-between gap-2 overflow-x-auto rounded-xl border border-white/[0.08] bg-[#111318] px-3 py-1.5 text-xs font-semibold text-zinc-300 md:hidden"
         >
-          <a href="#sneak-peek" className="shrink-0 hover:text-amber-300">
+          <a href="#sneak-peek" className="inline-flex min-h-[44px] shrink-0 items-center px-1.5 hover:text-emerald-300">
             Sneak Peek
           </a>
-          <a href="#how-it-works" className="shrink-0 hover:text-amber-300">
+          <a href="#how-it-works" className="inline-flex min-h-[44px] shrink-0 items-center px-1.5 hover:text-emerald-300">
             How It Works
           </a>
-          <a href="#coach" className="shrink-0 hover:text-amber-300">
+          <a href="#coach" className="inline-flex min-h-[44px] shrink-0 items-center px-1.5 hover:text-emerald-300">
             Coach
           </a>
-          <a href="#pricing" className="shrink-0 hover:text-amber-300">
+          <a href="#pricing" className="inline-flex min-h-[44px] shrink-0 items-center px-1.5 hover:text-emerald-300">
             Pricing
           </a>
         </nav>
@@ -1085,11 +1095,11 @@ export default function HolidayUnmaskingSplash({
           {/* COUNTDOWN TICKER HUD */}
           <div
             style={{
-              background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(8, 14, 20, 0.98) 100%)',
-              border: '1px solid rgba(245, 158, 11, 0.35)',
+              background: '#111318',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: 16,
               padding: '28px 20px',
-              boxShadow: '0 16px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(245, 158, 11, 0.2)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 52px rgba(0, 0, 0, 0.65)',
               maxWidth: 760,
               margin: '0 auto',
             }}
@@ -1099,21 +1109,23 @@ export default function HolidayUnmaskingSplash({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
                 paddingBottom: 16,
                 marginBottom: 20,
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                fontSize: 12,
+                borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+                fontSize: 11,
                 fontFamily: 'var(--font-telemetry)',
-                letterSpacing: '0.1em',
-                color: '#CBD5E1',
+                letterSpacing: '0.12em',
+                color: '#A1A1AA',
                 textTransform: 'uppercase',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <ForgeIcon name="clock" size={15} style={{ color: '#F59E0B' }} />
+                <ForgeIcon name="clock" size={15} style={{ color: '#34D399' }} />
                 <span>UNMASKING COUNTDOWN</span>
               </div>
-              <div style={{ color: '#FBBF24', fontWeight: 600 }}>
+              <div style={{ color: '#FBBF24', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                 {LAUNCH_CAMPAIGN_INFO.dateFormatted} · {LAUNCH_CAMPAIGN_INFO.timeFormatted}
               </div>
             </div>
@@ -1123,7 +1135,7 @@ export default function HolidayUnmaskingSplash({
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 12,
+                gap: 10,
               }}
             >
               {[
@@ -1135,23 +1147,25 @@ export default function HolidayUnmaskingSplash({
                 <div
                   key={unit.label}
                   style={{
-                    background: 'rgba(8, 14, 24, 0.85)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: '#181B22',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: 12,
                     padding: '16px 8px',
                     textAlign: 'center',
-                    boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.5)',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
                     position: 'relative',
                     overflow: 'hidden',
                   }}
                 >
                   <div
+                    className="tabular-nums"
                     style={{
                       fontFamily: 'var(--font-telemetry)',
-                      fontSize: 'clamp(2rem, 5vw, 3.25rem)',
+                      fontVariantNumeric: 'tabular-nums',
+                      fontSize: 'clamp(1.85rem, 5vw, 3.25rem)',
                       fontWeight: 800,
                       lineHeight: 1,
-                      color: idx === 3 ? '#F59E0B' : '#F8FAFC',
+                      color: idx === 3 ? '#34D399' : '#F8FAFC',
                       letterSpacing: '-0.02em',
                       marginBottom: 6,
                     }}
@@ -1162,8 +1176,8 @@ export default function HolidayUnmaskingSplash({
                     style={{
                       fontFamily: 'var(--font-telemetry)',
                       fontSize: 10,
-                      letterSpacing: '0.18em',
-                      color: '#64748B',
+                      letterSpacing: '0.14em',
+                      color: '#A1A1AA',
                       textTransform: 'uppercase',
                       fontWeight: 600,
                     }}
@@ -1837,12 +1851,10 @@ export default function HolidayUnmaskingSplash({
 
                 {/* Holographic Member Card */}
                 <div
+                  className="forge-metallic-pass"
                   style={{
-                    background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 50%, #080E14 100%)',
-                    border: '1px solid rgba(245, 158, 11, 0.6)',
-                    borderRadius: 14,
+                    borderRadius: 16,
                     padding: '24px 20px',
-                    boxShadow: '0 16px 36px rgba(0, 0, 0, 0.8), 0 0 24px rgba(245, 158, 11, 0.25)',
                     textAlign: 'left',
                     position: 'relative',
                     overflow: 'hidden',
