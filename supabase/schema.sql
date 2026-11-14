@@ -404,49 +404,58 @@ create index if not exists coaching_applications_created_at_idx on coaching_appl
 create index if not exists marketing_email_queue_dispatch_idx on marketing_email_queue(status, send_after);
 create unique index if not exists marketing_email_queue_unique_template_idx on marketing_email_queue(email, template_key);
 
+-- ── RLS SECURITY DEFINER HELPERS (PREVENTS 42P17 RECURSION ON CLIENTS) ──
+create or replace function public.is_authenticated_coach()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.clients c
+    where c.id = auth.uid()
+      and c.role = 'coach'
+  );
+$$;
+
+create or replace function public.is_coach_assigned_to_client(target_client_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.clients coach
+    join public.clients cl on cl.id = target_client_id
+    where coach.id = auth.uid()
+      and coach.role = 'coach'
+      and cl.designated_coach_id = auth.uid()
+  );
+$$;
+
 -- ── COACH POLICIES ────────────────────────────────────────
 -- Coach can read assigned clients
 drop policy if exists "Coach reads all clients" on clients;
 drop policy if exists "Coach reads assigned clients" on clients;
 create policy "Coach reads assigned clients" on clients
   for select using (
-    (
-      id = auth.uid()
-      and exists (select 1 from clients c where c.id = auth.uid() and c.role = 'coach')
-    )
-    or (
-      designated_coach_id = auth.uid()
-      and exists (select 1 from clients c where c.id = auth.uid() and c.role = 'coach')
-    )
+    (id = auth.uid() and public.is_authenticated_coach())
+    or (designated_coach_id = auth.uid() and public.is_authenticated_coach())
   );
 
 -- Coach can read assigned client packages
 drop policy if exists "Coach reads all packages" on client_packages;
 drop policy if exists "Coach reads assigned packages" on client_packages;
 create policy "Coach reads assigned packages" on client_packages
-  for select using (
-    exists (
-      select 1
-      from clients c
-      join clients cl on cl.id = client_packages.client_id
-      where c.id = auth.uid()
-        and c.role = 'coach'
-        and cl.designated_coach_id = auth.uid()
-    )
-  );
+  for select using (public.is_coach_assigned_to_client(client_packages.client_id));
 
 drop policy if exists "Coach reads assigned comp grants" on comp_session_grants;
 create policy "Coach reads assigned comp grants" on comp_session_grants
-  for select using (
-    exists (
-      select 1
-      from clients coach
-      join clients cl on cl.id = comp_session_grants.client_id
-      where coach.id = auth.uid()
-        and coach.role = 'coach'
-        and cl.designated_coach_id = auth.uid()
-    )
-  );
+  for select using (public.is_coach_assigned_to_client(comp_session_grants.client_id));
 
 drop policy if exists "Coach reads own discount codes" on discount_codes;
 create policy "Coach reads own discount codes" on discount_codes

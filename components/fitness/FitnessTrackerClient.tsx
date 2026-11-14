@@ -110,6 +110,7 @@ import {
   resolveNextUnfinishedWorkoutDay,
   resolveWorkoutDayCompletion,
   resolveMicrocycleWeekCompletedCount,
+  resolveEffectiveWorkoutSessionDate,
   filterLogsForPlan,
 } from '@/lib/fitness'
 import { calculateActiveMicrocycleProgress } from '@/lib/periodization-roadmap'
@@ -613,6 +614,7 @@ export {
   resolveNextUnfinishedWorkoutDay,
   resolveWorkoutDayCompletion,
   resolveMicrocycleWeekCompletedCount,
+  resolveEffectiveWorkoutSessionDate,
   filterLogsForPlan,
   calculateActiveMicrocycleProgress,
 }
@@ -1160,7 +1162,7 @@ export default function FitnessTrackerClient({
   const handleClientQuitWorkout = useCallback(() => {
     const targetDay = activeWorkoutSessionDay ?? effectiveActiveWorkoutDay
     const targetWorkout = planWorkouts.find(w => w.day === targetDay)
-    const sessionDate = targetWorkout?.scheduledDate || todayDateOnly()
+    const sessionDate = resolveEffectiveWorkoutSessionDate(targetWorkout?.scheduledDate, todayDateOnly())
 
     // 1. Immediately purge unfinalized sets for this day from local state
     setLocalSetLogs(prev => prev.filter(s => {
@@ -1220,11 +1222,12 @@ export default function FitnessTrackerClient({
     const currentDay = effectiveActiveWorkoutDay
     const workout = planWorkouts.find(w => w.day === currentDay) ?? planWorkouts[0]
     if (workout && workout.exercises && workout.exercises.length > 0) {
+      const effectiveSessionDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
       const firstUnfinished = workout.exercises.find(ex => {
         const setsLogged = (activeSetLogs || []).filter(l =>
           normalizeExerciseName(l.exercise_name) === normalizeExerciseName(ex.name) &&
           extractWorkoutDayTag(l.notes) === workout.day &&
-          (workout.scheduledDate ? l.session_date === workout.scheduledDate : true) &&
+          (!workout.scheduledDate || l.session_date === effectiveSessionDate || extractWorkoutWeekTag(l.notes) === microcycleProgress.currentWeek) &&
           !l.is_warmup
         ).length
         const targetSets = parseInt(String(ex.sets).trim(), 10) || 3
@@ -1233,7 +1236,7 @@ export default function FitnessTrackerClient({
       return `${workout.day}-${firstUnfinished.name}`
     }
     return null
-  }, [expandedExerciseKey, effectiveActiveWorkoutDay, planWorkouts, activeSetLogs])
+  }, [expandedExerciseKey, effectiveActiveWorkoutDay, planWorkouts, activeSetLogs, microcycleProgress.currentWeek])
 
   // Coach Gordon Real-Time Workout Action Execution Listeners
   useEffect(() => {
@@ -1395,12 +1398,13 @@ export default function FitnessTrackerClient({
       forcePhase || (activeStepFilter === 'all' ? activeWatchPhaseRef.current : activeStepFilter)
 
     // 1. Warm-Up Drills
+    const effectiveWatchDate = resolveEffectiveWorkoutSessionDate(activeWorkout.scheduledDate, todayDateOnly())
     const warmupItems = resolvePrescribedWarmupDrills(latestAssessment, activeWorkout.focus)
     const warmupKey = getWarmupStorageKey(
       plan?.id,
       microcycleProgress.currentWeek,
       activeWorkout.day,
-      activeWorkout.scheduledDate
+      effectiveWatchDate
     )
     let completedWarmupRecord: Record<string, boolean> = {}
     try {
@@ -1590,9 +1594,9 @@ export default function FitnessTrackerClient({
       const stage = Number(cardio.stage) || 2
       const targetZoneMetrics = stage === 1 ? zones.zone1 : stage === 3 ? zones.zone3 : zones.zone2
       const isCardioLogged = (localCardioLogs || []).some(log => {
+        const isMatchDate = log.session_date === effectiveWatchDate
         const isMatchDay = log.notes?.includes(`[Day ${activeWorkout.day}`)
-        const isMatchDate = activeWorkout.scheduledDate && log.session_date === activeWorkout.scheduledDate
-        return isMatchDay || isMatchDate
+        return isMatchDate && (isMatchDay || !log.notes?.includes('[Day '))
       })
       cardioPayload = {
         modality: cardio.recommendedModalities?.[0] || 'Incline Treadmill Walk',
@@ -1615,7 +1619,7 @@ export default function FitnessTrackerClient({
       plan?.id,
       microcycleProgress.currentWeek,
       activeWorkout.day,
-      activeWorkout.scheduledDate
+      effectiveWatchDate
     )
     let completedCooldownRecord: Record<string, boolean> = {}
     try {
@@ -1846,7 +1850,15 @@ export default function FitnessTrackerClient({
 
 
 
-  async function executeSetLog(workout: WorkoutDay, exercise: WorkoutExercise, draft: InlineSetDraft) {
+  async function executeSetLog(workout: WorkoutDay, exercise: WorkoutExercise, rawDraft: InlineSetDraft) {
+    const effectiveSessionDate = resolveEffectiveWorkoutSessionDate(
+      rawDraft.sessionDate || workout.scheduledDate,
+      todayDateOnly()
+    )
+    const draft: InlineSetDraft = {
+      ...rawDraft,
+      sessionDate: effectiveSessionDate,
+    }
     const key = exerciseDraftKey(workout.day, exercise.name)
     const movementCard = getNasmClinicalMovementCard(exercise.name, exercise)
     const isStrength = isStrengthExercise(exercise.name, exercise.block, exercise.reps)
@@ -2132,7 +2144,7 @@ export default function FitnessTrackerClient({
   async function handleInlineSetLog(e: React.FormEvent, workout: WorkoutDay, exercise: WorkoutExercise) {
     e.preventDefault()
     const key = exerciseDraftKey(workout.day, exercise.name)
-    const initialDate = workout.scheduledDate || todayDateOnly()
+    const initialDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
     const movementCard = getNasmClinicalMovementCard(exercise.name, exercise)
     const isStrength = isStrengthExercise(exercise.name, exercise.block, exercise.reps)
     const effectiveTempo = isStrength ? (exercise.tempo || movementCard.tempo || getDefaultNasmOptTempo(plan?.nasm_opt_phase, exercise.name).tempo) : ''
@@ -2152,7 +2164,7 @@ export default function FitnessTrackerClient({
     const effectiveTempo = isStrength ? (exercise.tempo || movementCard.tempo || getDefaultNasmOptTempo(plan?.nasm_opt_phase, exercise.name).tempo) : ''
 
     const draft: InlineSetDraft = {
-      sessionDate: workout.scheduledDate || todayDateOnly(),
+      sessionDate: resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly()),
       setNumber: supersetDraft.setNumber,
       reps: supersetDraft.reps,
       weight: supersetDraft.weight,
@@ -2345,7 +2357,7 @@ export default function FitnessTrackerClient({
           plan?.id,
           microcycleProgress.currentWeek,
           activeWorkout.day,
-          activeWorkout.scheduledDate
+          resolveEffectiveWorkoutSessionDate(activeWorkout.scheduledDate, todayDateOnly())
         )
 
         try {
@@ -2412,7 +2424,7 @@ export default function FitnessTrackerClient({
           plan?.id,
           microcycleProgress.currentWeek,
           activeWorkout.day,
-          activeWorkout.scheduledDate
+          resolveEffectiveWorkoutSessionDate(activeWorkout.scheduledDate, todayDateOnly())
         )
 
         try {
@@ -2484,7 +2496,7 @@ export default function FitnessTrackerClient({
           ? 'stair_climber'
           : 'hiit'
 
-        const sessionDate = activeWorkout.scheduledDate || todayDateOnly()
+        const sessionDate = resolveEffectiveWorkoutSessionDate(activeWorkout.scheduledDate, todayDateOnly())
         const noteParts = [
           `[Day ${activeWorkout.day} Prescribed Cardio]`,
           cardio ? `${cardio.title} (Stage ${cardio.stage})` : 'Cardio Interval',
@@ -2579,7 +2591,7 @@ export default function FitnessTrackerClient({
 
   async function handleCompleteWorkoutDay(workout: WorkoutDay, exertionRpe?: number) {
     const busyKey = `log-day:${String(workout.day)}`
-    const sessionDate = workout.scheduledDate || todayDateOnly()
+    const sessionDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
     const sessionTitle = `Day ${String(workout.day)}: ${workout.focus}`
 
     // 1. Dynamic duration and calories calculation for Apple Health (before stopping timer)
@@ -2626,10 +2638,13 @@ export default function FitnessTrackerClient({
       notes: `Day ${workout.day}: ${workout.focus || (isCardioDay ? 'Cardio Training' : 'Strength Training')}`,
     }).catch(err => console.warn('[AppleHealth] Sync error:', err))
 
-    // 4. Check if already logged today
-    const existing = localWorkoutLogs.find(
-      row => row.session_date === sessionDate && row.session_title === sessionTitle
-    )
+    // 4. Check if already logged today for this microcycle week
+    const existing = localWorkoutLogs.find(row => {
+      if (row.session_date !== sessionDate || row.session_title !== sessionTitle) return false
+      const rowWeek = extractWorkoutWeekTag(row.notes)
+      if (rowWeek !== null && rowWeek !== microcycleProgress.currentWeek) return false
+      return true
+    })
     if (existing) {
       playCoachChime(1046.5, 0.4, 'sine')
       speakCoachVoiceCue(`Session complete! Day ${workout.day} telemetry closed and synced to Apple Health.`)
@@ -2679,7 +2694,7 @@ export default function FitnessTrackerClient({
     exertionRpe?: number
   ) {
     const busyKey = `unified-log:${workout.day}`
-    const sessionDate = workout.scheduledDate || todayDateOnly()
+    const sessionDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
     const sessionTitle = `Day ${workout.day}: ${workout.focus || 'Unified Strength + Cardio'}`
 
     setBusy(busyKey)
@@ -2805,7 +2820,7 @@ export default function FitnessTrackerClient({
         distanceKm = units === 'imperial' ? rawDist * 1.60934 : rawDist
       }
 
-      const sessionDate = workout.scheduledDate || todayDateOnly()
+      const sessionDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
 
       const noteParts = [
         `[Day ${workout.day} Prescribed Cardio]`,
@@ -3642,7 +3657,7 @@ export default function FitnessTrackerClient({
                           <span style={{ color: '#94A3B8', fontSize: 11, fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums' }}>
                             {workoutProgress.loggedSets}/{workoutProgress.targetSets || workout.exercises.length} sets
                             {workoutProgress.totalVolumeKg > 0 ? ` · ${formatWeight(workoutProgress.totalVolumeKg, units)}` : ''}
-                            {workout.scheduledDate ? ` · ${new Date(`${workout.scheduledDate}T12:00:00Z`).toLocaleDateString()}` : ''}
+                            {workout.scheduledDate && workout.scheduledDate >= todayDateOnly() ? ` · ${new Date(`${workout.scheduledDate}T12:00:00Z`).toLocaleDateString()}` : ''}
                           </span>
                         </div>
 
@@ -3671,7 +3686,7 @@ export default function FitnessTrackerClient({
                                   body: JSON.stringify({
                                     workoutDay: workout.day,
                                     workoutPlanId: plan?.id,
-                                    sessionDate: workout.scheduledDate || todayDateOnly(),
+                                    sessionDate: resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly()),
                                   }),
                                 })
 
@@ -3976,10 +3991,10 @@ export default function FitnessTrackerClient({
                       {/* Step 1: Pre-Lift Kinetic Warmup */}
                       {(activeStepFilter === 'all' || activeStepFilter === 'warmup') && (
                         <ClinicalKineticWarmupModule
-                          key={`warmup-${plan?.id || 'p'}-w${microcycleProgress.currentWeek}-d${workout.day}-${workout.scheduledDate || todayDateOnly()}`}
+                          key={`warmup-${plan?.id || 'p'}-w${microcycleProgress.currentWeek}-d${workout.day}-${resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())}`}
                           planId={plan?.id}
                           workoutWeek={microcycleProgress.currentWeek}
-                          sessionDate={workout.scheduledDate || todayDateOnly()}
+                          sessionDate={resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())}
                           workoutDay={workout.day}
                           workoutFocus={workout.focus}
                           notes={workout.notes}
@@ -4218,7 +4233,7 @@ export default function FitnessTrackerClient({
                                     )}
                                     <SupersetPairCard
                                       pair={pair}
-                                      sessionDate={workout.scheduledDate || todayDateOnly()}
+                                      sessionDate={resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())}
                                       units={units}
                                       setLogsA={logsA}
                                       setLogsB={logsB}
@@ -4251,14 +4266,15 @@ export default function FitnessTrackerClient({
                         const isStrength = isStrengthExercise(ex.name, ex.block, ex.reps)
                         const isBand = isBandExercise(ex.name, equipmentBadges(ex.primaryEquipment, ex.name, ex.description))
 
+                        const effectiveSessionDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
                         const effectiveTempo = isStrength ? (ex.tempo || movementCard.tempo || getDefaultNasmOptTempo(plan?.nasm_opt_phase, ex.name).tempo) : ''
-                        const draft = inlineSetDrafts[exerciseKey] ?? defaultInlineSetDraft(workout.scheduledDate || todayDateOnly(), ex.reps, plan?.nasm_opt_phase, ex.block, ex.rest, effectiveTempo, ex.name)
+                        const draft = inlineSetDrafts[exerciseKey] ?? defaultInlineSetDraft(effectiveSessionDate, ex.reps, plan?.nasm_opt_phase, ex.block, ex.rest, effectiveTempo, ex.name)
                         const isFutureWorkout = workout.scheduledDate ? workout.scheduledDate > todayDateOnly() : false
                         const exerciseRecentLogs = isFutureWorkout ? [] : (setLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
-                          .filter(row => row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === Number(workout.day))
+                          .filter(row => row.session_date === effectiveSessionDate || extractWorkoutDayTag(row.notes) === Number(workout.day))
                           .slice(0, 5)
                         const exLoggedSets = isFutureWorkout ? 0 : (setLogsByExercise.get(normalizeExerciseName(ex.name)) ?? [])
-                          .filter(row => (row.session_date === (workout.scheduledDate || todayDateOnly()) || extractWorkoutDayTag(row.notes) === Number(workout.day)) && !row.is_warmup).length
+                          .filter(row => (row.session_date === effectiveSessionDate || extractWorkoutDayTag(row.notes) === Number(workout.day)) && !row.is_warmup).length
                         const exTargetSets = parseSetTarget(ex.sets)
 
                         const sectionHeader = hasSections && ex.block && OPT_SECTION_ORDER.includes(ex.block) && !seenSections.has(ex.block)
@@ -5284,6 +5300,7 @@ export default function FitnessTrackerClient({
               {/* ── Auto-Prompt: Advance from Resistance to Cardio ── */}
               {(() => {
                 if (isDedicatedCardioDay) return null
+                const effectiveSessionDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
                 const exercises = workout.exercises || []
                 const hasExercises = exercises.length > 0
                 const loggedCount = exercises.filter(ex => {
@@ -5292,13 +5309,17 @@ export default function FitnessTrackerClient({
                     !set.is_warmup &&
                     extractWorkoutDayTag(set.notes) === workout.day &&
                     normalizeExerciseName(set.exercise_name) === normalizeExerciseName(ex.name) &&
-                    (!workout.scheduledDate || set.session_date === workout.scheduledDate)
+                    (!workout.scheduledDate || set.session_date === effectiveSessionDate || extractWorkoutWeekTag(set.notes) === microcycleProgress.currentWeek)
                   )
                   return target > 0 && workingSets.length >= target
                 }).length
                 const allResistanceLogged = hasExercises && loggedCount === exercises.length
                 const cardio = resolveWorkoutCardioProtocol(workout, profile, plan)
-                const isCardioLogged = localCardioLogs.some(log => log.notes?.includes(`[Day ${workout.day}`) || (workout.scheduledDate && log.session_date === workout.scheduledDate))
+                const isCardioLogged = localCardioLogs.some(
+                  log =>
+                    log.session_date === effectiveSessionDate &&
+                    (log.notes?.includes(`[Day ${workout.day}`) || !log.notes?.includes('[Day '))
+                )
 
                 if (!cardio || isCardioLogged) return null
 
@@ -5378,10 +5399,11 @@ export default function FitnessTrackerClient({
 
                         const draft = cardioDraftsByDay[workout.day] ?? defaultCardioDraft(cardio)
 
+                        const effectiveCardioDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
                         const dayCardioLogs = localCardioLogs.filter(log => {
+                          const isMatchDate = log.session_date === effectiveCardioDate
                           const isMatchDay = log.notes?.includes(`[Day ${workout.day}`)
-                          const isMatchDate = workout.scheduledDate && log.session_date === workout.scheduledDate
-                          return isMatchDay || isMatchDate
+                          return isMatchDate && (isMatchDay || !log.notes?.includes('[Day '))
                         })
 
                         const isCollapsed = isStageCollapsed(workout.day, 'cardio')
@@ -5506,7 +5528,7 @@ export default function FitnessTrackerClient({
                                       <span>Quick Cardio Log</span>
                                     </span>
                                     <span style={{ fontSize: 11, color: 'var(--gray)' }}>
-                                      Logged for {workout.scheduledDate || 'Today'}
+                                      Logged for {workout.scheduledDate && workout.scheduledDate > todayDateOnly() ? workout.scheduledDate : 'Today'}
                                     </span>
                                   </div>
 
@@ -5810,10 +5832,10 @@ export default function FitnessTrackerClient({
                       {/* ── Step 4: NASM Clinical Cool-Down Protocol ── */}
                       {(activeStepFilter === 'all' || activeStepFilter === 'cooldown') && (
                         <ClinicalCoolDownModule
-                          key={`cooldown-${plan?.id || 'p'}-w${microcycleProgress.currentWeek}-d${workout.day}-${workout.scheduledDate || todayDateOnly()}`}
+                          key={`cooldown-${plan?.id || 'p'}-w${microcycleProgress.currentWeek}-d${workout.day}-${resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())}`}
                           planId={plan?.id}
                           workoutWeek={microcycleProgress.currentWeek}
-                          sessionDate={workout.scheduledDate || todayDateOnly()}
+                          sessionDate={resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())}
                           workoutDay={workout.day}
                           workoutFocus={workout.focus}
                           notes={workout.notes}

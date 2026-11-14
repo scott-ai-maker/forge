@@ -119,14 +119,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .select('user_id, consent_signed_at, updated_at')
       .eq('user_id', user.id)
       .maybeSingle(),
-    supabase
+    admin
       .from('athlete_wearable_metrics')
       .select('resting_heart_rate')
       .eq('client_id', user.id)
       .order('sample_date', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase
+    admin
       .from('coach_client_messages')
       .select('message_body, created_at')
       .eq('client_id', user.id)

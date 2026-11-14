@@ -1009,3 +1009,25 @@ export function resolveNextUnfinishedWorkoutDay(
   return planWorkouts[0].day
 }
 
+/**
+ * Resolves the effective YYYY-MM-DD session date when recording or tracking
+ * an active workout day. Repeating microcycle plans often store Week 1's
+ * original `scheduledDate` on each template workout; once that date is in the
+ * past (`< today`), new set logs, cardio logs, and workout completions must
+ * stamp `today` so later weeks never collide with earlier weeks' logs.
+ */
+export function resolveEffectiveWorkoutSessionDate(
+  scheduledDate?: string | null,
+  today: string = new Date().toISOString().slice(0, 10)
+): string {
+  const trimmed = String(scheduledDate ?? '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return today
+  }
+  if (trimmed < today) {
+    return today
+  }
+  return trimmed
+}
+
+

@@ -16,8 +16,6 @@ export default async function BookPage() {
 
   if (!user) redirect('/auth/login')
 
-  // Strictly scope query to authenticated user.id via admin client to avoid
-  // PostgreSQL 42P17 RLS recursion on cross-joined clients policies.
   const admin = supabaseAdmin()
   const { data: packages } = await admin
     .from('client_packages')

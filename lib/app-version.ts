@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.53.0'
+export const APP_VERSION = '1.53.1'
 export const APP_RELEASE_DATE = '2026-11-13'
-export const APP_RELEASE_CODENAME = 'Cinema-Grade WebRTC Video Processing & Studio Background Engine'
+export const APP_RELEASE_CODENAME = 'Multi-Week Workout Recording & Client Package RLS Safeguard'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.53.1',
+    date: '2026-11-13',
+    codename: 'Multi-Week Workout Recording & Client Package RLS Safeguard',
+    category: 'fix',
+    badge: 'Workout Telemetry & Package Credits',
+    title: 'v1.53.1 — Multi-Week Microcycle Recording & Client Portal RLS Safeguard',
+    summary:
+      'Fixes repeating-microcycle workout completion and set/cardio date stamping when template workouts carry Week 1 scheduledDate values, and hardens client portal server queries and PostgreSQL RLS policies against 42P17 infinite recursion on client_packages, coach_client_messages, and wearable telemetry.',
+    highlights: [
+      'Repeating Microcycle Session Date Guard (resolveEffectiveWorkoutSessionDate): Ensures Week 2+ set logs, cardio logs, warmup/cooldown progress, and workout completions always stamp the actual training date instead of colliding with Week 1 scheduledDate strings.',
+      'Microcycle-Aware Duplicate Completion Guard: Scopes workout completion deduplication by active microcycle week tag ([workout-week:W]) so repeating splits never skip saving completed sessions.',
+      'Client Portal Package & Live Session Banner Reliability: Uses authenticated user.id-scoped server queries across client portal pages and adds SECURITY DEFINER RLS helpers (20261113_fix_clients_rls_recursion.sql) to eliminate 42P17 policy recursion.',
+    ],
+  },
   {
     version: '1.53.0',
     date: '2026-11-13',
