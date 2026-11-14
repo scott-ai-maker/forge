@@ -196,6 +196,23 @@ export default function PrivacyPolicyPage() {
               </tbody>
             </table>
           </div>
+          <div
+            id="sms-privacy"
+            style={{
+              background: 'rgba(14, 23, 38, 0.78)',
+              border: '1px solid rgba(197, 160, 89, 0.35)',
+              borderRadius: 8,
+              padding: '1.15rem 1.4rem',
+              marginTop: '1rem',
+            }}
+          >
+            <p style={{ margin: '0 0 0.45rem', fontWeight: 700, color: 'var(--gold-lt)', fontSize: '0.92rem' }}>
+              SMS &amp; Mobile Messaging Opt-In Privacy (No Third-Party Sharing)
+            </p>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#CBD5E1' }}>
+              No mobile information, telephone numbers, or text messaging originator opt-in data and consent will ever be sold, rented, loaned, or shared with any third parties, affiliates, or lead generators for marketing or promotional purposes. All the above categories exclude text messaging originator opt-in data and consent; this information will not be shared with any third parties, excluding aggregators and providers of the text message delivery services (Twilio, Inc.) strictly as necessary to transmit athlete-authorized account and coaching alerts. You may opt out at any time by replying <strong>STOP</strong> to any message or disabling SMS in <em>Account Settings</em>.
+            </p>
+          </div>
         </section>
 
         <section style={{ marginBottom: '2.5rem' }}>

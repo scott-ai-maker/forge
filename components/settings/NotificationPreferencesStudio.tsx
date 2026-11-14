@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { NOTIFICATION_CATEGORIES } from '@/lib/notification-catalog'
 
@@ -135,7 +136,15 @@ export default function NotificationPreferencesStudio({ defaultPhone = '' }: { d
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
             <span>
               I agree to receive account text messages from Forge Athletic at this number. Message frequency varies. Msg &amp; data
-              rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.
+              rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase. See our{' '}
+              <Link href="/terms#sms-terms" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+                Terms
+              </Link>{' '}
+              &amp;{' '}
+              <Link href="/privacy#sms-privacy" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+                Privacy Policy
+              </Link>
+              .
             </span>
           </label>
         </div>

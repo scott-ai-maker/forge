@@ -191,6 +191,30 @@ export default function TermsOfServicePage() {
           <p style={{ fontSize: '0.95rem' }}>
             Upon cancellation after any applicable statutory 3-business-day cooling-off period (and absent qualifying medical disability/relocation/statutory refund events), your subscription will not renew, you retain full access through the end of your current paid billing cycle, and prior completed billing cycles are non-refundable except where required by applicable state or federal law. Applicable sales/SaaS taxes are calculated at checkout based on your billing jurisdiction.
           </p>
+
+          <h3
+            id="sms-terms"
+            style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.15rem', color: '#FFFFFF', margin: '1.5rem 0 0.5rem', letterSpacing: '0.03em' }}
+          >
+            4.1 Optional SMS &amp; Mobile Text Messaging Program Terms
+          </h3>
+          <p style={{ fontSize: '0.95rem' }}>
+            <strong>Program Description &amp; Affirmative Opt-In:</strong> Athletes and members who explicitly opt in via <em>Account Settings &gt; Notification Preferences</em> (or <Link href="/sms-consent" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>SMS Consent Verification</Link>) may elect to receive transactional text messages from <strong>Forge Athletic</strong> regarding live coaching sessions, priority coach responses, weekly readiness check-in reminders, and urgent account/billing alerts. Consent to receive text messages is strictly optional and is <strong>not</strong> a condition of purchasing any membership or service.
+          </p>
+          <ul style={{ paddingLeft: '1.25rem', margin: '0.5rem 0 1rem', fontSize: '0.92rem' }}>
+            <li style={{ marginBottom: '0.4rem' }}>
+              <strong>Opt-Out (STOP):</strong> You can cancel the SMS service at any time. Simply text <strong>STOP</strong> to our sending number. After you send <strong>STOP</strong>, we will confirm your unsubscribe status via SMS (or honor your opt-out immediately), after which you will no longer receive SMS messages from us. If you want to rejoin, text <strong>START</strong> or re-enable SMS in <em>Account Settings</em>.
+            </li>
+            <li style={{ marginBottom: '0.4rem' }}>
+              <strong>Support (HELP):</strong> If you are experiencing issues with the messaging program, reply with the keyword <strong>HELP</strong> for more assistance, or contact us directly at <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a> or <a href="tel:+14132426370" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>413-242-6370</a>.
+            </li>
+            <li style={{ marginBottom: '0.4rem' }}>
+              <strong>Message Frequency &amp; Rates:</strong> Message frequency varies based on your coaching tier and account activity (typically 1–6 messages per month). As always, message and data rates may apply for any messages sent to you from us and to us from you. Contact your wireless provider for questions about your text plan or data plan.
+            </li>
+            <li style={{ marginBottom: '0.4rem' }}>
+              <strong>Carrier Disclaimer &amp; Privacy:</strong> Wireless carriers are not liable for delayed or undelivered messages. For details on how we protect mobile phone numbers and never share SMS opt-in consent with third parties for marketing, review our <Link href="/privacy#sms-privacy" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Privacy Policy</Link>.
+            </li>
+          </ul>
         </section>
 
         <section style={{ marginBottom: '2.5rem' }}>

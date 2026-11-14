@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { hasSmsConfig } from '@/lib/sms'
 import {
   ALL_LAUNCH_TEMPLATE_IDS,
   deliverAutomationPayload,
@@ -78,11 +79,7 @@ export async function GET(req: NextRequest) {
     providerStatus: {
       resendConfigured: Boolean(process.env.RESEND_API_KEY?.trim()),
       fromEmail: process.env.MARKETING_FROM_EMAIL?.trim() || null,
-      twilioConfigured: Boolean(
-        process.env.TWILIO_ACCOUNT_SID?.trim() &&
-          process.env.TWILIO_AUTH_TOKEN?.trim() &&
-          process.env.TWILIO_FROM_NUMBER?.trim()
-      ),
+      twilioConfigured: hasSmsConfig(),
     },
     items,
   })
