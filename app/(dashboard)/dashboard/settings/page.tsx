@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SiteHeader from '@/components/ui/SiteHeader'
 import ClientSettingsStudio, { SettingsTab } from '@/components/settings/ClientSettingsStudio'
@@ -24,25 +25,25 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
 
   if (!user) redirect('/auth/login')
 
+  const admin = supabaseAdmin()
+
   const [
     { data: profile },
-    { data: latestPackage },
+    { data: clientPackages },
     { data: fitnessProfile },
     { data: workoutPlan, error: workoutPlanError },
     { data: scheduledSessions },
   ] = await Promise.all([
-    supabase
+    admin
       .from('clients')
       .select('email, full_name, phone, role, avatar_path')
       .eq('id', user.id)
       .maybeSingle(),
-    supabase
+    admin
       .from('client_packages')
-      .select('package_name')
+      .select('package_name, sessions_remaining, expires_at')
       .eq('client_id', user.id)
-      .order('purchased_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .order('purchased_at', { ascending: false }),
     supabase
       .from('fitness_profiles')
       .select('*')
@@ -55,13 +56,23 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase
+    admin
       .from('sessions')
       .select('id, scheduled_at, duration_mins, notes, status')
       .eq('client_id', user.id)
       .eq('status', 'scheduled')
       .order('scheduled_at', { ascending: true }),
   ])
+
+  const now = new Date()
+  const activeClientPackages = (clientPackages ?? []).filter(
+    p => !p.expires_at || new Date(p.expires_at) > now
+  )
+  const latestPackage =
+    activeClientPackages.find(p => (p.sessions_remaining ?? 0) > 0) ??
+    activeClientPackages[0] ??
+    clientPackages?.[0] ??
+    null
 
   if (workoutPlanError) throw new Error(`Could not load workout schedule: ${workoutPlanError.message}`)
   const workoutSchedule = buildWorkoutSchedule(workoutPlan?.plan_json, scheduledSessions)

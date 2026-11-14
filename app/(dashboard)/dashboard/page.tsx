@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase'
 import { normalizeDashboardWorkspace } from '@/lib/validation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SuccessBanner from '@/components/dashboard/SuccessBanner'
@@ -31,6 +32,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   if (!user) redirect('/auth/login')
 
+  const admin = supabaseAdmin()
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
   const [
@@ -43,19 +45,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     { data: recentPrs },
     { data: workoutLogs },
   ] = await Promise.all([
-    supabase
+    admin
       .from('client_packages')
       .select('*')
       .eq('client_id', user.id)
       .order('purchased_at', { ascending: false }),
-    supabase
+    admin
       .from('sessions')
       .select('*')
       .eq('client_id', user.id)
       .eq('status', 'scheduled')
       .gte('scheduled_at', new Date().toISOString())
       .order('scheduled_at', { ascending: true }),
-    supabase
+    admin
       .from('clients')
       .select('full_name, email, role')
       .eq('id', user.id)
@@ -79,7 +81,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .eq('user_id', user.id)
       .gte('session_date', sevenDaysAgo.split('T')[0])
       .order('session_date', { ascending: false }),
-    supabase
+    admin
       .from('client_personal_records')
       .select('exercise_name, max_weight_kg, max_weight_reps, max_weight_date, updated_at')
       .eq('user_id', user.id)

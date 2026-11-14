@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase'
 import { normalizeFitnessWorkspace } from '@/lib/validation'
 import FitnessTrackerClient from '@/components/fitness/FitnessTrackerClient'
 import LogoutButton from '@/components/auth/LogoutButton'

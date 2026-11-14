@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SlotPicker from '@/components/booking/SlotPicker'
 import SiteHeader from '@/components/ui/SiteHeader'
@@ -15,7 +16,10 @@ export default async function BookPage() {
 
   if (!user) redirect('/auth/login')
 
-  const { data: packages } = await supabase
+  // Strictly scope query to authenticated user.id via admin client to avoid
+  // PostgreSQL 42P17 RLS recursion on cross-joined clients policies.
+  const admin = supabaseAdmin()
+  const { data: packages } = await admin
     .from('client_packages')
     .select('id, package_name, sessions_remaining, expires_at')
     .eq('client_id', user.id)
