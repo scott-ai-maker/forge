@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.52.0'
+export const APP_VERSION = '1.53.0'
 export const APP_RELEASE_DATE = '2026-11-13'
-export const APP_RELEASE_CODENAME = 'Live Studio Microsoft Teams Responsive Shell & Low-Bandwidth Resilience'
+export const APP_RELEASE_CODENAME = 'Cinema-Grade WebRTC Video Processing & Studio Background Engine'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,22 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.53.0',
+    date: '2026-11-13',
+    codename: 'Cinema-Grade WebRTC Video Processing & Studio Background Engine',
+    category: 'feature',
+    badge: 'WebGL2 Cinema LUT & GPU Segmentation',
+    title: 'v1.53.0 — Cinema-Grade WebRTC Video Processing & Studio Background Engine',
+    summary:
+      'Introduces a zero-latency WebGL2 Forge Studio LUT & MediaPipe GPU Selfie Segmentation pipeline (useStudioVideoPipeline + <StudioVideoControls />) across the Coach Live Cockpit and Athlete Live Studio, paired with 1080p / 2.5 Mbps HD WebRTC capture, 48 kHz voice isolation, a Pre-Call Green Room Preview, and an in-call collapsible Studio FX toolbar.',
+    highlights: [
+      'High-Bitrate 1080p WebRTC Capture & 48 kHz Voice Isolation: Progressive getUserMedia constraint chain (1920x1080 @ 30–60fps), 2.5 Mbps RTCRtpSender encoding with maintain-resolution degradation preference across 1-on-1 and multi-peer bridges, and echo-cancelled 48 kHz audio.',
+      'Real-Time WebGL2 "Forge Studio LUT" & Smart Low-Light Boost: Custom fragment shader with adaptive shadow lift, unsharp-mask edge sharpening (0.25), skin-tone safe white balance, 10% dark-tactile vignette across 4 presets (Studio Natural, Warm Tactile, High-Contrast Form, Raw), and automatic <75 luminance detection.',
+      'MediaPipe GPU Background Segmentation & <22fps Guardrail: Camera-guided bilateral edge feathering, motion-adaptive temporal alpha smoothing, 4 studio background modes (14px Studio Bokeh Blur, Forge Dark Tactical Studio, #121417 Pure Chroma Matte, Off), and automatic quality step-down below 22fps.',
+      'Pre-Call Green Room Preview & Collapsible In-Call "Studio FX" Pill: Live mirror preview with 12-bar RMS mic meter, Head-to-Toe vs. Upper-Body Desk Check framing guides, WAI-ARIA toolbar controls, and deterministic camera/WebGL/AudioContext teardown.',
+    ],
+  },
   {
     version: '1.52.0',
     date: '2026-11-13',

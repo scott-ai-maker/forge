@@ -474,10 +474,10 @@ describe('lib/webrtc-peer-bridge', () => {
         expect.objectContaining({
           encodings: [
             expect.objectContaining({
-              maxBitrate: 2000000,
+              maxBitrate: 2500000,
             }),
           ],
-          degradationPreference: 'maintain-framerate',
+          degradationPreference: 'maintain-resolution',
         })
       )
 

@@ -128,6 +128,10 @@ describe('lib/live-bandwidth-profiles', () => {
 
   describe('profiles, camera constraints & snapshot age helpers', () => {
     it('defines progressively lower bitrates from HD down to Audio-First (~36 kbps)', () => {
+      expect(BANDWIDTH_PROFILES.hd.maxVideoBitrate).toBe(2_500_000)
+      expect(BANDWIDTH_PROFILES.hd.degradationPreference).toBe('maintain-resolution')
+      expect(BANDWIDTH_PROFILES.hd.cameraWidthIdeal).toBe(1920)
+      expect(BANDWIDTH_PROFILES.hd.cameraHeightIdeal).toBe(1080)
       expect(BANDWIDTH_PROFILES.hd.maxVideoBitrate).toBeGreaterThan(BANDWIDTH_PROFILES.sd.maxVideoBitrate)
       expect(BANDWIDTH_PROFILES.sd.maxVideoBitrate).toBeGreaterThan(BANDWIDTH_PROFILES.low_data.maxVideoBitrate)
       expect(BANDWIDTH_PROFILES.audio_first.videoEnabled).toBe(false)

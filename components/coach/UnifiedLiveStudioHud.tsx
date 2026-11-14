@@ -62,6 +62,15 @@ import {
   LiveAdaptiveConnectionBanner,
   LiveBandwidthSelectorPill,
 } from './LiveBandwidthStatusControls'
+import ForgeIcon from '@/components/ui/ForgeIcon'
+import { isSfxMuted } from '@/lib/sfx-audio'
+import { useStudioVideoPipeline } from '@/hooks/useStudioVideoPipeline'
+import StudioVideoControls, {
+  StudioFramingGuideOverlay,
+  StudioGreenRoomPreview,
+  markStudioGreenRoomJoined,
+  shouldAutoOpenStudioGreenRoom,
+} from './StudioVideoControls'
 import './live-studio-teams.css'
 
 export { getNasmClinicalMovementCard, type NasmClinicalMovementCard }
@@ -284,10 +293,6 @@ export default function UnifiedLiveStudioHud({
   // Video State & Eco Mode
   const [layout, setLayout] = useState<VideoHudLayout>(isTeamSession ? 'team_grid' : 'split')
   const [isStageSwapped, setIsStageSwapped] = useState(false)
-  const [isCameraActive, setIsCameraActive] = useState(true)
-  const [isMicMuted, setIsMicMuted] = useState(false)
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
-  const [_streamError, setStreamError] = useState<string | null>(null)
   const [ecoMode, setEcoMode] = useState(true)
 
   // ── Team Session State ──
@@ -366,7 +371,6 @@ export default function UnifiedLiveStudioHud({
   const [ringFeedback, setRingFeedback] = useState<string | null>(null)
   const [selectedBackground, setSelectedBackground] = useState<CoachBackgroundPreset | null>(null)
   const [showBackgroundPicker, setShowBackgroundPicker] = useState(false)
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
 
   // ── In-HUD Luxury Toast Notification State ──
   const [hudToast, setHudToast] = useState<{ message: string; type?: 'info' | 'gold' | 'emerald' | 'amber' } | null>(null)
@@ -540,6 +544,37 @@ export default function UnifiedLiveStudioHud({
   const [disconnectTick, setDisconnectTick] = useState(0)
   const [lastSignalAt, setLastSignalAt] = useState<number>(0)
 
+  // ── Cinema-Grade WebRTC Video Processing & Studio Background Engine ──
+  const studioPipeline = useStudioVideoPipeline({
+    enabled: true,
+    initialFacingMode: 'user',
+    effectiveTier,
+    ecoMode: false,
+    customBackdropUrl: selectedBackground && !selectedBackground.isBlur ? selectedBackground.imageUrl : null,
+  })
+  const mediaStream = studioPipeline.outputStream
+  const isCameraActive = studioPipeline.isCameraActive
+  const isMicMuted = studioPipeline.isMicMuted
+  const facingMode = studioPipeline.facingMode
+  const localVideoTransform = studioPipeline.isPipelineRendering
+    ? 'none'
+    : studioPipeline.isMirrored
+    ? 'scaleX(-1)'
+    : 'none'
+
+  // ── Pre-Call Green Room Mirror Preview State ──
+  const greenRoomKey = useMemo(
+    () => `forge_green_room_coach_${teamId || clientId || coachUserId || 'live'}`,
+    [teamId, clientId, coachUserId]
+  )
+  const [showGreenRoom, setShowGreenRoom] = useState(false)
+
+  useEffect(() => {
+    if (shouldAutoOpenStudioGreenRoom(greenRoomKey)) {
+      setShowGreenRoom(true)
+    }
+  }, [greenRoomKey])
+
   // 1-Click High-Res Video Frame Grabber with 4-Slot Targeting & Auto-Advance
   const captureClientFrame = useCallback((targetSlot?: AssessmentCaptureSlot): string | null => {
     const slot = targetSlot || selectedCaptureSlot
@@ -643,6 +678,7 @@ export default function UnifiedLiveStudioHud({
 
   // Luxury 2-Tone Athlete Lobby Arrival Chime (E5 -> G#5)
   const playLobbyChime = useCallback(() => {
+    if (isSfxMuted()) return
     try {
       if (!audioCtxRef.current) {
         const AudioClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
@@ -1127,6 +1163,7 @@ export default function UnifiedLiveStudioHud({
 
   // High-Performance Singleton Web Audio Synth
   const playBeep = useCallback((freq = 440, duration = 0.08) => {
+    if (isSfxMuted()) return
     try {
       if (!audioCtxRef.current) {
         const AudioClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
@@ -1220,88 +1257,72 @@ export default function UnifiedLiveStudioHud({
     return () => clearInterval(interval)
   }, [teamCircuitTimer.isActive, playBeep, showHudToast])
 
-  const effectiveTierRef = useRef<ResolvedBandwidthTier>(effectiveTier)
-  effectiveTierRef.current = effectiveTier
-
-  // Camera Setup with Adaptive Bandwidth Profile & Microphone Audio
-  const startCamera = useCallback(async () => {
-    try {
-      setStreamError(null)
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop())
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        try { mediaRecorderRef.current.stop() } catch {}
-      }
-
-      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-        setStreamError('Camera access not supported on this device.')
-        return
-      }
-
-      const camSpec = BANDWIDTH_PROFILES[effectiveTierRef.current]
-
-      // Instant Studio Camera Startup with Microphone
-      let stream: MediaStream
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode,
-            width: { ideal: camSpec.cameraWidthIdeal, min: 320 },
-            height: { ideal: camSpec.cameraHeightIdeal, min: 180 },
-            frameRate: { ideal: camSpec.cameraFrameRateIdeal, min: 8 },
-          },
-          audio: true,
-        })
-      } catch {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          })
-        } catch {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true })
-        }
-      }
-
-      streamRef.current = stream
-      setMediaStream(stream)
-
-      // Enforce 1.0x digital zoom lock on camera track
-      const videoTrack = stream.getVideoTracks()[0]
+  // Sync raw hardware stream ref & still-camera 1.0x optical lock
+  useEffect(() => {
+    streamRef.current = studioPipeline.rawStream
+    if (studioPipeline.rawStream) {
+      const videoTrack = studioPipeline.rawStream.getVideoTracks()[0]
       if (videoTrack) {
         void applyStillCameraConstraints(videoTrack)
       }
-
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream
-        localVideoRef.current.play().catch(() => {})
-      }
-      setIsCameraActive(true)
-
-      // Only run continuous background recorder if ecoMode is disabled
-      if (!ecoMode) {
-        try {
-          const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8' : 'video/webm'
-          const recorder = new MediaRecorder(stream, { mimeType })
-          mediaRecorderRef.current = recorder
-          recorder.ondataavailable = e => {
-            if (e.data && e.data.size > 0) {
-              const now = Date.now()
-              rollingChunksRef.current.push({ data: e.data, timestamp: now })
-              const cutoff = now - 10000
-              rollingChunksRef.current = rollingChunksRef.current.filter(c => c.timestamp >= cutoff)
-            }
-          }
-          recorder.start(1000)
-        } catch {
-          // Ignore
-        }
-      }
-    } catch (err) {
-      console.error('Camera startup error:', err)
-      setStreamError('Camera / Microphone permission pending or unavailable.')
-      setIsCameraActive(false)
     }
-  }, [facingMode, ecoMode])
+  }, [studioPipeline.rawStream])
+
+  // Sync processed output stream into local self-view & optional DVR recorder (when !ecoMode)
+  useEffect(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop()
+      } catch {}
+    }
+    mediaRecorderRef.current = null
+
+    if (!mediaStream) return
+
+    if (localVideoRef.current && localVideoRef.current.srcObject !== mediaStream) {
+      localVideoRef.current.srcObject = mediaStream
+      localVideoRef.current.play().catch(() => {})
+    }
+
+    if (!ecoMode && typeof MediaRecorder !== 'undefined') {
+      try {
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8' : 'video/webm'
+        const recorder = new MediaRecorder(mediaStream, { mimeType })
+        mediaRecorderRef.current = recorder
+        recorder.ondataavailable = e => {
+          if (e.data && e.data.size > 0) {
+            const now = Date.now()
+            rollingChunksRef.current.push({ data: e.data, timestamp: now })
+            const cutoff = now - 10000
+            rollingChunksRef.current = rollingChunksRef.current.filter(c => c.timestamp >= cutoff)
+          }
+        }
+        recorder.start(1000)
+      } catch {
+        // Ignore
+      }
+    }
+
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop()
+        } catch {}
+      }
+      mediaRecorderRef.current = null
+    }
+  }, [mediaStream, ecoMode, isCameraActive])
+
+  // Close singleton WebAudio context on HUD unmount
+  useEffect(() => {
+    return () => {
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        try {
+          void audioCtxRef.current.close()
+        } catch {}
+      }
+    }
+  }, [])
 
   const requestStillCamera = useCallback(async () => {
     if (!signalingChannelRef.current) {
@@ -1326,46 +1347,63 @@ export default function UnifiedLiveStudioHud({
   }, [coachName, showHudToast])
 
   const toggleCamera = useCallback(() => {
-    if (streamRef.current) {
-      const videoTracks = streamRef.current.getVideoTracks()
-      videoTracks.forEach(track => {
-        track.enabled = !track.enabled
-      })
-      setIsCameraActive(videoTracks.some(t => t.enabled))
-    }
-  }, [])
+    studioPipeline.toggleCamera()
+  }, [studioPipeline])
 
   const toggleMic = useCallback(() => {
-    if (streamRef.current) {
-      const audioTracks = streamRef.current.getAudioTracks()
-      const willMute = !isMicMuted
-      audioTracks.forEach(track => {
-        track.enabled = !willMute
-      })
-      setIsMicMuted(willMute)
-    }
-  }, [isMicMuted])
+    studioPipeline.toggleMic()
+  }, [studioPipeline])
 
-  // Bind video element to media stream whenever either changes
-  useEffect(() => {
-    if (localVideoRef.current && mediaStream && localVideoRef.current.srcObject !== mediaStream) {
-      localVideoRef.current.srcObject = mediaStream
-      localVideoRef.current.play().catch(() => {})
-    }
-  }, [mediaStream, isCameraActive])
-
-  useEffect(() => {
-    void startCamera()
-    return () => {
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop())
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        try { mediaRecorderRef.current.stop() } catch {}
-      }
-      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-        try { audioCtxRef.current.close() } catch {}
-      }
-    }
-  }, [startCamera])
+  const renderCoachLocalStage = () => (
+    <>
+      {selectedBackground && !studioPipeline.isPipelineRendering ? (
+        <LiveVirtualBackgroundStage
+          stream={studioPipeline.rawStream || mediaStream}
+          isActive={isCameraActive}
+          isMirrored={facingMode === 'user'}
+          selectedBackground={selectedBackground}
+          coachName={coachName}
+          onOpenPicker={() => setShowBackgroundPicker(true)}
+        />
+      ) : isCameraActive ? (
+        <video
+          ref={el => {
+            localVideoRef.current = el
+            if (el && mediaStream && el.srcObject !== mediaStream) {
+              el.srcObject = mediaStream
+              el.play().catch(() => {})
+            }
+          }}
+          autoPlay
+          playsInline
+          muted
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transform: localVideoTransform,
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'rgba(255,255,255,0.65)',
+            fontSize: 12,
+            fontWeight: 700,
+            background: '#060A14',
+          }}
+        >
+          Coach Camera Off
+        </div>
+      )}
+      <StudioFramingGuideOverlay mode={studioPipeline.framingGuide} />
+    </>
+  )
 
   // Broadcast ultra-lightweight (<300B) exercise, tempo & OPT phase sync to athlete HUD (works even in Audio-First ~36 kbps mode)
   const restRemainingRef = useRef<number | null>(restRemaining)
@@ -2040,6 +2078,30 @@ export default function UnifiedLiveStudioHud({
               onChangeMode={mode => handleChangeBandwidthMode(mode, true)}
             />
 
+            {/* Pre-Call Green Room Mirror & Framing Check Trigger */}
+            <button
+              type="button"
+              onClick={() => setShowGreenRoom(true)}
+              data-testid="open-green-room-btn"
+              title="Open Green Room Mirror, Studio LUT, Background & Mic Check"
+              style={{
+                padding: '5px 10px',
+                background: 'rgba(16, 185, 129, 0.14)',
+                border: '1px solid rgba(52, 211, 153, 0.42)',
+                color: '#34D399',
+                borderRadius: 4,
+                fontSize: 11,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <ForgeIcon name="sparkles" size={11} tone="emerald" />
+              <span>Green Room</span>
+            </button>
+
             {/* Low-CPU Eco Mode Toggle */}
             <button
               type="button"
@@ -2641,14 +2703,7 @@ export default function UnifiedLiveStudioHud({
                     }}
                   >
                     <div style={{ flex: 1, position: 'relative' }}>
-                      <LiveVirtualBackgroundStage
-                        stream={mediaStream}
-                        isActive={isCameraActive}
-                        isMirrored={facingMode === 'user'}
-                        selectedBackground={selectedBackground}
-                        coachName={coachName}
-                        onOpenPicker={() => setShowBackgroundPicker(true)}
-                      />
+                      {renderCoachLocalStage()}
                     </div>
                     <div
                       style={{
@@ -3105,14 +3160,7 @@ export default function UnifiedLiveStudioHud({
                   data-testid="coach-video-container"
                   className={`teams-stage-tile ${layout === 'pip' ? 'teams-pip-tile pip-start' : ''}`}
                 >
-                  <LiveVirtualBackgroundStage
-                    stream={mediaStream}
-                    isActive={isCameraActive}
-                    isMirrored={facingMode === 'user'}
-                    selectedBackground={selectedBackground}
-                    coachName={coachName}
-                    onOpenPicker={() => setShowBackgroundPicker(true)}
-                  />
+                  {renderCoachLocalStage()}
 
                   {/* Coach Status & Swap Badge */}
                   <div
@@ -3556,14 +3604,7 @@ export default function UnifiedLiveStudioHud({
                 data-testid="coach-video-container"
                 className="teams-stage-tile"
               >
-                <LiveVirtualBackgroundStage
-                  stream={mediaStream}
-                  isActive={isCameraActive}
-                  isMirrored={facingMode === 'user'}
-                  selectedBackground={selectedBackground}
-                  coachName={coachName}
-                  onOpenPicker={() => setShowBackgroundPicker(true)}
-                />
+                {renderCoachLocalStage()}
 
                 {/* Swap Stage Return Overlay Button */}
                 <button
@@ -4316,7 +4357,7 @@ export default function UnifiedLiveStudioHud({
 
               <button
                 type="button"
-                onClick={() => setFacingMode(f => (f === 'user' ? 'environment' : 'user'))}
+                onClick={() => studioPipeline.flipCamera()}
                 style={{
                   padding: '5px 8px',
                   background: 'rgba(255,255,255,0.08)',
@@ -4699,8 +4740,18 @@ export default function UnifiedLiveStudioHud({
                 <span>Plate Math</span>
               </button>
 
+              {/* In-Call Collapsible Studio FX Pill (WebGL LUT, Bokeh/Backdrop Segmentation & Framing) */}
+              <StudioVideoControls
+                pipeline={studioPipeline}
+                onOpenGreenRoom={() => setShowGreenRoom(true)}
+                onToast={(msg, tone) => showHudToast(msg, tone || 'gold')}
+                placement="dock"
+                compact={isMobile}
+              />
+
               <button
                 type="button"
+                data-testid="virtual-background-btn"
                 onClick={() => setShowBackgroundPicker(true)}
                 style={{
                   padding: '5px 10px',
@@ -6315,6 +6366,7 @@ export default function UnifiedLiveStudioHud({
         activeBackground={selectedBackground}
         onSelectBackground={(bg) => {
           setSelectedBackground(bg)
+          studioPipeline.setBackgroundMode(bg ? (bg.isBlur ? 'bokeh_blur' : 'forge_dark_studio') : 'off')
           if (bg) {
             showHudToast(`Virtual BG: ${bg.name}`, 'gold')
           } else {
@@ -6322,6 +6374,19 @@ export default function UnifiedLiveStudioHud({
           }
         }}
         onClose={() => setShowBackgroundPicker(false)}
+      />
+
+      {/* Pre-Call Green Room Mirror Preview & Framing Check */}
+      <StudioGreenRoomPreview
+        isOpen={showGreenRoom}
+        pipeline={studioPipeline}
+        participantName={coachName}
+        counterpartName={isTeamSession ? teamName || 'Squad' : athleteName}
+        isCoach={true}
+        onJoinStudio={() => {
+          markStudioGreenRoomJoined(greenRoomKey)
+          setShowGreenRoom(false)
+        }}
       />
 
       {/* ── Team Circuit Timer Configuration Modal (NASM VCS) ── */}

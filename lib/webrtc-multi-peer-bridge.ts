@@ -265,6 +265,30 @@ export class WebRtcMultiPeerBridge {
     }
   }
 
+  private optimizeSenderForEntry(sender: RTCRtpSender, kind: string): void {
+    try {
+      const spec = BANDWIDTH_PROFILES.hd
+      const params = sender.getParameters()
+      if (!params.encodings || params.encodings.length === 0) {
+        params.encodings = [{}]
+      }
+      if (kind === 'video') {
+        params.encodings[0].active = true
+        params.encodings[0].maxBitrate = spec.maxVideoBitrate
+        params.encodings[0].maxFramerate = spec.maxFramerate
+        params.encodings[0].scaleResolutionDownBy = 1
+        ;(params as RTCRtpSendParameters & { degradationPreference?: string }).degradationPreference =
+          spec.degradationPreference
+      } else if (kind === 'audio') {
+        params.encodings[0].active = true
+        params.encodings[0].maxBitrate = spec.maxAudioBitrate
+      }
+      void sender.setParameters(params).catch(() => {})
+    } catch {
+      // Optional browser sender tuning
+    }
+  }
+
   private attachStreamToPeer(entry: PeerEntry, stream: MediaStream): void {
     if (!entry.pc) return
     const transceivers = typeof entry.pc.getTransceivers === 'function' ? entry.pc.getTransceivers() : []
@@ -282,6 +306,7 @@ export class WebRtcMultiPeerBridge {
           transceiver.direction = 'sendrecv'
         }
         void transceiver.sender.replaceTrack(track).catch(() => {})
+        this.optimizeSenderForEntry(transceiver.sender, track.kind)
         return
       }
 
@@ -289,9 +314,13 @@ export class WebRtcMultiPeerBridge {
       const existing = senders.find(s => s.track?.kind === track.kind)
       if (existing) {
         void existing.replaceTrack(track).catch(() => {})
+        this.optimizeSenderForEntry(existing, track.kind)
       } else {
         try {
-          entry.pc.addTrack(track, stream)
+          const sender = entry.pc.addTrack(track, stream)
+          if (sender) {
+            this.optimizeSenderForEntry(sender, track.kind)
+          }
         } catch {
           // Already attached
         }

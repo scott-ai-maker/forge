@@ -46,6 +46,14 @@ import {
   LiveAdaptiveConnectionBanner,
   LiveBandwidthSelectorPill,
 } from './LiveBandwidthStatusControls'
+import ForgeIcon from '@/components/ui/ForgeIcon'
+import { useStudioVideoPipeline } from '@/hooks/useStudioVideoPipeline'
+import StudioVideoControls, {
+  StudioFramingGuideOverlay,
+  StudioGreenRoomPreview,
+  markStudioGreenRoomJoined,
+  shouldAutoOpenStudioGreenRoom,
+} from './StudioVideoControls'
 import './live-studio-teams.css'
 
 export type VideoHudLayout = 'split' | 'pip' | 'focus' | 'team_grid' | 'spotlight'
@@ -171,12 +179,8 @@ export default function LiveVideoCameraHud({
   const router = useRouter()
   const [layout, setLayout] = useState<VideoHudLayout>('split')
   const [isStageSwapped, setIsStageSwapped] = useState(false)
-  const [isCameraActive, setIsCameraActive] = useState(true)
-  const [isMicMuted, setIsMicMuted] = useState(false)
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
   const [showPlumbLine, setShowPlumbLine] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [_streamError, setStreamError] = useState<string | null>(null)
 
   // ── Team Session State (Athlete View) ──
   const [teamCircuitTimer, setTeamCircuitTimer] = useState<TeamCircuitTimerData | null>(null)
@@ -283,7 +287,40 @@ export default function LiveVideoCameraHud({
     embedUrl?: string | null
     name: string
   } | null>(null)
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
+
+  // ── Cinema-Grade WebRTC Video Processing & Studio Background Engine ──
+  const studioPipeline = useStudioVideoPipeline({
+    enabled: true,
+    initialFacingMode: 'user',
+    effectiveTier,
+    ecoMode: false,
+    customBackdropUrl: selectedBackground && !selectedBackground.isBlur ? selectedBackground.imageUrl : null,
+  })
+  const mediaStream = studioPipeline.outputStream
+  const isCameraActive = studioPipeline.isCameraActive
+  const isMicMuted = studioPipeline.isMicMuted
+  const facingMode = studioPipeline.facingMode
+  const localVideoTransform = studioPipeline.isPipelineRendering
+    ? 'none'
+    : studioPipeline.isMirrored
+    ? 'scaleX(-1)'
+    : 'none'
+
+  const setMicMutedRef = useRef(studioPipeline.setMicMuted)
+  setMicMutedRef.current = studioPipeline.setMicMuted
+
+  // ── Pre-Call Green Room Mirror Preview State ──
+  const greenRoomKey = useMemo(
+    () => `forge_green_room_${sessionId || clientId || currentUserId || 'live'}`,
+    [sessionId, clientId, currentUserId]
+  )
+  const [showGreenRoom, setShowGreenRoom] = useState(false)
+
+  useEffect(() => {
+    if (shouldAutoOpenStudioGreenRoom(greenRoomKey)) {
+      setShowGreenRoom(true)
+    }
+  }, [greenRoomKey])
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -629,7 +666,7 @@ export default function LiveVideoCameraHud({
           setTimeout(() => setActiveTeamCue(null), 8000)
         } else if (payload?.type === 'mute' && payload.data) {
           const shouldMute = Boolean((payload.data as { muted?: boolean })?.muted)
-          setIsMicMuted(shouldMute)
+          setMicMutedRef.current(shouldMute)
           showHudToast(shouldMute ? '🎙️ Squad Microphones Muted by Coach' : '🎙️ Microphone Unmuted', 'amber')
         } else if (payload?.type === 'spotlight') {
           const isMe = payload.data === currentUserId
@@ -779,141 +816,81 @@ export default function LiveVideoCameraHud({
     return () => clearInterval(interval)
   }, [teamCircuitTimer?.isActive])
 
-  const effectiveTierRef = useRef<ResolvedBandwidthTier>(effectiveTier)
-  effectiveTierRef.current = effectiveTier
-
-  const startCamera = useCallback(async () => {
-    try {
-      setStreamError(null)
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop())
-      }
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop()
-      }
-
-      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-        setStreamError('Camera access not supported on this device.')
-        return
-      }
-
-      // Hardware Camera & Microphone Startup with Adaptive Bandwidth Resolution & Enhanced Audio Processing
-      const camSpec = BANDWIDTH_PROFILES[effectiveTierRef.current]
-      let stream: MediaStream
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode,
-            width: { ideal: camSpec.cameraWidthIdeal, min: 320 },
-            height: { ideal: camSpec.cameraHeightIdeal, min: 180 },
-            frameRate: { ideal: camSpec.cameraFrameRateIdeal, min: 8 },
-          },
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-        })
-      } catch {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          })
-        } catch {
-          // Fallback if microphone hardware or permission is unavailable
-          stream = await navigator.mediaDevices.getUserMedia({ video: true })
-        }
-      }
-
-      streamRef.current = stream
-      setMediaStream(stream)
-
-      // Apply W3C PTZ / 1.0x digital zoom lock to enforce still camera
-      const videoTrack = stream.getVideoTracks()[0]
+  // Sync raw hardware stream ref & still-camera 1.0x optical lock
+  useEffect(() => {
+    streamRef.current = studioPipeline.rawStream
+    if (studioPipeline.rawStream) {
+      const videoTrack = studioPipeline.rawStream.getVideoTracks()[0]
       if (videoTrack) {
         void applyStillCameraConstraints(videoTrack)
       }
+    }
+  }, [studioPipeline.rawStream])
 
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream
-        localVideoRef.current.play().catch(() => {})
-      }
-      setIsCameraActive(true)
+  // Sync processed output stream into local self-view & desktop 10s rolling replay recorder
+  useEffect(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop()
+      } catch {}
+    }
+    mediaRecorderRef.current = null
 
-      // Only run continuous background recorder on desktop devices to preserve mobile performance
-      const isMobileDevice = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
-      if (!isMobileDevice) {
-        try {
-          const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' })
-          mediaRecorderRef.current = recorder
+    if (!mediaStream) return
 
-          recorder.ondataavailable = e => {
-            if (e.data && e.data.size > 0) {
-              const now = Date.now()
-              rollingChunksRef.current.push({ data: e.data, timestamp: now })
-              const cutoff = now - 10000
-              rollingChunksRef.current = rollingChunksRef.current.filter(c => c.timestamp >= cutoff)
-            }
+    if (localVideoRef.current && localVideoRef.current.srcObject !== mediaStream) {
+      localVideoRef.current.srcObject = mediaStream
+      localVideoRef.current.play().catch(() => {})
+    }
+
+    const isMobileDevice = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+    if (!isMobileDevice && typeof MediaRecorder !== 'undefined') {
+      const attachDataHandler = (recorder: MediaRecorder) => {
+        recorder.ondataavailable = e => {
+          if (e.data && e.data.size > 0) {
+            const now = Date.now()
+            rollingChunksRef.current.push({ data: e.data, timestamp: now })
+            const cutoff = now - 10000
+            rollingChunksRef.current = rollingChunksRef.current.filter(c => c.timestamp >= cutoff)
           }
-
-          recorder.start(1000)
-        } catch {
-          try {
-            const recorder = new MediaRecorder(stream)
-            mediaRecorderRef.current = recorder
-            recorder.ondataavailable = e => {
-              if (e.data && e.data.size > 0) {
-                const now = Date.now()
-                rollingChunksRef.current.push({ data: e.data, timestamp: now })
-                const cutoff = now - 10000
-                rollingChunksRef.current = rollingChunksRef.current.filter(c => c.timestamp >= cutoff)
-              }
-            }
-            recorder.start(1000)
-          } catch {}
         }
       }
-    } catch {
-      setStreamError('Camera / Microphone permission pending or unavailable.')
-      setIsCameraActive(false)
-    }
-  }, [facingMode])
 
-  useEffect(() => {
-    void startCamera()
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop())
-      }
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop()
+      try {
+        const recorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm;codecs=vp8,opus' })
+        mediaRecorderRef.current = recorder
+        attachDataHandler(recorder)
+        recorder.start(1000)
+      } catch {
+        try {
+          const recorder = new MediaRecorder(mediaStream)
+          mediaRecorderRef.current = recorder
+          attachDataHandler(recorder)
+          recorder.start(1000)
+        } catch {}
       }
     }
-  }, [startCamera])
+
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop()
+        } catch {}
+      }
+      mediaRecorderRef.current = null
+    }
+  }, [mediaStream])
 
   const toggleCamera = () => {
-    if (streamRef.current) {
-      const videoTracks = streamRef.current.getVideoTracks()
-      videoTracks.forEach(track => {
-        track.enabled = !track.enabled
-      })
-      setIsCameraActive(videoTracks.some(t => t.enabled))
-    }
+    studioPipeline.toggleCamera()
   }
 
   const toggleMic = () => {
-    if (streamRef.current) {
-      const audioTracks = streamRef.current.getAudioTracks()
-      audioTracks.forEach(track => {
-        track.enabled = !track.enabled
-      })
-      setIsMicMuted(audioTracks.every(t => !t.enabled))
-    }
+    studioPipeline.toggleMic()
   }
 
   const flipCamera = () => {
-    setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'))
+    studioPipeline.flipCamera()
   }
 
   const toggleFullscreen = async () => {
@@ -1072,6 +1049,31 @@ export default function LiveVideoCameraHud({
             networkQuality={networkQuality}
             onChangeMode={mode => handleChangeBandwidthMode(mode, true)}
           />
+
+          {/* Pre-Call Green Room Mirror & Framing Check Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowGreenRoom(true)}
+            data-testid="open-green-room-btn"
+            title="Open Green Room Mirror, Lighting, Background & Mic Check"
+            style={{
+              padding: '4px 9px',
+              background: 'rgba(16, 185, 129, 0.14)',
+              border: '1px solid rgba(52, 211, 153, 0.42)',
+              color: '#34D399',
+              borderRadius: 6,
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <ForgeIcon name="sparkles" size={12} tone="emerald" />
+            <span>Green Room</span>
+          </button>
 
           {/* Still Camera Mode Guidance Badge */}
           <button
@@ -1275,7 +1277,7 @@ export default function LiveVideoCameraHud({
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+                    transform: localVideoTransform,
                   }}
                 />
               ) : (
@@ -1405,6 +1407,9 @@ export default function LiveVideoCameraHud({
             {/* Plumb Line (Strictly Athlete's camera only — never coach's video) */}
             {showPlumbLine && <BiomechanicalPlumbLine />}
 
+            {/* Local Self-View Framing Guide (Athlete self-view only) */}
+            {!isCoach && <StudioFramingGuideOverlay mode={studioPipeline.framingGuide} />}
+
             {/* Active Telestrator Drawing Layer (Scaped to Athlete) */}
             <LiveTelestratorCanvas
               isActive={telestratorActive}
@@ -1457,9 +1462,9 @@ export default function LiveVideoCameraHud({
               {isCoach ? (
                 /* When Coach is viewing HUD, coach's self-view is local webcam */
                 isCameraActive ? (
-                  selectedBackground ? (
+                  selectedBackground && !studioPipeline.isPipelineRendering ? (
                     <LiveVirtualBackgroundStage
-                      stream={mediaStream}
+                      stream={studioPipeline.rawStream || mediaStream}
                       isActive={isCameraActive}
                       isMirrored={facingMode === 'user'}
                       selectedBackground={selectedBackground}
@@ -1482,7 +1487,7 @@ export default function LiveVideoCameraHud({
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+                        transform: localVideoTransform,
                       }}
                     />
                   )
@@ -1561,6 +1566,9 @@ export default function LiveVideoCameraHud({
                     : '(Standby)'}
                 </span>
               </div>
+
+              {/* Local Self-View Framing Guide (Coach self-view only) */}
+              {isCoach && <StudioFramingGuideOverlay mode={studioPipeline.framingGuide} />}
 
               {/* Adaptive Low-Bandwidth & Tiered NASM Fail-Safe Notice */}
               <LiveAdaptiveConnectionBanner
@@ -1827,7 +1835,7 @@ export default function LiveVideoCameraHud({
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+                    transform: localVideoTransform,
                   }}
                 />
               ) : (
@@ -1957,6 +1965,9 @@ export default function LiveVideoCameraHud({
             {/* Plumb Line (Strictly Athlete's camera only — never coach's video) */}
             {showPlumbLine && <BiomechanicalPlumbLine />}
 
+            {/* Local Self-View Framing Guide (Athlete self-view only) */}
+            {!isCoach && <StudioFramingGuideOverlay mode={studioPipeline.framingGuide} />}
+
             {/* Active Telestrator Drawing Layer (Scaped to Athlete) */}
             <LiveTelestratorCanvas
               isActive={telestratorActive}
@@ -1973,9 +1984,9 @@ export default function LiveVideoCameraHud({
           >
             {isCoach ? (
               isCameraActive ? (
-                selectedBackground ? (
+                selectedBackground && !studioPipeline.isPipelineRendering ? (
                   <LiveVirtualBackgroundStage
-                    stream={mediaStream}
+                    stream={studioPipeline.rawStream || mediaStream}
                     isActive={isCameraActive}
                     isMirrored={facingMode === 'user'}
                     selectedBackground={selectedBackground}
@@ -1998,7 +2009,7 @@ export default function LiveVideoCameraHud({
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+                      transform: localVideoTransform,
                     }}
                   />
                 )
@@ -2076,6 +2087,9 @@ export default function LiveVideoCameraHud({
                   : '(Standby)'}
               </span>
             </div>
+
+            {/* Local Self-View Framing Guide (Coach self-view only) */}
+            {isCoach && <StudioFramingGuideOverlay mode={studioPipeline.framingGuide} />}
 
             {/* Adaptive Low-Bandwidth & Tiered NASM Fail-Safe Notice */}
             <LiveAdaptiveConnectionBanner
@@ -2980,6 +2994,14 @@ export default function LiveVideoCameraHud({
 
         {/* Dock 2: Kinematics & Biomechanical Diagnostics */}
         <div className="teams-dock-cluster">
+          {/* In-Call Collapsible Studio FX Pill (WebGL LUT, Bokeh/Backdrop Segmentation & Framing) */}
+          <StudioVideoControls
+            pipeline={studioPipeline}
+            onOpenGreenRoom={() => setShowGreenRoom(true)}
+            onToast={(msg, tone) => showHudToast(msg, tone || 'gold')}
+            placement="dock"
+          />
+
           {/* Virtual Background Preset Cycler */}
           <button
             type="button"
@@ -3401,6 +3423,7 @@ export default function LiveVideoCameraHud({
         activeBackground={selectedBackground}
         onSelectBackground={(bg) => {
           setSelectedBackground(bg)
+          studioPipeline.setBackgroundMode(bg ? (bg.isBlur ? 'bokeh_blur' : 'forge_dark_studio') : 'off')
           if (bg) {
             showHudToast(`Virtual BG: ${bg.name}`, 'gold')
           } else {
@@ -3408,6 +3431,19 @@ export default function LiveVideoCameraHud({
           }
         }}
         onClose={() => setShowBackgroundPicker(false)}
+      />
+
+      {/* Pre-Call Green Room Mirror Preview & Framing Check */}
+      <StudioGreenRoomPreview
+        isOpen={showGreenRoom}
+        pipeline={studioPipeline}
+        participantName={isCoach ? coachName : clientName}
+        counterpartName={isCoach ? clientName : coachName}
+        isCoach={isCoach}
+        onJoinStudio={() => {
+          markStudioGreenRoomJoined(greenRoomKey)
+          setShowGreenRoom(false)
+        }}
       />
     </div>
   )
