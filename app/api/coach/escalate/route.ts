@@ -29,7 +29,7 @@ const EscalateRequestSchema = z.object({
     .default({ postureFlags: [] }),
 })
 
-export function formatEscalationResponseWindow(tierId: ForgeTierId): {
+function formatEscalationResponseWindow(tierId: ForgeTierId): {
   slaBadge: string
   responseWindowCopy: string
 } {
@@ -54,7 +54,7 @@ export function formatEscalationResponseWindow(tierId: ForgeTierId): {
   }
 }
 
-export function buildTelemetryAttachmentBlock(params: {
+function buildTelemetryAttachmentBlock(params: {
   tierId: ForgeTierId
   sourceContext: string
   optPhase?: number | null

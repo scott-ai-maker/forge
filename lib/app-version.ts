@@ -4,7 +4,7 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.56.0'
+export const APP_VERSION = '1.56.1'
 export const APP_RELEASE_DATE = '2026-11-14'
 export const APP_RELEASE_CODENAME = 'Coach Gordon AI, Hybrid ElevenLabs Voice & Clinical Safety Guardrails'
 
@@ -32,6 +32,20 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.56.1',
+    date: '2026-11-14',
+    codename: 'Coach Gordon AI, Hybrid ElevenLabs Voice & Clinical Safety Guardrails',
+    category: 'fix',
+    badge: 'Production Build & Voice Env Sync',
+    title: 'v1.56.1 — Next.js 16 Route Type Strictness Patch & Production Voice Environment Sync',
+    summary:
+      'Scopes escalation telemetry helper functions inside /api/coach/escalate for Next.js 16 App Router route-type validation and synchronizes ElevenLabs and Gemini credentials across Production and Preview.',
+    highlights: [
+      'Next.js 16 Route Validator Compliance: Scoped formatEscalationResponseWindow and buildTelemetryAttachmentBlock internally within /api/coach/escalate/route.ts so generated .next/types route checks pass cleanly during production builds.',
+      'Production & Preview Voice Credential Sync: Provisioned COACH_GORDON_VOICE_ID, COACH_GORDON_ELEVENLABS_VOICE_ID, ELEVENLABS_VOICE_ID, ELEVENLABS_API_KEY, and GEMINI_API_KEY as encrypted Vercel Secrets across Production and Preview environments.',
+    ],
+  },
   {
     version: '1.56.0',
     date: '2026-11-14',
