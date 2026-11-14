@@ -81,8 +81,10 @@ export default function SmsConsentVerificationPage() {
           phone input and the unchecked affirmative SMS consent checkbox.
         </p>
 
-        <section
-          aria-label="Member Account Settings SMS Opt-In Preview"
+        <form
+          action="/auth/login"
+          method="get"
+          aria-label="Member Account Settings SMS Opt-In Form"
           style={{
             background: 'rgba(14, 23, 38, 0.92)',
             border: '1px solid rgba(197, 160, 89, 0.4)',
@@ -92,6 +94,7 @@ export default function SmsConsentVerificationPage() {
             boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
           }}
         >
+          <input type="hidden" name="next" value="/dashboard/settings" />
           <div
             style={{
               display: 'flex',
@@ -108,23 +111,23 @@ export default function SmsConsentVerificationPage() {
             }}
           >
             <span>Account Settings · Notification Preferences</span>
-            <span>forge-athletic.app/dashboard/settings</span>
+            <span>forge-athletic.app</span>
           </div>
 
           <h2 style={{ margin: '0 0 6px', color: '#FFFFFF', fontSize: 16, fontWeight: 700 }}>How should we reach you?</h2>
 
           <label style={rowStyle}>
-            <input type="checkbox" defaultChecked readOnly />
+            <input type="checkbox" name="pushEnabled" defaultChecked />
             <span>Push notifications</span>
           </label>
 
           <label style={rowStyle}>
-            <input type="checkbox" defaultChecked readOnly />
+            <input type="checkbox" name="emailEnabled" defaultChecked />
             <span>Email</span>
           </label>
 
           <label style={rowStyle}>
-            <input type="checkbox" defaultChecked readOnly />
+            <input type="checkbox" name="smsEnabled" defaultChecked />
             <span>
               Text messages (Optional)
               <small style={{ display: 'block', color: '#94A3B8' }}>
@@ -139,9 +142,9 @@ export default function SmsConsentVerificationPage() {
             </label>
             <input
               id="sms-preview-phone"
+              name="phone"
               type="tel"
               placeholder="(413) 555-0199"
-              readOnly
               style={{
                 width: '100%',
                 maxWidth: 280,
@@ -154,7 +157,7 @@ export default function SmsConsentVerificationPage() {
             />
 
             <label style={{ ...rowStyle, borderBottom: 'none', fontSize: 12.5, color: '#E2E8F0', marginTop: 6 }}>
-              <input type="checkbox" defaultChecked={false} readOnly />
+              <input type="checkbox" name="smsConsent" defaultChecked={false} />
               <span>
                 I agree to receive account text messages from <strong>Forge Athletic</strong> at this number. Message frequency
                 varies. Msg &amp; data rates may apply. Reply <strong>STOP</strong> to opt out, <strong>HELP</strong> for help.
@@ -174,7 +177,7 @@ export default function SmsConsentVerificationPage() {
           <h3 style={{ margin: '18px 0 4px', color: '#FFFFFF', fontSize: 15, fontWeight: 700 }}>What should we tell you about?</h3>
           {NOTIFICATION_CATEGORIES.map((cat) => (
             <label key={cat.id} style={rowStyle}>
-              <input type="checkbox" defaultChecked readOnly disabled={!cat.mutable} />
+              <input type="checkbox" name={`cat_${cat.id}`} defaultChecked disabled={!cat.mutable} />
               <span>
                 {cat.label}
                 <small style={{ display: 'block', color: '#94A3B8' }}>{cat.description}</small>
@@ -183,15 +186,15 @@ export default function SmsConsentVerificationPage() {
           ))}
 
           <div style={{ marginTop: 16 }}>
-            <Link
-              href="/auth/login?next=/dashboard/settings"
+            <button
+              type="submit"
               className="btn-gold"
-              style={{ display: 'inline-block', textDecoration: 'none', padding: '10px 18px', borderRadius: 8, fontWeight: 700 }}
+              style={{ cursor: 'pointer', padding: '10px 18px', borderRadius: 8, fontWeight: 700, border: 'none' }}
             >
-              Sign in to manage live notification settings
-            </Link>
+              Save notification settings
+            </button>
           </div>
-        </section>
+        </form>
 
         <section style={{ fontSize: '0.9rem', color: '#CBD5E1' }}>
           <h2
