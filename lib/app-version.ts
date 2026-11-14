@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.54.0'
+export const APP_VERSION = '1.55.0'
 export const APP_RELEASE_DATE = '2026-11-13'
-export const APP_RELEASE_CODENAME = 'Obsidian & Brushed Steel UI/UX & Visual Craft Polish'
+export const APP_RELEASE_CODENAME = 'Unified Cross-Platform Client Telemetry & Store-Launch Diagnostics'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.55.0',
+    date: '2026-11-13',
+    codename: 'Unified Cross-Platform Client Telemetry & Store-Launch Diagnostics',
+    category: 'feature',
+    badge: 'Cross-Platform Telemetry & Store Readiness',
+    title: 'v1.55.0 — Unified Cross-Platform Client Telemetry, Durable Queue & Store-Launch Diagnostics',
+    summary:
+      'Unifies 100% of Forge Athletic client biomechanical, workout, Live Studio, and runtime diagnostic telemetry across PWA (Web), Apple iOS (Safari & App Store wrapper), and Google Android (Chrome & Play Store TWA/wrapper) with an IndexedDB durable offline queue, backend event_id idempotency, real-time Coach Portal sync, and a 10-second round-trip store-build verifier.',
+    highlights: [
+      'Unified Telemetry Client & Sanitization Guardrail: Standardized UUIDv4 event_id envelopes, auto-detected platform metadata, WebGL2/FPS CV capability probing, and recursive NaN/Infinity/undefined landmark sanitization across all 7 domain telemetry streams.',
+      'Durable IndexedDB Queue & iOS/Android/PWA Lifecycle Hardening: Immediate high-priority flushing, 10s/10-event low-priority batching, jittered exponential backoff (1s → 60s), visibilitychange/pagehide keepalive packets with explicit Bearer auth, launch-time server rehydration, Android hardware camera release hooks, and NetworkOnly + Background Sync Service Worker routing.',
+      'Live Coach Portal Telemetry Card & Store-Launch Inspector: Real-time Readiness Score, Joint Comfort SVG sparkline, Desk Audit strain flags, OPT™ phase/environment sync, and Last Synced indicator in the Coach Portal, plus the ?debug=telemetry / Settings System Diagnostics round-trip verifier.',
+    ],
+  },
   {
     version: '1.54.0',
     date: '2026-11-13',

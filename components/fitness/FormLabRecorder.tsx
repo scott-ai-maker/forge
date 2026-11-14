@@ -5,6 +5,7 @@ import { ArrowUpRight, Camera, CheckCircle2, Lock, Sparkles, Video } from 'lucid
 import { useTierAccess } from '@/lib/tierEntitlements'
 import TierUpgradeModal from '@/components/packages/TierUpgradeModal'
 import { playForgeTactileTone } from '@/lib/sfx-audio'
+import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 export interface FormLabRecorderProps {
   selectedLiftLabel?: string
@@ -39,11 +40,18 @@ export default function FormLabRecorder({
     }
     playForgeTactileTone('success')
     const statusLabel = entitlements.priority24hSla ? '24h Priority Queue' : 'Telestrator Queue'
+    const trimmedNote = clipNotes.trim()
+    void trackEvent('form_lab_uploaded', {
+      lift_name: selectedLiftLabel,
+      camera_angle: 'front_45',
+      priority_sla: Boolean(entitlements.priority24hSla),
+      has_notes: trimmedNote.length > 0,
+    })
     setSubmittedClips(prev => [
       {
         id: `${Date.now()}`,
         lift: selectedLiftLabel,
-        note: clipNotes.trim() || '45° front-diagonal working set (3–5 reps)',
+        note: trimmedNote || '45° front-diagonal working set (3–5 reps)',
         status: statusLabel,
       },
       ...prev,

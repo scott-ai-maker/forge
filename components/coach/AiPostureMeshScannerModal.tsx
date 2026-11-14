@@ -407,6 +407,27 @@ export default function AiPostureMeshScannerModal({
         ...prev,
         [activeView]: data.data,
       }))
+      void import('@/src/lib/telemetry/telemetryClient').then(({ trackEvent }) =>
+        trackEvent('posture_scan_completed', {
+          scan_mode: 'full_33_point_mesh',
+          overall_posture_score:
+            typeof data.data?.postureScore === 'number' ? data.data.postureScore : null,
+          forward_head_tilt_deg:
+            typeof data.data?.angles?.craniovertebralDeg === 'number'
+              ? data.data.angles.craniovertebralDeg
+              : null,
+          shoulder_symmetry_deg:
+            typeof data.data?.angles?.shoulderTiltDeg === 'number'
+              ? data.data.angles.shoulderTiltDeg
+              : null,
+          pelvic_symmetry_deg:
+            typeof data.data?.angles?.pelvicTiltDeg === 'number'
+              ? data.data.angles.pelvicTiltDeg
+              : null,
+          improvement_summary:
+            typeof data.data?.clinicalSummary === 'string' ? data.data.clinicalSummary : null,
+        })
+      )
       setActiveRightTab('analysis')
       setMobileTab('analysis')
     } catch (err: unknown) {

@@ -4,6 +4,7 @@ import './globals.css'
 import MobilePortraitLock from '@/components/ui/MobilePortraitLock'
 import ServiceWorkerRegistrar from '@/components/ui/ServiceWorkerRegistrar'
 import PwaInstallPrompt from '@/components/ui/PwaInstallPrompt'
+import TelemetryBootstrap from '@/components/telemetry/TelemetryBootstrap'
 
 const barlowCondensed = localFont({
   src: [
@@ -217,6 +218,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <MobilePortraitLock />
         <ServiceWorkerRegistrar />
+        <TelemetryBootstrap />
         <PwaInstallPrompt />
         {children}
       </body>

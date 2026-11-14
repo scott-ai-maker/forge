@@ -60,8 +60,24 @@ export async function POST(req: NextRequest) {
   }
 
   const validPlanId = toValidUuidOrNull(body.workoutPlanId)
+  const validEventId = toValidUuidOrNull(body.eventId)
+
+  // Strict idempotency guard: if network retry replays the same client `eventId`, return existing row
+  if (validEventId) {
+    const { data: existingLog } = await supabaseAdmin()
+      .from('workout_logs')
+      .select('*')
+      .eq('id', validEventId)
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (existingLog) {
+      return NextResponse.json({ success: true, deduplicated: true, log: existingLog })
+    }
+  }
 
   const insertPayload = {
+    ...(validEventId ? { id: validEventId } : {}),
     user_id: userId,
     workout_plan_id: validPlanId,
     session_date: sessionDate,

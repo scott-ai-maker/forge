@@ -2,11 +2,15 @@
 
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { clearOfflineQueue } from '@/lib/offline-sync-queue'
+import { clearTelemetryQueue } from '@/src/lib/telemetry/telemetryClient'
 
 export default function LogoutButton() {
   const router = useRouter()
 
   async function handleLogout() {
+    clearOfflineQueue()
+    await clearTelemetryQueue()
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/auth/login')

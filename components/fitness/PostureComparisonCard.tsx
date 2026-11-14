@@ -22,6 +22,7 @@ import {
 import { getUpgradeTriggerCopy, useTierAccess } from '@/lib/tierEntitlements'
 import TierUpgradeModal from '@/components/packages/TierUpgradeModal'
 import { playForgeTactileTone } from '@/lib/sfx-audio'
+import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 export interface PostureComparisonViewerProps {
   sandboxMode?: boolean
@@ -247,6 +248,20 @@ export function PostureComparisonInteractiveStage({
       setViewMode('overlay')
     }
     playForgeTactileTone('success')
+    if (!sandboxMode) {
+      void trackEvent('posture_scan_completed', {
+        scan_mode: 'quick_check',
+        overall_posture_score: updated.overallPostureScore,
+        forward_head_tilt_deg: updated.forwardHeadDeltaDeg,
+        shoulder_symmetry_deg: updated.shoulderSymmetryDeltaDeg,
+        pelvic_symmetry_deg: updated.pelvicTiltDeltaDeg,
+        joint_deltas_33: {
+          forward_head_delta_deg: updated.forwardHeadDeltaDeg,
+          shoulder_symmetry_delta_deg: updated.shoulderSymmetryDeltaDeg,
+          pelvic_tilt_delta_deg: updated.pelvicTiltDeltaDeg,
+        },
+      })
+    }
   }
 
   const handleArmDay30Reminder = () => {

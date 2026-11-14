@@ -10,6 +10,7 @@ import {
   type NetworkQualityGrade,
   type ResolvedBandwidthTier,
 } from './live-bandwidth-profiles'
+import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 export function getIceServers(): RTCIceServer[] {
   const servers: RTCIceServer[] = [
@@ -626,6 +627,22 @@ export class WebRtcPeerBridge {
 
     if (changed) {
       this.options.onNetworkQualityChange?.(this.networkQuality, this.effectiveTier, sample)
+      const profile = BANDWIDTH_PROFILES[this.effectiveTier]
+      void trackEvent('live_studio_telemetry', {
+        bitrate_kbps:
+          typeof sample.availableOutgoingBitrate === 'number'
+            ? Math.round(sample.availableOutgoingBitrate / 1000)
+            : Math.round((profile?.maxVideoBitrate ?? 1_500_000) / 1000),
+        resolution: profile
+          ? `${profile.cameraWidthIdeal}x${profile.cameraHeightIdeal}`
+          : null,
+        fps: sample.framesPerSecond ?? profile?.maxFramerate ?? null,
+        rtt_ms: sample.rttMs,
+        packet_loss_ratio: sample.packetLossRatio ?? null,
+        quality_grade: this.networkQuality,
+        studio_lut_preset: 'live_webrtc_adaptive',
+        background_mode: this.effectiveTier,
+      })
     }
     return sample
   }

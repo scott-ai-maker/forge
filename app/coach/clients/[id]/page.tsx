@@ -26,6 +26,7 @@ import {
 } from '@/lib/fitness-photos'
 
 import CoachClientOverviewStatusCard from '@/components/coach/CoachClientOverviewStatusCard'
+import CoachClientTelemetrySyncCard from '@/components/coach/CoachClientTelemetrySyncCard'
 import CoachAthleteVitalsEnvironmentalCard from '@/components/coach/CoachAthleteVitalsEnvironmentalCard'
 import CoachOnboardingProgressionCard from '@/components/coach/CoachOnboardingProgressionCard'
 import {
@@ -34,6 +35,7 @@ import {
   type ClientGateRecord,
 } from '@/lib/coach-onboarding-progression'
 import { loadClientOnboardingGates } from '@/lib/coach-onboarding-gates-storage'
+import { loadClientTelemetrySnapshot } from '@/lib/telemetry-storage'
 
 // Dynamic Chunks for Heavy Sub-Views
 const CoachProgramWorkspace = dynamicImport(() => import('@/components/coach/CoachProgramWorkspace'), {
@@ -191,6 +193,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
     dossierCardioLogsResult,
     dossierPrsResult,
     dossierWearableResult,
+    clientTelemetrySnapshot,
   ] = await Promise.all([
     admin
       .from('workout_plans')
@@ -328,6 +331,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
           .limit(1)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    loadClientTelemetrySnapshot(admin, id),
   ])
 
   const parqAnswers: ParqAnswers = parseParqAnswers(
@@ -507,9 +511,11 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
     clientName: client.full_name ?? 'Client',
     email: client.email,
     daysSinceLastCheckin: readinessSummary.daysSinceLastCompleted ?? 14,
-    readinessScore: readinessSummary.readiness === 'low' ? 45 : readinessSummary.readiness === 'moderate' ? 68 : 88,
+    readinessScore:
+      clientTelemetrySnapshot?.latestReadinessScore ??
+      (readinessSummary.readiness === 'low' ? 45 : readinessSummary.readiness === 'moderate' ? 68 : 88),
     completionRate14d: readinessSummary.completionRate14d,
-    currentOptPhase: latestPlansResult.data?.[0]?.nasm_opt_phase ?? 1,
+    currentOptPhase: clientTelemetrySnapshot?.optPhase ?? latestPlansResult.data?.[0]?.nasm_opt_phase ?? 1,
     acwrRatio: acwrData.acwrRatio,
     acuteWorkloadUnits: acwrData.acuteWorkloadUnits,
     chronicWorkloadUnits: acwrData.chronicWorkloadUnits,
@@ -956,6 +962,14 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
               statusReason={clientStatusReason}
               statusUpdatedAt={clientStatusUpdatedAt}
               auditEventCount={(lifecycleAuditLogsResult.data ?? []).length}
+            />
+
+            {/* Real-Time Client Biomechanical, Readiness & Device Telemetry Card */}
+            <CoachClientTelemetrySyncCard
+              snapshot={clientTelemetrySnapshot}
+              activePlanOptPhase={latestPlansResult.data?.[0]?.nasm_opt_phase ?? null}
+              activePlanPhaseName={latestPlansResult.data?.[0]?.phase_name ?? null}
+              completedWorkoutsCount={(workoutLogsResult.data ?? []).filter(l => l.completed).length}
             />
 
             {/* Stage 3: Athlete Biometrics & Environmental Readiness Card */}

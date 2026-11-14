@@ -22,6 +22,11 @@ import {
   type StudioFramingGuideMode,
   type StudioLightingPresetId,
 } from '@/lib/studio-video-presets'
+import {
+  TELEMETRY_CAMERA_RELEASE_EVENT,
+  recordCameraFpsSample,
+  trackEvent,
+} from '@/src/lib/telemetry/telemetryClient'
 
 interface MediaPipeMask {
   width?: number
@@ -689,6 +694,11 @@ export function useStudioVideoPipeline(
     const handleContextLost = (e: Event) => {
       e.preventDefault()
       isGlLostRef.current = true
+      void trackEvent('client_runtime_diagnostic', {
+        diagnostic_kind: 'webgl_fallback',
+        webgl_fallback_reason: 'webglcontextlost',
+        component_context: 'useStudioVideoPipeline',
+      })
     }
     const handleContextRestored = () => {
       isGlLostRef.current = false
@@ -1055,6 +1065,7 @@ export function useStudioVideoPipeline(
             ...guardrailStateRef.current,
             emaFrameRenderMs: effectiveFrameMs,
           })
+          const prevTier = guardrailStateRef.current.currentTier
           guardrailStateRef.current = {
             emaFrameRenderMs: nextEma,
             currentTier: resolution.tier,
@@ -1066,6 +1077,16 @@ export function useStudioVideoPipeline(
           setGuardrailTier(resolution.tier)
           setRenderFps(measuredFps)
           setFrameRenderMs(Math.round(nextEma * 10) / 10)
+          recordCameraFpsSample(measuredFps)
+
+          if (resolution.tier !== prevTier && resolution.tier !== 'high') {
+            void trackEvent('client_runtime_diagnostic', {
+              diagnostic_kind: 'fps_drop',
+              fps: measuredFps,
+              webgl_fallback_reason: `guardrail_${resolution.tier}`,
+              component_context: 'useStudioVideoPipeline',
+            })
+          }
         }
       }
 
@@ -1299,17 +1320,60 @@ export function useStudioVideoPipeline(
       outputStreamRef.current = finalOutStream
       setOutputStream(finalOutStream)
       setIsCameraActive(true)
+      void trackEvent('live_studio_telemetry', {
+        bitrate_kbps: null,
+        resolution: hwVideoTrack
+          ? `${hwVideoTrack.getSettings?.().width ?? 1280}x${hwVideoTrack.getSettings?.().height ?? 720}`
+          : null,
+        fps: hwVideoTrack?.getSettings?.().frameRate ?? 30,
+        studio_lut_preset: lightingPresetRef.current,
+        background_mode: backgroundModeRef.current,
+      })
     } catch {
       setStreamError('Camera / Microphone permission pending or unavailable.')
       setIsCameraActive(false)
+      void trackEvent('client_runtime_diagnostic', {
+        diagnostic_kind: 'camera_permission',
+        camera_permission_state: 'denied',
+        component_context: 'useStudioVideoPipeline',
+      })
     }
   }, [enabled, facingMode, stopAllManagedStreams])
 
-  // Start hardware pipeline on mount / facingMode change, and clean up every track on unmount
+  // Start hardware pipeline on mount / facingMode change, and cleanly release camera/mic
+  // on Android hardware back button, app switcher minimize, or pagehide
   useEffect(() => {
     if (!enabled) return
     void startCamera()
+
+    const handleHardwareRelease = (e: Event) => {
+      const reason =
+        (e as CustomEvent<{ reason?: string }>)?.detail?.reason || 'background_release'
+      if (rawStreamRef.current) {
+        stopAllManagedStreams()
+        void trackEvent('client_runtime_diagnostic', {
+          diagnostic_kind: 'camera_lifecycle_release',
+          component_context: reason,
+        })
+      }
+    }
+
+    const handleForegroundResume = () => {
+      if (document.visibilityState === 'visible' && !rawStreamRef.current) {
+        void startCamera()
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener(TELEMETRY_CAMERA_RELEASE_EVENT, handleHardwareRelease)
+      document.addEventListener('visibilitychange', handleForegroundResume)
+    }
+
     return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(TELEMETRY_CAMERA_RELEASE_EVENT, handleHardwareRelease)
+        document.removeEventListener('visibilitychange', handleForegroundResume)
+      }
       stopAllManagedStreams()
     }
   }, [enabled, startCamera, stopAllManagedStreams])

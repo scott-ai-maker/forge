@@ -296,3 +296,151 @@ export function runQuickPostureCheckDelta(): PostureDeltaSummary {
   })
   return next.postureDelta
 }
+
+export interface ServerTelemetryRehydrationPayload {
+  snapshot?: {
+    latestReadinessScore?: number | null
+    latestReadinessAt?: string | null
+    jointComfortHistory?: Array<{
+      date: string
+      score: number
+      label?: string
+      timestamp?: string
+    }>
+    deskWorkstationScore?: number | null
+    deskStrainLevel?: string | null
+    deskStrainFlags?: string[]
+    postureDelta?: {
+      overallPostureScore?: number | null
+      forwardHeadTiltDeg?: number | null
+      shoulderSymmetryDeg?: number | null
+      pelvicSymmetryDeg?: number | null
+      checkedAt?: string | null
+    }
+    injectedWarmupDrills?: Array<{ id: string; title: string; duration_sec: number }>
+    expressModeActive?: boolean
+    environmentProfile?: string
+    lastSyncedAt?: string | null
+  } | null
+  baselineAssessment?: {
+    assessmentDate?: string | null
+    overallPostureScore?: number | null
+  } | null
+}
+
+/**
+ * Mitigates Apple iOS Safari / WKWebView 7-day script-writable storage eviction
+ * by merging server-persisted posture scores, Desk Audit flags, Joint Comfort history,
+ * Readiness scores, and environment preferences into `forge_posture_profile_v1` on launch.
+ */
+export function rehydratePostureProfileFromServer(
+  rehydration: ServerTelemetryRehydrationPayload | null | undefined
+): PersistedPostureProfileState | null {
+  if (typeof window === 'undefined' || !rehydration) return null
+  const snap = rehydration.snapshot
+  const baseline = rehydration.baselineAssessment
+  if (!snap && !baseline) return null
+
+  return savePostureProfileState(prev => {
+    const validFlags = Array.isArray(snap?.deskStrainFlags)
+      ? snap.deskStrainFlags.filter(
+          (f): f is ErgonomicFlag =>
+            f === 'forward_head' || f === 'rounded_shoulders' || f === 'hip_flexor_tightness'
+        )
+      : []
+
+    const mergedFlags = Array.from(new Set([...prev.ergonomicFlags, ...validFlags]))
+
+    const mergedLogs: Record<string, DailyReadinessComfortLog> = { ...prev.dailyLogs }
+    if (Array.isArray(snap?.jointComfortHistory)) {
+      for (const entry of snap.jointComfortHistory) {
+        if (!entry?.date || typeof entry.score !== 'number') continue
+        const existing = mergedLogs[entry.date] || {
+          date: entry.date,
+          updatedAt: entry.timestamp || new Date().toISOString(),
+        }
+        // Preserve local entry if already recorded today, otherwise backfill from server
+        if (existing.jointComfortScore === undefined) {
+          mergedLogs[entry.date] = {
+            ...existing,
+            jointComfortScore: Math.max(1, Math.min(10, Math.round(entry.score / 10))),
+            comfortLabel: entry.label || existing.comfortLabel,
+            updatedAt: entry.timestamp || existing.updatedAt,
+          }
+        }
+      }
+    }
+
+    if (typeof snap?.latestReadinessScore === 'number' && snap.latestReadinessAt) {
+      const readinessDate = snap.latestReadinessAt.split('T')[0]
+      const existing = mergedLogs[readinessDate] || {
+        date: readinessDate,
+        updatedAt: snap.latestReadinessAt,
+      }
+      if (existing.readinessScore === undefined) {
+        mergedLogs[readinessDate] = {
+          ...existing,
+          readinessScore: snap.latestReadinessScore,
+          updatedAt: snap.latestReadinessAt,
+        }
+      }
+    }
+
+    const validEnv =
+      snap?.environmentProfile &&
+      (snap.environmentProfile === 'home_gym' ||
+        snap.environmentProfile === 'full_gym' ||
+        snap.environmentProfile === 'hotel_travel' ||
+        snap.environmentProfile === 'bodyweight_only')
+        ? (snap.environmentProfile as EnvironmentProfileId)
+        : prev.environmentProfile
+
+    const strainMap: StrainLevel =
+      snap?.deskStrainLevel === 'high_strain'
+        ? 'coral'
+        : snap?.deskStrainLevel === 'optimal'
+          ? 'optimal'
+          : prev.postureDelta.strainFlag
+
+    const nextPostureDelta: PostureDeltaSummary = {
+      ...prev.postureDelta,
+      baselineDate: baseline?.assessmentDate
+        ? String(baseline.assessmentDate).split('T')[0]
+        : prev.postureDelta.baselineDate,
+      latestDate: snap?.postureDelta?.checkedAt
+        ? snap.postureDelta.checkedAt.split('T')[0]
+        : prev.postureDelta.latestDate,
+      overallPostureScore:
+        typeof snap?.postureDelta?.overallPostureScore === 'number'
+          ? snap.postureDelta.overallPostureScore
+          : typeof snap?.deskWorkstationScore === 'number'
+            ? snap.deskWorkstationScore
+            : typeof baseline?.overallPostureScore === 'number'
+              ? baseline.overallPostureScore
+              : prev.postureDelta.overallPostureScore,
+      forwardHeadDeltaDeg:
+        typeof snap?.postureDelta?.forwardHeadTiltDeg === 'number'
+          ? snap.postureDelta.forwardHeadTiltDeg
+          : prev.postureDelta.forwardHeadDeltaDeg,
+      shoulderSymmetryDeltaDeg:
+        typeof snap?.postureDelta?.shoulderSymmetryDeg === 'number'
+          ? snap.postureDelta.shoulderSymmetryDeg
+          : prev.postureDelta.shoulderSymmetryDeltaDeg,
+      pelvicTiltDeltaDeg:
+        typeof snap?.postureDelta?.pelvicSymmetryDeg === 'number'
+          ? snap.postureDelta.pelvicSymmetryDeg
+          : prev.postureDelta.pelvicTiltDeltaDeg,
+      strainFlag: strainMap,
+    }
+
+    return {
+      ...prev,
+      ergonomicFlags: mergedFlags,
+      expressModeActive:
+        typeof snap?.expressModeActive === 'boolean' ? snap.expressModeActive : prev.expressModeActive,
+      environmentProfile: validEnv,
+      dailyLogs: mergedLogs,
+      postureDelta: nextPostureDelta,
+    }
+  })
+}

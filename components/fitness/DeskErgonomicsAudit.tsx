@@ -101,7 +101,16 @@ export default function DeskErgonomicsAudit({
   }, [])
 
   useEffect(() => {
-    return () => stopCamera()
+    const handleHardwareRelease = () => stopCamera()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('forge:release-camera-hardware', handleHardwareRelease)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('forge:release-camera-hardware', handleHardwareRelease)
+      }
+      stopCamera()
+    }
   }, [stopCamera])
 
   const finalizeScan = useCallback(
@@ -111,28 +120,54 @@ export default function DeskErgonomicsAudit({
       playTone('success')
 
       if (!sandboxMode && autoPersist) {
+        const craniovertebralDeg =
+          result.angles.find(a => a.id === 'craniovertebral')?.measuredDegrees ?? 0
+        const shoulderProtractionDeg =
+          result.angles.find(a => a.id === 'shoulder_protraction')?.measuredDegrees ?? 0
+        const elbowAngleDeg =
+          result.angles.find(a => a.id === 'elbow_wrist')?.measuredDegrees ?? 95
+        const seatedHipAngleDeg =
+          result.angles.find(a => a.id === 'seated_hip')?.measuredDegrees ?? 100
+        const resolvedLabel = workstationLabel.trim() || `Workstation ${savedProfiles.length + 1}`
+
         const canSaveNewProfile =
           maxSavedProfiles === null || savedProfiles.length < maxSavedProfiles
         const updated = persistDeskErgonomicFlags(
           result.ergonomicFlags,
           canSaveNewProfile
             ? {
-                label: workstationLabel.trim() || `Workstation ${savedProfiles.length + 1}`,
+                label: resolvedLabel,
                 score: result.score,
                 strainLevel: result.overallStrain,
                 ergonomicFlags: result.ergonomicFlags,
-                craniovertebralDeg:
-                  result.angles.find(a => a.id === 'craniovertebral')?.measuredDegrees ?? 0,
-                shoulderProtractionDeg:
-                  result.angles.find(a => a.id === 'shoulder_protraction')?.measuredDegrees ?? 0,
-                elbowAngleDeg:
-                  result.angles.find(a => a.id === 'elbow_wrist')?.measuredDegrees ?? 95,
-                seatedHipAngleDeg:
-                  result.angles.find(a => a.id === 'seated_hip')?.measuredDegrees ?? 100,
+                craniovertebralDeg,
+                shoulderProtractionDeg,
+                elbowAngleDeg,
+                seatedHipAngleDeg,
               }
             : undefined
         )
         setSavedProfiles(updated.workstationProfiles)
+
+        const mappedStrainLevel =
+          result.overallStrain === 'coral'
+            ? 'high_strain'
+            : result.overallStrain === 'amber'
+              ? 'moderate_strain'
+              : 'optimal'
+
+        void import('@/src/lib/telemetry/telemetryClient').then(({ trackEvent }) =>
+          trackEvent('desk_ergonomics_completed', {
+            workstation_score: result.score,
+            strain_level: mappedStrainLevel,
+            strain_flags: result.ergonomicFlags,
+            ear_shoulder_angle_deg: craniovertebralDeg,
+            shoulder_protraction_deg: shoulderProtractionDeg,
+            elbow_angle_deg: elbowAngleDeg,
+            seated_hip_angle_deg: seatedHipAngleDeg,
+            workstation_label: resolvedLabel,
+          })
+        )
       }
     },
     [maxSavedProfiles, playTone, sandboxMode, savedProfiles.length, workstationLabel]
@@ -241,6 +276,15 @@ export default function DeskErgonomicsAudit({
     } catch {
       setCameraError('Camera permission was declined or blocked by browser settings.')
       stopCamera()
+      if (!sandboxMode) {
+        void import('@/src/lib/telemetry/telemetryClient').then(({ trackEvent }) =>
+          trackEvent('client_runtime_diagnostic', {
+            diagnostic_kind: 'camera_permission',
+            camera_permission_state: 'denied',
+            component_context: 'DeskErgonomicsAudit',
+          })
+        )
+      }
     }
   }
 

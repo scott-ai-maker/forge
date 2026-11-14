@@ -7,6 +7,12 @@ import { playPrecisionTone } from '@/lib/web-audio-cadence-engine'
 import { speakCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import { getNasmClinicalMovementCard } from '@/lib/nasm-clinical-movement-cards'
 import { isStrengthExercise } from '@/lib/exercise-logging-helpers'
+import { loadPostureProfileState } from '@/lib/posture-profile-state'
+import {
+  generateTelemetryUuid,
+  getTelemetryAuthHeaders,
+  trackEvent,
+} from '@/src/lib/telemetry/telemetryClient'
 
 export interface WorkoutSetLogRecord {
   id: string
@@ -263,21 +269,39 @@ export function useWorkoutSetLogger(
         }
       }
 
-      // Async persistence
+      // Async persistence + unified telemetry stream
       setBusySetKey(key)
-      const payload = buildWorkoutSetPayload(
-        currentDraft,
-        exercise.name,
-        workoutDay,
-        effectiveTempo,
-        weightKg,
-        restSecsToSave
-      )
+      const setEventId = generateTelemetryUuid()
+      const profileState = loadPostureProfileState()
+      const payload = {
+        ...buildWorkoutSetPayload(
+          currentDraft,
+          exercise.name,
+          workoutDay,
+          effectiveTempo,
+          weightKg,
+          restSecsToSave
+        ),
+        eventId: setEventId,
+      }
+
+      void trackEvent('set_logged', {
+        session_date: currentDraft.sessionDate,
+        exercise_name: exercise.name,
+        set_number: Number(currentDraft.setNumber),
+        reps: Number(currentDraft.reps) || null,
+        weight_kg: weightKg ?? null,
+        rpe: currentDraft.rpe ? Number(currentDraft.rpe) : null,
+        rest_seconds: restSecsToSave,
+        opt_phase: optPhase,
+        express_20m: Boolean(profileState.expressModeActive),
+        environment_profile: profileState.environmentProfile || 'home_gym',
+      })
 
       try {
         const res = await fetch('/api/workouts/log-set', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getTelemetryAuthHeaders(),
           body: JSON.stringify(payload),
         })
 

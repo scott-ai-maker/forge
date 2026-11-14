@@ -15,6 +15,7 @@ import {
   recordDailyReadinessAndComfort,
   type InjectedReadinessDrill,
 } from '@/lib/posture-profile-state'
+import { TELEMETRY_CAMERA_RELEASE_EVENT, trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 export interface CameraReadinessCheckProps {
   expressModeActive?: boolean
@@ -79,7 +80,16 @@ export default function CameraReadinessCheck({
   }, [])
 
   useEffect(() => {
-    return () => cleanupCamera()
+    const handleHardwareRelease = () => cleanupCamera()
+    if (typeof window !== 'undefined') {
+      window.addEventListener(TELEMETRY_CAMERA_RELEASE_EVENT, handleHardwareRelease)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(TELEMETRY_CAMERA_RELEASE_EVENT, handleHardwareRelease)
+      }
+      cleanupCamera()
+    }
   }, [cleanupCamera])
 
   const commitEvaluation = useCallback(
@@ -97,6 +107,37 @@ export default function CameraReadinessCheck({
         screenType: mode,
         restrictionFlags: evaluated.restrictionFlags,
         injectedDrills: evaluated.injectedDrills,
+      })
+
+      const peakRomDeltas: Record<
+        string,
+        {
+          measured_deg: number | null
+          baseline_deg: number | null
+          delta_deg: number | null
+          severity: string
+        }
+      > = {}
+      for (const check of evaluated.checks) {
+        peakRomDeltas[check.id] = {
+          measured_deg: check.measuredDeg,
+          baseline_deg: check.baselineDeg,
+          delta_deg: Number((check.measuredDeg - check.baselineDeg).toFixed(1)),
+          severity: check.status,
+        }
+      }
+
+      void trackEvent('readiness_check_completed', {
+        readiness_index: evaluated.readinessScore,
+        movement_type: mode,
+        peak_rom_deltas: peakRomDeltas,
+        restriction_flags: evaluated.restrictionFlags,
+        injected_warmup_drills: evaluated.injectedDrills.map(d => ({
+          id: d.id,
+          title: d.name,
+          duration_sec: d.durationSec,
+        })),
+        express_mode_active: expressModeActive,
       })
     },
     [expressModeActive, playTone]
@@ -120,6 +161,11 @@ export default function CameraReadinessCheck({
         }
       } catch {
         setCameraNotice('Camera permission unavailable — running hands-free biomechanics cadence.')
+        void trackEvent('client_runtime_diagnostic', {
+          diagnostic_kind: 'camera_permission',
+          camera_permission_state: 'denied',
+          component_context: 'CameraReadinessCheck',
+        })
       }
     } else {
       setCameraNotice('Live camera stream unavailable in this browser — running hands-free cadence.')

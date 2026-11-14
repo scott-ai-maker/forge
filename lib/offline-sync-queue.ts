@@ -33,6 +33,7 @@ export function isNativePlatform(): boolean {
 
 export interface QueuedSetLogPayload {
   tempId: string
+  eventId?: string
   queuedAt: number
   workoutPlanId?: string
   sessionDate: string
@@ -179,6 +180,17 @@ export function clearOfflineQueue(): void {
   }
 }
 
+function makeUuidV4(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
 /**
  * Enqueue a set log to the offline storage queue.
  */
@@ -190,6 +202,7 @@ export function enqueueOfflineSet(
   const queuedItem: QueuedSetLogPayload = {
     ...payload,
     tempId,
+    eventId: payload.eventId ?? makeUuidV4(),
     queuedAt: Date.now(),
     status: 'pending',
     retryCount: 0,
@@ -272,6 +285,7 @@ export async function flushOfflineQueue(
           method: 'POST',
           headers,
           body: JSON.stringify({
+            eventId: item.eventId,
             workoutPlanId: item.workoutPlanId,
             sessionDate: item.sessionDate,
             exerciseName: item.exerciseName,

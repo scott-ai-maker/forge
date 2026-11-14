@@ -4821,6 +4821,18 @@ details.forge-science-accordion > summary::-webkit-details-marker {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 32px 84px rgba(0, 0, 0, 0.78);
 }
 
+dialog.forge-telemetry-drawer:modal {
+  overscroll-behavior: contain;
+}
+
+dialog.forge-telemetry-drawer::backdrop {
+  background: rgba(6, 8, 12, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
 .forge-glass-pill {
   background: var(--surface-glass);
   backdrop-filter: blur(20px);

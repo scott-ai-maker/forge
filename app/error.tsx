@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 interface ErrorProps {
   error: Error & { digest?: string }
@@ -10,8 +11,14 @@ interface ErrorProps {
 
 export default function RootError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Log to error reporting service in production
     console.error('Root error:', error)
+    void trackEvent('client_runtime_diagnostic', {
+      diagnostic_kind: 'exception',
+      error_name: error.name || 'RootError',
+      error_message: error.message || 'Unhandled application route error',
+      error_digest: error.digest ?? null,
+      component_context: 'app/error.tsx',
+    })
   }, [error])
 
   return (

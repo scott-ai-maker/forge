@@ -2,6 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { getPendingQueueCount, flushOfflineQueue, triggerHaptic } from '@/lib/offline-sync-queue'
+import {
+  flushTelemetry,
+  getTelemetryHealth,
+  subscribeTelemetryHealth,
+} from '@/src/lib/telemetry/telemetryClient'
 
 export default function OfflineTelemetryBadge() {
   const [isOnline, setIsOnline] = useState(true)
@@ -10,18 +15,22 @@ export default function OfflineTelemetryBadge() {
   const [showSyncedNotice, setShowSyncedNotice] = useState(false)
 
   const checkPending = useCallback(() => {
-    setPendingCount(getPendingQueueCount())
+    const health = getTelemetryHealth()
+    setPendingCount(health.queueDepth)
   }, [])
 
   const attemptSync = useCallback(async () => {
     if (isSyncing) return
-    const count = getPendingQueueCount()
-    if (count === 0) return
+    const healthBefore = getTelemetryHealth()
+    if (healthBefore.queueDepth === 0) return
 
     setIsSyncing(true)
     try {
-      const result = await flushOfflineQueue()
-      if (result.synced > 0) {
+      const [setResult, telemetryResult] = await Promise.all([
+        getPendingQueueCount() > 0 ? flushOfflineQueue() : Promise.resolve({ synced: 0, failed: 0 }),
+        flushTelemetry({ reason: 'manual', interactive: true }),
+      ])
+      if (setResult.synced > 0 || telemetryResult.acceptedCount > 0) {
         triggerHaptic('success')
         setShowSyncedNotice(true)
         setTimeout(() => setShowSyncedNotice(false), 3500)
@@ -37,6 +46,11 @@ export default function OfflineTelemetryBadge() {
 
     setIsOnline(navigator.onLine)
     checkPending()
+
+    const unsubscribeHealth = subscribeTelemetryHealth(snapshot => {
+      setIsOnline(snapshot.isOnline)
+      setPendingCount(snapshot.queueDepth)
+    })
 
     const handleOnline = () => {
       setIsOnline(true)
@@ -54,6 +68,7 @@ export default function OfflineTelemetryBadge() {
     const interval = setInterval(checkPending, 5000)
 
     return () => {
+      unsubscribeHealth()
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
       clearInterval(interval)
@@ -93,28 +108,23 @@ export default function OfflineTelemetryBadge() {
 
         <span
           className={`font-mono text-[11px] font-bold uppercase tracking-[0.1em] tabular-nums ${
-            !isOnline ? 'text-amber-200' : showSyncedNotice ? 'text-emerald-200' : 'text-zinc-200'
+            !isOnline ? 'text-amber-300' : showSyncedNotice ? 'text-emerald-300' : 'text-zinc-200'
           }`}
         >
-          {!isOnline ? (
-            pendingCount > 0
-              ? `Offline · ${pendingCount} Set${pendingCount > 1 ? 's' : ''} Saved Locally`
-              : 'Offline Mode · Sets Cached Locally'
-          ) : isSyncing ? (
-            'Syncing Telemetry…'
-          ) : showSyncedNotice ? (
-            '✓ Telemetry Synced'
-          ) : pendingCount > 0 ? (
-            `${pendingCount} Set${pendingCount > 1 ? 's' : ''} Ready to Sync`
-          ) : null}
+          {isSyncing
+            ? `Syncing ${pendingCount} ${pendingCount === 1 ? 'event' : 'events'}...`
+            : showSyncedNotice
+              ? '✓ Telemetry Synced'
+              : !isOnline
+                ? `Offline${pendingCount > 0 ? ` · ${pendingCount} Queued` : ''}`
+                : `${pendingCount} Unsynced`}
         </span>
 
         {isOnline && pendingCount > 0 && !isSyncing && (
           <button
             type="button"
             onClick={() => void attemptSync()}
-            aria-label="Sync offline sets now"
-            className="forge-tactile-press min-h-[32px] rounded-full bg-emerald-400 px-3 py-1 text-[10.5px] font-extrabold uppercase tracking-wider text-zinc-950 transition-colors hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+            className="forge-tactile-press ml-1 inline-flex min-h-[32px] items-center rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
           >
             Sync Now
           </button>

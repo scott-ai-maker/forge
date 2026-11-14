@@ -9,6 +9,7 @@ import {
   POSTURE_PROFILE_EVENT,
 } from '@/lib/posture-profile-state'
 import { playForgeTactileTone, useSfxMuted } from '@/lib/sfx-audio'
+import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 export interface DeskResetDrill {
   id: string
@@ -103,12 +104,21 @@ export function DeskResetGuidedPlayer({
         setRunning(false)
         setCompleted(true)
         playForgeTactileTone('success')
+        if (!sandboxMode) {
+          const totalDurationSec = drills.reduce((acc, d) => acc + d.durationSec, 0)
+          void trackEvent('desk_reset_completed', {
+            duration_sec: totalDurationSec,
+            drills_completed: drills.length,
+            strain_flags_targeted: activeFlags,
+            environment_profile: environmentProfile,
+          })
+        }
         onCompleted?.()
         return 0
       })
     }, 1000)
     return () => window.clearInterval(timer)
-  }, [running, currentIndex, drills, onCompleted])
+  }, [running, currentIndex, drills, onCompleted, sandboxMode, activeFlags, environmentProfile])
 
   const currentDrill = drills[currentIndex] ?? drills[0]
 

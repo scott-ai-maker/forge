@@ -9,6 +9,7 @@ import {
   recordDailyReadinessAndComfort,
 } from '@/lib/posture-profile-state'
 import { playForgeTactileTone } from '@/lib/sfx-audio'
+import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 const RATING_STEPS = [
   { rating: 1, points: 2, label: 'Stiff' },
@@ -46,7 +47,17 @@ export default function JointComfortScoreStrip() {
   const displayScore = savedScore ?? computedScore
 
   const handleSave = () => {
-    recordDailyReadinessAndComfort({ jointComfortScore: computedScore })
+    const comfortLabel =
+      computedScore >= 80 ? 'Fluid' : computedScore >= 60 ? 'Moderate' : 'Tight / Stiff'
+    recordDailyReadinessAndComfort({
+      jointComfortScore: computedScore,
+      comfortLabel,
+    })
+    void trackEvent('joint_comfort_logged', {
+      comfort_score: computedScore,
+      comfort_label: comfortLabel,
+      joint_region: `neck:${neckShoulders},lumbar:${lowerBack},hips_knees:${hipsKnees}`,
+    })
     setSavedScore(computedScore)
     setJustLogged(true)
     playForgeTactileTone('success')

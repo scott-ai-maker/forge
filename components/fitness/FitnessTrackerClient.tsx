@@ -30,6 +30,12 @@ import type {
 import ExerciseVideoModal from '@/components/fitness/ExerciseVideoModal'
 import SmartExerciseSwapModal from '@/components/coach/SmartExerciseSwapModal'
 import PreWorkoutReadinessBridge from '@/components/fitness/PreWorkoutReadinessBridge'
+import { loadPostureProfileState } from '@/lib/posture-profile-state'
+import {
+  generateTelemetryUuid,
+  getTelemetryAuthHeaders,
+  trackEvent,
+} from '@/src/lib/telemetry/telemetryClient'
 const CoachCardioVoiceoverPlayer = dynamic(
   () => import('@/components/fitness/CoachCardioVoiceoverPlayer'),
   { ssr: false }
@@ -2072,11 +2078,27 @@ export default function FitnessTrackerClient({
 
     // 4. Attempt Server Sync or Queue to Persistent Offline Storage
     setBusy(`set-log:${key}`)
+    const setEventId = generateTelemetryUuid()
+    const postureStateForSet = loadPostureProfileState()
+    void trackEvent('set_logged', {
+      workout_plan_id: plan?.id ?? null,
+      session_date: draft.sessionDate,
+      exercise_name: exercise.name,
+      set_number: Number(draft.setNumber),
+      reps: Number(draft.reps) || null,
+      weight_kg: weightKg ?? null,
+      rpe: rpeToSave ?? null,
+      rest_seconds: restSecsToSave ?? null,
+      opt_phase: plan?.nasm_opt_phase || 2,
+      express_20m: Boolean(postureStateForSet.expressModeActive),
+      environment_profile: postureStateForSet.environmentProfile || 'home_gym',
+    })
     try {
       const res = await fetch('/api/workouts/log-set', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getTelemetryAuthHeaders(),
         body: JSON.stringify({
+          eventId: setEventId,
           workoutPlanId: plan?.id,
           sessionDate: draft.sessionDate,
           exerciseName: exercise.name,
@@ -2101,6 +2123,7 @@ export default function FitnessTrackerClient({
       } else {
         // Queue locally for auto-retry
         enqueueOfflineSet({
+          eventId: setEventId,
           workoutPlanId: plan?.id,
           sessionDate: draft.sessionDate,
           exerciseName: exercise.name,
@@ -2122,6 +2145,7 @@ export default function FitnessTrackerClient({
       setBusy(null)
       // Enqueue to offline storage
       enqueueOfflineSet({
+        eventId: setEventId,
         workoutPlanId: plan?.id,
         sessionDate: draft.sessionDate,
         exerciseName: exercise.name,
@@ -2655,10 +2679,29 @@ export default function FitnessTrackerClient({
     setBusy(busyKey)
     setStatus(null)
 
+    const workoutEventId = generateTelemetryUuid()
+    const postureStateForWorkout = loadPostureProfileState()
+    void trackEvent(
+      'workout_completed',
+      {
+        workout_plan_id: plan?.id ?? null,
+        session_date: sessionDate,
+        opt_phase: plan?.nasm_opt_phase || 2,
+        express_20m: Boolean(postureStateForWorkout.expressModeActive),
+        environment_profile: postureStateForWorkout.environmentProfile || 'home_gym',
+        rpe: typeof exertionRpe === 'number' && Number.isFinite(exertionRpe) ? exertionRpe : null,
+        duration_mins: Number.isFinite(calculatedDuration) ? calculatedDuration : null,
+        completed: true,
+        exercises_logged_count: (workout.exercises || []).length,
+      },
+      { eventId: workoutEventId }
+    )
+
     const res = await fetch('/api/workouts/log', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getTelemetryAuthHeaders(),
       body: JSON.stringify({
+        eventId: workoutEventId,
         workoutPlanId: plan?.id,
         sessionDate,
         sessionTitle,

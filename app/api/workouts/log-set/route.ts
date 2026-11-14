@@ -70,8 +70,29 @@ export async function POST(req: NextRequest) {
   const sessionDate = String(body.sessionDate ?? '').trim() || new Date().toISOString().split('T')[0]
   const validPlanId = toValidUuidOrNull(body.workoutPlanId)
   const validLogId = toValidUuidOrNull(body.workoutLogId)
+  const validEventId = toValidUuidOrNull(body.eventId)
+
+  // Strict idempotency guard: prevent network retries from double-counting logged sets
+  if (validEventId) {
+    const { data: existingSet } = await supabaseAdmin()
+      .from('workout_set_logs')
+      .select('*')
+      .eq('id', validEventId)
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (existingSet) {
+      return NextResponse.json({
+        success: true,
+        deduplicated: true,
+        setLog: existingSet,
+        record: existingSet,
+      })
+    }
+  }
 
   const payload = {
+    ...(validEventId ? { id: validEventId } : {}),
     user_id: userId,
     workout_log_id: validLogId,
     workout_plan_id: validPlanId,
