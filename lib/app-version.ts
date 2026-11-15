@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.56.1'
+export const APP_VERSION = '1.57.0'
 export const APP_RELEASE_DATE = '2026-11-14'
-export const APP_RELEASE_CODENAME = 'Coach Gordon AI, Hybrid ElevenLabs Voice & Clinical Safety Guardrails'
+export const APP_RELEASE_CODENAME = 'Website Copy & Complete Ecosystem Showcase Overhaul'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.57.0',
+    date: '2026-11-14',
+    codename: 'Website Copy & Complete Ecosystem Showcase Overhaul',
+    category: 'feature',
+    badge: 'Website Copy & Ecosystem Showcase',
+    title: 'v1.57.0 — Grounded Website Copy, 3-Pillar Ecosystem Showcase & Streamlined 3-Tier Founding Matrix',
+    summary:
+      'Executes a complete public website copy and product showcase overhaul across pre-launch and unmasked landing surfaces—retiring public Live Studio ($180/session) marketing references and presenting the full Forge Athletic ecosystem in a calm, grounded, authoritative voice.',
+    highlights: [
+      'Outcome-First Hero & Interactive 4-Tab Sneak Peek: Grounded Founding Cohort hero copy, collapsed SMS launch-alert friction guardrail, and 4 interactive device-bezel previews (33-Point Posture Mesh, Desk Ergonomics Audit, 5-Phase NASM OPT™, and Express & Travel Engine).',
+      'Everyday Moments Strip & 3-Pillar Feature Ecosystem: Added tactile daily scenarios (6:45 AM Living Room, 1:15 PM Between Meetings, Thursday Hotel Gym) alongside a 13-feature ecosystem breakdown across Camera Diagnostics, Real Voice & Adaptive OPT™, and Human Coaching.',
+      'Coach Authority, 3-Tier Founding Rate Lock & Semantic FAQ: Added Coach Gordon’s joint-first philosophy and NASM OPT™ science disclosure, client outcome profiles, streamlined Core Lab ($19.99/mo), Plus ($49.00/mo), and Coach Support ($199.00/mo) pricing cards, and a 5-item buyer FAQ.',
+    ],
+  },
   {
     version: '1.56.1',
     date: '2026-11-14',

@@ -34,45 +34,36 @@ const packagesStructuredData = {
   offers: {
     '@type': 'AggregateOffer',
     priceCurrency: 'USD',
-    lowPrice: '49.00',
-    highPrice: '1240.00',
-    offerCount: '4',
+    lowPrice: '19.99',
+    highPrice: '299.00',
+    offerCount: '3',
     offers: [
       {
         '@type': 'Offer',
-        name: 'Core Membership',
-        price: '49.00',
+        name: 'Core Lab Membership',
+        price: '19.99',
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: 'Complete autonomous training app, customized 5-phase NASM OPT™ program, 33-point posture screening, wearable sync, and telemetry logging with 7-day free trial.',
+        description: 'Autonomous AI Foundation & Daily Posture Care: 5-Phase NASM OPT™ engine, 20m Express Mode, Coach Gordon’s real voice pacing, 33-point posture checks, and direct Email access (48h).',
       },
       {
         '@type': 'Offer',
         name: 'Plus Membership',
-        price: '99.00',
+        price: '49.00',
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: 'Guided hybrid coaching including full nutrition planning, travel training tools, strength and body composition analytics, and 4 video form reviews per month.',
+        description: 'Guided Hybrid Coaching & Monthly Video Reviews: 2 Form Lab slow-motion video reviews/month, unlimited Desk Ergonomics Audits, Multi-Day Travel Pass, phase-synced nutrition, and Priority Email access (24h).',
       },
       {
         '@type': 'Offer',
         name: 'Coach Support Membership',
-        price: '299.00',
+        price: '199.00',
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: 'Direct 1-on-1 messaging with Coach Gordon, quarterly video strategy reviews, 8 video reviews per month in Form Lab, and Master Coach Safety Gate. Strictly capped at 15 athletes.',
-      },
-      {
-        '@type': 'Offer',
-        name: 'Live 1-on-1 Studio Coaching Sessions',
-        price: '180.00',
-        priceCurrency: 'USD',
-        availability: 'https://schema.org/LimitedAvailability',
-        url: 'https://forge-athletic.app/packages#add-ons',
-        description: 'Real-time 1-on-1 live video coaching with Coach Gordon in the high-definition Live Video Studio. Strictly limited seat roster; availability dedicated exclusively to nights and weekends.',
+        description: '1-on-1 Master Coaching & Direct Text Line: Direct SMS Text Line & Priority In-App Chat with Coach Gordon (24h SLA), 8 Form Lab reviews/month, bespoke OPT™ overrides, and quarterly mesh review (capped at 25 spots).',
       },
     ],
   },
@@ -129,38 +120,31 @@ const COMPARISON_ROWS = [
     note: 'Frame-by-frame concentric velocity, bar path, and joint angle breakdown.',
   },
   {
-    feature: 'Direct Coach Messaging Access',
-    core: '—',
-    plus: '—',
-    support: 'Direct 1:1 (24h SLA)',
-    note: 'Direct messaging with Coach Gordon during dedicated advisory windows.',
+    feature: 'Direct Access to Coach Gordon',
+    core: 'Direct Email (48h)',
+    plus: 'Priority Email (24h)',
+    support: 'Direct SMS + Chat (24h SLA)',
+    note: 'Direct human access with your posture deltas and readiness telemetry attached automatically.',
   },
   {
     feature: 'Biomechanical & Diagnostic Testing',
     core: 'Add-on ($159)',
     plus: 'Add-on ($159)',
-    support: 'Quarterly Diagnostic Screen',
-    note: 'Comprehensive 5-angle movement screen & kinetic chain evaluation with Coach Gordon.',
+    support: 'Quarterly Certified Mesh Review',
+    note: 'Comprehensive 5-angle movement screen & kinetic chain evaluation signed off by Coach Gordon.',
   },
   {
     feature: 'Master Coach Safety Gate Oversight',
-    core: 'Algorithmic',
-    plus: 'Algorithmic',
-    support: 'Certified by Scott Gordon',
-    note: 'Every training phase and deload cycle personally validated by Coach Gordon.',
-  },
-  {
-    feature: 'Live 1-on-1 Studio Sessions',
-    core: 'Add-on ($180/ea)',
-    plus: 'Add-on ($180/ea)',
-    support: 'Quarterly + Add-on',
-    note: 'Real-time video coaching in Live Studio. Strictly limited seats; dedicated availability to nights & weekends.',
+    core: 'Algorithmic + Pinchy Alert',
+    plus: 'Algorithmic + Pinchy Alert',
+    support: 'Bespoke Overrides by Coach Gordon',
+    note: 'Every training phase, injury modification, and deload cycle personally validated by Coach Gordon.',
   },
   {
     feature: 'Athlete Roster Limit',
-    core: 'Unlimited',
-    plus: 'Open Roster',
-    support: 'Strictly Capped at 15',
+    core: 'Founding Cohort',
+    plus: 'Founding Cohort',
+    support: 'Capped at 25 Spots',
     note: 'Roster cap protects coach attention, response speed, and programming depth.',
   },
 ]
@@ -328,87 +312,7 @@ export default function PackagesPage() {
           </table>
         </section>
 
-        {/* Live 1-on-1 Studio Coaching Announcement Banner */}
-        <div
-          id="live-1-on-1"
-          style={{
-            margin: '3rem auto 1.5rem',
-            padding: '1.5rem 1.75rem',
-            borderRadius: '14px',
-            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%)',
-            border: '1px solid rgba(212, 175, 55, 0.35)',
-            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1.25rem',
-          }}
-        >
-          <div style={{ maxWidth: '820px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-              <span
-                style={{
-                  fontFamily: 'var(--font-telemetry)',
-                  fontSize: '10.5px',
-                  fontWeight: 800,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: '#D4AF37',
-                  background: 'rgba(212, 175, 55, 0.18)',
-                  border: '1px solid rgba(212, 175, 55, 0.4)',
-                  padding: '3px 9px',
-                  borderRadius: '4px',
-                }}
-              >
-                STRICTLY LIMITED SEATS
-              </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-telemetry)',
-                  fontSize: '10.5px',
-                  fontWeight: 800,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: '#34D399',
-                  background: 'rgba(52, 211, 153, 0.15)',
-                  border: '1px solid rgba(52, 211, 153, 0.35)',
-                  padding: '3px 9px',
-                  borderRadius: '4px',
-                }}
-              >
-                NIGHTS &amp; WEEKENDS ONLY
-              </span>
-            </div>
-            <h3 style={{ margin: 0, color: '#FFF', fontSize: '1.25rem', fontFamily: 'var(--font-heading)', letterSpacing: '0.02em' }}>
-              Live 1-on-1 Studio Coaching
-            </h3>
-            <p style={{ margin: '6px 0 0', color: '#CBD5E1', fontSize: '0.92rem', lineHeight: 1.55 }}>
-              Train in real time with Coach Gordon in the high-definition Live Video Studio featuring real-time telestrator form markups, slow-motion replay analysis, and instant NASM OPT™ program updates. To guarantee premier coaching quality and personal attention, active client seats are strictly capped with booking reserved exclusively for evening (night) and weekend training blocks.
-            </p>
-          </div>
-          <a
-            href="#add-ons"
-            style={{
-              padding: '10px 18px',
-              borderRadius: '8px',
-              background: 'var(--gold)',
-              color: '#080E14',
-              fontFamily: 'var(--font-heading)',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 4px 14px rgba(212, 160, 23, 0.25)',
-            }}
-          >
-            View 1:1 Packages ↓
-          </a>
-        </div>
-
-        {/* Add-ons & Private Sessions */}
+        {/* Optional Add-ons */}
         <ForgeAddons />
 
         {/* Value Proposition & Massachusetts Coaching Philosophy */}

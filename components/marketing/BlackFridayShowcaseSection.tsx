@@ -2,14 +2,14 @@
 
 import React, { useRef, useState } from 'react'
 import Link from 'next/link'
-import { HOLIDAY_DEAL_PROMO, LAUNCH_CAMPAIGN_INFO } from '@/lib/launch-config'
+import { LAUNCH_CAMPAIGN_INFO } from '@/lib/launch-config'
 
 const SHOWCASE_CHAPTERS = [
   { id: 'desk', code: '01', label: 'Desk Posture & Ergonomics', timeSec: 0 },
   { id: 'home', code: '02', label: 'Joint-First Home Strength', timeSec: 2.5 },
-  { id: 'travel', code: '03', label: '20-Min Travel & Recovery', timeSec: 5.0 },
-  { id: 'coach', code: '04', label: '1-on-1 Live Coaching', timeSec: 8.2 },
-  { id: 'crest', code: '05', label: 'The Forge Sanctuary', timeSec: 10.7 },
+  { id: 'travel', code: '03', label: '20m Express & Hotel Travel', timeSec: 5.0 },
+  { id: 'coach', code: '04', label: 'Async Form Lab & Real Voice', timeSec: 8.2 },
+  { id: 'crest', code: '05', label: 'The Precision Sanctuary', timeSec: 10.7 },
 ] as const
 
 export default function BlackFridayShowcaseSection() {
@@ -28,108 +28,43 @@ export default function BlackFridayShowcaseSection() {
   return (
     <section
       aria-labelledby="bf-showcase-heading"
-      style={{
-        maxWidth: '1160px',
-        margin: '2.5rem auto 3.5rem',
-        padding: '0 1.25rem',
-      }}
+      className="mx-auto my-12 max-w-[1160px] px-4 sm:px-6"
     >
       <div
+        className="overflow-hidden rounded-2xl border border-amber-400/35 bg-[#0E131D]"
         style={{
-          borderRadius: '20px',
-          overflow: 'hidden',
-          background: 'linear-gradient(180deg, #0B121E 0%, #06090F 100%)',
-          border: '1px solid rgba(245, 158, 11, 0.45)',
-          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65), 0 0 40px rgba(245, 158, 11, 0.14)',
+          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 64px rgba(0, 0, 0, 0.6)',
         }}
       >
-        {/* Top Black Friday Event Marquee Strip */}
-        <div
-          style={{
-            background: 'linear-gradient(90deg, #92400E 0%, #D97706 50%, #92400E 100%)',
-            color: '#080E14',
-            padding: '8px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            flexWrap: 'wrap',
-            fontFamily: 'var(--font-telemetry)',
-            fontSize: '11px',
-            fontWeight: 800,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            textAlign: 'center',
-          }}
-        >
-          <span>🔥 BLACK FRIDAY FOUNDING EVENT · {LAUNCH_CAMPAIGN_INFO.dateFormatted}</span>
-          <span>•</span>
-          <span>JOIN ON BLACK FRIDAY FOR 25% OFF FOR LIFE + $279 IN FREE BONUSES (CODE: {HOLIDAY_DEAL_PROMO.code})</span>
+        {/* Top Founding Cohort Strip */}
+        <div className="flex flex-wrap items-center justify-center gap-2.5 border-b border-amber-400/25 bg-amber-500/10 px-4 py-2.5 text-center font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-200">
+          <span>FOUNDING COHORT (50 SPOTS) · {LAUNCH_CAMPAIGN_INFO.dateFormatted}</span>
+          <span aria-hidden="true">·</span>
+          <span>PERMANENT LIFETIME RATE LOCK + PRE-THANKSGIVING SCREENING</span>
         </div>
 
         {/* Header Copy */}
-        <div
-          style={{
-            padding: '28px 24px 20px',
-            textAlign: 'center',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          }}
-        >
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '4px 12px',
-              borderRadius: '9999px',
-              background: 'rgba(245, 158, 11, 0.14)',
-              border: '1px solid rgba(245, 158, 11, 0.4)',
-              color: '#FBBF24',
-              fontFamily: 'var(--font-telemetry)',
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              marginBottom: '12px',
-            }}
-          >
-            <span>OFFICIAL BRAND FILM · 1080P CINEMA</span>
+        <div className="border-b border-white/[0.08] px-5 pb-5 pt-6 text-center sm:px-8">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-400/35 bg-amber-500/10 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-300">
+            <span>Product Walkthrough Film</span>
           </div>
           <h2
             id="bf-showcase-heading"
-            style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: 'clamp(1.75rem, 3.8vw, 2.65rem)',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.03em',
-              color: '#FFFFFF',
-              margin: '0 0 10px',
-            }}
+            style={{ textWrap: 'balance' }}
+            className="font-serif text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
           >
-            Built For Real Life, Pain-Free Strength &amp; Longevity
+            Built for Real Schedules, Comfortable Joints &amp; Long-Term Strength
           </h2>
-          <p
-            style={{
-              maxWidth: '720px',
-              margin: '0 auto',
-              color: '#94A3B8',
-              fontSize: '0.98rem',
-              lineHeight: 1.6,
-            }}
-          >
-            From 5-minute desk ergonomics resets and joint-friendly 20-minute home or hotel workouts to personalized NASM OPT™ progression, nutrition periodization, and 1-on-1 live coaching with Coach Gordon.
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
+            From 5-second Desk Ergonomics Audits and 20-minute home or hotel workouts to Coach
+            Gordon’s real voice pacing every rep, async Form Lab reviews, and direct coaching access.
           </p>
         </div>
 
         {/* 16:9 Cinema Video Stage */}
         <div
-          style={{
-            position: 'relative',
-            width: '100%',
-            aspectRatio: '16 / 9',
-            backgroundColor: '#05080D',
-          }}
+          style={{ aspectRatio: '16 / 9' }}
+          className="relative w-full bg-[#05080D]"
         >
           <video
             ref={videoRef}
@@ -137,18 +72,12 @@ export default function BlackFridayShowcaseSection() {
             loop
             muted={videoMuted}
             playsInline
-            preload="auto"
-            poster="/images/forge-black-friday-showcase-poster.jpg?v=7"
-            aria-label="Forge Athletic Holistic Coaching Showcase Film"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-            }}
+            preload="metadata"
+            poster="/images/forge-black-friday-showcase-poster.jpg"
+            aria-label="Forge Athletic ecosystem walkthrough film"
+            className="block h-full w-full object-cover"
           >
-            <source src="/videos/forge-black-friday-showcase.mp4?v=7" type="video/mp4" />
-            <source src="/videos/gaa-founding-manifesto.mp4" type="video/mp4" />
+            <source src="/videos/forge-black-friday-showcase.mp4" type="video/mp4" />
           </video>
 
           {/* Top-right Sound Toggle */}
@@ -165,41 +94,14 @@ export default function BlackFridayShowcaseSection() {
               }
             }}
             aria-label={videoMuted ? 'Unmute showcase video audio' : 'Mute showcase video audio'}
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              background: videoMuted
-                ? 'rgba(8, 14, 24, 0.85)'
-                : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-              border: '1px solid rgba(245, 158, 11, 0.55)',
-              color: videoMuted ? '#FBBF24' : '#080E14',
-              borderRadius: '8px',
-              padding: '8px 14px',
-              fontSize: '11px',
-              fontFamily: 'var(--font-telemetry)',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              cursor: 'pointer',
-              backdropFilter: 'blur(8px)',
-            }}
+            className="forge-tactile-press absolute right-4 top-4 inline-flex min-h-[44px] items-center rounded-xl border border-amber-400/50 bg-[#090A0D]/85 px-3.5 py-2 font-mono text-[11px] font-bold uppercase tracking-wider text-amber-300 backdrop-blur"
           >
-            {videoMuted ? '🔇 UNMUTE FILM AUDIO' : '🔊 FILM AUDIO ON'}
+            {videoMuted ? 'Unmute Audio' : 'Audio On'}
           </button>
         </div>
 
-        {/* Interactive 5-Act Telemetry Chapter Bar */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-            gap: '8px',
-            padding: '14px 16px',
-            background: 'rgba(8, 14, 24, 0.95)',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          }}
-        >
+        {/* Interactive 5-Chapter Bar */}
+        <div className="grid grid-cols-1 gap-2 border-y border-white/[0.08] bg-[#111318] p-3.5 sm:grid-cols-2 lg:grid-cols-5">
           {SHOWCASE_CHAPTERS.map(chapter => {
             const isActive = activeChapter === chapter.id
             return (
@@ -207,44 +109,20 @@ export default function BlackFridayShowcaseSection() {
                 key={chapter.id}
                 type="button"
                 onClick={() => jumpToChapter(chapter.id, chapter.timeSec)}
-                style={{
-                  background: isActive ? 'rgba(245, 158, 11, 0.18)' : 'rgba(255, 255, 255, 0.03)',
-                  border: isActive
-                    ? '1px solid rgba(245, 158, 11, 0.5)'
-                    : '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '8px',
-                  padding: '8px 10px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
+                className={`forge-tactile-press flex min-h-[44px] items-center gap-2 rounded-xl border px-3 py-2 text-left transition ${
+                  isActive
+                    ? 'border-amber-400/50 bg-amber-500/15 text-white'
+                    : 'border-white/[0.08] bg-[#181B22] text-zinc-300 hover:border-white/20'
+                }`}
               >
                 <span
-                  style={{
-                    fontFamily: 'var(--font-telemetry)',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    color: isActive ? '#080E14' : '#FBBF24',
-                    background: isActive ? '#F59E0B' : 'rgba(245, 158, 11, 0.12)',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                  }}
+                  className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-extrabold ${
+                    isActive ? 'bg-amber-400 text-[#090A0D]' : 'bg-amber-500/15 text-amber-300'
+                  }`}
                 >
                   {chapter.code}
                 </span>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-telemetry)',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: isActive ? '#F8FAFC' : '#94A3B8',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
+                <span className="truncate font-mono text-[11px] font-semibold">
                   {chapter.label}
                 </span>
               </button>
@@ -252,70 +130,26 @@ export default function BlackFridayShowcaseSection() {
           })}
         </div>
 
-        {/* Black Friday Promo Branding Package Footer */}
-        <div
-          style={{
-            padding: '24px',
-            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(15, 23, 42, 0.96) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px',
-          }}
-        >
-          <div style={{ maxWidth: '680px' }}>
-            <div
-              style={{
-                fontFamily: 'var(--font-telemetry)',
-                fontSize: '11px',
-                fontWeight: 800,
-                letterSpacing: '0.12em',
-                color: '#34D399',
-                textTransform: 'uppercase',
-                marginBottom: '4px',
-              }}
-            >
-              ★ BLACK FRIDAY DOORBUSTER PACKAGE · DEEPEST DISCOUNT OF THE YEAR
+        {/* Grounded Founding Cohort Footer */}
+        <div className="flex flex-wrap items-center justify-between gap-4 bg-[#111318] px-5 py-5 sm:px-7">
+          <div className="max-w-2xl">
+            <div className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-300">
+              Founding Member Benefits Included
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '1.25rem',
-                fontWeight: 700,
-                color: '#FFFFFF',
-                marginBottom: '4px',
-              }}
-            >
-              Join on Black Friday (Nov 27) for 25% Off For Life + $279 in Free Founding Bonuses
-            </div>
-            <p style={{ margin: 0, fontSize: '0.88rem', color: '#CBD5E1', lineHeight: 1.5 }}>
-              Lock in <strong>25% off any tier for life</strong> (save up to $900/yr), a <strong>Free 60-Min 1-on-1 Live Movement Screen ($180 value)</strong>, and a <strong>Free 30-Day Partner Guest Pass ($99 value)</strong> with code <strong>{HOLIDAY_DEAL_PROMO.code}</strong>.
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 sm:text-sm">
+              Includes your permanent Founding Member Lifetime Rate Lock, a complimentary 1-on-1
+              movement screening with Coach Gordon before Thanksgiving, and 1 free 30-day Founding
+              Partner Pass to gift a spouse or friend.
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <Link
-              href="/packages"
-              style={{
-                textDecoration: 'none',
-                padding: '12px 20px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                color: '#080E14',
-                fontFamily: 'var(--font-heading)',
-                fontSize: '15px',
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                boxShadow: '0 4px 18px rgba(245, 158, 11, 0.35)',
-              }}
-            >
-              Claim Black Friday Deal ({HOLIDAY_DEAL_PROMO.code}) &rarr;
-            </Link>
-          </div>
+          <Link
+            href="#pricing"
+            className="forge-tactile-press inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 px-5 py-2.5 font-serif text-sm font-extrabold tracking-wide text-[#090A0D] no-underline shadow-[0_4px_18px_rgba(245,158,11,0.28)]"
+          >
+            View Founding Pricing →
+          </Link>
         </div>
       </div>
     </section>
   )
 }
-

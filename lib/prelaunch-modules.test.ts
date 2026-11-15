@@ -26,7 +26,10 @@ import { buildOrderedDeskResetDrills } from '@/components/fitness/DeskResetModal
 import {
   CLIENT_OUTCOMES_GRID,
   COACH_GORDON_TRUST_PROFILE,
+  ECOSYSTEM_PILLARS,
+  EVERYDAY_MOMENTS_SCENARIOS,
   FOUNDING_PRICING_CARDS,
+  LANDING_FAQ_ITEMS,
 } from '@/lib/landingSocialProof'
 
 describe('Forge Athletic Pre-Launch Modules (Phases 1–4)', () => {
@@ -125,8 +128,12 @@ describe('Forge Athletic Pre-Launch Modules (Phases 1–4)', () => {
 
   it('validates landing social proof profiles and Founding Member Lifetime Rate Lock pricing', () => {
     expect(COACH_GORDON_TRUST_PROFILE.monogram).toBe('CG')
-    expect(COACH_GORDON_TRUST_PROFILE.verificationBadge).toBe('NASM-CPT® Since 2008')
+    expect(COACH_GORDON_TRUST_PROFILE.verificationBadge).toBe('NASM-CPT® Certified Since 2008')
     expect(COACH_GORDON_TRUST_PROFILE.philosophySentences).toHaveLength(3)
+
+    expect(EVERYDAY_MOMENTS_SCENARIOS).toHaveLength(3)
+    expect(ECOSYSTEM_PILLARS).toHaveLength(3)
+    expect(LANDING_FAQ_ITEMS).toHaveLength(5)
 
     expect(CLIENT_OUTCOMES_GRID).toHaveLength(3)
     expect(CLIENT_OUTCOMES_GRID.map(c => c.nameAndAge)).toEqual([
@@ -135,11 +142,10 @@ describe('Forge Athletic Pre-Launch Modules (Phases 1–4)', () => {
       'David K., 45',
     ])
 
-    expect(FOUNDING_PRICING_CARDS.map(p => `${p.name}:${p.foundingPrice}`)).toEqual([
-      'Core Lab:$19.99',
-      'Plus:$49',
-      'Coach Support:$199',
-      'Live Studio:$180',
+    expect(FOUNDING_PRICING_CARDS.map(p => `${p.name}:${p.foundingPrice}->${p.postLaunchPrice}`)).toEqual([
+      'Core Lab:$19.99->$29.99',
+      'Plus:$49.00->$69.00',
+      'Coach Support:$199.00->$249.00',
     ])
   })
 })

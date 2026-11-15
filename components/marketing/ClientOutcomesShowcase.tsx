@@ -3,7 +3,7 @@ import { CLIENT_OUTCOMES_GRID } from '@/lib/landingSocialProof'
 
 export default function ClientOutcomesShowcase() {
   return (
-    <div style={{ maxWidth: 1160, margin: '2.75rem auto 0' }}>
+    <div style={{ maxWidth: 1160, margin: '2rem auto 0' }}>
       <div style={{ marginBottom: '1.25rem', textAlign: 'left' }}>
         <div
           style={{
@@ -23,7 +23,7 @@ export default function ClientOutcomesShowcase() {
             marginBottom: 10,
           }}
         >
-          <span>VERIFIED MEMBER OUTCOMES</span>
+          <span>EVERYDAY CLIENT OUTCOMES</span>
           <span>·</span>
           <span>REAL SCHEDULES</span>
         </div>
@@ -32,7 +32,7 @@ export default function ClientOutcomesShowcase() {
             margin: 0,
             color: '#FFFFFF',
             fontFamily: 'var(--font-heading)',
-            fontSize: 'clamp(1.5rem, 2.8vw, 2.1rem)',
+            fontSize: 'clamp(1.35rem, 1.1rem + 1.2vw, 2rem)',
             fontWeight: 800,
             letterSpacing: '0.02em',
           }}
@@ -51,7 +51,7 @@ export default function ClientOutcomesShowcase() {
               overflow: 'hidden',
               borderRadius: 16,
               background: '#111318',
-              border: '1px solid rgba(255, 255, 255, 0.07)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 44px rgba(0, 0, 0, 0.52)',
               textAlign: 'left',
             }}
@@ -81,7 +81,7 @@ export default function ClientOutcomesShowcase() {
                   position: 'absolute',
                   inset: 0,
                   background:
-                    'linear-gradient(180deg, rgba(8, 14, 20, 0.12) 0%, rgba(8, 14, 20, 0.55) 60%, rgba(8, 14, 20, 0.95) 100%)',
+                    'linear-gradient(180deg, rgba(8, 14, 20, 0.14) 0%, rgba(8, 14, 20, 0.55) 60%, rgba(8, 14, 20, 0.95) 100%)',
                 }}
               />
               <div
@@ -93,7 +93,7 @@ export default function ClientOutcomesShowcase() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: 8,
+                  gap: 6,
                   flexWrap: 'wrap',
                 }}
               >
@@ -108,27 +108,58 @@ export default function ClientOutcomesShowcase() {
                     fontFamily: 'var(--font-telemetry)',
                     fontSize: 10.5,
                     fontWeight: 700,
-                    letterSpacing: '0.08em',
+                    letterSpacing: '0.07em',
                     textTransform: 'uppercase',
                   }}
                 >
                   {item.personaBadge}
                 </span>
+              </div>
+
+              {/* Outcome Metric Pills along bottom of image */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 10,
+                  left: 12,
+                  right: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  flexWrap: 'wrap',
+                }}
+              >
                 <span
                   style={{
-                    padding: '4px 10px',
+                    padding: '3px 9px',
                     borderRadius: 9999,
-                    background: 'rgba(6, 78, 59, 0.82)',
+                    background: 'rgba(6, 78, 59, 0.88)',
                     backdropFilter: 'blur(8px)',
                     border: '1px solid rgba(52, 211, 153, 0.5)',
                     color: '#6EE7B7',
                     fontFamily: 'var(--font-telemetry)',
                     fontSize: 10.5,
                     fontWeight: 800,
-                    letterSpacing: '0.05em',
+                    letterSpacing: '0.04em',
                   }}
                 >
                   {item.keyMetricBadge}
+                </span>
+                <span
+                  style={{
+                    padding: '3px 9px',
+                    borderRadius: 9999,
+                    background: 'rgba(15, 23, 42, 0.88)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(148, 163, 184, 0.35)',
+                    color: '#E2E8F0',
+                    fontFamily: 'var(--font-telemetry)',
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    letterSpacing: '0.03em',
+                  }}
+                >
+                  {item.secondaryMetricBadge}
                 </span>
               </div>
             </div>
@@ -149,9 +180,9 @@ export default function ClientOutcomesShowcase() {
                     margin: 0,
                     color: '#FFFFFF',
                     fontFamily: 'var(--font-heading)',
-                    fontSize: '1.25rem',
+                    fontSize: '1.2rem',
                     fontWeight: 700,
-                    lineHeight: 1.28,
+                    lineHeight: 1.3,
                   }}
                 >
                   {item.headline}
@@ -160,7 +191,7 @@ export default function ClientOutcomesShowcase() {
                   style={{
                     margin: '0.65rem 0 0',
                     color: '#CBD5E1',
-                    fontSize: '0.88rem',
+                    fontSize: '0.875rem',
                     lineHeight: 1.6,
                   }}
                 >
@@ -179,12 +210,12 @@ export default function ClientOutcomesShowcase() {
                   gap: 10,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                   <span
                     aria-hidden="true"
                     style={{
-                      width: 32,
-                      height: 32,
+                      width: 34,
+                      height: 34,
                       borderRadius: 9999,
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -195,22 +226,28 @@ export default function ClientOutcomesShowcase() {
                       fontFamily: 'var(--font-telemetry)',
                       fontSize: 11,
                       fontWeight: 800,
+                      flexShrink: 0,
                     }}
                   >
                     {item.monogram}
                   </span>
-                  <strong style={{ color: '#F8FAFC', fontSize: '0.88rem' }}>{item.nameAndAge}</strong>
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ display: 'block', color: '#F8FAFC', fontSize: '0.86rem', lineHeight: 1.25 }}>
+                      {item.nameAndAge} · {item.roleTitle}
+                    </strong>
+                    <span
+                      style={{
+                        display: 'block',
+                        color: '#94A3B8',
+                        fontFamily: 'var(--font-telemetry)',
+                        fontSize: 10.5,
+                        marginTop: 2,
+                      }}
+                    >
+                      {item.featureUsed}
+                    </span>
+                  </div>
                 </div>
-                <span
-                  style={{
-                    color: '#94A3B8',
-                    fontFamily: 'var(--font-telemetry)',
-                    fontSize: 10.5,
-                    textAlign: 'right',
-                  }}
-                >
-                  {item.featureUsed}
-                </span>
               </div>
             </div>
           </article>
@@ -219,4 +256,3 @@ export default function ClientOutcomesShowcase() {
     </div>
   )
 }
-

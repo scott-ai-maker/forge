@@ -10,12 +10,14 @@ describe('Forge Athletic add-on catalog', () => {
     }
   })
 
-  it('advertises live 1:1 private session packs with seat caps and night/weekend availability constraints', () => {
+  it('parks benched private session packs from public storefront while preserving metadata for existing entitlements', () => {
     expect(getForgeAddonsByCategory('advanced-feature')).toHaveLength(4)
-    const privateSessions = getForgeAddonsByCategory('private-session')
-    expect(privateSessions).toHaveLength(3)
+    expect(getForgeAddonsByCategory('private-session')).toHaveLength(0)
+    const parkedPrivateSessions = getForgeAddonsByCategory('private-session', true)
+    expect(parkedPrivateSessions).toHaveLength(3)
     expect(FORGE_ADDONS.filter(a => a.popular && !a.isParked)).toHaveLength(1)
-    for (const addon of privateSessions) {
+    for (const addon of parkedPrivateSessions) {
+      expect(addon.isParked).toBe(true)
       expect(addon.seatCapLabel).toMatch(/limited/i)
       expect(addon.availabilityLabel).toMatch(/nights|weekends/i)
       expect(addon.includes.some(inc => /nights|evenings|weekends/i.test(inc))).toBe(true)

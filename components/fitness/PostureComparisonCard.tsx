@@ -244,7 +244,10 @@ export function PostureComparisonInteractiveStage({
   const [escalationOpen, setEscalationOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'overlay' | 'side_by_side' | 'day1_preview'>('overlay')
   const [splitPct, setSplitPct] = useState(54)
-  const [delta, setDelta] = useState(() => loadPostureProfileState().postureDelta)
+  const [delta, setDelta] = useState(() => {
+    const base = loadPostureProfileState().postureDelta
+    return sandboxMode ? { ...base, forwardHeadDeltaDeg: -4.2 } : base
+  })
   const [day30ReminderArmed, setDay30ReminderArmed] = useState(false)
   const [remoteCountdownSec, setRemoteCountdownSec] = useState<number>(0)
   const stageRef = useRef<HTMLDivElement | null>(null)
@@ -699,7 +702,10 @@ export default function PostureComparisonCard({
   const { tierId, shouldShowTrigger } = useTierAccess()
   const [modalOpen, setModalOpen] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
-  const [delta, setDelta] = useState(() => loadPostureProfileState().postureDelta)
+  const [delta, setDelta] = useState(() => {
+    const base = loadPostureProfileState().postureDelta
+    return sandboxMode ? { ...base, forwardHeadDeltaDeg: -4.2 } : base
+  })
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const headingId = useId()
 

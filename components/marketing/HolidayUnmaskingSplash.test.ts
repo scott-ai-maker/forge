@@ -7,13 +7,25 @@ import {
   calculateTimeRemaining,
 } from '@/lib/launch-config'
 
-describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
+describe('HolidayUnmaskingSplash & Overhauled Public Landing Showcase', () => {
   const componentSource = fs.readFileSync(
     path.resolve(process.cwd(), 'components/marketing/HolidayUnmaskingSplash.tsx'),
     'utf-8'
   )
   const homePageSource = fs.readFileSync(
     path.resolve(process.cwd(), 'app/page.tsx'),
+    'utf-8'
+  )
+  const sneakPeekSource = fs.readFileSync(
+    path.resolve(process.cwd(), 'components/marketing/AppSneakPeekShowcase.tsx'),
+    'utf-8'
+  )
+  const pricingGridSource = fs.readFileSync(
+    path.resolve(process.cwd(), 'components/packages/FoundingRateLockPricingGrid.tsx'),
+    'utf-8'
+  )
+  const socialProofSource = fs.readFileSync(
+    path.resolve(process.cwd(), 'lib/landingSocialProof.ts'),
     'utf-8'
   )
 
@@ -40,33 +52,66 @@ describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
     expect(result.isLive).toBe(false)
   })
 
-  it('verifies HolidayUnmaskingSplash contains all key branding, showcase video, countdown, and pass minting tokens', () => {
-    expect(componentSource).toContain('THE UNMASKING')
-    expect(componentSource).toContain('Precision Science. Unbreakable Bodies.')
+  it('verifies grounded Hero copy, showcase video, SMS friction guardrail, and pass minting tokens', () => {
+    const normalizedComponent = componentSource.replace(/\s+/g, ' ')
+    expect(normalizedComponent).toContain(
+      'FOUNDING COHORT (50 SPOTS) · OPENS FRIDAY, NOV 20 AT 6:00 AM EST'
+    )
+    expect(normalizedComponent).toContain('Don’t wait for January to repair what November broke.')
+    expect(normalizedComponent).toContain(
+      'A real NASM-certified personal trainer at your side—combining 33-point phone camera posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct email or text access whenever you want human eyes on your training.'
+    )
+    expect(normalizedComponent).toContain('Claim Your Founding Member Pass →')
+    expect(normalizedComponent).toContain('Add SMS launch alert (optional)')
+    expect(normalizedComponent).toContain(
+      'Includes your permanent Founding Member Lifetime Rate Lock, a complimentary 1-on-1 movement screening with Coach Gordon before Thanksgiving, and 1 free 30-day Founding Partner Pass to gift a spouse or friend.'
+    )
     expect(componentSource).toContain('/videos/forge-black-friday-showcase.mp4')
     expect(componentSource).toContain('/images/forge-black-friday-showcase-poster.jpg')
-    expect(componentSource).toContain('BLACK FRIDAY DOORBUSTER VAULT')
-    expect(componentSource).toContain('MUST JOIN ON BLACK FRIDAY (NOV 27) TO UNLOCK DEEP DISCOUNTS')
     expect(componentSource).toContain('/api/waitlist')
 
-    const showcaseVideoPath = path.resolve(process.cwd(), 'public/videos/forge-black-friday-showcase.mp4')
+    const showcaseVideoPath = path.resolve(
+      process.cwd(),
+      'public/videos/forge-black-friday-showcase.mp4'
+    )
     expect(fs.existsSync(showcaseVideoPath)).toBe(true)
     expect(fs.statSync(showcaseVideoPath).size).toBeGreaterThan(1024 * 1024)
 
     expect(homePageSource).toContain('BlackFridayShowcaseSection')
     expect(componentSource).toContain('FORGE-HOLIDAY-2026-')
     expect(componentSource).toContain('holiday_unmasking_drop')
-    expect(componentSource).toContain('CLAIM FOUNDING MEMBER PASS')
-    expect(componentSource).toContain('25% Lifetime Rate Lock')
-    expect(componentSource).toContain('Free 60-Min Pre-Holiday Screening')
     expect(componentSource).toContain('HOLIDAY_DEAL_PROMO')
     expect(componentSource).toContain('Member Sign In')
     expect(componentSource).toContain('Coach Portal')
     expect(componentSource).toContain('Founding Partner Pass')
-    expect(componentSource).toContain('Metabolic Health & Sleep Recovery')
     expect(componentSource.toLowerCase()).not.toContain('executive')
     expect(componentSource).toContain('First 50 Founding Members')
     expect(componentSource).toContain('12 of 50 Spots Left')
+  })
+
+  it('verifies all 6 smooth-scroll navigation anchors exist and zero benched Live Studio / $180 strings remain', () => {
+    for (const anchor of [
+      '#sneak-peek',
+      '#features',
+      '#how-it-works',
+      '#coach',
+      '#pricing',
+      '#faq',
+    ]) {
+      expect(componentSource).toContain(anchor)
+      expect(homePageSource).toContain(anchor)
+    }
+
+    const combinedPublicMarketing = [
+      componentSource,
+      homePageSource,
+      sneakPeekSource,
+      pricingGridSource,
+      socialProofSource,
+    ].join('\n')
+
+    expect(combinedPublicMarketing).not.toMatch(/live studio/i)
+    expect(combinedPublicMarketing).not.toContain('$180')
   })
 
   it('verifies root app/page.tsx gates visitors to HolidayUnmaskingSplash while parked', () => {
@@ -92,19 +137,16 @@ describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
   })
 
   it('verifies Precision Training Sanctuary, Clinical Sports Science, and Human + AI manifesto tokens across marketing surfaces', () => {
-    // Splash page assertions
     expect(componentSource).toContain('CLINICAL SPORTS SCIENCE')
     expect(componentSource).toContain('The Precision Training Sanctuary')
     expect(componentSource).toContain('Uninterrupted Flow State')
     expect(componentSource).toContain('Best Tools × Best Coaching')
     expect(componentSource).toContain('Results-Driven Flywheel')
 
-    // Home page assertions
     expect(homePageSource).toContain('The Precision Training Sanctuary')
     expect(homePageSource).toContain('CLINICAL SPORTS SCIENCE')
     expect(homePageSource).toContain('Best Tools × Best Coaching')
 
-    // Master manifesto document validation
     const manifestoPath = path.resolve(process.cwd(), 'docs/brand-strategy-manifesto.md')
     expect(fs.existsSync(manifestoPath)).toBe(true)
     const manifestoContent = fs.readFileSync(manifestoPath, 'utf-8')
@@ -118,4 +160,3 @@ describe('HolidayUnmaskingSplash & Parked Pre-Launch Engine', () => {
     expect(manifestoContent).toContain('THE BEST MASTER COACHING')
   })
 })
-

@@ -299,7 +299,7 @@ export default function FirstVisitLeadCapture({
                 textOverflow: 'ellipsis',
               }}
             >
-              {isLive ? 'Coach Gordon in the live studio' : 'Training and movement insights'}
+              {isLive ? 'Coach Gordon · Direct Coaching Access' : 'Training and movement insights'}
             </span>
           </div>
 

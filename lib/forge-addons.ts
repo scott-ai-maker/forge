@@ -33,8 +33,8 @@ export const FORGE_ADDON_CATEGORIES: readonly { id: ForgeAddonCategory; title: s
   },
   {
     id: 'private-session',
-    title: 'Live 1-on-1 Studio Sessions',
-    blurb: 'Real-time 1-on-1 coaching with Coach Gordon in the high-definition Forge Live Video Studio. Strictly limited seat capacity; availability dedicated exclusively to nights and weekends.',
+    title: 'Private 1-on-1 Sessions',
+    blurb: 'Dedicated 1-on-1 video sessions with Coach Gordon (benched during Founding Cohort enrollment).',
   },
 ]
 
@@ -100,19 +100,19 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
       'Jet-lag recovery guidelines',
     ],
   },
-  // Live 1:1 private session packs (strictly limited seat roster, dedicated to nights & weekends)
+  // Benched private session packs (parked from public storefront)
   {
     id: 'addon-private-session-single',
     category: 'private-session',
-    name: 'Live 1-on-1 Private Session',
-    tagline: 'One 60-minute live studio session with Coach Gordon (nights & weekends only).',
+    name: 'Private 1-on-1 Session',
+    tagline: 'One 60-minute private coaching session with Coach Gordon (nights & weekends only).',
     priceCents: 18000,
     sessions: 1,
-    isParked: false,
+    isParked: true,
     seatCapLabel: 'Strictly limited seats',
     availabilityLabel: 'Nights & weekends only',
     includes: [
-      '60-minute live video session with Coach Gordon in the high-definition Live Studio',
+      '60-minute private video session with Coach Gordon',
       'Dedicated off-hours booking: Evenings & weekends only (48h advance notice)',
       'Strictly limited seat roster to ensure master-level attention and programming depth',
       'Real-time form correction, telestrator markups, and instant NASM OPT™ program updates',
@@ -121,16 +121,16 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
   {
     id: 'addon-private-session-4',
     category: 'private-session',
-    name: '4-Session Live 1-on-1 Pack',
-    tagline: 'Four 60-minute live sessions across your training cycle (nights & weekends).',
+    name: '4-Session Private 1-on-1 Pack',
+    tagline: 'Four 60-minute private sessions across your training cycle (nights & weekends).',
     priceCents: 66000,
     sessions: 4,
     listPriceCents: 72000,
-    isParked: false,
+    isParked: true,
     seatCapLabel: 'Strictly limited seats',
     availabilityLabel: 'Nights & weekends only',
     includes: [
-      'Four 60-minute live sessions with Coach Gordon in the Live Studio',
+      'Four 60-minute private sessions with Coach Gordon',
       'Dedicated off-hours booking: Scheduled exclusively for nights and weekends (48h notice)',
       'Strictly limited seat roster to protect coach responsiveness and personal focus',
       'Program calibration and kinetic compensation tracking after each session',
@@ -139,16 +139,16 @@ export const FORGE_ADDONS: readonly ForgeAddon[] = [
   {
     id: 'addon-private-session-8',
     category: 'private-session',
-    name: '8-Session Live 1-on-1 Block',
+    name: '8-Session Private 1-on-1 Block',
     tagline: 'Sustained 1-on-1 coaching for a full 8-week training block (nights & weekends).',
     priceCents: 124000,
     sessions: 8,
     listPriceCents: 144000,
-    isParked: false,
+    isParked: true,
     seatCapLabel: 'Strictly limited seats',
     availabilityLabel: 'Nights & weekends only',
     includes: [
-      'Eight 60-minute live sessions with Coach Gordon in the Live Studio',
+      'Eight 60-minute private sessions with Coach Gordon',
       'Dedicated off-hours booking: Scheduled exclusively for nights and weekends (48h notice)',
       'Strictly limited seat roster to maintain premier coaching stewardship',
       'Continuous periodized progression, deload management, and weekly biomechanical review',

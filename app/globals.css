@@ -4865,7 +4865,61 @@ dialog.forge-telemetry-drawer::backdrop {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* Semantic <details> / <summary> Disclosure Accordion (Modern Web Guidance) */
+details.forge-disclosure-item {
+  interpolate-size: allow-keywords;
+}
+
+details.forge-disclosure-item > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+details.forge-disclosure-item > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.forge-disclosure-item > summary::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-inline-end: 2px solid #FBBF24;
+  border-block-end: 2px solid #FBBF24;
+  transform: rotate(-45deg);
+  flex-shrink: 0;
+  margin-inline-end: 0.15rem;
+}
+
+details.forge-disclosure-item[open] > summary::before {
+  transform: rotate(45deg);
+  border-color: #34D399;
+}
+
+details.forge-disclosure-item::details-content {
+  overflow: clip;
+  contain: layout;
+}
+
+details.forge-disclosure-item:not([open])::details-content {
+  block-size: 0;
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  details.forge-disclosure-item > summary::before {
+    transition: transform 0.2s var(--ease-spring), border-color 0.2s ease;
+  }
+
+  details.forge-disclosure-item::details-content {
+    transition-property: block-size, content-visibility, display;
+    transition-duration: 0.22s;
+    transition-timing-function: var(--ease-spring);
+    transition-behavior: allow-discrete;
+  }
+
   .forge-tactile-press {
     transition: transform 100ms var(--ease-spring), background-color 150ms ease, border-color 150ms ease;
   }
@@ -4929,7 +4983,8 @@ dialog.forge-telemetry-drawer::backdrop {
   .forge-surface-interactive,
   .forge-glass-modal,
   .forge-glass-pill,
-  .forge-metallic-pass {
+  .forge-metallic-pass,
+  .forge-disclosure-item {
     border: 1px solid CanvasText;
   }
 

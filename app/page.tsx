@@ -5,20 +5,23 @@ import MobileAppPromoSection from '@/components/marketing/MobileAppPromoSection'
 import HolidayUnmaskingSplash from '@/components/marketing/HolidayUnmaskingSplash'
 import BlackFridayShowcaseSection from '@/components/marketing/BlackFridayShowcaseSection'
 import AppSneakPeekShowcase from '@/components/marketing/AppSneakPeekShowcase'
-import ClientOutcomesShowcase from '@/components/marketing/ClientOutcomesShowcase'
+import EverydayMomentsStrip from '@/components/marketing/EverydayMomentsStrip'
+import CompleteFeatureEcosystem from '@/components/marketing/CompleteFeatureEcosystem'
+import CoachAuthoritySection from '@/components/marketing/CoachAuthoritySection'
+import LandingFaqAccordion from '@/components/marketing/LandingFaqAccordion'
 import FoundingRateLockPricingGrid from '@/components/packages/FoundingRateLockPricingGrid'
 import LandingHeaderSfxToggle from '@/components/marketing/LandingHeaderSfxToggle'
-import { COACH_GORDON_TRUST_PROFILE } from '@/lib/landingSocialProof'
-import { isSiteUnmasked, LAUNCH_CAMPAIGN_INFO } from '@/lib/launch-config'
+import { COACH_GORDON_TRUST_PROFILE, LANDING_FAQ_ITEMS } from '@/lib/landingSocialProof'
+import { isSiteUnmasked } from '@/lib/launch-config'
 
 export const metadata: Metadata = {
-  title: 'Forge Athletic | Online Personal Training, NASM Periodization & 3D Movement Screening',
+  title: 'Forge Athletic | Online Personal Training, 33-Point Posture Diagnostics & NASM OPT™',
   description:
-    'Evidence-led online personal training, 3D movement screening, and NASM OPT™ periodization tailored for real schedules. Don’t wait for January to repair what November broke.',
+    'Don’t wait for January to repair what November broke. A real NASM-certified personal trainer at your side—combining 33-point phone camera posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct email or text access.',
   openGraph: {
-    title: 'Forge Athletic | Online Personal Training & 3D Movement Screening',
+    title: 'Forge Athletic | Online Personal Training & 33-Point Camera Posture Diagnostics',
     description:
-      'Evidence-led online personal training, 3D movement screening, and NASM OPT™ periodization tailored for real schedules.',
+      'A real NASM-certified personal trainer at your side—33-point phone camera posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct coaching access.',
     images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
   },
 }
@@ -26,112 +29,54 @@ export const metadata: Metadata = {
 const homeFaqStructuredData = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: 'What makes Forge Athletic personal training methodology unique?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Forge Athletic pairs evidence-based NASM 5-phase Optimum Performance Training (OPT™) periodization with computer-vision 3D movement screening and wearable biometric telemetry. Built on the NASM Virtual Coaching Specialization (VCS) framework, every training plan adapts dynamically to your real schedule, joint health, and recovery data rather than rigid cookie-cutter routines.',
-      },
+  mainEntity: LANDING_FAQ_ITEMS.map(item => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
     },
-    {
-      '@type': 'Question',
-      name: 'Is Forge Athletic coaching remote, hybrid, or in-person?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Headquartered in Massachusetts, Forge Athletic operates as a 100% remote virtual performance coaching platform serving clients across the Commonwealth and nationwide across all 50 states. Athletes receive tailored training routines, asynchronous video form analysis in the Form Lab, live WebRTC virtual coaching sessions, and mobile workout tracking across Apple iOS, Android, and Progressive Web Apps—delivering master-level coaching directly to your home gym or private workout space with zero commute friction.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Who is Forge Athletic designed for?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Forge Athletic is engineered for busy executives and professionals seeking posture restoration and energy, longevity lifters (40s–60s+) protecting joint integrity and bone density, and everyday athletes wanting collegiate-grade strength and conditioning without wasting hours in the gym.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'What credentials does Coach Gordon have?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Coach Gordon has been a personal trainer since 2008 (18+ years of dedicated coaching experience). He holds an accredited Bachelor of Science in Information Technology (3.72 GPA), an active NCCA-accredited NASM-CPT certification (#1261890687), ASTI CPR/AED credentials, and 34 verified Credly badges in AI and cloud architecture. He is an active candidate on the NASM Master Trainer track across Corrective Exercise (CES), Performance Enhancement (PES), Nutrition (CNC, CSNC), and Virtual Coaching Specialization (VCS).',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'How does the 3D movement and posture screening work?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Using standard smartphone video and computer vision algorithms, Forge Athletic evaluates 33 kinetic chain anatomical landmarks during an overhead squat assessment, identifying overactive and underactive muscle compensations to formulate targeted corrective exercises.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Are live 1-on-1 coaching sessions available with Coach Gordon?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Yes. Live 1-on-1 coaching sessions with Coach Gordon in the high-definition Forge Live Video Studio are available. Because Coach Gordon personally leads each 60-minute session with live telestration, multi-angle form validation, and instantaneous OPT™ adjustments, active athlete seats are strictly limited, and scheduling is dedicated exclusively to nights (evenings) and weekends with advance booking.',
-      },
-    },
-  ],
+  })),
 }
-
-const FEATURE_PILLARS = [
-  {
-    number: '01',
-    title: 'A plan built around you',
-    description: 'Personalized NASM OPT™ training that adapts to your goals and builds strength over time.',
-    image: '/images/pillar-plan-personalized.jpg',
-    imageAlt: 'Coach Gordon reviewing an individualized training plan on a tablet with an everyday client',
-  },
-  {
-    number: '02',
-    title: 'Move with confidence',
-    description: 'Practical movement screening and coaching help you understand how to train well.',
-    image: '/images/pillar-move-confidence.jpg',
-    imageAlt: 'Coach Gordon observing squat depth and knee alignment during a tailored movement screen',
-  },
-  {
-    number: '03',
-    title: 'See progress that matters',
-    description: 'Bring workouts, strength trends, and available recovery signals together in one clear view.',
-    image: '/images/pillar-progress-telemetry.jpg',
-    imageAlt: 'Active client smiling and checking workout progress telemetry on her smartwatch',
-  },
-]
 
 const AUDIENCE_PERSONAS = [
   {
     tag: 'Posture & Energy',
     title: 'Busy Professionals & Desk Workers',
-    description: 'Reverse the stiffness of long desk hours. Build core stability, open tight hips, and gain steady physical stamina that powers your workday.',
+    description:
+      'Reverse the stiffness of long desk hours with 5-second Desk Ergonomics Audits, 5-Minute Desk Resets, and steady 20-minute strength sessions.',
     image: '/images/personas/executive-strength.jpg',
-    imageAlt: 'Professional woman performing controlled dumbbell Romanian deadlift with focused alignment',
+    imageAlt:
+      'Professional woman performing controlled dumbbell Romanian deadlift with focused alignment',
   },
   {
     tag: 'Joint Health & Vitality',
-    title: 'Longevity & Master Lifters (40s–60s+)',
-    description: 'Protect knees, shoulders, and spine while preserving bone density. Progressive, safe strength training designed to keep you moving pain-free for decades.',
+    title: 'Longevity & Joint-Conscious Lifters (40s–60s+)',
+    description:
+      'Protect knees, shoulders, and spine while preserving bone density with Phase 01 Stabilization screening and 1-tap joint-safe regressions.',
     image: '/images/personas/longevity-vitality-male.jpg',
-    imageAlt: 'Active mature 58-year-old man performing controlled kettlebell deadlift with excellent posture',
+    imageAlt:
+      'Active mature man performing controlled kettlebell deadlift in athletic t-shirt with clean posture',
   },
   {
-    tag: 'Power & Stamina',
-    title: 'Athletic Conditioning & Hybrid Strength',
-    description: 'Train with collegiate-grade periodization across NASM’s 5 phases—building rotational power, speed, work capacity, and resilient athletic conditioning.',
-    image: '/images/personas/athletic-conditioning.jpg',
-    imageAlt: 'Athletic trainee holding front-rack kettlebell in a high-performance gym facility',
-  },
-  {
-    tag: 'Live 1-on-1 Studio',
-    title: 'Live 1-on-1 Video Coaching (Nights & Weekends)',
-    description: 'Train live 1-on-1 with Coach Gordon in the high-definition Live Video Studio (strictly limited seats; available nights and weekends), or access asynchronous video form reviews and custom training plans anytime.',
+    tag: 'Hotel & Travel',
+    title: 'Frequent Travelers & Busy Parents',
+    description:
+      'Switch seamlessly between Bodyweight Only, Home Dumbbells, Apartment Gym, and Hotel Travel without losing 5-Phase NASM OPT™ momentum.',
     image: '/images/remote-virtual-coaching.jpg',
-    imageAlt: 'Client training in a home gym guided by Coach Gordon on a live tablet video consultation',
+    imageAlt:
+      'Focused home and travel dumbbell workout guided by structured NASM progression',
   },
 ]
+
+const NAV_ANCHORS = [
+  { href: '#sneak-peek', label: 'Sneak Peek' },
+  { href: '#features', label: 'Features' },
+  { href: '#how-it-works', label: 'How It Works' },
+  { href: '#coach', label: 'Coach' },
+  { href: '#pricing', label: 'Pricing' },
+  { href: '#faq', label: 'FAQ' },
+] as const
 
 /**
  * Full unmasked marketing experience. Rendered when site unmasking is active,
@@ -152,7 +97,8 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
             fontFamily: 'var(--font-telemetry)',
           }}
         >
-          <strong>INTERNAL PREVIEW:</strong> Viewing full unmasked site. Public visitors currently see the Holiday Pre-Launch Splash Page.
+          <strong>INTERNAL PREVIEW:</strong> Viewing full unmasked site. Public visitors currently
+          see the Founding Cohort Pre-Launch experience until Friday, Nov 20 at 6:00 AM EST.
         </div>
       )}
 
@@ -167,55 +113,83 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           />
           <span>Forge Athletic</span>
         </Link>
-        <nav aria-label="Primary landing page sections and account" className="flex flex-wrap items-center gap-3">
-          <a href="#sneak-peek" className="hidden text-xs font-semibold text-slate-300 transition hover:text-amber-300 md:inline">
-            Sneak Peek
-          </a>
-          <a href="#how-it-works" className="hidden text-xs font-semibold text-slate-300 transition hover:text-amber-300 md:inline">
-            How It Works
-          </a>
-          <a href="#coach" className="hidden text-xs font-semibold text-slate-300 transition hover:text-amber-300 md:inline">
-            Coach
-          </a>
-          <a href="#pricing" className="hidden text-xs font-semibold text-slate-300 transition hover:text-amber-300 md:inline">
-            Pricing
-          </a>
+        <nav
+          aria-label="Primary landing page sections and account"
+          className="flex flex-wrap items-center gap-3"
+        >
+          {NAV_ANCHORS.map(anchor => (
+            <a
+              key={anchor.href}
+              href={anchor.href}
+              className="hidden text-xs font-semibold text-slate-300 transition hover:text-amber-300 lg:inline"
+            >
+              {anchor.label}
+            </a>
+          ))}
           <LandingHeaderSfxToggle />
           <Link href="/auth/login">Log in</Link>
-          <Link className="forge-header-cta" href="/auth/signup">Get started</Link>
+          <Link className="forge-header-cta" href="/auth/signup">
+            Get started
+          </Link>
         </nav>
       </header>
 
+      {/* Mobile / Tablet Anchor Navigation Strip */}
+      <nav
+        aria-label="Mobile section navigation"
+        className="mx-auto mb-4 flex max-w-[1160px] items-center gap-2 overflow-x-auto px-4 py-1 text-xs font-semibold text-zinc-300 lg:hidden"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {NAV_ANCHORS.map(anchor => (
+          <a
+            key={anchor.href}
+            href={anchor.href}
+            className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-white/[0.08] bg-[#111318] px-3 text-zinc-300 no-underline transition hover:border-amber-400/40 hover:text-amber-300"
+          >
+            {anchor.label}
+          </a>
+        ))}
+      </nav>
+
+      {/* 1. HERO SECTION (Outcome-First & Grounded) */}
       <section className="forge-hero" aria-labelledby="forge-hero-title">
         <div className="forge-hero-copy">
           <p className="forge-eyebrow">
             <span />
-            Launching {LAUNCH_CAMPAIGN_INFO.dateFormatted} · {LAUNCH_CAMPAIGN_INFO.timeFormatted}
+            FOUNDING COHORT (50 SPOTS) · OPENS FRIDAY, NOV 20 AT 6:00 AM EST
           </p>
-          <h1 id="forge-hero-title">Pain-free joints, desk posture relief, and 20-minute home workouts.</h1>
-          <p className="forge-hero-tagline font-semibold text-amber-300">{LAUNCH_CAMPAIGN_INFO.tagline}</p>
+          <h1 id="forge-hero-title">
+            Don’t wait for January to repair what November broke.
+          </h1>
           <p className="forge-hero-description">
-            Fix stiff desk posture in 5 minutes, build lasting strength in 20 minutes from home or a hotel gym, and keep your neck, shoulders, hips, and knees feeling strong every week.
+            A real NASM-certified personal trainer at your side—combining 33-point phone camera
+            posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct email or
+            text access whenever you want human eyes on your training.
           </p>
-          <details className="forge-science-accordion my-3 rounded-xl border border-slate-800 bg-slate-950/75 px-4 py-3 text-left">
-            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-amber-300">
-              How the Science Works
-            </summary>
-            <p className="mt-2 text-xs leading-relaxed text-slate-300">
-              Powered by 33-point smartphone pose tracking and the 5-Phase NASM Optimum Performance Training (OPT™) model—starting with Stabilization Endurance and corrective mobility before layering hypertrophy, maximal strength, and power.
-            </p>
-          </details>
           <div className="forge-hero-actions">
-            <Link className="forge-primary-link" href="/packages">Explore memberships</Link>
-            <Link className="forge-secondary-link" href="/auth/login">Member sign in <span aria-hidden="true">→</span></Link>
+            <Link className="forge-primary-link" href="/auth/signup">
+              Claim Your Founding Member Pass →
+            </Link>
+            <a className="forge-secondary-link" href="#sneak-peek">
+              Explore Sneak Peek <span aria-hidden="true">→</span>
+            </a>
           </div>
-          <p className="forge-hero-proof">Personal trainer since 2008 <span>·</span> NASM-CPT® Certified <span>·</span> NASM VCS Model <span>·</span> Massachusetts &amp; Remote</p>
+          <p className="mt-3 max-w-xl text-xs leading-relaxed text-zinc-400">
+            Includes your permanent Founding Member Lifetime Rate Lock, a complimentary 1-on-1
+            movement screening with Coach Gordon before Thanksgiving, and 1 free 30-day Founding
+            Partner Pass to gift a spouse or friend.
+          </p>
+          <p className="forge-hero-proof">
+            {COACH_GORDON_TRUST_PROFILE.verificationBadge} <span>·</span> NASM Master Trainer
+            Candidate <span>·</span> 18+ Years Personal Coaching
+          </p>
         </div>
+
         <div className="forge-hero-showcase">
           <div className="forge-hero-image-wrapper">
             <Image
               src="/images/hero-personal-coaching.jpg"
-              alt="Coach Gordon coaching an everyday client through dumbbell goblet squat form during a personalized training session"
+              alt="Coach Gordon coaching an everyday client through dumbbell goblet squat alignment during a personalized training session"
               width={680}
               height={510}
               priority
@@ -225,19 +199,19 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
             <div className="forge-hero-badge-overlay">
               <div className="forge-hero-badge-coach">
                 <Image
-                  src="/images/hero-personal-coaching-45wk-goal.jpg"
+                  src={COACH_GORDON_TRUST_PROFILE.portraitSrc}
                   alt="Coach Gordon"
                   width={40}
                   height={40}
                   className="forge-hero-badge-avatar"
                 />
                 <div>
-                  <strong>Coach Gordon</strong>
-                  <span>NASM-CPT® · Since 2008</span>
+                  <strong>{COACH_GORDON_TRUST_PROFILE.name}</strong>
+                  <span>{COACH_GORDON_TRUST_PROFILE.verificationBadge}</span>
                 </div>
               </div>
               <div className="forge-hero-badge-tag">
-                <span>✓ Form Checked</span>
+                <span>✓ 33-Point Checked</span>
               </div>
             </div>
           </div>
@@ -246,48 +220,35 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
 
       <BlackFridayShowcaseSection />
 
-      <div className="px-4">
+      {/* 2. INTERACTIVE 4-TAB SNEAK PEEK SHOWCASE (#sneak-peek) */}
+      <div className="px-4 sm:px-6">
         <AppSneakPeekShowcase />
       </div>
 
-      <section id="how-it-works" className="forge-feature-section scroll-mt-20" aria-labelledby="forge-features-title">
-        <div className="forge-section-intro">
-          <p className="forge-eyebrow">How It Works</p>
-          <h2 id="forge-features-title">Move better at your desk. Build strength in 20 minutes.</h2>
-          <p>One focused system for pain-free joints, quick mobility resets, and workouts that fit real life.</p>
-        </div>
-        <div className="forge-feature-grid">
-          {FEATURE_PILLARS.map(feature => (
-            <article className="forge-feature-card" key={feature.number}>
-              <div className="forge-feature-image-box">
-                <Image
-                  src={feature.image}
-                  alt={feature.imageAlt}
-                  width={640}
-                  height={420}
-                  loading="lazy"
-                  sizes="(max-width: 768px) 94vw, 32vw"
-                  className="forge-feature-img"
-                />
-                <span className="forge-feature-number">{feature.number}</span>
-              </div>
-              <div className="forge-feature-body">
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+      {/* 3. "A REAL TRAINER AT YOUR SIDE" — EVERYDAY MOMENTS STRIP (#how-it-works) */}
+      <div className="px-4 sm:px-6">
+        <EverydayMomentsStrip />
+      </div>
 
-        <ClientOutcomesShowcase />
-      </section>
+      {/* 4. COMPLETE FEATURE ECOSYSTEM (#features) */}
+      <div className="px-4 sm:px-6">
+        <CompleteFeatureEcosystem />
+      </div>
+
+      {/* 5. HUMAN AUTHORITY & EVERYDAY SOCIAL PROOF (#coach) */}
+      <div className="px-4 sm:px-6">
+        <CoachAuthoritySection />
+      </div>
 
       {/* Audience Showcase: Who We Train */}
       <section className="forge-personas-section" aria-labelledby="forge-personas-title">
         <div className="forge-section-intro">
           <p className="forge-eyebrow">Who We Train</p>
-          <h2 id="forge-personas-title">Built for your starting point, age, and ambition.</h2>
-          <p>Whether you are reversing desk strain, building long-term joint resilience, or elevating athletic performance, your training is calibrated specifically for you.</p>
+          <h2 id="forge-personas-title">Built for your starting point, schedule, and joints.</h2>
+          <p>
+            Whether you are undoing desk stiffness, protecting knees and shoulders for the long run,
+            or staying consistent on work travel, every phase adapts to your day.
+          </p>
         </div>
         <div className="forge-personas-grid">
           {AUDIENCE_PERSONAS.map((persona, index) => (
@@ -299,7 +260,7 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
                   width={600}
                   height={450}
                   loading="lazy"
-                  sizes="(max-width: 640px) 94vw, (max-width: 1080px) 46vw, 23vw"
+                  sizes="(max-width: 640px) 94vw, (max-width: 1080px) 46vw, 31vw"
                   className="forge-persona-img"
                 />
                 <span className="forge-persona-tag">{persona.tag}</span>
@@ -313,7 +274,7 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
         </div>
       </section>
 
-      {/* Brand Manifesto: The Focus Sanctuary */}
+      {/* Brand Manifesto: The Precision Training Sanctuary */}
       <section
         className="forge-manifesto-banner"
         style={{
@@ -321,7 +282,8 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           maxWidth: '1160px',
           padding: '2.75rem 2rem',
           borderRadius: '16px',
-          background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 14, 24, 0.98) 100%)',
+          background:
+            'linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 14, 24, 0.98) 100%)',
           border: '1px solid rgba(245, 158, 11, 0.35)',
           boxShadow: '0 20px 48px rgba(0, 0, 0, 0.5)',
         }}
@@ -347,14 +309,14 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           >
             <span>CLINICAL SPORTS SCIENCE</span>
             <span>·</span>
-            <span>DEEP KINETIC FLOW</span>
+            <span>CALM CONSISTENCY</span>
             <span>·</span>
-            <span>100% BESPOKE COACHING</span>
+            <span>HUMAN STEWARDSHIP</span>
           </div>
           <h2
             style={{
               fontFamily: 'var(--font-heading)',
-              fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+              fontSize: 'clamp(1.75rem, 1.3rem + 2vw, 2.5rem)',
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: '0.03em',
@@ -366,14 +328,15 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           </h2>
           <p
             style={{
-              fontSize: '1.05rem',
+              fontSize: '1.02rem',
               lineHeight: 1.6,
               color: '#CBD5E1',
               margin: '0 auto 2rem',
             }}
           >
-            Engineered around NASM Virtual Coaching best practices, Forge Athletic brings clinical-grade sports science and master coach guidance directly to your workout.
-            We pour 100% of our focus into <strong>the best tools</strong> and <strong>the best coaching</strong>—the perfect combination of computational AI and 18+ years of Master Coach stewardship.
+            Built around NASM Virtual Coaching standards, Forge Athletic focuses on practical
+            biomechanics tools and attentive human coaching—combining on-device camera diagnostics
+            with 18+ years of personal coaching experience and zero social-feed noise.
           </p>
           <div
             style={{
@@ -401,13 +364,21 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
                   marginBottom: '6px',
                 }}
               >
-                DEEP KINETIC FLOW
+                CALM FOCUS
               </div>
-              <h3 style={{ color: '#FFF', fontSize: '1.1rem', margin: '0 0 6px', fontFamily: 'var(--font-heading)' }}>
+              <h3
+                style={{
+                  color: '#FFF',
+                  fontSize: '1.1rem',
+                  margin: '0 0 6px',
+                  fontFamily: 'var(--font-heading)',
+                }}
+              >
                 Uninterrupted Flow State
               </h3>
               <p style={{ color: '#94A3B8', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
-                Every second between sets is dialed in for autonomic recovery, diaphragmatic breathwork, and nervous system replenishment. Hands on the bar, mind in the muscle, eyes on real physical progress.
+                Hands-free voice tempo cues and quiet rest pacing keep your phone propped across the
+                room so you can focus on clean reps and steady breathing.
               </p>
             </div>
             <div
@@ -428,13 +399,21 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
                   marginBottom: '6px',
                 }}
               >
-                THE GOLD STANDARD
+                HYBRID CRAFT
               </div>
-              <h3 style={{ color: '#FFF', fontSize: '1.1rem', margin: '0 0 6px', fontFamily: 'var(--font-heading)' }}>
+              <h3
+                style={{
+                  color: '#FFF',
+                  fontSize: '1.1rem',
+                  margin: '0 0 6px',
+                  fontFamily: 'var(--font-heading)',
+                }}
+              >
                 Best Tools × Best Coaching
               </h3>
               <p style={{ color: '#94A3B8', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
-                Sub-180ms computational AI handles bar velocity, posture mesh diagnostics, and dynamic load adaptation—steered by Master Coach Gordon&apos;s clinical guidance.
+                On-device computer vision handles 33-point posture angles and daily readiness checks
+                while Coach Gordon oversees form reviews, safety alerts, and progression.
               </p>
             </div>
             <div
@@ -455,205 +434,62 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
                   marginBottom: '6px',
                 }}
               >
-                UNDENIABLE PROOF
+                MEASURED PROGRESS
               </div>
-              <h3 style={{ color: '#FFF', fontSize: '1.1rem', margin: '0 0 6px', fontFamily: 'var(--font-heading)' }}>
+              <h3
+                style={{
+                  color: '#FFF',
+                  fontSize: '1.1rem',
+                  margin: '0 0 6px',
+                  fontFamily: 'var(--font-heading)',
+                }}
+              >
                 Results-Driven Flywheel
               </h3>
               <p style={{ color: '#94A3B8', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
-                High-intent search discovery, peer recommendations, and a goal-achieving app that delivers measurable PRs with zero joint pain. Nothing but the best will do.
+                Degree-by-degree posture improvements, comfortable joints, and steady 5-Phase OPT™
+                milestones compound week after week—at home or on the road.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="forge-pricing-section scroll-mt-20" id="pricing" aria-labelledby="forge-pricing-title">
+      {/* 6. STREAMLINED 3-TIER PRICING MATRIX (#pricing) */}
+      <section
+        className="forge-pricing-section scroll-mt-24"
+        id="pricing"
+        aria-labelledby="forge-pricing-title"
+      >
         <div className="forge-section-intro">
           <p className="forge-eyebrow">Founding Member Lifetime Rate Lock</p>
           <h2 id="forge-pricing-title">Lock in your Founding Member rate permanently.</h2>
-          <p>Post-launch rates apply after our Founding Cohort fills. Your rate never increases while active.</p>
+          <p>
+            Post-launch rates apply after our 50-spot Founding Cohort fills. Your monthly rate stays
+            locked for life while active, and carries over if you upgrade tiers later.
+          </p>
         </div>
 
         <FoundingRateLockPricingGrid mode="live" />
 
-        {/* Live 1:1 Studio Coaching Callout */}
-        <div
-          style={{
-            margin: '2.5rem auto 1.5rem',
-            maxWidth: '1080px',
-            padding: '1.25rem 1.5rem',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%)',
-            border: '1px solid rgba(212, 175, 55, 0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem',
-          }}
-        >
-          <div style={{ maxWidth: '780px' }}>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '10px', fontFamily: 'var(--font-telemetry)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#D4AF37', background: 'rgba(212, 175, 55, 0.18)', border: '1px solid rgba(212, 175, 55, 0.35)', padding: '2px 8px', borderRadius: '4px' }}>
-                STRICTLY LIMITED SEATS
-              </span>
-              <span style={{ fontSize: '10px', fontFamily: 'var(--font-telemetry)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#34D399', background: 'rgba(52, 211, 153, 0.15)', border: '1px solid rgba(52, 211, 153, 0.35)', padding: '2px 8px', borderRadius: '4px' }}>
-                NIGHTS &amp; WEEKENDS ONLY
-              </span>
-            </div>
-            <strong style={{ color: '#FFF', fontSize: '1.08rem', fontFamily: 'var(--font-heading)', letterSpacing: '0.02em', display: 'block' }}>
-              Live 1-on-1 Studio Sessions with Coach Gordon
-            </strong>
-            <p style={{ margin: '4px 0 0', color: '#CBD5E1', fontSize: '0.88rem', lineHeight: 1.5 }}>
-              Connect live in the high-definition Live Video Studio featuring real-time telestration, slow-motion replays, and instant OPT™ adjustments. Limited seat capacity; scheduled exclusively for nights and weekends.
-            </p>
-          </div>
-          <Link
-            href="/packages#live-1-on-1"
-            style={{
-              minHeight: '44px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '9px 18px',
-              borderRadius: '8px',
-              background: 'var(--gold)',
-              color: '#080E14',
-              fontFamily: 'var(--font-heading)',
-              fontWeight: 700,
-              fontSize: '0.82rem',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Explore 1:1 Sessions →
-          </Link>
-        </div>
-
-        <p className="forge-billing-note">Secure checkout. Cancel recurring memberships at any time.</p>
+        <p className="forge-billing-note">
+          Secure checkout. Includes 1 free 30-day Founding Partner Pass. Cancel recurring
+          memberships at any time.
+        </p>
       </section>
 
-      <section id="coach" className="forge-founder-section scroll-mt-20" aria-labelledby="forge-founder-title">
-        <div className="forge-founder-photo-wrap">
-          <div className="relative aspect-square w-52 overflow-hidden rounded-2xl border border-amber-400/35 bg-slate-900 sm:w-56">
-            <span
-              aria-hidden="true"
-              className="absolute inset-0 flex items-center justify-center font-mono text-4xl font-extrabold text-amber-400/40"
-            >
-              {COACH_GORDON_TRUST_PROFILE.monogram}
-            </span>
-            <Image
-              src={COACH_GORDON_TRUST_PROFILE.portraitSrc}
-              alt="Coach Gordon, NASM-CPT and Founder of Forge Athletic"
-              width={440}
-              height={440}
-              loading="lazy"
-              sizes="(max-width: 760px) 208px, 224px"
-              className="relative z-10 h-full w-full object-cover"
-            />
-          </div>
-          <div className="forge-founder-experience-badge">
-            <span className="forge-founder-badge-num">18+</span>
-            <span className="forge-founder-badge-lbl">Years Coaching</span>
-          </div>
-        </div>
-        <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-500/35 bg-emerald-500/10 px-3 py-1 font-mono text-xs font-bold text-emerald-300">
-            <span>✓ {COACH_GORDON_TRUST_PROFILE.verificationBadge}</span>
-          </div>
-          <p className="forge-eyebrow">Joint-First Personal Coaching</p>
-          <h2 id="forge-founder-title">{COACH_GORDON_TRUST_PROFILE.name}</h2>
-          <p className="space-y-1 text-slate-200">
-            {COACH_GORDON_TRUST_PROFILE.philosophySentences.join(' ')}
-          </p>
-
-          {/* Verified Credentials & Digital Badges Spotlight */}
-          <div
-            style={{
-              margin: '1.5rem 0',
-              padding: '1.25rem 1.5rem',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, rgba(20, 30, 48, 0.85) 0%, rgba(10, 18, 30, 0.95) 100%)',
-              border: '1px solid rgba(197, 160, 89, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.15rem' }}>
-              <Image
-                src="/images/badges/nasm-cpt-badge.png"
-                alt="Official NASM Certified Personal Trainer Digital Badge"
-                width={56}
-                height={56}
-                style={{ objectFit: 'contain', flexShrink: 0 }}
-              />
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      fontFamily: 'var(--font-heading)',
-                      fontWeight: 700,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: '#34D399',
-                      background: 'rgba(52, 211, 153, 0.15)',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      border: '1px solid rgba(52, 211, 153, 0.35)',
-                    }}
-                  >
-                    Verified NCCA Accredited
-                  </span>
-                  <span style={{ fontSize: '0.8rem', color: '#94A3B8', fontFamily: 'var(--font-telemetry)' }}>
-                    Cert #1261890687
-                  </span>
-                </div>
-                <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: '1.05rem' }}>
-                  NASM-CPT® &amp; ASTI CPR/AED Certified
-                </div>
-              </div>
-            </div>
-
-            <Link
-              href="/credentials"
-              style={{
-                display: 'inline-flex',
-                minHeight: 44,
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.55rem 1.15rem',
-                borderRadius: '8px',
-                background: 'rgba(245, 158, 11, 0.15)',
-                border: '1px solid var(--gold)',
-                color: 'var(--gold-lt)',
-                fontFamily: 'var(--font-heading)',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-              }}
-            >
-              <span>View Badges &amp; Credentials</span>
-              <span aria-hidden="true">→</span>
-            </Link>
-          </div>
-
-          <p className="forge-founder-signoff">Whatever your goal, you can train for it here.</p>
-        </div>
-      </section>
+      {/* 7. UPDATED FAQ ACCORDION (#faq) */}
+      <div className="px-4 sm:px-6">
+        <LandingFaqAccordion />
+      </div>
 
       {/* Official Mobile Apps, iOS & PWA Companion Section */}
       <MobileAppPromoSection />
 
       <footer className="forge-home-footer">
-        <Link href="/" aria-label="Forge Athletic home">Forge Athletic</Link>
+        <Link href="/" aria-label="Forge Athletic home">
+          Forge Athletic
+        </Link>
         <p>Built From The Ground Up. Precision Science For Real Lives.</p>
         <nav aria-label="Footer">
           <Link href="/packages">Memberships</Link>

@@ -72,15 +72,19 @@ export default function ForgeAddons() {
         <p>Every membership works on its own. These extras are one-time purchases with no new subscription.</p>
       </div>
 
-      {FORGE_ADDON_CATEGORIES.map(category => (
-        <div className="forge-addon-group" key={category.id}>
-          <h3>{category.title}</h3>
-          <p>{category.blurb}</p>
-          <div className="forge-plans-grid">
-            {getForgeAddonsByCategory(category.id).map(addon => <AddonCard addon={addon} key={addon.id} />)}
+      {FORGE_ADDON_CATEGORIES.map(category => {
+        const activeAddons = getForgeAddonsByCategory(category.id)
+        if (activeAddons.length === 0) return null
+        return (
+          <div className="forge-addon-group" key={category.id}>
+            <h3>{category.title}</h3>
+            <p>{category.blurb}</p>
+            <div className="forge-plans-grid">
+              {activeAddons.map(addon => <AddonCard addon={addon} key={addon.id} />)}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </section>
   )
 }
