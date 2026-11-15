@@ -48,24 +48,33 @@ describe('ExerciseVideoModal & Exercise Card Instruction Hierarchy', () => {
     expect(instructionsIndex).toBeLessThan(actionRowIndex)
   })
 
-  it('displays the AI-generated branding loop & Official NASM form safety disclaimer across all client workout surfaces', () => {
+  it('keeps the AI studio loop notice minimal, scoped to the studio loop player, and anchored in Terms of Service without spamming workout cards', () => {
     const modalContent = fs.readFileSync(modalFilePath, 'utf-8')
     const clientContent = fs.readFileSync(clientFilePath, 'utf-8')
     const warmupContent = fs.readFileSync(warmupFilePath, 'utf-8')
     const cooldownContent = fs.readFileSync(cooldownFilePath, 'utf-8')
     const supersetFilePath = path.resolve(process.cwd(), 'components/fitness/tracker/SupersetPairCard.tsx')
     const supersetContent = fs.readFileSync(supersetFilePath, 'utf-8')
+    const termsFilePath = path.resolve(process.cwd(), 'app/terms/page.tsx')
+    const termsContent = fs.readFileSync(termsFilePath, 'utf-8')
 
+    // ExerciseVideoModal retains a single concise 1-line note only on the studio loop tab
     expect(modalContent).toContain('ai-exercise-loop-disclaimer')
-    expect(modalContent).toContain('AI-generated for branding and movement recognition')
-    expect(modalContent).toContain('actual Official NASM Video Demonstration')
+    expect(modalContent).toContain("activeMediaTab === 'studio' && card.studioVideoUrl")
+    expect(modalContent).toContain('Illustrative AI preview')
+    expect(modalContent).not.toContain('Form &amp; Injury Prevention Disclaimer')
 
-    expect(clientContent).toContain('workout-ai-loop-disclaimer')
-    expect(clientContent).toContain('AI-generated for branding')
+    // Terms of Service anchors the contractual AI studio loop disclosure
+    expect(termsContent).toContain('studio exercise loops')
 
-    expect(supersetContent).toContain('Studio loops are AI-generated for branding')
-    expect(warmupContent).toContain('Studio loops are AI-generated for branding')
-    expect(cooldownContent).toContain('Studio loops are AI-generated for branding')
+    // Workout surfaces are free of repeated per-card / top-of-workout warning banners
+    expect(clientContent).not.toContain('workout-ai-loop-disclaimer')
+    expect(clientContent).not.toContain('AI Loop Disclaimer')
+    expect(supersetContent).not.toContain('AI Loop Disclaimer')
+    expect(warmupContent).not.toContain('Form Safety Disclaimer')
+    expect(warmupContent).not.toContain('AI Loop Disclaimer')
+    expect(cooldownContent).not.toContain('Form Safety Disclaimer')
+    expect(cooldownContent).not.toContain('AI Loop Disclaimer')
   })
 })
 

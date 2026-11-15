@@ -234,9 +234,6 @@ export default function PreWorkoutReadinessBridge({
               )
             })}
           </div>
-          <p className="mt-2.5 text-[10.5px] leading-snug text-amber-200/90">
-            <strong className="font-bold text-amber-300">Form Guidance Notice:</strong> Studio loops are AI-generated for visual branding and may have minor flaws. Tap any drill thumbnail to view the official NASM video for exact form guidance.
-          </p>
         </section>
       ) : null}
 

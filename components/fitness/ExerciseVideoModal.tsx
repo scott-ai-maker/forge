@@ -199,7 +199,7 @@ export default function ExerciseVideoModal({
                     size={12}
                     tone={activeMediaTab === 'studio' ? 'gold' : 'slate'}
                   />
-                  <span>Forge Studio Loop (AI Branding)</span>
+                  <span>Forge Studio Loop</span>
                 </button>
               )}
               <button
@@ -267,7 +267,7 @@ export default function ExerciseVideoModal({
                     size={12}
                     tone={activeMediaTab === 'video' ? 'cyan' : 'slate'}
                   />
-                  <span>Official NASM Video (Form Guide)</span>
+                  <span>Official NASM Video</span>
                 </button>
               )}
             </div>
@@ -328,27 +328,6 @@ export default function ExerciseVideoModal({
                 }}
               >
                 FORGE ATHLETIC™
-              </div>
-              <div
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  top: 10,
-                  right: 10,
-                  padding: '3px 8px',
-                  borderRadius: 4,
-                  background: 'rgba(120, 53, 15, 0.88)',
-                  border: '1px solid rgba(251, 191, 36, 0.65)',
-                  color: '#FDE68A',
-                  fontSize: 9,
-                  fontWeight: 800,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  pointerEvents: 'none',
-                  userSelect: 'none',
-                }}
-              >
-                AI Branding Loop · Use NASM Video for Form
               </div>
             </div>
           ) : activeMediaTab === 'video' && card.embedUrl ? (
@@ -468,93 +447,50 @@ export default function ExerciseVideoModal({
                   }}
                 >
                   <GaaIcon name="play" size={12} tone="gold" />
-                  <span>Watch Official NASM Form Video</span>
+                  <span>Watch Video Demo</span>
                 </button>
               )}
             </div>
           ) : null}
 
-          {/* AI Branding Loop & Clinical Form Guidance Disclaimer */}
-          <div
-            role="note"
-            aria-label="Exercise Loop Form & Injury Prevention Disclaimer"
-            data-testid="ai-exercise-loop-disclaimer"
-            style={{
-              background: 'rgba(245, 158, 11, 0.12)',
-              border: '1px solid rgba(245, 158, 11, 0.48)',
-              borderLeft: '3px solid #F59E0B',
-              borderRadius: 6,
-              padding: '10px 12px',
-              marginBottom: 14,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  color: '#FBBF24',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.07em',
-                }}
-              >
-                <GaaIcon name="shield-alert" size={13} tone="gold" />
-                <span>Form &amp; Injury Prevention Disclaimer (AI-Generated Branding Loop)</span>
-              </div>
-              {activeMediaTab !== 'video' && card.embedUrl && (
-                <button
-                  type="button"
-                  onClick={() => setActiveMediaTab('video')}
-                  className="tactile-btn"
-                  style={{
-                    background: 'rgba(56, 189, 248, 0.2)',
-                    border: '1px solid rgba(56, 189, 248, 0.6)',
-                    color: '#7DD3FC',
-                    borderRadius: 4,
-                    padding: '4px 10px',
-                    fontSize: 11,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                  }}
-                >
-                  <GaaIcon name="play" size={11} tone="cyan" />
-                  <span>Watch Actual NASM Form Video →</span>
-                </button>
-              )}
-            </div>
+          {activeMediaTab === 'studio' && card.studioVideoUrl && (
             <p
+              role="note"
+              data-testid="ai-exercise-loop-disclaimer"
               style={{
-                margin: 0,
-                fontSize: 11.5,
-                lineHeight: 1.48,
-                color: '#FDE68A',
+                margin: '-2px 0 12px',
+                fontSize: 10.5,
+                lineHeight: 1.4,
+                color: 'var(--gray)',
               }}
             >
-              While this Forge Studio loop is engineered to be as accurate as possible, it is{' '}
-              <strong>AI-generated for branding and movement recognition</strong> and may contain minor visual or biomechanical flaws.{' '}
-              <strong>Do not copy the AI loop verbatim for form execution.</strong> To protect yourself from injury, always use the{' '}
-              <strong>actual Official NASM Video Demonstration</strong>, the written{' '}
-              <strong>Step-by-Step How-To Instructions</strong>, and the{' '}
-              <strong>5 Kinetic Chain Checkpoints</strong> below for proper form guidance.
+              Illustrative AI preview — follow written cues
+              {card.embedUrl ? (
+                <>
+                  {' '}and{' '}
+                  <button
+                    type="button"
+                    onClick={() => setActiveMediaTab('video')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: '#7DD3FC',
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Official NASM Video
+                  </button>{' '}
+                  for form; train pain-free.
+                </>
+              ) : (
+                ' for form; train pain-free.'
+              )}
             </p>
-          </div>
+          )}
 
           <div
             style={{

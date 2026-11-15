@@ -503,9 +503,9 @@ export default function CameraReadinessCheck({
                 </p>
                 <p
                   data-testid="readiness-loop-disclaimer"
-                  className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2.5 py-1.5 text-[10.5px] leading-snug text-amber-200"
+                  className="text-[10px] leading-snug text-zinc-500"
                 >
-                  <strong className="font-bold text-amber-300">Form Guidance Notice:</strong> Studio loop is AI-generated for visual branding and may contain minor flaws. Use the official NASM video in the demonstration viewer for exact form guidance and injury prevention.
+                  Illustrative AI preview — follow written cues &amp; official demo for form.
                 </p>
               </div>
             </div>
