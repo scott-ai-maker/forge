@@ -513,12 +513,14 @@ export default function TelemetryDiagnosticsDrawer({
       }}
       className="forge-glass-modal forge-telemetry-drawer m-auto w-[min(94vw,760px)] max-h-[88dvh] overflow-y-auto rounded-2xl p-0 text-zinc-100"
     >
-      <div className="p-4 sm:p-6">
-        <TelemetryDiagnosticsPanel
-          headingId={headingId}
-          onClose={() => dialogRef.current?.close()}
-        />
-      </div>
+      {open ? (
+        <div className="p-4 sm:p-6">
+          <TelemetryDiagnosticsPanel
+            headingId={headingId}
+            onClose={() => dialogRef.current?.close()}
+          />
+        </div>
+      ) : null}
     </dialog>
   )
 }

@@ -65,6 +65,7 @@ export interface DeskResetPlayerContentProps {
   onToggleExpress?: (next: boolean) => void
   environmentProfile?: EnvironmentProfileId
   onChangeEnvironment?: (env: EnvironmentProfileId) => void
+  activeModalOpen?: boolean
   onCompleted?: () => void
 }
 
@@ -75,55 +76,94 @@ export function DeskResetGuidedPlayer({
   onToggleExpress,
   environmentProfile = 'home_gym',
   onChangeEnvironment,
+  activeModalOpen = true,
   onCompleted,
 }: DeskResetPlayerContentProps) {
   const { sfxMuted, toggleSfxMuted } = useSfxMuted()
   const drills = useMemo(() => buildOrderedDeskResetDrills(activeFlags), [activeFlags])
+  const progressId = useId()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(drills[0]?.durationSec ?? 75)
   const [running, setRunning] = useState(false)
   const [completed, setCompleted] = useState(false)
+  const completionFiredRef = useRef(false)
 
   useEffect(() => {
     setCurrentIndex(0)
     setSecondsLeft(drills[0]?.durationSec ?? 75)
     setRunning(false)
     setCompleted(false)
+    completionFiredRef.current = false
   }, [drills])
 
+  // Pause active timer immediately if parent modal closes so audio/telemetry never fire from a closed dialog
   useEffect(() => {
-    if (!running) return
+    if (!activeModalOpen && running) {
+      setRunning(false)
+    }
+  }, [activeModalOpen, running])
+
+  // Pure 1-second decrement (keeps React state updater side-effect-free under StrictMode)
+  useEffect(() => {
+    if (!running || !activeModalOpen) return
     const timer = window.setInterval(() => {
-      setSecondsLeft(prev => {
-        if (prev > 1) return prev - 1
-        const nextIdx = currentIndex + 1
-        if (nextIdx < drills.length) {
-          setCurrentIndex(nextIdx)
-          playCoachStaticCue('desk_reset_transition')
-          return drills[nextIdx].durationSec
-        }
-        setRunning(false)
-        setCompleted(true)
-        playForgeTactileTone('success')
-        if (!sandboxMode) {
-          recordDeskResetCompletedOnDate()
-          const totalDurationSec = drills.reduce((acc, d) => acc + d.durationSec, 0)
-          void trackEvent('desk_reset_completed', {
-            duration_sec: totalDurationSec,
-            drills_completed: drills.length,
-            strain_flags_targeted: activeFlags,
-            environment_profile: environmentProfile,
-          })
-        }
-        onCompleted?.()
-        return 0
-      })
+      setSecondsLeft(prev => (prev > 0 ? prev - 1 : 0))
     }, 1000)
     return () => window.clearInterval(timer)
-  }, [running, currentIndex, drills, onCompleted, sandboxMode, activeFlags, environmentProfile])
+  }, [running, activeModalOpen])
+
+  // Handle drill transition or 5-minute completion side effects cleanly outside state updaters
+  useEffect(() => {
+    if (!running || secondsLeft > 0) return
+
+    const nextIdx = currentIndex + 1
+    if (nextIdx < drills.length) {
+      setCurrentIndex(nextIdx)
+      setSecondsLeft(drills[nextIdx].durationSec)
+      playCoachStaticCue('desk_reset_transition')
+      return
+    }
+
+    setRunning(false)
+    setCompleted(true)
+    if (!completionFiredRef.current) {
+      completionFiredRef.current = true
+      playForgeTactileTone('success')
+      if (!sandboxMode) {
+        recordDeskResetCompletedOnDate()
+        const totalDurationSec = drills.reduce((acc, d) => acc + d.durationSec, 0)
+        void trackEvent('desk_reset_completed', {
+          duration_sec: totalDurationSec,
+          drills_completed: drills.length,
+          strain_flags_targeted: activeFlags,
+          environment_profile: environmentProfile,
+        })
+      }
+      onCompleted?.()
+    }
+  }, [
+    secondsLeft,
+    running,
+    currentIndex,
+    drills,
+    onCompleted,
+    sandboxMode,
+    activeFlags,
+    environmentProfile,
+  ])
 
   const currentDrill = drills[currentIndex] ?? drills[0]
+  const totalSessionSec = useMemo(
+    () => drills.reduce((sum, d) => sum + d.durationSec, 0),
+    [drills]
+  )
+  const elapsedSessionSec = useMemo(() => {
+    if (completed) return totalSessionSec
+    const priorSec = drills.slice(0, currentIndex).reduce((sum, d) => sum + d.durationSec, 0)
+    const currentElapsed = Math.max(0, (currentDrill?.durationSec ?? 75) - secondsLeft)
+    return Math.min(totalSessionSec, priorSec + currentElapsed)
+  }, [completed, currentDrill?.durationSec, currentIndex, drills, secondsLeft, totalSessionSec])
 
   return (
     <div className="space-y-3.5 text-zinc-100">
@@ -210,6 +250,21 @@ export function DeskResetGuidedPlayer({
         </div>
         <p className="mt-2 text-xs leading-relaxed text-zinc-300 sm:text-sm">{currentDrill.cue}</p>
 
+        <div className="mt-3 space-y-1">
+          <div className="flex items-center justify-between text-[10.5px] font-semibold text-zinc-400">
+            <label htmlFor={progressId}>5-Min Session Progress</label>
+            <span className="font-mono tabular-nums text-emerald-300">
+              {Math.round((elapsedSessionSec / Math.max(1, totalSessionSec)) * 100)}%
+            </span>
+          </div>
+          <progress
+            id={progressId}
+            className="forge-progress-bar"
+            value={elapsedSessionSec}
+            max={totalSessionSec}
+          />
+        </div>
+
         <div className="mt-3.5 flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -218,6 +273,7 @@ export function DeskResetGuidedPlayer({
                 setCurrentIndex(0)
                 setSecondsLeft(drills[0].durationSec)
                 setCompleted(false)
+                completionFiredRef.current = false
               }
               setRunning(prev => !prev)
             }}
@@ -225,11 +281,12 @@ export function DeskResetGuidedPlayer({
           >
             {running ? (
               <>
-                <Pause size={14} strokeWidth={1.75} /> Pause Drill
+                <Pause size={14} strokeWidth={1.75} aria-hidden="true" /> Pause Drill
               </>
             ) : (
               <>
-                <Play size={14} strokeWidth={1.75} /> {completed ? 'Restart 5-Min Reset' : 'Start Guided Timer'}
+                <Play size={14} strokeWidth={1.75} aria-hidden="true" />{' '}
+                {completed ? 'Restart 5-Min Reset' : 'Start Guided Timer'}
               </>
             )}
           </button>
@@ -255,17 +312,22 @@ export function DeskResetGuidedPlayer({
               setCurrentIndex(0)
               setSecondsLeft(drills[0].durationSec)
               setCompleted(false)
+              completionFiredRef.current = false
             }}
             aria-label="Reset timer"
             className="forge-tactile-press inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-[#181B22] text-zinc-300 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
           >
-            <RotateCcw size={15} strokeWidth={1.75} />
+            <RotateCcw size={15} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
 
         {completed ? (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-semibold text-emerald-200">
-            <CheckCircle2 size={15} strokeWidth={1.75} /> 5-Min Desk Reset complete — thoracic &amp; hip posture refreshed!
+          <div
+            role="status"
+            aria-live="polite"
+            className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-semibold text-emerald-200"
+          >
+            <CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> 5-Min Desk Reset complete — thoracic &amp; hip posture refreshed!
           </div>
         ) : null}
       </div>
@@ -278,6 +340,7 @@ export function DeskResetGuidedPlayer({
             <li key={d.id}>
               <button
                 type="button"
+                aria-current={active ? 'step' : undefined}
                 onClick={() => {
                   setCurrentIndex(idx)
                   setSecondsLeft(d.durationSec)
@@ -389,9 +452,10 @@ export default function DeskResetModal({ open, onClose, overrideFlags }: DeskRes
   const [persistedFlags, setPersistedFlags] = useState<DeskErgonomicFlag[]>([])
 
   useEffect(() => {
-    if (open) {
-      setPersistedFlags(loadPostureProfileState().ergonomicFlags)
-    }
+    const sync = () => setPersistedFlags(loadPostureProfileState().ergonomicFlags)
+    if (open) sync()
+    window.addEventListener(POSTURE_PROFILE_EVENT, sync)
+    return () => window.removeEventListener(POSTURE_PROFILE_EVENT, sync)
   }, [open])
 
   useEffect(() => {
@@ -404,19 +468,50 @@ export default function DeskResetModal({ open, onClose, overrideFlags }: DeskRes
     }
   }, [open])
 
-  const activeFlags = overrideFlags && overrideFlags.length > 0 ? overrideFlags : persistedFlags
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog || typeof HTMLDialogElement === 'undefined') return
+    if ('closedBy' in HTMLDialogElement.prototype) return
+
+    const isOutside = (e: PointerEvent) => {
+      const r = dialog.getBoundingClientRect()
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom
+    }
+
+    let pressedOutside = false
+    const onPointerDown = (e: PointerEvent) => {
+      pressedOutside = isOutside(e)
+    }
+    const onPointerUp = (e: PointerEvent) => {
+      if (pressedOutside && isOutside(e)) {
+        dialog.close()
+      }
+      pressedOutside = false
+    }
+
+    dialog.addEventListener('pointerdown', onPointerDown)
+    dialog.addEventListener('pointerup', onPointerUp)
+    return () => {
+      dialog.removeEventListener('pointerdown', onPointerDown)
+      dialog.removeEventListener('pointerup', onPointerUp)
+    }
+  }, [])
+
+  const activeFlags = overrideFlags !== undefined ? overrideFlags : persistedFlags
 
   return (
     <dialog
       ref={dialogRef}
+      {...({ closedby: 'any' } as Record<string, string>)}
       aria-labelledby={headingId}
-      onClose={onClose}
-      onClick={e => {
-        if (e.target === e.currentTarget) onClose()
+      onClose={() => {
+        if (dialogRef.current) dialogRef.current.returnValue = ''
+        onClose()
       }}
-      className="forge-glass-modal m-auto w-[min(94vw,560px)] rounded-2xl p-0 text-zinc-100 backdrop:bg-black/75 backdrop:backdrop-blur-sm"
+      style={{ zIndex: 100060 }}
+      className="forge-glass-modal m-auto w-[min(94vw,560px)] overscroll-contain rounded-2xl p-0 text-zinc-100 backdrop:bg-black/75 backdrop:backdrop-blur-sm"
     >
-      <div className="p-4 sm:p-6">
+      <div className="max-h-[92dvh] overflow-y-auto overscroll-contain p-4 sm:p-6">
         <div className="mb-3.5 flex items-center justify-between gap-3">
           <div>
             <div className="forge-eyebrow-micro text-emerald-300">Active Posture Recovery</div>
@@ -430,11 +525,11 @@ export default function DeskResetModal({ open, onClose, overrideFlags }: DeskRes
             aria-label="Close 5-Min Desk Reset"
             className="forge-tactile-press inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#181B22] text-zinc-300 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
           >
-            <X size={16} strokeWidth={1.75} />
+            <X size={16} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
 
-        <DeskResetGuidedPlayer activeFlags={activeFlags} />
+        <DeskResetGuidedPlayer activeFlags={activeFlags} activeModalOpen={open} />
       </div>
     </dialog>
   )

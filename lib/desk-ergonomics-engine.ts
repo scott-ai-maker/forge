@@ -1,4 +1,4 @@
-import type { ErgonomicFlag, StrainLevel } from '@/lib/posture-profile-state'
+import type { ErgonomicFlag, SavedWorkstationProfile, StrainLevel } from '@/lib/posture-profile-state'
 
 /**
  * 33-point MediaPipe Pose landmark subset used for lateral seated desk ergonomics
@@ -84,13 +84,41 @@ export function computePlumbDeviationDeg(
   return Math.round(((Math.atan2(dx, dy) * 180) / Math.PI) * 10) / 10
 }
 
+function sanitizeSeatedPoint(
+  pt: SeatedPosePoint | undefined,
+  fallback: SeatedPosePoint
+): SeatedPosePoint {
+  if (!pt) return fallback
+  const x = Number.isFinite(pt.x) ? Math.max(0, Math.min(100, pt.x)) : fallback.x
+  const y = Number.isFinite(pt.y) ? Math.max(0, Math.min(100, pt.y)) : fallback.y
+  const confidence = Number.isFinite(pt.confidence)
+    ? Math.max(0, Math.min(1, pt.confidence))
+    : fallback.confidence
+  return {
+    ...fallback,
+    ...pt,
+    x: Math.round(x * 10) / 10,
+    y: Math.round(y * 10) / 10,
+    confidence: Math.round(confidence * 100) / 100,
+  }
+}
+
 /**
  * Evaluates 33-point seated lateral landmarks into 4 joint angle metrics, a 0-100 Workstation Ergonomics Score,
  * ergonomic flags (`forward_head`, `rounded_shoulders`, `hip_flexor_tightness`), and 3 concrete adjustments.
  */
 export function evaluateDeskErgonomicsFromLandmarks(
-  landmarks: Record<SeatedPosePoint['id'], SeatedPosePoint>
+  rawLandmarks: Record<SeatedPosePoint['id'], SeatedPosePoint>
 ): DeskErgonomicsScanResult {
+  const landmarks: Record<SeatedPosePoint['id'], SeatedPosePoint> = {
+    ear: sanitizeSeatedPoint(rawLandmarks?.ear, SAMPLE_DESK_LANDMARKS.optimal_setup.ear),
+    shoulder: sanitizeSeatedPoint(rawLandmarks?.shoulder, SAMPLE_DESK_LANDMARKS.optimal_setup.shoulder),
+    elbow: sanitizeSeatedPoint(rawLandmarks?.elbow, SAMPLE_DESK_LANDMARKS.optimal_setup.elbow),
+    wrist: sanitizeSeatedPoint(rawLandmarks?.wrist, SAMPLE_DESK_LANDMARKS.optimal_setup.wrist),
+    hip: sanitizeSeatedPoint(rawLandmarks?.hip, SAMPLE_DESK_LANDMARKS.optimal_setup.hip),
+    knee: sanitizeSeatedPoint(rawLandmarks?.knee, SAMPLE_DESK_LANDMARKS.optimal_setup.knee),
+    ankle: sanitizeSeatedPoint(rawLandmarks?.ankle, SAMPLE_DESK_LANDMARKS.optimal_setup.ankle),
+  }
   const { ear, shoulder, elbow, wrist, hip, knee } = landmarks
 
   // Determine facing direction (is subject facing right -> knee.x > hip.x, or left -> knee.x < hip.x)
@@ -106,8 +134,13 @@ export function evaluateDeskErgonomicsFromLandmarks(
   const cvStatus: StrainLevel =
     forwardHeadDeg <= 8 ? 'optimal' : forwardHeadDeg <= 16 ? 'amber' : 'coral'
 
-  // 2. Shoulder Elevation & Protraction (shoulder relative to ear & hip plumb line)
-  const protractionDeg = computePlumbDeviationDeg(hip, shoulder)
+  // 2. Shoulder Elevation & Protraction (forward rounding toward screen vs. gentle backrest recline)
+  const rawShoulderForwardOffset = (shoulder.x - hip.x) * facingSign
+  const rawTorsoPlumbDeg = computePlumbDeviationDeg(hip, shoulder)
+  const protractionDeg =
+    rawShoulderForwardOffset > 0
+      ? rawTorsoPlumbDeg
+      : Math.max(0, Math.round((rawTorsoPlumbDeg - 12) * 10) / 10)
   const neckGap = Math.abs(shoulder.y - ear.y)
   const elevationPenaltyDeg = neckGap < 11 ? Math.round((11 - neckGap) * 1.5 * 10) / 10 : 0
   const effectiveShoulderDeg = Math.round((protractionDeg + elevationPenaltyDeg) * 10) / 10
@@ -317,13 +350,16 @@ export function mapMediaPipe33LandmarksToSeated(
   const sidePrefix = useRight ? 'Right' : 'Left'
   const toPt = (key: SeatedPosePoint['id'], labelSuffix: string): SeatedPosePoint => {
     const raw = mpLandmarks[idx[key]] || { x: 0.5, y: 0.5, visibility: 0.8 }
+    const safeX = Number.isFinite(raw.x) ? raw.x : 0.5
+    const safeY = Number.isFinite(raw.y) ? raw.y : 0.5
+    const safeVis = Number.isFinite(raw.visibility) ? (raw.visibility as number) : 0.88
     return {
       index: idx[key],
       id: key,
       label: `${sidePrefix} ${labelSuffix}`,
-      x: Math.round(Math.max(4, Math.min(96, raw.x * 100)) * 10) / 10,
-      y: Math.round(Math.max(4, Math.min(96, raw.y * 100)) * 10) / 10,
-      confidence: Math.round((raw.visibility ?? 0.88) * 100) / 100,
+      x: Math.round(Math.max(4, Math.min(96, safeX * 100)) * 10) / 10,
+      y: Math.round(Math.max(4, Math.min(96, safeY * 100)) * 10) / 10,
+      confidence: Math.round(Math.max(0, Math.min(1, safeVis)) * 100) / 100,
     }
   }
 
@@ -335,6 +371,71 @@ export function mapMediaPipe33LandmarksToSeated(
     hip: toPt('hip', 'Hip'),
     knee: toPt('knee', 'Knee'),
     ankle: toPt('ankle', 'Ankle'),
+  }
+}
+
+/**
+ * Reconstructs a full visual + clinical `DeskErgonomicsScanResult` from a persisted `SavedWorkstationProfile`
+ * so users can toggle between saved desks ("Home Desk", "Office Standing Desk") and inspect their metrics.
+ */
+export function reconstructScanFromSavedWorkstation(
+  profile: SavedWorkstationProfile
+): DeskErgonomicsScanResult {
+  const baseTemplate =
+    profile.strainLevel === 'optimal'
+      ? SAMPLE_DESK_LANDMARKS.optimal_setup
+      : SAMPLE_DESK_LANDMARKS.typical_strain
+
+  const baseEval = evaluateDeskErgonomicsFromLandmarks(baseTemplate)
+  const cvDeg = profile.craniovertebralDeg
+  const shoulderDeg = profile.shoulderProtractionDeg
+  const elbowDeg = profile.elbowAngleDeg
+  const hipDeg = profile.seatedHipAngleDeg
+
+  const cvStatus: StrainLevel = cvDeg <= 8 ? 'optimal' : cvDeg <= 16 ? 'amber' : 'coral'
+  const shoulderStatus: StrainLevel =
+    shoulderDeg <= 7 ? 'optimal' : shoulderDeg <= 14 ? 'amber' : 'coral'
+  const elbowDist =
+    elbowDeg >= 90 && elbowDeg <= 105 ? 0 : elbowDeg < 90 ? 90 - elbowDeg : elbowDeg - 105
+  const elbowStatus: StrainLevel =
+    elbowDist <= 4 ? 'optimal' : elbowDist <= 14 ? 'amber' : 'coral'
+  const hipDist =
+    hipDeg >= 95 && hipDeg <= 110 ? 0 : hipDeg < 95 ? 95 - hipDeg : hipDeg - 110
+  const hipStatus: StrainLevel = hipDist <= 4 ? 'optimal' : hipDist <= 12 ? 'amber' : 'coral'
+
+  const angles: DeskJointAngleMetric[] = [
+    {
+      ...baseEval.angles[0],
+      measuredDegrees: cvDeg,
+      status: cvStatus,
+      colorHex: STRAIN_COLORS[cvStatus],
+    },
+    {
+      ...baseEval.angles[1],
+      measuredDegrees: shoulderDeg,
+      status: shoulderStatus,
+      colorHex: STRAIN_COLORS[shoulderStatus],
+    },
+    {
+      ...baseEval.angles[2],
+      measuredDegrees: elbowDeg,
+      status: elbowStatus,
+      colorHex: STRAIN_COLORS[elbowStatus],
+    },
+    {
+      ...baseEval.angles[3],
+      measuredDegrees: hipDeg,
+      status: hipStatus,
+      colorHex: STRAIN_COLORS[hipStatus],
+    },
+  ]
+
+  return {
+    ...baseEval,
+    score: profile.score,
+    overallStrain: profile.strainLevel,
+    angles,
+    ergonomicFlags: Array.isArray(profile.ergonomicFlags) ? profile.ergonomicFlags : [],
   }
 }
 

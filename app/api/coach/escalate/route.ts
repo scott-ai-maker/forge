@@ -6,6 +6,10 @@ import { isWithinSmsQuietHours, sendSms } from '@/lib/sms'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { ForgeTierId } from '@/lib/tierEntitlements'
 import { sanitizePiiString } from '@/src/lib/safety/clinicalGuardrails'
+import {
+  checkSlidingWindowRateLimit,
+  resolveRequestSubjectKey,
+} from '@/src/lib/security/rateLimiter'
 
 const EscalateRequestSchema = z.object({
   tierId: z.enum(['core_lab', 'plus', 'coach_support']).default('core_lab'),
@@ -101,8 +105,9 @@ export async function POST(req: NextRequest) {
     designatedCoachId = authz.client.designated_coach_id ?? null
   } catch (error) {
     const isDevPreview =
-      process.env.NODE_ENV === 'development' ||
-      process.env.NEXT_PUBLIC_ALLOW_ANON_PREVIEW === 'true'
+      process.env.NODE_ENV !== 'production' &&
+      (process.env.NODE_ENV === 'development' ||
+        process.env.NEXT_PUBLIC_ALLOW_ANON_PREVIEW === 'true')
     if (!isDevPreview) {
       const status = error instanceof AuthzError ? error.status : 401
       const message = error instanceof Error ? error.message : 'Unauthorized'
@@ -120,6 +125,40 @@ export async function POST(req: NextRequest) {
   }
 
   const { tierId, sourceContext, question, telemetrySummary } = parsed.data
+
+  // Rate-limit non-emergency escalations to prevent SMS / email relay abuse
+  if (!telemetrySummary.safetyFlagActive) {
+    const rateCheck = checkSlidingWindowRateLimit({
+      namespace: 'coach_escalate_relay',
+      subjectKey: resolveRequestSubjectKey(req, userId),
+      maxRequests: 10,
+      windowMs: 10 * 60 * 1000,
+    })
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: `You've sent several direct messages recently—please wait ${rateCheck.retryAfterSeconds}s or use your local mail/SMS client below.`,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateCheck.retryAfterSeconds),
+            'X-RateLimit-Limit': String(rateCheck.limit),
+            'X-RateLimit-Remaining': '0',
+          },
+        }
+      )
+    }
+  }
+
+  const cleanQuestion = sanitizePiiString(question.trim())
+  const sanitizedTelemetry = {
+    ...telemetrySummary,
+    postureFlags: (telemetrySummary.postureFlags || []).map(f => sanitizePiiString(f)),
+    activeExercise: telemetrySummary.activeExercise
+      ? sanitizePiiString(telemetrySummary.activeExercise)
+      : telemetrySummary.activeExercise,
+  }
   const effectiveChannel =
     tierId === 'coach_support' && parsed.data.channel !== 'email' ? 'sms_priority' : 'email'
 
@@ -127,7 +166,7 @@ export async function POST(req: NextRequest) {
   const telemetryBlock = buildTelemetryAttachmentBlock({
     tierId,
     sourceContext,
-    ...telemetrySummary,
+    ...sanitizedTelemetry,
   })
 
   const coachEmail =
@@ -137,19 +176,19 @@ export async function POST(req: NextRequest) {
   const coachSmsPhone = process.env.COACH_GORDON_SMS_NUMBER || process.env.TWILIO_COACH_ALERT_TO || ''
 
   const subjectLine = `${
-    telemetrySummary.safetyFlagActive ? '[SAFETY PRIORITY] ' : ''
+    sanitizedTelemetry.safetyFlagActive ? '[SAFETY PRIORITY] ' : ''
   }[${windowMeta.slaBadge}] ${memberName} — Forge Athletic Coaching Question`
 
-  const plainBody = `${question.trim()}\n\n--- Attached Forge Athletic Diagnostic Context ---\n${telemetryBlock}`
+  const plainBody = `${cleanQuestion}\n\n--- Attached Forge Athletic Diagnostic Context ---\n${telemetryBlock}`
 
   const mailtoHref = `mailto:${encodeURIComponent(coachEmail)}?subject=${encodeURIComponent(
     subjectLine
   )}&body=${encodeURIComponent(plainBody)}`
 
-  const smsCompactBody = `[Forge 24h Priority · ${memberName}] ${question.trim().slice(0, 220)} | Phase 0${
-    telemetrySummary.optPhase || 1
-  } · Comfort ${telemetrySummary.jointComfortScore ?? '—'}/100 · Readiness ${
-    telemetrySummary.readinessIndex ?? '—'
+  const smsCompactBody = `[Forge 24h Priority · ${memberName}] ${cleanQuestion.slice(0, 220)} | Phase 0${
+    sanitizedTelemetry.optPhase || 1
+  } · Comfort ${sanitizedTelemetry.jointComfortScore ?? '—'}/100 · Readiness ${
+    sanitizedTelemetry.readinessIndex ?? '—'
   }/100`
   const smsHref = coachSmsPhone
     ? `sms:${encodeURIComponent(coachSmsPhone)}?&body=${encodeURIComponent(smsCompactBody)}`
@@ -165,7 +204,7 @@ export async function POST(req: NextRequest) {
     if (userId && designatedCoachId && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const admin = supabaseAdmin()
-        const threadBody = `[PRIORITY 24H SLA · ${sourceContext.replace(/_/g, ' ').toUpperCase()}]\n${question.trim()}\n\n${telemetryBlock}`
+        const threadBody = `[PRIORITY 24H SLA · ${sourceContext.replace(/_/g, ' ').toUpperCase()}]\n${cleanQuestion}\n\n${telemetryBlock}`
         const { error: msgErr } = await admin.from('coach_client_messages').insert({
           client_id: userId,
           coach_id: designatedCoachId,

@@ -107,6 +107,44 @@ describe('POST /api/fitness/skip-exercise', () => {
     await expect(res.json()).resolves.toMatchObject({ exercise_name: 'Squat', reason: 'injury' })
   })
 
+  it('normalizes fatigue skip reason to PostgreSQL-safe "other" while preserving fatigue context in notes', async () => {
+    getRequestAuthzMock.mockResolvedValue(authedUser)
+    let capturedInsert: Record<string, unknown> | null = null
+    supabaseAdminMock.mockReturnValue({
+      from() {
+        return {
+          insert(payload: Record<string, unknown>) {
+            capturedInsert = payload
+            return {
+              select() {
+                return {
+                  single: async () => ({
+                    data: { id: 'skip-fatigue', ...payload },
+                    error: null,
+                  }),
+                }
+              },
+            }
+          },
+        }
+      },
+    })
+
+    const res = await POST(
+      makeRequest({
+        exercise_name: 'Barbell Back Squat',
+        session_date: '2026-04-19',
+        reason: 'fatigue',
+        notes: 'Legs taxed after travel flight',
+      })
+    )
+    expect(res.status).toBe(201)
+    expect(capturedInsert).toMatchObject({
+      reason: 'other',
+      notes: '[Excessive Fatigue / Overload] Legs taxed after travel flight',
+    })
+  })
+
   it('returns 500 on db error', async () => {
     getRequestAuthzMock.mockResolvedValue(authedUser)
     supabaseAdminMock.mockReturnValue(makeAdmin(null))

@@ -144,6 +144,7 @@ export default function CoachGordonAssistant({
 
   const drawerHeadingId = useId()
   const chatInputId = useId()
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null)
   const scrollEndRef = useRef<HTMLDivElement | null>(null)
   const autoSubmittedPromptRef = useRef<string | null>(null)
 
@@ -151,6 +152,8 @@ export default function CoachGordonAssistant({
   const [inputValue, setInputValue] = useState('')
   const [loading, setLoading] = useState(false)
   const [messages, setMessages] = useState<AssistantChatMessage[]>([])
+  const [appliedActions, setAppliedActions] = useState<Record<string, string>>({})
+  const [safetySwapApplied, setSafetySwapApplied] = useState<string | null>(null)
   const [activeSafetyBanner, setActiveSafetyBanner] =
     useState<AskCoachGordonSafetyCard | null>(initialSafetyCard)
   const [escalationOpen, setEscalationOpen] = useState(false)
@@ -174,13 +177,19 @@ export default function CoachGordonAssistant({
 
   useEffect(() => {
     if (!isOpen) return
+    const raf = window.requestAnimationFrame(() => {
+      closeBtnRef.current?.focus({ preventScroll: true })
+    })
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !escalationOpen) {
         onClose()
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () => {
+      window.cancelAnimationFrame(raf)
+      window.removeEventListener('keydown', onKeyDown)
+    }
   }, [isOpen, escalationOpen, onClose])
 
   const todayIso = getTodayIsoDate()
@@ -392,16 +401,23 @@ export default function CoachGordonAssistant({
     scrollEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  const handleActionClick = (action: CoachActionRecommendation) => {
+  const handleActionClick = (msgId: string, action: CoachActionRecommendation) => {
+    let feedbackLabel = 'Applied to active session'
     if (action.type === 'swap_exercise' && action.targetExerciseName) {
       onApplyExerciseSwap?.(action.targetExerciseName, action.currentExerciseName)
+      feedbackLabel = `Swapped to ${action.targetExerciseName}`
     } else if (action.type === 'start_timer' && action.restSeconds) {
       onStartRestTimer?.(action.restSeconds)
+      feedbackLabel = `Started ${action.restSeconds}s rest timer`
     } else if (action.type === 'auto_regulate_load') {
-      onAutoRegulateLoad?.(action.loadReductionPercent || 15)
+      const pct = action.loadReductionPercent || 15
+      onAutoRegulateLoad?.(pct)
+      feedbackLabel = `Working load reduced ${pct}%`
     } else if (action.type === 'enable_express_mode') {
       setExpressModeActive(true)
+      feedbackLabel = '20m Express Mode active'
     }
+    setAppliedActions(prev => ({ ...prev, [msgId]: feedbackLabel }))
   }
 
   const openHumanEscalation = (
@@ -459,6 +475,7 @@ export default function CoachGordonAssistant({
           </div>
 
           <button
+            ref={closeBtnRef}
             type="button"
             onClick={() => {
               stopVoicePlayback()
@@ -551,12 +568,11 @@ export default function CoachGordonAssistant({
                 {activeSafetyBanner.replacementExercise && onApplyExerciseSwap ? (
                   <button
                     type="button"
-                    onClick={() =>
-                      onApplyExerciseSwap(
-                        activeSafetyBanner.replacementExercise!,
-                        currentExerciseName
-                      )
-                    }
+                    onClick={() => {
+                      const targetSwap = activeSafetyBanner.replacementExercise!
+                      onApplyExerciseSwap(targetSwap, currentExerciseName)
+                      setSafetySwapApplied(`Swapped to ${targetSwap}`)
+                    }}
                     className="forge-tactile-press inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-emerald-400 px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-zinc-950"
                   >
                     Switch to {activeSafetyBanner.replacementExercise}
@@ -576,6 +592,14 @@ export default function CoachGordonAssistant({
                   <span>Message Real Coach Gordon</span>
                 </button>
               </div>
+              {safetySwapApplied ? (
+                <div
+                  data-testid="safety-swap-applied-badge"
+                  className="rounded-lg border border-emerald-400/35 bg-emerald-500/15 px-2.5 py-1 font-mono text-[10.5px] font-bold text-emerald-200"
+                >
+                  ✓ {safetySwapApplied}
+                </div>
+              ) : null}
             </div>
           )}
 
@@ -647,10 +671,17 @@ export default function CoachGordonAssistant({
           </div>
 
           {/* Conversation Thread */}
-          <div className="space-y-3 pt-1">
+          <div
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+            aria-busy={loading}
+            className="space-y-3 pt-1"
+          >
             {messages.map(msg => {
               const speakJobId = `dyn:on_demand_chat:${msg.id}`
               const isMsgSpeaking = isSpeaking && activeSpeakingId === speakJobId
+              const appliedLabel = appliedActions[msg.id]
               return (
                 <div
                   key={msg.id}
@@ -737,12 +768,22 @@ export default function CoachGordonAssistant({
                       {msg.recommendedAction ? (
                         <button
                           type="button"
-                          onClick={() => handleActionClick(msg.recommendedAction!)}
+                          onClick={() => handleActionClick(msg.id, msg.recommendedAction!)}
+                          data-testid="coach-recommended-action-btn"
                           className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-emerald-400 px-3 py-1.5 text-[11px] font-extrabold text-zinc-950 transition-colors hover:bg-emerald-300"
                         >
                           <Zap size={12} strokeWidth={2} aria-hidden="true" />
                           <span>{msg.recommendedAction.buttonText}</span>
                         </button>
+                      ) : null}
+
+                      {appliedLabel ? (
+                        <span
+                          data-testid="coach-action-applied-badge"
+                          className="inline-flex items-center rounded-lg border border-emerald-400/35 bg-emerald-500/15 px-2.5 py-1 font-mono text-[10.5px] font-bold text-emerald-200"
+                        >
+                          ✓ {appliedLabel}
+                        </span>
                       ) : null}
                     </div>
                   )}
@@ -760,7 +801,7 @@ export default function CoachGordonAssistant({
                               void submitQuestion(follow)
                             }
                           }}
-                          className="min-h-[38px] rounded-lg border border-white/10 bg-[#090A0D] px-2.5 py-1 text-[11px] font-medium text-zinc-300 hover:border-white/20 hover:text-white"
+                          className="min-h-[44px] rounded-xl border border-white/10 bg-[#090A0D] px-3 py-2 text-left text-[11px] font-medium text-zinc-300 hover:border-white/20 hover:text-white"
                         >
                           {follow}
                         </button>
@@ -773,8 +814,7 @@ export default function CoachGordonAssistant({
 
             {loading ? (
               <div
-                role="status"
-                aria-live="polite"
+                aria-hidden="true"
                 className="rounded-2xl border border-white/10 bg-[#141821] px-3.5 py-3 text-xs text-zinc-400"
               >
                 Coach Gordon is reviewing your Phase 0{nasmOptPhase} metrics…

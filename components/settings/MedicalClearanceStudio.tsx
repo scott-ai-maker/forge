@@ -504,22 +504,15 @@ export default function MedicalClearanceStudio({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.85)',
             zIndex: 100050,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-            overflowY: 'auto',
+            pointerEvents: 'none',
           }}
         >
-          <div style={{ maxWidth: 780, width: '100%', maxHeight: '92vh', overflowY: 'auto' }}>
-            <MedicalParqModal
-              initialAnswers={answers}
-              onClose={() => setIsModalOpen(false)}
-              onSaveParq={handleSaveParq}
-            />
-          </div>
+          <MedicalParqModal
+            initialAnswers={answers}
+            onClose={() => setIsModalOpen(false)}
+            onSaveParq={handleSaveParq}
+          />
         </div>
       )}
     </div>

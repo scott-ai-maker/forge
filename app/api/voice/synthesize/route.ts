@@ -89,8 +89,9 @@ export async function POST(req: NextRequest) {
     authenticatedUserId = authz.user.id
   } catch (error) {
     const isDevPreview =
-      process.env.NODE_ENV === 'development' ||
-      process.env.NEXT_PUBLIC_ALLOW_ANON_PREVIEW === 'true'
+      process.env.NODE_ENV !== 'production' &&
+      (process.env.NODE_ENV === 'development' ||
+        process.env.NEXT_PUBLIC_ALLOW_ANON_PREVIEW === 'true')
     if (!isDevPreview) {
       const status = error instanceof AuthzError ? error.status : 401
       const message = error instanceof Error ? error.message : 'Unauthorized'

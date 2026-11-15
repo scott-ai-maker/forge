@@ -181,6 +181,8 @@ export default function AiPostureMeshScannerModal({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
   // Clear running countdown timer
   const clearTimer = useCallback(() => {
@@ -296,11 +298,23 @@ export default function AiPostureMeshScannerModal({
     }, 1000)
   }, [capturePhoto, clearTimer])
 
-  // Stop camera and timer when modal closes or unmounts
+  // Stop camera and timer when modal closes or unmounts, and manage modal focus
   useEffect(() => {
     if (!isOpen) {
       stopCamera()
+      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+        previousFocusRef.current.focus()
+        previousFocusRef.current = null
+      }
+      return
     }
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      previousFocusRef.current = document.activeElement
+    }
+    const raf = window.requestAnimationFrame(() => {
+      closeBtnRef.current?.focus()
+    })
+    return () => window.cancelAnimationFrame(raf)
   }, [isOpen, stopCamera])
 
   useEffect(() => {
@@ -308,6 +322,21 @@ export default function AiPostureMeshScannerModal({
       stopCamera()
     }
   }, [stopCamera])
+
+  // Hardware camera release on global release event or backgrounding
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') return
+    const handleRelease = () => stopCamera()
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') stopCamera()
+    }
+    window.addEventListener('forge:release-camera', handleRelease)
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      window.removeEventListener('forge:release-camera', handleRelease)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [isOpen, stopCamera])
 
   // Keyboard accessibility: Close on Escape key
   useEffect(() => {
@@ -381,6 +410,24 @@ export default function AiPostureMeshScannerModal({
     })
   }, [storageKey])
 
+  const extractTelemetryPayload = useCallback((scanData: PosturalMeshScanResult | undefined | null) => {
+    const anglesList = Array.isArray(scanData?.angles) ? scanData.angles : []
+    const findAngle = (pattern: RegExp): number | null => {
+      const match = anglesList.find(a => pattern.test(a.name))
+      return typeof match?.angleDegrees === 'number' ? match.angleDegrees : null
+    }
+    return {
+      scan_mode: 'full_33_point_mesh' as const,
+      overall_posture_score:
+        typeof scanData?.postureScore === 'number' ? scanData.postureScore : null,
+      forward_head_tilt_deg: findAngle(/head|craniovertebral/i),
+      shoulder_symmetry_deg: findAngle(/shoulder/i),
+      pelvic_symmetry_deg: findAngle(/pelvic/i),
+      improvement_summary:
+        typeof scanData?.clinicalSummary === 'string' ? scanData.clinicalSummary : null,
+    }
+  }, [])
+
   // Trigger AI Biomechanical Scan for active pose
   const handleScan = useCallback(async () => {
     const currentPhoto = photosByView[activeView]
@@ -408,25 +455,7 @@ export default function AiPostureMeshScannerModal({
         [activeView]: data.data,
       }))
       void import('@/src/lib/telemetry/telemetryClient').then(({ trackEvent }) =>
-        trackEvent('posture_scan_completed', {
-          scan_mode: 'full_33_point_mesh',
-          overall_posture_score:
-            typeof data.data?.postureScore === 'number' ? data.data.postureScore : null,
-          forward_head_tilt_deg:
-            typeof data.data?.angles?.craniovertebralDeg === 'number'
-              ? data.data.angles.craniovertebralDeg
-              : null,
-          shoulder_symmetry_deg:
-            typeof data.data?.angles?.shoulderTiltDeg === 'number'
-              ? data.data.angles.shoulderTiltDeg
-              : null,
-          pelvic_symmetry_deg:
-            typeof data.data?.angles?.pelvicTiltDeg === 'number'
-              ? data.data.angles.pelvicTiltDeg
-              : null,
-          improvement_summary:
-            typeof data.data?.clinicalSummary === 'string' ? data.data.clinicalSummary : null,
-        })
+        trackEvent('posture_scan_completed', extractTelemetryPayload(data.data))
       )
       setActiveRightTab('analysis')
       setMobileTab('analysis')
@@ -436,7 +465,7 @@ export default function AiPostureMeshScannerModal({
     } finally {
       setIsScanning(false)
     }
-  }, [clientId, activeView, clientName, photosByView])
+  }, [clientId, activeView, clientName, photosByView, extractTelemetryPayload])
 
   // Batch scan all captured poses
   const handleBatchScan = useCallback(async () => {
@@ -513,8 +542,13 @@ export default function AiPostureMeshScannerModal({
     })
 
     const primaryResult = scanResult || allResults[0]
+    const avgScore = Math.round(
+      allResults.reduce((acc, r) => acc + (typeof r.postureScore === 'number' ? r.postureScore : 80), 0) /
+        allResults.length
+    )
     const combinedResult: PosturalMeshScanResult = {
       view: activeView,
+      postureScore: avgScore,
       landmarks: primaryResult.landmarks,
       angles: primaryResult.angles,
       detectedCompensations: Array.from(new Set(allResults.flatMap(r => r.detectedCompensations || []))),
@@ -525,9 +559,10 @@ export default function AiPostureMeshScannerModal({
       clinicalSummary: summaries.join('\n\n'),
     }
 
+    stopCamera()
     onApplyScan(combinedResult)
     onClose()
-  }, [scanResultsByView, scanResult, activeView, onApplyScan, onClose])
+  }, [scanResultsByView, scanResult, activeView, onApplyScan, onClose, stopCamera])
 
   // Draw Biomechanical Mesh on Canvas
   useEffect(() => {
@@ -631,16 +666,36 @@ export default function AiPostureMeshScannerModal({
       drawLine(getPoint('hip'), getPoint('knee'))
       drawLine(getPoint('knee'), getPoint('ankle'))
     } else {
-      drawLine(getPoint('left_shoulder'), getPoint('right_shoulder'))
-      drawLine(getPoint('left_hip'), getPoint('right_hip'))
-      drawLine(getPoint('left_knee'), getPoint('right_knee'))
-      drawLine(getPoint('left_ankle'), getPoint('right_ankle'))
-      drawLine(getPoint('left_shoulder'), getPoint('left_hip'))
-      drawLine(getPoint('right_shoulder'), getPoint('right_hip'))
-      drawLine(getPoint('left_hip'), getPoint('left_knee'))
-      drawLine(getPoint('right_hip'), getPoint('right_knee'))
-      drawLine(getPoint('left_knee'), getPoint('left_ankle'))
-      drawLine(getPoint('right_knee'), getPoint('right_ankle'))
+      const getJoint = (shortId: string, longId: string) => getPoint(shortId) || getPoint(longId)
+      const lShoulder = getJoint('l_shoulder', 'left_shoulder')
+      const rShoulder = getJoint('r_shoulder', 'right_shoulder')
+      const lHip = getJoint('l_hip', 'left_hip')
+      const rHip = getJoint('r_hip', 'right_hip')
+      const lKnee = getJoint('l_knee', 'left_knee')
+      const rKnee = getJoint('r_knee', 'right_knee')
+      const lAnkle = getJoint('l_ankle', 'left_ankle')
+      const rAnkle = getJoint('r_ankle', 'right_ankle')
+      const headNode = getPoint('head') || getPoint('c7')
+
+      if (headNode && lShoulder && rShoulder) {
+        drawLine(headNode, {
+          id: 'mid_shoulder',
+          name: 'Mid Shoulder',
+          x: (lShoulder.x + rShoulder.x) / 2,
+          y: (lShoulder.y + rShoulder.y) / 2,
+          confidence: Math.min(lShoulder.confidence, rShoulder.confidence),
+        })
+      }
+      drawLine(lShoulder, rShoulder)
+      drawLine(lHip, rHip)
+      drawLine(lKnee, rKnee)
+      drawLine(lAnkle, rAnkle)
+      drawLine(lShoulder, lHip)
+      drawLine(rShoulder, rHip)
+      drawLine(lHip, lKnee)
+      drawLine(rHip, rKnee)
+      drawLine(lKnee, lAnkle)
+      drawLine(rKnee, rAnkle)
     }
 
     // Reset shadow
@@ -714,6 +769,13 @@ export default function AiPostureMeshScannerModal({
           .posture-scanner-backdrop {
             z-index: 100050 !important;
           }
+          .posture-scanner-dialog button {
+            min-height: 44px;
+          }
+          .posture-scanner-dialog button:focus-visible {
+            outline: 2px solid #34D399;
+            outline-offset: 2px;
+          }
           @media (max-width: 768px) {
             .posture-scanner-dialog {
               max-width: 100% !important;
@@ -742,6 +804,15 @@ export default function AiPostureMeshScannerModal({
             }
             .posture-mobile-nav-btn {
               display: flex !important;
+            }
+          }
+          @media (max-width: 480px) {
+            .posture-shutter-row {
+              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+              flex-wrap: wrap !important;
+            }
+            .posture-view-preset-grid {
+              grid-template-columns: 1fr !important;
             }
           }
           @media (min-width: 769px) {
@@ -788,15 +859,22 @@ export default function AiPostureMeshScannerModal({
           </div>
 
           <button
+            ref={closeBtnRef}
             type="button"
-            onClick={onClose}
+            aria-label="Close postural mesh scanner"
+            onClick={() => {
+              stopCamera()
+              onClose()
+            }}
             style={{
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: 6,
               color: 'var(--gray)',
               cursor: 'pointer',
-              padding: '6px 8px',
+              minWidth: 44,
+              minHeight: 44,
+              padding: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -821,6 +899,7 @@ export default function AiPostureMeshScannerModal({
         >
           <button
             type="button"
+            aria-pressed={mobileTab === 'camera'}
             onClick={() => setMobileTab('camera')}
             style={{
               flex: 1,
@@ -844,6 +923,7 @@ export default function AiPostureMeshScannerModal({
 
           <button
             type="button"
+            aria-pressed={mobileTab === 'guide'}
             onClick={() => {
               setActiveRightTab('guide')
               setMobileTab('guide')
@@ -871,6 +951,7 @@ export default function AiPostureMeshScannerModal({
           {scanResult && (
             <button
               type="button"
+              aria-pressed={mobileTab === 'analysis'}
               onClick={() => {
                 setActiveRightTab('analysis')
                 setMobileTab('analysis')
@@ -981,7 +1062,7 @@ export default function AiPostureMeshScannerModal({
             </div>
 
             {/* View Selector Tabs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
+            <div className="posture-view-preset-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
               {VIEW_PRESETS.map(preset => {
                 const hasPhoto = Boolean(photosByView[preset.id])
                 const isScanned = Boolean(scanResultsByView[preset.id])
@@ -989,6 +1070,7 @@ export default function AiPostureMeshScannerModal({
                   <button
                     key={preset.id}
                     type="button"
+                    aria-pressed={activeView === preset.id}
                     onClick={() => {
                       stopCamera()
                       setActiveView(preset.id)
@@ -1478,6 +1560,7 @@ export default function AiPostureMeshScannerModal({
               <div style={{ display: 'flex', gap: 6 }}>
                 <button
                   type="button"
+                  aria-pressed={activeRightTab === 'guide'}
                   onClick={() => setActiveRightTab('guide')}
                   style={{
                     padding: '5px 10px',
@@ -1500,6 +1583,7 @@ export default function AiPostureMeshScannerModal({
                 {scanResult && (
                   <button
                     type="button"
+                    aria-pressed={activeRightTab === 'analysis'}
                     onClick={() => setActiveRightTab('analysis')}
                     style={{
                       padding: '5px 10px',
@@ -1673,11 +1757,13 @@ export default function AiPostureMeshScannerModal({
                       Primary Postural Distortion
                     </div>
                     <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 17, color: '#FFFFFF' }}>
-                      {scanResult.syndromeDetected} Syndrome
+                      {scanResult.syndromeDetected === 'Optimal Alignment'
+                        ? 'Optimal Postural Alignment'
+                        : `${scanResult.syndromeDetected || 'Lower Crossed'} Syndrome`}
                     </div>
                   </div>
                   <span style={{ padding: '3px 8px', borderRadius: 4, background: 'rgba(16,185,129,0.2)', border: '1px solid #10B981', color: '#6EE7B7', fontSize: 11, fontWeight: 700 }}>
-                    AI Confidence: 94%
+                    Score: {scanResult.postureScore}/100
                   </span>
                 </div>
 
@@ -1725,26 +1811,42 @@ export default function AiPostureMeshScannerModal({
                     Detected Kinetic Chain Compensations:
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {scanResult.detectedCompensations.map(c => (
+                    {scanResult.detectedCompensations.length > 0 ? (
+                      scanResult.detectedCompensations.map(c => (
+                        <span
+                          key={c}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: 4,
+                            background: 'rgba(245,158,11,0.15)',
+                            border: '1px solid #F59E0B',
+                            color: '#FCD34D',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                          }}
+                        >
+                          <GaaIcon name="alert-triangle" size={11} tone="amber" />
+                          <span>{c.replace(/_/g, ' ').toUpperCase()}</span>
+                        </span>
+                      ))
+                    ) : (
                       <span
-                        key={c}
                         style={{
                           padding: '4px 8px',
                           borderRadius: 4,
-                          background: 'rgba(245,158,11,0.15)',
-                          border: '1px solid #F59E0B',
-                          color: '#FCD34D',
+                          background: 'rgba(16,185,129,0.15)',
+                          border: '1px solid #10B981',
+                          color: '#6EE7B7',
                           fontSize: 11,
                           fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 5,
                         }}
                       >
-                        <GaaIcon name="alert-triangle" size={11} tone="amber" />
-                        <span>{c.replace(/_/g, ' ').toUpperCase()}</span>
+                        NO COMPENSATIONS DETECTED — BALANCED KINETIC ALIGNMENT
                       </span>
-                    ))}
+                    )}
                   </div>
                 </div>
 

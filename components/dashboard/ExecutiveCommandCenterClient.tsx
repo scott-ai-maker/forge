@@ -207,6 +207,35 @@ export default function ExecutiveCommandCenterClient({
     }
   }, [deskAuditOpen])
 
+  useEffect(() => {
+    const dialog = deskAuditDialogRef.current
+    if (!dialog || typeof HTMLDialogElement === 'undefined') return
+    if ('closedBy' in HTMLDialogElement.prototype) return
+
+    const isOutside = (e: PointerEvent) => {
+      const r = dialog.getBoundingClientRect()
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom
+    }
+
+    let pressedOutside = false
+    const onPointerDown = (e: PointerEvent) => {
+      pressedOutside = isOutside(e)
+    }
+    const onPointerUp = (e: PointerEvent) => {
+      if (pressedOutside && isOutside(e)) {
+        dialog.close()
+      }
+      pressedOutside = false
+    }
+
+    dialog.addEventListener('pointerdown', onPointerDown)
+    dialog.addEventListener('pointerup', onPointerUp)
+    return () => {
+      dialog.removeEventListener('pointerdown', onPointerDown)
+      dialog.removeEventListener('pointerup', onPointerUp)
+    }
+  }, [])
+
   const onboardingBannerState = getBaselineOnboardingBannerState({
     isOnboardingCompleted,
     needsOnboarding,
@@ -634,10 +663,11 @@ export default function ExecutiveCommandCenterClient({
       {/* Desk Ergonomics Audit Modal (with Trigger 1 Post-Scan & Trigger 2 Second Workstation Gate) */}
       <dialog
         ref={deskAuditDialogRef}
+        {...({ closedby: 'any' } as Record<string, string>)}
         aria-labelledby={deskAuditHeadingId}
-        onClose={() => setDeskAuditOpen(false)}
-        onClick={e => {
-          if (e.target === e.currentTarget) setDeskAuditOpen(false)
+        onClose={() => {
+          if (deskAuditDialogRef.current) deskAuditDialogRef.current.returnValue = ''
+          setDeskAuditOpen(false)
         }}
         className="forge-glass-modal m-0 h-dvh max-h-dvh w-screen max-w-none overscroll-contain p-0 text-zinc-100 sm:m-auto sm:h-auto sm:max-h-[92dvh] sm:w-[min(95vw,760px)] sm:rounded-2xl"
       >
@@ -662,6 +692,7 @@ export default function ExecutiveCommandCenterClient({
           </div>
 
           <DeskErgonomicsAudit
+            isOpen={deskAuditOpen}
             maxSavedProfiles={entitlements.maxWorkstationProfiles}
             onUpgradeWorkstationLimit={() => {
               setDeskAuditOpen(false)
@@ -682,7 +713,7 @@ export default function ExecutiveCommandCenterClient({
               return (
                 <div className="mt-3 flex flex-col justify-between gap-2.5 rounded-xl border border-amber-400/35 bg-amber-500/10 p-3 text-slate-100 sm:flex-row sm:items-center">
                   <div className="flex items-start gap-2 text-xs text-amber-100">
-                    <Sparkles size={15} className="mt-0.5 shrink-0 text-amber-300" />
+                    <Sparkles size={15} className="mt-0.5 shrink-0 text-amber-300" aria-hidden="true" />
                     <span>{postScanCopy.bannerCopy}</span>
                   </div>
                   <button
@@ -691,9 +722,9 @@ export default function ExecutiveCommandCenterClient({
                       setDeskAuditOpen(false)
                       setUpgradeTrigger('post_scan_flag')
                     }}
-                    className="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-950"
+                    className="forge-tactile-press inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1 rounded-xl bg-amber-400 px-3.5 py-2 text-xs font-extrabold uppercase tracking-wider text-slate-950"
                   >
-                    Upgrade to Plus <ArrowUpRight size={13} />
+                    Upgrade to Plus <ArrowUpRight size={13} aria-hidden="true" />
                   </button>
                 </div>
               )

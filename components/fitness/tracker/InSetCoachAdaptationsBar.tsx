@@ -311,7 +311,7 @@ export default function InSetCoachAdaptationsBar({
       data-testid="in-set-coach-adaptations-bar"
       className="mb-2.5 rounded-xl border border-white/10 bg-[#10141D]/95 p-2.5 text-zinc-100"
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-emerald-300">
           Coach Gordon Live In-Set Adaptations
         </span>
@@ -323,7 +323,7 @@ export default function InSetCoachAdaptationsBar({
               nasmOptPhase: optPhase,
             })
           }
-          className="inline-flex min-h-[32px] items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1 text-[11px] font-semibold text-zinc-200 transition-colors hover:border-emerald-400/40 hover:text-emerald-200"
+          className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px] font-semibold text-zinc-200 transition-colors hover:border-emerald-400/40 hover:text-emerald-200"
         >
           <MessageSquare size={12} className="text-emerald-300" aria-hidden="true" />
           <span>Ask Coach</span>
@@ -415,7 +415,7 @@ export default function InSetCoachAdaptationsBar({
               type="button"
               onClick={() => setCoachBanner(null)}
               aria-label="Dismiss Coach Gordon note"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/10 hover:text-white"
+              className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/10 hover:text-white"
             >
               <X size={13} aria-hidden="true" />
             </button>
@@ -441,7 +441,7 @@ export default function InSetCoachAdaptationsBar({
                   forceUnlockVoiceOnTap: true,
                 })
               }}
-              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.06] px-2.5 py-1.5 text-[11px] font-bold text-zinc-100 hover:bg-white/12"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.06] px-2.5 py-2 text-[11px] font-bold text-zinc-100 hover:bg-white/12"
             >
               <Volume2 size={13} className="text-emerald-300" aria-hidden="true" />
               <span>Listen to Coach Gordon</span>
@@ -451,7 +451,7 @@ export default function InSetCoachAdaptationsBar({
               type="button"
               onClick={() => setEscalationOpen(true)}
               data-testid="in-set-message-real-coach-btn"
-              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-1.5 text-[11px] font-bold text-emerald-100 hover:bg-emerald-500/25"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-2 text-[11px] font-bold text-emerald-100 hover:bg-emerald-500/25"
             >
               {isCoachSupport ? (
                 <Smartphone size={13} aria-hidden="true" />

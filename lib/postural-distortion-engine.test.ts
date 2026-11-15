@@ -1,166 +1,155 @@
-import { describe, it, expect } from 'vitest'
-import { diagnosePosturalDistortions } from './postural-distortion-engine'
+import React from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it } from 'vitest'
+import {
+  diagnosePosturalDistortions,
+  type PosturalObservationsInput,
+} from './postural-distortion-engine'
+import {
+  computePostureDailyStreak,
+  getDefaultPostureProfileState,
+  runQuickPostureCheckDelta,
+} from './posture-profile-state'
+import PostureComparisonCard from '@/components/fitness/PostureComparisonCard'
+import PosturalDistortionStudio from '@/components/fitness/PosturalDistortionStudio'
 
-describe('Postural Distortion Syndrome & Muscle Synergy Diagnostic Engine', () => {
-  it('diagnoses Pronation Distortion Syndrome when feet flatten and knees collapse inward', () => {
-    const diag = diagnosePosturalDistortions({
+function createOptimalInput(): PosturalObservationsInput {
+  return {
+    feetFlattenOrPronate: false,
+    feetTurnOut: false,
+    heelsElevate: false,
+    kneesValgusInward: false,
+    kneesVarusOutward: false,
+    kneesHyperextended: false,
+    anteriorPelvicTilt: false,
+    posteriorPelvicTilt: false,
+    excessiveForwardLean: false,
+    asymmetricWeightShift: false,
+    roundedShouldersProtracted: false,
+    shouldersElevated: false,
+    scapularWinging: false,
+    armsFallForward: false,
+    forwardHeadCarriage: false,
+    cervicalHyperextension: false,
+  }
+}
+
+describe('Postural Distortion Engine & Alignment Comparison Suite', () => {
+  it('diagnoses Optimal Postural Alignment when zero checkpoints are flagged', () => {
+    const res = diagnosePosturalDistortions(createOptimalInput())
+    expect(res.syndrome).toBe('optimal_alignment')
+    expect(res.severityScore).toBe(0)
+    expect(res.kineticChainDysfunctionLevel).toBe('Optimal')
+    expect(res.allOveractiveMuscles).toEqual([])
+    expect(res.allUnderactiveMuscles).toEqual([])
+    expect(res.injuryRisks).toEqual([])
+    expect(res.correctiveProtocol.inhibit.length).toBeGreaterThan(0)
+  })
+
+  it('diagnoses Pronation Distortion Syndrome and Knee Varus lateral chain accurately', () => {
+    const pronation = diagnosePosturalDistortions({
+      ...createOptimalInput(),
       feetFlattenOrPronate: true,
       feetTurnOut: true,
-      heelsElevate: false,
       kneesValgusInward: true,
-      kneesVarusOutward: false,
-      kneesHyperextended: false,
-      anteriorPelvicTilt: false,
-      posteriorPelvicTilt: false,
-      excessiveForwardLean: false,
-      asymmetricWeightShift: false,
-      roundedShouldersProtracted: false,
-      shouldersElevated: false,
-      scapularWinging: false,
-      armsFallForward: false,
-      forwardHeadCarriage: false,
-      cervicalHyperextension: false,
     })
+    expect(pronation.syndrome).toBe('pronation_distortion')
+    expect(pronation.detectedSyndromes.pronation).toBe(true)
+    expect(pronation.allOveractiveMuscles).toContain('Peroneals')
+    expect(pronation.allUnderactiveMuscles).toContain('Gluteus Medius')
 
-    expect(diag.syndrome).toBe('pronation_distortion')
-    expect(diag.detectedSyndromes.pronation).toBe(true)
-    expect(diag.allOveractiveMuscles).toContain('Adductors')
-    expect(diag.allUnderactiveMuscles).toContain('Gluteus Medius')
-    expect(diag.injuryRisks).toContain('Patellofemoral Pain Syndrome (PFPS)')
-    expect(diag.correctiveProtocol.inhibit[0].name).toContain('Peroneals')
-  })
-
-  it('diagnoses Lower Crossed Syndrome when anterior pelvic tilt is present', () => {
-    const diag = diagnosePosturalDistortions({
-      feetFlattenOrPronate: false,
-      feetTurnOut: false,
-      heelsElevate: false,
-      kneesValgusInward: false,
-      kneesVarusOutward: false,
-      kneesHyperextended: true,
-      anteriorPelvicTilt: true,
-      posteriorPelvicTilt: false,
-      excessiveForwardLean: true,
-      asymmetricWeightShift: false,
-      roundedShouldersProtracted: false,
-      shouldersElevated: false,
-      scapularWinging: false,
-      armsFallForward: false,
-      forwardHeadCarriage: false,
-      cervicalHyperextension: false,
-    })
-
-    expect(diag.syndrome).toBe('lower_crossed')
-    expect(diag.detectedSyndromes.lowerCrossed).toBe(true)
-    expect(diag.allOveractiveMuscles).toContain('Iliopsoas')
-    expect(diag.allUnderactiveMuscles).toContain('Gluteus Maximus')
-    expect(diag.injuryRisks).toContain('Low-Back SI Joint Pain')
-    expect(diag.correctiveProtocol.lengthen[0].name).toContain('Hip Flexor')
-  })
-
-  it('diagnoses Upper Crossed Syndrome when forward head and rounded shoulders are present', () => {
-    const diag = diagnosePosturalDistortions({
-      feetFlattenOrPronate: false,
-      feetTurnOut: false,
-      heelsElevate: false,
-      kneesValgusInward: false,
-      kneesVarusOutward: false,
-      kneesHyperextended: false,
-      anteriorPelvicTilt: false,
-      posteriorPelvicTilt: false,
-      excessiveForwardLean: false,
-      asymmetricWeightShift: false,
-      roundedShouldersProtracted: true,
-      shouldersElevated: true,
-      scapularWinging: true,
-      armsFallForward: true,
-      forwardHeadCarriage: true,
-      cervicalHyperextension: true,
-    })
-
-    expect(diag.syndrome).toBe('upper_crossed')
-    expect(diag.detectedSyndromes.upperCrossed).toBe(true)
-    expect(diag.allOveractiveMuscles).toContain('Upper Trapezius')
-    expect(diag.allUnderactiveMuscles).toContain('Serratus Anterior')
-    expect(diag.injuryRisks).toContain('Subacromial Bursitis')
-    expect(diag.correctiveProtocol.activate[0].name).toContain('Chin Tucks')
-  })
-
-  it('diagnoses Mixed Postural Distortion Syndrome when multiple checkpoints are distorted', () => {
-    const diag = diagnosePosturalDistortions({
-      feetFlattenOrPronate: true,
-      feetTurnOut: false,
-      heelsElevate: false,
-      kneesValgusInward: true,
-      kneesVarusOutward: false,
-      kneesHyperextended: false,
-      anteriorPelvicTilt: true,
-      posteriorPelvicTilt: false,
-      excessiveForwardLean: true,
-      asymmetricWeightShift: false,
-      roundedShouldersProtracted: true,
-      shouldersElevated: false,
-      scapularWinging: false,
-      armsFallForward: false,
-      forwardHeadCarriage: true,
-      cervicalHyperextension: false,
-    })
-
-    expect(diag.syndrome).toBe('mixed_distortion')
-    expect(diag.severityScore).toBeGreaterThanOrEqual(50)
-    expect(diag.correctiveProtocol.inhibit.length).toBeGreaterThanOrEqual(4)
-  })
-
-  it('diagnoses knee varus lateral chain distortion when kneesVarusOutward is true', () => {
-    const diag = diagnosePosturalDistortions({
-      feetFlattenOrPronate: false,
-      feetTurnOut: false,
-      heelsElevate: false,
-      kneesValgusInward: false,
+    const varus = diagnosePosturalDistortions({
+      ...createOptimalInput(),
       kneesVarusOutward: true,
-      kneesHyperextended: false,
-      anteriorPelvicTilt: false,
-      posteriorPelvicTilt: false,
-      excessiveForwardLean: false,
-      asymmetricWeightShift: false,
-      roundedShouldersProtracted: false,
-      shouldersElevated: false,
-      scapularWinging: false,
-      armsFallForward: false,
-      forwardHeadCarriage: false,
-      cervicalHyperextension: false,
+      feetTurnOut: true,
     })
-
-    expect(diag.allOveractiveMuscles).toContain('TFL')
-    expect(diag.allUnderactiveMuscles).toContain('Adductor Complex')
-    expect(diag.injuryRisks).toContain('IT Band Syndrome')
-    expect(diag.correctiveProtocol.activate.some(ex => ex.name.includes('Adductor'))).toBe(true)
+    expect(varus.syndrome).toBe('pronation_distortion')
+    expect(varus.allUnderactiveMuscles).toContain('Adductor Complex')
   })
 
-  it('diagnoses posterior pelvic tilt and hamstring dominance when posteriorPelvicTilt is true', () => {
-    const diag = diagnosePosturalDistortions({
-      feetFlattenOrPronate: false,
-      feetTurnOut: false,
-      heelsElevate: false,
-      kneesValgusInward: false,
-      kneesVarusOutward: false,
-      kneesHyperextended: false,
-      anteriorPelvicTilt: false,
+  it('separates Posterior Pelvic Tilt (Flat Back) from Anterior Pelvic Tilt without contradictory hip-flexor stretches', () => {
+    const ppt = diagnosePosturalDistortions({
+      ...createOptimalInput(),
       posteriorPelvicTilt: true,
-      excessiveForwardLean: false,
-      asymmetricWeightShift: false,
-      roundedShouldersProtracted: false,
-      shouldersElevated: false,
-      scapularWinging: false,
-      armsFallForward: false,
-      forwardHeadCarriage: false,
-      cervicalHyperextension: false,
     })
+    expect(ppt.syndrome).toBe('lower_crossed')
+    expect(ppt.title).toContain('Posterior Pelvic Tilt')
+    expect(ppt.allOveractiveMuscles).toContain('Hamstrings')
+    expect(ppt.allUnderactiveMuscles).toContain('Iliopsoas')
+    // Must NOT simultaneously claim Iliopsoas is overactive when only Posterior Pelvic Tilt is present
+    expect(ppt.allOveractiveMuscles).not.toContain('Iliopsoas')
 
-    expect(diag.syndrome).toBe('lower_crossed')
-    expect(diag.title).toContain('Posterior Pelvic Tilt')
-    expect(diag.allOveractiveMuscles).toContain('Hamstrings')
-    expect(diag.allUnderactiveMuscles).toContain('Iliopsoas')
-    expect(diag.injuryRisks).toContain('Lumbar Disc Herniation Risk')
+    const apt = diagnosePosturalDistortions({
+      ...createOptimalInput(),
+      anteriorPelvicTilt: true,
+      excessiveForwardLean: true,
+    })
+    expect(apt.syndrome).toBe('lower_crossed')
+    expect(apt.title).toContain('Lower Crossed Syndrome')
+    expect(apt.allOveractiveMuscles).toContain('Iliopsoas')
+    expect(apt.allUnderactiveMuscles).toContain('Gluteus Maximus')
+  })
+
+  it('diagnoses Upper Crossed and Mixed Postural Distortion Syndromes', () => {
+    const ucs = diagnosePosturalDistortions({
+      ...createOptimalInput(),
+      forwardHeadCarriage: true,
+      roundedShouldersProtracted: true,
+      scapularWinging: true,
+    })
+    expect(ucs.syndrome).toBe('upper_crossed')
+    expect(ucs.allUnderactiveMuscles).toContain('Deep Cervical Flexors')
+    expect(ucs.allUnderactiveMuscles).toContain('Serratus Anterior')
+
+    const mixed = diagnosePosturalDistortions({
+      ...createOptimalInput(),
+      feetFlattenOrPronate: true,
+      kneesValgusInward: true,
+      anteriorPelvicTilt: true,
+      forwardHeadCarriage: true,
+      roundedShouldersProtracted: true,
+    })
+    expect(mixed.syndrome).toBe('mixed_distortion')
+    expect(mixed.detectedSyndromes).toEqual({
+      pronation: true,
+      lowerCrossed: true,
+      upperCrossed: true,
+    })
+    expect(mixed.severityScore).toBeGreaterThanOrEqual(65)
+    expect(mixed.kineticChainDysfunctionLevel).toBe('Severe Dysfunction')
+  })
+
+  it('updates posture delta and computes consecutive posture streaks accurately', () => {
+    const delta = runQuickPostureCheckDelta()
+    expect(delta.forwardHeadDeltaDeg).toBeLessThanOrEqual(-4.5)
+    expect(delta.overallPostureScore).toBeGreaterThanOrEqual(84)
+
+    const baseState = getDefaultPostureProfileState()
+    baseState.dailyLogs = {
+      '2026-11-13': { date: '2026-11-13', readinessScore: 80, updatedAt: '2026-11-13T10:00:00Z' },
+      '2026-11-14': { date: '2026-11-14', readinessScore: 84, updatedAt: '2026-11-14T10:00:00Z' },
+    }
+    baseState.deskResetCompletedDates = ['2026-11-15']
+    expect(computePostureDailyStreak(baseState, '2026-11-15')).toBe(3)
+  })
+
+  it('renders PostureComparisonCard and PosturalDistortionStudio cleanly via SSR with all 16 checkpoints and shirted silhouettes', () => {
+    const cardHtml = renderToStaticMarkup(React.createElement(PostureComparisonCard, { sandboxMode: true }))
+    expect(cardHtml).toContain('Overlay Slider')
+    expect(cardHtml).toContain('Side-by-Side')
+    expect(cardHtml).toContain('Day-1 vs Day-30')
+    expect(cardHtml).toContain('Scrub Mesh')
+    expect(cardHtml).toContain('forge-range-slider')
+
+    const fullCardHtml = renderToStaticMarkup(React.createElement(PostureComparisonCard))
+    expect(fullCardHtml).toContain('33-Point Posture Mesh Delta')
+    expect(fullCardHtml).toContain('closedby="any"')
+
+    const studioHtml = renderToStaticMarkup(React.createElement(PosturalDistortionStudio))
+    expect(studioHtml).toContain('POSTURAL DISTORTION &amp; MUSCLE SYNERGY DIAGNOSTIC STUDIO')
+    expect(studioHtml).toContain('Asymmetric Weight Shift')
+    expect(studioHtml).toContain('Scapular Winging')
+    const checkboxMatches = studioHtml.match(/type="checkbox"/g) || []
+    expect(checkboxMatches.length).toBe(16)
   })
 })

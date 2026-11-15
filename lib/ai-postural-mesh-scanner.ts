@@ -5,8 +5,16 @@
  */
 
 import { OhsaCompensation, StaticPosturalFinding, KineticChainCheckpoint } from './nasm-assessments'
+import { sanitizePiiString } from '@/src/lib/safety/clinicalGuardrails'
 
 export type PosturalViewType = 'anterior' | 'lateral' | 'posterior' | 'overhead_squat'
+
+export const VALID_POSTURAL_VIEWS: readonly PosturalViewType[] = [
+  'anterior',
+  'lateral',
+  'posterior',
+  'overhead_squat',
+] as const
 
 export interface LandmarkPoint {
   id: string
@@ -26,6 +34,7 @@ export interface BiomechanicalAngle {
 
 export interface PosturalMeshScanResult {
   view: PosturalViewType
+  postureScore?: number
   landmarks: LandmarkPoint[]
   angles: BiomechanicalAngle[]
   detectedCompensations: string[]
@@ -152,6 +161,14 @@ export const POSTURAL_VIEW_INSTRUCTIONS: Record<PosturalViewType, PosturalViewIn
   },
 }
 
+export function sanitizeAthleteFirstName(rawName?: string): string {
+  if (!rawName || typeof rawName !== 'string') return 'Athlete'
+  const scrubbed = sanitizePiiString(rawName).trim()
+  if (!scrubbed || scrubbed.includes('[REDACTED')) return 'Athlete'
+  const firstToken = scrubbed.split(/\s+/)[0]?.replace(/[^a-zA-Z'-]/g, '')
+  return firstToken && firstToken.length >= 2 ? firstToken : 'Athlete'
+}
+
 /**
  * Analyzes posture or movement photos to detect kinetic chain compensations.
  */
@@ -159,16 +176,22 @@ export async function analyzePosturalMesh(
   params: ScanPostureParams
 ): Promise<PosturalMeshScanResult> {
   const { imageBase64, view, clientName = 'Athlete' } = params
+  const safeView: PosturalViewType = VALID_POSTURAL_VIEWS.includes(view) ? view : 'anterior'
+  const safeAthleteLabel = sanitizeAthleteFirstName(clientName)
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
 
   if (apiKey && imageBase64) {
     try {
-      const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
-      const mimeType = imageBase64.includes('image/png') ? 'image/png' : 'image/jpeg'
+      const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, '')
+      const mimeType = imageBase64.includes('image/png')
+        ? 'image/png'
+        : imageBase64.includes('image/webp')
+          ? 'image/webp'
+          : 'image/jpeg'
 
       const prompt = `You are Coach Gordon, Director of Human Performance at Forge Athletic, Master NASM-CPT, Corrective Exercise Specialist (CES), and Golf Fitness Specialist (GFS).
 You analyze movement and posture with deep empathy, compassionate encouragement, and orthopedic safety (never catastrophizing or body-shaming; focus on empowering corrective progressions and longevity).
-Analyze this athlete's ${view.replace('_', ' ')} posture / movement screen.
+Analyze this athlete's ${safeView.replace('_', ' ')} posture / movement screen.
 Extract anatomical landmarks (x, y coordinates in percentages 0-100), measure biomechanical deviation angles, and identify NASM kinetic chain compensations.
 
 Return valid JSON adhering to:
@@ -226,7 +249,7 @@ Return valid JSON adhering to:
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text
         if (rawText) {
           const parsed = JSON.parse(rawText)
-          return formatScanResult(parsed, view, clientName)
+          return formatScanResult(parsed, safeView, safeAthleteLabel)
         }
       }
     } catch {
@@ -234,88 +257,215 @@ Return valid JSON adhering to:
     }
   }
 
-  return generateDeterministicPostureScan(view, clientName)
+  return generateDeterministicPostureScan(safeView, safeAthleteLabel)
+}
+
+function clampNumber(value: unknown, min: number, max: number, fallback: number): number {
+  const num = typeof value === 'number' && Number.isFinite(value) ? value : fallback
+  return Math.max(min, Math.min(max, num))
+}
+
+function mapCompensationToken(token: string): {
+  compensation: OhsaCompensation
+  checkpoint: KineticChainCheckpoint
+  view: 'anterior' | 'lateral' | 'posterior'
+} {
+  const lower = token.toLowerCase()
+  if (lower.includes('lean')) {
+    return { compensation: 'excessive_forward_lean', checkpoint: 'lphc', view: 'lateral' }
+  }
+  if (lower.includes('round') || lower.includes('posterior') || lower.includes('wink')) {
+    return { compensation: 'low_back_rounds', checkpoint: 'lphc', view: 'lateral' }
+  }
+  if (lower.includes('arch') || lower.includes('anterior_tilt') || lower.includes('back')) {
+    return { compensation: 'low_back_arches', checkpoint: 'lphc', view: 'lateral' }
+  }
+  if (lower.includes('shift') || lower.includes('asym')) {
+    return { compensation: 'asymmetrical_weight_shift', checkpoint: 'lphc', view: 'posterior' }
+  }
+  if (lower.includes('arms')) {
+    return { compensation: 'arms_fall_forward', checkpoint: 'shoulders', view: 'lateral' }
+  }
+  if (lower.includes('shrug') || lower.includes('shoulder_elev') || lower.includes('shoulders_elevate')) {
+    return { compensation: 'shoulders_elevate', checkpoint: 'shoulders', view: 'posterior' }
+  }
+  if (lower.includes('head') || lower.includes('cervical')) {
+    return { compensation: 'forward_head', checkpoint: 'head_neck', view: 'lateral' }
+  }
+  if (lower.includes('heel')) {
+    return { compensation: 'heels_rise', checkpoint: 'feet_ankles', view: 'posterior' }
+  }
+  if (lower.includes('flatten') || lower.includes('pronat') || lower.includes('evert')) {
+    return { compensation: 'feet_flatten', checkpoint: 'feet_ankles', view: 'posterior' }
+  }
+  if (lower.includes('feet') || lower.includes('turn')) {
+    return { compensation: 'feet_turn_out', checkpoint: 'feet_ankles', view: 'anterior' }
+  }
+  if (lower.includes('outward') || lower.includes('varus') || lower.includes('bow')) {
+    return { compensation: 'knees_move_outward', checkpoint: 'knees', view: 'anterior' }
+  }
+  return { compensation: 'knees_move_inward', checkpoint: 'knees', view: 'anterior' }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function formatScanResult(parsed: any, view: PosturalViewType, clientName: string): PosturalMeshScanResult {
-  const compensations: string[] = Array.isArray(parsed?.detectedCompensations) && parsed.detectedCompensations.length
-    ? parsed.detectedCompensations
-    : ['knees_cave_in', 'excessive_forward_lean']
+export function formatScanResult(parsed: any, view: PosturalViewType, clientName: string): PosturalMeshScanResult {
+  const validSyndromes = new Set([
+    'Lower Crossed',
+    'Upper Crossed',
+    'Pronation Distortion',
+    'Optimal Alignment',
+  ])
+  const syndromeDetected: PosturalMeshScanResult['syndromeDetected'] = validSyndromes.has(
+    parsed?.syndromeDetected
+  )
+    ? parsed.syndromeDetected
+    : 'Lower Crossed'
+  const isOptimal = syndromeDetected === 'Optimal Alignment'
 
-  const ohsaObservations = compensations.map((c: string) => {
-    let comp: OhsaCompensation = 'knees_move_inward'
-    let checkpoint: KineticChainCheckpoint = 'knees'
-    let viewAngle: 'anterior' | 'lateral' | 'posterior' = 'anterior'
+  const rawCompensations: string[] = Array.isArray(parsed?.detectedCompensations)
+    ? parsed.detectedCompensations.filter((c: unknown): c is string => typeof c === 'string' && c.trim().length > 0)
+    : isOptimal
+      ? []
+      : ['knees_cave_in', 'excessive_forward_lean']
 
-    if (c.includes('lean')) {
-      comp = 'excessive_forward_lean'
-      checkpoint = 'lphc'
-      viewAngle = 'lateral'
-    } else if (c.includes('arch') || c.includes('back')) {
-      comp = 'low_back_arches'
-      checkpoint = 'lphc'
-      viewAngle = 'lateral'
-    } else if (c.includes('arms')) {
-      comp = 'arms_fall_forward'
-      checkpoint = 'shoulders'
-      viewAngle = 'lateral'
-    } else if (c.includes('feet') || c.includes('turn')) {
-      comp = 'feet_turn_out'
-      checkpoint = 'feet_ankles'
-      viewAngle = 'anterior'
+  const compensations =
+    !isOptimal && rawCompensations.length === 0
+      ? ['knees_cave_in', 'excessive_forward_lean']
+      : rawCompensations
+
+  const seenOhsa = new Set<OhsaCompensation>()
+  const ohsaObservations: PosturalMeshScanResult['ohsaObservations'] = []
+  for (const c of compensations) {
+    const mapped = mapCompensationToken(c)
+    if (!seenOhsa.has(mapped.compensation)) {
+      seenOhsa.add(mapped.compensation)
+      ohsaObservations.push({
+        compensation: mapped.compensation,
+        checkpoint: mapped.checkpoint,
+        observed: true,
+        severity: 'moderate',
+        view: mapped.view,
+      })
     }
-
-    return {
-      compensation: comp,
-      checkpoint,
-      observed: true,
-      severity: 'moderate' as const,
-      view: viewAngle,
-    }
-  })
-
-  const staticFindings: StaticPosturalFinding[] = [
-    { checkpoint: 'head_neck', observation: 'Forward head migration noted', distortionSyndrome: 'upper_crossed' },
-    { checkpoint: 'lphc', observation: 'Anterior pelvic tilt with lumbar extension', distortionSyndrome: 'lower_crossed' },
-    { checkpoint: 'knees', observation: 'Bilateral knee valgus tracking medial to 2nd toe', distortionSyndrome: 'pronation_distortion' },
-    { checkpoint: 'feet_ankles', observation: 'Mild subtalar pronation and eversion', distortionSyndrome: 'pronation_distortion' },
-  ]
-
-  const cexPrescription = {
-    inhibit: [
-      { muscle: 'Gastrocnemius & Soleus', protocol: 'SMR 30-60s per tender spot' },
-      { muscle: 'Tensor Fasciae Latae (TFL) / IT Band', protocol: 'SMR 30-60s on foam roller' },
-      { muscle: 'Latissimus Dorsi', protocol: 'SMR 30-60s under axillary border' },
-    ],
-    lengthen: [
-      { muscle: 'Static Gastrocnemius Stretch', protocol: 'Hold 30s x 2 sets' },
-      { muscle: 'Half-Kneeling Hip Flexor Stretch', protocol: 'Hold 30s x 2 sets with posterior pelvic tilt' },
-      { muscle: 'Static Ball Latissimus Stretch', protocol: 'Hold 30s x 2 sets' },
-    ],
-    activate: [
-      { muscle: 'Gluteus Medius / Minimus', protocol: 'Banded Side-Lying Clamshells 3x12-15' },
-      { muscle: 'Vastus Medialis Oblique (VMO)', protocol: 'Single-Leg Balance to Reach 3x10' },
-      { muscle: 'Lower Trapezius & Serratus Anterior', protocol: 'Prone Cobra / Y-Raises 3x12' },
-    ],
-    integrate: [
-      { exercise: 'Squat to Overhead Press with Tubing', protocol: '3 sets x 12 reps (4/2/1 tempo)' },
-      { exercise: 'Single-Leg Romanian Deadlift to Balance', protocol: '3 sets x 10 reps/side (3/2/1 tempo)' },
-    ],
   }
+
+  const staticFindings: StaticPosturalFinding[] = []
+  if (!isOptimal) {
+    if (syndromeDetected === 'Upper Crossed' || compensations.some(c => c.includes('head') || c.includes('arms'))) {
+      staticFindings.push({
+        checkpoint: 'head_neck',
+        observation: 'Forward head migration noted',
+        distortionSyndrome: 'upper_crossed',
+      })
+    }
+    if (syndromeDetected === 'Lower Crossed' || compensations.some(c => c.includes('arch') || c.includes('lean') || c.includes('back'))) {
+      staticFindings.push({
+        checkpoint: 'lphc',
+        observation: 'Anterior pelvic tilt with lumbar extension',
+        distortionSyndrome: 'lower_crossed',
+      })
+    }
+    if (syndromeDetected === 'Pronation Distortion' || compensations.some(c => c.includes('knee') || c.includes('feet') || c.includes('flatten'))) {
+      staticFindings.push(
+        {
+          checkpoint: 'knees',
+          observation: 'Bilateral knee valgus tracking medial to 2nd toe',
+          distortionSyndrome: 'pronation_distortion',
+        },
+        {
+          checkpoint: 'feet_ankles',
+          observation: 'Mild subtalar pronation and eversion',
+          distortionSyndrome: 'pronation_distortion',
+        }
+      )
+    }
+  }
+
+  const rawLandmarks: LandmarkPoint[] =
+    Array.isArray(parsed?.landmarks) && parsed.landmarks.length > 0
+      ? parsed.landmarks.map((pt: Partial<LandmarkPoint>, idx: number) => ({
+          id: typeof pt?.id === 'string' && pt.id ? pt.id : `joint_${idx}`,
+          name: typeof pt?.name === 'string' && pt.name ? pt.name : `Landmark ${idx + 1}`,
+          x: Number(clampNumber(pt?.x, 0, 100, 50).toFixed(1)),
+          y: Number(clampNumber(pt?.y, 0, 100, 50).toFixed(1)),
+          confidence: Number(clampNumber(pt?.confidence, 0, 1, 0.9).toFixed(2)),
+        }))
+      : getDefaultLandmarks(view)
+
+  const validStatuses = new Set(['optimal', 'mild', 'moderate', 'severe'])
+  const rawAngles: BiomechanicalAngle[] =
+    Array.isArray(parsed?.angles) && parsed.angles.length > 0
+      ? parsed.angles.map((ang: Partial<BiomechanicalAngle>, idx: number) => ({
+          name: typeof ang?.name === 'string' && ang.name ? ang.name : `Joint Angle ${idx + 1}`,
+          angleDegrees: Number(clampNumber(ang?.angleDegrees, 0, 180, 8).toFixed(1)),
+          status: validStatuses.has(ang?.status as string)
+            ? (ang.status as BiomechanicalAngle['status'])
+            : 'moderate',
+          normalRange: typeof ang?.normalRange === 'string' && ang.normalRange ? ang.normalRange : '< 10°',
+          clinicalNote:
+            typeof ang?.clinicalNote === 'string' && ang.clinicalNote
+              ? sanitizePiiString(ang.clinicalNote)
+              : 'Kinetic chain alignment checkpoint evaluated',
+        }))
+      : getDefaultAngles(view)
+
+  const anglePenalty = rawAngles.reduce((acc, ang) => {
+    if (ang.status === 'severe') return acc + 10
+    if (ang.status === 'moderate') return acc + 6
+    if (ang.status === 'mild') return acc + 3
+    return acc
+  }, 0)
+  const postureScore = isOptimal
+    ? Math.max(90, 96 - anglePenalty)
+    : Math.max(48, Math.min(92, 92 - anglePenalty - compensations.length * 3))
+
+  const cexPrescription = isOptimal
+    ? {
+        inhibit: [{ muscle: 'Global Posterior Chain Maintenance', protocol: 'Foam roll flush 30s per region' }],
+        lengthen: [{ muscle: 'Dynamic Thoracic & Hip Opener', protocol: 'World’s Greatest Stretch 5 reps/side' }],
+        activate: [{ muscle: 'Deep Core & Gluteal Stabilizers', protocol: 'Bird Dog & Supine Bridge 2x10' }],
+        integrate: [{ exercise: 'Goblet Squat to Overhead Reach', protocol: '2 sets x 10 reps (3/1/1 tempo)' }],
+      }
+    : {
+        inhibit: [
+          { muscle: 'Gastrocnemius & Soleus', protocol: 'SMR 30-60s per tender spot' },
+          { muscle: 'Tensor Fasciae Latae (TFL) / IT Band', protocol: 'SMR 30-60s on foam roller' },
+          { muscle: 'Latissimus Dorsi', protocol: 'SMR 30-60s under axillary border' },
+        ],
+        lengthen: [
+          { muscle: 'Static Gastrocnemius Stretch', protocol: 'Hold 30s x 2 sets' },
+          { muscle: 'Half-Kneeling Hip Flexor Stretch', protocol: 'Hold 30s x 2 sets with posterior pelvic tilt' },
+          { muscle: 'Static Ball Latissimus Stretch', protocol: 'Hold 30s x 2 sets' },
+        ],
+        activate: [
+          { muscle: 'Gluteus Medius / Minimus', protocol: 'Banded Side-Lying Clamshells 3x12-15' },
+          { muscle: 'Vastus Medialis Oblique (VMO)', protocol: 'Single-Leg Balance to Reach 3x10' },
+          { muscle: 'Lower Trapezius & Serratus Anterior', protocol: 'Prone Cobra / Y-Raises 3x12' },
+        ],
+        integrate: [
+          { exercise: 'Squat to Overhead Press with Tubing', protocol: '3 sets x 12 reps (4/2/1 tempo)' },
+          { exercise: 'Single-Leg Romanian Deadlift to Balance', protocol: '3 sets x 10 reps/side (3/2/1 tempo)' },
+        ],
+      }
+
+  const safeSummary =
+    typeof parsed?.clinicalSummary === 'string' && parsed.clinicalSummary.trim().length > 0
+      ? sanitizePiiString(parsed.clinicalSummary.trim())
+      : isOptimal
+        ? `Biomechanical scan for ${sanitizeAthleteFirstName(clientName)} demonstrates balanced alignment across kinetic checkpoints.`
+        : `Biomechanical scan for ${sanitizeAthleteFirstName(clientName)} indicates kinetic chain compensations consistent with ${syndromeDetected}. 4-Phase CEx continuum calibrated to restore neuromuscular efficiency.`
 
   return {
     view,
-    landmarks: parsed.landmarks || getDefaultLandmarks(view),
-    angles: parsed.angles || getDefaultAngles(view),
+    postureScore,
+    landmarks: rawLandmarks,
+    angles: rawAngles,
     detectedCompensations: compensations,
     ohsaObservations,
     staticFindings,
-    syndromeDetected: parsed.syndromeDetected || 'Lower Crossed',
+    syndromeDetected,
     cexPrescription,
-    clinicalSummary:
-      parsed.clinicalSummary ||
-      `Biomechanical scan for ${clientName} indicates kinetic chain compensations consistent with Lower Crossed & Pronation Distortion. 4-Phase CEx continuum calibrated to restore neuromuscular efficiency.`,
+    clinicalSummary: safeSummary,
   }
 }
 
@@ -361,15 +511,43 @@ function getDefaultAngles(view: PosturalViewType): BiomechanicalAngle[] {
 }
 
 function generateDeterministicPostureScan(view: PosturalViewType, clientName: string): PosturalMeshScanResult {
+  const safeName = sanitizeAthleteFirstName(clientName)
+  const presetByView: Record<
+    PosturalViewType,
+    { syndrome: PosturalMeshScanResult['syndromeDetected']; compensations: string[]; focusLabel: string }
+  > = {
+    anterior: {
+      syndrome: 'Pronation Distortion',
+      compensations: ['knees_cave_in', 'feet_turn_out'],
+      focusLabel: 'frontal-plane Knee and Foot/Ankle checkpoints (Knees Cave In, Feet Turn Out)',
+    },
+    lateral: {
+      syndrome: 'Lower Crossed',
+      compensations: ['low_back_arches', 'excessive_forward_lean', 'head_protrudes'],
+      focusLabel: 'sagittal-plane LPHC and Cervical checkpoints (Anterior Pelvic Tilt, Forward Head)',
+    },
+    posterior: {
+      syndrome: 'Pronation Distortion',
+      compensations: ['feet_flatten', 'asymmetric_weight_shift', 'shoulders_elevate'],
+      focusLabel: 'posterior-plane Calcaneal, LPHC, and Scapular checkpoints (Subtalar Pronation, Asymmetric Shift)',
+    },
+    overhead_squat: {
+      syndrome: 'Lower Crossed',
+      compensations: ['knees_cave_in', 'excessive_forward_lean', 'arms_fall_forward'],
+      focusLabel: 'dynamic OHSA LPHC, Shoulder, and Knee checkpoints (Knees Cave In, Forward Lean, Arms Fall Forward)',
+    },
+  }
+  const preset = presetByView[view]
+
   return formatScanResult(
     {
-      syndromeDetected: 'Lower Crossed',
+      syndromeDetected: preset.syndrome,
       landmarks: getDefaultLandmarks(view),
       angles: getDefaultAngles(view),
-      detectedCompensations: ['knees_cave_in', 'excessive_forward_lean', 'low_back_arches'],
-      clinicalSummary: `Kinetic mesh analysis for ${clientName} identified primary compensations in LPHC and Knee checkpoints (Knees Cave In, Forward Lean). Corrective continuum initialized.`,
+      detectedCompensations: preset.compensations,
+      clinicalSummary: `Kinetic mesh analysis for ${safeName} identified primary compensations in ${preset.focusLabel}. Corrective continuum initialized.`,
     },
     view,
-    clientName
+    safeName
   )
 }

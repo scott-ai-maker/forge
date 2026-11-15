@@ -117,4 +117,33 @@ describe('Coach Safety Alerts Subsystem (lib/coach-safety-alerts)', () => {
     expect(result.reason).toBe('Missing RESEND_API_KEY')
     expect(sendMock).not.toHaveBeenCalled()
   })
+
+  it('HTML-escapes untrusted fields and scrubs PII from safety alert emails', async () => {
+    const result = await dispatchCoachSafetyAlert({
+      request: {
+        question:
+          'Sharp knee pain at alex@example.com or 555-234-5678 <script>alert("xss")</script>',
+        athleteName: 'Alex <img src=x onerror=alert(1)>',
+        currentExerciseName: 'Barbell Squat <b>Heavy</b>',
+      },
+      response: {
+        answerMarkdown: 'Stop immediately & switch to **Box Squat** <script>evil()</script>.',
+        spokenAudioText: 'Stop immediately.',
+        relevantCurriculums: ['Scope of Practice'],
+        suggestedFollowUps: [],
+        requiresCoachPing: true,
+        coachPingReason: 'Pain flag <svg onload=alert(2)>',
+      },
+    })
+
+    expect(result.sent).toBe(true)
+    const callArgs = sendMock.mock.calls[0][0]
+    expect(callArgs.html).not.toContain('<script>')
+    expect(callArgs.html).not.toContain('<img src=x')
+    expect(callArgs.html).not.toContain('<svg onload=')
+    expect(callArgs.html).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;')
+    expect(callArgs.html).not.toContain('alex@example.com')
+    expect(callArgs.html).not.toContain('555-234-5678')
+    expect(callArgs.text).not.toContain('alex@example.com')
+  })
 })

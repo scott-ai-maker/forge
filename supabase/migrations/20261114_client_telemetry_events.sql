@@ -18,7 +18,11 @@ create table if not exists client_telemetry_events (
       'desk_reset_completed',
       'form_lab_uploaded',
       'live_studio_telemetry',
-      'client_runtime_diagnostic'
+      'watch_biometrics_stream',
+      'client_runtime_diagnostic',
+      'safety_flag',
+      'escalation_sms',
+      'escalation_email'
     )
   ),
   client_timestamp      timestamptz not null,
@@ -39,6 +43,30 @@ create index if not exists idx_client_telemetry_events_user_time
 
 create index if not exists idx_client_telemetry_events_user_type
   on client_telemetry_events(user_id, event_type, client_timestamp desc);
+
+-- Idempotent constraint upgrade for environments created before safety_flag / escalation_* event types
+alter table client_telemetry_events
+  drop constraint if exists client_telemetry_events_event_type_check;
+
+alter table client_telemetry_events
+  add constraint client_telemetry_events_event_type_check check (
+    event_type in (
+      'posture_scan_completed',
+      'desk_ergonomics_completed',
+      'readiness_check_completed',
+      'workout_completed',
+      'set_logged',
+      'joint_comfort_logged',
+      'desk_reset_completed',
+      'form_lab_uploaded',
+      'live_studio_telemetry',
+      'watch_biometrics_stream',
+      'client_runtime_diagnostic',
+      'safety_flag',
+      'escalation_sms',
+      'escalation_email'
+    )
+  );
 
 create table if not exists client_telemetry_snapshots (
   user_id                   uuid primary key references auth.users(id) on delete cascade,

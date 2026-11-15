@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useId, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Activity, Clock, Dumbbell, Layers, Monitor, Plane, Route } from 'lucide-react'
 import PostureComparisonCard from '@/components/fitness/PostureComparisonCard'
 import DeskErgonomicsAudit from '@/components/fitness/DeskErgonomicsAudit'
@@ -81,11 +81,16 @@ const ENVIRONMENT_PREVIEW_BLOCKS: Record<
 
 export default function AppSneakPeekShowcase() {
   const baseId = useId()
+  const [hydrated, setHydrated] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [sandboxExpress, setSandboxExpress] = useState(true)
   const [sandboxEnv, setSandboxEnv] = useState<EnvironmentProfileId>('hotel_travel')
   const [readinessPreset, setReadinessPreset] = useState<ReadinessPresetId>('tight_hips_ankles')
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
+
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   const readinessPreview = useMemo(
     () =>
@@ -183,6 +188,7 @@ export default function AppSneakPeekShowcase() {
       <div
         role="tablist"
         aria-label="Interactive Forge Athletic product previews"
+        data-hydrated={hydrated ? 'true' : undefined}
         onKeyDown={handleKeyDown}
         className="relative z-10 mb-5 flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-4 sm:overflow-visible sm:pb-0"
         style={{ scrollSnapType: 'inline proximity' }}

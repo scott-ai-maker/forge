@@ -1291,6 +1291,46 @@ export function deriveRecommendedAction(
   const aLower = (answerText || '').toLowerCase()
   const combined = `${qLower} ${aLower}`
 
+  // 1. Explicit Express / Shorten Session intent ("Shorten today to 15 minutes", "20m express", etc.)
+  if (
+    qLower.includes('shorten') ||
+    qLower.includes('15 min') ||
+    qLower.includes('15-min') ||
+    qLower.includes('20 min') ||
+    qLower.includes('20-min') ||
+    qLower.includes('express') ||
+    qLower.includes('short on time') ||
+    qLower.includes('running late') ||
+    qLower.includes('tight on time')
+  ) {
+    return {
+      type: 'enable_express_mode',
+      buttonText: 'Activate 20m Express Workout Mode',
+    }
+  }
+
+  // 2. Explicit Squat Depth / Tight Hips & Wrist-Friendly Neutral-Grip quick-prompt intents
+  if (qLower.includes('how low') && qLower.includes('squat') && qLower.includes('hip')) {
+    return {
+      type: 'swap_exercise',
+      targetExerciseName: 'Box-Supported Goblet Squat',
+      currentExerciseName: currentExerciseName || 'Squat',
+      buttonText: 'Swap to Box-Supported Goblet Squat',
+    }
+  }
+
+  if (
+    qLower.includes('wrist') &&
+    (qLower.includes('neutral') || qLower.includes('friendly') || qLower.includes('option'))
+  ) {
+    return {
+      type: 'swap_exercise',
+      targetExerciseName: 'Neutral-Grip Dumbbell Floor Press',
+      currentExerciseName: currentExerciseName || 'Press',
+      buttonText: 'Swap to Neutral-Grip Dumbbell Floor Press',
+    }
+  }
+
   if (combined.includes('swap') || combined.includes('replace') || combined.includes('substitute') || combined.includes('busy') || combined.includes('taken')) {
     if (currentExerciseName) {
       const smartSubs = getSmartSubstitutions(currentExerciseName, `Phase ${nasmOptPhase}`, undefined, equipmentAccess)

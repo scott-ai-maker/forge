@@ -31,9 +31,9 @@ describe('/api/coach/tts', () => {
     expect(res.status).toBe(400)
   })
 
-  it('rejects unauthenticated requests in production environment', async () => {
+  it('rejects unauthenticated requests in production environment even if NEXT_PUBLIC_ALLOW_ANON_PREVIEW is set', async () => {
     vi.stubEnv('NODE_ENV', 'production')
-    delete process.env.NEXT_PUBLIC_ALLOW_ANON_PREVIEW
+    vi.stubEnv('NEXT_PUBLIC_ALLOW_ANON_PREVIEW', 'true')
 
     getRequestAuthzMock.mockRejectedValueOnce(new AuthzError('Unauthorized', 401))
 
@@ -44,6 +44,49 @@ describe('/api/coach/tts', () => {
     const res = await POST(req)
     expect(res.status).toBe(401)
 
+    vi.unstubAllEnvs()
+  })
+
+  it('requires authentication BEFORE serving cached audio buffers and sets private Cache-Control', async () => {
+    vi.stubEnv('ELEVENLABS_API_KEY', 'el_test_key')
+    const fakeMp3 = new Uint8Array(256).fill(42).buffer
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(fakeMp3, {
+        status: 200,
+        headers: { 'Content-Type': 'audio/mpeg' },
+      })
+    )
+
+    // 1. Authenticated warm-up populates server cache
+    const warmReq = new NextRequest('http://localhost:3000/api/coach/tts', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'Brace core and control eccentric tempo.' }),
+    })
+    const warmRes = await POST(warmReq)
+    expect(warmRes.status).toBe(200)
+    expect(warmRes.headers.get('Cache-Control')).toBe('private, max-age=86400')
+
+    // 2. Unauthenticated production request for the exact same cached text MUST return 401
+    vi.stubEnv('NODE_ENV', 'production')
+    getRequestAuthzMock.mockRejectedValueOnce(new AuthzError('Unauthorized', 401))
+    const unauthReq = new NextRequest('http://localhost:3000/api/coach/tts', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'Brace core and control eccentric tempo.' }),
+    })
+    const unauthRes = await POST(unauthReq)
+    expect(unauthRes.status).toBe(401)
+
+    // 3. Authenticated request hits cache with private Cache-Control
+    const cachedReq = new NextRequest('http://localhost:3000/api/coach/tts', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'Brace core and control eccentric tempo.' }),
+    })
+    const cachedRes = await POST(cachedReq)
+    expect(cachedRes.status).toBe(200)
+    expect(cachedRes.headers.get('X-Forge-Voice-Provider')).toBe('cache')
+    expect(cachedRes.headers.get('Cache-Control')).toBe('private, max-age=86400')
+
+    fetchSpy.mockRestore()
     vi.unstubAllEnvs()
   })
 

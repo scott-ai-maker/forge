@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   evaluateMedicalParq,
@@ -57,6 +57,11 @@ export default function MedicalParqModal({
   onSaveParq,
   onClose,
 }: MedicalParqModalProps) {
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const headingId = useId()
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   const [answers, setAnswers] = useState<ParqAnswers>(
     initialAnswers ?? {
       hasHeartCondition: false,
@@ -76,6 +81,22 @@ export default function MedicalParqModal({
   const [signature, setSignature] = useState<string>(initialAnswers?.signedWaiverName ?? '')
   const [agreedToWaiver, setAgreedToWaiver] = useState<boolean>(Boolean(initialAnswers?.signedWaiverName))
 
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (!dialog.open) {
+      dialog.showModal()
+    }
+    const handleNativeClose = () => {
+      dialog.returnValue = ''
+      onCloseRef.current?.()
+    }
+    dialog.addEventListener('close', handleNativeClose)
+    return () => {
+      dialog.removeEventListener('close', handleNativeClose)
+    }
+  }, [])
+
   const evaluation: ParqEvaluationResult = evaluateMedicalParq(answers)
 
   const handleToggle = (key: keyof ParqAnswers) => {
@@ -83,6 +104,15 @@ export default function MedicalParqModal({
       ...prev,
       [key]: !prev[key],
     }))
+  }
+
+  const handleCloseClick = () => {
+    const dialog = dialogRef.current
+    if (dialog?.open) {
+      dialog.close()
+      return
+    }
+    onClose?.()
   }
 
   const handleSave = () => {
@@ -101,17 +131,25 @@ export default function MedicalParqModal({
   }
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={headingId}
+      onClick={e => {
+        if (e.target === e.currentTarget && onClose) {
+          handleCloseClick()
+        }
+      }}
       style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(4,7,13,0.92)',
-        backdropFilter: 'blur(8px)',
         zIndex: 100050,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(12px, 3vw, 24px)',
+        pointerEvents: 'auto',
+        margin: 'auto',
+        width: 'min(96vw, 720px)',
+        maxWidth: 720,
+        maxHeight: '92vh',
+        padding: 0,
+        border: '1px solid var(--navy-lt)',
+        background: 'var(--navy-mid)',
+        color: 'var(--white)',
         overflowY: 'auto',
       }}
     >
@@ -119,14 +157,10 @@ export default function MedicalParqModal({
         className="glass-card"
         style={{
           width: '100%',
-          maxWidth: 720,
           background: 'var(--navy-mid)',
-          border: '1px solid var(--navy-lt)',
           padding: 'clamp(18px, 4vw, 32px)',
           display: 'grid',
           gap: 20,
-          maxHeight: '92vh',
-          overflowY: 'auto',
         }}
       >
         {/* Header */}
@@ -144,7 +178,8 @@ export default function MedicalParqModal({
             >
               Clinical Intake &amp; Liability Shield (NASM CPT-7 Appendix D)
             </span>
-            <h3
+            <h2
+              id={headingId}
               style={{
                 fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
                 fontSize: 20,
@@ -155,14 +190,28 @@ export default function MedicalParqModal({
               }}
             >
               Physical Activity Readiness &amp; Liability Acknowledgment
-            </h3>
+            </h2>
           </div>
 
           {onClose && (
             <button
               type="button"
-              onClick={onClose}
-              style={{ background: 'transparent', border: 'none', color: 'var(--gray)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              aria-label="Close medical screening"
+              onClick={handleCloseClick}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 6,
+                color: 'var(--gray)',
+                cursor: 'pointer',
+                minWidth: 44,
+                minHeight: 44,
+                padding: 8,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
             >
               <GaaIcon name="close" size={16} tone="slate" />
             </button>
@@ -171,6 +220,8 @@ export default function MedicalParqModal({
 
         {/* Real-time Clearance Status Badge */}
         <div
+          role="status"
+          aria-live="polite"
           style={{
             padding: '14px 18px',
             background:
@@ -226,15 +277,29 @@ export default function MedicalParqModal({
         </div>
 
         {/* 7-Question Checklist */}
-        <div style={{ display: 'grid', gap: 12 }}>
+        <fieldset style={{ border: 'none', margin: 0, padding: 0, display: 'grid', gap: 12 }}>
+          <legend
+            style={{
+              fontSize: 11,
+              color: 'var(--gold-lt)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontWeight: 700,
+              marginBottom: 8,
+            }}
+          >
+            Select any medical or orthopedic questions that apply to you (leave unchecked if No)
+          </legend>
           {QUESTIONS.map((q, idx) => {
             const isYes = Boolean(answers[q.key])
+            const inputId = `parq-check-${q.key}`
             return (
-              <div
+              <label
                 key={q.key}
-                onClick={() => handleToggle(q.key)}
+                htmlFor={inputId}
                 className="tactile-btn"
                 style={{
+                  minHeight: 52,
                   padding: '14px 16px',
                   background: isYes ? 'rgba(248,113,113,0.1)' : 'rgba(8,14,20,0.6)',
                   border: isYes ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.08)',
@@ -246,7 +311,28 @@ export default function MedicalParqModal({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 16, fontWeight: 700, color: isYes ? 'var(--error)' : 'var(--gold-lt)' }}>
+                  <input
+                    id={inputId}
+                    name={q.key}
+                    type="checkbox"
+                    checked={isYes}
+                    onChange={() => handleToggle(q.key)}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      flexShrink: 0,
+                      accentColor: isYes ? 'var(--error, #EF4444)' : 'var(--gold)',
+                    }}
+                  />
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      fontFamily: 'var(--font-telemetry, monospace)',
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: isYes ? 'var(--error)' : 'var(--gold-lt)',
+                    }}
+                  >
                     0{idx + 1}
                   </span>
                   <span style={{ fontSize: 13, color: isYes ? 'var(--white)' : 'var(--gray)', lineHeight: 1.5 }}>
@@ -255,6 +341,7 @@ export default function MedicalParqModal({
                 </div>
 
                 <div
+                  aria-hidden="true"
                   style={{
                     padding: '6px 14px',
                     background: isYes ? 'var(--error)' : 'rgba(255,255,255,0.08)',
@@ -268,17 +355,30 @@ export default function MedicalParqModal({
                 >
                   {isYes ? 'YES (FLAGGED)' : 'NO'}
                 </div>
-              </div>
+              </label>
             )
           })}
-        </div>
+        </fieldset>
 
         {/* Optional Medical Notes */}
         <div>
-          <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600 }}>
+          <label
+            htmlFor="parq-orthopedic-notes"
+            style={{
+              display: 'block',
+              fontSize: 11,
+              color: 'var(--gray)',
+              textTransform: 'uppercase',
+              marginBottom: 6,
+              letterSpacing: '0.08em',
+              fontWeight: 600,
+            }}
+          >
             Orthopedic History &amp; Injury Specifics (Optional)
           </label>
           <textarea
+            id="parq-orthopedic-notes"
+            name="reportedConditionsNotes"
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="e.g. L4/L5 disc herniation in 2023, cleared by PT; mild right patellar tendonitis."
@@ -373,7 +473,7 @@ export default function MedicalParqModal({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }
 

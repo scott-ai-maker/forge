@@ -10,6 +10,7 @@ import {
   prefetchCoachVoiceCue,
 } from '@/lib/coach-voice-synthesizer'
 import { getSharedAudioContext } from '@/lib/web-audio-cadence-engine'
+import { getCoachAudioMode } from '@/lib/sfx-audio'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import {
   deriveProactiveTelemetryGreeting,
@@ -140,9 +141,9 @@ export default function AskCoachGordonModal({
   const [actionFeedback, setActionFeedback] = useState<Record<string, string>>({})
   const [systemBannerNotice, setSystemBannerNotice] = useState<string | null>(null)
 
-  // Pre-warm ElevenLabs audio for the initial greeting immediately when modal opens
+  // Pre-warm ElevenLabs audio for the initial greeting only when Voice + Chimes is explicitly enabled
   useEffect(() => {
-    if (isOpen && initialGreeting) {
+    if (isOpen && initialGreeting && getCoachAudioMode() === 'voice_and_chimes') {
       const text = initialGreeting.audioText || initialGreeting.text
       if (text) {
         void prefetchCoachVoiceCue(text)
@@ -150,8 +151,9 @@ export default function AskCoachGordonModal({
     }
   }, [isOpen, initialGreeting])
 
-  // Pre-warm ElevenLabs audio for every incoming assistant response in the background
+  // Pre-warm ElevenLabs audio for incoming assistant responses only when Voice + Chimes is explicitly enabled
   useEffect(() => {
+    if (getCoachAudioMode() !== 'voice_and_chimes') return
     const lastMsg = messages[messages.length - 1]
     if (lastMsg && lastMsg.role === 'assistant') {
       const text = lastMsg.audioText || lastMsg.text
@@ -205,6 +207,17 @@ export default function AskCoachGordonModal({
   const [showVideoModal, setShowVideoModal] = useState(false)
   const [selectedLiftType, setSelectedLiftType] = useState<LiftType>('barbell_back_squat')
   const [isAnalyzingVideo, setIsAnalyzingVideo] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !showVideoModal && !activeDemoVideo) {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isOpen, showVideoModal, activeDemoVideo, onClose])
 
   // Dynamic Context-Aware In-Gym Topic Chips
   const dynamicTopicChips = React.useMemo(() => {

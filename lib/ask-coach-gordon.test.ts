@@ -222,5 +222,27 @@ describe('Ask Coach Gordon AI Engine & Multi-Tier Liability Safeguards', () => {
       expect(response.recommendedAction?.type).toBe('swap_exercise')
       expect(response.recommendedAction?.targetExerciseName).toBe('Neutral-Grip Dumbbell Floor Press')
     })
+
+    it('prioritizes enable_express_mode and quick-prompt swaps in deriveRecommendedAction even when live AI answers mention rest intervals', async () => {
+      const { deriveRecommendedAction } = await import('./ask-coach-gordon')
+
+      const expressAction = deriveRecommendedAction(
+        'shorten today to 15 minutes',
+        'Barbell Back Squat',
+        'Cut rest down from 2 minutes to 45 seconds and pair supersets.',
+        2
+      )
+      expect(expressAction?.type).toBe('enable_express_mode')
+      expect(expressAction?.buttonText).toBe('Activate 20m Express Workout Mode')
+
+      const squatAction = deriveRecommendedAction(
+        'how low should i squat with tight hips?',
+        'Barbell Back Squat',
+        'Stop right above pelvic tuck and rest 90s between sets.',
+        2
+      )
+      expect(squatAction?.type).toBe('swap_exercise')
+      expect(squatAction?.targetExerciseName).toBe('Box-Supported Goblet Squat')
+    })
   })
 })

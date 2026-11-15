@@ -19,7 +19,11 @@ export interface CoachVoiceOptions {
 }
 
 import { configureAudioSession, getSharedAudioContext } from './web-audio-cadence-engine'
-import { getCoachAudioMode } from './sfx-audio'
+import {
+  COACH_AUDIO_MODE_EVENT_NAME,
+  getCoachAudioMode,
+  type CoachAudioMode,
+} from './sfx-audio'
 
 let cachedCoachVoice: SpeechSynthesisVoice | null = null
 
@@ -348,6 +352,7 @@ export const COMMON_COACH_GORDON_CUES = [
  */
 export async function prefetchCoachVoiceCue(text: string, voiceId: string = COACH_GORDON_VOICE_ID): Promise<string | null> {
   if (typeof window === 'undefined' || navigator.webdriver) return null
+  if (getCoachAudioMode() !== 'voice_and_chimes') return null
 
   const cleanText = sanitizeCoachSpeechText(text)
   if (!cleanText) return null
@@ -409,15 +414,23 @@ export async function prefetchCoachVoiceCue(text: string, voiceId: string = COAC
   return null
 }
 
+let hasScheduledCommonVoicePrefetch = false
+
 /**
- * Pre-warms common in-gym cues into browser memory using requestIdleCallback
+ * Pre-warms common in-gym cues into browser memory using requestIdleCallback,
+ * strictly gated behind explicit 'voice_and_chimes' mode to honor default-muted audio posture.
  */
 export function prefetchCommonCoachVoiceCues(): void {
   if (typeof window === 'undefined' || navigator.webdriver) return
+  if (getCoachAudioMode() !== 'voice_and_chimes') return
+  if (hasScheduledCommonVoicePrefetch) return
+  hasScheduledCommonVoicePrefetch = true
+
   const runner = async () => {
     // Batch in groups of 4 to prevent network starvation or rate limit spikes
     const batchSize = 4
     for (let i = 0; i < COMMON_COACH_GORDON_CUES.length; i += batchSize) {
+      if (getCoachAudioMode() !== 'voice_and_chimes') break
       const chunk = COMMON_COACH_GORDON_CUES.slice(i, i + batchSize)
       await Promise.allSettled(chunk.map(cue => prefetchCoachVoiceCue(cue)))
     }
@@ -431,7 +444,17 @@ export function prefetchCommonCoachVoiceCues(): void {
 }
 
 if (typeof window !== 'undefined') {
-  prefetchCommonCoachVoiceCues()
+  if (getCoachAudioMode() === 'voice_and_chimes') {
+    prefetchCommonCoachVoiceCues()
+  }
+  window.addEventListener(COACH_AUDIO_MODE_EVENT_NAME, (e: Event) => {
+    const mode = (e as CustomEvent<{ mode?: CoachAudioMode }>).detail?.mode ?? getCoachAudioMode()
+    if (mode === 'voice_and_chimes') {
+      prefetchCommonCoachVoiceCues()
+    } else {
+      stopCoachVoiceCue()
+    }
+  })
 }
 
 /**

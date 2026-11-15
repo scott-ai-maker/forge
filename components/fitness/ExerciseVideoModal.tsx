@@ -142,14 +142,17 @@ export default function ExerciseVideoModal({
               background: 'rgba(255,255,255,0.08)',
               border: 'none',
               color: '#FFFFFF',
-              width: 32,
-              height: 32,
-              borderRadius: 16,
+              minWidth: 44,
+              minHeight: 44,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
               fontSize: 16,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             ✕
@@ -165,14 +168,16 @@ export default function ExerciseVideoModal({
           }}
         >
           {(card.studioVideoUrl || (card.embedUrl && (card.imageUrl || card.fallbackImageUrl))) && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+            <div role="group" aria-label="Exercise demonstration media format" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
               {card.studioVideoUrl && (
                 <button
                   type="button"
+                  aria-pressed={activeMediaTab === 'studio'}
                   onClick={() => setActiveMediaTab('studio')}
                   className="tactile-btn"
                   style={{
-                    padding: '5px 12px',
+                    minHeight: 44,
+                    padding: '8px 12px',
                     fontSize: 11,
                     fontWeight: 700,
                     borderRadius: 4,
@@ -204,10 +209,12 @@ export default function ExerciseVideoModal({
               )}
               <button
                 type="button"
+                aria-pressed={activeMediaTab === 'photo'}
                 onClick={() => setActiveMediaTab('photo')}
                 className="tactile-btn"
                 style={{
-                  padding: '5px 12px',
+                  minHeight: 44,
+                  padding: '8px 12px',
                   fontSize: 11,
                   fontWeight: 700,
                   borderRadius: 4,
@@ -239,10 +246,12 @@ export default function ExerciseVideoModal({
               {card.embedUrl && (
                 <button
                   type="button"
+                  aria-pressed={activeMediaTab === 'video'}
                   onClick={() => setActiveMediaTab('video')}
                   className="tactile-btn"
                   style={{
-                    padding: '5px 12px',
+                    minHeight: 44,
+                    padding: '8px 12px',
                     fontSize: 11,
                     fontWeight: 700,
                     borderRadius: 4,
@@ -267,7 +276,7 @@ export default function ExerciseVideoModal({
                     size={12}
                     tone={activeMediaTab === 'video' ? 'cyan' : 'slate'}
                   />
-                  <span>Official NASM Video</span>
+                  <span>Video Demonstration</span>
                 </button>
               )}
             </div>

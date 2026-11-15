@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
+import { useMemo, useState, useCallback, useEffect, useRef, useId } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 
@@ -905,6 +905,9 @@ export default function FitnessTrackerClient({
     return map[first]
   }, [clientInjuries])
 
+  const [expandedExerciseKey, setExpandedExerciseKey] = useState<string | null>(null)
+  const [_showUnifiedSessionModal, _setShowUnifiedSessionModal] = useState<boolean>(false)
+
   const handleExerciseSwap = useCallback((
     workoutDay: number,
     oldExercise: WorkoutExercise,
@@ -944,6 +947,7 @@ export default function FitnessTrackerClient({
       ...prev,
       [workoutDay]: currentDayExercises,
     }))
+    setExpandedExerciseKey(`${workoutDay}-${substitution.name}`)
 
     triggerHaptic('success')
     setStatus(`✓ Substituted "${oldExercise.name}" with "${substitution.name}" (${substitution.reasoning})`)
@@ -965,9 +969,6 @@ export default function FitnessTrackerClient({
       [`${day}-${stage}`]: !prev[`${day}-${stage}`],
     }))
   }
-
-  const [expandedExerciseKey, setExpandedExerciseKey] = useState<string | null>(null)
-  const [_showUnifiedSessionModal, _setShowUnifiedSessionModal] = useState<boolean>(false)
 
   // 1. Modular Superset Controller & NASM OPT Phase Governance
   const {
@@ -1238,9 +1239,10 @@ export default function FitnessTrackerClient({
     }
     const currentDay = effectiveActiveWorkoutDay
     const workout = planWorkouts.find(w => w.day === currentDay) ?? planWorkouts[0]
-    if (workout && workout.exercises && workout.exercises.length > 0) {
+    const dayExercises = workout ? (adaptedExercisesByDay[workout.day] ?? workout.exercises) : undefined
+    if (workout && dayExercises && dayExercises.length > 0) {
       const effectiveSessionDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
-      const firstUnfinished = workout.exercises.find(ex => {
+      const firstUnfinished = dayExercises.find(ex => {
         const setsLogged = (activeSetLogs || []).filter(l =>
           normalizeExerciseName(l.exercise_name) === normalizeExerciseName(ex.name) &&
           extractWorkoutDayTag(l.notes) === workout.day &&
@@ -1249,11 +1251,11 @@ export default function FitnessTrackerClient({
         ).length
         const targetSets = parseInt(String(ex.sets).trim(), 10) || 3
         return setsLogged < targetSets
-      }) ?? workout.exercises[0]
+      }) ?? dayExercises[0]
       return `${workout.day}-${firstUnfinished.name}`
     }
     return null
-  }, [expandedExerciseKey, effectiveActiveWorkoutDay, planWorkouts, activeSetLogs, microcycleProgress.currentWeek])
+  }, [expandedExerciseKey, effectiveActiveWorkoutDay, planWorkouts, adaptedExercisesByDay, activeSetLogs, microcycleProgress.currentWeek])
 
   // Coach Gordon Real-Time Workout Action Execution Listeners
   useEffect(() => {
@@ -2886,8 +2888,9 @@ export default function FitnessTrackerClient({
     planWorkouts,
   ])
 
-  async function handleSkipExercise(workout: WorkoutDay, exercise: WorkoutExercise, reason: string, _notes: string) {
-    await fetch('/api/fitness/skip-exercise', {
+  async function handleSkipExercise(workout: WorkoutDay, exercise: WorkoutExercise, reason: string, notes: string) {
+    const trimmedNotes = notes.trim()
+    const res = await fetch('/api/fitness/skip-exercise', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2895,9 +2898,15 @@ export default function FitnessTrackerClient({
         exercise_name: exercise.name,
         workout_day: workout.day,
         reason,
+        ...(trimmedNotes ? { notes: trimmedNotes } : {}),
       }),
     })
     setSkipModal(null)
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}))
+      setStatus(errJson?.error ? `Unable to log skip: ${errJson.error}` : `Skipped ${exercise.name} locally.`)
+      return
+    }
     setStatus(`Skipped ${exercise.name}.`)
   }
 
@@ -4354,9 +4363,9 @@ export default function FitnessTrackerClient({
                               sets: String(ae.sets),
                               reps: ae.reps,
                               tempo: ae.tempo ?? null,
-                              rest: null,
+                              rest: ae.restSeconds ? `${ae.restSeconds}s` : null,
                               notes: ae.coachingCue ?? null,
-                              description: null,
+                              description: ae.notes ?? null,
                               primaryEquipment: null,
                               imageUrl: null,
                               videoUrl: null,
@@ -4596,7 +4605,7 @@ export default function FitnessTrackerClient({
 
                         return (
                           <li
-                            key={exItemKey}
+                            key={`${workout.day}-slot-${exIdx}`}
                             id={`exercise-item-${workout.day}-${exIdx}`}
                             style={{ marginBottom: 12, listStyle: 'none', maxWidth: '100%', minWidth: 0 }}
                           >
@@ -7227,10 +7236,91 @@ function PostWorkoutFinishModal({
   }) {
     const [reason, setReason] = useState('other')
     const [notes, setNotes] = useState('')
+    const dialogRef = useRef<HTMLDialogElement | null>(null)
+    const headingId = useId()
+    const reasonId = useId()
+    const notesId = useId()
+    const onCloseRef = useRef(onClose)
+    onCloseRef.current = onClose
+
+    useEffect(() => {
+      const dialog = dialogRef.current
+      if (!dialog) return
+
+      if (typeof dialog.showModal === 'function' && !dialog.open) {
+        try {
+          dialog.showModal()
+        } catch {
+          dialog.setAttribute('open', '')
+        }
+      }
+
+      const handleNativeClose = () => {
+        dialog.returnValue = ''
+        onCloseRef.current()
+      }
+      dialog.addEventListener('close', handleNativeClose)
+
+      let handleBackdropClick: ((event: MouseEvent) => void) | null = null
+      if (typeof HTMLDialogElement !== 'undefined' && !('closedBy' in HTMLDialogElement.prototype)) {
+        handleBackdropClick = (event: MouseEvent) => {
+          if (event.target !== dialog) return
+          const rect = dialog.getBoundingClientRect()
+          const isDialogContent =
+            rect.top <= event.clientY &&
+            event.clientY <= rect.top + rect.height &&
+            rect.left <= event.clientX &&
+            event.clientX <= rect.left + rect.width
+          if (!isDialogContent) {
+            if (typeof dialog.close === 'function') {
+              dialog.close()
+            } else {
+              onCloseRef.current()
+            }
+          }
+        }
+        dialog.addEventListener('click', handleBackdropClick)
+      }
+
+      return () => {
+        dialog.removeEventListener('close', handleNativeClose)
+        if (handleBackdropClick) {
+          dialog.removeEventListener('click', handleBackdropClick)
+        }
+      }
+    }, [])
+
+    const handleDismiss = () => {
+      const dialog = dialogRef.current
+      if (dialog?.open && typeof dialog.close === 'function') {
+        dialog.close()
+      } else {
+        onClose()
+      }
+    }
+
     return (
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(4,7,14,0.85)', backdropFilter: 'blur(8px)', zIndex: 100050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-        <div style={{ background: 'linear-gradient(180deg, #0D1629 0%, #080D1A 100%)', border: '1px solid rgba(212,160,23,0.4)', borderRadius: 10, padding: 24, maxWidth: 440, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }}>
-          <h3 style={{ margin: '0 0 6px', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 19, letterSpacing: '0.04em', fontWeight: 700, color: '#FFFFFF' }}>
+      <dialog
+        ref={dialogRef}
+        aria-labelledby={headingId}
+        data-testid="skip-exercise-modal"
+        className="forge-glass-modal"
+        {...({ closedby: 'any' } as Record<string, string>)}
+        style={{
+          zIndex: 100050,
+          margin: 'auto',
+          background: 'linear-gradient(180deg, #0D1629 0%, #080D1A 100%)',
+          border: '1px solid rgba(212,160,23,0.4)',
+          borderRadius: 10,
+          padding: 0,
+          maxWidth: 440,
+          width: 'min(440px, calc(100vw - 32px))',
+          color: '#FFFFFF',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+        }}
+      >
+        <div style={{ padding: 24 }}>
+          <h3 id={headingId} style={{ margin: '0 0 6px', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 19, letterSpacing: '0.04em', fontWeight: 700, color: '#FFFFFF' }}>
             Skip: {exercise.name}
           </h3>
           <p style={{ color: 'var(--gray)', fontSize: 12.5, margin: '0 0 14px' }}>
@@ -7265,7 +7355,8 @@ function PostWorkoutFinishModal({
                 type="button"
                 onClick={onOpenSwap}
                 style={{
-                  padding: '7px 12px',
+                  minHeight: 44,
+                  padding: '8px 14px',
                   background: 'var(--gold)',
                   color: '#0A0E18',
                   border: 'none',
@@ -7282,13 +7373,14 @@ function PostWorkoutFinishModal({
             </div>
           )}
 
-          <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 5 }}>
+          <label htmlFor={reasonId} style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 5 }}>
             Primary Skip Reason
-          </div>
+          </label>
           <select
+            id={reasonId}
             value={reason}
             onChange={e => setReason(e.target.value)}
-            style={{ width: '100%', padding: '9px 12px', background: '#090E1A', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: 'var(--white)', fontFamily: 'Raleway, sans-serif', fontSize: 13.5, marginBottom: 12 }}
+            style={{ width: '100%', minHeight: 44, padding: '9px 12px', background: '#090E1A', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: 'var(--white)', fontFamily: 'Raleway, sans-serif', fontSize: 13.5, marginBottom: 12 }}
           >
             <option value="injury">Joint Discomfort / Sports Injury</option>
             <option value="no_equipment">Equipment Busy or Missing</option>
@@ -7312,6 +7404,7 @@ function PostWorkoutFinishModal({
                     <button
                       key={key}
                       type="button"
+                      aria-pressed={isTagged}
                       onClick={() => {
                         if (isTagged) {
                           setNotes(prev => prev.replace(tag, '').trim())
@@ -7320,7 +7413,8 @@ function PostWorkoutFinishModal({
                         }
                       }}
                       style={{
-                        padding: '4px 9px',
+                        minHeight: 44,
+                        padding: '6px 11px',
                         background: isTagged ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.12)',
                         border: isTagged ? '1px solid rgba(239, 68, 68, 0.7)' : '1px solid rgba(239, 68, 68, 0.3)',
                         color: isTagged ? '#FFFFFF' : '#FCA5A5',
@@ -7342,10 +7436,11 @@ function PostWorkoutFinishModal({
             </div>
           )}
 
-          <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 5 }}>
+          <label htmlFor={notesId} style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 5 }}>
             Coach Notes & Context
-          </div>
+          </label>
           <textarea
+            id={notesId}
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Describe any joint discomfort or context for Coach Gordon..."
@@ -7356,20 +7451,20 @@ function PostWorkoutFinishModal({
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button
               type="button"
-              onClick={onClose}
-              style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', color: 'var(--gray)', fontFamily: 'Raleway, sans-serif', borderRadius: 6, cursor: 'pointer', fontSize: 12.5 }}
+              onClick={handleDismiss}
+              style={{ minHeight: 44, padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', color: 'var(--gray)', fontFamily: 'Raleway, sans-serif', borderRadius: 6, cursor: 'pointer', fontSize: 12.5 }}
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={() => onConfirm(reason, notes)}
-              style={{ padding: '8px 18px', background: 'var(--gold)', color: '#0D1B2A', border: 'none', borderRadius: 6, fontFamily: 'var(--font-sans, Raleway), sans-serif', textTransform: 'uppercase', fontSize: 12, letterSpacing: '0.08em', fontWeight: 700, cursor: 'pointer' }}
+              style={{ minHeight: 44, padding: '8px 18px', background: 'var(--gold)', color: '#0D1B2A', border: 'none', borderRadius: 6, fontFamily: 'var(--font-sans, Raleway), sans-serif', textTransform: 'uppercase', fontSize: 12, letterSpacing: '0.08em', fontWeight: 700, cursor: 'pointer' }}
             >
               Log Skip
             </button>
           </div>
         </div>
-      </div>
+      </dialog>
     )
   }

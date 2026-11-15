@@ -18,6 +18,8 @@ import {
   getTodayIsoDate,
   loadPostureProfileState,
 } from '@/lib/posture-profile-state'
+import { sanitizePiiString } from '@/src/lib/safety/clinicalGuardrails'
+import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
 export interface EscalationTelemetryContext {
   optPhase?: number | null
@@ -67,22 +69,54 @@ export default function CoachEscalationModal({
   } | null>(null)
 
   useEffect(() => {
-    if (initialQuestion) {
-      setQuestion(initialQuestion)
-    }
-  }, [initialQuestion])
-
-  useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
     if (open && !dialog.open) {
+      setQuestion(initialQuestion || '')
       setErrorMsg(null)
       setDispatchResult(null)
       dialog.showModal()
     } else if (!open && dialog.open) {
       dialog.close()
     }
-  }, [open])
+  }, [open, initialQuestion])
+
+  // Fallback for browsers without native <dialog closedby="any"> support:
+  // check pointer coordinates against dialog bounding box on both pointerdown and pointerup
+  // so padding clicks or text-selection drags from inside the textarea never dismiss the modal.
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog || typeof HTMLDialogElement === 'undefined') return
+    if ('closedBy' in HTMLDialogElement.prototype) return
+
+    const isOutside = (e: PointerEvent) => {
+      const r = dialog.getBoundingClientRect()
+      return (
+        e.clientX < r.left ||
+        e.clientX > r.right ||
+        e.clientY < r.top ||
+        e.clientY > r.bottom
+      )
+    }
+
+    let pressedOutside = false
+    const onPointerDown = (e: PointerEvent) => {
+      pressedOutside = e.target === dialog && isOutside(e)
+    }
+    const onPointerUp = (e: PointerEvent) => {
+      if (pressedOutside && e.target === dialog && isOutside(e)) {
+        dialog.close()
+      }
+      pressedOutside = false
+    }
+
+    dialog.addEventListener('pointerdown', onPointerDown)
+    dialog.addEventListener('pointerup', onPointerUp)
+    return () => {
+      dialog.removeEventListener('pointerdown', onPointerDown)
+      dialog.removeEventListener('pointerup', onPointerUp)
+    }
+  }, [])
 
   const postureState = typeof window !== 'undefined' ? loadPostureProfileState() : null
   const todayIso = getTodayIsoDate()
@@ -152,14 +186,31 @@ export default function CoachEscalationModal({
       if (!res.ok || !data?.ok) {
         setErrorMsg(data?.error || 'Could not reach relay right now—use the 1-tap direct launch button below.')
       } else {
+        const channelUsed: 'email' | 'sms_priority' =
+          data.channelUsed === 'sms_priority' ? 'sms_priority' : 'email'
         setDispatchResult({
           slaBadge: data.slaBadge,
           responseWindowCopy: data.responseWindowCopy,
           mailtoHref: data.mailtoHref,
           smsHref: data.smsHref,
           messagesThreadHref: data.messagesThreadHref || '/dashboard/messages',
-          channelUsed: data.channelUsed,
+          channelUsed,
         })
+        void trackEvent(
+          channelUsed === 'sms_priority' ? 'escalation_sms' : 'escalation_email',
+          {
+            tier_id: tierId,
+            source_context: sourceContext,
+            sla_badge: data.slaBadge || (isCoachSupport ? '24h Priority SLA' : 'Direct Email'),
+            opt_phase: mergedTelemetry.optPhase ?? null,
+            comfort_score_100: mergedTelemetry.jointComfortScore ?? null,
+            readiness_score_100: mergedTelemetry.readinessIndex ?? null,
+            active_exercise: mergedTelemetry.activeExercise ?? null,
+            safety_flag_active: Boolean(mergedTelemetry.safetyFlagActive),
+            question_preview: sanitizePiiString(question.trim()).slice(0, 180),
+          },
+          { immediate: true }
+        )
       }
     } catch {
       setErrorMsg('Offline right now—tap below to open your email or SMS client with your telemetry pre-filled.')
@@ -171,11 +222,10 @@ export default function CoachEscalationModal({
   return (
     <dialog
       ref={dialogRef}
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       aria-labelledby={headingId}
       onClose={onClose}
-      onClick={e => {
-        if (e.target === e.currentTarget) onClose()
-      }}
+      style={{ zIndex: 100060 }}
       data-testid="coach-escalation-modal"
       className="forge-glass-modal m-0 h-dvh max-h-dvh w-screen max-w-none overscroll-contain p-0 text-zinc-100 sm:m-auto sm:h-auto sm:max-h-[92dvh] sm:w-[min(94vw,560px)] sm:rounded-2xl"
     >
@@ -211,7 +261,7 @@ export default function CoachEscalationModal({
             type="button"
             onClick={onClose}
             aria-label="Close message composer"
-            className="forge-tactile-press inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#181B22] text-zinc-200 transition-colors hover:border-white/20 hover:bg-[#1D212A]"
+            className="forge-tactile-press inline-flex min-h-[45px] min-w-[45px] shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#181B22] text-zinc-200 transition-colors hover:border-white/20 hover:bg-[#1D212A]"
           >
             <X size={18} strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -296,7 +346,7 @@ export default function CoachEscalationModal({
                 <>
                   <a
                     href={dispatchResult.smsHref}
-                    className="forge-tactile-press inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-400 px-3.5 py-2 text-xs font-extrabold uppercase tracking-wider text-zinc-950"
+                    className="forge-tactile-press inline-flex min-h-[45px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-400 px-3.5 py-2 text-xs font-extrabold uppercase tracking-wider text-zinc-950"
                   >
                     <Smartphone size={14} strokeWidth={1.85} aria-hidden="true" />
                     Open Native SMS Line
@@ -304,7 +354,7 @@ export default function CoachEscalationModal({
                   <Link
                     href={dispatchResult.messagesThreadHref}
                     onClick={onClose}
-                    className="forge-tactile-press inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-[#181B22] px-3.5 py-2 text-xs font-bold text-white"
+                    className="forge-tactile-press inline-flex min-h-[45px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-[#181B22] px-3.5 py-2 text-xs font-bold text-white"
                   >
                     <MessageSquare size={14} strokeWidth={1.85} aria-hidden="true" />
                     Open 24h Priority Thread
@@ -313,7 +363,7 @@ export default function CoachEscalationModal({
               ) : (
                 <a
                   href={dispatchResult.mailtoHref}
-                  className="forge-tactile-press inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-[#181B22] px-3.5 py-2 text-xs font-semibold text-zinc-100 hover:bg-[#1D212A]"
+                  className="forge-tactile-press inline-flex min-h-[45px] items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-[#181B22] px-3.5 py-2 text-xs font-semibold text-zinc-100 hover:bg-[#1D212A]"
                 >
                   <ExternalLink size={13} strokeWidth={1.8} aria-hidden="true" />
                   Also Open in Mail App
@@ -322,7 +372,7 @@ export default function CoachEscalationModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="forge-tactile-press min-h-[44px] rounded-xl border border-white/15 bg-[#090A0D] px-4 py-2 text-xs font-semibold text-zinc-200"
+                className="forge-tactile-press min-h-[45px] rounded-xl border border-white/15 bg-[#090A0D] px-4 py-2 text-xs font-semibold text-zinc-200"
               >
                 Done
               </button>
@@ -359,7 +409,7 @@ export default function CoachEscalationModal({
               <button
                 type="submit"
                 disabled={submitting}
-                className="forge-tactile-press inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-zinc-950 shadow-[0_6px_20px_rgba(52,211,153,0.2)] transition-colors hover:bg-emerald-300 disabled:opacity-60"
+                className="forge-tactile-press inline-flex min-h-[45px] flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-zinc-950 shadow-[0_6px_20px_rgba(52,211,153,0.2)] transition-colors hover:bg-emerald-300 disabled:opacity-60"
               >
                 <Send size={14} strokeWidth={1.85} aria-hidden="true" />
                 <span>
@@ -374,7 +424,7 @@ export default function CoachEscalationModal({
               {isCoachSupport ? (
                 <a
                   href={buildLocalSmsHref()}
-                  className="forge-tactile-press inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-amber-400/40 bg-amber-500/12 px-3.5 py-2.5 text-xs font-bold text-amber-200 hover:bg-amber-500/20"
+                  className="forge-tactile-press inline-flex min-h-[45px] items-center justify-center gap-1.5 rounded-xl border border-amber-400/40 bg-amber-500/12 px-3.5 py-2.5 text-xs font-bold text-amber-200 hover:bg-amber-500/20"
                 >
                   <Smartphone size={14} strokeWidth={1.8} aria-hidden="true" />
                   1-Tap SMS App
@@ -382,7 +432,7 @@ export default function CoachEscalationModal({
               ) : (
                 <a
                   href={buildLocalMailtoFallback()}
-                  className="forge-tactile-press inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-[#181B22] px-3.5 py-2.5 text-xs font-semibold text-zinc-200 hover:bg-[#1D212A]"
+                  className="forge-tactile-press inline-flex min-h-[45px] items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-[#181B22] px-3.5 py-2.5 text-xs font-semibold text-zinc-200 hover:bg-[#1D212A]"
                 >
                   <Mail size={14} strokeWidth={1.8} aria-hidden="true" />
                   Open Mail App

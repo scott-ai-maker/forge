@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useId, useState, useMemo } from 'react'
 import {
   diagnosePosturalDistortions,
   PosturalObservationsInput,
@@ -8,8 +8,63 @@ import {
 } from '@/lib/postural-distortion-engine'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 
+type PresetId = 'pronation' | 'lower' | 'upper' | 'mixed' | 'optimal'
+
+function CheckpointCheckboxRow({
+  id,
+  checked,
+  onChange,
+  label,
+}: {
+  id: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+  label: string
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        minHeight: 44,
+        padding: '4px 0',
+      }}
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        style={{
+          accentColor: 'var(--gold)',
+          width: 18,
+          height: 18,
+          flexShrink: 0,
+          cursor: 'pointer',
+        }}
+      />
+      <label
+        htmlFor={id}
+        style={{
+          fontSize: 12.5,
+          lineHeight: 1.35,
+          color: '#F1F5F9',
+          cursor: 'pointer',
+          flex: 1,
+          padding: '8px 0',
+        }}
+      >
+        {label}
+      </label>
+    </div>
+  )
+}
+
 export default function PosturalDistortionStudio() {
+  const uid = useId()
   const [activeView, setActiveView] = useState<'screener' | 'synergy' | 'cex'>('screener')
+  const [selectedPreset, setSelectedPreset] = useState<PresetId | null>(null)
 
   // Checkpoint 1: Feet & Ankles
   const [feetFlatten, setFeetFlatten] = useState<boolean>(true)
@@ -38,7 +93,8 @@ export default function PosturalDistortionStudio() {
   const [cervicalHyperextend, setCervicalHyperextend] = useState<boolean>(false)
 
   // Pre-set Presets
-  const handleLoadPreset = (preset: 'pronation' | 'lower' | 'upper' | 'mixed' | 'optimal') => {
+  const handleLoadPreset = (preset: PresetId) => {
+    setSelectedPreset(preset)
     // Reset all
     setFeetFlatten(false); setFeetTurnOut(false); setHeelsElevate(false)
     setKneesValgus(false); setKneesVarus(false); setKneesHyperextend(false)
@@ -87,11 +143,12 @@ export default function PosturalDistortionStudio() {
 
   return (
     <div
+      className="postural-distortion-studio"
       style={{
         background: 'linear-gradient(180deg, #0D1424 0%, #070B14 100%)',
         border: '1px solid rgba(212,160,23,0.3)',
         borderRadius: 12,
-        padding: '24px',
+        padding: 'clamp(14px, 3vw, 24px)',
         color: '#FFFFFF',
         boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
       }}
@@ -110,7 +167,7 @@ export default function PosturalDistortionStudio() {
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span
               style={{
                 fontSize: 11,
@@ -133,7 +190,7 @@ export default function PosturalDistortionStudio() {
           <h3
             style={{
               fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-              fontSize: 20,
+              fontSize: 'clamp(16px, 2.5vw, 20px)',
               fontWeight: 700,
               letterSpacing: '0.04em',
               margin: '6px 0 0',
@@ -145,7 +202,11 @@ export default function PosturalDistortionStudio() {
         </div>
 
         {/* View Navigation */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <div
+          role="group"
+          aria-label="Postural distortion studio views"
+          style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}
+        >
           {[
             { id: 'screener', label: '5-Checkpoint Screen', icon: 'microscope' as const },
             { id: 'synergy', label: 'Synergy Decoder Matrix', icon: 'lightning' as const },
@@ -154,13 +215,15 @@ export default function PosturalDistortionStudio() {
             <button
               key={tab.id}
               type="button"
+              aria-pressed={activeView === tab.id}
               onClick={() => setActiveView(tab.id as 'screener' | 'synergy' | 'cex')}
               style={{
                 background: activeView === tab.id ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
                 color: activeView === tab.id ? '#0A0E18' : 'var(--gray)',
-                border: activeView === tab.id ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)',
+                border: activeView === tab.id ? '1.5px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 6,
-                padding: '7px 14px',
+                minHeight: 44,
+                padding: '8px 14px',
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -178,11 +241,12 @@ export default function PosturalDistortionStudio() {
 
       {/* ── Diagnosis Hero Banner ────────────────────────────────────── */}
       <div
+        aria-live="polite"
         style={{
           background: 'linear-gradient(135deg, rgba(212,160,23,0.12) 0%, rgba(13,20,36,0.95) 100%)',
           border: '1px solid rgba(212,160,23,0.4)',
           borderRadius: 10,
-          padding: '20px 24px',
+          padding: 'clamp(14px, 2.5vw, 20px) clamp(14px, 3vw, 24px)',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
           gap: 20,
@@ -194,7 +258,7 @@ export default function PosturalDistortionStudio() {
           <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800 }}>
             Clinical Postural Classification
           </div>
-          <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 22, fontWeight: 700, margin: '4px 0', color: '#FFF', letterSpacing: '0.04em' }}>
+          <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(18px, 2.5vw, 22px)', fontWeight: 700, margin: '4px 0', color: '#FFF', letterSpacing: '0.04em' }}>
             {diagnosis.title}
           </h4>
           <div style={{ fontSize: 14, fontWeight: 700, color: diagnosis.severityScore > 40 ? '#EF4444' : '#34D399' }}>
@@ -211,150 +275,266 @@ export default function PosturalDistortionStudio() {
             <GaaIcon name="alert-triangle" size={13} tone="ruby" /> Associated Musculoskeletal Injury Risks
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {diagnosis.injuryRisks.map((risk, rIdx) => (
+            {diagnosis.injuryRisks.length > 0 ? (
+              diagnosis.injuryRisks.map((risk, rIdx) => (
+                <span
+                  key={rIdx}
+                  style={{
+                    fontSize: 11,
+                    background: 'rgba(239,68,68,0.15)',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                    color: '#FCA5A5',
+                    padding: '3px 8px',
+                    borderRadius: 4,
+                  }}
+                >
+                  {risk}
+                </span>
+              ))
+            ) : (
               <span
-                key={rIdx}
                 style={{
                   fontSize: 11,
-                  background: 'rgba(239,68,68,0.15)',
-                  border: '1px solid rgba(239,68,68,0.3)',
-                  color: '#FCA5A5',
+                  background: 'rgba(52,211,153,0.15)',
+                  border: '1px solid rgba(52,211,153,0.35)',
+                  color: '#6EE7B7',
                   padding: '3px 8px',
                   borderRadius: 4,
                 }}
               >
-                {risk}
+                Low soft-tissue strain risk under controlled loading
               </span>
-            ))}
+            )}
           </div>
         </div>
       </div>
 
       {/* ── Quick Diagnostic Presets ──────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+      <div
+        role="group"
+        aria-label="Diagnostic posture presets"
+        style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}
+      >
         <span style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Diagnostic Presets:
         </span>
         {[
-          { id: 'pronation', label: 'Pronation Distortion' },
-          { id: 'lower', label: 'Lower Crossed (APT)' },
-          { id: 'upper', label: 'Upper Crossed (Forward Head)' },
-          { id: 'mixed', label: 'Mixed Syndromes' },
-          { id: 'optimal', label: 'Optimal Posture' },
-        ].map(preset => (
-          <button
-            key={preset.id}
-            type="button"
-            onClick={() => handleLoadPreset(preset.id as 'pronation' | 'lower' | 'upper' | 'mixed' | 'optimal')}
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.14)',
-              color: '#FFF',
-              padding: '4px 10px',
-              borderRadius: 4,
-              fontSize: 11,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            {preset.label}
-          </button>
-        ))}
+          { id: 'pronation' as const, label: 'Pronation Distortion' },
+          { id: 'lower' as const, label: 'Lower Crossed (APT)' },
+          { id: 'upper' as const, label: 'Upper Crossed (Forward Head)' },
+          { id: 'mixed' as const, label: 'Mixed Syndromes' },
+          { id: 'optimal' as const, label: 'Optimal Posture' },
+        ].map(preset => {
+          const isActivePreset = selectedPreset === preset.id
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              aria-pressed={isActivePreset}
+              onClick={() => handleLoadPreset(preset.id)}
+              style={{
+                background: isActivePreset ? 'rgba(212,160,23,0.2)' : 'rgba(255,255,255,0.06)',
+                border: isActivePreset ? '1.5px solid var(--gold)' : '1px solid rgba(255,255,255,0.14)',
+                color: isActivePreset ? 'var(--gold-lt)' : '#FFF',
+                minHeight: 44,
+                padding: '8px 12px',
+                borderRadius: 6,
+                fontSize: 11.5,
+                fontWeight: isActivePreset ? 800 : 600,
+                cursor: 'pointer',
+              }}
+            >
+              {preset.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* ── VIEW 1: 5-CHECKPOINT SCREENER ────────────────────────────── */}
       {activeView === 'screener' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 14 }}>
           {/* Checkpoint 1 */}
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 700, marginBottom: 8 }}>
+          <fieldset style={{ margin: 0, minWidth: 0, background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <legend style={{ padding: '0 4px', fontSize: 12, color: 'var(--gold-lt)', fontWeight: 700 }}>
               1. Feet & Ankles
-            </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 6, cursor: 'pointer' }}>
-              <input type="checkbox" checked={feetFlatten} onChange={e => setFeetFlatten(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Feet Flatten / Evert (Pronation)
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 6, cursor: 'pointer' }}>
-              <input type="checkbox" checked={feetTurnOut} onChange={e => setFeetTurnOut(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Feet Turn Outward
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer' }}>
-              <input type="checkbox" checked={heelsElevate} onChange={e => setHeelsElevate(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Heels Rise Early
-            </label>
-          </div>
+            </legend>
+            <CheckpointCheckboxRow
+              id={`${uid}-feet-flatten`}
+              checked={feetFlatten}
+              onChange={v => {
+                setSelectedPreset(null)
+                setFeetFlatten(v)
+              }}
+              label="Feet Flatten / Evert (Pronation)"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-feet-turn-out`}
+              checked={feetTurnOut}
+              onChange={v => {
+                setSelectedPreset(null)
+                setFeetTurnOut(v)
+              }}
+              label="Feet Turn Outward"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-heels-elevate`}
+              checked={heelsElevate}
+              onChange={v => {
+                setSelectedPreset(null)
+                setHeelsElevate(v)
+              }}
+              label="Heels Rise Early"
+            />
+          </fieldset>
 
           {/* Checkpoint 2 */}
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ fontSize: 12, color: '#60A5FA', fontWeight: 700, marginBottom: 8 }}>
+          <fieldset style={{ margin: 0, minWidth: 0, background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <legend style={{ padding: '0 4px', fontSize: 12, color: '#60A5FA', fontWeight: 700 }}>
               2. Knee Complex
-            </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 6, cursor: 'pointer' }}>
-              <input type="checkbox" checked={kneesValgus} onChange={e => setKneesValgus(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Knees Move Inward (Valgus)
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 6, cursor: 'pointer' }}>
-              <input type="checkbox" checked={kneesVarus} onChange={e => setKneesVarus(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Knees Move Outward (Varus)
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer' }}>
-              <input type="checkbox" checked={kneesHyperextend} onChange={e => setKneesHyperextend(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Knees Hyperextended (Genu Recurvatum)
-            </label>
-          </div>
+            </legend>
+            <CheckpointCheckboxRow
+              id={`${uid}-knees-valgus`}
+              checked={kneesValgus}
+              onChange={v => {
+                setSelectedPreset(null)
+                setKneesValgus(v)
+                if (v) setKneesVarus(false)
+              }}
+              label="Knees Move Inward (Valgus)"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-knees-varus`}
+              checked={kneesVarus}
+              onChange={v => {
+                setSelectedPreset(null)
+                setKneesVarus(v)
+                if (v) setKneesValgus(false)
+              }}
+              label="Knees Move Outward (Varus)"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-knees-hyperextend`}
+              checked={kneesHyperextend}
+              onChange={v => {
+                setSelectedPreset(null)
+                setKneesHyperextend(v)
+              }}
+              label="Knees Hyperextended (Genu Recurvatum)"
+            />
+          </fieldset>
 
           {/* Checkpoint 3 */}
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ fontSize: 12, color: '#34D399', fontWeight: 700, marginBottom: 8 }}>
+          <fieldset style={{ margin: 0, minWidth: 0, background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <legend style={{ padding: '0 4px', fontSize: 12, color: '#34D399', fontWeight: 700 }}>
               3. Lumbo-Pelvic-Hip (LPHC)
-            </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 6, cursor: 'pointer' }}>
-              <input type="checkbox" checked={anteriorTilt} onChange={e => setAnteriorTilt(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Anterior Pelvic Tilt (Hyperlordosis)
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 6, cursor: 'pointer' }}>
-              <input type="checkbox" checked={posteriorTilt} onChange={e => setPosteriorTilt(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Posterior Pelvic Tilt (Flat-Back)
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer' }}>
-              <input type="checkbox" checked={forwardLean} onChange={e => setForwardLean(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Excessive Forward Trunk Lean
-            </label>
-          </div>
+            </legend>
+            <CheckpointCheckboxRow
+              id={`${uid}-anterior-tilt`}
+              checked={anteriorTilt}
+              onChange={v => {
+                setSelectedPreset(null)
+                setAnteriorTilt(v)
+                if (v) setPosteriorTilt(false)
+              }}
+              label="Anterior Pelvic Tilt (Hyperlordosis)"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-posterior-tilt`}
+              checked={posteriorTilt}
+              onChange={v => {
+                setSelectedPreset(null)
+                setPosteriorTilt(v)
+                if (v) setAnteriorTilt(false)
+              }}
+              label="Posterior Pelvic Tilt (Flat-Back)"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-forward-lean`}
+              checked={forwardLean}
+              onChange={v => {
+                setSelectedPreset(null)
+                setForwardLean(v)
+              }}
+              label="Excessive Forward Trunk Lean"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-asym-shift`}
+              checked={asymShift}
+              onChange={v => {
+                setSelectedPreset(null)
+                setAsymShift(v)
+              }}
+              label="Asymmetric Weight Shift"
+            />
+          </fieldset>
 
           {/* Checkpoint 4 */}
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ fontSize: 12, color: '#F59E0B', fontWeight: 700, marginBottom: 8 }}>
+          <fieldset style={{ margin: 0, minWidth: 0, background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <legend style={{ padding: '0 4px', fontSize: 12, color: '#F59E0B', fontWeight: 700 }}>
               4. Shoulders & Thoracic
-            </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 6, cursor: 'pointer' }}>
-              <input type="checkbox" checked={roundedShoulders} onChange={e => setRoundedShoulders(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Rounded / Protracted Shoulders
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 6, cursor: 'pointer' }}>
-              <input type="checkbox" checked={shouldersElevated} onChange={e => setShouldersElevated(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Shoulders Elevated / Shrugged
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer' }}>
-              <input type="checkbox" checked={armsFallForward} onChange={e => setArmsFallForward(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Arms Fall Forward (Lat Dominance)
-            </label>
-          </div>
+            </legend>
+            <CheckpointCheckboxRow
+              id={`${uid}-rounded-shoulders`}
+              checked={roundedShoulders}
+              onChange={v => {
+                setSelectedPreset(null)
+                setRoundedShoulders(v)
+              }}
+              label="Rounded / Protracted Shoulders"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-shoulders-elevated`}
+              checked={shouldersElevated}
+              onChange={v => {
+                setSelectedPreset(null)
+                setShouldersElevated(v)
+              }}
+              label="Shoulders Elevated / Shrugged"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-scapular-winging`}
+              checked={scapularWinging}
+              onChange={v => {
+                setSelectedPreset(null)
+                setScapularWinging(v)
+              }}
+              label="Scapular Winging"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-arms-fall-forward`}
+              checked={armsFallForward}
+              onChange={v => {
+                setSelectedPreset(null)
+                setArmsFallForward(v)
+              }}
+              label="Arms Fall Forward (Lat Dominance)"
+            />
+          </fieldset>
 
           {/* Checkpoint 5 */}
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ fontSize: 12, color: '#A78BFA', fontWeight: 700, marginBottom: 8 }}>
+          <fieldset style={{ margin: 0, minWidth: 0, background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <legend style={{ padding: '0 4px', fontSize: 12, color: '#A78BFA', fontWeight: 700 }}>
               5. Head & Cervical Spine
-            </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 6, cursor: 'pointer' }}>
-              <input type="checkbox" checked={forwardHead} onChange={e => setForwardHead(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Forward Head Carriage
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer' }}>
-              <input type="checkbox" checked={cervicalHyperextend} onChange={e => setCervicalHyperextend(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-              Cervical Spine Hyperextension
-            </label>
-          </div>
+            </legend>
+            <CheckpointCheckboxRow
+              id={`${uid}-forward-head`}
+              checked={forwardHead}
+              onChange={v => {
+                setSelectedPreset(null)
+                setForwardHead(v)
+              }}
+              label="Forward Head Carriage"
+            />
+            <CheckpointCheckboxRow
+              id={`${uid}-cervical-hyperextend`}
+              checked={cervicalHyperextend}
+              onChange={v => {
+                setSelectedPreset(null)
+                setCervicalHyperextend(v)
+              }}
+              label="Cervical Spine Hyperextension"
+            />
+          </fieldset>
         </div>
       )}
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sanitizeCoachSpeechText, COACH_GORDON_ELEVENLABS_VOICE_ID } from '@/lib/coach-voice-synthesizer'
 import { getRequestAuthz, requireRole, requireActiveClient, AuthzError } from '@/lib/authz'
 import { enforceRateLimit, getClientIp } from '@/lib/rate-limit'
+import { validateCoachBrandSafetyOutput } from '@/src/lib/safety/clinicalGuardrails'
 
 // In-memory LRU audio buffer cache (avoids repeated API calls for identical cues)
 const audioBufferCache = new Map<string, { buffer: ArrayBuffer; contentType: string; cachedAt: number }>()
@@ -22,9 +23,10 @@ async function authenticateAndRateLimit(req: NextRequest) {
     requireActiveClient(authz.client)
     userId = authz.user.id
   } catch (error) {
+    const isNonProd = process.env.NODE_ENV !== 'production'
     const isDev = process.env.NODE_ENV === 'development'
     const isTest = process.env.NODE_ENV === 'test'
-    const isAnonPreview = process.env.NEXT_PUBLIC_ALLOW_ANON_PREVIEW === 'true'
+    const isAnonPreview = isNonProd && process.env.NEXT_PUBLIC_ALLOW_ANON_PREVIEW === 'true'
     if (!isDev && !isTest && !isAnonPreview) {
       const status = error instanceof AuthzError ? error.status : 401
       const message = error instanceof Error ? error.message : 'Unauthorized'
@@ -93,7 +95,8 @@ function setCachedAudio(key: string, buffer: ArrayBuffer, contentType: string) {
 }
 
 async function handleTtsRequest(rawText: string, voiceIdOverride?: string) {
-  const cleanText = sanitizeCoachSpeechText(rawText)
+  const brandSafe = validateCoachBrandSafetyOutput(rawText)
+  const cleanText = sanitizeCoachSpeechText(brandSafe.cleanText)
   if (!cleanText) {
     return NextResponse.json({ error: 'Clean text is empty' }, { status: 400 })
   }
@@ -108,7 +111,7 @@ async function handleTtsRequest(rawText: string, voiceIdOverride?: string) {
       status: 200,
       headers: {
         'Content-Type': cached.contentType,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'private, max-age=86400',
         'X-Forge-Voice-Provider': 'cache',
       },
     })
@@ -149,7 +152,7 @@ async function handleTtsRequest(rawText: string, voiceIdOverride?: string) {
           status: 200,
           headers: {
             'Content-Type': 'audio/mpeg',
-            'Cache-Control': 'public, max-age=86400',
+            'Cache-Control': 'private, max-age=86400',
             'X-Forge-Voice-Provider': 'elevenlabs-coach-gordon',
           },
         })
@@ -175,32 +178,15 @@ async function handleTtsRequest(rawText: string, voiceIdOverride?: string) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await authenticateAndRateLimit(req)
+    if (!auth.authorized) {
+      return auth.response!
+    }
+
     const body = await req.json().catch(() => ({}))
     const rawText = body.text
     if (!rawText || typeof rawText !== 'string' || !rawText.trim()) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 })
-    }
-
-    const cleanText = sanitizeCoachSpeechText(rawText)
-    const voiceId = body.voiceId || DEFAULT_ELEVENLABS_VOICE_ID
-    const cacheKey = `tts_${voiceId}_${cleanText.slice(0, 120)}_${cleanText.length}`
-
-    // Check in-memory server cache first (instant return with zero DB or ElevenLabs overhead)
-    const cached = audioBufferCache.get(cacheKey)
-    if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
-      return new NextResponse(cached.buffer, {
-        status: 200,
-        headers: {
-          'Content-Type': cached.contentType,
-          'Cache-Control': 'public, max-age=86400',
-          'X-Forge-Voice-Provider': 'cache',
-        },
-      })
-    }
-
-    const auth = await authenticateAndRateLimit(req)
-    if (!auth.authorized) {
-      return auth.response!
     }
 
     return handleTtsRequest(rawText, body.voiceId)

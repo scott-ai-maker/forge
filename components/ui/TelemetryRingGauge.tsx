@@ -57,11 +57,18 @@ export default function TelemetryRingGauge({
   const dashOffset = circumference * (1 - ratio)
   const palette = TONE_MAP[tone]
 
+  const accessibleLabel = label
+    ? label.includes(String(clamped))
+      ? label
+      : `${label}: ${clamped} out of ${max}`
+    : undefined
+
   return (
     <div
+      role={accessibleLabel ? 'img' : undefined}
       className={`relative inline-flex shrink-0 items-center justify-center select-none ${className}`}
       style={{ width: size, height: size }}
-      aria-label={label ? `${label}: ${clamped} out of ${max}` : undefined}
+      aria-label={accessibleLabel}
     >
       <svg
         width={size}
@@ -96,7 +103,10 @@ export default function TelemetryRingGauge({
           }}
         />
       </svg>
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center leading-none">
+      <div
+        aria-hidden={accessibleLabel ? 'true' : undefined}
+        className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center leading-none"
+      >
         <span className={`font-mono text-sm font-bold tabular-nums ${palette.textClass}`}>
           {clamped}
           {unit}

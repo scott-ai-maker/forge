@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
@@ -75,6 +75,8 @@ export default function GlobalCoachGordonHost() {
   const isFabVisible = shouldShowCoachGordonFab(pathname)
   const [isOpen, setIsOpen] = useState(false)
   const [context, setContext] = useState<CoachGordonContext>({})
+  const fabRef = useRef<HTMLButtonElement | null>(null)
+  const wasOpenRef = useRef(false)
 
   const handleOpen = useCallback((customContext?: CoachGordonContext) => {
     if (customContext && Object.keys(customContext).length > 0) {
@@ -86,6 +88,22 @@ export default function GlobalCoachGordonHost() {
   const handleClose = useCallback(() => {
     setIsOpen(false)
   }, [])
+
+  // Restore keyboard focus to the triggering FAB when the Coach Gordon drawer closes
+  useEffect(() => {
+    if (isOpen) {
+      wasOpenRef.current = true
+      return
+    }
+    if (wasOpenRef.current && isFabVisible) {
+      wasOpenRef.current = false
+      const raf = window.requestAnimationFrame(() => {
+        fabRef.current?.focus({ preventScroll: true })
+      })
+      return () => window.cancelAnimationFrame(raf)
+    }
+    wasOpenRef.current = false
+  }, [isOpen, isFabVisible])
 
   // Auto-hydrate profile if opening on /dashboard without prior context
   useEffect(() => {
@@ -220,6 +238,7 @@ export default function GlobalCoachGordonHost() {
       {/* Global Ask Coach Gordon button */}
       {isFabVisible && !isOpen && (
         <button
+          ref={fabRef}
           type="button"
           onClick={() => {
             triggerHaptic('tap')

@@ -17,6 +17,7 @@ import {
   chunkTextIntoSpeechSentences,
   getAuthoritativeCoachVoice,
   sanitizeCoachSpeechText,
+  stopCoachVoiceCue,
 } from '@/lib/coach-voice-synthesizer'
 import {
   COACH_AUDIO_MODE_EVENT_NAME,
@@ -372,6 +373,7 @@ function notifyPlaybackState(isSpeaking: boolean, activeId: string | null) {
 
 function stopLowLevelAudioImmediately(): void {
   clearSpeechKeepalive()
+  stopCoachVoiceCue()
   try {
     const ctx = getSharedCoachAudioContext()
     if (activeBufferGain && ctx) {

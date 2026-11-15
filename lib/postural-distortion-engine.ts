@@ -297,7 +297,7 @@ export function diagnosePosturalDistortions(
       })
     }
 
-    if (anteriorPelvicTilt || isLowerCrossed) {
+    if (anteriorPelvicTilt || (isLowerCrossed && !posteriorPelvicTilt)) {
       synergies.push({
         muscleGroup: 'Lumbo-Pelvic-Hip Complex (Lower Crossed Syndrome)',
         overactiveMuscles: ['Iliopsoas', 'Rectus Femoris', 'Tensor Fasciae Latae (TFL)', 'Erector Spinae', 'Latissimus Dorsi'],

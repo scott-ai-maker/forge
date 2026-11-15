@@ -184,12 +184,36 @@ export interface TelemetryEventMap {
     action_taken: string
     client_note?: string | null
   }
+  escalation_sms: {
+    tier_id: 'core_lab' | 'plus' | 'coach_support'
+    source_context: string
+    sla_badge: string
+    opt_phase?: number | null
+    comfort_score_100?: number | null
+    readiness_score_100?: number | null
+    active_exercise?: string | null
+    safety_flag_active?: boolean
+    question_preview?: string | null
+  }
+  escalation_email: {
+    tier_id: 'core_lab' | 'plus' | 'coach_support'
+    source_context: string
+    sla_badge: string
+    opt_phase?: number | null
+    comfort_score_100?: number | null
+    readiness_score_100?: number | null
+    active_exercise?: string | null
+    safety_flag_active?: boolean
+    question_preview?: string | null
+  }
 }
 
 export type TelemetryEventType = keyof TelemetryEventMap
 
 export const HIGH_PRIORITY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventType> = new Set([
   'safety_flag',
+  'escalation_sms',
+  'escalation_email',
   'workout_completed',
   'posture_scan_completed',
   'desk_ergonomics_completed',

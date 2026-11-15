@@ -241,6 +241,7 @@ export function PostureComparisonInteractiveStage({
 }: PostureComparisonViewerProps) {
   const { tierId } = useTierAccess()
   const isCoachSupport = tierId === 'coach_support'
+  const sliderId = useId()
   const [escalationOpen, setEscalationOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'overlay' | 'side_by_side' | 'day1_preview'>('overlay')
   const [splitPct, setSplitPct] = useState(54)
@@ -253,6 +254,14 @@ export function PostureComparisonInteractiveStage({
   const stageRef = useRef<HTMLDivElement | null>(null)
   const draggingRef = useRef(false)
   const remoteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (sandboxMode) return
+    const sync = () => setDelta(loadPostureProfileState().postureDelta)
+    sync()
+    window.addEventListener(POSTURE_PROFILE_EVENT, sync)
+    return () => window.removeEventListener(POSTURE_PROFILE_EVENT, sync)
+  }, [sandboxMode])
 
   useEffect(() => {
     try {
@@ -409,7 +418,7 @@ export function PostureComparisonInteractiveStage({
             type="button"
             onClick={() => setViewMode('overlay')}
             aria-pressed={viewMode === 'overlay'}
-            className={`forge-tactile-press inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
+            className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
               viewMode === 'overlay'
                 ? 'bg-[#181B22] text-emerald-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                 : 'text-zinc-400 hover:text-white'
@@ -421,7 +430,7 @@ export function PostureComparisonInteractiveStage({
             type="button"
             onClick={() => setViewMode('side_by_side')}
             aria-pressed={viewMode === 'side_by_side'}
-            className={`forge-tactile-press inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
+            className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
               viewMode === 'side_by_side'
                 ? 'bg-[#181B22] text-emerald-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                 : 'text-zinc-400 hover:text-white'
@@ -433,7 +442,7 @@ export function PostureComparisonInteractiveStage({
             type="button"
             onClick={() => setViewMode('day1_preview')}
             aria-pressed={viewMode === 'day1_preview'}
-            className={`forge-tactile-press inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
+            className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 ${
               viewMode === 'day1_preview'
                 ? 'bg-[#181B22] text-emerald-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                 : 'text-zinc-400 hover:text-white'
@@ -503,23 +512,35 @@ export function PostureComparisonInteractiveStage({
             Current ({currentDeg}°)
           </div>
 
-          <div className="absolute inset-x-3 bottom-2.5 rounded-xl border border-white/10 bg-[#111318]/85 px-3.5 py-2 backdrop-blur-xl">
-            <label className="flex items-center gap-3 text-[11px] font-semibold text-zinc-200">
-              <span className="shrink-0">Scrub Mesh</span>
+          <div className="absolute inset-x-3 bottom-2.5 rounded-xl border border-white/10 bg-[#111318]/85 px-3.5 py-1 backdrop-blur-xl">
+            <div className="flex items-center gap-3 text-[11px] font-semibold text-zinc-200">
+              <label htmlFor={sliderId} className="shrink-0 cursor-pointer">
+                Scrub Mesh
+              </label>
               <input
+                id={sliderId}
                 type="range"
                 min={6}
                 max={94}
+                step={1}
                 value={splitPct}
                 onChange={e => setSplitPct(Number(e.target.value))}
                 aria-label="Compare baseline and current 33-point posture alignment"
-                style={{ touchAction: 'pan-y' }}
-                className="h-2 flex-1 cursor-ew-resize accent-emerald-400"
+                aria-valuetext={`${splitPct}% baseline to ${100 - splitPct}% current posture alignment`}
+                style={
+                  {
+                    touchAction: 'pan-y',
+                    '--attr-min': 6,
+                    '--attr-max': 94,
+                    '--control-value': splitPct,
+                  } as React.CSSProperties
+                }
+                className="forge-range-slider flex-1"
               />
               <span className="w-10 text-right font-mono font-bold tabular-nums text-emerald-300">
                 {splitPct}%
               </span>
-            </label>
+            </div>
           </div>
         </div>
       ) : viewMode === 'side_by_side' ? (
@@ -730,6 +751,36 @@ export default function PostureComparisonCard({
     }
   }, [isDialogShown, sandboxMode])
 
+  useEffect(() => {
+    if (sandboxMode) return
+    const dialog = dialogRef.current
+    if (!dialog || typeof HTMLDialogElement === 'undefined') return
+    if ('closedBy' in HTMLDialogElement.prototype) return
+
+    const isOutside = (e: PointerEvent) => {
+      const r = dialog.getBoundingClientRect()
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom
+    }
+
+    let pressedOutside = false
+    const onPointerDown = (e: PointerEvent) => {
+      pressedOutside = isOutside(e)
+    }
+    const onPointerUp = (e: PointerEvent) => {
+      if (pressedOutside && isOutside(e)) {
+        dialog.close()
+      }
+      pressedOutside = false
+    }
+
+    dialog.addEventListener('pointerdown', onPointerDown)
+    dialog.addEventListener('pointerup', onPointerUp)
+    return () => {
+      dialog.removeEventListener('pointerdown', onPointerDown)
+      dialog.removeEventListener('pointerup', onPointerUp)
+    }
+  }, [sandboxMode])
+
   if (sandboxMode) {
     return <PostureComparisonInteractiveStage sandboxMode />
   }
@@ -807,7 +858,7 @@ export default function PostureComparisonCard({
             <button
               type="button"
               onClick={() => setUpgradeOpen(true)}
-              className="forge-tactile-press inline-flex min-h-[38px] shrink-0 items-center rounded-xl bg-amber-400 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#090A0D]"
+              className="forge-tactile-press inline-flex min-h-[44px] shrink-0 items-center rounded-xl bg-amber-400 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#090A0D]"
             >
               Plus →
             </button>
@@ -817,11 +868,13 @@ export default function PostureComparisonCard({
 
       <dialog
         ref={dialogRef}
+        {...({ closedby: 'any' } as Record<string, string>)}
         aria-labelledby={headingId}
-        onClose={closeFullScreenModal}
-        onClick={e => {
-          if (e.target === e.currentTarget) closeFullScreenModal()
+        onClose={() => {
+          if (dialogRef.current) dialogRef.current.returnValue = ''
+          closeFullScreenModal()
         }}
+        style={{ zIndex: 100055 }}
         className="forge-glass-modal m-0 h-dvh max-h-dvh w-screen max-w-none overscroll-contain p-0 text-zinc-100 sm:m-auto sm:h-auto sm:max-h-[92dvh] sm:w-[min(94vw,660px)] sm:rounded-2xl"
       >
         <div className="flex h-full flex-col overflow-y-auto overscroll-contain p-4 sm:p-6">

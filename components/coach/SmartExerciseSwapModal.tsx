@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import {
   getSmartSubstitutions,
   detectMovementPattern,
@@ -18,6 +18,32 @@ interface SmartExerciseSwapModalProps {
   onClose: () => void
 }
 
+function normalizeFilterChipDiscomfort(discomfort?: DiscomfortArea): DiscomfortArea | undefined {
+  if (!discomfort) return undefined
+  if (discomfort === 'rotator_cuff') return 'shoulder'
+  if (discomfort === 'jumpers_knee' || discomfort === 'it_band') return 'knee'
+  return discomfort
+}
+
+const DISCOMFORT_FILTER_TABS: ReadonlyArray<{
+  id: DiscomfortArea | undefined
+  label: string
+  icon: 'lightning' | 'runner' | 'bandage' | 'shield-check' | 'activity' | 'dumbbell'
+}> = [
+  { id: undefined, label: 'All Options', icon: 'lightning' },
+  { id: 'runners_knee', label: "Runner's Knee", icon: 'runner' },
+  { id: 'tennis_elbow', label: 'Tennis Elbow', icon: 'bandage' },
+  { id: 'golfers_elbow', label: "Golfer's Elbow", icon: 'bandage' },
+  { id: 'shoulder', label: 'Shoulder / Rotator Cuff', icon: 'shield-check' },
+  { id: 'lower_back', label: 'Lower Back / Lumbar', icon: 'shield-check' },
+  { id: 'knee', label: 'Knee / Patellar Relief', icon: 'activity' },
+  { id: 'shin_splints', label: 'Shin Splints', icon: 'activity' },
+  { id: 'plantar_fasciitis', label: 'Plantar Fasciitis', icon: 'activity' },
+  { id: 'hamstring', label: 'Hamstring Strain', icon: 'activity' },
+  { id: 'achilles', label: 'Achilles Tendinopathy', icon: 'activity' },
+  { id: 'equipment_busy', label: 'Equipment Busy', icon: 'dumbbell' },
+]
+
 export default function SmartExerciseSwapModal({
   currentExerciseName,
   optPhase = 'Phase 2: Strength Endurance',
@@ -26,7 +52,61 @@ export default function SmartExerciseSwapModal({
   onSelectSubstitution,
   onClose,
 }: SmartExerciseSwapModalProps) {
-  const [selectedDiscomfort, setSelectedDiscomfort] = useState<DiscomfortArea | undefined>(initialDiscomfort)
+  const [selectedDiscomfort, setSelectedDiscomfort] = useState<DiscomfortArea | undefined>(() =>
+    normalizeFilterChipDiscomfort(initialDiscomfort)
+  )
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const headingId = useId()
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (typeof dialog.showModal === 'function' && !dialog.open) {
+      try {
+        dialog.showModal()
+      } catch {
+        dialog.setAttribute('open', '')
+      }
+    }
+
+    const handleNativeClose = () => {
+      dialog.returnValue = ''
+      onCloseRef.current()
+    }
+    dialog.addEventListener('close', handleNativeClose)
+
+    // Light-dismiss coordinate fallback for browsers lacking <dialog closedby="any">
+    let handleBackdropClick: ((event: MouseEvent) => void) | null = null
+    if (typeof HTMLDialogElement !== 'undefined' && !('closedBy' in HTMLDialogElement.prototype)) {
+      handleBackdropClick = (event: MouseEvent) => {
+        if (event.target !== dialog) return
+        const rect = dialog.getBoundingClientRect()
+        const isDialogContent =
+          rect.top <= event.clientY &&
+          event.clientY <= rect.top + rect.height &&
+          rect.left <= event.clientX &&
+          event.clientX <= rect.left + rect.width
+        if (!isDialogContent) {
+          if (typeof dialog.close === 'function') {
+            dialog.close()
+          } else {
+            onCloseRef.current()
+          }
+        }
+      }
+      dialog.addEventListener('click', handleBackdropClick)
+    }
+
+    return () => {
+      dialog.removeEventListener('close', handleNativeClose)
+      if (handleBackdropClick) {
+        dialog.removeEventListener('click', handleBackdropClick)
+      }
+    }
+  }, [])
 
   const pattern = detectMovementPattern(currentExerciseName)
   const substitutions = getSmartSubstitutions(
@@ -36,43 +116,55 @@ export default function SmartExerciseSwapModal({
     availableEquipment
   )
 
+  const handleDismiss = () => {
+    const dialog = dialogRef.current
+    if (dialog?.open && typeof dialog.close === 'function') {
+      dialog.close()
+    } else {
+      onClose()
+    }
+  }
+
   return (
-    <div
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={headingId}
+      data-testid="smart-exercise-swap-modal"
+      className="forge-glass-modal"
+      {...({ closedby: 'any' } as Record<string, string>)}
       style={{
-        position: 'fixed',
-        inset: 0,
         zIndex: 100004,
-        background: 'rgba(4,7,14,0.88)',
-        backdropFilter: 'blur(12px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
+        margin: 'auto',
+        maxWidth: 680,
+        width: 'min(680px, calc(100vw - 32px))',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        background: 'linear-gradient(180deg, #0D1629 0%, #080D1A 100%)',
+        border: '1px solid rgba(212,160,23,0.5)',
+        borderRadius: 14,
+        padding: 0,
+        color: '#FFFFFF',
+        boxShadow: '0 25px 70px rgba(0,0,0,0.9)',
       }}
     >
       <div
         style={{
-          maxWidth: 680,
-          width: '100%',
-          background: 'linear-gradient(180deg, #0D1629 0%, #080D1A 100%)',
-          border: '1px solid rgba(212,160,23,0.5)',
-          borderRadius: 14,
           padding: 24,
-          boxShadow: '0 25px 70px rgba(0,0,0,0.9)',
           display: 'flex',
           flexDirection: 'column',
           gap: 18,
-          maxHeight: '90vh',
-          overflowY: 'auto',
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800 }}>
               NASM Smart Biomechanical Substitution Engine
             </div>
-            <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 20, margin: '4px 0 0', color: '#FFFFFF', letterSpacing: '0.04em' }}>
+            <h2
+              id={headingId}
+              style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 20, margin: '4px 0 0', color: '#FFFFFF', letterSpacing: '0.04em' }}
+            >
               SUBSTITUTE: {currentExerciseName}
             </h2>
             <div style={{ fontSize: 12, color: 'var(--gray)', marginTop: 2 }}>
@@ -82,16 +174,20 @@ export default function SmartExerciseSwapModal({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleDismiss}
+            aria-label="Close exercise substitution dialog"
             style={{
+              minHeight: 45,
+              minWidth: 45,
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.15)',
               color: '#FFFFFF',
               borderRadius: 6,
-              padding: '6px 12px',
+              padding: '8px 14px',
               fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
+              flexShrink: 0,
             }}
           >
             ✕ Close
@@ -103,44 +199,36 @@ export default function SmartExerciseSwapModal({
           <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 6 }}>
             Filter by Joint Discomfort, Sports Injury, or Constraint:
           </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {[
-              { id: undefined, label: 'All Options', icon: 'lightning' as const },
-              { id: 'runners_knee' as DiscomfortArea, label: "Runner's Knee", icon: 'runner' as const },
-              { id: 'tennis_elbow' as DiscomfortArea, label: 'Tennis Elbow', icon: 'bandage' as const },
-              { id: 'golfers_elbow' as DiscomfortArea, label: "Golfer's Elbow", icon: 'bandage' as const },
-              { id: 'shoulder' as DiscomfortArea, label: 'Shoulder / Rotator Cuff', icon: 'shield-check' as const },
-              { id: 'lower_back' as DiscomfortArea, label: 'Lower Back / Lumbar', icon: 'shield-check' as const },
-              { id: 'knee' as DiscomfortArea, label: 'Knee / Patellar Relief', icon: 'activity' as const },
-              { id: 'shin_splints' as DiscomfortArea, label: 'Shin Splints', icon: 'activity' as const },
-              { id: 'plantar_fasciitis' as DiscomfortArea, label: 'Plantar Fasciitis', icon: 'activity' as const },
-              { id: 'hamstring_strain' as DiscomfortArea, label: 'Hamstring Strain', icon: 'activity' as const },
-              { id: 'achilles' as DiscomfortArea, label: 'Achilles Tendinopathy', icon: 'activity' as const },
-              { id: 'equipment_busy' as DiscomfortArea, label: 'Equipment Busy', icon: 'dumbbell' as const },
-            ].map(tab => (
-              <button
-                key={String(tab.id)}
-                type="button"
-                onClick={() => setSelectedDiscomfort(tab.id)}
-                style={{
-                  padding: '5px 10px',
-                  background: selectedDiscomfort === tab.id ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
-                  color: selectedDiscomfort === tab.id ? '#0A0E18' : '#FFFFFF',
-                  border: selectedDiscomfort === tab.id ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: 4,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <GaaIcon name={tab.icon} size={12} tone={selectedDiscomfort === tab.id ? 'dark' : 'gold'} />
-                {tab.label}
-              </button>
-            ))}
+          <div role="group" aria-label="Joint discomfort or equipment constraint filter" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {DISCOMFORT_FILTER_TABS.map(tab => {
+              const isPressed = selectedDiscomfort === tab.id
+              return (
+                <button
+                  key={String(tab.id)}
+                  type="button"
+                  aria-pressed={isPressed}
+                  onClick={() => setSelectedDiscomfort(tab.id)}
+                  style={{
+                    minHeight: 45,
+                    padding: '8px 12px',
+                    background: isPressed ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
+                    color: isPressed ? '#0A0E18' : '#FFFFFF',
+                    border: isPressed ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <GaaIcon name={tab.icon} size={12} tone={isPressed ? 'dark' : 'gold'} />
+                  {tab.label}
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -149,6 +237,7 @@ export default function SmartExerciseSwapModal({
           {substitutions.map((sub, idx) => (
             <div
               key={idx}
+              data-testid={`swap-option-card-${idx}`}
               style={{
                 background: 'rgba(0,0,0,0.4)',
                 border: '1px solid rgba(255,255,255,0.08)',
@@ -161,7 +250,7 @@ export default function SmartExerciseSwapModal({
                 gap: 12,
               }}
             >
-              <div style={{ flex: 1, minWidth: 260 }}>
+              <div style={{ flex: 1, minWidth: 220 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <span
                     style={{
@@ -205,13 +294,15 @@ export default function SmartExerciseSwapModal({
 
               <button
                 type="button"
+                aria-label={`Select substitution ${sub.name}`}
                 onClick={() => {
                   onSelectSubstitution(sub)
-                  onClose()
+                  handleDismiss()
                 }}
                 className="tactile-btn"
                 style={{
-                  padding: '8px 16px',
+                  minHeight: 45,
+                  padding: '10px 16px',
                   background: 'linear-gradient(135deg, #D4AF37 0%, #8A6508 100%)',
                   color: '#0A0E18',
                   border: 'none',
@@ -231,6 +322,6 @@ export default function SmartExerciseSwapModal({
           ))}
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

@@ -25,11 +25,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'session_date must be YYYY-MM-DD' }, { status: 400 })
   }
 
-  const validReasons = ['no_equipment', 'injury', 'time', 'other']
-  const reason = body.reason ? String(body.reason).trim() : 'other'
-  if (!validReasons.includes(reason)) {
-    return NextResponse.json({ error: 'reason must be one of: no_equipment, injury, time, other' }, { status: 400 })
+  const validReasons = ['no_equipment', 'injury', 'time', 'fatigue', 'other']
+  const rawReason = body.reason ? String(body.reason).trim() : 'other'
+  if (!validReasons.includes(rawReason)) {
+    return NextResponse.json({ error: 'reason must be one of: no_equipment, injury, time, fatigue, other' }, { status: 400 })
   }
+
+  // PostgreSQL exercise_skips.reason check constraint allows ('no_equipment','injury','time','other')
+  const dbReason = rawReason === 'fatigue' ? 'other' : rawReason
+  const rawNotes = body.notes !== undefined && body.notes !== null ? String(body.notes).trim() : ''
+  const mergedNotes =
+    rawReason === 'fatigue'
+      ? rawNotes
+        ? `[Excessive Fatigue / Overload] ${rawNotes}`
+        : '[Excessive Fatigue / Overload]'
+      : rawNotes || null
 
   const admin = supabaseAdmin()
 
@@ -40,8 +50,8 @@ export async function POST(req: NextRequest) {
       session_date: sessionDate,
       exercise_name: exerciseName,
       workout_day: body.workout_day !== undefined ? Number(body.workout_day) : null,
-      reason,
-      notes: body.notes !== undefined ? String(body.notes).trim() : null,
+      reason: dbReason,
+      notes: mergedNotes,
     })
     .select()
     .single()

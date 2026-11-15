@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase-browser'
 import { LEGAL_DOCUMENTS } from '@/lib/legal-compliance'
+import { ForgeTierId, setStoredTierId } from '@/lib/tierEntitlements'
 
 type Mode = 'login' | 'signup' | 'reset'
 
@@ -11,6 +13,7 @@ interface AuthFormProps {
   redirectPath?: string
   coachId?: string
   coachName?: string
+  selectedPlan?: ForgeTierId
   initialError?: string
 }
 
@@ -135,12 +138,14 @@ export default function AuthForm({
   redirectPath = '/dashboard',
   coachId,
   coachName,
+  selectedPlan,
   initialError,
 }: AuthFormProps) {
   const resetCooldownMs = 30_000
   const [mode, setMode] = useState<Mode>(initialMode)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [acceptedLegalTerms, setAcceptedLegalTerms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<'google' | 'apple' | null>(null)
@@ -158,6 +163,12 @@ export default function AuthForm({
   useEffect(() => {
     setIsHydrated(true)
   }, [])
+
+  useEffect(() => {
+    if (initialMode === 'signup' && selectedPlan) {
+      setStoredTierId(selectedPlan)
+    }
+  }, [initialMode, selectedPlan])
 
   useEffect(() => {
     if (!resetCooldownEndsAt) return
@@ -275,6 +286,9 @@ export default function AuthForm({
       if (coachId) {
         callbackUrl.searchParams.set('coach', coachId)
       }
+      if (selectedPlan) {
+        callbackUrl.searchParams.set('plan', selectedPlan)
+      }
 
       const { error, data } = await supabase.auth.signUp({
         email: cleanEmail,
@@ -288,6 +302,7 @@ export default function AuthForm({
             legal_terms_version: LEGAL_DOCUMENTS.terms_of_service.version,
             legal_privacy_version: LEGAL_DOCUMENTS.privacy_policy.version,
             legal_health_biometric_version: LEGAL_DOCUMENTS.consumer_health_biometric_policy.version,
+            ...(selectedPlan ? { selected_founding_plan: selectedPlan } : {}),
           },
         },
       })
@@ -378,6 +393,9 @@ export default function AuthForm({
       if (coachId) {
         callbackUrl.searchParams.set('coach', coachId)
       }
+      if (mode === 'signup' && selectedPlan) {
+        callbackUrl.searchParams.set('plan', selectedPlan)
+      }
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -452,7 +470,11 @@ export default function AuthForm({
   }
 
   return (
-    <div className="sgf-auth-form-shell mobile-touch-scope" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div
+      className="sgf-auth-form-shell mobile-touch-scope"
+      data-hydrated={isHydrated ? 'true' : 'false'}
+      style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+    >
       {/* ── OAuth 1-Click Fast Pass (Google & Apple) ── */}
       {mode !== 'reset' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -622,36 +644,102 @@ export default function AuthForm({
             <label htmlFor="password-input" style={labelStyle}>
               Password {fieldErrors.password && '*'}
             </label>
-            <input
-              ref={passwordInputRef}
-              id="password-input"
-              name="password"
-              type="password"
-              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-              value={password}
-              disabled={isAnyLoading}
-              onChange={e => {
-                setPassword(e.target.value)
-                if (fieldErrors.password) {
-                  const rest = { ...fieldErrors }
-                  delete rest.password
-                  setFieldErrors(rest)
+            {mode === 'signup' && (
+              <div
+                id="password-constraints"
+                style={{
+                  fontFamily: 'Raleway, sans-serif',
+                  fontSize: 11.5,
+                  color: '#94A3B8',
+                  marginBottom: 6,
+                  lineHeight: 1.4,
+                }}
+              >
+                Use 8+ characters with at least 1 uppercase letter and 1 number.
+              </div>
+            )}
+            <div style={{ position: 'relative' }}>
+              <input
+                ref={passwordInputRef}
+                id="password-input"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                value={password}
+                disabled={isAnyLoading}
+                onChange={e => {
+                  setPassword(e.target.value)
+                  if (fieldErrors.password) {
+                    const rest = { ...fieldErrors }
+                    delete rest.password
+                    setFieldErrors(rest)
+                  }
+                }}
+                onBlur={() => {
+                  const error = validatePassword(password, mode)
+                  if (error) {
+                    setFieldErrors(prev => ({ ...prev, password: error }))
+                  }
+                }}
+                aria-invalid={!!fieldErrors.password}
+                aria-describedby={
+                  [
+                    mode === 'signup' ? 'password-constraints' : null,
+                    fieldErrors.password ? 'password-error' : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' ') || undefined
                 }
-              }}
-              onBlur={() => {
-                const error = validatePassword(password, mode)
-                if (error) {
-                  setFieldErrors(prev => ({ ...prev, password: error }))
-                }
-              }}
-              aria-invalid={!!fieldErrors.password}
-              aria-describedby={fieldErrors.password ? 'password-error' : undefined}
-              style={{
-                ...inputStyle,
-                ...(fieldErrors.password ? errorStyle : {}),
-              }}
-              placeholder="••••••••"
-            />
+                style={{
+                  ...inputStyle,
+                  paddingRight: 46,
+                  ...(fieldErrors.password ? errorStyle : {}),
+                }}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                aria-pressed={showPassword}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-describedby="password-toggle-warning"
+                disabled={isAnyLoading}
+                onClick={() => setShowPassword(prev => !prev)}
+                style={{
+                  position: 'absolute',
+                  right: 2,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  minWidth: 42,
+                  minHeight: 42,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94A3B8',
+                  cursor: isAnyLoading ? 'not-allowed' : 'pointer',
+                  padding: 0,
+                }}
+              >
+                {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+              </button>
+              <span
+                id="password-toggle-warning"
+                style={{
+                  position: 'absolute',
+                  clipPath: 'inset(50%)',
+                  overflow: 'hidden',
+                  width: 1,
+                  height: 1,
+                  margin: -1,
+                  padding: 0,
+                  border: 0,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Warning: this will display your password on the screen.
+              </span>
+            </div>
             {fieldErrors.password && (
               <div id="password-error" role="alert" style={errorMessageStyle}>
                 {fieldErrors.password}

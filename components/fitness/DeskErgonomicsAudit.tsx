@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useId } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import TelemetryRingGauge from '@/components/ui/TelemetryRingGauge'
 import { useSfxMuted } from '@/lib/sfx-audio'
 import {
   evaluateDeskErgonomicsFromLandmarks,
   mapMediaPipe33LandmarksToSeated,
+  reconstructScanFromSavedWorkstation,
   SAMPLE_DESK_LANDMARKS,
   STRAIN_COLORS,
   STRAIN_LABELS,
@@ -15,6 +16,7 @@ import {
 import {
   loadPostureProfileState,
   persistDeskErgonomicFlags,
+  POSTURE_PROFILE_EVENT,
   type ErgonomicFlag,
   type SavedWorkstationProfile,
   type StrainLevel,
@@ -33,6 +35,8 @@ import {
 } from '@/src/lib/audio/coachVoiceEngine'
 
 export interface DeskErgonomicsAuditProps {
+  /** Whether parent dialog/container is currently open (stops hardware camera immediately when false) */
+  isOpen?: boolean
   /** Render read-only preloaded sample in landing page Sneak Peek bezel with zero protected calls */
   sandboxMode?: boolean
   /** Callback when user clicks "Launch Targeted 5-Min Desk Reset →" */
@@ -68,6 +72,7 @@ function buildJointArcPath(
 }
 
 export default function DeskErgonomicsAudit({
+  isOpen = true,
   sandboxMode = false,
   onLaunchDeskReset,
   maxSavedProfiles = null,
@@ -77,6 +82,7 @@ export default function DeskErgonomicsAudit({
   const { sfxMuted, toggleSfxMuted, playTone } = useSfxMuted()
   const { tierId } = useTierAccess()
   const isCoachSupport = tierId === 'coach_support'
+  const workstationInputId = useId()
   const [escalationOpen, setEscalationOpen] = useState(false)
 
   const [scanResult, setScanResult] = useState<DeskErgonomicsScanResult | null>(() =>
@@ -86,25 +92,48 @@ export default function DeskErgonomicsAudit({
   const [sampleVariant, setSampleVariant] = useState<'typical_strain' | 'optimal_setup'>('typical_strain')
   const [workstationLabel, setWorkstationLabel] = useState<string>('Home Desk')
   const [savedProfiles, setSavedProfiles] = useState<SavedWorkstationProfile[]>([])
+  const [activeSavedProfileId, setActiveSavedProfileId] = useState<string | null>(null)
   const [cameraActive, setCameraActive] = useState(false)
   const [countdownSec, setCountdownSec] = useState<number | null>(null)
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [statusNote, setStatusNote] = useState<string | null>(null)
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const activeStreamRef = useRef<MediaStream | null>(null)
+  const cameraActiveRef = useRef(cameraActive)
+  cameraActiveRef.current = cameraActive
+  const isMountedRef = useRef(true)
+  const isOpenRef = useRef(isOpen)
+  isOpenRef.current = isOpen
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
     if (sandboxMode) return
-    const persisted = loadPostureProfileState()
-    setSavedProfiles(persisted.workstationProfiles)
+    const sync = () => {
+      const persisted = loadPostureProfileState()
+      setSavedProfiles(persisted.workstationProfiles)
+    }
+    sync()
+    window.addEventListener(POSTURE_PROFILE_EVENT, sync)
+    return () => window.removeEventListener(POSTURE_PROFILE_EVENT, sync)
   }, [sandboxMode])
 
   const stopCamera = useCallback(() => {
     if (countdownTimerRef.current) {
       clearInterval(countdownTimerRef.current)
       countdownTimerRef.current = null
+    }
+    if (activeStreamRef.current) {
+      activeStreamRef.current.getTracks().forEach(track => track.stop())
+      activeStreamRef.current = null
     }
     if (videoRef.current?.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream
@@ -116,13 +145,46 @@ export default function DeskErgonomicsAudit({
   }, [])
 
   useEffect(() => {
+    if (cameraActive && videoRef.current && activeStreamRef.current) {
+      videoRef.current.srcObject = activeStreamRef.current
+      void videoRef.current.play().catch(() => {})
+    }
+  }, [cameraActive])
+
+  useEffect(() => {
+    if (!isOpen) {
+      stopCamera()
+    }
+  }, [isOpen, stopCamera])
+
+  useEffect(() => {
     const handleHardwareRelease = () => stopCamera()
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        stopCamera()
+      }
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && cameraActiveRef.current) {
+        stopCamera()
+      }
+    }
     if (typeof window !== 'undefined') {
       window.addEventListener('forge:release-camera-hardware', handleHardwareRelease)
+      window.addEventListener('forge:release-camera', handleHardwareRelease)
+      window.addEventListener('keydown', handleKeyDown)
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange)
     }
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('forge:release-camera-hardware', handleHardwareRelease)
+        window.removeEventListener('forge:release-camera', handleHardwareRelease)
+        window.removeEventListener('keydown', handleKeyDown)
+      }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
       }
       stopCamera()
     }
@@ -157,9 +219,14 @@ export default function DeskErgonomicsAudit({
         const seatedHipAngleDeg =
           result.angles.find(a => a.id === 'seated_hip')?.measuredDegrees ?? 100
         const resolvedLabel = workstationLabel.trim() || `Workstation ${savedProfiles.length + 1}`
+        const isUpdatingExistingLabel = savedProfiles.some(
+          p => p.label.trim().toLowerCase() === resolvedLabel.toLowerCase()
+        )
 
         const canSaveNewProfile =
-          maxSavedProfiles === null || savedProfiles.length < maxSavedProfiles
+          maxSavedProfiles === null ||
+          isUpdatingExistingLabel ||
+          savedProfiles.length < maxSavedProfiles
         const updated = persistDeskErgonomicFlags(
           result.ergonomicFlags,
           canSaveNewProfile
@@ -176,6 +243,10 @@ export default function DeskErgonomicsAudit({
             : undefined
         )
         setSavedProfiles(updated.workstationProfiles)
+        const matchedSaved = updated.workstationProfiles.find(
+          p => p.label.trim().toLowerCase() === resolvedLabel.toLowerCase()
+        )
+        setActiveSavedProfileId(matchedSaved?.id ?? null)
 
         const mappedStrainLevel =
           result.overallStrain === 'coral'
@@ -198,7 +269,7 @@ export default function DeskErgonomicsAudit({
         )
       }
     },
-    [maxSavedProfiles, sandboxMode, savedProfiles.length, workstationLabel]
+    [maxSavedProfiles, sandboxMode, savedProfiles, workstationLabel]
   )
 
   const detectPoseOrFallback = useCallback(
@@ -258,20 +329,19 @@ export default function DeskErgonomicsAudit({
     }
 
     try {
+      stopCamera()
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       })
+      if (!isMountedRef.current || !isOpenRef.current) {
+        stream.getTracks().forEach(track => track.stop())
+        return
+      }
+      activeStreamRef.current = stream
       setCameraActive(true)
       setCountdownSec(5)
       playCoachStaticCue('calibration_framing')
-
-      requestAnimationFrame(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          void videoRef.current.play().catch(() => {})
-        }
-      })
 
       let remaining = 5
       countdownTimerRef.current = setInterval(() => {
@@ -319,7 +389,16 @@ export default function DeskErgonomicsAudit({
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
+    if (file.type && !/^image\/(jpeg|jpg|png|webp|heic|heif)$/i.test(file.type)) {
+      setCameraError('Please select a JPEG, PNG, WebP, or HEIC side-profile photo.')
+      return
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setCameraError('Side-profile photo must be 15 MB or smaller.')
+      return
+    }
     setCameraError(null)
     const reader = new FileReader()
     reader.onload = () => {
@@ -337,6 +416,16 @@ export default function DeskErgonomicsAudit({
     reader.readAsDataURL(file)
   }
 
+  const handleSelectSavedProfile = (profile: SavedWorkstationProfile) => {
+    setActiveSavedProfileId(profile.id)
+    setWorkstationLabel(profile.label)
+    setSampleVariant(profile.strainLevel === 'optimal' ? 'optimal_setup' : 'typical_strain')
+    setCapturedImageSrc(null)
+    setCameraError(null)
+    setScanResult(reconstructScanFromSavedWorkstation(profile))
+    setStatusNote(`Loaded saved workstation "${profile.label}" (${profile.score}/100).`)
+  }
+
   const handleAuditAnotherDesk = () => {
     if (
       !sandboxMode &&
@@ -348,6 +437,7 @@ export default function DeskErgonomicsAudit({
     }
     setScanResult(null)
     setCapturedImageSrc(null)
+    setActiveSavedProfileId(null)
     setWorkstationLabel(`Workstation ${savedProfiles.length + 1}`)
     setStatusNote(null)
   }
@@ -507,15 +597,50 @@ export default function DeskErgonomicsAudit({
         </div>
       </div>
 
+      {/* Saved Workstation Switcher Pills */}
+      {!sandboxMode && savedProfiles.length > 0 && (
+        <div
+          aria-label="Saved workstation profiles"
+          role="group"
+          className="flex flex-wrap items-center gap-2"
+        >
+          {savedProfiles.map(profile => {
+            const isActive = activeSavedProfileId === profile.id
+            return (
+              <button
+                key={profile.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => handleSelectSavedProfile(profile)}
+                className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 ${
+                  isActive
+                    ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'
+                    : 'border-white/10 bg-[#181B22] text-zinc-300 hover:border-white/20 hover:bg-[#1D212A]'
+                }`}
+              >
+                <span>{profile.label}</span>
+                <span className="rounded-md bg-black/40 px-1.5 py-0.5 font-mono text-[10.5px] font-bold tabular-nums text-emerald-300">
+                  {profile.score}/100
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Input Controls (hidden in compact sandbox mode) */}
       {!sandboxMode && !cameraActive && (
         <div className="space-y-2.5">
           <div className="flex flex-wrap items-center gap-2">
+            <label htmlFor={workstationInputId} className="sr-only">
+              Workstation profile name
+            </label>
             <input
+              id={workstationInputId}
               type="text"
+              name="workstation_label"
               value={workstationLabel}
               onChange={e => setWorkstationLabel(e.target.value)}
-              aria-label="Workstation profile name"
               placeholder="Workstation name (e.g. Home Desk)"
               className="min-h-[44px] min-w-0 flex-1 basis-40 rounded-xl border border-white/10 bg-[#181B22] px-3.5 py-2 text-base text-white placeholder:text-zinc-500 transition-colors duration-150 hover:border-white/15 focus:border-emerald-400/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
             />
@@ -551,6 +676,14 @@ export default function DeskErgonomicsAudit({
               className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 transition-colors duration-150 hover:bg-emerald-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               Load Sample Desk Scan
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleLoadSample('optimal_setup')}
+              className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-white/10 bg-[#181B22] px-3.5 py-2 text-xs font-semibold text-zinc-200 transition-colors duration-150 hover:border-white/20 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
+            >
+              Load Optimal Reference
             </button>
           </div>
 
@@ -1106,64 +1239,70 @@ export default function DeskErgonomicsAudit({
           </div>
 
           {/* Action Loop Row */}
-          {!sandboxMode && (
+          {(!sandboxMode || Boolean(onLaunchDeskReset)) && (
             <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => onLaunchDeskReset?.(scanResult.ergonomicFlags)}
-                className="forge-tactile-press min-h-[44px] flex-1 basis-56 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
-              >
-                Launch Targeted 5-Min Desk Reset →
-              </button>
+              {(!sandboxMode || Boolean(onLaunchDeskReset)) && (
+                <button
+                  type="button"
+                  onClick={() => onLaunchDeskReset?.(scanResult.ergonomicFlags)}
+                  className="forge-tactile-press min-h-[44px] flex-1 basis-56 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
+                >
+                  Launch Targeted 5-Min Desk Reset →
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={handleAuditAnotherDesk}
-                className="forge-tactile-press min-h-[44px] rounded-xl border border-white/10 bg-[#181B22] px-4 py-2.5 text-xs font-semibold text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
-              >
-                + Audit Another Desk
-              </button>
+              {!sandboxMode && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleAuditAnotherDesk}
+                    className="forge-tactile-press min-h-[44px] rounded-xl border border-white/10 bg-[#181B22] px-4 py-2.5 text-xs font-semibold text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
+                  >
+                    + Audit Another Desk
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  const flaggedAngle = scanResult.angles.find(a => a.status !== 'optimal')
-                  const spokenSummary = buildPostScanDiagnosticSummary({
-                    scanType: 'desk_ergonomics',
-                    score: scanResult.score,
-                    primaryFinding: flaggedAngle
-                      ? `${flaggedAngle.title.toLowerCase()} (${flaggedAngle.measuredDegrees} degrees)`
-                      : 'clean ergonomic alignment',
-                    actionableFix: scanResult.adjustments[0]?.headline,
-                  })
-                  void speakCoachDynamicText(spokenSummary, {
-                    moment: 'post_scan_summary',
-                    forceUnlockVoiceOnTap: true,
-                  })
-                }}
-                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-white/12 bg-[#181B22] px-3.5 py-2 text-xs font-bold text-zinc-100 hover:bg-[#1D212A]"
-              >
-                <Volume2 size={14} className="text-emerald-300" aria-hidden="true" />
-                <span>Listen to Coach Gordon</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const flaggedAngle = scanResult.angles.find(a => a.status !== 'optimal')
+                      const spokenSummary = buildPostScanDiagnosticSummary({
+                        scanType: 'desk_ergonomics',
+                        score: scanResult.score,
+                        primaryFinding: flaggedAngle
+                          ? `${flaggedAngle.title.toLowerCase()} (${flaggedAngle.measuredDegrees} degrees)`
+                          : 'clean ergonomic alignment',
+                        actionableFix: scanResult.adjustments[0]?.headline,
+                      })
+                      void speakCoachDynamicText(spokenSummary, {
+                        moment: 'post_scan_summary',
+                        forceUnlockVoiceOnTap: true,
+                      })
+                    }}
+                    className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-white/12 bg-[#181B22] px-3.5 py-2 text-xs font-bold text-zinc-100 hover:bg-[#1D212A]"
+                  >
+                    <Volume2 size={14} className="text-emerald-300" aria-hidden="true" />
+                    <span>Listen to Coach Gordon</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => setEscalationOpen(true)}
-                data-testid="desk-audit-message-real-coach-btn"
-                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/12 px-3.5 py-2 text-xs font-bold text-emerald-200 hover:bg-emerald-500/20"
-              >
-                {isCoachSupport ? (
-                  <Smartphone size={14} aria-hidden="true" />
-                ) : (
-                  <Mail size={14} aria-hidden="true" />
-                )}
-                <span>
-                  {isCoachSupport
-                    ? 'Text Real Coach Gordon (24h SLA)'
-                    : 'Message Real Coach Gordon'}
-                </span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => setEscalationOpen(true)}
+                    data-testid="desk-audit-message-real-coach-btn"
+                    className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/12 px-3.5 py-2 text-xs font-bold text-emerald-200 hover:bg-emerald-500/20"
+                  >
+                    {isCoachSupport ? (
+                      <Smartphone size={14} aria-hidden="true" />
+                    ) : (
+                      <Mail size={14} aria-hidden="true" />
+                    )}
+                    <span>
+                      {isCoachSupport
+                        ? 'Text Real Coach Gordon (24h SLA)'
+                        : 'Message Real Coach Gordon'}
+                    </span>
+                  </button>
+                </>
+              )}
             </div>
           )}
 

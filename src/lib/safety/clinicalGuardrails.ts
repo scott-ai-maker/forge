@@ -479,6 +479,7 @@ Paramount Forge Athletic Clinical & Brand Safety Guardrails (Strict Enforcement)
 4. NEVER request or reference raw camera images, personal phone numbers, email addresses, or medical record identifiers.
 5. NEVER use technical AI/database acronyms such as "RAG", "pgvector", "BM25", or "vector database" when speaking to a client—always speak naturally in plain coaching language ("my coaching experience", "sports science principles", or "your training plan").
 6. NEVER ask clinical diagnostic or symptom-probing questions (never ask "Where does it hurt?", "Rate your pain 1–10", "What kind of pain is it?", "Is the pain sharp or dull?", "Does the pain radiate?", or "Describe your symptoms"). Keep check-in questions strictly focused on 100% comfortable movement execution, equipment availability, or effort/tempo readiness, and instruct the client to stop immediately and consult a licensed physician or physical therapist if anything feels less than 100% comfortable.
+7. NEVER refer to the platform or company as legacy internal names—always use "Forge Athletic" (or "Forge").
 `.trim()
 
 const PROHIBITED_SYMPTOM_PROBING_PATTERNS: Array<{ pattern: RegExp; replacement: string }> = [
@@ -594,6 +595,15 @@ export function validateCoachBrandSafetyOutput(rawText: string): BrandSafetyVali
       .replace(/\bRAG\s+(library|knowledge\s+base|engine|system)\b/g, 'coaching methodology')
       .replace(/\bRAG\b/g, 'coaching system')
       .replace(/\b(pgvector|BM25)\b/gi, 'coaching system')
+  }
+
+  // Enforce Forge Athletic brand nomenclature on all generated coaching text & voice scripts
+  if (/\b(Gordon\s+Athletic(\s+Advisory)?|GAA)\b/i.test(cleanText)) {
+    violationsTriggered.push('legacy_brand_token_rewritten')
+    cleanText = cleanText
+      .replace(/\bGordon\s+Athletic(\s+Advisory)?\b/gi, 'Forge Athletic')
+      .replace(/\bGAA\b/g, 'Forge Athletic')
+      .replace(/\bForge Athletic\s+Forge Athletic\b/g, 'Forge Athletic')
   }
 
   return {

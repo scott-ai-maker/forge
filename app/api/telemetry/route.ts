@@ -32,6 +32,8 @@ const ALLOWED_EVENT_TYPES = [
   'watch_biometrics_stream',
   'client_runtime_diagnostic',
   'safety_flag',
+  'escalation_sms',
+  'escalation_email',
 ] as const
 
 const TelemetryEnvelopeSchema = z.object({

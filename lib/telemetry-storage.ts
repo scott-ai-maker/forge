@@ -276,6 +276,13 @@ export function applyEventsToSnapshot(
         break
       }
 
+      case 'desk_reset_completed': {
+        if (typeof p.environment_profile === 'string' && p.environment_profile) {
+          next.environmentProfile = p.environment_profile
+        }
+        break
+      }
+
       case 'posture_scan_completed': {
         next.postureDelta = {
           ...next.postureDelta,
@@ -362,6 +369,7 @@ function isMissingRelationError(error: { code?: string; message?: string } | nul
   const msg = String(error.message || '')
   return (
     code === '42P01' ||
+    code === '23514' ||
     code === 'PGRST205' ||
     code === 'PGRST204' ||
     msg.includes('client_telemetry_events') ||

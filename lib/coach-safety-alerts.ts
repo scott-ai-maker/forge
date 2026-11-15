@@ -1,5 +1,15 @@
 import { Resend } from 'resend'
+import { sanitizePiiString } from '@/src/lib/safety/clinicalGuardrails'
 import type { AskCoachGordonRequest, AskCoachGordonResponse } from './ask-coach-gordon-types'
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 
 export interface SafetyAlertDispatchParams {
   request: AskCoachGordonRequest
@@ -37,12 +47,15 @@ export async function dispatchCoachSafetyAlert(
     process.env.MARKETING_FROM_EMAIL ||
     'Forge Athletic Safety <onboarding@resend.dev>'
 
+  const sanitizedQuestion = sanitizePiiString(request.question || '')
+  const safeAthleteName = sanitizePiiString(request.athleteName || 'Athlete')
+
   // Always log structured audit entry to server console for accountability
   const auditLog = {
     eventType: 'COACH_GORDON_SAFETY_ALERT',
     timestamp: new Date().toISOString(),
     urgencyTier: response.isEmergency911 ? 'EMERGENCY_911' : 'COACH_CLINICAL_REVIEW',
-    athleteName: request.athleteName || 'Anonymous Athlete',
+    athleteName: safeAthleteName || 'Anonymous Athlete',
     clientAge: request.clientAge,
     clientSex: request.clientSex,
     optPhase: request.nasmOptPhase,
@@ -50,7 +63,7 @@ export async function dispatchCoachSafetyAlert(
     readinessScore: request.recentReadinessScore,
     contraindicationTags: request.contraindicationTags || [],
     pingReason: response.coachPingReason || 'Flagged consultation requiring coach review',
-    question: request.question,
+    question: sanitizedQuestion,
     aiAnswerExcerpt: response.answerMarkdown ? response.answerMarkdown.slice(0, 300) : '',
   }
   console.warn('[SAFETY_AUDIT_LOG]', JSON.stringify(auditLog, null, 2))
@@ -66,7 +79,20 @@ export async function dispatchCoachSafetyAlert(
       ? '🚨 [CRITICAL 911 EMERGENCY] Athlete In-Session Alert'
       : '⚠️ [COACH ACTION REQUIRED] Coach Gordon Consultation Escalation'
 
-    const subject = `${urgencyLabel} — ${request.athleteName || 'Athlete'}`
+    const subject = `${urgencyLabel} — ${safeAthleteName}`
+    const safeHtmlAthlete = escapeHtml(safeAthleteName)
+    const safeHtmlPingReason = escapeHtml(
+      response.coachPingReason || 'Direct coach review requested or orthopedic safety trigger'
+    )
+    const safeHtmlGoal = escapeHtml(request.goal || 'General Fitness')
+    const safeHtmlContraindications = (request.contraindicationTags || [])
+      .map(tag => escapeHtml(String(tag)))
+      .join(', ')
+    const safeHtmlExercise = request.currentExerciseName
+      ? escapeHtml(request.currentExerciseName)
+      : ''
+    const safeHtmlQuestion = escapeHtml(sanitizedQuestion)
+    const safeHtmlAnswer = escapeHtml(response.answerMarkdown || '').replace(/\n/g, '<br/>')
 
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0A0E18; color: #FFFFFF; padding: 24px; border-radius: 8px; border: 1px solid #D4A017;">
@@ -80,24 +106,24 @@ export async function dispatchCoachSafetyAlert(
         </div>
 
         <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 6px; margin-bottom: 16px;">
-          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Athlete:</strong> ${request.athleteName || 'Athlete'}</p>
-          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Urgency Reason:</strong> <span style="color: #FCD34D;">${response.coachPingReason || 'Direct coach review requested or orthopedic safety trigger'}</span></p>
-          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>OPT™ Phase:</strong> Phase ${request.nasmOptPhase || 1} | <strong>Goal:</strong> ${request.goal || 'General Fitness'}</p>
-          ${request.contraindicationTags && request.contraindicationTags.length > 0 ? `<p style="margin: 0 0 8px 0; font-size: 14px; color: #F87171;"><strong>Known Contraindications:</strong> ${request.contraindicationTags.join(', ')}</p>` : ''}
-          ${request.currentExerciseName ? `<p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Active Movement:</strong> ${request.currentExerciseName}</p>` : ''}
+          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Athlete:</strong> ${safeHtmlAthlete}</p>
+          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Urgency Reason:</strong> <span style="color: #FCD34D;">${safeHtmlPingReason}</span></p>
+          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>OPT™ Phase:</strong> Phase ${Number(request.nasmOptPhase) || 1} | <strong>Goal:</strong> ${safeHtmlGoal}</p>
+          ${safeHtmlContraindications ? `<p style="margin: 0 0 8px 0; font-size: 14px; color: #F87171;"><strong>Known Contraindications:</strong> ${safeHtmlContraindications}</p>` : ''}
+          ${safeHtmlExercise ? `<p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Active Movement:</strong> ${safeHtmlExercise}</p>` : ''}
         </div>
 
         <div style="margin-bottom: 20px;">
           <h4 style="margin: 0 0 8px 0; color: #D4A017; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Athlete's Question / Statement:</h4>
           <blockquote style="margin: 0; padding: 12px 16px; background: rgba(255, 255, 255, 0.03); border-left: 3px solid #D4A017; font-style: italic; color: #E5E7EB;">
-            "${request.question}"
+            "${safeHtmlQuestion}"
           </blockquote>
         </div>
 
         <div style="margin-bottom: 24px;">
           <h4 style="margin: 0 0 8px 0; color: #9CA3AF; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">AI Coach Gordon Response Delivered:</h4>
           <div style="padding: 12px 16px; background: rgba(0, 0, 0, 0.4); border-radius: 6px; font-size: 13px; line-height: 1.5; color: #D1D5DB;">
-            ${(response.answerMarkdown || '').replace(/\n/g, '<br/>')}
+            ${safeHtmlAnswer}
           </div>
         </div>
 
@@ -112,14 +138,14 @@ export async function dispatchCoachSafetyAlert(
     const text = `
 FORGE ATHLETIC SAFETY ALERT
 ===========================
-Athlete: ${request.athleteName || 'Athlete'}
+Athlete: ${safeAthleteName}
 Urgency Tier: ${response.isEmergency911 ? 'EMERGENCY 911' : 'COACH CLINICAL REVIEW'}
 Reason: ${response.coachPingReason || 'Review requested'}
-OPT Phase: Phase ${request.nasmOptPhase || 1}
+OPT Phase: Phase ${Number(request.nasmOptPhase) || 1}
 Contraindications: ${(request.contraindicationTags || []).join(', ') || 'None'}
 
 ATHLETE'S QUESTION:
-"${request.question}"
+"${sanitizedQuestion}"
 
 AI RESPONSE DELIVERED:
 ${response.answerMarkdown || ''}

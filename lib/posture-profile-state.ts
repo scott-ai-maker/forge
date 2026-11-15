@@ -180,9 +180,26 @@ export function persistDeskErgonomicFlags(
   profileToSave?: Omit<SavedWorkstationProfile, 'id' | 'savedAt'>
 ): PersistedPostureProfileState {
   return savePostureProfileState(prev => {
-    const mergedFlags = Array.from(new Set([...prev.ergonomicFlags, ...flags]))
-    const nextProfiles = profileToSave
-      ? [
+    // Reflect the latest workstation audit's active flags so resolved desk strain clears cleanly
+    const latestFlags = Array.from(new Set(flags))
+    let nextProfiles = prev.workstationProfiles
+    if (profileToSave) {
+      const normalizedLabel = profileToSave.label.trim().toLowerCase()
+      const existingIndex = prev.workstationProfiles.findIndex(
+        p => p.label.trim().toLowerCase() === normalizedLabel
+      )
+      if (existingIndex >= 0) {
+        nextProfiles = prev.workstationProfiles.map((existing, idx) =>
+          idx === existingIndex
+            ? {
+                ...profileToSave,
+                id: existing.id,
+                savedAt: new Date().toISOString(),
+              }
+            : existing
+        )
+      } else {
+        nextProfiles = [
           ...prev.workstationProfiles,
           {
             ...profileToSave,
@@ -190,11 +207,12 @@ export function persistDeskErgonomicFlags(
             savedAt: new Date().toISOString(),
           },
         ]
-      : prev.workstationProfiles
+      }
+    }
 
     return {
       ...prev,
-      ergonomicFlags: mergedFlags,
+      ergonomicFlags: latestFlags,
       workstationProfiles: nextProfiles,
       postureDelta: profileToSave
         ? {
@@ -387,6 +405,8 @@ export function rehydratePostureProfileFromServer(
   if (!snap && !baseline) return null
 
   return savePostureProfileState(prev => {
+    const hasServerDeskAudit =
+      typeof snap?.deskWorkstationScore === 'number' || Array.isArray(snap?.deskStrainFlags)
     const validFlags = Array.isArray(snap?.deskStrainFlags)
       ? snap.deskStrainFlags.filter(
           (f): f is ErgonomicFlag =>
@@ -394,7 +414,12 @@ export function rehydratePostureProfileFromServer(
         )
       : []
 
-    const mergedFlags = Array.from(new Set([...prev.ergonomicFlags, ...validFlags]))
+    const mergedFlags =
+      hasServerDeskAudit && prev.workstationProfiles.length === 0
+        ? Array.from(new Set(validFlags))
+        : prev.ergonomicFlags.length > 0
+          ? prev.ergonomicFlags
+          : Array.from(new Set(validFlags))
 
     const mergedLogs: Record<string, DailyReadinessComfortLog> = { ...prev.dailyLogs }
     if (Array.isArray(snap?.jointComfortHistory)) {
@@ -443,9 +468,11 @@ export function rehydratePostureProfileFromServer(
     const strainMap: StrainLevel =
       snap?.deskStrainLevel === 'high_strain'
         ? 'coral'
-        : snap?.deskStrainLevel === 'optimal'
-          ? 'optimal'
-          : prev.postureDelta.strainFlag
+        : snap?.deskStrainLevel === 'moderate_strain'
+          ? 'amber'
+          : snap?.deskStrainLevel === 'optimal'
+            ? 'optimal'
+            : prev.postureDelta.strainFlag
 
     const nextPostureDelta: PostureDeltaSummary = {
       ...prev.postureDelta,
