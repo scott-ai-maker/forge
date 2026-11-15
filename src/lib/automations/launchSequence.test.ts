@@ -97,6 +97,33 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
       )
       expect(launchEmail.text).toContain('Hi Alex,')
       expect(launchEmail.text).toContain('https://forge-athletic.app/portal')
+      expect(launchEmail.text).toMatch(/33-point camera diagnostics/i)
+      expect(launchEmail.text).toMatch(/real voice guidance/i)
+      expect(launchEmail.text).toMatch(/direct Email\/Text access/i)
+      expect(launchEmail.text).not.toMatch(/Live Studio/i)
+      expect(launchEmail.html).not.toMatch(/Live Studio/i)
+      expect(launchEmail.previewText).not.toMatch(/Live Studio/i)
+    }
+
+    // Template 02A Rescue Email
+    const rescueEmail = renderAutomationTemplate('rescue_02a_email', {
+      email: 'alex@example.com',
+      firstName: 'Alex Morgan',
+      account_activated: false,
+      screening_booked: false,
+      guest_pass_redeemed: false,
+      sms_opt_in: false,
+    })
+    expect(rescueEmail.channel).toBe('email')
+    if (rescueEmail.channel === 'email') {
+      expect(rescueEmail.text).toContain('Hi Alex,')
+      expect(rescueEmail.text).toContain('https://forge-athletic.app/portal')
+      expect(rescueEmail.text).toMatch(/33-Point Camera Diagnostics/i)
+      expect(rescueEmail.text).toMatch(/Real Voice Guidance/i)
+      expect(rescueEmail.text).toMatch(/Direct Email\/Text Access/i)
+      expect(rescueEmail.text).not.toMatch(/Live Studio/i)
+      expect(rescueEmail.html).not.toMatch(/Live Studio/i)
+      expect(rescueEmail.previewText).not.toMatch(/Live Studio/i)
     }
 
     // Template 02B SMS
