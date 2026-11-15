@@ -35,7 +35,7 @@ for (const width of [320, 393, 768]) {
       const picker = lab.getByRole('button', { name: /^Choose a tool:/ })
       await picker.click()
       const options = lab.getByRole('group', { name: 'Fitness Lab tools' })
-      await expect(options.getByRole('button')).toHaveCount(9)
+      await expect(options.getByRole('button')).toHaveCount(10)
       const menuBox = (await options.boundingBox())!
       const appBox = (await lab.boundingBox())!
       expect(menuBox.x).toBeGreaterThanOrEqual(appBox.x)

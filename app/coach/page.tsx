@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
-import { createClient } from '@/lib/supabase-server'
+import { requireSurfaceRole } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import {
   normalizeCoachFocusFilter,
@@ -79,30 +78,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
   const resolvedSearchParams = await searchParams
   const selectedFocus = normalizeCoachFocusFilter(resolvedSearchParams.focus)
   const activeTab = normalizeCoachDashboardTab(resolvedSearchParams.tab)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/auth/login')
-
-  const isMasterCoach =
-    user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-    user.user_metadata?.surface_role === 'coach'
-  const roleCheck = await supabaseAdmin()
-    .from('clients')
-    .select('role')
-    .eq('id', user.id)
-    .eq('role', 'coach')
-    .maybeSingle()
-
-  if (!roleCheck.data) {
-    if (isMasterCoach) {
-      await supabaseAdmin().from('clients').update({ role: 'coach' }).eq('id', user.id)
-    } else {
-      redirect('/dashboard')
-    }
-  }
+  const { user } = await requireSurfaceRole('coach')
 
   const coachInvitePath = `/auth/signup?coach=${encodeURIComponent(user.id)}`
 

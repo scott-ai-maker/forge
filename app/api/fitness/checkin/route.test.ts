@@ -78,12 +78,13 @@ describe('GET /api/fitness/checkin', () => {
     expect(res.status).toBe(401)
   })
 
-  it('returns check-ins for authenticated user', async () => {
+  it('returns check-ins for authenticated user with HIPAA no-store cache headers', async () => {
     getRequestAuthzMock.mockResolvedValue(authedUser)
     const checkins = [{ id: 'ci-1', week_start: '2026-04-14', sleep_quality: 7 }]
     supabaseAdminMock.mockReturnValue(makeAdmin(null, checkins))
     const res = await GET(makeGetRequest())
     expect(res.status).toBe(200)
+    expect(res.headers.get('cache-control')).toBe('no-store, max-age=0')
     await expect(res.json()).resolves.toEqual({ checkins })
   })
 })
@@ -142,13 +143,73 @@ describe('POST /api/fitness/checkin', () => {
     }))
   })
 
-  it.each([{ sleep_quality: 6 }, { stress_level: 0 }, { energy_level: 2.5 }, { weight_kg: 0 }, { neck_cm: 'invalid' }])(
+  it.each([
+    { sleep_quality: 6 },
+    { stress_level: 0 },
+    { energy_level: 2.5 },
+    { weight_kg: 0 },
+    { weight_kg: 550 },
+    { waist_cm: 350 },
+    { neck_cm: 'invalid' },
+  ])(
     'rejects invalid check-in values %j',
     async fields => {
       getRequestAuthzMock.mockResolvedValue(authedUser)
       const res = await POST(makeRequest({ week_start: '2026-04-14', ...fields }))
       expect(res.status).toBe(400)
+      expect(res.headers.get('cache-control')).toBe('no-store, max-age=0')
       expect(upsertMock).not.toHaveBeenCalled()
     },
   )
+
+  it('rejects malformed JSON bodies with 400 instead of 500', async () => {
+    getRequestAuthzMock.mockResolvedValue(authedUser)
+    const badReq = new NextRequest('http://localhost/api/fitness/checkin', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{invalid-json',
+    })
+    const res = await POST(badReq)
+    expect(res.status).toBe(400)
+    expect(upsertMock).not.toHaveBeenCalled()
+  })
+
+  it('blocks paused or archived memberships with 403', async () => {
+    getRequestAuthzMock.mockResolvedValue({
+      user: { id: 'user-1' },
+      client: { id: 'user-1', role: 'client', status: 'paused', email: 'm@example.com', designated_coach_id: null },
+    })
+    const res = await POST(makeRequest({ week_start: '2026-04-14', sleep_quality: 4 }))
+    expect(res.status).toBe(403)
+    expect(upsertMock).not.toHaveBeenCalled()
+  })
+
+  it('scrubs HTML tags and control characters from notes and rejects >2000 character payloads', async () => {
+    getRequestAuthzMock.mockResolvedValue(authedUser)
+    supabaseAdminMock.mockReturnValue(makeAdmin({ id: 'ci-2', week_start: '2026-04-14' }))
+
+    const xssRes = await POST(
+      makeRequest({
+        week_start: '2026-04-14',
+        notes: 'Right knee felt stable\u0007 <script>alert(1)</script> after tempo squats.',
+      })
+    )
+    expect(xssRes.status).toBe(200)
+    expect(upsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notes: 'Right knee felt stable alert(1) after tempo squats.',
+      })
+    )
+
+    vi.clearAllMocks()
+    getRequestAuthzMock.mockResolvedValue(authedUser)
+    const oversizedRes = await POST(
+      makeRequest({
+        week_start: '2026-04-14',
+        notes: 'x'.repeat(2005),
+      })
+    )
+    expect(oversizedRes.status).toBe(400)
+    expect(upsertMock).not.toHaveBeenCalled()
+  })
 })

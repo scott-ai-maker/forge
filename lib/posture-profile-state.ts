@@ -158,16 +158,23 @@ export function savePostureProfileState(
 }
 
 /**
- * Checks whether selecting a travel/bodyweight environment swap today results in 2+ consecutive days.
+ * Checks whether selecting a travel/bodyweight environment swap on `candidateDate`
+ * forms a 2+ consecutive-day run with an adjacent travel swap date (±1 calendar day).
+ * Historical multi-day trips from weeks/months ago do NOT trigger on Day 1 of a new trip.
  */
 export function hasConsecutiveTravelSwaps(swapDates: string[], candidateDate: string): boolean {
-  const unique = Array.from(new Set([...swapDates, candidateDate])).sort()
-  if (unique.length < 2) return false
+  const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+  if (!ISO_DATE_RE.test(candidateDate)) return false
+  const candidateMs = new Date(`${candidateDate}T00:00:00Z`).getTime()
+  if (!Number.isFinite(candidateMs)) return false
 
-  for (let i = 1; i < unique.length; i += 1) {
-    const prevMs = new Date(`${unique[i - 1]}T00:00:00Z`).getTime()
-    const currMs = new Date(`${unique[i]}T00:00:00Z`).getTime()
-    const diffDays = Math.round((currMs - prevMs) / 86_400_000)
+  for (const rawDate of swapDates) {
+    if (typeof rawDate !== 'string' || !ISO_DATE_RE.test(rawDate) || rawDate === candidateDate) {
+      continue
+    }
+    const existingMs = new Date(`${rawDate}T00:00:00Z`).getTime()
+    if (!Number.isFinite(existingMs)) continue
+    const diffDays = Math.round(Math.abs(candidateMs - existingMs) / 86_400_000)
     if (diffDays === 1) {
       return true
     }
@@ -267,10 +274,27 @@ export function recordDailyReadinessAndComfort(params: {
 }
 
 export function setExpressModeActive(active: boolean): PersistedPostureProfileState {
-  return savePostureProfileState(prev => ({
+  const next = savePostureProfileState(prev => ({
     ...prev,
     expressModeActive: active,
   }))
+  if (typeof window !== 'undefined') {
+    void import('@/src/lib/telemetry/telemetryClient')
+      .then(({ trackEvent }) =>
+        trackEvent(
+          'client_runtime_diagnostic',
+          {
+            diagnostic_kind: 'session_preference_sync',
+            express_mode_active: active,
+            environment_profile: next.environmentProfile,
+            component_context: 'posture-profile-state',
+          },
+          { immediate: true }
+        )
+      )
+      .catch(() => {})
+  }
+  return next
 }
 
 export function recordEnvironmentSelection(
@@ -278,18 +302,43 @@ export function recordEnvironmentSelection(
   dateKey = getTodayIsoDate()
 ): { state: PersistedPostureProfileState; triggeredConsecutiveTravel: boolean } {
   const current = loadPostureProfileState()
-  const meta = ENVIRONMENT_PROFILE_META[env]
+  const safeEnv: EnvironmentProfileId = ENVIRONMENT_PROFILE_META[env] ? env : 'home_gym'
+  const meta = ENVIRONMENT_PROFILE_META[safeEnv]
   const triggeredConsecutiveTravel = meta.isTravelSwap
     ? hasConsecutiveTravelSwaps(current.environmentSwapDates, dateKey)
     : false
 
   const nextState = savePostureProfileState(prev => ({
     ...prev,
-    environmentProfile: env,
+    environmentProfile: safeEnv,
     environmentSwapDates: meta.isTravelSwap
-      ? Array.from(new Set([...prev.environmentSwapDates, dateKey])).sort()
+      ? Array.from(
+          new Set([
+            ...prev.environmentSwapDates.filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)),
+            dateKey,
+          ])
+        )
+          .sort()
+          .slice(-90)
       : prev.environmentSwapDates,
   }))
+
+  if (typeof window !== 'undefined') {
+    void import('@/src/lib/telemetry/telemetryClient')
+      .then(({ trackEvent }) =>
+        trackEvent(
+          'client_runtime_diagnostic',
+          {
+            diagnostic_kind: 'session_preference_sync',
+            express_mode_active: nextState.expressModeActive,
+            environment_profile: safeEnv,
+            component_context: 'posture-profile-state',
+          },
+          { immediate: true }
+        )
+      )
+      .catch(() => {})
+  }
 
   return { state: nextState, triggeredConsecutiveTravel }
 }

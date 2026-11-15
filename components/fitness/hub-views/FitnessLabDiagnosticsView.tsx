@@ -93,7 +93,13 @@ interface FitnessLabDiagnosticsViewProps {
   setLogs?: Array<{ id?: string; session_date: string; exercise_name: string; set_number?: number; reps?: number; rpe?: number; tempo?: string; created_at?: string }>
   plans?: Array<{ id?: string; plan_json?: { workouts?: Array<{ focus: string; exercises: Array<{ name: string; sets: string; reps: string; tempo?: string | null }> }> }; created_at?: string }>
   telemetry?: DailyBiometricSummary | null
-  onApplyTravelPlan?: (scenario: TravelLocationScenario, adaptedExercises: ExercisePlanItem[]) => void
+  onApplyTravelPlan?: (
+    scenario: TravelLocationScenario,
+    adaptedExercises: ExercisePlanItem[],
+    targetDay?: number | 'all',
+    adaptedByDay?: Record<number, ExercisePlanItem[]>
+  ) => void
+  activeWorkoutDay?: number
   initialLift?: LiftType
   initialCritique?: VideoCritiqueAnalysis | null
   onUpdateBodyfat?: (newVal: number) => void
@@ -115,6 +121,7 @@ export default function FitnessLabDiagnosticsView({
   plans = [],
   telemetry,
   onApplyTravelPlan,
+  activeWorkoutDay,
   initialLift,
   initialCritique,
   onUpdateBodyfat,
@@ -490,7 +497,13 @@ export default function FitnessLabDiagnosticsView({
         {activeLabTool === 'travel' && (
           addonsLoading ? loadingCard
             : addonFeatures?.travel.active
-              ? <ExecutiveTravelAdapterStudio plan={plan?.plan_json} onApplyTravelPlan={onApplyTravelPlan} />
+              ? (
+                  <ExecutiveTravelAdapterStudio
+                    plan={plan?.plan_json}
+                    activeDay={activeWorkoutDay}
+                    onApplyTravelPlan={onApplyTravelPlan}
+                  />
+                )
               : <AddonUnlockCard feature="travel" />
         )}
       </div>

@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   BACKOFF_SCHEDULE_MS,
-   computeRetryBackoffMs,
+  MAX_TELEMETRY_HTTP_RETRIES,
+  clearTelemetryQueue,
+  computeRetryBackoffMs,
   detectTelemetryPlatform,
   flushTelemetry,
   flushTelemetryOnBackground,
@@ -10,11 +12,13 @@ import {
   getTelemetryHealth,
   recordCameraFpsSample,
   sanitizeTelemetryPayload,
+  scrubDiagnosticText,
   sendTelemetryDiagnosticPing,
   setTelemetryAuthContext,
   trackEvent,
   __resetTelemetryClientForTests,
 } from './telemetryClient'
+import { enqueueOfflineSet, getPendingQueueCount } from '@/lib/offline-sync-queue'
 
 function createMockLocalStorage() {
   let store: Record<string, string> = {}
@@ -435,5 +439,193 @@ describe('Forge Athletic Unified Telemetry Client', () => {
     // Ensure flushTelemetry remains clean after ping
     const postFlush = await flushTelemetry()
     expect(postFlush.ok).toBe(true)
+  })
+
+  it('scrubs Bearer tokens, OAuth query tokens, emails, and phone numbers in diagnostic payloads (HIPAA Minimum Necessary)', async () => {
+    const rawLeak =
+      'Auth failed for athlete.jane@forge-athletic.app (+1 415-555-0199) with Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.secret at https://forge-athletic.app/cb?access_token=tok_live_999&code=oauth_code_123'
+    const scrubbed = scrubDiagnosticText(rawLeak)
+    expect(scrubbed).not.toContain('athlete.jane@forge-athletic.app')
+    expect(scrubbed).not.toContain('415-555-0199')
+    expect(scrubbed).not.toContain('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')
+    expect(scrubbed).not.toContain('tok_live_999')
+    expect(scrubbed).not.toContain('oauth_code_123')
+    expect(scrubbed).toContain('[REDACTED_EMAIL]')
+    expect(scrubbed).toContain('[REDACTED_PHONE]')
+    expect(scrubbed).toContain('Bearer [REDACTED_TOKEN]')
+
+    vi.stubGlobal('navigator', {
+      onLine: false,
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)',
+    })
+
+    const env = await trackEvent('client_runtime_diagnostic', {
+      diagnostic_kind: 'exception',
+      error_name: 'AuthTokenLeakError',
+      error_message: rawLeak,
+      component_context: 'callback?refresh_token=sec_refresh_777',
+    })
+
+    expect(env.payload.error_message).not.toContain('athlete.jane@forge-athletic.app')
+    expect(env.payload.error_message).toContain('[REDACTED_EMAIL]')
+    expect(env.payload.component_context).toContain('refresh_token=[REDACTED]')
+  })
+
+  it('drains newly enqueued diagnostic ping events even when called while another batch POST is in flight', async () => {
+    vi.stubGlobal('navigator', {
+      onLine: false,
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)',
+    })
+    await trackEvent('joint_comfort_logged', {
+      comfort_score: 82,
+      comfort_label: 'Steady',
+    })
+
+    vi.stubGlobal('navigator', {
+      onLine: true,
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)',
+    })
+
+    const flushedEventIds = new Set<string>()
+    const fetchSpy = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        const body = JSON.parse(String(init.body || '{"events":[]}')) as {
+          events: Array<{ event_id: string }>
+        }
+        // Delay first batch so sendTelemetryDiagnosticPing overlaps in-flight!
+        if (flushedEventIds.size === 0) {
+          await new Promise(resolve => setTimeout(resolve, 35))
+        }
+        for (const ev of body.events) {
+          flushedEventIds.add(ev.event_id)
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true, accepted: body.events.length }),
+        }
+      }
+
+      const verifyId = new URL(url, 'http://localhost:3000').searchParams.get('verifyEventId') || ''
+      const wasAlreadyFlushed = flushedEventIds.has(verifyId)
+      return {
+        ok: wasAlreadyFlushed,
+        status: wasAlreadyFlushed ? 200 : 404,
+        json: async () => ({
+          ok: wasAlreadyFlushed,
+          verified: wasAlreadyFlushed,
+          storageMode: 'supabase',
+        }),
+      }
+    })
+    vi.stubGlobal('fetch', fetchSpy)
+
+    const backgroundFlush = flushTelemetry({ reason: 'online' })
+    await new Promise(resolve => setTimeout(resolve, 5))
+    const pingResult = await sendTelemetryDiagnosticPing()
+    await backgroundFlush
+
+    expect(pingResult.verified).toBe(true)
+    expect(flushedEventIds.has(pingResult.eventId)).toBe(true)
+    expect(getTelemetryHealth().telemetryQueueDepth).toBe(0)
+  })
+
+  it('drains multi-batch queues (>50 events) deterministically within a single awaited flushTelemetry call', async () => {
+    vi.stubGlobal('navigator', {
+      onLine: false,
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)',
+    })
+
+    for (let i = 1; i <= 65; i += 1) {
+      await trackEvent('set_logged', {
+        session_date: '2026-11-15',
+        exercise_name: 'Cable Row',
+        set_number: i,
+        reps: 12,
+        weight_kg: 55,
+        rpe: 7,
+        opt_phase: 2,
+        express_20m: false,
+        environment_profile: 'commercial_gym',
+      })
+    }
+    expect(getTelemetryHealth().telemetryQueueDepth).toBe(65)
+
+    const batchSizes: number[] = []
+    vi.stubGlobal('navigator', {
+      onLine: true,
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)',
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
+        const parsed = JSON.parse(String(init?.body || '{"events":[]}')) as { events: unknown[] }
+        batchSizes.push(parsed.events.length)
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true, accepted: parsed.events.length }),
+        }
+      })
+    )
+
+    const flushRes = await flushTelemetry({ reason: 'manual', interactive: true })
+    expect(flushRes.ok).toBe(true)
+    expect(flushRes.acceptedCount).toBe(65)
+    expect(batchSizes).toEqual([50, 15])
+    expect(getTelemetryHealth().telemetryQueueDepth).toBe(0)
+  })
+
+  it('evicts permanently failing envelopes after MAX_TELEMETRY_HTTP_RETRIES and purges both queues on clearTelemetryQueue()', async () => {
+    vi.stubGlobal('navigator', {
+      onLine: false,
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)',
+    })
+    await trackEvent('joint_comfort_logged', {
+      comfort_score: 70,
+      comfort_label: 'Guarded',
+    })
+
+    vi.stubGlobal('navigator', {
+      onLine: true,
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)',
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+      })
+    )
+
+    for (let attempt = 1; attempt <= MAX_TELEMETRY_HTTP_RETRIES; attempt += 1) {
+      await flushTelemetry({ reason: 'manual', interactive: true })
+    }
+
+    // Circuit breaker evicts the unrecoverable envelope on the 10th failed HTTP attempt
+    expect(getTelemetryHealth().telemetryQueueDepth).toBe(0)
+
+    // Verify unified sign-out purge clears both telemetry queue and offline set queue
+    vi.stubGlobal('navigator', {
+      onLine: false,
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)',
+    })
+    await trackEvent('joint_comfort_logged', {
+      comfort_score: 90,
+      comfort_label: 'Fluid',
+    })
+    enqueueOfflineSet({
+      sessionDate: '2026-11-15',
+      exerciseName: 'Front Squat',
+      setNumber: 1,
+      reps: 6,
+      weightKg: 95,
+    })
+    expect(getTelemetryHealth().queueDepth).toBe(2)
+    expect(getPendingQueueCount()).toBe(1)
+
+    await clearTelemetryQueue()
+    expect(getTelemetryHealth().queueDepth).toBe(0)
+    expect(getPendingQueueCount()).toBe(0)
   })
 })

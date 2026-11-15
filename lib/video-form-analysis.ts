@@ -345,6 +345,20 @@ export function analyzeLiftForm(input: VideoFormInput): VideoCritiqueAnalysis {
         prescribedCue: 'Exceptional kinetic timing and force transfer.',
       })
     }
+
+    if (hasDeviation('hyperextension_lockout')) {
+      deductionPoints += 14
+      checkpoints.push({
+        name: 'Lockout Lumbar Neutrality',
+        status: 'moderate_deviation',
+        observation: 'Lumbar hyperextension observed at top lockout, compressing posterior lumbar facets instead of finishing with glute extension.',
+        prescribedCue: 'Cue: "Stand tall and squeeze glutes to meet the bar—keep ribs stacked over pelvis without leaning back."',
+        impairedMuscles: {
+          overactive: ['Erector Spinae', 'Hip Flexor Complex (Psoas, Rectus Femoris)'],
+          underactive: ['Gluteus Maximus', 'Intrinsic Core Stabilizers'],
+        },
+      })
+    }
   } else {
     // Upper Body Lifts (Bench / OHP / Row)
     if (hasDeviation('flared_elbows') || hasDeviation('lumbar_hyperextension')) {
@@ -354,13 +368,45 @@ export function analyzeLiftForm(input: VideoFormInput): VideoCritiqueAnalysis {
         status: 'moderate_deviation',
         observation: 'Excessive elbow flare (>80°) or excessive lumbar arch under heavy pressing load.',
         prescribedCue: 'Cue: "Tuck elbows to 45° like an arrow, lock glutes and brace ribcage down."',
+        impairedMuscles: {
+          overactive: ['Pectoralis Minor', 'Erector Spinae', 'Latissimus Dorsi'],
+          underactive: ['Lower Trapezius', 'Serratus Anterior', 'Intrinsic Core Stabilizers'],
+        },
       })
-    } else {
+    } else if (!hasDeviation('butt_off_bench') && !hasDeviation('excessive_forward_lean')) {
       checkpoints.push({
         name: 'Glenohumeral & Core Stability',
         status: 'optimal',
         observation: 'Optimal joint stacking, stable scapular platform, and zero energy leaks observed.',
         prescribedCue: 'Strong locked-in shoulder packing and bar trajectory.',
+      })
+    }
+
+    if (hasDeviation('butt_off_bench')) {
+      deductionPoints += 15
+      checkpoints.push({
+        name: 'Pelvic & Leg-Drive Contact',
+        status: 'moderate_deviation',
+        observation: 'Glutes lifted off the bench pad during concentric press, destabilizing the spinal arch and leaking leg-drive force.',
+        prescribedCue: 'Cue: "Drive heels backward toward your shoulders so leg drive pushes you horizontally up the bench, keeping glutes anchored."',
+        impairedMuscles: {
+          overactive: ['Hip Flexor Complex (Psoas, Rectus Femoris)', 'Erector Spinae'],
+          underactive: ['Gluteus Maximus', 'Intrinsic Core Stabilizers'],
+        },
+      })
+    }
+
+    if (hasDeviation('excessive_forward_lean')) {
+      deductionPoints += 16
+      checkpoints.push({
+        name: 'Hip-Hinge Torso Angle & Anti-Momentum',
+        status: 'moderate_deviation',
+        observation: 'Torso jerking / loss of hinged spine angle during concentric pull, substituting momentum for scapular retraction.',
+        prescribedCue: 'Cue: "Lock your 45° hip-hinge torso angle, brace abs hard, and drive elbows past ribs without heaving your chest."',
+        impairedMuscles: {
+          overactive: ['Upper Trapezius', 'Biceps Brachii', 'Levator Scapulae'],
+          underactive: ['Middle & Lower Trapezius', 'Rhomboids', 'Erector Spinae'],
+        },
       })
     }
   }
@@ -447,4 +493,38 @@ export function generateQuickBiomechanicalSpokenSummary(analysis: VideoCritiqueA
 
   return `Coach Gordon here on your ${liftName}. Form score is ${overallFormScore} percent. ${primaryFault ? `I noticed ${primaryFault}.` : ''} Key cue for your next set: ${cue} Lock into your tempo!`
 }
+
+/**
+ * Negotiates a cross-browser MediaRecorder container/codec (WebM VP9/VP8 on Chromium/Firefox,
+ * MP4 H.264 on iOS/macOS Safari) so camera capture never throws NotSupportedError on iPhone/iPad.
+ */
+export function resolveSupportedVideoMimeType(
+  isSupported?: (mimeType: string) => boolean
+): string {
+  const check =
+    isSupported ??
+    (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function'
+      ? (mime: string) => MediaRecorder.isTypeSupported(mime)
+      : null)
+
+  if (!check) return ''
+
+  const candidates = [
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+    'video/mp4;codecs=avc1',
+    'video/mp4',
+  ]
+
+  for (const mime of candidates) {
+    try {
+      if (check(mime)) return mime
+    } catch {
+      // Ignore engine-specific codec syntax errors and continue probing
+    }
+  }
+  return ''
+}
+
 

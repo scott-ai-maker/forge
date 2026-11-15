@@ -172,7 +172,9 @@ export default function ApplyQuiz() {
   const [answers, setAnswers] = useState<Answers>({})
   const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
+  const [honeypot, setHoneypot] = useState('')
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [submitErrorMsg, setSubmitErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -183,20 +185,21 @@ export default function ApplyQuiz() {
   const canAdvance = Boolean(current && answers[current.key])
   const recommendation = useMemo(() => recommendationFromAnswers(answers), [answers])
 
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
   const canSubmit = isEmailValid && submitState !== 'loading'
 
   async function submitApplication() {
     if (!canSubmit) return
     setSubmitState('loading')
+    setSubmitErrorMsg(null)
 
     try {
       const res = await fetch('/api/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email,
-          firstName,
+          email: email.trim(),
+          firstName: firstName.trim(),
           goal: answers.goal,
           timeline: answers.timeline,
           trainingDays: answers.trainingDays,
@@ -206,12 +209,23 @@ export default function ApplyQuiz() {
           budgetBand: answers.budgetBand,
           readiness: answers.readiness,
           recommendedTier: recommendation,
+          ...(honeypot ? { honeypot } : {}),
         }),
       })
 
-      if (!res.ok) throw new Error('submit_failed')
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        setSubmitErrorMsg(
+          typeof data?.error === 'string'
+            ? data.error
+            : 'Could not submit right now. Please check your network and try again.'
+        )
+        setSubmitState('error')
+        return
+      }
       setSubmitState('success')
     } catch {
+      setSubmitErrorMsg('Could not submit right now. Please check your network and try again.')
       setSubmitState('error')
     }
   }
@@ -257,6 +271,18 @@ export default function ApplyQuiz() {
             void submitApplication()
           }}
         >
+          <div aria-hidden="true" style={{ display: 'none', position: 'absolute', left: '-9999px' }}>
+            <label htmlFor="apply-quiz-hp">Leave this field blank</label>
+            <input
+              id="apply-quiz-hp"
+              type="text"
+              value={honeypot}
+              onChange={e => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
+
           <div className="apply-quiz-form-grid sgf-form-grid" style={{ marginBottom: 18, gap: 14 }}>
             <div>
               <label htmlFor="apply-first-name" style={{ display: 'block', marginBottom: 6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 700 }}>
@@ -265,12 +291,20 @@ export default function ApplyQuiz() {
               <input
                 id="apply-first-name"
                 value={firstName}
-                onChange={e => setFirstName(e.target.value)}
+                onChange={e => {
+                  setFirstName(e.target.value)
+                  if (submitState === 'error') {
+                    setSubmitState('idle')
+                    setSubmitErrorMsg(null)
+                  }
+                }}
                 placeholder="Your name"
                 autoComplete="given-name"
                 autoCapitalize="words"
+                aria-invalid="false"
                 style={{
                   width: '100%',
+                  minHeight: 46,
                   padding: '12px 14px',
                   background: 'rgba(14, 23, 36, 0.9)',
                   border: '1px solid rgba(197, 160, 89, 0.3)',
@@ -289,14 +323,23 @@ export default function ApplyQuiz() {
                 id="apply-email"
                 type="email"
                 required
+                aria-invalid={submitState === 'error' ? 'true' : 'false'}
+                aria-describedby={submitState === 'error' && submitErrorMsg ? 'apply-quiz-error' : undefined}
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => {
+                  setEmail(e.target.value)
+                  if (submitState === 'error') {
+                    setSubmitState('idle')
+                    setSubmitErrorMsg(null)
+                  }
+                }}
                 placeholder="name@company.com"
                 autoComplete="email"
                 inputMode="email"
                 autoCapitalize="none"
                 style={{
                   width: '100%',
+                  minHeight: 46,
                   padding: '12px 14px',
                   background: 'rgba(14, 23, 36, 0.9)',
                   border: '1px solid rgba(197, 160, 89, 0.3)',
@@ -310,13 +353,17 @@ export default function ApplyQuiz() {
           </div>
 
           {submitState === 'success' && (
-            <p style={{ color: '#34D399', margin: '0 0 16px', fontSize: 14, fontWeight: 700 }}>
+            <p role="status" style={{ color: '#34D399', margin: '0 0 16px', fontSize: 14, fontWeight: 700 }}>
               ✓ Application received. Coach Gordon will review your submission.
             </p>
           )}
           {submitState === 'error' && (
-            <p style={{ color: 'var(--error)', margin: '0 0 16px', fontSize: 14, fontWeight: 600 }}>
-              Could not submit right now. Please check your network and try again.
+            <p
+              id="apply-quiz-error"
+              role="alert"
+              style={{ color: 'var(--error)', margin: '0 0 16px', fontSize: 14, fontWeight: 600 }}
+            >
+              {submitErrorMsg || 'Could not submit right now. Please check your network and try again.'}
             </p>
           )}
 
@@ -326,6 +373,7 @@ export default function ApplyQuiz() {
               disabled={!canSubmit}
               className="tactile-btn"
               style={{
+                minHeight: 44,
                 border: 'none',
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                 color: '#080E14',
@@ -347,6 +395,7 @@ export default function ApplyQuiz() {
               href={cta.href}
               className="tactile-btn"
               style={{
+                minHeight: 44,
                 border: '1px solid rgba(197, 160, 89, 0.4)',
                 background: 'rgba(255, 255, 255, 0.04)',
                 color: 'var(--gold-lt)',
@@ -369,11 +418,13 @@ export default function ApplyQuiz() {
               onClick={() => {
                 setStep(0)
                 setSubmitState('idle')
+                setSubmitErrorMsg(null)
                 setEmail('')
                 setFirstName('')
               }}
               className="tactile-btn"
               style={{
+                minHeight: 44,
                 border: 'none',
                 background: 'transparent',
                 color: 'var(--gray)',
@@ -426,12 +477,14 @@ export default function ApplyQuiz() {
             <button
               key={choice.value}
               type="button"
+              aria-pressed={selected}
               disabled={!mounted}
               onClick={() => {
                 setAnswers(prev => ({ ...prev, [current.key]: choice.value }))
               }}
               className="tactile-btn"
               style={{
+                minHeight: 48,
                 border: selected ? '1.5px solid var(--gold)' : '1px solid rgba(255, 255, 255, 0.08)',
                 background: selected ? 'rgba(197, 160, 89, 0.14)' : 'rgba(8, 14, 24, 0.65)',
                 color: selected ? '#FFFFFF' : '#CBD5E1',
@@ -450,6 +503,7 @@ export default function ApplyQuiz() {
             >
               <span>{choice.label}</span>
               <span
+                aria-hidden="true"
                 style={{
                   width: 18,
                   height: 18,
@@ -469,13 +523,14 @@ export default function ApplyQuiz() {
         })}
       </div>
 
-      <div className="apply-quiz-nav" style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+      <div className="apply-quiz-nav" style={{ display: 'flex', gap: 12, marginTop: 24, flexWrap: 'wrap' }}>
         <button
           type="button"
           onClick={() => setStep(s => Math.max(0, s - 1))}
           disabled={step === 0}
           className="tactile-btn"
           style={{
+            minHeight: 44,
             border: '1px solid rgba(255, 255, 255, 0.12)',
             background: 'transparent',
             color: 'var(--gray)',
@@ -496,6 +551,7 @@ export default function ApplyQuiz() {
           disabled={!canAdvance}
           className="tactile-btn"
           style={{
+            minHeight: 44,
             border: 'none',
             background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
             color: '#080E14',

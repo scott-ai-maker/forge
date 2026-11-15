@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { Activity, Clock, Dumbbell, Layers, Monitor, Plane, Route } from 'lucide-react'
+import { Activity, Clock, Dumbbell, Layers, Monitor, Plane, Route, User } from 'lucide-react'
 import PostureComparisonCard from '@/components/fitness/PostureComparisonCard'
 import DeskErgonomicsAudit from '@/components/fitness/DeskErgonomicsAudit'
 import OptPhaseRoadmap from '@/components/fitness/OptPhaseRoadmap'
@@ -57,7 +57,7 @@ const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
 ]
 
 const ENVIRONMENT_PREVIEW_BLOCKS: Record<
-  'home_gym' | 'hotel_travel',
+  'home_gym' | 'hotel_travel' | 'bodyweight_only',
   {
     label: string
     equipmentNote: string
@@ -76,6 +76,12 @@ const ENVIRONMENT_PREVIEW_BLOCKS: Record<
     equipmentNote: 'Light hotel rack dumbbells (up to 35 lb) · Missing bench/barbell adapted',
     primaryPair: 'A1. Rear-Foot-Elevated Split Squat × A2. Kickstand DB Hip Hinge',
     tempoAndCredit: '3-1-1 Unilateral Load Match · Zero Lost Phase 02 Progression',
+  },
+  bodyweight_only: {
+    label: 'Bodyweight Only',
+    equipmentNote: 'Zero equipment required · Hotel room floor & elevated foot support',
+    primaryPair: 'A1. Bodyweight Rear-Foot-Elevated Split Squat × A2. Tempo Deficit Push-Up',
+    tempoAndCredit: '4-2-1 Isometric Pause Tempo · Full Phase 02 Progression Retained',
   },
 }
 
@@ -108,9 +114,17 @@ export default function AppSneakPeekShowcase() {
     if (btn) {
       if (focus) btn.focus()
       try {
-        btn.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+        btn.scrollIntoView({
+          block: 'nearest',
+          inline: 'nearest',
+          container: 'nearest',
+        } as ScrollIntoViewOptions)
       } catch {
-        // Ignore in non-DOM test environments
+        try {
+          btn.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+        } catch {
+          // Ignore in non-DOM test environments
+        }
       }
     }
   }
@@ -133,8 +147,12 @@ export default function AppSneakPeekShowcase() {
   }
 
   const activeTab = SNEAK_TABS[selectedIndex]
-  const activeEnvKey: 'home_gym' | 'hotel_travel' =
-    sandboxEnv === 'hotel_travel' ? 'hotel_travel' : 'home_gym'
+  const activeEnvKey: 'home_gym' | 'hotel_travel' | 'bodyweight_only' =
+    sandboxEnv === 'hotel_travel'
+      ? 'hotel_travel'
+      : sandboxEnv === 'bodyweight_only'
+        ? 'bodyweight_only'
+        : 'home_gym'
   const envSpec = ENVIRONMENT_PREVIEW_BLOCKS[activeEnvKey]
 
   return (
@@ -369,7 +387,7 @@ export default function AppSneakPeekShowcase() {
                                 {envSpec.label}
                               </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                               <button
                                 type="button"
                                 aria-pressed={activeEnvKey === 'home_gym'}
@@ -396,6 +414,19 @@ export default function AppSneakPeekShowcase() {
                                 <Plane size={13} aria-hidden="true" />
                                 Hotel Travel
                               </button>
+                              <button
+                                type="button"
+                                aria-pressed={activeEnvKey === 'bodyweight_only'}
+                                onClick={() => setSandboxEnv('bodyweight_only')}
+                                className={`forge-tactile-press inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors ${
+                                  activeEnvKey === 'bodyweight_only'
+                                    ? 'border-emerald-400/50 bg-emerald-500/20 text-emerald-200'
+                                    : 'border-white/10 bg-[#181B22] text-zinc-300 hover:border-white/20'
+                                }`}
+                              >
+                                <User size={13} aria-hidden="true" />
+                                Bodyweight
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -408,8 +439,18 @@ export default function AppSneakPeekShowcase() {
                               {envSpec.tempoAndCredit}
                             </span>
                           </div>
-                          <div className="mt-1.5 text-xs font-semibold text-white sm:text-sm">
-                            {envSpec.primaryPair}
+                          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-xs font-semibold text-white sm:text-sm">
+                              {envSpec.primaryPair}
+                            </span>
+                            <span
+                              data-testid="sneak-peek-express-prescription-pill"
+                              className="rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 font-mono text-[11px] font-semibold tabular-nums text-amber-200"
+                            >
+                              {sandboxExpress
+                                ? '2 × 10–12 · 45s Density Rest (~18m Total)'
+                                : '4 × 8–10 · 90s Rest (~45m Standard)'}
+                            </span>
                           </div>
                         </div>
 
@@ -439,7 +480,7 @@ export default function AppSneakPeekShowcase() {
                                     type="button"
                                     aria-pressed={active}
                                     onClick={() => setReadinessPreset(presetKey)}
-                                    className={`forge-tactile-press min-h-[38px] rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                                    className={`forge-tactile-press min-h-[44px] rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition-colors ${
                                       active
                                         ? 'border-amber-400/50 bg-amber-500/15 text-amber-200'
                                         : 'border-white/10 bg-[#181B22] text-zinc-300 hover:border-white/20'
@@ -464,6 +505,8 @@ export default function AppSneakPeekShowcase() {
                                       <img
                                         src={drill.imageUrl}
                                         alt={drill.name}
+                                        width={64}
+                                        height={40}
                                         loading="lazy"
                                         className="h-10 w-16 shrink-0 rounded border border-white/10 object-cover"
                                       />

@@ -17,6 +17,7 @@ import { calculatePrecisionMacros, type NasmOptPhase, type NutritionGoal } from 
 import { normalizeActivity, parseNutritionTargets, type NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 
 const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library']
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 function parsePayload(body: Record<string, unknown>): CoachProgramPayload | null {
   const workouts = Array.isArray(body.workouts) ? body.workouts : []
@@ -155,14 +156,14 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const url = new URL(req.url)
   const clientId = String(url.searchParams.get('clientId') ?? '').trim()
 
   if (!clientId) {
-    return NextResponse.json({ error: 'clientId query parameter is required.' }, { status: 400 })
+    return NextResponse.json({ error: 'clientId query parameter is required.' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
   try {
@@ -170,7 +171,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Forbidden'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const admin = supabaseAdmin()
@@ -182,10 +183,10 @@ export async function GET(req: NextRequest) {
     .limit(30)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
-  return NextResponse.json({ plans: data ?? [] })
+  return NextResponse.json({ plans: data ?? [] }, { headers: NO_STORE_HEADERS })
 }
 
 export async function POST(req: NextRequest) {
@@ -198,7 +199,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const body = await req.json().catch(() => ({}))
@@ -208,11 +209,11 @@ export async function POST(req: NextRequest) {
   let nutritionTargets = parseNutritionTargets(body.nutritionTargets)
 
   if (!payload) {
-    return NextResponse.json({ error: 'Invalid workout plan payload.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid workout plan payload.' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
   if (!Array.isArray(payload.workouts) || payload.workouts.length === 0) {
-    return NextResponse.json({ error: 'Add at least one training day.' }, { status: 400 })
+    return NextResponse.json({ error: 'Add at least one training day.' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
   try {
@@ -220,7 +221,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Forbidden'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const admin = supabaseAdmin()
@@ -237,7 +238,7 @@ export async function POST(req: NextRequest) {
       console.error('Could not calculate workout plan nutrition targets:', error)
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Could not calculate client nutrition targets.' },
-        { status: 500 }
+        { status: 500, headers: NO_STORE_HEADERS }
       )
     }
   } else if (!nutritionTargets && handPortionPlan) {
@@ -305,7 +306,7 @@ export async function POST(req: NextRequest) {
   )
 
   if (storedPlan.workouts.length === 0) {
-    return NextResponse.json({ error: 'Add at least one exercise to a training day.' }, { status: 400 })
+    return NextResponse.json({ error: 'Add at least one exercise to a training day.' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
   // Check for existing plan to preserve periodization or merge
@@ -403,7 +404,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (updateErr) {
-      return NextResponse.json({ error: updateErr.message }, { status: 500 })
+      return NextResponse.json({ error: updateErr.message }, { status: 500, headers: NO_STORE_HEADERS })
     }
     data = updated
     isOverwritten = true
@@ -415,13 +416,13 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (insertErr) {
-      return NextResponse.json({ error: insertErr.message }, { status: 500 })
+      return NextResponse.json({ error: insertErr.message }, { status: 500, headers: NO_STORE_HEADERS })
     }
     data = inserted
   }
 
   if (!data) {
-    return NextResponse.json({ error: 'Failed to process workout plan.' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to process workout plan.' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   // Automatically post an update notification to the client's concierge message thread
@@ -437,7 +438,7 @@ export async function POST(req: NextRequest) {
     message_body: messageBody,
   })
 
-  return NextResponse.json({ success: true, plan: data, isOverwritten })
+  return NextResponse.json({ success: true, plan: data, isOverwritten }, { headers: NO_STORE_HEADERS })
 }
 
 export async function DELETE(req: NextRequest) {
@@ -450,7 +451,7 @@ export async function DELETE(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const url = new URL(req.url)
@@ -458,7 +459,7 @@ export async function DELETE(req: NextRequest) {
   const clientId = String(url.searchParams.get('clientId') ?? '').trim()
 
   if (!planId || !clientId) {
-    return NextResponse.json({ error: 'Plan ID and Client ID are required.' }, { status: 400 })
+    return NextResponse.json({ error: 'Plan ID and Client ID are required.' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
   try {
@@ -466,7 +467,7 @@ export async function DELETE(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Forbidden'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const admin = supabaseAdmin()
@@ -477,8 +478,8 @@ export async function DELETE(req: NextRequest) {
     .eq('user_id', clientId)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
-  return NextResponse.json({ success: true, deletedPlanId: planId })
+  return NextResponse.json({ success: true, deletedPlanId: planId }, { headers: NO_STORE_HEADERS })
 }

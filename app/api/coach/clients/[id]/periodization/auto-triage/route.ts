@@ -12,6 +12,22 @@ import {
 import { parseInjuriesFromText } from '@/lib/sports-injuries'
 import { PeriodizationAutoTriageAction } from '@/lib/coach-triage'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
+const ALLOWED_AUTO_TRIAGE_ACTIONS = new Set<Exclude<PeriodizationAutoTriageAction, null>>([
+  'insert_deload',
+  'setback_protocol',
+  'accelerate_phase',
+  'extend_phase',
+  'certify_safety_gate',
+])
+
+function sanitizeCoachReason(raw: unknown, fallback: string): string {
+  if (typeof raw !== 'string') return fallback
+  const cleaned = raw.replace(/[\u0000-\u001F\u007F<>]/g, '').trim().slice(0, 500)
+  return cleaned || fallback
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -24,7 +40,7 @@ export async function POST(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { id: clientId } = await params
@@ -38,18 +54,27 @@ export async function POST(
     .single()
 
   if (clientError || !client || client.designated_coach_id !== userId) {
-    return NextResponse.json({ error: 'Unauthorized coach access' }, { status: 403 })
+    return NextResponse.json({ error: 'Unauthorized coach access' }, { status: 403, headers: NO_STORE_HEADERS })
   }
 
   try {
     const body = await req.json()
-    const action: PeriodizationAutoTriageAction = body.action
-    const reason = body.reason || 'Biometric workload & recovery triage'
-    const targetPhase = Number(body.targetPhase) || 2
+    const rawAction = typeof body?.action === 'string' ? body.action.trim() : ''
 
-    if (!action) {
-      return NextResponse.json({ error: 'Missing auto-triage action' }, { status: 400 })
+    if (!rawAction) {
+      return NextResponse.json({ error: 'Missing auto-triage action' }, { status: 400, headers: NO_STORE_HEADERS })
     }
+
+    if (!ALLOWED_AUTO_TRIAGE_ACTIONS.has(rawAction as Exclude<PeriodizationAutoTriageAction, null>)) {
+      return NextResponse.json({ error: 'Unsupported auto-triage action' }, { status: 400, headers: NO_STORE_HEADERS })
+    }
+
+    const action = rawAction as Exclude<PeriodizationAutoTriageAction, null>
+    const reason = sanitizeCoachReason(body?.reason, 'Biometric workload & recovery triage')
+    const parsedTargetPhase = Number(body?.targetPhase)
+    const targetPhase = Number.isFinite(parsedTargetPhase)
+      ? Math.max(1, Math.min(5, Math.round(parsedTargetPhase)))
+      : 2
 
     // 1. Fetch current macrocycle from workout_plans or generate baseline
     const { data: existingPlanRecord } = await admin
@@ -162,14 +187,17 @@ export async function POST(
       // Non-blocking: ensure calibration response succeeds even if notification logging has an issue
     }
 
-    return NextResponse.json({
-      ok: true,
-      plan: modulatedPlan,
-      actionExecuted: action,
-      message: actionSummary,
-    })
+    return NextResponse.json(
+      {
+        ok: true,
+        plan: modulatedPlan,
+        actionExecuted: action,
+        message: actionSummary,
+      },
+      { headers: NO_STORE_HEADERS }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to execute auto-triage periodization action'
-    return NextResponse.json({ error: message }, { status: 400 })
+    return NextResponse.json({ error: message }, { status: 400, headers: NO_STORE_HEADERS })
   }
 }

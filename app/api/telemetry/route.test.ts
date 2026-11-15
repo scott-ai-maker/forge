@@ -232,4 +232,70 @@ describe('/api/telemetry route', () => {
     expect(rehydrateJson.ok).toBe(true)
     expect(rehydrateJson.rehydration.snapshot.lastPlatform).toBe('android_app')
   })
+
+  it('rejects oversized telemetry batches (>256 KB) with 413 and strict no-store cache headers', async () => {
+    const hugeNotes = 'x'.repeat(270 * 1024)
+    const oversizedBody = JSON.stringify({
+      events: [
+        {
+          event_id: '550e8400-e29b-41d4-a716-446655440100',
+          event_type: 'joint_comfort_logged',
+          session_id: 'sess-oversized',
+          client_timestamp: '2026-11-15T10:00:00.000-05:00',
+          timezone_offset_mins: -300,
+          platform: 'pwa_standalone',
+          app_version: '1.58.0',
+          payload: {
+            comfort_score: 75,
+            comfort_label: 'Steady',
+            notes: hugeNotes,
+          },
+        },
+      ],
+    })
+
+    const res = await POST(
+      new NextRequest('http://localhost:3000/api/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: oversizedBody,
+      })
+    )
+
+    expect(res.status).toBe(413)
+    expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0')
+  })
+
+  it('enforces per-user sliding-window rate limits (429 + Retry-After) against burst floods', async () => {
+    let lastStatus = 200
+    let retryAfterHeader: string | null = null
+
+    for (let i = 0; i < 121; i += 1) {
+      const res = await POST(
+        new NextRequest('http://localhost:3000/api/telemetry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            events: [
+              {
+                event_id: `550e8400-e29b-41d4-a716-${String(i).padStart(12, '0')}`,
+                event_type: 'joint_comfort_logged',
+                session_id: 'sess-flood',
+                client_timestamp: '2026-11-15T10:05:00.000-05:00',
+                timezone_offset_mins: -300,
+                platform: 'mobile_web',
+                app_version: '1.58.0',
+                payload: { comfort_score: 80, comfort_label: 'Fluid' },
+              },
+            ],
+          }),
+        })
+      )
+      lastStatus = res.status
+      retryAfterHeader = res.headers.get('Retry-After')
+    }
+
+    expect(lastStatus).toBe(429)
+    expect(Number(retryAfterHeader)).toBeGreaterThan(0)
+  })
 })

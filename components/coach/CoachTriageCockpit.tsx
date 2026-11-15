@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useId } from 'react'
 import Link from 'next/link'
 import {
   ClientTriageSummary,
@@ -15,6 +15,24 @@ interface CoachTriageCockpitProps {
   onOpenConsultantMemo?: (clientId: string) => void
 }
 
+function buildClientMemoInput(client: ClientTriageSummary, customNotes?: string) {
+  const adherence = typeof client.adherencePercent === 'number' && Number.isFinite(client.adherencePercent)
+    ? client.adherencePercent
+    : 80
+  const readiness = typeof client.readinessScore === 'number' && Number.isFinite(client.readinessScore)
+    ? client.readinessScore
+    : 80
+  return {
+    clientName: client.clientName,
+    optPhase: client.currentOptPhase || 1,
+    totalSetsLogged: Math.round((adherence / 100) * 36),
+    targetSetsPlanned: 36,
+    avgReadiness: readiness,
+    cexStreakDays: 5,
+    coachCustomNotes: customNotes?.trim() || undefined,
+  }
+}
+
 export default function CoachTriageCockpit({
   initialClients,
   onOpenConsultantMemo,
@@ -24,15 +42,50 @@ export default function CoachTriageCockpit({
     setIsHydrated(true)
   }, [])
 
+  const searchInputId = useId()
+  const memoNoteInputId = useId()
+  const memoTextareaId = useId()
+  const memoDialogRef = useRef<HTMLDialogElement | null>(null)
+
   const [filterPriority, setFilterPriority] = useState<'all' | 'red' | 'amber' | 'green' | 'fatigue_triage' | 'safety_gate'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedDetailsClientId, setExpandedDetailsClientId] = useState<string | null>(null)
   const [executingClientId, setExecutingClientId] = useState<string | null>(null)
   const [actionSuccessFeedback, setActionSuccessFeedback] = useState<Record<string, string>>({})
+  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null)
   const [activeMemoClient, setActiveMemoClient] = useState<ClientTriageSummary | null>(null)
   const [memoCustomNote, setMemoCustomNote] = useState('')
   const [generatedMemoText, setGeneratedMemoText] = useState('')
   const [isDispatchingMemo, setIsDispatchingMemo] = useState(false)
+
+  useEffect(() => {
+    const dialog = memoDialogRef.current
+    if (!dialog) return
+
+    if (activeMemoClient) {
+      if (!dialog.open) {
+        dialog.showModal()
+      }
+      if (!('closedBy' in HTMLDialogElement.prototype)) {
+        const handleBackdropClick = (event: MouseEvent) => {
+          if (event.target !== dialog) return
+          const rect = dialog.getBoundingClientRect()
+          const isDialogContent =
+            rect.top <= event.clientY &&
+            event.clientY <= rect.top + rect.height &&
+            rect.left <= event.clientX &&
+            event.clientX <= rect.left + rect.width
+          if (!isDialogContent) {
+            dialog.close()
+          }
+        }
+        dialog.addEventListener('click', handleBackdropClick)
+        return () => dialog.removeEventListener('click', handleBackdropClick)
+      }
+    } else if (dialog.open) {
+      dialog.close()
+    }
+  }, [activeMemoClient])
 
   const sorted = useMemo(() => sortTriageQueue(initialClients), [initialClients])
 
@@ -40,7 +93,7 @@ export default function CoachTriageCockpit({
   const amberCount = sorted.filter(c => c.priority === 'amber').length
   const greenCount = sorted.filter(c => c.priority === 'green').length
   const fatigueTriageCount = sorted.filter(
-    c => c.daysSinceLastCheckin <= 2 || (typeof c.readinessScore === 'number' && c.readinessScore > 0 && c.readinessScore < 60) || c.hasReportedPain || c.acwrZone === 'Danger Zone'
+    c => c.daysSinceLastCheckin <= 2 || (typeof c.readinessScore === 'number' && c.readinessScore >= 0 && c.readinessScore < 60) || c.hasReportedPain || c.acwrZone === 'Danger Zone'
   ).length
   const safetyGateCount = sorted.filter(
     c => c.hasMedicalRedFlag || c.hasReportedPain || c.hasPendingVideoCritique || Boolean(c.hasPendingSafetyCertification)
@@ -54,7 +107,7 @@ export default function CoachTriageCockpit({
           : filterPriority === 'safety_gate'
             ? (c.hasMedicalRedFlag || c.hasReportedPain || c.hasPendingVideoCritique || Boolean(c.hasPendingSafetyCertification))
             : filterPriority === 'fatigue_triage'
-              ? (c.daysSinceLastCheckin <= 2 || (typeof c.readinessScore === 'number' && c.readinessScore > 0 && c.readinessScore < 60) || c.hasReportedPain || c.acwrZone === 'Danger Zone')
+              ? (c.daysSinceLastCheckin <= 2 || (typeof c.readinessScore === 'number' && c.readinessScore >= 0 && c.readinessScore < 60) || c.hasReportedPain || c.acwrZone === 'Danger Zone')
               : c.priority === filterPriority
       if (!matchesPriority) return false
 
@@ -75,16 +128,10 @@ export default function CoachTriageCockpit({
   const handleDispatchConsultantMemo = async () => {
     if (!activeMemoClient) return
     setIsDispatchingMemo(true)
+    setActionErrorMessage(null)
     try {
-      const textToDispatch = generatedMemoText || generateConsultantMemo({
-        clientName: activeMemoClient.clientName,
-        optPhase: activeMemoClient.currentOptPhase || 1,
-        totalSetsLogged: Math.round(((activeMemoClient.adherencePercent || 80) / 100) * 36),
-        targetSetsPlanned: 36,
-        avgReadiness: activeMemoClient.readinessScore || 80,
-        cexStreakDays: 5,
-        coachCustomNotes: memoCustomNote.trim() || undefined,
-      }).fullMemoMarkdown
+      const textToDispatch =
+        generatedMemoText || generateConsultantMemo(buildClientMemoInput(activeMemoClient, memoCustomNote)).fullMemoMarkdown
 
       const res = await fetch('/api/messages', {
         method: 'POST',
@@ -103,10 +150,11 @@ export default function CoachTriageCockpit({
         setGeneratedMemoText('')
         setMemoCustomNote('')
       } else {
-        alert('Failed to dispatch memo to athlete messages.')
+        const errData = await res.json().catch(() => ({}))
+        setActionErrorMessage(errData.error || 'Failed to dispatch memo to athlete messages.')
       }
     } catch {
-      alert('Network error dispatching consultant memo.')
+      setActionErrorMessage('Network error dispatching consultant memo.')
     } finally {
       setIsDispatchingMemo(false)
     }
@@ -119,23 +167,24 @@ export default function CoachTriageCockpit({
   ) => {
     if (!action) return
     setExecutingClientId(clientId)
+    setActionErrorMessage(null)
     try {
       const res = await fetch(`/api/coach/clients/${clientId}/periodization/auto-triage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (res.ok && data.ok) {
         setActionSuccessFeedback(prev => ({
           ...prev,
           [clientId]: data.message || `Auto-triage calibrated for ${clientName}`,
         }))
       } else {
-        alert(data.error || 'Failed to execute auto-triage action')
+        setActionErrorMessage(data.error || 'Failed to execute auto-triage action.')
       }
     } catch {
-      alert('Network error executing auto-triage')
+      setActionErrorMessage('Network error executing auto-triage.')
     } finally {
       setExecutingClientId(null)
     }
@@ -148,6 +197,7 @@ export default function CoachTriageCockpit({
   const handleSendCoachDirective = async (clientId: string, clientName: string) => {
     if (!customDirectiveText.trim()) return
     setIsSendingDirective(true)
+    setActionErrorMessage(null)
     try {
       const res = await fetch('/api/messages', {
         method: 'POST',
@@ -157,7 +207,7 @@ export default function CoachTriageCockpit({
           message_body: `Coach Gordon Direct Directive: ${customDirectiveText.trim()}`,
         }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setActionSuccessFeedback(prev => ({
           ...prev,
@@ -166,10 +216,10 @@ export default function CoachTriageCockpit({
         setCustomDirectiveText('')
         setSelectedDirectiveClientId(null)
       } else {
-        alert(data.error || 'Failed to dispatch directive')
+        setActionErrorMessage(data.error || 'Failed to dispatch directive.')
       }
     } catch {
-      alert('Network error dispatching directive')
+      setActionErrorMessage('Network error dispatching directive.')
     } finally {
       setIsSendingDirective(false)
     }
@@ -225,6 +275,7 @@ export default function CoachTriageCockpit({
       <div className="coach-triage-pills-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 12 }}>
         <button
           type="button"
+          aria-pressed={filterPriority === 'safety_gate'}
           onClick={() => setFilterPriority(filterPriority === 'safety_gate' ? 'all' : 'safety_gate')}
           className="tactile-btn tabular-nums coach-triage-pill"
           style={{
@@ -236,6 +287,7 @@ export default function CoachTriageCockpit({
             display: 'grid',
             gap: 2,
             borderRadius: 8,
+            minHeight: 44,
           }}
         >
           <div style={{ color: '#10B981', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -250,6 +302,7 @@ export default function CoachTriageCockpit({
 
         <button
           type="button"
+          aria-pressed={filterPriority === 'red'}
           onClick={() => setFilterPriority(filterPriority === 'red' ? 'all' : 'red')}
           className="tactile-btn tabular-nums coach-triage-pill"
           style={{
@@ -261,6 +314,7 @@ export default function CoachTriageCockpit({
             display: 'grid',
             gap: 2,
             borderRadius: 8,
+            minHeight: 44,
           }}
         >
           <div style={{ color: 'var(--error)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -275,6 +329,7 @@ export default function CoachTriageCockpit({
 
         <button
           type="button"
+          aria-pressed={filterPriority === 'fatigue_triage'}
           onClick={() => setFilterPriority(filterPriority === 'fatigue_triage' ? 'all' : 'fatigue_triage')}
           className="tactile-btn tabular-nums coach-triage-pill"
           style={{
@@ -286,6 +341,7 @@ export default function CoachTriageCockpit({
             display: 'grid',
             gap: 2,
             borderRadius: 8,
+            minHeight: 44,
           }}
         >
           <div style={{ color: '#fbbf24', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -300,6 +356,7 @@ export default function CoachTriageCockpit({
 
         <button
           type="button"
+          aria-pressed={filterPriority === 'amber'}
           onClick={() => setFilterPriority(filterPriority === 'amber' ? 'all' : 'amber')}
           className="tactile-btn tabular-nums coach-triage-pill"
           style={{
@@ -311,6 +368,7 @@ export default function CoachTriageCockpit({
             display: 'grid',
             gap: 2,
             borderRadius: 8,
+            minHeight: 44,
           }}
         >
           <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -325,6 +383,7 @@ export default function CoachTriageCockpit({
 
         <button
           type="button"
+          aria-pressed={filterPriority === 'green'}
           onClick={() => setFilterPriority(filterPriority === 'green' ? 'all' : 'green')}
           className="tactile-btn tabular-nums coach-triage-pill"
           style={{
@@ -336,6 +395,7 @@ export default function CoachTriageCockpit({
             display: 'grid',
             gap: 2,
             borderRadius: 8,
+            minHeight: 44,
           }}
         >
           <div style={{ color: 'var(--success)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -349,8 +409,47 @@ export default function CoachTriageCockpit({
         </button>
       </div>
 
+      {actionErrorMessage && (
+        <div
+          role="alert"
+          style={{
+            padding: '12px 16px',
+            background: 'rgba(239, 68, 68, 0.16)',
+            border: '1px solid #EF4444',
+            borderRadius: 8,
+            color: '#FCA5A5',
+            fontSize: 13,
+            fontWeight: 600,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <span>{actionErrorMessage}</span>
+          <button
+            type="button"
+            aria-label="Dismiss triage error"
+            onClick={() => setActionErrorMessage(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#FCA5A5',
+              cursor: 'pointer',
+              minWidth: 44,
+              minHeight: 44,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Triage Queue List */}
-      <div className="glass-card" style={{ padding: 20, display: 'grid', gap: 14 }}>
+      <div className="glass-card" style={{ padding: 'clamp(14px, 3vw, 20px)', display: 'grid', gap: 14 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 18, color: 'var(--white)', letterSpacing: '0.04em' }}>
@@ -361,22 +460,31 @@ export default function CoachTriageCockpit({
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <search style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flex: '1 1 220px', maxWidth: 420, justifyContent: 'flex-end' }}>
+            <label htmlFor={searchInputId} className="visually-hidden">
+              Search athlete or trigger
+            </label>
             <input
-              type="text"
+              id={searchInputId}
+              type="search"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search athlete or trigger (e.g. Deload, Pain)..."
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
               style={{
-                padding: '6px 12px',
+                padding: '8px 12px',
                 borderRadius: 6,
                 background: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 color: '#FFFFFF',
                 fontFamily: 'Raleway, sans-serif',
-                fontSize: 12,
-                outline: 'none',
-                minWidth: 220,
+                fontSize: 'max(1rem, 1em)',
+                minHeight: 44,
+                width: '100%',
+                minWidth: 0,
+                boxSizing: 'border-box',
               }}
             />
 
@@ -387,12 +495,21 @@ export default function CoachTriageCockpit({
                   setFilterPriority('all')
                   setSearchQuery('')
                 }}
-                style={{ background: 'transparent', border: 'none', color: 'var(--gold-lt)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--gold-lt)',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  minHeight: 44,
+                  padding: '0 8px',
+                }}
               >
                 Reset Filters
               </button>
             )}
-          </div>
+          </search>
         </div>
 
         <div style={{ display: 'grid', gap: 12 }}>
@@ -417,7 +534,7 @@ export default function CoachTriageCockpit({
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 14 }}>
-                  <div style={{ flex: 1, minWidth: 260 }}>
+                  <div style={{ flex: 1, minWidth: 'min(100%, 260px)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                       <span style={{ fontFamily: 'Raleway, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--white)' }}>
                         {client.clientName}
@@ -524,6 +641,7 @@ export default function CoachTriageCockpit({
 
                       <button
                         type="button"
+                        aria-expanded={expandedDetailsClientId === client.clientId}
                         onClick={() => setExpandedDetailsClientId(expandedDetailsClientId === client.clientId ? null : client.clientId)}
                         style={{
                           background: 'none',
@@ -532,7 +650,10 @@ export default function CoachTriageCockpit({
                           fontSize: 11,
                           fontFamily: 'Raleway, sans-serif',
                           cursor: 'pointer',
-                          padding: 0,
+                          padding: '6px 8px',
+                          minHeight: 44,
+                          display: 'inline-flex',
+                          alignItems: 'center',
                           textDecoration: 'underline',
                           textUnderlineOffset: 2,
                         }}
@@ -545,7 +666,7 @@ export default function CoachTriageCockpit({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
                     <div className="tabular-nums" style={{ textAlign: 'right', fontSize: 12 }}>
                       <div style={{ color: 'var(--white)' }}>
-                        <strong>{client.readinessScore}%</strong> Readiness
+                        <strong>{typeof client.readinessScore === 'number' ? `${client.readinessScore}%` : '—'}</strong> Readiness
                       </div>
                       <div style={{ color: 'var(--gray)' }}>
                         {client.adherencePercent}% Adherence
@@ -568,6 +689,7 @@ export default function CoachTriageCockpit({
                           className="sgf-button sgf-button-gold"
                           style={{
                             padding: '8px 14px',
+                            minHeight: 44,
                             fontSize: 12,
                             fontWeight: 700,
                             display: 'flex',
@@ -587,6 +709,7 @@ export default function CoachTriageCockpit({
                           className="tactile-btn"
                           style={{
                             padding: '8px 14px',
+                            minHeight: 44,
                             background: 'rgba(16,185,129,0.12)',
                             border: '1px solid rgba(16,185,129,0.4)',
                             color: '#34d399',
@@ -607,6 +730,7 @@ export default function CoachTriageCockpit({
 
                       {successMsg && (
                         <span
+                          role="status"
                           style={{
                             padding: '6px 12px',
                             background: 'rgba(52,211,153,0.15)',
@@ -615,6 +739,8 @@ export default function CoachTriageCockpit({
                             fontSize: 11,
                             fontWeight: 700,
                             borderRadius: 4,
+                            display: 'inline-flex',
+                            alignItems: 'center',
                           }}
                         >
                           ✓ Synced with Athlete
@@ -629,20 +755,14 @@ export default function CoachTriageCockpit({
                             onOpenConsultantMemo(client.clientId)
                           } else {
                             setActiveMemoClient(client)
-                            const initial = generateConsultantMemo({
-                              clientName: client.clientName,
-                              optPhase: client.currentOptPhase || 1,
-                              totalSetsLogged: Math.round(((client.adherencePercent || 80) / 100) * 36),
-                              targetSetsPlanned: 36,
-                              avgReadiness: client.readinessScore || 80,
-                              cexStreakDays: 5,
-                            })
+                            const initial = generateConsultantMemo(buildClientMemoInput(client))
                             setGeneratedMemoText(initial.fullMemoMarkdown)
                           }
                         }}
                         className="tactile-btn"
                         style={{
                           padding: '8px 14px',
+                          minHeight: 44,
                           background: 'rgba(255,255,255,0.06)',
                           border: '1px solid rgba(255,255,255,0.15)',
                           color: 'var(--white)',
@@ -663,10 +783,12 @@ export default function CoachTriageCockpit({
                       {/* 1-Tap Quick Voice Directive / Message Dispatch to Athlete */}
                       <button
                         type="button"
+                        aria-expanded={selectedDirectiveClientId === client.clientId}
                         onClick={() => setSelectedDirectiveClientId(selectedDirectiveClientId === client.clientId ? null : client.clientId)}
                         className="tactile-btn"
                         style={{
                           padding: '8px 14px',
+                          minHeight: 44,
                           background: selectedDirectiveClientId === client.clientId ? 'rgba(212,160,23,0.3)' : 'rgba(212,160,23,0.12)',
                           border: '1px solid rgba(212,160,23,0.4)',
                           color: 'var(--gold-lt, #fef08a)',
@@ -689,6 +811,7 @@ export default function CoachTriageCockpit({
                         className="tactile-btn"
                         style={{
                           padding: '8px 14px',
+                          minHeight: 44,
                           background: 'linear-gradient(135deg, rgba(197,160,89,0.2) 0%, rgba(197,160,89,0.06) 100%)',
                           border: '1px solid rgba(197,160,89,0.45)',
                           color: 'var(--gold-lt)',
@@ -713,6 +836,7 @@ export default function CoachTriageCockpit({
                         className="tactile-btn"
                         style={{
                           padding: '8px 14px',
+                          minHeight: 44,
                           background: 'rgba(255,255,255,0.06)',
                           border: '1px solid rgba(255,255,255,0.12)',
                           color: 'var(--white)',
@@ -721,6 +845,8 @@ export default function CoachTriageCockpit({
                           fontWeight: 600,
                           textDecoration: 'none',
                           borderRadius: 4,
+                          display: 'inline-flex',
+                          alignItems: 'center',
                         }}
                       >
                         Open Lab →
@@ -818,8 +944,20 @@ export default function CoachTriageCockpit({
                       </span>
                       <button
                         type="button"
+                        aria-label="Close directive panel"
                         onClick={() => setSelectedDirectiveClientId(null)}
-                        style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: 14, cursor: 'pointer' }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#9ca3af',
+                          fontSize: 14,
+                          cursor: 'pointer',
+                          minWidth: 44,
+                          minHeight: 44,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
                       >
                         ✕
                       </button>
@@ -836,7 +974,8 @@ export default function CoachTriageCockpit({
                           type="button"
                           onClick={() => setCustomDirectiveText(preset)}
                           style={{
-                            padding: '4px 10px',
+                            padding: '8px 12px',
+                            minHeight: 44,
                             background: 'rgba(255, 255, 255, 0.05)',
                             border: '1px solid rgba(255, 255, 255, 0.12)',
                             color: '#d1d5db',
@@ -851,21 +990,26 @@ export default function CoachTriageCockpit({
                       ))}
                     </div>
 
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <label htmlFor={`directive-input-${client.clientId}`} className="visually-hidden">
+                        Direct note to {client.clientName}
+                      </label>
                       <input
+                        id={`directive-input-${client.clientId}`}
                         type="text"
                         value={customDirectiveText}
                         onChange={e => setCustomDirectiveText(e.target.value)}
                         placeholder={`Direct note to ${client.clientName}...`}
                         style={{
-                          flex: 1,
+                          flex: '1 1 200px',
                           padding: '8px 12px',
+                          minHeight: 44,
                           borderRadius: 6,
                           background: 'rgba(255, 255, 255, 0.05)',
                           border: '1px solid rgba(255, 255, 255, 0.15)',
                           color: '#FFFFFF',
-                          fontSize: 12,
-                          outline: 'none',
+                          fontSize: 'max(1rem, 1em)',
+                          boxSizing: 'border-box',
                         }}
                       />
                       <button
@@ -873,7 +1017,7 @@ export default function CoachTriageCockpit({
                         disabled={isSendingDirective || !customDirectiveText.trim()}
                         onClick={() => handleSendCoachDirective(client.clientId, client.clientName)}
                         className="sgf-button sgf-button-gold"
-                        style={{ padding: '8px 16px', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                        style={{ padding: '8px 16px', minHeight: 44, fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                       >
                         <GaaIcon name="rocket" size={13} tone="inherit" />
                         <span>{isSendingDirective ? 'Dispatching...' : 'Dispatch'}</span>
@@ -904,43 +1048,34 @@ export default function CoachTriageCockpit({
       </div>
 
       {/* ── Executive Consultant Memo Studio Modal ── */}
-      {activeMemoClient && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="memo-modal-title"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            background: 'rgba(4,8,14,0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setActiveMemoClient(null)
-            }
-          }}
-        >
+      <dialog
+        ref={memoDialogRef}
+        {...({ closedby: 'any' } as Record<string, unknown>)}
+        aria-labelledby="memo-modal-title"
+        onClose={() => setActiveMemoClient(null)}
+        style={{
+          width: 'min(680px, calc(100vw - 24px))',
+          maxHeight: '90dvh',
+          margin: 'auto',
+          overflowY: 'auto',
+          background: '#0a121d',
+          border: '1px solid rgba(212,160,23,0.4)',
+          borderRadius: 12,
+          padding: 0,
+          color: 'var(--white)',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.7)',
+        }}
+      >
+        {activeMemoClient && (
           <div
             className="glass-card"
             style={{
-              width: '100%',
-              maxWidth: 680,
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              background: '#0a121d',
-              border: '1px solid rgba(212,160,23,0.4)',
-              borderRadius: 12,
               padding: 'clamp(16px, 3vw, 24px)',
               display: 'flex',
               flexDirection: 'column',
               gap: 16,
-              boxShadow: '0 20px 50px rgba(0,0,0,0.7)',
+              border: 'none',
+              background: 'transparent',
             }}
           >
             {/* Modal Header */}
@@ -993,9 +1128,13 @@ export default function CoachTriageCockpit({
                   border: '1px solid rgba(255,255,255,0.15)',
                   color: 'var(--gray)',
                   borderRadius: 6,
-                  padding: '6px 10px',
+                  minWidth: 44,
+                  minHeight: 44,
                   cursor: 'pointer',
                   fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 ✕
@@ -1004,37 +1143,33 @@ export default function CoachTriageCockpit({
 
             {/* Coach Quick Note Input */}
             <div style={{ display: 'grid', gap: 6 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <label htmlFor={memoNoteInputId} style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Coach Special Directive / Audio Note
               </label>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <input
+                  id={memoNoteInputId}
                   type="text"
+                  autoFocus
                   value={memoCustomNote}
                   onChange={(e) => setMemoCustomNote(e.target.value)}
                   placeholder="e.g., Dial in 4/2/1 tempo on goblet squats; protect right knee..."
                   style={{
-                    flex: 1,
+                    flex: '1 1 220px',
                     background: 'rgba(0,0,0,0.4)',
                     border: '1px solid rgba(255,255,255,0.15)',
                     borderRadius: 6,
                     padding: '8px 12px',
+                    minHeight: 44,
                     color: 'var(--white)',
-                    fontSize: 13,
+                    fontSize: 'max(1rem, 1em)',
+                    boxSizing: 'border-box',
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => {
-                    const regenerated = generateConsultantMemo({
-                      clientName: activeMemoClient.clientName,
-                      optPhase: activeMemoClient.currentOptPhase || 1,
-                      totalSetsLogged: Math.round(((activeMemoClient.adherencePercent || 80) / 100) * 36),
-                      targetSetsPlanned: 36,
-                      avgReadiness: activeMemoClient.readinessScore || 80,
-                      cexStreakDays: 5,
-                      coachCustomNotes: memoCustomNote.trim() || undefined,
-                    })
+                    const regenerated = generateConsultantMemo(buildClientMemoInput(activeMemoClient, memoCustomNote))
                     setGeneratedMemoText(regenerated.fullMemoMarkdown)
                   }}
                   className="tactile-btn"
@@ -1044,7 +1179,8 @@ export default function CoachTriageCockpit({
                     color: 'var(--gold-lt)',
                     fontWeight: 700,
                     fontSize: 11,
-                    padding: '0 12px',
+                    padding: '8px 14px',
+                    minHeight: 44,
                     borderRadius: 6,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
@@ -1061,10 +1197,11 @@ export default function CoachTriageCockpit({
 
             {/* Formatted Memo Content Textarea / Preview */}
             <div style={{ display: 'grid', gap: 6 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Executive Briefing Markdown (Review & Edit)
+              <label htmlFor={memoTextareaId} style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Executive Briefing Markdown (Review &amp; Edit)
               </label>
               <textarea
+                id={memoTextareaId}
                 value={generatedMemoText}
                 onChange={(e) => setGeneratedMemoText(e.target.value)}
                 rows={11}
@@ -1076,15 +1213,16 @@ export default function CoachTriageCockpit({
                   padding: '12px',
                   color: 'var(--white)',
                   fontFamily: 'var(--font-telemetry, monospace)',
-                  fontSize: 12,
+                  fontSize: 'max(1rem, 1em)',
                   lineHeight: 1.5,
                   resize: 'vertical',
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
 
             {/* Modal Actions */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, marginTop: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => setActiveMemoClient(null)}
@@ -1096,6 +1234,7 @@ export default function CoachTriageCockpit({
                   fontSize: 12,
                   fontWeight: 600,
                   padding: '10px 18px',
+                  minHeight: 44,
                   borderRadius: 6,
                   cursor: 'pointer',
                 }}
@@ -1109,6 +1248,7 @@ export default function CoachTriageCockpit({
                 className="sgf-button sgf-button-gold"
                 style={{
                   padding: '10px 20px',
+                  minHeight: 44,
                   fontSize: 12,
                   fontWeight: 800,
                   display: 'inline-flex',
@@ -1121,8 +1261,8 @@ export default function CoachTriageCockpit({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </dialog>
     </div>
   )
 }

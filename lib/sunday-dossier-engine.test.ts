@@ -257,5 +257,42 @@ describe('Sunday Intelligence Dossier Engine', () => {
       expect(dossier.topPrsThisWeek[0]?.reps).toBe(3)
       expect(dossier.topPrsThisWeek[0]?.achieved_at).toBe('2026-08-18')
     })
+
+    it('classifies Overreaching (1.31–1.49) and Under-training (<0.80) against 28-day chronic workload', () => {
+      const overreachingSets = [
+        { session_date: '2026-08-18', weight_lbs: 280, reps: 10, is_warmup: false, rpe: 8.5 }, // 2800 lbs
+        { session_date: '2026-08-20', weight_lbs: 280, reps: 10, is_warmup: false, rpe: 8.5 }, // 2800 lbs
+      ]
+      const overreaching = generateSundayDossier(
+        'Athlete',
+        'Phase 3: Muscular Development',
+        overreachingSets,
+        [],
+        [],
+        3,
+        52,
+        68,
+        4000 // 5600 / 4000 = 1.40 -> Overreaching
+      )
+      expect(overreaching.acwrRatio).toBe(1.4)
+      expect(overreaching.acwrZone).toBe('Overreaching')
+
+      const undertrainingSets = [
+        { session_date: '2026-08-18', weight_lbs: 200, reps: 10, is_warmup: false, rpe: 7 }, // 2000 lbs
+      ]
+      const undertraining = generateSundayDossier(
+        'Athlete',
+        'Phase 1: Stabilization Endurance',
+        undertrainingSets,
+        [],
+        [],
+        3,
+        52,
+        68,
+        4000 // 2000 / 4000 = 0.50 -> Under-training
+      )
+      expect(undertraining.acwrRatio).toBe(0.5)
+      expect(undertraining.acwrZone).toBe('Under-training')
+    })
   })
 })

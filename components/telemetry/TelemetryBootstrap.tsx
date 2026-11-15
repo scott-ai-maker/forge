@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { clearOfflineQueue } from '@/lib/offline-sync-queue'
 import {
   rehydratePostureProfileFromServer,
   type ServerTelemetryRehydrationPayload,
@@ -105,6 +106,7 @@ export default function TelemetryBootstrap() {
 
       const { data } = supabase.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT') {
+          clearOfflineQueue()
           void clearTelemetryQueue()
           return
         }

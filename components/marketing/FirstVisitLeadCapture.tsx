@@ -7,8 +7,10 @@ import GaaIcon from '@/components/ui/GaaIcon'
 import { trackMarketingEvent } from '@/lib/marketing-analytics'
 import { isCompanionApp } from '@/lib/native-companion'
 
-const STORAGE_KEY_CAPTURED = 'gaa_lead_captured'
-const STORAGE_KEY_DISMISSED = 'gaa_lead_dock_dismissed_until'
+const STORAGE_KEY_CAPTURED = 'forge_lead_captured'
+const LEGACY_STORAGE_KEY_CAPTURED = 'gaa_lead_captured'
+const STORAGE_KEY_DISMISSED = 'forge_lead_dock_dismissed_until'
+const LEGACY_STORAGE_KEY_DISMISSED = 'gaa_lead_dock_dismissed_until'
 const SUPPRESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 export type FirstVisitLeadCaptureProps = {
@@ -51,10 +53,15 @@ export default function FirstVisitLeadCapture({
 
     // 1. Check if user already submitted or dismissed
     try {
-      if (localStorage.getItem(STORAGE_KEY_CAPTURED) === 'true') {
+      if (
+        localStorage.getItem(STORAGE_KEY_CAPTURED) === 'true' ||
+        localStorage.getItem(LEGACY_STORAGE_KEY_CAPTURED) === 'true'
+      ) {
         return
       }
-      const dismissedUntil = localStorage.getItem(STORAGE_KEY_DISMISSED)
+      const dismissedUntil =
+        localStorage.getItem(STORAGE_KEY_DISMISSED) ||
+        localStorage.getItem(LEGACY_STORAGE_KEY_DISMISSED)
       if (dismissedUntil && Date.now() < Number(dismissedUntil)) {
         return
       }
@@ -111,7 +118,9 @@ export default function FirstVisitLeadCapture({
     setIsVisible(false)
     trackMarketingEvent('first_visit_dock_dismiss', { isLive, pathname })
     try {
-      localStorage.setItem(STORAGE_KEY_DISMISSED, String(Date.now() + SUPPRESSION_DURATION_MS))
+      const until = String(Date.now() + SUPPRESSION_DURATION_MS)
+      localStorage.setItem(STORAGE_KEY_DISMISSED, until)
+      localStorage.setItem(LEGACY_STORAGE_KEY_DISMISSED, until)
     } catch {
       // ignore
     }
@@ -152,6 +161,7 @@ export default function FirstVisitLeadCapture({
         })
         try {
           localStorage.setItem(STORAGE_KEY_CAPTURED, 'true')
+          localStorage.setItem(LEGACY_STORAGE_KEY_CAPTURED, 'true')
         } catch {
           // ignore
         }
@@ -183,11 +193,13 @@ export default function FirstVisitLeadCapture({
   // Minimized Floating Badge
   if (isMinimized) {
     return (
-      <div
+      <button
+        type="button"
         className="first-visit-dock-minimized"
         style={{
           position: 'fixed',
           zIndex: 9999,
+          minHeight: 44,
           display: 'flex',
           alignItems: 'center',
           gap: 10,
@@ -203,8 +215,6 @@ export default function FirstVisitLeadCapture({
           boxSizing: 'border-box',
         }}
         onClick={() => setIsMinimized(false)}
-        role="button"
-        tabIndex={0}
         aria-label="Open Forge Athletic updates"
       >
         <span
@@ -231,7 +241,7 @@ export default function FirstVisitLeadCapture({
         >
           {isLive ? 'Live coaching' : 'Training and movement updates'}
         </span>
-      </div>
+      </button>
     )
   }
 
@@ -303,12 +313,14 @@ export default function FirstVisitLeadCapture({
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
             <button
               type="button"
               onClick={() => setIsMinimized(true)}
               aria-label="Minimize intake dock"
               style={{
+                minWidth: 44,
+                minHeight: 44,
                 background: 'transparent',
                 border: 'none',
                 color: '#94A3B8',
@@ -326,6 +338,8 @@ export default function FirstVisitLeadCapture({
               onClick={handleDismiss}
               aria-label="Dismiss intake dock"
               style={{
+                minWidth: 44,
+                minHeight: 44,
                 background: 'transparent',
                 border: 'none',
                 color: '#94A3B8',
@@ -471,6 +485,9 @@ export default function FirstVisitLeadCapture({
 
               <input
                 type="email"
+                aria-label="Email address"
+                aria-invalid={status === 'error' ? 'true' : 'false'}
+                aria-describedby={status === 'error' && errorMessage ? 'first-visit-dock-error' : undefined}
                 value={email}
                 onChange={e => {
                   setEmail(e.target.value)
@@ -499,7 +516,11 @@ export default function FirstVisitLeadCapture({
               />
 
               {status === 'error' && errorMessage && (
-                <div style={{ fontSize: 11.5, color: 'var(--error)', lineHeight: 1.4 }}>
+                <div
+                  id="first-visit-dock-error"
+                  role="alert"
+                  style={{ fontSize: 11.5, color: 'var(--error)', lineHeight: 1.4 }}
+                >
                   {errorMessage}
                   {suggestion && (
                     <button
@@ -507,6 +528,7 @@ export default function FirstVisitLeadCapture({
                       onClick={() => applySuggestion(suggestion)}
                       style={{
                         marginLeft: 6,
+                        minHeight: 32,
                         background: 'transparent',
                         border: 'none',
                         color: 'var(--gold-lt)',
@@ -514,7 +536,7 @@ export default function FirstVisitLeadCapture({
                         cursor: 'pointer',
                         fontWeight: 700,
                         fontSize: 11.5,
-                        padding: 0,
+                        padding: '4px 6px',
                       }}
                     >
                       Use {suggestion}

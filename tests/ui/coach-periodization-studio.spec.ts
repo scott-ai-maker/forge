@@ -119,4 +119,66 @@ test.describe('Coach Program Builder (OPT periodization studio)', () => {
     await expect(page.getByText("Why this is in Jennifer's plan").first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Approve & send to Jennifer' }).first()).toBeVisible()
   })
+
+  test('maps sandbox athlete goal to general_fitness and operates Exercise Video <dialog>, Smart Swap, Memo tab, and Program Deployment', async ({ page }) => {
+    // 1. Sandbox athlete maps to general_fitness (not fat_loss)
+    await page.locator('#coach-studio-client-select').selectOption('sandbox-athlete')
+    await openIntake(page)
+    const intakeDialog = page.getByRole('dialog', { name: /NASM OPT Program Intake/i })
+    await expect(intakeDialog).toBeVisible()
+
+    let capturedGoal: string | null = null
+    await page.route('**/api/coach/ai-architect', async route => {
+      const reqBody = route.request().postDataJSON() as { goal?: string }
+      capturedGoal = reqBody?.goal ?? null
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ plan: MOCK_PLAN }) })
+    })
+
+    await intakeDialog.getByRole('button', { name: /Draft .*program with AI/i }).click({ force: true })
+    await expect(intakeDialog).toBeHidden()
+    expect(capturedGoal).toBe('general_fitness')
+
+    // 2. Named sub-navigation buttons with aria-pressed states
+    const matrixTabBtn = page.getByRole('button', { name: /Workouts Matrix/i })
+    const memoTabBtn = page.getByRole('button', { name: /Master Coach Memo/i })
+    await expect(matrixTabBtn).toHaveAttribute('aria-pressed', 'true')
+    await expect(memoTabBtn).toHaveAttribute('aria-pressed', 'false')
+
+    await memoTabBtn.click()
+    await expect(memoTabBtn).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByText('Phase 1 stability focus.')).toBeVisible()
+
+    await matrixTabBtn.click()
+    await expect(matrixTabBtn).toHaveAttribute('aria-pressed', 'true')
+
+    // 3. Official NASM Edge Video Demonstration opens in native <dialog> and closes on Escape
+    await page.getByRole('button', { name: /Watch demonstration video for Step Up/i }).click()
+    const videoDialog = page.getByRole('dialog', { name: /Step Up/i })
+    await expect(videoDialog).toBeVisible()
+    await expect(videoDialog.locator('iframe')).toHaveAttribute('title', /Demonstration for Step Up/i)
+    await page.keyboard.press('Escape')
+    await expect(videoDialog).toBeHidden()
+
+    // 4. Deploy failure surfaces role="alert", then 200 success surfaces role="status"
+    await page.route('**/api/coach/workout-plans', route =>
+      route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'Deployment pipeline busy' }) })
+    )
+    await page.getByRole('button', { name: 'Approve & save' }).first().click()
+    const deployError = page.locator('main [role="alert"]')
+    await expect(deployError).toBeVisible()
+    await expect(deployError).toContainText('Deployment pipeline busy')
+
+    await page.unroute('**/api/coach/workout-plans')
+    await page.route('**/api/coach/workout-plans', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, plan: { id: 'plan-new' }, isOverwritten: true }) })
+    )
+    await page.getByRole('button', { name: 'Approve & save' }).first().click()
+    const deployStatus = page.locator('main [role="status"]')
+    await expect(deployStatus).toBeVisible()
+    await expect(deployStatus).toContainText('Approved & Sent')
+
+    // 5. Zero horizontal overflow down to 320px
+    await page.setViewportSize({ width: 320, height: 812 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
+  })
 })

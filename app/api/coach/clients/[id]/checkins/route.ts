@@ -3,6 +3,8 @@ import { getRequestAuthz, requireRole, requireCoachAssignedClient, AuthzError } 
 import { supabaseAdmin } from '@/lib/supabase'
 import { notifyUser } from '@/lib/notifications'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,7 +17,7 @@ export async function GET(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { id: clientId } = await params
@@ -25,7 +27,7 @@ export async function GET(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Forbidden'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const admin = supabaseAdmin()
@@ -38,10 +40,10 @@ export async function GET(
     .limit(24)
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to load check-ins' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load check-ins' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
-  return NextResponse.json({ checkins: data ?? [] })
+  return NextResponse.json({ checkins: data ?? [] }, { headers: NO_STORE_HEADERS })
 }
 
 export async function PATCH(
@@ -56,7 +58,7 @@ export async function PATCH(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { id: clientId } = await params
@@ -67,12 +69,12 @@ export async function PATCH(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Forbidden'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const checkinId = String(body.checkin_id ?? '').trim()
   if (!checkinId) {
-    return NextResponse.json({ error: 'checkin_id required' }, { status: 400 })
+    return NextResponse.json({ error: 'checkin_id required' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
   const patch: { coach_feedback?: string; coach_rating_adjustment?: number | null } = {}
@@ -87,7 +89,7 @@ export async function PATCH(
   }
 
   if (Object.keys(patch).length === 0) {
-    return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
+    return NextResponse.json({ error: 'No fields to update' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
   const admin = supabaseAdmin()
@@ -101,7 +103,7 @@ export async function PATCH(
     .single()
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to update check-in' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to update check-in' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   if (patch.coach_feedback) {
@@ -114,5 +116,5 @@ export async function PATCH(
     }).catch(() => undefined)
   }
 
-  return NextResponse.json(data)
+  return NextResponse.json(data, { headers: NO_STORE_HEADERS })
 }

@@ -36,24 +36,81 @@ const REQUIRED_FIELDS: Array<keyof ApplyPayload> = [
 ]
 
 
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, max-age=0',
+} as const
+
+function jsonNoStore(
+  body: Record<string, unknown>,
+  init?: { status?: number; headers?: Record<string, string> }
+) {
+  return NextResponse.json(body, {
+    status: init?.status ?? 200,
+    headers: {
+      ...NO_STORE_HEADERS,
+      ...(init?.headers ?? {}),
+    },
+  })
+}
+
+function sanitizeText(value: unknown): string {
+  if (typeof value !== 'string') return ''
+  return value.replace(/[\u0000-\u001F\u007F<>]/g, '').trim()
+}
+
 function retryAfterSeconds(resetAt: string) {
   const ms = new Date(resetAt).getTime() - Date.now()
   return Math.max(1, Math.ceil(ms / 1000))
 }
 
+const QUIZ_FIELD_KEYS: Array<Exclude<keyof ApplyPayload, 'email' | 'firstName' | 'honeypot' | 'startTimeMs'>> = [
+  'goal',
+  'timeline',
+  'trainingDays',
+  'supportLevel',
+  'primaryObstacle',
+  'coachingHistory',
+  'budgetBand',
+  'readiness',
+  'recommendedTier',
+]
+
 export async function POST(req: NextRequest) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+    return jsonNoStore({ error: 'Supabase not configured' }, { status: 503 })
+  }
+
+  let payload: ApplyPayload
+  try {
+    const raw = await req.json()
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return jsonNoStore({ error: 'Invalid JSON payload' }, { status: 400 })
+    }
+    payload = raw as ApplyPayload
+  } catch {
+    return jsonNoStore({ error: 'Invalid JSON payload' }, { status: 400 })
   }
 
   try {
-    const payload = (await req.json()) as ApplyPayload
-
     for (const field of REQUIRED_FIELDS) {
       const value = payload[field]
       if (typeof value !== 'string' || value.trim().length === 0) {
-        return NextResponse.json({ error: `Missing required field: ${field}` }, { status: 400 })
+        return jsonNoStore({ error: `Missing required field: ${field}` }, { status: 400 })
       }
+    }
+
+    const normalizedFirstName = sanitizeText(payload.firstName)
+    if (normalizedFirstName.length > 80) {
+      return jsonNoStore({ error: 'First name is too long' }, { status: 400 })
+    }
+
+    const sanitizedQuizFields = {} as Record<(typeof QUIZ_FIELD_KEYS)[number], string>
+    for (const field of QUIZ_FIELD_KEYS) {
+      const cleaned = sanitizeText(payload[field])
+      if (!cleaned || cleaned.length > 120) {
+        return jsonNoStore({ error: `Invalid value for ${field}` }, { status: 400 })
+      }
+      sanitizedQuizFields[field] = cleaned
     }
 
     const validation = await validateInboundEmail({
@@ -64,9 +121,9 @@ export async function POST(req: NextRequest) {
 
     if (!validation.valid) {
       if (validation.isBot) {
-        return NextResponse.json({ success: true })
+        return jsonNoStore({ success: true })
       }
-      return NextResponse.json(
+      return jsonNoStore(
         {
           error: validation.error || 'Invalid email',
           suggestion: validation.suggestedEmail,
@@ -92,7 +149,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!ipResult.allowed) {
-      return NextResponse.json(
+      return jsonNoStore(
         { error: 'Too many requests. Please try again later.' },
         {
           status: 429,
@@ -112,7 +169,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!emailResult.allowed) {
-      return NextResponse.json(
+      return jsonNoStore(
         { error: 'Too many attempts for this email. Please try again later.' },
         {
           status: 429,
@@ -130,16 +187,16 @@ export async function POST(req: NextRequest) {
       .from('coaching_applications')
       .insert({
         email,
-        first_name: (payload.firstName ?? '').trim() || null,
-        goal: payload.goal,
-        timeline: payload.timeline,
-        training_days: payload.trainingDays,
-        support_level: payload.supportLevel,
-        primary_obstacle: payload.primaryObstacle,
-        coaching_history: payload.coachingHistory,
-        budget_band: payload.budgetBand,
-        readiness: payload.readiness,
-        recommended_tier: payload.recommendedTier,
+        first_name: normalizedFirstName || null,
+        goal: sanitizedQuizFields.goal,
+        timeline: sanitizedQuizFields.timeline,
+        training_days: sanitizedQuizFields.trainingDays,
+        support_level: sanitizedQuizFields.supportLevel,
+        primary_obstacle: sanitizedQuizFields.primaryObstacle,
+        coaching_history: sanitizedQuizFields.coachingHistory,
+        budget_band: sanitizedQuizFields.budgetBand,
+        readiness: sanitizedQuizFields.readiness,
+        recommended_tier: sanitizedQuizFields.recommendedTier,
         source: 'apply_quiz',
       })
 
@@ -148,14 +205,14 @@ export async function POST(req: NextRequest) {
     const { triggerLeadEmailAutomation } = await import('@/lib/marketing-email')
     await triggerLeadEmailAutomation(supabase, {
       email,
-      firstName: payload.firstName,
+      firstName: normalizedFirstName || null,
       source: 'apply',
-      recommendedTier: payload.recommendedTier,
+      recommendedTier: sanitizedQuizFields.recommendedTier,
     })
 
-    return NextResponse.json({ success: true })
+    return jsonNoStore({ success: true })
   } catch (err) {
     console.error('Apply route error:', err)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return jsonNoStore({ error: 'Server error' }, { status: 500 })
   }
 }

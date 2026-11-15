@@ -40,6 +40,35 @@ export default function TierUpgradeModal({
     }
   }, [open, triggerContext])
 
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog || !open || !triggerContext) return
+    if (typeof HTMLDialogElement !== 'undefined' && 'closedBy' in HTMLDialogElement.prototype) {
+      return
+    }
+    const isOutside = (e: PointerEvent) => {
+      const r = dialog.getBoundingClientRect()
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom
+    }
+    let pressedOutside = false
+    const onPointerDown = (e: PointerEvent) => {
+      pressedOutside = isOutside(e)
+    }
+    const onPointerUp = (e: PointerEvent) => {
+      if (pressedOutside && isOutside(e)) {
+        dismissUpgradeTrigger(triggerContext)
+        dialog.close()
+      }
+      pressedOutside = false
+    }
+    dialog.addEventListener('pointerdown', onPointerDown)
+    dialog.addEventListener('pointerup', onPointerUp)
+    return () => {
+      dialog.removeEventListener('pointerdown', onPointerDown)
+      dialog.removeEventListener('pointerup', onPointerUp)
+    }
+  }, [open, triggerContext])
+
   if (!triggerContext) return null
 
   const copy = getUpgradeTriggerCopy(triggerContext, currentTier)
@@ -60,12 +89,12 @@ export default function TierUpgradeModal({
   return (
     <dialog
       ref={dialogRef}
+      data-testid="tier-upgrade-modal"
+      {...({ closedby: 'any' } as React.DialogHTMLAttributes<HTMLDialogElement>)}
       aria-labelledby={headingId}
-      onClose={onClose}
-      onClick={e => {
-        if (e.target === e.currentTarget) {
-          handleDismissWithCooldown()
-        }
+      onClose={e => {
+        e.currentTarget.returnValue = ''
+        onClose()
       }}
       className="forge-glass-modal m-auto w-[min(94vw,510px)] rounded-2xl p-0 text-zinc-100 backdrop:bg-black/75 backdrop:backdrop-blur-sm"
     >

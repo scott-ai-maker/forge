@@ -54,7 +54,25 @@ export interface QueuedSetLogPayload {
 const FORGE_STORAGE_KEY = 'forge_offline_set_queue_v1'
 const LEGACY_STORAGE_KEY = 'sgf_offline_set_queue_v1'
 const MAX_RETRY_COUNT = 5
-let isFlushingQueue = false
+export const OFFLINE_QUEUE_CHANGED_EVENT = 'forge:offline-queue-changed'
+let activeOfflineFlushPromise: Promise<{ synced: number; failed: number }> | null = null
+let activeSyncedCallbacks: Array<(tempId: string, syncedServerRecord: unknown) => void> = []
+let cachedAccessToken: string | null = null
+
+export function setOfflineQueueAccessToken(token: string | null): void {
+  cachedAccessToken = token
+}
+
+function emitOfflineQueueChanged(): void {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return
+  try {
+    if (typeof CustomEvent === 'function') {
+      window.dispatchEvent(new CustomEvent(OFFLINE_QUEUE_CHANGED_EVENT))
+    }
+  } catch {
+    // Ignore restricted sandbox event errors
+  }
+}
 
 /**
  * Trigger subtle, native tactile vibration:
@@ -140,9 +158,19 @@ export function getQueuedOfflineSets(): QueuedSetLogPayload[] {
   if (!storage) return []
 
   try {
-    const raw = storage.getItem(LEGACY_STORAGE_KEY) || storage.getItem(FORGE_STORAGE_KEY)
+    const raw = storage.getItem(FORGE_STORAGE_KEY) ?? storage.getItem(LEGACY_STORAGE_KEY)
     if (!raw) return []
-    return JSON.parse(raw) as QueuedSetLogPayload[]
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (item): item is QueuedSetLogPayload =>
+        Boolean(
+          item &&
+            typeof item === 'object' &&
+            typeof (item as QueuedSetLogPayload).tempId === 'string' &&
+            typeof (item as QueuedSetLogPayload).exerciseName === 'string'
+        )
+    )
   } catch {
     return []
   }
@@ -156,12 +184,18 @@ function saveQueuedOfflineSets(queue: QueuedSetLogPayload[]): void {
   if (!storage) return
 
   try {
-    const serialized = JSON.stringify(queue)
-    storage.setItem(FORGE_STORAGE_KEY, serialized)
-    storage.setItem(LEGACY_STORAGE_KEY, serialized)
+    if (queue.length === 0) {
+      storage.removeItem(FORGE_STORAGE_KEY)
+      storage.removeItem(LEGACY_STORAGE_KEY)
+    } else {
+      const serialized = JSON.stringify(queue)
+      storage.setItem(FORGE_STORAGE_KEY, serialized)
+      storage.setItem(LEGACY_STORAGE_KEY, serialized)
+    }
   } catch (err) {
     console.error('Failed to save offline sets queue to localStorage:', err)
   }
+  emitOfflineQueueChanged()
 }
 
 /**
@@ -169,6 +203,7 @@ function saveQueuedOfflineSets(queue: QueuedSetLogPayload[]): void {
  * Adheres to HIPAA (1996) standard: Prevents lingering telemetry on shared gym devices.
  */
 export function clearOfflineQueue(): void {
+  cachedAccessToken = null
   const storage = getStorage()
   if (!storage) return
 
@@ -178,6 +213,7 @@ export function clearOfflineQueue(): void {
   } catch (err) {
     console.error('Failed to clear offline sets queue from localStorage:', err)
   }
+  emitOfflineQueueChanged()
 }
 
 function makeUuidV4(): string {
@@ -233,6 +269,9 @@ export function getPendingQueueCount(): number {
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (cachedAccessToken) {
+    headers.Authorization = `Bearer ${cachedAccessToken}`
+  }
   if (typeof window === 'undefined') return headers
 
   try {
@@ -240,10 +279,11 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.access_token) {
+      cachedAccessToken = session.access_token
       headers.Authorization = `Bearer ${session.access_token}`
     }
   } catch {
-    // Silent fallback if session lookup fails in testing or offline
+    // Silent fallback to cachedAccessToken or session cookies in testing / offline
   }
 
   return headers
@@ -251,12 +291,17 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
 /**
  * Flush and upload all pending sets in the offline queue to the server.
- * Includes concurrency locking to prevent duplicate submissions from multiple reconnect triggers.
+ * Includes concurrency locking to prevent duplicate submissions from multiple reconnect triggers,
+ * and merges any newly logged sets that arrived while network requests were in flight.
  */
 export async function flushOfflineQueue(
   onSetSynced?: (tempId: string, syncedServerRecord: unknown) => void
 ): Promise<{ synced: number; failed: number }> {
-  if (isFlushingQueue) {
+  if (activeOfflineFlushPromise) {
+    if (onSetSynced && !activeSyncedCallbacks.includes(onSetSynced)) {
+      activeSyncedCallbacks.push(onSetSynced)
+    }
+    await activeOfflineFlushPromise
     return { synced: 0, failed: 0 }
   }
 
@@ -265,49 +310,70 @@ export async function flushOfflineQueue(
     return { synced: 0, failed: 0 }
   }
 
-  isFlushingQueue = true
-  let syncedCount = 0
-  let failedCount = 0
-  const remainingQueue: QueuedSetLogPayload[] = []
+  activeSyncedCallbacks = onSetSynced ? [onSetSynced] : []
 
-  try {
-    const headers = await getAuthHeaders()
+  const runFlush = async (): Promise<{ synced: number; failed: number }> => {
+    let syncedCount = 0
+    let failedCount = 0
+    const remainingQueue: QueuedSetLogPayload[] = []
+    const processedTempIds = new Set(queue.map(item => item.tempId))
 
-    for (const item of queue) {
-      // Discard permanently unrecoverable items exceeding max retry ceiling
-      if (item.retryCount >= MAX_RETRY_COUNT) {
-        failedCount++
-        continue
-      }
+    try {
+      const headers = await getAuthHeaders()
 
-      try {
-        const res = await fetch('/api/workouts/log-set', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            eventId: item.eventId,
-            workoutPlanId: item.workoutPlanId,
-            sessionDate: item.sessionDate,
-            exerciseName: item.exerciseName,
-            setNumber: item.setNumber,
-            reps: item.reps,
-            weightKg: item.weightKg,
-            tempo: item.tempo,
-            restSeconds: item.restSeconds,
-            rpe: item.rpe,
-            rir: item.rir,
-            isWarmup: item.isWarmup,
-            notes: item.notes,
-          }),
-        })
+      for (const item of queue) {
+        // Discard permanently unrecoverable items exceeding max retry ceiling
+        if (item.retryCount >= MAX_RETRY_COUNT) {
+          failedCount++
+          continue
+        }
 
-        if (res.ok) {
-          const data = await res.json()
-          syncedCount++
-          if (onSetSynced && data.setLog) {
-            onSetSynced(item.tempId, data.setLog)
+        try {
+          const res = await fetch('/api/workouts/log-set', {
+            method: 'POST',
+            headers,
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              eventId: item.eventId,
+              workoutPlanId: item.workoutPlanId,
+              sessionDate: item.sessionDate,
+              exerciseName: item.exerciseName,
+              setNumber: item.setNumber,
+              reps: item.reps,
+              weightKg: item.weightKg,
+              tempo: item.tempo,
+              restSeconds: item.restSeconds,
+              rpe: item.rpe,
+              rir: item.rir,
+              isWarmup: item.isWarmup,
+              notes: item.notes,
+            }),
+          })
+
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}))
+            syncedCount++
+            if (data.setLog) {
+              for (const cb of activeSyncedCallbacks) {
+                try {
+                  cb(item.tempId, data.setLog)
+                } catch {
+                  // Isolate listener error so queue drain never aborts
+                }
+              }
+            }
+          } else if (res.status === 400 || res.status === 422) {
+            // Non-retryable schema validation error: drop poison-pill entry so valid sets are not blocked
+            failedCount++
+          } else {
+            failedCount++
+            remainingQueue.push({
+              ...item,
+              status: 'failed',
+              retryCount: item.retryCount + 1,
+            })
           }
-        } else {
+        } catch {
           failedCount++
           remainingQueue.push({
             ...item,
@@ -315,22 +381,26 @@ export async function flushOfflineQueue(
             retryCount: item.retryCount + 1,
           })
         }
-      } catch {
-        failedCount++
-        remainingQueue.push({
-          ...item,
-          status: 'failed',
-          retryCount: item.retryCount + 1,
-        })
       }
+
+      // Re-read storage so sets enqueued (or explicitly dequeued) while fetch was in flight are never clobbered
+      const latestStorageSnapshot = getQueuedOfflineSets()
+      const latestTempIds = new Set(latestStorageSnapshot.map(item => item.tempId))
+      const retainedFailed = remainingQueue.filter(item => latestTempIds.has(item.tempId))
+      const newlyEnqueuedDuringFlush = latestStorageSnapshot.filter(
+        item => !processedTempIds.has(item.tempId)
+      )
+      saveQueuedOfflineSets([...retainedFailed, ...newlyEnqueuedDuringFlush])
+    } finally {
+      activeOfflineFlushPromise = null
+      activeSyncedCallbacks = []
     }
 
-    saveQueuedOfflineSets(remainingQueue)
-  } finally {
-    isFlushingQueue = false
+    return { synced: syncedCount, failed: failedCount }
   }
 
-  return { synced: syncedCount, failed: failedCount }
+  activeOfflineFlushPromise = runFlush()
+  return activeOfflineFlushPromise
 }
 
 /**

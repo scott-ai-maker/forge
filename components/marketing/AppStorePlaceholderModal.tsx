@@ -25,7 +25,7 @@ export default function AppStorePlaceholderModal({
   const [submittedEmail, setSubmittedEmail] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deviceGuideTab, setDeviceGuideTab] = useState<'ios' | 'android' | 'desktop'>('ios')
-  const dialogRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
   // Sync initialPlatform when modal opens
   useEffect(() => {
@@ -36,25 +36,45 @@ export default function AppStorePlaceholderModal({
     }
   }, [isOpen, initialPlatform])
 
-  // ESC key and backdrop lock
+  // Native <dialog> modal lifecycle & progressive light-dismiss fallback
   useEffect(() => {
-    if (!isOpen) return
+    const dialog = dialogRef.current
+    if (!dialog) return
 
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    if (isOpen) {
+      if (!dialog.open && typeof dialog.showModal === 'function') {
+        try {
+          dialog.showModal()
+        } catch {
+          // Ignore if already open in top layer
+        }
+      }
+    } else if (dialog.open && typeof dialog.close === 'function') {
+      dialog.close()
+    }
+  }, [isOpen])
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog || !isOpen) return
+    if ('closedBy' in HTMLDialogElement.prototype) return
+
+    const handleBackdropClick = (event: MouseEvent) => {
+      if (event.target !== dialog) return
+      const rect = dialog.getBoundingClientRect()
+      const isDialogContent =
+        rect.top <= event.clientY &&
+        event.clientY <= rect.top + rect.height &&
+        rect.left <= event.clientX &&
+        event.clientX <= rect.left + rect.width
+      if (!isDialogContent) {
+        dialog.close()
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.body.style.overflow = originalOverflow
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isOpen, onClose])
+    dialog.addEventListener('click', handleBackdropClick)
+    return () => dialog.removeEventListener('click', handleBackdropClick)
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -81,47 +101,27 @@ export default function AppStorePlaceholderModal({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       aria-labelledby="app-placeholder-title"
+      onClose={onClose}
+      className="forge-app-placeholder-dialog glass-card-gold"
       style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(12px, 3vw, 24px)',
-        background: 'rgba(4, 7, 13, 0.85)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        animation: 'appModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}
-      onClick={e => {
-        if (e.target === e.currentTarget) onClose()
+        width: 'min(calc(100vw - 24px), 620px)',
+        maxWidth: 620,
+        maxHeight: '90dvh',
+        margin: 'auto',
+        padding: 0,
+        overflowY: 'auto',
+        borderRadius: 16,
+        background: 'linear-gradient(180deg, #0D1424 0%, #080D18 100%)',
+        border: '1.5px solid rgba(197, 160, 89, 0.4)',
+        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(197, 160, 89, 0.2)',
+        color: '#F8FAFC',
       }}
     >
-      <div
-        ref={dialogRef}
-        className="glass-card-gold"
-        style={{
-          width: '100%',
-          maxWidth: 620,
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          borderRadius: 16,
-          background: 'linear-gradient(180deg, #0D1424 0%, #080D18 100%)',
-          border: '1.5px solid rgba(197, 160, 89, 0.4)',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(197, 160, 89, 0.2)',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-        }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
         {/* Header Bar */}
         <div
           style={{
@@ -192,8 +192,9 @@ export default function AppStorePlaceholderModal({
             aria-label="Close dialog"
             className="tactile-btn"
             style={{
-              width: 36,
-              height: 36,
+              width: 44,
+              height: 44,
+              flexShrink: 0,
               borderRadius: 8,
               background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -229,10 +230,13 @@ export default function AppStorePlaceholderModal({
             return (
               <button
                 key={tab.id}
+                type="button"
                 role="tab"
                 aria-selected={isSelected}
                 onClick={() => setActivePlatform(tab.id)}
+                className="forge-sneak-tab"
                 style={{
+                  minHeight: 44,
                   padding: '12px 10px',
                   background: isSelected ? 'rgba(212,160,23,0.14)' : 'rgba(10, 16, 26, 0.95)',
                   border: 'none',
@@ -405,16 +409,17 @@ export default function AppStorePlaceholderModal({
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="athlete@example.com"
+                      aria-label="Email address for Apple TestFlight beta invite"
                       required
                       style={{
                         flex: '1 1 200px',
-                        minHeight: 40,
+                        minHeight: 44,
                         background: 'rgba(10, 16, 26, 0.85)',
                         border: '1px solid rgba(197, 160, 89, 0.35)',
                         borderRadius: 6,
                         padding: '8px 12px',
                         color: '#FFFFFF',
-                        fontSize: 13,
+                        fontSize: 16,
                         fontFamily: 'inherit',
                       }}
                     />
@@ -423,7 +428,7 @@ export default function AppStorePlaceholderModal({
                       disabled={isSubmitting}
                       className="tactile-btn"
                       style={{
-                        minHeight: 40,
+                        minHeight: 44,
                         padding: '8px 16px',
                         background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
                         color: '#0A0E18',
@@ -472,7 +477,7 @@ export default function AppStorePlaceholderModal({
                   How to Install on Your Device:
                 </div>
 
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {[
                     { id: 'ios' as const, label: 'iPhone / iPad (Safari)' },
                     { id: 'android' as const, label: 'Android (Chrome)' },
@@ -481,9 +486,11 @@ export default function AppStorePlaceholderModal({
                     <button
                       key={tab.id}
                       type="button"
+                      aria-pressed={deviceGuideTab === tab.id}
                       onClick={() => setDeviceGuideTab(tab.id)}
                       style={{
-                        padding: '6px 12px',
+                        minHeight: 44,
+                        padding: '8px 12px',
                         borderRadius: 6,
                         background: deviceGuideTab === tab.id ? 'rgba(197, 160, 89, 0.2)' : 'rgba(255, 255, 255, 0.04)',
                         border: deviceGuideTab === tab.id ? '1px solid var(--gold)' : '1px solid rgba(255, 255, 255, 0.1)',
@@ -703,16 +710,17 @@ export default function AppStorePlaceholderModal({
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="google.account@gmail.com"
+                      aria-label="Google Play email address for Android early access"
                       required
                       style={{
                         flex: '1 1 200px',
-                        minHeight: 40,
+                        minHeight: 44,
                         background: 'rgba(10, 16, 26, 0.85)',
                         border: '1px solid rgba(56, 189, 248, 0.35)',
                         borderRadius: 6,
                         padding: '8px 12px',
                         color: '#FFFFFF',
-                        fontSize: 13,
+                        fontSize: 16,
                         fontFamily: 'inherit',
                       }}
                     />
@@ -721,7 +729,7 @@ export default function AppStorePlaceholderModal({
                       disabled={isSubmitting}
                       className="tactile-btn"
                       style={{
-                        minHeight: 40,
+                        minHeight: 44,
                         padding: '8px 16px',
                         background: 'linear-gradient(135deg, #38BDF8 0%, #0284C7 100%)',
                         color: '#080E14',
@@ -763,6 +771,8 @@ export default function AppStorePlaceholderModal({
             type="button"
             onClick={onClose}
             style={{
+              minHeight: 44,
+              padding: '8px 12px',
               background: 'transparent',
               border: 'none',
               color: 'var(--gold-lt)',
@@ -776,19 +786,6 @@ export default function AppStorePlaceholderModal({
           </button>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes appModalFadeIn {
-          from {
-            opacity: 0;
-            transform: scale(0.97);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
-    </div>
+    </dialog>
   )
 }

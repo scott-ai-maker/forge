@@ -211,7 +211,7 @@ export default function CoachProgramPreviewCanvas({
         </div>
 
         {/* Header Action Buttons */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={onOpenIntakeDrawer}
@@ -221,6 +221,7 @@ export default function CoachProgramPreviewCanvas({
               color: 'var(--gold-lt, #F5D061)',
               borderRadius: 8,
               padding: '10px 16px',
+              minHeight: 44,
               fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
@@ -245,6 +246,7 @@ export default function CoachProgramPreviewCanvas({
               color: '#FFFFFF',
               borderRadius: 8,
               padding: '10px 20px',
+              minHeight: 44,
               fontSize: 13,
               fontWeight: 800,
               cursor: isDeploying ? 'not-allowed' : 'pointer',
@@ -282,6 +284,7 @@ export default function CoachProgramPreviewCanvas({
       {/* Deployment Feedback */}
       {deploySuccessMessage && (
         <div
+          role="status"
           style={{
             background: 'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(5,150,105,0.1) 100%)',
             border: '1px solid #10B981',
@@ -302,6 +305,7 @@ export default function CoachProgramPreviewCanvas({
 
       {deployErrorMessage && (
         <div
+          role="alert"
           style={{
             background: 'linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(185,28,28,0.1) 100%)',
             border: '1px solid #EF4444',
@@ -366,6 +370,7 @@ export default function CoachProgramPreviewCanvas({
       >
         <button
           type="button"
+          aria-pressed={activeTab === 'matrix'}
           onClick={() => setActiveTab('matrix')}
           style={{
             background: activeTab === 'matrix' ? 'rgba(212,160,23,0.2)' : 'transparent',
@@ -373,12 +378,14 @@ export default function CoachProgramPreviewCanvas({
             color: activeTab === 'matrix' ? 'var(--gold-lt)' : '#94A3B8',
             borderRadius: 6,
             padding: '8px 16px',
+            minHeight: 44,
             fontSize: 13,
             fontWeight: 700,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: 6,
+            flexShrink: 0,
           }}
         >
           <GaaIcon name="dumbbell" size={14} style={{ color: activeTab === 'matrix' ? 'var(--gold-lt)' : '#94A3B8' }} />
@@ -387,6 +394,7 @@ export default function CoachProgramPreviewCanvas({
 
         <button
           type="button"
+          aria-pressed={activeTab === 'memo'}
           onClick={() => setActiveTab('memo')}
           style={{
             background: activeTab === 'memo' ? 'rgba(212,160,23,0.2)' : 'transparent',
@@ -394,15 +402,18 @@ export default function CoachProgramPreviewCanvas({
             color: activeTab === 'memo' ? 'var(--gold-lt)' : '#94A3B8',
             borderRadius: 6,
             padding: '8px 16px',
+            minHeight: 44,
             fontSize: 13,
             fontWeight: 700,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: 6,
+            flexShrink: 0,
           }}
         >
           <GaaIcon name="clipboard" size={14} style={{ color: activeTab === 'memo' ? 'var(--gold-lt)' : '#94A3B8' }} />
+          Master Coach Memo
         </button>
       </div>
 
@@ -701,12 +712,14 @@ export default function CoachProgramPreviewCanvas({
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                       {/* Thumbnail & Video Button */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div
+                        <button
+                          type="button"
                           onClick={() => onOpenExerciseVideo(ex.name)}
-                          title="Watch Official NASM Edge Demonstration"
+                          aria-label={`Watch demonstration video for ${ex.name}`}
                           style={{
                             width: 64,
                             height: 48,
+                            padding: 0,
                             borderRadius: 6,
                             overflow: 'hidden',
                             position: 'relative',
@@ -719,10 +732,11 @@ export default function CoachProgramPreviewCanvas({
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imgUrl}
-                            alt={ex.name}
+                            alt=""
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
                           <div
+                            aria-hidden="true"
                             style={{
                               position: 'absolute',
                               inset: 0,
@@ -734,7 +748,7 @@ export default function CoachProgramPreviewCanvas({
                           >
                             <span style={{ fontSize: 14, color: 'var(--gold-lt)' }}>▶</span>
                           </div>
-                        </div>
+                        </button>
 
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -767,13 +781,14 @@ export default function CoachProgramPreviewCanvas({
                         <button
                           type="button"
                           onClick={() => onOpenExerciseSwap(ex.name, safeDayIndex, exIndex)}
-                          title="Substitute with biomechanically safe alternative"
+                          aria-label={`Swap ${ex.name}`}
                           style={{
                             background: 'rgba(212,160,23,0.12)',
                             border: '1px solid rgba(212,160,23,0.35)',
                             color: 'var(--gold-lt)',
                             borderRadius: 6,
                             padding: '6px 10px',
+                            minHeight: 44,
                             fontSize: 11,
                             fontWeight: 700,
                             cursor: 'pointer',
@@ -788,13 +803,15 @@ export default function CoachProgramPreviewCanvas({
                         <button
                           type="button"
                           onClick={() => handleRemoveExercise(exIndex)}
-                          title="Remove exercise"
+                          aria-label={`Remove ${ex.name}`}
                           style={{
                             background: 'rgba(239,68,68,0.1)',
                             border: '1px solid rgba(239,68,68,0.25)',
                             color: '#F87171',
                             borderRadius: 6,
                             padding: '6px 8px',
+                            minHeight: 44,
+                            minWidth: 44,
                             fontSize: 11,
                             fontWeight: 700,
                             cursor: 'pointer',
@@ -817,8 +834,9 @@ export default function CoachProgramPreviewCanvas({
                       }}
                     >
                       <div>
-                        <label style={{ fontSize: 10, color: '#94A3B8', display: 'block' }}>Sets</label>
+                        <label htmlFor={`sets-${safeDayIndex}-${exIndex}`} style={{ fontSize: 10, color: '#94A3B8', display: 'block' }}>Sets</label>
                         <input
+                          id={`sets-${safeDayIndex}-${exIndex}`}
                           type="text"
                           value={ex.sets}
                           onChange={e => handleExerciseChange(exIndex, 'sets', e.target.value)}
@@ -829,15 +847,17 @@ export default function CoachProgramPreviewCanvas({
                             border: '1px solid rgba(255,255,255,0.12)',
                             borderRadius: 4,
                             padding: '4px 6px',
-                            fontSize: 12,
+                            minHeight: 44,
+                            fontSize: 'max(1rem, 1em)',
                             boxSizing: 'border-box',
                           }}
                         />
                       </div>
 
                       <div>
-                        <label style={{ fontSize: 10, color: '#94A3B8', display: 'block' }}>Reps</label>
+                        <label htmlFor={`reps-${safeDayIndex}-${exIndex}`} style={{ fontSize: 10, color: '#94A3B8', display: 'block' }}>Reps</label>
                         <input
+                          id={`reps-${safeDayIndex}-${exIndex}`}
                           type="text"
                           value={ex.reps}
                           onChange={e => handleExerciseChange(exIndex, 'reps', e.target.value)}
@@ -848,15 +868,17 @@ export default function CoachProgramPreviewCanvas({
                             border: '1px solid rgba(255,255,255,0.12)',
                             borderRadius: 4,
                             padding: '4px 6px',
-                            fontSize: 12,
+                            minHeight: 44,
+                            fontSize: 'max(1rem, 1em)',
                             boxSizing: 'border-box',
                           }}
                         />
                       </div>
 
                       <div>
-                        <label style={{ fontSize: 10, color: '#94A3B8', display: 'block' }}>Tempo</label>
+                        <label htmlFor={`tempo-${safeDayIndex}-${exIndex}`} style={{ fontSize: 10, color: '#94A3B8', display: 'block' }}>Tempo</label>
                         <input
+                          id={`tempo-${safeDayIndex}-${exIndex}`}
                           type="text"
                           value={ex.tempo}
                           onChange={e => handleExerciseChange(exIndex, 'tempo', e.target.value)}
@@ -867,15 +889,17 @@ export default function CoachProgramPreviewCanvas({
                             border: '1px solid rgba(255,255,255,0.12)',
                             borderRadius: 4,
                             padding: '4px 6px',
-                            fontSize: 12,
+                            minHeight: 44,
+                            fontSize: 'max(1rem, 1em)',
                             boxSizing: 'border-box',
                           }}
                         />
                       </div>
 
                       <div>
-                        <label style={{ fontSize: 10, color: '#94A3B8', display: 'block' }}>Rest</label>
+                        <label htmlFor={`rest-${safeDayIndex}-${exIndex}`} style={{ fontSize: 10, color: '#94A3B8', display: 'block' }}>Rest</label>
                         <input
+                          id={`rest-${safeDayIndex}-${exIndex}`}
                           type="text"
                           value={ex.rest}
                           onChange={e => handleExerciseChange(exIndex, 'rest', e.target.value)}
@@ -886,7 +910,8 @@ export default function CoachProgramPreviewCanvas({
                             border: '1px solid rgba(255,255,255,0.12)',
                             borderRadius: 4,
                             padding: '4px 6px',
-                            fontSize: 12,
+                            minHeight: 44,
+                            fontSize: 'max(1rem, 1em)',
                             boxSizing: 'border-box',
                           }}
                         />
@@ -895,10 +920,11 @@ export default function CoachProgramPreviewCanvas({
 
                     {/* Coaching Cues */}
                     <div>
-                      <label style={{ fontSize: 10, color: '#94A3B8', display: 'block', marginBottom: 2 }}>
+                      <label htmlFor={`cues-${safeDayIndex}-${exIndex}`} style={{ fontSize: 10, color: '#94A3B8', display: 'block', marginBottom: 2 }}>
                         Coaching Cues & Kinetic Anchors
                       </label>
                       <input
+                        id={`cues-${safeDayIndex}-${exIndex}`}
                         type="text"
                         value={toArr(ex.coachingCues).join(' | ')}
                         onChange={e => handleExerciseChange(exIndex, 'coachingCues', e.target.value)}
@@ -910,7 +936,8 @@ export default function CoachProgramPreviewCanvas({
                           border: '1px solid rgba(255,255,255,0.12)',
                           borderRadius: 4,
                           padding: '6px 8px',
-                          fontSize: 11,
+                          minHeight: 44,
+                          fontSize: 'max(1rem, 1em)',
                           boxSizing: 'border-box',
                         }}
                       />
@@ -972,7 +999,7 @@ export default function CoachProgramPreviewCanvas({
           </span>
         </label>
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={onOpenIntakeDrawer}
@@ -982,6 +1009,7 @@ export default function CoachProgramPreviewCanvas({
               color: '#FFFFFF',
               borderRadius: 6,
               padding: '8px 14px',
+              minHeight: 44,
               fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
@@ -1002,6 +1030,7 @@ export default function CoachProgramPreviewCanvas({
               color: '#FFFFFF',
               borderRadius: 6,
               padding: '8px 20px',
+              minHeight: 44,
               fontSize: 13,
               fontWeight: 800,
               cursor: isDeploying ? 'not-allowed' : 'pointer',

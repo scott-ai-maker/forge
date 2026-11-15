@@ -5,14 +5,66 @@ import {
   getPositiveIntEnv,
 } from '@/lib/rate-limit'
 
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, max-age=0',
+} as const
+
+function jsonNoStore(
+  body: Record<string, unknown>,
+  init?: { status?: number; headers?: Record<string, string> }
+) {
+  return NextResponse.json(body, {
+    status: init?.status ?? 200,
+    headers: {
+      ...NO_STORE_HEADERS,
+      ...(init?.headers ?? {}),
+    },
+  })
+}
+
+function sanitizeText(value: unknown): string {
+  if (typeof value !== 'string') return ''
+  return value.replace(/[\u0000-\u001F\u007F<>]/g, '').trim()
+}
+
 function retryAfterSeconds(resetAt: string) {
   const ms = new Date(resetAt).getTime() - Date.now()
   return Math.max(1, Math.ceil(ms / 1000))
 }
 
+const FOUNDING_COHORT_SOURCES = new Set([
+  'founding_cohort_intake',
+  'founding_cohort',
+  'holiday_unmasking_drop',
+])
+
 export async function POST(req: NextRequest) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+    return jsonNoStore({ error: 'Supabase not configured' }, { status: 503 })
+  }
+
+  let parsedBody: {
+    email?: unknown
+    firstName?: unknown
+    trainingLevel?: unknown
+    primaryGoal?: unknown
+    source?: unknown
+    honeypot?: unknown
+    startTimeMs?: unknown
+    assignedCohortNumber?: unknown
+    cohortReservationNumber?: unknown
+    phone?: unknown
+    profileType?: unknown
+  }
+
+  try {
+    const raw = await req.json()
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return jsonNoStore({ error: 'Invalid JSON payload' }, { status: 400 })
+    }
+    parsedBody = raw as typeof parsedBody
+  } catch {
+    return jsonNoStore({ error: 'Invalid JSON payload' }, { status: 400 })
   }
 
   try {
@@ -31,19 +83,7 @@ export async function POST(req: NextRequest) {
       cohortReservationNumber,
       phone,
       profileType,
-    } = await req.json() as {
-      email?: unknown
-      firstName?: unknown
-      trainingLevel?: unknown
-      primaryGoal?: unknown
-      source?: unknown
-      honeypot?: unknown
-      startTimeMs?: unknown
-      assignedCohortNumber?: unknown
-      cohortReservationNumber?: unknown
-      phone?: unknown
-      profileType?: unknown
-    }
+    } = parsedBody
 
     const validation = await validateInboundEmail({
       email,
@@ -54,9 +94,9 @@ export async function POST(req: NextRequest) {
     if (!validation.valid) {
       if (validation.isBot) {
         // Silently discard bot submissions to protect resources and sender reputation
-        return NextResponse.json({ success: true })
+        return jsonNoStore({ success: true })
       }
-      return NextResponse.json(
+      return jsonNoStore(
         {
           error: validation.error || 'Invalid email',
           suggestion: validation.suggestedEmail,
@@ -67,28 +107,28 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = validation.normalizedEmail
 
-    const normalizedFirstName = typeof firstName === 'string' ? firstName.trim() : ''
+    const normalizedFirstName = sanitizeText(firstName)
     const normalizedTrainingLevel = typeof trainingLevel === 'string' ? trainingLevel.trim().toLowerCase() : ''
-    const normalizedPrimaryGoal = typeof primaryGoal === 'string' ? primaryGoal.trim() : ''
-    const normalizedSource = typeof source === 'string' ? source.trim().toLowerCase() : 'waitlist'
+    const normalizedPrimaryGoal = sanitizeText(primaryGoal)
+    const normalizedSource = typeof source === 'string' && source.trim() ? source.trim().toLowerCase() : 'waitlist'
 
     if (normalizedFirstName.length > 80) {
-      return NextResponse.json({ error: 'First name is too long' }, { status: 400 })
+      return jsonNoStore({ error: 'First name is too long' }, { status: 400 })
     }
 
     if (
       normalizedTrainingLevel &&
       !['beginner', 'intermediate', 'advanced'].includes(normalizedTrainingLevel)
     ) {
-      return NextResponse.json({ error: 'Invalid training level' }, { status: 400 })
+      return jsonNoStore({ error: 'Invalid training level' }, { status: 400 })
     }
 
     if (normalizedPrimaryGoal.length > 600) {
-      return NextResponse.json({ error: 'Primary goal is too long' }, { status: 400 })
+      return jsonNoStore({ error: 'Primary goal is too long' }, { status: 400 })
     }
 
     if (!/^[a-z0-9_-]{1,40}$/.test(normalizedSource)) {
-      return NextResponse.json({ error: 'Invalid source' }, { status: 400 })
+      return jsonNoStore({ error: 'Invalid source' }, { status: 400 })
     }
 
     const ipLimit = getPositiveIntEnv('RATE_LIMIT_WAITLIST_IP_LIMIT', 20)
@@ -106,7 +146,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!ipResult.allowed) {
-      return NextResponse.json(
+      return jsonNoStore(
         { error: 'Too many requests. Please try again later.' },
         {
           status: 429,
@@ -126,7 +166,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!emailResult.allowed) {
-      return NextResponse.json(
+      return jsonNoStore(
         { error: 'Too many attempts for this email. Please try again later.' },
         {
           status: 429,
@@ -175,9 +215,9 @@ export async function POST(req: NextRequest) {
             ? parseInt(rawCohort, 10)
             : null
       const validCohortNumber = parsedCohort && parsedCohort >= 1 && parsedCohort <= 99 ? parsedCohort : null
-      const normalizedPhone = typeof phone === 'string' ? phone.trim().slice(0, 40) : null
-      const normalizedProfileType = typeof profileType === 'string' ? profileType.trim().slice(0, 40) : null
-      const isFoundingCohort = normalizedSource === 'founding_cohort_intake' || normalizedSource === 'founding_cohort'
+      const normalizedPhone = typeof phone === 'string' ? sanitizeText(phone).slice(0, 40) || null : null
+      const normalizedProfileType = typeof profileType === 'string' ? sanitizeText(profileType).slice(0, 40) || null : null
+      const isFoundingCohort = FOUNDING_COHORT_SOURCES.has(normalizedSource)
 
       await triggerLeadEmailAutomation(supabase, {
         email: normalizedEmail,
@@ -190,9 +230,9 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    return NextResponse.json({ success: true })
+    return jsonNoStore({ success: true })
   } catch (err) {
     console.error('Waitlist error:', err)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return jsonNoStore({ error: 'Server error' }, { status: 500 })
   }
 }

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeLiftForm, LIFT_METADATA, parseYouTubeVideoUrl } from './video-form-analysis'
+import {
+  analyzeLiftForm,
+  generateQuickBiomechanicalSpokenSummary,
+  LIFT_METADATA,
+  parseYouTubeVideoUrl,
+  resolveSupportedVideoMimeType,
+} from './video-form-analysis'
 
 describe('video-form-analysis', () => {
   it('analyzes flawless squat execution with mastery rating', () => {
@@ -102,6 +108,71 @@ describe('video-form-analysis', () => {
       expect(analysis.videoUrl).toBe('https://youtu.be/dQw4w9WgXcQ?t=20')
       expect(analysis.videoSourceType).toBe('youtube')
       expect(analysis.youtubeVideoId).toBe('dQw4w9WgXcQ')
+    })
+  })
+
+  describe('extended compound fault checkpoints & Safari/Chromium MediaRecorder MIME negotiation', () => {
+    it('flags deadlift lockout hyperextension and maps erector/glute imbalances', () => {
+      const analysis = analyzeLiftForm({
+        liftType: 'barbell_deadlift',
+        loadLbs: 365,
+        observedDeviations: ['hyperextension_lockout'],
+      })
+
+      expect(analysis.overallFormScore).toBe(86)
+      expect(analysis.rating).toBe('Proficient')
+      const lockoutCp = analysis.checkpoints.find(c => c.name === 'Lockout Lumbar Neutrality')
+      expect(lockoutCp?.status).toBe('moderate_deviation')
+      expect(lockoutCp?.impairedMuscles?.overactive).toContain('Erector Spinae')
+      expect(lockoutCp?.impairedMuscles?.underactive).toContain('Gluteus Maximus')
+    })
+
+    it('flags bench press glutes lifting off bench and barbell row torso jerking', () => {
+      const bench = analyzeLiftForm({
+        liftType: 'barbell_bench_press',
+        loadLbs: 245,
+        observedDeviations: ['butt_off_bench'],
+      })
+      expect(bench.overallFormScore).toBe(85)
+      expect(bench.rating).toBe('Proficient')
+      expect(bench.checkpoints.some(c => c.name === 'Pelvic & Leg-Drive Contact')).toBe(true)
+
+      const row = analyzeLiftForm({
+        liftType: 'barbell_row',
+        loadLbs: 185,
+        observedDeviations: ['excessive_forward_lean'],
+      })
+      expect(row.overallFormScore).toBe(84)
+      expect(row.rating).toBe('Proficient')
+      expect(row.checkpoints.some(c => c.name === 'Hip-Hinge Torso Angle & Anti-Momentum')).toBe(
+        true
+      )
+    })
+
+    it('synthesizes Coach Gordon spoken summary for both mastery and fault states', () => {
+      const mastery = analyzeLiftForm({ liftType: 'barbell_back_squat', loadLbs: 275 })
+      expect(generateQuickBiomechanicalSpokenSummary(mastery)).toContain(
+        'Outstanding execution!'
+      )
+
+      const faulted = analyzeLiftForm({
+        liftType: 'romanian_deadlift',
+        loadLbs: 225,
+        observedDeviations: ['lumbar_rounding'],
+      })
+      const spoken = generateQuickBiomechanicalSpokenSummary(faulted)
+      expect(spoken).toContain('Form score is 75 percent')
+      expect(spoken).toContain('Pull slack out of the barbell')
+    })
+
+    it('negotiates WebM on Chromium and MP4 on iOS Safari without throwing', () => {
+      expect(
+        resolveSupportedVideoMimeType(mime => mime === 'video/webm;codecs=vp9')
+      ).toBe('video/webm;codecs=vp9')
+      expect(
+        resolveSupportedVideoMimeType(mime => mime === 'video/mp4')
+      ).toBe('video/mp4')
+      expect(resolveSupportedVideoMimeType(() => false)).toBe('')
     })
   })
 })

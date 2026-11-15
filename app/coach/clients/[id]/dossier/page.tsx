@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Metadata } from 'next'
-import { createClient } from '@/lib/supabase-server'
+import { isMasterCoachEmail, requireSurfaceRole } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SiteHeader from '@/components/ui/SiteHeader'
@@ -21,32 +21,12 @@ interface PageProps {
 }
 
 export default async function CoachClientDossierPage({ params }: PageProps) {
+  const { user } = await requireSurfaceRole('coach')
   const { id } = await params
   if (Boolean(true)) redirect(`/coach/clients/${id}`)
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/auth/login')
-
   const admin = supabaseAdmin()
-
-  // Verify coach privileges
-  const { data: coachUser } = await admin
-    .from('clients')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  const isMasterCoach =
-    user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-    user.user_metadata?.surface_role === 'coach'
-
-  if (coachUser?.role !== 'coach' && !isMasterCoach) {
-    redirect('/dashboard')
-  }
+  const isMasterCoach = isMasterCoachEmail(user.email)
 
   // Fetch client details
   const { data: client, error: clientError } = await admin

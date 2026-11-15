@@ -85,12 +85,13 @@ self.addEventListener('fetch', event => {
   // Ignore cross-origin requests
   if (url.origin !== self.location.origin) return
 
-  // Strict NetworkOnly bypass for `/api/telemetry*`, all `/api/*` endpoints, and all non-GET mutations
-  // Ensures keepalive packets, Authorization headers, and round-trip verifiers are never intercepted or stale-cached
+  // Strict NetworkOnly bypass for `/api/telemetry*`, all `/api/*` endpoints, Next.js image optimizer (`/_next/image`), and all non-GET mutations
+  // Ensures keepalive packets, Authorization headers, query-keyed optimized images, and private signed media are never stale-cached or collided
   if (
     request.method !== 'GET' ||
     url.pathname.startsWith('/api/telemetry') ||
-    url.pathname.startsWith('/api/')
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/_next/image')
   ) {
     return
   }
@@ -180,7 +181,8 @@ self.addEventListener('fetch', event => {
         const cached = await cache.match(request, { ignoreSearch: true })
         const fetchPromise = fetch(request)
           .then(networkResponse => {
-            if (networkResponse.ok) {
+            const cc = (networkResponse.headers.get('cache-control') || '').toLowerCase()
+            if (networkResponse.ok && !cc.includes('no-store') && !cc.includes('private')) {
               cache.put(request, networkResponse.clone())
             }
             return networkResponse
@@ -199,6 +201,19 @@ self.addEventListener('fetch', event => {
   )
 })
 
+function normalizeSafeNotificationUrl(rawUrl) {
+  if (typeof rawUrl !== 'string' || !rawUrl.trim()) return '/dashboard/live'
+  try {
+    const resolved = new URL(rawUrl, self.location.origin)
+    if (resolved.origin !== self.location.origin) {
+      return '/dashboard/live'
+    }
+    return `${resolved.pathname}${resolved.search}${resolved.hash}`
+  } catch {
+    return '/dashboard/live'
+  }
+}
+
 // Push & Notification Click Navigation (opens /dashboard/live or target URL directly)
 self.addEventListener('push', event => {
   let payload = {}
@@ -209,7 +224,7 @@ self.addEventListener('push', event => {
   }
   const title = payload.title || (payload.aps && payload.aps.alert && payload.aps.alert.title) || 'Forge Athletic'
   const body = payload.body || (payload.aps && payload.aps.alert && payload.aps.alert.body) || 'Tap to open your session.'
-  const targetUrl = payload.url || payload.link || '/dashboard/live'
+  const targetUrl = normalizeSafeNotificationUrl(payload.url || payload.link || '/dashboard/live')
 
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -223,7 +238,9 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close()
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/dashboard/live'
+  const targetUrl = normalizeSafeNotificationUrl(
+    (event.notification.data && event.notification.data.url) || '/dashboard/live'
+  )
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
       for (const client of windowClients) {

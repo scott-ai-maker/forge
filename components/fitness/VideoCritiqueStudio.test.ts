@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
 import { inferLiftTypeFromFileName } from '@/components/fitness/VideoCritiqueStudio'
 import { parseYouTubeVideoUrl, analyzeLiftForm } from '@/lib/video-form-analysis'
 
@@ -86,7 +88,7 @@ describe('VideoCritiqueStudio YouTube Integration & Biomechanical Analysis', () 
     })
 
     expect(critique.liftName).toBe('Overhead Squat Assessment (OHSA)')
-    expect(['Needs Improvement', 'High Risk']).toContain(critique.rating)
+    expect(['Needs Recalibration', 'High Risk']).toContain(critique.rating)
     expect(critique.overallFormScore).toBeLessThan(75)
     expect(critique.checkpoints.length).toBeGreaterThan(0)
 
@@ -99,6 +101,19 @@ describe('VideoCritiqueStudio YouTube Integration & Biomechanical Analysis', () 
     // Verify Forge Athletic branding is strictly maintained
     expect(critique.masterCoachSummary).not.toContain('GAA')
     expect(critique.masterCoachSummary).not.toContain('Gordon Athletic')
+  })
+
+  it('uses native <progress>, 100MB upload guard, timer/blob cleanup, and 4-tier rating badges', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'components/fitness/VideoCritiqueStudio.tsx'),
+      'utf-8'
+    )
+    expect(source).toContain('className="forge-progress-bar"')
+    expect(source).toContain('MAX_VIDEO_FILE_BYTES = 100 * 1024 * 1024')
+    expect(source).toContain('URL.revokeObjectURL')
+    expect(source).toContain('clearScanTimers')
+    expect(source).toContain("rating === 'Proficient'")
+    expect(source).toContain("rating === 'Needs Recalibration'")
   })
 })
 

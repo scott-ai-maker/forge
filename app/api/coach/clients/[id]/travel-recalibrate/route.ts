@@ -3,6 +3,18 @@ import { getRequestAuthz, requireRole, requireCoachAssignedClient, AuthzError } 
 import { supabaseAdmin } from '@/lib/supabase'
 import { adaptFullPlanForTravel, TravelLocationScenario, TRAVEL_SCENARIO_META } from '@/lib/travel-workout-adapter'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
+function sanitizeCoachTravelNotes(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const cleaned = raw
+    .replace(/<[^>]*>/g, '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .trim()
+  if (!cleaned) return null
+  return cleaned.slice(0, 500)
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,27 +27,42 @@ export async function POST(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
-  const { id: clientId } = await params
+  const { id: rawClientId } = await params
+  const clientId = typeof rawClientId === 'string' ? rawClientId.trim() : ''
+  if (!clientId || clientId.length > 128) {
+    return NextResponse.json(
+      { error: 'Valid athlete identifier is required.' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
+  }
+
   const body = await req.json().catch(() => ({}))
   const { scenario, customNotes } = body as {
     scenario: TravelLocationScenario
     customNotes?: string
   }
 
-  if (!scenario || !TRAVEL_SCENARIO_META[scenario]) {
-    return NextResponse.json({ error: 'Valid travel scenario is required.' }, { status: 400 })
+  if (!scenario || !Object.prototype.hasOwnProperty.call(TRAVEL_SCENARIO_META, scenario)) {
+    return NextResponse.json(
+      { error: 'Valid travel scenario is required.' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
   }
 
+  const safeCustomNotes = sanitizeCoachTravelNotes(customNotes)
   const admin = supabaseAdmin()
 
   try {
     await requireCoachAssignedClient(coachId, clientId)
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 403
-    return NextResponse.json({ error: 'Not authorized for this athlete.' }, { status })
+    return NextResponse.json(
+      { error: 'Not authorized for this athlete.' },
+      { status, headers: NO_STORE_HEADERS }
+    )
   }
 
   // 1. Fetch current active plan
@@ -50,7 +77,7 @@ export async function POST(
   if (planFetchErr || !latestPlan || !latestPlan.plan_json) {
     return NextResponse.json(
       { error: 'No active workout plan found for this athlete to recalibrate.' },
-      { status: 404 }
+      { status: 404, headers: NO_STORE_HEADERS }
     )
   }
 
@@ -76,7 +103,7 @@ export async function POST(
       ...adapted.planJson,
       generatedByCoachId: coachId,
       recalibratedFromPlanId: latestPlan.id,
-      coachTravelNotes: customNotes || null,
+      coachTravelNotes: safeCustomNotes,
     },
   }
 
@@ -89,14 +116,14 @@ export async function POST(
   if (insertErr || !insertedPlan) {
     return NextResponse.json(
       { error: insertErr?.message || 'Failed to save adapted workout plan.' },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     )
   }
 
   // 3. Dispatch Concierge Notification
   const conciergeMessage = isRestoring
     ? `Welcome Back: I have restored your primary **${adapted.planTitle}** barbell protocol! Your Fitness Lab has been updated for standard gym access.`
-    : `Travel Protocol Deployed: I've recalibrated your training split for **${scenarioMeta.label}**! All exercises, tempos, and coaching cues are now active in your Fitness Lab.${customNotes ? `\n\nCoach Note: "${customNotes}"` : ''}`
+    : `Travel Protocol Deployed: I've recalibrated your training split for **${scenarioMeta.label}**! All exercises, tempos, and coaching cues are now active in your Fitness Lab.${safeCustomNotes ? `\n\nCoach Note: "${safeCustomNotes}"` : ''}`
 
   await admin.from('coach_client_messages').insert({
     client_id: clientId,
@@ -121,12 +148,15 @@ export async function POST(
     // Non-critical if table doesn't have event_type constraint
   }
 
-  return NextResponse.json({
-    ok: true,
-    plan: insertedPlan,
-    message: isRestoring
-      ? 'Standard commercial gym protocol restored.'
-      : `Successfully deployed ${scenarioMeta.label} protocol to athlete.`,
-  })
+  return NextResponse.json(
+    {
+      ok: true,
+      plan: insertedPlan,
+      message: isRestoring
+        ? 'Standard commercial gym protocol restored.'
+        : `Successfully deployed ${scenarioMeta.label} protocol to athlete.`,
+    },
+    { headers: NO_STORE_HEADERS }
+  )
 }
 

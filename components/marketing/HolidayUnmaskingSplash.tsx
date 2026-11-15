@@ -58,6 +58,9 @@ export default function HolidayUnmaskingSplash({
   const [honeypot, setHoneypot] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [invalidField, setInvalidField] = useState<'name' | 'email' | null>(null)
+  const [activeChapterCode, setActiveChapterCode] = useState<string>('01')
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [assignedPassNumber, setAssignedPassNumber] = useState<number>(42)
   const [copiedSerial, setCopiedSerial] = useState(false)
 
@@ -72,6 +75,7 @@ export default function HolidayUnmaskingSplash({
   const emailInputId = useId()
   const phoneInputId = useId()
   const goalSelectId = useId()
+  const formErrorId = useId()
 
   useEffect(() => {
     setMounted(true)
@@ -86,7 +90,29 @@ export default function HolidayUnmaskingSplash({
       setTimeRemaining(calculateTimeRemaining(resolvedTarget))
     }, 1000)
 
-    return () => clearInterval(timer)
+    const reducedMotionQuery =
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+        : null
+    const syncVideoMotion = (prefersReduced: boolean) => {
+      setPrefersReducedMotion(prefersReduced)
+      const video = videoRef.current
+      if (!video) return
+      if (prefersReduced) {
+        video.removeAttribute('autoplay')
+        video.pause()
+      }
+    }
+    if (reducedMotionQuery) {
+      syncVideoMotion(reducedMotionQuery.matches)
+    }
+    const onMotionChange = (event: MediaQueryListEvent) => syncVideoMotion(event.matches)
+    reducedMotionQuery?.addEventListener('change', onMotionChange)
+
+    return () => {
+      clearInterval(timer)
+      reducedMotionQuery?.removeEventListener('change', onMotionChange)
+    }
   }, [])
 
   const playTactileTone = (type: 'tick' | 'chime' | 'success') => {
@@ -198,18 +224,23 @@ export default function HolidayUnmaskingSplash({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage(null)
-
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setStatus('error')
-      setErrorMessage('Please enter a valid email address.')
-      playTactileTone('tick')
-      return
-    }
+    setInvalidField(null)
 
     if (!fullName.trim()) {
       setStatus('error')
+      setInvalidField('name')
       setErrorMessage('Please enter your full name.')
       playTactileTone('tick')
+      document.getElementById(nameInputId)?.focus()
+      return
+    }
+
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setStatus('error')
+      setInvalidField('email')
+      setErrorMessage('Please enter a valid email address.')
+      playTactileTone('tick')
+      document.getElementById(emailInputId)?.focus()
       return
     }
 
@@ -238,10 +269,22 @@ export default function HolidayUnmaskingSplash({
 
       if (res.ok) {
         setStatus('success')
+        setInvalidField(null)
         playTactileTone('success')
       } else {
         setStatus('error')
-        setErrorMessage(data?.error || 'Unable to register your reservation. Please try again.')
+        const serverErr =
+          typeof data?.error === 'string'
+            ? data.error
+            : 'Unable to register your reservation. Please try again.'
+        setErrorMessage(serverErr)
+        if (/email|domain|mail/i.test(serverErr)) {
+          setInvalidField('email')
+          document.getElementById(emailInputId)?.focus()
+        } else if (/name/i.test(serverErr)) {
+          setInvalidField('name')
+          document.getElementById(nameInputId)?.focus()
+        }
       }
     } catch {
       setStatus('error')
@@ -372,7 +415,7 @@ export default function HolidayUnmaskingSplash({
               aria-label="Sound effects"
               aria-pressed={soundEnabled}
               title={soundEnabled ? 'Audio feedback enabled' : 'Enable subtle audio feedback'}
-              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border px-3 py-2 font-mono text-[11px] transition-colors"
+              className="forge-tactile-press inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-xl border px-3 py-2 font-mono text-[11px] transition-colors"
               style={{
                 background: soundEnabled ? 'rgba(16, 185, 129, 0.12)' : '#181B22',
                 borderColor: soundEnabled ? 'rgba(52, 211, 153, 0.35)' : 'rgba(255, 255, 255, 0.1)',
@@ -606,10 +649,21 @@ export default function HolidayUnmaskingSplash({
                         type="text"
                         required
                         autoComplete="name"
+                        aria-invalid={invalidField === 'name' ? 'true' : 'false'}
+                        aria-describedby={invalidField === 'name' && errorMessage ? formErrorId : undefined}
                         value={fullName}
-                        onChange={e => setFullName(e.target.value)}
+                        onChange={e => {
+                          setFullName(e.target.value)
+                          if (invalidField === 'name' || status === 'error') {
+                            setInvalidField(null)
+                            setErrorMessage(null)
+                            if (status === 'error') setStatus('idle')
+                          }
+                        }}
                         placeholder="Jordan Smith"
-                        className="min-h-[46px] w-full rounded-xl border border-white/15 bg-[#090A0D] px-3.5 py-2.5 text-base text-white placeholder:text-zinc-500 focus:border-amber-400"
+                        className={`min-h-[46px] w-full rounded-xl border bg-[#090A0D] px-3.5 py-2.5 text-base text-white placeholder:text-zinc-500 focus:border-amber-400 ${
+                          invalidField === 'name' ? 'border-rose-400/70' : 'border-white/15'
+                        }`}
                       />
                     </div>
 
@@ -625,10 +679,21 @@ export default function HolidayUnmaskingSplash({
                         type="email"
                         required
                         autoComplete="email"
+                        aria-invalid={invalidField === 'email' ? 'true' : 'false'}
+                        aria-describedby={invalidField === 'email' && errorMessage ? formErrorId : undefined}
                         value={email}
-                        onChange={e => setEmail(e.target.value)}
+                        onChange={e => {
+                          setEmail(e.target.value)
+                          if (invalidField === 'email' || status === 'error') {
+                            setInvalidField(null)
+                            setErrorMessage(null)
+                            if (status === 'error') setStatus('idle')
+                          }
+                        }}
                         placeholder="jordan@example.com"
-                        className="min-h-[46px] w-full rounded-xl border border-white/15 bg-[#090A0D] px-3.5 py-2.5 text-base text-white placeholder:text-zinc-500 focus:border-amber-400"
+                        className={`min-h-[46px] w-full rounded-xl border bg-[#090A0D] px-3.5 py-2.5 text-base text-white placeholder:text-zinc-500 focus:border-amber-400 ${
+                          invalidField === 'email' ? 'border-rose-400/70' : 'border-white/15'
+                        }`}
                       />
                     </div>
 
@@ -698,6 +763,7 @@ export default function HolidayUnmaskingSplash({
 
                     {errorMessage && (
                       <div
+                        id={formErrorId}
                         role="alert"
                         className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200"
                       >
@@ -823,7 +889,7 @@ export default function HolidayUnmaskingSplash({
                     }
                   }}
                   aria-label={videoMuted ? 'Unmute showcase video audio' : 'Mute showcase video audio'}
-                  className="forge-tactile-press inline-flex min-h-[38px] items-center rounded-lg border border-amber-400/45 bg-amber-500/15 px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-amber-200"
+                  className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-lg border border-amber-400/45 bg-amber-500/15 px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-amber-200"
                 >
                   {videoMuted ? 'Unmute Audio' : 'Audio On'}
                 </button>
@@ -836,10 +902,12 @@ export default function HolidayUnmaskingSplash({
               >
                 <video
                   ref={videoRef}
-                  autoPlay
+                  autoPlay={!prefersReducedMotion}
                   loop
                   muted={videoMuted}
                   playsInline
+                  width={1280}
+                  height={720}
                   preload="metadata"
                   poster="/images/forge-black-friday-showcase-poster.jpg"
                   aria-label="Forge Athletic ecosystem walkthrough video"
@@ -861,27 +929,36 @@ export default function HolidayUnmaskingSplash({
 
               {/* 5-Chapter Film Scrubber */}
               <div className="grid grid-cols-1 gap-1.5 border-t border-white/[0.08] bg-[#111318] p-3 sm:grid-cols-2 xl:grid-cols-3">
-                {SHOWCASE_FILM_CHAPTERS.map(ch => (
-                  <button
-                    key={ch.code}
-                    type="button"
-                    onClick={() => {
-                      if (videoRef.current) {
-                        videoRef.current.currentTime = ch.timeSec
-                        videoRef.current.play().catch(() => {})
-                      }
-                      playTactileTone('tick')
-                    }}
-                    className="forge-tactile-press flex min-h-[40px] items-center gap-2 rounded-lg border border-white/[0.08] bg-[#181B22] px-2.5 py-1.5 text-left transition hover:border-amber-400/40"
-                  >
-                    <span className="rounded bg-amber-400 px-1.5 py-0.5 font-mono text-[10px] font-extrabold text-[#090A0D]">
-                      {ch.code}
-                    </span>
-                    <span className="truncate font-mono text-[11px] font-medium text-zinc-200">
-                      {ch.label}
-                    </span>
-                  </button>
-                ))}
+                {SHOWCASE_FILM_CHAPTERS.map(ch => {
+                  const isActiveChapter = activeChapterCode === ch.code
+                  return (
+                    <button
+                      key={ch.code}
+                      type="button"
+                      aria-pressed={isActiveChapter}
+                      onClick={() => {
+                        setActiveChapterCode(ch.code)
+                        if (videoRef.current) {
+                          videoRef.current.currentTime = ch.timeSec
+                          videoRef.current.play().catch(() => {})
+                        }
+                        playTactileTone('tick')
+                      }}
+                      className={`forge-tactile-press flex min-h-[44px] items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left transition ${
+                        isActiveChapter
+                          ? 'border-amber-400/50 bg-amber-500/15'
+                          : 'border-white/[0.08] bg-[#181B22] hover:border-amber-400/40'
+                      }`}
+                    >
+                      <span className="rounded bg-amber-400 px-1.5 py-0.5 font-mono text-[10px] font-extrabold text-[#090A0D]">
+                        {ch.code}
+                      </span>
+                      <span className="truncate font-mono text-[11px] font-medium text-zinc-200">
+                        {ch.label}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>

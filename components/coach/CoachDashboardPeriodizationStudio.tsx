@@ -30,6 +30,16 @@ export interface ClientSummaryOption {
   } | null
 }
 
+export function resolveStudioGoalType(
+  goal?: string | null
+): 'fat_loss' | 'hypertrophy' | 'performance' | 'general_fitness' {
+  const rawGoal = (goal || '').toLowerCase()
+  if (rawGoal.includes('fat') || rawGoal.includes('loss') || rawGoal.includes('lean')) return 'fat_loss'
+  if (rawGoal.includes('hyper') || rawGoal.includes('muscle') || rawGoal.includes('mass')) return 'hypertrophy'
+  if (rawGoal.includes('power') || rawGoal.includes('athletic') || rawGoal.includes('perf')) return 'performance'
+  return 'general_fitness'
+}
+
 interface CoachDashboardPeriodizationStudioProps {
   clients: ClientSummaryOption[]
   initialSelectedClientId?: string
@@ -79,13 +89,7 @@ export default function CoachDashboardPeriodizationStudio({
     }
   }, [clients, selectedClientId])
 
-  const goalType = useMemo((): 'fat_loss' | 'hypertrophy' | 'performance' | 'general_fitness' => {
-    const rawGoal = (selectedClient.goal || '').toLowerCase()
-    if (rawGoal.includes('fat') || rawGoal.includes('loss') || rawGoal.includes('lean')) return 'fat_loss'
-    if (rawGoal.includes('hyper') || rawGoal.includes('muscle') || rawGoal.includes('mass')) return 'hypertrophy'
-    if (rawGoal.includes('power') || rawGoal.includes('athletic') || rawGoal.includes('perf')) return 'performance'
-    return 'fat_loss'
-  }, [selectedClient.goal])
+  const goalType = useMemo(() => resolveStudioGoalType(selectedClient.goal), [selectedClient.goal])
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>

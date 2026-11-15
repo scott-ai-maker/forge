@@ -8,6 +8,8 @@ import {
 } from '@/lib/periodization-roadmap'
 import { parseInjuriesFromText } from '@/lib/sports-injuries'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -20,7 +22,7 @@ export async function GET(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { id: clientId } = await params
@@ -34,7 +36,7 @@ export async function GET(
     .single()
 
   if (clientError || !client || client.designated_coach_id !== userId) {
-    return NextResponse.json({ error: 'Unauthorized coach access' }, { status: 403 })
+    return NextResponse.json({ error: 'Unauthorized coach access' }, { status: 403, headers: NO_STORE_HEADERS })
   }
 
   try {
@@ -87,12 +89,15 @@ export async function GET(
     if (latestPlan?.plan_json?.periodizationPlan) {
       const storedPlan = latestPlan.plan_json.periodizationPlan as MacrocyclePlan
       const syncedPlan = syncMacrocycleWithCompletedWorkouts(storedPlan, completedCount, sessionsPerWeek)
-      return NextResponse.json({
-        ok: true,
-        plan: syncedPlan,
-        source: 'stored',
-        completedWorkoutsCount: completedCount,
-      })
+      return NextResponse.json(
+        {
+          ok: true,
+          plan: syncedPlan,
+          source: 'stored',
+          completedWorkoutsCount: completedCount,
+        },
+        { headers: NO_STORE_HEADERS }
+      )
     }
 
     // 3. Otherwise fetch profile goal and generate baseline synced with microcycle progress
@@ -111,15 +116,18 @@ export async function GET(
     })
     const syncedPlan = syncMacrocycleWithCompletedWorkouts(generatedPlan, completedCount, sessionsPerWeek)
 
-    return NextResponse.json({
-      ok: true,
-      plan: syncedPlan,
-      source: 'generated',
-      completedWorkoutsCount: completedCount,
-    })
+    return NextResponse.json(
+      {
+        ok: true,
+        plan: syncedPlan,
+        source: 'generated',
+        completedWorkoutsCount: completedCount,
+      },
+      { headers: NO_STORE_HEADERS }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to load periodization plan'
-    return NextResponse.json({ error: message }, { status: 400 })
+    return NextResponse.json({ error: message }, { status: 400, headers: NO_STORE_HEADERS })
   }
 }
 
@@ -135,7 +143,7 @@ export async function POST(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { id: clientId } = await params
@@ -149,7 +157,7 @@ export async function POST(
     .single()
 
   if (clientError || !client || client.designated_coach_id !== userId) {
-    return NextResponse.json({ error: 'Unauthorized coach access' }, { status: 403 })
+    return NextResponse.json({ error: 'Unauthorized coach access' }, { status: 403, headers: NO_STORE_HEADERS })
   }
 
   try {
@@ -157,7 +165,7 @@ export async function POST(
     const plan: MacrocyclePlan = body.plan
 
     if (!plan || !Array.isArray(plan.weeks)) {
-      return NextResponse.json({ error: 'Invalid periodization plan payload' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid periodization plan payload' }, { status: 400, headers: NO_STORE_HEADERS })
     }
 
     // Attach calibration timestamp
@@ -218,13 +226,16 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({
-      ok: true,
-      plan: calibratedPlan,
-      message: 'Macrocycle periodization calibrated and synchronized successfully.',
-    })
+    return NextResponse.json(
+      {
+        ok: true,
+        plan: calibratedPlan,
+        message: 'Macrocycle periodization calibrated and synchronized successfully.',
+      },
+      { headers: NO_STORE_HEADERS }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to save periodization plan'
-    return NextResponse.json({ error: message }, { status: 400 })
+    return NextResponse.json({ error: message }, { status: 400, headers: NO_STORE_HEADERS })
   }
 }

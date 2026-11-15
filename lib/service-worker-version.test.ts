@@ -41,4 +41,34 @@ describe('Automated Service Worker Version & Cache Sync Engine', () => {
     expect(result.targetVersionTag).toBe(`gaa-v${result.appVersion}`)
     expect(result.changed).toBe(false)
   })
+
+  it('enforces strict NetworkOnly bypasses, Cache-Control privacy checks, and same-origin notification URLs in public/sw.js', () => {
+    const swContent = readFileSync(swPath, 'utf8')
+
+    // Never cache /api/* or /_next/image (prevents ignoreSearch collisions & private signed URL caching)
+    expect(swContent).toContain("url.pathname.startsWith('/api/telemetry')")
+    expect(swContent).toContain("url.pathname.startsWith('/api/')")
+    expect(swContent).toContain("url.pathname.startsWith('/_next/image')")
+    expect(swContent).toContain("!cc.includes('no-store')")
+    expect(swContent).toContain("!cc.includes('private')")
+
+    // Extract and test normalizeSafeNotificationUrl against external phishing/open-redirect URLs
+    const fnMatch = swContent.match(
+      /function\s+normalizeSafeNotificationUrl\(rawUrl\)\s*\{[\s\S]*?\n\}/
+    )
+    expect(fnMatch).not.toBeNull()
+
+    const evalNormalize = new Function(
+      'self',
+      `${fnMatch![0]}; return normalizeSafeNotificationUrl;`
+    )({ location: { origin: 'https://forge-athletic.app' } }) as (rawUrl: unknown) => string
+
+    expect(evalNormalize('https://evil.example/steal-token')).toBe('/dashboard/live')
+    expect(evalNormalize('//evil.example/open-redirect')).toBe('/dashboard/live')
+    expect(evalNormalize('javascript:alert(1)')).toBe('/dashboard/live')
+    expect(evalNormalize('/dashboard/fitness?workspace=train#sets')).toBe(
+      '/dashboard/fitness?workspace=train#sets'
+    )
+    expect(evalNormalize('')).toBe('/dashboard/live')
+  })
 })

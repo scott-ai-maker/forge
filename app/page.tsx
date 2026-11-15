@@ -109,7 +109,6 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
             alt=""
             width={48}
             height={48}
-            priority
           />
           <span>Forge Athletic</span>
         </Link>
@@ -192,7 +191,8 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
               alt="Coach Gordon coaching an everyday client through dumbbell goblet squat alignment during a personalized training session"
               width={680}
               height={510}
-              priority
+              loading="eager"
+              fetchPriority="high"
               sizes="(max-width: 760px) 92vw, 45vw"
               className="forge-hero-main-img"
             />

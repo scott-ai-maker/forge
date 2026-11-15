@@ -175,7 +175,8 @@ export default function ReadinessRecoveryTracker({
               href="/dashboard/settings?tab=wearables"
               className="tactile-btn"
               style={{
-                padding: '8px 14px',
+                minHeight: 44,
+                padding: '10px 14px',
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.15)',
                 color: 'var(--white)',
@@ -218,10 +219,11 @@ export default function ReadinessRecoveryTracker({
               aria-pressed={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id as 'gate' | 'acwr' | 'deload')}
               style={{
+                minHeight: 44,
                 background: activeTab === tab.id ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
                 color: activeTab === tab.id ? 'var(--navy)' : 'var(--white)',
                 border: activeTab === tab.id ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                padding: '8px 14px',
+                padding: '10px 14px',
                 borderRadius: 4,
                 fontFamily: 'Raleway, sans-serif',
                 fontWeight: 700,
@@ -349,98 +351,157 @@ export default function ReadinessRecoveryTracker({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 16 }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--gray)', marginBottom: 6 }}>
-                  <span>Sleep Duration:</span>
+                  <label htmlFor="readiness-sleep-duration" style={{ cursor: 'pointer' }}>Sleep duration</label>
                   <strong className="tabular-nums" style={{ color: 'var(--gold-lt)' }}>{sleepHours !== null ? `${sleepHours} hrs` : '-- hrs'}</strong>
                 </div>
                 <input
-                  aria-label="Sleep duration"
+                  id="readiness-sleep-duration"
+                  className="forge-range-slider"
                   type="range"
                   min={4}
                   max={10}
                   step={0.1}
                   value={sleepHours ?? 7.5}
+                  aria-valuetext={sleepHours !== null ? `${sleepHours} hours` : 'Not set (default 7.5 hours)'}
                   onChange={e => setSleepHours(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: 'var(--gold)' }}
+                  onPointerUp={e => setSleepHours(Number(e.currentTarget.value))}
+                  style={{
+                    width: '100%',
+                    ['--attr-min' as string]: '4',
+                    ['--attr-max' as string]: '10',
+                    ['--control-value' as string]: String(sleepHours ?? 7.5),
+                    ['--slider-fill-color' as string]: 'var(--gold, #D4A017)',
+                    ['--slider-thumb-color' as string]: 'var(--gold, #D4A017)',
+                  }}
                 />
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--gray)', marginBottom: 6 }}>
-                  <span>Sleep Quality:</span>
+                  <label htmlFor="readiness-sleep-quality" style={{ cursor: 'pointer' }}>Sleep quality</label>
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{sleepQuality !== null ? `${sleepQuality}/10` : '--/10'}</strong>
                 </div>
                 <input
-                  aria-label="Sleep quality"
+                  id="readiness-sleep-quality"
+                  className="forge-range-slider"
                   type="range"
                   min={1}
                   max={10}
                   value={sleepQuality ?? 8}
+                  aria-valuetext={sleepQuality !== null ? `${sleepQuality} out of 10` : 'Not set (default 8 out of 10)'}
                   onChange={e => setSleepQuality(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: 'var(--gold)' }}
+                  onPointerUp={e => setSleepQuality(Number(e.currentTarget.value))}
+                  style={{
+                    width: '100%',
+                    ['--attr-min' as string]: '1',
+                    ['--attr-max' as string]: '10',
+                    ['--control-value' as string]: String(sleepQuality ?? 8),
+                    ['--slider-fill-color' as string]: 'var(--gold, #D4A017)',
+                    ['--slider-thumb-color' as string]: 'var(--gold, #D4A017)',
+                  }}
                 />
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--gray)', marginBottom: 6 }}>
-                  <span>Resting Heart Rate:</span>
+                  <label htmlFor="readiness-resting-hr" style={{ cursor: 'pointer' }}>Resting heart rate</label>
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{restingHeartRate !== null ? `${restingHeartRate} BPM` : '-- BPM'}</strong>
                 </div>
                 <input
-                  aria-label="Resting heart rate"
+                  id="readiness-resting-hr"
+                  className="forge-range-slider"
                   type="range"
                   min={40}
                   max={90}
                   value={restingHeartRate ?? 60}
+                  aria-valuetext={restingHeartRate !== null ? `${restingHeartRate} beats per minute` : 'Not set (default 60 BPM)'}
                   onChange={e => setRestingHeartRate(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: 'var(--gold)' }}
+                  onPointerUp={e => setRestingHeartRate(Number(e.currentTarget.value))}
+                  style={{
+                    width: '100%',
+                    ['--attr-min' as string]: '40',
+                    ['--attr-max' as string]: '90',
+                    ['--control-value' as string]: String(restingHeartRate ?? 60),
+                    ['--slider-fill-color' as string]: 'var(--gold, #D4A017)',
+                    ['--slider-thumb-color' as string]: 'var(--gold, #D4A017)',
+                  }}
                 />
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--gray)', marginBottom: 6 }}>
-                  <span>Baseline RHR:</span>
+                  <label htmlFor="readiness-baseline-rhr" style={{ cursor: 'pointer' }}>Baseline resting heart rate</label>
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{baselineRhr} BPM</strong>
                 </div>
                 <input
-                  aria-label="Baseline resting heart rate"
+                  id="readiness-baseline-rhr"
+                  className="forge-range-slider"
                   type="range"
                   min={40}
                   max={80}
                   value={baselineRhr}
+                  aria-valuetext={`${baselineRhr} beats per minute`}
                   onChange={e => setBaselineRhr(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: 'var(--gold)' }}
+                  style={{
+                    width: '100%',
+                    ['--attr-min' as string]: '40',
+                    ['--attr-max' as string]: '80',
+                    ['--control-value' as string]: String(baselineRhr),
+                    ['--slider-fill-color' as string]: 'var(--gold, #D4A017)',
+                    ['--slider-thumb-color' as string]: 'var(--gold, #D4A017)',
+                  }}
                 />
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--gray)', marginBottom: 6 }}>
-                  <span>Muscle Soreness (DOMS):</span>
+                  <label htmlFor="readiness-soreness-level" style={{ cursor: 'pointer' }}>Soreness level</label>
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{sorenessLevel !== null ? `${sorenessLevel}/10` : '--/10'}</strong>
                 </div>
                 <input
-                  aria-label="Soreness level"
+                  id="readiness-soreness-level"
+                  className="forge-range-slider"
                   type="range"
                   min={1}
                   max={10}
                   value={sorenessLevel ?? 3}
+                  aria-valuetext={sorenessLevel !== null ? `${sorenessLevel} out of 10` : 'Not set (default 3 out of 10)'}
                   onChange={e => setSorenessLevel(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: 'var(--gold)' }}
+                  onPointerUp={e => setSorenessLevel(Number(e.currentTarget.value))}
+                  style={{
+                    width: '100%',
+                    ['--attr-min' as string]: '1',
+                    ['--attr-max' as string]: '10',
+                    ['--control-value' as string]: String(sorenessLevel ?? 3),
+                    ['--slider-fill-color' as string]: 'var(--gold, #D4A017)',
+                    ['--slider-thumb-color' as string]: 'var(--gold, #D4A017)',
+                  }}
                 />
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--gray)', marginBottom: 6 }}>
-                  <span>Life &amp; Cognitive Stress:</span>
+                  <label htmlFor="readiness-stress-level" style={{ cursor: 'pointer' }}>Stress level</label>
                   <strong className="tabular-nums" style={{ color: 'var(--white)' }}>{stressLevel !== null ? `${stressLevel}/10` : '--/10'}</strong>
                 </div>
                 <input
-                  aria-label="Stress level"
+                  id="readiness-stress-level"
+                  className="forge-range-slider"
                   type="range"
                   min={1}
                   max={10}
                   value={stressLevel ?? 3}
+                  aria-valuetext={stressLevel !== null ? `${stressLevel} out of 10` : 'Not set (default 3 out of 10)'}
                   onChange={e => setStressLevel(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: 'var(--gold)' }}
+                  onPointerUp={e => setStressLevel(Number(e.currentTarget.value))}
+                  style={{
+                    width: '100%',
+                    ['--attr-min' as string]: '1',
+                    ['--attr-max' as string]: '10',
+                    ['--control-value' as string]: String(stressLevel ?? 3),
+                    ['--slider-fill-color' as string]: 'var(--gold, #D4A017)',
+                    ['--slider-thumb-color' as string]: 'var(--gold, #D4A017)',
+                  }}
                 />
               </div>
             </div>
@@ -550,6 +611,56 @@ export default function ReadinessRecoveryTracker({
                 <div style={{ fontFamily: 'var(--font-sans, Raleway), sans-serif', fontSize: 14, fontWeight: 700, letterSpacing: '0.04em', color: '#38BDF8', marginTop: 4 }}>{deloadPlan.cnsRecoveryAction}</div>
               </div>
             </div>
+
+            {deloadPlan.days && deloadPlan.days.length > 0 && (
+              <div style={{ marginTop: 18 }}>
+                <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 10 }}>
+                  7-Day Microcycle Schedule
+                </div>
+                <ol
+                  role="list"
+                  data-testid="deload-microcycle-schedule"
+                  style={{
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: 0,
+                    display: 'grid',
+                    gap: 10,
+                  }}
+                >
+                  {deloadPlan.days.map(day => (
+                    <li
+                      key={day.day}
+                      style={{
+                        background: 'rgba(8,14,20,0.55)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 6,
+                        padding: '12px 14px',
+                        display: 'grid',
+                        gap: 6,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <strong style={{ color: '#FFFFFF', fontSize: 13.5 }}>
+                          Day {day.day}: {day.title}
+                        </strong>
+                        <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 11.5, color: '#34D399', fontWeight: 700 }}>
+                          {day.volumeReductionPct > 0 ? `-${day.volumeReductionPct}% Volume · ` : ''}RPE ≤ {day.rpeCap}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12.5, color: '#CBD5E1' }}>{day.focus}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 11.5, color: 'var(--gray)' }}>
+                        <span>Sets: <strong style={{ color: 'var(--gold-lt)' }}>{day.targetSets}</strong></span>
+                        <span>Conditioning: <strong style={{ color: '#E2E8F0' }}>{day.conditioning}</strong></span>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: 'var(--gray)' }}>
+                        Mobility: <span style={{ color: '#CBD5E1' }}>{day.mobilityFocus}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
         </div>
       )}

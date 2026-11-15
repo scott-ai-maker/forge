@@ -257,7 +257,7 @@ export default function JointComfortScoreStrip() {
                   type="button"
                   onClick={() => setEscalationOpen(true)}
                   data-testid="joint-comfort-message-real-coach-btn"
-                  className="forge-tactile-press inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-bold text-emerald-100 hover:bg-emerald-500/25"
+                  className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-bold text-emerald-100 hover:bg-emerald-500/25"
                 >
                   {isCoachSupport ? (
                     <Smartphone size={13} aria-hidden="true" />

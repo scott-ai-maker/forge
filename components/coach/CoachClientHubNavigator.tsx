@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useId } from 'react'
 import Link from 'next/link'
 import { CoachClientTab } from '@/lib/validation'
 import GaaIcon, { type GaaIconName, type GaaIconTone } from '@/components/ui/GaaIcon'
@@ -90,6 +90,7 @@ export default function CoachClientHubNavigator({
   currentStageNumber,
   currentStageTitle,
 }: CoachClientHubNavigatorProps) {
+  const searchInputId = useId()
   const [filterQuery, setFilterQuery] = useState('')
   const [isGridExpanded, setIsGridExpanded] = useState(false)
 
@@ -200,13 +201,42 @@ export default function CoachClientHubNavigator({
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: '1 1 240px', justifyContent: 'flex-end' }}>
+            <search style={{ flex: '1 1 160px', maxWidth: 260, minWidth: 0 }}>
+              <label htmlFor={searchInputId} className="visually-hidden">
+                Search client hub tools
+              </label>
+              <input
+                id={searchInputId}
+                type="search"
+                value={filterQuery}
+                onChange={e => setFilterQuery(e.target.value)}
+                placeholder="Search hubs (e.g. PAR-Q, OPT)..."
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                style={{
+                  width: '100%',
+                  minHeight: 44,
+                  padding: '6px 10px',
+                  borderRadius: 6,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
+                  color: '#FFFFFF',
+                  fontSize: 'max(1rem, 1em)',
+                  fontFamily: 'Raleway, sans-serif',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </search>
+
             {/* Hub Directory Grid Expander Button */}
             <button
               type="button"
+              aria-expanded={isGridExpanded}
               onClick={() => setIsGridExpanded(prev => !prev)}
               className="sgf-button sgf-button-secondary"
-              style={{ padding: '4px 10px', fontSize: 10.5, fontWeight: 700 }}
+              style={{ padding: '6px 12px', minHeight: 44, fontSize: 11, fontWeight: 700 }}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                 {isGridExpanded ? <GaaIcon name="chevron-left" size={11} tone="gold" /> : <GaaIcon name="grid" size={11} tone="gold" />}
@@ -219,10 +249,11 @@ export default function CoachClientHubNavigator({
               href={`/coach/clients/${clientId}/live`}
               className="tactile-btn"
               style={{
-                padding: '4px 10px',
+                padding: '6px 12px',
+                minHeight: 44,
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                 color: '#080E14',
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: 800,
                 borderRadius: 4,
                 textDecoration: 'none',
@@ -284,7 +315,7 @@ export default function CoachClientHubNavigator({
         )}
 
         {/* ── Categorized Quick Tabs Row (Single Horizontal Scroll Row) ── */}
-        <div className="responsive-tabs-scroll" style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', paddingBottom: 2 }}>
+        <nav aria-label="Client hub workspaces" className="responsive-tabs-scroll" style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', paddingBottom: 2 }}>
           {PILLARS.flatMap(p => p.tabs).map(tab => {
             const isActive = activeTab === tab.key
             const isCurrentPhase = currentStageTab === tab.key
@@ -333,9 +364,12 @@ export default function CoachClientHubNavigator({
               <Link
                 key={tab.key}
                 href={`/coach/clients/${clientId}?tab=${tab.key}`}
+                aria-current={isActive ? 'page' : undefined}
                 className="tactile-btn"
                 style={{
-                  padding: '7px 12px',
+                  padding: '8px 12px',
+                  minHeight: 44,
+                  flex: 'none',
                   borderRadius: 6,
                   textDecoration: 'none',
                   fontSize: 12,
@@ -413,7 +447,7 @@ export default function CoachClientHubNavigator({
               </Link>
             )
           })}
-        </div>
+        </nav>
 
         {/* ── Full 4-Pillar Visual Grid (When Expanded) ── */}
         {isGridExpanded && (
@@ -422,7 +456,7 @@ export default function CoachClientHubNavigator({
               paddingTop: 12,
               borderTop: '1px solid rgba(255,255,255,0.08)',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
               gap: 12,
             }}
           >

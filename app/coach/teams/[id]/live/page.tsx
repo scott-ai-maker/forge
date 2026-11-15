@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase-server'
+import { requireSurfaceRole } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SiteHeader from '@/components/ui/SiteHeader'
@@ -14,30 +14,11 @@ interface PageProps {
 }
 
 export default async function CoachTeamLiveSessionPage({ params }: PageProps) {
+  const { user } = await requireSurfaceRole('coach')
   if (Boolean(true)) redirect('/coach')
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
 
   const { id: teamId } = await params
   const admin = supabaseAdmin()
-
-  // 1. Verify Coach Role or Master Coach
-  const isMasterCoach =
-    user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-    user.user_metadata?.surface_role === 'coach'
-
-  const { data: coachRecord } = await admin
-    .from('clients')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (coachRecord?.role !== 'coach' && !isMasterCoach) {
-    redirect('/dashboard')
-  }
 
   // 2. Fetch Assigned Clients to build dynamic squads if needed
   const { data: assignedClients } = await admin

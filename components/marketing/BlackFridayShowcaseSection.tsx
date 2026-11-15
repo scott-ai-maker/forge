@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { LAUNCH_CAMPAIGN_INFO } from '@/lib/launch-config'
 
@@ -16,6 +16,25 @@ export default function BlackFridayShowcaseSection() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [videoMuted, setVideoMuted] = useState(true)
   const [activeChapter, setActiveChapter] = useState<string>('desk')
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const syncReducedMotion = (prefersReduced: boolean) => {
+      setPrefersReducedMotion(prefersReduced)
+      const video = videoRef.current
+      if (!video) return
+      if (prefersReduced) {
+        video.removeAttribute('autoplay')
+        video.pause()
+      }
+    }
+    syncReducedMotion(reducedMotionQuery.matches)
+    const onChange = (event: MediaQueryListEvent) => syncReducedMotion(event.matches)
+    reducedMotionQuery.addEventListener('change', onChange)
+    return () => reducedMotionQuery.removeEventListener('change', onChange)
+  }, [])
 
   const jumpToChapter = (id: string, timeSec: number) => {
     setActiveChapter(id)
@@ -68,10 +87,13 @@ export default function BlackFridayShowcaseSection() {
         >
           <video
             ref={videoRef}
-            autoPlay
+            {...({ loading: 'lazy' } as Record<string, unknown>)}
+            autoPlay={!prefersReducedMotion}
             loop
             muted={videoMuted}
             playsInline
+            width={1280}
+            height={720}
             preload="metadata"
             poster="/images/forge-black-friday-showcase-poster.jpg"
             aria-label="Forge Athletic ecosystem walkthrough film"
@@ -108,6 +130,7 @@ export default function BlackFridayShowcaseSection() {
               <button
                 key={chapter.id}
                 type="button"
+                aria-pressed={isActive}
                 onClick={() => jumpToChapter(chapter.id, chapter.timeSec)}
                 className={`forge-tactile-press flex min-h-[44px] items-center gap-2 rounded-xl border px-3 py-2 text-left transition ${
                   isActive

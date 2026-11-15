@@ -10,6 +10,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { getMissingEmailConfigKeys, sendWelcomeEmail } from '@/lib/marketing-email'
 
 type ClientRouteContext = { params: Promise<{ id: string }> }
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 export async function PATCH(
   _req: NextRequest,
@@ -23,7 +24,7 @@ export async function PATCH(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { id } = await ctx.params
@@ -70,11 +71,11 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ client, welcomeEmail })
+    return NextResponse.json({ client, welcomeEmail }, { headers: NO_STORE_HEADERS })
   } catch (error) {
     const status = error instanceof CoachAssignmentError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unexpected assignment error'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 }
 
@@ -90,7 +91,7 @@ export async function DELETE(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { id } = await ctx.params
@@ -98,10 +99,10 @@ export async function DELETE(
 
   try {
     const client = await releaseClientFromCoach(admin, id, coachId)
-    return NextResponse.json({ client })
+    return NextResponse.json({ client }, { headers: NO_STORE_HEADERS })
   } catch (error) {
     const status = error instanceof CoachAssignmentError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unexpected assignment error'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 }

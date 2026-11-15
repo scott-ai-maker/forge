@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase-server'
+import { requireSurfaceRole } from '@/lib/authz'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SiteHeader from '@/components/ui/SiteHeader'
 import CoachOperationsStudio, { type CoachSettingsTab } from '@/components/coach/CoachOperationsStudio'
@@ -17,12 +17,7 @@ interface CoachSettingsPageProps {
 }
 
 export default async function CoachSettingsPage({ searchParams }: CoachSettingsPageProps) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/auth/login')
+  const { supabase, user } = await requireSurfaceRole('coach')
 
   const { data: profile } = await supabase
     .from('clients')
@@ -36,7 +31,7 @@ export default async function CoachSettingsPage({ searchParams }: CoachSettingsP
     email: profile?.email ?? user.email ?? '',
     fullName: profile?.full_name ?? '',
     phone: profile?.phone ?? '',
-    role: profile?.role === 'coach' || user.user_metadata?.surface_role === 'coach' ? 'coach' : 'client',
+    role: 'coach',
     avatarUrl,
     pendingEmail: user.new_email ?? null,
   } as const

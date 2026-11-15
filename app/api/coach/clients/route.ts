@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 export async function GET(req: NextRequest) {
   let coachId = ''
   try {
@@ -11,7 +13,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { searchParams } = new URL(req.url)
@@ -33,21 +35,20 @@ export async function GET(req: NextRequest) {
   const { data: assignedClients, error } = await query
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to load clients' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load clients' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   const clientIds = (assignedClients ?? []).map((c) => c.id)
 
   if (clientIds.length === 0) {
-    return NextResponse.json({ clients: [] })
+    return NextResponse.json({ clients: [] }, { headers: NO_STORE_HEADERS })
   }
 
   const [packagesResult, profilesResult, checkinsResult] = await Promise.all([
     admin
       .from('client_packages')
-      .select('client_id, sessions_remaining')
-      .in('client_id', clientIds)
-      .eq('is_active', true),
+      .select('client_id, sessions_remaining, expires_at')
+      .in('client_id', clientIds),
     admin
       .from('fitness_profiles')
       .select('user_id, onboarding_completed_at')
@@ -59,10 +60,17 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false }),
   ])
 
+  const nowMs = Date.now()
   const sessionsMap = new Map<string, number>()
   for (const pkg of packagesResult.data ?? []) {
+    if (pkg.expires_at) {
+      const expiresMs = new Date(pkg.expires_at).getTime()
+      if (Number.isFinite(expiresMs) && expiresMs <= nowMs) continue
+    }
+    const remaining = Math.max(0, Number(pkg.sessions_remaining ?? 0))
+    if (remaining <= 0) continue
     const current = sessionsMap.get(pkg.client_id) ?? 0
-    sessionsMap.set(pkg.client_id, current + (pkg.sessions_remaining ?? 0))
+    sessionsMap.set(pkg.client_id, current + remaining)
   }
 
   const onboardingMap = new Map<string, string>()
@@ -93,5 +101,5 @@ export async function GET(req: NextRequest) {
     last_checkin_date: checkinMap.get(c.id) ?? null,
   }))
 
-  return NextResponse.json({ clients })
+  return NextResponse.json({ clients }, { headers: NO_STORE_HEADERS })
 }

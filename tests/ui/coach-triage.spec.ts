@@ -104,4 +104,86 @@ test.describe('Master Coach Daily Triage Cockpit & Executive Memo Feature Suite'
     await expect(page.getByText(/Chronic Workload \(28d\)/i)).toBeVisible()
     await expect(page.getByText(/Joint Discomfort/i)).toBeVisible()
   })
+
+  test('exposes aria-pressed filter states, <search> landmark, 1-click Auto-Triage sync, and non-blocking role="alert" error banner', async ({ page }) => {
+    const searchLandmark = page.getByRole('search')
+    await expect(searchLandmark).toBeVisible()
+
+    const urgentPill = page.getByRole('button', { name: /Urgent Action/i })
+    await expect(urgentPill).toHaveAttribute('aria-pressed', 'false')
+    await urgentPill.click()
+    await expect(urgentPill).toHaveAttribute('aria-pressed', 'true')
+    await urgentPill.click()
+    await expect(urgentPill).toHaveAttribute('aria-pressed', 'false')
+
+    // First verify inline role="alert" banner on 500 failure (never blocking window.alert)
+    let dialogTriggered = false
+    page.on('dialog', () => {
+      dialogTriggered = true
+    })
+
+    await page.route('**/api/coach/clients/athlete-red-01/periodization/auto-triage', route =>
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Simulated database lock during deload insert' }),
+      })
+    )
+
+    const deloadBtn = page.getByRole('button', { name: /1-Click Restorative Deload/i })
+    await deloadBtn.click()
+
+    const errorBanner = page.locator('main [role="alert"]')
+    await expect(errorBanner).toBeVisible()
+    await expect(errorBanner).toContainText('Simulated database lock during deload insert')
+    expect(dialogTriggered).toBe(false)
+
+    await errorBanner.getByRole('button', { name: /Dismiss triage error/i }).click()
+    await expect(errorBanner).toHaveCount(0)
+
+    // Now verify 200 success updates row to ✓ Synced with Athlete
+    await page.unroute('**/api/coach/clients/athlete-red-01/periodization/auto-triage')
+    await page.route('**/api/coach/clients/athlete-red-01/periodization/auto-triage', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, message: '1-Click Restorative Deload Week inserted at Week 1.' }),
+      })
+    )
+
+    await deloadBtn.click()
+    await expect(page.getByText('✓ Synced with Athlete')).toBeVisible()
+  })
+
+  test('renders null readiness as em-dash without falsifying 0%, preserves real 0% readiness in Executive Memo, and holds zero overflow at 320px/375px', async ({ page }) => {
+    await page.goto('/test-harness/coach-triage?scenario=telemetry-edge')
+    await page.waitForSelector('[data-hydrated="true"]')
+
+    // Clara has readinessScore: null -> displays — (never 0%)
+    // Evelyn has readinessScore: 0 -> displays 0% and is counted in Sunday Triage / Fatigue (1)
+    const sundayPill = page.getByRole('button', { name: /Sunday Triage \/ Fatigue/i })
+    await expect(sundayPill).toContainText('1')
+
+    await expect(page.getByText('—')).toBeVisible()
+    await expect(page.getByText('0%').first()).toBeVisible()
+
+    // Open Executive Memo for Dr. Evelyn Vance (0% readiness, 0% adherence) -> must show 0%, not 80% fallback
+    await page.getByTitle(/Synthesize & Dispatch Executive Memo for Dr\. Evelyn Vance/i).click()
+    const modal = page.getByRole('dialog')
+    await expect(modal).toBeVisible()
+    await expect(modal.getByText(/Readiness: 0%/i)).toBeVisible()
+    const memoValue = await modal.locator('textarea').inputValue()
+    expect(memoValue).toContain('0 sets this week (0% adherence)')
+    expect(memoValue).toContain('**0%**')
+
+    // Native <dialog> closes cleanly on Escape
+    await page.keyboard.press('Escape')
+    await expect(modal).toBeHidden()
+
+    for (const width of [375, 320]) {
+      await page.setViewportSize({ width, height: 812 })
+      const overflowPx = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+      expect(overflowPx, `Horizontal overflow at ${width}px`).toBeLessThanOrEqual(0)
+    }
+  })
 })

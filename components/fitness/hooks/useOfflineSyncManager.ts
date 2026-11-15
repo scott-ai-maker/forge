@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   flushOfflineQueue,
   getPendingQueueCount,
+  OFFLINE_QUEUE_CHANGED_EVENT,
 } from '@/lib/offline-sync-queue'
 
 export function formatSyncSuccessMessage(syncedCount: number): string {
@@ -43,11 +44,17 @@ export function useOfflineSyncManager<TRecord extends { id: string }>(
       setIsOnline(false)
     }
 
+    const handleQueueChanged = () => {
+      setPendingSyncCount(getPendingQueueCount())
+    }
+
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
+    window.addEventListener(OFFLINE_QUEUE_CHANGED_EVENT, handleQueueChanged)
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
+      window.removeEventListener(OFFLINE_QUEUE_CHANGED_EVENT, handleQueueChanged)
     }
   }, [syncQueue])
 

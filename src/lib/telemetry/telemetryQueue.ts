@@ -244,8 +244,8 @@ export async function hydrateTelemetryQueue(): Promise<QueuedTelemetryEnvelope[]
         const idbItems = await readAllFromIdb()
         activeEngine = 'indexeddb'
         memoryMirror = mergeUniqueEnvelopes(memoryMirror, [...idbItems, ...lsItems])
-        if (lsItems.length > 0) {
-          await putInIdb(lsItems)
+        if (lsItems.length > 0 || memoryMirror.length > idbItems.length) {
+          await putInIdb(memoryMirror)
           writeLocalStorageFallback([])
         }
         hydrated = true

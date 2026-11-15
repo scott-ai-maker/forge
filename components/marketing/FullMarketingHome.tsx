@@ -7,6 +7,7 @@ import EverydayMomentsStrip from '@/components/marketing/EverydayMomentsStrip'
 import CompleteFeatureEcosystem from '@/components/marketing/CompleteFeatureEcosystem'
 import CoachAuthoritySection from '@/components/marketing/CoachAuthoritySection'
 import LandingFaqAccordion from '@/components/marketing/LandingFaqAccordion'
+import LandingHeaderSfxToggle from '@/components/marketing/LandingHeaderSfxToggle'
 import FoundingRateLockPricingGrid from '@/components/packages/FoundingRateLockPricingGrid'
 import { COACH_GORDON_TRUST_PROFILE } from '@/lib/landingSocialProof'
 
@@ -46,7 +47,6 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
             alt=""
             width={48}
             height={48}
-            priority
           />
           <span>Forge Athletic</span>
         </Link>
@@ -60,12 +60,30 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
               {anchor.label}
             </a>
           ))}
+          <LandingHeaderSfxToggle />
           <Link href="/auth/login">Log in</Link>
           <Link className="forge-header-cta" href="/auth/signup">
             Get started
           </Link>
         </nav>
       </header>
+
+      {/* Mobile / Tablet Anchor Navigation Strip */}
+      <nav
+        aria-label="Mobile section navigation"
+        className="mx-auto mb-4 flex max-w-[1160px] items-center gap-2 overflow-x-auto px-4 py-1 text-xs font-semibold text-zinc-300 lg:hidden"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {NAV_ANCHORS.map(anchor => (
+          <a
+            key={anchor.href}
+            href={anchor.href}
+            className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-white/[0.08] bg-[#111318] px-3 text-zinc-300 no-underline transition hover:border-amber-400/40 hover:text-amber-300"
+          >
+            {anchor.label}
+          </a>
+        ))}
+      </nav>
 
       <section className="forge-hero" aria-labelledby="forge-hero-title">
         <div className="forge-hero-copy">
@@ -106,7 +124,8 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
               alt="Coach Gordon coaching an everyday client through dumbbell goblet squat form during a personalized training session"
               width={680}
               height={510}
-              priority
+              loading="eager"
+              fetchPriority="high"
               sizes="(max-width: 760px) 92vw, 45vw"
               className="forge-hero-main-img"
             />

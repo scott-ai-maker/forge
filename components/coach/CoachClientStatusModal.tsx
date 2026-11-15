@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState, useTransition, useEffect, useRef, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   STATUS_REASONS,
@@ -28,6 +28,8 @@ export default function CoachClientStatusModal({
   onSuccess,
 }: CoachClientStatusModalProps) {
   const router = useRouter()
+  const baseId = useId()
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
   const [isPending, startTransition] = useTransition()
   const [selectedStatus, setSelectedStatus] = useState<ClientStatus>(() => {
     if (currentStatus === 'active') return 'paused'
@@ -37,7 +39,34 @@ export default function CoachClientStatusModal({
   const [reasonNotes, setReasonNotes] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  if (!isOpen) return null
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (isOpen) {
+      if (!dialog.open) {
+        dialog.showModal()
+      }
+      if (!('closedBy' in HTMLDialogElement.prototype)) {
+        const handleBackdropClick = (event: MouseEvent) => {
+          if (event.target !== dialog) return
+          const rect = dialog.getBoundingClientRect()
+          const isDialogContent =
+            rect.top <= event.clientY &&
+            event.clientY <= rect.top + rect.height &&
+            rect.left <= event.clientX &&
+            event.clientX <= rect.left + rect.width
+          if (!isDialogContent) {
+            dialog.close()
+          }
+        }
+        dialog.addEventListener('click', handleBackdropClick)
+        return () => dialog.removeEventListener('click', handleBackdropClick)
+      }
+    } else if (dialog.open) {
+      dialog.close()
+    }
+  }, [isOpen])
 
   // Category mapping
   const expectedCategory: Record<ClientStatus, StatusReasonCategory> = {
@@ -122,266 +151,301 @@ export default function CoachClientStatusModal({
   }
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
+      {...({ closedby: 'any' } as Record<string, unknown>)}
+      aria-labelledby={`${baseId}-title`}
+      onClose={onClose}
       style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.82)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 100050,
-        padding: 16,
+        width: 'min(540px, calc(100vw - 24px))',
+        maxHeight: '90dvh',
+        margin: 'auto',
+        overflowY: 'auto',
+        padding: 0,
+        background: 'linear-gradient(135deg, #0B132B 0%, #050811 100%)',
+        border: '1px solid rgba(212,160,23,0.4)',
+        borderRadius: 12,
+        boxShadow: '0 25px 60px rgba(0,0,0,0.9), 0 0 30px rgba(212,160,23,0.15)',
+        color: '#FFFFFF',
       }}
-      onClick={onClose}
     >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 540,
-          background: 'linear-gradient(135deg, #0B132B 0%, #050811 100%)',
-          border: '1px solid rgba(212,160,23,0.4)',
-          borderRadius: 12,
-          padding: '24px',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.9), 0 0 30px rgba(212,160,23,0.15)',
-          color: '#FFFFFF',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)' }}>
-              Clinical & Operational Lifecycle Audit
-            </div>
-            <h3 style={{ margin: '4px 0 0', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 20, letterSpacing: '0.04em', color: '#FFFFFF' }}>
-              Manage Client Status: {clientName}
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--gray)', fontSize: 22, cursor: 'pointer', padding: 4 }}
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Current Standing Bar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 8,
-            padding: '10px 14px',
-            marginBottom: 16,
-          }}
-        >
-          <span style={{ fontSize: 12, color: 'var(--gray)' }}>Current Membership Standing:</span>
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 800,
-              color: statusMeta[currentStatus]?.color || '#10B981',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <GaaIcon name={statusMeta[currentStatus]?.icon || 'sparkles'} size={14} tone="inherit" />
-            <span>{statusMeta[currentStatus]?.label}</span>
-          </span>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Target Status Selector */}
-          <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', marginBottom: 8 }}>
-              1. Select New Target Status:
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-              {(['active', 'paused', 'inactive', 'archived'] as ClientStatus[]).map(st => {
-                const isSelected = selectedStatus === st
-                const isCurrent = currentStatus === st
-                const meta = statusMeta[st]
-
-                return (
-                  <button
-                    key={st}
-                    type="button"
-                    onClick={() => {
-                      setSelectedStatus(st)
-                      setSelectedReason('')
-                    }}
-                    className="tactile-btn"
-                    style={{
-                      padding: '12px 6px',
-                      borderRadius: 8,
-                      background: isSelected ? `${meta.color}22` : 'rgba(255,255,255,0.02)',
-                      border: isSelected ? `1.5px solid ${meta.color}` : '1px solid rgba(255,255,255,0.08)',
-                      color: isSelected ? meta.color : 'var(--gray)',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      position: 'relative',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    <GaaIcon name={meta.icon} size={18} />
-                    <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'capitalize' }}>
-                      {st}
-                    </div>
-                    {isCurrent && (
-                      <span style={{ fontSize: 9, color: 'var(--gray)', display: 'block' }}>
-                        (Current)
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Structured Reason Code Selector */}
-          <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', marginBottom: 6 }}>
-              2. Structured Audit Reason Code:
-            </label>
-            <select
-              value={selectedReason}
-              onChange={e => setSelectedReason(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                background: '#060A12',
-                border: '1px solid rgba(255,255,255,0.18)',
-                borderRadius: 6,
-                color: '#FFFFFF',
-                fontSize: 13,
-                outline: 'none',
-              }}
-              required
-            >
-              <option value="">-- Select Audit Reason Code --</option>
-              {availableReasons.map(r => (
-                <option key={r.code} value={r.code}>
-                  {r.label} {r.requiresNotes ? '(Requires Notes)' : ''}
-                </option>
-              ))}
-            </select>
-            {currentReasonDef && (
-              <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 4, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 5 }}>
-                <GaaIcon name="lightning" size={11} tone="gold" />
-                <span>{currentReasonDef.description}</span>
+      {isOpen && (
+        <div style={{ padding: 'clamp(18px, 3vw, 24px)' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 18 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)' }}>
+                Clinical &amp; Operational Lifecycle Audit
               </div>
-            )}
-          </div>
-
-          {/* Clinical / Operational Notes */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)' }}>
-                3. Clinical / Operational Notes:
-              </label>
-              {currentReasonDef?.requiresNotes && (
-                <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 800 }}>
-                  ● Mandatory for this reason
-                </span>
-              )}
+              <h3
+                id={`${baseId}-title`}
+                style={{ margin: '4px 0 0', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 20, letterSpacing: '0.04em', color: '#FFFFFF' }}
+              >
+                Manage Client Status: {clientName}
+              </h3>
             </div>
-            <textarea
-              rows={3}
-              value={reasonNotes}
-              onChange={e => setReasonNotes(e.target.value)}
-              placeholder="Provide context for clinical audit log (e.g. physician recommendations, expected return date, cancellation notes)..."
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                background: '#060A12',
-                border: '1px solid rgba(255,255,255,0.18)',
-                borderRadius: 6,
-                color: '#FFFFFF',
-                fontSize: 12.5,
-                resize: 'vertical',
-                outline: 'none',
-              }}
-            />
-          </div>
-
-          {/* Impact Warning Banner */}
-          <div
-            style={{
-              background: 'rgba(0,0,0,0.4)',
-              border: `1px solid ${statusMeta[selectedStatus].color}44`,
-              borderRadius: 8,
-              padding: '12px 14px',
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 800, color: statusMeta[selectedStatus].color, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <GaaIcon name="shield-check" size={12} tone="inherit" />
-              <span>Studio Access Impact:</span>
-            </div>
-            <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
-              {statusMeta[selectedStatus].impact}
-            </div>
-          </div>
-
-          {errorMessage && (
-            <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid #EF4444', borderRadius: 6, padding: '10px 12px', color: '#FCA5A5', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <GaaIcon name="alert-triangle" size={13} tone="ruby" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
             <button
               type="button"
               onClick={onClose}
-              className="tactile-btn"
-              disabled={isPending}
+              aria-label="Close client status modal"
               style={{
-                padding: '10px 18px',
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.15)',
                 borderRadius: 6,
-                color: '#FFFFFF',
-                fontSize: 13,
+                color: 'var(--gray)',
+                fontSize: 16,
                 cursor: 'pointer',
+                minWidth: 44,
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              className="tactile-btn"
-              disabled={isPending}
-              style={{
-                padding: '10px 24px',
-                background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-                border: 'none',
-                borderRadius: 6,
-                color: '#000000',
-                fontSize: 13,
-                fontWeight: 800,
-                cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(212,160,23,0.35)',
-              }}
-            >
-              {isPending ? 'Logging Audit & Updating...' : 'Record Audit & Transition Status'}
+              ✕
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+
+          {/* Current Standing Bar */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 8,
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 8,
+              padding: '10px 14px',
+              marginBottom: 16,
+            }}
+          >
+            <span style={{ fontSize: 12, color: 'var(--gray)' }}>Current Membership Standing:</span>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: statusMeta[currentStatus]?.color || '#10B981',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <GaaIcon name={statusMeta[currentStatus]?.icon || 'sparkles'} size={14} tone="inherit" />
+              <span>{statusMeta[currentStatus]?.label}</span>
+            </span>
+          </div>
+
+          <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Target Status Selector */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', marginBottom: 8 }}>
+                1. Select New Target Status:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(105px, 1fr))', gap: 8 }}>
+                {(['active', 'paused', 'inactive', 'archived'] as ClientStatus[]).map(st => {
+                  const isSelected = selectedStatus === st
+                  const isCurrent = currentStatus === st
+                  const meta = statusMeta[st]
+
+                  return (
+                    <button
+                      key={st}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => {
+                        setSelectedStatus(st)
+                        setSelectedReason('')
+                        setErrorMessage(null)
+                      }}
+                      className="tactile-btn"
+                      style={{
+                        padding: '12px 6px',
+                        minHeight: 44,
+                        borderRadius: 8,
+                        background: isSelected ? `${meta.color}22` : 'rgba(255,255,255,0.02)',
+                        border: isSelected ? `1.5px solid ${meta.color}` : '1px solid rgba(255,255,255,0.08)',
+                        color: isSelected ? meta.color : 'var(--gray)',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <GaaIcon name={meta.icon} size={18} />
+                      <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'capitalize' }}>
+                        {st}
+                      </div>
+                      {isCurrent && (
+                        <span style={{ fontSize: 9, color: 'var(--gray)', display: 'block' }}>
+                          (Current)
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Structured Reason Code Selector */}
+            <div>
+              <label
+                htmlFor={`${baseId}-reason`}
+                style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', marginBottom: 6 }}
+              >
+                2. Structured Audit Reason Code:
+              </label>
+              <select
+                id={`${baseId}-reason`}
+                value={selectedReason}
+                onChange={e => {
+                  setSelectedReason(e.target.value)
+                  if (errorMessage) setErrorMessage(null)
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  minHeight: 44,
+                  background: '#060A12',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  borderRadius: 6,
+                  color: '#FFFFFF',
+                  fontSize: 'max(1rem, 1em)',
+                }}
+                required
+              >
+                <option value="">-- Select Audit Reason Code --</option>
+                {availableReasons.map(r => (
+                  <option key={r.code} value={r.code}>
+                    {r.label} {r.requiresNotes ? '(Requires Notes)' : ''}
+                  </option>
+                ))}
+              </select>
+              {currentReasonDef && (
+                <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 4, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <GaaIcon name="lightning" size={11} tone="gold" />
+                  <span>{currentReasonDef.description}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Clinical / Operational Notes */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 4 }}>
+                <label
+                  htmlFor={`${baseId}-notes`}
+                  style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)' }}
+                >
+                  3. Clinical / Operational Notes:
+                </label>
+                {currentReasonDef?.requiresNotes && (
+                  <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 800 }}>
+                    ● Mandatory for this reason
+                  </span>
+                )}
+              </div>
+              <textarea
+                id={`${baseId}-notes`}
+                rows={3}
+                value={reasonNotes}
+                onChange={e => {
+                  setReasonNotes(e.target.value)
+                  if (errorMessage) setErrorMessage(null)
+                }}
+                placeholder="Provide context for clinical audit log (e.g. physician recommendations, expected return date, cancellation notes)..."
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: '#060A12',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  borderRadius: 6,
+                  color: '#FFFFFF',
+                  fontSize: 'max(1rem, 1em)',
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* Impact Warning Banner */}
+            <div
+              style={{
+                background: 'rgba(0,0,0,0.4)',
+                border: `1px solid ${statusMeta[selectedStatus].color}44`,
+                borderRadius: 8,
+                padding: '12px 14px',
+              }}
+            >
+              <div style={{ fontSize: 11, fontWeight: 800, color: statusMeta[selectedStatus].color, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <GaaIcon name="shield-check" size={12} tone="inherit" />
+                <span>Studio Access Impact:</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.4 }}>
+                {statusMeta[selectedStatus].impact}
+              </div>
+            </div>
+
+            {errorMessage && (
+              <div
+                role="alert"
+                style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid #EF4444', borderRadius: 6, padding: '10px 12px', color: '#FCA5A5', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <GaaIcon name="alert-triangle" size={13} tone="ruby" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap', marginTop: 4 }}>
+              <button
+                type="button"
+                onClick={onClose}
+                className="tactile-btn"
+                disabled={isPending}
+                style={{
+                  padding: '10px 18px',
+                  minHeight: 44,
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 6,
+                  color: '#FFFFFF',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                className="tactile-btn"
+                disabled={isPending}
+                style={{
+                  padding: '10px 24px',
+                  minHeight: 44,
+                  background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
+                  border: 'none',
+                  borderRadius: 6,
+                  color: '#000000',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 16px rgba(212,160,23,0.35)',
+                }}
+              >
+                {isPending ? 'Logging Audit & Updating...' : 'Record Audit & Transition Status'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </dialog>
   )
 }
 

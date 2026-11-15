@@ -10,15 +10,17 @@ import {
 
 export const dynamic = 'force-dynamic'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 function getAuthzErrorResponse(error: unknown) {
   if (error instanceof AuthzError) {
-    return NextResponse.json({ error: error.message }, { status: error.status })
+    return NextResponse.json({ error: error.message }, { status: error.status, headers: NO_STORE_HEADERS })
   }
   if (error instanceof ClientLifecycleError) {
-    return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    return NextResponse.json({ error: error.message, code: error.code }, { status: error.status, headers: NO_STORE_HEADERS })
   }
   const message = error instanceof Error ? error.message : 'Internal server error'
-  return NextResponse.json({ error: message }, { status: 500 })
+  return NextResponse.json({ error: message }, { status: 500, headers: NO_STORE_HEADERS })
 }
 
 export async function GET(
@@ -42,17 +44,20 @@ export async function GET(
       .maybeSingle()
 
     if (clientError || !client) {
-      return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Client not found' }, { status: 404, headers: NO_STORE_HEADERS })
     }
 
     const auditLogs = await getClientLifecycleAuditTrail(admin, clientId)
 
-    return NextResponse.json({
-      status: (client.status || 'active') as ClientStatus,
-      status_reason: client.status_reason || null,
-      status_updated_at: client.status_updated_at || null,
-      auditLogs,
-    })
+    return NextResponse.json(
+      {
+        status: (client.status || 'active') as ClientStatus,
+        status_reason: client.status_reason || null,
+        status_updated_at: client.status_updated_at || null,
+        auditLogs,
+      },
+      { headers: NO_STORE_HEADERS }
+    )
   } catch (error) {
     return getAuthzErrorResponse(error)
   }
@@ -76,7 +81,7 @@ export async function PATCH(
     if (!newStatus || !reasonCode) {
       return NextResponse.json(
         { error: 'newStatus and reasonCode are required' },
-        { status: 400 }
+        { status: 400, headers: NO_STORE_HEADERS }
       )
     }
 
@@ -105,7 +110,7 @@ export async function PATCH(
       },
     })
 
-    return NextResponse.json(result)
+    return NextResponse.json(result, { headers: NO_STORE_HEADERS })
   } catch (error) {
     return getAuthzErrorResponse(error)
   }

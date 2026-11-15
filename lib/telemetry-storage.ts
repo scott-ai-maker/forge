@@ -355,6 +355,22 @@ export function applyEventsToSnapshot(
         break
       }
 
+      case 'client_runtime_diagnostic': {
+        if (typeof p.express_mode_active === 'boolean') {
+          next.expressModeActive = p.express_mode_active
+        }
+        if (
+          typeof p.environment_profile === 'string' &&
+          (p.environment_profile === 'home_gym' ||
+            p.environment_profile === 'full_gym' ||
+            p.environment_profile === 'hotel_travel' ||
+            p.environment_profile === 'bodyweight_only')
+        ) {
+          next.environmentProfile = p.environment_profile
+        }
+        break
+      }
+
       default:
         break
     }
@@ -659,7 +675,33 @@ export async function verifyTelemetryEventReceipt(
   }
 }
 
+const rateLimitBuckets = new Map<string, number[]>()
+const TELEMETRY_RATE_WINDOW_MS = 60_000
+const TELEMETRY_MAX_REQUESTS_PER_WINDOW = 120
+
+export function checkTelemetryIngestRateLimit(
+  userId: string,
+  nowMs: number = Date.now()
+): { allowed: boolean; retryAfterSec: number } {
+  const cutoff = nowMs - TELEMETRY_RATE_WINDOW_MS
+  const prev = (rateLimitBuckets.get(userId) ?? []).filter(ts => ts > cutoff)
+  if (prev.length >= TELEMETRY_MAX_REQUESTS_PER_WINDOW) {
+    const oldest = prev[0] ?? nowMs
+    const retryAfterSec = Math.max(1, Math.ceil((oldest + TELEMETRY_RATE_WINDOW_MS - nowMs) / 1000))
+    rateLimitBuckets.set(userId, prev)
+    return { allowed: false, retryAfterSec }
+  }
+  prev.push(nowMs)
+  rateLimitBuckets.set(userId, prev)
+  if (rateLimitBuckets.size > 2_000) {
+    const oldestUser = rateLimitBuckets.keys().next().value
+    if (oldestUser) rateLimitBuckets.delete(oldestUser)
+  }
+  return { allowed: true, retryAfterSec: 0 }
+}
+
 export function __resetServerTelemetryFallbackForTests(): void {
   fallbackSeenEvents.clear()
   fallbackSnapshots.clear()
+  rateLimitBuckets.clear()
 }

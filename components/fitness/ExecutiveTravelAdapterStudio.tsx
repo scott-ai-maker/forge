@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 import {
   adaptWorkoutForTravel,
@@ -9,10 +9,20 @@ import {
   TRAVEL_SCENARIO_META,
 } from '@/lib/travel-workout-adapter'
 import { isStrengthExercise } from '@/lib/exercise-logging-helpers'
+import {
+  recordEnvironmentSelection,
+  type EnvironmentProfileId,
+} from '@/lib/posture-profile-state'
 
 interface ExecutiveTravelAdapterStudioProps {
   plan?: Record<string, unknown> | null
-  onApplyTravelPlan?: (scenario: TravelLocationScenario, adaptedExercises: ExercisePlanItem[]) => void
+  activeDay?: number
+  onApplyTravelPlan?: (
+    scenario: TravelLocationScenario,
+    adaptedExercises: ExercisePlanItem[],
+    targetDay?: number | 'all',
+    adaptedByDay?: Record<number, ExercisePlanItem[]>
+  ) => void
 }
 
 const SCENARIO_ICONS: Record<TravelLocationScenario, GaaIconName> = {
@@ -22,42 +32,134 @@ const SCENARIO_ICONS: Record<TravelLocationScenario, GaaIconName> = {
   commercial_full_gym: 'barbell',
 }
 
+const SCENARIO_TO_ENVIRONMENT_PROFILE: Record<TravelLocationScenario, EnvironmentProfileId> = {
+  hotel_dumbbells_only: 'hotel_travel',
+  hotel_cables_cardio: 'hotel_travel',
+  hotel_room_bands: 'hotel_travel',
+  commercial_full_gym: 'full_gym',
+}
+
 const SCENARIO_KEYS = Object.keys(TRAVEL_SCENARIO_META) as TravelLocationScenario[]
+
+function mapRawPlanExercises(rawList: unknown): ExercisePlanItem[] {
+  if (!Array.isArray(rawList) || rawList.length === 0) return []
+  return rawList.map((item: Record<string, unknown>) => ({
+    name: String(item?.originalBarbellName || item?.name || 'Compound Movement'),
+    sets: Number(item?.sets) || 3,
+    reps: String(item?.originalReps || item?.reps || '10'),
+    tempo: item?.originalTempo
+      ? String(item.originalTempo)
+      : item?.tempo
+        ? String(item.tempo)
+        : undefined,
+    restSeconds: item?.rest ? parseInt(String(item.rest), 10) || 60 : 60,
+    coachingCue: String(item?.coachingCue || item?.notes || 'Maintain controlled form'),
+    originalBarbellName: item?.originalBarbellName ? String(item.originalBarbellName) : undefined,
+    originalTempo: item?.originalTempo ? String(item.originalTempo) : undefined,
+    originalReps: item?.originalReps ? String(item.originalReps) : undefined,
+  }))
+}
 
 export default function ExecutiveTravelAdapterStudio({
   plan,
+  activeDay,
   onApplyTravelPlan,
 }: ExecutiveTravelAdapterStudioProps) {
-  const workouts = Array.isArray(plan?.workouts) ? (plan.workouts as Record<string, unknown>[]) : []
-  const firstWorkout = workouts[0]
-  const planExercises = Array.isArray(firstWorkout?.exercises) ? (firstWorkout.exercises as Record<string, unknown>[]) : []
-  const rawExercises: ExercisePlanItem[] = (Array.isArray(planExercises) && planExercises.length > 0)
-    ? planExercises.map((ex: Record<string, unknown>) => ({
-        name: String(ex?.name || 'Compound Movement'),
-        sets: Number(ex?.sets) || 3,
-        reps: String(ex?.reps || '10'),
-        restSeconds: ex?.rest ? parseInt(String(ex.rest), 10) || 60 : 60,
-        coachingCue: String(ex?.coachingCue || ex?.notes || 'Maintain controlled form'),
-      }))
-    : []
+  const workouts = useMemo(
+    () => (Array.isArray(plan?.workouts) ? (plan.workouts as Record<string, unknown>[]) : []),
+    [plan?.workouts]
+  )
 
-  const [selectedScenario, setSelectedScenario] = useState<TravelLocationScenario>('hotel_dumbbells_only')
+  const defaultDay = useMemo(() => {
+    if (typeof activeDay === 'number' && workouts.some(w => Number(w?.day) === activeDay)) {
+      return activeDay
+    }
+    return Number(workouts[0]?.day) || 1
+  }, [activeDay, workouts])
+
+  const [selectedDay, setSelectedDay] = useState<number>(defaultDay)
+  const [applyScope, setApplyScope] = useState<'single_day' | 'all_days'>('single_day')
+  const [selectedScenario, setSelectedScenario] =
+    useState<TravelLocationScenario>('hotel_dumbbells_only')
   const [deployedStatus, setDeployedStatus] = useState<string | null>(null)
+  const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const adaptedExercises = adaptWorkoutForTravel(rawExercises, selectedScenario)
-  const currentMeta = TRAVEL_SCENARIO_META[selectedScenario] || TRAVEL_SCENARIO_META['hotel_dumbbells_only']
+  const scenarioGroupLabelId = useId()
+  const dayGroupLabelId = useId()
+
+  useEffect(() => {
+    setSelectedDay(defaultDay)
+  }, [defaultDay])
+
+  useEffect(() => {
+    return () => {
+      if (statusTimerRef.current) {
+        clearTimeout(statusTimerRef.current)
+      }
+    }
+  }, [])
+
+  const selectedWorkout = useMemo(() => {
+    return (
+      workouts.find((w, idx) => (Number(w?.day) || idx + 1) === selectedDay) ||
+      workouts[0] ||
+      null
+    )
+  }, [workouts, selectedDay])
+
+  const rawExercises = useMemo(
+    () => mapRawPlanExercises(selectedWorkout?.exercises),
+    [selectedWorkout]
+  )
+
+  const adaptedExercises = useMemo(
+    () => adaptWorkoutForTravel(rawExercises, selectedScenario),
+    [rawExercises, selectedScenario]
+  )
+  const currentMeta =
+    TRAVEL_SCENARIO_META[selectedScenario] || TRAVEL_SCENARIO_META['hotel_dumbbells_only']
 
   const handleDeploy = () => {
     if (adaptedExercises.length === 0) return
-    if (onApplyTravelPlan) {
-      onApplyTravelPlan(selectedScenario, adaptedExercises)
+
+    const adaptedByDay: Record<number, ExercisePlanItem[]> = {}
+    if (applyScope === 'all_days' && workouts.length > 0) {
+      workouts.forEach((w, idx) => {
+        const dayNum = Number(w?.day) || idx + 1
+        adaptedByDay[dayNum] = adaptWorkoutForTravel(
+          mapRawPlanExercises(w?.exercises),
+          selectedScenario
+        )
+      })
+    } else {
+      adaptedByDay[selectedDay] = adaptedExercises
     }
-    setDeployedStatus(`Applied ${currentMeta.label} to your first workout day.`)
-    setTimeout(() => setDeployedStatus(null), 4000)
+
+    recordEnvironmentSelection(SCENARIO_TO_ENVIRONMENT_PROFILE[selectedScenario])
+
+    if (onApplyTravelPlan) {
+      onApplyTravelPlan(
+        selectedScenario,
+        adaptedExercises,
+        applyScope === 'all_days' ? 'all' : selectedDay,
+        adaptedByDay
+      )
+    }
+
+    const firstDayNum = Number(workouts[0]?.day) || 1
+    const scopeSummary =
+      applyScope === 'all_days' && workouts.length > 1
+        ? `all ${workouts.length} workout days`
+        : selectedDay === firstDayNum
+          ? `your first workout day (Day ${selectedDay})`
+          : `workout Day ${selectedDay}`
+    setDeployedStatus(`Applied ${currentMeta.label} to ${scopeSummary}.`)
+    if (statusTimerRef.current) clearTimeout(statusTimerRef.current)
+    statusTimerRef.current = setTimeout(() => setDeployedStatus(null), 4500)
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div data-testid="executive-travel-adapter-studio" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* ── Studio Header Banner ── */}
       <div
         style={{
@@ -83,6 +185,7 @@ export default function ExecutiveTravelAdapterStudio({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             <GaaIcon name="travel" size={24} tone="cyan" />
@@ -95,17 +198,19 @@ export default function ExecutiveTravelAdapterStudio({
               Adapt your workout for travel
             </h3>
             <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--gray)' }}>
-              Adjust your workout to match the equipment you have available.
+              Adjust any training day—or your full weekly split—to match the equipment you have available.
             </p>
           </div>
         </div>
 
         <button
           type="button"
+          data-testid="travel-studio-deploy-btn"
           onClick={handleDeploy}
           disabled={adaptedExercises.length === 0}
           className="tactile-btn"
           style={{
+            minHeight: 44,
             background: adaptedExercises.length === 0
               ? 'rgba(255,255,255,0.05)'
               : 'linear-gradient(135deg, rgba(56,189,248,0.3) 0%, rgba(56,189,248,0.15) 100%)',
@@ -113,21 +218,30 @@ export default function ExecutiveTravelAdapterStudio({
             color: adaptedExercises.length === 0 ? 'var(--gray)' : '#FFFFFF',
             padding: '10px 18px',
             fontSize: 12,
+            fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             cursor: adaptedExercises.length === 0 ? 'not-allowed' : 'pointer',
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
+            borderRadius: 8,
           }}
         >
           <GaaIcon name="lightning" size={15} tone="cyan" />
-          <span>Use this travel workout</span>
+          <span>
+            {applyScope === 'all_days' && workouts.length > 1
+              ? `Apply to all ${workouts.length} workout days`
+              : 'Use this travel workout'}
+          </span>
         </button>
       </div>
 
       {deployedStatus && (
         <div
+          role="status"
+          aria-live="polite"
+          data-testid="travel-studio-deployed-status"
           style={{
             padding: '12px 16px',
             background: 'rgba(52,211,153,0.12)',
@@ -146,12 +260,150 @@ export default function ExecutiveTravelAdapterStudio({
         </div>
       )}
 
+      {/* ── Multi-Day Selector & Scope Toggle ── */}
+      {workouts.length > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+            padding: '12px 16px',
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 8,
+          }}
+        >
+          <div>
+            <div
+              id={dayGroupLabelId}
+              style={{
+                fontSize: 11,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: 'var(--gray)',
+                fontWeight: 800,
+                marginBottom: 6,
+              }}
+            >
+              Preview workout day
+            </div>
+            <div
+              role="group"
+              aria-labelledby={dayGroupLabelId}
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+            >
+              {workouts.map((w, idx) => {
+                const dayNum = Number(w?.day) || idx + 1
+                const focusLabel = String(w?.focus || `Session ${dayNum}`)
+                const isDayActive = selectedDay === dayNum
+                return (
+                  <button
+                    key={dayNum}
+                    type="button"
+                    data-testid={`travel-studio-day-${dayNum}`}
+                    aria-pressed={isDayActive}
+                    onClick={() => setSelectedDay(dayNum)}
+                    className="tactile-btn"
+                    style={{
+                      minHeight: 44,
+                      padding: '8px 14px',
+                      borderRadius: 8,
+                      border: isDayActive
+                        ? '1px solid #38BDF8'
+                        : '1px solid rgba(255,255,255,0.1)',
+                      background: isDayActive
+                        ? 'rgba(56,189,248,0.16)'
+                        : 'rgba(255,255,255,0.03)',
+                      color: isDayActive ? '#FFFFFF' : 'var(--gray)',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Day {dayNum}: {focusLabel}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <button
+              type="button"
+              data-testid="travel-studio-scope-single"
+              aria-pressed={applyScope === 'single_day'}
+              onClick={() => setApplyScope('single_day')}
+              className="tactile-btn"
+              style={{
+                minHeight: 44,
+                padding: '8px 14px',
+                borderRadius: 8,
+                border:
+                  applyScope === 'single_day'
+                    ? '1px solid rgba(52,211,153,0.6)'
+                    : '1px solid rgba(255,255,255,0.1)',
+                background:
+                  applyScope === 'single_day'
+                    ? 'rgba(52,211,153,0.14)'
+                    : 'rgba(255,255,255,0.03)',
+                color: applyScope === 'single_day' ? '#6EE7B7' : 'var(--gray)',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Current Day Only
+            </button>
+            <button
+              type="button"
+              data-testid="travel-studio-scope-all"
+              aria-pressed={applyScope === 'all_days'}
+              onClick={() => setApplyScope('all_days')}
+              className="tactile-btn"
+              style={{
+                minHeight: 44,
+                padding: '8px 14px',
+                borderRadius: 8,
+                border:
+                  applyScope === 'all_days'
+                    ? '1px solid rgba(52,211,153,0.6)'
+                    : '1px solid rgba(255,255,255,0.1)',
+                background:
+                  applyScope === 'all_days'
+                    ? 'rgba(52,211,153,0.14)'
+                    : 'rgba(255,255,255,0.03)',
+                color: applyScope === 'all_days' ? '#6EE7B7' : 'var(--gray)',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              All Workout Days
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Travel Scenario Selector Grid ── */}
       <div>
-        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 8 }}>
+        <div
+          id={scenarioGroupLabelId}
+          style={{
+            fontSize: 11,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: 'var(--gold-lt)',
+            fontWeight: 800,
+            marginBottom: 8,
+          }}
+        >
           What equipment do you have?
         </div>
         <div
+          role="group"
+          aria-labelledby={scenarioGroupLabelId}
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
@@ -171,10 +423,12 @@ export default function ExecutiveTravelAdapterStudio({
               <button
                 key={scenarioKey}
                 type="button"
+                data-testid={`travel-scenario-${scenarioKey}`}
                 aria-pressed={isSelected}
                 onClick={() => setSelectedScenario(scenarioKey)}
                 className="tactile-btn"
                 style={{
+                  minHeight: 44,
                   background: isSelected
                     ? 'linear-gradient(135deg, rgba(56,189,248,0.2) 0%, rgba(56,189,248,0.06) 100%)'
                     : 'rgba(255,255,255,0.02)',
@@ -194,7 +448,7 @@ export default function ExecutiveTravelAdapterStudio({
                   {isSelected && (
                     <span style={{ fontSize: 10, color: '#38BDF8', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4 }}>
                       <GaaIcon name="check" size={11} tone="cyan" />
-                      <span>Active</span>
+                      <span>Selected</span>
                     </span>
                   )}
                 </div>
@@ -215,7 +469,7 @@ export default function ExecutiveTravelAdapterStudio({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
           <div>
             <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#38BDF8', fontWeight: 800 }}>
-              Adapted Protocol Flow:
+              Adapted Protocol Flow (Day {selectedDay}):
             </span>
             <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 700, marginLeft: 8 }}>
               {currentMeta.label}
@@ -241,13 +495,14 @@ export default function ExecutiveTravelAdapterStudio({
             No active workout plan loaded to adapt. Generate or assign a periodized workout block to enable travel equipment recalibration.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div data-testid="travel-studio-preview-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {adaptedExercises.map((ex, idx) => (
               <div
-                key={idx}
+                key={`${selectedDay}-${idx}-${ex.name}`}
+                data-testid={`travel-preview-item-${idx}`}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
                   gap: 12,
                   padding: '12px 16px',
                   background: 'rgba(0,0,0,0.3)',
@@ -258,7 +513,9 @@ export default function ExecutiveTravelAdapterStudio({
               >
                 <div>
                   <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700 }}>
-                    Standard Lift → Adapted Movement
+                    {ex.originalBarbellName && ex.originalBarbellName !== ex.name
+                      ? `Adapted from: ${ex.originalBarbellName}`
+                      : 'Prescribed Movement'}
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#FFFFFF', marginTop: 2 }}>
                     {ex.name}
@@ -310,7 +567,7 @@ export default function ExecutiveTravelAdapterStudio({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
             gap: 12,
             fontSize: 12,
             color: '#E2E8F0',

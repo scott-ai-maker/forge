@@ -1,5 +1,5 @@
-import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase-server'
+import { notFound } from 'next/navigation'
+import { isMasterCoachEmail, requireSurfaceRole } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SiteHeader from '@/components/ui/SiteHeader'
@@ -12,9 +12,7 @@ interface PageProps {
 }
 
 export default async function CoachLiveSessionPage({ params }: PageProps) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  const { user } = await requireSurfaceRole('coach')
 
   const { id: clientId } = await params
   const admin = supabaseAdmin()
@@ -29,7 +27,7 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
     notFound()
   }
 
-  // If unassigned, automatically assign to current coach so sessions can proceed
+  // If unassigned, automatically assign to verified coach so sessions can proceed
   if (!client.designated_coach_id) {
     await admin
       .from('clients')
@@ -37,11 +35,7 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
       .eq('id', clientId)
     client.designated_coach_id = user.id
   } else if (client.designated_coach_id !== user.id) {
-    // Only block if assigned to a different coach and current user is not Master Coach
-    const isMasterCoach =
-      user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-      user.user_metadata?.surface_role === 'coach'
-    if (!isMasterCoach) {
+    if (!isMasterCoachEmail(user.email)) {
       notFound()
     }
   }

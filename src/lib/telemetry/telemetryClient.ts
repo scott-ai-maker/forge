@@ -15,7 +15,13 @@
  */
 
 import { APP_VERSION } from '@/lib/app-version'
-import { flushOfflineQueue, getPendingQueueCount } from '@/lib/offline-sync-queue'
+import {
+  clearOfflineQueue,
+  flushOfflineQueue,
+  getPendingQueueCount,
+  OFFLINE_QUEUE_CHANGED_EVENT,
+  setOfflineQueueAccessToken,
+} from '@/lib/offline-sync-queue'
 import {
   acknowledgeTelemetryEvents,
   enqueueTelemetryEnvelope,
@@ -162,6 +168,7 @@ export interface TelemetryEventMap {
       | 'exception'
       | 'camera_lifecycle_release'
       | 'diagnostic_ping'
+      | 'session_preference_sync'
     camera_permission_state?: string | null
     fps?: number | null
     webgl_fallback_reason?: string | null
@@ -170,6 +177,8 @@ export interface TelemetryEventMap {
     error_digest?: string | null
     component_context?: string | null
     ping_tag?: string | null
+    express_mode_active?: boolean | null
+    environment_profile?: string | null
   }
   safety_flag: {
     severity: 'emergency_911' | 'clinical_stop' | 'joint_regression'
@@ -224,6 +233,7 @@ export const HIGH_PRIORITY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventType> = n
 export const BACKOFF_SCHEDULE_MS = [1_000, 2_000, 4_000, 16_000, 60_000] as const
 export const BATCH_FLUSH_THRESHOLD = 10
 export const BATCH_FLUSH_INTERVAL_MS = 10_000
+export const MAX_TELEMETRY_HTTP_RETRIES = 10
 const KEEPALIVE_SAFE_BYTE_LIMIT = 56_000
 const SESSION_STORAGE_ID_KEY = 'forge_telemetry_session_id_v1'
 export const TELEMETRY_SW_SYNC_TAG = 'forge-telemetry-sync'
@@ -297,6 +307,7 @@ let retryTimerId: ReturnType<typeof setTimeout> | null = null
 let currentRetryAttempt = 0
 let nextRetryAtIso: string | null = null
 let activeFlushPromise: Promise<TelemetryFlushStatus> | null = null
+let pendingFollowUpFlushOptions: FlushTelemetryOptions | null = null
 let lifecycleCleanup: (() => void) | null = null
 let lastExceptionAtMs = 0
 
@@ -609,6 +620,23 @@ function detectNetworkType(): string {
 }
 
 /**
+ * Scrubs accidental PII, email addresses, phone numbers, Bearer JWTs, and URL query
+ * secrets from diagnostic error messages and stack locations before persistence (HIPAA 1996).
+ */
+export function scrubDiagnosticText(raw: string | null | undefined): string | null {
+  if (typeof raw !== 'string') return null
+  return raw
+    .replace(/Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi, 'Bearer [REDACTED_TOKEN]')
+    .replace(
+      /([?&](?:access_token|refresh_token|id_token|token|code|apikey|api_key)=)[^&\s#]+/gi,
+      '$1[REDACTED]'
+    )
+    .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[REDACTED_EMAIL]')
+    .replace(/(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}\b/g, '[REDACTED_PHONE]')
+    .slice(0, 1024)
+}
+
+/**
  * Updates cached authentication context so telemetry and background `keepalive` flushes
  * always carry an explicit `Authorization: Bearer <token>` header (immune to iOS ITP / WKWebView cookie blocking).
  */
@@ -618,6 +646,7 @@ export function setTelemetryAuthContext(ctx: {
 }): void {
   cachedUserId = ctx.userId
   cachedAccessToken = ctx.accessToken
+  setOfflineQueueAccessToken(ctx.accessToken)
   notifyHealthListeners()
 }
 
@@ -703,7 +732,35 @@ export async function trackEvent<K extends TelemetryEventType>(
 ): Promise<QueuedTelemetryEnvelope<TelemetryEventMap[K]>> {
   const { isoWithOffset, timezoneOffsetMins } = formatIsoWithLocalOffset(new Date())
   const platform = detectTelemetryPlatform()
-  const sanitizedPayload = sanitizeTelemetryPayload(payload)
+  const rawPayloadToSanitize =
+    eventType === 'client_runtime_diagnostic' && payload && typeof payload === 'object'
+      ? ({
+          ...(payload as TelemetryEventMap['client_runtime_diagnostic']),
+          ...((payload as TelemetryEventMap['client_runtime_diagnostic']).error_message != null
+            ? {
+                error_message: scrubDiagnosticText(
+                  (payload as TelemetryEventMap['client_runtime_diagnostic']).error_message
+                ),
+              }
+            : {}),
+          ...((payload as TelemetryEventMap['client_runtime_diagnostic']).component_context != null
+            ? {
+                component_context: scrubDiagnosticText(
+                  (payload as TelemetryEventMap['client_runtime_diagnostic']).component_context
+                ),
+              }
+            : {}),
+          ...((payload as TelemetryEventMap['client_runtime_diagnostic']).webgl_fallback_reason !=
+          null
+            ? {
+                webgl_fallback_reason: scrubDiagnosticText(
+                  (payload as TelemetryEventMap['client_runtime_diagnostic']).webgl_fallback_reason
+                ),
+              }
+            : {}),
+        } as unknown as TelemetryEventMap[K])
+      : payload
+  const sanitizedPayload = sanitizeTelemetryPayload(rawPayloadToSanitize)
 
   const envelope: QueuedTelemetryEnvelope<TelemetryEventMap[K]> = {
     event_id: options?.eventId || generateTelemetryUuid(),
@@ -763,20 +820,36 @@ export async function flushTelemetry(
   options?: FlushTelemetryOptions
 ): Promise<TelemetryFlushStatus> {
   if (activeFlushPromise) {
-    return activeFlushPromise
+    pendingFollowUpFlushOptions = {
+      reason: options?.reason ?? pendingFollowUpFlushOptions?.reason,
+      interactive: Boolean(options?.interactive || pendingFollowUpFlushOptions?.interactive),
+    }
+    await activeFlushPromise
+    if (
+      getTelemetryQueueDepthSync() > 0 &&
+      (typeof navigator === 'undefined' || navigator.onLine !== false) &&
+      retryTimerId === null
+    ) {
+      const followUp = pendingFollowUpFlushOptions
+      pendingFollowUpFlushOptions = null
+      return flushTelemetry(followUp ?? options)
+    }
+    return lastFlushStatus
   }
 
   activeFlushPromise = (async (): Promise<TelemetryFlushStatus> => {
     clearBatchTimer()
     await hydrateTelemetryQueue()
-    const pending = getQueuedEnvelopesSync()
+    let pending = getQueuedEnvelopesSync()
 
-    // Also opportunistically drain legacy workout set queue when online
+    // Also opportunistically drain workout set queue when online
     if (typeof navigator === 'undefined' || navigator.onLine !== false) {
       if (getPendingQueueCount() > 0) {
-        void flushOfflineQueue().catch(() => {
-          // Handled by offline-sync-queue
-        })
+        void flushOfflineQueue()
+          .then(() => notifyHealthListeners())
+          .catch(() => {
+            // Handled by offline-sync-queue
+          })
       }
     }
 
@@ -801,98 +874,116 @@ export async function flushTelemetry(
       return lastFlushStatus
     }
 
-    const batch = pending.slice(0, 50)
-    const batchIds = batch.map(item => item.event_id)
-    const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    let totalAcceptedCount = 0
+    let batchIterations = 0
 
-    try {
-      const fetchInit: RequestInit & { priority?: 'low' | 'high' | 'auto' } = {
-        method: 'POST',
-        headers: getTelemetryAuthHeaders(),
-        credentials: 'same-origin',
-        body: JSON.stringify({ events: batch }),
-      }
+    while (pending.length > 0 && batchIterations < 10) {
+      batchIterations += 1
+      const batch = pending.slice(0, 50)
+      const batchIds = batch.map(item => item.event_id)
+      const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now()
 
-      // Deprioritize background batch flushes so interactive UI / camera streams stay smooth
-      if (!options?.interactive && options?.reason !== 'diagnostic_ping') {
-        fetchInit.priority = 'low'
-      }
+      try {
+        const fetchInit: RequestInit & { priority?: 'low' | 'high' | 'auto' } = {
+          method: 'POST',
+          headers: getTelemetryAuthHeaders(),
+          credentials: 'same-origin',
+          body: JSON.stringify({ events: batch }),
+        }
 
-      const res = await fetch('/api/telemetry', fetchInit)
-      const endedAt = typeof performance !== 'undefined' ? performance.now() : Date.now()
-      const latencyMs = Math.max(1, Math.round(endedAt - startedAt))
-      const nowIso = new Date().toISOString()
+        // Deprioritize background batch flushes so interactive UI / camera streams stay smooth
+        if (!options?.interactive && options?.reason !== 'diagnostic_ping') {
+          fetchInit.priority = 'low'
+        }
 
-      if (res.ok) {
-        await acknowledgeTelemetryEvents(batchIds)
-        clearRetryTimer()
-        currentRetryAttempt = 0
-        lastSyncedAtIso = nowIso
+        const res = await fetch('/api/telemetry', fetchInit)
+        const endedAt = typeof performance !== 'undefined' ? performance.now() : Date.now()
+        const latencyMs = Math.max(1, Math.round(endedAt - startedAt))
+        const nowIso = new Date().toISOString()
+
+        if (res.ok) {
+          await acknowledgeTelemetryEvents(batchIds)
+          totalAcceptedCount += batch.length
+          clearRetryTimer()
+          currentRetryAttempt = 0
+          lastSyncedAtIso = nowIso
+          lastFlushStatus = {
+            httpStatus: res.status,
+            ok: true,
+            latencyMs,
+            timestamp: nowIso,
+            acceptedCount: totalAcceptedCount,
+            error: null,
+          }
+          notifyHealthListeners()
+          pending = getQueuedEnvelopesSync()
+          continue
+        }
+
+        // Non-retryable client schema error (400/422) vs retryable auth/network/5xx
+        const errBody = await res.json().catch(() => ({}))
+        const errMsg =
+          typeof (errBody as { error?: string })?.error === 'string'
+            ? (errBody as { error: string }).error
+            : `HTTP ${res.status}`
+
         lastFlushStatus = {
           httpStatus: res.status,
-          ok: true,
+          ok: false,
           latencyMs,
           timestamp: nowIso,
-          acceptedCount: batch.length,
-          error: null,
+          acceptedCount: totalAcceptedCount,
+          error: errMsg,
+        }
+
+        if (res.status === 400 || res.status === 422) {
+          // Prevent poison-pill batch loops while preserving diagnostic visibility
+          await acknowledgeTelemetryEvents(batchIds)
+        } else {
+          await incrementEnvelopeRetryCounts(batchIds)
+          const exhaustedIds = batch
+            .filter(item => (item.retry_count || 0) + 1 >= MAX_TELEMETRY_HTTP_RETRIES)
+            .map(item => item.event_id)
+          if (exhaustedIds.length > 0) {
+            await acknowledgeTelemetryEvents(exhaustedIds)
+          }
+          if (getTelemetryQueueDepthSync() > 0) {
+            void registerPwaBackgroundSync()
+            scheduleRetryBackoff()
+          }
+        }
+
+        notifyHealthListeners()
+        return lastFlushStatus
+      } catch (err) {
+        const endedAt = typeof performance !== 'undefined' ? performance.now() : Date.now()
+        const latencyMs = Math.max(1, Math.round(endedAt - startedAt))
+        await incrementEnvelopeRetryCounts(batchIds)
+        const exhaustedIds = batch
+          .filter(item => (item.retry_count || 0) + 1 >= MAX_TELEMETRY_HTTP_RETRIES)
+          .map(item => item.event_id)
+        if (exhaustedIds.length > 0) {
+          await acknowledgeTelemetryEvents(exhaustedIds)
+        }
+
+        lastFlushStatus = {
+          httpStatus: null,
+          ok: false,
+          latencyMs,
+          timestamp: new Date().toISOString(),
+          acceptedCount: totalAcceptedCount,
+          error: err instanceof Error ? err.message : 'Network request failed',
+        }
+        if (getTelemetryQueueDepthSync() > 0) {
+          void registerPwaBackgroundSync()
+          scheduleRetryBackoff()
         }
         notifyHealthListeners()
-
-        // If additional events remain beyond the 50-event batch window, continue draining
-        if (getTelemetryQueueDepthSync() > 0) {
-          setTimeout(() => {
-            void flushTelemetry({ reason: options?.reason })
-          }, 50)
-        }
-
         return lastFlushStatus
       }
-
-      // Non-retryable client schema error (400/422) vs retryable auth/network/5xx
-      const errBody = await res.json().catch(() => ({}))
-      const errMsg =
-        typeof (errBody as { error?: string })?.error === 'string'
-          ? (errBody as { error: string }).error
-          : `HTTP ${res.status}`
-
-      lastFlushStatus = {
-        httpStatus: res.status,
-        ok: false,
-        latencyMs,
-        timestamp: nowIso,
-        acceptedCount: 0,
-        error: errMsg,
-      }
-
-      if (res.status === 400 || res.status === 422) {
-        // Prevent poison-pill batch loops while preserving diagnostic visibility
-        await acknowledgeTelemetryEvents(batchIds)
-      } else {
-        await incrementEnvelopeRetryCounts(batchIds)
-        void registerPwaBackgroundSync()
-        scheduleRetryBackoff()
-      }
-
-      notifyHealthListeners()
-      return lastFlushStatus
-    } catch (err) {
-      const endedAt = typeof performance !== 'undefined' ? performance.now() : Date.now()
-      const latencyMs = Math.max(1, Math.round(endedAt - startedAt))
-      await incrementEnvelopeRetryCounts(batchIds)
-      void registerPwaBackgroundSync()
-
-      lastFlushStatus = {
-        httpStatus: null,
-        ok: false,
-        latencyMs,
-        timestamp: new Date().toISOString(),
-        acceptedCount: 0,
-        error: err instanceof Error ? err.message : 'Network request failed',
-      }
-      scheduleRetryBackoff()
-      notifyHealthListeners()
-      return lastFlushStatus
     }
+
+    return lastFlushStatus
   })()
 
   try {
@@ -1209,6 +1300,10 @@ export function initTelemetryLifecycle(options?: {
     }
   }
 
+  const handleOfflineQueueChanged = () => {
+    notifyHealthListeners()
+  }
+
   const handleWindowError = (event: ErrorEvent) => {
     const now = Date.now()
     if (now - lastExceptionAtMs < 5_000) return
@@ -1216,8 +1311,10 @@ export function initTelemetryLifecycle(options?: {
     void trackEvent('client_runtime_diagnostic', {
       diagnostic_kind: 'exception',
       error_name: event.error?.name || 'WindowError',
-      error_message: event.message || 'Unhandled runtime error',
-      component_context: event.filename ? `${event.filename}:${event.lineno ?? 0}` : 'window.onerror',
+      error_message: scrubDiagnosticText(event.message || 'Unhandled runtime error'),
+      component_context: scrubDiagnosticText(
+        event.filename ? `${event.filename}:${event.lineno ?? 0}` : 'window.onerror'
+      ),
     })
   }
 
@@ -1229,7 +1326,9 @@ export function initTelemetryLifecycle(options?: {
     void trackEvent('client_runtime_diagnostic', {
       diagnostic_kind: 'exception',
       error_name: reason instanceof Error ? reason.name : 'UnhandledRejection',
-      error_message: reason instanceof Error ? reason.message : String(reason ?? 'Promise rejected'),
+      error_message: scrubDiagnosticText(
+        reason instanceof Error ? reason.message : String(reason ?? 'Promise rejected')
+      ),
       component_context: 'window.unhandledrejection',
     })
   }
@@ -1238,6 +1337,7 @@ export function initTelemetryLifecycle(options?: {
   window.addEventListener('pagehide', handlePageHide)
   window.addEventListener('online', handleOnline)
   window.addEventListener('offline', handleOffline)
+  window.addEventListener(OFFLINE_QUEUE_CHANGED_EVENT, handleOfflineQueueChanged)
   window.addEventListener('error', handleWindowError)
   window.addEventListener('unhandledrejection', handleUnhandledRejection)
   if ('serviceWorker' in navigator) {
@@ -1312,6 +1412,7 @@ export function initTelemetryLifecycle(options?: {
     window.removeEventListener('pagehide', handlePageHide)
     window.removeEventListener('online', handleOnline)
     window.removeEventListener('offline', handleOffline)
+    window.removeEventListener(OFFLINE_QUEUE_CHANGED_EVENT, handleOfflineQueueChanged)
     window.removeEventListener('error', handleWindowError)
     window.removeEventListener('unhandledrejection', handleUnhandledRejection)
     if ('serviceWorker' in navigator) {
@@ -1333,6 +1434,7 @@ export async function clearTelemetryQueue(): Promise<void> {
   currentRetryAttempt = 0
   cachedUserId = null
   cachedAccessToken = null
+  clearOfflineQueue()
   await purgeTelemetryQueue()
   notifyHealthListeners()
 }
@@ -1346,8 +1448,10 @@ export function __resetTelemetryClientForTests(options?: { disableIndexedDb?: bo
   lifecycleCleanup?.()
   currentRetryAttempt = 0
   nextRetryAtIso = null
+  pendingFollowUpFlushOptions = null
   cachedUserId = null
   cachedAccessToken = null
+  setOfflineQueueAccessToken(null)
   cachedSessionId = null
   cachedWebGl2Support = null
   cachedNativeNetworkType = null

@@ -16,6 +16,8 @@ export interface CoachSafetyQueueItem {
   swappedToExercise: string | null
 }
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 export async function GET(request: NextRequest) {
   try {
     const authz = await getRequestAuthz(request)
@@ -133,22 +135,25 @@ export async function GET(request: NextRequest) {
       vectorIndexReady = false
     }
 
-    return NextResponse.json({
-      ok: true,
-      items,
-      libraryIndex: {
-        totalPassages: totalLibraryPassages,
-        indexedCount: indexedVectorCount,
-        vectorIndexReady,
+    return NextResponse.json(
+      {
+        ok: true,
+        items,
+        libraryIndex: {
+          totalPassages: totalLibraryPassages,
+          indexedCount: indexedVectorCount,
+          vectorIndexReady,
+        },
       },
-    })
+      { headers: NO_STORE_HEADERS }
+    )
   } catch (err) {
     if (err instanceof AuthzError) {
-      return NextResponse.json({ error: err.message }, { status: err.status })
+      return NextResponse.json({ error: err.message }, { status: err.status, headers: NO_STORE_HEADERS })
     }
     return NextResponse.json(
       { error: 'Unable to load Coach Safety & Escalation queue.' },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     )
   }
 }

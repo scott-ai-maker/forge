@@ -4740,6 +4740,18 @@ dialog::backdrop {
   -webkit-backdrop-filter: blur(8px);
 }
 
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
 /* Smooth anchor scrolling for marketing navigation when reduced-motion is not requested */
 @media (prefers-reduced-motion: no-preference) {
   html {
@@ -5135,5 +5147,19 @@ details.forge-disclosure-item:not([open])::details-content {
     border-block-end-color: Highlight;
   }
 }
+
+/* Native <dialog> modal scroll containment & backdrop styling */
+dialog.forge-app-placeholder-dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog.forge-app-placeholder-dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgba(4, 7, 13, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
 
 

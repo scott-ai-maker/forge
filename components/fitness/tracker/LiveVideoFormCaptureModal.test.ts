@@ -1,15 +1,22 @@
 import { describe, it, expect } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
 import { mapExerciseNameToLiftType } from './LiveVideoFormCaptureModal'
 import { inferLiftTypeFromFileName } from '@/components/fitness/VideoCritiqueStudio'
 import { analyzeLiftForm } from '@/lib/video-form-analysis'
 
 describe('Live Video Form Capture & NASM Technique Biomechanics', () => {
-  it('maps various exercise names to correct NASM lift types', () => {
+  it('maps various exercise names—including DB RDL and OHSA—to exact NASM lift types', () => {
     expect(mapExerciseNameToLiftType('Barbell Back Squat')).toBe('barbell_back_squat')
     expect(mapExerciseNameToLiftType('Romanian Deadlift (RDL)')).toBe('romanian_deadlift')
+    expect(mapExerciseNameToLiftType('Dumbbell RDL')).toBe('romanian_deadlift')
+    expect(mapExerciseNameToLiftType('Single-Leg RDL')).toBe('romanian_deadlift')
+    expect(mapExerciseNameToLiftType('Conventional Barbell Deadlift')).toBe('barbell_deadlift')
     expect(mapExerciseNameToLiftType('Dumbbell Bench Press')).toBe('barbell_bench_press')
     expect(mapExerciseNameToLiftType('Seated Overhead Dumbbell Press')).toBe('overhead_press')
     expect(mapExerciseNameToLiftType('Bent-Over Barbell Row')).toBe('barbell_row')
+    expect(mapExerciseNameToLiftType('Single-Leg Squat')).toBe('single_leg_squat')
+    expect(mapExerciseNameToLiftType('NASM OHSA Movement Screen')).toBe('overhead_squat_assessment')
   })
 
   it('infers lift type accurately from uploaded video file names', () => {
@@ -42,9 +49,30 @@ describe('Live Video Form Capture & NASM Technique Biomechanics', () => {
     })
 
     expect(critique.overallFormScore).toBeLessThan(85)
-    expect(critique.checkpoints.some(c => c.prescribedCue.toLowerCase().includes('knee') || c.prescribedCue.toLowerCase().includes('torso') || c.prescribedCue.toLowerCase().includes('chest'))).toBe(true)
+    expect(
+      critique.checkpoints.some(
+        c =>
+          c.prescribedCue.toLowerCase().includes('knee') ||
+          c.prescribedCue.toLowerCase().includes('torso') ||
+          c.prescribedCue.toLowerCase().includes('chest')
+      )
+    ).toBe(true)
     expect(critique.prescribedCorrectiveContinuum.inhibit.length).toBeGreaterThan(0)
     expect(critique.prescribedCorrectiveContinuum.activate.length).toBeGreaterThan(0)
   })
-})
 
+  it('uses native <dialog closedby="any"> and releases physical camera tracks via activeStreamRef', () => {
+    const modalSource = fs.readFileSync(
+      path.resolve(process.cwd(), 'components/fitness/tracker/LiveVideoFormCaptureModal.tsx'),
+      'utf-8'
+    )
+    expect(modalSource).toContain('<dialog')
+    expect(modalSource).toContain("closedby: 'any'")
+    expect(modalSource).not.toContain('role="dialog"')
+    expect(modalSource).not.toContain('aria-modal="true"')
+    expect(modalSource).toContain('activeStreamRef')
+    expect(modalSource).toContain('TELEMETRY_CAMERA_RELEASE_EVENT')
+    expect(modalSource).toContain('resolveSupportedVideoMimeType')
+    expect(modalSource).toContain('URL.revokeObjectURL')
+  })
+})

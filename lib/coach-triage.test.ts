@@ -222,6 +222,36 @@ describe('coach-triage', () => {
     expect(res.suggestedPeriodizationAction).toBe('certify_safety_gate')
     expect(res.suggestedActionLabel).toContain('1-Click Certify Safety Gate')
   })
+
+  it('assigns AMBER priority across the entire Overreaching ACWR band (1.31..1.49) without a dead-zone', () => {
+    const res = evaluateClientTriage({
+      clientId: 'c_overreach_132',
+      clientName: 'Overreaching Athlete',
+      email: 'overreach@example.com',
+      daysSinceLastCheckin: 2,
+      acwrRatio: 1.32,
+      readinessScore: 84,
+      completionRate14d: 92,
+    })
+
+    expect(res.acwrZone).toBe('Overreaching')
+    expect(res.priority).toBe('amber')
+    expect(res.primaryReason).toContain('ACWR: 1.32')
+  })
+
+  it('treats readinessScore: 0 as severe fatigue (RED priority) rather than missing telemetry', () => {
+    const res = evaluateClientTriage({
+      clientId: 'c_zero_readiness',
+      clientName: 'Zero Readiness Athlete',
+      email: 'zero@example.com',
+      daysSinceLastCheckin: 3,
+      readinessScore: 0,
+    })
+
+    expect(res.priority).toBe('red')
+    expect(res.readinessScore).toBe(0)
+    expect(res.primaryReason).toContain('Readiness: 0%')
+  })
 })
 
 

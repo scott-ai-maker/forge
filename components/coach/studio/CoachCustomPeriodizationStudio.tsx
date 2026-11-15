@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import CoachAiIntakeDrawer, { CoachAiIntakeFormData } from './CoachAiIntakeDrawer'
 import CoachProgramPreviewCanvas from './CoachProgramPreviewCanvas'
 import SmartExerciseSwapModal from '@/components/coach/SmartExerciseSwapModal'
@@ -113,6 +113,36 @@ export default function CoachCustomPeriodizationStudio({
 
   // Video Preview Modal
   const [videoModalExercise, setVideoModalExercise] = useState<string | null>(null)
+  const videoDialogRef = useRef<HTMLDialogElement | null>(null)
+
+  useEffect(() => {
+    const dialog = videoDialogRef.current
+    if (!dialog) return
+
+    if (videoModalExercise) {
+      if (!dialog.open) {
+        dialog.showModal()
+      }
+      if (!('closedBy' in HTMLDialogElement.prototype)) {
+        const handleBackdropClick = (event: MouseEvent) => {
+          if (event.target !== dialog) return
+          const rect = dialog.getBoundingClientRect()
+          const isDialogContent =
+            rect.top <= event.clientY &&
+            event.clientY <= rect.top + rect.height &&
+            rect.left <= event.clientX &&
+            event.clientX <= rect.left + rect.width
+          if (!isDialogContent) {
+            dialog.close()
+          }
+        }
+        dialog.addEventListener('click', handleBackdropClick)
+        return () => dialog.removeEventListener('click', handleBackdropClick)
+      }
+    } else if (dialog.open) {
+      dialog.close()
+    }
+  }, [videoModalExercise])
 
   // Smart Exercise Swap Modal
   const [swapTarget, setSwapTarget] = useState<{
@@ -398,13 +428,14 @@ export default function CoachCustomPeriodizationStudio({
             type="button"
             className="coach-builder-btn coach-builder-btn-primary"
             onClick={() => setIsIntakeDrawerOpen(true)}
+            style={{ minHeight: 44 }}
           >
             <GaaIcon name="edit" size={14} tone="dark" />
             {currentPlan ? 'Refine intake' : 'Start personal intake'}
           </button>
 
           {onClose && (
-            <button type="button" className="coach-builder-btn coach-builder-btn-ghost" onClick={onClose}>
+            <button type="button" className="coach-builder-btn coach-builder-btn-ghost" onClick={onClose} style={{ minHeight: 44 }}>
               Close
             </button>
           )}
@@ -474,6 +505,7 @@ export default function CoachCustomPeriodizationStudio({
       {/* Synthesis Error Display */}
       {synthesisError && (
         <div
+          role="alert"
           style={{
             background: 'linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(185,28,28,0.1) 100%)',
             border: '1px solid #EF4444',
@@ -564,41 +596,28 @@ export default function CoachCustomPeriodizationStudio({
       />
 
       {/* Video Demonstration Modal */}
-      {videoModalExercise && (() => {
-        const videoRes = resolveExerciseVideoEmbed(videoModalExercise)
-        return (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="video-modal-title"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 100006,
-              background: 'rgba(3,7,18,0.92)',
-              backdropFilter: 'blur(12px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 16,
-            }}
-            onClick={e => {
-              if (e.target === e.currentTarget) setVideoModalExercise(null)
-            }}
-          >
-            <div
-              style={{
-                width: '100%',
-                maxWidth: 720,
-                background: '#0D1629',
-                border: '1px solid rgba(212,160,23,0.4)',
-                borderRadius: 12,
-                overflow: 'hidden',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.9)',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
+      <dialog
+        ref={videoDialogRef}
+        {...({ closedby: 'any' } as Record<string, unknown>)}
+        aria-labelledby="video-modal-title"
+        onClose={() => setVideoModalExercise(null)}
+        style={{
+          width: 'min(720px, calc(100vw - 24px))',
+          maxHeight: '90dvh',
+          margin: 'auto',
+          padding: 0,
+          background: '#0D1629',
+          border: '1px solid rgba(212,160,23,0.4)',
+          borderRadius: 12,
+          overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.9)',
+          color: '#FFFFFF',
+        }}
+      >
+        {videoModalExercise && (() => {
+          const videoRes = resolveExerciseVideoEmbed(videoModalExercise)
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               {/* Modal Header */}
               <div
                 style={{
@@ -606,6 +625,7 @@ export default function CoachCustomPeriodizationStudio({
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  gap: 12,
                   borderBottom: '1px solid rgba(255,255,255,0.1)',
                 }}
               >
@@ -628,6 +648,7 @@ export default function CoachCustomPeriodizationStudio({
 
                 <button
                   type="button"
+                  autoFocus
                   onClick={() => setVideoModalExercise(null)}
                   style={{
                     background: 'rgba(255,255,255,0.06)',
@@ -635,6 +656,8 @@ export default function CoachCustomPeriodizationStudio({
                     color: '#FFFFFF',
                     borderRadius: 6,
                     padding: '6px 12px',
+                    minHeight: 44,
+                    minWidth: 44,
                     fontSize: 12,
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -663,7 +686,7 @@ export default function CoachCustomPeriodizationStudio({
               </div>
 
               {/* Video Footer */}
-              <div style={{ padding: '12px 20px', fontSize: 12, color: '#94A3B8', display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ padding: '12px 20px', fontSize: 12, color: '#94A3B8', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                 <span>{videoRes.sourceTitle}</span>
                 <a
                   href={videoRes.externalUrl}
@@ -675,9 +698,9 @@ export default function CoachCustomPeriodizationStudio({
                 </a>
               </div>
             </div>
-          </div>
-        )
-      })()}
+          )
+        })()}
+      </dialog>
 
       {/* Smart Exercise Swap Modal */}
       {swapTarget && (

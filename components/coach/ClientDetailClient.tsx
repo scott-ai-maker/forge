@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import SessionActions from '@/components/coach/SessionActions'
 import CoachScheduleSessionModal from '@/components/coach/CoachScheduleSessionModal'
@@ -36,6 +36,36 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
   const [confirmWaiveOpen, setConfirmWaiveOpen] = useState(false)
   const [waivingConsult, setWaivingConsult] = useState(false)
   const [waiverError, setWaiverError] = useState<string | null>(null)
+  const waiveDialogRef = useRef<HTMLDialogElement | null>(null)
+
+  useEffect(() => {
+    const dialog = waiveDialogRef.current
+    if (!dialog) return
+
+    if (confirmWaiveOpen) {
+      if (!dialog.open) {
+        dialog.showModal()
+      }
+      if (!('closedBy' in HTMLDialogElement.prototype)) {
+        const handleBackdropClick = (event: MouseEvent) => {
+          if (event.target !== dialog) return
+          const rect = dialog.getBoundingClientRect()
+          const isDialogContent =
+            rect.top <= event.clientY &&
+            event.clientY <= rect.top + rect.height &&
+            rect.left <= event.clientX &&
+            event.clientX <= rect.left + rect.width
+          if (!isDialogContent) {
+            dialog.close()
+          }
+        }
+        dialog.addEventListener('click', handleBackdropClick)
+        return () => dialog.removeEventListener('click', handleBackdropClick)
+      }
+    } else if (dialog.open) {
+      dialog.close()
+    }
+  }, [confirmWaiveOpen])
 
   function handleUpdate() {
     router.refresh()
@@ -100,6 +130,110 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
     s.notes?.toLowerCase().includes('async delivery')
   )
 
+  const waiveConfirmDialog = (
+    <dialog
+      ref={waiveDialogRef}
+      {...({ closedby: 'any' } as Record<string, unknown>)}
+      aria-labelledby="waive-consult-dialog-title"
+      onClose={() => setConfirmWaiveOpen(false)}
+      style={{
+        width: 'min(460px, calc(100vw - 24px))',
+        margin: 'auto',
+        padding: 0,
+        background: '#070C16',
+        border: '1px solid rgba(212, 160, 23, 0.4)',
+        borderRadius: 12,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.9)',
+        color: '#FFFFFF',
+      }}
+    >
+      {confirmWaiveOpen && (
+        <div style={{ padding: '24px 28px', textAlign: 'left' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div
+              aria-hidden="true"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                background: 'rgba(212,160,23,0.15)',
+                border: '1px solid rgba(212,160,23,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <GaaIcon name="check" size={16} tone="gold" />
+            </div>
+            <h3
+              id="waive-consult-dialog-title"
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
+                fontSize: 18,
+                fontWeight: 700,
+                color: '#FFFFFF',
+                letterSpacing: '0.04em',
+              }}
+            >
+              WAIVE LIVE CONSULTATION?
+            </h3>
+          </div>
+
+          <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 13.5, color: 'var(--gray)', lineHeight: 1.5, margin: '0 0 20px' }}>
+            Waive live consultation for <strong style={{ color: '#FFFFFF' }}>{clientName}</strong>? This fast-tracks the athlete directly to <strong style={{ color: 'var(--gold-lt)' }}>Stage 8 (Telemetry Monitoring &amp; Weekly Triage)</strong> for asynchronous program delivery.
+          </p>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setConfirmWaiveOpen(false)}
+              disabled={waivingConsult}
+              style={{
+                padding: '8px 16px',
+                minHeight: 44,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 4,
+                color: 'var(--gray-lt)',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                await executeWaiveConsult()
+                setConfirmWaiveOpen(false)
+              }}
+              disabled={waivingConsult}
+              style={{
+                padding: '8px 18px',
+                minHeight: 44,
+                background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
+                border: 'none',
+                borderRadius: 4,
+                color: '#080E14',
+                fontSize: 12,
+                fontWeight: 800,
+                fontFamily: 'Raleway, sans-serif',
+                cursor: waivingConsult ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 12px rgba(197,160,89,0.35)',
+              }}
+            >
+              {waivingConsult ? 'Waiving...' : 'Confirm & Fast-Track ➔'}
+            </button>
+          </div>
+        </div>
+      )}
+    </dialog>
+  )
+
   if (sessions.length === 0) {
     return (
       <div
@@ -146,6 +280,7 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
               onClick={() => setScheduleModalOpen(true)}
               style={{
                 padding: '9px 20px',
+                minHeight: 44,
                 background: 'var(--gold)',
                 color: '#080E14',
                 borderRadius: 4,
@@ -171,6 +306,7 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
               className="tactile-btn"
               style={{
                 padding: '9px 20px',
+                minHeight: 44,
                 background: 'rgba(255, 255, 255, 0.06)',
                 color: 'var(--gold-lt)',
                 borderRadius: 4,
@@ -193,7 +329,7 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
         )}
 
         {waiverError && (
-          <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 12, color: 'var(--error)', margin: '4px 0 0' }}>
+          <p role="alert" style={{ fontFamily: 'Raleway, sans-serif', fontSize: 12, color: 'var(--error)', margin: '4px 0 0' }}>
             {waiverError}
           </p>
         )}
@@ -209,102 +345,7 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
           />
         )}
 
-        {/* Luxury In-HUD Waive Confirmation Modal */}
-        {confirmWaiveOpen && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(2, 5, 11, 0.85)',
-              backdropFilter: 'blur(10px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 100050,
-              padding: 16,
-            }}
-          >
-            <div
-              style={{
-                background: '#070C16',
-                border: '1px solid rgba(212, 160, 23, 0.4)',
-                borderRadius: 12,
-                maxWidth: 460,
-                width: '100%',
-                padding: '24px 28px',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.9)',
-                textAlign: 'left',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 6,
-                    background: 'rgba(212,160,23,0.15)',
-                    border: '1px solid rgba(212,160,23,0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <GaaIcon name="check" size={16} tone="gold" />
-                </div>
-                <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em' }}>
-                  WAIVE LIVE CONSULTATION?
-                </div>
-              </div>
-
-              <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 13.5, color: 'var(--gray)', lineHeight: 1.5, margin: '0 0 20px' }}>
-                Waive live consultation for <strong style={{ color: '#FFFFFF' }}>{clientName}</strong>? This fast-tracks the athlete directly to <strong style={{ color: 'var(--gold-lt)' }}>Stage 8 (Telemetry Monitoring & Weekly Triage)</strong> for asynchronous program delivery.
-              </p>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setConfirmWaiveOpen(false)}
-                  disabled={waivingConsult}
-                  style={{
-                    padding: '8px 16px',
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 4,
-                    color: 'var(--gray-lt)',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await executeWaiveConsult()
-                    setConfirmWaiveOpen(false)
-                  }}
-                  disabled={waivingConsult}
-                  style={{
-                    padding: '8px 18px',
-                    background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-                    border: 'none',
-                    borderRadius: 4,
-                    color: '#080E14',
-                    fontSize: 12,
-                    fontWeight: 800,
-                    fontFamily: 'Raleway, sans-serif',
-                    cursor: waivingConsult ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 4px 12px rgba(197,160,89,0.35)',
-                  }}
-                >
-                  {waivingConsult ? 'Waiving...' : 'Confirm & Fast-Track ➔'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {waiveConfirmDialog}
       </div>
     )
   }
@@ -355,6 +396,7 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
               className="tactile-btn"
               style={{
                 padding: '7px 15px',
+                minHeight: 44,
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                 color: '#080E14',
                 borderRadius: 4,
@@ -382,6 +424,7 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
               disabled={waivingConsult}
               style={{
                 padding: '7px 12px',
+                minHeight: 44,
                 background: 'rgba(255, 255, 255, 0.05)',
                 color: 'var(--gray-lt)',
                 borderRadius: 4,
@@ -402,7 +445,7 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
       </div>
 
       {waiverError && (
-        <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 12, color: 'var(--error)', margin: 0 }}>
+        <p role="alert" style={{ fontFamily: 'Raleway, sans-serif', fontSize: 12, color: 'var(--error)', margin: 0 }}>
           {waiverError}
         </p>
       )}
@@ -480,102 +523,7 @@ export default function ClientDetailClient({ clientId, sessions, clientName = 'A
       ))}
       </div>
 
-      {/* Luxury In-HUD Waive Confirmation Modal */}
-      {confirmWaiveOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(2, 5, 11, 0.85)',
-            backdropFilter: 'blur(10px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100050,
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              background: '#070C16',
-              border: '1px solid rgba(212, 160, 23, 0.4)',
-              borderRadius: 12,
-              maxWidth: 460,
-              width: '100%',
-              padding: '24px 28px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.9)',
-              textAlign: 'left',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 6,
-                  background: 'rgba(212,160,23,0.15)',
-                  border: '1px solid rgba(212,160,23,0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <GaaIcon name="check" size={16} tone="gold" />
-              </div>
-              <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em' }}>
-                WAIVE LIVE CONSULTATION?
-              </div>
-            </div>
-
-            <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 13.5, color: 'var(--gray)', lineHeight: 1.5, margin: '0 0 20px' }}>
-              Waive live consultation for <strong style={{ color: '#FFFFFF' }}>{clientName}</strong>? This fast-tracks the athlete directly to <strong style={{ color: 'var(--gold-lt)' }}>Stage 8 (Telemetry Monitoring & Weekly Triage)</strong> for asynchronous program delivery.
-            </p>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button
-                type="button"
-                onClick={() => setConfirmWaiveOpen(false)}
-                disabled={waivingConsult}
-                style={{
-                  padding: '8px 16px',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 4,
-                  color: 'var(--gray-lt)',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={async () => {
-                  await executeWaiveConsult()
-                  setConfirmWaiveOpen(false)
-                }}
-                disabled={waivingConsult}
-                style={{
-                  padding: '8px 18px',
-                  background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-                  border: 'none',
-                  borderRadius: 4,
-                  color: '#080E14',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  fontFamily: 'Raleway, sans-serif',
-                  cursor: waivingConsult ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 12px rgba(197,160,89,0.35)',
-                }}
-              >
-                {waivingConsult ? 'Waiving...' : 'Confirm & Fast-Track ➔'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {waiveConfirmDialog}
 
       {clientId && (
         <CoachScheduleSessionModal

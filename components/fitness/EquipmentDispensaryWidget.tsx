@@ -217,8 +217,8 @@ export default function EquipmentDispensaryWidget({
               onClick={() => setShowAllInCompact(prev => !prev)}
               className="forge-equip-btn"
               style={{
-                padding: '7px 14px',
-                minBlockSize: 36,
+                padding: '10px 14px',
+                minBlockSize: 44,
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.16)',
                 borderRadius: 6,
@@ -424,8 +424,8 @@ export default function EquipmentDispensaryWidget({
                   fontWeight: 800,
                   color: 'var(--gold-lt)',
                   textDecoration: 'none',
-                  padding: '6px 10px',
-                  minBlockSize: 32,
+                  padding: '10px 12px',
+                  minBlockSize: 44,
                   display: 'inline-flex',
                   alignItems: 'center',
                   border: '1px solid rgba(212, 160, 23, 0.35)',
@@ -458,8 +458,8 @@ export default function EquipmentDispensaryWidget({
             onClick={() => setActiveWorkspaceMode('rag_builder')}
             className="forge-equip-filter-btn"
             style={{
-              minBlockSize: 42,
-              padding: '9px 16px',
+              minBlockSize: 44,
+              padding: '10px 16px',
               borderRadius: 7,
               border: '1px solid',
               borderColor:
@@ -488,8 +488,8 @@ export default function EquipmentDispensaryWidget({
             onClick={() => setActiveWorkspaceMode('catalog')}
             className="forge-equip-filter-btn"
             style={{
-              minBlockSize: 42,
-              padding: '9px 16px',
+              minBlockSize: 44,
+              padding: '10px 16px',
               borderRadius: 7,
               border: '1px solid',
               borderColor:
@@ -557,8 +557,8 @@ export default function EquipmentDispensaryWidget({
               onClick={() => setActiveFilter('all')}
               className="forge-equip-btn"
               style={{
-                padding: '6px 12px',
-                minBlockSize: 32,
+                padding: '10px 14px',
+                minBlockSize: 44,
                 borderRadius: 5,
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.16)',
@@ -649,8 +649,8 @@ export default function EquipmentDispensaryWidget({
                     onClick={() => setActiveFilter(isSelected ? 'all' : tier.id)}
                     className="forge-equip-filter-btn"
                     style={{
-                      padding: '7px 12px',
-                      minBlockSize: 34,
+                      padding: '10px 14px',
+                      minBlockSize: 44,
                       borderRadius: 5,
                       border: '1px solid',
                       borderColor: isSelected ? 'var(--gold)' : 'rgba(212, 160, 23, 0.4)',
@@ -694,8 +694,8 @@ export default function EquipmentDispensaryWidget({
                 style={{
                   flex: 'none',
                   position: 'relative',
-                  padding: '8px 14px',
-                  minBlockSize: 36,
+                  padding: '10px 14px',
+                  minBlockSize: 44,
                   borderRadius: 6,
                   border: '1px solid',
                   borderColor: selected ? 'var(--gold)' : 'rgba(255, 255, 255, 0.14)',
@@ -958,8 +958,8 @@ function EquipmentCard({ item, compact, copiedSku, onCopyPromoCode }: EquipmentC
               aria-label={`Copy promo code ${item.promoCode} for ${item.name}`}
               className="forge-equip-btn"
               style={{
-                padding: '6px 10px',
-                minBlockSize: 34,
+                padding: '10px 12px',
+                minBlockSize: 44,
                 borderRadius: 5,
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.18)',
@@ -981,8 +981,8 @@ function EquipmentCard({ item, compact, copiedSku, onCopyPromoCode }: EquipmentC
             aria-label={ctaAriaLabel}
             className="forge-equip-link"
             style={{
-              padding: '8px 14px',
-              minBlockSize: 36,
+              padding: '10px 14px',
+              minBlockSize: 44,
               borderRadius: 5,
               background: item.alreadyOwned
                 ? 'rgba(255, 255, 255, 0.08)'
@@ -995,7 +995,8 @@ function EquipmentCard({ item, compact, copiedSku, onCopyPromoCode }: EquipmentC
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              whiteSpace: 'nowrap',
+              whiteSpace: 'normal',
+              textAlign: 'center',
             }}
           >
             {ctaText}

@@ -188,6 +188,63 @@ describe('POST /api/waitlist', () => {
 
     const res = await POST(req)
     expect(res.status).toBe(429)
+    expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0')
+  })
+
+  it('routes holiday_unmasking_drop reservations to founding_cohort email automation and sanitizes control/angle chars', async () => {
+    const req = new NextRequest('http://localhost/api/waitlist', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: 'jordan@example.com',
+        firstName: '  Jordan <script>Smith  ',
+        trainingLevel: 'intermediate',
+        primaryGoal: '[Founding Cohort Pass] Goal: posture_joint_health | Phone: +1 555 0100',
+        source: 'holiday_unmasking_drop',
+        assignedCohortNumber: 24,
+        phone: '+1 555 0100',
+        profileType: 'posture_joint_health',
+        honeypot: '',
+        startTimeMs: Date.now() - 5000,
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+    expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0')
+
+    expect(insertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'jordan@example.com',
+        first_name: 'Jordan scriptSmith',
+        source: 'holiday_unmasking_drop',
+      })
+    )
+
+    expect(triggerLeadEmailAutomationMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        email: 'jordan@example.com',
+        firstName: 'Jordan scriptSmith',
+        source: 'founding_cohort',
+        cohortReservationNumber: 24,
+        phone: '+1 555 0100',
+        profileType: 'posture_joint_health',
+      })
+    )
+  })
+
+  it('returns 400 Invalid JSON payload with no-store headers on malformed request body', async () => {
+    const req = new NextRequest('http://localhost/api/waitlist', {
+      method: 'POST',
+      body: '{malformed-json',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+    expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0')
+    const json = await res.json()
+    expect(json.error).toBe('Invalid JSON payload')
   })
 })
 

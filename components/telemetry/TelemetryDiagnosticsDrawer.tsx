@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
+import { flushOfflineQueue, getPendingQueueCount } from '@/lib/offline-sync-queue'
 import {
   getAppleWatchSyncDiagnostics,
   subscribeToWatchSyncStateChanged,
@@ -110,7 +111,10 @@ export function TelemetryDiagnosticsPanel({
   const handleManualFlush = async () => {
     setIsFlushing(true)
     try {
-      await flushTelemetry({ reason: 'manual', interactive: true })
+      await Promise.all([
+        getPendingQueueCount() > 0 ? flushOfflineQueue() : Promise.resolve({ synced: 0, failed: 0 }),
+        flushTelemetry({ reason: 'manual', interactive: true }),
+      ])
       setHealth(getTelemetryHealth())
     } finally {
       setIsFlushing(false)
@@ -156,7 +160,7 @@ export function TelemetryDiagnosticsPanel({
             type="button"
             onClick={onClose}
             aria-label="Close System Diagnostics"
-            className="inline-flex min-h-[40px] min-w-[40px] shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 px-2.5 text-xs font-bold text-zinc-200 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 px-2.5 text-xs font-bold text-zinc-200 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
           >
             ✕
           </button>
@@ -252,7 +256,7 @@ export function TelemetryDiagnosticsPanel({
                 type="button"
                 onClick={handleManualFlush}
                 disabled={isFlushing || !health.isOnline}
-                className="rounded-md border border-emerald-400/40 bg-emerald-500/15 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-emerald-400/40 bg-emerald-500/15 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:opacity-50"
               >
                 {isFlushing ? 'Flushing…' : 'Flush Now'}
               </button>
@@ -438,8 +442,8 @@ export function TelemetryDiagnosticsPanel({
 
         {pingResult && (
           <div
-            role="status"
-            aria-live="polite"
+            role={pingResult.verified ? 'status' : 'alert'}
+            aria-live={pingResult.verified ? 'polite' : 'assertive'}
             data-testid="telemetry-ping-result"
             className={`mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3.5 py-2.5 text-xs ${
               pingResult.verified
@@ -494,9 +498,27 @@ export default function TelemetryDiagnosticsDrawer({
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
-    if (open && !dialog.open) {
-      dialog.showModal()
-    } else if (!open && dialog.open) {
+    if (open) {
+      if (!dialog.open) {
+        dialog.showModal()
+      }
+      if (!('closedBy' in HTMLDialogElement.prototype)) {
+        const handleBackdropClick = (event: MouseEvent) => {
+          if (event.target !== dialog) return
+          const rect = dialog.getBoundingClientRect()
+          const isDialogContent =
+            rect.top <= event.clientY &&
+            event.clientY <= rect.top + rect.height &&
+            rect.left <= event.clientX &&
+            event.clientX <= rect.left + rect.width
+          if (!isDialogContent) {
+            dialog.close()
+          }
+        }
+        dialog.addEventListener('click', handleBackdropClick)
+        return () => dialog.removeEventListener('click', handleBackdropClick)
+      }
+    } else if (dialog.open) {
       dialog.close()
     }
   }, [open])
@@ -504,13 +526,9 @@ export default function TelemetryDiagnosticsDrawer({
   return (
     <dialog
       ref={dialogRef}
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       aria-labelledby={headingId}
       onClose={onClose}
-      onClick={e => {
-        if (e.target === e.currentTarget) {
-          e.currentTarget.close()
-        }
-      }}
       className="forge-glass-modal forge-telemetry-drawer m-auto w-[min(94vw,760px)] max-h-[88dvh] overflow-y-auto rounded-2xl p-0 text-zinc-100"
     >
       {open ? (

@@ -3,6 +3,17 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { toValidUuidOrNull } from '@/lib/uuid-utils'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
+function sanitizeSetString(raw: unknown, maxLen: number): string {
+  if (typeof raw !== 'string' && typeof raw !== 'number') return ''
+  return String(raw)
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/[<>]/g, '')
+    .trim()
+    .slice(0, maxLen)
+}
+
 export async function GET(req: NextRequest) {
   let userId = ''
   try {
@@ -12,7 +23,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const rawPlanId = req.nextUrl.searchParams.get('planId')
@@ -37,10 +48,10 @@ export async function GET(req: NextRequest) {
   const { data, error } = await finalQuery
   if (error) {
     console.error('[workouts/log-set GET] Query error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
-  return NextResponse.json({ setLogs: data ?? [] })
+  return NextResponse.json({ setLogs: data ?? [] }, { headers: NO_STORE_HEADERS })
 }
 
 export async function POST(req: NextRequest) {
@@ -52,22 +63,29 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const body = await req.json().catch(() => ({}))
 
-  const exerciseName = String(body.exerciseName ?? '').trim()
+  const exerciseName = sanitizeSetString(body.exerciseName, 160)
   if (!exerciseName) {
-    return NextResponse.json({ error: 'exerciseName is required' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'exerciseName is required' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
   }
 
   const reps = Number(body.reps)
   if (!Number.isFinite(reps) || reps <= 0) {
-    return NextResponse.json({ error: 'reps must be a positive number' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'reps must be a positive number' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
   }
 
-  const sessionDate = String(body.sessionDate ?? '').trim() || new Date().toISOString().split('T')[0]
+  const sessionDate =
+    sanitizeSetString(body.sessionDate, 32) || new Date().toISOString().split('T')[0]
   const validPlanId = toValidUuidOrNull(body.workoutPlanId)
   const validLogId = toValidUuidOrNull(body.workoutLogId)
   const validEventId = toValidUuidOrNull(body.eventId)
@@ -82,14 +100,20 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     if (existingSet) {
-      return NextResponse.json({
-        success: true,
-        deduplicated: true,
-        setLog: existingSet,
-        record: existingSet,
-      })
+      return NextResponse.json(
+        {
+          success: true,
+          deduplicated: true,
+          setLog: existingSet,
+          record: existingSet,
+        },
+        { headers: NO_STORE_HEADERS }
+      )
     }
   }
+
+  const sanitizedTempo = sanitizeSetString(body.tempo, 32)
+  const sanitizedNotes = sanitizeSetString(body.notes, 1000)
 
   const payload = {
     ...(validEventId ? { id: validEventId } : {}),
@@ -104,9 +128,9 @@ export async function POST(req: NextRequest) {
     rest_seconds: body.restSeconds != null && !isNaN(Number(body.restSeconds)) ? Number(body.restSeconds) : null,
     rpe: body.rpe != null && !isNaN(Number(body.rpe)) ? Number(body.rpe) : null,
     rir: body.rir != null && !isNaN(Number(body.rir)) ? Number(body.rir) : null,
-    tempo: body.tempo ? String(body.tempo).trim() : null,
+    tempo: sanitizedTempo || null,
     is_warmup: Boolean(body.isWarmup),
-    notes: body.notes ? String(body.notes).trim() : null,
+    notes: sanitizedNotes || null,
   }
 
   const { data, error } = await supabaseAdmin()
@@ -116,9 +140,34 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
+    // Handle concurrent duplicate race (`23505` unique constraint violation on `id`) idempotently
+    if (validEventId && String((error as { code?: string }).code || '') === '23505') {
+      const { data: concurrentSet } = await supabaseAdmin()
+        .from('workout_set_logs')
+        .select('*')
+        .eq('id', validEventId)
+        .eq('user_id', userId)
+        .maybeSingle()
+
+      if (concurrentSet) {
+        return NextResponse.json(
+          {
+            success: true,
+            deduplicated: true,
+            setLog: concurrentSet,
+            record: concurrentSet,
+          },
+          { headers: NO_STORE_HEADERS }
+        )
+      }
+    }
+
     console.error('[workouts/log-set POST] Insert error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
-  return NextResponse.json({ success: true, setLog: data, record: data })
+  return NextResponse.json(
+    { success: true, setLog: data, record: data },
+    { headers: NO_STORE_HEADERS }
+  )
 }

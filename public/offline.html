@@ -87,7 +87,11 @@
         background: var(--cyan-telemetry);
         border-radius: 50%;
         box-shadow: 0 0 10px var(--cyan-telemetry);
-        animation: pulse 1.8s infinite ease-in-out;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .pulse-dot {
+          animation: pulse 1.8s infinite ease-in-out;
+        }
       }
       @keyframes pulse {
         0%, 100% { opacity: 1; transform: scale(1); }
@@ -121,11 +125,16 @@
       }
       .actions {
         display: flex;
+        flex-wrap: wrap;
         gap: 12px;
         margin-top: 8px;
       }
       .btn-primary {
-        flex: 1;
+        flex: 1 1 180px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
         color: #080E14;
         border: none;
@@ -143,7 +152,11 @@
         filter: brightness(0.9);
       }
       .btn-secondary {
-        flex: 1;
+        flex: 1 1 180px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         background: transparent;
         color: var(--gold-light);
         border: 1px solid rgba(197, 160, 89, 0.4);
@@ -155,6 +168,11 @@
         text-decoration: none;
         text-align: center;
         letter-spacing: 0.04em;
+      }
+      .btn-primary:focus-visible,
+      .btn-secondary:focus-visible {
+        outline: 3px solid var(--gold-light);
+        outline-offset: 2px;
       }
     </style>
   </head>
@@ -170,7 +188,7 @@
         />
         <div class="hero-overlay">
           <div class="status-pill">
-            <span class="pulse-dot"></span>
+            <span class="pulse-dot" aria-hidden="true"></span>
             Offline In-Gym Mode
           </div>
         </div>
@@ -182,14 +200,22 @@
           Your active sets, plate calculations, and local workout timers continue running locally on this device.
         </p>
         <div class="telemetry-notice">
-          <strong>Biometric & Telemetry Queue:</strong> Any logged reps, weights, and RPE scores will automatically sync to Coach Gordon once your connection is restored.
+          <strong>Biometric &amp; Telemetry Queue:</strong> Any logged reps, weights, and RPE scores will automatically sync to Coach Gordon once your connection is restored.
         </div>
         <div class="actions">
-          <button class="btn-primary" onclick="window.location.reload()">Reconnect Now</button>
+          <button type="button" id="reconnect-btn" class="btn-primary">Reconnect Now</button>
           <a class="btn-secondary" href="/dashboard/fitness?workspace=train">Back to Workout</a>
         </div>
       </div>
     </main>
+    <script>
+      const reconnectBtn = document.getElementById('reconnect-btn');
+      if (reconnectBtn) {
+        reconnectBtn.addEventListener('click', () => {
+          window.location.reload();
+        });
+      }
+    </script>
   </body>
 </html>
 

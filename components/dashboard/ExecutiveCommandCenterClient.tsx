@@ -128,6 +128,39 @@ export function getBaselineOnboardingBannerState(params: {
   }
 }
 
+export function hasSavedOnboardingDraft(
+  storage?: Pick<Storage, 'getItem'> | null
+): boolean {
+  if (!storage) return false
+  try {
+    return Boolean(
+      storage.getItem('forge_baseline_onboarding_draft') ||
+        storage.getItem('gaa_baseline_onboarding_draft')
+    )
+  } catch {
+    return false
+  }
+}
+
+export function resolveCommandCenterHeroMeta(params: {
+  expressMode: boolean
+  activeDayExerciseCount: number
+  activeWorkoutDurationMins?: number
+  planEstimatedDurationMins?: number
+}): { displayedLiftCount: number; estimatedMins: number } {
+  const baseLifts = params.activeDayExerciseCount > 0 ? params.activeDayExerciseCount : 5
+  if (params.expressMode) {
+    return {
+      displayedLiftCount: Math.min(4, params.activeDayExerciseCount > 0 ? params.activeDayExerciseCount : 4),
+      estimatedMins: 20,
+    }
+  }
+  return {
+    displayedLiftCount: baseLifts,
+    estimatedMins: params.activeWorkoutDurationMins || params.planEstimatedDurationMins || 45,
+  }
+}
+
 const ENVIRONMENT_OPTIONS: EnvironmentProfileId[] = [
   'home_gym',
   'full_gym',
@@ -177,14 +210,8 @@ export default function ExecutiveCommandCenterClient({
   const { tileStatusLabel: partnerPassStatusLabel } = usePartnerPass(clientName)
 
   useEffect(() => {
-    try {
-      const draft =
-        typeof window !== 'undefined'
-          ? localStorage.getItem('gaa_baseline_onboarding_draft')
-          : null
-      if (draft) setHasLocalDraft(true)
-    } catch {
-      // ignore
+    if (typeof window !== 'undefined' && hasSavedOnboardingDraft(window.localStorage)) {
+      setHasLocalDraft(true)
     }
 
     const sync = () => {
@@ -250,9 +277,12 @@ export default function ExecutiveCommandCenterClient({
       : null
 
   const promoteDeskResetToHero = !activeWorkout || isWorkoutCompleted
-  const estimatedMins = expressMode
-    ? 20
-    : activeWorkoutDurationMins || latestPlan?.estimated_duration_mins || 45
+  const { displayedLiftCount, estimatedMins } = resolveCommandCenterHeroMeta({
+    expressMode,
+    activeDayExerciseCount,
+    activeWorkoutDurationMins,
+    planEstimatedDurationMins: latestPlan?.estimated_duration_mins,
+  })
 
   const handleToggleExpress = () => {
     const next = !expressMode
@@ -338,8 +368,11 @@ export default function ExecutiveCommandCenterClient({
             ? `Day ${activeWorkout.day}: ${activeWorkout.focus}`
             : 'Full-Body Joint-First Strength'}
         </h1>
-        <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-zinc-300">
-          {activeDayExerciseCount || 5} lifts · ~{estimatedMins}m
+        <span
+          data-testid="hero-workout-meta"
+          className="shrink-0 font-mono text-xs font-semibold tabular-nums text-zinc-300"
+        >
+          {displayedLiftCount} lifts · ~{estimatedMins}m
         </span>
       </div>
 
@@ -368,14 +401,14 @@ export default function ExecutiveCommandCenterClient({
               })
             }}
             data-testid="hero-listen-preworkout-briefing-btn"
-            className="forge-tactile-press inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 font-semibold text-emerald-200 hover:bg-emerald-500/20"
+            className="forge-tactile-press inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-semibold text-emerald-200 hover:bg-emerald-500/20"
           >
             <Volume2 size={12} strokeWidth={1.75} aria-hidden="true" /> Listen to Briefing
           </button>
           <button
             type="button"
             onClick={handleScheduleMultiDayTrip}
-            className="forge-tactile-press inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-lg px-2 py-1 font-semibold text-sky-300 hover:bg-white/[0.04] hover:underline"
+            className="forge-tactile-press inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 font-semibold text-sky-300 hover:bg-white/[0.04] hover:underline"
           >
             <Plane size={12} strokeWidth={1.75} aria-hidden="true" /> Schedule Multi-Day Trip
           </button>
@@ -414,7 +447,7 @@ export default function ExecutiveCommandCenterClient({
           </div>
           <Link
             href={activeLiveSessionHref}
-            className="shrink-0 rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-extrabold uppercase text-slate-950"
+            className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg bg-emerald-400 px-3.5 py-2 text-xs font-extrabold uppercase text-slate-950"
           >
             Join →
           </Link>
@@ -433,14 +466,14 @@ export default function ExecutiveCommandCenterClient({
           />
           <JointComfortScoreStrip />
           {activeWorkout && isWorkoutCompleted ? (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-slate-100">
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3.5 py-2 text-xs text-slate-100">
               <span>
                 <strong className="text-emerald-300">✓ Day {activeWorkout.day} Complete</strong>
                 {totalVolumeMovedLbs > 0 ? ` · ${totalVolumeMovedLbs.toLocaleString()} lbs` : ''}
               </span>
               <Link
                 href="/dashboard/fitness?workspace=train"
-                className="font-bold text-emerald-300 hover:underline"
+                className="inline-flex min-h-[44px] items-center px-2 font-bold text-emerald-300 hover:underline"
               >
                 Summary →
               </Link>
@@ -488,7 +521,7 @@ export default function ExecutiveCommandCenterClient({
           </div>
           <Link
             href={onboardingBannerState.href}
-            className="shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950"
+            className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg bg-amber-400 px-3.5 py-2 text-xs font-extrabold text-slate-950"
           >
             {onboardingBannerState.buttonText}
           </Link>
@@ -585,7 +618,10 @@ export default function ExecutiveCommandCenterClient({
         <div className="rounded-2xl border border-white/[0.07] bg-[#111318] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-5">
           <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
             <span>7-Day Volume &amp; Readiness</span>
-            <Link href="/dashboard/fitness?workspace=progress" className="text-emerald-300 hover:underline">
+            <Link
+              href="/dashboard/fitness?workspace=progress"
+              className="inline-flex min-h-[44px] items-center px-1.5 text-emerald-300 hover:underline"
+            >
               Progress →
             </Link>
           </div>
@@ -631,7 +667,7 @@ export default function ExecutiveCommandCenterClient({
             <div className="flex shrink-0 items-center gap-1.5">
               <Link
                 href="/dashboard/live"
-                className="forge-tactile-press inline-flex min-h-[38px] items-center rounded-xl bg-emerald-400 px-3 py-1.5 text-[11px] font-extrabold text-[#090A0D] transition-colors hover:bg-emerald-300"
+                className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl bg-emerald-400 px-3 py-1.5 text-[11px] font-extrabold text-[#090A0D] transition-colors hover:bg-emerald-300"
               >
                 Studio →
               </Link>
@@ -647,7 +683,7 @@ export default function ExecutiveCommandCenterClient({
                     })
                     downloadIcsFile('forge-live-session', ics)
                   }}
-                  className="forge-tactile-press inline-flex min-h-[38px] items-center rounded-xl border border-white/15 bg-[#181B22] px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#1D212A]"
+                  className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-white/15 bg-[#181B22] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#1D212A]"
                 >
                   +ICS
                 </button>

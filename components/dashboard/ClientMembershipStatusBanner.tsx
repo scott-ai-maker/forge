@@ -20,6 +20,8 @@ export default function ClientMembershipStatusBanner({
 
   return (
     <div
+      role="status"
+      data-testid="client-membership-status-banner"
       style={{
         background: isPaused
           ? 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(180,83,9,0.15) 100%)'
@@ -37,7 +39,7 @@ export default function ClientMembershipStatusBanner({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }} aria-hidden="true">
           <GaaIcon name={isPaused ? 'status-paused' : 'status-inactive'} size={28} />
         </div>
         <div>
@@ -66,7 +68,8 @@ export default function ClientMembershipStatusBanner({
           href="/dashboard/messages"
           className="tactile-btn"
           style={{
-            padding: '8px 16px',
+            minHeight: 44,
+            padding: '10px 16px',
             background: isPaused ? '#F59E0B' : '#EF4444',
             color: isPaused ? '#080E14' : '#FFFFFF',
             borderRadius: 6,
@@ -74,6 +77,8 @@ export default function ClientMembershipStatusBanner({
             fontWeight: 800,
             textDecoration: 'none',
             whiteSpace: 'nowrap',
+            display: 'inline-flex',
+            alignItems: 'center',
           }}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>

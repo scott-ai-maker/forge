@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase-server'
+import { notFound } from 'next/navigation'
+import { isMasterCoachEmail, requireSurfaceRole } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import LogoutButton from '@/components/auth/LogoutButton'
 import MessageThreadClient from '@/components/messages/MessageThreadClient'
@@ -14,12 +14,7 @@ interface PageProps {
 }
 
 export default async function CoachClientMessagesPage({ params }: PageProps) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/auth/login')
+  const { user } = await requireSurfaceRole('coach')
 
   const { id } = await params
 
@@ -42,10 +37,7 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
       .eq('id', id)
     client.designated_coach_id = user.id
   } else if (client.designated_coach_id !== user.id) {
-    const isMasterCoach =
-      user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-      user.user_metadata?.surface_role === 'coach'
-    if (!isMasterCoach) {
+    if (!isMasterCoachEmail(user.email)) {
       notFound()
     }
   }

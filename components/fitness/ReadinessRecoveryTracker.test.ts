@@ -270,4 +270,25 @@ describe('ReadinessRecoveryTracker & Recovery Workload Gate (Tool #13)', () => {
       expect(evaluation.workoutAction).toBe('proceed_normal')
     })
   })
+
+  describe('Accessible Brand-Consistent Sliders & 7-Day Deload Schedule Rendering', () => {
+    it('wires explicit label htmlFor associations, forge-range-slider styling, pointer commit, and 7-day deload schedule', async () => {
+      const fs = await import('node:fs')
+      const path = await import('node:path')
+      const src = fs.readFileSync(
+        path.join(process.cwd(), 'components/fitness/ReadinessRecoveryTracker.tsx'),
+        'utf8'
+      )
+
+      expect(src).toContain('htmlFor="readiness-sleep-duration"')
+      expect(src).toContain('htmlFor="readiness-sleep-quality"')
+      expect(src).toContain('htmlFor="readiness-resting-hr"')
+      expect(src).toContain('htmlFor="readiness-baseline-rhr"')
+      expect(src).toContain('htmlFor="readiness-soreness-level"')
+      expect(src).toContain('htmlFor="readiness-stress-level"')
+      expect(src).toContain('className="forge-range-slider"')
+      expect(src).toContain('onPointerUp=')
+      expect(src).toContain('data-testid="deload-microcycle-schedule"')
+    })
+  })
 })

@@ -239,7 +239,7 @@ export function evaluateClientTriage(raw: ClientRawTelemetry): ClientTriageSumma
     priority = 'amber'
     primaryReason = 'Video lift critique submitted and awaiting coach verification.'
     recommendedAction = 'Review AI joint telemetry and publish coach cues.'
-  } else if (hasAcwr && acwrRatio! >= 1.35) {
+  } else if (hasAcwr && acwrRatio! > 1.30) {
     priority = 'amber'
     primaryReason = `Workload overreaching (ACWR: ${acwrRatio!.toFixed(2)}). Fatigue accumulating.`
     recommendedAction = 'Monitor volume closely and prescribe restorative SMR protocol.'

@@ -15,26 +15,28 @@ function isAuthorized(req: NextRequest): boolean {
   return false
 }
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 async function handleWeeklyCheckin() {
   try {
     const result = await sendWeeklyCheckinNudges()
-    return NextResponse.json(result)
+    return NextResponse.json(result, { headers: NO_STORE_HEADERS })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to send weekly check-in nudges'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 500, headers: NO_STORE_HEADERS })
   }
 }
 
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_STORE_HEADERS })
   }
   return handleWeeklyCheckin()
 }
 
 export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_STORE_HEADERS })
   }
   return handleWeeklyCheckin()
 }

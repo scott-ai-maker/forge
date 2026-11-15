@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestAuthz, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
+import { getRequestAuthz, requireCoachAssignedClient, requireRole, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 export async function GET(req: NextRequest) {
   let userId = ''
   try {
     const authz = await getRequestAuthz(req)
+    requireRole(authz.client.role, ['client', 'coach'])
     if (authz.client.role === 'coach') {
       const clientId = String(req.nextUrl.searchParams.get('clientId') ?? '').trim()
       if (!clientId) {
-        return NextResponse.json({ error: 'clientId is required for coach progress views' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'clientId is required for coach progress views' },
+          { status: 400, headers: NO_STORE_HEADERS }
+        )
       }
 
       await requireCoachAssignedClient(authz.user.id, clientId)
@@ -20,7 +26,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const admin = supabaseAdmin()
@@ -35,7 +41,7 @@ export async function GET(req: NextRequest) {
     .limit(16)
 
   if (checkinsError) {
-    return NextResponse.json({ error: 'Failed to load check-ins' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load check-ins' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   // Try to fetch measurement columns separately — they may not exist yet if schema migration
@@ -93,9 +99,10 @@ export async function GET(req: NextRequest) {
     .not('weight_kg', 'is', null)
     .gt('weight_kg', 0)
     .order('weight_kg', { ascending: false })
+    .limit(2500)
 
   if (setLogsError) {
-    return NextResponse.json({ error: 'Failed to load set logs' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load set logs' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   // Deduplicate — one PR per exercise (already ordered desc by weight)
@@ -122,23 +129,30 @@ export async function GET(req: NextRequest) {
 
   const strengthByExercise = new Map<
     string,
-    Array<{ sessionDate: string; bestWeightKg: number; bestReps: number | null }>
+    {
+      displayName: string
+      points: Array<{ sessionDate: string; bestWeightKg: number; bestReps: number | null }>
+    }
   >()
 
   for (const row of setLogs ?? []) {
     const exerciseName = row.exercise_name?.trim()
+    const normalizedKey = exerciseName?.toLowerCase()
     const sessionDate = row.created_at?.slice(0, 10)
-    if (!exerciseName || !sessionDate || row.weight_kg == null) continue
+    if (!exerciseName || !normalizedKey || !sessionDate || row.weight_kg == null) continue
 
-    const existingSeries = strengthByExercise.get(exerciseName) ?? []
-    const existingPoint = existingSeries.find((point) => point.sessionDate === sessionDate)
+    const existingEntry = strengthByExercise.get(normalizedKey) ?? {
+      displayName: exerciseName,
+      points: [] as Array<{ sessionDate: string; bestWeightKg: number; bestReps: number | null }>,
+    }
+    const existingPoint = existingEntry.points.find((point) => point.sessionDate === sessionDate)
     if (!existingPoint) {
-      existingSeries.push({
+      existingEntry.points.push({
         sessionDate,
         bestWeightKg: row.weight_kg,
         bestReps: row.reps ?? null,
       })
-      strengthByExercise.set(exerciseName, existingSeries)
+      strengthByExercise.set(normalizedKey, existingEntry)
       continue
     }
 
@@ -148,20 +162,23 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const strengthTrend = Array.from(strengthByExercise.entries())
-    .map(([exerciseName, points]) => ({
-      exerciseName,
+  const strengthTrend = Array.from(strengthByExercise.values())
+    .map(({ displayName, points }) => ({
+      exerciseName: displayName,
       points: points.sort((left, right) => left.sessionDate.localeCompare(right.sessionDate)),
     }))
     .filter((series) => series.points.length >= 2)
     .sort((left, right) => right.points.length - left.points.length)
     .slice(0, 6)
 
-  return NextResponse.json({
-    weightTrend,
-    measurementTrend,
-    wellnessTrend,
-    strengthTrend,
-    personalRecords,
-  })
+  return NextResponse.json(
+    {
+      weightTrend,
+      measurementTrend,
+      wellnessTrend,
+      strengthTrend,
+      personalRecords,
+    },
+    { headers: NO_STORE_HEADERS }
+  )
 }

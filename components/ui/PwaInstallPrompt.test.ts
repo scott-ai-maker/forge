@@ -48,12 +48,19 @@ describe('PwaInstallPrompt & Modal Stacking Architecture', () => {
     for (const relPath of modalFiles) {
       const fullPath = path.resolve(__dirname, '../../', relPath)
       const content = fs.readFileSync(fullPath, 'utf-8')
-      // Extract all zIndex declarations
+      // Native <dialog> with .showModal() renders in the browser top layer above all z-index contexts
+      const usesNativeTopLayerDialog =
+        content.includes('<dialog') && content.includes('.showModal(')
+      if (usesNativeTopLayerDialog) {
+        expect(usesNativeTopLayerDialog).toBe(true)
+        continue
+      }
+      // Extract all zIndex declarations for non-native overlays
       const zIndexMatches = [...content.matchAll(/zIndex:\s*([0-9]+)/g)].map(m => Number(m[1]))
       const maxZ = Math.max(...zIndexMatches)
       expect(
         maxZ,
-        `Expected ${relPath} to have a modal backdrop zIndex >= 100000 (found ${maxZ})`
+        `Expected ${relPath} to use native top-layer <dialog>.showModal() or zIndex >= 100000 (found ${maxZ})`
       ).toBeGreaterThanOrEqual(100000)
     }
   })

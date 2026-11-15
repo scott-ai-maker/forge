@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { isMasterCoachEmail } from '@/lib/authz'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SiteHeader from '@/components/ui/SiteHeader'
 import GaaIcon from '@/components/ui/GaaIcon'
@@ -50,13 +51,23 @@ export default async function ExecutiveSundayDossierPage({
       .eq('role', 'coach')
       .maybeSingle()
 
-    const isMasterCoach =
-      user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-      user.user_metadata?.surface_role === 'coach'
+    const isMasterCoach = isMasterCoachEmail(user.email)
 
-    if (coachCheck || isMasterCoach) {
+    if (isMasterCoach) {
       targetUserId = rawClientId
       isCoachPreview = true
+    } else if (coachCheck) {
+      const { data: assignedClient } = await admin
+        .from('clients')
+        .select('id')
+        .eq('id', rawClientId)
+        .eq('designated_coach_id', user.id)
+        .maybeSingle()
+
+      if (assignedClient) {
+        targetUserId = rawClientId
+        isCoachPreview = true
+      }
     }
   }
 

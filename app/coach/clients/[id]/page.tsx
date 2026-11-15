@@ -1,7 +1,7 @@
 import dynamicImport from 'next/dynamic'
 import Link from 'next/link'
-import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase-server'
+import { notFound } from 'next/navigation'
+import { isMasterCoachEmail, requireSurfaceRole } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import { normalizeCoachClientTab } from '@/lib/validation'
 import LogoutButton from '@/components/auth/LogoutButton'
@@ -97,12 +97,7 @@ function isExcludedEquipmentName(name: string) {
 }
 
 export default async function CoachClientPage({ params, searchParams }: PageProps) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/auth/login')
+  const { user } = await requireSurfaceRole('coach')
 
   const { id } = await params
   const resolvedSearchParams = await searchParams
@@ -130,7 +125,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
 
   if (clientError || !client) notFound()
 
-  // Auto-assign unassigned clients or allow master coach access
+  // Auto-assign unassigned clients to verified coach or allow authoritative master coach access
   if (!client.designated_coach_id) {
     await admin
       .from('clients')
@@ -138,10 +133,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
       .eq('id', id)
     client.designated_coach_id = user.id
   } else if (client.designated_coach_id !== user.id) {
-    const isMasterCoach =
-      user.email?.toLowerCase() === 'coach@forge-athletic.app' ||
-      user.user_metadata?.surface_role === 'coach'
-    if (!isMasterCoach) {
+    if (!isMasterCoachEmail(user.email)) {
       notFound()
     }
   }

@@ -4,12 +4,15 @@ import { AuthzError, getRequestAuthz, requireRole } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import { toValidUuidOrNull } from '@/lib/uuid-utils'
 import {
+  checkTelemetryIngestRateLimit,
   loadClientTelemetrySnapshot,
   recordTelemetryBatch,
   verifyTelemetryEventReceipt,
   type ValidatedTelemetryEnvelope,
 } from '@/lib/telemetry-storage'
 import { sanitizeTelemetryPayload } from '@/src/lib/telemetry/telemetryClient'
+
+const MAX_TELEMETRY_BODY_BYTES = 262_144 // 256 KB ceiling per batch request
 
 const ALLOWED_PLATFORMS = [
   'ios_app',
@@ -173,7 +176,51 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const rawBody = await req.json().catch(() => null)
+  const contentLengthHeader = req.headers.get('content-length')
+  if (contentLengthHeader) {
+    const contentLength = Number(contentLengthHeader)
+    if (Number.isFinite(contentLength) && contentLength > MAX_TELEMETRY_BODY_BYTES) {
+      return NextResponse.json(
+        { error: 'Telemetry batch payload exceeds 256 KB maximum' },
+        { status: 413, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+      )
+    }
+  }
+
+  const rateCheck = checkTelemetryIngestRateLimit(userId)
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { error: 'Telemetry ingestion rate limit exceeded. Please retry shortly.' },
+      {
+        status: 429,
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+          'Retry-After': String(rateCheck.retryAfterSec),
+        },
+      }
+    )
+  }
+
+  const rawText = await req.text().catch(() => '')
+  if (!rawText) {
+    return NextResponse.json(
+      { error: 'Invalid JSON request body' },
+      { status: 400, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    )
+  }
+  if (Buffer.byteLength(rawText, 'utf8') > MAX_TELEMETRY_BODY_BYTES) {
+    return NextResponse.json(
+      { error: 'Telemetry batch payload exceeds 256 KB maximum' },
+      { status: 413, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    )
+  }
+
+  let rawBody: unknown = null
+  try {
+    rawBody = JSON.parse(rawText)
+  } catch {
+    rawBody = null
+  }
   if (!rawBody || typeof rawBody !== 'object') {
     return NextResponse.json(
       { error: 'Invalid JSON request body' },

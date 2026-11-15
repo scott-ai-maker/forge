@@ -19,6 +19,8 @@ export interface ClientEngagement {
   trend: 'improving' | 'stable' | 'declining' | 'new'
 }
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 export async function GET(req: NextRequest) {
   let coachId = ''
   let isMasterCoach = false
@@ -26,11 +28,11 @@ export async function GET(req: NextRequest) {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['coach'])
     coachId = authz.user.id
-    isMasterCoach = isMasterCoachEmail(authz.user.email) || authz.user.user_metadata?.surface_role === 'coach'
+    isMasterCoach = isMasterCoachEmail(authz.user.email)
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const admin = supabaseAdmin()
@@ -60,11 +62,11 @@ export async function GET(req: NextRequest) {
   const { data: clients, error: clientsError } = await clientsQuery
 
   if (clientsError) {
-    return NextResponse.json({ error: 'Failed to load clients' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load clients' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   if (!clients || clients.length === 0) {
-    return NextResponse.json({ clients: [], summary: buildSummary([]) })
+    return NextResponse.json({ clients: [], summary: buildSummary([]) }, { headers: NO_STORE_HEADERS })
   }
 
   const clientIds = clients.map((c) => c.id)
@@ -291,10 +293,13 @@ export async function GET(req: NextRequest) {
     }
   })
 
-  return NextResponse.json({
-    clients: engagement,
-    summary: buildSummary(engagement),
-  })
+  return NextResponse.json(
+    {
+      clients: engagement,
+      summary: buildSummary(engagement),
+    },
+    { headers: NO_STORE_HEADERS }
+  )
 }
 
 function buildSummary(data: ClientEngagement[]) {

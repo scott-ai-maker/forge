@@ -32,11 +32,14 @@ import SmartExerciseSwapModal from '@/components/coach/SmartExerciseSwapModal'
 import PreWorkoutReadinessBridge from '@/components/fitness/PreWorkoutReadinessBridge'
 import {
   computePostureDailyStreak,
+  ENVIRONMENT_PROFILE_META,
+  type EnvironmentProfileId,
   getTodayIsoDate,
   loadPostureProfileState,
   POSTURE_PROFILE_EVENT,
   recordDailyReadinessAndComfort,
   recordDeskResetCompletedOnDate,
+  recordEnvironmentSelection,
   removeInjectedWarmupForToday,
   setExpressModeActive,
 } from '@/lib/posture-profile-state'
@@ -149,7 +152,10 @@ import {
   type TrainingSplitId,
 } from '@/lib/rag-nasm-program-generator'
 import ClientTrainingSplitSelector from '@/components/fitness/tracker/ClientTrainingSplitSelector'
-import type { ExercisePlanItem } from '@/lib/travel-workout-adapter'
+import {
+  applyExpressAndEnvironmentToExercises,
+  type ExercisePlanItem,
+} from '@/lib/travel-workout-adapter'
 import type { NasmAssessmentRecord } from '@/lib/nasm-assessments'
 import {
   isTimedStaticStretch,
@@ -828,6 +834,26 @@ export default function FitnessTrackerClient({
   const [completeModal, setCompleteModal] = useState<WorkoutDay | null>(null)
   const [skipModal, setSkipModal] = useState<{ workoutDay: number; exercise: WorkoutExercise } | null>(null)
   const [adaptedExercisesByDay, setAdaptedExercisesByDay] = useState<Record<number, ExercisePlanItem[]>>({})
+  const [sessionAdaptationPrefs, setSessionAdaptationPrefs] = useState<{
+    expressModeActive: boolean
+    environmentProfile: EnvironmentProfileId
+  }>({
+    expressModeActive: false,
+    environmentProfile: 'home_gym',
+  })
+
+  useEffect(() => {
+    const syncPrefs = () => {
+      const state = loadPostureProfileState()
+      setSessionAdaptationPrefs({
+        expressModeActive: state.expressModeActive,
+        environmentProfile: state.environmentProfile,
+      })
+    }
+    syncPrefs()
+    window.addEventListener(POSTURE_PROFILE_EVENT, syncPrefs)
+    return () => window.removeEventListener(POSTURE_PROFILE_EVENT, syncPrefs)
+  }, [])
   const [localCardioLogs, setLocalCardioLogs] = useState<CardioLogEntry[]>(cardioLogs)
   const [cardioDraftsByDay, setCardioDraftsByDay] = useState<Record<number, InWorkoutCardioDraft>>({})
   const [activeCardioPlayerSession, setActiveCardioPlayerSession] = useState<{
@@ -1239,7 +1265,16 @@ export default function FitnessTrackerClient({
     }
     const currentDay = effectiveActiveWorkoutDay
     const workout = planWorkouts.find(w => w.day === currentDay) ?? planWorkouts[0]
-    const dayExercises = workout ? (adaptedExercisesByDay[workout.day] ?? workout.exercises) : undefined
+    const baseDayExercises = workout ? (adaptedExercisesByDay[workout.day] ?? workout.exercises) : undefined
+    const dayExercises = baseDayExercises
+      ? applyExpressAndEnvironmentToExercises(
+          baseDayExercises.map(ex => ({
+            ...ex,
+            alreadyManuallyAdapted: Boolean(adaptedExercisesByDay[workout!.day]),
+          })),
+          sessionAdaptationPrefs
+        )
+      : undefined
     if (workout && dayExercises && dayExercises.length > 0) {
       const effectiveSessionDate = resolveEffectiveWorkoutSessionDate(workout.scheduledDate, todayDateOnly())
       const firstUnfinished = dayExercises.find(ex => {
@@ -1255,7 +1290,7 @@ export default function FitnessTrackerClient({
       return `${workout.day}-${firstUnfinished.name}`
     }
     return null
-  }, [expandedExerciseKey, effectiveActiveWorkoutDay, planWorkouts, adaptedExercisesByDay, activeSetLogs, microcycleProgress.currentWeek])
+  }, [expandedExerciseKey, effectiveActiveWorkoutDay, planWorkouts, adaptedExercisesByDay, activeSetLogs, microcycleProgress.currentWeek, sessionAdaptationPrefs])
 
   // Coach Gordon Real-Time Workout Action Execution Listeners
   useEffect(() => {
@@ -1468,16 +1503,21 @@ export default function FitnessTrackerClient({
     }))
 
     // 2. Resistance Exercises
-    const rawCandidateExercises: WorkoutExercise[] = adaptedExercisesByDay[activeWorkout.day]
+    const baseCandidateExercises: (WorkoutExercise & { alreadyManuallyAdapted?: boolean })[] = adaptedExercisesByDay[activeWorkout.day]
       ? adaptedExercisesByDay[activeWorkout.day].map(ae => ({
           name: ae.name,
           sets: String(ae.sets),
           reps: ae.reps,
           tempo: ae.tempo ?? null,
-          rest: null,
+          rest: ae.restSeconds ? `${ae.restSeconds}s` : null,
           block: (ae as unknown as { block?: string | null }).block ?? 'resistance',
+          alreadyManuallyAdapted: true,
         }))
       : (activeWorkout.exercises || [])
+    const rawCandidateExercises: WorkoutExercise[] = applyExpressAndEnvironmentToExercises(
+      baseCandidateExercises,
+      sessionAdaptationPrefs
+    )
 
     const isDedicatedCardioDay =
       activeWorkout.focus?.toLowerCase().includes('cardio') ||
@@ -1744,6 +1784,7 @@ export default function FitnessTrackerClient({
     latestAssessment,
     microcycleProgress.currentWeek,
     adaptedExercisesByDay,
+    sessionAdaptationPrefs,
     localSetLogs,
     inlineSetDrafts,
     effectiveOpenExerciseKey,
@@ -4357,7 +4398,7 @@ export default function FitnessTrackerClient({
 
                       {/* Step 2: Resistance Training */}
                       {(activeStepFilter === 'all' || activeStepFilter === 'resistance') && (() => {
-                        const rawCurrentExercises: WorkoutExercise[] = adaptedExercisesByDay[workout.day]
+                        const baseCurrentExercises: (WorkoutExercise & { alreadyManuallyAdapted?: boolean })[] = adaptedExercisesByDay[workout.day]
                           ? adaptedExercisesByDay[workout.day].map(ae => ({
                               name: ae.name,
                               sets: String(ae.sets),
@@ -4370,17 +4411,114 @@ export default function FitnessTrackerClient({
                               imageUrl: null,
                               videoUrl: null,
                               block: 'resistance',
+                              alreadyManuallyAdapted: true,
                             }))
                           : workout.exercises
+
+                        const rawCurrentExercises: WorkoutExercise[] = applyExpressAndEnvironmentToExercises(
+                          baseCurrentExercises || [],
+                          sessionAdaptationPrefs
+                        )
 
                         const currentExercises = (rawCurrentExercises || []).filter(ex => !isCardioPseudoExercise(ex.name))
                         const isDedicatedCardioDay =
                           workout.focus?.toLowerCase().includes('cardio') ||
                           workout.focus?.toLowerCase().includes('recovery') ||
                           currentExercises.length === 0
+                        const isTravelEnvActive =
+                          sessionAdaptationPrefs.environmentProfile === 'hotel_travel' ||
+                          sessionAdaptationPrefs.environmentProfile === 'bodyweight_only'
+                        const showSessionAdaptationStrip =
+                          !isDedicatedCardioDay &&
+                          (sessionAdaptationPrefs.expressModeActive ||
+                            isTravelEnvActive ||
+                            Boolean(adaptedExercisesByDay[workout.day]))
 
                         return (
                           <div style={{ marginBottom: 16 }}>
+                            {!isStageCollapsed(workout.day, 'resistance') && showSessionAdaptationStrip && (
+                              <div
+                                data-testid="active-session-adaptation-banner"
+                                style={{
+                                  marginBottom: 10,
+                                  padding: '10px 14px',
+                                  borderRadius: 10,
+                                  background:
+                                    'linear-gradient(135deg, rgba(251,191,36,0.09) 0%, rgba(56,189,248,0.09) 100%)',
+                                  border: '1px solid rgba(56,189,248,0.32)',
+                                  display: 'flex',
+                                  flexWrap: 'wrap',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: 8,
+                                }}
+                              >
+                                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, fontSize: 12, color: '#E2E8F0' }}>
+                                  <span style={{ fontWeight: 800, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 11 }}>
+                                    Active Session Adaptation:
+                                  </span>
+                                  {sessionAdaptationPrefs.expressModeActive && (
+                                    <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(251,191,36,0.16)', border: '1px solid rgba(251,191,36,0.4)', color: '#FDE68A', fontWeight: 700, fontSize: 11 }}>
+                                      20m Express ({currentExercises.length} lifts · max 2 sets · 45s rest)
+                                    </span>
+                                  )}
+                                  {isTravelEnvActive && (
+                                    <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(56,189,248,0.16)', border: '1px solid rgba(56,189,248,0.4)', color: '#BAE6FD', fontWeight: 700, fontSize: 11 }}>
+                                      {ENVIRONMENT_PROFILE_META[sessionAdaptationPrefs.environmentProfile]?.label}
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                  {sessionAdaptationPrefs.expressModeActive && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpressModeActive(false)}
+                                      style={{
+                                        minHeight: 44,
+                                        padding: '6px 12px',
+                                        borderRadius: 8,
+                                        border: '1px solid rgba(255,255,255,0.16)',
+                                        background: 'rgba(15,23,42,0.75)',
+                                        color: '#F8FAFC',
+                                        fontSize: 11,
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      Standard 45m
+                                    </button>
+                                  )}
+                                  {(isTravelEnvActive || Boolean(adaptedExercisesByDay[workout.day])) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        recordEnvironmentSelection('home_gym')
+                                        if (adaptedExercisesByDay[workout.day]) {
+                                          setAdaptedExercisesByDay(prev => {
+                                            const copy = { ...prev }
+                                            delete copy[workout.day]
+                                            return copy
+                                          })
+                                        }
+                                      }}
+                                      style={{
+                                        minHeight: 44,
+                                        padding: '6px 12px',
+                                        borderRadius: 8,
+                                        border: '1px solid rgba(255,255,255,0.16)',
+                                        background: 'rgba(15,23,42,0.75)',
+                                        color: '#F8FAFC',
+                                        fontSize: 11,
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      Restore Home Gym
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                             {!isStageCollapsed(workout.day, 'resistance') && (
                               isDedicatedCardioDay ? (
                                 <div
@@ -6300,13 +6438,30 @@ export default function FitnessTrackerClient({
               : undefined
           }
           initialOpenScanner={isScannerRequested}
-          onApplyTravelPlan={(scenario, adapted) => {
+          activeWorkoutDay={effectiveActiveWorkoutDay}
+          onApplyTravelPlan={(scenario, adapted, targetDay, adaptedByDay) => {
             if (planWorkouts.length > 0) {
-              setAdaptedExercisesByDay(prev => ({
-                ...prev,
-                [planWorkouts[0].day]: adapted,
-              }))
-              setStatus(`Activated ${scenario.replace(/_/g, ' ')} travel workout for day ${planWorkouts[0].day}.`)
+              if (adaptedByDay && Object.keys(adaptedByDay).length > 0) {
+                setAdaptedExercisesByDay(prev => ({
+                  ...prev,
+                  ...adaptedByDay,
+                }))
+                const daySummary =
+                  targetDay === 'all'
+                    ? `all ${Object.keys(adaptedByDay).length} workout days`
+                    : `Day ${targetDay ?? effectiveActiveWorkoutDay}`
+                setStatus(`Activated ${scenario.replace(/_/g, ' ')} travel workout for ${daySummary}.`)
+              } else {
+                const resolvedDay =
+                  typeof targetDay === 'number'
+                    ? targetDay
+                    : effectiveActiveWorkoutDay || planWorkouts[0].day
+                setAdaptedExercisesByDay(prev => ({
+                  ...prev,
+                  [resolvedDay]: adapted,
+                }))
+                setStatus(`Activated ${scenario.replace(/_/g, ' ')} travel workout for day ${resolvedDay}.`)
+              }
             }
           }}
         />

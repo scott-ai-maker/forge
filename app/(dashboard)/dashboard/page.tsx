@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { isMasterCoachEmail } from '@/lib/authz'
 import { normalizeDashboardWorkspace } from '@/lib/validation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SuccessBanner from '@/components/dashboard/SuccessBanner'
@@ -34,13 +35,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const admin = supabaseAdmin()
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const twentyEightDaysAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
+  const sevenDaysAgoDateStr = sevenDaysAgo.split('T')[0]
+  const twentyEightDaysAgoDateStr = twentyEightDaysAgo.split('T')[0]
 
   const [
     { data: packages },
     { data: sessions },
     { data: clientRow },
     { data: latestPlan },
-    { data: weeklySetLogs },
+    { data: allRecentSetLogs },
     { data: weeklyCardioLogs },
     { data: recentPrs },
     { data: workoutLogs },
@@ -59,7 +63,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .order('scheduled_at', { ascending: true }),
     admin
       .from('clients')
-      .select('full_name, email, role')
+      .select('full_name, email, role, status, status_reason')
       .eq('id', user.id)
       .maybeSingle(),
     supabase
@@ -73,19 +77,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .from('workout_set_logs')
       .select('session_date, weight_kg, reps, is_warmup, rpe, rir, exercise_name, notes, created_at')
       .eq('user_id', user.id)
-      .gte('session_date', sevenDaysAgo.split('T')[0])
+      .gte('session_date', twentyEightDaysAgoDateStr)
       .order('session_date', { ascending: false }),
     supabase
       .from('cardio_logs')
       .select('session_date, activity_type, duration_mins, avg_heart_rate')
       .eq('user_id', user.id)
-      .gte('session_date', sevenDaysAgo.split('T')[0])
+      .gte('session_date', sevenDaysAgoDateStr)
       .order('session_date', { ascending: false }),
     admin
       .from('client_personal_records')
       .select('exercise_name, max_weight_kg, max_weight_reps, max_weight_date, updated_at')
       .eq('user_id', user.id)
-      .gte('max_weight_date', sevenDaysAgo.split('T')[0])
+      .gte('max_weight_date', sevenDaysAgoDateStr)
       .order('max_weight_date', { ascending: false }),
     supabase
       .from('workout_logs')
@@ -99,8 +103,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const isPreview = resolvedSearchParams?.preview === 'client' || resolvedSearchParams?.as === 'athlete'
   const isCoach =
     clientRow?.role === 'coach' ||
-    user.user_metadata?.surface_role === 'coach' ||
-    user.email?.toLowerCase() === 'coach@forge-athletic.app'
+    isMasterCoachEmail(user.email)
 
   if (isCoach && !isPreview) {
     redirect('/coach')
@@ -121,7 +124,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .maybeSingle(),
     admin
       .from('athlete_wearable_metrics')
-      .select('resting_heart_rate')
+      .select('resting_heart_rate, hrv_rmssd_ms')
       .eq('client_id', user.id)
       .order('sample_date', { ascending: false })
       .limit(1)
@@ -164,30 +167,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ? `Phase ${latestPlan.nasm_opt_phase}: ${latestPlan.phase_name}`
     : (needsOnboarding ? 'Intake & PAR-Q Pending' : (profile?.fitness_goal || 'Awaiting Protocol Assignment'))
 
-  const restingHeartRate = wearableMetric?.resting_heart_rate ?? 54
-
-  const dossier = generateSundayDossier(
-    clientName,
-    currentPlanPhase,
-    weeklySetLogs ?? [],
-    weeklyCardioLogs ?? [],
-    recentPrs ?? [],
-    4,
-    restingHeartRate,
-    68
-  )
-
-  const now = new Date()
-  const activePackages = (packages ?? []).filter(
-    p => !p.expires_at || new Date(p.expires_at) > now
-  )
-  const totalRemaining = activePackages.reduce(
-    (sum, p) => sum + (p.sessions_remaining ?? 0),
-    0
-  )
-
-  const activePackage = activePackages[0] ?? packages?.[0]
-
   const planJson = (latestPlan as { plan_json?: unknown } | null)?.plan_json
   const parsedPlanJson = typeof planJson === 'string'
     ? (() => {
@@ -214,6 +193,39 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }> = Array.isArray(parsedPlanJson?.workouts) ? parsedPlanJson.workouts : []
 
   const sessionsPerWeek = Number(latestPlan?.sessions_per_week) || (planWorkouts.length > 0 ? planWorkouts.length : 4)
+  const restingHeartRate = wearableMetric?.resting_heart_rate ?? 54
+  const hrvBaseline = wearableMetric?.hrv_rmssd_ms ?? 68
+  const weeklySetLogs = (allRecentSetLogs ?? []).filter(
+    s => (s.session_date ?? '') >= sevenDaysAgoDateStr
+  )
+  const chronicTonnageSum = (allRecentSetLogs ?? []).reduce(
+    (acc, s) => acc + (s.is_warmup ? 0 : ((s.weight_kg ?? 0) * 2.20462) * (s.reps ?? 0)),
+    0
+  )
+  const chronicWorkloadTonnage = Math.round(chronicTonnageSum / 4)
+
+  const dossier = generateSundayDossier(
+    clientName,
+    currentPlanPhase,
+    weeklySetLogs,
+    weeklyCardioLogs ?? [],
+    recentPrs ?? [],
+    sessionsPerWeek,
+    restingHeartRate,
+    hrvBaseline,
+    chronicWorkloadTonnage
+  )
+
+  const now = new Date()
+  const activePackages = (packages ?? []).filter(
+    p => !p.expires_at || new Date(p.expires_at) > now
+  )
+  const totalRemaining = activePackages.reduce(
+    (sum, p) => sum + (p.sessions_remaining ?? 0),
+    0
+  )
+
+  const activePackage = activePackages[0] ?? packages?.[0]
   const planCompletedLogs = filterLogsForPlan(workoutLogs ?? [], latestPlan, planWorkouts)
   const completedWorkoutCount = planCompletedLogs.length > 0
     ? planCompletedLogs.length
@@ -254,7 +266,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const activeDaySetLogs = activeWorkout
     ? filterSetLogsForMicrocycleWeek({
-        setLogs: (weeklySetLogs ?? []).map(s => ({
+        setLogs: (allRecentSetLogs ?? []).map(s => ({
           ...s,
           exercise_name: s.exercise_name,
           reps: s.reps,

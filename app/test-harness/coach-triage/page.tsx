@@ -99,11 +99,66 @@ const MOCK_TRIAGE_CLIENTS: ClientTriageSummary[] = [
   },
 ]
 
-export default function CoachTriageTestHarnessPage() {
+const TELEMETRY_EDGE_CLIENTS: ClientTriageSummary[] = [
+  {
+    clientId: 'athlete-null-readiness',
+    clientName: 'Clara Onboarding',
+    email: 'clara@forgeathletic.com',
+    priority: 'green',
+    priorityRank: 3,
+    primaryReason: 'Awaiting Week 1 biometric check-in',
+    readinessScore: null,
+    adherencePercent: 100,
+    daysSinceLastCheckin: 3,
+    hasPendingVideoCritique: false,
+    hasMedicalRedFlag: false,
+    hasReportedPain: false,
+    currentOptPhase: 1,
+    recommendedAction: 'Monitor baseline movement screen and initial session completion.',
+    acwrRatio: null,
+    acwrZone: 'No Data',
+    acuteWorkloadUnits: 0,
+    chronicWorkloadUnits: 0,
+    primaryFatiguedMuscles: [],
+    suggestedPeriodizationAction: null,
+  },
+  {
+    clientId: 'athlete-zero-readiness',
+    clientName: 'Dr. Evelyn Vance',
+    email: 'evelyn@forgeathletic.com',
+    priority: 'red',
+    priorityRank: 1,
+    primaryReason: 'High systemic fatigue (Readiness: 0%). Autonomic exhaustion risk.',
+    readinessScore: 0,
+    adherencePercent: 0,
+    daysSinceLastCheckin: 4,
+    hasPendingVideoCritique: false,
+    hasMedicalRedFlag: false,
+    hasReportedPain: false,
+    currentOptPhase: 2,
+    recommendedAction: 'Prescribe complete parasympathetic recovery day.',
+    acwrRatio: 1.32,
+    acwrZone: 'Overreaching',
+    acuteWorkloadUnits: 1056,
+    chronicWorkloadUnits: 800,
+    primaryFatiguedMuscles: ['CNS', 'Lumbar'],
+    suggestedPeriodizationAction: 'insert_deload',
+    suggestedActionLabel: '1-Click Restorative Deload',
+  },
+]
+
+export default async function CoachTriageTestHarnessPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ scenario?: string }>
+}) {
+  const resolved = searchParams ? await searchParams : {}
+  const clients = resolved?.scenario === 'telemetry-edge' ? TELEMETRY_EDGE_CLIENTS : MOCK_TRIAGE_CLIENTS
+
   return (
     <main style={{ minHeight: '100dvh', background: '#080E14', padding: '24px 16px' }}>
       <div style={{ maxWidth: 1440, margin: '0 auto' }}>
-        <CoachTriageCockpit initialClients={MOCK_TRIAGE_CLIENTS} />
+        <CoachTriageCockpit initialClients={clients} />
       </div>
     </main>
   )

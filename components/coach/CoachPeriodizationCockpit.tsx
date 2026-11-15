@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import {
@@ -82,6 +82,7 @@ export default function CoachPeriodizationCockpit({
   initialPlan = null,
 }: CoachPeriodizationCockpitProps) {
   const router = useRouter()
+  const baseId = useId()
   const [macrocycle, setMacrocycle] = useState<MacrocyclePlan>(() => {
     return initialPlan || generate12WeekMacrocycle(1, clientGoal)
   })
@@ -92,7 +93,7 @@ export default function CoachPeriodizationCockpit({
   const [_isLoading, setIsLoading] = useState<boolean>(false)
 
   // Modal / intervention states
-  const [activeIntervention, setActiveIntervention] = useState<'deload' | 'accelerate' | 'extend' | 'setback' | null>(null)
+  const [activeIntervention, setActiveIntervention] = useState<'deload' | 'accelerate' | 'extend' | 'setback' | 'reset' | null>(null)
   const [interventionNote, setInterventionNote] = useState<string>('')
   const [targetPhaseSelect, setTargetPhaseSelect] = useState<number>(2)
   const [extendWeeksCount, setExtendWeeksCount] = useState<number>(1)
@@ -160,12 +161,15 @@ export default function CoachPeriodizationCockpit({
   }
 
   const handleResetToBaseline = () => {
-    if (window.confirm('Reset this macrocycle to default 12-Week NASM OPT baseline?')) {
-      const reset = generate12WeekMacrocycle(1, clientGoal)
-      setMacrocycle(reset)
-      setSelectedWeekNum(1)
-      setSaveStatus({ success: true, message: 'Macrocycle reset to baseline OPT 12-week periodization.' })
-    }
+    setActiveIntervention('reset')
+  }
+
+  const confirmResetToBaseline = () => {
+    const reset = generate12WeekMacrocycle(1, clientGoal)
+    setMacrocycle(reset)
+    setSelectedWeekNum(1)
+    setActiveIntervention(null)
+    setSaveStatus({ success: true, message: 'Macrocycle reset to baseline OPT 12-week periodization.' })
   }
 
   // Save to database & sync with client
@@ -287,7 +291,7 @@ export default function CoachPeriodizationCockpit({
               onClick={handleSaveAndSync}
               disabled={isSaving}
               className="sgf-button sgf-button-gold"
-              style={{ padding: '10px 22px', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              style={{ padding: '10px 22px', minHeight: 44, fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
               <GaaIcon name="check" size={13} tone="inherit" />
               <span>{isSaving ? 'Synchronizing...' : 'Save & Sync Macrocycle'}</span>
@@ -316,6 +320,7 @@ export default function CoachPeriodizationCockpit({
       {/* Save Status Notification */}
       {saveStatus && (
         <div
+          role={saveStatus.success ? 'status' : 'alert'}
           style={{
             padding: '12px 18px',
             borderRadius: 6,
@@ -338,6 +343,7 @@ export default function CoachPeriodizationCockpit({
                 href={`/coach/clients/${clientId}?tab=program#workspace-tab-content`}
                 style={{
                   padding: '5px 12px',
+                  minHeight: 44,
                   borderRadius: 4,
                   background: '#34d399',
                   color: '#080E14',
@@ -355,8 +361,9 @@ export default function CoachPeriodizationCockpit({
           </div>
           <button
             type="button"
+            aria-label="Dismiss notification"
             onClick={() => setSaveStatus(null)}
-            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 4, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <GaaIcon name="close" size={14} tone="slate" />
           </button>
@@ -531,23 +538,37 @@ export default function CoachPeriodizationCockpit({
                     <span>Apply Joint Setback Protocol at Week {selectedWeekNum}</span>
                   </>
                 )}
+                {activeIntervention === 'reset' && (
+                  <>
+                    <GaaIcon name="rotate-ccw" size={14} tone="slate" />
+                    <span>Reset Macrocycle to Default 12-Week NASM OPT™ Baseline?</span>
+                  </>
+                )}
               </strong>
               <button
                 type="button"
                 onClick={() => setActiveIntervention(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--gray)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}
+                aria-label="Close intervention panel"
+                style={{ background: 'none', border: 'none', color: 'var(--gray)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, minHeight: 44, padding: '0 8px' }}
               >
                 <GaaIcon name="close" size={13} tone="slate" />
-                <span>Cancel</span>
+                <span>Close</span>
               </button>
             </div>
 
+            {activeIntervention === 'reset' && (
+              <p style={{ margin: 0, fontSize: 13, color: '#CBD5E1', lineHeight: 1.5 }}>
+                This will overwrite unsaved week modulations and restore the standard 12-week NASM OPT™ macrocycle trajectory for <strong>{clientName}</strong>.
+              </p>
+            )}
+
             {activeIntervention === 'accelerate' && (
               <div>
-                <label style={{ fontSize: 12, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
+                <label htmlFor={`${baseId}-target-phase`} style={{ fontSize: 12, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
                   Target Advanced OPT™ Phase:
                 </label>
                 <select
+                  id={`${baseId}-target-phase`}
                   value={targetPhaseSelect}
                   onChange={e => setTargetPhaseSelect(Number(e.target.value))}
                   style={{
@@ -555,6 +576,8 @@ export default function CoachPeriodizationCockpit({
                     color: '#FFFFFF',
                     border: '1px solid rgba(255,255,255,0.2)',
                     padding: '8px 12px',
+                    minHeight: 44,
+                    fontSize: 'max(1rem, 1em)',
                     borderRadius: 4,
                     width: '100%',
                   }}
@@ -569,10 +592,11 @@ export default function CoachPeriodizationCockpit({
 
             {activeIntervention === 'extend' && (
               <div>
-                <label style={{ fontSize: 12, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
+                <label htmlFor={`${baseId}-extend-weeks`} style={{ fontSize: 12, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
                   Number of Reinforcement Microcycles to Add:
                 </label>
                 <select
+                  id={`${baseId}-extend-weeks`}
                   value={extendWeeksCount}
                   onChange={e => setExtendWeeksCount(Number(e.target.value))}
                   style={{
@@ -580,6 +604,8 @@ export default function CoachPeriodizationCockpit({
                     color: '#FFFFFF',
                     border: '1px solid rgba(255,255,255,0.2)',
                     padding: '8px 12px',
+                    minHeight: 44,
+                    fontSize: 'max(1rem, 1em)',
                     borderRadius: 4,
                     width: '100%',
                   }}
@@ -591,40 +617,45 @@ export default function CoachPeriodizationCockpit({
               </div>
             )}
 
-            <div>
-              <label style={{ fontSize: 12, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
-                Coach Clinical Memo for Athlete:
-              </label>
-              <input
-                type="text"
-                placeholder={
-                  activeIntervention === 'deload'
-                    ? 'e.g. Active recovery microcycle to dissipate acute fatigue and protect joints.'
-                    : activeIntervention === 'setback'
-                    ? 'e.g. Modulating to 4/2/1 tempo to decompress shoulder joint.'
-                    : 'e.g. Advancing phase following early movement mastery.'
-                }
-                value={interventionNote}
-                onChange={e => setInterventionNote(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: '#0A0E18',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  padding: '8px 12px',
-                  borderRadius: 4,
-                  fontSize: 13,
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
+            {activeIntervention !== 'reset' && (
+              <div>
+                <label htmlFor={`${baseId}-intervention-note`} style={{ fontSize: 12, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
+                  Coach Clinical Memo for Athlete:
+                </label>
+                <input
+                  id={`${baseId}-intervention-note`}
+                  type="text"
+                  placeholder={
+                    activeIntervention === 'deload'
+                      ? 'e.g. Active recovery microcycle to dissipate acute fatigue and protect joints.'
+                      : activeIntervention === 'setback'
+                      ? 'e.g. Modulating to 4/2/1 tempo to decompress shoulder joint.'
+                      : 'e.g. Advancing phase following early movement mastery.'
+                  }
+                  value={interventionNote}
+                  onChange={e => setInterventionNote(e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: '#0A0E18',
+                    color: '#FFFFFF',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    padding: '8px 12px',
+                    minHeight: 44,
+                    borderRadius: 4,
+                    fontSize: 'max(1rem, 1em)',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            )}
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button
                 type="button"
+                autoFocus={activeIntervention === 'reset'}
                 onClick={() => setActiveIntervention(null)}
                 className="sgf-button sgf-button-secondary"
-                style={{ padding: '6px 14px', fontSize: 12 }}
+                style={{ padding: '8px 16px', minHeight: 44, fontSize: 12 }}
               >
                 Cancel
               </button>
@@ -635,11 +666,12 @@ export default function CoachPeriodizationCockpit({
                   else if (activeIntervention === 'accelerate') handleAccelerate()
                   else if (activeIntervention === 'extend') handleExtend()
                   else if (activeIntervention === 'setback') handleSetback()
+                  else if (activeIntervention === 'reset') confirmResetToBaseline()
                 }}
                 className="sgf-button sgf-button-gold"
-                style={{ padding: '6px 16px', fontSize: 12, fontWeight: 700 }}
+                style={{ padding: '8px 18px', minHeight: 44, fontSize: 12, fontWeight: 700 }}
               >
-                Confirm Modulation
+                {activeIntervention === 'reset' ? 'Confirm Reset Baseline' : 'Confirm Modulation'}
               </button>
             </div>
           </div>
@@ -674,6 +706,7 @@ export default function CoachPeriodizationCockpit({
               <button
                 key={w.weekNumber}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedWeekNum(w.weekNumber)}
                 className="tactile-btn tabular-nums"
                 style={{
@@ -834,7 +867,7 @@ export default function CoachPeriodizationCockpit({
                     setSaveStatus({ success: true, message: `Set Week ${activeWeek.weekNumber} as current active week.` })
                   }}
                   className="sgf-button sgf-button-secondary"
-                  style={{ padding: '6px 12px', fontSize: 11 }}
+                  style={{ padding: '6px 12px', minHeight: 44, fontSize: 11 }}
                 >
                   Set as Current Week
                 </button>
@@ -843,13 +876,14 @@ export default function CoachPeriodizationCockpit({
           </div>
 
           {/* Form Fields for Editing Acute Variables */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 16 }}>
             {/* OPT Phase */}
             <div>
-              <label style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+              <label htmlFor={`${baseId}-opt-phase`} style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
                 OPT™ Phase:
               </label>
               <select
+                id={`${baseId}-opt-phase`}
                 value={activeWeek.phaseNumber}
                 onChange={e => {
                   const pNum = Number(e.target.value)
@@ -862,8 +896,9 @@ export default function CoachPeriodizationCockpit({
                   color: '#FFFFFF',
                   border: '1px solid rgba(255,255,255,0.18)',
                   padding: '8px 12px',
+                  minHeight: 44,
                   borderRadius: 6,
-                  fontSize: 13,
+                  fontSize: 'max(1rem, 1em)',
                 }}
               >
                 <option value={1}>Phase 1: Stabilization Endurance</option>
@@ -876,10 +911,11 @@ export default function CoachPeriodizationCockpit({
 
             {/* Microcycle Theme */}
             <div>
-              <label style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+              <label htmlFor={`${baseId}-theme`} style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
                 Microcycle Focus / Theme:
               </label>
               <input
+                id={`${baseId}-theme`}
                 type="text"
                 value={activeWeek.theme}
                 onChange={e => {
@@ -892,8 +928,9 @@ export default function CoachPeriodizationCockpit({
                   color: '#FFFFFF',
                   border: '1px solid rgba(255,255,255,0.18)',
                   padding: '8px 12px',
+                  minHeight: 44,
                   borderRadius: 6,
-                  fontSize: 13,
+                  fontSize: 'max(1rem, 1em)',
                   boxSizing: 'border-box',
                 }}
               />
@@ -901,10 +938,11 @@ export default function CoachPeriodizationCockpit({
 
             {/* Volume & Intensity */}
             <div>
-              <label style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+              <label htmlFor={`${baseId}-vol-intensity`} style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
                 Volume / Intensity Prescription:
               </label>
               <input
+                id={`${baseId}-vol-intensity`}
                 type="text"
                 value={activeWeek.volumeIntensity}
                 onChange={e => {
@@ -917,8 +955,9 @@ export default function CoachPeriodizationCockpit({
                   color: '#FFFFFF',
                   border: '1px solid rgba(255,255,255,0.18)',
                   padding: '8px 12px',
+                  minHeight: 44,
                   borderRadius: 6,
-                  fontSize: 13,
+                  fontSize: 'max(1rem, 1em)',
                   boxSizing: 'border-box',
                 }}
               />
@@ -927,10 +966,11 @@ export default function CoachPeriodizationCockpit({
             {/* Target % 1RM */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4 }}>
-                <span style={{ color: 'var(--gray)', fontWeight: 600 }}>Target % 1RM:</span>
+                <label htmlFor={`${baseId}-1rm`} style={{ color: 'var(--gray)', fontWeight: 600 }}>Target % 1RM:</label>
                 <strong style={{ color: 'var(--gold-lt)' }}>{activeWeek.targetIntensity1RmPercent ?? 70}%</strong>
               </div>
               <input
+                id={`${baseId}-1rm`}
                 type="range"
                 min={40}
                 max={95}
@@ -942,16 +982,17 @@ export default function CoachPeriodizationCockpit({
                   })
                   setMacrocycle(updated)
                 }}
-                style={{ width: '100%', accentColor: 'var(--gold)' }}
+                style={{ width: '100%', minHeight: 44, accentColor: 'var(--gold)' }}
               />
             </div>
 
             {/* Tempo */}
             <div>
-              <label style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+              <label htmlFor={`${baseId}-tempo`} style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
                 Biomechanical Tempo:
               </label>
               <input
+                id={`${baseId}-tempo`}
                 type="text"
                 value={activeWeek.tempo ?? '4/2/1'}
                 onChange={e => {
@@ -965,8 +1006,9 @@ export default function CoachPeriodizationCockpit({
                   color: '#FFFFFF',
                   border: '1px solid rgba(255,255,255,0.18)',
                   padding: '8px 12px',
+                  minHeight: 44,
                   borderRadius: 6,
-                  fontSize: 13,
+                  fontSize: 'max(1rem, 1em)',
                   boxSizing: 'border-box',
                 }}
               />
@@ -974,10 +1016,11 @@ export default function CoachPeriodizationCockpit({
 
             {/* Rest Period */}
             <div>
-              <label style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+              <label htmlFor={`${baseId}-rest`} style={{ fontSize: 11.5, color: 'var(--gray)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
                 Prescribed Rest:
               </label>
               <input
+                id={`${baseId}-rest`}
                 type="text"
                 value={activeWeek.restPeriod ?? '60s'}
                 onChange={e => {
@@ -991,8 +1034,9 @@ export default function CoachPeriodizationCockpit({
                   color: '#FFFFFF',
                   border: '1px solid rgba(255,255,255,0.18)',
                   padding: '8px 12px',
+                  minHeight: 44,
                   borderRadius: 6,
-                  fontSize: 13,
+                  fontSize: 'max(1rem, 1em)',
                   boxSizing: 'border-box',
                 }}
               />
@@ -1001,7 +1045,7 @@ export default function CoachPeriodizationCockpit({
 
           {/* Re-Assessment Milestone Checkbox */}
           <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: 6, display: 'grid', gap: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 44, cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={activeWeek.isReassessmentWeek}
@@ -1021,6 +1065,7 @@ export default function CoachPeriodizationCockpit({
             {activeWeek.isReassessmentWeek && (
               <input
                 type="text"
+                aria-label="Milestone title"
                 value={activeWeek.milestoneTitle}
                 onChange={e => {
                   const updated = updateMicrocycleWeek(macrocycle, activeWeek.weekNumber, {
@@ -1035,8 +1080,9 @@ export default function CoachPeriodizationCockpit({
                   color: '#FFFFFF',
                   border: '1px solid rgba(212,160,23,0.4)',
                   padding: '8px 12px',
+                  minHeight: 44,
                   borderRadius: 4,
-                  fontSize: 12.5,
+                  fontSize: 'max(1rem, 1em)',
                   boxSizing: 'border-box',
                 }}
               />
@@ -1046,7 +1092,7 @@ export default function CoachPeriodizationCockpit({
           {/* Coach Weekly Periodization Memo */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
-              <label style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <label htmlFor={`${baseId}-weekly-memo`} style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <GaaIcon name="mic" size={13} tone="gold" />
                 <span>Coach Gordon Direct Memo for Week {activeWeek.weekNumber} (Visible in Athlete Portal):</span>
               </label>
@@ -1057,7 +1103,8 @@ export default function CoachPeriodizationCockpit({
                   onClick={() => setShowAudioNoteModal(true)}
                   className="tactile-btn"
                   style={{
-                    padding: '3px 10px',
+                    padding: '6px 12px',
+                    minHeight: 44,
                     background: 'rgba(56,189,248,0.15)',
                     border: '1px solid rgba(56,189,248,0.45)',
                     borderRadius: 4,
@@ -1078,7 +1125,8 @@ export default function CoachPeriodizationCockpit({
                   onClick={() => setShowMemoModal(true)}
                   className="tactile-btn"
                   style={{
-                    padding: '3px 10px',
+                    padding: '6px 12px',
+                    minHeight: 44,
                     background: 'rgba(212,160,23,0.15)',
                     border: '1px solid rgba(212,160,23,0.45)',
                     borderRadius: 4,
@@ -1097,6 +1145,7 @@ export default function CoachPeriodizationCockpit({
               </div>
             </div>
             <textarea
+              id={`${baseId}-weekly-memo`}
               rows={3}
               value={activeWeek.coachWeeklyMemo ?? ''}
               onChange={e => {
@@ -1113,7 +1162,7 @@ export default function CoachPeriodizationCockpit({
                 border: '1px solid rgba(255,255,255,0.2)',
                 borderRadius: 6,
                 padding: '10px 12px',
-                fontSize: 13,
+                fontSize: 'max(1rem, 1em)',
                 fontFamily: 'inherit',
                 lineHeight: 1.5,
                 boxSizing: 'border-box',

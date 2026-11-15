@@ -149,6 +149,9 @@ export default function MobileAppPromoSection({
           <img
             src="/images/mobile-apps-telemetry.jpg"
             alt="Forge Athletic Mobile Telemetry HUD and Smartwatch Integration"
+            width={1080}
+            height={440}
+            loading="lazy"
             style={{ width: '100%', height: 'auto', maxHeight: 440, objectFit: 'cover', display: 'block' }}
           />
           <div

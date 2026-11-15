@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
 
 export interface WeeklyCheckin {
@@ -62,6 +62,7 @@ function RatingInput({
             aria-label={`${descriptions[opt]} (${label})`}
             style={{
               flex: 1,
+              minHeight: 44,
               padding: '10px 0',
               border: `1px solid ${value === opt ? 'var(--gold)' : 'var(--navy-lt)'}`,
               background: value === opt ? 'rgba(212,160,23,0.18)' : 'var(--navy-mid)',
@@ -95,6 +96,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const hasUserEditedRef = useRef(false)
 
   const [form, setForm] = useState({
     sleep_quality: initialCheckin?.sleep_quality ? String(initialCheckin.sleep_quality) : '',
@@ -124,23 +126,25 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
       const thisWeekCheckin = payload.checkins.find((c: WeeklyCheckin) => c.week_start === thisWeek)
       if (thisWeekCheckin) {
         setExisting(thisWeekCheckin)
-        setForm({
-          sleep_quality: thisWeekCheckin.sleep_quality ? String(thisWeekCheckin.sleep_quality) : '',
-          stress_level: thisWeekCheckin.stress_level ? String(thisWeekCheckin.stress_level) : '',
-          soreness_level: thisWeekCheckin.soreness_level ? String(thisWeekCheckin.soreness_level) : '',
-          energy_level: thisWeekCheckin.energy_level ? String(thisWeekCheckin.energy_level) : '',
-          weight: thisWeekCheckin.weight_kg
-            ? preferredUnits === 'imperial'
-              ? String(Math.round(thisWeekCheckin.weight_kg * 2.20462 * 10) / 10)
-              : String(thisWeekCheckin.weight_kg)
-            : '',
-          notes: thisWeekCheckin.notes ?? '',
-        })
+        if (!hasUserEditedRef.current) {
+          setForm({
+            sleep_quality: thisWeekCheckin.sleep_quality ? String(thisWeekCheckin.sleep_quality) : '',
+            stress_level: thisWeekCheckin.stress_level ? String(thisWeekCheckin.stress_level) : '',
+            soreness_level: thisWeekCheckin.soreness_level ? String(thisWeekCheckin.soreness_level) : '',
+            energy_level: thisWeekCheckin.energy_level ? String(thisWeekCheckin.energy_level) : '',
+            weight: thisWeekCheckin.weight_kg
+              ? preferredUnits === 'imperial'
+                ? String(Math.round(thisWeekCheckin.weight_kg * 2.20462 * 10) / 10)
+                : String(thisWeekCheckin.weight_kg)
+              : '',
+            notes: thisWeekCheckin.notes ?? '',
+          })
+        }
       } else {
         setExisting(null)
       }
     } catch (error) {
-      console.error('Weekly check-in load failed:', error)
+      console.warn('Weekly check-in load failed:', error)
       setLoadError(error instanceof Error ? error.message : 'Could not load your check-in. Please retry.')
     } finally {
       setLoaded(true)
@@ -162,14 +166,17 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
       setError('Enter a positive weight or leave it blank.')
       return
     }
-    setSaving(true)
-    setError(null)
-
     const weightKg = form.weight
       ? preferredUnits === 'imperial'
         ? Math.round(Number(form.weight) * 0.453592 * 100) / 100
         : Number(form.weight)
       : undefined
+    if (weightKg !== undefined && weightKg > 500) {
+      setError('Enter a realistic weight under 1,100 lb (500 kg), or leave it blank.')
+      return
+    }
+    setSaving(true)
+    setError(null)
 
     try {
       const res = await fetch('/api/fitness/checkin', {
@@ -191,13 +198,16 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
         setError('Please sign in to save your check-in. Your entries are still here.')
         return
       }
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Failed to save check-in')
-      if (!data.id) throw new Error('Could not confirm your saved check-in. Please retry.')
+      const data = await res.json().catch(() => null)
+      if (!res.ok) throw new Error((data && typeof data.error === 'string' ? data.error : null) ?? 'Failed to save check-in')
+      if (!data || typeof data !== 'object' || !data.id) {
+        throw new Error('Could not confirm your saved check-in. Please retry.')
+      }
+      hasUserEditedRef.current = false
       setSaved(true)
       setExisting(previous => ({ ...previous, ...data }))
     } catch (error) {
-      console.error('Weekly check-in save failed:', error)
+      console.warn('Weekly check-in save failed:', error)
       setError(error instanceof Error ? error.message : 'Failed to save check-in. Please retry.')
     } finally {
       setSaving(false)
@@ -210,9 +220,26 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
 
   if (loadError) {
     return (
-      <div role="alert" className="fitness-coach-checkin">
-        <p>{loadError}</p>
-        <button type="button" onClick={() => void load()}>Retry check-in</button>
+      <div role="alert" className="fitness-coach-checkin" style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: 14, borderRadius: 8 }}>
+        <p style={{ margin: '0 0 12px', fontSize: 14 }}>{loadError}</p>
+        <button
+          type="button"
+          onClick={() => void load()}
+          style={{
+            minHeight: 44,
+            padding: '10px 16px',
+            border: '1px solid var(--gold)',
+            background: 'rgba(212,160,23,0.14)',
+            color: 'var(--gold)',
+            fontFamily: 'var(--font-sans, Raleway), sans-serif',
+            fontWeight: 700,
+            fontSize: 13,
+            borderRadius: 4,
+            cursor: 'pointer',
+          }}
+        >
+          Retry check-in
+        </button>
       </div>
     )
   }
@@ -281,10 +308,10 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
           Choose how you feel this week. Tap a selected rating again to clear it.
         </p>
         <div className="fitness-coach-rating-grid">
-          <RatingInput label="Sleep Quality" hint="1 = poor sleep, 5 = excellent sleep" descriptions={sleepDescriptions} value={form.sleep_quality} onChange={v => setForm(p => ({ ...p, sleep_quality: v }))} />
-          <RatingInput label="Stress Level" hint="1 = very high stress, 5 = very low stress" descriptions={stressDescriptions} value={form.stress_level} onChange={v => setForm(p => ({ ...p, stress_level: v }))} />
-          <RatingInput label="Soreness" hint="1 = very sore, 5 = fresh" descriptions={sorenessDescriptions} value={form.soreness_level} onChange={v => setForm(p => ({ ...p, soreness_level: v }))} />
-          <RatingInput label="Energy Level" hint="1 = low energy, 5 = high energy" descriptions={energyDescriptions} value={form.energy_level} onChange={v => setForm(p => ({ ...p, energy_level: v }))} />
+          <RatingInput label="Sleep Quality" hint="1 = poor sleep, 5 = excellent sleep" descriptions={sleepDescriptions} value={form.sleep_quality} onChange={v => { hasUserEditedRef.current = true; setSaved(false); setError(null); setForm(p => ({ ...p, sleep_quality: v })) }} />
+          <RatingInput label="Stress Level" hint="1 = very high stress, 5 = very low stress" descriptions={stressDescriptions} value={form.stress_level} onChange={v => { hasUserEditedRef.current = true; setSaved(false); setError(null); setForm(p => ({ ...p, stress_level: v })) }} />
+          <RatingInput label="Soreness" hint="1 = very sore, 5 = fresh" descriptions={sorenessDescriptions} value={form.soreness_level} onChange={v => { hasUserEditedRef.current = true; setSaved(false); setError(null); setForm(p => ({ ...p, soreness_level: v })) }} />
+          <RatingInput label="Energy Level" hint="1 = low energy, 5 = high energy" descriptions={energyDescriptions} value={form.energy_level} onChange={v => { hasUserEditedRef.current = true; setSaved(false); setError(null); setForm(p => ({ ...p, energy_level: v })) }} />
         </div>
 
         <div>
@@ -293,13 +320,20 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
           </label>
           <input
             id="weight-input"
+            name="weight"
             type="text"
             disabled={!isHydrated || saving}
             inputMode="decimal"
             autoComplete="off"
             onFocus={selectOnFocus}
             value={form.weight}
-            onChange={e => setForm(p => ({ ...p, weight: sanitizeNumericInput(e.target.value) }))}
+            aria-invalid={error && error.toLowerCase().includes('weight') ? true : undefined}
+            onChange={e => {
+              hasUserEditedRef.current = true
+              setSaved(false)
+              setError(null)
+              setForm(p => ({ ...p, weight: sanitizeNumericInput(e.target.value) }))
+            }}
             className="sgf-form-input"
             placeholder={preferredUnits === 'imperial' ? 'e.g. 185' : 'e.g. 84.0'}
             aria-describedby="weight-hint"
@@ -315,9 +349,16 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
           </label>
           <textarea
             id="notes-input"
+            name="notes"
             disabled={!isHydrated || saving}
+            maxLength={2000}
             value={form.notes}
-            onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
+            onChange={e => {
+              hasUserEditedRef.current = true
+              setSaved(false)
+              setError(null)
+              setForm(p => ({ ...p, notes: e.target.value }))
+            }}
             className="sgf-form-input"
             style={{ minHeight: 88 }}
             placeholder="How did training feel this week? Note any changes to medications, new joint aches or injuries, schedule changes, or wins/struggles Coach Gordon should know..."
@@ -337,6 +378,7 @@ export default function WeeklyCheckinForm({ preferredUnits = 'imperial', initial
           aria-label={existing ? 'Update check-in' : 'Submit check-in'}
           aria-busy={saving}
           style={{
+            minHeight: 44,
             border: 0,
             background: saving ? 'var(--navy-lt)' : 'var(--gold)',
             color: '#0D1B2A',

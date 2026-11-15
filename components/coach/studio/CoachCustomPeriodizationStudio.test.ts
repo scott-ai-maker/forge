@@ -1,7 +1,10 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { resolveExerciseVideoEmbed } from '@/lib/nasm-exercise-video-catalog'
 import { resolveGaaExerciseImage } from '@/lib/nasm-generated-images'
 import { getSmartSubstitutions, detectMovementPattern } from '@/lib/nasm-exercise-substitution'
+import { resolveStudioGoalType } from '@/components/coach/CoachDashboardPeriodizationStudio'
 import type { GeneratedMacrocyclePlan } from '@/lib/rag-nasm-program-generator'
 import type { CoachAiIntakeFormData } from './CoachAiIntakeDrawer'
 
@@ -153,5 +156,31 @@ describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
     expect(payload.clinicalRationale).toBe('Coach Gordon: High-EQ clinical briefing memo.')
     expect(payload.workouts[0].exercises[0].name).toBe('Dumbbell Step-Up to Balance')
     expect(payload.workouts[0].exercises[0].tempo).toBe('4/2/1')
+  })
+
+  it('maps sandbox and general fitness goals to general_fitness instead of falling back to fat_loss', () => {
+    expect(resolveStudioGoalType('General Fitness & Recomposition')).toBe('general_fitness')
+    expect(resolveStudioGoalType('General Fitness')).toBe('general_fitness')
+    expect(resolveStudioGoalType('Fat Loss & Carry Capacity')).toBe('fat_loss')
+    expect(resolveStudioGoalType('Hypertrophy & Muscle Mass')).toBe('hypertrophy')
+    expect(resolveStudioGoalType('Athletic Power Output')).toBe('performance')
+  })
+
+  it('enforces authoritative requireSurfaceRole("coach") across all 7 /coach server pages (no user_metadata.surface_role trust)', () => {
+    const coachPages = [
+      'app/coach/page.tsx',
+      'app/coach/clients/[id]/page.tsx',
+      'app/coach/clients/[id]/dossier/page.tsx',
+      'app/coach/clients/[id]/messages/page.tsx',
+      'app/coach/clients/[id]/live/page.tsx',
+      'app/coach/settings/page.tsx',
+      'app/coach/teams/[id]/live/page.tsx',
+    ]
+
+    for (const relPath of coachPages) {
+      const source = readFileSync(resolve(process.cwd(), relPath), 'utf8')
+      expect(source, `${relPath} must call requireSurfaceRole('coach')`).toContain("requireSurfaceRole('coach')")
+      expect(source, `${relPath} must never trust user_metadata?.surface_role`).not.toContain('user_metadata?.surface_role')
+    }
   })
 })

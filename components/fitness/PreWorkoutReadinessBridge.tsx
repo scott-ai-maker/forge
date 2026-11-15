@@ -10,14 +10,17 @@ import {
   resolveGaaExerciseImage,
 } from '@/lib/nasm-generated-images'
 import {
+  ENVIRONMENT_PROFILE_META,
+  type EnvironmentProfileId,
   InjectedReadinessDrill,
   loadPostureProfileState,
   POSTURE_PROFILE_EVENT,
+  recordEnvironmentSelection,
   removeInjectedWarmupForToday,
   setExpressModeActive,
 } from '@/lib/posture-profile-state'
 import { useSfxMuted } from '@/lib/sfx-audio'
-import { useTierAccess } from '@/lib/tierEntitlements'
+import { isTriggerInCooldown, type UpgradeTriggerId, useTierAccess } from '@/lib/tierEntitlements'
 import TierUpgradeModal from '@/components/packages/TierUpgradeModal'
 
 export interface PreWorkoutReadinessBridgeProps {
@@ -42,7 +45,9 @@ export default function PreWorkoutReadinessBridge({
   const { playTone } = useSfxMuted()
   const [modalOpen, setModalOpen] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const [upgradeTrigger, setUpgradeTrigger] = useState<UpgradeTriggerId>('post_scan_flag')
   const [expressMode, setExpressMode] = useState(false)
+  const [environmentProfile, setEnvironmentProfile] = useState<EnvironmentProfileId>('home_gym')
   const [rawDrills, setRawDrills] = useState<InjectedReadinessDrill[]>([])
   const [completedDrillIds, setCompletedDrillIds] = useState<string[]>([])
   const [activeTimerDrillId, setActiveTimerDrillId] = useState<string | null>(null)
@@ -52,11 +57,13 @@ export default function PreWorkoutReadinessBridge({
 
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const headingId = useId()
+  const envSelectId = useId()
 
   useEffect(() => {
     const sync = () => {
       const state = loadPostureProfileState()
       setExpressMode(state.expressModeActive)
+      setEnvironmentProfile(state.environmentProfile)
       setRawDrills(state.injectedWarmupDrills)
     }
     sync()
@@ -242,12 +249,25 @@ export default function PreWorkoutReadinessBridge({
     setExpressModeActive(next)
   }
 
+  const handleChangeEnvironment = (nextEnv: EnvironmentProfileId) => {
+    setEnvironmentProfile(nextEnv)
+    const { triggeredConsecutiveTravel } = recordEnvironmentSelection(nextEnv)
+    if (
+      triggeredConsecutiveTravel &&
+      !entitlements.multiDayTravelPass &&
+      !isTriggerInCooldown('consecutive_travel_swaps')
+    ) {
+      setUpgradeTrigger('consecutive_travel_swaps')
+      setUpgradeOpen(true)
+    }
+  }
+
   const allDrillsDone =
     cappedDrills.length > 0 && cappedDrills.every(d => completedDrillIds.includes(d.id))
 
   return (
     <>
-      {/* Pre-Workout Overview Trigger Bar + Express Mode Toggle */}
+      {/* Pre-Workout Overview Trigger Bar + Express Mode & Environment Switcher */}
       <div
         data-testid="pre-workout-readiness-bar"
         className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/[0.07] bg-[#111318] px-4 py-3 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
@@ -277,6 +297,38 @@ export default function PreWorkoutReadinessBridge({
             <Zap size={13} strokeWidth={1.75} aria-hidden="true" /> 20m Express{' '}
             {expressMode ? 'Active' : 'Off'}
           </button>
+
+          <div className="inline-flex items-center gap-1.5">
+            <label
+              htmlFor={envSelectId}
+              className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400"
+            >
+              Gym
+            </label>
+            <select
+              id={envSelectId}
+              name="environmentProfile"
+              data-testid="readiness-bridge-environment-select"
+              value={environmentProfile}
+              onChange={e => handleChangeEnvironment(e.target.value as EnvironmentProfileId)}
+              style={{ fontSize: 16 }}
+              className={`min-h-[44px] rounded-xl border px-3 py-1.5 font-semibold transition-colors duration-150 ${
+                ENVIRONMENT_PROFILE_META[environmentProfile]?.isTravelSwap
+                  ? 'border-sky-400/45 bg-sky-500/12 text-sky-200'
+                  : 'border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15'
+              }`}
+            >
+              {(Object.keys(ENVIRONMENT_PROFILE_META) as EnvironmentProfileId[]).map(envKey => (
+                <option
+                  key={envKey}
+                  value={envKey}
+                  className="bg-[#111318] text-zinc-100"
+                >
+                  {ENVIRONMENT_PROFILE_META[envKey].shortLabel}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <span
@@ -526,6 +578,7 @@ export default function PreWorkoutReadinessBridge({
             allowDualScreen={entitlements.dualScreenReadiness}
             onRequestUpgradeDualScreen={() => {
               setModalOpen(false)
+              setUpgradeTrigger('post_scan_flag')
               setUpgradeOpen(true)
             }}
             onComplete={result => {
@@ -547,7 +600,7 @@ export default function PreWorkoutReadinessBridge({
 
       <TierUpgradeModal
         open={upgradeOpen}
-        triggerContext="post_scan_flag"
+        triggerContext={upgradeTrigger}
         currentTier={tierId}
         onClose={() => setUpgradeOpen(false)}
       />

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   detectStillCameraPlatform,
@@ -298,6 +298,8 @@ export default function MovementScreenInstructionsModal({
   onLaunchVideoUpload,
   onLaunchLiveStudio,
 }: MovementScreenInstructionsModalProps) {
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const headingId = useId()
   const [activeTab, setActiveTab] = useState<MovementScreenTab>(initialTab)
   const [checkedChecklist, setCheckedChecklist] = useState<Record<string, boolean>>({
     bare_feet: true,
@@ -311,7 +313,44 @@ export default function MovementScreenInstructionsModal({
   const platform = detectStillCameraPlatform()
   const stillCameraSteps = platform === 'android' ? ANDROID_STILL_CAMERA_STEPS : IOS_STILL_CAMERA_STEPS
 
-  if (!isOpen) return null
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (isOpen && !dialog.open) {
+      dialog.showModal()
+    } else if (!isOpen && dialog.open) {
+      dialog.close()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog || typeof HTMLDialogElement === 'undefined') return
+    if ('closedBy' in HTMLDialogElement.prototype) return
+
+    const isOutside = (e: PointerEvent) => {
+      const r = dialog.getBoundingClientRect()
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom
+    }
+
+    let pressedOutside = false
+    const onPointerDown = (e: PointerEvent) => {
+      pressedOutside = dialog.open && isOutside(e)
+    }
+    const onPointerUp = (e: PointerEvent) => {
+      if (pressedOutside && dialog.open && isOutside(e)) {
+        dialog.close()
+      }
+      pressedOutside = false
+    }
+
+    dialog.addEventListener('pointerdown', onPointerDown)
+    dialog.addEventListener('pointerup', onPointerUp)
+    return () => {
+      dialog.removeEventListener('pointerdown', onPointerDown)
+      dialog.removeEventListener('pointerup', onPointerUp)
+    }
+  }, [])
 
   function toggleCheck(id: string) {
     setCheckedChecklist(prev => ({
@@ -327,37 +366,38 @@ export default function MovementScreenInstructionsModal({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
       data-testid="movement-screen-instructions-modal"
+      {...({ closedby: 'any' } as React.DialogHTMLAttributes<HTMLDialogElement>)}
+      aria-labelledby={headingId}
+      onClose={e => {
+        e.currentTarget.returnValue = ''
+        onClose()
+      }}
+      className="forge-glass-modal"
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: 'rgba(3, 6, 12, 0.88)',
-        backdropFilter: 'blur(12px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease-out',
+        background: 'linear-gradient(180deg, #0C1220 0%, #060912 100%)',
+        border: '1px solid rgba(212, 175, 55, 0.45)',
+        borderRadius: 14,
+        width: 'min(780px, 95vw)',
+        maxHeight: '92dvh',
+        boxShadow: '0 24px 70px rgba(0,0,0,0.85), 0 0 35px rgba(212,175,55,0.18)',
+        overflow: 'hidden',
+        padding: 0,
+        margin: 'auto',
+        color: 'var(--white)',
       }}
     >
-      <div
-        style={{
-          background: 'linear-gradient(180deg, #0C1220 0%, #060912 100%)',
-          border: '1px solid rgba(212, 175, 55, 0.45)',
-          borderRadius: 14,
-          maxWidth: 780,
-          width: '100%',
-          maxHeight: '92vh',
-          boxShadow: '0 24px 70px rgba(0,0,0,0.85), 0 0 35px rgba(212,175,55,0.18)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      {isOpen ? (
+        <div
+          style={{
+            maxHeight: '92dvh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}
+        >
         {/* Header Ribbon */}
         <div
           style={{
@@ -367,6 +407,7 @@ export default function MovementScreenInstructionsModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: 10,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -390,6 +431,7 @@ export default function MovementScreenInstructionsModal({
                 Forge Athletic · Clinical Diagnostic Standards
               </div>
               <h2
+                id={headingId}
                 style={{
                   fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
                   fontSize: 18,
@@ -409,12 +451,13 @@ export default function MovementScreenInstructionsModal({
               type="button"
               onClick={handlePrint}
               style={{
+                minHeight: 44,
                 background: 'transparent',
                 border: '1px solid rgba(255,255,255,0.15)',
                 color: 'var(--gray)',
-                padding: '6px 10px',
+                padding: '8px 12px',
                 borderRadius: 6,
-                fontSize: 11,
+                fontSize: 12,
                 cursor: 'pointer',
               }}
             >
@@ -422,15 +465,20 @@ export default function MovementScreenInstructionsModal({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => dialogRef.current?.close()}
               style={{
+                minWidth: 44,
+                minHeight: 44,
                 background: 'transparent',
                 border: 'none',
                 color: 'rgba(255,255,255,0.7)',
-                fontSize: 22,
+                fontSize: 20,
                 cursor: 'pointer',
-                padding: '4px 8px',
+                padding: '8px',
                 lineHeight: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
               aria-label="Close modal"
             >
@@ -450,8 +498,10 @@ export default function MovementScreenInstructionsModal({
         >
           <button
             type="button"
+            aria-pressed={activeTab === 'setup'}
             onClick={() => setActiveTab('setup')}
             style={{
+              minHeight: 44,
               padding: '12px 18px',
               background: 'transparent',
               border: 'none',
@@ -469,8 +519,10 @@ export default function MovementScreenInstructionsModal({
           </button>
           <button
             type="button"
+            aria-pressed={activeTab === 'ohsa'}
             onClick={() => setActiveTab('ohsa')}
             style={{
+              minHeight: 44,
               padding: '12px 18px',
               background: 'transparent',
               border: 'none',
@@ -488,8 +540,10 @@ export default function MovementScreenInstructionsModal({
           </button>
           <button
             type="button"
+            aria-pressed={activeTab === 'dynamic'}
             onClick={() => setActiveTab('dynamic')}
             style={{
+              minHeight: 44,
               padding: '12px 18px',
               background: 'transparent',
               border: 'none',
@@ -507,8 +561,10 @@ export default function MovementScreenInstructionsModal({
           </button>
           <button
             type="button"
+            aria-pressed={activeTab === 'submit'}
             onClick={() => setActiveTab('submit')}
             style={{
+              minHeight: 44,
               padding: '12px 18px',
               background: 'transparent',
               border: 'none',
@@ -992,10 +1048,11 @@ export default function MovementScreenInstructionsModal({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => dialogRef.current?.close()}
             className="tactile-btn"
             style={{
-              padding: '8px 18px',
+              minHeight: 44,
+              padding: '10px 18px',
               background: 'rgba(255,255,255,0.08)',
               border: '1px solid rgba(255,255,255,0.15)',
               color: 'var(--white)',
@@ -1008,7 +1065,8 @@ export default function MovementScreenInstructionsModal({
             Close Guide
           </button>
         </div>
-      </div>
-    </div>
+        </div>
+      ) : null}
+    </dialog>
   )
 }
