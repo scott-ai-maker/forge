@@ -1,15 +1,24 @@
 'use client'
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useId } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import TelemetryRingGauge from '@/components/ui/TelemetryRingGauge'
 import { useSfxMuted } from '@/lib/sfx-audio'
 import {
+  applyExpressCapToInjectedDrills,
+  createReadinessRepSession,
   evaluateCameraReadiness,
+  finalizeReadinessSession,
+  getActiveMovementForRep,
+  ingestPoseFrameIntoSession,
   READINESS_PRESET_LABELS,
   READINESS_SCREEN_MEDIA,
+  recordManualRepInSession,
+  type NormalizedPoseLandmark,
   type ReadinessEvaluationResult,
+  type ReadinessFrameTelemetry,
   type ReadinessPresetId,
+  type ReadinessRepSession,
   type ReadinessScreenMode,
 } from '@/lib/camera-readiness-engine'
 import {
@@ -26,7 +35,7 @@ import {
   syncCameraRemoteStateToWatch,
 } from '@/lib/native-healthkit-bridge'
 import { TELEMETRY_CAMERA_RELEASE_EVENT, trackEvent } from '@/src/lib/telemetry/telemetryClient'
-import { Mail, Smartphone, Volume2 } from 'lucide-react'
+import { Camera, CheckCircle2, Mail, RefreshCw, Smartphone, Volume2 } from 'lucide-react'
 import { useTierAccess } from '@/lib/tierEntitlements'
 import CoachEscalationModal from '@/components/coach-gordon/CoachEscalationModal'
 import {
@@ -38,6 +47,7 @@ import {
 export interface CameraReadinessCheckProps {
   expressModeActive?: boolean
   allowDualScreen?: boolean
+  isOpen?: boolean
   onRequestUpgradeDualScreen?: () => void
   onComplete: (result: {
     readinessScore: number
@@ -46,6 +56,31 @@ export interface CameraReadinessCheckProps {
   }) => void
   onSkip: () => void
 }
+
+interface PoseLandmarkerLike {
+  detectForVideo: (
+    video: HTMLVideoElement,
+    timestampMs: number
+  ) => { landmarks?: NormalizedPoseLandmark[][] }
+  close?: () => void
+}
+
+interface TestPoseStreamHook {
+  frames: Array<{ timestampMs?: number; landmarks: NormalizedPoseLandmark[] }>
+  intervalMs?: number
+  skipCountdown?: boolean
+}
+
+declare global {
+  interface Window {
+    __FORGE_TEST_POSE_STREAM__?: TestPoseStreamHook
+  }
+}
+
+type ReadinessStage = 'idle' | 'countdown' | 'scanning' | 'complete'
+
+const COUNTDOWN_SECONDS = 5
+const SCAN_WINDOW_SECONDS = 25
 
 const REP_CUES: Record<ReadinessScreenMode, [string, string, string]> = {
   overhead_squat: [
@@ -65,9 +100,15 @@ const REP_CUES: Record<ReadinessScreenMode, [string, string, string]> = {
   ],
 }
 
+function sanitizeFinite(val: number | null | undefined): number | null {
+  if (typeof val !== 'number' || !Number.isFinite(val)) return null
+  return Number(val.toFixed(1))
+}
+
 export default function CameraReadinessCheck({
   expressModeActive = false,
   allowDualScreen = false,
+  isOpen = true,
   onRequestUpgradeDualScreen,
   onComplete,
   onSkip,
@@ -75,34 +116,100 @@ export default function CameraReadinessCheck({
   const { sfxMuted, toggleSfxMuted, playTone } = useSfxMuted()
   const { tierId } = useTierAccess()
   const isCoachSupport = tierId === 'coach_support'
-  const [escalationOpen, setEscalationOpen] = useState(false)
+  const progressId = useId()
 
+  const [escalationOpen, setEscalationOpen] = useState(false)
   const [screenMode, setScreenMode] = useState<ReadinessScreenMode>('overhead_squat')
-  const [selectedPreset, setSelectedPreset] = useState<ReadinessPresetId>('tight_hips_ankles')
-  const [isScanning, setIsScanning] = useState(false)
-  const [currentRep, setCurrentRep] = useState<1 | 2 | 3>(1)
-  const [result, setResult] = useState<ReadinessEvaluationResult | null>(null)
+  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user')
+  const [stage, setStage] = useState<ReadinessStage>('idle')
+  const [countdownSec, setCountdownSec] = useState<number>(COUNTDOWN_SECONDS)
+  const [scanElapsedSec, setScanElapsedSec] = useState<number>(0)
+  const [completedReps, setCompletedReps] = useState<number>(0)
+  const [liveTelemetry, setLiveTelemetry] = useState<ReadinessFrameTelemetry | null>(null)
+  const [cameraAvailable, setCameraAvailable] = useState<boolean>(true)
+  const [cvReady, setCvReady] = useState<boolean>(false)
   const [cameraNotice, setCameraNotice] = useState<string | null>(null)
+  const [result, setResult] = useState<ReadinessEvaluationResult | null>(null)
+  const [rawResultDrills, setRawResultDrills] = useState<InjectedReadinessDrill[]>([])
   const [activeVideoModal, setActiveVideoModal] = useState<ExerciseModalData | null>(null)
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const repIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const poseLandmarkerRef = useRef<PoseLandmarkerLike | null>(null)
+  const rafRef = useRef<number | null>(null)
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const scanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const testStreamTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const finalizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sessionRef = useRef<ReadinessRepSession>(createReadinessRepSession('overhead_squat'))
+  const lastVideoTimestampRef = useRef<number>(-1)
+  const lastInferenceAtRef = useRef<number>(0)
+  const isFinalizingRef = useRef<boolean>(false)
+  const isOpenRef = useRef<boolean>(isOpen)
+  const scanGenRef = useRef<number>(0)
 
-  const cleanupCamera = useCallback(() => {
-    if (repIntervalRef.current) {
-      clearInterval(repIntervalRef.current)
-      repIntervalRef.current = null
+  isOpenRef.current = isOpen
+
+  const stopTimersAndLoops = useCallback(() => {
+    if (rafRef.current !== null && typeof window !== 'undefined') {
+      window.cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
     }
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream
-      stream.getTracks().forEach(t => t.stop())
-      videoRef.current.srcObject = null
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
     }
-    setIsScanning(false)
+    if (scanTimerRef.current) {
+      clearInterval(scanTimerRef.current)
+      scanTimerRef.current = null
+    }
+    if (testStreamTimerRef.current) {
+      clearInterval(testStreamTimerRef.current)
+      testStreamTimerRef.current = null
+    }
+    if (finalizeTimeoutRef.current) {
+      clearTimeout(finalizeTimeoutRef.current)
+      finalizeTimeoutRef.current = null
+    }
   }, [])
 
+  const cleanupCamera = useCallback(() => {
+    scanGenRef.current += 1
+    stopTimersAndLoops()
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop())
+      streamRef.current = null
+    }
+    if (videoRef.current?.srcObject) {
+      const attached = videoRef.current.srcObject as MediaStream
+      attached.getTracks().forEach(t => t.stop())
+      videoRef.current.srcObject = null
+    }
+    if (poseLandmarkerRef.current) {
+      try {
+        poseLandmarkerRef.current.close?.()
+      } catch {
+        // Ignore close errors during teardown
+      }
+      poseLandmarkerRef.current = null
+    }
+    setCvReady(false)
+    isFinalizingRef.current = false
+  }, [stopTimersAndLoops])
+
+  // Immediately release hardware camera & timers when parent <dialog> closes (e.g., Esc or backdrop light-dismiss)
   useEffect(() => {
-    const handleHardwareRelease = () => cleanupCamera()
+    if (!isOpen) {
+      cleanupCamera()
+      setStage(prev => (prev === 'countdown' || prev === 'scanning' ? 'idle' : prev))
+    }
+  }, [cleanupCamera, isOpen])
+
+  useEffect(() => {
+    const handleHardwareRelease = () => {
+      cleanupCamera()
+      setStage(prev => (prev === 'countdown' || prev === 'scanning' ? 'idle' : prev))
+    }
     if (typeof window !== 'undefined') {
       window.addEventListener(TELEMETRY_CAMERA_RELEASE_EVENT, handleHardwareRelease)
     }
@@ -114,14 +221,29 @@ export default function CameraReadinessCheck({
     }
   }, [cleanupCamera])
 
-  const commitEvaluation = useCallback(
-    (mode: ReadinessScreenMode, preset: ReadinessPresetId) => {
-      const evaluated = evaluateCameraReadiness({
-        screenMode: mode,
-        preset,
-        expressModeActive,
-      })
+  // Keep displayed result drills synchronized if athlete toggles 20m Express Mode after scanning
+  useEffect(() => {
+    if (!result || rawResultDrills.length === 0) return
+    const capped = applyExpressCapToInjectedDrills(rawResultDrills, expressModeActive)
+    const totalSec = capped.reduce((sum, d) => sum + d.durationSec, 0)
+    setResult(prev =>
+      prev
+        ? {
+            ...prev,
+            injectedDrills: capped,
+            totalInjectedDurationSec: totalSec,
+          }
+        : null
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expressModeActive])
+
+  const commitEvaluatedResult = useCallback(
+    (evaluated: ReadinessEvaluationResult, unCappedDrills?: InjectedReadinessDrill[]) => {
+      cleanupCamera()
+      setRawResultDrills(unCappedDrills ?? evaluated.injectedDrills)
       setResult(evaluated)
+      setStage('complete')
       playCoachStaticCue('calibration_locked')
 
       const primaryFlagCheck = evaluated.checks.find(c => c.status !== 'optimal')
@@ -140,9 +262,9 @@ export default function CameraReadinessCheck({
 
       recordDailyReadinessAndComfort({
         readinessScore: evaluated.readinessScore,
-        screenType: mode,
+        screenType: evaluated.screenMode,
         restrictionFlags: evaluated.restrictionFlags,
-        injectedDrills: evaluated.injectedDrills,
+        injectedDrills: unCappedDrills ?? evaluated.injectedDrills,
       })
 
       const peakRomDeltas: Record<
@@ -155,17 +277,21 @@ export default function CameraReadinessCheck({
         }
       > = {}
       for (const check of evaluated.checks) {
+        const m = sanitizeFinite(check.measuredDeg)
+        const b = sanitizeFinite(check.baselineDeg)
         peakRomDeltas[check.id] = {
-          measured_deg: check.measuredDeg,
-          baseline_deg: check.baselineDeg,
-          delta_deg: Number((check.measuredDeg - check.baselineDeg).toFixed(1)),
+          measured_deg: m,
+          baseline_deg: b,
+          delta_deg: m !== null && b !== null ? sanitizeFinite(m - b) : null,
           severity: check.status,
         }
       }
 
       void trackEvent('readiness_check_completed', {
-        readiness_index: evaluated.readinessScore,
-        movement_type: mode,
+        readiness_index: sanitizeFinite(evaluated.readinessScore) ?? 0,
+        movement_type: evaluated.screenMode,
+        evaluation_source: evaluated.evaluationSource,
+        captured_reps: evaluated.capturedRepsCount,
         peak_rom_deltas: peakRomDeltas,
         restriction_flags: evaluated.restrictionFlags,
         injected_warmup_drills: evaluated.injectedDrills.map(d => ({
@@ -176,101 +302,442 @@ export default function CameraReadinessCheck({
         express_mode_active: expressModeActive,
       })
     },
-    [expressModeActive]
+    [cleanupCamera, expressModeActive]
   )
 
-  const startThirtySecondCheck = async () => {
-    setResult(null)
-    setCameraNotice(null)
-    setCurrentRep(1)
-    setIsScanning(true)
+  const handleSelfCheckPreset = useCallback(
+    (preset: ReadinessPresetId) => {
+      const targetMode: ReadinessScreenMode =
+        preset === 'stiff_upper_back' && screenMode === 'overhead_squat'
+          ? 'scapular_wall_slides'
+          : screenMode
+      setScreenMode(targetMode)
+      const fullEval = evaluateCameraReadiness({
+        screenMode: targetMode,
+        preset,
+        expressModeActive: false,
+      })
+      const evaluated = evaluateCameraReadiness({
+        screenMode: targetMode,
+        preset,
+        expressModeActive,
+      })
+      commitEvaluatedResult(evaluated, fullEval.injectedDrills)
+    },
+    [commitEvaluatedResult, expressModeActive, screenMode]
+  )
 
-    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 720 } },
-          audio: false,
-        })
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          void videoRef.current.play().catch(() => {})
-        }
-      } catch {
-        setCameraNotice('Camera permission unavailable — running hands-free biomechanics cadence.')
-        void trackEvent('client_runtime_diagnostic', {
-          diagnostic_kind: 'camera_permission',
-          camera_permission_state: 'denied',
-          component_context: 'CameraReadinessCheck',
-        })
-      }
+  const finalizeFromCurrentSession = useCallback(() => {
+    if (isFinalizingRef.current) return
+    const unCappedEval = finalizeReadinessSession(sessionRef.current, false)
+    const evaluated = finalizeReadinessSession(sessionRef.current, expressModeActive)
+    if (evaluated) {
+      isFinalizingRef.current = true
+      commitEvaluatedResult(evaluated, unCappedEval?.injectedDrills ?? evaluated.injectedDrills)
     } else {
-      setCameraNotice('Live camera stream unavailable in this browser — running hands-free cadence.')
+      cleanupCamera()
+      setStage('idle')
+      setCameraNotice(
+        'No full body landmarks were locked during the 25s window. Re-center 6–8 ft from the lens or use Quick Mobility Self-Check below.'
+      )
+    }
+  }, [cleanupCamera, commitEvaluatedResult, expressModeActive])
+
+  const processIncomingLandmarks = useCallback(
+    (landmarks: ReadonlyArray<NormalizedPoseLandmark>, timestampMs: number) => {
+      if (isFinalizingRef.current) return
+      const mirrorX = cameraFacing === 'user'
+      const { session: nextSession, repJustCompleted } = ingestPoseFrameIntoSession(
+        sessionRef.current,
+        landmarks,
+        timestampMs,
+        { mirrorX }
+      )
+      sessionRef.current = nextSession
+      if (nextSession.latestFrame) {
+        setLiveTelemetry(nextSession.latestFrame)
+      }
+
+      if (repJustCompleted) {
+        setCompletedReps(nextSession.completedReps)
+        playTone('rep_complete')
+
+        if (nextSession.completedReps >= nextSession.targetReps) {
+          isFinalizingRef.current = true
+          stopTimersAndLoops()
+          finalizeTimeoutRef.current = setTimeout(() => {
+            const unCappedEval = finalizeReadinessSession(sessionRef.current, false)
+            const evaluated = finalizeReadinessSession(sessionRef.current, expressModeActive)
+            if (evaluated) {
+              commitEvaluatedResult(
+                evaluated,
+                unCappedEval?.injectedDrills ?? evaluated.injectedDrills
+              )
+            }
+          }, 380)
+        }
+      }
+    },
+    [cameraFacing, commitEvaluatedResult, expressModeActive, playTone, stopTimersAndLoops]
+  )
+
+  const beginLiveScanningWindow = useCallback(() => {
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+    setStage('scanning')
+    setScanElapsedSec(0)
+    playCoachStaticCue('readiness_rep_1_3')
+
+    const scanStartedAt = Date.now()
+    scanTimerRef.current = setInterval(() => {
+      const elapsed = Math.min(
+        SCAN_WINDOW_SECONDS,
+        Math.floor((Date.now() - scanStartedAt) / 1000)
+      )
+      setScanElapsedSec(elapsed)
+      if (elapsed >= SCAN_WINDOW_SECONDS) {
+        if (scanTimerRef.current) {
+          clearInterval(scanTimerRef.current)
+          scanTimerRef.current = null
+        }
+        finalizeFromCurrentSession()
+      }
+    }, 250)
+
+    // Deterministic E2E pose stream hook for automated Playwright validation
+    const injectedStream =
+      typeof window !== 'undefined' ? window.__FORGE_TEST_POSE_STREAM__ : undefined
+    if (injectedStream && Array.isArray(injectedStream.frames) && injectedStream.frames.length > 0) {
+      setCvReady(true)
+      let idx = 0
+      let syntheticClockMs = 1000
+      const stepMs = injectedStream.intervalMs ?? 55
+      testStreamTimerRef.current = setInterval(() => {
+        if (idx >= injectedStream.frames.length || isFinalizingRef.current) {
+          if (testStreamTimerRef.current) {
+            clearInterval(testStreamTimerRef.current)
+            testStreamTimerRef.current = null
+          }
+          return
+        }
+        const item = injectedStream.frames[idx]
+        const frameTs = item.timestampMs ?? syntheticClockMs
+        syntheticClockMs += 250
+        idx += 1
+        processIncomingLandmarks(item.landmarks, frameTs)
+      }, stepMs)
+      return
     }
 
-    playCoachStaticCue('calibration_framing')
-    window.setTimeout(() => {
-      playCoachStaticCue('readiness_rep_1_3')
-    }, 900)
-    let rep = 1
-    repIntervalRef.current = setInterval(() => {
-      rep += 1
-      if (rep <= 3) {
-        setCurrentRep(rep as 1 | 2 | 3)
-        playTone('rep_complete')
-      } else {
-        cleanupCamera()
-        const inferredPreset: ReadinessPresetId =
-          screenMode === 'scapular_wall_slides' ? 'stiff_upper_back' : selectedPreset
-        commitEvaluation(screenMode, inferredPreset)
+    // Real MediaPipe 33-point VIDEO inference loop (client-side only; zero frame uploads)
+    const tickPoseFrame = (rafNow: number) => {
+      if (isFinalizingRef.current) return
+      const videoEl = videoRef.current
+      const landmarker = poseLandmarkerRef.current
+      if (
+        videoEl &&
+        landmarker &&
+        videoEl.readyState >= 2 &&
+        rafNow - lastInferenceAtRef.current >= 65
+      ) {
+        lastInferenceAtRef.current = rafNow
+        const videoTs = Math.max(lastVideoTimestampRef.current + 1, Math.round(rafNow))
+        lastVideoTimestampRef.current = videoTs
+        try {
+          const detection = landmarker.detectForVideo(videoEl, videoTs)
+          const firstPose = detection?.landmarks?.[0]
+          if (firstPose && firstPose.length >= 29) {
+            processIncomingLandmarks(firstPose, videoTs)
+          }
+        } catch {
+          // Transient video frame decode race; continue on next animation frame
+        }
       }
-    }, 2400)
-  }
+      rafRef.current = window.requestAnimationFrame(tickPoseFrame)
+    }
 
-  const handleSimulatePreset = (preset: ReadinessPresetId) => {
-    setSelectedPreset(preset)
-    cleanupCamera()
-    const targetMode: ReadinessScreenMode =
-      preset === 'stiff_upper_back' ? 'scapular_wall_slides' : screenMode
-    setScreenMode(targetMode)
-    commitEvaluation(targetMode, preset)
-  }
+    if (typeof window !== 'undefined') {
+      rafRef.current = window.requestAnimationFrame(tickPoseFrame)
+    }
+  }, [finalizeFromCurrentSession, processIncomingLandmarks])
 
-  const isRepLocked = currentRep === 3
+  const initPoseLandmarkerEngine = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    if (window.__FORGE_TEST_POSE_STREAM__?.frames?.length) {
+      setCvReady(true)
+      return
+    }
+    try {
+      const vision = await import('@mediapipe/tasks-vision')
+      let fileset
+      try {
+        fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
+      } catch {
+        fileset = await vision.FilesetResolver.forVisionTasks(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+        )
+      }
+
+      const modelAssetPath =
+        'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'
+
+      let landmarker: PoseLandmarkerLike
+      try {
+        landmarker = (await vision.PoseLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath, delegate: 'GPU' },
+          runningMode: 'VIDEO',
+          numPoses: 1,
+        })) as unknown as PoseLandmarkerLike
+      } catch {
+        landmarker = (await vision.PoseLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath, delegate: 'CPU' },
+          runningMode: 'VIDEO',
+          numPoses: 1,
+        })) as unknown as PoseLandmarkerLike
+      }
+
+      poseLandmarkerRef.current = landmarker
+      setCvReady(true)
+    } catch {
+      setCvReady(false)
+      setCameraNotice(
+        prev =>
+          prev ??
+          '33-point pose model offline — tap Log Rep as you finish each rep or select how your joints felt below.'
+      )
+    }
+  }, [])
+
+  const startThirtySecondCheck = useCallback(
+    async (overrideFacing?: 'user' | 'environment') => {
+      cleanupCamera()
+      const currentGen = scanGenRef.current
+      const activeFacing = overrideFacing ?? cameraFacing
+      sessionRef.current = createReadinessRepSession(screenMode)
+      lastVideoTimestampRef.current = -1
+      lastInferenceAtRef.current = 0
+      isFinalizingRef.current = false
+
+      setResult(null)
+      setRawResultDrills([])
+      setCameraNotice(null)
+      setCompletedReps(0)
+      setLiveTelemetry(null)
+      setCountdownSec(COUNTDOWN_SECONDS)
+      setScanElapsedSec(0)
+      setStage('countdown')
+
+      const injectedStream =
+        typeof window !== 'undefined' ? window.__FORGE_TEST_POSE_STREAM__ : undefined
+
+      let hasLiveCamera = false
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: activeFacing,
+              width: { ideal: 960 },
+              height: { ideal: 720 },
+            },
+            audio: false,
+          })
+          if (!isOpenRef.current || currentGen !== scanGenRef.current) {
+            stream.getTracks().forEach(t => t.stop())
+            return
+          }
+          streamRef.current = stream
+          hasLiveCamera = true
+          if (
+            videoRef.current &&
+            typeof MediaStream !== 'undefined' &&
+            stream instanceof MediaStream
+          ) {
+            videoRef.current.srcObject = stream
+            void videoRef.current.play().catch(() => {})
+          }
+        } catch {
+          hasLiveCamera = false
+          if (!injectedStream) {
+            setCameraNotice(
+              'Camera permission unavailable — complete 3 paced reps below or pick your Quick Mobility Self-Check.'
+            )
+          }
+          void trackEvent('client_runtime_diagnostic', {
+            diagnostic_kind: 'camera_permission',
+            camera_permission_state: 'denied',
+            component_context: 'CameraReadinessCheck',
+          })
+        }
+      } else if (!injectedStream) {
+        setCameraNotice(
+          'Live camera stream unavailable in this browser — use Guided 3-Rep Pacing or Quick Mobility Self-Check.'
+        )
+      }
+
+      setCameraAvailable(hasLiveCamera || Boolean(injectedStream))
+      playCoachStaticCue('calibration_framing')
+
+      // Load 33-point MediaPipe PoseLandmarker while the athlete steps 6-8 ft back
+      void initPoseLandmarkerEngine()
+
+      if (injectedStream?.skipCountdown) {
+        beginLiveScanningWindow()
+        return
+      }
+
+      // Live framing preview during 5s step-back countdown when PoseLandmarker warms up early
+      let remaining = COUNTDOWN_SECONDS
+      countdownTimerRef.current = setInterval(() => {
+        // Sample framing during countdown if video + landmarker are already live
+        const videoEl = videoRef.current
+        const landmarker = poseLandmarkerRef.current
+        if (videoEl && landmarker && videoEl.readyState >= 2) {
+          const nowTs = Math.max(lastVideoTimestampRef.current + 1, Math.round(performance.now()))
+          lastVideoTimestampRef.current = nowTs
+          try {
+            const det = landmarker.detectForVideo(videoEl, nowTs)
+            const pose0 = det?.landmarks?.[0]
+            if (pose0 && pose0.length >= 29) {
+              const previewSession = ingestPoseFrameIntoSession(
+                createReadinessRepSession(screenMode),
+                pose0,
+                nowTs,
+                { mirrorX: activeFacing === 'user' }
+              ).session
+              if (previewSession.latestFrame) {
+                setLiveTelemetry(previewSession.latestFrame)
+              }
+            }
+          } catch {
+            // Ignore transient warmup frame errors
+          }
+        }
+
+        remaining -= 1
+        if (remaining <= 0) {
+          beginLiveScanningWindow()
+        } else {
+          setCountdownSec(remaining)
+        }
+      }, 1000)
+    },
+    [
+      beginLiveScanningWindow,
+      cameraFacing,
+      cleanupCamera,
+      initPoseLandmarkerEngine,
+      screenMode,
+    ]
+  )
+
+  // Attach MediaStream if video element mounts right as stage enters 'countdown'
+  useEffect(() => {
+    if (
+      (stage === 'countdown' || stage === 'scanning') &&
+      videoRef.current &&
+      streamRef.current &&
+      typeof MediaStream !== 'undefined' &&
+      streamRef.current instanceof MediaStream
+    ) {
+      if (videoRef.current.srcObject !== streamRef.current) {
+        videoRef.current.srcObject = streamRef.current
+        void videoRef.current.play().catch(() => {})
+      }
+    }
+  }, [stage])
+
+  const handleManualLogRep = useCallback(() => {
+    if (stage !== 'scanning' || isFinalizingRef.current) return
+    const nextSession = recordManualRepInSession(sessionRef.current, Date.now())
+    sessionRef.current = nextSession
+    setCompletedReps(nextSession.completedReps)
+    playTone('rep_complete')
+
+    if (nextSession.completedReps >= nextSession.targetReps) {
+      isFinalizingRef.current = true
+      stopTimersAndLoops()
+      const unCappedEval = finalizeReadinessSession(nextSession, false)
+      const evaluated = finalizeReadinessSession(nextSession, expressModeActive)
+      if (evaluated) {
+        commitEvaluatedResult(evaluated, unCappedEval?.injectedDrills ?? evaluated.injectedDrills)
+      }
+    }
+  }, [commitEvaluatedResult, expressModeActive, playTone, stage, stopTimersAndLoops])
+
+  const handleFlipCameraFacing = useCallback(() => {
+    const nextFacing = cameraFacing === 'user' ? 'environment' : 'user'
+    setCameraFacing(nextFacing)
+    if (stage === 'countdown' || stage === 'scanning') {
+      void startThirtySecondCheck(nextFacing)
+    }
+  }, [cameraFacing, stage, startThirtySecondCheck])
+
+  const activeRepIndex = Math.min(3, completedReps + 1) as 1 | 2 | 3
+  const isRepLocked = completedReps >= 3
+  const activeMovement = getActiveMovementForRep(screenMode, activeRepIndex)
 
   // Bidirectional Apple Watch Wrist Camera Remote sync (30-Second Camera Readiness Check)
   useEffect(() => {
-    const isActive = !result
+    if (!isOpen) return
+    const isActive = stage !== 'complete'
     void syncCameraRemoteStateToWatch({
       isActive,
       mode: 'readiness_check',
       modeTitle: '30s Readiness Check',
-      framingStatus: isRepLocked ? 'locked' : isScanning ? 'recording' : 'framing',
-      isRecording: isScanning,
-      countdownSeconds: 0,
-      repCount: isScanning ? currentRep : 0,
+      framingStatus: isRepLocked
+        ? 'locked'
+        : stage === 'scanning'
+          ? 'recording'
+          : 'framing',
+      isRecording: stage === 'scanning',
+      countdownSeconds: stage === 'countdown' ? countdownSec : 0,
+      repCount: stage === 'scanning' ? completedReps : 0,
       targetReps: 3,
       statusHint: isRepLocked
         ? 'Locked · Emerald — 33-point ROM captured'
-        : isScanning
-          ? `Rep ${currentRep} of 3 in progress`
-          : 'Step 6–8 ft back · Tap Start 5s Timer on Watch',
+        : stage === 'countdown'
+          ? `Step 6–8 ft back · Starting in ${countdownSec}s`
+          : stage === 'scanning'
+            ? `Rep ${activeRepIndex} of 3 · ${SCAN_WINDOW_SECONDS - scanElapsedSec}s left`
+            : 'Step 6–8 ft back · Tap Start 5s Timer on Watch',
     })
-  }, [currentRep, isRepLocked, isScanning, result])
+  }, [
+    activeRepIndex,
+    completedReps,
+    countdownSec,
+    isOpen,
+    isRepLocked,
+    scanElapsedSec,
+    stage,
+  ])
 
   useEffect(() => {
     let cleanupWatchSub: (() => void) | null = null
     void subscribeToWatchCameraCommand(cmd => {
-      if (cmd.command === 'startTimer5s' || cmd.command === 'recordRep') {
-        if (!isScanning && !result) {
+      if (cmd.command === 'startTimer5s') {
+        if (stage === 'idle') {
           void startThirtySecondCheck()
         }
+      } else if (cmd.command === 'recordRep') {
+        if (stage === 'idle') {
+          void startThirtySecondCheck()
+        } else if (stage === 'countdown') {
+          beginLiveScanningWindow()
+        } else if (stage === 'scanning') {
+          handleManualLogRep()
+        }
       } else if (cmd.command === 'stopAndReview') {
-        cleanupCamera()
-        const inferredPreset: ReadinessPresetId =
-          screenMode === 'scapular_wall_slides' ? 'stiff_upper_back' : selectedPreset
-        commitEvaluation(screenMode, inferredPreset)
+        if (stage === 'scanning') {
+          finalizeFromCurrentSession()
+        } else {
+          cleanupCamera()
+          setStage('idle')
+        }
       } else if (cmd.command === 'dismissRemote') {
         cleanupCamera()
+        setStage('idle')
       }
     }).then(unsub => {
       cleanupWatchSub = unsub
@@ -285,13 +752,18 @@ export default function CameraReadinessCheck({
         framingStatus: 'framing',
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cleanupCamera, commitEvaluation, isScanning, result, screenMode, selectedPreset])
+  }, [
+    beginLiveScanningWindow,
+    cleanupCamera,
+    finalizeFromCurrentSession,
+    handleManualLogRep,
+    stage,
+    startThirtySecondCheck,
+  ])
 
   return (
-    <section
+    <div
       data-testid="camera-readiness-check"
-      aria-label="30-Second Pre-Workout Camera Readiness Check"
       className="forge-surface-card mb-3 space-y-3.5 rounded-2xl p-4 text-zinc-100 sm:p-5"
     >
       {/* Top Bar */}
@@ -302,7 +774,10 @@ export default function CameraReadinessCheck({
               33-Point Readiness · 30s Check
             </span>
             {expressModeActive && (
-              <span className="inline-flex items-center rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums text-amber-300">
+              <span
+                data-testid="readiness-express-cap-badge"
+                className="inline-flex items-center rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums text-amber-300"
+              >
                 20m Express Cap: Max 90s Warm-Up
               </span>
             )}
@@ -331,7 +806,10 @@ export default function CameraReadinessCheck({
           </button>
           <button
             type="button"
-            onClick={onSkip}
+            onClick={() => {
+              cleanupCamera()
+              onSkip()
+            }}
             className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-white/10 bg-[#181B22] px-3.5 text-xs font-semibold text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
           >
             Skip to Workout →
@@ -339,12 +817,13 @@ export default function CameraReadinessCheck({
         </div>
       </div>
 
-      {/* Screen Selector */}
-      {!isScanning && !result && (
+      {/* Stage 1: Idle Setup & Screen Selector */}
+      {stage === 'idle' && (
         <>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             <button
               type="button"
+              data-testid="readiness-mode-overhead-squat"
               onClick={() => setScreenMode('overhead_squat')}
               aria-pressed={screenMode === 'overhead_squat'}
               className={`forge-tactile-press min-h-[44px] overflow-hidden rounded-xl border p-2.5 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
@@ -367,7 +846,9 @@ export default function CameraReadinessCheck({
                   3 Reps · 30s
                 </span>
               </div>
-              <div className="text-xs font-bold tabular-nums text-white">3 Bodyweight Overhead Squats</div>
+              <div className="text-xs font-bold tabular-nums text-white">
+                3 Bodyweight Overhead Squats
+              </div>
               <div className="mt-1 text-[11px] leading-snug text-zinc-400">
                 Ankle dorsiflexion · Hip depth · Knee valgus · Torso lean
               </div>
@@ -375,6 +856,7 @@ export default function CameraReadinessCheck({
 
             <button
               type="button"
+              data-testid="readiness-mode-wall-slides"
               onClick={() => setScreenMode('scapular_wall_slides')}
               aria-pressed={screenMode === 'scapular_wall_slides'}
               className={`forge-tactile-press min-h-[44px] overflow-hidden rounded-xl border p-2.5 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
@@ -397,7 +879,9 @@ export default function CameraReadinessCheck({
                   3 Reps · 30s
                 </span>
               </div>
-              <div className="text-xs font-bold tabular-nums text-white">3 Scapular Wall Slides</div>
+              <div className="text-xs font-bold tabular-nums text-white">
+                3 Scapular Wall Slides
+              </div>
               <div className="mt-1 text-[11px] leading-snug text-zinc-400">
                 Thoracic extension · Shoulder flexion · Cervical drift
               </div>
@@ -405,6 +889,7 @@ export default function CameraReadinessCheck({
 
             <button
               type="button"
+              data-testid="readiness-mode-dual-screen"
               onClick={() => {
                 if (!allowDualScreen) {
                   onRequestUpgradeDualScreen?.()
@@ -442,12 +927,12 @@ export default function CameraReadinessCheck({
                 )}
               </div>
               <div className="mt-1 text-[11px] leading-snug text-zinc-400">
-                Lower + Upper kinetic chain + trend alerts
+                2 Squats + 1 Wall Slide · Lower + Upper chain
               </div>
             </button>
           </div>
 
-          {/* Selected Screen Mode Studio Demonstration Loop + Safety Disclaimer */}
+          {/* Selected Screen Mode Studio Demonstration Loop + Minimal Legal Note */}
           <div className="overflow-hidden rounded-xl border border-white/10 bg-[#14171E] p-3">
             <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-[200px_1fr]">
               <button
@@ -457,7 +942,7 @@ export default function CameraReadinessCheck({
                     name: READINESS_SCREEN_MEDIA[screenMode].title,
                     imageUrl: READINESS_SCREEN_MEDIA[screenMode].imageUrl,
                     coachingCues: REP_CUES[screenMode],
-                    protocol: '3 controlled reps (2-1-2 cadence)',
+                    protocol: '3 controlled reps (5s step-back + 25s capture)',
                   })
                 }
                 className="group relative aspect-video w-full overflow-hidden rounded-lg border border-white/15 bg-[#090A0D] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
@@ -481,7 +966,7 @@ export default function CameraReadinessCheck({
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-bold text-white">
-                    {READINESS_SCREEN_MEDIA[screenMode].title} — Cadence Preview
+                    {READINESS_SCREEN_MEDIA[screenMode].title} — 30s Protocol
                   </span>
                   <button
                     type="button"
@@ -490,16 +975,17 @@ export default function CameraReadinessCheck({
                         name: READINESS_SCREEN_MEDIA[screenMode].title,
                         imageUrl: READINESS_SCREEN_MEDIA[screenMode].imageUrl,
                         coachingCues: REP_CUES[screenMode],
-                        protocol: '3 controlled reps (2-1-2 cadence)',
+                        protocol: '3 controlled reps (5s step-back + 25s capture)',
                       })
                     }
                     className="font-mono text-[10.5px] font-bold uppercase tracking-wider text-emerald-300 underline decoration-emerald-400/50 underline-offset-2 hover:text-emerald-200"
                   >
-                    Watch Full Demo & NASM Form →
+                    Watch Full Demo &amp; NASM Form →
                   </button>
                 </div>
                 <p className="text-[11px] leading-relaxed text-zinc-300">
-                  {REP_CUES[screenMode][0]}
+                  Prop phone at waist height, step 6–8 ft back during the 5s framing countdown, then
+                  complete 3 smooth reps. All 33-point landmark math stays locally in device memory.
                 </p>
                 <p
                   data-testid="readiness-loop-disclaimer"
@@ -511,91 +997,191 @@ export default function CameraReadinessCheck({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => void startThirtySecondCheck()}
-              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
+          {cameraNotice && (
+            <div
+              role="status"
+              data-testid="readiness-idle-notice"
+              className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-200"
             >
-              <GaaIcon name="camera" size={14} tone="dark" />
-              <span>Start 3-Rep Camera Check</span>
-            </button>
+              {cameraNotice}
+            </div>
+          )}
 
-            {/* Dev / Preview Simulate Readiness Check Selector */}
+          {/* Primary Camera Action Row */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex flex-wrap items-center gap-2">
-              <label
-                htmlFor="simulate-readiness-preset"
-                className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400"
-              >
-                Simulate Readiness Check:
-              </label>
-              <select
-                id="simulate-readiness-preset"
-                value={selectedPreset}
-                onChange={e => handleSimulatePreset(e.target.value as ReadinessPresetId)}
-                className="min-h-[44px] cursor-pointer rounded-xl border border-white/10 bg-[#181B22] px-3 py-2 text-base text-white transition-colors duration-150 hover:border-white/15 focus:border-emerald-400/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
-              >
-                {(Object.keys(READINESS_PRESET_LABELS) as ReadinessPresetId[]).map(presetKey => (
-                  <option key={presetKey} value={presetKey}>
-                    {READINESS_PRESET_LABELS[presetKey]}
-                  </option>
-                ))}
-              </select>
               <button
                 type="button"
-                onClick={() => handleSimulatePreset(selectedPreset)}
-                className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-300 transition-colors duration-150 hover:bg-amber-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
+                data-testid="readiness-start-camera-btn"
+                onClick={() => void startThirtySecondCheck()}
+                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-colors duration-150 hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
               >
-                Run Preset
+                <GaaIcon name="camera" size={14} tone="dark" />
+                <span>Start 30s Camera Check</span>
+              </button>
+
+              <button
+                type="button"
+                data-testid="readiness-camera-facing-btn"
+                onClick={() =>
+                  setCameraFacing(prev => (prev === 'user' ? 'environment' : 'user'))
+                }
+                aria-label="Switch camera lens"
+                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-white/10 bg-[#181B22] px-3.5 py-2 text-xs font-semibold text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+              >
+                <RefreshCw size={13} aria-hidden="true" className="text-emerald-300" />
+                <span>{cameraFacing === 'user' ? 'Front Lens' : 'Rear Lens'}</span>
               </button>
             </div>
+
+            <span className="font-mono text-[11px] tabular-nums text-zinc-400">
+              5s step-back · 25s 3-rep CV scan
+            </span>
           </div>
+
+          {/* Crowded-Gym / No-Camera Quick Mobility Self-Check Disclosure */}
+          <details
+            data-testid="readiness-self-check-disclosure"
+            className="group rounded-xl border border-white/10 bg-[#14171E]/85 px-3.5 py-2.5"
+          >
+            <summary className="flex min-h-[36px] cursor-pointer list-none items-center justify-between gap-2 text-xs font-semibold text-zinc-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70">
+              <span>No camera space or crowded gym? Quick Mobility Self-Check</span>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-300 group-open:rotate-180 transition-transform">
+                ▾
+              </span>
+            </summary>
+            <div className="mt-2.5 space-y-2 border-t border-white/10 pt-2.5">
+              <p className="text-[11px] text-zinc-400">
+                Perform 3 unhurried bodyweight reps and tap how your joints felt today to adapt Set 1
+                warm-up drills immediately:
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {(Object.keys(READINESS_PRESET_LABELS) as ReadinessPresetId[]).map(presetId => (
+                  <button
+                    key={presetId}
+                    type="button"
+                    data-testid={`readiness-self-check-${presetId}`}
+                    onClick={() => handleSelfCheckPreset(presetId)}
+                    className="forge-tactile-press min-h-[44px] rounded-xl border border-white/10 bg-[#181B22] px-3 py-2 text-left text-xs font-semibold text-zinc-100 transition-colors hover:border-emerald-400/40 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+                  >
+                    {READINESS_PRESET_LABELS[presetId]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </details>
         </>
       )}
 
-      {/* Active 3-Rep Computer-Vision HUD */}
-      {isScanning && (
+      {/* Stage 2 & 3: Unified 5s Framing Countdown + 25s Live 33-Point CV HUD */}
+      {(stage === 'countdown' || stage === 'scanning') && (
         <div
+          data-testid="readiness-active-hud"
           className={`relative overflow-hidden rounded-2xl border bg-[#090A0D] p-3.5 transition-colors duration-300 ${
-            isRepLocked ? 'border-emerald-400/70' : 'border-amber-400/70'
+            isRepLocked
+              ? 'border-emerald-400/75'
+              : liveTelemetry?.framingReady
+                ? 'border-emerald-500/45'
+                : 'border-amber-400/70'
           }`}
         >
           <div className="relative overflow-hidden rounded-xl bg-[#090A0D]">
             <video
               ref={videoRef}
+              data-testid="readiness-camera-video"
               poster={READINESS_SCREEN_MEDIA[screenMode].imageUrl}
               muted
               playsInline
+              className={cameraFacing === 'user' ? 'scale-x-[-1]' : ''}
               style={{
                 width: '100%',
-                height: 215,
+                height: 240,
                 objectFit: 'cover',
                 display: 'block',
                 background: '#090A0D',
               }}
             />
 
-            {/* Frosted-Glass Top Instruction Pill */}
+            {/* Frosted-Glass Top Status Pill */}
             <div className="forge-glass-pill absolute inset-x-2.5 top-2.5 z-10 flex items-center justify-between gap-2 rounded-full px-3 py-1.5 text-[11.5px] text-zinc-100">
-              <span className="truncate font-medium">
-                Frame full body in lens · <strong className="tabular-nums text-white">Rep {currentRep} of 3</strong>
+              <span className="truncate font-medium" data-testid="readiness-framing-status">
+                {stage === 'countdown' ? (
+                  <>
+                    Step 6–8 ft back into brackets ·{' '}
+                    <strong className="font-mono tabular-nums text-amber-300">
+                      {countdownSec}s
+                    </strong>
+                  </>
+                ) : liveTelemetry ? (
+                  <>
+                    {liveTelemetry.framingHint} ·{' '}
+                    <strong className="tabular-nums text-white">
+                      Rep {activeRepIndex} of 3
+                    </strong>
+                  </>
+                ) : cameraAvailable ? (
+                  <>
+                    Align full body in lens ·{' '}
+                    <strong className="tabular-nums text-white">
+                      Rep {activeRepIndex} of 3
+                    </strong>
+                  </>
+                ) : (
+                  <>
+                    Hands-Free Pacing ·{' '}
+                    <strong className="tabular-nums text-white">
+                      Rep {activeRepIndex} of 3
+                    </strong>
+                  </>
+                )}
               </span>
               <span
+                data-testid="readiness-tracking-badge"
                 className={`shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors duration-300 ${
                   isRepLocked
                     ? 'border-emerald-500/35 bg-emerald-500/15 text-emerald-300'
-                    : 'border-amber-500/35 bg-amber-500/15 text-amber-300'
+                    : stage === 'countdown'
+                      ? 'border-amber-500/35 bg-amber-500/15 text-amber-300'
+                      : liveTelemetry
+                        ? 'border-emerald-500/35 bg-emerald-500/15 text-emerald-300'
+                        : 'border-zinc-500/35 bg-zinc-500/15 text-zinc-300'
                 }`}
               >
-                {isRepLocked ? 'LOCKED' : 'TRACKING'}
+                {isRepLocked
+                  ? 'LOCKED'
+                  : stage === 'countdown'
+                    ? 'FRAMING'
+                    : liveTelemetry
+                      ? '33-PT LIVE'
+                      : cvReady
+                        ? 'AWAITING POSE'
+                        : 'GUIDED'}
               </span>
             </div>
 
-            {/* Corner Framing Brackets + Glowing Vector Skeleton Overlay */}
+            {/* 5-Second Step-Back Countdown Center Overlay */}
+            {stage === 'countdown' && (
+              <div
+                data-testid="readiness-countdown-overlay"
+                className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/45 px-4 text-center backdrop-blur-[2px]"
+              >
+                <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-amber-400/80 bg-[#090A0D]/85 font-mono text-3xl font-extrabold tabular-nums text-amber-300 shadow-lg">
+                  {countdownSec}
+                </div>
+                <p className="mt-2 max-w-xs text-xs font-semibold text-white">
+                  {liveTelemetry?.framingReady
+                    ? 'Framing verified — hold steady for Rep 1'
+                    : 'Set device down & step 6–8 ft back so head-to-ankles fit inside brackets'}
+                </p>
+              </div>
+            )}
+
+            {/* Optical Framing Brackets + Live 33-Point Skeleton Overlay (ONLY rendered from real pose frames) */}
             <svg
-              viewBox="0 0 100 60"
+              viewBox="0 0 100 100"
               preserveAspectRatio="none"
               aria-hidden="true"
+              data-testid="readiness-hud-svg"
               className="pointer-events-none absolute inset-0 h-full w-full"
             >
               <defs>
@@ -607,100 +1193,236 @@ export default function CameraReadinessCheck({
                   </feMerge>
                 </filter>
               </defs>
+              {/* Framing Corner Brackets */}
               <path
-                d="M 5 16 L 5 9 L 13 9 M 87 9 L 95 9 L 95 16 M 5 48 L 5 55 L 13 55 M 87 55 L 95 55 L 95 48"
+                d="M 5 22 L 5 12 L 13 12 M 87 12 L 95 12 L 95 22 M 5 80 L 5 90 L 13 90 M 87 90 L 95 90 L 95 80"
                 fill="none"
-                stroke={isRepLocked ? '#34D399' : '#FBBF24'}
+                stroke={
+                  isRepLocked || liveTelemetry?.framingReady ? '#34D399' : '#FBBF24'
+                }
                 strokeWidth="0.9"
                 strokeLinecap="round"
-                style={{ transition: 'stroke 260ms ease' }}
+                style={{ transition: 'stroke 220ms ease' }}
               />
-              <g filter="url(#readiness-hud-glow)" opacity="0.88">
-                <line x1="50" y1="16" x2="50" y2="33" stroke={isRepLocked ? '#34D399' : '#FBBF24'} strokeWidth="0.75" />
-                <line x1="42" y1="21" x2="58" y2="21" stroke={isRepLocked ? '#34D399' : '#FBBF24'} strokeWidth="0.75" />
-                <line x1="42" y1="21" x2="38" y2="12" stroke="#34D399" strokeWidth="0.65" />
-                <line x1="58" y1="21" x2="62" y2="12" stroke="#34D399" strokeWidth="0.65" />
-                <line x1="45" y1="33" x2="55" y2="33" stroke={isRepLocked ? '#34D399' : '#FBBF24'} strokeWidth="0.75" />
-                <line x1="45" y1="33" x2="43" y2="49" stroke="#34D399" strokeWidth="0.75" />
-                <line x1="55" y1="33" x2="57" y2="49" stroke="#34D399" strokeWidth="0.75" />
-              </g>
-              {[
-                { x: 50, y: 15 },
-                { x: 42, y: 21 },
-                { x: 58, y: 21 },
-                { x: 45, y: 33 },
-                { x: 55, y: 33 },
-                { x: 43, y: 49 },
-                { x: 57, y: 49 },
-              ].map((pt, i) => (
-                <g key={i} opacity={0.94 - i * 0.03}>
-                  <circle
-                    cx={pt.x}
-                    cy={pt.y}
-                    r="2.1"
-                    fill={isRepLocked ? 'rgba(52,211,153,0.2)' : 'rgba(251,191,36,0.2)'}
-                    stroke={isRepLocked ? 'rgba(52,211,153,0.5)' : 'rgba(251,191,36,0.5)'}
-                    strokeWidth="0.35"
-                  />
-                  <circle
-                    cx={pt.x}
-                    cy={pt.y}
-                    r="1.05"
-                    fill="#090A0D"
-                    stroke="#FFFFFF"
-                    strokeWidth="0.55"
-                  />
-                </g>
-              ))}
+
+              {liveTelemetry && (
+                <>
+                  <g
+                    data-testid="readiness-live-skeleton-segments"
+                    filter="url(#readiness-hud-glow)"
+                    opacity="0.9"
+                  >
+                    {liveTelemetry.overlaySegments.map(seg => (
+                      <line
+                        key={`${seg.from}-${seg.to}`}
+                        x1={seg.x1}
+                        y1={seg.y1}
+                        x2={seg.x2}
+                        y2={seg.y2}
+                        stroke={
+                          isRepLocked || liveTelemetry.framingReady ? '#34D399' : '#FBBF24'
+                        }
+                        strokeWidth="0.85"
+                        strokeLinecap="round"
+                      />
+                    ))}
+                  </g>
+                  <g data-testid="readiness-live-skeleton-nodes">
+                    {liveTelemetry.overlayNodes.map(pt => (
+                      <g key={pt.id} opacity={Math.max(0.55, pt.confidence)}>
+                        <circle
+                          cx={pt.x}
+                          cy={pt.y}
+                          r="2.0"
+                          fill={
+                            isRepLocked || liveTelemetry.framingReady
+                              ? 'rgba(52,211,153,0.22)'
+                              : 'rgba(251,191,36,0.22)'
+                          }
+                          stroke={
+                            isRepLocked || liveTelemetry.framingReady
+                              ? 'rgba(52,211,153,0.55)'
+                              : 'rgba(251,191,36,0.55)'
+                          }
+                          strokeWidth="0.35"
+                        />
+                        <circle
+                          cx={pt.x}
+                          cy={pt.y}
+                          r="0.95"
+                          fill="#090A0D"
+                          stroke="#FFFFFF"
+                          strokeWidth="0.5"
+                        />
+                      </g>
+                    ))}
+                  </g>
+                </>
+              )}
             </svg>
+
+            {/* Live Angle Telemetry Strip at Bottom of Viewport when Pose Landmarks are Active */}
+            {stage === 'scanning' && liveTelemetry && (
+              <div
+                data-testid="readiness-live-angles"
+                className="pointer-events-none absolute inset-x-2.5 bottom-2 z-10 flex flex-wrap items-center gap-1.5"
+              >
+                {activeMovement === 'overhead_squat' ? (
+                  <>
+                    <span className="rounded-md bg-black/80 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-emerald-300">
+                      Ankle DF {liveTelemetry.angles.ankleDorsiflexionDeg}°
+                    </span>
+                    <span className="rounded-md bg-black/80 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-zinc-100">
+                      Hip Depth {liveTelemetry.angles.hipCreaseDepthDeg}°
+                    </span>
+                    <span className="rounded-md bg-black/80 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-zinc-200">
+                      Valgus {liveTelemetry.angles.kneeValgusDeg}°
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="rounded-md bg-black/80 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-emerald-300">
+                      Shoulder Flex {liveTelemetry.angles.shoulderFlexionDeg}°
+                    </span>
+                    <span className="rounded-md bg-black/80 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-zinc-100">
+                      T-Spine {liveTelemetry.angles.thoracicExtensionDeg}°
+                    </span>
+                    <span className="rounded-md bg-black/80 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-zinc-200">
+                      Neck Drift {liveTelemetry.angles.cervicalDriftDeg}°
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="mt-3 flex items-center justify-between gap-2">
-            <span
-              className={`font-mono text-xs font-extrabold uppercase tracking-wider tabular-nums ${
-                isRepLocked ? 'text-emerald-300' : 'text-amber-300'
-              }`}
-            >
-              Rep {currentRep} of 3
-            </span>
-            <div className="flex gap-1.5">
-              {[1, 2, 3].map(r => (
-                <span
-                  key={r}
-                  className={`h-1.5 w-8 rounded-full transition-colors duration-200 ${
-                    r <= currentRep
-                      ? isRepLocked
+          {/* Progress + Rep Counter Row */}
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span
+                data-testid="readiness-rep-counter"
+                className={`font-mono text-xs font-extrabold uppercase tracking-wider tabular-nums ${
+                  isRepLocked ? 'text-emerald-300' : 'text-amber-300'
+                }`}
+              >
+                {stage === 'countdown'
+                  ? `Framing Countdown · ${countdownSec}s`
+                  : `Completed ${completedReps} of 3 Reps · ${Math.max(0, SCAN_WINDOW_SECONDS - scanElapsedSec)}s Left`}
+              </span>
+              <div className="flex gap-1.5" aria-hidden="true">
+                {[1, 2, 3].map(r => (
+                  <span
+                    key={r}
+                    className={`h-1.5 w-8 rounded-full transition-colors duration-200 ${
+                      r <= completedReps
                         ? 'bg-emerald-400'
-                        : 'bg-amber-400'
-                      : 'bg-white/10'
-                  }`}
-                />
-              ))}
+                        : stage === 'scanning' && r === activeRepIndex
+                          ? 'bg-amber-400'
+                          : 'bg-white/10'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
+
+            {stage === 'scanning' && (
+              <div className="flex items-center gap-2">
+                <label htmlFor={progressId} className="sr-only">
+                  25-second readiness scan window progress
+                </label>
+                <progress
+                  id={progressId}
+                  max={SCAN_WINDOW_SECONDS}
+                  value={scanElapsedSec}
+                  className="h-1.5 w-full overflow-hidden rounded-full accent-emerald-400 [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-white/10 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-emerald-400"
+                />
+              </div>
+            )}
           </div>
 
           <div className="mt-2 text-xs font-medium leading-relaxed text-zinc-100 sm:text-sm">
-            {REP_CUES[screenMode][currentRep - 1]}
+            {REP_CUES[screenMode][activeRepIndex - 1]}
           </div>
 
-          {cameraNotice && (
-            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#181B22] px-3 py-2 text-xs text-zinc-300">
-              <span>{cameraNotice}</span>
+          {/* Active Scan Controls */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {stage === 'countdown' ? (
+                <button
+                  type="button"
+                  data-testid="readiness-skip-countdown-btn"
+                  onClick={beginLiveScanningWindow}
+                  className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/15 px-3.5 py-2 text-xs font-bold text-emerald-200 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+                >
+                  <Camera size={14} aria-hidden="true" />
+                  <span>Start Now (Skip 5s)</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  data-testid="readiness-log-rep-btn"
+                  onClick={handleManualLogRep}
+                  className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/15 px-3.5 py-2 text-xs font-bold text-emerald-200 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+                >
+                  <CheckCircle2 size={14} aria-hidden="true" />
+                  <span>Log Rep ({completedReps}/3)</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => handleSimulatePreset(selectedPreset)}
-                className="forge-tactile-press min-h-[44px] rounded-xl border border-emerald-500/30 bg-emerald-500/15 px-3 text-[11px] font-bold uppercase tracking-wider text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                onClick={handleFlipCameraFacing}
+                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-white/10 bg-[#181B22] px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-white/20 hover:bg-[#1D212A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
               >
-                Run Demo Scan
+                <RefreshCw size={13} aria-hidden="true" />
+                <span>{cameraFacing === 'user' ? 'Rear Lens' : 'Front Lens'}</span>
               </button>
+            </div>
+
+            <button
+              type="button"
+              data-testid="readiness-cancel-scan-btn"
+              onClick={() => {
+                cleanupCamera()
+                setStage('idle')
+              }}
+              className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-xl border border-white/10 bg-[#181B22] px-3.5 py-2 text-xs font-semibold text-zinc-300 transition-colors hover:border-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+            >
+              Cancel
+            </button>
+          </div>
+
+          {/* Honest Fallback Bar When Camera Permission Denied or CV Model Offline */}
+          {cameraNotice && (
+            <div
+              data-testid="readiness-camera-fallback-bar"
+              className="mt-3 space-y-2 rounded-xl border border-white/10 bg-[#181B22] p-3 text-xs text-zinc-300"
+            >
+              <div>{cameraNotice}</div>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(READINESS_PRESET_LABELS) as ReadinessPresetId[]).map(presetId => (
+                  <button
+                    key={presetId}
+                    type="button"
+                    data-testid={`readiness-fallback-${presetId}`}
+                    onClick={() => handleSelfCheckPreset(presetId)}
+                    className="forge-tactile-press min-h-[44px] rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] font-bold text-emerald-200 transition-colors hover:bg-emerald-500/20"
+                  >
+                    {READINESS_PRESET_LABELS[presetId]}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Evaluated Readiness Score & Warm-Up Preview */}
-      {result && (
-        <div className="space-y-3 rounded-2xl border border-white/10 bg-[#181B22]/90 p-4">
+      {/* Stage 4: Evaluated Readiness Score & Warm-Up Preview */}
+      {stage === 'complete' && result && (
+        <div
+          data-testid="readiness-result-card"
+          className="space-y-3 rounded-2xl border border-white/10 bg-[#181B22]/90 p-4"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <TelemetryRingGauge
@@ -713,8 +1435,19 @@ export default function CameraReadinessCheck({
                 label={`Forge Readiness Score ${result.readinessScore} out of 100`}
               />
               <div>
-                <div className="forge-eyebrow-micro">Forge Readiness Score</div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="forge-eyebrow-micro">Forge Readiness Score</span>
+                  <span
+                    data-testid="readiness-source-badge"
+                    className="rounded-full border border-white/10 bg-[#090A0D] px-2 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-zinc-300"
+                  >
+                    {result.evaluationSource === 'live_pose_cv'
+                      ? `Live 33-Pt CV · ${result.capturedRepsCount}/3 Reps`
+                      : 'Mobility Self-Check'}
+                  </span>
+                </div>
                 <div
+                  data-testid="readiness-score-value"
                   className={`mt-0.5 font-mono text-2xl font-extrabold tabular-nums ${
                     result.readinessScore >= 85 ? 'text-emerald-300' : 'text-amber-300'
                   }`}
@@ -729,6 +1462,7 @@ export default function CameraReadinessCheck({
               {result.checks.map(chk => (
                 <span
                   key={chk.id}
+                  data-testid={`readiness-check-pill-${chk.id}`}
                   className={`rounded-full border px-2.5 py-1 font-mono text-[10.5px] font-semibold tabular-nums ${
                     chk.status === 'optimal'
                       ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300'
@@ -746,17 +1480,25 @@ export default function CameraReadinessCheck({
           </p>
 
           {result.injectedDrills.length > 0 && (
-            <div className="space-y-2.5 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-200">
+            <div
+              data-testid="readiness-injected-drills-preview"
+              className="space-y-2.5 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-200"
+            >
               <div>
                 <strong className="tabular-nums text-amber-100">
-                  Auto-Injecting {result.injectedDrills.length} Corrective Drills ({result.totalInjectedDurationSec}s
+                  Auto-Injecting {result.injectedDrills.length} Corrective{' '}
+                  {result.injectedDrills.length === 1 ? 'Drill' : 'Drills'} (
+                  {result.totalInjectedDurationSec}s
                   {expressModeActive ? ' · 20m Express Capped' : ''}):
                 </strong>{' '}
                 {result.injectedDrills.map(d => d.name).join(' · ')}
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {result.injectedDrills.map(drill => {
-                  const thumb = drill.imageUrl || resolveGaaExerciseImage(drill.name, false) || BRAND_LOGO_FALLBACK_IMAGE
+                  const thumb =
+                    drill.imageUrl ||
+                    resolveGaaExerciseImage(drill.name, false) ||
+                    BRAND_LOGO_FALLBACK_IMAGE
                   return (
                     <button
                       key={drill.id}
@@ -770,7 +1512,7 @@ export default function CameraReadinessCheck({
                           protocol: `${drill.durationSec}s (${drill.targetArea})`,
                         })
                       }
-                      className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-[#090A0D]/90 p-2 text-left transition-colors hover:border-amber-400/40"
+                      className="flex min-h-[44px] items-center gap-2.5 rounded-lg border border-white/10 bg-[#090A0D]/90 p-2 text-left transition-colors hover:border-amber-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
                     >
                       <div className="relative h-12 w-20 shrink-0 overflow-hidden rounded-md border border-white/10 bg-[#14171E]">
                         <img
@@ -787,7 +1529,9 @@ export default function CameraReadinessCheck({
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[11.5px] font-bold text-white">{drill.name}</div>
+                        <div className="truncate text-[11.5px] font-bold text-white">
+                          {drill.name}
+                        </div>
                         <div className="truncate text-[10.5px] text-zinc-400">
                           {drill.targetArea} · {drill.durationSec}s
                         </div>
@@ -802,6 +1546,7 @@ export default function CameraReadinessCheck({
           <div className="flex flex-wrap gap-2.5">
             <button
               type="button"
+              data-testid="readiness-apply-begin-btn"
               onClick={() =>
                 onComplete({
                   readinessScore: result.readinessScore,
@@ -817,7 +1562,12 @@ export default function CameraReadinessCheck({
             </button>
             <button
               type="button"
-              onClick={() => setResult(null)}
+              data-testid="readiness-rescan-btn"
+              onClick={() => {
+                setResult(null)
+                setRawResultDrills([])
+                setStage('idle')
+              }}
               className="forge-tactile-press min-h-[44px] rounded-xl border border-white/10 bg-[#090A0D] px-4 py-2.5 text-xs font-semibold text-zinc-300 transition-colors duration-150 hover:border-white/15 hover:bg-[#111318] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               Re-Scan
@@ -887,6 +1637,6 @@ export default function CameraReadinessCheck({
           onClose={() => setActiveVideoModal(null)}
         />
       )}
-    </section>
+    </div>
   )
 }

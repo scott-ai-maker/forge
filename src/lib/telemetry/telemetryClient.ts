@@ -72,6 +72,8 @@ export interface TelemetryEventMap {
   readiness_check_completed: {
     readiness_index: number
     movement_type: string
+    evaluation_source?: 'live_pose_cv' | 'self_check_preset'
+    captured_reps?: number
     peak_rom_deltas: Record<
       string,
       {
