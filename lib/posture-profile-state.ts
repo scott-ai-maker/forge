@@ -29,6 +29,8 @@ export interface InjectedReadinessDrill {
   durationSec: number
   cue: string
   priority: number
+  imageUrl?: string
+  videoUrl?: string
 }
 
 export interface DailyReadinessComfortLog {

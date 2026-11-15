@@ -1,9 +1,14 @@
 'use client'
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { CheckCircle2, Clock, Sparkles, Trash2, X, Zap } from 'lucide-react'
+import { CheckCircle2, Clock, Play, Sparkles, Trash2, X, Zap } from 'lucide-react'
 import CameraReadinessCheck from '@/components/fitness/CameraReadinessCheck'
+import ExerciseVideoModal, { type ExerciseModalData } from '@/components/fitness/ExerciseVideoModal'
 import { applyExpressCapToInjectedDrills } from '@/lib/camera-readiness-engine'
+import {
+  BRAND_LOGO_FALLBACK_IMAGE,
+  resolveGaaExerciseImage,
+} from '@/lib/nasm-generated-images'
 import {
   InjectedReadinessDrill,
   loadPostureProfileState,
@@ -31,6 +36,7 @@ export default function PreWorkoutReadinessBridge({
   const [expressMode, setExpressMode] = useState(false)
   const [rawDrills, setRawDrills] = useState<InjectedReadinessDrill[]>([])
   const [completedDrillIds, setCompletedDrillIds] = useState<string[]>([])
+  const [activeVideoModal, setActiveVideoModal] = useState<ExerciseModalData | null>(null)
 
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const headingId = useId()
@@ -157,6 +163,7 @@ export default function PreWorkoutReadinessBridge({
           <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {cappedDrills.map(drill => {
               const done = completedDrillIds.includes(drill.id)
+              const thumb = drill.imageUrl || resolveGaaExerciseImage(drill.name, false) || BRAND_LOGO_FALLBACK_IMAGE
               return (
                 <div
                   key={drill.id}
@@ -166,7 +173,36 @@ export default function PreWorkoutReadinessBridge({
                       : 'border-white/[0.07] bg-[#181B22]'
                   }`}
                 >
-                  <div className="min-w-0">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveVideoModal({
+                        name: drill.name,
+                        imageUrl: thumb,
+                        coachingCues: [drill.cue],
+                        target: drill.targetArea,
+                        protocol: `${drill.durationSec}s (${drill.targetArea})`,
+                      })
+                    }
+                    aria-label={`Watch ${drill.name} demonstration`}
+                    className="group relative h-14 w-24 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#090A0D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+                  >
+                    <img
+                      src={thumb}
+                      alt={drill.name}
+                      loading="lazy"
+                      onError={e => {
+                        e.currentTarget.src = BRAND_LOGO_FALLBACK_IMAGE
+                      }}
+                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-90 transition-opacity group-hover:bg-black/20">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400/90 text-[#090A0D]">
+                        <Play size={11} fill="currentColor" aria-hidden="true" />
+                      </span>
+                    </span>
+                  </button>
+                  <div className="min-w-0 flex-1">
                     <div className="text-xs font-bold text-white">
                       {drill.name}{' '}
                       <span className="font-mono text-[11px] tabular-nums text-emerald-300">
@@ -198,6 +234,9 @@ export default function PreWorkoutReadinessBridge({
               )
             })}
           </div>
+          <p className="mt-2.5 text-[10.5px] leading-snug text-amber-200/90">
+            <strong className="font-bold text-amber-300">Form Guidance Notice:</strong> Studio loops are AI-generated for visual branding and may have minor flaws. Tap any drill thumbnail to view the official NASM video for exact form guidance.
+          </p>
         </section>
       ) : null}
 
@@ -260,6 +299,13 @@ export default function PreWorkoutReadinessBridge({
         currentTier={tierId}
         onClose={() => setUpgradeOpen(false)}
       />
+
+      {activeVideoModal && (
+        <ExerciseVideoModal
+          exercise={activeVideoModal}
+          onClose={() => setActiveVideoModal(null)}
+        />
+      )}
     </>
   )
 }

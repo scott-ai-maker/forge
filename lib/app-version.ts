@@ -4,9 +4,9 @@
  * https://semver.org/spec/v2.0.0.html
  */
 
-export const APP_VERSION = '1.57.0'
+export const APP_VERSION = '1.58.0'
 export const APP_RELEASE_DATE = '2026-11-14'
-export const APP_RELEASE_CODENAME = 'Website Copy & Complete Ecosystem Showcase Overhaul'
+export const APP_RELEASE_CODENAME = '30-Second Camera Readiness Check Studio Media & Loops'
 
 export type ReleaseCategory = 'major' | 'feature' | 'intelligence' | 'fix' | 'security'
 
@@ -32,6 +32,21 @@ export interface ReleaseLogEntry {
 }
 
 export const RELEASE_LOG: ReleaseLogEntry[] = [
+  {
+    version: '1.58.0',
+    date: '2026-11-14',
+    codename: '30-Second Camera Readiness Check Studio Media & Loops',
+    category: 'feature',
+    badge: 'Readiness Studio Media',
+    title: 'v1.58.0 — 30-Second Camera Readiness Check Studio Keyframes, 120-Frame Loops & NASM Safety Guidance',
+    summary:
+      'Adds dedicated Forge Athletic Studio 16:9 exercise thumbnails and 120-frame (4.0s) concentric-peak-eccentric video loops across all 3 Screen Modes and all 6 Auto-Injected Corrective Warm-Up Drills in the 30-Second Camera Readiness Check.',
+    highlights: [
+      '3 Readiness Screen Mode Studio Loops: Generated and wired dedicated Studio images and 120-frame loops for 3 Bodyweight Overhead Squats, 3 Scapular Wall Slides, and Dual-Screen Full Check with inline cadence previews.',
+      '6 Auto-Injected Corrective Drill Loops: Generated and wired Studio images and 4.0s loops for Half-Kneeling Ankle Dorsiflexion Rocks, 90/90 Hip Capsule & Psoas Opener, Tempo Glute Bridge w/ Knee Out-Drive, Side-Lying Open-Book Thoracic Rotations, Wall Scapular Upward-Rotation Slides + Chin Nod, and Controlled Scapular External Rotation Pulses.',
+      'Interactive Demonstration Viewer & Safety Disclaimers: Connected all Readiness Check screen modes and prepended warm-up drills to ExerciseVideoModal with AI-generated branding loop & Official NASM form safety notices.',
+    ],
+  },
   {
     version: '1.57.0',
     date: '2026-11-14',

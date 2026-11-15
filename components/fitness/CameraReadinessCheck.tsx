@@ -7,10 +7,16 @@ import { useSfxMuted } from '@/lib/sfx-audio'
 import {
   evaluateCameraReadiness,
   READINESS_PRESET_LABELS,
+  READINESS_SCREEN_MEDIA,
   type ReadinessEvaluationResult,
   type ReadinessPresetId,
   type ReadinessScreenMode,
 } from '@/lib/camera-readiness-engine'
+import {
+  BRAND_LOGO_FALLBACK_IMAGE,
+  resolveGaaExerciseImage,
+} from '@/lib/nasm-generated-images'
+import ExerciseVideoModal, { type ExerciseModalData } from '@/components/fitness/ExerciseVideoModal'
 import {
   recordDailyReadinessAndComfort,
   type InjectedReadinessDrill,
@@ -77,6 +83,7 @@ export default function CameraReadinessCheck({
   const [currentRep, setCurrentRep] = useState<1 | 2 | 3>(1)
   const [result, setResult] = useState<ReadinessEvaluationResult | null>(null)
   const [cameraNotice, setCameraNotice] = useState<string | null>(null)
+  const [activeVideoModal, setActiveVideoModal] = useState<ExerciseModalData | null>(null)
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const repIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -340,12 +347,26 @@ export default function CameraReadinessCheck({
               type="button"
               onClick={() => setScreenMode('overhead_squat')}
               aria-pressed={screenMode === 'overhead_squat'}
-              className={`forge-tactile-press min-h-[44px] rounded-xl border p-3 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+              className={`forge-tactile-press min-h-[44px] overflow-hidden rounded-xl border p-2.5 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
                 screenMode === 'overhead_squat'
                   ? 'border-emerald-500/35 bg-emerald-500/10 text-white'
                   : 'border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
               }`}
             >
+              <div className="relative mb-2 aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-[#090A0D]">
+                <img
+                  src={READINESS_SCREEN_MEDIA.overhead_squat.imageUrl}
+                  alt="3 Bodyweight Overhead Squats Forge Studio demonstration"
+                  loading="lazy"
+                  onError={e => {
+                    e.currentTarget.src = BRAND_LOGO_FALLBACK_IMAGE
+                  }}
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute bottom-1.5 right-1.5 rounded bg-black/75 px-1.5 py-0.5 font-mono text-[9.5px] font-bold uppercase tracking-wider text-emerald-300">
+                  3 Reps · 30s
+                </span>
+              </div>
               <div className="text-xs font-bold tabular-nums text-white">3 Bodyweight Overhead Squats</div>
               <div className="mt-1 text-[11px] leading-snug text-zinc-400">
                 Ankle dorsiflexion · Hip depth · Knee valgus · Torso lean
@@ -356,12 +377,26 @@ export default function CameraReadinessCheck({
               type="button"
               onClick={() => setScreenMode('scapular_wall_slides')}
               aria-pressed={screenMode === 'scapular_wall_slides'}
-              className={`forge-tactile-press min-h-[44px] rounded-xl border p-3 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+              className={`forge-tactile-press min-h-[44px] overflow-hidden rounded-xl border p-2.5 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
                 screenMode === 'scapular_wall_slides'
                   ? 'border-emerald-500/35 bg-emerald-500/10 text-white'
                   : 'border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
               }`}
             >
+              <div className="relative mb-2 aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-[#090A0D]">
+                <img
+                  src={READINESS_SCREEN_MEDIA.scapular_wall_slides.imageUrl}
+                  alt="3 Scapular Wall Slides Forge Studio demonstration"
+                  loading="lazy"
+                  onError={e => {
+                    e.currentTarget.src = BRAND_LOGO_FALLBACK_IMAGE
+                  }}
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute bottom-1.5 right-1.5 rounded bg-black/75 px-1.5 py-0.5 font-mono text-[9.5px] font-bold uppercase tracking-wider text-emerald-300">
+                  3 Reps · 30s
+                </span>
+              </div>
               <div className="text-xs font-bold tabular-nums text-white">3 Scapular Wall Slides</div>
               <div className="mt-1 text-[11px] leading-snug text-zinc-400">
                 Thoracic extension · Shoulder flexion · Cervical drift
@@ -378,12 +413,26 @@ export default function CameraReadinessCheck({
                 setScreenMode('dual_screen')
               }}
               aria-pressed={screenMode === 'dual_screen'}
-              className={`forge-tactile-press min-h-[44px] rounded-xl border p-3 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+              className={`forge-tactile-press min-h-[44px] overflow-hidden rounded-xl border p-2.5 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
                 screenMode === 'dual_screen'
                   ? 'border-amber-500/35 bg-amber-500/10 text-white'
                   : 'border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
               }`}
             >
+              <div className="relative mb-2 aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-[#090A0D]">
+                <img
+                  src={READINESS_SCREEN_MEDIA.dual_screen.imageUrl}
+                  alt="Dual-Screen Full Check Forge Studio demonstration"
+                  loading="lazy"
+                  onError={e => {
+                    e.currentTarget.src = BRAND_LOGO_FALLBACK_IMAGE
+                  }}
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute bottom-1.5 right-1.5 rounded bg-black/75 px-1.5 py-0.5 font-mono text-[9.5px] font-bold uppercase tracking-wider text-amber-300">
+                  Full Chain
+                </span>
+              </div>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-bold text-white">Dual-Screen Full Check</span>
                 {!allowDualScreen && (
@@ -396,6 +445,70 @@ export default function CameraReadinessCheck({
                 Lower + Upper kinetic chain + trend alerts
               </div>
             </button>
+          </div>
+
+          {/* Selected Screen Mode Studio Demonstration Loop + Safety Disclaimer */}
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-[#14171E] p-3">
+            <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-[200px_1fr]">
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveVideoModal({
+                    name: READINESS_SCREEN_MEDIA[screenMode].title,
+                    imageUrl: READINESS_SCREEN_MEDIA[screenMode].imageUrl,
+                    coachingCues: REP_CUES[screenMode],
+                    protocol: '3 controlled reps (2-1-2 cadence)',
+                  })
+                }
+                className="group relative aspect-video w-full overflow-hidden rounded-lg border border-white/15 bg-[#090A0D] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+                aria-label={`Watch ${READINESS_SCREEN_MEDIA[screenMode].title} demonstration`}
+              >
+                <video
+                  key={READINESS_SCREEN_MEDIA[screenMode].videoUrl}
+                  src={READINESS_SCREEN_MEDIA[screenMode].videoUrl}
+                  poster={READINESS_SCREEN_MEDIA[screenMode].imageUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute bottom-1.5 left-1.5 rounded bg-black/80 px-2 py-0.5 font-mono text-[9.5px] font-bold uppercase tracking-wider text-emerald-300">
+                  Studio Demo Loop · Tap to Expand
+                </span>
+              </button>
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-white">
+                    {READINESS_SCREEN_MEDIA[screenMode].title} — Cadence Preview
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveVideoModal({
+                        name: READINESS_SCREEN_MEDIA[screenMode].title,
+                        imageUrl: READINESS_SCREEN_MEDIA[screenMode].imageUrl,
+                        coachingCues: REP_CUES[screenMode],
+                        protocol: '3 controlled reps (2-1-2 cadence)',
+                      })
+                    }
+                    className="font-mono text-[10.5px] font-bold uppercase tracking-wider text-emerald-300 underline decoration-emerald-400/50 underline-offset-2 hover:text-emerald-200"
+                  >
+                    Watch Full Demo & NASM Form →
+                  </button>
+                </div>
+                <p className="text-[11px] leading-relaxed text-zinc-300">
+                  {REP_CUES[screenMode][0]}
+                </p>
+                <p
+                  data-testid="readiness-loop-disclaimer"
+                  className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2.5 py-1.5 text-[10.5px] leading-snug text-amber-200"
+                >
+                  <strong className="font-bold text-amber-300">Form Guidance Notice:</strong> Studio loop is AI-generated for visual branding and may contain minor flaws. Use the official NASM video in the demonstration viewer for exact form guidance and injury prevention.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -450,6 +563,7 @@ export default function CameraReadinessCheck({
           <div className="relative overflow-hidden rounded-xl bg-[#090A0D]">
             <video
               ref={videoRef}
+              poster={READINESS_SCREEN_MEDIA[screenMode].imageUrl}
               muted
               playsInline
               style={{
@@ -632,12 +746,56 @@ export default function CameraReadinessCheck({
           </p>
 
           {result.injectedDrills.length > 0 && (
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-200">
-              <strong className="tabular-nums text-amber-100">
-                Auto-Injecting {result.injectedDrills.length} Corrective Drills ({result.totalInjectedDurationSec}s
-                {expressModeActive ? ' · 20m Express Capped' : ''}):
-              </strong>{' '}
-              {result.injectedDrills.map(d => d.name).join(' · ')}
+            <div className="space-y-2.5 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-200">
+              <div>
+                <strong className="tabular-nums text-amber-100">
+                  Auto-Injecting {result.injectedDrills.length} Corrective Drills ({result.totalInjectedDurationSec}s
+                  {expressModeActive ? ' · 20m Express Capped' : ''}):
+                </strong>{' '}
+                {result.injectedDrills.map(d => d.name).join(' · ')}
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {result.injectedDrills.map(drill => {
+                  const thumb = drill.imageUrl || resolveGaaExerciseImage(drill.name, false) || BRAND_LOGO_FALLBACK_IMAGE
+                  return (
+                    <button
+                      key={drill.id}
+                      type="button"
+                      onClick={() =>
+                        setActiveVideoModal({
+                          name: drill.name,
+                          imageUrl: thumb,
+                          coachingCues: [drill.cue],
+                          target: drill.targetArea,
+                          protocol: `${drill.durationSec}s (${drill.targetArea})`,
+                        })
+                      }
+                      className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-[#090A0D]/90 p-2 text-left transition-colors hover:border-amber-400/40"
+                    >
+                      <div className="relative h-12 w-20 shrink-0 overflow-hidden rounded-md border border-white/10 bg-[#14171E]">
+                        <img
+                          src={thumb}
+                          alt={drill.name}
+                          loading="lazy"
+                          onError={e => {
+                            e.currentTarget.src = BRAND_LOGO_FALLBACK_IMAGE
+                          }}
+                          className="h-full w-full object-cover"
+                        />
+                        <span className="absolute bottom-0.5 right-0.5 rounded bg-black/80 px-1 py-0.5 font-mono text-[8.5px] font-bold uppercase text-emerald-300">
+                          Demo
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[11.5px] font-bold text-white">{drill.name}</div>
+                        <div className="truncate text-[10.5px] text-zinc-400">
+                          {drill.targetArea} · {drill.durationSec}s
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
 
@@ -721,6 +879,13 @@ export default function CameraReadinessCheck({
             }}
           />
         </div>
+      )}
+
+      {activeVideoModal && (
+        <ExerciseVideoModal
+          exercise={activeVideoModal}
+          onClose={() => setActiveVideoModal(null)}
+        />
       )}
     </section>
   )

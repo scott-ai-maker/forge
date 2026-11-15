@@ -451,11 +451,21 @@ export default function AppSneakPeekShowcase() {
                               {readinessPreview.injectedDrills.map(drill => (
                                 <li
                                   key={drill.id}
-                                  className="flex items-center justify-between gap-2 rounded-lg border border-white/[0.06] bg-[#181B22] px-3 py-2 text-xs"
+                                  className="flex items-center justify-between gap-2.5 rounded-lg border border-white/[0.06] bg-[#181B22] px-3 py-2 text-xs"
                                 >
-                                  <div>
-                                    <div className="font-semibold text-white">{drill.name}</div>
-                                    <div className="text-[11px] text-zinc-400">{drill.targetArea}</div>
+                                  <div className="flex min-w-0 items-center gap-2.5">
+                                    {drill.imageUrl ? (
+                                      <img
+                                        src={drill.imageUrl}
+                                        alt={drill.name}
+                                        loading="lazy"
+                                        className="h-10 w-16 shrink-0 rounded border border-white/10 object-cover"
+                                      />
+                                    ) : null}
+                                    <div className="min-w-0">
+                                      <div className="truncate font-semibold text-white">{drill.name}</div>
+                                      <div className="truncate text-[11px] text-zinc-400">{drill.targetArea}</div>
+                                    </div>
                                   </div>
                                   <span className="shrink-0 rounded bg-emerald-500/15 px-2 py-0.5 font-mono text-[11px] font-bold tabular-nums text-emerald-300">
                                     {drill.durationSec}s

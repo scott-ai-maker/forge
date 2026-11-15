@@ -6,7 +6,12 @@ import {
 import {
   applyExpressCapToInjectedDrills,
   evaluateCameraReadiness,
+  READINESS_SCREEN_MEDIA,
 } from '@/lib/camera-readiness-engine'
+import {
+  resolveForgeExerciseVideo,
+  resolveGaaExerciseImage,
+} from '@/lib/nasm-generated-images'
 import {
   buildPartnerPassInviteUrl,
   buildPartnerPassShareChannels,
@@ -72,6 +77,35 @@ describe('Forge Athletic Pre-Launch Modules (Phases 1–4)', () => {
     const capped = applyExpressCapToInjectedDrills(standard.injectedDrills, true)
     expect(capped).toHaveLength(2)
     expect(capped.reduce((sum, d) => sum + d.durationSec, 0)).toBeLessThanOrEqual(90)
+
+    // Verify all 3 Screen Modes and all injected drills include Forge Studio imageUrl + videoUrl
+    for (const mode of ['overhead_squat', 'scapular_wall_slides', 'dual_screen'] as const) {
+      expect(READINESS_SCREEN_MEDIA[mode].imageUrl).toMatch(/^\/images\/exercises\/readiness-.*\.jpg$/)
+      expect(READINESS_SCREEN_MEDIA[mode].videoUrl).toMatch(/^\/videos\/exercises\/readiness-.*\.mp4$/)
+      expect(resolveGaaExerciseImage(READINESS_SCREEN_MEDIA[mode].title)).toBe(
+        READINESS_SCREEN_MEDIA[mode].imageUrl
+      )
+      expect(resolveForgeExerciseVideo(READINESS_SCREEN_MEDIA[mode].title)).toBe(
+        READINESS_SCREEN_MEDIA[mode].videoUrl
+      )
+    }
+
+    const dualEval = evaluateCameraReadiness({
+      screenMode: 'dual_screen',
+      preset: 'tight_hips_ankles',
+      expressModeActive: false,
+    })
+    const upperEval = evaluateCameraReadiness({
+      screenMode: 'scapular_wall_slides',
+      preset: 'stiff_upper_back',
+      expressModeActive: false,
+    })
+    for (const drill of [...dualEval.injectedDrills, ...upperEval.injectedDrills]) {
+      expect(drill.imageUrl).toMatch(/^\/images\/exercises\/readiness-.*\.jpg$/)
+      expect(drill.videoUrl).toMatch(/^\/videos\/exercises\/readiness-.*\.mp4$/)
+      expect(resolveGaaExerciseImage(drill.name)).toBe(drill.imageUrl)
+      expect(resolveForgeExerciseVideo(drill.name)).toBe(drill.videoUrl)
+    }
   })
 
   it('formats Founding Partner Pass invite links, tile statuses, and 3-step stepper accurately', () => {
