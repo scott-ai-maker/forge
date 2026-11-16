@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { test, expect } from '@playwright/test'
 
 const TINY_PNG_BUFFER = Buffer.from(
@@ -275,5 +276,74 @@ test.describe('Feature #6: Desk Ergonomics Audit & Guided 5-Minute Desk Reset', 
 
     const expressTab = page.getByRole('tab', { name: /04.*Express & Travel/i })
     await expect(expressTab).toHaveAttribute('aria-selected', 'true')
+  })
+
+  test('Real MediaPipe PoseLandmarker extracts distinct joint angles and scores from different athlete photos without CSP errors', async ({
+    page,
+  }) => {
+    const cspErrors: string[] = []
+    page.on('console', msg => {
+      if (
+        msg.type() === 'error' &&
+        /Content Security Policy|Refused to connect/i.test(msg.text())
+      ) {
+        cspErrors.push(msg.text())
+      }
+    })
+
+    const capturedPayloads: Array<Record<string, unknown>> = []
+    await page.route('**/api/telemetry', async route => {
+      try {
+        const body = route.request().postDataJSON() as {
+          events?: Array<{ event_type?: string; payload?: Record<string, unknown> }>
+        }
+        for (const ev of body?.events ?? []) {
+          if (ev.event_type === 'desk_ergonomics_completed' && ev.payload) {
+            capturedPayloads.push(ev.payload)
+          }
+        }
+      } catch {
+        // ignore
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, accepted: 1 }),
+      })
+    })
+
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto('/test-harness/desk-ergonomics')
+    await expect(page.locator('main[data-hydrated="true"]')).toBeVisible()
+
+    const fileInput = page.locator('input[type="file"][aria-label="Upload side-profile desk photo"]')
+
+    // Photo A: Upright seated chest press machine posture
+    await fileInput.setInputFiles(
+      path.join(process.cwd(), 'public/images/exercises/chest-press-machine.jpg')
+    )
+    const statusBanner = page.getByText(/✓ 33-point posture analyzed/i)
+    await expect(statusBanner).toBeVisible({ timeout: 15_000 })
+    const firstBannerText = await statusBanner.textContent()
+
+    // Photo B: Forward-hinged dumbbell bent-over row posture
+    await fileInput.setInputFiles(
+      path.join(process.cwd(), 'public/images/exercises/dumbbell-bent-over-row.jpg')
+    )
+    await expect.poll(() => capturedPayloads.length, { timeout: 15_000 }).toBeGreaterThanOrEqual(2)
+    const secondBannerText = await statusBanner.textContent()
+
+    expect(cspErrors).toEqual([])
+    expect(firstBannerText).not.toBe(secondBannerText)
+
+    const p1 = capturedPayloads[0]
+    const p2 = capturedPayloads[1]
+    // Verify real MediaPipe extracted distinct joint telemetry across the two photos (never frozen on sample 49/100)
+    const telemetryDiffers =
+      p1.workstation_score !== p2.workstation_score ||
+      p1.ear_shoulder_angle_deg !== p2.ear_shoulder_angle_deg ||
+      p1.shoulder_protraction_deg !== p2.shoulder_protraction_deg ||
+      p1.elbow_angle_deg !== p2.elbow_angle_deg
+    expect(telemetryDiffers).toBe(true)
   })
 })

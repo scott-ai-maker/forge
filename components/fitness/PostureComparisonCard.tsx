@@ -22,11 +22,19 @@ import {
 } from 'lucide-react'
 import {
   getDefaultPostureProfileState,
+  getTodayIsoDate,
   loadPostureProfileState,
   POSTURE_PROFILE_EVENT,
   runQuickPostureCheckDelta,
+  savePostureProfileState,
   type PostureDeltaSummary,
 } from '@/lib/posture-profile-state'
+import {
+  evaluateStandingPostureFromMediaPipe,
+  getStrainHexColor,
+  MEDIAPIPE_POSE_CONNECTIONS,
+  type StandingPostureScanEvaluation,
+} from '@/lib/standing-posture-mesh-engine'
 import { getUpgradeTriggerCopy, useTierAccess } from '@/lib/tierEntitlements'
 import TierUpgradeModal from '@/components/packages/TierUpgradeModal'
 import { playForgeTactileTone } from '@/lib/sfx-audio'
@@ -47,9 +55,337 @@ export interface PostureComparisonViewerProps {
   remoteActive?: boolean
   onRequestUpgrade?: () => void
   showPostScanBanner?: boolean
+  initialDroppedFile?: File | null
+  onConsumedDroppedFile?: () => void
 }
 
 const DAY30_REMINDER_KEY = 'forge_posture_day30_reminder_v1'
+
+interface CachedStandingPoseLandmarker {
+  detect: (source: HTMLImageElement | HTMLCanvasElement) => {
+    landmarks?: Array<Array<{ x: number; y: number; z?: number; visibility?: number }>>
+    worldLandmarks?: Array<Array<{ x: number; y: number; z?: number; visibility?: number }>>
+  }
+}
+
+let sharedStandingLandmarkerPromise: Promise<CachedStandingPoseLandmarker> | null = null
+
+function getOrInitStandingPoseLandmarker(): Promise<CachedStandingPoseLandmarker> {
+  if (sharedStandingLandmarkerPromise) return sharedStandingLandmarkerPromise
+  sharedStandingLandmarkerPromise = (async () => {
+    const vision = await import('@mediapipe/tasks-vision')
+    let fileset
+    try {
+      fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
+    } catch {
+      fileset = await vision.FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+      )
+    }
+    const createWith = async (modelAssetPath: string, delegate: 'GPU' | 'CPU') =>
+      (await vision.PoseLandmarker.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath, delegate },
+        runningMode: 'IMAGE',
+        numPoses: 1,
+        minPoseDetectionConfidence: 0.35,
+        minPosePresenceConfidence: 0.35,
+        minTrackingConfidence: 0.35,
+      })) as unknown as CachedStandingPoseLandmarker
+
+    for (const modelPath of [
+      '/models/pose_landmarker_lite.task',
+      'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+    ]) {
+      try {
+        return await createWith(modelPath, 'GPU')
+      } catch {
+        try {
+          return await createWith(modelPath, 'CPU')
+        } catch {
+          // Try next model path
+        }
+      }
+    }
+    throw new Error('Unable to initialize MediaPipe PoseLandmarker')
+  })().catch(err => {
+    sharedStandingLandmarkerPromise = null
+    throw err
+  })
+  return sharedStandingLandmarkerPromise
+}
+
+function buildMeshArcPath(
+  vertex: { x: number; y: number },
+  armA: { x: number; y: number },
+  armB: { x: number; y: number },
+  radius = 8.5
+): string {
+  const startAngle = Math.atan2(armA.y - vertex.y, armA.x - vertex.x)
+  const endAngle = Math.atan2(armB.y - vertex.y, armB.x - vertex.x)
+  let delta = endAngle - startAngle
+  while (delta > Math.PI) delta -= Math.PI * 2
+  while (delta < -Math.PI) delta += Math.PI * 2
+  const sweepFlag = delta >= 0 ? 1 : 0
+  const x1 = vertex.x + radius * Math.cos(startAngle)
+  const y1 = vertex.y + radius * Math.sin(startAngle)
+  const x2 = vertex.x + radius * Math.cos(endAngle)
+  const y2 = vertex.y + radius * Math.sin(endAngle)
+  return `M ${vertex.x} ${vertex.y} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${radius} ${radius} 0 0 ${sweepFlag} ${x2.toFixed(2)} ${y2.toFixed(2)} Z`
+}
+
+function CapturedPostureMeshStage({
+  photoUrl,
+  evaluation,
+  showMesh = true,
+}: {
+  photoUrl: string
+  evaluation: StandingPostureScanEvaluation
+  showMesh?: boolean
+}) {
+  const svgUid = useId().replace(/:/g, '')
+  const glowId = `captured-mesh-glow-${svgUid}`
+  const { width: vbW, height: vbH } = evaluation.viewBox
+  const { ear, shoulder, elbow, wrist, hip, knee, ankle } = evaluation.landmarks
+
+  const cvaColor =
+    evaluation.cvaDeg <= 7.5 ? '#10B981' : evaluation.cvaDeg <= 18 ? '#F59E0B' : '#FB7185'
+  const trunkAbs = Math.abs(evaluation.pelvicDriftDeg)
+  const trunkColor =
+    trunkAbs <= 4.5 ? '#10B981' : trunkAbs <= 10.5 ? '#F59E0B' : '#FB7185'
+  const overallColor = getStrainHexColor(evaluation.strainFlag)
+
+  const clampX = (v: number, w = 18) => Math.max(2, Math.min(vbW - w - 2, v))
+  const clampY = (v: number, h = 6) => Math.max(2.5, Math.min(vbH - h - 2.5, v))
+
+  const showCv = !ear.occluded && !shoulder.occluded
+  const showTrunk = !shoulder.occluded && !hip.occluded
+  const showThigh = !hip.occluded && !knee.occluded
+  const showShin = !knee.occluded && !ankle.occluded
+  const showUpperArm = !shoulder.occluded && !elbow.occluded
+  const showForearm = !elbow.occluded && !wrist.occluded
+
+  const plumbLabelX = clampX(evaluation.plumbLineX + 1.4, 20)
+
+  return (
+    <div
+      className="relative mx-auto flex h-full max-h-full max-w-full items-center justify-center overflow-hidden rounded-xl"
+      style={{ aspectRatio: `${vbW} / ${vbH}` }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={photoUrl}
+        alt="Analyzed 33-point posture photo"
+        className={`block h-full w-full object-contain ${showMesh ? 'opacity-92' : 'opacity-100'}`}
+      />
+      {showMesh ? (
+      <svg
+        viewBox={`0 0 ${vbW} ${vbH}`}
+        preserveAspectRatio="xMidYMid meet"
+        aria-label="Detected 33-point posture mesh overlay"
+        className="pointer-events-none absolute inset-0 h-full w-full"
+      >
+        <defs>
+          <filter id={glowId} x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="0.9" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Vertical Gravity Plumb Line */}
+        <line
+          x1={evaluation.plumbLineX}
+          y1={vbH * 0.05}
+          x2={evaluation.plumbLineX}
+          y2={vbH * 0.96}
+          stroke="#38BDF8"
+          strokeOpacity="0.72"
+          strokeWidth="0.6"
+          strokeDasharray="2.2 1.8"
+        />
+        <rect
+          x={plumbLabelX}
+          y={vbH * 0.92}
+          width="19.5"
+          height="4.6"
+          rx="1.3"
+          fill="rgba(9,10,13,0.88)"
+        />
+        <text
+          x={plumbLabelX + 1.4}
+          y={vbH * 0.92 + 3.2}
+          fill="#7DD3FC"
+          fontSize="2.55"
+          fontWeight="700"
+          letterSpacing="0.06em"
+        >
+          PLUMB LINE
+        </text>
+
+        {/* Secondary 33-Node BlazePose Bilateral Lattice */}
+        <g stroke="rgba(56, 189, 248, 0.35)" strokeWidth="0.55" strokeLinecap="round">
+          {MEDIAPIPE_POSE_CONNECTIONS.map(([aIdx, bIdx]) => {
+            const a = evaluation.allNodes[aIdx]
+            const b = evaluation.allNodes[bIdx]
+            if (!a?.visible || !b?.visible) return null
+            return <line key={`${aIdx}-${bIdx}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
+          })}
+        </g>
+        {evaluation.allNodes.map(node =>
+          node.visible ? (
+            <circle
+              key={`raw-${node.index}`}
+              cx={node.x}
+              cy={node.y}
+              r="0.85"
+              fill="#38BDF8"
+              fillOpacity={Math.max(0.35, node.confidence * 0.65)}
+            />
+          ) : null
+        )}
+
+        {/* Calibrated CVA Wedge Arc at Shoulder */}
+        {showCv && evaluation.cameraAngle !== 'frontal' && evaluation.cvaDeg >= 1 && (() => {
+          const earToShAngle = Math.atan2(ear.y - shoulder.y, ear.x - shoulder.x)
+          const facingDir = ear.x >= shoulder.x ? 1 : -1
+          const refAngle = earToShAngle - facingDir * ((evaluation.cvaDeg * Math.PI) / 180)
+          const refArm = {
+            x: shoulder.x + 15 * Math.cos(refAngle),
+            y: shoulder.y + 15 * Math.sin(refAngle),
+          }
+          return (
+            <path
+              d={buildMeshArcPath(shoulder, refArm, ear, 7.5)}
+              fill={cvaColor}
+              fillOpacity="0.26"
+              stroke={cvaColor}
+              strokeWidth="0.7"
+            />
+          )
+        })()}
+
+        {/* Primary Highlighted Sagittal Kinetic Chain */}
+        <g filter={`url(#${glowId})`} strokeLinecap="round">
+          {showCv && (
+            <line x1={ear.x} y1={ear.y} x2={shoulder.x} y2={shoulder.y} stroke={cvaColor} strokeWidth="1.45" />
+          )}
+          {showTrunk && (
+            <line x1={shoulder.x} y1={shoulder.y} x2={hip.x} y2={hip.y} stroke={trunkColor} strokeWidth="1.55" />
+          )}
+          {showThigh && (
+            <line x1={hip.x} y1={hip.y} x2={knee.x} y2={knee.y} stroke={overallColor} strokeWidth="1.45" />
+          )}
+          {showShin && (
+            <line x1={knee.x} y1={knee.y} x2={ankle.x} y2={ankle.y} stroke={overallColor} strokeWidth="1.4" />
+          )}
+          {showUpperArm && (
+            <line
+              x1={shoulder.x}
+              y1={shoulder.y}
+              x2={elbow.x}
+              y2={elbow.y}
+              stroke="rgba(248,250,252,0.75)"
+              strokeWidth="1.05"
+              strokeDasharray="2 1.5"
+            />
+          )}
+          {showForearm && (
+            <line
+              x1={elbow.x}
+              y1={elbow.y}
+              x2={wrist.x}
+              y2={wrist.y}
+              stroke="rgba(248,250,252,0.75)"
+              strokeWidth="1.05"
+              strokeDasharray="2 1.5"
+            />
+          )}
+        </g>
+
+        {/* Primary Dual-Ring Anatomical Nodes */}
+        {(['ear', 'shoulder', 'elbow', 'wrist', 'hip', 'knee', 'ankle'] as const).map(key => {
+          const pt = evaluation.landmarks[key]
+          if (pt.occluded) return null
+          return (
+            <g key={pt.id}>
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r="2.9"
+                fill="rgba(52, 211, 153, 0.16)"
+                stroke="rgba(255, 255, 255, 0.36)"
+                strokeWidth="0.4"
+              />
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r="1.45"
+                fill="#090A0D"
+                stroke="#FFFFFF"
+                strokeWidth="0.75"
+              />
+            </g>
+          )
+        })}
+
+        {/* Floating Degree Callout Pills */}
+        {showCv && (
+          <g>
+            <rect
+              x={clampX(ear.x - 21, 18.5)}
+              y={clampY(ear.y - 3, 5.4)}
+              width="18.5"
+              height="5.4"
+              rx="2"
+              fill="rgba(9,10,13,0.88)"
+              stroke={cvaColor}
+              strokeOpacity="0.75"
+              strokeWidth="0.45"
+            />
+            <text
+              x={clampX(ear.x - 21, 18.5) + 9.25}
+              y={clampY(ear.y - 3, 5.4) + 3.7}
+              textAnchor="middle"
+              fill="#F8FAFC"
+              fontSize="2.85"
+              fontWeight="800"
+            >
+              {`CVA ${evaluation.cvaDeg.toFixed(1)}°`}
+            </text>
+          </g>
+        )}
+        {showTrunk && (
+          <g>
+            <rect
+              x={clampX(hip.x - 22, 19.5)}
+              y={clampY(hip.y - 2.7, 5.4)}
+              width="19.5"
+              height="5.4"
+              rx="2"
+              fill="rgba(9,10,13,0.88)"
+              stroke={trunkColor}
+              strokeOpacity="0.75"
+              strokeWidth="0.45"
+            />
+            <text
+              x={clampX(hip.x - 22, 19.5) + 9.75}
+              y={clampY(hip.y - 2.7, 5.4) + 3.7}
+              textAnchor="middle"
+              fill="#F8FAFC"
+              fontSize="2.8"
+              fontWeight="800"
+            >
+              {`SWAY ${trunkAbs.toFixed(1)}°`}
+            </text>
+          </g>
+        )}
+      </svg>
+      ) : null}
+    </div>
+  )
+}
 
 function createInitialDelta(sandboxMode: boolean): PostureDeltaSummary {
   const base = getDefaultPostureProfileState().postureDelta
@@ -520,11 +856,14 @@ export function PostureComparisonInteractiveStage({
   remoteActive = false,
   onRequestUpgrade,
   showPostScanBanner = false,
+  initialDroppedFile = null,
+  onConsumedDroppedFile,
 }: PostureComparisonViewerProps) {
   const { tierId } = useTierAccess()
   const isCoachSupport = tierId === 'coach_support'
   const sliderId = useId()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const baselineFileInputRef = useRef<HTMLInputElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const cameraTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -539,7 +878,12 @@ export function PostureComparisonInteractiveStage({
   const [remoteCountdownSec, setRemoteCountdownSec] = useState<number>(0)
   const [isScanningSweep, setIsScanningSweep] = useState(false)
   const [scanStatusBanner, setScanStatusBanner] = useState<string | null>(null)
+  const [baselinePhotoUrl, setBaselinePhotoUrl] = useState<string | null>(null)
+  const [baselineMesh, setBaselineMesh] = useState<StandingPostureScanEvaluation | null>(null)
   const [capturedPhotoUrl, setCapturedPhotoUrl] = useState<string | null>(null)
+  const [detectedMesh, setDetectedMesh] = useState<StandingPostureScanEvaluation | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [sideDropHover, setSideDropHover] = useState<'baseline' | 'current' | null>(null)
   const [cameraActive, setCameraActive] = useState(false)
   const [cameraCountdownSec, setCameraCountdownSec] = useState<number | null>(null)
   const [cameraError, setCameraError] = useState<string | null>(null)
@@ -577,6 +921,11 @@ export function PostureComparisonInteractiveStage({
   }, [stopSandboxCamera])
 
   useEffect(() => {
+    if (typeof window === 'undefined' || (!sandboxMode && !remoteActive)) return
+    void getOrInitStandingPoseLandmarker().catch(() => {})
+  }, [remoteActive, sandboxMode])
+
+  useEffect(() => {
     if (cameraActive && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current
       void videoRef.current.play().catch(() => {})
@@ -584,7 +933,6 @@ export function PostureComparisonInteractiveStage({
   }, [cameraActive])
 
   useEffect(() => {
-    if (!sandboxMode) return
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && cameraActive) {
         stopSandboxCamera()
@@ -592,7 +940,7 @@ export function PostureComparisonInteractiveStage({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [cameraActive, sandboxMode, stopSandboxCamera])
+  }, [cameraActive, stopSandboxCamera])
 
   useEffect(() => {
     if (sandboxMode) return
@@ -620,75 +968,187 @@ export function PostureComparisonInteractiveStage({
     el.style.setProperty('--control-value', String(splitPct))
   }, [splitPct, viewMode])
 
+  const baselineMeshRef = useRef<StandingPostureScanEvaluation | null>(null)
+  baselineMeshRef.current = baselineMesh
+  const detectedMeshRef = useRef<StandingPostureScanEvaluation | null>(null)
+  detectedMeshRef.current = detectedMesh
+  const viewModeRef = useRef(viewMode)
+  viewModeRef.current = viewMode
+
   const analyzeImagePoseLocally = useCallback(
-    async (sourceEl: HTMLImageElement | HTMLCanvasElement, dataUrl: string) => {
-      let measuredHeadDelta = -4.9
-      let measuredPelvic = -2.1
-      let measuredScore = 89
+    async (
+      sourceEl: HTMLImageElement | HTMLCanvasElement,
+      dataUrl: string,
+      slot: 'baseline' | 'current' = 'current'
+    ) => {
+      const imgWidth =
+        sourceEl instanceof HTMLImageElement
+          ? sourceEl.naturalWidth || sourceEl.width
+          : sourceEl.width
+      const imgHeight =
+        sourceEl instanceof HTMLImageElement
+          ? sourceEl.naturalHeight || sourceEl.height
+          : sourceEl.height
+
+      setIsScanningSweep(true)
+      setCameraError(null)
 
       try {
-        const lm = await Promise.race([
-          (async () => {
-            const vision = await import('@mediapipe/tasks-vision')
-            let fileset
-            try {
-              fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
-            } catch {
-              fileset = await vision.FilesetResolver.forVisionTasks(
-                'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
-              )
-            }
-            const poseLandmarker = await vision.PoseLandmarker.createFromOptions(fileset, {
-              baseOptions: {
-                modelAssetPath:
-                  'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-              },
-              runningMode: 'IMAGE',
-              numPoses: 1,
-            })
-            const detection = poseLandmarker.detect(sourceEl)
-            poseLandmarker.close()
-            return detection?.landmarks?.[0] ?? null
-          })(),
-          new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
+        const landmarker = await Promise.race([
+          getOrInitStandingPoseLandmarker(),
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 10000)),
         ])
-        if (lm && lm[7] && lm[11] && lm[23]) {
-          const ear = lm[7]
-          const shoulder = lm[11]
-          const hip = lm[23]
-          const cvaDeg = Math.min(
-            18,
-            Math.max(1.8, (Math.atan2(Math.abs(ear.x - shoulder.x), Math.max(0.04, shoulder.y - ear.y)) * 180) / Math.PI * 0.42)
-          )
-          const trunkDeg = Math.min(
-            8,
-            Math.max(0.8, (Math.atan2(Math.abs(shoulder.x - hip.x), Math.max(0.06, hip.y - shoulder.y)) * 180) / Math.PI * 0.5)
-          )
-          measuredHeadDelta = Number((cvaDeg - 8.9).toFixed(1))
-          measuredPelvic = Number((-trunkDeg).toFixed(1))
-          measuredScore = Math.round(Math.max(62, Math.min(97, 98 - cvaDeg * 1.8 - trunkDeg * 1.6)))
-        }
-      } catch {
-        // Offline / strict-CSP fallback uses deterministic clinical delta on local frame
-      }
 
-      if (!isMountedRef.current) return
-      setCapturedPhotoUrl(dataUrl)
-      setViewMode('overlay')
-      setDelta(prev => ({
-        ...prev,
-        forwardHeadDeltaDeg: measuredHeadDelta,
-        pelvicTiltDeltaDeg: measuredPelvic,
-        overallPostureScore: measuredScore,
-        strainFlag: measuredScore >= 88 ? 'optimal' : 'amber',
-      }))
-      setScanStatusBanner(
-        `Local frame analyzed in browser (0 bytes uploaded) · Posture Score ${measuredScore}/100`
-      )
-      playForgeTactileTone('success')
+        if (!isMountedRef.current) return
+
+        if (!landmarker) {
+          setCameraError('33-point vision model timed out while loading. Please try again.')
+          return
+        }
+
+        const detection = landmarker.detect(sourceEl)
+        const firstPose = detection?.landmarks?.[0]
+        const firstWorldPose = detection?.worldLandmarks?.[0]
+
+        if (!firstPose) {
+          setCameraError(
+            'No standing or seated person detected in frame. Ensure head, shoulders, and torso are clearly visible in good lighting.'
+          )
+          return
+        }
+
+        const refBaselineCva =
+          slot === 'current' && baselineMeshRef.current ? baselineMeshRef.current.cvaDeg : 8.9
+
+        const evaluated = evaluateStandingPostureFromMediaPipe(firstPose, {
+          imageWidth: imgWidth,
+          imageHeight: imgHeight,
+          worldLandmarks: firstWorldPose,
+          baselineCvaDeg: refBaselineCva,
+        })
+
+        if (!evaluated) {
+          setCameraError(
+            'Ear and shoulder landmarks were outside the frame. Step back slightly so your full posture is visible.'
+          )
+          return
+        }
+
+        if (slot === 'baseline') {
+          setBaselineMesh(evaluated)
+          setBaselinePhotoUrl(dataUrl)
+          if (viewModeRef.current === 'day1_preview') {
+            setViewMode('side_by_side')
+          } else if (viewModeRef.current === 'overlay' && detectedMeshRef.current) {
+            setSplitPct(50)
+          }
+          // If a Current photo is also loaded, recompute Before -> After delta between the two real photos
+          if (detectedMeshRef.current) {
+            const cur = detectedMeshRef.current
+            const pairHeadDelta = Number((cur.cvaDeg - evaluated.cvaDeg).toFixed(1))
+            setDelta(prev => ({
+              ...prev,
+              forwardHeadDeltaDeg: pairHeadDelta,
+              shoulderSymmetryDeltaDeg: cur.shoulderDeltaDeg,
+              pelvicTiltDeltaDeg: cur.pelvicDriftDeg,
+              overallPostureScore: cur.score,
+              strainFlag: cur.strainFlag,
+            }))
+            setScanStatusBanner(
+              `Baseline (${evaluated.score}/100 · CVA ${evaluated.cvaDeg.toFixed(1)}°) vs Current (${cur.score}/100 · CVA ${cur.cvaDeg.toFixed(1)}°) locked.`
+            )
+          } else {
+            setScanStatusBanner(
+              `Baseline photo locked (${evaluated.trackedNodeCount}/33 nodes · CVA ${evaluated.cvaDeg.toFixed(1)}° · Score ${evaluated.score}/100). Drop a 2nd photo on Current to compare!`
+            )
+          }
+          playForgeTactileTone('success')
+          if (!sandboxMode) {
+            const spokenSummary = buildPostScanDiagnosticSummary({
+              scanType: 'posture_2min',
+              score: evaluated.score,
+              primaryFinding: `baseline forward-head angle ${evaluated.cvaDeg.toFixed(1)} degrees`,
+            })
+            void speakCoachDynamicText(spokenSummary, { moment: 'post_scan_summary' })
+          }
+          return
+        }
+
+        const nextDelta: PostureDeltaSummary = {
+          baselineDate: delta.baselineDate,
+          latestDate: getTodayIsoDate(),
+          forwardHeadDeltaDeg: evaluated.forwardHeadDeltaDeg,
+          shoulderSymmetryDeltaDeg: evaluated.shoulderDeltaDeg,
+          pelvicTiltDeltaDeg: evaluated.pelvicDriftDeg,
+          overallPostureScore: evaluated.score,
+          strainFlag: evaluated.strainFlag,
+        }
+
+        setDetectedMesh(evaluated)
+        setCapturedPhotoUrl(dataUrl)
+        // Preserve Side-by-Side if user is comparing side-by-side; only exit day1_preview
+        if (viewModeRef.current === 'day1_preview') {
+          setViewMode('overlay')
+        }
+        if (viewModeRef.current !== 'side_by_side') {
+          setSplitPct(baselineMeshRef.current ? 50 : 36)
+        }
+        setDelta(nextDelta)
+
+        if (!sandboxMode) {
+          savePostureProfileState(prev => ({
+            ...prev,
+            postureDelta: nextDelta,
+          }))
+          void trackEvent('posture_scan_completed', {
+            scan_mode: 'full_33_point_mesh',
+            overall_posture_score: evaluated.score,
+            forward_head_tilt_deg: evaluated.cvaDeg,
+            shoulder_symmetry_deg: evaluated.shoulderDeltaDeg,
+            pelvic_symmetry_deg: evaluated.pelvicDriftDeg,
+            joint_deltas_33: {
+              forward_head_delta_deg: evaluated.forwardHeadDeltaDeg,
+              shoulder_symmetry_delta_deg: evaluated.shoulderDeltaDeg,
+              pelvic_tilt_delta_deg: evaluated.pelvicDriftDeg,
+            },
+          })
+          const spokenSummary = buildPostScanDiagnosticSummary({
+            scanType: 'posture_2min',
+            score: evaluated.score,
+            primaryFinding: `craniovertebral angle ${evaluated.cvaDeg.toFixed(1)} degrees and pelvic drift ${Math.abs(evaluated.pelvicDriftDeg).toFixed(1)} degrees`,
+          })
+          void speakCoachDynamicText(spokenSummary, { moment: 'post_scan_summary' })
+        }
+
+        if (baselineMeshRef.current) {
+          const base = baselineMeshRef.current
+          setScanStatusBanner(
+            `Before/After locked · Baseline ${base.score}/100 (${base.cvaDeg.toFixed(1)}°) → Current ${evaluated.score}/100 (${evaluated.cvaDeg.toFixed(1)}°)`
+          )
+        } else {
+          setScanStatusBanner(
+            sandboxMode
+              ? `Local frame analyzed in browser (0 bytes uploaded) · ${evaluated.trackedNodeCount}/33 nodes · Score ${evaluated.score}/100`
+              : `33-point posture mesh locked (${evaluated.trackedNodeCount}/33 nodes · CVA ${evaluated.cvaDeg.toFixed(1)}°) · Posture Score ${evaluated.score}/100`
+          )
+        }
+        playForgeTactileTone('success')
+      } catch {
+        if (!isMountedRef.current) return
+        setCameraError(
+          'Local 33-point vision engine could not run in this browser context. Check WebGL/WebAssembly settings.'
+        )
+      } finally {
+        if (isMountedRef.current) {
+          setIsScanningSweep(false)
+        }
+      }
     },
-    []
+    [delta.baselineDate, sandboxMode]
   )
+
+  const analyzeImageRef = useRef(analyzeImagePoseLocally)
+  analyzeImageRef.current = analyzeImagePoseLocally
 
   const handleStartSandboxCamera = async () => {
     setCameraError(null)
@@ -697,10 +1157,11 @@ export function PostureComparisonInteractiveStage({
       setCameraError('Camera stream unavailable on this browser. Upload a side photo or run Quick Check.')
       return
     }
+    void getOrInitStandingPoseLandmarker().catch(() => {})
     try {
       stopSandboxCamera()
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
         audio: false,
       })
       if (!isMountedRef.current) {
@@ -717,7 +1178,11 @@ export function PostureComparisonInteractiveStage({
         rem -= 1
         if (rem > 0) {
           setCameraCountdownSec(rem)
-          playForgeTactileTone('countdown')
+          if (rem === 2) {
+            playCoachStaticCue('calibration_locked')
+          } else {
+            playForgeTactileTone('countdown')
+          }
         } else {
           if (cameraTimerRef.current) {
             clearInterval(cameraTimerRef.current)
@@ -731,9 +1196,9 @@ export function PostureComparisonInteractiveStage({
             const ctx = canvas.getContext('2d')
             if (ctx) {
               ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.86)
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.88)
               stopSandboxCamera()
-              void analyzeImagePoseLocally(canvas, dataUrl)
+              void analyzeImageRef.current(canvas, dataUrl)
               return
             }
           }
@@ -746,26 +1211,82 @@ export function PostureComparisonInteractiveStage({
     }
   }
 
+  const processPostureFile = useCallback(
+    (file: File, slot: 'baseline' | 'current' = 'current') => {
+      if (file.type && !/^image\/(jpeg|jpg|png|webp|heic|heif)$/i.test(file.type)) {
+        setCameraError('Please choose a JPEG, PNG, WebP, or HEIC side-profile image.')
+        return
+      }
+      if (file.size > 15 * 1024 * 1024) {
+        setCameraError('Posture photo must be 15 MB or smaller.')
+        return
+      }
+      setCameraError(null)
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = typeof reader.result === 'string' ? reader.result : null
+        if (!dataUrl) return
+        const img = new window.Image()
+        img.onload = () => {
+          void analyzeImageRef.current(img, dataUrl, slot)
+        }
+        img.onerror = () => {
+          setCameraError('Could not decode image file. Please try a JPEG, PNG, or WebP photo.')
+        }
+        img.src = dataUrl
+      }
+      reader.readAsDataURL(file)
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (!initialDroppedFile) return
+    processPostureFile(initialDroppedFile, 'current')
+    onConsumedDroppedFile?.()
+  }, [initialDroppedFile, onConsumedDroppedFile, processPostureFile])
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-    if (file.type && !/^image\/(jpeg|jpg|png|webp|heic|heif)$/i.test(file.type)) {
-      setCameraError('Please choose a JPEG, PNG, WebP, or HEIC side-profile image.')
+    processPostureFile(file, 'current')
+  }
+
+  const handleBaselinePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    processPostureFile(file, 'baseline')
+  }
+
+  const handleStageDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isDragOver) setIsDragOver(true)
+  }
+
+  const handleStageDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+    setIsDragOver(false)
+  }
+
+  const handleStageDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    setSideDropHover(null)
+    const files = e.dataTransfer?.files
+    if (!files || files.length === 0) return
+    if (files.length >= 2) {
+      // Dropping 2 photos at once loads Photo 1 as Baseline (Before) and Photo 2 as Current (After)
+      processPostureFile(files[0], 'baseline')
+      processPostureFile(files[1], 'current')
       return
     }
-    setCameraError(null)
-    const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === 'string' ? reader.result : null
-      if (!dataUrl) return
-      const img = new window.Image()
-      img.onload = () => {
-        void analyzeImagePoseLocally(img, dataUrl)
-      }
-      img.src = dataUrl
-    }
-    reader.readAsDataURL(file)
+    processPostureFile(files[0], 'current')
   }
 
   const handleRunQuickScan = () => {
@@ -804,13 +1325,12 @@ export function PostureComparisonInteractiveStage({
         }
       })
       playForgeTactileTone('success')
-      playCoachStaticCue('calibration_locked')
       return
     }
 
     const updated = runQuickPostureCheckDelta()
     setDelta(updated)
-    playCoachStaticCue('calibration_locked')
+    playForgeTactileTone('success')
 
     const spokenSummary = buildPostScanDiagnosticSummary({
       scanType: 'posture_2min',
@@ -932,12 +1452,36 @@ export function PostureComparisonInteractiveStage({
     setSplitPct(Math.round(Math.max(6, Math.min(94, rawPct))))
   }
 
-  const baselineDeg = 8.9
-  const currentDeg = Number(Math.max(1.5, baselineDeg + delta.forwardHeadDeltaDeg).toFixed(1))
+  const baselineDeg = baselineMesh ? baselineMesh.cvaDeg : 8.9
+  const currentDeg = detectedMesh
+    ? detectedMesh.cvaDeg
+    : Number(Math.max(0, baselineDeg + delta.forwardHeadDeltaDeg).toFixed(1))
+  const hasTwoPhotos = Boolean(
+    baselinePhotoUrl && baselineMesh && capturedPhotoUrl && detectedMesh
+  )
+  const hasSinglePhoto = Boolean(
+    !hasTwoPhotos &&
+      ((capturedPhotoUrl && detectedMesh) || (baselinePhotoUrl && baselineMesh))
+  )
+  const singlePhotoUrl = (capturedPhotoUrl || baselinePhotoUrl) as string | null
+  const singlePhotoEval = (detectedMesh || baselineMesh) as StandingPostureScanEvaluation | null
   const postScanCopy = getUpgradeTriggerCopy('post_scan_flag', 'core_lab')
+  const strainTextClass =
+    delta.strainFlag === 'optimal'
+      ? 'text-emerald-300'
+      : delta.strainFlag === 'amber'
+        ? 'text-amber-300'
+        : 'text-rose-300'
 
   return (
-    <div className="space-y-3.5 text-zinc-100">
+    <div
+      onDragOver={handleStageDragOver}
+      onDragLeave={handleStageDragLeave}
+      onDrop={handleStageDrop}
+      className={`space-y-3.5 rounded-2xl text-zinc-100 transition-shadow duration-150 ${
+        isDragOver ? 'ring-2 ring-emerald-400/80 ring-offset-2 ring-offset-[#090A0D]' : ''
+      }`}
+    >
       {/* Top Toolbar: View Switcher + Interactive Scan / Local Camera Controls */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div
@@ -984,7 +1528,7 @@ export function PostureComparisonInteractiveStage({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {sandboxMode && !cameraActive ? (
+          {!cameraActive ? (
             <>
               <button
                 type="button"
@@ -1002,6 +1546,16 @@ export function PostureComparisonInteractiveStage({
                 <Upload size={14} strokeWidth={1.75} className="text-amber-300" aria-hidden="true" />
                 <span>Upload Photo</span>
               </button>
+              {capturedPhotoUrl && !baselinePhotoUrl ? (
+                <button
+                  type="button"
+                  onClick={() => baselineFileInputRef.current?.click()}
+                  className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 transition-colors duration-150 hover:bg-amber-500/20"
+                >
+                  <Upload size={13} strokeWidth={1.75} aria-hidden="true" />
+                  <span>+ Baseline Photo</span>
+                </button>
+              ) : null}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1010,12 +1564,28 @@ export function PostureComparisonInteractiveStage({
                 className="hidden"
                 aria-label="Upload side-profile posture photo"
               />
-              {capturedPhotoUrl ? (
+              <input
+                ref={baselineFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleBaselinePhotoUpload}
+                className="hidden"
+                aria-label="Upload baseline comparison posture photo"
+              />
+              {capturedPhotoUrl || baselinePhotoUrl ? (
                 <button
                   type="button"
                   onClick={() => {
                     setCapturedPhotoUrl(null)
-                    setDelta(createInitialDelta(true))
+                    setDetectedMesh(null)
+                    setBaselinePhotoUrl(null)
+                    setBaselineMesh(null)
+                    setSplitPct(54)
+                    setDelta(
+                      sandboxMode
+                        ? createInitialDelta(true)
+                        : loadPostureProfileState().postureDelta
+                    )
                     setScanStatusBanner(null)
                   }}
                   aria-label="Reset sample posture mesh"
@@ -1056,7 +1626,7 @@ export function PostureComparisonInteractiveStage({
         </div>
       ) : null}
 
-      {/* Live 5-Second Local Camera Capture Viewfinder (Sandbox Mode) */}
+      {/* Live 5-Second Local Camera Capture Viewfinder */}
       {cameraActive ? (
         <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-emerald-400/50 bg-[#090A0D]">
           <video
@@ -1067,7 +1637,7 @@ export function PostureComparisonInteractiveStage({
           />
           <div className="forge-glass-pill absolute inset-x-3 top-3 z-10 flex items-center justify-between gap-2 rounded-full px-3.5 py-1.5 text-xs text-zinc-100">
             <span className="truncate">
-              Stand tall in side profile · <strong>Ear → Shoulder → Hip</strong>
+              Stand tall in side profile · <strong>Ear → Shoulder → Hip → Ankle</strong>
             </span>
             <span className="rounded-full border border-emerald-500/35 bg-emerald-500/15 px-2.5 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
               LOCAL IN-BROWSER
@@ -1109,34 +1679,44 @@ export function PostureComparisonInteractiveStage({
             draggingRef.current = false
           }}
           style={{ touchAction: 'pan-y' }}
-          className="relative h-72 w-full cursor-ew-resize overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0B0E14] sm:h-80"
+          className={`relative w-full cursor-ew-resize overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0B0E14] ${
+            hasTwoPhotos || hasSinglePhoto ? 'h-80 sm:h-96' : 'h-72 sm:h-80'
+          }`}
         >
-          {/* Right / Base Layer: Current Improved Alignment (or Local Captured Frame) */}
+          {/* Right / Base Layer: 33-Point Analyzed Mesh (Current Photo, Single Photo X-Ray, or Synthetic Reference) */}
           <div className="absolute inset-0 flex items-center justify-center p-2 pb-14 sm:p-3 sm:pb-14">
-            {capturedPhotoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={capturedPhotoUrl}
-                alt="Locally analyzed posture frame"
-                className="absolute inset-0 h-full w-full object-cover opacity-55"
+            {hasTwoPhotos && capturedPhotoUrl && detectedMesh ? (
+              <CapturedPostureMeshStage photoUrl={capturedPhotoUrl} evaluation={detectedMesh} showMesh />
+            ) : hasSinglePhoto && singlePhotoUrl && singlePhotoEval ? (
+              <CapturedPostureMeshStage photoUrl={singlePhotoUrl} evaluation={singlePhotoEval} showMesh />
+            ) : (
+              <PostureSilhouetteSvg
+                variant="current"
+                measuredDeg={currentDeg}
+                pelvicDriftDeg={delta.pelvicTiltDeltaDeg}
               />
-            ) : null}
-            <PostureSilhouetteSvg
-              variant="current"
-              measuredDeg={currentDeg}
-              pelvicDriftDeg={delta.pelvicTiltDeltaDeg}
-            />
+            )}
           </div>
 
-          {/* Left / Clipped Layer: Day-1 Baseline Alignment */}
+          {/* Left / Clipped Layer: Either Baseline Photo Mesh (2 photos), Clean Original Photo (1 photo X-Ray reveal), or Day-1 Reference (0 photos) */}
           <div
-            className="absolute inset-0 flex items-center justify-center bg-[#090B10]/96 p-2 pb-14 sm:p-3 sm:pb-14"
+            className="absolute inset-0 flex items-center justify-center bg-[#0B0E14] p-2 pb-14 sm:p-3 sm:pb-14"
             style={{ clipPath: `inset(0 ${100 - splitPct}% 0 0)` }}
           >
-            <PostureSilhouetteSvg variant="baseline" measuredDeg={baselineDeg} pelvicDriftDeg={-6.2} />
+            {hasTwoPhotos && baselinePhotoUrl && baselineMesh ? (
+              <CapturedPostureMeshStage photoUrl={baselinePhotoUrl} evaluation={baselineMesh} showMesh />
+            ) : hasSinglePhoto && singlePhotoUrl && singlePhotoEval ? (
+              <CapturedPostureMeshStage
+                photoUrl={singlePhotoUrl}
+                evaluation={singlePhotoEval}
+                showMesh={false}
+              />
+            ) : (
+              <PostureSilhouetteSvg variant="baseline" measuredDeg={baselineDeg} pelvicDriftDeg={-6.2} />
+            )}
           </div>
 
-          {/* Animated 33-Point Laser Sweep Overlay when Quick Check runs */}
+          {/* Animated 33-Point Laser Sweep Overlay when Quick Check / Photo Scan runs */}
           {isScanningSweep ? (
             <div
               aria-hidden="true"
@@ -1169,16 +1749,32 @@ export function PostureComparisonInteractiveStage({
           </div>
 
           <div className="pointer-events-none absolute left-2.5 top-2.5 rounded-full border border-amber-500/35 bg-black/80 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider tabular-nums text-amber-300 backdrop-blur-md">
-            Baseline ({baselineDeg}°)
+            {hasTwoPhotos && baselineMesh
+              ? `Baseline (${baselineMesh.cvaDeg.toFixed(1)}° · ${baselineMesh.score}/100)`
+              : hasSinglePhoto
+                ? 'Original Photo'
+                : `Baseline (${baselineDeg}°)`}
           </div>
-          <div className="pointer-events-none absolute right-2.5 top-2.5 rounded-full border border-emerald-500/35 bg-black/80 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider tabular-nums text-emerald-300 backdrop-blur-md">
-            Current ({currentDeg}°)
+          <div
+            className={`pointer-events-none absolute right-2.5 top-2.5 rounded-full border bg-black/80 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider tabular-nums backdrop-blur-md ${
+              delta.strainFlag === 'optimal'
+                ? 'border-emerald-500/35 text-emerald-300'
+                : delta.strainFlag === 'amber'
+                  ? 'border-amber-500/35 text-amber-300'
+                  : 'border-rose-500/35 text-rose-300'
+            }`}
+          >
+            {hasTwoPhotos && detectedMesh
+              ? `Current (${detectedMesh.cvaDeg.toFixed(1)}° · ${detectedMesh.score}/100)`
+              : hasSinglePhoto && singlePhotoEval
+                ? `33-Pt Mesh (${singlePhotoEval.cvaDeg.toFixed(1)}° · ${singlePhotoEval.score}/100)`
+                : `Current (${currentDeg}°)`}
           </div>
 
           <div className="absolute inset-x-2.5 bottom-2.5 rounded-xl border border-white/10 bg-[#111318]/90 px-3 py-0.5 backdrop-blur-xl sm:inset-x-3 sm:px-3.5">
             <div className="flex items-center gap-2.5 text-[11px] font-semibold text-zinc-200 sm:gap-3">
               <label htmlFor={sliderId} className="shrink-0 cursor-pointer">
-                Scrub Mesh
+                {hasSinglePhoto ? 'Scrub X-Ray' : 'Scrub Mesh'}
               </label>
               <input
                 ref={sliderInputRef}
@@ -1208,23 +1804,112 @@ export function PostureComparisonInteractiveStage({
           </div>
         </div>
       ) : viewMode === 'side_by_side' ? (
-        <div className="grid grid-cols-1 gap-2.5 sm:h-72 sm:grid-cols-2">
-          <div className="relative flex h-60 min-h-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-amber-500/25 bg-[#0B0E14] p-2 pt-8 sm:h-full">
-            <span className="absolute left-2.5 top-2.5 rounded-full border border-amber-500/30 bg-black/80 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-amber-300 backdrop-blur-md">
-              Baseline · {baselineDeg}°
+        <div className="grid grid-cols-1 gap-2.5 sm:h-80 sm:grid-cols-2">
+          {/* Left Panel: Baseline / Before Photo Drop Zone */}
+          <div
+            onDragOver={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              if (sideDropHover !== 'baseline') setSideDropHover('baseline')
+            }}
+            onDragLeave={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+              setSideDropHover(null)
+            }}
+            onDrop={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              setIsDragOver(false)
+              setSideDropHover(null)
+              const file = e.dataTransfer?.files?.[0]
+              if (file) processPostureFile(file, 'baseline')
+            }}
+            className={`relative flex h-64 min-h-0 flex-col items-center justify-center overflow-hidden rounded-2xl border bg-[#0B0E14] p-2 pt-10 transition-colors sm:h-full ${
+              sideDropHover === 'baseline'
+                ? 'border-amber-400 ring-2 ring-amber-400/70'
+                : 'border-amber-500/25'
+            }`}
+          >
+            <span className="absolute left-2.5 top-2.5 z-10 rounded-full border border-amber-500/30 bg-black/80 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-amber-300 backdrop-blur-md">
+              {baselineMesh
+                ? `Baseline · ${baselineMesh.cvaDeg.toFixed(1)}° · ${baselineMesh.score}/100`
+                : `Baseline · ${baselineDeg}°`}
             </span>
-            <PostureSilhouetteSvg variant="baseline" measuredDeg={baselineDeg} compact />
+            <button
+              type="button"
+              onClick={() => baselineFileInputRef.current?.click()}
+              className="forge-tactile-press absolute right-2 top-2 z-10 inline-flex min-h-[44px] items-center gap-1 rounded-xl border border-white/12 bg-black/80 px-3 py-1.5 text-[10.5px] font-semibold text-zinc-200 backdrop-blur-md hover:border-amber-400/50 hover:text-white"
+            >
+              <Upload size={11} aria-hidden="true" />
+              <span>{baselinePhotoUrl ? 'Replace' : 'Drop / Upload'}</span>
+            </button>
+            {baselinePhotoUrl && baselineMesh ? (
+              <CapturedPostureMeshStage photoUrl={baselinePhotoUrl} evaluation={baselineMesh} />
+            ) : (
+              <PostureSilhouetteSvg variant="baseline" measuredDeg={baselineDeg} compact />
+            )}
           </div>
-          <div className="relative flex h-60 min-h-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-emerald-500/25 bg-[#0B0E14] p-2 pt-8 sm:h-full">
-            <span className="absolute left-2.5 top-2.5 rounded-full border border-emerald-500/30 bg-black/80 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-emerald-300 backdrop-blur-md">
-              Current · {currentDeg}°
+
+          {/* Right Panel: Current / After Photo Drop Zone */}
+          <div
+            onDragOver={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              if (sideDropHover !== 'current') setSideDropHover('current')
+            }}
+            onDragLeave={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+              setSideDropHover(null)
+            }}
+            onDrop={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              setIsDragOver(false)
+              setSideDropHover(null)
+              const file = e.dataTransfer?.files?.[0]
+              if (file) processPostureFile(file, 'current')
+            }}
+            className={`relative flex h-64 min-h-0 flex-col items-center justify-center overflow-hidden rounded-2xl border bg-[#0B0E14] p-2 pt-10 transition-colors sm:h-full ${
+              sideDropHover === 'current'
+                ? 'border-emerald-400 ring-2 ring-emerald-400/70'
+                : 'border-emerald-500/25'
+            }`}
+          >
+            <span
+              className={`absolute left-2.5 top-2.5 z-10 rounded-full border bg-black/80 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums backdrop-blur-md ${
+                delta.strainFlag === 'optimal'
+                  ? 'border-emerald-500/30 text-emerald-300'
+                  : delta.strainFlag === 'amber'
+                    ? 'border-amber-500/30 text-amber-300'
+                    : 'border-rose-500/30 text-rose-300'
+              }`}
+            >
+              {detectedMesh
+                ? `Current · ${detectedMesh.cvaDeg.toFixed(1)}° · ${detectedMesh.score}/100`
+                : `Current · ${currentDeg}°`}
             </span>
-            <PostureSilhouetteSvg
-              variant="current"
-              measuredDeg={currentDeg}
-              pelvicDriftDeg={delta.pelvicTiltDeltaDeg}
-              compact
-            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="forge-tactile-press absolute right-2 top-2 z-10 inline-flex min-h-[44px] items-center gap-1 rounded-xl border border-white/12 bg-black/80 px-3 py-1.5 text-[10.5px] font-semibold text-zinc-200 backdrop-blur-md hover:border-emerald-400/50 hover:text-white"
+            >
+              <Upload size={11} aria-hidden="true" />
+              <span>{capturedPhotoUrl ? 'Replace' : 'Drop / Upload'}</span>
+            </button>
+            {capturedPhotoUrl && detectedMesh ? (
+              <CapturedPostureMeshStage photoUrl={capturedPhotoUrl} evaluation={detectedMesh} />
+            ) : (
+              <PostureSilhouetteSvg
+                variant="current"
+                measuredDeg={currentDeg}
+                pelvicDriftDeg={delta.pelvicTiltDeltaDeg}
+                compact
+              />
+            )}
           </div>
         </div>
       ) : (
@@ -1276,22 +1961,34 @@ export function PostureComparisonInteractiveStage({
         </div>
       )}
 
-      {/* Interactive Scan Confirmation + Coach Gordon Voice Preview (Sandbox Mode) */}
-      {sandboxMode && scanStatusBanner ? (
+      {/* Interactive Scan Confirmation Banner */}
+      {scanStatusBanner ? (
         <div
           role="status"
           aria-live="polite"
           className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-200"
         >
           <span className="font-medium">✓ {scanStatusBanner}</span>
-          <button
-            type="button"
-            onClick={() => playCoachStaticCue('calibration_locked', { forceUnlockVoiceOnTap: true })}
-            className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-400/35 bg-[#111318] px-3 py-1.5 text-xs font-bold text-emerald-200 hover:bg-[#181B22]"
-          >
-            <Volume2 size={13} strokeWidth={1.75} className="text-emerald-300" aria-hidden="true" />
-            <span>Hear Coach Gordon</span>
-          </button>
+          {sandboxMode ? (
+            <button
+              type="button"
+              onClick={() => {
+                const spokenSummary = buildPostScanDiagnosticSummary({
+                  scanType: 'posture_2min',
+                  score: delta.overallPostureScore,
+                  primaryFinding: `forward-head delta ${delta.forwardHeadDeltaDeg.toFixed(1)} degrees and pelvic drift ${delta.pelvicTiltDeltaDeg.toFixed(1)} degrees`,
+                })
+                void speakCoachDynamicText(spokenSummary, {
+                  moment: 'post_scan_summary',
+                  forceUnlockVoiceOnTap: true,
+                })
+              }}
+              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-400/35 bg-[#111318] px-3 py-1.5 text-xs font-bold text-emerald-200 hover:bg-[#181B22]"
+            >
+              <Volume2 size={13} strokeWidth={1.75} className="text-emerald-300" aria-hidden="true" />
+              <span>Hear Coach Gordon</span>
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -1301,8 +1998,8 @@ export function PostureComparisonInteractiveStage({
           <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-zinc-400">
             Forward Head
           </div>
-          <div className="font-mono text-sm font-bold tabular-nums text-emerald-300 sm:mt-0.5">
-            {delta.forwardHeadDeltaDeg.toFixed(1)}°
+          <div className={`font-mono text-sm font-bold tabular-nums sm:mt-0.5 ${strainTextClass}`}>
+            {delta.forwardHeadDeltaDeg > 0 ? `+${delta.forwardHeadDeltaDeg.toFixed(1)}` : delta.forwardHeadDeltaDeg.toFixed(1)}°
           </div>
         </div>
         <div className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-[#181B22] p-3 sm:block">
@@ -1317,11 +2014,7 @@ export function PostureComparisonInteractiveStage({
           <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-zinc-400">
             Pelvic Drift
           </div>
-          <div
-            className={`font-mono text-sm font-bold tabular-nums sm:mt-0.5 ${
-              delta.strainFlag === 'optimal' ? 'text-emerald-300' : 'text-amber-300'
-            }`}
-          >
+          <div className={`font-mono text-sm font-bold tabular-nums sm:mt-0.5 ${strainTextClass}`}>
             {delta.pelvicTiltDeltaDeg.toFixed(1)}° ({delta.strainFlag.toUpperCase()})
           </div>
         </div>
@@ -1416,6 +2109,8 @@ export default function PostureComparisonCard({
   const { tierId, shouldShowTrigger } = useTierAccess()
   const [modalOpen, setModalOpen] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const [cardDragOver, setCardDragOver] = useState(false)
+  const [droppedFile, setDroppedFile] = useState<File | null>(null)
   const [delta, setDelta] = useState<PostureDeltaSummary>(() => createInitialDelta(sandboxMode))
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const headingId = useId()
@@ -1481,12 +2176,37 @@ export default function PostureComparisonCard({
   }
 
   const baselineDeg = 8.9
-  const currentDeg = Number(Math.max(1.5, baselineDeg + delta.forwardHeadDeltaDeg).toFixed(1))
+  const currentDeg = Number(Math.max(0, baselineDeg + delta.forwardHeadDeltaDeg).toFixed(1))
   const showPostScanBanner = shouldShowTrigger('post_scan_flag') && delta.strainFlag !== 'optimal'
 
   return (
     <>
-      <div className="rounded-2xl border border-white/[0.07] bg-[#111318] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-6">
+      <div
+        onDragOver={e => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (!cardDragOver) setCardDragOver(true)
+        }}
+        onDragLeave={e => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+          setCardDragOver(false)
+        }}
+        onDrop={e => {
+          e.preventDefault()
+          e.stopPropagation()
+          setCardDragOver(false)
+          const file = e.dataTransfer?.files?.[0]
+          if (file) {
+            setDroppedFile(file)
+            setModalOpen(true)
+          }
+        }}
+        className={`rounded-2xl border border-white/[0.07] bg-[#111318] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-shadow duration-150 sm:p-6 ${
+          cardDragOver ? 'ring-2 ring-emerald-400/80 ring-offset-2 ring-offset-[#090A0D]' : ''
+        }`}
+      >
         <div className="flex items-center justify-between gap-2">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
@@ -1590,6 +2310,8 @@ export default function PostureComparisonCard({
           <PostureComparisonInteractiveStage
             remoteActive={isDialogShown}
             showPostScanBanner={showPostScanBanner}
+            initialDroppedFile={droppedFile}
+            onConsumedDroppedFile={() => setDroppedFile(null)}
             onRequestUpgrade={() => {
               closeFullScreenModal()
               setUpgradeOpen(true)

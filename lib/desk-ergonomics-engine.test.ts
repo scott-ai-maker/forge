@@ -5,6 +5,7 @@ import {
   computePlumbDeviationDeg,
   computeThreePointAngleDeg,
   evaluateDeskErgonomicsFromLandmarks,
+  evaluateMediaPipeSeatedPose,
   mapMediaPipe33LandmarksToSeated,
   reconstructScanFromSavedWorkstation,
   SAMPLE_DESK_LANDMARKS,
@@ -283,5 +284,116 @@ describe('Feature #6: Desk Ergonomics Engine, State Sync & Guided 5-Min Desk Res
     expect(rolled.deskStrainFlags).toEqual(['forward_head', 'rounded_shoulders'])
     expect(rolled.deskAngles.earShoulderDeg).toBe(29.5)
     expect(rolled.environmentProfile).toBe('hotel_travel')
+  })
+
+  it('evaluates real MediaPipe poses accurately across aspect ratios, 3/4 oblique angles, frontal webcams, and occluded desk legs', () => {
+    // 1. Same physical posture in 16:9 landscape (1280x720) vs 3:4 portrait (900x1200) produces identical angles & score
+    const makePoseFromPixelCoords = (
+      ptsPx: Record<number, { x: number; y: number; visibility?: number }>,
+      w: number,
+      h: number
+    ) => {
+      const arr = Array.from({ length: 33 }, () => ({ x: 0.5, y: 1.2, visibility: 0.05 }))
+      for (const [idxStr, pt] of Object.entries(ptsPx)) {
+        arr[Number(idxStr)] = { x: pt.x / w, y: pt.y / h, visibility: pt.visibility ?? 0.96 }
+      }
+      return arr
+    }
+
+    // Upright right-facing lateral posture in pixel coordinates
+    const uprightPx = {
+      0: { x: 425, y: 205, visibility: 0.98 }, // Nose ahead of ear
+      8: { x: 375, y: 190, visibility: 0.98 }, // Right ear
+      12: { x: 368, y: 350, visibility: 0.98 }, // Right shoulder
+      14: { x: 382, y: 540, visibility: 0.96 }, // Right elbow
+      16: { x: 560, y: 550, visibility: 0.96 }, // Right wrist
+      24: { x: 358, y: 630, visibility: 0.97 }, // Right hip
+      26: { x: 620, y: 665, visibility: 0.95 }, // Right knee
+      28: { x: 620, y: 890, visibility: 0.93 }, // Right ankle
+    }
+    const landscapeEval = evaluateMediaPipeSeatedPose(
+      makePoseFromPixelCoords(uprightPx, 1600, 1000),
+      { imageWidth: 1600, imageHeight: 1000 }
+    )!
+    const portraitEval = evaluateMediaPipeSeatedPose(
+      makePoseFromPixelCoords(uprightPx, 900, 1200),
+      { imageWidth: 900, imageHeight: 1200 }
+    )!
+    expect(landscapeEval.score).toBeGreaterThanOrEqual(92)
+    expect(portraitEval.score).toBe(landscapeEval.score)
+    expect(landscapeEval.viewBox).toEqual({ width: 160, height: 100 })
+    expect(portraitEval.viewBox).toEqual({ width: 100, height: 133.3 })
+
+    // 2. Slouched lateral posture produces distinctly lower score than upright posture
+    const slouchedPx = {
+      ...uprightPx,
+      0: { x: 540, y: 230, visibility: 0.98 },
+      8: { x: 485, y: 215, visibility: 0.98 }, // Pronounced forward head
+      12: { x: 405, y: 355, visibility: 0.98 }, // Rounded shoulder ahead of hip
+      16: { x: 645, y: 495, visibility: 0.96 }, // Over-extended reach
+      26: { x: 615, y: 590, visibility: 0.95 }, // Closed hip angle
+    }
+    const slouchedEval = evaluateMediaPipeSeatedPose(
+      makePoseFromPixelCoords(slouchedPx, 1600, 1000),
+      { imageWidth: 1600, imageHeight: 1000 }
+    )!
+    expect(slouchedEval.score).toBeLessThan(landscapeEval.score - 25)
+    expect(slouchedEval.ergonomicFlags).toContain('forward_head')
+
+    // 3. Under-desk occluded knees (low visibility / out of frame) do NOT trigger a fake hip tilt penalty
+    const underDeskOccludedPx = {
+      0: { x: 425, y: 205, visibility: 0.98 },
+      8: { x: 375, y: 190, visibility: 0.98 },
+      12: { x: 368, y: 350, visibility: 0.98 },
+      14: { x: 382, y: 540, visibility: 0.96 },
+      16: { x: 560, y: 550, visibility: 0.96 },
+      24: { x: 358, y: 630, visibility: 0.90 },
+      // Knee & ankle occluded below desk (y > h, visibility = 0.04)
+      26: { x: 355, y: 1180, visibility: 0.04 },
+      28: { x: 355, y: 1450, visibility: 0.02 },
+    }
+    const occludedEval = evaluateMediaPipeSeatedPose(
+      makePoseFromPixelCoords(underDeskOccludedPx, 1280, 960),
+      { imageWidth: 1280, imageHeight: 960 }
+    )!
+    expect(occludedEval.landmarks.knee.occluded).toBe(true)
+    expect(occludedEval.ergonomicFlags).not.toContain('hip_flexor_tightness')
+    expect(occludedEval.score).toBeGreaterThanOrEqual(92)
+
+    // 4. Frontal webcam view uses 3D worldLandmarks instead of misinterpreting clavicle width as forward head
+    const frontal2D = Array.from({ length: 33 }, () => ({ x: 0.5, y: 1.2, visibility: 0.05 }))
+    frontal2D[0] = { x: 0.5, y: 0.3, visibility: 0.99 }
+    frontal2D[7] = { x: 0.56, y: 0.29, visibility: 0.92 }
+    frontal2D[8] = { x: 0.44, y: 0.29, visibility: 0.92 }
+    frontal2D[11] = { x: 0.64, y: 0.47, visibility: 0.98 }
+    frontal2D[12] = { x: 0.36, y: 0.47, visibility: 0.98 }
+
+    const makeFrontalWorld = (earForwardZ: number, shForwardZ: number) => {
+      const w = Array.from({ length: 33 }, () => ({ x: 0, y: 0, z: 0, visibility: 0.5 }))
+      w[0] = { x: 0, y: -0.58, z: earForwardZ - 0.12, visibility: 0.99 }
+      w[7] = { x: 0.075, y: -0.57, z: earForwardZ, visibility: 0.92 }
+      w[8] = { x: -0.075, y: -0.57, z: earForwardZ, visibility: 0.92 }
+      w[11] = { x: 0.19, y: -0.39, z: shForwardZ, visibility: 0.98 }
+      w[12] = { x: -0.19, y: -0.39, z: shForwardZ, visibility: 0.98 }
+      w[23] = { x: 0.13, y: 0, z: 0, visibility: 0.85 }
+      w[24] = { x: -0.13, y: 0, z: 0, visibility: 0.85 }
+      return w
+    }
+
+    const frontalUpright = evaluateMediaPipeSeatedPose(frontal2D, {
+      imageWidth: 1280,
+      imageHeight: 960,
+      worldLandmarks: makeFrontalWorld(-0.02, 0),
+    })!
+    expect(frontalUpright.cameraAngle).toBe('frontal')
+    expect(frontalUpright.score).toBeGreaterThanOrEqual(90)
+
+    const frontalTurtled = evaluateMediaPipeSeatedPose(frontal2D, {
+      imageWidth: 1280,
+      imageHeight: 960,
+      worldLandmarks: makeFrontalWorld(-0.14, -0.04),
+    })!
+    expect(frontalTurtled.score).toBeLessThan(frontalUpright.score - 15)
+    expect(frontalTurtled.ergonomicFlags).toContain('forward_head')
   })
 })

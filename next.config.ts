@@ -84,7 +84,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https://images.credly.com https://*.supabase.co https://img.youtube.com https://i.ytimg.com https://*.ytimg.com https://images.unsplash.com https://*.google-analytics.com https://*.googletagmanager.com",
               "font-src 'self' data:",
               "media-src 'self' blob: data: https://*.supabase.co",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://img.youtube.com https://i.ytimg.com https://www.youtube.com https://www.youtube-nocookie.com https://api.tryvital.io https://link.tryvital.io https://generativelanguage.googleapis.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://img.youtube.com https://i.ytimg.com https://www.youtube.com https://www.youtube-nocookie.com https://api.tryvital.io https://link.tryvital.io https://generativelanguage.googleapis.com https://storage.googleapis.com https://cdn.jsdelivr.net https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
               "worker-src 'self' blob:",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.youtube-nocookie.com https://www.youtube.com https://youtube.com https://open.spotify.com",
               "object-src 'none'",
@@ -124,6 +124,15 @@ const nextConfig: NextConfig = {
           {
             key: 'X-Robots-Tag',
             value: 'noai, noimageai',
+          },
+        ],
+      },
+      {
+        source: '/(models|wasm)/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, stale-while-revalidate=604800',
           },
         ],
       },

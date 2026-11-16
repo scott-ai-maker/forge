@@ -42,6 +42,7 @@ interface SneakPeekTabSpec {
   label: string
   shortLabel: string
   subtitle: string
+  whatItMeansForYou: string
   telemetryBadge: string
   voiceCueKey: StaticCoachCueKey
 }
@@ -53,7 +54,9 @@ const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
     label: '33-Point Posture Mesh',
     shortLabel: 'Posture Mesh',
     subtitle:
-      'Scrub Baseline vs. Current alignment (-4.2° Forward Head Tilt), run an interactive Quick Check, or test your own side profile locally in-browser.',
+      'Scrub Baseline vs. Current alignment, drop in your own side-profile photo locally in-browser, or compare Before & After side-by-side.',
+    whatItMeansForYou:
+      'What this means for you: Identifies neck, shoulder, or hip tightness in seconds so your exercises relieve tension first—never forcing restricted joints under load.',
     telemetryBadge: 'LOCAL BROWSER VISION · ZERO CLOUD UPLOAD',
     voiceCueKey: 'calibration_framing',
   },
@@ -64,6 +67,8 @@ const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
     shortLabel: 'Desk Audit',
     subtitle:
       'Compare Before/Optimal workstation angles, run a 5-second local camera or photo audit, and launch a targeted 5-Min Desk Reset in 1 tap.',
+    whatItMeansForYou:
+      'What this means for you: Pinpoints the exact monitor height or chair angle straining your neck and low back, then gives you a calm 5-minute seated reset.',
     telemetryBadge: 'LOCAL BROWSER VISION · ZERO CLOUD UPLOAD',
     voiceCueKey: 'calibration_locked',
   },
@@ -73,8 +78,10 @@ const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
     label: '5-Phase NASM OPT™',
     shortLabel: '5-Phase OPT™',
     subtitle:
-      'Inspect all 5 NASM OPT™ phases (01 Stabilization → 05 Power), open studio movement demos, and hear Coach Gordon pace a rep.',
-    telemetryBadge: '5-PHASE NASM OPT™ ENGINE · ZERO LOGIN',
+      'Explore how NASM OPT™ matches your personal goals and health history—from foundational joint stability & everyday strength (Phases 01–02) to optional athletic tracks.',
+    whatItMeansForYou:
+      'What this means for you: You only train in the phases that match your goals and health profile—never pushed into heavy max lifts or jump training that do not fit your plan.',
+    telemetryBadge: 'GOAL-MATCHED NASM OPT™ · ZERO LOGIN',
     voiceCueKey: 'tempo_3_1_1_eccentric',
   },
   {
@@ -84,6 +91,8 @@ const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
     shortLabel: 'Express & Travel',
     subtitle:
       'Toggle 20m Express Mode, adapt workouts across Home / Hotel / Bodyweight environments, and test 30-Second Camera Readiness warm-up injection.',
+    whatItMeansForYou:
+      'What this means for you: Adjusts every session to your time window, available equipment, and daily joint comfort—swapping movements anytime something feels stiff.',
     telemetryBadge: 'ADAPTIVE SESSION ENGINE · ZERO LOGIN',
     voiceCueKey: 'readiness_rep_1_3',
   },
@@ -324,9 +333,9 @@ export default function AppSneakPeekShowcase() {
           Test-Drive the Forge Athletic Ecosystem Right Now
         </h2>
         <p className="mx-auto max-w-2xl text-sm leading-relaxed text-zinc-300">
-          Explore live, launch-ready modules—from 33-point phone camera posture deltas and seated
-          desk audits to 5-Phase NASM OPT™ progression and 20-minute travel adaptation—with zero
-          login required.
+          Try the live tools below with zero login required—every diagnostic and NASM OPT™ workout
+          adapts directly to your goals, joint comfort, and health profile rather than a
+          one-size-fits-all routine.
         </p>
       </div>
 
@@ -426,7 +435,10 @@ export default function AppSneakPeekShowcase() {
           </div>
         </div>
 
-        <p className="mb-4 text-xs leading-relaxed text-zinc-300 sm:text-sm">{activeTab.subtitle}</p>
+        <p className="mb-2 text-xs leading-relaxed text-zinc-300 sm:text-sm">{activeTab.subtitle}</p>
+        <div className="mb-4 rounded-xl border border-white/[0.07] bg-[#181B22]/85 px-3.5 py-2.5 text-xs leading-relaxed text-emerald-200/95">
+          {activeTab.whatItMeansForYou}
+        </div>
 
         {/* Tab Panels (Styles applied to inner child wrapper per WCAG / hidden-panel layout rules) */}
         {SNEAK_TABS.map(tab => {

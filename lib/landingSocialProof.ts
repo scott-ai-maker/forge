@@ -71,7 +71,7 @@ export const COACH_GORDON_TRUST_PROFILE = {
   scienceAccordionTitle: 'How the NASM OPT™ Science Works',
   scienceAccordionParagraphs: [
     '33-Point Smartphone Pose Diagnostics: Using only your phone or laptop camera locally in your browser, Forge Athletic measures craniovertebral head tilt, shoulder symmetry, pelvic balance, and squat depth so tightness is addressed before you pick up a weight.',
-    '5-Phase NASM Optimum Performance Training (OPT™): Every plan starts with joint stabilization, tendon preparation, and core bracing (Phase 01), then progresses methodically through Strength Endurance (Phase 02), Muscular Development (Phase 03), Maximal Strength (Phase 04), and Power (Phase 05)—syncing sets, tempos, rest intervals, and daily readiness.',
+    'Goal-Matched NASM Optimum Performance Training (OPT™): Every plan starts with joint stabilization, balance, and controlled breathing (Phase 01) and builds durable everyday strength (Phase 02)—where most posture, fat-loss, and long-term fitness members do their best work. Specialty tracks like Muscular Development (Phase 03), Maximal Strength (Phase 04), and Power (Phase 05) are optional and included only when matched to your goals and health profile.',
   ] as const,
 } as const
 

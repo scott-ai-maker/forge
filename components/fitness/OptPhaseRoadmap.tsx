@@ -20,11 +20,15 @@ export interface OptPhaseSpec {
   phase: 1 | 2 | 3 | 4 | 5
   code: string
   shortTitle: string
+  trackLabel: string
+  isOptionalGoalTrack: boolean
   outcomeHeadline: string
   tempo: string
   repsAndSets: string
   restInterval: string
   plainEnglishSummary: string
+  whoItsFor: string
+  clinicalNote: string
   sampleBlockTitle: string
   sampleExercises: [OptPhaseSampleExercise, OptPhaseSampleExercise]
 }
@@ -34,12 +38,18 @@ export const OPT_PHASES: OptPhaseSpec[] = [
     phase: 1,
     code: 'PHASE 01',
     shortTitle: 'Stabilization',
+    trackLabel: 'Core Foundation',
+    isOptionalGoalTrack: false,
     outcomeHeadline: 'Bulletproof Joints, Core Bracing & Alignment',
     tempo: '4-2-1 Controlled Tempo',
     repsAndSets: '1–3 Sets · 12–20 Reps',
     restInterval: '0–90s Rest',
     plainEnglishSummary:
-      'Corrects desk stiffness and prepares tendons, rotator cuffs, and deep core stabilizers before heavy loading.',
+      'Corrects desk stiffness and prepares tendons, rotator cuffs, and deep core stabilizers with light, joint-friendly loads and steady breathing.',
+    whoItsFor:
+      'Every member starts here—foundational for joint comfort, core stability, balance, and posture alignment.',
+    clinicalNote:
+      'Controlled tempos and steady rhythmic breathing calibrated to your health intake.',
     sampleBlockTitle: 'Phase 01 Joint-Stability & Proprioception Pairing',
     sampleExercises: [
       {
@@ -64,12 +74,18 @@ export const OPT_PHASES: OptPhaseSpec[] = [
     phase: 2,
     code: 'PHASE 02',
     shortTitle: 'Strength Endurance',
+    trackLabel: 'Primary Longevity',
+    isOptionalGoalTrack: false,
     outcomeHeadline: 'Lean Muscle Work Capacity & Superset Stamina',
     tempo: '2-0-2 / 4-2-1 Superset',
     repsAndSets: '2–4 Sets · 8–12 Reps',
     restInterval: '60s Rest',
     plainEnglishSummary:
-      'Pairs a primary compound strength lift immediately with a joint-stabilizing exercise to build durable lean muscle.',
+      'Pairs a moderate, controlled strength movement with a joint-stabilizing exercise to build durable everyday strength, bone density, and metabolic health.',
+    whoItsFor:
+      'The primary training zone for sustainable strength, lean muscle tone, fat loss, and everyday stamina.',
+    clinicalNote:
+      'Moderate loads and smooth pacing—effective stimulus without unnecessary joint or blood-pressure strain.',
     sampleBlockTitle: 'Phase 02 Biomechanical Contrast Superset (0s Intra-Pair Rest)',
     sampleExercises: [
       {
@@ -94,12 +110,18 @@ export const OPT_PHASES: OptPhaseSpec[] = [
     phase: 3,
     code: 'PHASE 03',
     shortTitle: 'Muscular Dev',
+    trackLabel: 'Goal-Optional',
+    isOptionalGoalTrack: true,
     outcomeHeadline: 'Targeted Hypertrophy & Balanced Physique',
     tempo: '2-0-2 Controlled Hypertrophy',
     repsAndSets: '3–5 Sets · 6–12 Reps',
     restInterval: '60–90s Rest',
     plainEnglishSummary:
-      'Progressive volume blocks engineered to add functional lean mass without lower-back or shoulder wear.',
+      'Optional physique-focused volume blocks designed to add lean muscle mass without lower-back or shoulder wear.',
+    whoItsFor:
+      'Optional track used when adding extra muscle size and hypertrophy is one of your goals.',
+    clinicalNote:
+      'Included only when higher muscle-building volume aligns with your priorities and recovery.',
     sampleBlockTitle: 'Phase 03 Mechanical Tension Hypertrophy Block',
     sampleExercises: [
       {
@@ -124,12 +146,18 @@ export const OPT_PHASES: OptPhaseSpec[] = [
     phase: 4,
     code: 'PHASE 04',
     shortTitle: 'Max Strength',
+    trackLabel: 'Goal-Optional',
+    isOptionalGoalTrack: true,
     outcomeHeadline: 'Peak Force Output & Dense Neural Strength',
     tempo: 'Explosive Concentric (X-0-X)',
     repsAndSets: '4–6 Sets · 1–5 Reps',
     restInterval: '3–5m Rest',
     plainEnglishSummary:
-      'High-recruitment compound strength cycles calibrated safely from your recorded rep-velocity and joint comfort.',
+      'Optional low-rep strength cycles strictly for cleared lifters pursuing heavy barbell or unilateral force milestones.',
+    whoItsFor:
+      'Optional specialty track for members specifically pursuing heavy maximal strength milestones.',
+    clinicalNote:
+      'Used only when low-rep heavy loading matches your goals and health clearance (omitted for blood-pressure or joint restrictions).',
     sampleBlockTitle: 'Phase 04 Neural Recruitment & Force Block',
     sampleExercises: [
       {
@@ -154,12 +182,18 @@ export const OPT_PHASES: OptPhaseSpec[] = [
     phase: 5,
     code: 'PHASE 05',
     shortTitle: 'Power',
+    trackLabel: 'Sport-Optional',
+    isOptionalGoalTrack: true,
     outcomeHeadline: 'Athletic Speed, Elasticity & Force-Velocity',
     tempo: 'Superset Heavy + Explosive',
     repsAndSets: '3–5 Sets · 1–5 + 8–10 Reps',
     restInterval: '1–2m / 3–5m Rest',
     plainEnglishSummary:
-      'Combines strength lifts with crisp, low-impact explosive movements so you move fast and pain-free at any age.',
+      'Optional sport-performance track pairing strength work with explosive speed drills for cleared court, field, and rotational athletes.',
+    whoItsFor:
+      'Optional sport-performance track for rotational, court, or field athletic speed and power.',
+    clinicalNote:
+      'Programmed only when explosive sport performance is your goal—never forced into general fitness or wellness plans.',
     sampleBlockTitle: 'Phase 05 Post-Activation Potentiation (PAP) Complex',
     sampleExercises: [
       {
@@ -245,6 +279,30 @@ export default function OptPhaseRoadmap({
         </div>
       </div>
 
+      {sandboxMode ? (
+        <div className="mb-3.5 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.07] p-3 text-xs leading-relaxed text-zinc-200">
+          <div className="flex items-start gap-2">
+            <ShieldCheck
+              size={16}
+              strokeWidth={1.85}
+              className="mt-0.5 shrink-0 text-emerald-300"
+              aria-hidden="true"
+            />
+            <div>
+              <strong className="font-semibold text-white">
+                Built Around Your Goals — Not a Mandatory 1-to-5 Ladder:
+              </strong>{' '}
+              Most members focused on posture, fat loss, joint comfort, and lasting strength do
+              their best work in <strong className="text-emerald-300">Phases 01–02</strong>.{' '}
+              <strong className="text-amber-200">Phases 03–05 are optional specialty tracks</strong>{' '}
+              used only when your specific goals and health profile call for them—so you never do
+              heavy max lifts or jump training unless they directly serve what you are working
+              toward.
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Horizontal Snap-Scroll on Mobile · Full Symmetrical 5-Column Grid on Desktop */}
       <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [touch-action:pan-x_pan-y] lg:grid lg:grid-cols-5 lg:overflow-visible lg:pb-0">
         {OPT_PHASES.map(item => {
@@ -258,7 +316,7 @@ export default function OptPhaseRoadmap({
               type="button"
               onClick={() => setSelectedPhase(item.phase)}
               aria-pressed={isSelected}
-              className={`forge-tactile-press min-h-[82px] min-w-[144px] shrink-0 snap-start rounded-xl border p-3 text-left transition-colors duration-150 lg:min-w-0 ${
+              className={`forge-tactile-press min-h-[88px] min-w-[148px] shrink-0 snap-start rounded-xl border p-3 text-left transition-colors duration-150 lg:min-w-0 ${
                 isSelected
                   ? 'border-emerald-500/45 bg-[#181B22] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                   : isCurrent
@@ -274,14 +332,25 @@ export default function OptPhaseRoadmap({
                 >
                   {item.code}
                 </span>
-                {isUnlocked ? (
+                {sandboxMode ? (
+                  <span
+                    className={`rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider ${
+                      item.isOptionalGoalTrack
+                        ? 'border border-amber-500/30 bg-amber-500/10 text-amber-200'
+                        : 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
+                    }`}
+                  >
+                    {item.isOptionalGoalTrack ? 'Optional' : 'Core'}
+                  </span>
+                ) : isUnlocked ? (
                   <CheckCircle2 size={13} strokeWidth={1.75} className="text-emerald-400" aria-hidden="true" />
                 ) : (
                   <Lock size={12} strokeWidth={1.75} className="text-zinc-500" aria-hidden="true" />
                 )}
               </div>
               <div className="mt-1 text-xs font-bold leading-snug text-white">{item.shortTitle}</div>
-              <div className="mt-1 font-mono text-[10px] tabular-nums text-zinc-400">
+              <div className="mt-0.5 text-[10px] font-medium text-zinc-400">{item.trackLabel}</div>
+              <div className="mt-0.5 font-mono text-[10px] tabular-nums text-zinc-500">
                 {item.repsAndSets.split('·')[1]?.trim()}
               </div>
             </button>
@@ -292,9 +361,20 @@ export default function OptPhaseRoadmap({
       {/* Selected Phase Detail Strip */}
       <div className="mt-3 rounded-xl border border-white/[0.07] bg-[#181B22] p-3.5 sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs font-bold text-white sm:text-sm">
-            {activeSpec.code} · {activeSpec.outcomeHeadline}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-white sm:text-sm">
+              {activeSpec.code} · {activeSpec.outcomeHeadline}
+            </span>
+            <span
+              className={`rounded-full border px-2 py-0.5 font-mono text-[9.5px] font-bold uppercase tracking-wider ${
+                activeSpec.isOptionalGoalTrack
+                  ? 'border-amber-500/35 bg-amber-500/12 text-amber-200'
+                  : 'border-emerald-500/35 bg-emerald-500/12 text-emerald-300'
+              }`}
+            >
+              {activeSpec.trackLabel}
+            </span>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-md border border-amber-400/25 bg-amber-400/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-amber-200">
               {activeSpec.tempo}
@@ -305,6 +385,22 @@ export default function OptPhaseRoadmap({
           </div>
         </div>
         <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">{activeSpec.plainEnglishSummary}</p>
+
+        {/* Plain-English Goal Fit & Clinical Safety Readout */}
+        <div className="mt-2.5 grid grid-cols-1 gap-2 rounded-lg border border-white/[0.06] bg-[#111318] p-2.5 text-[11.5px] leading-relaxed md:grid-cols-2">
+          <div>
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+              Who This Phase Is For:{' '}
+            </span>
+            <span className="text-zinc-200">{activeSpec.whoItsFor}</span>
+          </div>
+          <div>
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300">
+              Health &amp; Safety Guardrail:{' '}
+            </span>
+            <span className="text-zinc-300">{activeSpec.clinicalNote}</span>
+          </div>
+        </div>
 
         {/* Interactive Sample Superset Cards + 120-Frame Studio Video Modal in Sandbox Mode */}
         {sandboxMode ? (

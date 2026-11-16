@@ -480,22 +480,34 @@ export default function CameraReadinessCheck({
         )
       }
 
-      const modelAssetPath =
+      const localModelPath = '/models/pose_landmarker_lite.task'
+      const remoteModelPath =
         'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'
 
-      let landmarker: PoseLandmarkerLike
-      try {
-        landmarker = (await vision.PoseLandmarker.createFromOptions(fileset, {
-          baseOptions: { modelAssetPath, delegate: 'GPU' },
-          runningMode: 'VIDEO',
-          numPoses: 1,
-        })) as unknown as PoseLandmarkerLike
-      } catch {
-        landmarker = (await vision.PoseLandmarker.createFromOptions(fileset, {
-          baseOptions: { modelAssetPath, delegate: 'CPU' },
-          runningMode: 'VIDEO',
-          numPoses: 1,
-        })) as unknown as PoseLandmarkerLike
+      let landmarker: PoseLandmarkerLike | null = null
+      for (const modelAssetPath of [localModelPath, remoteModelPath]) {
+        try {
+          landmarker = (await vision.PoseLandmarker.createFromOptions(fileset, {
+            baseOptions: { modelAssetPath, delegate: 'GPU' },
+            runningMode: 'VIDEO',
+            numPoses: 1,
+          })) as unknown as PoseLandmarkerLike
+          break
+        } catch {
+          try {
+            landmarker = (await vision.PoseLandmarker.createFromOptions(fileset, {
+              baseOptions: { modelAssetPath, delegate: 'CPU' },
+              runningMode: 'VIDEO',
+              numPoses: 1,
+            })) as unknown as PoseLandmarkerLike
+            break
+          } catch {
+            // Try fallback model path
+          }
+        }
+      }
+      if (!landmarker) {
+        throw new Error('PoseLandmarker initialization failed')
       }
 
       poseLandmarkerRef.current = landmarker
