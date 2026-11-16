@@ -143,13 +143,29 @@ test.describe('Feature #12: Public Landing Showcase, Interactive 4-Tab Sneak Pee
     })
     expect(parseFloat(selectedAfterBorder)).toBeGreaterThanOrEqual(2)
 
-    // Keyboard roving navigation: ArrowRight -> Tab 02, End -> Tab 04, Home -> Tab 01
+    // Exercise Tab 01 interactive Quick Check + local camera option
+    await expect(sneakSection.getByRole('button', { name: /5s Live Camera/i })).toBeVisible()
+    await sneakSection.getByRole('button', { name: /Run 2-Min Quick Check/i }).click()
+    await expect(sneakSection.getByText(/33-Point Quick Check locked/i)).toBeVisible()
+    await expect(sneakSection.getByText('88/100', { exact: true })).toBeVisible()
+
+    // Keyboard roving navigation: ArrowRight -> Tab 02, ArrowRight -> Tab 03, End -> Tab 04
     await tabs.nth(0).focus()
     await page.keyboard.press('ArrowRight')
     await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true')
     await expect(tabs.nth(1)).toBeFocused()
     await expect(sneakSection.getByText(/FORGE LAB \/\/ Desk Ergonomics Audit/i)).toBeVisible()
+    await expect(sneakSection.getByRole('button', { name: /5s Camera Timer/i })).toBeVisible()
 
+    await page.keyboard.press('ArrowRight')
+    await expect(tabs.nth(2)).toHaveAttribute('aria-selected', 'true')
+    await sneakSection.getByRole('button', { name: /Goblet Squat/i }).click()
+    const exerciseDialog = page.getByRole('dialog', { name: /Official NASM Movement Standards/i })
+    await expect(exerciseDialog).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(exerciseDialog).toHaveCount(0)
+
+    await tabs.nth(2).focus()
     await page.keyboard.press('End')
     await expect(tabs.nth(3)).toHaveAttribute('aria-selected', 'true')
     await expect(sneakSection.getByText(/FORGE LAB \/\/ Express & Travel Engine/i)).toBeVisible()

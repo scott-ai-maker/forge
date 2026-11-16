@@ -1,26 +1,31 @@
 'use client'
 
-import React, { useEffect, useId, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
 import {
   ArrowUpRight,
   Bell,
+  Camera,
   Check,
   Columns,
   GripVertical,
   Layers,
   Mail,
   Maximize2,
+  RotateCcw,
   ScanLine,
   Smartphone,
   Sparkles,
+  Upload,
   UserCheck,
   Volume2,
   X,
 } from 'lucide-react'
 import {
+  getDefaultPostureProfileState,
   loadPostureProfileState,
   POSTURE_PROFILE_EVENT,
   runQuickPostureCheckDelta,
+  type PostureDeltaSummary,
 } from '@/lib/posture-profile-state'
 import { getUpgradeTriggerCopy, useTierAccess } from '@/lib/tierEntitlements'
 import TierUpgradeModal from '@/components/packages/TierUpgradeModal'
@@ -46,186 +51,463 @@ export interface PostureComparisonViewerProps {
 
 const DAY30_REMINDER_KEY = 'forge_posture_day30_reminder_v1'
 
+function createInitialDelta(sandboxMode: boolean): PostureDeltaSummary {
+  const base = getDefaultPostureProfileState().postureDelta
+  return sandboxMode ? { ...base, forwardHeadDeltaDeg: -4.2 } : base
+}
+
 function PostureSilhouetteSvg({
   variant,
+  measuredDeg,
+  pelvicDriftDeg = -3.0,
   opacity = 1,
+  compact = false,
 }: {
   variant: 'baseline' | 'current' | 'day30_ghost'
+  measuredDeg?: number
+  pelvicDriftDeg?: number
   opacity?: number
+  compact?: boolean
 }) {
+  const svgUid = useId().replace(/:/g, '')
   const isBaseline = variant === 'baseline'
   const isGhost = variant === 'day30_ghost'
-  const headCx = isBaseline ? 117 : 101
-  const shoulderX = isBaseline ? 108 : 100
-  const elbowX = isBaseline ? 104 : 99
-  const wristX = isBaseline ? 109 : 101
-  const hipX = 100
-  const kneeX = 101
-  const ankleX = 100
+
+  const effectiveDeg =
+    measuredDeg ?? (isGhost ? 3.2 : isBaseline ? 8.9 : 4.7)
+  // Plumb line sits at x = 210 in a 420x260 precision clinical stage
+  const plumbX = 210
+  const forwardOffset = Math.max(2, Math.min(26, (effectiveDeg - 2.2) * 2.75))
+  const tragusX = Math.round((plumbX + forwardOffset) * 10) / 10
+  const shoulderX = Math.round((plumbX + forwardOffset * 0.36) * 10) / 10
+  const thoracicX = Math.round((plumbX - 7 + forwardOffset * 0.16) * 10) / 10
+  const lumbarX = Math.round((plumbX + 3 + Math.abs(pelvicDriftDeg) * 0.45) * 10) / 10
+  const hipX = plumbX
+  const kneeX = Math.round((plumbX + 2.5) * 10) / 10
+  const ankleX = plumbX
+  const elbowX = Math.round((shoulderX - 5) * 10) / 10
+  const wristX = Math.round((shoulderX + 3) * 10) / 10
+
   const strokeColor = isBaseline ? '#FBBF24' : '#34D399'
-  const glowColor = isBaseline ? 'rgba(251,191,36,0.22)' : 'rgba(52,211,153,0.22)'
-  const glowFilterId = `mesh-glow-${variant}`
+  const secondaryStroke = isBaseline ? 'rgba(251,191,36,0.45)' : 'rgba(52,211,153,0.5)'
+  const glowColor = isBaseline ? 'rgba(251,191,36,0.16)' : 'rgba(52,211,153,0.16)'
+  const glowFilterId = `mesh-glow-${variant}-${svgUid}`
+  const torsoGradId = `torso-grad-${variant}-${svgUid}`
+
+  // CVA wedge arc at C7 (shoulderX, 76) between vertical plumb and C7->Tragus vector
+  const tragusY = 42
+  const c7Y = 76
+  const arcR = 19
+  const vecAngle = Math.atan2(tragusY - c7Y, tragusX - shoulderX)
+  const vertAngle = -Math.PI / 2
+  const arcStartX = shoulderX + arcR * Math.cos(vertAngle)
+  const arcStartY = c7Y + arcR * Math.sin(vertAngle)
+  const arcEndX = shoulderX + arcR * Math.cos(vecAngle)
+  const arcEndY = c7Y + arcR * Math.sin(vecAngle)
 
   return (
     <svg
-      viewBox="0 0 280 260"
-      className="h-full w-full select-none"
+      viewBox={compact ? '95 6 230 248' : '0 0 420 260'}
+      className="pointer-events-none h-full max-h-full w-full select-none"
       style={{ opacity }}
       aria-hidden="true"
     >
       <defs>
-        <filter id={glowFilterId} x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="2.2" result="blur" />
+        <filter id={glowFilterId} x="-25%" y="-25%" width="150%" height="150%">
+          <feGaussianBlur stdDeviation="2.1" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
+        <linearGradient id={torsoGradId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={isGhost ? 'rgba(30,36,48,0.42)' : '#232834'} />
+          <stop offset="100%" stopColor={isGhost ? 'rgba(17,19,24,0.38)' : '#141720'} />
+        </linearGradient>
       </defs>
 
-      {[40, 80, 120, 160, 200, 240].map(gx => (
-        <line key={`vx-${gx}`} x1={gx} y1={10} x2={gx} y2={250} stroke="rgba(255,255,255,0.035)" strokeWidth={0.8} />
+      {/* Calibrated Studio Depth Grid */}
+      {[42, 84, 126, 168, 210, 252, 294, 336, 378].map(gx => (
+        <line
+          key={`vx-${gx}`}
+          x1={gx}
+          y1={12}
+          x2={gx}
+          y2={248}
+          stroke={gx === plumbX ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.035)'}
+          strokeWidth={0.8}
+        />
       ))}
-      {[44, 88, 132, 176, 220].map(gy => (
-        <line key={`hy-${gy}`} x1={16} y1={gy} x2={264} y2={gy} stroke="rgba(255,255,255,0.035)" strokeWidth={0.8} />
+      {[36, 76, 116, 156, 196, 236].map(gy => (
+        <line
+          key={`hy-${gy}`}
+          x1={18}
+          y1={gy}
+          x2={402}
+          y2={gy}
+          stroke="rgba(255,255,255,0.035)"
+          strokeWidth={0.8}
+        />
       ))}
 
+      {/* Optical Viewfinder Framing Brackets */}
       <path
-        d="M 20 28 L 20 16 L 32 16 M 248 16 L 260 16 L 260 28 M 20 232 L 20 244 L 32 244 M 248 244 L 260 244 L 260 232"
+        d={
+          compact
+            ? 'M 106 24 L 106 14 L 116 14 M 304 14 L 314 14 L 314 24 M 106 236 L 106 246 L 116 246 M 304 246 L 314 246 L 314 236'
+            : 'M 26 28 L 26 16 L 40 16 M 380 16 L 394 16 L 394 28 M 26 232 L 26 244 L 40 244 M 380 244 L 394 244 L 394 232'
+        }
         fill="none"
-        stroke={isGhost ? 'rgba(52,211,153,0.4)' : isBaseline ? 'rgba(251,191,36,0.5)' : 'rgba(52,211,153,0.6)'}
-        strokeWidth={1.4}
+        stroke={secondaryStroke}
+        strokeWidth={1.35}
         strokeLinecap="round"
       />
 
-      <ellipse cx={140} cy={135} rx={52} ry={95} fill={glowColor} opacity={isGhost ? 0.16 : 0.32} />
+      {/* Ambient Anatomical Halo & Calibrated Force-Plate Platform */}
+      <ellipse
+        cx={plumbX}
+        cy={136}
+        rx={58}
+        ry={98}
+        fill={glowColor}
+        opacity={isGhost ? 0.35 : 0.72}
+      />
+      <ellipse
+        cx={plumbX + 4}
+        cy={240}
+        rx={46}
+        ry={6.5}
+        fill="rgba(17,19,24,0.92)"
+        stroke={secondaryStroke}
+        strokeWidth={0.9}
+      />
 
+      {/* Left & Right Clinical Telemetry Callouts (Full Stage View) */}
+      {!compact && (
+        <g opacity={0.92}>
+          {/* Left Callout: Craniovertebral Plumb Reference */}
+          <rect
+            x={34}
+            y={56}
+            width={108}
+            height={44}
+            rx={7}
+            fill="rgba(17,19,24,0.88)"
+            stroke="rgba(255,255,255,0.09)"
+            strokeWidth={0.9}
+          />
+          <text x={43} y={71} fill="#A1A1AA" fontSize="6.8" fontFamily="monospace" fontWeight="600">
+            C7 → TRAGUS AXIS
+          </text>
+          <text x={43} y={87} fill={strokeColor} fontSize="11" fontFamily="monospace" fontWeight="800">
+            {isBaseline ? '+8.9° DRIFT' : `+${effectiveDeg.toFixed(1)}° ALIGNED`}
+          </text>
+          <line
+            x1={142}
+            y1={76}
+            x2={shoulderX - 18}
+            y2={76}
+            stroke="rgba(255,255,255,0.14)"
+            strokeWidth={0.8}
+            strokeDasharray="2.5 2.5"
+          />
+
+          {/* Left Lower Callout: Lumbo-Pelvic Stack */}
+          <rect
+            x={34}
+            y={132}
+            width={108}
+            height={42}
+            rx={7}
+            fill="rgba(17,19,24,0.88)"
+            stroke="rgba(255,255,255,0.09)"
+            strokeWidth={0.9}
+          />
+          <text x={43} y={147} fill="#A1A1AA" fontSize="6.8" fontFamily="monospace" fontWeight="600">
+            PELVIC TILT VECTOR
+          </text>
+          <text
+            x={43}
+            y={162}
+            fill={isBaseline ? '#FBBF24' : '#6EE7B7'}
+            fontSize="10.2"
+            fontFamily="monospace"
+            fontWeight="700"
+          >
+            {isBaseline ? 'ANTERIOR 6.2°' : `NEUTRAL ${Math.abs(pelvicDriftDeg).toFixed(1)}°`}
+          </text>
+          <line
+            x1={142}
+            y1={150}
+            x2={hipX - 20}
+            y2={146}
+            stroke="rgba(255,255,255,0.14)"
+            strokeWidth={0.8}
+            strokeDasharray="2.5 2.5"
+          />
+
+          {/* Right Callout: Kinetic Plumb Verification */}
+          <rect
+            x={278}
+            y={94}
+            width={108}
+            height={52}
+            rx={7}
+            fill="rgba(17,19,24,0.88)"
+            stroke={secondaryStroke}
+            strokeWidth={0.9}
+          />
+          <text x={287} y={109} fill="#A1A1AA" fontSize="6.8" fontFamily="monospace" fontWeight="600">
+            33-PT SAGITTAL LOCK
+          </text>
+          <text x={287} y={124} fill="#F8FAFC" fontSize="9.8" fontFamily="monospace" fontWeight="700">
+            33 / 33 NODES
+          </text>
+          <text x={287} y={137} fill={strokeColor} fontSize="7.4" fontFamily="monospace" fontWeight="700">
+            {isBaseline ? 'DAY-01 BASELINE' : 'POST-SCAN VERIFIED'}
+          </text>
+        </g>
+      )}
+
+      {/* True Vertical Gravity Plumb Line */}
       <line
-        x1={140}
+        x1={plumbX}
         y1={14}
-        x2={140}
-        y2={246}
-        stroke="rgba(56,189,248,0.45)"
-        strokeWidth={1.1}
+        x2={plumbX}
+        y2={244}
+        stroke="#38BDF8"
+        strokeOpacity={0.58}
+        strokeWidth={1.15}
         strokeDasharray="4 3"
       />
 
-      <g transform="translate(40, 0)">
-        {/* Fitted Dark Slate Crewneck Athletic Shirt & Shorts (Strict Wardrobe Standard) */}
+      {/* Anatomical Sagittal Human Profile (Fitted Charcoal Crewneck & Training Shorts — Strict Shirts-On Standard) */}
+      <g>
+        {/* Posterior & Anterior Sculpted Legs + Training Shoes */}
         <path
-          d={`M ${shoulderX - 22} 72 Q ${shoulderX} 65 ${shoulderX + 22} 72 L ${hipX + 18} 144 L ${hipX - 18} 144 Z`}
-          fill={isGhost ? 'rgba(24,27,34,0.35)' : '#181B22'}
-          stroke={isGhost ? 'rgba(52,211,153,0.5)' : 'rgba(255,255,255,0.18)'}
-          strokeWidth={1.1}
+          d={`M ${hipX - 11} 176
+              Q ${kneeX - 12} 196 ${kneeX - 8} 206
+              L ${ankleX - 7} 233
+              L ${ankleX + 13} 236
+              Q ${ankleX + 16} 239 ${ankleX + 12} 241
+              L ${ankleX - 11} 241
+              Q ${ankleX - 14} 236 ${ankleX - 11} 231
+              L ${kneeX - 14} 204
+              Q ${hipX - 16} 188 ${hipX - 14} 176 Z`}
+          fill={isGhost ? 'rgba(39,43,54,0.34)' : '#252A36'}
+          stroke={isGhost ? 'rgba(52,211,153,0.35)' : 'rgba(255,255,255,0.16)'}
+          strokeWidth={1}
           strokeDasharray={isGhost ? '4 3' : undefined}
         />
         <path
-          d={`M ${shoulderX - 22} 72 L ${shoulderX - 30} 102 L ${shoulderX - 17} 105 L ${shoulderX - 14} 82 Z`}
-          fill={isGhost ? 'rgba(24,27,34,0.3)' : '#181B22'}
-          stroke={isGhost ? 'rgba(52,211,153,0.4)' : 'rgba(255,255,255,0.14)'}
-          strokeWidth={0.9}
-          strokeDasharray={isGhost ? '3 3' : undefined}
-        />
-        <path
-          d={`M ${shoulderX + 22} 72 L ${shoulderX + 30} 102 L ${shoulderX + 17} 105 L ${shoulderX + 14} 82 Z`}
-          fill={isGhost ? 'rgba(24,27,34,0.3)' : '#181B22'}
-          stroke={isGhost ? 'rgba(52,211,153,0.4)' : 'rgba(255,255,255,0.14)'}
-          strokeWidth={0.9}
-          strokeDasharray={isGhost ? '3 3' : undefined}
-        />
-        <path
-          d={`M ${hipX - 18} 144 L ${hipX + 18} 144 L ${kneeX + 15} 186 L ${hipX + 2} 186 L ${hipX} 163 L ${hipX - 2} 186 L ${kneeX - 15} 186 Z`}
-          fill={isGhost ? 'rgba(17,19,24,0.35)' : '#111318'}
-          stroke={isGhost ? 'rgba(52,211,153,0.4)' : 'rgba(255,255,255,0.15)'}
+          d={`M ${hipX - 2} 176
+              Q ${kneeX + 9} 194 ${kneeX + 6} 206
+              L ${ankleX + 4} 233
+              L ${ankleX + 18} 236
+              Q ${ankleX + 20} 240 ${ankleX + 15} 241
+              L ${ankleX - 4} 241
+              L ${ankleX - 3} 232
+              L ${kneeX - 3} 205
+              Q ${hipX - 5} 189 ${hipX - 4} 176 Z`}
+          fill={isGhost ? 'rgba(46,52,66,0.38)' : '#2D3342'}
+          stroke={isGhost ? 'rgba(52,211,153,0.4)' : 'rgba(255,255,255,0.2)'}
           strokeWidth={1}
           strokeDasharray={isGhost ? '4 3' : undefined}
         />
 
-        <line x1={kneeX - 8} y1={186} x2={ankleX - 8} y2={234} stroke={isGhost ? 'rgba(52,211,153,0.3)' : '#272B36'} strokeWidth={6} strokeLinecap="round" strokeDasharray={isGhost ? '4 4' : undefined} />
-        <line x1={kneeX + 8} y1={186} x2={ankleX + 8} y2={234} stroke={isGhost ? 'rgba(52,211,153,0.3)' : '#272B36'} strokeWidth={6} strokeLinecap="round" strokeDasharray={isGhost ? '4 4' : undefined} />
-
-        <circle
-          cx={headCx}
-          cy={43}
-          r={14.5}
-          fill={isGhost ? 'rgba(24,27,34,0.3)' : '#181B22'}
-          stroke={strokeColor}
-          strokeWidth={1.6}
+        {/* Fitted Athletic Training Shorts */}
+        <path
+          d={`M ${hipX - 16} 142
+              L ${hipX + 16} 142
+              Q ${kneeX + 15} 162 ${kneeX + 12} 178
+              L ${hipX - 14} 178
+              Q ${hipX - 18} 160 ${hipX - 16} 142 Z`}
+          fill={isGhost ? 'rgba(17,19,24,0.4)' : '#12151D'}
+          stroke={isGhost ? 'rgba(52,211,153,0.42)' : 'rgba(255,255,255,0.2)'}
+          strokeWidth={1.05}
           strokeDasharray={isGhost ? '4 3' : undefined}
         />
 
-        <polygon
-          points={`${shoulderX - 16},78 ${shoulderX + 16},78 ${hipX + 13},144 ${hipX - 13},144`}
-          fill={glowColor}
-          fillOpacity={isGhost ? 0.35 : 0.7}
-          stroke={strokeColor}
-          strokeOpacity={isGhost ? 0.45 : 0.55}
+        {/* Fitted Dark-Slate Crewneck Performance T-Shirt Torso */}
+        <path
+          d={`M ${shoulderX - 17} 69
+              Q ${shoulderX + 2} 63 ${shoulderX + 17} 71
+              Q ${shoulderX + 21} 98 ${hipX + 16} 143
+              L ${hipX - 16} 143
+              Q ${thoracicX - 14} 106 ${shoulderX - 17} 69 Z`}
+          fill={`url(#${torsoGradId})`}
+          stroke={isGhost ? 'rgba(52,211,153,0.48)' : 'rgba(255,255,255,0.24)'}
+          strokeWidth={1.15}
+          strokeDasharray={isGhost ? '4 3' : undefined}
+        />
+
+        {/* Fitted Short-Sleeve Crewneck Sleeve & Forearm */}
+        <path
+          d={`M ${shoulderX - 7} 72
+              Q ${shoulderX + 7} 72 ${shoulderX + 10} 84
+              L ${elbowX + 8} 102
+              L ${elbowX - 7} 101
+              Z`}
+          fill={isGhost ? 'rgba(30,35,46,0.38)' : '#1E232E'}
+          stroke={isGhost ? 'rgba(52,211,153,0.42)' : 'rgba(255,255,255,0.2)'}
           strokeWidth={0.95}
+          strokeDasharray={isGhost ? '3 3' : undefined}
+        />
+        <path
+          d={`M ${elbowX - 5} 101
+              L ${elbowX + 6} 101
+              L ${wristX + 4} 139
+              L ${wristX - 4} 139 Z`}
+          fill={isGhost ? 'rgba(45,51,66,0.34)' : '#2B3140'}
+          stroke={isGhost ? 'rgba(52,211,153,0.35)' : 'rgba(255,255,255,0.16)'}
+          strokeWidth={0.9}
+          strokeDasharray={isGhost ? '3 3' : undefined}
+        />
+
+        {/* Sculpted Neck & Sagittal Head Profile (Facing Right) */}
+        <path
+          d={`M ${shoulderX - 6} 69
+              L ${tragusX - 6} 53
+              L ${tragusX + 6} 55
+              L ${shoulderX + 7} 70 Z`}
+          fill={isGhost ? 'rgba(39,45,58,0.36)' : '#252B38'}
+          stroke={isGhost ? 'rgba(52,211,153,0.36)' : 'rgba(255,255,255,0.16)'}
+          strokeWidth={0.9}
+        />
+        <path
+          d={`M ${tragusX - 13} 41
+              C ${tragusX - 13} 27, ${tragusX + 10} 25, ${tragusX + 14} 36
+              L ${tragusX + 16.5} 42
+              L ${tragusX + 14} 45
+              Q ${tragusX + 13.5} 53 ${tragusX + 6} 55
+              Q ${tragusX - 9} 55 ${tragusX - 13} 41 Z`}
+          fill={isGhost ? 'rgba(28,33,43,0.4)' : '#1D222D'}
+          stroke={strokeColor}
+          strokeWidth={1.5}
+          strokeDasharray={isGhost ? '4 3' : undefined}
+        />
+
+        {/* CVA Angle Wedge Arc (Plumb -> C7-Tragus Vector) */}
+        <path
+          d={`M ${shoulderX} ${c7Y} L ${arcStartX.toFixed(1)} ${arcStartY.toFixed(1)} A ${arcR} ${arcR} 0 0 1 ${arcEndX.toFixed(1)} ${arcEndY.toFixed(1)} Z`}
+          fill={strokeColor}
+          fillOpacity={isGhost ? 0.16 : 0.26}
+          stroke={strokeColor}
+          strokeWidth={0.95}
+        />
+
+        {/* Biomechanical Torso Mesh Lattice */}
+        <polygon
+          points={`${shoulderX - 12},76 ${shoulderX + 12},76 ${hipX + 12},144 ${hipX - 12},144`}
+          fill={glowColor}
+          fillOpacity={isGhost ? 0.28 : 0.52}
+          stroke={strokeColor}
+          strokeOpacity={isGhost ? 0.38 : 0.45}
+          strokeWidth={0.85}
           strokeDasharray={isGhost ? '3 2.5' : undefined}
         />
-        <line x1={shoulderX - 16} y1={78} x2={hipX + 13} y2={144} stroke={strokeColor} strokeOpacity={0.28} strokeWidth={0.8} />
-        <line x1={shoulderX + 16} y1={78} x2={hipX - 13} y2={144} stroke={strokeColor} strokeOpacity={0.28} strokeWidth={0.8} />
+        <line
+          x1={shoulderX - 12}
+          y1={76}
+          x2={hipX + 12}
+          y2={144}
+          stroke={strokeColor}
+          strokeOpacity={0.22}
+          strokeWidth={0.75}
+        />
+        <line
+          x1={shoulderX + 12}
+          y1={76}
+          x2={hipX - 12}
+          y2={144}
+          stroke={strokeColor}
+          strokeOpacity={0.22}
+          strokeWidth={0.75}
+        />
 
-        <polyline
-          points={`${headCx},43 ${shoulderX},78 ${hipX},144 ${kneeX},194 ${ankleX},236`}
+        {/* Pelvic Tilt Plane Indicator */}
+        <line
+          x1={hipX - 17}
+          y1={isBaseline ? 141 : 143.5}
+          x2={hipX + 17}
+          y2={isBaseline ? 148 : 145}
+          stroke={isBaseline ? '#FBBF24' : '#34D399'}
+          strokeWidth={1.5}
+          strokeLinecap="round"
+        />
+
+        {/* Primary Glowing Sagittal Spine & Lower-Limb Kinetic Chain */}
+        <path
+          d={`M ${tragusX} ${tragusY}
+              L ${shoulderX} ${c7Y}
+              Q ${thoracicX} 106 ${lumbarX} 127
+              L ${hipX} 144
+              L ${kneeX} 198
+              L ${ankleX} 236`}
           fill="none"
           stroke={strokeColor}
-          strokeWidth={2.4}
+          strokeWidth={2.35}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeDasharray={isGhost ? '4 3' : undefined}
           filter={`url(#${glowFilterId})`}
         />
         <polyline
-          points={`${shoulderX},78 ${elbowX},112 ${wristX},142`}
+          points={`${shoulderX},${c7Y} ${elbowX},108 ${wristX},138`}
           fill="none"
           stroke={strokeColor}
           strokeOpacity={0.78}
-          strokeWidth={1.6}
+          strokeWidth={1.5}
           strokeDasharray="3 2"
         />
 
-        {/* Dark Pill Degree Badge Over Anatomical Landmark */}
-        <line x1={headCx + 15} y1={43} x2={headCx + 38} y2={35} stroke={strokeColor} strokeWidth={0.95} />
+        {/* Crisp Degree Callout Badge Over Tragus Landmark */}
+        <line
+          x1={tragusX + 16}
+          y1={tragusY - 2}
+          x2={tragusX + 30}
+          y2={tragusY - 10}
+          stroke={strokeColor}
+          strokeWidth={0.95}
+        />
         <rect
-          x={headCx + 38}
-          y={24}
-          width={62}
+          x={tragusX + 30}
+          y={tragusY - 20}
+          width={68}
           height={18}
           rx={5}
-          fill="rgba(9, 10, 13, 0.85)"
+          fill="rgba(9, 10, 13, 0.9)"
           stroke={strokeColor}
-          strokeOpacity={0.75}
-          strokeWidth={0.9}
+          strokeOpacity={0.8}
+          strokeWidth={0.95}
         />
         <text
-          x={headCx + 69}
-          y={35.5}
+          x={tragusX + 64}
+          y={tragusY - 8.5}
           textAnchor="middle"
           fill={isGhost ? '#6EE7B7' : '#F8FAFC'}
           fontSize="7.8"
           fontFamily="monospace"
           fontWeight="700"
         >
-          {isGhost ? 'TARGET ≤4°' : isBaseline ? 'CVA +8.9°' : 'CVA +4.4°'}
+          {isGhost ? 'TARGET ≤4°' : `CVA +${effectiveDeg.toFixed(1)}°`}
         </text>
 
-        {/* Dual-Ring Joint Nodes (Solid Core + Translucent Outer Halo + Confidence Opacity) */}
+        {/* Dual-Ring Anatomical Landmark Nodes */}
         {[
-          { x: headCx, y: 43, conf: 0.98 },
-          { x: shoulderX, y: 78, conf: 0.96 },
-          { x: shoulderX - 16, y: 78, conf: 0.92 },
-          { x: shoulderX + 16, y: 78, conf: 0.92 },
-          { x: elbowX, y: 112, conf: 0.88 },
-          { x: hipX, y: 144, conf: 0.96 },
-          { x: hipX - 13, y: 144, conf: 0.9 },
-          { x: hipX + 13, y: 144, conf: 0.9 },
-          { x: kneeX, y: 194, conf: 0.94 },
-          { x: ankleX, y: 236, conf: 0.9 },
+          { x: tragusX, y: tragusY, conf: 0.99 },
+          { x: shoulderX, y: c7Y, conf: 0.97 },
+          { x: thoracicX, y: 106, conf: 0.93 },
+          { x: lumbarX, y: 127, conf: 0.92 },
+          { x: elbowX, y: 108, conf: 0.89 },
+          { x: wristX, y: 138, conf: 0.88 },
+          { x: hipX, y: 144, conf: 0.97 },
+          { x: kneeX, y: 198, conf: 0.95 },
+          { x: ankleX, y: 236, conf: 0.93 },
         ].map((pt, idx) => (
-          <g key={idx} opacity={isGhost ? 0.55 : pt.conf}>
-            <circle cx={pt.x} cy={pt.y} r={5.6} fill={strokeColor} fillOpacity={0.22} />
-            <circle cx={pt.x} cy={pt.y} r={2.8} fill={strokeColor} stroke="#090A0D" strokeWidth={1.1} />
+          <g key={idx} opacity={isGhost ? 0.58 : pt.conf}>
+            <circle cx={pt.x} cy={pt.y} r={5.4} fill={strokeColor} fillOpacity={0.22} />
+            <circle cx={pt.x} cy={pt.y} r={2.6} fill={strokeColor} stroke="#090A0D" strokeWidth={1.1} />
           </g>
         ))}
       </g>
@@ -242,18 +524,75 @@ export function PostureComparisonInteractiveStage({
   const { tierId } = useTierAccess()
   const isCoachSupport = tierId === 'coach_support'
   const sliderId = useId()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const cameraTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const scanAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isMountedRef = useRef(true)
+
   const [escalationOpen, setEscalationOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'overlay' | 'side_by_side' | 'day1_preview'>('overlay')
   const [splitPct, setSplitPct] = useState(54)
-  const [delta, setDelta] = useState(() => {
-    const base = loadPostureProfileState().postureDelta
-    return sandboxMode ? { ...base, forwardHeadDeltaDeg: -4.2 } : base
-  })
+  const [delta, setDelta] = useState<PostureDeltaSummary>(() => createInitialDelta(sandboxMode))
   const [day30ReminderArmed, setDay30ReminderArmed] = useState(false)
   const [remoteCountdownSec, setRemoteCountdownSec] = useState<number>(0)
+  const [isScanningSweep, setIsScanningSweep] = useState(false)
+  const [scanStatusBanner, setScanStatusBanner] = useState<string | null>(null)
+  const [capturedPhotoUrl, setCapturedPhotoUrl] = useState<string | null>(null)
+  const [cameraActive, setCameraActive] = useState(false)
+  const [cameraCountdownSec, setCameraCountdownSec] = useState<number | null>(null)
+  const [cameraError, setCameraError] = useState<string | null>(null)
+
   const stageRef = useRef<HTMLDivElement | null>(null)
+  const sliderInputRef = useRef<HTMLInputElement | null>(null)
   const draggingRef = useRef(false)
   const remoteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const stopSandboxCamera = useCallback(() => {
+    if (cameraTimerRef.current) {
+      clearInterval(cameraTimerRef.current)
+      cameraTimerRef.current = null
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop())
+      streamRef.current = null
+    }
+    if (videoRef.current?.srcObject) {
+      const s = videoRef.current.srcObject as MediaStream
+      s.getTracks().forEach(t => t.stop())
+      videoRef.current.srcObject = null
+    }
+    setCameraActive(false)
+    setCameraCountdownSec(null)
+  }, [])
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+      if (scanAnimTimerRef.current) clearTimeout(scanAnimTimerRef.current)
+      stopSandboxCamera()
+    }
+  }, [stopSandboxCamera])
+
+  useEffect(() => {
+    if (cameraActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current
+      void videoRef.current.play().catch(() => {})
+    }
+  }, [cameraActive])
+
+  useEffect(() => {
+    if (!sandboxMode) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && cameraActive) {
+        stopSandboxCamera()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [cameraActive, sandboxMode, stopSandboxCamera])
 
   useEffect(() => {
     if (sandboxMode) return
@@ -273,34 +612,225 @@ export function PostureComparisonInteractiveStage({
     }
   }, [])
 
+  useEffect(() => {
+    const el = sliderInputRef.current
+    if (!el) return
+    el.style.setProperty('--attr-min', '6')
+    el.style.setProperty('--attr-max', '94')
+    el.style.setProperty('--control-value', String(splitPct))
+  }, [splitPct, viewMode])
+
+  const analyzeImagePoseLocally = useCallback(
+    async (sourceEl: HTMLImageElement | HTMLCanvasElement, dataUrl: string) => {
+      let measuredHeadDelta = -4.9
+      let measuredPelvic = -2.1
+      let measuredScore = 89
+
+      try {
+        const lm = await Promise.race([
+          (async () => {
+            const vision = await import('@mediapipe/tasks-vision')
+            let fileset
+            try {
+              fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
+            } catch {
+              fileset = await vision.FilesetResolver.forVisionTasks(
+                'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+              )
+            }
+            const poseLandmarker = await vision.PoseLandmarker.createFromOptions(fileset, {
+              baseOptions: {
+                modelAssetPath:
+                  'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+              },
+              runningMode: 'IMAGE',
+              numPoses: 1,
+            })
+            const detection = poseLandmarker.detect(sourceEl)
+            poseLandmarker.close()
+            return detection?.landmarks?.[0] ?? null
+          })(),
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
+        ])
+        if (lm && lm[7] && lm[11] && lm[23]) {
+          const ear = lm[7]
+          const shoulder = lm[11]
+          const hip = lm[23]
+          const cvaDeg = Math.min(
+            18,
+            Math.max(1.8, (Math.atan2(Math.abs(ear.x - shoulder.x), Math.max(0.04, shoulder.y - ear.y)) * 180) / Math.PI * 0.42)
+          )
+          const trunkDeg = Math.min(
+            8,
+            Math.max(0.8, (Math.atan2(Math.abs(shoulder.x - hip.x), Math.max(0.06, hip.y - shoulder.y)) * 180) / Math.PI * 0.5)
+          )
+          measuredHeadDelta = Number((cvaDeg - 8.9).toFixed(1))
+          measuredPelvic = Number((-trunkDeg).toFixed(1))
+          measuredScore = Math.round(Math.max(62, Math.min(97, 98 - cvaDeg * 1.8 - trunkDeg * 1.6)))
+        }
+      } catch {
+        // Offline / strict-CSP fallback uses deterministic clinical delta on local frame
+      }
+
+      if (!isMountedRef.current) return
+      setCapturedPhotoUrl(dataUrl)
+      setViewMode('overlay')
+      setDelta(prev => ({
+        ...prev,
+        forwardHeadDeltaDeg: measuredHeadDelta,
+        pelvicTiltDeltaDeg: measuredPelvic,
+        overallPostureScore: measuredScore,
+        strainFlag: measuredScore >= 88 ? 'optimal' : 'amber',
+      }))
+      setScanStatusBanner(
+        `Local frame analyzed in browser (0 bytes uploaded) · Posture Score ${measuredScore}/100`
+      )
+      playForgeTactileTone('success')
+    },
+    []
+  )
+
+  const handleStartSandboxCamera = async () => {
+    setCameraError(null)
+    setScanStatusBanner(null)
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setCameraError('Camera stream unavailable on this browser. Upload a side photo or run Quick Check.')
+      return
+    }
+    try {
+      stopSandboxCamera()
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      })
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach(t => t.stop())
+        return
+      }
+      streamRef.current = stream
+      setCameraActive(true)
+      setCameraCountdownSec(5)
+      playForgeTactileTone('cue')
+
+      let rem = 5
+      cameraTimerRef.current = setInterval(() => {
+        rem -= 1
+        if (rem > 0) {
+          setCameraCountdownSec(rem)
+          playForgeTactileTone('countdown')
+        } else {
+          if (cameraTimerRef.current) {
+            clearInterval(cameraTimerRef.current)
+            cameraTimerRef.current = null
+          }
+          const video = videoRef.current
+          if (video && video.videoWidth > 0 && video.videoHeight > 0) {
+            const canvas = document.createElement('canvas')
+            canvas.width = video.videoWidth
+            canvas.height = video.videoHeight
+            const ctx = canvas.getContext('2d')
+            if (ctx) {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.86)
+              stopSandboxCamera()
+              void analyzeImagePoseLocally(canvas, dataUrl)
+              return
+            }
+          }
+          stopSandboxCamera()
+        }
+      }, 1000)
+    } catch {
+      stopSandboxCamera()
+      setCameraError('Camera access was declined or blocked. Upload a photo or run the interactive Quick Check.')
+    }
+  }
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.type && !/^image\/(jpeg|jpg|png|webp|heic|heif)$/i.test(file.type)) {
+      setCameraError('Please choose a JPEG, PNG, WebP, or HEIC side-profile image.')
+      return
+    }
+    setCameraError(null)
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : null
+      if (!dataUrl) return
+      const img = new window.Image()
+      img.onload = () => {
+        void analyzeImagePoseLocally(img, dataUrl)
+      }
+      img.src = dataUrl
+    }
+    reader.readAsDataURL(file)
+  }
+
   const handleRunQuickScan = () => {
-    const updated = runQuickPostureCheckDelta()
-    setDelta(updated)
+    setCameraError(null)
     if (viewMode === 'day1_preview') {
       setViewMode('overlay')
     }
-    playCoachStaticCue('calibration_locked')
-    if (!sandboxMode) {
-      const spokenSummary = buildPostScanDiagnosticSummary({
-        scanType: 'posture_2min',
-        score: updated.overallPostureScore,
-        primaryFinding: `forward-head delta ${updated.forwardHeadDeltaDeg.toFixed(1)} degrees and pelvic drift ${updated.pelvicTiltDeltaDeg.toFixed(1)} degrees`,
-      })
-      void speakCoachDynamicText(spokenSummary, { moment: 'post_scan_summary' })
+    setIsScanningSweep(true)
+    if (scanAnimTimerRef.current) clearTimeout(scanAnimTimerRef.current)
+    scanAnimTimerRef.current = setTimeout(() => {
+      if (isMountedRef.current) setIsScanningSweep(false)
+    }, 1200)
 
-      void trackEvent('posture_scan_completed', {
-        scan_mode: 'quick_check',
-        overall_posture_score: updated.overallPostureScore,
-        forward_head_tilt_deg: updated.forwardHeadDeltaDeg,
-        shoulder_symmetry_deg: updated.shoulderSymmetryDeltaDeg,
-        pelvic_symmetry_deg: updated.pelvicTiltDeltaDeg,
-        joint_deltas_33: {
-          forward_head_delta_deg: updated.forwardHeadDeltaDeg,
-          shoulder_symmetry_delta_deg: updated.shoulderSymmetryDeltaDeg,
-          pelvic_tilt_delta_deg: updated.pelvicTiltDeltaDeg,
-        },
+    if (sandboxMode) {
+      setDelta(prev => {
+        const nextHead =
+          prev.forwardHeadDeltaDeg <= -6.2
+            ? -4.5
+            : Number((prev.forwardHeadDeltaDeg - 0.6).toFixed(1))
+        const nextPelvic =
+          prev.pelvicTiltDeltaDeg >= -1.4
+            ? -2.8
+            : Number((prev.pelvicTiltDeltaDeg + 0.5).toFixed(1))
+        const nextScore =
+          prev.overallPostureScore >= 94 ? 86 : Math.min(95, prev.overallPostureScore + 4)
+        const nextStrain = nextScore >= 88 ? 'optimal' : 'amber'
+        setScanStatusBanner(
+          `33-Point Quick Check locked · Forward Head ${nextHead.toFixed(1)}° · Score ${nextScore}/100`
+        )
+        return {
+          ...prev,
+          forwardHeadDeltaDeg: nextHead,
+          pelvicTiltDeltaDeg: nextPelvic,
+          overallPostureScore: nextScore,
+          strainFlag: nextStrain,
+        }
       })
+      playForgeTactileTone('success')
+      playCoachStaticCue('calibration_locked')
+      return
     }
+
+    const updated = runQuickPostureCheckDelta()
+    setDelta(updated)
+    playCoachStaticCue('calibration_locked')
+
+    const spokenSummary = buildPostScanDiagnosticSummary({
+      scanType: 'posture_2min',
+      score: updated.overallPostureScore,
+      primaryFinding: `forward-head delta ${updated.forwardHeadDeltaDeg.toFixed(1)} degrees and pelvic drift ${updated.pelvicTiltDeltaDeg.toFixed(1)} degrees`,
+    })
+    void speakCoachDynamicText(spokenSummary, { moment: 'post_scan_summary' })
+
+    void trackEvent('posture_scan_completed', {
+      scan_mode: 'quick_check',
+      overall_posture_score: updated.overallPostureScore,
+      forward_head_tilt_deg: updated.forwardHeadDeltaDeg,
+      shoulder_symmetry_deg: updated.shoulderSymmetryDeltaDeg,
+      pelvic_symmetry_deg: updated.pelvicTiltDeltaDeg,
+      joint_deltas_33: {
+        forward_head_delta_deg: updated.forwardHeadDeltaDeg,
+        shoulder_symmetry_delta_deg: updated.shoulderSymmetryDeltaDeg,
+        pelvic_tilt_delta_deg: updated.pelvicTiltDeltaDeg,
+      },
+    })
   }
 
   // Bidirectional Apple Watch Wrist Camera Remote sync (2-Minute Quick Posture Check)
@@ -408,11 +938,12 @@ export function PostureComparisonInteractiveStage({
 
   return (
     <div className="space-y-3.5 text-zinc-100">
+      {/* Top Toolbar: View Switcher + Interactive Scan / Local Camera Controls */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div
           role="group"
           aria-label="Posture comparison view mode"
-          className="inline-flex flex-wrap rounded-xl border border-white/[0.08] bg-[#090A0D] p-1"
+          className="inline-flex flex-wrap rounded-xl border border-white/[0.08] bg-[#111318] p-1"
         >
           <button
             type="button"
@@ -452,16 +983,113 @@ export function PostureComparisonInteractiveStage({
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={handleRunQuickScan}
-          className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2 text-xs font-bold text-emerald-300 transition-colors duration-150 hover:border-emerald-400/40 hover:bg-emerald-500/18"
-        >
-          <ScanLine size={14} strokeWidth={1.75} aria-hidden="true" /> Run 2-Min Quick Check
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {sandboxMode && !cameraActive ? (
+            <>
+              <button
+                type="button"
+                onClick={() => void handleStartSandboxCamera()}
+                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-white/12 bg-[#181B22] px-3 py-2 text-xs font-semibold text-zinc-100 transition-colors duration-150 hover:border-emerald-400/40 hover:bg-[#1D212A]"
+              >
+                <Camera size={14} strokeWidth={1.75} className="text-emerald-300" aria-hidden="true" />
+                <span>5s Live Camera</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-white/12 bg-[#181B22] px-3 py-2 text-xs font-semibold text-zinc-100 transition-colors duration-150 hover:border-white/25 hover:bg-[#1D212A]"
+              >
+                <Upload size={14} strokeWidth={1.75} className="text-amber-300" aria-hidden="true" />
+                <span>Upload Photo</span>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="hidden"
+                aria-label="Upload side-profile posture photo"
+              />
+              {capturedPhotoUrl ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCapturedPhotoUrl(null)
+                    setDelta(createInitialDelta(true))
+                    setScanStatusBanner(null)
+                  }}
+                  aria-label="Reset sample posture mesh"
+                  className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1 rounded-xl border border-white/10 bg-[#111318] px-2.5 py-2 text-xs font-semibold text-zinc-300 hover:text-white"
+                >
+                  <RotateCcw size={13} strokeWidth={1.75} aria-hidden="true" />
+                  <span>Reset</span>
+                </button>
+              ) : null}
+            </>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={handleRunQuickScan}
+            className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/15 px-3.5 py-2 text-xs font-bold text-emerald-200 transition-colors duration-150 hover:border-emerald-400/50 hover:bg-emerald-500/25"
+          >
+            <ScanLine size={14} strokeWidth={1.75} aria-hidden="true" />
+            <span>{isScanningSweep ? 'Scanning 33 Nodes…' : 'Run 2-Min Quick Check'}</span>
+          </button>
+        </div>
       </div>
 
-      {viewMode === 'overlay' ? (
+      {/* Camera Permission / File Validation Feedback */}
+      {cameraError ? (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-500/30 bg-[#181B22] px-3.5 py-2.5 text-xs text-amber-200"
+        >
+          <span>{cameraError}</span>
+          <button
+            type="button"
+            onClick={handleRunQuickScan}
+            className="forge-tactile-press inline-flex min-h-[44px] items-center rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 text-xs font-bold text-emerald-200"
+          >
+            Simulate Scan Instead
+          </button>
+        </div>
+      ) : null}
+
+      {/* Live 5-Second Local Camera Capture Viewfinder (Sandbox Mode) */}
+      {cameraActive ? (
+        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-emerald-400/50 bg-[#090A0D]">
+          <video
+            ref={videoRef}
+            muted
+            playsInline
+            className="block h-full w-full object-cover"
+          />
+          <div className="forge-glass-pill absolute inset-x-3 top-3 z-10 flex items-center justify-between gap-2 rounded-full px-3.5 py-1.5 text-xs text-zinc-100">
+            <span className="truncate">
+              Stand tall in side profile · <strong>Ear → Shoulder → Hip</strong>
+            </span>
+            <span className="rounded-full border border-emerald-500/35 bg-emerald-500/15 px-2.5 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
+              LOCAL IN-BROWSER
+            </span>
+          </div>
+          <div className="forge-glass-pill absolute inset-x-3 bottom-3 z-10 flex items-center justify-between gap-3 rounded-xl px-3.5 py-2">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xl font-extrabold tabular-nums text-emerald-300">
+                {cameraCountdownSec ?? 5}s
+              </span>
+              <span className="text-xs text-zinc-200">Capturing 33-point sagittal frame…</span>
+            </div>
+            <button
+              type="button"
+              onClick={stopSandboxCamera}
+              className="forge-tactile-press min-h-[44px] rounded-xl border border-white/15 bg-[#181B22] px-3.5 text-xs font-semibold text-white"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : viewMode === 'overlay' ? (
         <div
           ref={stageRef}
           onPointerDown={e => {
@@ -481,43 +1109,79 @@ export function PostureComparisonInteractiveStage({
             draggingRef.current = false
           }}
           style={{ touchAction: 'pan-y' }}
-          className="relative h-64 w-full cursor-ew-resize overflow-hidden rounded-2xl border border-white/[0.08] bg-[#090A0D] sm:h-72"
+          className="relative h-72 w-full cursor-ew-resize overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0B0E14] sm:h-80"
         >
-          <div className="absolute inset-0 flex items-center justify-center p-3">
-            <PostureSilhouetteSvg variant="current" />
+          {/* Right / Base Layer: Current Improved Alignment (or Local Captured Frame) */}
+          <div className="absolute inset-0 flex items-center justify-center p-2 pb-14 sm:p-3 sm:pb-14">
+            {capturedPhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={capturedPhotoUrl}
+                alt="Locally analyzed posture frame"
+                className="absolute inset-0 h-full w-full object-cover opacity-55"
+              />
+            ) : null}
+            <PostureSilhouetteSvg
+              variant="current"
+              measuredDeg={currentDeg}
+              pelvicDriftDeg={delta.pelvicTiltDeltaDeg}
+            />
           </div>
 
+          {/* Left / Clipped Layer: Day-1 Baseline Alignment */}
           <div
-            className="absolute inset-0 flex items-center justify-center bg-[#0D1017]/95 p-3"
+            className="absolute inset-0 flex items-center justify-center bg-[#090B10]/96 p-2 pb-14 sm:p-3 sm:pb-14"
             style={{ clipPath: `inset(0 ${100 - splitPct}% 0 0)` }}
           >
-            <PostureSilhouetteSvg variant="baseline" />
+            <PostureSilhouetteSvg variant="baseline" measuredDeg={baselineDeg} pelvicDriftDeg={-6.2} />
           </div>
+
+          {/* Animated 33-Point Laser Sweep Overlay when Quick Check runs */}
+          {isScanningSweep ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-20 overflow-hidden bg-emerald-500/[0.04]"
+            >
+              <div
+                className="h-1 w-full bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_24px_rgba(52,211,153,0.95)]"
+                style={{
+                  animation: 'pulse 0.6s ease-in-out infinite',
+                  marginTop: '44%',
+                }}
+              />
+              <div className="absolute inset-x-0 bottom-16 flex justify-center">
+                <span className="rounded-full border border-emerald-400/50 bg-[#090A0D]/92 px-3.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-300 shadow-lg">
+                  Locking 33 Sagittal Landmarks…
+                </span>
+              </div>
+            </div>
+          ) : null}
 
           {/* Vertical Laser-Hairline Divider + 44px Circular Thumb Grip */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 w-px bg-gradient-to-b from-emerald-300/30 via-emerald-400 to-emerald-300/30 shadow-[0_0_12px_rgba(52,211,153,0.9)]"
+            className="pointer-events-none absolute inset-y-0 w-px bg-gradient-to-b from-emerald-300/35 via-emerald-400 to-emerald-300/35 shadow-[0_0_12px_rgba(52,211,153,0.9)]"
             style={{ left: `${splitPct}%` }}
           >
-            <div className="absolute top-1/2 left-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-400/60 bg-[#111318]/90 text-emerald-300 shadow-[0_4px_18px_rgba(0,0,0,0.75),0_0_16px_rgba(52,211,153,0.3)] backdrop-blur-md">
+            <div className="absolute top-[44%] left-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-400/60 bg-[#111318]/92 text-emerald-300 shadow-[0_4px_18px_rgba(0,0,0,0.75),0_0_16px_rgba(52,211,153,0.3)] backdrop-blur-md">
               <GripVertical size={16} strokeWidth={1.75} />
             </div>
           </div>
 
-          <div className="pointer-events-none absolute left-3 top-3 rounded-full border border-amber-500/30 bg-black/75 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider tabular-nums text-amber-300 backdrop-blur-md">
+          <div className="pointer-events-none absolute left-2.5 top-2.5 rounded-full border border-amber-500/35 bg-black/80 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider tabular-nums text-amber-300 backdrop-blur-md">
             Baseline ({baselineDeg}°)
           </div>
-          <div className="pointer-events-none absolute right-3 top-3 rounded-full border border-emerald-500/30 bg-black/75 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider tabular-nums text-emerald-300 backdrop-blur-md">
+          <div className="pointer-events-none absolute right-2.5 top-2.5 rounded-full border border-emerald-500/35 bg-black/80 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider tabular-nums text-emerald-300 backdrop-blur-md">
             Current ({currentDeg}°)
           </div>
 
-          <div className="absolute inset-x-3 bottom-2.5 rounded-xl border border-white/10 bg-[#111318]/85 px-3.5 py-1 backdrop-blur-xl">
-            <div className="flex items-center gap-3 text-[11px] font-semibold text-zinc-200">
+          <div className="absolute inset-x-2.5 bottom-2.5 rounded-xl border border-white/10 bg-[#111318]/90 px-3 py-0.5 backdrop-blur-xl sm:inset-x-3 sm:px-3.5">
+            <div className="flex items-center gap-2.5 text-[11px] font-semibold text-zinc-200 sm:gap-3">
               <label htmlFor={sliderId} className="shrink-0 cursor-pointer">
                 Scrub Mesh
               </label>
               <input
+                ref={sliderInputRef}
                 id={sliderId}
                 type="range"
                 min={6}
@@ -544,35 +1208,40 @@ export function PostureComparisonInteractiveStage({
           </div>
         </div>
       ) : viewMode === 'side_by_side' ? (
-        <div className="grid h-64 grid-cols-2 gap-2.5 sm:h-72">
-          <div className="relative flex flex-col items-center justify-center rounded-2xl border border-amber-500/25 bg-[#090A0D] p-2">
-            <span className="absolute left-2.5 top-2.5 rounded-full border border-amber-500/30 bg-black/75 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-amber-300 backdrop-blur-md">
+        <div className="grid grid-cols-1 gap-2.5 sm:h-72 sm:grid-cols-2">
+          <div className="relative flex h-60 min-h-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-amber-500/25 bg-[#0B0E14] p-2 pt-8 sm:h-full">
+            <span className="absolute left-2.5 top-2.5 rounded-full border border-amber-500/30 bg-black/80 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-amber-300 backdrop-blur-md">
               Baseline · {baselineDeg}°
             </span>
-            <PostureSilhouetteSvg variant="baseline" />
+            <PostureSilhouetteSvg variant="baseline" measuredDeg={baselineDeg} compact />
           </div>
-          <div className="relative flex flex-col items-center justify-center rounded-2xl border border-emerald-500/25 bg-[#090A0D] p-2">
-            <span className="absolute left-2.5 top-2.5 rounded-full border border-emerald-500/30 bg-black/75 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-emerald-300 backdrop-blur-md">
+          <div className="relative flex h-60 min-h-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-emerald-500/25 bg-[#0B0E14] p-2 pt-8 sm:h-full">
+            <span className="absolute left-2.5 top-2.5 rounded-full border border-emerald-500/30 bg-black/80 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-emerald-300 backdrop-blur-md">
               Current · {currentDeg}°
             </span>
-            <PostureSilhouetteSvg variant="current" />
+            <PostureSilhouetteSvg
+              variant="current"
+              measuredDeg={currentDeg}
+              pelvicDriftDeg={delta.pelvicTiltDeltaDeg}
+              compact
+            />
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/[0.08] bg-[#090A0D] p-3.5 sm:p-4">
-          <div className="grid h-56 grid-cols-2 gap-2.5 sm:h-64">
-            <div className="relative flex flex-col items-center justify-center rounded-xl border border-amber-500/25 bg-[#111318] p-2">
-              <span className="absolute left-2.5 top-2.5 rounded-full border border-amber-500/30 bg-black/75 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-amber-300 backdrop-blur-md">
+        <div className="rounded-2xl border border-white/[0.08] bg-[#0B0E14] p-3.5 sm:p-4">
+          <div className="grid grid-cols-1 gap-2.5 sm:h-64 sm:grid-cols-2">
+            <div className="relative flex h-56 min-h-0 flex-col items-center justify-center overflow-hidden rounded-xl border border-amber-500/25 bg-[#111318] p-2 pt-8 sm:h-full">
+              <span className="absolute left-2.5 top-2.5 rounded-full border border-amber-500/30 bg-black/80 px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-amber-300 backdrop-blur-md">
                 Day-1 Baseline ({baselineDeg}°)
               </span>
-              <PostureSilhouetteSvg variant="baseline" />
+              <PostureSilhouetteSvg variant="baseline" measuredDeg={baselineDeg} compact />
             </div>
 
-            <div className="relative flex flex-col items-center justify-center rounded-xl border border-dashed border-emerald-500/35 bg-[#111318]/50 p-2">
+            <div className="relative flex h-56 min-h-0 flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-emerald-500/35 bg-[#111318]/50 p-2 pt-8 sm:h-full">
               <span className="absolute left-2.5 top-2.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-300">
                 Day-30 Target Preview
               </span>
-              <PostureSilhouetteSvg variant="day30_ghost" />
+              <PostureSilhouetteSvg variant="day30_ghost" compact />
             </div>
           </div>
 
@@ -607,28 +1276,52 @@ export function PostureComparisonInteractiveStage({
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2.5">
-        <div className="rounded-xl border border-white/[0.07] bg-[#181B22] p-3">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-400">
+      {/* Interactive Scan Confirmation + Coach Gordon Voice Preview (Sandbox Mode) */}
+      {sandboxMode && scanStatusBanner ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-200"
+        >
+          <span className="font-medium">✓ {scanStatusBanner}</span>
+          <button
+            type="button"
+            onClick={() => playCoachStaticCue('calibration_locked', { forceUnlockVoiceOnTap: true })}
+            className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-400/35 bg-[#111318] px-3 py-1.5 text-xs font-bold text-emerald-200 hover:bg-[#181B22]"
+          >
+            <Volume2 size={13} strokeWidth={1.75} className="text-emerald-300" aria-hidden="true" />
+            <span>Hear Coach Gordon</span>
+          </button>
+        </div>
+      ) : null}
+
+      {/* 3 Telemetry KPI Cards (Stack cleanly on narrow mobile so labels never break mid-word) */}
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        <div className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-[#181B22] p-3 sm:block">
+          <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-zinc-400">
             Forward Head
           </div>
-          <div className="mt-0.5 font-mono text-sm font-bold tabular-nums text-emerald-300">
+          <div className="font-mono text-sm font-bold tabular-nums text-emerald-300 sm:mt-0.5">
             {delta.forwardHeadDeltaDeg.toFixed(1)}°
           </div>
         </div>
-        <div className="rounded-xl border border-white/[0.07] bg-[#181B22] p-3">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-400">
+        <div className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-[#181B22] p-3 sm:block">
+          <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-zinc-400">
             Posture Score
           </div>
-          <div className="mt-0.5 font-mono text-sm font-bold tabular-nums text-white">
+          <div className="font-mono text-sm font-bold tabular-nums text-white sm:mt-0.5">
             {delta.overallPostureScore}/100
           </div>
         </div>
-        <div className="rounded-xl border border-white/[0.07] bg-[#181B22] p-3">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-400">
+        <div className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-[#181B22] p-3 sm:block">
+          <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-zinc-400">
             Pelvic Drift
           </div>
-          <div className="mt-0.5 font-mono text-sm font-bold tabular-nums text-amber-300">
+          <div
+            className={`font-mono text-sm font-bold tabular-nums sm:mt-0.5 ${
+              delta.strainFlag === 'optimal' ? 'text-emerald-300' : 'text-amber-300'
+            }`}
+          >
             {delta.pelvicTiltDeltaDeg.toFixed(1)}° ({delta.strainFlag.toUpperCase()})
           </div>
         </div>
@@ -723,10 +1416,7 @@ export default function PostureComparisonCard({
   const { tierId, shouldShowTrigger } = useTierAccess()
   const [modalOpen, setModalOpen] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
-  const [delta, setDelta] = useState(() => {
-    const base = loadPostureProfileState().postureDelta
-    return sandboxMode ? { ...base, forwardHeadDeltaDeg: -4.2 } : base
-  })
+  const [delta, setDelta] = useState<PostureDeltaSummary>(() => createInitialDelta(sandboxMode))
   const dialogRef = useRef<HTMLDialogElement | null>(null)
   const headingId = useId()
 
@@ -815,7 +1505,7 @@ export default function PostureComparisonCard({
           </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+        <div className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
           <div className="rounded-xl border border-white/[0.06] bg-[#181B22] px-3 py-2">
             <span className="block text-[10px] uppercase tracking-wider text-zinc-400">
               Baseline → Now

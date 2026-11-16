@@ -1,17 +1,40 @@
 'use client'
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { Activity, Clock, Dumbbell, Layers, Monitor, Plane, Route, User } from 'lucide-react'
+import {
+  Activity,
+  Camera,
+  Clock,
+  Dumbbell,
+  Layers,
+  Monitor,
+  Plane,
+  Play,
+  Route,
+  User,
+  Volume2,
+  X,
+} from 'lucide-react'
 import PostureComparisonCard from '@/components/fitness/PostureComparisonCard'
 import DeskErgonomicsAudit from '@/components/fitness/DeskErgonomicsAudit'
 import OptPhaseRoadmap from '@/components/fitness/OptPhaseRoadmap'
+import CameraReadinessCheck from '@/components/fitness/CameraReadinessCheck'
+import ExerciseVideoModal, { type ExerciseModalData } from '@/components/fitness/ExerciseVideoModal'
 import { DeskResetGuidedPlayer } from '@/components/fitness/DeskResetModal'
 import {
   evaluateCameraReadiness,
   READINESS_PRESET_LABELS,
   type ReadinessPresetId,
 } from '@/lib/camera-readiness-engine'
-import type { EnvironmentProfileId } from '@/lib/posture-profile-state'
+import type {
+  DeskErgonomicFlag,
+  EnvironmentProfileId,
+  InjectedReadinessDrill,
+} from '@/lib/posture-profile-state'
+import {
+  playCoachStaticCue,
+  type StaticCoachCueKey,
+} from '@/src/lib/audio/coachVoiceEngine'
 
 interface SneakPeekTabSpec {
   id: 'posture-mesh' | 'desk-ergonomics' | 'opt-roadmap' | 'express-travel'
@@ -19,6 +42,8 @@ interface SneakPeekTabSpec {
   label: string
   shortLabel: string
   subtitle: string
+  telemetryBadge: string
+  voiceCueKey: StaticCoachCueKey
 }
 
 const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
@@ -28,7 +53,9 @@ const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
     label: '33-Point Posture Mesh',
     shortLabel: 'Posture Mesh',
     subtitle:
-      'Interactive Before/After comparison slider (-4.2° Forward Head Tilt) showing measurable alignment progress using only a phone camera.',
+      'Scrub Baseline vs. Current alignment (-4.2° Forward Head Tilt), run an interactive Quick Check, or test your own side profile locally in-browser.',
+    telemetryBadge: 'LOCAL BROWSER VISION · ZERO CLOUD UPLOAD',
+    voiceCueKey: 'calibration_framing',
   },
   {
     id: 'desk-ergonomics',
@@ -36,7 +63,9 @@ const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
     label: 'Desk Ergonomics Audit',
     shortLabel: 'Desk Audit',
     subtitle:
-      '5-second seated side-profile angle scan (0–100 Workstation Score) with 3 instant desk adjustments and 1-tap 5-Min Desk Reset launch.',
+      'Compare Before/Optimal workstation angles, run a 5-second local camera or photo audit, and launch a targeted 5-Min Desk Reset in 1 tap.',
+    telemetryBadge: 'LOCAL BROWSER VISION · ZERO CLOUD UPLOAD',
+    voiceCueKey: 'calibration_locked',
   },
   {
     id: 'opt-roadmap',
@@ -44,7 +73,9 @@ const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
     label: '5-Phase NASM OPT™',
     shortLabel: '5-Phase OPT™',
     subtitle:
-      'Interactive phase progression track (01 Stabilization → 05 Power) with live workout unlock progress.',
+      'Inspect all 5 NASM OPT™ phases (01 Stabilization → 05 Power), open studio movement demos, and hear Coach Gordon pace a rep.',
+    telemetryBadge: '5-PHASE NASM OPT™ ENGINE · ZERO LOGIN',
+    voiceCueKey: 'tempo_3_1_1_eccentric',
   },
   {
     id: 'express-travel',
@@ -52,9 +83,19 @@ const SNEAK_TABS: ReadonlyArray<SneakPeekTabSpec> = [
     label: 'Express & Travel Engine',
     shortLabel: 'Express & Travel',
     subtitle:
-      'Live toggle preview of 20m Express Mode, Environment Switcher (Home Dumbbells / Hotel Travel), and 30-Second Camera Readiness warm-up injection.',
+      'Toggle 20m Express Mode, adapt workouts across Home / Hotel / Bodyweight environments, and test 30-Second Camera Readiness warm-up injection.',
+    telemetryBadge: 'ADAPTIVE SESSION ENGINE · ZERO LOGIN',
+    voiceCueKey: 'readiness_rep_1_3',
   },
 ]
+
+interface EnvironmentExerciseItem {
+  slot: string
+  name: string
+  imageUrl: string
+  videoUrl: string
+  cue: string
+}
 
 const ENVIRONMENT_PREVIEW_BLOCKS: Record<
   'home_gym' | 'hotel_travel' | 'bodyweight_only',
@@ -63,6 +104,7 @@ const ENVIRONMENT_PREVIEW_BLOCKS: Record<
     equipmentNote: string
     primaryPair: string
     tempoAndCredit: string
+    exercises: [EnvironmentExerciseItem, EnvironmentExerciseItem]
   }
 > = {
   home_gym: {
@@ -70,18 +112,66 @@ const ENVIRONMENT_PREVIEW_BLOCKS: Record<
     equipmentNote: 'Adjustable or fixed dumbbells + flat floor space',
     primaryPair: 'A1. Heels-Elevated Goblet Squat × A2. Single-Leg Romanian Balance Reach',
     tempoAndCredit: '3-1-1 Lowering Tempo · Full Phase 02 Strength Endurance Credit',
+    exercises: [
+      {
+        slot: 'A1 · Compound Prime',
+        name: 'Goblet Squat',
+        imageUrl: '/images/exercises/goblet-squat.jpg',
+        videoUrl: '/videos/exercises/goblet-squat.mp4',
+        cue: 'Elevate heels slightly, brace 360° core, and descend on a 3-second count.',
+      },
+      {
+        slot: 'A2 · Unilateral Stability',
+        name: 'Single Leg Balance Reach',
+        imageUrl: '/images/exercises/single-leg-balance-reach-frontal-plane.jpg',
+        videoUrl: '/videos/exercises/single-leg-balance-reach-frontal-plane.mp4',
+        cue: 'Anchor tripod foot and stabilize hip alignment immediately after A1.',
+      },
+    ],
   },
   hotel_travel: {
     label: 'Hotel Travel',
     equipmentNote: 'Light hotel rack dumbbells (up to 35 lb) · Missing bench/barbell adapted',
     primaryPair: 'A1. Rear-Foot-Elevated Split Squat × A2. Kickstand DB Hip Hinge',
     tempoAndCredit: '3-1-1 Unilateral Load Match · Zero Lost Phase 02 Progression',
+    exercises: [
+      {
+        slot: 'A1 · Unilateral Force Match',
+        name: 'Bulgarian Split Squat',
+        imageUrl: '/images/exercises/bulgarian-split-squat.jpg',
+        videoUrl: '/videos/exercises/bulgarian-split-squat.mp4',
+        cue: 'Doubles per-leg mechanical tension so light hotel dumbbells match full gym stimulus.',
+      },
+      {
+        slot: 'A2 · Posterior Hinge Match',
+        name: 'Dumbbell Romanian Deadlift',
+        imageUrl: '/images/exercises/dumbbell-romanian-deadlift.jpg',
+        videoUrl: '/videos/exercises/dumbbell-romanian-deadlift.mp4',
+        cue: '3-second eccentric hip hinge keeping dumbbells tight along thighs.',
+      },
+    ],
   },
   bodyweight_only: {
     label: 'Bodyweight Only',
     equipmentNote: 'Zero equipment required · Hotel room floor & elevated foot support',
     primaryPair: 'A1. Bodyweight Rear-Foot-Elevated Split Squat × A2. Tempo Deficit Push-Up',
     tempoAndCredit: '4-2-1 Isometric Pause Tempo · Full Phase 02 Progression Retained',
+    exercises: [
+      {
+        slot: 'A1 · Zero-Gear Lower Block',
+        name: 'Bulgarian Split Squat',
+        imageUrl: '/images/exercises/bulgarian-split-squat.jpg',
+        videoUrl: '/videos/exercises/bulgarian-split-squat.mp4',
+        cue: 'Elevate rear foot on bed or chair; 4s lowering + 2s bottom isometric hold.',
+      },
+      {
+        slot: 'A2 · Zero-Gear Upper Block',
+        name: 'Push Up',
+        imageUrl: '/images/exercises/push-up.jpg',
+        videoUrl: '/videos/exercises/push-up.mp4',
+        cue: 'Rigid plank line from ear to ankle with 2-second bottom hover.',
+      },
+    ],
   },
 }
 
@@ -92,13 +182,25 @@ export default function AppSneakPeekShowcase() {
   const [sandboxExpress, setSandboxExpress] = useState(true)
   const [sandboxEnv, setSandboxEnv] = useState<EnvironmentProfileId>('hotel_travel')
   const [readinessPreset, setReadinessPreset] = useState<ReadinessPresetId>('tight_hips_ankles')
+  const [sandboxDeskFlags, setSandboxDeskFlags] = useState<DeskErgonomicFlag[]>([
+    'forward_head',
+    'rounded_shoulders',
+  ])
+  const [liveReadinessOpen, setLiveReadinessOpen] = useState(false)
+  const [customReadinessResult, setCustomReadinessResult] = useState<{
+    readinessScore: number
+    injectedDrills: InjectedReadinessDrill[]
+  } | null>(null)
+  const [activeExerciseModal, setActiveExerciseModal] = useState<ExerciseModalData | null>(null)
+
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
+  const deskResetCardRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setHydrated(true)
   }, [])
 
-  const readinessPreview = useMemo(
+  const presetReadiness = useMemo(
     () =>
       evaluateCameraReadiness({
         screenMode: 'overhead_squat',
@@ -108,8 +210,20 @@ export default function AppSneakPeekShowcase() {
     [readinessPreset, sandboxExpress]
   )
 
+  const displayedReadinessScore =
+    customReadinessResult?.readinessScore ?? presetReadiness.readinessScore
+  const displayedInjectedDrills =
+    customReadinessResult?.injectedDrills ?? presetReadiness.injectedDrills
+  const displayedTotalDurationSec = displayedInjectedDrills.reduce(
+    (sum, d) => sum + d.durationSec,
+    0
+  )
+
   const selectTab = (index: number, focus = false) => {
     setSelectedIndex(index)
+    if (index !== 3) {
+      setLiveReadinessOpen(false)
+    }
     const btn = tabRefs.current[index]
     if (btn) {
       if (focus) btn.focus()
@@ -126,6 +240,20 @@ export default function AppSneakPeekShowcase() {
           // Ignore in non-DOM test environments
         }
       }
+    }
+  }
+
+  const handleLaunchTargetedDeskReset = (flags: DeskErgonomicFlag[]) => {
+    setSandboxDeskFlags(flags)
+    selectTab(3, false)
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        try {
+          deskResetCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        } catch {
+          // Ignore in non-DOM test environments
+        }
+      }, 80)
     }
   }
 
@@ -227,17 +355,13 @@ export default function AppSneakPeekShowcase() {
               tabIndex={selected ? 0 : -1}
               onClick={() => selectTab(index, false)}
               style={{ scrollSnapAlign: 'start' }}
-              className={`forge-sneak-tab forge-tactile-press relative flex min-h-[46px] flex-none items-center justify-center gap-2 rounded-xl border px-3.5 py-3 text-xs font-bold tracking-wide sm:flex-initial focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
-                selected
-                  ? 'border-emerald-500/35 bg-[#181B22] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_26px_rgba(0,0,0,0.45)]'
-                  : 'border-white/[0.07] bg-[#111318] text-zinc-400 hover:border-white/15 hover:bg-[#181B22] hover:text-zinc-200'
-              }`}
+              className="forge-sneak-tab forge-sneak-tab-pill forge-tactile-press relative flex flex-none items-center justify-center gap-2 rounded-xl px-3.5 py-3 text-xs font-bold tracking-wide sm:flex-initial focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D]"
             >
               <span
                 className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums ${
                   selected
                     ? 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
-                    : 'bg-white/[0.05] text-zinc-400'
+                    : 'border border-transparent bg-white/[0.05] text-zinc-400'
                 }`}
               >
                 {tab.step}
@@ -284,9 +408,22 @@ export default function AppSneakPeekShowcase() {
               FORGE LAB // {activeTab.label}
             </span>
           </div>
-          <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
-            LOCAL CAMERA SANDBOX · ZERO CLOUD UPLOAD
-          </span>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                playCoachStaticCue(activeTab.voiceCueKey, { forceUnlockVoiceOnTap: true })
+              }
+              className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-white/12 bg-[#181B22] px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-200 transition-colors hover:border-emerald-400/45 hover:text-emerald-200"
+            >
+              <Volume2 size={12} className="text-emerald-400" aria-hidden="true" />
+              <span>Voice Sample</span>
+            </button>
+            <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
+              {activeTab.telemetryBadge}
+            </span>
+          </div>
         </div>
 
         <p className="mb-4 text-xs leading-relaxed text-zinc-300 sm:text-sm">{activeTab.subtitle}</p>
@@ -311,7 +448,7 @@ export default function AppSneakPeekShowcase() {
                   {tab.id === 'desk-ergonomics' ? (
                     <DeskErgonomicsAudit
                       sandboxMode
-                      onLaunchDeskReset={() => selectTab(3, false)}
+                      onLaunchDeskReset={handleLaunchTargetedDeskReset}
                     />
                   ) : null}
 
@@ -333,7 +470,7 @@ export default function AppSneakPeekShowcase() {
                             </div>
                           </div>
                           <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 font-mono text-[11px] font-bold tabular-nums text-emerald-300">
-                            Forge Readiness Index: {readinessPreview.readinessScore}/100
+                            Forge Readiness Index: {displayedReadinessScore}/100
                           </span>
                         </div>
 
@@ -353,7 +490,10 @@ export default function AppSneakPeekShowcase() {
                               <button
                                 type="button"
                                 aria-pressed={sandboxExpress}
-                                onClick={() => setSandboxExpress(true)}
+                                onClick={() => {
+                                  setSandboxExpress(true)
+                                  setCustomReadinessResult(null)
+                                }}
                                 className={`forge-tactile-press min-h-[44px] rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors ${
                                   sandboxExpress
                                     ? 'border-amber-400/50 bg-amber-400 text-zinc-950'
@@ -365,7 +505,10 @@ export default function AppSneakPeekShowcase() {
                               <button
                                 type="button"
                                 aria-pressed={!sandboxExpress}
-                                onClick={() => setSandboxExpress(false)}
+                                onClick={() => {
+                                  setSandboxExpress(false)
+                                  setCustomReadinessResult(null)
+                                }}
                                 className={`forge-tactile-press min-h-[44px] rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors ${
                                   !sandboxExpress
                                     ? 'border-emerald-400/50 bg-emerald-500/20 text-emerald-200'
@@ -431,7 +574,7 @@ export default function AppSneakPeekShowcase() {
                           </div>
                         </div>
 
-                        {/* Adapted Compound Superset Readout */}
+                        {/* Adapted Compound Superset Readout + Clickable Studio Demos */}
                         <div className="mt-3 rounded-xl border border-white/[0.07] bg-[#090A0D] p-3">
                           <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
                             <span>{envSpec.equipmentNote}</span>
@@ -452,6 +595,53 @@ export default function AppSneakPeekShowcase() {
                                 : '4 × 8–10 · 90s Rest (~45m Standard)'}
                             </span>
                           </div>
+
+                          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            {envSpec.exercises.map(ex => (
+                              <button
+                                key={`${activeEnvKey}-${ex.slot}`}
+                                type="button"
+                                onClick={() =>
+                                  setActiveExerciseModal({
+                                    name: ex.name,
+                                    imageUrl: ex.imageUrl,
+                                    videoUrl: ex.videoUrl,
+                                    protocol: sandboxExpress
+                                      ? '2 × 10–12 · 45s Density Rest'
+                                      : '4 × 8–10 · 90s Standard Rest',
+                                    phaseLabel: `PHASE 02 · ${envSpec.label}`,
+                                    coachingCues: [ex.cue],
+                                  })
+                                }
+                                className="forge-tactile-press group flex min-h-[68px] flex-col gap-2 rounded-xl border border-white/[0.07] bg-[#181B22] p-2.5 text-left transition-colors hover:border-emerald-400/45 hover:bg-[#1D212A] sm:flex-row sm:items-center sm:gap-2.5 sm:p-2"
+                              >
+                                <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#090A0D] sm:aspect-auto sm:h-12 sm:w-20">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={ex.imageUrl}
+                                    alt={ex.name}
+                                    width={80}
+                                    height={48}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                  />
+                                  <span
+                                    aria-hidden="true"
+                                    className="absolute inset-0 flex items-center justify-center bg-black/35 text-emerald-300"
+                                  >
+                                    <Play size={12} fill="currentColor" />
+                                  </span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-mono text-[9.5px] font-semibold uppercase tracking-wider text-emerald-300">
+                                    {ex.slot} · Watch Demo
+                                  </div>
+                                  <div className="truncate text-xs font-bold text-white">{ex.name}</div>
+                                  <div className="truncate text-[11px] text-zinc-400">{ex.cue}</div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
                         {/* 30-Second Camera Readiness Warm-Up Injection */}
@@ -461,25 +651,66 @@ export default function AppSneakPeekShowcase() {
                               <Activity size={14} className="text-emerald-400" aria-hidden="true" />
                               <span>30-Second Camera Readiness · Auto Warm-Up Injection</span>
                             </div>
-                            <span className="font-mono text-[11px] tabular-nums text-zinc-400">
-                              {readinessPreview.injectedDrills.length === 0
-                                ? '0s added · Cleared for Set 1'
-                                : `${readinessPreview.injectedDrills.length} drills · ${readinessPreview.totalInjectedDurationSec}s total${
-                                    sandboxExpress ? ' (90s Express cap)' : ''
-                                  }`}
-                            </span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-mono text-[11px] tabular-nums text-zinc-400">
+                                {displayedInjectedDrills.length === 0
+                                  ? '0s added · Cleared for Set 1'
+                                  : `${displayedInjectedDrills.length} drills · ${displayedTotalDurationSec}s total${
+                                      sandboxExpress ? ' (90s Express cap)' : ''
+                                    }`}
+                              </span>
+                              <button
+                                type="button"
+                                aria-expanded={liveReadinessOpen}
+                                onClick={() => setLiveReadinessOpen(prev => !prev)}
+                                className="forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-emerald-500/35 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-bold text-emerald-200 transition-colors hover:bg-emerald-500/25"
+                              >
+                                {liveReadinessOpen ? (
+                                  <>
+                                    <X size={13} aria-hidden="true" />
+                                    <span>Close Camera Check</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Camera size={13} aria-hidden="true" />
+                                    <span>Try 30s Camera Check</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
+
+                          {liveReadinessOpen ? (
+                            <div className="mt-3">
+                              <CameraReadinessCheck
+                                expressModeActive={sandboxExpress}
+                                isOpen={liveReadinessOpen}
+                                onComplete={res => {
+                                  setCustomReadinessResult({
+                                    readinessScore: res.readinessScore,
+                                    injectedDrills: res.injectedDrills,
+                                  })
+                                  setLiveReadinessOpen(false)
+                                }}
+                                onSkip={() => setLiveReadinessOpen(false)}
+                              />
+                            </div>
+                          ) : null}
 
                           <div className="mt-2.5 flex flex-wrap gap-1.5">
                             {(Object.keys(READINESS_PRESET_LABELS) as ReadinessPresetId[]).map(
                               presetKey => {
-                                const active = readinessPreset === presetKey
+                                const active =
+                                  customReadinessResult === null && readinessPreset === presetKey
                                 return (
                                   <button
                                     key={presetKey}
                                     type="button"
                                     aria-pressed={active}
-                                    onClick={() => setReadinessPreset(presetKey)}
+                                    onClick={() => {
+                                      setCustomReadinessResult(null)
+                                      setReadinessPreset(presetKey)
+                                    }}
                                     className={`forge-tactile-press min-h-[44px] rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition-colors ${
                                       active
                                         ? 'border-amber-400/50 bg-amber-500/15 text-amber-200'
@@ -493,32 +724,58 @@ export default function AppSneakPeekShowcase() {
                             )}
                           </div>
 
-                          {readinessPreview.injectedDrills.length > 0 ? (
-                            <ul className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                              {readinessPreview.injectedDrills.map(drill => (
-                                <li
-                                  key={drill.id}
-                                  className="flex items-center justify-between gap-2.5 rounded-lg border border-white/[0.06] bg-[#181B22] px-3 py-2 text-xs"
-                                >
-                                  <div className="flex min-w-0 items-center gap-2.5">
-                                    {drill.imageUrl ? (
-                                      <img
-                                        src={drill.imageUrl}
-                                        alt={drill.name}
-                                        width={64}
-                                        height={40}
-                                        loading="lazy"
-                                        className="h-10 w-16 shrink-0 rounded border border-white/10 object-cover"
-                                      />
-                                    ) : null}
-                                    <div className="min-w-0">
-                                      <div className="truncate font-semibold text-white">{drill.name}</div>
-                                      <div className="truncate text-[11px] text-zinc-400">{drill.targetArea}</div>
+                          {displayedInjectedDrills.length > 0 ? (
+                            <ul className="m-0 mt-2.5 grid list-none grid-cols-1 gap-2 p-0 sm:grid-cols-2">
+                              {displayedInjectedDrills.map(drill => (
+                                <li key={drill.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setActiveExerciseModal({
+                                        name: drill.name,
+                                        imageUrl: drill.imageUrl,
+                                        videoUrl: drill.videoUrl,
+                                        protocol: `${drill.durationSec}s Pre-Session Warm-Up`,
+                                        target: drill.targetArea,
+                                        phaseLabel: '30-Second Camera Readiness Prep',
+                                        coachingCues: [drill.cue],
+                                      })
+                                    }
+                                    className="forge-tactile-press group flex min-h-[56px] w-full items-center justify-between gap-2.5 rounded-lg border border-white/[0.07] bg-[#181B22] px-3 py-2 text-left text-xs transition-colors hover:border-emerald-400/45 hover:bg-[#1D212A]"
+                                  >
+                                    <div className="flex min-w-0 items-center gap-2.5">
+                                      {drill.imageUrl ? (
+                                        <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded border border-white/10 bg-[#090A0D]">
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                                          <img
+                                            src={drill.imageUrl}
+                                            alt={drill.name}
+                                            width={64}
+                                            height={40}
+                                            loading="lazy"
+                                            className="h-full w-full object-cover"
+                                          />
+                                          <span
+                                            aria-hidden="true"
+                                            className="absolute inset-0 flex items-center justify-center bg-black/35 text-emerald-300"
+                                          >
+                                            <Play size={10} fill="currentColor" />
+                                          </span>
+                                        </div>
+                                      ) : null}
+                                      <div className="min-w-0">
+                                        <div className="truncate font-semibold text-white">
+                                          {drill.name}
+                                        </div>
+                                        <div className="truncate text-[11px] text-zinc-400">
+                                          {drill.targetArea} · Tap for video
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <span className="shrink-0 rounded bg-emerald-500/15 px-2 py-0.5 font-mono text-[11px] font-bold tabular-nums text-emerald-300">
-                                    {drill.durationSec}s
-                                  </span>
+                                    <span className="shrink-0 rounded bg-emerald-500/15 px-2 py-0.5 font-mono text-[11px] font-bold tabular-nums text-emerald-300">
+                                      {drill.durationSec}s
+                                    </span>
+                                  </button>
                                 </li>
                               ))}
                             </ul>
@@ -530,15 +787,18 @@ export default function AppSneakPeekShowcase() {
                         </div>
                       </div>
 
-                      {/* Guided 5-Min Mobility Reset Player */}
-                      <DeskResetGuidedPlayer
-                        sandboxMode
-                        activeFlags={['forward_head', 'rounded_shoulders']}
-                        expressMode={sandboxExpress}
-                        onToggleExpress={setSandboxExpress}
-                        environmentProfile={sandboxEnv}
-                        onChangeEnvironment={setSandboxEnv}
-                      />
+                      {/* Guided 5-Min Mobility Reset Player (Synced with Tab 02 Desk Audit Flags) */}
+                      <div
+                        ref={deskResetCardRef}
+                        className="rounded-2xl border border-white/[0.08] bg-[#111318] p-3.5 sm:p-4"
+                      >
+                        <DeskResetGuidedPlayer
+                          sandboxMode
+                          activeFlags={sandboxDeskFlags}
+                          expressMode={sandboxExpress}
+                          environmentProfile={sandboxEnv}
+                        />
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -547,6 +807,13 @@ export default function AppSneakPeekShowcase() {
           )
         })}
       </div>
+
+      {activeExerciseModal ? (
+        <ExerciseVideoModal
+          exercise={activeExerciseModal}
+          onClose={() => setActiveExerciseModal(null)}
+        />
+      ) : null}
     </section>
   )
 }

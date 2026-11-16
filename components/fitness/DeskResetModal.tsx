@@ -181,7 +181,13 @@ export function DeskResetGuidedPlayer({
 
         <button
           type="button"
-          onClick={toggleSfxMuted}
+          onClick={() => {
+            const wasMuted = sfxMuted
+            toggleSfxMuted()
+            if (wasMuted) {
+              playCoachStaticCue('desk_reset_transition', { forceUnlockVoiceOnTap: true })
+            }
+          }}
           aria-label="Desk reset audio cues"
           aria-pressed={!sfxMuted}
           className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border px-3 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
@@ -199,36 +205,40 @@ export function DeskResetGuidedPlayer({
         </button>
       </div>
 
-      {/* Sandbox Express & Hotel Travel Toggles (used in Landing Sneak Peek Tab 4) */}
-      {sandboxMode ? (
+      {/* Optional standalone Sandbox Express & Hotel Travel Toggles when parent does not provide its own bar */}
+      {sandboxMode && (onToggleExpress || onChangeEnvironment) ? (
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[#111318] p-2.5">
-          <button
-            type="button"
-            aria-pressed={expressMode}
-            onClick={() => onToggleExpress?.(!expressMode)}
-            className={`forge-tactile-press min-h-[44px] rounded-xl px-3.5 py-2 text-xs font-bold uppercase tracking-wider tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
-              expressMode
-                ? 'border border-amber-400/40 bg-amber-400 text-zinc-950'
-                : 'border border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
-            }`}
-          >
-            ⚡ 20m Express {expressMode ? 'ON (18m Total)' : 'OFF (45m Standard)'}
-          </button>
+          {onToggleExpress ? (
+            <button
+              type="button"
+              aria-pressed={expressMode}
+              onClick={() => onToggleExpress(!expressMode)}
+              className={`forge-tactile-press min-h-[44px] rounded-xl px-3.5 py-2 text-xs font-bold uppercase tracking-wider tabular-nums transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+                expressMode
+                  ? 'border border-amber-400/40 bg-amber-400 text-zinc-950'
+                  : 'border border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
+              }`}
+            >
+              ⚡ 20m Express {expressMode ? 'ON (18m Total)' : 'OFF (45m Standard)'}
+            </button>
+          ) : null}
 
-          <button
-            type="button"
-            aria-pressed={environmentProfile === 'hotel_travel'}
-            onClick={() =>
-              onChangeEnvironment?.(environmentProfile === 'hotel_travel' ? 'home_gym' : 'hotel_travel')
-            }
-            className={`forge-tactile-press min-h-[44px] rounded-xl px-3.5 py-2 text-xs font-bold uppercase tracking-wider transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
-              environmentProfile === 'hotel_travel'
-                ? 'border border-emerald-400/40 bg-emerald-500/20 text-emerald-200'
-                : 'border border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
-            }`}
-          >
-            ✈️ {environmentProfile === 'hotel_travel' ? 'Hotel Travel Active' : 'Switch to Hotel Travel'}
-          </button>
+          {onChangeEnvironment ? (
+            <button
+              type="button"
+              aria-pressed={environmentProfile === 'hotel_travel'}
+              onClick={() =>
+                onChangeEnvironment(environmentProfile === 'hotel_travel' ? 'home_gym' : 'hotel_travel')
+              }
+              className={`forge-tactile-press min-h-[44px] rounded-xl px-3.5 py-2 text-xs font-bold uppercase tracking-wider transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
+                environmentProfile === 'hotel_travel'
+                  ? 'border border-emerald-400/40 bg-emerald-500/20 text-emerald-200'
+                  : 'border border-white/10 bg-[#181B22] text-zinc-200 hover:border-white/15 hover:bg-[#1D212A]'
+              }`}
+            >
+              ✈️ {environmentProfile === 'hotel_travel' ? 'Hotel Travel Active' : 'Switch to Hotel Travel'}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -244,7 +254,7 @@ export function DeskResetGuidedPlayer({
               {currentDrill.name}
             </div>
           </div>
-          <div className="font-mono text-2xl font-extrabold tabular-nums text-emerald-300 sm:text-3xl">
+          <div className="shrink-0 whitespace-nowrap font-mono text-2xl font-extrabold tabular-nums text-emerald-300 sm:text-3xl">
             {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
           </div>
         </div>
@@ -333,7 +343,7 @@ export function DeskResetGuidedPlayer({
       </div>
 
       {/* Ordered Drill Queue */}
-      <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <ol className="m-0 grid list-none grid-cols-1 gap-2 p-0 sm:grid-cols-2">
         {drills.map((d, idx) => {
           const active = idx === currentIndex
           return (

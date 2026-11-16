@@ -549,21 +549,40 @@ function speakViaWebSpeechFallback(text: string, signal: { aborted: boolean }): 
   })
 }
 
+export interface PlayStaticCueOptions {
+  forceUnlockVoiceOnTap?: boolean
+}
+
 /**
  * Plays a zero-latency static Coach Gordon cue (`staticCueMap`).
- * - `'muted'`: silent.
+ * - `'muted'`: silent (unless `forceUnlockVoiceOnTap` is set on an explicit user tap).
  * - `'chimes_only'`: subtle tactile Web Audio chime only.
  * - `'voice_and_chimes'`: static ElevenLabs `.mp3` buffer, or automatic Web Speech + chime fallback in local dev.
  */
-export function playCoachStaticCue(cueKey: StaticCoachCueKey): void {
+export function playCoachStaticCue(
+  cueKey: StaticCoachCueKey,
+  options?: PlayStaticCueOptions
+): void {
+  if (options?.forceUnlockVoiceOnTap) {
+    unlockSharedAudioContextOnGesture()
+    if (getCoachAudioMode() === 'muted') {
+      setCoachAudioMode('voice_and_chimes')
+    }
+  }
+
   const mode = getCoachAudioMode()
   if (mode === 'muted') return
 
   const cue = staticCueMap[cueKey]
   if (!cue) return
 
-  if (mode === 'chimes_only') {
+  if (mode === 'chimes_only' && !options?.forceUnlockVoiceOnTap) {
     playForgeTactileTone(cue.fallbackTone)
+    return
+  }
+
+  if (options?.forceUnlockVoiceOnTap && globalVoiceQueue.activeId === `static:${cue.key}`) {
+    stopCoachVoicePlayback()
     return
   }
 
@@ -572,7 +591,12 @@ export function playCoachStaticCue(cueKey: StaticCoachCueKey): void {
     priority: cue.priority,
     cancelActive: stopLowLevelAudioImmediately,
     execute: async signal => {
-      if (signal.aborted || getCoachAudioMode() !== 'voice_and_chimes') return
+      if (
+        signal.aborted ||
+        (getCoachAudioMode() !== 'voice_and_chimes' && !options?.forceUnlockVoiceOnTap)
+      ) {
+        return
+      }
 
       let decoded = decodedStaticBufferCache.get(cue.key) ?? null
       if (!decoded && !missingStaticAssets.has(cue.key)) {
