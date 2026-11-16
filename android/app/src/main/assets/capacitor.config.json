@@ -6,7 +6,7 @@
 		"androidScheme": "https",
 		"iosScheme": "https",
 		"url": "https://forge-athletic.app/dashboard/fitness?source=native",
-		"cleartext": true,
+		"cleartext": false,
 		"allowNavigation": [
 			"forge-athletic.app",
 			"*.forge-athletic.app",
@@ -27,7 +27,7 @@
 	},
 	"android": {
 		"backgroundColor": "#080E14",
-		"allowMixedContent": true,
+		"allowMixedContent": false,
 		"captureInput": true,
 		"webContentsDebuggingEnabled": false
 	},

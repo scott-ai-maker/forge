@@ -522,7 +522,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.55.0;
+				MARKETING_VERSION = 1.58.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.gordonathletic.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -545,7 +545,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.55.0;
+				MARKETING_VERSION = 1.58.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gordonathletic.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
@@ -566,7 +566,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ForgeWatch/Info.plist;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
-				MARKETING_VERSION = 1.55.0;
+				MARKETING_VERSION = 1.58.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.gordonathletic.app.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -593,7 +593,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ForgeWatch/Info.plist;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
-				MARKETING_VERSION = 1.55.0;
+				MARKETING_VERSION = 1.58.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.gordonathletic.app.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
