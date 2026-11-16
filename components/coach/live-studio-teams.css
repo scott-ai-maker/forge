@@ -378,5 +378,15 @@
   .teams-capture-pill {
     padding: 2px 6px !important;
     gap: 4px !important;
+    max-inline-size: calc(100% - 16px) !important;
   }
+
+  .teams-capture-pill select {
+    min-inline-size: 0 !important;
+    max-inline-size: 160px !important;
+  }
+}
+
+.teams-pip-tile [data-testid^="studio-framing-guide-"] > div {
+  display: none !important;
 }

@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useRef } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { BAND_COLOR_SPECTRUM, BandResistanceLevel } from '@/lib/exercise-logging-helpers'
+import { useNativeStudioDialog } from '@/components/coach/useNativeStudioDialog'
 
 interface BandResistanceChartModalProps {
   isOpen: boolean
@@ -19,48 +20,30 @@ export default function BandResistanceChartModal({
   onSelectBand,
   selectedBandId,
 }: BandResistanceChartModalProps) {
-  useEffect(() => {
-    if (!isOpen) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  useNativeStudioDialog(dialogRef, isOpen, onClose)
 
   if (!isOpen) return null
 
   return (
-    <div
-      className="band-matrix-modal-overlay"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        zIndex: 100000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(10px, 3vw, 20px)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        boxSizing: 'border-box',
-      }}
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="forge-live-studio-dialog band-matrix-modal-overlay"
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       aria-labelledby="band-chart-title"
-      onClick={onClose}
+      style={{
+        maxWidth: 'min(680px, calc(100vw - 16px))',
+      }}
     >
       <div
         className="band-matrix-dialog"
-        onClick={(e) => e.stopPropagation()}
         style={{
           background: 'linear-gradient(180deg, #162235 0%, #0D1B2A 100%)',
           border: '1px solid rgba(212, 160, 23, 0.4)',
           borderRadius: 12,
           maxWidth: 680,
           width: '100%',
-          maxHeight: '92vh',
+          maxHeight: '92dvh',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(212,160,23,0.2)',
@@ -151,7 +134,7 @@ export default function BandResistanceChartModal({
                 border: '1px solid rgba(255,255,255,0.15)',
                 color: 'var(--gray)',
                 padding: '6px 12px',
-                minHeight: 34,
+                minHeight: 44,
                 borderRadius: 6,
                 cursor: 'pointer',
                 fontSize: 12,
@@ -445,6 +428,6 @@ export default function BandResistanceChartModal({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

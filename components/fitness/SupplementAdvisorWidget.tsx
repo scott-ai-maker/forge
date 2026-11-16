@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useId } from 'react'
 import {
   generateSupplementStack,
   SupplementGoal,
@@ -15,6 +15,7 @@ import {
   isThorneAccountLinked,
 } from '@/lib/supplement-prescriptions'
 import { parseParqMedicationsAndConditions } from '@/lib/muscle-recovery-telemetry'
+import ExecutiveSupplementTimeline from '@/components/fitness/ExecutiveSupplementTimeline'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
 
@@ -45,10 +46,20 @@ export default function SupplementAdvisorWidget({
   initialLevel = 'intermediate',
   intake,
 }: SupplementAdvisorWidgetProps) {
+  const fieldPrefix = useId()
+  const goalFieldId = `${fieldPrefix}-goal`
+  const ageFieldId = `${fieldPrefix}-age`
+  const sexFieldId = `${fieldPrefix}-sex`
+  const levelFieldId = `${fieldPrefix}-level`
+
   const [goal, setGoal] = useState<SupplementGoal>(initialGoal)
   const [age, setAge] = useState<string>(String(initialAge))
   const [sex, setSex] = useState<ClientSex>(initialSex)
   const [level, setLevel] = useState<FitnessLevel>(initialLevel)
+
+  useEffect(() => {
+    setGoal(initialGoal)
+  }, [initialGoal])
 
   // Clinical parsing of intake medications and conditions
   const parsedMedications = useMemo(() => {
@@ -246,7 +257,7 @@ export default function SupplementAdvisorWidget({
           <div style={{ color: 'var(--white)', fontSize: 13, lineHeight: 1.6 }}>
             <strong>This guide is an evidence-informed options catalog, NOT a mandatory checklist.</strong> A balanced athlete routine requires only <strong>2 to 3 daily core essentials</strong>. Ergogenic recovery aids are taken <em>strictly on workout days around training</em>.
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10, marginTop: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 10, marginTop: 4 }}>
             <div style={{ background: 'rgba(8,14,20,0.6)', padding: '10px 14px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', fontSize: 12, color: 'var(--gray-lt)' }}>
               <strong style={{ color: 'var(--gold-lt)' }}>☀️ Rest Days (Non-Training):</strong> Take only your <strong>{stack.routineSummary.dailyCoreCount} Daily Core</strong> items with meals or bedtime. Do NOT take pre-workouts, protein shakes, or intra-workout mixes.
             </div>
@@ -270,7 +281,7 @@ export default function SupplementAdvisorWidget({
             ) : (
               <span>
                 Browse third-party verified formulations directly at{' '}
-                <a href="https://www.thorne.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+                <a href="https://www.thorne.com" target="_blank" rel="noopener noreferrer" style={{ minHeight: 44, color: 'var(--gold-lt)', textDecoration: 'underline' }}>
                   Thorne.com
                 </a>.
               </span>
@@ -282,16 +293,17 @@ export default function SupplementAdvisorWidget({
             rel="noopener noreferrer"
             className="tactile-btn"
             style={{
+              minHeight: 44,
               background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
               color: '#080E14',
-              padding: '8px 14px',
+              padding: '10px 14px',
               borderRadius: 4,
               fontSize: 11.5,
               fontWeight: 800,
               textDecoration: 'none',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
+              whiteSpace: 'normal',
             }}
           >
             Open Thorne Dispensary (15% Off) ↗
@@ -305,22 +317,24 @@ export default function SupplementAdvisorWidget({
           1. Athlete Physical Profile &amp; Goal Inputs
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))', gap: 12 }}>
           {/* Primary Goal */}
           <div>
-            <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+            <label htmlFor={goalFieldId} style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
               Primary Goal
             </label>
             <select
+              id={goalFieldId}
               value={goal}
               onChange={e => setGoal(e.target.value as SupplementGoal)}
               style={{
                 width: '100%',
+                minHeight: 44,
                 padding: '9px 12px',
                 background: 'var(--navy)',
                 border: '1px solid var(--navy-lt)',
                 color: 'var(--white)',
-                fontSize: 13,
+                fontSize: 'max(1rem, 1em)',
                 fontFamily: 'Raleway, sans-serif',
                 borderRadius: 4,
               }}
@@ -335,10 +349,11 @@ export default function SupplementAdvisorWidget({
 
           {/* Age */}
           <div>
-            <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+            <label htmlFor={ageFieldId} style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
               Age (Years)
             </label>
             <input
+              id={ageFieldId}
               type="text"
               inputMode="numeric"
               autoComplete="off"
@@ -347,11 +362,12 @@ export default function SupplementAdvisorWidget({
               onChange={e => setAge(sanitizeNumericInput(e.target.value))}
               style={{
                 width: '100%',
+                minHeight: 44,
                 padding: '9px 12px',
                 background: 'var(--navy)',
                 border: '1px solid var(--navy-lt)',
                 color: 'var(--white)',
-                fontSize: 13,
+                fontSize: 'max(1rem, 1em)',
                 fontFamily: 'Raleway, sans-serif',
                 borderRadius: 4,
               }}
@@ -360,19 +376,21 @@ export default function SupplementAdvisorWidget({
 
           {/* Biological Sex */}
           <div>
-            <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+            <label htmlFor={sexFieldId} style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
               Biological Sex
             </label>
             <select
+              id={sexFieldId}
               value={sex}
               onChange={e => setSex(e.target.value as ClientSex)}
               style={{
                 width: '100%',
+                minHeight: 44,
                 padding: '9px 12px',
                 background: 'var(--navy)',
                 border: '1px solid var(--navy-lt)',
                 color: 'var(--white)',
-                fontSize: 13,
+                fontSize: 'max(1rem, 1em)',
                 fontFamily: 'Raleway, sans-serif',
                 borderRadius: 4,
               }}
@@ -385,19 +403,21 @@ export default function SupplementAdvisorWidget({
 
           {/* Fitness Level */}
           <div>
-            <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+            <label htmlFor={levelFieldId} style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
               Current Level
             </label>
             <select
+              id={levelFieldId}
               value={level}
               onChange={e => setLevel(e.target.value as FitnessLevel)}
               style={{
                 width: '100%',
+                minHeight: 44,
                 padding: '9px 12px',
                 background: 'var(--navy)',
                 border: '1px solid var(--navy-lt)',
                 color: 'var(--white)',
-                fontSize: 13,
+                fontSize: 'max(1rem, 1em)',
                 fontFamily: 'Raleway, sans-serif',
                 borderRadius: 4,
               }}
@@ -410,9 +430,13 @@ export default function SupplementAdvisorWidget({
         </div>
 
         {/* Prescription Medications Interactive Screening */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14 }}>
+        <fieldset style={{ border: 0, borderTop: '1px solid rgba(255,255,255,0.08)', margin: 0, padding: '14px 0 0', minWidth: 0 }}>
+          <legend style={{ padding: 0, marginBottom: 8, fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+            2. Prescription Medication &amp; Clinical Safety Screening
+          </legend>
           {parsedMedications.hasAnyReportedMedications && (
             <div
+              role="status"
               style={{
                 marginBottom: 12,
                 padding: '10px 14px',
@@ -434,10 +458,7 @@ export default function SupplementAdvisorWidget({
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
-            <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
-              2. Prescription Medication &amp; Clinical Safety Screening
-            </div>
+          <div style={{ marginBottom: 10 }}>
             <span style={{ fontSize: 11, color: 'var(--gray)' }}>
               {parsedMedications.hasAnyReportedMedications
                 ? 'Pre-populated from intake · Check/uncheck to adjust safety shields'
@@ -445,108 +466,108 @@ export default function SupplementAdvisorWidget({
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingAnticoagulants ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingAnticoagulants ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 10 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingAnticoagulants ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingAnticoagulants ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={takingAnticoagulants}
                 onChange={e => setTakingAnticoagulants(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Blood Thinners:</strong> Warfarin, Eliquis, Xarelto, Plavix, Aspirin</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingAntihypertensives ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingAntihypertensives ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingAntihypertensives ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingAntihypertensives ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={takingAntihypertensives}
                 onChange={e => setTakingAntihypertensives(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Blood Pressure:</strong> Lisinopril, Losartan, Metoprolol, Diuretics</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingThyroidHormone ? 'rgba(197,160,89,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingThyroidHormone ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingThyroidHormone ? 'rgba(197,160,89,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingThyroidHormone ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={takingThyroidHormone}
                 onChange={e => setTakingThyroidHormone(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Thyroid Hormone:</strong> Levothyroxine / Synthroid, Cytomel</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingStatins ? 'rgba(52,211,153,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingStatins ? '1px solid var(--success)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingStatins ? 'rgba(52,211,153,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingStatins ? '1px solid var(--success)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={takingStatins}
                 onChange={e => setTakingStatins(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Statins (Cholesterol):</strong> Lipitor, Crestor, Simvastatin</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingAntidepressants ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingAntidepressants ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingAntidepressants ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingAntidepressants ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={takingAntidepressants}
                 onChange={e => setTakingAntidepressants(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Antidepressants:</strong> SSRIs / SNRIs (Zoloft, Lexapro, Cymbalta)</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingDiabetesMedications ? 'rgba(52,211,153,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingDiabetesMedications ? '1px solid var(--success)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingDiabetesMedications ? 'rgba(52,211,153,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingDiabetesMedications ? '1px solid var(--success)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={takingDiabetesMedications}
                 onChange={e => setTakingDiabetesMedications(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Diabetes / GLP-1:</strong> Metformin, Ozempic, Mounjaro, Insulin</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingOralAntibiotics ? 'rgba(197,160,89,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingOralAntibiotics ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingOralAntibiotics ? 'rgba(197,160,89,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingOralAntibiotics ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={takingOralAntibiotics}
                 onChange={e => setTakingOralAntibiotics(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Oral Antibiotics:</strong> Ciprofloxacin, Doxycycline</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingImmunosuppressantsOrSteroids ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingImmunosuppressantsOrSteroids ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: takingImmunosuppressantsOrSteroids ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: takingImmunosuppressantsOrSteroids ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={takingImmunosuppressantsOrSteroids}
                 onChange={e => setTakingImmunosuppressantsOrSteroids(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Steroids / Immunosuppressants:</strong> Prednisone, Tacrolimus</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: hasKidneyCondition ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: hasKidneyCondition ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: hasKidneyCondition ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: hasKidneyCondition ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={hasKidneyCondition}
                 onChange={e => setHasKidneyCondition(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Renal / Kidney:</strong> Reduced eGFR or Kidney Condition</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: isPregnantOrNursing ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: isPregnantOrNursing ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
+            <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--white)', cursor: 'pointer', background: isPregnantOrNursing ? 'rgba(248,113,113,0.15)' : 'rgba(8,14,20,0.5)', padding: '8px 12px', border: isPregnantOrNursing ? '1px solid var(--error)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 4 }}>
               <input
                 type="checkbox"
                 checked={isPregnantOrNursing}
                 onChange={e => setIsPregnantOrNursing(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span><strong>Pregnancy:</strong> Pregnant or Lactating</span>
             </label>
           </div>
-        </div>
+        </fieldset>
       </div>
 
       {/* ── 3. PHARMACOLOGICAL INTERACTION & CONTRAINDICATION SHIELD ───────── */}
@@ -633,7 +654,7 @@ export default function SupplementAdvisorWidget({
           </div>
 
           {/* Interactive Tier & Timing Filter Bar */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div role="group" aria-label="Supplement routine tier and timing filters" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {[
               { key: 'all' as const, label: `All (${stack.prescribedItems.length})`, icon: null },
               { key: 'daily_core' as const, label: `☀️ Daily Core (${stack.tieredSchedule.dailyCore.length})`, icon: null },
@@ -649,13 +670,15 @@ export default function SupplementAdvisorWidget({
                 <button
                   key={tab.key}
                   type="button"
+                  aria-pressed={active}
                   onClick={() => setActiveFilter(tab.key)}
                   className="tactile-btn"
                   style={{
-                    padding: '6px 12px',
+                    minHeight: 44,
+                    padding: '8px 12px',
                     background: active ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
                     color: active ? 'var(--navy)' : 'var(--white)',
-                    border: active ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                    border: active ? '2px solid #FDE68A' : '1px solid rgba(255,255,255,0.12)',
                     fontSize: 12,
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -841,17 +864,18 @@ export default function SupplementAdvisorWidget({
                       rel="noopener noreferrer"
                       className="tactile-btn"
                       style={{
+                        minHeight: 44,
                         background: isThorneBrand && !isThorneAccountLinked
                           ? 'rgba(255,255,255,0.08)'
                           : 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                         color: isThorneBrand && !isThorneAccountLinked ? 'var(--gold-lt)' : '#080E14',
                         border: isThorneBrand && !isThorneAccountLinked ? '1px solid rgba(197,160,89,0.5)' : 'none',
-                        padding: '8px 16px',
+                        padding: '10px 16px',
                         borderRadius: 4,
                         fontSize: 12,
                         fontWeight: 800,
                         textDecoration: 'none',
-                        whiteSpace: 'nowrap',
+                        whiteSpace: 'normal',
                       }}
                     >
                       {isThorneBrand && !isThorneAccountLinked
@@ -873,6 +897,12 @@ export default function SupplementAdvisorWidget({
           })}
         </div>
       </div>
+
+      {/* ── 5B. DAILY CHRONO-DOSING ADHERENCE & SCIENCE INSPECTOR ───────────── */}
+      <ExecutiveSupplementTimeline
+        initialStack={stack}
+        isCoachView={false}
+      />
 
       {/* ── 6. TITANIUM SCOPE OF PRACTICE & MANDATORY LIABILITY FOOTER ──────── */}
       <div style={{ display: 'grid', gap: 12, marginTop: 10 }}>
@@ -899,7 +929,7 @@ export default function SupplementAdvisorWidget({
         </div>
 
         {/* Whole-Food First & Adverse Reactions */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 12 }}>
           <div style={{ background: 'rgba(8,14,20,0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 16 }}>
             <div style={{ color: 'var(--gold-lt)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
               Whole-Food Primacy Rule

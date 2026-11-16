@@ -71,12 +71,34 @@ describe('POST /api/coach/clients/[id]/body-composition', () => {
 
     const res = await POST(req, { params: Promise.resolve({ id: 'client-123' }) })
     expect(res.status).toBe(200)
+    expect(res.headers.get('cache-control')).toContain('no-store')
     const json = await res.json()
     expect(json.ok).toBe(true)
     expect(json.data.estimatedBodyFatPercent).toBeGreaterThan(15)
     expect(json.data.leanBodyMassKg).toBeGreaterThan(35)
     expect(json.data.cunninghamBmr).toBeGreaterThan(1200)
     expect(json.data.regionalBreakdown.length).toBe(4)
+  })
+
+  it('rejects out-of-range biometric overrides with 400', async () => {
+    const { getRequestAuthz, requireRole, requireCoachAssignedClient } = await import('@/lib/authz')
+    vi.mocked(getRequestAuthz).mockResolvedValueOnce({
+      user: { id: 'coach-123' },
+      client: { id: 'coach-123', role: 'coach', email: 'coach@example.com', status: 'active', designated_coach_id: null },
+    } as unknown as Awaited<ReturnType<typeof getRequestAuthz>>)
+    vi.mocked(requireRole).mockReturnValue(undefined)
+    vi.mocked(requireCoachAssignedClient).mockResolvedValue(undefined)
+
+    const req = new NextRequest('http://localhost/api/coach/clients/client-123/body-composition', {
+      method: 'POST',
+      body: JSON.stringify({ heightCm: 10, weightKg: 75 }),
+    })
+
+    const res = await POST(req, { params: Promise.resolve({ id: 'client-123' }) })
+    expect(res.status).toBe(400)
+    await expect(res.json()).resolves.toMatchObject({
+      error: 'heightCm must be between 100 and 260',
+    })
   })
 })
 

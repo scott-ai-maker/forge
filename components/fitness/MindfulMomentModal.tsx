@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { GaaIcon } from '@/components/ui/GaaIcon'
 import { syncActivityToAppleHealth } from '@/lib/native-healthkit-bridge'
 import { playPrecisionTone } from '@/lib/web-audio-cadence-engine'
+import { useNativeStudioDialog } from '@/components/coach/useNativeStudioDialog'
 
 export type MindfulProtocolId = '4-7-8' | 'box' | '5-5' | 'stillness'
 
@@ -113,6 +114,32 @@ export default function MindfulMomentModal({
   const [isAudioChimeEnabled, setIsAudioChimeEnabled] = useState<boolean>(true)
   const [appleHealthSyncState, setAppleHealthSyncState] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
   const [syncFeedbackMessage, setSyncFeedbackMessage] = useState<string>('')
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false)
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const tickRef = useRef({
+    totalElapsed: 0,
+    phaseIdx: 0,
+    phaseRem: protocolConfig.phases[0].duration,
+    finished: false,
+  })
+
+  useNativeStudioDialog(dialogRef, isOpen, onClose)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setPrefersReducedMotion(mq.matches)
+    const onChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches)
+    mq.addEventListener?.('change', onChange)
+    return () => mq.removeEventListener?.('change', onChange)
+  }, [])
+
+  // Pause session cleanly whenever modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsPlaying(false)
+    }
+  }, [isOpen])
 
   const targetTotalSeconds = durationMinutes * 60
   const activePhase = protocolConfig.phases[phaseIndex] || protocolConfig.phases[0]
@@ -141,10 +168,18 @@ export default function MindfulMomentModal({
     setCompletedCycles(0)
     setIsFinished(false)
     setHasStarted(false)
+    tickRef.current = {
+      totalElapsed: 0,
+      phaseIdx: 0,
+      phaseRem: cfg.phases[0].duration,
+      finished: false,
+    }
   }
 
   // Handle session completion & Apple Health logging
-  const handleFinishSession = useCallback(async () => {
+  const handleFinishSession = useCallback(async (finalElapsedOverride?: number) => {
+    if (tickRef.current.finished) return
+    tickRef.current.finished = true
     setIsPlaying(false)
     setIsFinished(true)
 
@@ -153,7 +188,8 @@ export default function MindfulMomentModal({
       playPrecisionTone({ freq: 528, duration: 0.7, type: 'sine', gainPeak: 0.2 })
     }
 
-    const completedMins = Math.max(1, Math.round(totalSecondsElapsed / 60))
+    const elapsedUsed = typeof finalElapsedOverride === 'number' ? finalElapsedOverride : tickRef.current.totalElapsed
+    const completedMins = Math.max(1, Math.round(elapsedUsed / 60))
     onCompleted?.({ protocol: selectedProtocol, minutes: completedMins })
 
     // Sync to Apple Health Mindful Minutes
@@ -180,51 +216,51 @@ export default function MindfulMomentModal({
       setAppleHealthSyncState('synced')
       setSyncFeedbackMessage(`Session recorded (${completedMins} min)`)
     }
-  }, [isAudioChimeEnabled, totalSecondsElapsed, onCompleted, selectedProtocol, protocolConfig.name])
+  }, [isAudioChimeEnabled, onCompleted, selectedProtocol, protocolConfig.name])
 
-  // Main countdown timer ticker
+  // Main countdown timer ticker (StrictMode-pure: no side effects inside state updaters)
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null
+    if (!isOpen || !isPlaying || isFinished) return
 
-    if (isPlaying && !isFinished) {
-      interval = setInterval(() => {
-        setTotalSecondsElapsed(prevTotal => {
-          const nextTotal = prevTotal + 1
-          if (nextTotal >= targetTotalSeconds) {
-            void handleFinishSession()
-            return targetTotalSeconds
-          }
-          return nextTotal
-        })
+    const interval = setInterval(() => {
+      if (tickRef.current.finished) return
+      const nextTotal = tickRef.current.totalElapsed + 1
+      tickRef.current.totalElapsed = nextTotal
 
-        setPhaseSecondsRemaining(prevSec => {
-          if (prevSec > 1) {
-            return prevSec - 1
-          }
+      if (nextTotal >= targetTotalSeconds) {
+        setTotalSecondsElapsed(targetTotalSeconds)
+        void handleFinishSession(targetTotalSeconds)
+        return
+      }
 
-          // Advance phase
-          const nextIdx = (phaseIndex + 1) % protocolConfig.phases.length
-          setPhaseIndex(nextIdx)
-          if (nextIdx === 0) {
-            setCompletedCycles(c => c + 1)
-          }
+      setTotalSecondsElapsed(nextTotal)
 
-          const nextPhase = protocolConfig.phases[nextIdx]
-          playMindfulChime(nextPhase.type)
-          return nextPhase.duration
-        })
-      }, 1000)
-    }
+      if (tickRef.current.phaseRem > 1) {
+        tickRef.current.phaseRem -= 1
+        setPhaseSecondsRemaining(tickRef.current.phaseRem)
+      } else {
+        const nextIdx = (tickRef.current.phaseIdx + 1) % protocolConfig.phases.length
+        tickRef.current.phaseIdx = nextIdx
+        const nextPhase = protocolConfig.phases[nextIdx]
+        tickRef.current.phaseRem = nextPhase.duration
+        setPhaseIndex(nextIdx)
+        setPhaseSecondsRemaining(nextPhase.duration)
+        if (nextIdx === 0) {
+          setCompletedCycles(c => c + 1)
+        }
+        playMindfulChime(nextPhase.type)
+      }
+    }, 1000)
 
     return () => {
-      if (interval) clearInterval(interval)
+      clearInterval(interval)
     }
-  }, [isPlaying, isFinished, phaseIndex, protocolConfig.phases, targetTotalSeconds, handleFinishSession, playMindfulChime])
+  }, [isOpen, isPlaying, isFinished, protocolConfig.phases, targetTotalSeconds, handleFinishSession, playMindfulChime])
 
   if (!isOpen) return null
 
-  // Calculate breathing circle scale
-  const circleScale = !hasStarted || !isPlaying || isFinished
+  // Calculate breathing circle scale (static 1 under prefers-reduced-motion)
+  const circleScale = prefersReducedMotion || !hasStarted || !isPlaying || isFinished
     ? 1
     : activePhase.type === 'inhale'
       ? 1.35
@@ -240,22 +276,13 @@ export default function MindfulMomentModal({
   const remS = (remainingTotalSecs % 60).toString().padStart(2, '0')
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Mindful Moment Cooldown"
+    <dialog
+      ref={dialogRef}
+      className="forge-live-studio-dialog"
+      {...({ closedby: 'any' } as Record<string, unknown>)}
+      aria-labelledby="mindful-moment-dialog-title"
       style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(5, 10, 20, 0.92)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        zIndex: 100003,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(8px, 3vw, 24px)',
-        overflowY: 'auto',
+        maxWidth: 'min(540px, calc(100vw - 16px))',
       }}
     >
       <div
@@ -270,7 +297,8 @@ export default function MindfulMomentModal({
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: '92vh',
+          maxHeight: '92dvh',
+          boxSizing: 'border-box',
         }}
       >
         {/* Header Bar */}
@@ -281,24 +309,27 @@ export default function MindfulMomentModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: 10,
             background: 'rgba(255, 255, 255, 0.02)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 22 }}>🧘</span>
-            <div>
-              <div
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <span aria-hidden="true" style={{ fontSize: 22 }}>🧘</span>
+            <div style={{ minWidth: 0 }}>
+              <h3
+                id="mindful-moment-dialog-title"
                 style={{
+                  margin: 0,
                   fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-                  fontSize: 18,
+                  fontSize: 'clamp(15px, 4vw, 18px)',
                   fontWeight: 700,
                   letterSpacing: '0.04em',
                   color: '#38BDF8',
-                  lineHeight: 1.1,
+                  lineHeight: 1.15,
                 }}
               >
                 MINDFUL MOMENT &amp; PARASYMPATHETIC RESET
-              </div>
+              </h3>
               <div style={{ fontSize: 11, color: '#94A3B8' }}>
                 Apple Health Mindful Minutes Sync · Autonomic Recovery
               </div>
@@ -314,13 +345,14 @@ export default function MindfulMomentModal({
               border: '1px solid rgba(255, 255, 255, 0.15)',
               color: '#94A3B8',
               borderRadius: '50%',
-              width: 32,
-              height: 32,
+              minWidth: 44,
+              minHeight: 44,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               fontSize: 16,
+              flexShrink: 0,
             }}
           >
             ✕
@@ -343,15 +375,21 @@ export default function MindfulMomentModal({
               <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Select Nervous System Protocol
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+              <div
+                role="group"
+                aria-label="Select Nervous System Protocol"
+                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))', gap: 8 }}
+              >
                 {Object.values(MINDFUL_PROTOCOLS).map(proto => {
                   const isSelected = proto.id === selectedProtocol
                   return (
                     <button
                       key={proto.id}
                       type="button"
+                      aria-pressed={isSelected}
                       onClick={() => handleSelectProtocol(proto.id)}
                       style={{
+                        minHeight: 44,
                         background: isSelected ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.03)',
                         border: isSelected ? '1px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.08)',
                         borderRadius: 8,
@@ -380,15 +418,17 @@ export default function MindfulMomentModal({
               <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Duration
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div role="group" aria-label="Session duration" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {[2, 3, 5, 10].map(mins => (
                   <button
                     key={mins}
                     type="button"
+                    aria-pressed={durationMinutes === mins}
                     onClick={() => setDurationMinutes(mins)}
                     style={{
-                      flex: 1,
-                      padding: '7px 0',
+                      flex: '1 1 60px',
+                      minHeight: 44,
+                      padding: '8px 6px',
                       borderRadius: 6,
                       fontSize: 12,
                       fontWeight: 800,
@@ -517,24 +557,25 @@ export default function MindfulMomentModal({
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#94A3B8', marginBottom: 4 }}>
                 <span>Remaining: <strong style={{ color: '#FFFFFF' }}>{remM}:{remS}</strong></span>
-                <span>Cycles Completed: <strong style={{ color: '#38BDF8' }}>{completedCycles}</strong></span>
+                <span>Cycles Completed: <strong style={{ color: '#38BDF8' }}>{completedCycles}</strong> ({progressPercent}%)</span>
               </div>
-              <div style={{ height: 4, background: 'rgba(255, 255, 255, 0.08)', borderRadius: 2, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${progressPercent}%`,
-                    background: 'linear-gradient(90deg, #38BDF8 0%, #34D399 100%)',
-                    transition: 'width 0.5s ease',
-                  }}
-                />
-              </div>
+              <progress
+                className="forge-progress-bar"
+                max={targetTotalSeconds}
+                value={totalSecondsElapsed}
+                aria-label="Mindful session completion progress"
+                style={{
+                  ['--progress-bar-fill' as string]: '#38BDF8',
+                  blockSize: 6,
+                }}
+              />
             </div>
           )}
 
           {/* Apple Health Sync Feedback Badge */}
           {appleHealthSyncState === 'synced' && (
             <div
+              role="status"
               style={{
                 background: 'rgba(16, 185, 129, 0.12)',
                 border: '1px solid rgba(16, 185, 129, 0.3)',
@@ -548,7 +589,7 @@ export default function MindfulMomentModal({
                 fontWeight: 700,
               }}
             >
-              <span style={{ fontSize: 18 }}>🍎</span>
+              <span aria-hidden="true" style={{ fontSize: 18 }}>🍎</span>
               <span>{syncFeedbackMessage}</span>
             </div>
           )}
@@ -558,8 +599,10 @@ export default function MindfulMomentModal({
             <span style={{ fontSize: 11, color: '#64748B' }}>Acoustic Chime Cues</span>
             <button
               type="button"
+              aria-pressed={isAudioChimeEnabled}
               onClick={() => setIsAudioChimeEnabled(!isAudioChimeEnabled)}
               style={{
+                minHeight: 44,
                 background: 'transparent',
                 border: 'none',
                 color: isAudioChimeEnabled ? '#38BDF8' : '#64748B',
@@ -569,6 +612,7 @@ export default function MindfulMomentModal({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
+                padding: '8px 6px',
               }}
             >
               <span>{isAudioChimeEnabled ? '🔔 Chimes On' : '🔕 Chimes Muted'}</span>
@@ -595,6 +639,7 @@ export default function MindfulMomentModal({
               onClick={onClose}
               className="tactile-btn"
               style={{
+                minHeight: 44,
                 background: '#10B981',
                 color: '#0A0E18',
                 border: 'none',
@@ -611,6 +656,17 @@ export default function MindfulMomentModal({
             <button
               type="button"
               onClick={() => {
+                tickRef.current = {
+                  totalElapsed: 0,
+                  phaseIdx: 0,
+                  phaseRem: protocolConfig.phases[0].duration,
+                  finished: false,
+                }
+                setPhaseIndex(0)
+                setPhaseSecondsRemaining(protocolConfig.phases[0].duration)
+                setTotalSecondsElapsed(0)
+                setCompletedCycles(0)
+                setIsFinished(false)
                 setHasStarted(true)
                 setIsPlaying(true)
                 playMindfulChime('inhale')
@@ -618,6 +674,7 @@ export default function MindfulMomentModal({
               className="tactile-btn"
               style={{
                 width: '100%',
+                minHeight: 44,
                 padding: '12px 20px',
                 background: 'linear-gradient(135deg, #38BDF8 0%, #0284C7 100%)',
                 color: '#0A0E18',
@@ -645,6 +702,7 @@ export default function MindfulMomentModal({
                 type="button"
                 onClick={() => setIsPlaying(!isPlaying)}
                 style={{
+                  minHeight: 44,
                   background: 'rgba(255, 255, 255, 0.08)',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
                   color: '#FFFFFF',
@@ -662,6 +720,7 @@ export default function MindfulMomentModal({
                 type="button"
                 onClick={() => void handleFinishSession()}
                 style={{
+                  minHeight: 44,
                   background: 'rgba(56, 189, 248, 0.15)',
                   border: '1px solid rgba(56, 189, 248, 0.4)',
                   color: '#38BDF8',
@@ -678,7 +737,7 @@ export default function MindfulMomentModal({
           )}
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }
 

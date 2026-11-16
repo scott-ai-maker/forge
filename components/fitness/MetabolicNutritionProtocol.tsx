@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useId } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   calculateEnergyExpenditure,
   calculatePrecisionMacros,
   calculateHandPortions,
+  optPhaseNumberToKey,
   EXECUTIVE_DINING_PLAYBOOK,
   NasmOptPhase,
   NutritionGoal,
@@ -60,9 +61,22 @@ export default function MetabolicNutritionProtocol({
   optPhase = null,
   initialMode = 'macros_dining',
 }: MetabolicNutritionProtocolProps) {
+  const formIdPrefix = useId()
+  const weightSliderId = `${formIdPrefix}-weight`
+  const goalSelectId = `${formIdPrefix}-goal`
+  const activitySelectId = `${formIdPrefix}-activity`
+  const bodyFatSliderId = `${formIdPrefix}-bodyfat`
+
   const [nutritionMode, setNutritionMode] = useState<'hand_portions' | 'macros_dining' | 'supplements' | 'equipment'>(initialMode)
-  const [activePhase, setActivePhase] = useState<NasmOptPhase>('phase1_stabilization')
+  const [activePhase, setActivePhase] = useState<NasmOptPhase>(() => optPhaseNumberToKey(optPhase))
   const [activeDiningTab, setActiveDiningTab] = useState<string>('steakhouse')
+  const [isExploringCustomInputs, setIsExploringCustomInputs] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (optPhase !== null && optPhase !== undefined) {
+      setActivePhase(optPhaseNumberToKey(optPhase))
+    }
+  }, [optPhase])
 
   // Live Ingested Telemetry
   const caloriesIngested = telemetry?.nutrition?.caloriesConsumedKcal ?? 2180
@@ -79,6 +93,15 @@ export default function MetabolicNutritionProtocol({
   const [sex] = useState<'male' | 'female' | 'other'>(initialSex)
   const [heightInches] = useState<number>(initialHeightInches)
   const [bodyFat, setBodyFat] = useState<number>(initialBodyFat)
+
+  const handleResetToSavedTargets = () => {
+    setWeight(bodyweightLbs)
+    setSelectedGoal(goal)
+    setActivityLevel(initialActivityLevel)
+    setBodyFat(initialBodyFat)
+    setActivePhase(optPhaseNumberToKey(optPhase))
+    setIsExploringCustomInputs(false)
+  }
 
   const calculatedEnergy = useMemo(() => calculateEnergyExpenditure({
     weightLbs: weight,
@@ -100,16 +123,20 @@ export default function MetabolicNutritionProtocol({
     goal: selectedGoal,
     phase: activePhase,
   }), [weight, heightInches, age, sex, bodyFat, activityLevel, selectedGoal, activePhase])
-  const energy = useMemo(() => savedTargets
+
+  const useSavedLock = Boolean(savedTargets) && !isExploringCustomInputs
+
+  const energy = useMemo(() => useSavedLock && savedTargets
     ? {
         ...calculatedEnergy,
         targetCalories: savedTargets.targetCalories,
         calorieDelta: savedTargets.targetCalories - calculatedEnergy.tdeeCalories,
         goalLabel: 'Saved program nutrition target',
       }
-    : calculatedEnergy, [calculatedEnergy, savedTargets])
+    : calculatedEnergy, [calculatedEnergy, savedTargets, useSavedLock])
+
   const macros = useMemo(() => {
-    if (!savedTargets) return calculatedMacros
+    if (!useSavedLock || !savedTargets) return calculatedMacros
     const proteinCalories = savedTargets.proteinGrams * 4
     const carbCalories = savedTargets.carbGrams * 4
     const fatCalories = savedTargets.fatGrams * 9
@@ -127,7 +154,7 @@ export default function MetabolicNutritionProtocol({
       fatCalories,
       fatPct: totalCalories ? Math.round((fatCalories / totalCalories) * 100) : 0,
     }
-  }, [calculatedMacros, savedTargets])
+  }, [calculatedMacros, savedTargets, useSavedLock])
 
   const handPortions = useMemo(() => calculateHandPortions({
     sex,
@@ -151,24 +178,46 @@ export default function MetabolicNutritionProtocol({
       {savedTargets && (
         <section
           aria-label="Saved program nutrition targets"
-          style={{ padding: '16px 18px', border: '1px solid rgba(212,160,23,0.5)', borderRadius: 10, background: 'rgba(13,27,42,0.95)' }}
+          style={{ padding: '16px 18px', border: '1px solid rgba(212,160,23,0.5)', borderRadius: 10, background: 'rgba(13,27,42,0.95)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}
         >
-          <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            Daily targets from your saved program
+          <div>
+            <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              Daily targets from your saved program
+            </div>
+            <div style={{ marginTop: 6, color: 'var(--white)', fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-telemetry, monospace)' }}>
+              {savedTargets.targetCalories.toLocaleString()} kcal / day
+            </div>
+            <div style={{ color: 'var(--gray)', fontSize: 14, marginTop: 3 }}>
+              Protein {savedTargets.proteinGrams}g · Carbs {savedTargets.carbGrams}g · Fat {savedTargets.fatGrams}g
+            </div>
           </div>
-          <div style={{ marginTop: 6, color: 'var(--white)', fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-telemetry, monospace)' }}>
-            {savedTargets.targetCalories.toLocaleString()} kcal / day
-          </div>
-          <div style={{ color: 'var(--gray)', fontSize: 14, marginTop: 3 }}>
-            Protein {savedTargets.proteinGrams}g · Carbs {savedTargets.carbGrams}g · Fat {savedTargets.fatGrams}g
-          </div>
+          {isExploringCustomInputs && (
+            <button
+              type="button"
+              onClick={handleResetToSavedTargets}
+              className="tactile-btn"
+              style={{
+                minHeight: 44,
+                padding: '10px 16px',
+                borderRadius: 6,
+                background: 'rgba(212,160,23,0.18)',
+                border: '1px solid var(--gold)',
+                color: 'var(--gold-lt)',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+              }}
+            >
+              Reset to saved targets
+            </button>
+          )}
         </section>
       )}
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="glass-card" style={{ padding: '24px 28px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span
                 style={{
                   fontFamily: 'Raleway, sans-serif',
@@ -202,15 +251,17 @@ export default function MetabolicNutritionProtocol({
             </h3>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div role="group" aria-label="Nutrition workspace modes" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
               type="button"
+              aria-pressed={nutritionMode === 'hand_portions'}
               onClick={() => setNutritionMode('hand_portions')}
               className="tactile-btn"
               style={{
+                minHeight: 44,
                 padding: '8px 16px',
                 background: nutritionMode === 'hand_portions' ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
-                border: nutritionMode === 'hand_portions' ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                border: nutritionMode === 'hand_portions' ? '2px solid #FDE68A' : '1px solid rgba(255,255,255,0.12)',
                 color: nutritionMode === 'hand_portions' ? 'var(--navy)' : 'var(--white)',
                 fontFamily: 'Raleway, sans-serif',
                 fontWeight: 700,
@@ -228,12 +279,14 @@ export default function MetabolicNutritionProtocol({
 
             <button
               type="button"
+              aria-pressed={nutritionMode === 'macros_dining'}
               onClick={() => setNutritionMode('macros_dining')}
               className="tactile-btn"
               style={{
+                minHeight: 44,
                 padding: '8px 16px',
                 background: nutritionMode === 'macros_dining' ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
-                border: nutritionMode === 'macros_dining' ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                border: nutritionMode === 'macros_dining' ? '2px solid #FDE68A' : '1px solid rgba(255,255,255,0.12)',
                 color: nutritionMode === 'macros_dining' ? 'var(--navy)' : 'var(--white)',
                 fontFamily: 'Raleway, sans-serif',
                 fontWeight: 700,
@@ -251,13 +304,14 @@ export default function MetabolicNutritionProtocol({
 
             <button
               type="button"
+              aria-pressed={nutritionMode === 'supplements'}
               onClick={() => setNutritionMode('supplements')}
               className="tactile-btn"
-              title="Chrono-Nutrition & Thorne Dispensary (15% Member Discount)"
               style={{
+                minHeight: 44,
                 padding: '8px 16px',
                 background: nutritionMode === 'supplements' ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
-                border: nutritionMode === 'supplements' ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                border: nutritionMode === 'supplements' ? '2px solid #FDE68A' : '1px solid rgba(255,255,255,0.12)',
                 color: nutritionMode === 'supplements' ? 'var(--navy)' : 'var(--white)',
                 fontFamily: 'Raleway, sans-serif',
                 fontWeight: 700,
@@ -293,13 +347,14 @@ export default function MetabolicNutritionProtocol({
             {isEquipmentDispensaryEnabled && (
               <button
                 type="button"
+                aria-pressed={nutritionMode === 'equipment'}
                 onClick={() => setNutritionMode('equipment')}
                 className="tactile-btn"
-                title="Prescribed Corrective & Home-Gym Gear (Perform Better & Crossover Symmetry)"
                 style={{
+                  minHeight: 44,
                   padding: '8px 16px',
                   background: nutritionMode === 'equipment' ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
-                  border: nutritionMode === 'equipment' ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                  border: nutritionMode === 'equipment' ? '2px solid #FDE68A' : '1px solid rgba(255,255,255,0.12)',
                   color: nutritionMode === 'equipment' ? 'var(--navy)' : 'var(--white)',
                   fontFamily: 'Raleway, sans-serif',
                   fontWeight: 700,
@@ -353,7 +408,15 @@ export default function MetabolicNutritionProtocol({
       ) : nutritionMode === 'supplements' ? (
         <div style={{ display: 'grid', gap: 24 }}>
           <SupplementAdvisorWidget
-            initialGoal={selectedGoal === 'hypertrophy' ? 'hypertrophy' : selectedGoal === 'fat_loss' ? 'fat_loss' : 'general_health'}
+            initialGoal={
+              selectedGoal === 'hypertrophy'
+                ? 'hypertrophy'
+                : selectedGoal === 'fat_loss'
+                ? 'fat_loss'
+                : selectedGoal === 'athletic_power'
+                ? 'athletic_power'
+                : 'general_health'
+            }
             initialAge={initialAge}
             initialSex={initialSex === 'female' ? 'female' : 'male'}
             intake={intake}
@@ -409,7 +472,7 @@ export default function MetabolicNutritionProtocol({
               </div>
 
               {/* Goal Selector Pill Switcher */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <div role="group" aria-label="Hand portion nutrition goals" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {(
                   [
                     { key: 'fat_loss', label: 'Fat Loss' },
@@ -423,12 +486,17 @@ export default function MetabolicNutritionProtocol({
                     <button
                       key={g.key}
                       type="button"
-                      onClick={() => setSelectedGoal(g.key)}
+                      aria-pressed={active}
+                      onClick={() => {
+                        setSelectedGoal(g.key)
+                        setIsExploringCustomInputs(true)
+                      }}
                       className="tactile-btn"
                       style={{
-                        padding: '6px 12px',
+                        minHeight: 44,
+                        padding: '10px 14px',
                         background: active ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
-                        border: active ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                        border: active ? '2px solid #FDE68A' : '1px solid rgba(255,255,255,0.12)',
                         color: active ? 'var(--navy)' : 'var(--white)',
                         fontFamily: 'Raleway, sans-serif',
                         fontWeight: 700,
@@ -454,7 +522,7 @@ export default function MetabolicNutritionProtocol({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
                 gap: 16,
               }}
             >
@@ -639,7 +707,7 @@ export default function MetabolicNutritionProtocol({
               </h4>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 14 }}>
               {/* Cue 1: Hara Hachi Bu */}
               <div style={{ background: 'rgba(8,14,20,0.6)', padding: 16, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, display: 'grid', gap: 6 }}>
                 <div style={{ color: 'var(--gold-lt)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -725,30 +793,47 @@ export default function MetabolicNutritionProtocol({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: 14 }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--gray)' }}>
-              <span>Body Weight:</span>
+              <label htmlFor={weightSliderId}>Body Weight:</label>
               <strong style={{ color: 'var(--gold-lt)' }}>{weight} lbs ({energy.weightKg} kg)</strong>
             </div>
             <input
-              aria-label="Nutrition body weight in pounds"
+              id={weightSliderId}
+              className="forge-range-slider"
               type="range"
               min={100}
               max={320}
               value={weight}
-              onChange={e => setWeight(Number(e.target.value))}
-              style={{ width: '100%', accentColor: 'var(--gold)', marginTop: 4 }}
+              aria-valuetext={`${weight} pounds (${energy.weightKg} kilograms)`}
+              onChange={e => {
+                setWeight(Number(e.target.value))
+                setIsExploringCustomInputs(true)
+              }}
+              style={
+                {
+                  '--attr-min': 100,
+                  '--attr-max': 320,
+                  '--control-value': weight,
+                  '--slider-fill-color': '#D4A017',
+                  '--slider-thumb-color': '#FBBF24',
+                  marginTop: 4,
+                } as React.CSSProperties
+              }
             />
           </div>
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--gray)' }}>
-              <span>Primary Goal:</span>
+              <label htmlFor={goalSelectId}>Primary Goal:</label>
               <strong style={{ color: 'var(--gold-lt)' }}>{selectedGoal.replace('_', ' ').toUpperCase()}</strong>
             </div>
             <select
-              aria-label="Nutrition goal"
+              id={goalSelectId}
               value={selectedGoal}
-              onChange={e => setSelectedGoal(e.target.value as NutritionGoal)}
-              style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '6px 8px', borderRadius: 4, marginTop: 4 }}
+              onChange={e => {
+                setSelectedGoal(e.target.value as NutritionGoal)
+                setIsExploringCustomInputs(true)
+              }}
+              style={{ width: '100%', minHeight: 44, fontSize: 'max(1rem, 1em)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '8px 10px', borderRadius: 4, marginTop: 4 }}
             >
               <option value="fat_loss">Fat Loss (-500 kcal)</option>
               <option value="hypertrophy">Muscle Hypertrophy (+350 kcal)</option>
@@ -759,14 +844,17 @@ export default function MetabolicNutritionProtocol({
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--gray)' }}>
-              <span>Activity Level (PAL):</span>
+              <label htmlFor={activitySelectId}>Activity Level (PAL):</label>
               <strong style={{ color: 'var(--gold-lt)' }}>{energy.activityMultiplier}x</strong>
             </div>
             <select
-              aria-label="Nutrition activity level"
+              id={activitySelectId}
               value={activityLevel}
-              onChange={e => setActivityLevel(e.target.value as ActivityLevel)}
-              style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '6px 8px', borderRadius: 4, marginTop: 4 }}
+              onChange={e => {
+                setActivityLevel(e.target.value as ActivityLevel)
+                setIsExploringCustomInputs(true)
+              }}
+              style={{ width: '100%', minHeight: 44, fontSize: 'max(1rem, 1em)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '8px 10px', borderRadius: 4, marginTop: 4 }}
             >
               <option value="sedentary">Sedentary (1.2x)</option>
               <option value="lightly_active">Lightly Active (1.375x)</option>
@@ -778,17 +866,31 @@ export default function MetabolicNutritionProtocol({
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--gray)' }}>
-              <span>Body Fat % (Optional):</span>
+              <label htmlFor={bodyFatSliderId}>Body Fat % (Optional):</label>
               <strong style={{ color: 'var(--gold-lt)' }}>{bodyFat > 0 ? `${bodyFat}%` : 'Standard'}</strong>
             </div>
             <input
-              aria-label="Nutrition body fat percent"
+              id={bodyFatSliderId}
+              className="forge-range-slider"
               type="range"
               min={6}
               max={40}
-              value={bodyFat}
-              onChange={e => setBodyFat(Number(e.target.value))}
-              style={{ width: '100%', accentColor: 'var(--gold)', marginTop: 4 }}
+              value={Math.min(40, Math.max(6, bodyFat || 16))}
+              aria-valuetext={bodyFat > 0 ? `${bodyFat}% body fat` : 'Standard Mifflin-St Jeor estimate'}
+              onChange={e => {
+                setBodyFat(Number(e.target.value))
+                setIsExploringCustomInputs(true)
+              }}
+              style={
+                {
+                  '--attr-min': 6,
+                  '--attr-max': 40,
+                  '--control-value': Math.min(40, Math.max(6, bodyFat || 16)),
+                  '--slider-fill-color': '#D4A017',
+                  '--slider-thumb-color': '#FBBF24',
+                  marginTop: 4,
+                } as React.CSSProperties
+              }
             />
           </div>
         </div>
@@ -819,7 +921,7 @@ export default function MetabolicNutritionProtocol({
       </details>
 
       {/* ── Phase Selector Tabs ─────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div role="group" aria-label="NASM OPT training phases" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {phases.map(p => {
           const active = activePhase === p.key
           return (
@@ -830,8 +932,9 @@ export default function MetabolicNutritionProtocol({
               onClick={() => setActivePhase(p.key)}
               className="tactile-btn"
               style={{
+                minHeight: 44,
                 padding: '10px 16px',
-                border: active ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.08)',
+                border: active ? '1.5px solid var(--gold)' : '1px solid rgba(255,255,255,0.08)',
                 background: active ? 'rgba(197,160,89,0.15)' : 'rgba(8,14,20,0.6)',
                 color: active ? 'var(--gold-lt)' : 'var(--white)',
                 cursor: 'pointer',
@@ -887,9 +990,13 @@ export default function MetabolicNutritionProtocol({
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '2px 0' }}>
               {caloriesIngested.toLocaleString()} <span style={{ fontSize: 13, color: 'var(--gold-lt)' }}>/ {macros.targetCalories}</span>
             </div>
-            <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, Math.round((caloriesIngested / Math.max(macros.targetCalories, 1)) * 100))}%`, height: '100%', background: '#FF2D55' }} />
-            </div>
+            <progress
+              className="forge-progress-bar"
+              value={Math.min(caloriesIngested, Math.max(macros.targetCalories, 1))}
+              max={Math.max(macros.targetCalories, 1)}
+              aria-label="Calories ingested progress"
+              style={{ '--progress-bar-fill': '#FF2D55', blockSize: '0.35rem' } as React.CSSProperties}
+            />
           </div>
 
           <div style={{ background: 'rgba(0,0,0,0.35)', padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -897,9 +1004,13 @@ export default function MetabolicNutritionProtocol({
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: '#34D399', margin: '2px 0' }}>
               {proteinIngested}g <span style={{ fontSize: 13, color: 'var(--gray)' }}>/ {macros.proteinGrams}g</span>
             </div>
-            <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, Math.round((proteinIngested / Math.max(macros.proteinGrams, 1)) * 100))}%`, height: '100%', background: '#34D399' }} />
-            </div>
+            <progress
+              className="forge-progress-bar"
+              value={Math.min(proteinIngested, Math.max(macros.proteinGrams, 1))}
+              max={Math.max(macros.proteinGrams, 1)}
+              aria-label="Protein ingested progress"
+              style={{ '--progress-bar-fill': '#34D399', blockSize: '0.35rem' } as React.CSSProperties}
+            />
           </div>
 
           <div style={{ background: 'rgba(0,0,0,0.35)', padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -907,9 +1018,13 @@ export default function MetabolicNutritionProtocol({
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--gold)', margin: '2px 0' }}>
               {carbsIngested}g <span style={{ fontSize: 13, color: 'var(--gray)' }}>/ {macros.carbGrams}g</span>
             </div>
-            <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, Math.round((carbsIngested / Math.max(macros.carbGrams, 1)) * 100))}%`, height: '100%', background: 'var(--gold)' }} />
-            </div>
+            <progress
+              className="forge-progress-bar"
+              value={Math.min(carbsIngested, Math.max(macros.carbGrams, 1))}
+              max={Math.max(macros.carbGrams, 1)}
+              aria-label="Carbohydrates ingested progress"
+              style={{ '--progress-bar-fill': '#D4A017', blockSize: '0.35rem' } as React.CSSProperties}
+            />
           </div>
 
           <div style={{ background: 'rgba(0,0,0,0.35)', padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -917,9 +1032,13 @@ export default function MetabolicNutritionProtocol({
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: '#60A5FA', margin: '2px 0' }}>
               {fatIngested}g <span style={{ fontSize: 13, color: 'var(--gray)' }}>/ {macros.fatGrams}g</span>
             </div>
-            <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, Math.round((fatIngested / Math.max(macros.fatGrams, 1)) * 100))}%`, height: '100%', background: '#60A5FA' }} />
-            </div>
+            <progress
+              className="forge-progress-bar"
+              value={Math.min(fatIngested, Math.max(macros.fatGrams, 1))}
+              max={Math.max(macros.fatGrams, 1)}
+              aria-label="Dietary fat ingested progress"
+              style={{ '--progress-bar-fill': '#60A5FA', blockSize: '0.35rem' } as React.CSSProperties}
+            />
           </div>
 
           <div style={{ background: 'rgba(0,0,0,0.35)', padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -927,9 +1046,13 @@ export default function MetabolicNutritionProtocol({
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: '#38BDF8', margin: '2px 0' }}>
               {waterIngested} oz <span style={{ fontSize: 13, color: 'var(--gray)' }}>/ {macros.hydrationTargetOz} oz</span>
             </div>
-            <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, Math.round((waterIngested / Math.max(macros.hydrationTargetOz, 1)) * 100))}%`, height: '100%', background: '#38BDF8' }} />
-            </div>
+            <progress
+              className="forge-progress-bar"
+              value={Math.min(waterIngested, Math.max(macros.hydrationTargetOz, 1))}
+              max={Math.max(macros.hydrationTargetOz, 1)}
+              aria-label="Daily hydration progress"
+              style={{ '--progress-bar-fill': '#38BDF8', blockSize: '0.35rem' } as React.CSSProperties}
+            />
           </div>
         </div>
       </div>
@@ -957,7 +1080,7 @@ export default function MetabolicNutritionProtocol({
 
           <div style={{ background: 'rgba(8,14,20,0.6)', padding: '16px 18px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}>
             <div style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-            {savedTargets ? 'Protein' : `Protein (${macros.proteinPerLb}g/lb)`}
+            {useSavedLock ? 'Protein' : `Protein (${macros.proteinPerLb}g/lb)`}
             </div>
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 36, fontWeight: 700, color: 'var(--white)', lineHeight: 1, marginTop: 4 }}>
               {macros.proteinGrams}g
@@ -1038,19 +1161,21 @@ export default function MetabolicNutritionProtocol({
         </div>
 
         {/* Venue Selector */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div role="group" aria-label="Dining and travel protocols" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {EXECUTIVE_DINING_PLAYBOOK.map(venue => {
             const active = activeDiningTab === venue.venueType
             return (
               <button
                 key={venue.venueType}
                 type="button"
+                aria-pressed={active}
                 onClick={() => setActiveDiningTab(venue.venueType)}
                 className="tactile-btn"
                 style={{
-                  padding: '8px 16px',
+                  minHeight: 44,
+                  padding: '10px 16px',
                   background: active ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  border: active ? '2px solid #FDE68A' : '1px solid rgba(255,255,255,0.1)',
                   color: active ? 'var(--navy)' : 'var(--white)',
                   fontFamily: 'Raleway, sans-serif',
                   fontSize: 12,

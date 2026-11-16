@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback, useId } from 'react'
 import {
   CARDIO_PATTERNS,
   buildCardioSession,
@@ -100,6 +100,11 @@ export default function CoachCardioVoiceoverPlayer({
   onFlowToMindfulness,
   onSessionLogged,
 }: CoachCardioVoiceoverPlayerProps) {
+  const uid = useId()
+  const patternGroupLabelId = `${uid}-cardio-pattern-group`
+  const durationGroupLabelId = `${uid}-cardio-duration-group`
+  const modalitySelectId = `${uid}-cardio-modality`
+
   const [isHydrated, setIsHydrated] = useState(false)
   useEffect(() => {
     setIsHydrated(true)
@@ -191,7 +196,7 @@ export default function CoachCardioVoiceoverPlayer({
       const next = !prev
       try {
         localStorage.setItem('gaa_cardio_music_ducking_v1', JSON.stringify(next))
-      } catch {}
+      } catch { }
       if (next) {
         configureCardioAudioSession('transient')
         clearCardioMediaSession()
@@ -213,7 +218,7 @@ export default function CoachCardioVoiceoverPlayer({
       setIsMusicDuckingActive(true)
       try {
         localStorage.setItem('gaa_cardio_music_ducking_v1', 'true')
-      } catch {}
+      } catch { }
     }
     launchSpotifyNative('https://open.spotify.com/playlist/37i9dQZF1DXdLEN7aqioXM')
     setMusicDuckingToast('Spotify launched! Music ducking engaged — Coach Gordon will speak over your rhythm.')
@@ -228,6 +233,29 @@ export default function CoachCardioVoiceoverPlayer({
   const [nativeBpm, setNativeBpm] = useState<number | null>(null)
   const [bpmSamples, setBpmSamples] = useState<number[]>([])
   const [lastAdaptiveAlertTime, setLastAdaptiveAlertTime] = useState<number>(0)
+  const btDeviceRef = useRef<{ gatt?: { connected?: boolean; disconnect?: () => void } } | null>(null)
+  const btCharacteristicRef = useRef<{
+    removeEventListener?: (e: string, h: (ev: Event) => void) => void
+    stopNotifications?: () => Promise<void>
+  } | null>(null)
+  const btListenerRef = useRef<((ev: Event) => void) | null>(null)
+
+  const cleanupBtHeartRate = useCallback(() => {
+    if (btCharacteristicRef.current && btListenerRef.current) {
+      try {
+        btCharacteristicRef.current.removeEventListener?.('characteristicvaluechanged', btListenerRef.current)
+        void btCharacteristicRef.current.stopNotifications?.()
+      } catch { }
+    }
+    btCharacteristicRef.current = null
+    btListenerRef.current = null
+    if (btDeviceRef.current?.gatt?.connected) {
+      try {
+        btDeviceRef.current.gatt.disconnect?.()
+      } catch { }
+    }
+    btDeviceRef.current = null
+  }, [])
 
   // Two-Way Hands-Free Voice Copilot
   const [isVoiceCopilotEnabled, setIsVoiceCopilotEnabled] = useState<boolean>(false)
@@ -341,7 +369,7 @@ export default function CoachCardioVoiceoverPlayer({
         if (typeof window !== 'undefined' && 'vibrate' in navigator) {
           try {
             navigator.vibrate([40, 30, 80])
-          } catch {}
+          } catch { }
         }
       }
     }, 50)
@@ -362,7 +390,7 @@ export default function CoachCardioVoiceoverPlayer({
       if (typeof window !== 'undefined' && 'vibrate' in navigator) {
         try {
           navigator.vibrate(60)
-        } catch {}
+        } catch { }
       }
     }
     lastShieldTapRef.current = now
@@ -394,7 +422,7 @@ export default function CoachCardioVoiceoverPlayer({
         if (isMounted && typeof res.heartRate === 'number' && res.heartRate > 30) {
           setNativeBpm(res.heartRate)
         }
-      } catch {}
+      } catch { }
     }
 
     void pollNativeHr()
@@ -929,25 +957,32 @@ export default function CoachCardioVoiceoverPlayer({
   // ── Web Bluetooth Heart Rate Connection ──────────────────────────
   const connectBluetoothHeartRate = async () => {
     if (typeof window === 'undefined' || !('bluetooth' in navigator)) {
-      alert('Web Bluetooth is supported on Google Chrome, Microsoft Edge, and Chrome for Android. Connect on a supported browser.')
+      setMusicDuckingToast('Web Bluetooth requires Google Chrome, Microsoft Edge, or Chrome for Android.')
+      setTimeout(() => setMusicDuckingToast(null), 4000)
       return
     }
 
     setIsBtConnecting(true)
+    cleanupBtHeartRate()
     try {
       const navBt = (navigator as unknown as {
         bluetooth: {
           requestDevice: (opts: unknown) => Promise<{
             gatt: {
+              connected?: boolean
               connect: () => Promise<{
                 getPrimaryService: (s: string) => Promise<{
                   getCharacteristic: (c: string) => Promise<{
                     startNotifications: () => Promise<void>
+                    stopNotifications?: () => Promise<void>
                     addEventListener: (e: string, h: (ev: Event) => void) => void
+                    removeEventListener?: (e: string, h: (ev: Event) => void) => void
                   }>
                 }>
               }>
+              disconnect?: () => void
             }
+            addEventListener?: (e: string, h: () => void) => void
             name?: string
           }>
         }
@@ -957,32 +992,42 @@ export default function CoachCardioVoiceoverPlayer({
         filters: [{ services: ['heart_rate'] }],
         optionalServices: ['battery_service'],
       })
+      btDeviceRef.current = device
+      device.addEventListener?.('gattserverdisconnected', () => {
+        setIsBtConnected(false)
+        setLiveBpm(null)
+      })
 
       const server = await device.gatt.connect()
       const service = await server.getPrimaryService('heart_rate')
       const characteristic = await service.getCharacteristic('heart_rate_measurement')
+      btCharacteristicRef.current = characteristic
 
-      await characteristic.startNotifications()
-      characteristic.addEventListener('characteristicvaluechanged', (ev: Event) => {
-        const target = ev.target as unknown as { value: DataView }
-        if (!target?.value) return
+      const onCharacteristicChanged = (ev: Event) => {
+        const target = ev.target as unknown as { value?: DataView }
+        const val = target?.value
+        if (!val || typeof val.byteLength !== 'number' || val.byteLength < 2) return
 
-        const val = target.value
         const flags = val.getUint8(0)
-        const is16Bit = flags & 0x1
+        const is16Bit = Boolean(flags & 0x1)
+        if (is16Bit && val.byteLength < 3) return
         const bpm = is16Bit ? val.getUint16(1, true) : val.getUint8(1)
 
         if (bpm >= 35 && bpm <= 235) {
           setLiveBpm(bpm)
           setBpmSamples(prev => [...prev.slice(-300), bpm])
         }
-      })
+      }
+      btListenerRef.current = onCharacteristicChanged
+
+      await characteristic.startNotifications()
+      characteristic.addEventListener('characteristicvaluechanged', onCharacteristicChanged)
 
       setIsBtConnected(true)
       setBtDeviceName(device.name || 'Bluetooth Heart Rate Monitor')
       speakCue('Heart rate monitor connected. Real-time biometric feedback engaged.')
     } catch {
-      // User cancelled or Bluetooth unavailable
+      cleanupBtHeartRate()
     } finally {
       setIsBtConnecting(false)
     }
@@ -1025,7 +1070,7 @@ export default function CoachCardioVoiceoverPlayer({
         if (isVoiceCopilotEnabled && isPlaying) {
           try {
             recognition?.start()
-          } catch {}
+          } catch { }
         } else {
           setIsListeningForVoice(false)
         }
@@ -1078,13 +1123,13 @@ export default function CoachCardioVoiceoverPlayer({
       }
 
       recognition.start()
-    } catch {}
+    } catch { }
 
     return () => {
       if (recognition) {
         try {
           recognition.stop()
-        } catch {}
+        } catch { }
       }
       setIsListeningForVoice(false)
     }
@@ -1150,8 +1195,8 @@ export default function CoachCardioVoiceoverPlayer({
       typeof DeviceMotionEventWithPermission.requestPermission === 'function'
     ) {
       try {
-        void DeviceMotionEventWithPermission.requestPermission().catch(() => {})
-      } catch {}
+        void DeviceMotionEventWithPermission.requestPermission().catch(() => { })
+      } catch { }
     }
 
     // Unlock AudioContext and configure transient AudioSession for smooth ducking
@@ -1305,6 +1350,7 @@ export default function CoachCardioVoiceoverPlayer({
       void releaseScreenWakeLock()
       stopCardioVoiceCue()
       clearCardioMediaSession()
+      cleanupBtHeartRate()
       if (holdIntervalRef.current) {
         clearInterval(holdIntervalRef.current)
       }
@@ -1313,7 +1359,7 @@ export default function CoachCardioVoiceoverPlayer({
         watchIdRef.current = null
       }
     }
-  }, [])
+  }, [cleanupBtHeartRate])
 
   // Format mm:ss
   const formatTime = (secs: number) => {
@@ -1347,6 +1393,7 @@ export default function CoachCardioVoiceoverPlayer({
     void releaseScreenWakeLock()
     stopCardioVoiceCue()
     clearCardioMediaSession()
+    cleanupBtHeartRate()
     onClose?.()
   }
 
@@ -1410,6 +1457,9 @@ export default function CoachCardioVoiceoverPlayer({
           gap: 14px;
           align-items: stretch;
           margin-bottom: 16px;
+        }
+        .coach-cardio-header-actions > button {
+          min-height: 44px;
         }
         .coach-cardio-presets-grid {
           display: grid;
@@ -1747,6 +1797,8 @@ export default function CoachCardioVoiceoverPlayer({
         {/* ── Music Ducking Status Toast ──────────────────────────────── */}
         {musicDuckingToast && (
           <div
+            role="status"
+            aria-live="polite"
             style={{
               background: 'rgba(56,189,248,0.15)',
               border: '1px solid #38BDF8',
@@ -1954,18 +2006,19 @@ export default function CoachCardioVoiceoverPlayer({
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <div id={patternGroupLabelId} style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Select Cardio Prescription Protocol:
-                </label>
+                </div>
                 <span style={{ fontSize: 10, color: 'var(--gray)' }}>6 Prescriptions</span>
               </div>
-              <div className="coach-cardio-presets-grid">
+              <div className="coach-cardio-presets-grid" role="group" aria-labelledby={patternGroupLabelId}>
                 {Object.values(CARDIO_PATTERNS).map(pat => {
                   const isSelected = selectedPatternId === pat.id
                   return (
                     <button
                       key={pat.id}
                       type="button"
+                      aria-pressed={isSelected}
                       onClick={() => {
                         setSelectedPatternId(pat.id)
                         setDurationMinutes(pat.defaultDurationMins)
@@ -1976,6 +2029,7 @@ export default function CoachCardioVoiceoverPlayer({
                         border: isSelected ? '2px solid #D4AF37' : '1px solid rgba(255,255,255,0.08)',
                         borderRadius: 8,
                         padding: '8px 10px',
+                        minHeight: 46,
                         textAlign: 'left',
                         color: '#FFFFFF',
                         cursor: 'pointer',
@@ -2010,14 +2064,15 @@ export default function CoachCardioVoiceoverPlayer({
             >
               {/* Duration Pills */}
               <div>
-                <label style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>
+                <div id={durationGroupLabelId} style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>
                   Session Duration:
-                </label>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                </div>
+                <div role="group" aria-labelledby={durationGroupLabelId} style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {(session.pattern.allowedDurations || [10, 15, 20, 30, 45]).map(mins => (
                     <button
                       key={mins}
                       type="button"
+                      aria-pressed={durationMinutes === mins}
                       onClick={() => setDurationMinutes(mins)}
                       className="tactile-btn"
                       style={{
@@ -2025,7 +2080,8 @@ export default function CoachCardioVoiceoverPlayer({
                         color: durationMinutes === mins ? '#0A0E18' : '#FFFFFF',
                         border: durationMinutes === mins ? '1px solid #F59E0B' : '1px solid rgba(255,255,255,0.1)',
                         borderRadius: 6,
-                        padding: '6px 12px',
+                        padding: '8px 12px',
+                        minHeight: 44,
                         fontSize: 12,
                         fontWeight: 800,
                         cursor: 'pointer',
@@ -2039,9 +2095,9 @@ export default function CoachCardioVoiceoverPlayer({
               </div>
 
               {/* Equipment Modality Selector */}
-              <div style={{ minWidth: 200, flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                  <label style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div style={{ minWidth: 'min(100%, 200px)', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                  <label htmlFor={modalitySelectId} style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     Equipment &amp; Modality:
                   </label>
                   <button
@@ -2051,10 +2107,14 @@ export default function CoachCardioVoiceoverPlayer({
                       background: 'none',
                       border: 'none',
                       color: '#38BDF8',
-                      fontSize: 10.5,
+                      fontSize: 11,
                       fontWeight: 800,
                       cursor: 'pointer',
                       textDecoration: 'underline',
+                      minHeight: 44,
+                      padding: '4px 6px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
                     }}
                   >
                     {showFormGuide ? 'Hide Form Directives' : 'View Form Directives'}
@@ -2062,16 +2122,19 @@ export default function CoachCardioVoiceoverPlayer({
                 </div>
 
                 <select
+                  id={modalitySelectId}
+                  name="cardio_modality"
                   value={selectedModality}
                   onChange={e => setSelectedModality(e.target.value)}
                   style={{
                     width: '100%',
+                    minHeight: 44,
                     background: '#0F172A',
                     color: '#FFFFFF',
                     border: '1px solid rgba(212,160,23,0.4)',
                     borderRadius: 6,
-                    padding: '7px 10px',
-                    fontSize: 12,
+                    padding: '8px 10px',
+                    fontSize: 16,
                   }}
                 >
                   {MODALITY_OPTIONS.map(m => (
@@ -2094,7 +2157,7 @@ export default function CoachCardioVoiceoverPlayer({
                     flexWrap: 'wrap',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 160 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 'min(100%, 160px)' }}>
                     <span style={{ fontSize: 13 }}>{isDistanceTrackingEnabled ? '🛰️' : '⚙️'}</span>
                     <div>
                       <div style={{ fontSize: 10.5, fontWeight: 800, color: isDistanceTrackingEnabled ? '#38BDF8' : 'var(--gray-lt)' }}>
@@ -2113,14 +2176,17 @@ export default function CoachCardioVoiceoverPlayer({
                       <div style={{ display: 'flex', background: 'rgba(0,0,0,0.4)', borderRadius: 5, padding: 2, border: '1px solid rgba(255,255,255,0.1)' }}>
                         <button
                           type="button"
+                          aria-pressed={distanceUnit === 'mi'}
                           onClick={() => setDistanceUnit('mi')}
                           style={{
                             background: distanceUnit === 'mi' ? '#D4AF37' : 'transparent',
                             color: distanceUnit === 'mi' ? '#0A0E18' : 'var(--gray)',
                             border: 'none',
                             borderRadius: 4,
-                            padding: '2px 6px',
-                            fontSize: 10,
+                            padding: '6px 10px',
+                            minHeight: 40,
+                            minWidth: 40,
+                            fontSize: 10.5,
                             fontWeight: 800,
                             cursor: 'pointer',
                           }}
@@ -2129,14 +2195,17 @@ export default function CoachCardioVoiceoverPlayer({
                         </button>
                         <button
                           type="button"
+                          aria-pressed={distanceUnit === 'km'}
                           onClick={() => setDistanceUnit('km')}
                           style={{
                             background: distanceUnit === 'km' ? '#D4AF37' : 'transparent',
                             color: distanceUnit === 'km' ? '#0A0E18' : 'var(--gray)',
                             border: 'none',
                             borderRadius: 4,
-                            padding: '2px 6px',
-                            fontSize: 10,
+                            padding: '6px 10px',
+                            minHeight: 40,
+                            minWidth: 40,
+                            fontSize: 10.5,
                             fontWeight: 800,
                             cursor: 'pointer',
                           }}
@@ -2148,13 +2217,17 @@ export default function CoachCardioVoiceoverPlayer({
 
                     <button
                       type="button"
+                      aria-label="GPS distance and step tracking"
+                      aria-pressed={isDistanceTrackingEnabled}
                       onClick={() => setIsDistanceTrackingEnabled(prev => !prev)}
                       style={{
                         background: isDistanceTrackingEnabled ? '#0284C7' : 'rgba(255,255,255,0.1)',
                         color: '#FFFFFF',
                         border: 'none',
                         borderRadius: 6,
-                        padding: '4px 9px',
+                        padding: '8px 12px',
+                        minHeight: 44,
+                        minWidth: 44,
                         fontSize: 10.5,
                         fontWeight: 800,
                         cursor: 'pointer',
@@ -2260,10 +2333,10 @@ export default function CoachCardioVoiceoverPlayer({
                     {cadenceGuidance.modalityCategory === 'rowing'
                       ? '🚣'
                       : cadenceGuidance.modalityCategory === 'cycling'
-                      ? '🚴'
-                      : cadenceGuidance.modalityCategory === 'stairmaster'
-                      ? '🪜'
-                      : '🏃'}
+                        ? '🚴'
+                        : cadenceGuidance.modalityCategory === 'stairmaster'
+                          ? '🪜'
+                          : '🏃'}
                   </span>
                   <div>
                     <div style={{ fontSize: 10, fontWeight: 800, color: '#D4AF37', textTransform: 'uppercase' }}>
@@ -2411,16 +2484,16 @@ export default function CoachCardioVoiceoverPlayer({
                             gpsStatus === 'locked'
                               ? '#34D399'
                               : gpsStatus === 'paused'
-                              ? '#F59E0B'
-                              : gpsStatus === 'error'
-                              ? '#EF4444'
-                              : '#38BDF8',
+                                ? '#F59E0B'
+                                : gpsStatus === 'error'
+                                  ? '#EF4444'
+                                  : '#38BDF8',
                           boxShadow:
                             gpsStatus === 'locked'
                               ? '0 0 8px #34D399'
                               : gpsStatus === 'error'
-                              ? '0 0 8px #EF4444'
-                              : '0 0 8px #38BDF8',
+                                ? '0 0 8px #EF4444'
+                                : '0 0 8px #38BDF8',
                           animation: gpsStatus === 'requesting' || gpsStatus === 'acquiring' ? 'pulse 1.2s infinite' : 'none',
                         }}
                       />
@@ -2428,10 +2501,10 @@ export default function CoachCardioVoiceoverPlayer({
                         {gpsStatus === 'locked'
                           ? `GPS Locked (${gpsAccuracy !== null ? `±${gpsAccuracy}m` : 'High Acc.'})`
                           : gpsStatus === 'paused'
-                          ? 'GPS Paused'
-                          : gpsStatus === 'error'
-                          ? 'GPS Offline'
-                          : 'Acquiring GPS Signal...'}
+                            ? 'GPS Paused'
+                            : gpsStatus === 'error'
+                              ? 'GPS Offline'
+                              : 'Acquiring GPS Signal...'}
                       </span>
                     </div>
 
@@ -2465,26 +2538,26 @@ export default function CoachCardioVoiceoverPlayer({
                   }}
                 >
                   {/* Heart Rate */}
-                    <div
-                      style={{
-                        background: 'rgba(0,0,0,0.3)',
-                        border: hasMeasuredHr ? '1px solid #EF4444' : '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: 8,
-                        padding: '8px 10px',
-                        textAlign: 'center',
-                      }}
-                    >
-                      <div style={{ fontSize: 9, color: 'var(--gray)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-                        <span style={{ animation: hasMeasuredHr ? 'pulse 1s infinite' : 'none' }}>
-                          <GaaIcon name="heart-rate" size={11} tone={hasMeasuredHr ? 'ruby' : 'inherit'} />
-                        </span>
-                        <span>{hasMeasuredHr ? 'Live HR' : 'Est. HR'}</span>
-                      </div>
-                      <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 18, fontWeight: 700, color: hasMeasuredHr ? '#F87171' : 'var(--gold)', lineHeight: 1.1, marginTop: 2 }}>
-                        {hasMeasuredHr ? effectiveBpm : `~${effectiveBpm}`} <span style={{ fontSize: 10, color: 'var(--gray)', fontFamily: 'var(--font-sans, Raleway), sans-serif', fontWeight: 600 }}>BPM</span>{' '}
-                        <span style={{ fontSize: 10, color: '#38BDF8', fontFamily: 'var(--font-telemetry, monospace)' }}>({currentHrPct}%)</span>
-                      </div>
+                  <div
+                    style={{
+                      background: 'rgba(0,0,0,0.3)',
+                      border: hasMeasuredHr ? '1px solid #EF4444' : '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 8,
+                      padding: '8px 10px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div style={{ fontSize: 9, color: 'var(--gray)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+                      <span style={{ animation: hasMeasuredHr ? 'pulse 1s infinite' : 'none' }}>
+                        <GaaIcon name="heart-rate" size={11} tone={hasMeasuredHr ? 'ruby' : 'inherit'} />
+                      </span>
+                      <span>{hasMeasuredHr ? 'Live HR' : 'Est. HR'}</span>
                     </div>
+                    <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 18, fontWeight: 700, color: hasMeasuredHr ? '#F87171' : 'var(--gold)', lineHeight: 1.1, marginTop: 2 }}>
+                      {hasMeasuredHr ? effectiveBpm : `~${effectiveBpm}`} <span style={{ fontSize: 10, color: 'var(--gray)', fontFamily: 'var(--font-sans, Raleway), sans-serif', fontWeight: 600 }}>BPM</span>{' '}
+                      <span style={{ fontSize: 10, color: '#38BDF8', fontFamily: 'var(--font-telemetry, monospace)' }}>({currentHrPct}%)</span>
+                    </div>
+                  </div>
 
                   {/* Calories */}
                   <div
@@ -2643,11 +2716,10 @@ export default function CoachCardioVoiceoverPlayer({
                       border: `2px solid ${getRpeColor(currentSegment.targetRpe)}`,
                       transform: breathPhase === 'inhale' ? 'scale(1.22)' : 'scale(0.88)',
                       opacity: breathPhase === 'inhale' ? 0.9 : 0.4,
-                      transition: `all ${
-                        breathPhase === 'inhale'
+                      transition: `all ${breathPhase === 'inhale'
                           ? currentBreathing.inBreathSeconds || 2
                           : currentBreathing.outBreathSeconds || 2
-                      }s cubic-bezier(0.4, 0, 0.2, 1)`,
+                        }s cubic-bezier(0.4, 0, 0.2, 1)`,
                       boxShadow: `0 0 20px ${getRpeColor(currentSegment.targetRpe)}40`,
                     }}
                   />
@@ -2666,11 +2738,10 @@ export default function CoachCardioVoiceoverPlayer({
                       alignItems: 'center',
                       justifyContent: 'center',
                       transform: breathPhase === 'inhale' ? 'scale(1.08)' : 'scale(0.96)',
-                      transition: `all ${
-                        breathPhase === 'inhale'
+                      transition: `all ${breathPhase === 'inhale'
                           ? currentBreathing.inBreathSeconds || 2
                           : currentBreathing.outBreathSeconds || 2
-                      }s ease-in-out`,
+                        }s ease-in-out`,
                     }}
                   >
                     <span
@@ -2726,10 +2797,10 @@ export default function CoachCardioVoiceoverPlayer({
                         {cadenceGuidance.modalityCategory === 'rowing'
                           ? '🚣'
                           : cadenceGuidance.modalityCategory === 'cycling'
-                          ? '🚴'
-                          : cadenceGuidance.modalityCategory === 'stairmaster'
-                          ? '🪜'
-                          : '🏃'}
+                            ? '🚴'
+                            : cadenceGuidance.modalityCategory === 'stairmaster'
+                              ? '🪜'
+                              : '🏃'}
                       </span>
                       <span
                         style={{
@@ -2754,7 +2825,8 @@ export default function CoachCardioVoiceoverPlayer({
                         border: '1px solid rgba(212,160,23,0.4)',
                         color: '#FFFFFF',
                         borderRadius: 6,
-                        padding: '2px 7px',
+                        padding: '6px 10px',
+                        minHeight: 40,
                         fontSize: 9.5,
                         fontWeight: 800,
                         cursor: isVoiceMuted ? 'not-allowed' : 'pointer',
@@ -2764,7 +2836,7 @@ export default function CoachCardioVoiceoverPlayer({
                         opacity: isVoiceMuted ? 0.4 : 1,
                       }}
                     >
-                      <span>🔊</span> Cue Rhythm
+                      <span aria-hidden="true">🔊</span> Cue Rhythm
                     </button>
                   </div>
 
@@ -2839,7 +2911,8 @@ export default function CoachCardioVoiceoverPlayer({
                   border: 'none',
                   color: '#FFFFFF',
                   borderRadius: 6,
-                  padding: '5px 10px',
+                  padding: '8px 12px',
+                  minHeight: 44,
                   fontSize: 10.5,
                   fontWeight: 800,
                   cursor: hasStarted ? 'pointer' : 'not-allowed',
@@ -2871,8 +2944,8 @@ export default function CoachCardioVoiceoverPlayer({
                         background: isCompleted
                           ? '#10B981'
                           : isCurrent
-                          ? getRpeColor(seg.targetRpe)
-                          : 'rgba(255,255,255,0.1)',
+                            ? getRpeColor(seg.targetRpe)
+                            : 'rgba(255,255,255,0.1)',
                         borderRadius: 2,
                         boxShadow: isCurrent ? `0 0 6px ${getRpeColor(seg.targetRpe)}` : 'none',
                       }}
@@ -2905,7 +2978,8 @@ export default function CoachCardioVoiceoverPlayer({
                 border: '1px solid #D4AF37',
                 color: '#D4AF37',
                 borderRadius: 6,
-                padding: '8px 12px',
+                padding: '10px 14px',
+                minHeight: 44,
                 fontSize: 11.5,
                 fontWeight: 800,
                 cursor: 'pointer',
@@ -2928,7 +3002,8 @@ export default function CoachCardioVoiceoverPlayer({
                 color: '#0A0E18',
                 border: 'none',
                 borderRadius: 6,
-                padding: '8px 16px',
+                padding: '10px 16px',
+                minHeight: 44,
                 fontSize: 12.5,
                 fontWeight: 900,
                 cursor: logSavedSuccess ? 'default' : 'pointer',
@@ -2940,6 +3015,7 @@ export default function CoachCardioVoiceoverPlayer({
 
             {appleHealthSyncMessage && (
               <span
+                role="status"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -2947,13 +3023,14 @@ export default function CoachCardioVoiceoverPlayer({
                   background: 'rgba(16,185,129,0.15)',
                   border: '1px solid rgba(16,185,129,0.35)',
                   color: '#34D399',
-                  padding: '6px 10px',
+                  padding: '8px 10px',
+                  minHeight: 40,
                   borderRadius: 6,
                   fontSize: 11.5,
                   fontWeight: 800,
                 }}
               >
-                <span>🍎</span> {appleHealthSyncMessage}
+                <span aria-hidden="true">🍎</span> {appleHealthSyncMessage}
               </span>
             )}
 
@@ -2976,7 +3053,8 @@ export default function CoachCardioVoiceoverPlayer({
                   color: '#FFFFFF',
                   border: '1px solid rgba(52,211,153,0.4)',
                   borderRadius: 6,
-                  padding: '8px 14px',
+                  padding: '10px 14px',
+                  minHeight: 44,
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -2999,7 +3077,8 @@ export default function CoachCardioVoiceoverPlayer({
                   color: '#FFFFFF',
                   border: '1px solid rgba(255,255,255,0.18)',
                   borderRadius: 6,
-                  padding: '8px 12px',
+                  padding: '10px 14px',
+                  minHeight: 44,
                   fontSize: 12,
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -3063,6 +3142,7 @@ export default function CoachCardioVoiceoverPlayer({
                 onClick={handleRewind15}
                 disabled={!hasStarted}
                 className="tactile-btn"
+                aria-label="Rewind 15 Seconds (-15s)"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.15)',
@@ -3111,6 +3191,7 @@ export default function CoachCardioVoiceoverPlayer({
                 onClick={handleSkipSegment}
                 disabled={!hasStarted}
                 className="tactile-btn"
+                aria-label={currentSegmentIndex >= session.intervals.length - 1 ? 'Finish Workout & View Debrief' : 'Skip to Next Interval'}
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.15)',
@@ -3145,11 +3226,12 @@ export default function CoachCardioVoiceoverPlayer({
                     background: 'transparent',
                     border: 'none',
                     color: '#D4AF37',
-                    fontSize: 9.5,
+                    fontSize: 10.5,
                     fontWeight: 700,
                     cursor: 'pointer',
                     textDecoration: 'underline',
-                    padding: 0,
+                    padding: '6px 8px',
+                    minHeight: 40,
                   }}
                 >
                   🔒 Lock Screen for Pocket
@@ -3309,7 +3391,16 @@ export default function CoachCardioVoiceoverPlayer({
 
           {/* Bottom Controls: Hold to Unlock Button + Hint */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%', maxWidth: 320 }}>
-            <div
+            <button
+              type="button"
+              onClick={e => e.stopPropagation()}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  cancelHoldUnlock()
+                  setIsPocketLockActive(false)
+                }
+              }}
               onPointerDown={startHoldUnlock}
               onPointerUp={cancelHoldUnlock}
               onPointerLeave={cancelHoldUnlock}
@@ -3321,6 +3412,7 @@ export default function CoachCardioVoiceoverPlayer({
                 position: 'relative',
                 width: '100%',
                 height: 56,
+                padding: 0,
                 borderRadius: 28,
                 background: 'rgba(255,255,255,0.06)',
                 border: '1.5px solid rgba(212,160,23,0.6)',
@@ -3330,7 +3422,7 @@ export default function CoachCardioVoiceoverPlayer({
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 0 20px rgba(212,160,23,0.15)',
-                touchAction: 'none',
+                touchAction: 'manipulation',
               }}
             >
               {/* Animated Progress Fill */}
@@ -3362,7 +3454,7 @@ export default function CoachCardioVoiceoverPlayer({
                 <GaaIcon name="unlock" size={16} tone="gold" />
                 <span>{unlockHoldProgress > 0 ? `Unlocking... ${unlockHoldProgress}%` : 'Hold to Unlock'}</span>
               </div>
-            </div>
+            </button>
 
             <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
               Hold button for 1.2s or double-tap screen to unlock

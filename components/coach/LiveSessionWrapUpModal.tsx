@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   computeLiveSessionSummary,
   LiveSessionSet,
 } from '@/lib/live-session-wrapup'
+import { useNativeStudioDialog } from './useNativeStudioDialog'
 
 interface LiveSessionWrapUpModalProps {
   clientId: string
@@ -34,6 +35,14 @@ export default function LiveSessionWrapUpModal({
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successResult, setSuccessResult] = useState<{ briefingId?: string; creditDeducted?: boolean } | null>(null)
+
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const titleId = useId()
+  const coachNotesId = useId()
+  const recoveryId = useId()
+  const deductCreditId = useId()
+
+  useNativeStudioDialog(dialogRef, true, onClose)
 
   const summary = computeLiveSessionSummary({
     athleteName,
@@ -63,7 +72,7 @@ export default function LiveSessionWrapUpModal({
         }),
       })
 
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to dispatch session wrap-up briefing.')
@@ -84,41 +93,38 @@ export default function LiveSessionWrapUpModal({
   }
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
+      className="forge-live-studio-dialog"
+      aria-labelledby={titleId}
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        backdropFilter: 'blur(10px)',
-        zIndex: 100050,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
+        maxWidth: 'min(680px, calc(100vw - 16px))',
       }}
     >
       <div
         style={{
           width: '100%',
-          maxWidth: 680,
-          maxHeight: '92vh',
+          maxHeight: '92dvh',
           backgroundColor: '#080E18',
           border: '1.5px solid rgba(212,160,23,0.4)',
           borderRadius: 12,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
           boxShadow: '0 25px 60px rgba(0,0,0,0.9)',
-          padding: 24,
+          padding: 'clamp(16px, 2.5vw, 24px)',
           gap: 16,
           boxSizing: 'border-box',
           overflowY: 'auto',
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 12 }}>
-          <div>
-            <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 12 }}>
+          <div style={{ minInlineSize: 0 }}>
+            <h2
+              id={titleId}
+              style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 'clamp(17px, 2.2vw, 20px)', fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em' }}
+            >
               Live Telehealth Wrap-Up &amp; Performance Takeaway
             </h2>
             <div style={{ fontSize: 12, color: 'var(--gray)', marginTop: 2 }}>
@@ -130,11 +136,12 @@ export default function LiveSessionWrapUpModal({
             type="button"
             onClick={onClose}
             style={{
+              minHeight: 44,
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.15)',
               color: '#FFFFFF',
               borderRadius: 6,
-              padding: '6px 12px',
+              padding: '8px 14px',
               fontSize: 12,
               fontWeight: 700,
               cursor: 'pointer',
@@ -168,6 +175,7 @@ export default function LiveSessionWrapUpModal({
               }}
               style={{
                 marginTop: 10,
+                minHeight: 44,
                 padding: '10px 24px',
                 background: 'var(--gold)',
                 color: '#0A0E18',
@@ -187,7 +195,7 @@ export default function LiveSessionWrapUpModal({
         ) : (
           <>
             {/* Metrics Ribbon */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: 10 }}>
               <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 12 }}>
                 <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700 }}>Total Tonnage</div>
                 <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontWeight: 800, fontSize: 22, color: '#FFFFFF', marginTop: 2 }}>
@@ -204,7 +212,7 @@ export default function LiveSessionWrapUpModal({
 
               <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 12 }}>
                 <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700 }}>Peak Load Anchor</div>
-                <div style={{ fontSize: 13, color: 'var(--gold-lt)', fontWeight: 700, marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 13, color: 'var(--gold-lt)', fontWeight: 700, marginTop: 4, overflowWrap: 'anywhere' }}>
                   {summary.heaviestLift ? `${summary.heaviestLift.exercise} (${summary.heaviestLift.weightLbs} lbs)` : 'Bodyweight'}
                 </div>
               </div>
@@ -212,75 +220,93 @@ export default function LiveSessionWrapUpModal({
 
             {/* Coach Cues Editor */}
             <div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 4 }}>
+              <label
+                htmlFor={coachNotesId}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 4 }}
+              >
                 <GaaIcon name="target" size={12} tone="gold" />
                 <span>Coach Gordon Tactical Form Cues</span>
               </label>
               <textarea
+                id={coachNotesId}
+                name="coach_notes"
                 value={coachNotes}
                 onChange={e => setCoachNotes(e.target.value)}
                 rows={3}
                 style={{
                   width: '100%',
                   background: 'rgba(0,0,0,0.5)',
-                  border: '1px solid rgba(255,255,255,0.12)',
+                  border: '1px solid rgba(255,255,255,0.15)',
                   borderRadius: 6,
                   padding: '8px 12px',
                   color: '#FFFFFF',
-                  fontSize: 13,
+                  fontSize: 16,
                   fontFamily: 'inherit',
-                  outline: 'none',
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
 
             {/* Recovery Directive Editor */}
             <div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 4 }}>
+              <label
+                htmlFor={recoveryId}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', fontWeight: 800, marginBottom: 4 }}
+              >
                 <GaaIcon name="shield" size={12} tone="gold" />
                 <span>Next 48-Hour Recovery &amp; Nutrition Directive</span>
               </label>
               <textarea
+                id={recoveryId}
+                name="recovery_directive"
                 value={recoveryDirective}
                 onChange={e => setRecoveryDirective(e.target.value)}
                 rows={2}
                 style={{
                   width: '100%',
                   background: 'rgba(0,0,0,0.5)',
-                  border: '1px solid rgba(255,255,255,0.12)',
+                  border: '1px solid rgba(255,255,255,0.15)',
                   borderRadius: 6,
                   padding: '8px 12px',
                   color: '#FFFFFF',
-                  fontSize: 13,
+                  fontSize: 16,
                   fontFamily: 'inherit',
-                  outline: 'none',
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
 
             {/* Package Deduction Checkbox */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--gray)', cursor: 'pointer' }}>
+            <label
+              htmlFor={deductCreditId}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 40, fontSize: 13, color: 'var(--gray)', cursor: 'pointer' }}
+            >
               <input
+                id={deductCreditId}
+                name="deduct_credit"
                 type="checkbox"
                 checked={deductCredit}
                 onChange={e => setDeductCredit(e.target.checked)}
-                style={{ width: 16, height: 16, accentColor: 'var(--gold)' }}
+                style={{ width: 18, height: 18, accentColor: 'var(--gold)', flexShrink: 0 }}
               />
               <span>Deduct 1 consultation credit from athlete&apos;s active coaching package</span>
             </label>
 
             {errorMsg && (
-              <div style={{ color: '#F87171', fontSize: 13, background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 4 }}>
+              <div role="alert" style={{ color: '#F87171', fontSize: 13, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.35)', padding: '8px 12px', borderRadius: 6 }}>
                 {errorMsg}
               </div>
             )}
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
               <button
                 type="button"
                 onClick={onClose}
                 style={{
+                  minHeight: 44,
                   padding: '10px 16px',
                   background: 'rgba(255,255,255,0.08)',
                   color: '#FFFFFF',
@@ -300,7 +326,8 @@ export default function LiveSessionWrapUpModal({
                 disabled={submitting}
                 className="tactile-btn"
                 style={{
-                  padding: '10px 24px',
+                  minHeight: 44,
+                  padding: '10px 20px',
                   background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                   color: '#FFFFFF',
                   border: 'none',
@@ -312,7 +339,7 @@ export default function LiveSessionWrapUpModal({
                   textTransform: 'uppercase',
                   cursor: submitting ? 'not-allowed' : 'pointer',
                   opacity: submitting ? 0.7 : 1,
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: 8,
                 }}
@@ -324,6 +351,6 @@ export default function LiveSessionWrapUpModal({
           </>
         )}
       </div>
-    </div>
+    </dialog>
   )
 }

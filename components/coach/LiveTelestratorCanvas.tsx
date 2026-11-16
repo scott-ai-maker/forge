@@ -242,19 +242,36 @@ export default function LiveTelestratorCanvas({
     }
   }, [strokes, currentStroke, autoFade, activeTool, protractorPoints])
 
-  // Handle Resize
+  // Handle Resize (both window resize and container layout transitions via ResizeObserver)
   useEffect(() => {
+    const canvas = canvasRef.current
+    const parent = canvas?.parentElement
+
     const handleResize = () => {
-      const canvas = canvasRef.current
-      if (!canvas || !canvas.parentElement) return
-      canvas.width = canvas.parentElement.clientWidth
-      canvas.height = canvas.parentElement.clientHeight
+      const el = canvasRef.current
+      if (!el || !el.parentElement) return
+      const nextW = Math.max(1, el.parentElement.clientWidth)
+      const nextH = Math.max(1, el.parentElement.clientHeight)
+      if (el.width !== nextW || el.height !== nextH) {
+        el.width = nextW
+        el.height = nextH
+      }
       redrawCanvas()
     }
 
     handleResize()
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+
+    let observer: ResizeObserver | null = null
+    if (parent && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => handleResize())
+      observer.observe(parent)
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      observer?.disconnect()
+    }
   }, [redrawCanvas])
 
   // Eco Animation Frame Loop for Auto-Fade: ONLY runs when active strokes exist
@@ -280,23 +297,38 @@ export default function LiveTelestratorCanvas({
     redrawCanvas()
   }, [strokes, currentStroke, redrawCanvas])
 
-  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>): Point => {
+  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>): Point | null => {
     const canvas = canvasRef.current
-    if (!canvas) return { x: 0, y: 0 }
+    if (!canvas) return null
     const rect = canvas.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return null
 
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    let clientX: number | undefined
+    let clientY: number | undefined
+    if ('touches' in e) {
+      const touch = e.touches[0] ?? e.changedTouches?.[0]
+      clientX = touch?.clientX
+      clientY = touch?.clientY
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+
+    if (clientX === undefined || clientY === undefined) return null
+
+    const scaleX = canvas.width > 0 ? canvas.width / rect.width : 1
+    const scaleY = canvas.height > 0 ? canvas.height / rect.height : 1
 
     return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
     }
   }
 
   const handlePointerDown = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isActive) return
     const pt = getCanvasCoords(e)
+    if (!pt) return
 
     if (activeTool === 'protractor') {
       const nextPoints = [...protractorPoints, pt]
@@ -335,6 +367,7 @@ export default function LiveTelestratorCanvas({
   const handlePointerMove = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isActive || !isDrawingRef.current || !currentStroke) return
     const pt = getCanvasCoords(e)
+    if (!pt) return
 
     if (activeTool === 'pen') {
       setCurrentStroke(prev => (prev ? { ...prev, points: [...prev.points, pt] } : null))
@@ -353,12 +386,15 @@ export default function LiveTelestratorCanvas({
   return (
     <canvas
       ref={canvasRef}
+      aria-label="Live biomechanical telestrator annotation canvas"
       onMouseDown={handlePointerDown}
       onMouseMove={handlePointerMove}
       onMouseUp={handlePointerUp}
+      onMouseLeave={handlePointerUp}
       onTouchStart={handlePointerDown}
       onTouchMove={handlePointerMove}
       onTouchEnd={handlePointerUp}
+      onTouchCancel={handlePointerUp}
       style={{
         position: 'absolute',
         inset: 0,

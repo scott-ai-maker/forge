@@ -136,12 +136,96 @@ describe('POST /api/fitness/cardio', () => {
     await expect(res.json()).resolves.toMatchObject({ error: expect.stringContaining('perceived_effort') })
   })
 
-  it('creates a cardio log with valid payload', async () => {
+  it('creates a cardio log with valid payload and no-store cache headers', async () => {
     getRequestAuthzMock.mockResolvedValue(authedUser)
     const log = { id: 'log-1', activity_type: 'cycling', duration_mins: 45, session_date: '2026-01-15' }
     supabaseAdminMock.mockReturnValue(makeAdmin(log))
     const res = await POST(makeRequest({ session_date: '2026-01-15', activity_type: 'cycling', duration_mins: 45, perceived_effort: 7 }))
     expect(res.status).toBe(201)
+    expect(res.headers.get('cache-control')).toBe('no-store, max-age=0')
     await expect(res.json()).resolves.toMatchObject(log)
+  })
+
+  it('preserves null optional fields from CardioLogForm instead of coercing null to 0 or 400', async () => {
+    getRequestAuthzMock.mockResolvedValue(authedUser)
+    let capturedInsert: Record<string, unknown> | null = null
+    supabaseAdminMock.mockReturnValue({
+      from() {
+        return {
+          insert(payload: Record<string, unknown>) {
+            capturedInsert = payload
+            return {
+              select() {
+                return {
+                  single: async () => ({
+                    data: { id: 'log-nulls', ...payload },
+                    error: null,
+                  }),
+                }
+              },
+            }
+          },
+        }
+      },
+    })
+
+    const res = await POST(
+      makeRequest({
+        session_date: '2026-02-28',
+        activity_type: '<b>Zone 2 Aerobic</b>',
+        duration_mins: 30,
+        distance_km: null,
+        avg_heart_rate: null,
+        calories: null,
+        perceived_effort: null,
+        notes: '<script>alert(1)</script> Easy nasal breathing',
+      })
+    )
+
+    expect(res.status).toBe(201)
+    expect(capturedInsert).toMatchObject({
+      activity_type: 'bZone 2 Aerobic/b',
+      distance_km: null,
+      avg_heart_rate: null,
+      calories: null,
+      perceived_effort: null,
+      notes: 'scriptalert(1)/script Easy nasal breathing',
+    })
+  })
+
+  it('rejects calendar-invalid dates, NaN perceived_effort, out-of-range biometrics, and rate-limited bursts', async () => {
+    getRequestAuthzMock.mockResolvedValue(authedUser)
+    supabaseAdminMock.mockReturnValue(makeAdmin())
+
+    // Calendar-invalid date 2026-02-31
+    const badDateRes = await POST(
+      makeRequest({ session_date: '2026-02-31', activity_type: 'run', duration_mins: 30 })
+    )
+    expect(badDateRes.status).toBe(400)
+
+    // Non-numeric perceived_effort ("abc" -> NaN)
+    const nanRpeRes = await POST(
+      makeRequest({ session_date: '2026-02-20', activity_type: 'run', duration_mins: 30, perceived_effort: 'abc' })
+    )
+    expect(nanRpeRes.status).toBe(400)
+
+    // Out-of-bounds heart rate
+    const badHrRes = await POST(
+      makeRequest({ session_date: '2026-02-20', activity_type: 'run', duration_mins: 30, avg_heart_rate: 999 })
+    )
+    expect(badHrRes.status).toBe(400)
+
+    // Rate-limited (429)
+    supabaseAdminMock.mockReturnValue({
+      ...makeAdmin(),
+      rpc: async () => ({
+        data: [{ allowed: false, remaining: 0, reset_at: '2026-02-20T00:01:00Z', current_count: 31 }],
+        error: null,
+      }),
+    })
+    const rlRes = await POST(
+      makeRequest({ session_date: '2026-02-20', activity_type: 'run', duration_mins: 30 })
+    )
+    expect(rlRes.status).toBe(429)
   })
 })

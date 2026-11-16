@@ -46,6 +46,26 @@ describe('lib/voice-notes-storage', () => {
     expect(res).toMatch(/^\[voice-note\]:8:client-abc\/voice_\d+_[a-f0-9]+\.mp4$/)
   })
 
+  it('preserves .wav extension for UniversalVoiceRecorder WAV blobs', async () => {
+    const uploadMock = vi.fn().mockResolvedValue({ error: null })
+    const adminMock = {
+      storage: {
+        from: vi.fn().mockReturnValue({
+          upload: uploadMock,
+        }),
+      },
+    }
+
+    const wavDataUrl = 'data:audio/wav;base64,UklGRg=='
+    const res = await uploadVoiceNoteAudio(adminMock as unknown as Parameters<typeof uploadVoiceNoteAudio>[0], {
+      clientId: 'client-abc',
+      audioDataUrl: wavDataUrl,
+      duration: 12,
+    })
+
+    expect(res).toMatch(/^\[voice-note\]:12:client-abc\/voice_\d+_[a-f0-9]+\.wav$/)
+  })
+
   it('falls back safely to inline data URL if storage upload fails', async () => {
     const adminMock = {
       storage: {

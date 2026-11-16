@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import ForgeIcon from '@/components/ui/ForgeIcon'
 import {
   type SanctuaryBreathingCadence,
@@ -12,6 +12,7 @@ import {
   type SanctuaryAudioNote,
 } from '@/lib/sanctuary-audio-notes-engine'
 import SanctuaryAudioNotePlayer from '@/components/fitness/SanctuaryAudioNotePlayer'
+import { useNativeStudioDialog } from '@/components/coach/useNativeStudioDialog'
 
 export interface SanctuaryModeHudProps {
   isWorkoutActive: boolean
@@ -49,41 +50,58 @@ export default function SanctuaryModeHud({
   const [expanded, setExpanded] = useState(false)
   const [showAudioNotesModal, setShowAudioNotesModal] = useState(false)
   const [selectedAudioNote, setSelectedAudioNote] = useState<SanctuaryAudioNote | null>(null)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const interventionDialogRef = useRef<HTMLDialogElement | null>(null)
+  const memosDialogRef = useRef<HTMLDialogElement | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setPrefersReducedMotion(mq.matches)
+    const onChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches)
+    mq.addEventListener?.('change', onChange)
+    return () => mq.removeEventListener?.('change', onChange)
+  }, [])
+
+  useNativeStudioDialog(
+    interventionDialogRef,
+    Boolean(isWorkoutActive && isSanctuaryActive && activeIntervention),
+    onDismissIntervention,
+    { lightDismiss: false }
+  )
+  useNativeStudioDialog(
+    memosDialogRef,
+    Boolean(isWorkoutActive && isSanctuaryActive && showAudioNotesModal),
+    () => setShowAudioNotesModal(false)
+  )
 
   if (!isWorkoutActive || !isSanctuaryActive) return null
 
   // Focus score color
   const scoreColor = focusScore >= 90 ? '#34D399' : focusScore >= 75 ? '#FBBF24' : '#F87171'
 
-  // Breathing circle scale factor
-  const scale =
-    breathingState.phase === 'inhale'
-      ? 1 + (breathingState.progressPercent / 100) * 0.35
-      : breathingState.phase === 'hold_in'
-      ? 1.35
-      : breathingState.phase === 'exhale'
-      ? 1.35 - (breathingState.progressPercent / 100) * 0.35
-      : 1.0
+  // Breathing circle scale factor (static 1.0 under prefers-reduced-motion)
+  const scale = prefersReducedMotion
+    ? 1.0
+    : breathingState.phase === 'inhale'
+    ? 1 + (breathingState.progressPercent / 100) * 0.35
+    : breathingState.phase === 'hold_in'
+    ? 1.35
+    : breathingState.phase === 'exhale'
+    ? 1.35 - (breathingState.progressPercent / 100) * 0.35
+    : 1.0
 
   return (
     <>
       {/* ── DISTRACTION INTERVENTION ALERT MODAL ── */}
       {activeIntervention && (
-        <div
-          role="alertdialog"
-          aria-modal="true"
+        <dialog
+          ref={interventionDialogRef}
+          className="forge-live-studio-dialog"
+          {...({ closedby: 'none' } as Record<string, unknown>)}
+          aria-labelledby="sanctuary-intervention-title"
           style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100000,
-            background: 'rgba(4, 7, 14, 0.85)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-            animation: 'fadeIn 0.2s ease-out',
+            maxWidth: 'min(460px, calc(100vw - 16px))',
           }}
         >
           <div
@@ -97,6 +115,7 @@ export default function SanctuaryModeHud({
               boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 32px rgba(245, 158, 11, 0.25)',
               textAlign: 'center',
               position: 'relative',
+              boxSizing: 'border-box',
             }}
           >
             <div
@@ -123,6 +142,7 @@ export default function SanctuaryModeHud({
             </div>
 
             <h3
+              id="sanctuary-intervention-title"
               style={{
                 fontFamily: 'var(--font-heading)',
                 fontSize: 20,
@@ -169,9 +189,11 @@ export default function SanctuaryModeHud({
 
             <button
               type="button"
+              autoFocus
               onClick={onDismissIntervention}
               style={{
                 width: '100%',
+                minHeight: 44,
                 background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
                 border: '1px solid #D4AF37',
                 color: '#0A0E18',
@@ -190,7 +212,7 @@ export default function SanctuaryModeHud({
               I&apos;m Locked In // Return to Lift
             </button>
           </div>
-        </div>
+        </dialog>
       )}
 
       {/* ── TOP SANCTUARY MODE HUD BAR ── */}
@@ -297,13 +319,15 @@ export default function SanctuaryModeHud({
             {/* Audio Breath Pacer Toggle */}
             <button
               type="button"
+              aria-pressed={audioBreathPacerEnabled}
               onClick={onToggleAudioBreathPacer}
               style={{
+                minHeight: 44,
                 background: audioBreathPacerEnabled ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.06)',
                 border: audioBreathPacerEnabled ? '1px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.15)',
                 color: audioBreathPacerEnabled ? '#FBBF24' : '#94A3B8',
                 borderRadius: 6,
-                padding: '5px 10px',
+                padding: '6px 12px',
                 fontSize: 11,
                 fontFamily: 'var(--font-telemetry)',
                 cursor: 'pointer',
@@ -312,7 +336,6 @@ export default function SanctuaryModeHud({
                 gap: 5,
                 transition: 'all 0.15s ease',
               }}
-              title={audioBreathPacerEnabled ? 'Audio Breath Chimes ON' : 'Turn ON In-Ear Breath Chimes'}
             >
               <ForgeIcon name={audioBreathPacerEnabled ? 'zap' : 'activity'} size={13} />
               <span>{audioBreathPacerEnabled ? 'Audio Pacer ON' : 'Audio Pacer'}</span>
@@ -328,11 +351,12 @@ export default function SanctuaryModeHud({
                 setShowAudioNotesModal(true)
               }}
               style={{
+                minHeight: 44,
                 background: 'rgba(212, 175, 55, 0.15)',
                 border: '1px solid rgba(212, 175, 55, 0.4)',
                 color: 'var(--gold-lt, #F3E5AB)',
                 borderRadius: 6,
-                padding: '5px 10px',
+                padding: '6px 12px',
                 fontSize: 11,
                 fontFamily: 'var(--font-telemetry)',
                 cursor: 'pointer',
@@ -340,7 +364,6 @@ export default function SanctuaryModeHud({
                 alignItems: 'center',
                 gap: 5,
               }}
-              title="Open Coach Gordon In-Ear Voice Notes"
             >
               <ForgeIcon name="headphones" size={13} />
               <span>Coach Memos</span>
@@ -349,13 +372,15 @@ export default function SanctuaryModeHud({
             {/* Expand / Minimize Breath Sphere Button */}
             <button
               type="button"
+              aria-expanded={expanded || isRestActive}
               onClick={() => setExpanded(prev => !prev)}
               style={{
+                minHeight: 44,
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 color: '#CBD5E1',
                 borderRadius: 6,
-                padding: '5px 10px',
+                padding: '6px 12px',
                 fontSize: 11,
                 fontFamily: 'var(--font-telemetry)',
                 cursor: 'pointer',
@@ -381,8 +406,12 @@ export default function SanctuaryModeHud({
           >
             {/* Cadence Selector Tabs */}
             <div
+              role="group"
+              aria-label="Breathing cadence protocol"
               style={{
                 display: 'inline-flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
                 gap: 6,
                 background: 'rgba(0, 0, 0, 0.35)',
                 padding: 4,
@@ -400,13 +429,15 @@ export default function SanctuaryModeHud({
                 <button
                   key={c.id}
                   type="button"
+                  aria-pressed={cadence === c.id}
                   onClick={() => onChangeCadence(c.id)}
                   style={{
+                    minHeight: 44,
                     background: cadence === c.id ? 'rgba(245, 158, 11, 0.25)' : 'transparent',
                     border: cadence === c.id ? '1px solid rgba(245, 158, 11, 0.5)' : '1px solid transparent',
                     color: cadence === c.id ? '#FBBF24' : '#64748B',
                     borderRadius: 6,
-                    padding: '4px 10px',
+                    padding: '6px 10px',
                     fontSize: 10.5,
                     fontFamily: 'var(--font-telemetry)',
                     cursor: 'pointer',
@@ -517,21 +548,13 @@ export default function SanctuaryModeHud({
 
       {/* ── COACH GORDON SANCTUARY AUDIO NOTES MODAL ── */}
       {showAudioNotesModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
+        <dialog
+          ref={memosDialogRef}
+          className="forge-live-studio-dialog"
+          {...({ closedby: 'any' } as Record<string, unknown>)}
           aria-labelledby="sanctuary-audio-notes-title"
           style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100000,
-            background: 'rgba(4, 7, 14, 0.88)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
+            maxWidth: 'min(540px, calc(100vw - 16px))',
           }}
         >
           <div
@@ -544,8 +567,9 @@ export default function SanctuaryModeHud({
               padding: 20,
               boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 32px rgba(212, 175, 55, 0.25)',
               position: 'relative',
-              maxHeight: '90vh',
+              maxHeight: '90dvh',
               overflowY: 'auto',
+              boxSizing: 'border-box',
             }}
           >
             <div
@@ -592,11 +616,16 @@ export default function SanctuaryModeHud({
                 onClick={() => setShowAudioNotesModal(false)}
                 aria-label="Close Coach Memos"
                 style={{
+                  minWidth: 44,
+                  minHeight: 44,
                   background: 'transparent',
                   border: 'none',
                   color: '#94A3B8',
                   cursor: 'pointer',
                   padding: 4,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 <ForgeIcon name="close" size={16} />
@@ -689,7 +718,7 @@ export default function SanctuaryModeHud({
               </div>
             )}
           </div>
-        </div>
+        </dialog>
       )}
     </>
   )

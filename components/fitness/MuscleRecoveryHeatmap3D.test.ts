@@ -131,6 +131,7 @@ describe('MuscleRecoveryHeatmap3D & Biomechanical Supercompensation Engine (Tool
       expect(chestStrain).toBeDefined()
       expect(chestStrain?.totalSetsPerformed).toBe(2)
       expect(chestStrain?.averageRpe).toBe(8.5)
+      expect(Number.isInteger(chestStrain?.hoursElapsedSinceSession)).toBe(true)
     })
   })
 

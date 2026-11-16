@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import ForgeIcon from '@/components/ui/ForgeIcon'
 import {
   type ProofOfWorkDossier,
@@ -9,6 +9,7 @@ import {
 } from '@/lib/proof-of-work-dossier-engine'
 import { generateQrCodeSvg } from '@/lib/qr-code'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
+import { useNativeStudioDialog } from '@/components/coach/useNativeStudioDialog'
 
 export interface ProofOfWorkDossierModalProps {
   isOpen?: boolean
@@ -33,6 +34,9 @@ export default function ProofOfWorkDossierModal({
   const [copiedLink, setCopiedLink] = useState(false)
   const [qrSvg, setQrSvg] = useState<string | null>(null)
   const [showQr, setShowQr] = useState(false)
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+
+  useNativeStudioDialog(dialogRef, Boolean(isOpen && !isEmbedded), () => onClose?.())
 
   useEffect(() => {
     if (providedDossier) {
@@ -196,6 +200,8 @@ export default function ProofOfWorkDossierModal({
               onClick={onClose}
               aria-label="Close dossier modal"
               style={{
+                minWidth: 44,
+                minHeight: 44,
                 background: 'transparent',
                 border: 'none',
                 color: '#94A3B8',
@@ -1050,25 +1056,17 @@ export default function ProofOfWorkDossierModal({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="forge-live-studio-dialog"
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       aria-label="Clinical Proof of Work Performance Dossier"
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100000,
-        background: 'rgba(3, 6, 12, 0.88)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: 'clamp(12px, 3vw, 24px)',
+        maxWidth: 'min(880px, calc(100vw - 16px))',
         overflowY: 'auto',
       }}
     >
       {content}
-    </div>
+    </dialog>
   )
 }

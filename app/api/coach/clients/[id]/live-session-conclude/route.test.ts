@@ -287,10 +287,100 @@ describe('Live Session Conclude API Route', () => {
 
     const res = await POST(req, { params: Promise.resolve({ id: 'client-456' }) })
     expect(res.status).toBe(200)
+    expect(res.headers.get('cache-control')).toContain('no-store')
     const json = await res.json()
     expect(json.success).toBe(true)
     expect(json.creditDeducted).toBe(true)
     // Package update should NOT have been called because credit was already decremented at booking
     expect(updatePackageSpy).not.toHaveBeenCalled()
+  })
+
+  it('rejects oversized wrap-up payloads exceeding 128 KB with 413', async () => {
+    vi.mocked(getRequestAuthz).mockResolvedValue({
+      user: { id: 'coach-123' },
+      client: { role: 'coach' },
+    } as unknown as Awaited<ReturnType<typeof getRequestAuthz>>)
+
+    vi.mocked(requireCoachAssignedClient).mockResolvedValue(undefined)
+
+    const hugeMessage = 'X'.repeat(140_000)
+    const req = new NextRequest('http://localhost/api/coach/clients/client-456/live-session-conclude', {
+      method: 'POST',
+      body: JSON.stringify({ summaryMessage: hugeMessage }),
+    })
+
+    const res = await POST(req, { params: Promise.resolve({ id: 'client-456' }) })
+    expect(res.status).toBe(413)
+    expect(res.headers.get('cache-control')).toContain('no-store')
+  })
+
+  it('sanitizes <script> tags and clamps negative/NaN set loads in wrap-up briefing', async () => {
+    vi.mocked(getRequestAuthz).mockResolvedValue({
+      user: { id: 'coach-123' },
+      client: { role: 'coach' },
+    } as unknown as Awaited<ReturnType<typeof getRequestAuthz>>)
+
+    vi.mocked(requireCoachAssignedClient).mockResolvedValue(undefined)
+
+    let insertedMessageBody = ''
+    const mockAdmin = {
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table === 'clients') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({ data: { full_name: 'Devin Booker' }, error: null }),
+              }),
+            }),
+          }
+        }
+        if (table === 'coach_client_messages') {
+          return {
+            insert: vi.fn().mockImplementation((row: { message_body: string }) => {
+              insertedMessageBody = row.message_body
+              return {
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({ data: { id: 'msg-clean', created_at: '2026-11-15' }, error: null }),
+                }),
+              }
+            }),
+          }
+        }
+        if (table === 'sessions') {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  gte: vi.fn().mockReturnValue({
+                    lte: vi.fn().mockResolvedValue({ data: null, error: null }),
+                  }),
+                }),
+              }),
+            }),
+          }
+        }
+        return {}
+      }),
+    }
+
+    vi.mocked(supabaseAdmin).mockReturnValue(mockAdmin as unknown as ReturnType<typeof supabaseAdmin>)
+
+    const req = new NextRequest('http://localhost/api/coach/clients/client-456/live-session-conclude', {
+      method: 'POST',
+      body: JSON.stringify({
+        optPhase: 'Phase 3: Hypertrophy',
+        coachNotes: 'Solid depth <script>alert("xss")</script> maintained.',
+        deductCredit: false,
+        sets: [
+          { exercise_name: 'Barbell Squat', reps: -5, weight_kg: -100, is_warmup: false },
+          { exercise_name: 'Bench Press', reps: 8, weight_kg: 80, is_warmup: false },
+        ],
+      }),
+    })
+
+    const res = await POST(req, { params: Promise.resolve({ id: 'client-456' }) })
+    expect(res.status).toBe(200)
+    expect(insertedMessageBody).not.toContain('<script>')
+    expect(insertedMessageBody).toContain('Solid depth  maintained.')
   })
 })

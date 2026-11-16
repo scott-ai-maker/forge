@@ -230,6 +230,29 @@ export default function LiveVideoCameraHud({
   const [replayVideoUrl, setReplayVideoUrl] = useState<string | null>(null)
   const rollingChunksRef = useRef<{ data: Blob; timestamp: number }[]>([])
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recorderMimeTypeRef = useRef<string>('video/webm')
+  const replayObjectUrlRef = useRef<string | null>(null)
+
+  const closeReplayModal = useCallback(() => {
+    if (replayObjectUrlRef.current) {
+      try {
+        URL.revokeObjectURL(replayObjectUrlRef.current)
+      } catch {}
+      replayObjectUrlRef.current = null
+    }
+    setReplayVideoUrl(null)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (replayObjectUrlRef.current) {
+        try {
+          URL.revokeObjectURL(replayObjectUrlRef.current)
+        } catch {}
+        replayObjectUrlRef.current = null
+      }
+    }
+  }, [])
 
   // ── In-HUD Luxury Toast Notification State ──
   const [hudToast, setHudToast] = useState<{ message: string; type?: 'info' | 'gold' | 'emerald' | 'amber' } | null>(null)
@@ -857,13 +880,27 @@ export default function LiveVideoCameraHud({
       }
 
       try {
-        const recorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm;codecs=vp8,opus' })
+        const candidateMimes = [
+          'video/webm;codecs=vp8,opus',
+          'video/webm;codecs=vp8',
+          'video/webm',
+          'video/mp4',
+        ]
+        const supportedMime =
+          typeof MediaRecorder.isTypeSupported === 'function'
+            ? candidateMimes.find(m => MediaRecorder.isTypeSupported(m))
+            : undefined
+        const recorder = supportedMime
+          ? new MediaRecorder(mediaStream, { mimeType: supportedMime })
+          : new MediaRecorder(mediaStream)
+        recorderMimeTypeRef.current = recorder.mimeType || supportedMime || 'video/webm'
         mediaRecorderRef.current = recorder
         attachDataHandler(recorder)
         recorder.start(1000)
       } catch {
         try {
           const recorder = new MediaRecorder(mediaStream)
+          recorderMimeTypeRef.current = recorder.mimeType || 'video/webm'
           mediaRecorderRef.current = recorder
           attachDataHandler(recorder)
           recorder.start(1000)
@@ -937,9 +974,17 @@ export default function LiveVideoCameraHud({
       showHudToast('Buffering high-speed video feed… please wait 3 seconds before replaying.', 'amber')
       return
     }
+    if (replayObjectUrlRef.current) {
+      try {
+        URL.revokeObjectURL(replayObjectUrlRef.current)
+      } catch {}
+      replayObjectUrlRef.current = null
+    }
     const blobs = rollingChunksRef.current.map(c => c.data)
-    const combined = new Blob(blobs, { type: 'video/webm' })
+    const mimeType = recorderMimeTypeRef.current || blobs[0]?.type || 'video/webm'
+    const combined = new Blob(blobs, { type: mimeType })
     const url = URL.createObjectURL(combined)
+    replayObjectUrlRef.current = url
     setReplayVideoUrl(url)
   }
 
@@ -3280,7 +3325,7 @@ export default function LiveVideoCameraHud({
           videoUrl={replayVideoUrl}
           clientName={clientName}
           exerciseName={exerciseName}
-          onClose={() => setReplayVideoUrl(null)}
+          onClose={closeReplayModal}
         />
       )}
 

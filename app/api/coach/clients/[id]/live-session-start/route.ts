@@ -3,6 +3,9 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestAuthz, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
 import { notifyUser } from '@/lib/notifications'
 import { getBaseUrl } from '@/lib/marketing-email'
+import { enforceRateLimit } from '@/lib/rate-limit'
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 export async function POST(
   req: NextRequest,
@@ -14,11 +17,14 @@ export async function POST(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   if (authz.client.role !== 'coach') {
-    return NextResponse.json({ error: 'Only assigned coaches can initiate live session alerts.' }, { status: 403 })
+    return NextResponse.json(
+      { error: 'Only assigned coaches can initiate live session alerts.' },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
   }
 
   const { id: clientId } = await context.params
@@ -28,7 +34,21 @@ export async function POST(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Forbidden'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
+  }
+
+  const rl = await enforceRateLimit({
+    key: `live-session-start:${authz.user.id}:${clientId}`,
+    limit: 10,
+    windowSeconds: 300,
+    route: '/api/coach/clients/[id]/live-session-start',
+    dimension: 'user',
+  })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many live session alerts sent recently. Please wait a few minutes.' },
+      { status: 429, headers: NO_STORE_HEADERS }
+    )
   }
 
   const admin = supabaseAdmin()
@@ -78,10 +98,13 @@ export async function POST(
     pushSent = false
   }
 
-  return NextResponse.json({
-    success: true,
-    athleteName,
-    pushSent,
-    message: 'Live session alert and notification dispatched to athlete.',
-  })
+  return NextResponse.json(
+    {
+      success: true,
+      athleteName,
+      pushSent,
+      message: 'Live session alert and notification dispatched to athlete.',
+    },
+    { headers: NO_STORE_HEADERS }
+  )
 }

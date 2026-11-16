@@ -111,9 +111,40 @@ describe('POST /api/fitness/bodyfat', () => {
 
       const res = await POST(req)
       expect(res!.status).toBe(401)
+      expect(res!.headers.get('cache-control')).toContain('no-store')
     } finally {
       vi.unstubAllEnvs()
     }
+  })
+
+  it('rejects non-finite or out-of-range heightCm/weightKg/sex with 400', async () => {
+    const badHeightReq = new NextRequest('http://localhost/api/fitness/bodyfat', {
+      method: 'POST',
+      body: JSON.stringify({ sex: 'male', heightCm: 'abc', weightKg: 82 }),
+    })
+    const badHeightRes = await POST(badHeightReq)
+    expect(badHeightRes!.status).toBe(400)
+    await expect(badHeightRes!.json()).resolves.toMatchObject({
+      error: 'heightCm must be between 100 and 260',
+    })
+
+    const badSexReq = new NextRequest('http://localhost/api/fitness/bodyfat', {
+      method: 'POST',
+      body: JSON.stringify({ sex: 'invalid', heightCm: 180, weightKg: 82 }),
+    })
+    const badSexRes = await POST(badSexReq)
+    expect(badSexRes!.status).toBe(400)
+  })
+
+  it('clamps extreme targetBodyFatPercent safely in generateRecompositionPlan without division by zero', async () => {
+    const { generateRecompositionPlan } = await import('@/lib/ai-body-composition-engine')
+    const planAt100 = generateRecompositionPlan(85, 22, 'male', 100)
+    expect(Number.isFinite(planAt100.targetWeightKg)).toBe(true)
+    expect(planAt100.targetBodyFatPercent).toBeLessThanOrEqual(45)
+
+    const planNegative = generateRecompositionPlan(65, 24, 'female', -10)
+    expect(Number.isFinite(planNegative.targetWeightKg)).toBe(true)
+    expect(planNegative.targetBodyFatPercent).toBeGreaterThanOrEqual(10)
   })
 })
 

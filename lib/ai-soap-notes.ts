@@ -90,10 +90,13 @@ Generate the structured clinical SOAP output in JSON format.`
 
       for (const model of modelsToTry) {
         try {
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
           const response = await fetch(endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey,
+            },
             body: JSON.stringify({
               contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
               systemInstruction: { parts: [{ text: systemInstruction }] },

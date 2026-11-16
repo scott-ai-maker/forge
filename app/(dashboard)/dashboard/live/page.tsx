@@ -55,11 +55,23 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
     }
   }
 
-  // Resolve Team if teamId query parameter is provided
+  // Resolve Team if teamId query parameter is provided — strictly verify active membership
   let team = null
   if (targetTeamId) {
-    team = await getTeamById(targetTeamId, client?.designated_coach_id || undefined)
+    const candidateTeam = await getTeamById(targetTeamId, client?.designated_coach_id || undefined)
+    if (
+      candidateTeam &&
+      candidateTeam.members.some(m => m.clientId === user.id && m.status !== 'inactive')
+    ) {
+      team = candidateTeam
+    }
   }
+
+  const sanitizedTeamRoster = team?.members.map(m => ({
+    ...m,
+    email: '',
+    sessionsRemaining: undefined,
+  }))
 
   const isTeamSession = Boolean(team)
   const sessionId = team ? `team-${team.id}` : `live-${user.id}`
@@ -160,7 +172,7 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
             isTeamSession={isTeamSession}
             teamId={team?.id}
             teamName={team?.name}
-            teamRoster={team?.members}
+            teamRoster={sanitizedTeamRoster}
           />
         </div>
 

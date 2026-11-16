@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, requireActiveClient, AuthzError } from '@/lib/authz'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 function parseScheduledAt(value: unknown) {
   if (typeof value !== 'string' || value.trim().length === 0) return null
   const parsed = new Date(value)
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const body = await req.json().catch(() => ({}))
@@ -64,7 +66,10 @@ export async function POST(req: NextRequest) {
 
   if (callerRole === 'coach') {
     if (!clientId && !packageId) {
-      return NextResponse.json({ error: 'clientId or packageId is required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'clientId or packageId is required' },
+        { status: 400, headers: NO_STORE_HEADERS }
+      )
     }
     const { requireCoachAssignedClient } = await import('@/lib/authz')
     const { supabaseAdmin } = await import('@/lib/supabase')
@@ -76,7 +81,7 @@ export async function POST(req: NextRequest) {
       } catch (error) {
         const status = error instanceof AuthzError ? error.status : 403
         const message = error instanceof Error ? error.message : 'Forbidden'
-        return NextResponse.json({ error: message }, { status })
+        return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
       }
       clientTargetId = clientId
     } else if (packageId) {
@@ -86,14 +91,14 @@ export async function POST(req: NextRequest) {
         .eq('id', packageId)
         .maybeSingle()
       if (!pkg) {
-        return NextResponse.json({ error: 'Package not found' }, { status: 404 })
+        return NextResponse.json({ error: 'Package not found' }, { status: 404, headers: NO_STORE_HEADERS })
       }
       try {
         await requireCoachAssignedClient(callerId, pkg.client_id)
       } catch (error) {
         const status = error instanceof AuthzError ? error.status : 403
         const message = error instanceof Error ? error.message : 'Forbidden'
-        return NextResponse.json({ error: message }, { status })
+        return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
       }
       clientTargetId = pkg.client_id
     }
@@ -127,7 +132,10 @@ export async function POST(req: NextRequest) {
           .single()
 
         if (compErr || !compPkg) {
-          return NextResponse.json({ error: 'Failed to allocate session credit' }, { status: 500 })
+          return NextResponse.json(
+            { error: 'Failed to allocate session credit' },
+            { status: 500, headers: NO_STORE_HEADERS }
+          )
         }
         packageId = compPkg.id
       }
@@ -135,12 +143,18 @@ export async function POST(req: NextRequest) {
   }
 
   if (!packageId || !scheduledAt) {
-    return NextResponse.json({ error: 'packageId and scheduledAt are required' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'packageId and scheduledAt are required' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
   }
 
   const slotStart = parseScheduledAt(scheduledAt)
   if (!slotStart) {
-    return NextResponse.json({ error: 'scheduledAt must be a valid ISO datetime' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'scheduledAt must be a valid ISO datetime' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
   }
 
   const { supabaseAdmin } = await import('@/lib/supabase')
@@ -155,16 +169,16 @@ export async function POST(req: NextRequest) {
   if (error) {
     const mapped = statusForBookingError(error)
     if (mapped) {
-      return NextResponse.json({ error: mapped.error }, { status: mapped.status })
+      return NextResponse.json({ error: mapped.error }, { status: mapped.status, headers: NO_STORE_HEADERS })
     }
 
     console.error('Session booking rpc error:', error)
-    return NextResponse.json({ error: 'Failed to book session' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to book session' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   const session = Array.isArray(data) ? data[0] : data
   if (!session) {
-    return NextResponse.json({ error: 'Failed to book session' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to book session' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   // Immediately suppress 48-Hour 1-on-1 Screening Reminder (Template 03) once booked
@@ -175,5 +189,5 @@ export async function POST(req: NextRequest) {
     // Non-blocking suppression hook
   }
 
-  return NextResponse.json({ success: true, session })
+  return NextResponse.json({ success: true, session }, { headers: NO_STORE_HEADERS })
 }

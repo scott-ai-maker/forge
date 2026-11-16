@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useId } from 'react'
 import ForgeIcon from '@/components/ui/ForgeIcon'
 import { UniversalVoiceRecorder } from '@/lib/wav-audio-recorder'
 import {
@@ -12,6 +12,7 @@ import {
   getStoredSanctuaryAudioNotes,
   deleteSanctuaryAudioNote,
 } from '@/lib/sanctuary-audio-notes-engine'
+import { useNativeStudioDialog } from '@/components/coach/useNativeStudioDialog'
 
 export interface CoachSanctuaryAudioNoteModalProps {
   isOpen: boolean
@@ -59,6 +60,10 @@ export default function CoachSanctuaryAudioNoteModal({
   // Recorders
   const recorderRef = useRef<UniversalVoiceRecorder | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const baseId = useId()
+
+  useNativeStudioDialog(dialogRef, isOpen, onClose)
 
   // Library State
   const [libraryNotes, setLibraryNotes] = useState<SanctuaryAudioNote[]>([])
@@ -68,6 +73,20 @@ export default function CoachSanctuaryAudioNoteModal({
       setLibraryNotes(getStoredSanctuaryAudioNotes())
       setSavedSuccessMessage(false)
       setRecordingError(null)
+    } else {
+      if (recorderRef.current) {
+        recorderRef.current.cancel()
+        recorderRef.current = null
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause()
+      }
+      setIsRecording(false)
+      setIsPreviewPlaying(false)
     }
   }, [isOpen])
 
@@ -272,28 +291,20 @@ export default function CoachSanctuaryAudioNoteModal({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="forge-live-studio-dialog"
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       aria-labelledby="coach-audio-notes-title"
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100000,
-        background: 'rgba(3, 7, 18, 0.88)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
+        maxWidth: 'min(640px, calc(100vw - 16px))',
       }}
     >
       <div
         style={{
           maxWidth: 640,
           width: '100%',
-          maxHeight: '90vh',
+          maxHeight: '90dvh',
           background: 'linear-gradient(180deg, #0F172A 0%, #080E18 100%)',
           border: '1.5px solid rgba(212, 175, 55, 0.5)',
           borderRadius: 16,
@@ -302,6 +313,7 @@ export default function CoachSanctuaryAudioNoteModal({
           flexDirection: 'column',
           overflow: 'hidden',
           color: '#FFFFFF',
+          boxSizing: 'border-box',
         }}
       >
         {/* Header */}
@@ -329,6 +341,7 @@ export default function CoachSanctuaryAudioNoteModal({
                 justifyContent: 'center',
                 fontWeight: 800,
                 fontSize: 14,
+                flexShrink: 0,
               }}
             >
               SG
@@ -366,12 +379,17 @@ export default function CoachSanctuaryAudioNoteModal({
             onClick={onClose}
             aria-label="Close Voice Studio"
             style={{
+              minWidth: 44,
+              minHeight: 44,
               background: 'transparent',
               border: 'none',
               color: '#94A3B8',
               cursor: 'pointer',
               padding: 6,
               borderRadius: 6,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <ForgeIcon name="close" size={16} />
@@ -380,6 +398,8 @@ export default function CoachSanctuaryAudioNoteModal({
 
         {/* Navigation Tabs */}
         <div
+          role="group"
+          aria-label="Sanctuary voice studio views"
           style={{
             display: 'flex',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
@@ -388,9 +408,11 @@ export default function CoachSanctuaryAudioNoteModal({
         >
           <button
             type="button"
+            aria-pressed={activeTab === 'record'}
             onClick={() => setActiveTab('record')}
             style={{
               flex: 1,
+              minHeight: 44,
               padding: '10px 16px',
               background: activeTab === 'record' ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
               border: 'none',
@@ -414,9 +436,11 @@ export default function CoachSanctuaryAudioNoteModal({
 
           <button
             type="button"
+            aria-pressed={activeTab === 'library'}
             onClick={() => setActiveTab('library')}
             style={{
               flex: 1,
+              minHeight: 44,
               padding: '10px 16px',
               background: activeTab === 'library' ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
               border: 'none',
@@ -693,10 +717,11 @@ export default function CoachSanctuaryAudioNoteModal({
               </div>
 
               {/* ── METADATA & DISPATCH CONFIG ── */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 12 }}>
                 {/* Note Title */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label
+                    htmlFor={`${baseId}-title`}
                     style={{
                       display: 'block',
                       fontSize: 11,
@@ -711,18 +736,21 @@ export default function CoachSanctuaryAudioNoteModal({
                     Memo Title
                   </label>
                   <input
+                    id={`${baseId}-title`}
+                    name="title"
                     type="text"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     placeholder="e.g. Squat Wedge & 360° Brace"
                     style={{
                       width: '100%',
+                      minHeight: 44,
                       padding: '8px 12px',
                       borderRadius: 6,
                       background: 'rgba(0, 0, 0, 0.3)',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
                       color: '#FFFFFF',
-                      fontSize: 13,
+                      fontSize: 16,
                       boxSizing: 'border-box',
                     }}
                   />
@@ -731,6 +759,7 @@ export default function CoachSanctuaryAudioNoteModal({
                 {/* Category Selector */}
                 <div>
                   <label
+                    htmlFor={`${baseId}-category`}
                     style={{
                       display: 'block',
                       fontSize: 11,
@@ -745,16 +774,19 @@ export default function CoachSanctuaryAudioNoteModal({
                     Category
                   </label>
                   <select
+                    id={`${baseId}-category`}
+                    name="category"
                     value={category}
                     onChange={e => setCategory(e.target.value as SanctuaryAudioCategory)}
                     style={{
                       width: '100%',
+                      minHeight: 44,
                       padding: '8px 12px',
                       borderRadius: 6,
                       background: '#0B132B',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
                       color: '#FFFFFF',
-                      fontSize: 12,
+                      fontSize: 16,
                       boxSizing: 'border-box',
                     }}
                   >
@@ -769,6 +801,7 @@ export default function CoachSanctuaryAudioNoteModal({
                 {/* Target Exercise Scope */}
                 <div>
                   <label
+                    htmlFor={`${baseId}-exercise`}
                     style={{
                       display: 'block',
                       fontSize: 11,
@@ -783,18 +816,21 @@ export default function CoachSanctuaryAudioNoteModal({
                     Movement Scope (Optional)
                   </label>
                   <input
+                    id={`${baseId}-exercise`}
+                    name="exerciseScope"
                     type="text"
                     value={exerciseScope}
                     onChange={e => setExerciseScope(e.target.value)}
                     placeholder="e.g. Barbell Back Squat"
                     style={{
                       width: '100%',
+                      minHeight: 44,
                       padding: '8px 12px',
                       borderRadius: 6,
                       background: 'rgba(0, 0, 0, 0.3)',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
                       color: '#FFFFFF',
-                      fontSize: 12,
+                      fontSize: 16,
                       boxSizing: 'border-box',
                     }}
                   />
@@ -803,6 +839,7 @@ export default function CoachSanctuaryAudioNoteModal({
                 {/* Target Athlete Scope */}
                 <div>
                   <label
+                    htmlFor={`${baseId}-athlete`}
                     style={{
                       display: 'block',
                       fontSize: 11,
@@ -817,16 +854,19 @@ export default function CoachSanctuaryAudioNoteModal({
                     Athlete Target
                   </label>
                   <select
+                    id={`${baseId}-athlete`}
+                    name="clientScope"
                     value={clientScope}
                     onChange={e => setClientScope(e.target.value)}
                     style={{
                       width: '100%',
+                      minHeight: 44,
                       padding: '8px 12px',
                       borderRadius: 6,
                       background: '#0B132B',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
                       color: '#FFFFFF',
-                      fontSize: 12,
+                      fontSize: 16,
                       boxSizing: 'border-box',
                     }}
                   >
@@ -842,6 +882,7 @@ export default function CoachSanctuaryAudioNoteModal({
                 {/* Priority */}
                 <div>
                   <label
+                    htmlFor={`${baseId}-priority`}
                     style={{
                       display: 'block',
                       fontSize: 11,
@@ -856,16 +897,19 @@ export default function CoachSanctuaryAudioNoteModal({
                     Dispatch Priority
                   </label>
                   <select
+                    id={`${baseId}-priority`}
+                    name="priority"
                     value={priority}
                     onChange={e => setPriority(e.target.value as 'high' | 'normal')}
                     style={{
                       width: '100%',
+                      minHeight: 44,
                       padding: '8px 12px',
                       borderRadius: 6,
                       background: '#0B132B',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
                       color: '#FFFFFF',
-                      fontSize: 12,
+                      fontSize: 16,
                       boxSizing: 'border-box',
                     }}
                   >
@@ -878,6 +922,7 @@ export default function CoachSanctuaryAudioNoteModal({
                 <div style={{ gridColumn: '1 / -1' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                     <label
+                      htmlFor={`${baseId}-transcript`}
                       style={{
                         display: 'block',
                         fontSize: 11,
@@ -964,6 +1009,8 @@ export default function CoachSanctuaryAudioNoteModal({
                   </div>
 
                   <textarea
+                    id={`${baseId}-transcript`}
+                    name="transcript"
                     rows={3}
                     value={transcript}
                     onChange={e => {
@@ -978,7 +1025,7 @@ export default function CoachSanctuaryAudioNoteModal({
                       background: 'rgba(0, 0, 0, 0.3)',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
                       color: '#FFFFFF',
-                      fontSize: 12,
+                      fontSize: 16,
                       lineHeight: 1.4,
                       boxSizing: 'border-box',
                       fontFamily: 'inherit',
@@ -1144,6 +1191,8 @@ export default function CoachSanctuaryAudioNoteModal({
                       onClick={() => handleDeleteNote(item.id)}
                       aria-label={`Delete memo ${item.title}`}
                       style={{
+                        minWidth: 44,
+                        minHeight: 44,
                         background: 'transparent',
                         border: '1px solid rgba(239, 68, 68, 0.3)',
                         color: '#F87171',
@@ -1164,6 +1213,6 @@ export default function CoachSanctuaryAudioNoteModal({
           )}
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

@@ -177,17 +177,19 @@ export function calculateBaselineLbm(weightKg: number, heightCm: number, sex: 'm
   humeLbmKg: number
   meanLbmKg: number
 } {
+  const safeWeight = Number.isFinite(weightKg) ? Math.max(25, Math.min(350, weightKg)) : 80
+  const safeHeight = Number.isFinite(heightCm) ? Math.max(100, Math.min(260, heightCm)) : 178
   const isMale = sex === 'male' || sex === 'other'
   
   // Boer formula
   const boer = isMale
-    ? 0.407 * weightKg + 0.267 * heightCm - 19.2
-    : 0.252 * weightKg + 0.473 * heightCm - 48.3
+    ? 0.407 * safeWeight + 0.267 * safeHeight - 19.2
+    : 0.252 * safeWeight + 0.473 * safeHeight - 48.3
 
   // Hume formula
   const hume = isMale
-    ? 0.3281 * weightKg + 0.33929 * heightCm - 29.5336
-    : 0.29569 * weightKg + 0.41813 * heightCm - 43.2933
+    ? 0.3281 * safeWeight + 0.33929 * safeHeight - 29.5336
+    : 0.29569 * safeWeight + 0.41813 * safeHeight - 43.2933
 
   const meanLbm = (Math.max(20, boer) + Math.max(20, hume)) / 2
   return {
@@ -208,8 +210,10 @@ export function calculateFfmi(
   normalizedFfmi: number
   category: 'Below Average' | 'Average' | 'Above Average' | 'Athletic' | 'Near Natural Genetic Limit' | 'Exceptional'
 } {
-  const heightM = heightCm / 100
-  const rawFfmi = leanMassKg / (heightM * heightM)
+  const safeLeanMass = Number.isFinite(leanMassKg) ? Math.max(15, Math.min(250, leanMassKg)) : 60
+  const safeHeight = Number.isFinite(heightCm) ? Math.max(100, Math.min(260, heightCm)) : 178
+  const heightM = safeHeight / 100
+  const rawFfmi = safeLeanMass / (heightM * heightM)
   // Normalized FFMI adjusts for taller/shorter individuals to a standard 1.8m height
   const normFfmi = rawFfmi + 6.1 * (1.8 - heightM)
 
@@ -234,15 +238,17 @@ export function calculateFfmi(
  * Katch-McArdle Formula: BMR = 370 + (21.6 * LBM_kg)
  */
 export function calculateCunninghamBmr(leanMassKg: number): number {
-  return Math.round(370 + 21.6 * leanMassKg)
+  const safeLeanMass = Number.isFinite(leanMassKg) ? Math.max(15, Math.min(250, leanMassKg)) : 60
+  return Math.round(370 + 21.6 * safeLeanMass)
 }
 
 /**
  * Estimates Skeletal Muscle Mass (SMM) from Lean Body Mass using Janssen et al. model.
  */
 export function estimateSkeletalMuscleMass(leanMassKg: number, sex: 'male' | 'female' | 'other'): number {
+  const safeLeanMass = Number.isFinite(leanMassKg) ? Math.max(15, Math.min(250, leanMassKg)) : 60
   const smmRatio = sex === 'female' ? 0.52 : 0.56
-  return roundToOne(leanMassKg * smmRatio)
+  return roundToOne(safeLeanMass * smmRatio)
 }
 
 /**
@@ -255,14 +261,17 @@ export function calculateNavyBodyFat(
   neckCm: number,
   hipCm?: number
 ): number {
+  const safeHeight = Number.isFinite(heightCm) ? Math.max(100, Math.min(260, heightCm)) : 178
+  const safeWaist = Number.isFinite(waistCm) ? Math.max(40, Math.min(250, waistCm)) : 84
+  const safeNeck = Number.isFinite(neckCm) ? Math.max(20, Math.min(80, neckCm)) : 38
   if (sex === 'female') {
-    const effectiveHip = hipCm || waistCm * 1.15
-    const logVal = Math.log10(Math.max(1, waistCm + effectiveHip - neckCm))
-    const bf = 495 / (1.29579 - 0.35004 * logVal + 0.221 * Math.log10(heightCm)) - 450
+    const effectiveHip = Number.isFinite(hipCm) && (hipCm as number) > 0 ? (hipCm as number) : safeWaist * 1.15
+    const logVal = Math.log10(Math.max(1, safeWaist + effectiveHip - safeNeck))
+    const bf = 495 / (1.29579 - 0.35004 * logVal + 0.221 * Math.log10(safeHeight)) - 450
     return roundToOne(Math.max(8, Math.min(55, bf)))
   } else {
-    const logVal = Math.log10(Math.max(1, waistCm - neckCm))
-    const bf = 495 / (1.0324 - 0.19077 * logVal + 0.15456 * Math.log10(heightCm)) - 450
+    const logVal = Math.log10(Math.max(1, safeWaist - safeNeck))
+    const bf = 495 / (1.0324 - 0.19077 * logVal + 0.15456 * Math.log10(safeHeight)) - 450
     return roundToOne(Math.max(3, Math.min(48, bf)))
   }
 }
@@ -301,12 +310,17 @@ export function generateRecompositionPlan(
   sex: 'male' | 'female' | 'other',
   targetBodyFatInput?: number
 ): RecompositionPlan {
-  const currentLbmKg = currentWeightKg * (1 - currentBodyFatPercent / 100)
-  const currentFatMassKg = currentWeightKg * (currentBodyFatPercent / 100)
+  const safeWeightKg = Number.isFinite(currentWeightKg) ? Math.max(25, Math.min(350, currentWeightKg)) : 80
+  const safeCurrentBf = Number.isFinite(currentBodyFatPercent) ? Math.max(3, Math.min(65, currentBodyFatPercent)) : 20
+  const currentLbmKg = safeWeightKg * (1 - safeCurrentBf / 100)
+  const currentFatMassKg = safeWeightKg * (safeCurrentBf / 100)
 
-  // Default target: lean athletic fitness
+  // Default target: lean athletic fitness; clamp to physiological bounds to prevent division by zero
   const defaultTarget = sex === 'female' ? 20.0 : 12.0
-  const targetBodyFatPercent = targetBodyFatInput ?? defaultTarget
+  const minSafeTarget = sex === 'female' ? 10.0 : 4.0
+  const maxSafeTarget = sex === 'female' ? 50.0 : 45.0
+  const rawTarget = Number.isFinite(targetBodyFatInput) ? (targetBodyFatInput as number) : defaultTarget
+  const targetBodyFatPercent = roundToOne(Math.max(minSafeTarget, Math.min(maxSafeTarget, rawTarget)))
 
   // Assuming preservation of ~98.5% of Lean Body Mass during structured OPT™ training & high protein
   const targetLbmKg = currentLbmKg * 0.985
@@ -328,13 +342,13 @@ export function generateRecompositionPlan(
   let recommendedNasmPhase = 2
   let phaseName = 'Phase 2: Strength Endurance'
 
-  if (currentBodyFatPercent > targetBodyFatPercent + 1.5) {
+  if (safeCurrentBf > targetBodyFatPercent + 1.5) {
     // Fat Loss / Recomposition Focus
     weeklyDeficitOrSurplus = -3500 // ~1 lb fat loss per week (500 kcal/day deficit)
     dailyCaloricTarget = Math.max(1400, tdee - 500)
-    recommendedNasmPhase = currentBodyFatPercent > 22 ? 1 : 2
+    recommendedNasmPhase = safeCurrentBf > 22 ? 1 : 2
     phaseName = recommendedNasmPhase === 1 ? 'Phase 1: Stabilization Endurance' : 'Phase 2: Strength Endurance'
-  } else if (currentBodyFatPercent < targetBodyFatPercent - 2.0) {
+  } else if (safeCurrentBf < targetBodyFatPercent - 2.0) {
     // Lean Hypertrophy Massing
     weeklyDeficitOrSurplus = 1750 // ~0.5 lb lean gain per week (250 kcal/day surplus)
     dailyCaloricTarget = tdee + 300
@@ -529,10 +543,10 @@ export async function analyzeBodyCompositionFromImages(
   params: ScanBodyCompositionParams
 ): Promise<BodyCompositionScanResult> {
   const {
-    sex,
-    heightCm,
-    weightKg,
-    age = 32,
+    sex: rawSex,
+    heightCm: rawHeightCm,
+    weightKg: rawWeightKg,
+    age: rawAge = 32,
     athleteType = 'general',
     waistCm: inputWaistCm,
     neckCm: inputNeckCm,
@@ -543,9 +557,20 @@ export async function analyzeBodyCompositionFromImages(
     lateralPhotoBase64,
     posteriorPhotoBase64,
     photoDataUrl,
-    clientName = 'Athlete',
+    clientName: rawClientName = 'Athlete',
     targetBodyFatPercent,
   } = params
+
+  const sex: 'male' | 'female' | 'other' =
+    rawSex === 'female' || rawSex === 'other' ? rawSex : 'male'
+  const heightCm = Number.isFinite(rawHeightCm) ? Math.max(100, Math.min(260, rawHeightCm)) : 178
+  const weightKg = Number.isFinite(rawWeightKg) ? Math.max(25, Math.min(350, rawWeightKg)) : 80
+  const age = Number.isFinite(rawAge) ? Math.max(18, Math.min(110, Math.round(rawAge))) : 32
+  const clientName =
+    String(rawClientName || 'Athlete')
+      .replace(/[\u0000-\u001F\u007F<>]/g, '')
+      .trim()
+      .slice(0, 80) || 'Athlete'
 
   const primaryPhoto = anteriorPhotoBase64 || photoDataUrl
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
@@ -721,10 +746,13 @@ Return ONLY valid JSON matching this schema:
   "coachSummaryNotes": "DEXA-calibrated multi-compartment body composition analysis indicates athletic lean mass."
 }`
 
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
+      const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
         body: JSON.stringify({
           contents: [
             {

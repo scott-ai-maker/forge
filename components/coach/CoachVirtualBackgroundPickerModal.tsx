@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useId } from 'react'
 import {
   COACH_BACKGROUND_PRESETS,
   type CoachBackgroundPreset,
   type CoachBackgroundCategory,
 } from '@/lib/coach-backgrounds-catalog'
 import { GaaIcon } from '@/components/ui/GaaIcon'
+import { useNativeStudioDialog } from './useNativeStudioDialog'
 
 interface CoachVirtualBackgroundPickerModalProps {
   isOpen: boolean
@@ -25,6 +26,10 @@ export default function CoachVirtualBackgroundPickerModal({
 }: CoachVirtualBackgroundPickerModalProps) {
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const searchInputId = useId()
+
+  useNativeStudioDialog(dialogRef, isOpen, onClose)
 
   const categories: { label: string; value: FilterCategory; count: number }[] = useMemo(() => {
     return [
@@ -97,30 +102,19 @@ export default function CoachVirtualBackgroundPickerModal({
   if (!isOpen) return null
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="forge-live-studio-dialog"
       aria-label="Studio Virtual Backgrounds Picker"
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        background: 'rgba(5, 10, 18, 0.85)',
-        backdropFilter: 'blur(10px)',
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
+        maxWidth: 'min(1040px, calc(100vw - 16px))',
       }}
     >
       <div
         style={{
           width: '100%',
-          maxWidth: 1040,
-          maxHeight: '90vh',
+          maxHeight: '90dvh',
           display: 'flex',
           flexDirection: 'column',
           background: 'linear-gradient(180deg, #0F172A 0%, #0A0F1D 100%)',
@@ -133,16 +127,18 @@ export default function CoachVirtualBackgroundPickerModal({
         {/* Header */}
         <div
           style={{
-            padding: '18px 24px',
+            padding: 'clamp(14px, 2vw, 18px) clamp(14px, 2.5vw, 24px)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
             background: 'rgba(255, 255, 255, 0.02)',
           }}
         >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ minInlineSize: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span
                 style={{
                   fontSize: 10,
@@ -158,28 +154,29 @@ export default function CoachVirtualBackgroundPickerModal({
               >
                 Coach Studio Environment
               </span>
-              <span style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.4)' }}>
+              <span style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.55)' }}>
                 {COACH_BACKGROUND_PRESETS.length} Calibrated Modality Sets
               </span>
             </div>
             <h2
               style={{
                 fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-                fontSize: 20,
+                fontSize: 'clamp(17px, 2.2vw, 20px)',
                 color: '#FFF',
                 fontWeight: 700,
                 letterSpacing: '0.04em',
                 margin: '6px 0 0 0',
+                textWrap: 'balance',
               }}
             >
               Select Virtual Training Background
             </h2>
-            <p style={{ margin: '4px 0 0 0', fontSize: 12, color: 'rgba(255, 255, 255, 0.6)' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: 12, color: 'rgba(255, 255, 255, 0.65)' }}>
               Choose a hyperrealistic facility background tailored to the client’s active training block.
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             {activeBackground && (
               <button
                 type="button"
@@ -188,6 +185,7 @@ export default function CoachVirtualBackgroundPickerModal({
                   onClose()
                 }}
                 style={{
+                  minHeight: 44,
                   padding: '7px 14px',
                   background: 'rgba(239, 68, 68, 0.15)',
                   border: '1px solid rgba(239, 68, 68, 0.4)',
@@ -196,7 +194,7 @@ export default function CoachVirtualBackgroundPickerModal({
                   fontSize: 12,
                   fontWeight: 700,
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
                 }}
@@ -213,9 +211,9 @@ export default function CoachVirtualBackgroundPickerModal({
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: '50%',
-                width: 32,
-                height: 32,
-                display: 'flex',
+                minWidth: 44,
+                minHeight: 44,
+                display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#94A3B8',
@@ -231,25 +229,29 @@ export default function CoachVirtualBackgroundPickerModal({
         {/* Filter Strip & Search */}
         <div
           style={{
-            padding: '12px 24px',
+            padding: '12px clamp(14px, 2.5vw, 24px)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 16,
+            gap: 12,
             background: 'rgba(0, 0, 0, 0.2)',
             flexWrap: 'wrap',
           }}
         >
           {/* Category Tabs */}
           <div
+            role="group"
+            aria-label="Filter backgrounds by training modality"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 6,
               overflowX: 'auto',
               paddingBottom: 4,
-              maxWidth: '75%',
+              maxWidth: '100%',
+              flex: '1 1 280px',
+              minInlineSize: 0,
             }}
           >
             {categories.map((cat) => {
@@ -258,17 +260,19 @@ export default function CoachVirtualBackgroundPickerModal({
                 <button
                   key={cat.value}
                   type="button"
+                  aria-pressed={isSelected}
                   onClick={() => setSelectedCategory(cat.value)}
                   style={{
-                    padding: '5px 11px',
+                    minHeight: 38,
+                    padding: '6px 12px',
                     borderRadius: 20,
                     fontSize: 11,
                     fontWeight: isSelected ? 800 : 600,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
                     background: isSelected ? 'var(--gold)' : 'rgba(255, 255, 255, 0.05)',
-                    color: isSelected ? '#0D1B2A' : 'rgba(255, 255, 255, 0.7)',
+                    color: isSelected ? '#0D1B2A' : 'rgba(255, 255, 255, 0.78)',
                     border: isSelected ? '1px solid var(--gold)' : '1px solid rgba(255, 255, 255, 0.08)',
                   }}
                 >
@@ -278,28 +282,48 @@ export default function CoachVirtualBackgroundPickerModal({
             })}
           </div>
 
-          {/* Quick Search */}
-          <div style={{ position: 'relative', width: 220 }}>
+          {/* Quick Search wrapped in semantic <search> */}
+          <search style={{ position: 'relative', flex: '1 1 200px', maxWidth: 280 }}>
+            <label htmlFor={searchInputId} className="sr-only">
+              Search virtual training backgrounds
+            </label>
             <input
-              type="text"
+              id={searchInputId}
+              name="background_search"
+              type="search"
               placeholder="Search modality..."
               value={searchQuery}
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 width: '100%',
+                minHeight: 44,
                 background: 'rgba(15, 23, 42, 0.8)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.18)',
                 borderRadius: 6,
-                padding: '6px 12px 6px 28px',
+                padding: '8px 12px 8px 30px',
                 color: '#FFF',
-                fontSize: 12,
-                outline: 'none',
+                fontSize: 16,
+                boxSizing: 'border-box',
               }}
             />
-            <span style={{ position: 'absolute', left: 8, top: 6, opacity: 0.5 }}>
-              <GaaIcon name="search" size={12} tone="inherit" />
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: 10,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                opacity: 0.55,
+                pointerEvents: 'none',
+                display: 'inline-flex',
+              }}
+            >
+              <GaaIcon name="search" size={13} tone="inherit" />
             </span>
-          </div>
+          </search>
         </div>
 
         {/* Background Cards Grid */}
@@ -307,9 +331,9 @@ export default function CoachVirtualBackgroundPickerModal({
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '24px',
+            padding: 'clamp(14px, 2.5vw, 24px)',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
             gap: 16,
           }}
         >
@@ -317,13 +341,18 @@ export default function CoachVirtualBackgroundPickerModal({
             const isActive = activeBackground?.id === preset.id
 
             return (
-              <div
+              <button
                 key={preset.id}
+                type="button"
+                aria-pressed={isActive}
                 onClick={() => {
                   onSelectBackground(preset)
                   onClose()
                 }}
                 style={{
+                  padding: 0,
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
                   borderRadius: 10,
                   border: isActive ? '2px solid var(--gold)' : '1px solid rgba(255, 255, 255, 0.1)',
                   background: isActive ? 'rgba(212, 160, 23, 0.06)' : 'rgba(15, 23, 42, 0.6)',
@@ -331,7 +360,7 @@ export default function CoachVirtualBackgroundPickerModal({
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
+                  transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
                   boxShadow: isActive ? '0 0 20px rgba(212, 160, 23, 0.25)' : 'none',
                 }}
               >
@@ -422,7 +451,7 @@ export default function CoachVirtualBackgroundPickerModal({
                 </div>
 
                 {/* Details Card */}
-                <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', flex: 1, width: '100%', boxSizing: 'border-box' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <h3
                       style={{
@@ -456,6 +485,7 @@ export default function CoachVirtualBackgroundPickerModal({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      gap: 8,
                       fontSize: 10.5,
                     }}
                   >
@@ -464,19 +494,20 @@ export default function CoachVirtualBackgroundPickerModal({
                     </span>
                     <span
                       style={{
-                        color: isActive ? 'var(--gold)' : 'rgba(255, 255, 255, 0.5)',
+                        color: isActive ? 'var(--gold)' : 'rgba(255, 255, 255, 0.6)',
                         fontWeight: 800,
+                        flexShrink: 0,
                       }}
                     >
-                      {isActive ? 'Selected' : 'Click to Apply →'}
+                      {isActive ? 'Selected' : 'Apply →'}
                     </span>
                   </div>
                 </div>
-              </div>
+              </button>
             )
           })}
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

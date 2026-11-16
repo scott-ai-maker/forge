@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useId } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   BiologicalSex,
@@ -107,6 +107,7 @@ export default function MuscleRecoveryHeatmap3D({
   const [age, setAge] = useState<number>(autoResolvedAge)
   const [conditioning, setConditioning] = useState<ConditioningLevel>(autoResolvedConditioning)
   const [perspective, setPerspective] = useState<PerspectiveView>('anterior')
+  const baseId = useId()
 
   // Synchronize when profile props change
   useEffect(() => {
@@ -430,11 +431,12 @@ export default function MuscleRecoveryHeatmap3D({
               onClick={() => setPerspective('anterior')}
               style={{
                 flex: 1,
+                minHeight: 44,
                 background: perspective === 'anterior' ? 'linear-gradient(180deg, rgba(212,160,23,0.35), rgba(212,160,23,0.15))' : 'transparent',
                 color: perspective === 'anterior' ? 'var(--gold-lt)' : 'var(--gray)',
                 border: perspective === 'anterior' ? '1px solid rgba(212,160,23,0.45)' : '1px solid transparent',
                 borderRadius: 24,
-                padding: '7px 0',
+                padding: '7px 8px',
                 fontSize: 13,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -449,11 +451,12 @@ export default function MuscleRecoveryHeatmap3D({
               onClick={() => setPerspective('posterior')}
               style={{
                 flex: 1,
+                minHeight: 44,
                 background: perspective === 'posterior' ? 'linear-gradient(180deg, rgba(212,160,23,0.35), rgba(212,160,23,0.15))' : 'transparent',
                 color: perspective === 'posterior' ? 'var(--gold-lt)' : 'var(--gray)',
                 border: perspective === 'posterior' ? '1px solid rgba(212,160,23,0.45)' : '1px solid transparent',
                 borderRadius: 24,
-                padding: '7px 0',
+                padding: '7px 8px',
                 fontSize: 13,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -497,6 +500,8 @@ export default function MuscleRecoveryHeatmap3D({
           {/* ── AUTHENTIC HIGH-RES ANATOMY CANVAS WITH DYNAMIC HEATMAP OVERLAYS ── */}
           <div style={{ position: 'relative', width: '100%', maxWidth: 360, margin: '0 auto', aspectRatio: '2/3' }}>
             <svg
+              role="img"
+              aria-label={`Interactive ${perspective} muscle recovery heatmap`}
               viewBox="0 0 512 768"
               style={{
                 width: '100%',
@@ -1244,7 +1249,7 @@ export default function MuscleRecoveryHeatmap3D({
             <button
               type="button"
               onClick={() => setPerspective(p => (p === 'anterior' ? 'posterior' : 'anterior'))}
-              title="Rotate 3D Body Perspective"
+              aria-label="Rotate 3D body perspective"
               style={{
                 position: 'absolute',
                 bottom: 12,
@@ -1275,6 +1280,63 @@ export default function MuscleRecoveryHeatmap3D({
             >
               ↻
             </button>
+          </div>
+
+          {/* Accessible Keyboard & Touch Muscle Zone Selector */}
+          <div
+            role="group"
+            aria-label={`Select ${perspective} muscle zone`}
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 6,
+              justifyContent: 'center',
+              width: '100%',
+              marginTop: 14,
+            }}
+          >
+            {(perspective === 'anterior'
+              ? (['chest', 'deltoids_anterior', 'biceps', 'forearms', 'abdominals', 'obliques', 'quadriceps', 'tibialis_anterior'] as MuscleZoneId[])
+              : (['trapezius', 'deltoids_posterior', 'triceps', 'latissimus_dorsi', 'erector_spinae', 'gluteals', 'hamstrings', 'calves_gastrocnemius'] as MuscleZoneId[])
+            ).map(zoneId => {
+              const m = telemetry.muscles[zoneId]
+              if (!m) return null
+              const isSelected = selectedMuscleId === zoneId
+              return (
+                <button
+                  key={zoneId}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedMuscleId(zoneId)}
+                  style={{
+                    minHeight: 44,
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: isSelected ? `${m.colorHex}26` : 'rgba(255,255,255,0.04)',
+                    border: isSelected ? `1px solid ${m.colorHex}` : '1px solid rgba(255,255,255,0.12)',
+                    color: isSelected ? '#FFFFFF' : '#CBD5E1',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: m.colorHex,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span>{m.displayName}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -1339,22 +1401,21 @@ export default function MuscleRecoveryHeatmap3D({
               {/* Recovery Status Progress Bar */}
               <div style={{ marginBottom: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-                  <span style={{ color: 'var(--gray)' }}>Supercompensation Velocity:</span>
+                  <label htmlFor={`${baseId}-muscle-progress`} style={{ color: 'var(--gray)' }}>Supercompensation Velocity:</label>
                   <span style={{ fontWeight: 700, color: activeDetailMuscle.colorHex }}>
                     {activeDetailMuscle.recoveryPercentage}% Rebuilt
                   </span>
                 </div>
-                <div style={{ width: '100%', height: 10, background: 'rgba(255,255,255,0.08)', borderRadius: 5, overflow: 'hidden' }}>
-                  <div
-                    style={{
-                      width: `${activeDetailMuscle.recoveryPercentage}%`,
-                      height: '100%',
-                      background: `linear-gradient(90deg, ${activeDetailMuscle.colorHex}99, ${activeDetailMuscle.colorHex})`,
-                      boxShadow: `0 0 10px ${activeDetailMuscle.colorHex}`,
-                      transition: 'width 0.4s ease',
-                    }}
-                  />
-                </div>
+                <progress
+                  id={`${baseId}-muscle-progress`}
+                  className="forge-progress-bar"
+                  max={100}
+                  value={activeDetailMuscle.recoveryPercentage}
+                  style={{
+                    ['--progress-bar-fill' as string]: activeDetailMuscle.colorHex,
+                    blockSize: 10,
+                  }}
+                />
               </div>
 
               {/* Timing & Fatigue Metrics Grid */}
@@ -1500,25 +1561,36 @@ export default function MuscleRecoveryHeatmap3D({
                 marginBottom: 16,
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold-lt)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                <label htmlFor={`${baseId}-timelapse`} style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold-lt)', display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
                   <GaaIcon name="hourglass" size={12} tone="gold" />
                   <span>Time-Lapse Resolution:</span>
-                </span>
+                </label>
                 <span style={{ fontSize: 12, fontWeight: 800, color: timeLapseHoursOffset === 0 ? '#10B981' : '#38BDF8' }}>
                   {timeLapseHoursOffset === 0 ? 'Live (Now)' : `+${timeLapseHoursOffset} Hours Forward`}
                 </span>
               </div>
 
               <input
+                id={`${baseId}-timelapse`}
+                name="timeLapseHoursOffset"
                 aria-label="Recovery simulation hours ahead"
+                aria-valuetext={timeLapseHoursOffset === 0 ? 'Live now' : `${timeLapseHoursOffset} hours ahead`}
+                className="forge-range-slider"
                 type="range"
                 min={0}
                 max={72}
                 step={2}
                 value={timeLapseHoursOffset}
                 onChange={e => setTimeLapseHoursOffset(Number(e.target.value))}
-                style={{ width: '100%', accentColor: 'var(--gold)' }}
+                style={{
+                  width: '100%',
+                  ['--attr-min' as string]: 0,
+                  ['--attr-max' as string]: 72,
+                  ['--control-value' as string]: timeLapseHoursOffset,
+                  ['--slider-fill-color' as string]: '#D4A017',
+                  ['--slider-thumb-color' as string]: '#D4A017',
+                }}
               />
 
               {/* Quick Jump Buttons */}
@@ -1530,9 +1602,10 @@ export default function MuscleRecoveryHeatmap3D({
                     aria-pressed={timeLapseHoursOffset === offset}
                     onClick={() => setTimeLapseHoursOffset(offset)}
                     style={{
-                      padding: '3px 8px',
+                      padding: '6px 10px',
                       minWidth: 44,
-                      fontSize: 10.5,
+                      minHeight: 44,
+                      fontSize: 11,
                       fontWeight: 700,
                       borderRadius: 4,
                       cursor: 'pointer',
@@ -1574,10 +1647,10 @@ export default function MuscleRecoveryHeatmap3D({
             </div>
 
             {/* Age & Conditioning Sliders (Auto-Chosen for Client) */}
-            <div className="fitness-lab-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, marginBottom: 16 }}>
+            <div className="fitness-lab-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 16, marginBottom: 16 }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, marginBottom: 4 }}>
-                  <span style={{ color: 'var(--gray)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <label htmlFor={`${baseId}-age`} style={{ color: 'var(--gray)', display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
                     <span>Chronological Age:</span>
                     <span
                       style={{
@@ -1593,22 +1666,33 @@ export default function MuscleRecoveryHeatmap3D({
                     >
                       Auto-Calibrated
                     </span>
-                  </span>
+                  </label>
                   <strong style={{ color: 'var(--gold-lt)' }}>{age} yrs</strong>
                 </div>
                 <input
+                  id={`${baseId}-age`}
+                  name="age"
+                  className="forge-range-slider"
                   type="range"
                   min={18}
                   max={75}
                   value={age}
+                  aria-valuetext={`${age} years`}
                   onChange={e => setAge(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: 'var(--gold)' }}
+                  style={{
+                    width: '100%',
+                    ['--attr-min' as string]: 18,
+                    ['--attr-max' as string]: 75,
+                    ['--control-value' as string]: age,
+                    ['--slider-fill-color' as string]: '#D4A017',
+                    ['--slider-thumb-color' as string]: '#D4A017',
+                  }}
                 />
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, marginBottom: 4 }}>
-                  <span style={{ color: 'var(--gray)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <label htmlFor={`${baseId}-conditioning`} style={{ color: 'var(--gray)', display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
                     <span>Conditioning Tier:</span>
                     <span
                       style={{
@@ -1624,20 +1708,24 @@ export default function MuscleRecoveryHeatmap3D({
                     >
                       Auto-Calibrated
                     </span>
-                  </span>
+                  </label>
                   <strong style={{ color: 'var(--gold-lt)', textTransform: 'capitalize' }}>{conditioning}</strong>
                 </div>
                 <select
+                  id={`${baseId}-conditioning`}
+                  name="conditioning"
                   value={conditioning}
                   onChange={e => setConditioning(e.target.value as ConditioningLevel)}
                   style={{
                     width: '100%',
+                    minHeight: 44,
                     background: '#070D18',
                     color: '#FFFFFF',
                     border: '1px solid rgba(255,255,255,0.2)',
                     padding: '6px 10px',
                     borderRadius: 6,
-                    fontSize: 12,
+                    fontSize: 16,
+                    boxSizing: 'border-box',
                   }}
                 >
                   <option value="beginner">Beginner (+30% recovery time needed)</option>

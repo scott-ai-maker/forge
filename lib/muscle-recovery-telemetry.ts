@@ -471,7 +471,7 @@ export function calculateMuscleRecoveryTelemetry(
       perspective: config.perspective,
       baselineRecoveryHours: baselineHours,
       adjustedTotalRecoveryHours,
-      hoursElapsed,
+      hoursElapsed: Math.round(hoursElapsed),
       hoursRemaining,
       recoveryPercentage,
       colorHex,
@@ -849,7 +849,7 @@ export function extractMuscleStrainsFromWorkoutLogs(options: {
     const muscleId = muscleIdKey as MuscleZoneId
     if (!acc) continue
 
-    const hoursElapsed = Math.max(0, (effectiveNow - acc.latestTimestamp) / (1000 * 60 * 60))
+    const hoursElapsed = Math.round(Math.max(0, (effectiveNow - acc.latestTimestamp) / (1000 * 60 * 60)))
     const avgRpe = acc.rpeCount > 0 ? Number((acc.rpeSum / acc.rpeCount).toFixed(1)) : 8.0
     const totalSets = Math.round(acc.totalSets)
 

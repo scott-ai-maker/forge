@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { generateSlots } from '@/lib/session-slots'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 // Returns available 1-hour slots for the next 28 days (self-service booking).
 // Coach Gordon Active Coaching Hours (America/New_York):
 //   Mon–Fri: 5:00 PM – 8:00 PM  (hourly slots: 5:00 PM, 6:00 PM, 7:00 PM; ending at 8:00 PM)
@@ -14,7 +16,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { supabaseAdmin } = await import('@/lib/supabase')
@@ -43,5 +45,5 @@ export async function GET(req: NextRequest) {
     s => !bookedTimes.has(s.datetime.substring(0, 16))
   )
 
-  return NextResponse.json(slots)
+  return NextResponse.json(slots, { headers: NO_STORE_HEADERS })
 }

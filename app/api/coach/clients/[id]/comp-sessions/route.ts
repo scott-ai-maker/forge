@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireCoachAssignedClient, requireRole, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
+import { enforceRateLimit } from '@/lib/rate-limit'
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 interface GrantCompSessionBody {
   sessions?: unknown
@@ -21,7 +24,7 @@ export async function POST(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   const { id: clientId } = await ctx.params
@@ -31,15 +34,39 @@ export async function POST(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Forbidden'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
+  }
+
+  const rl = await enforceRateLimit({
+    key: `comp-sessions:${coachId}`,
+    limit: 20,
+    windowSeconds: 300,
+    route: '/api/coach/clients/[id]/comp-sessions',
+    dimension: 'user',
+  })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many comp session grants issued recently. Please retry shortly.' },
+      { status: 429, headers: NO_STORE_HEADERS }
+    )
   }
 
   const body = (await req.json().catch(() => ({}))) as GrantCompSessionBody
   const sessions = Number(body.sessions)
-  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  const note =
+    typeof body.note === 'string'
+      ? body.note
+          .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+          .trim()
+          .slice(0, 500)
+      : ''
 
   if (!Number.isInteger(sessions) || sessions < 1 || sessions > 50) {
-    return NextResponse.json({ error: 'sessions must be an integer between 1 and 50' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'sessions must be an integer between 1 and 50' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
   }
 
   const admin = supabaseAdmin()
@@ -60,7 +87,10 @@ export async function POST(
     .single()
 
   if (packageError || !packageRow) {
-    return NextResponse.json({ error: 'Failed to create comp session credit' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to create comp session credit' },
+      { status: 500, headers: NO_STORE_HEADERS }
+    )
   }
 
   const { data: grantRow, error: grantError } = await admin
@@ -76,11 +106,17 @@ export async function POST(
     .single()
 
   if (grantError || !grantRow) {
-    return NextResponse.json({ error: 'Failed to record comp session grant' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to record comp session grant' },
+      { status: 500, headers: NO_STORE_HEADERS }
+    )
   }
 
-  return NextResponse.json({
-    package: packageRow,
-    grant: grantRow,
-  })
+  return NextResponse.json(
+    {
+      package: packageRow,
+      grant: grantRow,
+    },
+    { headers: NO_STORE_HEADERS }
+  )
 }

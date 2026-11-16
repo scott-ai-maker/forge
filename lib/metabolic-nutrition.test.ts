@@ -4,7 +4,11 @@ import {
   calculatePrecisionMacros,
   calculatePhaseMacros,
   calculateHandPortions,
+  optPhaseNumberToKey,
   EXECUTIVE_DINING_PLAYBOOK,
+  type ActivityLevel,
+  type NutritionGoal,
+  type NasmOptPhase,
 } from './metabolic-nutrition'
 
 describe('Precision Metabolic Nutrition & Energy Balance Engine', () => {
@@ -124,5 +128,90 @@ describe('Precision Metabolic Nutrition & Energy Balance Engine', () => {
     expect(femaleHypertrophy.perMeal.carbCuppedHands).toBe(1.5)
     expect(femaleHypertrophy.perMeal.fatThumbs).toBe(1)
     expect(femaleHypertrophy.totalDaily.carbCuppedHands).toBe(6)
+  })
+
+  it('maps NASM OPT phase numbers 1-5 to typed phase keys with safe fallback', () => {
+    expect(optPhaseNumberToKey(1)).toBe('phase1_stabilization')
+    expect(optPhaseNumberToKey(2)).toBe('phase2_strength_endurance')
+    expect(optPhaseNumberToKey(3)).toBe('phase3_hypertrophy')
+    expect(optPhaseNumberToKey(4)).toBe('phase4_maximal_strength')
+    expect(optPhaseNumberToKey(5)).toBe('phase5_power')
+    expect(optPhaseNumberToKey(null)).toBe('phase1_stabilization')
+    expect(optPhaseNumberToKey(undefined)).toBe('phase1_stabilization')
+    expect(optPhaseNumberToKey(NaN)).toBe('phase1_stabilization')
+    expect(optPhaseNumberToKey(99)).toBe('phase1_stabilization')
+  })
+
+  it('sanitizes NaN, Infinity, negative, and unrecognized enum inputs without producing NaN', () => {
+    const energy = calculateEnergyExpenditure({
+      weightLbs: Number.NaN,
+      heightInches: Number.POSITIVE_INFINITY,
+      age: -12,
+      bodyFatPercent: Number.NaN,
+      calorieDeficitCalories: Number.NaN,
+      activityLevel: 'unknown_activity' as ActivityLevel,
+      goal: 'unknown_goal' as NutritionGoal,
+    })
+    const macros = calculatePrecisionMacros({
+      weightLbs: Number.NaN,
+      heightInches: Number.POSITIVE_INFINITY,
+      age: -12,
+      bodyFatPercent: Number.NaN,
+      calorieDeficitCalories: Number.NaN,
+      activityLevel: 'unknown_activity' as ActivityLevel,
+      goal: 'unknown_goal' as NutritionGoal,
+      phase: 'unknown_phase' as NasmOptPhase,
+    })
+
+    expect(Number.isFinite(energy.bmrCalories)).toBe(true)
+    expect(Number.isFinite(energy.tdeeCalories)).toBe(true)
+    expect(Number.isFinite(macros.targetCalories)).toBe(true)
+    expect(Number.isFinite(macros.proteinGrams)).toBe(true)
+    expect(Number.isFinite(macros.carbGrams)).toBe(true)
+    expect(Number.isFinite(macros.fatGrams)).toBe(true)
+    expect(macros.proteinPct + macros.carbPct + macros.fatPct).toBeGreaterThanOrEqual(99)
+    expect(macros.proteinPct + macros.carbPct + macros.fatPct).toBeLessThanOrEqual(101)
+  })
+
+  it('prevents protein + fat calories from exceeding the 1200 kcal floor under extreme bodyweight and deficit', () => {
+    const macros = calculatePrecisionMacros({
+      weightLbs: 380,
+      heightInches: 74,
+      age: 42,
+      sex: 'male',
+      activityLevel: 'sedentary',
+      goal: 'fat_loss',
+      calorieDeficitCalories: 2800, // forces 1200 kcal safety floor
+      phase: 'phase1_stabilization',
+    })
+
+    expect(macros.targetCalories).toBe(1200)
+    const macroCalories = macros.proteinGrams * 4 + macros.fatGrams * 9 + macros.carbGrams * 4
+    expect(macroCalories).toBeLessThanOrEqual(1220)
+    expect(macros.carbGrams).toBeGreaterThanOrEqual(0)
+    expect(macros.proteinGrams).toBeGreaterThan(0)
+    expect(macros.fatGrams).toBeGreaterThanOrEqual(35)
+  })
+
+  it('shifts carbohydrate and dietary fat partitioning across NASM OPT Phases 1 through 5', () => {
+    const p1 = calculatePrecisionMacros({
+      weightLbs: 190,
+      goal: 'athletic_power',
+      phase: 'phase1_stabilization',
+    })
+    const p3 = calculatePrecisionMacros({
+      weightLbs: 190,
+      goal: 'athletic_power',
+      phase: 'phase3_hypertrophy',
+    })
+    const p5 = calculatePrecisionMacros({
+      weightLbs: 190,
+      goal: 'athletic_power',
+      phase: 'phase5_power',
+    })
+
+    expect(p3.carbGrams).toBeGreaterThan(p1.carbGrams)
+    expect(p5.carbGrams).toBeGreaterThan(p1.carbGrams)
+    expect(p1.fatGrams).toBeGreaterThan(p5.fatGrams)
   })
 })

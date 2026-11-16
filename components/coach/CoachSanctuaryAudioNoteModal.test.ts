@@ -39,5 +39,7 @@ describe('CoachSanctuaryAudioNoteModal Component Architecture', () => {
     expect(source).toContain('audio-provider-status')
     expect(source).toContain('/api/coach/tts')
     expect(source).toContain('voiceProvider')
+    expect(source).toContain('useNativeStudioDialog(')
+    expect(source).toContain('className="forge-live-studio-dialog"')
   })
 })

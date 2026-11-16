@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useId } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { speakCoachVoiceCue } from '@/lib/coach-voice-synthesizer'
 import type { AssessmentCaptureSlot } from './UnifiedLiveStudioHud'
+import { useNativeStudioDialog } from './useNativeStudioDialog'
 
 export interface ConsultationGateMeta {
   gateNumber: number
@@ -167,6 +168,11 @@ export default function LiveConsultationPlaybookModal({
   })
   const [consultationNotes, setConsultationNotes] = useState<string>('')
   const [cueFeedback, setCueFeedback] = useState<string | null>(null)
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const soapDraftId = useId()
+  const distortionIdPrefix = useId()
+
+  useNativeStudioDialog(dialogRef, isOpen, onClose)
 
   const countdown = useMemo(() => formatConsultationCountdown(sessionDurationSec), [sessionDurationSec])
   const currentGateMeta = useMemo(() => {
@@ -194,20 +200,13 @@ export default function LiveConsultationPlaybookModal({
   if (!isOpen) return null
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="forge-live-studio-dialog"
       aria-labelledby="consultation-playbook-title"
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100005,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(12px, 2vw, 24px)',
-        background: 'rgba(0, 0, 0, 0.85)',
-        backdropFilter: 'blur(12px)',
+        maxWidth: 'min(780px, calc(100vw - 16px))',
       }}
     >
       <div
@@ -217,8 +216,7 @@ export default function LiveConsultationPlaybookModal({
           borderRadius: 14,
           boxShadow: '0 25px 80px rgba(0,0,0,0.95), 0 0 35px rgba(212,160,23,0.2)',
           width: '100%',
-          maxWidth: 780,
-          maxHeight: '92vh',
+          maxHeight: '92dvh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -229,7 +227,7 @@ export default function LiveConsultationPlaybookModal({
         {/* ── Header Ribbon & Telemetry Countdown ── */}
         <div
           style={{
-            padding: '16px 20px',
+            padding: '16px clamp(14px, 2vw, 20px)',
             borderBottom: '1px solid rgba(212,160,23,0.3)',
             background: 'rgba(10, 16, 30, 0.8)',
             display: 'flex',
@@ -239,7 +237,7 @@ export default function LiveConsultationPlaybookModal({
             gap: 12,
           }}
         >
-          <div>
+          <div style={{ minInlineSize: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <span
                 style={{
@@ -248,6 +246,7 @@ export default function LiveConsultationPlaybookModal({
                   borderRadius: '50%',
                   background: countdown.isOvertime ? '#EF4444' : '#34D399',
                   boxShadow: `0 0 8px ${countdown.isOvertime ? '#EF4444' : '#34D399'}`,
+                  flexShrink: 0,
                 }}
               />
               <span
@@ -266,7 +265,7 @@ export default function LiveConsultationPlaybookModal({
               id="consultation-playbook-title"
               className="font-serif"
               style={{
-                fontSize: 20,
+                fontSize: 'clamp(17px, 2.2vw, 20px)',
                 color: '#FFFFFF',
                 margin: '4px 0 0',
                 letterSpacing: '0.04em',
@@ -312,14 +311,14 @@ export default function LiveConsultationPlaybookModal({
               onClick={onClose}
               aria-label="Close consultation playbook"
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
+                minWidth: 44,
+                minHeight: 44,
+                borderRadius: 22,
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.15)',
                 color: '#FFFFFF',
                 cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: 15,
@@ -332,9 +331,11 @@ export default function LiveConsultationPlaybookModal({
 
         {/* ── 5-Gate Interactive Step Navigator ── */}
         <div
+          role="group"
+          aria-label="Consultation playbook gates"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 124px), 1fr))',
             background: 'rgba(0,0,0,0.45)',
             borderBottom: '1px solid rgba(255,255,255,0.08)',
           }}
@@ -347,9 +348,11 @@ export default function LiveConsultationPlaybookModal({
               <button
                 key={gate.gateNumber}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedGate(gate.gateNumber)}
                 style={{
-                  padding: '10px 8px',
+                  minHeight: 48,
+                  padding: '8px 6px',
                   background: isSelected
                     ? 'rgba(212,160,23,0.16)'
                     : 'transparent',
@@ -360,8 +363,8 @@ export default function LiveConsultationPlaybookModal({
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 3,
-                  transition: 'all 0.15s ease',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -382,7 +385,7 @@ export default function LiveConsultationPlaybookModal({
                   className="font-telemetry"
                   style={{
                     fontSize: 9.5,
-                    color: isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.4)',
+                    color: isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
                   }}
                 >
                   {gate.minuteRange}
@@ -408,7 +411,7 @@ export default function LiveConsultationPlaybookModal({
         </div>
 
         {/* ── Active Gate Detailed Execution View ── */}
-        <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div style={{ padding: 'clamp(14px, 2.5vw, 20px) clamp(14px, 2.5vw, 24px)', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 18 }}>
           {/* Gate Title & Objective */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
@@ -462,17 +465,18 @@ export default function LiveConsultationPlaybookModal({
               ))}
             </ul>
 
-            <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+            <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => triggerVoicePrompt(currentGateMeta.keyCues[0])}
                 style={{
-                  padding: '5px 10px',
+                  minHeight: 40,
+                  padding: '6px 12px',
                   background: 'rgba(212,160,23,0.12)',
                   border: '1px solid rgba(212,160,23,0.35)',
-                  borderRadius: 4,
+                  borderRadius: 6,
                   color: 'var(--gold-lt)',
-                  fontSize: 11,
+                  fontSize: 11.5,
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'inline-flex',
@@ -484,7 +488,7 @@ export default function LiveConsultationPlaybookModal({
                 <span>Speak Form Cue Aloud</span>
               </button>
               {cueFeedback && (
-                <span style={{ fontSize: 11.5, color: '#34D399', fontWeight: 700, alignSelf: 'center' }}>
+                <span role="status" aria-live="polite" style={{ fontSize: 11.5, color: '#34D399', fontWeight: 700, alignSelf: 'center' }}>
                   {cueFeedback}
                 </span>
               )}
@@ -497,7 +501,7 @@ export default function LiveConsultationPlaybookModal({
               <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
                 Allostatic CNS Load Assessment
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 10 }}>
                 {[
                   { id: 'low' as const, label: 'Low / Optimal', desc: 'Normal HRV, optimal recovery readiness', color: '#34D399' },
                   { id: 'moderate' as const, label: 'Moderate Load', desc: 'Mild sympathetic bias, slight fatigue', color: '#FBBF24' },
@@ -506,8 +510,10 @@ export default function LiveConsultationPlaybookModal({
                   <button
                     key={item.id}
                     type="button"
+                    aria-pressed={allostaticLoad === item.id}
                     onClick={() => setAllostaticLoad(item.id)}
                     style={{
+                      minHeight: 48,
                       padding: 12,
                       background: allostaticLoad === item.id ? `${item.color}15` : 'rgba(0,0,0,0.35)',
                       border: `1px solid ${allostaticLoad === item.id ? item.color : 'rgba(255,255,255,0.1)'}`,
@@ -529,7 +535,7 @@ export default function LiveConsultationPlaybookModal({
               <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
                 Static Gravitational Views (3-Slot Capture)
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: 10 }}>
                 {(['anterior', 'lateral', 'posterior'] as AssessmentCaptureSlot[]).map(slot => {
                   const isCaptured = Boolean(capturedFrames?.[slot])
                   return (
@@ -553,12 +559,13 @@ export default function LiveConsultationPlaybookModal({
                         type="button"
                         onClick={() => onCaptureSlot?.(slot)}
                         style={{
+                          minHeight: 40,
                           padding: '6px 10px',
                           background: isCaptured ? 'rgba(16,185,129,0.15)' : 'rgba(212,160,23,0.15)',
                           border: `1px solid ${isCaptured ? '#10B981' : 'var(--gold)'}`,
                           color: isCaptured ? '#34D399' : 'var(--gold-lt)',
-                          borderRadius: 4,
-                          fontSize: 11,
+                          borderRadius: 6,
+                          fontSize: 11.5,
                           fontWeight: 700,
                           cursor: 'pointer',
                         }}
@@ -577,7 +584,8 @@ export default function LiveConsultationPlaybookModal({
                   className="tactile-btn"
                   style={{
                     marginTop: 6,
-                    padding: '8px 14px',
+                    minHeight: 44,
+                    padding: '10px 14px',
                     background: 'linear-gradient(135deg, rgba(212,160,23,0.2) 0%, rgba(14,23,36,0.8) 100%)',
                     border: '1px solid var(--gold)',
                     borderRadius: 6,
@@ -603,50 +611,57 @@ export default function LiveConsultationPlaybookModal({
               <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
                 Kinetic Chain Checkpoints &amp; Distortions Observed
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 8 }}>
                 {[
                   { key: 'knee_valgus', label: 'Knee Valgus (Inward Buckle)', cue: 'Overactive Adductors / Underactive Glute Med' },
                   { key: 'forward_lean', label: 'Excessive Forward Trunk Lean', cue: 'Overactive Hip Flexors / Soleus' },
                   { key: 'arms_fall_forward', label: 'Arms Fall Forward', cue: 'Overactive Latissimus / Pec Major' },
                   { key: 'asymmetric_shift', label: 'Asymmetrical Weight Shift', cue: 'Side-to-side adductor / glute asymmetry' },
                   { key: 'feet_flatten', label: 'Feet Flatten / Turn Out', cue: 'Peroneal / lateral gastrocnemius overactivity' },
-                ].map(item => (
-                  <label
-                    key={item.key}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 8,
-                      background: observedDistortions[item.key] ? 'rgba(239,68,68,0.12)' : 'rgba(0,0,0,0.35)',
-                      border: `1px solid ${observedDistortions[item.key] ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
-                      borderRadius: 6,
-                      padding: '8px 10px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={Boolean(observedDistortions[item.key])}
-                      onChange={() => toggleDistortion(item.key)}
-                      style={{ marginTop: 2 }}
-                    />
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: observedDistortions[item.key] ? '#F87171' : '#FFF' }}>
-                        {item.label}
+                ].map(item => {
+                  const checkId = `${distortionIdPrefix}-${item.key}`
+                  return (
+                    <label
+                      key={item.key}
+                      htmlFor={checkId}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 8,
+                        background: observedDistortions[item.key] ? 'rgba(239,68,68,0.12)' : 'rgba(0,0,0,0.35)',
+                        border: `1px solid ${observedDistortions[item.key] ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
+                        borderRadius: 6,
+                        padding: '10px 12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <input
+                        id={checkId}
+                        name={item.key}
+                        type="checkbox"
+                        checked={Boolean(observedDistortions[item.key])}
+                        onChange={() => toggleDistortion(item.key)}
+                        style={{ marginTop: 2, width: 18, height: 18, accentColor: '#EF4444', flexShrink: 0 }}
+                      />
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: observedDistortions[item.key] ? '#F87171' : '#FFF' }}>
+                          {item.label}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--gray)', marginTop: 2 }}>{item.cue}</div>
                       </div>
-                      <div style={{ fontSize: 10, color: 'var(--gray)', marginTop: 2 }}>{item.cue}</div>
-                    </div>
-                  </label>
-                ))}
+                    </label>
+                  )
+                })}
               </div>
 
-              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                 {onOpenNasmSuite && (
                   <button
                     type="button"
                     onClick={onOpenNasmSuite}
                     style={{
-                      flex: 1,
+                      flex: '1 1 200px',
+                      minHeight: 44,
                       padding: '8px 12px',
                       background: 'rgba(212,160,23,0.15)',
                       border: '1px solid var(--gold)',
@@ -670,6 +685,7 @@ export default function LiveConsultationPlaybookModal({
                     type="button"
                     onClick={onOpenTelestrator}
                     style={{
+                      minHeight: 44,
                       padding: '8px 14px',
                       background: 'rgba(255,255,255,0.05)',
                       border: '1px solid rgba(255,255,255,0.2)',
@@ -692,7 +708,7 @@ export default function LiveConsultationPlaybookModal({
               <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
                 Metabolic &amp; Aerobic Threshold Telemetry
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 10 }}>
                 <div style={{ background: 'rgba(0,0,0,0.45)', padding: 12, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)' }}>
                   <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 800 }}>Tanaka Max HR</div>
                   <div className="font-telemetry" style={{ fontSize: 24, fontWeight: 800, color: '#FFF', marginTop: 4 }}>
@@ -725,7 +741,7 @@ export default function LiveConsultationPlaybookModal({
               <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)', fontWeight: 800 }}>
                 NASM-OPT Master Periodization Prescription
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 116px), 1fr))', gap: 6 }}>
                 {[
                   { phase: 1, name: 'Phase 1', desc: 'Stabilization' },
                   { phase: 2, name: 'Phase 2', desc: 'Strength Endur.' },
@@ -736,12 +752,14 @@ export default function LiveConsultationPlaybookModal({
                   <button
                     key={p.phase}
                     type="button"
+                    aria-pressed={targetOptPhase === p.phase}
                     onClick={() => setTargetOptPhase(p.phase)}
                     style={{
-                      padding: '8px 4px',
+                      minHeight: 48,
+                      padding: '8px 6px',
                       background: targetOptPhase === p.phase ? 'rgba(212,160,23,0.2)' : 'rgba(0,0,0,0.4)',
                       border: `1px solid ${targetOptPhase === p.phase ? 'var(--gold)' : 'rgba(255,255,255,0.1)'}`,
-                      borderRadius: 4,
+                      borderRadius: 6,
                       color: targetOptPhase === p.phase ? 'var(--gold-lt)' : '#FFF',
                       cursor: 'pointer',
                       textAlign: 'center',
@@ -754,25 +772,31 @@ export default function LiveConsultationPlaybookModal({
               </div>
 
               <div>
-                <label style={{ fontSize: 11, color: 'var(--gray)', fontWeight: 700, textTransform: 'uppercase' }}>
+                <label
+                  htmlFor={soapDraftId}
+                  style={{ display: 'block', fontSize: 11, color: 'var(--gray)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}
+                >
                   Boardroom Consultation Findings (SOAP Note Draft)
                 </label>
                 <textarea
+                  id={soapDraftId}
+                  name="consultation_soap_draft"
                   value={consultationNotes}
                   onChange={e => setConsultationNotes(e.target.value)}
                   placeholder={`Summary of clinical findings for ${athleteName}: Orthopedic observations, kinetic compensations, and microcycle roadmap...`}
+                  rows={3}
                   style={{
                     width: '100%',
-                    height: 64,
-                    marginTop: 4,
+                    minHeight: 76,
                     background: 'rgba(0,0,0,0.5)',
                     border: '1px solid rgba(255,255,255,0.15)',
                     borderRadius: 6,
-                    padding: 8,
-                    fontSize: 12,
+                    padding: '8px 10px',
+                    fontSize: 16,
                     color: '#FFF',
-                    resize: 'none',
-                    outline: 'none',
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit',
                   }}
                 />
               </div>
@@ -786,6 +810,7 @@ export default function LiveConsultationPlaybookModal({
                   }}
                   className="tactile-btn"
                   style={{
+                    minHeight: 44,
                     padding: '10px 16px',
                     background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                     border: 'none',
@@ -812,12 +837,14 @@ export default function LiveConsultationPlaybookModal({
         {/* ── Footer Navigation ── */}
         <div
           style={{
-            padding: '12px 20px',
+            padding: '12px clamp(14px, 2vw, 20px)',
             borderTop: '1px solid rgba(255,255,255,0.08)',
             background: 'rgba(8,12,22,0.95)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 8,
           }}
         >
           <button
@@ -825,12 +852,13 @@ export default function LiveConsultationPlaybookModal({
             disabled={selectedGate <= 1}
             onClick={() => setSelectedGate(g => Math.max(1, g - 1))}
             style={{
+              minHeight: 40,
               padding: '6px 14px',
               background: 'rgba(255,255,255,0.05)',
               border: '1px solid rgba(255,255,255,0.15)',
               color: selectedGate <= 1 ? 'var(--gray)' : '#FFF',
-              borderRadius: 4,
-              fontSize: 11,
+              borderRadius: 6,
+              fontSize: 11.5,
               fontWeight: 700,
               cursor: selectedGate <= 1 ? 'not-allowed' : 'pointer',
             }}
@@ -847,12 +875,13 @@ export default function LiveConsultationPlaybookModal({
             disabled={selectedGate >= 5}
             onClick={() => setSelectedGate(g => Math.min(5, g + 1))}
             style={{
+              minHeight: 40,
               padding: '6px 14px',
               background: selectedGate >= 5 ? 'rgba(255,255,255,0.05)' : 'rgba(212,160,23,0.2)',
               border: `1px solid ${selectedGate >= 5 ? 'rgba(255,255,255,0.15)' : 'var(--gold)'}`,
               color: selectedGate >= 5 ? 'var(--gray)' : 'var(--gold-lt)',
-              borderRadius: 4,
-              fontSize: 11,
+              borderRadius: 6,
+              fontSize: 11.5,
               fontWeight: 800,
               cursor: selectedGate >= 5 ? 'not-allowed' : 'pointer',
             }}
@@ -861,6 +890,6 @@ export default function LiveConsultationPlaybookModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

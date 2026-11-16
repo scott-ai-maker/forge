@@ -86,7 +86,7 @@ export default function WearablesDeviceStudio({
                   user_id: session?.user?.id,
                 }),
               })
-            } catch {}
+            } catch { }
           })()
           return
         }
@@ -126,7 +126,7 @@ export default function WearablesDeviceStudio({
         if (user && isMounted) {
           setCurrentUserId(user.id)
         }
-      } catch {}
+      } catch { }
     })()
 
     async function checkHealthStatus() {
@@ -175,7 +175,7 @@ export default function WearablesDeviceStudio({
           setTelemetry(summary)
           setAuthStatus('authorized')
           if (onTelemetryUpdateRef.current) onTelemetryUpdateRef.current(summary)
-        } catch {}
+        } catch { }
       }).then(h => {
         subHandle = h
       })
@@ -210,7 +210,7 @@ export default function WearablesDeviceStudio({
       }
 
       setAuthStatus('authorized')
-      await enableNativeHealthKitBackgroundDelivery().catch(() => {})
+      await enableNativeHealthKitBackgroundDelivery().catch(() => { })
 
       // Immediately query and synchronize biometrics
       const syncResult = await syncNativeHealthKitData()
@@ -293,10 +293,10 @@ export default function WearablesDeviceStudio({
   const isConnected = authStatus === 'authorized' || (telemetry?.restingHeartRate != null && telemetry.restingHeartRate > 0)
   const hasLiveTelemetry = Boolean(
     telemetry?.updatedAt &&
-      ((telemetry.restingHeartRate && telemetry.restingHeartRate > 0) ||
-        (telemetry.stepsCount && telemetry.stepsCount > 0) ||
-        (telemetry.sleepHours && telemetry.sleepHours > 0) ||
-        (telemetry.nutrition?.waterOz && telemetry.nutrition.waterOz > 0))
+    ((telemetry.restingHeartRate && telemetry.restingHeartRate > 0) ||
+      (telemetry.stepsCount && telemetry.stepsCount > 0) ||
+      (telemetry.sleepHours && telemetry.sleepHours > 0) ||
+      (telemetry.nutrition?.waterOz && telemetry.nutrition.waterOz > 0))
   )
 
   return (
@@ -457,6 +457,8 @@ export default function WearablesDeviceStudio({
 
       {statusNotice && (
         <div
+          role="status"
+          aria-live="polite"
           style={{
             padding: '12px 16px',
             background: 'rgba(16,185,129,0.15)',
@@ -691,7 +693,8 @@ export default function WearablesDeviceStudio({
               }}
               className="tactile-btn"
               style={{
-                padding: '8px 14px',
+                padding: '10px 14px',
+                minHeight: 44,
                 background: 'rgba(212,160,23,0.15)',
                 border: '1px solid var(--gold)',
                 borderRadius: 6,
@@ -711,7 +714,8 @@ export default function WearablesDeviceStudio({
               }}
               className="tactile-btn"
               style={{
-                padding: '8px 14px',
+                padding: '10px 14px',
+                minHeight: 44,
                 background: 'rgba(34, 197, 94, 0.15)',
                 border: '1px solid rgba(34, 197, 94, 0.4)',
                 borderRadius: 6,
@@ -757,13 +761,14 @@ export default function WearablesDeviceStudio({
               type="button"
               onClick={() => {
                 const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://forge-athletic.app'}/api/wearables/webhook${currentUserId ? `?client_id=${currentUserId}` : ''}`
-                navigator.clipboard.writeText(url)
+                void navigator.clipboard?.writeText?.(url)
                 setCopiedWebhook(true)
                 setTimeout(() => setCopiedWebhook(false), 3000)
               }}
               className="tactile-btn"
               style={{
                 padding: '10px 16px',
+                minHeight: 44,
                 background: copiedWebhook ? 'rgba(52,211,153,0.2)' : 'rgba(212,160,23,0.15)',
                 border: copiedWebhook ? '1px solid #34D399' : '1px solid var(--gold)',
                 borderRadius: 6,
@@ -894,7 +899,7 @@ export default function WearablesDeviceStudio({
             </div>
             <div style={{ fontSize: 10.5, color: 'var(--gold-lt)' }}>
               {telemetry?.nutrition &&
-              (telemetry.nutrition.proteinGrams > 0 || telemetry.nutrition.carbsGrams > 0)
+                (telemetry.nutrition.proteinGrams > 0 || telemetry.nutrition.carbsGrams > 0)
                 ? `${telemetry.nutrition.proteinGrams ?? 0}g P · ${telemetry.nutrition.carbsGrams ?? 0}g C · ${telemetry.nutrition.fatGrams ?? 0}g F`
                 : 'Awaiting macro intake'}
             </div>
@@ -943,8 +948,8 @@ export default function WearablesDeviceStudio({
               {telemetry?.cnsStressScore != null && telemetry.cnsStressScore > 0
                 ? `${telemetry.cnsStressScore}/100`
                 : (telemetry?.hrvRmssdMs && telemetry.hrvRmssdMs > 0 && telemetry?.restingHeartRate && telemetry.restingHeartRate > 0
-                    ? `${computeWearableCnsScore(telemetry.hrvRmssdMs, telemetry.restingHeartRate)}/100`
-                    : '--/100')}
+                  ? `${computeWearableCnsScore(telemetry.hrvRmssdMs, telemetry.restingHeartRate)}/100`
+                  : '--/100')}
             </div>
             <div style={{ fontSize: 10.5, color: telemetry?.cnsStressScore != null || (telemetry?.hrvRmssdMs != null && telemetry.hrvRmssdMs > 0) ? '#34D399' : 'var(--gray)' }}>
               {telemetry?.cnsStressScore != null || (telemetry?.hrvRmssdMs != null && telemetry.hrvRmssdMs > 0) ? '● Optimal Recovery' : 'Awaiting baseline'}

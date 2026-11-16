@@ -47,5 +47,16 @@ describe('MindfulMomentModal & Nervous System Protocols', () => {
     const breathsPerMin = 60 / cycleSec
     expect(breathsPerMin).toBe(6)
   })
+
+  it('uses native <dialog>, semantic <progress>, StrictMode-pure tickRef, and reduced-motion guard', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const src = fs.readFileSync(path.resolve(__dirname, 'MindfulMomentModal.tsx'), 'utf-8')
+    expect(src).toContain('useNativeStudioDialog(')
+    expect(src).toContain('className="forge-live-studio-dialog"')
+    expect(src).toContain('className="forge-progress-bar"')
+    expect(src).toContain('tickRef.current')
+    expect(src).toContain('prefers-reduced-motion: reduce')
+  })
 })
 

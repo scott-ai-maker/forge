@@ -60,6 +60,67 @@ export type TimingWindow =
   | 'night_pre_sleep'
   | 'daily_flexible'
 
+export const VALID_SUPPLEMENT_GOALS: readonly SupplementGoal[] = [
+  'hypertrophy',
+  'fat_loss',
+  'longevity_vitality',
+  'athletic_power',
+  'general_health',
+]
+
+export const VALID_CLIENT_SEXES: readonly ClientSex[] = ['male', 'female', 'other']
+
+export const VALID_FITNESS_LEVELS: readonly FitnessLevel[] = [
+  'beginner',
+  'intermediate',
+  'advanced_athlete',
+]
+
+export const VALID_TIMING_WINDOWS: readonly TimingWindow[] = [
+  'morning_with_breakfast',
+  'pre_workout_45min',
+  'post_workout_anabolic',
+  'night_pre_sleep',
+  'daily_flexible',
+]
+
+export function normalizeSupplementGoal(raw?: unknown): SupplementGoal {
+  if (typeof raw !== 'string' || !raw.trim()) return 'hypertrophy'
+  const val = raw.trim().toLowerCase()
+  if ((VALID_SUPPLEMENT_GOALS as readonly string[]).includes(val)) {
+    return val as SupplementGoal
+  }
+  if (val.includes('fat') || val.includes('weight_loss') || val.includes('weight loss') || val.includes('cut') || val.includes('lean')) {
+    return 'fat_loss'
+  }
+  if (val.includes('power') || val.includes('speed') || val.includes('explosive')) {
+    return 'athletic_power'
+  }
+  if (val.includes('longevity') || val.includes('vitality') || val.includes('masters') || val.includes('posture') || val.includes('joint')) {
+    return 'longevity_vitality'
+  }
+  if (val.includes('health') || val.includes('wellness') || val.includes('maintenance')) {
+    return 'general_health'
+  }
+  return 'hypertrophy'
+}
+
+export function normalizeClientSex(raw?: unknown): ClientSex {
+  if (typeof raw !== 'string') return 'male'
+  const val = raw.trim().toLowerCase()
+  if (val === 'female' || val === 'f') return 'female'
+  if (val === 'other' || val === 'nonbinary' || val === 'non-binary') return 'other'
+  return 'male'
+}
+
+export function normalizeFitnessLevel(raw?: unknown): FitnessLevel {
+  if (typeof raw !== 'string') return 'intermediate'
+  const val = raw.trim().toLowerCase()
+  if (val === 'beginner' || val === 'novice' || val === 'foundational') return 'beginner'
+  if (val === 'advanced_athlete' || val === 'advanced' || val === 'elite') return 'advanced_athlete'
+  return 'intermediate'
+}
+
 export interface PrescribedSupplementItem {
   id: string
   name: string

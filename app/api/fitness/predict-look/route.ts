@@ -21,6 +21,8 @@ import {
   recordLegalConsentAudit,
 } from '@/lib/legal-compliance'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 function retryAfterSeconds(resetAt: string) {
   const ms = new Date(resetAt).getTime() - Date.now()
   return Math.max(1, Math.ceil(ms / 1000))
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_STORE_HEADERS })
 
   const userLimit = getPositiveIntEnv('RATE_LIMIT_PREDICT_LOOK_USER_LIMIT', 5)
   const userWindowSeconds = getPositiveIntEnv('RATE_LIMIT_PREDICT_LOOK_USER_WINDOW_SECONDS', 60 * 60)
@@ -57,6 +59,7 @@ export async function POST(req: NextRequest) {
       {
         status: 429,
         headers: {
+          ...NO_STORE_HEADERS,
           'Retry-After': String(retryAfterSeconds(ipResult.resetAt)),
         },
       }
@@ -77,6 +80,7 @@ export async function POST(req: NextRequest) {
       {
         status: 429,
         headers: {
+          ...NO_STORE_HEADERS,
           'Retry-After': String(retryAfterSeconds(userResult.resetAt)),
         },
       }
@@ -91,7 +95,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (profileError || !profile) {
-    return NextResponse.json({ error: 'Profile not found' }, { status: 400 })
+    return NextResponse.json({ error: 'Profile not found' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
   if (typeof profile.age === 'number' && profile.age < MINIMUM_ATHLETE_AGE) {
@@ -99,23 +103,51 @@ export async function POST(req: NextRequest) {
       {
         error: `AI physique concept visualization is strictly restricted to adults aged ${MINIMUM_ATHLETE_AGE} and older.`,
       },
-      { status: 403 }
+      { status: 403, headers: NO_STORE_HEADERS }
     )
   }
 
-  const body = await req.json()
-  const { targetBodyfatPercent, fitnessGoal, notes, biometricSimulationConsent } = body ?? {}
+  let body: Record<string, unknown>
+  try {
+    const parsed = await req.json()
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400, headers: NO_STORE_HEADERS })
+    }
+    body = parsed as Record<string, unknown>
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400, headers: NO_STORE_HEADERS })
+  }
+
+  const { targetBodyfatPercent, fitnessGoal, notes, biometricSimulationConsent } = body
 
   if (biometricSimulationConsent === false) {
     return NextResponse.json(
       { error: 'Explicit consent is required prior to encrypted AI image synthesis.' },
-      { status: 400 }
+      { status: 400, headers: NO_STORE_HEADERS }
     )
   }
 
-  if (!targetBodyfatPercent || !fitnessGoal) {
-    return NextResponse.json({ error: 'targetBodyfatPercent and fitnessGoal are required' }, { status: 400 })
+  if (
+    targetBodyfatPercent === undefined ||
+    targetBodyfatPercent === null ||
+    targetBodyfatPercent === '' ||
+    !fitnessGoal ||
+    typeof fitnessGoal !== 'string'
+  ) {
+    return NextResponse.json(
+      { error: 'targetBodyfatPercent and fitnessGoal are required' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
   }
+
+  const numericTargetBf = Number(targetBodyfatPercent)
+  if (!Number.isFinite(numericTargetBf) || numericTargetBf < 4 || numericTargetBf > 50) {
+    return NextResponse.json(
+      { error: 'targetBodyfatPercent must be a number between 4 and 50' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
+  }
+  const roundedTargetBf = Math.round(numericTargetBf * 10) / 10
 
   const goalDescriptions = {
     'fat-loss': 'lean defined musculature, visible abdominal tone, natural athletic proportions',
@@ -141,7 +173,7 @@ export async function POST(req: NextRequest) {
   const prompt = [
     `Professional fitness photography of a ${ageContext} ${sexContext}${bodyContext ? `, ${bodyContext}` : ''}.`,
     `${goalDescription}.`,
-    `${targetBodyfatPercent}% body fat.`,
+    `${roundedTargetBf}% body fat.`,
     'Exactly one person in frame, single subject only.',
     'Preserve the same person identity, face structure, skin tone, and body frame from the source photo.',
     'Natural realistic human anatomy, no exaggerated bodybuilding proportions.',
@@ -196,18 +228,23 @@ export async function POST(req: NextRequest) {
       metadata: {
         usedBeforePhoto: Boolean(initImageId),
         fitnessGoal,
-        targetBodyfatPercent,
+        targetBodyfatPercent: roundedTargetBf,
       },
     })
 
-    return NextResponse.json({ 
-      imageUrl, 
-      prompt,
-      beforePhotoUrl,
-      simulationDisclaimer: PREDICT_LOOK_SIMULATION_DISCLAIMER,
-    })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to generate prediction image'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json(
+      {
+        imageUrl,
+        prompt,
+        beforePhotoUrl,
+        simulationDisclaimer: PREDICT_LOOK_SIMULATION_DISCLAIMER,
+      },
+      { headers: NO_STORE_HEADERS }
+    )
+  } catch {
+    return NextResponse.json(
+      { error: 'Failed to generate prediction image' },
+      { status: 500, headers: NO_STORE_HEADERS }
+    )
   }
 }

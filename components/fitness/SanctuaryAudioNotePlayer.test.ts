@@ -46,4 +46,12 @@ describe('SanctuaryAudioNotePlayer Component Architecture & Design Standards', (
     expect(source).toContain('elevenlabs-voice-badge')
     expect(source).toContain('ElevenLabs Cloned Voice')
   })
+
+  it('prevents background audio leaks on unmount and respects global mute state', () => {
+    const source = fs.readFileSync(componentPath, 'utf-8')
+    expect(source).toContain('isSfxMuted()')
+    expect(source).toContain('if (timer) clearTimeout(timer)')
+    expect(source).toContain('stopAllAudio()')
+    expect(source).toContain('className="forge-range-slider"')
+  })
 })

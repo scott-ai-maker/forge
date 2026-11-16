@@ -56,6 +56,19 @@ export default function LiveVisualTempoPulseHud({
   const audioCtxRef = useRef<AudioContext | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Clean up WebAudio context on unmount to prevent leaked AudioContexts
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        try {
+          void audioCtxRef.current.close()
+        } catch {}
+      }
+      audioCtxRef.current = null
+    }
+  }, [])
+
   // Sync activeTempo with prop changes
   useEffect(() => {
     if (tempoString) {
@@ -220,13 +233,13 @@ export default function LiveVisualTempoPulseHud({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div
+            className="animate-pulse"
             style={{
               width: 10,
               height: 10,
               borderRadius: 5,
               background: phaseMeta.color,
               boxShadow: `0 0 8px ${phaseMeta.color}`,
-              animation: 'pulse 1s infinite',
             }}
           />
           <span style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 16, color: '#FFFFFF', letterSpacing: '0.04em' }}>
@@ -243,10 +256,12 @@ export default function LiveVisualTempoPulseHud({
             <button
               key={mode}
               type="button"
+              aria-pressed={audioMode === mode}
               onClick={() => setAudioMode(mode)}
               style={{
-                padding: '3px 7px',
-                borderRadius: 4,
+                minHeight: 36,
+                padding: '4px 9px',
+                borderRadius: 6,
                 border: audioMode === mode ? '1px solid var(--gold)' : '1px solid rgba(255, 255, 255, 0.1)',
                 background: audioMode === mode ? 'rgba(197, 160, 89, 0.2)' : 'rgba(255, 255, 255, 0.04)',
                 color: audioMode === mode ? 'var(--gold-lt)' : 'var(--gray)',
@@ -276,14 +291,17 @@ export default function LiveVisualTempoPulseHud({
 
           <button
             type="button"
+            aria-label="Stop visual tempo pacer"
             onClick={onStop}
             style={{
-              padding: '3px 8px',
-              borderRadius: 4,
+              minWidth: 36,
+              minHeight: 36,
+              padding: '4px 10px',
+              borderRadius: 6,
               border: '1px solid #EF4444',
               background: 'rgba(239, 68, 68, 0.15)',
               color: '#FCA5A5',
-              fontSize: 10.5,
+              fontSize: 11,
               fontWeight: 800,
               cursor: 'pointer',
               marginLeft: 4,
@@ -351,20 +369,22 @@ export default function LiveVisualTempoPulseHud({
         </div>
 
         {/* Quick Tempo Presets & Log Set */}
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {tempoPresets.map(preset => (
               <button
                 key={preset}
                 type="button"
+                aria-pressed={activeTempo === preset}
                 onClick={() => setActiveTempo(preset)}
                 style={{
-                  padding: '2px 5px',
-                  borderRadius: 3,
+                  minHeight: 36,
+                  padding: '4px 8px',
+                  borderRadius: 4,
                   background: activeTempo === preset ? 'rgba(197, 160, 89, 0.25)' : 'rgba(255, 255, 255, 0.04)',
                   border: activeTempo === preset ? '1px solid var(--gold)' : '1px solid rgba(255, 255, 255, 0.08)',
                   color: activeTempo === preset ? 'var(--gold-lt)' : 'var(--gray)',
-                  fontSize: 10,
+                  fontSize: 10.5,
                   fontWeight: 700,
                   cursor: 'pointer',
                 }}
@@ -380,8 +400,9 @@ export default function LiveVisualTempoPulseHud({
               onClick={() => onLogSet(totalTutSec, repCount)}
               className="tactile-btn"
               style={{
-                padding: '4px 10px',
-                borderRadius: 4,
+                minHeight: 36,
+                padding: '6px 12px',
+                borderRadius: 6,
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                 border: 'none',
                 color: '#080E14',

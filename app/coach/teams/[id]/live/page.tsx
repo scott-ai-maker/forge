@@ -50,11 +50,18 @@ export default async function CoachTeamLiveSessionPage({ params }: PageProps) {
     .limit(1)
     .maybeSingle()
 
-  const { data: todaySets } = await admin
-    .from('workout_set_logs')
-    .select('*')
-    .eq('session_date', today)
-    .order('created_at', { ascending: true })
+  const teamMemberIds = Array.from(
+    new Set(team.members.map(m => m.clientId).filter(Boolean))
+  )
+  const { data: todaySets } =
+    teamMemberIds.length > 0
+      ? await admin
+          .from('workout_set_logs')
+          .select('*')
+          .in('user_id', teamMemberIds)
+          .eq('session_date', today)
+          .order('created_at', { ascending: true })
+      : { data: [] }
 
   return (
     <main style={{ minHeight: '100dvh', background: '#04070E' }}>

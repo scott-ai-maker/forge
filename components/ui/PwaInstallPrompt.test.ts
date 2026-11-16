@@ -48,9 +48,10 @@ describe('PwaInstallPrompt & Modal Stacking Architecture', () => {
     for (const relPath of modalFiles) {
       const fullPath = path.resolve(__dirname, '../../', relPath)
       const content = fs.readFileSync(fullPath, 'utf-8')
-      // Native <dialog> with .showModal() renders in the browser top layer above all z-index contexts
+      // Native <dialog> with .showModal() or useNativeStudioDialog() renders in the browser top layer above all z-index contexts
       const usesNativeTopLayerDialog =
-        content.includes('<dialog') && content.includes('.showModal(')
+        content.includes('<dialog') &&
+        (content.includes('.showModal(') || content.includes('useNativeStudioDialog('))
       if (usesNativeTopLayerDialog) {
         expect(usesNativeTopLayerDialog).toBe(true)
         continue

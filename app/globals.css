@@ -5169,8 +5169,38 @@ details.forge-disclosure-item:not([open])::details-content {
 }
 
 /* Native <dialog> modal scroll containment & backdrop styling */
-dialog.forge-app-placeholder-dialog:modal {
+dialog.forge-app-placeholder-dialog:modal,
+dialog.apple-watch-sim-dialog:modal,
+dialog.forge-live-studio-dialog:modal {
   overscroll-behavior: contain;
+}
+
+dialog.forge-live-studio-dialog {
+  border: 0;
+  padding: 0;
+  margin: auto;
+  background: transparent;
+  color: #ffffff;
+  max-width: min(1040px, calc(100vw - 16px));
+  width: 100%;
+  max-height: calc(100dvh - 16px);
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+dialog.forge-live-studio-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+dialog.forge-live-studio-dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgba(4, 7, 14, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 dialog.forge-app-placeholder-dialog::backdrop {
@@ -5179,6 +5209,44 @@ dialog.forge-app-placeholder-dialog::backdrop {
   background: rgba(4, 7, 13, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+dialog.apple-watch-sim-dialog {
+  border: 1.5px solid rgba(56, 189, 248, 0.3);
+  border-radius: 20px;
+  padding: 0;
+  margin: auto;
+  max-width: min(720px, calc(100vw - 20px));
+  width: 100%;
+  max-height: calc(100dvh - 20px);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(8, 14, 26, 0.99) 100%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.15);
+  color: #ffffff;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+dialog.apple-watch-sim-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+dialog.apple-watch-sim-dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgba(3, 7, 18, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .active-rest-cardio-breath-ring,
+  .coach-cardio-breath-outer,
+  .coach-cardio-breath-inner {
+    transition: none !important;
+    transform: scale(1) !important;
+  }
 }
 
 

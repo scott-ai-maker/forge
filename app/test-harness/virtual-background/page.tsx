@@ -158,7 +158,7 @@ export default function VirtualBackgroundHarnessPage() {
         readback.width = stageCanvas.width
         readback.height = stageCanvas.height
       }
-      const ctx = readback.getContext('2d')
+      const ctx = readback.getContext('2d', { willReadFrequently: true })
       if (!ctx) return
       ctx.drawImage(stageCanvas, 0, 0)
 

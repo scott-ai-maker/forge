@@ -2,13 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, AuthzError } from '@/lib/authz'
 import { loadClientEntitlements, summarizeAllFeatureAccess } from '@/lib/addon-entitlements'
 
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, max-age=0',
+}
+
 export async function GET(req: NextRequest) {
   try {
     const isDev = process.env.NODE_ENV !== 'production'
     const isTestHarness = isDev && (req.headers.get('referer')?.includes('/test-harness/') || false)
     if (isTestHarness) {
       const open = { active: true, expiresAt: null, usesRemaining: null }
-      return NextResponse.json({ features: { 'video-review': open, nutrition: open, travel: open } })
+      return NextResponse.json(
+        { features: { 'video-review': open, nutrition: open, travel: open } },
+        { headers: NO_STORE_HEADERS }
+      )
     }
 
     const authz = await getRequestAuthz(req)
@@ -16,16 +23,25 @@ export async function GET(req: NextRequest) {
     // Coaches use every feature for client work, so they are never gated.
     if (authz.client.role === 'coach') {
       const open = { active: true, expiresAt: null, usesRemaining: null }
-      return NextResponse.json({ features: { 'video-review': open, nutrition: open, travel: open } })
+      return NextResponse.json(
+        { features: { 'video-review': open, nutrition: open, travel: open } },
+        { headers: NO_STORE_HEADERS }
+      )
     }
 
     const rows = await loadClientEntitlements(authz.user.id)
-    return NextResponse.json({ features: summarizeAllFeatureAccess(rows) })
+    return NextResponse.json(
+      { features: summarizeAllFeatureAccess(rows) },
+      { headers: NO_STORE_HEADERS }
+    )
   } catch (error) {
     if (error instanceof AuthzError) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status, headers: NO_STORE_HEADERS }
+      )
     }
     const message = error instanceof Error ? error.message : 'Failed to load entitlements'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 500, headers: NO_STORE_HEADERS })
   }
 }

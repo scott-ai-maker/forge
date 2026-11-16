@@ -101,6 +101,8 @@ export async function uploadVoiceNoteAudio(
       ? 'ogg'
       : mimeType.includes('aac')
       ? 'aac'
+      : mimeType.includes('wav')
+      ? 'wav'
       : 'mp4'
 
     const buffer = Buffer.from(base64Data, 'base64')

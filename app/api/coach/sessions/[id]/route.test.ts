@@ -271,7 +271,43 @@ describe('PATCH /api/coach/sessions/[id]', () => {
     const [req, ctx] = makeRequest({ status: 'completed' })
     const res = await PATCH(req, ctx)
     expect(res.status).toBe(200)
+    expect(res.headers.get('cache-control')).toContain('no-store')
     // update should NOT be called since session was already completed
     expect(updateSpy).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 BEFORE mutating session status when restoring a cancelled session with 0 remaining credits', async () => {
+    getRequestAuthzMock.mockResolvedValue(coachUser)
+    requireCoachAssignedClientMock.mockResolvedValue(undefined)
+    const pkg = { id: 'pkg-empty', sessions_remaining: 0, sessions_total: 10 }
+    const session = { id: 'session-1', client_id: 'client-1', status: 'cancelled', package_id: 'pkg-empty' }
+    const sessionUpdateSpy = vi.fn()
+    const baseAdmin = makeAdmin(session, session, pkg)
+    const customAdmin = {
+      from(table: string) {
+        const real = baseAdmin.from(table)
+        if (table === 'sessions') {
+          return { ...real, update: sessionUpdateSpy }
+        }
+        return real
+      },
+    }
+    supabaseAdminMock.mockReturnValue(customAdmin)
+    const [req, ctx] = makeRequest({ status: 'scheduled' })
+    const res = await PATCH(req, ctx)
+    expect(res.status).toBe(400)
+    expect(res.headers.get('cache-control')).toContain('no-store')
+    expect(sessionUpdateSpy).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 for invalid checked_in_at ISO timestamp', async () => {
+    getRequestAuthzMock.mockResolvedValue(coachUser)
+    requireCoachAssignedClientMock.mockResolvedValue(undefined)
+    const session = { id: 'session-1', client_id: 'client-1', status: 'scheduled', package_id: null }
+    supabaseAdminMock.mockReturnValue(makeAdmin(session, session))
+    const [req, ctx] = makeRequest({ checked_in_at: 'not-a-timestamp' })
+    const res = await PATCH(req, ctx)
+    expect(res.status).toBe(400)
+    expect(res.headers.get('cache-control')).toContain('no-store')
   })
 })

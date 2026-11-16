@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useId } from 'react'
 import {
   calculateCardioZones,
   generateStageWorkout,
@@ -14,6 +14,7 @@ import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/fo
 interface CardioStageStudioProps {
   initialAge?: number
   initialRestingHr?: number
+  initialHasHeartMedications?: boolean
   sex?: 'male' | 'female' | 'other'
   weightLbs?: number
   onLaunchWorkout?: (workout: StageConditioningWorkout) => void
@@ -22,12 +23,25 @@ interface CardioStageStudioProps {
 export default function CardioStageStudio({
   initialAge = 35,
   initialRestingHr = 65,
+  initialHasHeartMedications = false,
   sex = 'male',
   weightLbs = 185,
   onLaunchWorkout,
 }: CardioStageStudioProps) {
+  const uid = useId()
+  const ageSliderId = `${uid}-age-slider`
+  const rhrSliderId = `${uid}-rhr-slider`
+  const medToggleId = `${uid}-heart-meds-toggle`
+  const stageDetailsPanelId = `${uid}-stage-details`
+  const rockportFormHeadingId = `${uid}-rockport-heading`
+  const rockportTimeId = `${uid}-rockport-time`
+  const rockportHrId = `${uid}-rockport-hr`
+  const ymcaFormHeadingId = `${uid}-ymca-heading`
+  const ymcaHrId = `${uid}-ymca-hr`
+
   const [age, setAge] = useState<number>(initialAge)
   const [restingHr, setRestingHr] = useState<number>(initialRestingHr)
+  const [hasHeartMedications, setHasHeartMedications] = useState<boolean>(initialHasHeartMedications)
   const [activeStage, setActiveStage] = useState<1 | 2 | 3>(1)
   const [isStagePrescriptionCollapsed, setIsStagePrescriptionCollapsed] = useState<boolean>(false)
   const [testTab, setTestTab] = useState<'zones' | 'stages' | 'rockport' | 'ymca'>('stages')
@@ -41,8 +55,14 @@ export default function CardioStageStudio({
   const [ymcaHr, setYmcaHr] = useState<string>('92')
   const [ymcaResult, setYmcaResult] = useState<ReturnType<typeof evaluateYmcaStepTest> | null>(null)
 
-  const zones = useMemo(() => calculateCardioZones(age, restingHr), [age, restingHr])
-  const stageWorkout = useMemo(() => generateStageWorkout(activeStage, age, restingHr), [activeStage, age, restingHr])
+  const zones = useMemo(
+    () => calculateCardioZones(age, restingHr, hasHeartMedications),
+    [age, restingHr, hasHeartMedications]
+  )
+  const stageWorkout = useMemo(
+    () => generateStageWorkout(activeStage, age, restingHr, hasHeartMedications),
+    [activeStage, age, restingHr, hasHeartMedications]
+  )
 
   const handleCalculateRockport = (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,6 +148,8 @@ export default function CardioStageStudio({
 
         {/* Tab Navigation */}
         <div
+          role="group"
+          aria-label="Cardiorespiratory studio views"
           style={{
             display: 'flex',
             gap: 6,
@@ -144,19 +166,21 @@ export default function CardioStageStudio({
             <button
               key={t.id}
               type="button"
+              aria-pressed={testTab === t.id}
               onClick={() => setTestTab(t.id as typeof testTab)}
               style={{
                 background: testTab === t.id ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
                 color: testTab === t.id ? '#0A0E18' : 'var(--gray)',
                 border: testTab === t.id ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)',
-                padding: '6px 12px',
+                padding: '8px 12px',
+                minHeight: 44,
                 borderRadius: 4,
                 fontSize: 11,
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 cursor: 'pointer',
-                transition: 'all 0.15s',
+                transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
               }}
             >
               {t.label}
@@ -172,7 +196,7 @@ export default function CardioStageStudio({
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 8,
           padding: '10px 14px',
-          marginBottom: 16,
+          marginBottom: 12,
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
           gap: 12,
@@ -183,31 +207,57 @@ export default function CardioStageStudio({
       >
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--gray)' }}>
-            <span>Athlete Age:</span>
+            <label htmlFor={ageSliderId}>Athlete Age:</label>
             <strong style={{ color: 'var(--gold-lt)' }}>{age} yrs</strong>
           </div>
           <input
+            id={ageSliderId}
+            name="athlete_age"
             type="range"
+            className="forge-range-slider"
             min={18}
             max={80}
+            step={1}
             value={age}
+            aria-valuetext={`${age} years`}
             onChange={e => setAge(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--gold)', marginTop: 4 }}
+            style={
+              {
+                '--attr-min': 18,
+                '--attr-max': 80,
+                '--control-value': age,
+                '--slider-fill-color': '#D4AF37',
+                '--slider-thumb-color': '#D4AF37',
+              } as React.CSSProperties
+            }
           />
         </div>
 
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--gray)' }}>
-            <span>Resting HR:</span>
+            <label htmlFor={rhrSliderId}>Resting HR:</label>
             <strong style={{ color: 'var(--gold-lt)' }}>{restingHr} BPM</strong>
           </div>
           <input
+            id={rhrSliderId}
+            name="resting_hr"
             type="range"
+            className="forge-range-slider"
             min={40}
             max={100}
+            step={1}
             value={restingHr}
+            aria-valuetext={`${restingHr} BPM`}
             onChange={e => setRestingHr(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--gold)', marginTop: 4 }}
+            style={
+              {
+                '--attr-min': 40,
+                '--attr-max': 100,
+                '--control-value': restingHr,
+                '--slider-fill-color': '#D4AF37',
+                '--slider-thumb-color': '#D4AF37',
+              } as React.CSSProperties
+            }
           />
         </div>
 
@@ -226,11 +276,71 @@ export default function CardioStageStudio({
         </div>
       </div>
 
+      {/* ── PHARMACOLOGICAL SAFETY / BETA-BLOCKER TOGGLE ────────────────── */}
+      <div
+        style={{
+          background: hasHeartMedications ? 'rgba(245, 158, 11, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+          border: hasHeartMedications ? '1px solid rgba(245, 158, 11, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 8,
+          padding: '8px 12px',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 44 }}>
+          <input
+            id={medToggleId}
+            name="has_heart_medications"
+            type="checkbox"
+            checked={hasHeartMedications}
+            onChange={e => setHasHeartMedications(e.target.checked)}
+            style={{
+              width: 20,
+              height: 20,
+              accentColor: '#F59E0B',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          />
+          <label
+            htmlFor={medToggleId}
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: hasHeartMedications ? '#FCD34D' : '#E2E8F0',
+              cursor: 'pointer',
+              lineHeight: 1.35,
+            }}
+          >
+            Beta-Blocker / BP Medication Mode (Govern Intensity by RPE &amp; Talk Test)
+          </label>
+        </div>
+
+        {hasHeartMedications && zones.clinicalGuidance && (
+          <div
+            role="status"
+            style={{
+              marginTop: 6,
+              paddingTop: 8,
+              borderTop: '1px solid rgba(245, 158, 11, 0.25)',
+              fontSize: 11.5,
+              color: '#FDE68A',
+              lineHeight: 1.45,
+            }}
+          >
+            {zones.clinicalGuidance}
+          </div>
+        )}
+      </div>
+
       {/* ── TAB 1: 3-STAGE CONDITIONING WORKOUT BUILDER ───────────────── */}
       {testTab === 'stages' && (
         <div>
           {/* Stage Selector Buttons */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8, marginBottom: 14 }}>
+          <div
+            role="group"
+            aria-label="NASM cardiorespiratory training stages"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8, marginBottom: 14 }}
+          >
             {[
               { num: 1, title: 'Stage 1: Aerobic Base', sub: 'Phase 1 OPT (Zone 1 Steady)', color: '#10B981' },
               { num: 2, title: 'Stage 2: VT1 Intervals', sub: 'Phase 2-3 OPT (1:3 Ratio)', color: '#F59E0B' },
@@ -239,15 +349,17 @@ export default function CardioStageStudio({
               <button
                 key={s.num}
                 type="button"
+                aria-pressed={activeStage === s.num}
                 onClick={() => setActiveStage(s.num as 1 | 2 | 3)}
                 style={{
                   background: activeStage === s.num ? 'rgba(212,160,23,0.15)' : 'rgba(255,255,255,0.02)',
                   border: activeStage === s.num ? `2px solid ${s.color}` : '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   padding: '10px 12px',
+                  minHeight: 48,
                   textAlign: 'left',
                   cursor: 'pointer',
-                  transition: 'all 0.15s',
+                  transition: 'background-color 0.15s, border-color 0.15s',
                   maxWidth: '100%',
                   boxSizing: 'border-box',
                 }}
@@ -292,6 +404,8 @@ export default function CardioStageStudio({
                 </span>
                 <button
                   type="button"
+                  aria-expanded={!isStagePrescriptionCollapsed}
+                  aria-controls={stageDetailsPanelId}
                   onClick={() => setIsStagePrescriptionCollapsed(prev => !prev)}
                   className="tactile-btn"
                   style={{
@@ -299,22 +413,24 @@ export default function CardioStageStudio({
                     border: '1px solid rgba(255,255,255,0.18)',
                     color: 'var(--gold-lt)',
                     borderRadius: 4,
-                    padding: '4px 10px',
+                    padding: '8px 12px',
+                    minHeight: 44,
                     fontSize: 11.5,
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 4,
+                    gap: 5,
                   }}
                 >
-                  {isStagePrescriptionCollapsed ? '▼ Expand' : '▲ Collapse'}
+                  <span aria-hidden="true">{isStagePrescriptionCollapsed ? '▼' : '▲'}</span>
+                  <span>Stage Details</span>
                 </button>
               </div>
             </div>
 
             {!isStagePrescriptionCollapsed && (
-              <>
+              <div id={stageDetailsPanelId} style={{ display: 'grid', gap: 14 }}>
                 {/* Interval Sequence Breakdown */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 10 }}>
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6, padding: '10px 12px' }}>
@@ -333,7 +449,7 @@ export default function CardioStageStudio({
 
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6, padding: '10px 12px' }}>
                     <div style={{ fontSize: 10.5, color: '#60A5FA', textTransform: 'uppercase', fontWeight: 800 }}>
-                      3. Cool-Down & Regeneration
+                      3. Cool-Down &amp; Regeneration
                     </div>
                     <div style={{ fontSize: 12, color: '#E2E8F0', marginTop: 4, lineHeight: 1.4 }}>{stageWorkout.cooldown}</div>
                   </div>
@@ -363,11 +479,12 @@ export default function CardioStageStudio({
                       border: 'none',
                       borderRadius: 6,
                       padding: '10px 16px',
+                      minHeight: 44,
                       fontSize: 13,
                       fontWeight: 800,
                       cursor: 'pointer',
                       boxShadow: '0 4px 14px rgba(212,160,23,0.3)',
-                      alignSelf: 'start',
+                      justifySelf: 'start',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
@@ -377,7 +494,7 @@ export default function CardioStageStudio({
                     <span>Load into Cardio Log Draft</span>
                   </button>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -443,8 +560,12 @@ export default function CardioStageStudio({
       {/* ── TAB 3: ROCKPORT 1-MILE WALK TEST ─────────────────────────── */}
       {testTab === 'rockport' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 14 }}>
-          <form onSubmit={handleCalculateRockport} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '14px 16px', maxWidth: '100%', boxSizing: 'border-box' }}>
-            <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, letterSpacing: '0.03em', margin: '0 0 12px', color: 'var(--gold-lt)' }}>
+          <form
+            aria-labelledby={rockportFormHeadingId}
+            onSubmit={handleCalculateRockport}
+            style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '14px 16px', maxWidth: '100%', boxSizing: 'border-box' }}
+          >
+            <h4 id={rockportFormHeadingId} style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, letterSpacing: '0.03em', margin: '0 0 12px', color: 'var(--gold-lt)' }}>
               Rockport 1-Mile Walk Screening
             </h4>
             <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.45, margin: '0 0 14px' }}>
@@ -453,33 +574,37 @@ export default function CardioStageStudio({
 
             <div style={{ display: 'grid', gap: 10 }}>
               <div>
-                <label style={{ fontSize: 11, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
-                  Time to Complete (Minutes)
+                <label htmlFor={rockportTimeId} style={{ fontSize: 11, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
+                  Time to Complete (Minutes) <span aria-hidden="true">*</span>
                 </label>
                 <input
+                  id={rockportTimeId}
+                  name="rockport_time_minutes"
                   type="text"
                   inputMode="decimal"
                   autoComplete="off"
                   onFocus={selectOnFocus}
                   value={rockportTime}
                   onChange={e => setRockportTime(sanitizeNumericInput(e.target.value))}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '8px 10px', borderRadius: 4, boxSizing: 'border-box' }}
+                  style={{ width: '100%', minHeight: 44, fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '8px 10px', borderRadius: 4, boxSizing: 'border-box' }}
                   required
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 11, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
-                  Finish Heart Rate (BPM)
+                <label htmlFor={rockportHrId} style={{ fontSize: 11, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
+                  Finish Heart Rate (BPM) <span aria-hidden="true">*</span>
                 </label>
                 <input
+                  id={rockportHrId}
+                  name="rockport_finish_hr"
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
                   onFocus={selectOnFocus}
                   value={rockportHr}
                   onChange={e => setRockportHr(sanitizeNumericInput(e.target.value))}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '8px 10px', borderRadius: 4, boxSizing: 'border-box' }}
+                  style={{ width: '100%', minHeight: 44, fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '8px 10px', borderRadius: 4, boxSizing: 'border-box' }}
                   required
                 />
               </div>
@@ -492,6 +617,7 @@ export default function CardioStageStudio({
                   border: 'none',
                   borderRadius: 4,
                   padding: '10px',
+                  minHeight: 44,
                   fontSize: 13,
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -504,7 +630,11 @@ export default function CardioStageStudio({
           </form>
 
           {rockportResult && (
-            <div style={{ background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.4)', borderRadius: 8, padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <div
+              role="status"
+              aria-live="polite"
+              style={{ background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.4)', borderRadius: 8, padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: '100%', boxSizing: 'border-box' }}
+            >
               <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800 }}>
                 Clinical Cardiorespiratory Capacity
               </div>
@@ -525,8 +655,12 @@ export default function CardioStageStudio({
       {/* ── TAB 4: YMCA 3-MINUTE STEP TEST ───────────────────────────── */}
       {testTab === 'ymca' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 14 }}>
-          <form onSubmit={handleCalculateYmca} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '14px 16px', maxWidth: '100%', boxSizing: 'border-box' }}>
-            <h4 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, letterSpacing: '0.03em', margin: '0 0 12px', color: 'var(--gold-lt)' }}>
+          <form
+            aria-labelledby={ymcaFormHeadingId}
+            onSubmit={handleCalculateYmca}
+            style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '14px 16px', maxWidth: '100%', boxSizing: 'border-box' }}
+          >
+            <h4 id={ymcaFormHeadingId} style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, letterSpacing: '0.03em', margin: '0 0 12px', color: 'var(--gold-lt)' }}>
               YMCA 3-Minute Step Test
             </h4>
             <p style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.45, margin: '0 0 14px' }}>
@@ -535,17 +669,19 @@ export default function CardioStageStudio({
 
             <div style={{ display: 'grid', gap: 10 }}>
               <div>
-                <label style={{ fontSize: 11, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
-                  1-Minute Recovery Heart Rate (BPM)
+                <label htmlFor={ymcaHrId} style={{ fontSize: 11, color: 'var(--gray)', display: 'block', marginBottom: 4 }}>
+                  1-Minute Recovery Heart Rate (BPM) <span aria-hidden="true">*</span>
                 </label>
                 <input
+                  id={ymcaHrId}
+                  name="ymca_recovery_hr"
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
                   onFocus={selectOnFocus}
                   value={ymcaHr}
                   onChange={e => setYmcaHr(sanitizeNumericInput(e.target.value))}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '8px 10px', borderRadius: 4, boxSizing: 'border-box' }}
+                  style={{ width: '100%', minHeight: 44, fontSize: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', padding: '8px 10px', borderRadius: 4, boxSizing: 'border-box' }}
                   required
                 />
               </div>
@@ -558,6 +694,7 @@ export default function CardioStageStudio({
                   border: 'none',
                   borderRadius: 4,
                   padding: '10px',
+                  minHeight: 44,
                   fontSize: 13,
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -570,7 +707,11 @@ export default function CardioStageStudio({
           </form>
 
           {ymcaResult && (
-            <div style={{ background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.4)', borderRadius: 8, padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <div
+              role="status"
+              aria-live="polite"
+              style={{ background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.4)', borderRadius: 8, padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: '100%', boxSizing: 'border-box' }}
+            >
               <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800 }}>
                 Autonomic Recovery Pulse Rating
               </div>

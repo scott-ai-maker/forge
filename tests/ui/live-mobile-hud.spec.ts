@@ -96,4 +96,69 @@ test.describe('Mobile 1:1 Live Coaching Studio HUD Responsive Suite', () => {
     const stageTheater = await page.locator('.teams-stage-column').boundingBox()
     expect(stageTheater!.width).toBeGreaterThan(stageDocked!.width + 250)
   })
+
+  test('operates Studio FX toolbar, Green Room native <dialog>, Virtual Background picker, Playbook & ERAP modals, and 320px zero-overflow layout', async ({ page }) => {
+    const pageErrors: string[] = []
+    page.on('pageerror', err => pageErrors.push(err.message))
+
+    // Start at ultra-narrow 320px × 800px WCAG 1.4.10 viewport
+    await page.setViewportSize({ width: 320, height: 800 })
+    await page.goto('/test-harness/live-mobile')
+    await expect(page.getByText('LIVE COCKPIT')).toBeVisible({ timeout: 15000 })
+
+    // Verify zero horizontal page overflow at 320px
+    const overflow320 = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth
+    )
+    expect(overflow320).toBeLessThanOrEqual(1)
+
+    // Open Studio FX floating panel on 320px screen and toggle LUT + Framing + Green Room
+    const studioFxPill = page.getByTestId('studio-fx-pill').first()
+    await studioFxPill.scrollIntoViewIfNeeded()
+    await studioFxPill.click()
+
+    const fxPanel = page.getByTestId('studio-fx-panel')
+    await expect(fxPanel).toBeVisible()
+    const overflowWithFxPanel = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth
+    )
+    expect(overflowWithFxPanel).toBeLessThanOrEqual(1)
+
+    const warmLutBtn = page.getByTestId('studio-lut-warm_tactile')
+    await warmLutBtn.click()
+    await expect(warmLutBtn).toHaveAttribute('aria-pressed', 'true')
+
+    const headToToeBtn = page.getByTestId('studio-framing-head_to_toe')
+    await headToToeBtn.click()
+    await expect(headToToeBtn).toHaveAttribute('aria-pressed', 'true')
+
+    // Launch Pre-Call Green Room native <dialog> from Studio FX panel
+    await page.getByTestId('studio-open-green-room-btn').click()
+    const greenRoomDialog = page.getByTestId('studio-green-room-modal')
+    await expect(greenRoomDialog).toBeVisible()
+    const greenRoomTag = await greenRoomDialog.evaluate(el => el.tagName)
+    expect(greenRoomTag).toBe('DIALOG')
+
+    // Dismiss Green Room via Join Live Studio CTA
+    await page.getByTestId('green-room-join-btn').click()
+    await expect(greenRoomDialog).not.toBeVisible()
+
+    // Open Consultation Playbook native <dialog> on 320px viewport & verify Escape closes cleanly without opening Exit modal
+    await page.getByRole('button', { name: /Playbook/i }).first().click()
+    const playbookDialog = page.getByRole('dialog', { name: /45-MINUTE LIVE DIAGNOSTIC CONSULTATION/i })
+    await expect(playbookDialog).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(playbookDialog).not.toBeVisible()
+    await expect(page.getByTestId('exit-cockpit-modal')).toHaveCount(0)
+
+    // Open Live Telehealth Wrap-Up native <dialog> & dismiss via Escape
+    await page.getByRole('button', { name: /^End$/i }).first().click()
+    const wrapUpDialog = page.getByRole('dialog', { name: /Live Telehealth Wrap-Up/i })
+    await expect(wrapUpDialog).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(wrapUpDialog).not.toBeVisible()
+    await expect(page.getByTestId('exit-cockpit-modal')).toHaveCount(0)
+
+    expect(pageErrors).toEqual([])
+  })
 })

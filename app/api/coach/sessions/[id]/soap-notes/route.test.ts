@@ -126,9 +126,39 @@ describe('POST /api/coach/sessions/[id]/soap-notes', () => {
     })
     const res = await POST(req, { params: Promise.resolve({ id: 's-2' }) })
     expect(res.status).toBe(200)
+    expect(res.headers.get('cache-control')).toContain('no-store')
     const json = await res.json()
     expect(json.ok).toBe(true)
     expect(json.data.formattedNotes).toContain('[S] SUBJECTIVE')
+  })
+
+  it('rejects rawNotes exceeding 12,000 characters with 413', async () => {
+    getRequestAuthzMock.mockResolvedValue(coachUser)
+
+    const req = new NextRequest('http://localhost/api/coach/sessions/s-2/soap-notes', {
+      method: 'POST',
+      body: JSON.stringify({
+        rawNotes: 'A'.repeat(12_005),
+      }),
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: 's-2' }) })
+    expect(res.status).toBe(413)
+    expect(res.headers.get('cache-control')).toContain('no-store')
+  })
+
+  it('rejects unsupported mode values with 400', async () => {
+    getRequestAuthzMock.mockResolvedValue(coachUser)
+
+    const req = new NextRequest('http://localhost/api/coach/sessions/s-2/soap-notes', {
+      method: 'POST',
+      body: JSON.stringify({
+        rawNotes: 'Squat 225x5x3.',
+        mode: 'arbitrary_invalid_mode',
+      }),
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: 's-2' }) })
+    expect(res.status).toBe(400)
+    expect(res.headers.get('cache-control')).toContain('no-store')
   })
 })
 

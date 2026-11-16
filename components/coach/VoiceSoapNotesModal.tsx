@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useId, useCallback } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import GaaMasterWatermarkSeal from '@/components/ui/GaaMasterWatermarkSeal'
 import { StructuredSoapOutput, SoapNotesMode } from '@/lib/ai-soap-notes'
 import { ALL_PARTY_RECORDING_NOTICE } from '@/lib/legal-compliance'
+import { useNativeStudioDialog } from './useNativeStudioDialog'
 
 interface VoiceSoapNotesModalProps {
   isOpen: boolean
@@ -32,24 +33,44 @@ export default function VoiceSoapNotesModal({
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
   const recognitionRef = useRef<{ stop: () => void; start: () => void } | null>(null)
+  const titleId = useId()
+  const rawNotesId = useId()
+  const formattedNotesId = useId()
+
+  const stopVoiceDictation = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop()
+      } catch {}
+      recognitionRef.current = null
+      setIsRecording(false)
+    }
+  }, [])
+
+  const handleClose = useCallback(() => {
+    stopVoiceDictation()
+    onClose()
+  }, [onClose, stopVoiceDictation])
+
+  useNativeStudioDialog(dialogRef, isOpen, handleClose)
 
   useEffect(() => {
     if (isOpen && existingNotes && !rawInput) {
       setRawInput(existingNotes)
     }
-  }, [isOpen, existingNotes, rawInput])
+    if (!isOpen) {
+      stopVoiceDictation()
+    }
+  }, [isOpen, existingNotes, rawInput, stopVoiceDictation])
 
   // Clean up speech recognition on unmount
   useEffect(() => {
     return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop()
-        } catch {}
-      }
+      stopVoiceDictation()
     }
-  }, [])
+  }, [stopVoiceDictation])
 
   if (!isOpen) return null
 
@@ -124,15 +145,6 @@ export default function VoiceSoapNotesModal({
     }
   }
 
-  const stopVoiceDictation = () => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop()
-      } catch {}
-      setIsRecording(false)
-    }
-  }
-
   const handleSynthesize = async () => {
     if (!rawInput.trim()) {
       setErrorMessage('Please dictate or type session notes before synthesizing.')
@@ -153,7 +165,7 @@ export default function VoiceSoapNotesModal({
         }),
       })
 
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
 
       if (!res.ok || !data.ok) {
         throw new Error(data.error || 'Failed to synthesize SOAP notes')
@@ -176,7 +188,7 @@ export default function VoiceSoapNotesModal({
     setIsSaving(true)
     try {
       await onApplyNotes(finalContent)
-      onClose()
+      handleClose()
     } catch (err: unknown) {
       const errObj = err as { message?: string }
       setErrorMessage(errObj?.message || 'Failed to save notes')
@@ -193,44 +205,39 @@ export default function VoiceSoapNotesModal({
   ]
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
+      className="forge-live-studio-dialog"
+      aria-labelledby={titleId}
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.84)',
-        backdropFilter: 'blur(10px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 100050,
-        padding: 16,
+        maxWidth: 'min(720px, calc(100vw - 16px))',
       }}
-      onClick={onClose}
     >
       <div
         style={{
           background: 'linear-gradient(145deg, #0D1624 0%, #080E16 100%)',
           border: '1.5px solid rgba(197, 160, 89, 0.4)',
           borderRadius: 14,
-          width: 'min(720px, 100%)',
-          maxHeight: '90vh',
+          width: '100%',
+          maxHeight: '90dvh',
           overflowY: 'auto',
-          padding: '24px 28px',
+          overflowX: 'hidden',
+          padding: 'clamp(16px, 2.5vw, 24px) clamp(16px, 3vw, 28px)',
           display: 'grid',
           gap: 16,
           boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(197, 160, 89, 0.15)',
           position: 'relative',
-          overflow: 'hidden',
+          boxSizing: 'border-box',
         }}
-        onClick={e => e.stopPropagation()}
       >
-        <div style={{ position: 'absolute', top: -15, right: -15, zIndex: 0 }}>
+        <div aria-hidden="true" style={{ position: 'absolute', top: -15, right: -15, zIndex: 0, pointerEvents: 'none' }}>
           <GaaMasterWatermarkSeal size={140} opacity={0.06} subtitle="CLINICAL S.O.A.P. RECORD" />
         </div>
 
         {/* Header Bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: 12, position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minInlineSize: 0 }}>
             <div
               style={{
                 width: 36,
@@ -241,14 +248,18 @@ export default function VoiceSoapNotesModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
               <GaaIcon name="message" size={18} tone="gold" />
             </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 16, fontFamily: 'Raleway, sans-serif', fontWeight: 800, color: '#FFFFFF' }}>
+            <div style={{ minInlineSize: 0 }}>
+              <h2
+                id={titleId}
+                style={{ margin: 0, fontSize: 16, fontFamily: 'Raleway, sans-serif', fontWeight: 800, color: '#FFFFFF' }}
+              >
                 AI Voice-to-Clinical S.O.A.P. Notes
-              </h3>
+              </h2>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--gray)' }}>
                 {clientName} · Clinical Sports Science Documentation
               </p>
@@ -257,17 +268,21 @@ export default function VoiceSoapNotesModal({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             style={{
-              background: 'none',
-              border: 'none',
+              minWidth: 44,
+              minHeight: 44,
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: 8,
               color: 'var(--gray)',
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              padding: 4,
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
-            aria-label="Close"
+            aria-label="Close AI Voice-to-Clinical S.O.A.P. Notes"
           >
             <GaaIcon name="close" size={16} tone="slate" />
           </button>
@@ -289,7 +304,7 @@ export default function VoiceSoapNotesModal({
         </div>
 
         {/* Mode Selector */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div role="group" aria-label="S.O.A.P. output format mode" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)' }}>
             Format Mode:
           </span>
@@ -297,10 +312,12 @@ export default function VoiceSoapNotesModal({
             <button
               key={m}
               type="button"
+              aria-pressed={mode === m}
               onClick={() => setMode(m)}
               className="tactile-btn"
               style={{
-                padding: '5px 12px',
+                minHeight: 38,
+                padding: '6px 12px',
                 borderRadius: 6,
                 background: mode === m ? 'rgba(197, 160, 89, 0.2)' : 'rgba(255, 255, 255, 0.04)',
                 border: mode === m ? '1px solid var(--gold)' : '1px solid rgba(255, 255, 255, 0.1)',
@@ -317,11 +334,13 @@ export default function VoiceSoapNotesModal({
         </div>
 
         {/* Tab Switcher: Dictate/Edit vs Structured S.O.A.P. Preview */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', gap: 12 }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', gap: 12, flexWrap: 'wrap' }}>
           <button
             type="button"
+            aria-pressed={activeTab === 'edit'}
             onClick={() => setActiveTab('edit')}
             style={{
+              minHeight: 40,
               padding: '8px 14px',
               background: 'none',
               border: 'none',
@@ -336,8 +355,10 @@ export default function VoiceSoapNotesModal({
           </button>
           <button
             type="button"
+            aria-pressed={activeTab === 'preview'}
             onClick={() => setActiveTab('preview')}
             style={{
+              minHeight: 40,
               padding: '8px 14px',
               background: 'none',
               border: 'none',
@@ -346,7 +367,7 @@ export default function VoiceSoapNotesModal({
               fontSize: 13,
               fontWeight: 700,
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
             }}
@@ -370,6 +391,7 @@ export default function VoiceSoapNotesModal({
                   onClick={isRecording ? stopVoiceDictation : startVoiceDictation}
                   className="tactile-btn"
                   style={{
+                    minHeight: 42,
                     padding: '8px 16px',
                     borderRadius: 6,
                     background: isRecording ? 'rgba(239, 68, 68, 0.25)' : 'rgba(197, 160, 89, 0.15)',
@@ -389,7 +411,7 @@ export default function VoiceSoapNotesModal({
                 </button>
 
                 {isRecording && (
-                  <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 700, animation: 'pulse 1s infinite' }}>
+                  <span className="animate-pulse" style={{ fontSize: 11, color: '#EF4444', fontWeight: 700 }}>
                     ● Mic Active
                   </span>
                 )}
@@ -400,26 +422,35 @@ export default function VoiceSoapNotesModal({
               </span>
             </div>
 
-            <textarea
-              value={rawInput}
-              onChange={e => setRawInput(e.target.value)}
-              placeholder="Dictate or type raw session notes here... (e.g. 'Back squats 225x5x3, RPE 8. Left knee caved slightly on rep 4 set 3. Athlete felt strong, energy 8/10. Next time progress to 230 lbs and cue external knee torque.')"
-              rows={6}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                background: '#060B12',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: 8,
-                color: '#FFFFFF',
-                fontSize: 13,
-                lineHeight: 1.6,
-                boxSizing: 'border-box',
-                resize: 'vertical',
-                outline: 'none',
-                fontFamily: 'Raleway, sans-serif',
-              }}
-            />
+            <div>
+              <label
+                htmlFor={rawNotesId}
+                style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-lt)', fontWeight: 700, marginBottom: 4 }}
+              >
+                Raw Session Notes
+              </label>
+              <textarea
+                id={rawNotesId}
+                name="raw_notes"
+                value={rawInput}
+                onChange={e => setRawInput(e.target.value)}
+                placeholder="Dictate or type raw session notes here... (e.g. 'Back squats 225x5x3, RPE 8. Left knee caved slightly on rep 4 set 3. Athlete felt strong, energy 8/10. Next time progress to 230 lbs and cue external knee torque.')"
+                rows={6}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  background: '#060B12',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: 8,
+                  color: '#FFFFFF',
+                  fontSize: 16,
+                  lineHeight: 1.6,
+                  boxSizing: 'border-box',
+                  resize: 'vertical',
+                  fontFamily: 'Raleway, sans-serif',
+                }}
+              />
+            </div>
 
             {/* Quick Cues Prompts */}
             <div>
@@ -434,14 +465,15 @@ export default function VoiceSoapNotesModal({
                     type="button"
                     onClick={() => setRawInput(prev => (prev ? `${prev}. ${cue}` : cue))}
                     style={{
-                      padding: '4px 10px',
+                      minHeight: 36,
+                      padding: '6px 10px',
                       background: 'rgba(255, 255, 255, 0.05)',
                       border: '1px solid rgba(255, 255, 255, 0.12)',
                       borderRadius: 14,
                       color: 'var(--gray)',
                       fontSize: 11,
                       cursor: 'pointer',
-                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
                     }}
                   >
                     + {cue}
@@ -458,7 +490,7 @@ export default function VoiceSoapNotesModal({
             {soapResult ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {/* Visual SOAP Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
                   <div style={{ padding: '12px 14px', background: 'rgba(56, 189, 248, 0.06)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: 8 }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
                       S — Subjective
@@ -498,10 +530,15 @@ export default function VoiceSoapNotesModal({
 
                 {/* Direct Editable Markdown Text Area */}
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', fontWeight: 700, marginBottom: 4 }}>
+                  <label
+                    htmlFor={formattedNotesId}
+                    style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', fontWeight: 700, marginBottom: 4 }}
+                  >
                     Formatted Notes to Apply to Session Record
                   </label>
                   <textarea
+                    id={formattedNotesId}
+                    name="formatted_notes"
                     value={soapResult.formattedNotes}
                     onChange={e => setSoapResult({ ...soapResult, formattedNotes: e.target.value })}
                     rows={7}
@@ -512,11 +549,10 @@ export default function VoiceSoapNotesModal({
                       border: '1px solid rgba(197, 160, 89, 0.3)',
                       borderRadius: 8,
                       color: '#FFFFFF',
-                      fontSize: 12.5,
+                      fontSize: 16,
                       lineHeight: 1.5,
                       boxSizing: 'border-box',
                       resize: 'vertical',
-                      outline: 'none',
                       fontFamily: 'monospace',
                     }}
                   />
@@ -525,14 +561,14 @@ export default function VoiceSoapNotesModal({
             ) : (
               <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--gray)' }}>
                 <p style={{ margin: 0, fontSize: 13 }}>No clinical notes synthesized yet.</p>
-                <p style={{ margin: '6px 0 0', fontSize: 12 }}>Dictate or enter notes on the first tab, then click &quot;Synthesize S.O.A.P. Notes&quot;.</p>
+                <p style={{ margin: '6px 0 0', fontSize: 12 }}>Dictate or enter notes on the first tab, then click &quot;Synthesize Clinical S.O.A.P.&quot;.</p>
               </div>
             )}
           </div>
         )}
 
         {errorMessage && (
-          <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #EF4444', borderRadius: 6, color: '#FCA5A5', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div role="alert" style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #EF4444', borderRadius: 6, color: '#FCA5A5', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
             <GaaIcon name="alert-triangle" size={13} tone="ruby" />
             <span>{errorMessage}</span>
           </div>
@@ -546,6 +582,7 @@ export default function VoiceSoapNotesModal({
             disabled={isSynthesizing || isRecording || !rawInput.trim()}
             className="tactile-btn"
             style={{
+              minHeight: 44,
               padding: '10px 18px',
               borderRadius: 6,
               background: 'rgba(197, 160, 89, 0.15)',
@@ -564,13 +601,14 @@ export default function VoiceSoapNotesModal({
             <span>{isSynthesizing ? 'Synthesizing S.O.A.P. with AI...' : 'Synthesize Clinical S.O.A.P.'}</span>
           </button>
 
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="tactile-btn"
               disabled={isSaving}
               style={{
+                minHeight: 44,
                 padding: '10px 16px',
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -589,6 +627,7 @@ export default function VoiceSoapNotesModal({
               disabled={isSaving || (!soapResult && !rawInput.trim())}
               className="tactile-btn"
               style={{
+                minHeight: 44,
                 padding: '10px 22px',
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                 border: 'none',
@@ -610,7 +649,6 @@ export default function VoiceSoapNotesModal({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }
-

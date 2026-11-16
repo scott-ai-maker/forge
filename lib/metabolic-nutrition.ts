@@ -155,22 +155,88 @@ const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
   extra_active: 1.9,
 }
 
+const VALID_GOALS: readonly NutritionGoal[] = [
+  'fat_loss',
+  'hypertrophy',
+  'maintenance',
+  'athletic_power',
+]
+
+const VALID_PHASES: readonly NasmOptPhase[] = [
+  'phase1_stabilization',
+  'phase2_strength_endurance',
+  'phase3_hypertrophy',
+  'phase4_maximal_strength',
+  'phase5_power',
+]
+
+export function optPhaseNumberToKey(optPhase?: number | null): NasmOptPhase {
+  if (typeof optPhase !== 'number' || !Number.isFinite(optPhase)) {
+    return 'phase1_stabilization'
+  }
+  const rounded = Math.round(optPhase)
+  if (rounded === 2) return 'phase2_strength_endurance'
+  if (rounded === 3) return 'phase3_hypertrophy'
+  if (rounded === 4) return 'phase4_maximal_strength'
+  if (rounded === 5) return 'phase5_power'
+  return 'phase1_stabilization'
+}
+
+function normalizeActivityLevel(activity?: string): ActivityLevel {
+  if (activity && Object.prototype.hasOwnProperty.call(ACTIVITY_MULTIPLIERS, activity)) {
+    return activity as ActivityLevel
+  }
+  return 'moderately_active'
+}
+
+function normalizeNutritionGoal(goal?: string): NutritionGoal {
+  if (goal && (VALID_GOALS as readonly string[]).includes(goal)) {
+    return goal as NutritionGoal
+  }
+  return 'fat_loss'
+}
+
+function normalizeOptPhase(phase?: string): NasmOptPhase {
+  if (phase && (VALID_PHASES as readonly string[]).includes(phase)) {
+    return phase as NasmOptPhase
+  }
+  return 'phase1_stabilization'
+}
+
+function sanitizePositiveMetric(
+  value: number | undefined,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return fallback
+  }
+  return Math.min(max, Math.max(min, value))
+}
+
 /**
  * Calculates BMR, TDEE, NEAT, EAT, TEF using Mifflin-St Jeor or Katch-McArdle
  */
 export function calculateEnergyExpenditure(input: MetabolicProfileInput): MetabolicEnergyAnalysis {
-  const weightLbs = Math.max(80, input.weightLbs || 180)
+  const weightLbs = sanitizePositiveMetric(input.weightLbs, 180, 80, 600)
   const weightKg = weightLbs / 2.20462
-  const heightCm = (input.heightInches || 70) * 2.54
-  const age = input.age || 35
-  const sex = input.sex || 'male'
-  const activity = input.activityLevel || 'moderately_active'
-  const goal = input.goal || 'fat_loss'
+  const heightInches = sanitizePositiveMetric(input.heightInches, 70, 48, 96)
+  const heightCm = heightInches * 2.54
+  const age = sanitizePositiveMetric(input.age, 35, 18, 100)
+  const sex = input.sex === 'female' ? 'female' : input.sex === 'other' ? 'other' : 'male'
+  const activity = normalizeActivityLevel(input.activityLevel)
+  const goal = normalizeNutritionGoal(input.goal)
 
   let bmr = 0
   let bmrMethod: MetabolicEnergyAnalysis['bmrMethod'] = 'Mifflin-St Jeor'
 
-  if (input.bodyFatPercent && input.bodyFatPercent > 3 && input.bodyFatPercent < 60) {
+  if (
+    typeof input.bodyFatPercent === 'number' &&
+    Number.isFinite(input.bodyFatPercent) &&
+    input.bodyFatPercent > 3 &&
+    input.bodyFatPercent < 60
+  ) {
     // Katch-McArdle Formula: BMR = 370 + 21.6 * LBM(kg)
     const lbmKg = weightKg * (1 - input.bodyFatPercent / 100)
     bmr = Math.round(370 + 21.6 * lbmKg)
@@ -190,8 +256,11 @@ export function calculateEnergyExpenditure(input: MetabolicProfileInput): Metabo
   // Caloric adjustment based on goal
   let delta = 0
   let goalLabel = 'Maintenance & Metabolic Equilibrium'
-  if (input.calorieDeficitCalories !== undefined) {
-    delta = -Math.max(0, input.calorieDeficitCalories)
+  if (
+    typeof input.calorieDeficitCalories === 'number' &&
+    Number.isFinite(input.calorieDeficitCalories)
+  ) {
+    delta = -Math.max(0, Math.round(input.calorieDeficitCalories))
     goalLabel = `Caloric Deficit for Fat Loss (-${Math.abs(delta)} kcal)`
   } else if (goal === 'fat_loss') {
     delta = -500 // standard 1 lb/week fat loss deficit
@@ -232,8 +301,8 @@ export function calculateEnergyExpenditure(input: MetabolicProfileInput): Metabo
 export function calculatePrecisionMacros(input: MetabolicProfileInput): PrecisionMacroPrescription {
   const energy = calculateEnergyExpenditure(input)
   const { weightLbs, targetCalories } = energy
-  const phase = input.phase || 'phase1_stabilization'
-  const goal = input.goal || 'fat_loss'
+  const phase = normalizeOptPhase(input.phase)
+  const goal = normalizeNutritionGoal(input.goal)
 
   // Standard NASM Evidence-Based Protein Targets (CPT-7 Table 9.2)
   // Fat Loss (Deficit): 0.85 g/lb (~1.87 g/kg) - preserves nitrogen balance
@@ -249,7 +318,12 @@ export function calculatePrecisionMacros(input: MetabolicProfileInput): Precisio
   let proteinGrams = Math.round(weightLbs * proteinPerLb)
 
   // If body fat % is provided, anchor protein precisely to Lean Body Mass (LBM)
-  if (input.bodyFatPercent && input.bodyFatPercent > 5 && input.bodyFatPercent < 55) {
+  if (
+    typeof input.bodyFatPercent === 'number' &&
+    Number.isFinite(input.bodyFatPercent) &&
+    input.bodyFatPercent > 5 &&
+    input.bodyFatPercent < 55
+  ) {
     const lbmLbs = weightLbs * (1 - input.bodyFatPercent / 100)
     // 1.0g per lb of LBM in a deficit, 0.90g per lb of LBM in surplus
     const lbmMultiplier = goal === 'fat_loss' ? 1.0 : (goal === 'hypertrophy' ? 0.92 : 0.85)
@@ -257,7 +331,7 @@ export function calculatePrecisionMacros(input: MetabolicProfileInput): Precisio
     proteinPerLb = Math.round((proteinGrams / weightLbs) * 100) / 100
   }
 
-  const proteinCalories = proteinGrams * 4
+  let proteinCalories = proteinGrams * 4
 
   // Fat allotment (20 - 35% of total daily calories, min 0.3g per lb)
   let fatPct = 0.28
@@ -274,12 +348,22 @@ export function calculatePrecisionMacros(input: MetabolicProfileInput): Precisio
     fatCalories = fatGrams * 9
   }
 
+  // Guard extreme bodyweight + aggressive deficit cases so protein + fat never exceed targetCalories
+  if (proteinCalories + fatCalories > targetCalories) {
+    const scale = targetCalories / (proteinCalories + fatCalories)
+    fatGrams = Math.max(25, Math.floor((fatCalories * scale) / 9))
+    fatCalories = fatGrams * 9
+    proteinGrams = Math.max(60, Math.floor(Math.max(0, targetCalories - fatCalories) / 4))
+    proteinCalories = proteinGrams * 4
+    proteinPerLb = Math.round((proteinGrams / weightLbs) * 100) / 100
+  }
+
   // Carbohydrate allotment (remainder of calories)
   const remainingCalories = Math.max(0, targetCalories - (proteinCalories + fatCalories))
   const carbGrams = Math.round(remainingCalories / 4)
   const carbCalories = carbGrams * 4
 
-  const totalCal = proteinCalories + fatCalories + carbCalories
+  const totalCal = Math.max(1, proteinCalories + fatCalories + carbCalories)
   const proteinPct = Math.round((proteinCalories / totalCal) * 100)
   const actualFatPct = Math.round((fatCalories / totalCal) * 100)
   const carbPct = Math.round((carbCalories / totalCal) * 100)

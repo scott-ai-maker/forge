@@ -1,33 +1,42 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { identifyHeartRateZone } from '@/lib/nasm-cardio-stage-engine'
+
+interface BluetoothCharacteristicRef {
+  startNotifications: () => Promise<void>
+  stopNotifications?: () => Promise<void>
+  addEventListener: (e: string, h: (ev: Event) => void) => void
+  removeEventListener?: (e: string, h: (ev: Event) => void) => void
+}
 
 interface BluetoothDeviceRef {
   gatt?: {
     connected?: boolean
     connect?: () => Promise<{
       getPrimaryService: (s: string) => Promise<{
-        getCharacteristic: (c: string) => Promise<{
-          startNotifications: () => Promise<void>
-          addEventListener: (e: string, h: (ev: Event) => void) => void
-        }>
+        getCharacteristic: (c: string) => Promise<BluetoothCharacteristicRef>
       }>
     }>
     disconnect?: () => void
   }
   addEventListener?: (e: string, h: () => void) => void
+  removeEventListener?: (e: string, h: () => void) => void
   name?: string
 }
 
 interface BluetoothHeartRateMonitorProps {
   athleteAge?: number
+  athleteRestingHr?: number
+  hasHeartMedications?: boolean
   onSyncSessionStats?: (stats: { avgBpm: number; maxBpm: number; durationMins: number }) => void
 }
 
 export default function BluetoothHeartRateMonitor({
   athleteAge = 35,
+  athleteRestingHr = 65,
+  hasHeartMedications = false,
   onSyncSessionStats,
 }: BluetoothHeartRateMonitorProps) {
   const [connecting, setConnecting] = useState<boolean>(false)
@@ -40,6 +49,8 @@ export default function BluetoothHeartRateMonitor({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const bluetoothDeviceRef = useRef<BluetoothDeviceRef | null>(null)
+  const characteristicRef = useRef<BluetoothCharacteristicRef | null>(null)
+  const disconnectHandlerRef = useRef<(() => void) | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Web Bluetooth capability check (deferred to effect to avoid SSR/client hydration mismatch)
@@ -60,37 +71,98 @@ export default function BluetoothHeartRateMonitor({
     }
   }, [connected, sessionStartTime])
 
-  const handleCharacteristicValueChanged = (event: Event) => {
-    const target = event.target as unknown as { value: DataView }
-    if (!target || !target.value) return
+  const handleCharacteristicValueChanged = useCallback((event: Event) => {
+    const target = event.target as unknown as { value?: DataView }
+    const value = target?.value
+    if (!value || typeof value.byteLength !== 'number' || value.byteLength < 2) return
 
-    const value = target.value
     const flags = value.getUint8(0)
-    const rate16Bits = flags & 0x1
-    let bpm: number
+    const rate16Bits = Boolean(flags & 0x1)
+    if (rate16Bits && value.byteLength < 3) return
 
-    if (rate16Bits) {
-      bpm = value.getUint16(1, /* littleEndian= */ true)
-    } else {
-      bpm = value.getUint8(1)
-    }
+    const bpm = rate16Bits
+      ? value.getUint16(1, /* littleEndian= */ true)
+      : value.getUint8(1)
 
     if (bpm > 30 && bpm < 250) {
       setCurrentBpm(bpm)
-      setSessionSamples(prev => [...prev, bpm])
+      setSessionSamples(prev => [...prev.slice(-900), bpm])
     }
-  }
+  }, [])
+
+  const cleanupBluetoothConnection = useCallback(() => {
+    if (characteristicRef.current) {
+      try {
+        characteristicRef.current.removeEventListener?.(
+          'characteristicvaluechanged',
+          handleCharacteristicValueChanged
+        )
+        void characteristicRef.current.stopNotifications?.()
+      } catch {
+        // Ignore teardown errors on already-closed GATT characteristics
+      }
+      characteristicRef.current = null
+    }
+
+    if (bluetoothDeviceRef.current) {
+      try {
+        if (disconnectHandlerRef.current) {
+          bluetoothDeviceRef.current.removeEventListener?.(
+            'gattserverdisconnected',
+            disconnectHandlerRef.current
+          )
+        }
+        if (bluetoothDeviceRef.current.gatt?.connected) {
+          bluetoothDeviceRef.current.gatt.disconnect?.()
+        }
+      } catch {
+        // Ignore teardown errors on already-disconnected GATT devices
+      }
+      bluetoothDeviceRef.current = null
+      disconnectHandlerRef.current = null
+    }
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }, [handleCharacteristicValueChanged])
+
+  // Ensure GATT radio and characteristic listeners never leak on unmount
+  useEffect(() => {
+    return () => {
+      cleanupBluetoothConnection()
+    }
+  }, [cleanupBluetoothConnection])
 
   async function connectBluetoothHeartRate() {
     setConnecting(true)
     setErrorMessage(null)
+    cleanupBluetoothConnection()
 
     try {
       if (!('bluetooth' in navigator)) {
         throw new Error('Web Bluetooth is not supported on this browser. Please use Google Chrome, Microsoft Edge, or a Web Bluetooth compatible browser.')
       }
 
-      const navBt = (navigator as unknown as { bluetooth: { requestDevice: (opts: unknown) => Promise<{ gatt: { connect: () => Promise<{ getPrimaryService: (s: string) => Promise<{ getCharacteristic: (c: string) => Promise<{ startNotifications: () => Promise<void>; addEventListener: (e: string, h: (ev: Event) => void) => void }> }> }> }; addEventListener: (e: string, h: () => void) => void; name?: string }> } }).bluetooth
+      const navBt = (navigator as unknown as {
+        bluetooth: {
+          requestDevice: (opts: unknown) => Promise<{
+            gatt: {
+              connected?: boolean
+              connect: () => Promise<{
+                getPrimaryService: (s: string) => Promise<{
+                  getCharacteristic: (c: string) => Promise<BluetoothCharacteristicRef>
+                }>
+              }>
+              disconnect?: () => void
+            }
+            addEventListener: (e: string, h: () => void) => void
+            removeEventListener?: (e: string, h: () => void) => void
+            name?: string
+          }>
+        }
+      }).bluetooth
       const device = await navBt.requestDevice({
         filters: [{ services: ['heart_rate'] }],
         optionalServices: ['battery_service'],
@@ -99,24 +171,29 @@ export default function BluetoothHeartRateMonitor({
       bluetoothDeviceRef.current = device
       setDeviceName(device.name || 'Bluetooth Heart Rate Monitor')
 
-      device.addEventListener('gattserverdisconnected', () => {
+      const onDisconnected = () => {
         setConnected(false)
         setCurrentBpm(null)
         setDeviceName(null)
-      })
+      }
+      disconnectHandlerRef.current = onDisconnected
+      device.addEventListener('gattserverdisconnected', onDisconnected)
 
       const server = await device.gatt.connect()
       const service = await server.getPrimaryService('heart_rate')
       const characteristic = await service.getCharacteristic('heart_rate_measurement')
+      characteristicRef.current = characteristic
 
       await characteristic.startNotifications()
       characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged)
 
       setConnected(true)
       setSessionStartTime(Date.now())
+      setElapsedSeconds(0)
       setSessionSamples([])
       setConnecting(false)
     } catch (err: unknown) {
+      cleanupBluetoothConnection()
       const errorObj = err as { name?: string; message?: string }
       if (errorObj?.name !== 'NotFoundError') {
         setErrorMessage(errorObj?.message || 'Failed to connect to Bluetooth heart rate monitor.')
@@ -126,16 +203,15 @@ export default function BluetoothHeartRateMonitor({
   }
 
   function disconnectBluetooth() {
-    if (bluetoothDeviceRef.current?.gatt?.connected) {
-      bluetoothDeviceRef.current.gatt.disconnect?.()
-    }
-    if (intervalRef.current) clearInterval(intervalRef.current)
+    cleanupBluetoothConnection()
     setConnected(false)
     setCurrentBpm(null)
     setDeviceName(null)
   }
 
-  const currentZone = currentBpm ? identifyHeartRateZone(currentBpm, athleteAge) : null
+  const currentZone = currentBpm
+    ? identifyHeartRateZone(currentBpm, athleteAge, athleteRestingHr, hasHeartMedications)
+    : null
 
   const avgBpm = sessionSamples.length > 0
     ? Math.round(sessionSamples.reduce((a, b) => a + b, 0) / sessionSamples.length)
@@ -193,14 +269,14 @@ export default function BluetoothHeartRateMonitor({
                 type="button"
                 onClick={connectBluetoothHeartRate}
                 disabled={connecting || !supported}
-                title={!supported ? 'Web Bluetooth is not supported in this browser' : undefined}
                 style={{
                   background: !supported
                     ? 'rgba(255,255,255,0.08)'
                     : 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
                   color: !supported ? 'var(--gray)' : '#0A0E18',
                   border: 'none',
-                  padding: '8px 16px',
+                  padding: '10px 16px',
+                  minHeight: 44,
                   borderRadius: 6,
                   fontFamily: 'Raleway, sans-serif',
                   fontWeight: 800,
@@ -218,7 +294,7 @@ export default function BluetoothHeartRateMonitor({
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {onSyncSessionStats && (
                 <button
                   type="button"
@@ -227,9 +303,10 @@ export default function BluetoothHeartRateMonitor({
                     background: 'rgba(16,185,129,0.2)',
                     border: '1px solid #10B981',
                     color: '#34D399',
-                    padding: '6px 12px',
+                    padding: '10px 14px',
+                    minHeight: 44,
                     borderRadius: 6,
-                    fontSize: 11,
+                    fontSize: 11.5,
                     fontWeight: 800,
                     cursor: 'pointer',
                     display: 'inline-flex',
@@ -248,11 +325,14 @@ export default function BluetoothHeartRateMonitor({
                   background: 'rgba(239,68,68,0.15)',
                   border: '1px solid rgba(239,68,68,0.3)',
                   color: '#F87171',
-                  padding: '6px 10px',
+                  padding: '10px 14px',
+                  minHeight: 44,
                   borderRadius: 6,
-                  fontSize: 11,
+                  fontSize: 11.5,
                   fontWeight: 700,
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
               >
                 Disconnect
@@ -263,7 +343,7 @@ export default function BluetoothHeartRateMonitor({
       </div>
 
       {errorMessage && (
-        <div style={{ fontSize: 11, color: '#F87171', marginTop: 10, lineHeight: 1.4 }}>
+        <div role="alert" style={{ fontSize: 12, color: '#F87171', marginTop: 10, lineHeight: 1.4 }}>
           {errorMessage}
         </div>
       )}

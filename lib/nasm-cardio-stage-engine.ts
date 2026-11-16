@@ -97,9 +97,11 @@ export function calculateCardioZones(
   restingHr: number = 65,
   hasHeartMedications: boolean = false
 ): CardioZoneMetrics {
-  const safeAge = Math.max(16, Math.min(95, age))
+  const finiteAge = Number.isFinite(age) ? age : 35
+  const safeAge = Math.max(16, Math.min(95, finiteAge))
   const hrMax = Math.round(208 - 0.7 * safeAge)
-  const safeRestingHr = Math.max(35, Math.min(120, restingHr))
+  const finiteRestingHr = Number.isFinite(restingHr) ? restingHr : 65
+  const safeRestingHr = Math.max(35, Math.min(120, finiteRestingHr))
   const hrr = Math.max(40, hrMax - safeRestingHr)
 
   // NASM standard %HRmax formula
@@ -183,43 +185,44 @@ export function identifyHeartRateZone(
   isMedicationSuppressed?: boolean
 } {
   const zones = calculateCardioZones(age, restingHr, hasHeartMedications)
+  const safeBpm = Number.isFinite(bpm) ? Math.max(0, Math.round(bpm)) : 0
   const medPrefix = hasHeartMedications
     ? '⚠️ [Medication Alert: Heart rate blunted] '
     : ''
 
-  if (bpm < zones.zone1.minBpm) {
+  if (safeBpm < zones.zone1.minBpm) {
     return {
       zoneCode: 'below_zone1',
       zoneName: 'Active Recovery / Below Zone 1',
       color: '#94A3B8',
-      description: `${medPrefix}Light active recovery (${bpm} BPM < ${zones.zone1.minBpm} BPM). Suitable for cool-downs and warm-ups.${hasHeartMedications ? ' Validate with RPE 1-2.' : ''}`,
+      description: `${medPrefix}Light active recovery (${safeBpm} BPM < ${zones.zone1.minBpm} BPM). Suitable for cool-downs and warm-ups.${hasHeartMedications ? ' Validate with RPE 1-2.' : ''}`,
       isMedicationSuppressed: hasHeartMedications,
     }
   }
-  if (bpm <= zones.zone1.maxBpm) {
+  if (safeBpm <= zones.zone1.maxBpm) {
     return {
       zoneCode: 'zone1',
       zoneName: 'Zone 1: Aerobic Base',
       color: '#10B981',
-      description: `${medPrefix}Aerobic endurance base (${bpm} BPM). Optimal for lipid mobilization and baseline mitochondrial conditioning.${hasHeartMedications ? ' Target RPE 3-4.' : ''}`,
+      description: `${medPrefix}Aerobic endurance base (${safeBpm} BPM). Optimal for lipid mobilization and baseline mitochondrial conditioning.${hasHeartMedications ? ' Target RPE 3-4.' : ''}`,
       isMedicationSuppressed: hasHeartMedications,
     }
   }
-  if (bpm <= zones.zone2.maxBpm) {
+  if (safeBpm <= zones.zone2.maxBpm) {
     return {
       zoneCode: 'zone2',
       zoneName: 'Zone 2: Lactate Threshold (VT1)',
       color: '#F59E0B',
-      description: `${medPrefix}Aerobic threshold (${bpm} BPM). Increases lactate threshold and cardiorespiratory buffering capacity.${hasHeartMedications ? ' Target RPE 5-6.' : ''}`,
+      description: `${medPrefix}Aerobic threshold (${safeBpm} BPM). Increases lactate threshold and cardiorespiratory buffering capacity.${hasHeartMedications ? ' Target RPE 5-6.' : ''}`,
       isMedicationSuppressed: hasHeartMedications,
     }
   }
-  if (bpm <= zones.zone3.maxBpm) {
+  if (safeBpm <= zones.zone3.maxBpm) {
     return {
       zoneCode: 'zone3',
       zoneName: 'Zone 3: Anaerobic Peak (VT2)',
       color: '#EF4444',
-      description: `${medPrefix}Peak high-intensity interval (${bpm} BPM). Maximizes VO2 peak and cardiac stroke volume.${hasHeartMedications ? ' Caution: Verify physician clearance; target RPE 7-8.' : ''}`,
+      description: `${medPrefix}Peak high-intensity interval (${safeBpm} BPM). Maximizes VO2 peak and cardiac stroke volume.${hasHeartMedications ? ' Caution: Verify physician clearance; target RPE 7-8.' : ''}`,
       isMedicationSuppressed: hasHeartMedications,
     }
   }
@@ -227,7 +230,7 @@ export function identifyHeartRateZone(
     zoneCode: 'above_zone3',
     zoneName: 'Supramaximal Zone (>95% HRmax)',
     color: '#EC4899',
-    description: `${medPrefix}Supramaximal effort (${bpm} BPM > ${zones.zone3.maxBpm} BPM). Limit to very short explosive bursts (<15s).`,
+    description: `${medPrefix}Supramaximal effort (${safeBpm} BPM > ${zones.zone3.maxBpm} BPM). Limit to very short explosive bursts (<15s).`,
     isMedicationSuppressed: hasHeartMedications,
   }
 }
@@ -263,15 +266,15 @@ export function generateStageWorkout(
       cooldown: `5-10 mins gradual cooldown dropping to RPE 1-2 followed by SMR foam rolling. Gradual cooldown prevents venous blood pooling.`,
       coachingCues: hasHeartMedications
         ? [
-            '🛡️ Medication Guidance: Heart rate response is suppressed by medication. Strictly rely on RPE 3-4 and the Talk Test.',
-            'Maintain a pace where you can comfortably speak in complete, unbroken sentences without gasping.',
-            'Never abruptly stop moving; perform a gradual 5-minute cool-down to prevent post-exercise hypotension.',
-          ]
+          '🛡️ Medication Guidance: Heart rate response is suppressed by medication. Strictly rely on RPE 3-4 and the Talk Test.',
+          'Maintain a pace where you can comfortably speak in complete, unbroken sentences without gasping.',
+          'Never abruptly stop moving; perform a gradual 5-minute cool-down to prevent post-exercise hypotension.',
+        ]
         : [
-            'Maintain a steady pace where you can recite the alphabet or speak in full sentences without gasping.',
-            'Focus on diaphragmatic breathing (nasal inhale, controlled oral exhale).',
-            'If heart rate exceeds Zone 1 max, reduce speed/incline until HR stabilizes.',
-          ],
+          'Maintain a steady pace where you can recite the alphabet or speak in full sentences without gasping.',
+          'Focus on diaphragmatic breathing (nasal inhale, controlled oral exhale).',
+          'If heart rate exceeds Zone 1 max, reduce speed/incline until HR stabilizes.',
+        ],
     }
   }
 
@@ -295,16 +298,16 @@ export function generateStageWorkout(
       cooldown: `5-10 mins light cooldown dropping to RPE 1-2 + static stretching.`,
       coachingCues: hasHeartMedications
         ? [
-            '🛡️ Medication Guidance: Do NOT chase heart rate numbers — beta-blockers/antihypertensives blunt maximum cardiac output.',
-            'During the 1-minute interval, push until speech is broken into short phrases (RPE 5-6).',
-            'During recovery, allow breathing to fully return to comfortable conversational baseline (RPE 3) before next round.',
-            'Strictly avoid Valsalva breath-holding to prevent intra-thoracic blood pressure spikes.',
-          ]
+          '🛡️ Medication Guidance: Do NOT chase heart rate numbers — beta-blockers/antihypertensives blunt maximum cardiac output.',
+          'During the 1-minute interval, push until speech is broken into short phrases (RPE 5-6).',
+          'During recovery, allow breathing to fully return to comfortable conversational baseline (RPE 3) before next round.',
+          'Strictly avoid Valsalva breath-holding to prevent intra-thoracic blood pressure spikes.',
+        ]
         : [
-            'During the 1-minute work interval, push intensity until speech becomes challenging and broken into short phrases.',
-            'During the 3-minute recovery, actively focus on bringing heart rate back down into Zone 1 before starting the next round.',
-            'As fitness improves, progress interval ratio to 1:2 (1 min Zone 2 ↔ 2 mins Zone 1).',
-          ],
+          'During the 1-minute work interval, push intensity until speech becomes challenging and broken into short phrases.',
+          'During the 3-minute recovery, actively focus on bringing heart rate back down into Zone 1 before starting the next round.',
+          'As fitness improves, progress interval ratio to 1:2 (1 min Zone 2 ↔ 2 mins Zone 1).',
+        ],
     }
   }
 
@@ -327,15 +330,15 @@ export function generateStageWorkout(
     cooldown: `5-10 mins Zone 1 / RPE 2 walk followed by SMR myofascial release.`,
     coachingCues: hasHeartMedications
       ? [
-            '🛡️ Clinical Prerequisite: Stage 3 high-intensity intervals require explicit physician clearance when taking cardiac medications.',
-            'Intensity is governed strictly by RPE 7-8 and Talk Test — do NOT attempt to reach calculated Zone 3 BPM.',
-            'Immediately terminate the session if experiencing lightheadedness, chest tightness, or irregular heartbeats.',
-          ]
+        '🛡️ Clinical Prerequisite: Stage 3 high-intensity intervals require explicit physician clearance when taking cardiac medications.',
+        'Intensity is governed strictly by RPE 7-8 and Talk Test — do NOT attempt to reach calculated Zone 3 BPM.',
+        'Immediately terminate the session if experiencing lightheadedness, chest tightness, or irregular heartbeats.',
+      ]
       : [
-            'Give maximal explosive effort during the 30-45s sprint interval (Zone 3). Talking should be impossible.',
-            'Do NOT begin the next high-intensity interval until heart rate drops fully back into Zone 1.',
-            'Limit Stage 3 training to 1-2 sessions per week to prevent autonomic nervous system overtraining.',
-          ],
+        'Give maximal explosive effort during the 30-45s sprint interval (Zone 3). Talking should be impossible.',
+        'Do NOT begin the next high-intensity interval until heart rate drops fully back into Zone 1.',
+        'Limit Stage 3 training to 1-2 sessions per week to prevent autonomic nervous system overtraining.',
+      ],
   }
 }
 
@@ -352,27 +355,33 @@ export function calculateRockportVo2Max(params: {
   hasHeartMedications?: boolean
 }): RockportWalkResult {
   const { weightLbs, age, sex, timeMinutes, endHeartRateBpm, hasHeartMedications = false } = params
+  const safeWeightLbs = Number.isFinite(weightLbs) ? Math.max(70, Math.min(550, weightLbs)) : 170
+  const safeAge = Number.isFinite(age) ? Math.max(16, Math.min(95, age)) : 35
+  const safeTimeMins = Number.isFinite(timeMinutes) ? Math.max(5, Math.min(60, timeMinutes)) : 16
+  const safeEndHr = Number.isFinite(endHeartRateBpm) ? Math.max(40, Math.min(240, endHeartRateBpm)) : 130
   const genderFactor = sex === 'female' ? 0 : 1
 
   const vo2 =
     132.853 -
-    0.0769 * weightLbs -
-    0.3877 * age +
+    0.0769 * safeWeightLbs -
+    0.3877 * safeAge +
     6.315 * genderFactor -
-    3.2649 * timeMinutes -
-    0.1565 * endHeartRateBpm
+    3.2649 * safeTimeMins -
+    0.1565 * safeEndHr
 
-  const roundedVo2 = Math.max(10, Math.round(vo2 * 10) / 10)
+  const roundedVo2 = Number.isFinite(vo2) ? Math.max(10, Math.min(90, Math.round(vo2 * 10) / 10)) : 10
 
   let fitnessCategory: RockportWalkResult['fitnessCategory'] = 'Fair'
   if (sex === 'male') {
-    if (roundedVo2 < 30) fitnessCategory = 'Poor'
+    if (roundedVo2 < 25) fitnessCategory = 'Very Poor'
+    else if (roundedVo2 < 30) fitnessCategory = 'Poor'
     else if (roundedVo2 < 38) fitnessCategory = 'Fair'
     else if (roundedVo2 < 44) fitnessCategory = 'Good'
     else if (roundedVo2 < 52) fitnessCategory = 'Excellent'
     else fitnessCategory = 'Superior'
   } else {
-    if (roundedVo2 < 24) fitnessCategory = 'Poor'
+    if (roundedVo2 < 20) fitnessCategory = 'Very Poor'
+    else if (roundedVo2 < 24) fitnessCategory = 'Poor'
     else if (roundedVo2 < 31) fitnessCategory = 'Fair'
     else if (roundedVo2 < 38) fitnessCategory = 'Good'
     else if (roundedVo2 < 46) fitnessCategory = 'Excellent'
@@ -380,8 +389,8 @@ export function calculateRockportVo2Max(params: {
   }
 
   const description = hasHeartMedications
-    ? `Estimated VO2max: ${roundedVo2} mL/kg/min (${fitnessCategory} capacity for age ${age}). ⚠️ Pharmacological Heart Rate Alert: Client is taking cardiac/blood pressure medication (e.g. beta-blockers) that blunts heart rate response. Heart-rate-dependent VO2max formulas overestimate actual cardiorespiratory capacity. Use strictly as a relative baseline trend; govern all exercise intensity using RPE (1-10) and the Talk Test.`
-    : `Estimated VO2max: ${roundedVo2} mL/kg/min (${fitnessCategory} cardiorespiratory capacity for age ${age}).`
+    ? `Estimated VO2max: ${roundedVo2} mL/kg/min (${fitnessCategory} capacity for age ${safeAge}). ⚠️ Pharmacological Heart Rate Alert: Client is taking cardiac/blood pressure medication (e.g. beta-blockers) that blunts heart rate response. Heart-rate-dependent VO2max formulas overestimate actual cardiorespiratory capacity. Use strictly as a relative baseline trend; govern all exercise intensity using RPE (1-10) and the Talk Test.`
+    : `Estimated VO2max: ${roundedVo2} mL/kg/min (${fitnessCategory} cardiorespiratory capacity for age ${safeAge}).`
 
   return {
     vo2Max: roundedVo2,
@@ -403,10 +412,13 @@ export function evaluateYmcaStepTest(
   hasHeartMedications: boolean = false
 ): YmcaStepResult {
   const isMale = sex !== 'female'
+  const safeRecoveryHr = Number.isFinite(postTestRecoveryHr)
+    ? Math.max(35, Math.min(240, Math.round(postTestRecoveryHr)))
+    : 120
 
   if (hasHeartMedications) {
     return {
-      postTestRecoveryHr,
+      postTestRecoveryHr: safeRecoveryHr,
       fitnessRating: 'Average',
       suggestedStartingStage: 1,
       rationale:
@@ -419,15 +431,15 @@ export function evaluateYmcaStepTest(
   let rationale = ''
 
   if (isMale) {
-    if (postTestRecoveryHr < 85) {
+    if (safeRecoveryHr < 85) {
       fitnessRating = 'Excellent'
       suggestedStartingStage = 2
       rationale = 'High cardiorespiratory recovery. Client can safely begin Stage 2 interval training.'
-    } else if (postTestRecoveryHr < 100) {
+    } else if (safeRecoveryHr < 100) {
       fitnessRating = 'Good'
       suggestedStartingStage = 2
       rationale = 'Solid cardiorespiratory base. Candidate for Stage 1 base conditioning with Stage 2 introductions.'
-    } else if (postTestRecoveryHr < 115) {
+    } else if (safeRecoveryHr < 115) {
       fitnessRating = 'Average'
       suggestedStartingStage = 1
       rationale = 'Moderate recovery. Establish 4-6 weeks of Stage 1 Zone 1 base training first.'
@@ -437,15 +449,15 @@ export function evaluateYmcaStepTest(
       rationale = 'Elevated recovery pulse. Prescribe Stage 1 Zone 1 training exclusively to develop aerobic foundations.'
     }
   } else {
-    if (postTestRecoveryHr < 90) {
+    if (safeRecoveryHr < 90) {
       fitnessRating = 'Excellent'
       suggestedStartingStage = 2
       rationale = 'High cardiorespiratory recovery. Client can safely begin Stage 2 interval training.'
-    } else if (postTestRecoveryHr < 105) {
+    } else if (safeRecoveryHr < 105) {
       fitnessRating = 'Good'
       suggestedStartingStage = 2
       rationale = 'Solid cardiorespiratory base. Candidate for Stage 1 base conditioning with Stage 2 introductions.'
-    } else if (postTestRecoveryHr < 120) {
+    } else if (safeRecoveryHr < 120) {
       fitnessRating = 'Average'
       suggestedStartingStage = 1
       rationale = 'Moderate recovery. Establish 4-6 weeks of Stage 1 Zone 1 base training first.'
@@ -457,7 +469,7 @@ export function evaluateYmcaStepTest(
   }
 
   return {
-    postTestRecoveryHr,
+    postTestRecoveryHr: safeRecoveryHr,
     fitnessRating,
     suggestedStartingStage,
     rationale,

@@ -1,13 +1,17 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useId, useRef } from 'react'
 import {
   generateSupplementStack,
+  normalizeSupplementGoal,
+  normalizeClientSex,
+  normalizeFitnessLevel,
   SupplementGoal,
   ClientSex,
   FitnessLevel,
   isDispensaryAndSupplementsEnabled,
 } from '@/lib/supplement-prescriptions'
+import { parseParqMedicationsAndConditions } from '@/lib/muscle-recovery-telemetry'
 import ExecutiveSupplementTimeline from '@/components/fitness/ExecutiveSupplementTimeline'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
@@ -27,6 +31,15 @@ export default function CoachSupplementPrescriber({
   clientSex = 'male',
   onPrescribeSuccess,
 }: CoachSupplementPrescriberProps) {
+  const fieldPrefix = useId()
+  const goalSelectId = `${fieldPrefix}-goal`
+  const ageInputId = `${fieldPrefix}-age`
+  const sexSelectId = `${fieldPrefix}-sex`
+  const levelSelectId = `${fieldPrefix}-level`
+  const coachNoteId = `${fieldPrefix}-note`
+
+  const userModifiedRef = useRef(false)
+
   const [goal, setGoal] = useState<SupplementGoal>('hypertrophy')
   const [age, setAge] = useState<string>(String(clientAge))
   const [sex, setSex] = useState<ClientSex>(clientSex)
@@ -49,9 +62,72 @@ export default function CoachSupplementPrescriber({
   const [isPrescribing, setIsPrescribing] = useState<boolean>(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  // Hydrate athlete's saved profile and intake medications when available
+  useEffect(() => {
+    let cancelled = false
+    async function loadAthleteSupplementContext() {
+      try {
+        const res = await fetch(`/api/coach/clients/${encodeURIComponent(clientId)}/supplements`, {
+          cache: 'no-store',
+        })
+        if (!res.ok || cancelled || userModifiedRef.current) return
+        const payload = (await res.json()) as {
+          profile?: Record<string, unknown> | null
+          intake?: {
+            parq_answers?: Record<string, unknown> | null
+            medications?: string | null
+            medical_conditions?: string | null
+          } | null
+        }
+        if (cancelled || userModifiedRef.current) return
+
+        if (payload.profile) {
+          if (payload.profile.primary_goal || payload.profile.fitness_goal) {
+            setGoal(normalizeSupplementGoal(payload.profile.primary_goal ?? payload.profile.fitness_goal))
+          }
+          const rawAge = Number(payload.profile.age)
+          if (Number.isFinite(rawAge) && rawAge >= 18 && rawAge <= 100) {
+            setAge(String(Math.round(rawAge)))
+          }
+          if (payload.profile.sex) {
+            setSex(normalizeClientSex(payload.profile.sex))
+          }
+          if (payload.profile.training_experience || payload.profile.fitness_level) {
+            setLevel(normalizeFitnessLevel(payload.profile.training_experience ?? payload.profile.fitness_level))
+          }
+        }
+
+        if (payload.intake) {
+          const parsedMeds = parseParqMedicationsAndConditions(
+            payload.intake.parq_answers ?? null,
+            payload.intake.medications ?? null,
+            payload.intake.medical_conditions ?? null
+          )
+          if (parsedMeds.takingAnticoagulants) setTakingAnticoagulants(true)
+          if (parsedMeds.takingAntihypertensives) setTakingAntihypertensives(true)
+          if (parsedMeds.takingThyroidHormone) setTakingThyroidHormone(true)
+          if (parsedMeds.takingStatins) setTakingStatins(true)
+          if (parsedMeds.takingAntidepressants) setTakingAntidepressants(true)
+          if (parsedMeds.takingDiabetesMedications) setTakingDiabetesMedications(true)
+          if (parsedMeds.takingOralAntibiotics) setTakingOralAntibiotics(true)
+          if (parsedMeds.takingImmunosuppressantsOrSteroids) setTakingImmunosuppressantsOrSteroids(true)
+          if (parsedMeds.hasKidneyCondition) setHasKidneyCondition(true)
+        }
+      } catch {
+        // Non-blocking fallback to prop defaults
+      }
+    }
+    void loadAthleteSupplementContext()
+    return () => {
+      cancelled = true
+    }
+  }, [clientId])
+
+  const parsedAgeNum = Math.min(100, Math.max(18, parseNumericInput(age, 35)))
+
   const stack = generateSupplementStack({
     goal,
-    age: parseNumericInput(age, 30),
+    age: parsedAgeNum,
     sex,
     fitnessLevel: level,
     healthConditions: {
@@ -72,12 +148,12 @@ export default function CoachSupplementPrescriber({
     setIsPrescribing(true)
     setErrorMessage(null)
     try {
-      const res = await fetch(`/api/coach/clients/${clientId}/supplements`, {
+      const res = await fetch(`/api/coach/clients/${encodeURIComponent(clientId)}/supplements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           goal,
-          age,
+          age: parsedAgeNum,
           sex,
           fitnessLevel: level,
           healthConditions: {
@@ -115,11 +191,11 @@ export default function CoachSupplementPrescriber({
   }
 
   return (
-    <div className="glass-card" style={{ padding: '24px 28px', display: 'grid', gap: 20 }}>
+    <div className="glass-card" style={{ padding: '24px 28px', display: 'grid', gap: 20, minWidth: 0 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span
               style={{
                 fontFamily: 'Raleway, sans-serif',
@@ -159,6 +235,7 @@ export default function CoachSupplementPrescriber({
           disabled={isPrescribing || !isDispensaryAndSupplementsEnabled}
           className="tactile-btn"
           style={{
+            minHeight: 44,
             padding: '10px 22px',
             background: !isDispensaryAndSupplementsEnabled
               ? 'rgba(255, 255, 255, 0.08)'
@@ -197,6 +274,7 @@ export default function CoachSupplementPrescriber({
 
       {!isDispensaryAndSupplementsEnabled && (
         <div
+          role="status"
           style={{
             padding: '14px 18px',
             background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(15, 23, 42, 0.96) 100%)',
@@ -211,53 +289,72 @@ export default function CoachSupplementPrescriber({
       )}
 
       {prescribedSuccess && (
-        <div style={{ padding: '12px 16px', background: 'rgba(52,211,153,0.15)', border: '1px solid var(--success)', color: 'var(--white)', fontSize: 14, borderRadius: 6 }}>
+        <div
+          role="status"
+          aria-live="polite"
+          style={{ padding: '12px 16px', background: 'rgba(52,211,153,0.15)', border: '1px solid var(--success)', color: 'var(--white)', fontSize: 14, borderRadius: 6 }}
+        >
           ✓ Precision Sports Science Supplement Guide successfully published to {clientName}&apos;s client portal and dispatched to their Concierge Chat.
         </div>
       )}
 
       {errorMessage && (
-        <div style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.15)', border: '1px solid #EF4444', color: '#FCA5A5', fontSize: 14, borderRadius: 6 }}>
+        <div
+          role="alert"
+          style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.15)', border: '1px solid #EF4444', color: '#FCA5A5', fontSize: 14, borderRadius: 6 }}
+        >
           {errorMessage}
         </div>
       )}
 
       {/* Input Selector Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, background: 'rgba(8,14,20,0.6)', padding: 16, border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: 12, background: 'rgba(8,14,20,0.6)', padding: 16, border: '1px solid rgba(255,255,255,0.08)' }}>
         <div>
-          <label style={{ display: 'block', fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4 }}>Goal</label>
+          <label htmlFor={goalSelectId} style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4, fontWeight: 600 }}>Goal</label>
           <select
+            id={goalSelectId}
             value={goal}
-            onChange={e => setGoal(e.target.value as SupplementGoal)}
-            style={{ width: '100%', padding: '8px 10px', background: 'var(--navy)', border: '1px solid var(--navy-lt)', color: 'var(--white)', fontSize: 12 }}
+            onChange={e => {
+              userModifiedRef.current = true
+              setGoal(e.target.value as SupplementGoal)
+            }}
+            style={{ width: '100%', minHeight: 44, padding: '8px 10px', background: 'var(--navy)', border: '1px solid var(--navy-lt)', color: 'var(--white)', fontSize: 'max(1rem, 1em)', borderRadius: 4 }}
           >
             <option value="hypertrophy">Hypertrophy (Muscle Growth)</option>
-            <option value="fat_loss">Fat Loss & Metabolic Rate</option>
-            <option value="longevity_vitality">Longevity & Masters Vitality</option>
+            <option value="fat_loss">Fat Loss &amp; Metabolic Rate</option>
+            <option value="longevity_vitality">Longevity &amp; Masters Vitality</option>
             <option value="athletic_power">Athletic Power</option>
             <option value="general_health">Foundational Health</option>
           </select>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4 }}>Age</label>
+          <label htmlFor={ageInputId} style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4, fontWeight: 600 }}>Age</label>
           <input
+            id={ageInputId}
             type="text"
             inputMode="numeric"
             autoComplete="off"
             onFocus={selectOnFocus}
             value={age}
-            onChange={e => setAge(sanitizeNumericInput(e.target.value))}
-            style={{ width: '100%', padding: '8px 10px', background: 'var(--navy)', border: '1px solid var(--navy-lt)', color: 'var(--white)', fontSize: 12 }}
+            onChange={e => {
+              userModifiedRef.current = true
+              setAge(sanitizeNumericInput(e.target.value))
+            }}
+            style={{ width: '100%', minHeight: 44, padding: '8px 10px', background: 'var(--navy)', border: '1px solid var(--navy-lt)', color: 'var(--white)', fontSize: 'max(1rem, 1em)', borderRadius: 4 }}
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4 }}>Sex</label>
+          <label htmlFor={sexSelectId} style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4, fontWeight: 600 }}>Sex</label>
           <select
+            id={sexSelectId}
             value={sex}
-            onChange={e => setSex(e.target.value as ClientSex)}
-            style={{ width: '100%', padding: '8px 10px', background: 'var(--navy)', border: '1px solid var(--navy-lt)', color: 'var(--white)', fontSize: 12 }}
+            onChange={e => {
+              userModifiedRef.current = true
+              setSex(e.target.value as ClientSex)
+            }}
+            style={{ width: '100%', minHeight: 44, padding: '8px 10px', background: 'var(--navy)', border: '1px solid var(--navy-lt)', color: 'var(--white)', fontSize: 'max(1rem, 1em)', borderRadius: 4 }}
           >
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -266,11 +363,15 @@ export default function CoachSupplementPrescriber({
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4 }}>Level</label>
+          <label htmlFor={levelSelectId} style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 4, fontWeight: 600 }}>Level</label>
           <select
+            id={levelSelectId}
             value={level}
-            onChange={e => setLevel(e.target.value as FitnessLevel)}
-            style={{ width: '100%', padding: '8px 10px', background: 'var(--navy)', border: '1px solid var(--navy-lt)', color: 'var(--white)', fontSize: 12 }}
+            onChange={e => {
+              userModifiedRef.current = true
+              setLevel(e.target.value as FitnessLevel)
+            }}
+            style={{ width: '100%', minHeight: 44, padding: '8px 10px', background: 'var(--navy)', border: '1px solid var(--navy-lt)', color: 'var(--white)', fontSize: 'max(1rem, 1em)', borderRadius: 4 }}
           >
             <option value="beginner">Beginner (Foundational)</option>
             <option value="intermediate">Intermediate (Strength)</option>
@@ -280,53 +381,53 @@ export default function CoachSupplementPrescriber({
       </div>
 
       {/* Prescription Medications Checklist */}
-      <div style={{ background: 'rgba(8,14,20,0.4)', padding: 14, border: '1px solid rgba(255,255,255,0.06)', display: 'grid', gap: 8 }}>
-        <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
-          Client Prescription Medications & Safety Screening
+      <fieldset style={{ margin: 0, background: 'rgba(8,14,20,0.4)', padding: 14, border: '1px solid rgba(255,255,255,0.06)', display: 'grid', gap: 8, minWidth: 0 }}>
+        <legend style={{ padding: '0 4px', fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+          Client Prescription Medications &amp; Safety Screening
+        </legend>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 8, fontSize: 12, color: 'var(--white)' }}>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={takingAnticoagulants} onChange={e => { userModifiedRef.current = true; setTakingAnticoagulants(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Blood Thinners (Warfarin/Eliquis)</span>
+          </label>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={takingAntihypertensives} onChange={e => { userModifiedRef.current = true; setTakingAntihypertensives(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Blood Pressure (ACEi/ARBs/Beta)</span>
+          </label>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={takingThyroidHormone} onChange={e => { userModifiedRef.current = true; setTakingThyroidHormone(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Thyroid (Levothyroxine)</span>
+          </label>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={takingStatins} onChange={e => { userModifiedRef.current = true; setTakingStatins(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Statins (Lipitor/Crestor)</span>
+          </label>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={takingAntidepressants} onChange={e => { userModifiedRef.current = true; setTakingAntidepressants(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Antidepressants (SSRIs/SNRIs)</span>
+          </label>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={takingDiabetesMedications} onChange={e => { userModifiedRef.current = true; setTakingDiabetesMedications(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Diabetes (Metformin/Ozempic)</span>
+          </label>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={takingOralAntibiotics} onChange={e => { userModifiedRef.current = true; setTakingOralAntibiotics(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Oral Antibiotics</span>
+          </label>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={takingImmunosuppressantsOrSteroids} onChange={e => { userModifiedRef.current = true; setTakingImmunosuppressantsOrSteroids(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Steroids / Immunosuppressants</span>
+          </label>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={hasKidneyCondition} onChange={e => { userModifiedRef.current = true; setHasKidneyCondition(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Kidney / Renal Sensitivity</span>
+          </label>
+          <label style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 6px' }}>
+            <input type="checkbox" checked={isPregnantOrNursing} onChange={e => { userModifiedRef.current = true; setIsPregnantOrNursing(e.target.checked) }} style={{ accentColor: 'var(--gold)', flexShrink: 0 }} />
+            <span>Pregnant / Nursing</span>
+          </label>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, fontSize: 12, color: 'var(--white)' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={takingAnticoagulants} onChange={e => setTakingAnticoagulants(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Blood Thinners (Warfarin/Eliquis)
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={takingAntihypertensives} onChange={e => setTakingAntihypertensives(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Blood Pressure (ACEi/ARBs/Beta)
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={takingThyroidHormone} onChange={e => setTakingThyroidHormone(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Thyroid (Levothyroxine)
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={takingStatins} onChange={e => setTakingStatins(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Statins (Lipitor/Crestor)
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={takingAntidepressants} onChange={e => setTakingAntidepressants(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Antidepressants (SSRIs/SNRIs)
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={takingDiabetesMedications} onChange={e => setTakingDiabetesMedications(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Diabetes (Metformin/Ozempic)
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={takingOralAntibiotics} onChange={e => setTakingOralAntibiotics(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Oral Antibiotics
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={takingImmunosuppressantsOrSteroids} onChange={e => setTakingImmunosuppressantsOrSteroids(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Steroids / Immunosuppressants
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={hasKidneyCondition} onChange={e => setHasKidneyCondition(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Kidney / Renal Sensitivity
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <input type="checkbox" checked={isPregnantOrNursing} onChange={e => setIsPregnantOrNursing(e.target.checked)} style={{ accentColor: 'var(--gold)' }} />
-            Pregnant / Nursing
-          </label>
-        </div>
-      </div>
+      </fieldset>
 
       {/* Drug Interactions Safety Alert Banner */}
       {stack.drugInteractions.length > 0 && (
@@ -361,8 +462,11 @@ export default function CoachSupplementPrescriber({
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                fontSize: 10,
-                padding: '3px 8px',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontSize: 10.5,
+                padding: '8px 12px',
                 borderRadius: 4,
                 background: stack.dispensaryInfo.isThorneLinked ? 'rgba(74,222,128,0.15)' : 'rgba(251,191,36,0.15)',
                 color: stack.dispensaryInfo.isThorneLinked ? 'var(--success)' : '#FBBF24',
@@ -383,10 +487,10 @@ export default function CoachSupplementPrescriber({
           <span><strong>Titration Protocol:</strong> {stack.routineSummary.titrationRule}</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 10 }}>
           {stack.prescribedItems.map(item => (
             <div key={item.id} style={{ background: 'rgba(8,14,20,0.6)', padding: 12, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, display: 'grid', gap: 4 }}>
-              <div style={{ fontWeight: 700, color: 'var(--white)', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontWeight: 700, color: 'var(--white)', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <span>{item.name}</span>
                 <span
                   style={{
@@ -423,15 +527,17 @@ export default function CoachSupplementPrescriber({
 
       {/* Coach Custom Directive */}
       <div>
-        <label style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+        <label htmlFor={coachNoteId} style={{ display: 'block', fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
           Coach Special Directives / Brand Guidance (Optional)
         </label>
         <input
+          id={coachNoteId}
           type="text"
+          maxLength={600}
           value={customCoachNote}
           onChange={e => setCustomCoachNote(e.target.value)}
           placeholder="e.g. Select Thorne NSF Certified for Sport® formulations via your 15%-off Forge Athletic dispensary link."
-          style={{ width: '100%', padding: '10px 12px', background: 'rgba(8,14,20,0.8)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--white)', fontSize: 13, borderRadius: 4 }}
+          style={{ width: '100%', minHeight: 44, padding: '10px 12px', background: 'rgba(8,14,20,0.8)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--white)', fontSize: 'max(1rem, 1em)', borderRadius: 4 }}
         />
       </div>
 

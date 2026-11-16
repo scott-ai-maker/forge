@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import CoachClientHubNavigator from '@/components/coach/CoachClientHubNavigator'
 import CoachPeriodizationCockpit from '@/components/coach/CoachPeriodizationCockpit'
+import CoachPrescriptionsWorkspace from '@/components/coach/CoachPrescriptionsWorkspace'
 import ClientDetailClient from '@/components/coach/ClientDetailClient'
 import CoachClientStatusModal from '@/components/coach/CoachClientStatusModal'
 import { generate12WeekMacrocycle } from '@/lib/periodization-roadmap'
@@ -53,6 +54,16 @@ export default function CoachPortalHubHarnessClient({ activeTab }: { activeTab: 
         currentStageNumber={8}
         currentStageTitle="Weekly Follow-Ups"
       />
+
+      {activeTab === 'prescriptions' && (
+        <section aria-label="Supplements & Gear Prescriptions">
+          <CoachPrescriptionsWorkspace
+            clientId="athlete-marcus-01"
+            clientName="Marcus Vance"
+            initialSubtab="supplements"
+          />
+        </section>
+      )}
 
       <section aria-label="12-Week Periodization Cockpit">
         <CoachPeriodizationCockpit

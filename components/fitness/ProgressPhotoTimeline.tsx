@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import Image from 'next/image'
 import GaaIcon from '@/components/ui/GaaIcon'
 import AiBodyCompositionScannerModal from './AiBodyCompositionScannerModal'
@@ -56,6 +56,7 @@ export default function ProgressPhotoTimeline({
   const [latestScanResult, setLatestScanResult] = useState<BodyCompositionScanResult | null>(null)
   const [form, setForm] = useState({ takenAt: new Date().toISOString().slice(0, 10), notes: '', file: null as File | null })
   const [attireConfirmed, setAttireConfirmed] = useState<boolean>(true)
+  const baseId = useId()
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -166,11 +167,12 @@ export default function ProgressPhotoTimeline({
           type="button"
           onClick={() => setIsScannerOpen(true)}
           style={{
+            minHeight: 44,
             background: 'linear-gradient(135deg, #D4A017 0%, #F59E0B 100%)',
             color: '#000000',
             border: 'none',
             borderRadius: 6,
-            padding: '8px 16px',
+            padding: '10px 16px',
             fontFamily: 'var(--font-sans, Raleway), sans-serif',
             fontSize: 12,
             fontWeight: 700,
@@ -203,22 +205,24 @@ export default function ProgressPhotoTimeline({
 
       {canUpload && (
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 10, marginBottom: 16, border: '1px solid rgba(255,255,255,0.08)', padding: 14, background: 'rgba(13,27,42,0.55)' }}>
-          <div className="fitness-progress-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
-            <div>
-              <label style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Select Photo</label>
+          <div className="fitness-progress-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 10 }}>
+            <div style={{ minWidth: 0 }}>
+              <label htmlFor={`${baseId}-photo`} style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Select progress photo</label>
               <input
+                id={`${baseId}-photo`}
+                name="photo"
                 type="file"
-                aria-label="Select progress photo"
                 accept="image/png,image/jpeg,image/webp"
                 onChange={event => setForm(prev => ({ ...prev, file: event.target.files?.[0] ?? null }))}
-                style={{ color: 'var(--white)', fontSize: 13 }}
+                style={{ color: 'var(--white)', fontSize: 16, minHeight: 44, width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
               />
             </div>
-            <div>
-              <label style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Date Taken</label>
+            <div style={{ minWidth: 0 }}>
+              <label htmlFor={`${baseId}-date`} style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Date Taken</label>
               <input
+                id={`${baseId}-date`}
+                name="taken_at"
                 type="date"
-                aria-label="Progress photo date"
                 value={form.takenAt}
                 onChange={event => setForm(prev => ({ ...prev, takenAt: event.target.value }))}
                 style={inputStyle}
@@ -227,14 +231,18 @@ export default function ProgressPhotoTimeline({
             </div>
           </div>
 
-          <textarea
-            aria-label="Progress photo notes"
-            value={form.notes}
-            onChange={event => setForm(prev => ({ ...prev, notes: event.target.value }))}
-            rows={2}
-            placeholder="Optional notes: lighting, scale weight, pumped vs cold, mood, etc."
-            style={{ ...inputStyle, minHeight: 60 }}
-          />
+          <div style={{ minWidth: 0 }}>
+            <label htmlFor={`${baseId}-notes`} style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Progress photo notes</label>
+            <textarea
+              id={`${baseId}-notes`}
+              name="notes"
+              value={form.notes}
+              onChange={event => setForm(prev => ({ ...prev, notes: event.target.value }))}
+              rows={2}
+              placeholder="Optional notes: lighting, scale weight, pumped vs cold, mood, etc."
+              style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
+            />
+          </div>
 
           {/* Attire Standards Guidance & Acceptance Policy */}
           <div
@@ -257,12 +265,13 @@ export default function ProgressPhotoTimeline({
             <div>
               Fitted athletic apparel required (sports bra + athletic shorts/tights for women; fitted athletic shorts + fitted top for men). <strong>Baggy sweatpants, oversized hoodies, casual street clothing, or inappropriate garments will not be accepted.</strong>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer', fontSize: 11.5, color: 'var(--gold-lt)', fontWeight: 600 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, minHeight: 44, cursor: 'pointer', fontSize: 11.5, color: 'var(--gold-lt)', fontWeight: 600 }}>
               <input
                 type="checkbox"
+                name="attireConfirmed"
                 checked={attireConfirmed}
                 onChange={e => setAttireConfirmed(e.target.checked)}
-                style={{ accentColor: 'var(--gold)' }}
+                style={{ accentColor: 'var(--gold)', width: 18, height: 18, flexShrink: 0 }}
               />
               <span>I confirm this photo meets Forge Athletic Attire Standards (fitted athletic wear, visible waistline, no baggy clothing).</span>
             </label>
@@ -406,16 +415,18 @@ function fileToDataUrl(file: File) {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
+  minHeight: 44,
   padding: '10px 12px',
   background: 'var(--navy)',
   border: '1px solid var(--navy-lt)',
   color: 'var(--white)',
   fontFamily: 'Raleway, sans-serif',
-  fontSize: 14,
+  fontSize: 16,
   boxSizing: 'border-box',
 }
 
 const buttonStyle: React.CSSProperties = {
+  minHeight: 44,
   padding: '10px 14px',
   background: 'var(--gold)',
   color: '#0D1B2A',

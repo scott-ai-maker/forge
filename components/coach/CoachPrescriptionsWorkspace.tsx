@@ -100,8 +100,11 @@ export default function CoachPrescriptionsWorkspace({
 
         {/* In-Tab Mode Switcher Pills */}
         <div
+          role="group"
+          aria-label="Athlete protocol sub-workspaces"
           style={{
             display: 'inline-flex',
+            flexWrap: 'wrap',
             padding: 4,
             borderRadius: 8,
             background: 'rgba(255, 255, 255, 0.05)',
@@ -111,15 +114,17 @@ export default function CoachPrescriptionsWorkspace({
         >
           <button
             type="button"
+            aria-pressed={activeSubtab === 'toolboxes'}
             onClick={() => setActiveSubtab('toolboxes')}
             style={{
+              minHeight: 44,
               padding: '8px 16px',
               borderRadius: 6,
               background: activeSubtab === 'toolboxes'
                 ? 'linear-gradient(135deg, rgba(52, 211, 153, 0.25) 0%, rgba(16, 185, 129, 0.15) 100%)'
                 : 'transparent',
               border: activeSubtab === 'toolboxes'
-                ? '1px solid #10B981'
+                ? '1.5px solid #10B981'
                 : '1px solid transparent',
               color: activeSubtab === 'toolboxes' ? '#34D399' : 'var(--gray-lt)',
               fontSize: 12,
@@ -137,15 +142,17 @@ export default function CoachPrescriptionsWorkspace({
 
           <button
             type="button"
+            aria-pressed={activeSubtab === 'supplements'}
             onClick={() => setActiveSubtab('supplements')}
             style={{
+              minHeight: 44,
               padding: '8px 16px',
               borderRadius: 6,
               background: activeSubtab === 'supplements'
                 ? 'linear-gradient(135deg, rgba(212, 160, 23, 0.28) 0%, rgba(170, 130, 10, 0.18) 100%)'
                 : 'transparent',
               border: activeSubtab === 'supplements'
-                ? '1px solid var(--gold)'
+                ? '1.5px solid var(--gold)'
                 : '1px solid transparent',
               color: activeSubtab === 'supplements' ? 'var(--gold-lt)' : 'var(--gray-lt)',
               fontSize: 12,
@@ -163,15 +170,17 @@ export default function CoachPrescriptionsWorkspace({
 
           <button
             type="button"
+            aria-pressed={activeSubtab === 'equipment'}
             onClick={() => setActiveSubtab('equipment')}
             style={{
+              minHeight: 44,
               padding: '8px 16px',
               borderRadius: 6,
               background: activeSubtab === 'equipment'
                 ? 'linear-gradient(135deg, rgba(212, 160, 23, 0.28) 0%, rgba(170, 130, 10, 0.18) 100%)'
                 : 'transparent',
               border: activeSubtab === 'equipment'
-                ? '1px solid var(--gold)'
+                ? '1.5px solid var(--gold)'
                 : '1px solid transparent',
               color: activeSubtab === 'equipment' ? 'var(--gold-lt)' : 'var(--gray-lt)',
               fontSize: 12,

@@ -218,7 +218,8 @@ export default function EquipmentDispensaryWidget({
               className="forge-equip-btn"
               style={{
                 padding: '10px 14px',
-                minBlockSize: 44,
+                minHeight: 44,
+                minBlockSize: '44px',
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.16)',
                 borderRadius: 6,
@@ -425,7 +426,8 @@ export default function EquipmentDispensaryWidget({
                   color: 'var(--gold-lt)',
                   textDecoration: 'none',
                   padding: '10px 12px',
-                  minBlockSize: 44,
+                  minHeight: 44,
+                minBlockSize: '44px',
                   display: 'inline-flex',
                   alignItems: 'center',
                   border: '1px solid rgba(212, 160, 23, 0.35)',
@@ -458,7 +460,8 @@ export default function EquipmentDispensaryWidget({
             onClick={() => setActiveWorkspaceMode('rag_builder')}
             className="forge-equip-filter-btn"
             style={{
-              minBlockSize: 44,
+              minHeight: 44,
+              minBlockSize: '44px',
               padding: '10px 16px',
               borderRadius: 7,
               border: '1px solid',
@@ -488,7 +491,8 @@ export default function EquipmentDispensaryWidget({
             onClick={() => setActiveWorkspaceMode('catalog')}
             className="forge-equip-filter-btn"
             style={{
-              minBlockSize: 44,
+              minHeight: 44,
+              minBlockSize: '44px',
               padding: '10px 16px',
               borderRadius: 7,
               border: '1px solid',
@@ -558,7 +562,8 @@ export default function EquipmentDispensaryWidget({
               className="forge-equip-btn"
               style={{
                 padding: '10px 14px',
-                minBlockSize: 44,
+                minHeight: 44,
+                minBlockSize: '44px',
                 borderRadius: 5,
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.16)',
@@ -650,7 +655,8 @@ export default function EquipmentDispensaryWidget({
                     className="forge-equip-filter-btn"
                     style={{
                       padding: '10px 14px',
-                      minBlockSize: 44,
+                      minHeight: 44,
+                minBlockSize: '44px',
                       borderRadius: 5,
                       border: '1px solid',
                       borderColor: isSelected ? 'var(--gold)' : 'rgba(212, 160, 23, 0.4)',
@@ -695,7 +701,8 @@ export default function EquipmentDispensaryWidget({
                   flex: 'none',
                   position: 'relative',
                   padding: '10px 14px',
-                  minBlockSize: 44,
+                  minHeight: 44,
+                minBlockSize: '44px',
                   borderRadius: 6,
                   border: '1px solid',
                   borderColor: selected ? 'var(--gold)' : 'rgba(255, 255, 255, 0.14)',
@@ -959,7 +966,8 @@ function EquipmentCard({ item, compact, copiedSku, onCopyPromoCode }: EquipmentC
               className="forge-equip-btn"
               style={{
                 padding: '10px 12px',
-                minBlockSize: 44,
+                minHeight: 44,
+                minBlockSize: '44px',
                 borderRadius: 5,
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.18)',
@@ -982,7 +990,8 @@ function EquipmentCard({ item, compact, copiedSku, onCopyPromoCode }: EquipmentC
             className="forge-equip-link"
             style={{
               padding: '10px 14px',
-              minBlockSize: 44,
+              minHeight: 44,
+              minBlockSize: '44px',
               borderRadius: 5,
               background: item.alreadyOwned
                 ? 'rgba(255, 255, 255, 0.08)'

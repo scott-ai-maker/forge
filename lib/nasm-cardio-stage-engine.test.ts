@@ -122,5 +122,39 @@ describe('NASM Cardiorespiratory Stage Training & Zone Engine', () => {
     expect(ymcaMed.rationale).toContain('Pharmacological Heart Rate Alert')
     expect(ymcaMed.rationale).toContain('artificially suppress')
   })
+
+  it('guards non-finite (NaN / Infinity) inputs safely without false Superior VO2max classifications', () => {
+    const nanZones = calculateCardioZones(Number.NaN, Number.POSITIVE_INFINITY)
+    expect(Number.isFinite(nanZones.hrMaxBpm)).toBe(true)
+    expect(nanZones.hrMaxBpm).toBe(184) // fallback age 35 -> 208 - 24.5 = 183.5 -> 184
+    expect(nanZones.restingHrBpm).toBe(65)
+
+    const nanZoneLookup = identifyHeartRateZone(Number.NaN, Number.NaN, Number.NaN)
+    expect(nanZoneLookup.zoneCode).toBe('below_zone1')
+
+    const nanRockport = calculateRockportVo2Max({
+      weightLbs: Number.NaN,
+      age: Number.NaN,
+      sex: 'male',
+      timeMinutes: Number.NaN,
+      endHeartRateBpm: Number.NaN,
+    })
+    expect(Number.isFinite(nanRockport.vo2Max)).toBe(true)
+    expect(nanRockport.fitnessCategory).not.toBe('Superior')
+
+    const veryPoorRockport = calculateRockportVo2Max({
+      weightLbs: 260,
+      age: 62,
+      sex: 'male',
+      timeMinutes: 22.5,
+      endHeartRateBpm: 168,
+    })
+    expect(veryPoorRockport.vo2Max).toBeLessThan(25)
+    expect(veryPoorRockport.fitnessCategory).toBe('Very Poor')
+
+    const nanYmca = evaluateYmcaStepTest(Number.NaN, Number.NaN, 'female')
+    expect(Number.isFinite(nanYmca.postTestRecoveryHr)).toBe(true)
+    expect(nanYmca.suggestedStartingStage).toBe(1)
+  })
 })
 

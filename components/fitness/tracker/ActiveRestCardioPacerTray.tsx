@@ -112,11 +112,13 @@ export default function ActiveRestCardioPacerTray({
           paddingBottom: 8,
           marginBottom: 10,
           gap: 6,
+          flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div role="group" aria-label="Active rest pacer views" style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
           <button
             type="button"
+            aria-pressed={activeTab === 'breath'}
             onClick={() => {
               triggerHaptic?.('tap')
               setActiveTab('breath')
@@ -125,8 +127,9 @@ export default function ActiveRestCardioPacerTray({
               background: activeTab === 'breath' ? 'rgba(56, 189, 248, 0.22)' : 'transparent',
               border: activeTab === 'breath' ? '1px solid rgba(56, 189, 248, 0.6)' : '1px solid transparent',
               color: activeTab === 'breath' ? '#38BDF8' : '#94A3B8',
-              padding: '3px 8px',
-              borderRadius: 4,
+              padding: '6px 10px',
+              minHeight: 44,
+              borderRadius: 6,
               fontSize: 10.5,
               fontWeight: 800,
               cursor: 'pointer',
@@ -141,6 +144,7 @@ export default function ActiveRestCardioPacerTray({
 
           <button
             type="button"
+            aria-pressed={activeTab === 'hrr'}
             onClick={() => {
               triggerHaptic?.('tap')
               setActiveTab('hrr')
@@ -149,8 +153,9 @@ export default function ActiveRestCardioPacerTray({
               background: activeTab === 'hrr' ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
               border: activeTab === 'hrr' ? '1px solid rgba(16, 185, 129, 0.6)' : '1px solid transparent',
               color: activeTab === 'hrr' ? '#34D399' : '#94A3B8',
-              padding: '3px 8px',
-              borderRadius: 4,
+              padding: '6px 10px',
+              minHeight: 44,
+              borderRadius: 6,
               fontSize: 10.5,
               fontWeight: 800,
               cursor: 'pointer',
@@ -165,6 +170,7 @@ export default function ActiveRestCardioPacerTray({
 
           <button
             type="button"
+            aria-pressed={activeTab === 'mobility'}
             onClick={() => {
               triggerHaptic?.('tap')
               setActiveTab('mobility')
@@ -173,8 +179,9 @@ export default function ActiveRestCardioPacerTray({
               background: activeTab === 'mobility' ? 'rgba(212, 160, 23, 0.22)' : 'transparent',
               border: activeTab === 'mobility' ? '1px solid rgba(212, 160, 23, 0.6)' : '1px solid transparent',
               color: activeTab === 'mobility' ? 'var(--gold-lt)' : '#94A3B8',
-              padding: '3px 8px',
-              borderRadius: 4,
+              padding: '6px 10px',
+              minHeight: 44,
+              borderRadius: 6,
               fontSize: 10.5,
               fontWeight: 800,
               cursor: 'pointer',
@@ -192,6 +199,8 @@ export default function ActiveRestCardioPacerTray({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button
             type="button"
+            aria-label="Breath cadence audio cues"
+            aria-pressed={soundEnabled}
             onClick={() => {
               triggerHaptic?.('tap')
               setSoundEnabled(prev => !prev)
@@ -200,35 +209,41 @@ export default function ActiveRestCardioPacerTray({
               background: soundEnabled ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.05)',
               border: '1px solid rgba(255,255,255,0.15)',
               color: soundEnabled ? '#38BDF8' : '#64748B',
-              padding: '3px 6px',
-              borderRadius: 4,
+              minWidth: 44,
+              minHeight: 44,
+              padding: '6px 8px',
+              borderRadius: 6,
               cursor: 'pointer',
               fontSize: 10,
               display: 'inline-flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: 3,
             }}
-            title={soundEnabled ? 'Breath audio tone enabled' : 'Mute breath audio'}
           >
-            <GaaIcon name={soundEnabled ? 'volume' : 'volume-x'} size={11} tone="inherit" />
+            <GaaIcon name={soundEnabled ? 'volume' : 'volume-x'} size={13} tone="inherit" />
           </button>
 
           {onClose && (
             <button
               type="button"
+              aria-label="Close Active Rest Pacer"
               onClick={onClose}
               style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#64748B',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#94A3B8',
                 cursor: 'pointer',
-                padding: '2px 4px',
+                minWidth: 44,
+                minHeight: 44,
+                borderRadius: 6,
+                padding: '6px',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
               }}
-              title="Close Pacer Tray"
             >
-              <GaaIcon name="close" size={13} tone="slate" />
+              <GaaIcon name="close" size={14} tone="slate" />
             </button>
           )}
         </div>
@@ -238,7 +253,7 @@ export default function ActiveRestCardioPacerTray({
       {activeTab === 'breath' && (
         <div>
           {/* Pattern Selector */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+          <div role="group" aria-label="Breathing cadence pattern" style={{ display: 'flex', gap: 4, marginBottom: 12, flexWrap: 'wrap' }}>
             {(
               [
                 { id: 'down_regulation_4_2_6', label: '4-2-6 Vagal Tone' },
@@ -249,18 +264,20 @@ export default function ActiveRestCardioPacerTray({
               <button
                 key={opt.id}
                 type="button"
+                aria-pressed={pattern === opt.id}
                 onClick={() => {
                   triggerHaptic?.('tap')
                   setPattern(opt.id)
                 }}
                 style={{
-                  flex: 1,
+                  flex: '1 1 92px',
                   background: pattern === opt.id ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255,255,255,0.04)',
                   border: pattern === opt.id ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.08)',
                   color: pattern === opt.id ? '#38BDF8' : '#94A3B8',
-                  padding: '4px 6px',
-                  borderRadius: 4,
-                  fontSize: 10,
+                  padding: '6px 8px',
+                  minHeight: 44,
+                  borderRadius: 6,
+                  fontSize: 10.5,
                   fontWeight: 700,
                   cursor: 'pointer',
                 }}
@@ -293,6 +310,7 @@ export default function ActiveRestCardioPacerTray({
             >
               {/* Outer Pulsing Ring */}
               <div
+                className="active-rest-cardio-breath-ring"
                 style={{
                   position: 'absolute',
                   inset: 0,

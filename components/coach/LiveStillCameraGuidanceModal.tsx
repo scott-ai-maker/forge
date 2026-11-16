@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useId } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   detectStillCameraPlatform,
@@ -8,6 +8,7 @@ import {
   ANDROID_STILL_CAMERA_STEPS,
   NASM_VIRTUAL_ASSESSMENT_CHECKLIST,
 } from '@/lib/camera-still-mode'
+import { useNativeStudioDialog } from './useNativeStudioDialog'
 
 interface LiveStillCameraGuidanceModalProps {
   isOpen: boolean
@@ -33,27 +34,25 @@ export default function LiveStillCameraGuidanceModal({
     frontal_lighting: true,
     space_traction: true,
   })
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const titleId = useId()
+  const idPrefix = useId()
+
+  useNativeStudioDialog(dialogRef, isOpen, onClose)
 
   if (!isOpen) return null
 
   const steps = activeTab === 'android' ? ANDROID_STILL_CAMERA_STEPS : IOS_STILL_CAMERA_STEPS
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       data-testid="still-camera-guidance-modal"
-      role="dialog"
-      aria-modal="true"
+      className="forge-live-studio-dialog"
+      aria-labelledby={titleId}
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: 'rgba(4, 7, 14, 0.88)',
-        backdropFilter: 'blur(10px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease-out',
+        maxWidth: 'min(540px, calc(100vw - 16px))',
       }}
     >
       <div
@@ -61,9 +60,8 @@ export default function LiveStillCameraGuidanceModal({
           background: 'linear-gradient(180deg, #0A0F1D 0%, #060912 100%)',
           border: '1px solid rgba(212, 175, 55, 0.45)',
           borderRadius: 16,
-          maxWidth: 540,
           width: '100%',
-          maxHeight: '90vh',
+          maxHeight: '90dvh',
           boxShadow: '0 24px 60px rgba(0,0,0,0.85), 0 0 30px rgba(212,175,55,0.15)',
           overflow: 'hidden',
           display: 'flex',
@@ -75,13 +73,14 @@ export default function LiveStillCameraGuidanceModal({
           style={{
             background: 'rgba(212, 175, 55, 0.08)',
             borderBottom: '1px solid rgba(212, 175, 55, 0.25)',
-            padding: '16px 20px',
+            padding: '16px clamp(14px, 2vw, 20px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: 10,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minInlineSize: 0 }}>
             <div
               style={{
                 width: 36,
@@ -93,11 +92,12 @@ export default function LiveStillCameraGuidanceModal({
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 0 12px rgba(212,175,55,0.3)',
+                flexShrink: 0,
               }}
             >
               <GaaIcon name="camera" size={18} tone="gold" />
             </div>
-            <div>
+            <div style={{ minInlineSize: 0 }}>
               <div
                 style={{
                   fontSize: 10,
@@ -109,7 +109,8 @@ export default function LiveStillCameraGuidanceModal({
               >
                 NASM Virtual Coaching Protocol
               </div>
-              <h3
+              <h2
+                id={titleId}
                 style={{
                   fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
                   fontSize: 17,
@@ -119,25 +120,26 @@ export default function LiveStillCameraGuidanceModal({
                 }}
               >
                 Remote Studio & Optical Setup
-              </h3>
+              </h2>
             </div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close modal"
+            aria-label="Close Remote Studio & Optical Setup modal"
             style={{
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.12)',
               borderRadius: 8,
-              width: 30,
-              height: 30,
-              display: 'flex',
+              minWidth: 44,
+              minHeight: 44,
+              display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               color: '#9CA3AF',
+              flexShrink: 0,
             }}
           >
             <GaaIcon name="close" size={14} tone="white" />
@@ -145,7 +147,7 @@ export default function LiveStillCameraGuidanceModal({
         </div>
 
         {/* Modal Body */}
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto' }}>
+        <div style={{ padding: 'clamp(14px, 2.5vw, 20px)', display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto' }}>
           {/* Coach Request Callout */}
           <div
             style={{
@@ -158,7 +160,7 @@ export default function LiveStillCameraGuidanceModal({
               gap: 10,
             }}
           >
-            <span style={{ fontSize: 16 }}>🎯</span>
+            <span aria-hidden="true" style={{ fontSize: 16 }}>🎯</span>
             <p style={{ margin: 0, fontSize: 12.5, color: '#E0F2FE', lineHeight: 1.45 }}>
               <strong style={{ color: '#93C5FD' }}>{requestedByCoachName}</strong> requires a calibrated virtual assessment environment. A locked wide-angle view, barefoot stance, and clear 8x8 ft space ensure valid biomechanical joint tracking.
             </p>
@@ -166,8 +168,11 @@ export default function LiveStillCameraGuidanceModal({
 
           {/* Navigation Tabs */}
           <div
+            role="group"
+            aria-label="Setup guidance views"
             style={{
               display: 'flex',
+              flexWrap: 'wrap',
               background: 'rgba(255,255,255,0.04)',
               borderRadius: 8,
               padding: 3,
@@ -176,9 +181,11 @@ export default function LiveStillCameraGuidanceModal({
           >
             <button
               type="button"
+              aria-pressed={activeTab === 'checklist'}
               onClick={() => setActiveTab('checklist')}
               style={{
-                flex: 1.2,
+                flex: '1 1 130px',
+                minHeight: 40,
                 padding: '8px 10px',
                 borderRadius: 6,
                 border: 'none',
@@ -187,16 +194,17 @@ export default function LiveStillCameraGuidanceModal({
                 fontSize: 11.5,
                 fontWeight: 800,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
               }}
             >
               5-Pt Setup Checklist
             </button>
             <button
               type="button"
+              aria-pressed={activeTab === 'ios'}
               onClick={() => setActiveTab('ios')}
               style={{
-                flex: 1,
+                flex: '1 1 110px',
+                minHeight: 40,
                 padding: '8px 10px',
                 borderRadius: 6,
                 border: 'none',
@@ -205,16 +213,17 @@ export default function LiveStillCameraGuidanceModal({
                 fontSize: 11.5,
                 fontWeight: 800,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
               }}
             >
               iOS Center Stage
             </button>
             <button
               type="button"
+              aria-pressed={activeTab === 'android'}
               onClick={() => setActiveTab('android')}
               style={{
-                flex: 1,
+                flex: '1 1 110px',
+                minHeight: 40,
                 padding: '8px 10px',
                 borderRadius: 6,
                 border: 'none',
@@ -223,7 +232,6 @@ export default function LiveStillCameraGuidanceModal({
                 fontSize: 11.5,
                 fontWeight: 800,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
               }}
             >
               Android Framing
@@ -238,10 +246,11 @@ export default function LiveStillCameraGuidanceModal({
               </div>
               {NASM_VIRTUAL_ASSESSMENT_CHECKLIST.map(item => {
                 const isChecked = !!checkedItems[item.id]
+                const checkboxId = `${idPrefix}-${item.id}`
                 return (
-                  <div
+                  <label
                     key={item.id}
-                    onClick={() => setCheckedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                    htmlFor={checkboxId}
                     style={{
                       background: isChecked ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255,255,255,0.03)',
                       border: isChecked ? '1px solid rgba(212, 175, 55, 0.4)' : '1px solid rgba(255,255,255,0.08)',
@@ -251,14 +260,15 @@ export default function LiveStillCameraGuidanceModal({
                       alignItems: 'flex-start',
                       gap: 10,
                       cursor: 'pointer',
-                      transition: 'all 0.15s ease',
                     }}
                   >
                     <input
+                      id={checkboxId}
+                      name={item.id}
                       type="checkbox"
                       checked={isChecked}
-                      readOnly
-                      style={{ marginTop: 2, accentColor: 'var(--gold)', cursor: 'pointer' }}
+                      onChange={() => setCheckedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                      style={{ marginTop: 2, width: 18, height: 18, accentColor: 'var(--gold)', cursor: 'pointer', flexShrink: 0 }}
                     />
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
@@ -273,7 +283,7 @@ export default function LiveStillCameraGuidanceModal({
                         {item.nasmRationale}
                       </div>
                     </div>
-                  </div>
+                  </label>
                 )
               })}
             </div>
@@ -339,6 +349,7 @@ export default function LiveStillCameraGuidanceModal({
             onClick={onClose}
             data-testid="still-camera-dismiss-btn"
             style={{
+              minHeight: 44,
               padding: '12px',
               background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
               border: 'none',
@@ -360,7 +371,6 @@ export default function LiveStillCameraGuidanceModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }
-

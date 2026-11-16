@@ -149,21 +149,45 @@ describe('POST /api/fitness/progress-photos (JSON body)', () => {
     await expect(res.json()).resolves.toMatchObject({ error: 'Unauthorized photo path' })
   })
 
-  it('rejects invalid taken_at format', async () => {
+  it('rejects invalid taken_at format and impossible calendar dates', async () => {
     getRequestAuthzMock.mockResolvedValue(authedUser)
     supabaseAdminMock.mockReturnValue(makeAdmin())
     const res = await POST(makeJsonRequest({ photo_url: 'user-1/f.jpg', taken_at: 'today' }))
     expect(res.status).toBe(400)
     await expect(res.json()).resolves.toMatchObject({ error: expect.stringContaining('taken_at') })
+
+    const impossibleDateRes = await POST(
+      makeJsonRequest({ photo_url: 'user-1/f.jpg', taken_at: '2026-02-31' })
+    )
+    expect(impossibleDateRes.status).toBe(400)
   })
 
-  it('saves photo and returns signed URL', async () => {
+  it('returns 400 on malformed JSON instead of 500', async () => {
     getRequestAuthzMock.mockResolvedValue(authedUser)
-    const record = { id: 'p-1', photo_url: 'user-1/f.jpg', taken_at: '2026-04-01', notes: null }
+    supabaseAdminMock.mockReturnValue(makeAdmin())
+    const req = new NextRequest('http://localhost/api/fitness/progress-photos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{invalid-json',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+  })
+
+  it('saves photo, scrubs HTML from notes, and returns signed URL with no-store', async () => {
+    getRequestAuthzMock.mockResolvedValue(authedUser)
+    const record = { id: 'p-1', photo_url: 'user-1/f.jpg', taken_at: '2026-04-01', notes: 'Lean check' }
     supabaseAdminMock.mockReturnValue(makeAdmin([], record))
     createSignedFitnessPhotoUrlMock.mockResolvedValue('https://signed.example.com/f.jpg')
-    const res = await POST(makeJsonRequest({ photo_url: 'user-1/f.jpg', taken_at: '2026-04-01' }))
+    const res = await POST(
+      makeJsonRequest({
+        photo_url: 'user-1/f.jpg',
+        taken_at: '2026-04-01',
+        notes: 'Lean check <script>alert(1)</script>',
+      })
+    )
     expect(res.status).toBe(201)
+    expect(res.headers.get('cache-control')).toContain('no-store')
     const body = await res.json()
     expect(body.photo.photo_url).toBe('https://signed.example.com/f.jpg')
   })

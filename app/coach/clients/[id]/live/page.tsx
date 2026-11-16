@@ -27,8 +27,11 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
     notFound()
   }
 
-  // If unassigned, automatically assign to verified coach so sessions can proceed
+  // Only master coach may auto-claim an unassigned client; non-master coaches require explicit assignment
   if (!client.designated_coach_id) {
+    if (!isMasterCoachEmail(user.email)) {
+      notFound()
+    }
     await admin
       .from('clients')
       .update({ designated_coach_id: user.id })

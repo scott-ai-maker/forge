@@ -22,5 +22,7 @@ describe('SanctuaryModeHud Component Structure & Tokens', () => {
     expect(source).toContain('Resynthesizing phosphagen (ATP-CP)')
     expect(source).toContain('sanctuary-coach-notes-btn')
     expect(source).toContain('SanctuaryAudioNotePlayer')
+    expect(source).toContain('useNativeStudioDialog(')
+    expect(source).toContain('prefers-reduced-motion: reduce')
   })
 })

@@ -9,10 +9,53 @@ import {
   formatGoogleHealthTelemetryToBiometricSummary,
 } from '@/lib/google-health-bridge'
 import { computeWearableCnsScore, type WearableProvider, WEARABLE_PROVIDERS } from '@/lib/wearables-telemetry'
+import {
+  sanitizeWearableRawPayload,
+  verifyAppleHealthWebhookToken,
+  verifyGoogleHealthWebhookToken,
+} from '@/lib/wearable-webhook-adapters'
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+const MAX_SYNC_PAYLOAD_BYTES = 262_144
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}))
+    const rawText = await req.text().catch(() => '')
+    if (Buffer.byteLength(rawText, 'utf8') > MAX_SYNC_PAYLOAD_BYTES) {
+      return NextResponse.json(
+        { error: 'Wearable sync payload exceeds maximum allowed size (256 KB)' },
+        { status: 413, headers: NO_STORE_HEADERS }
+      )
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let body: Record<string, any> = {}
+    if (rawText.trim().length > 0) {
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(rawText)
+      } catch {
+        return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400, headers: NO_STORE_HEADERS })
+      }
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return NextResponse.json({ error: 'Sync payload must be a JSON object' }, { status: 400, headers: NO_STORE_HEADERS })
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      body = parsed as Record<string, any>
+    }
+
+    if (
+      body.provider !== undefined &&
+      body.provider !== 'apple_health' &&
+      body.provider !== 'google_fit' &&
+      body.provider !== 'google_health'
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid wearable provider specified. Must be apple_health or google_fit.' },
+        { status: 400, headers: NO_STORE_HEADERS }
+      )
+    }
+
     const now = new Date().toISOString()
 
     const { supabaseAdmin } = await import('@/lib/supabase')
@@ -27,12 +70,19 @@ export async function POST(req: NextRequest) {
       userId = authz.user.id
     } catch (authzErr) {
       // 2. Fallback for native mobile background delivery (or expired session JWT during background query)
-      const candidateId = String(body.user_id || body.client_id || body.userId || body.clientId || '')
-      const authHeader = req.headers.get('authorization') || req.headers.get('Authorization')
+      const candidateId = String(body.user_id || body.client_id || body.userId || body.clientId || '').trim()
+      const authHeader =
+        req.headers.get('authorization') ||
+        req.headers.get('Authorization') ||
+        req.headers.get('x-webhook-secret')
+
+      const isGoogleCandidate =
+        body.provider === 'google_fit' || body.provider === 'google_health' || body.platform === 'android'
 
       let secretValid = process.env.NODE_ENV !== 'production'
-      if (process.env.APPLE_HEALTH_WEBHOOK_SECRET) {
-        const { verifyAppleHealthWebhookToken } = await import('@/lib/wearable-webhook-adapters')
+      if (isGoogleCandidate && process.env.GOOGLE_HEALTH_WEBHOOK_SECRET) {
+        secretValid = verifyGoogleHealthWebhookToken(authHeader, process.env.GOOGLE_HEALTH_WEBHOOK_SECRET)
+      } else if (!isGoogleCandidate && process.env.APPLE_HEALTH_WEBHOOK_SECRET) {
         secretValid = verifyAppleHealthWebhookToken(authHeader, process.env.APPLE_HEALTH_WEBHOOK_SECRET)
       }
 
@@ -50,9 +100,9 @@ export async function POST(req: NextRequest) {
 
       if (!userId) {
         if (authzErr instanceof AuthzError) {
-          return NextResponse.json({ error: authzErr.message }, { status: authzErr.status })
+          return NextResponse.json({ error: authzErr.message }, { status: authzErr.status, headers: NO_STORE_HEADERS })
         }
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_STORE_HEADERS })
       }
     }
 
@@ -79,12 +129,15 @@ export async function POST(req: NextRequest) {
         .eq('client_id', userId)
         .eq('provider', provider)
 
-      return NextResponse.json({
-        success: true,
-        action: 'cleared',
-        message: `Cleared all telemetry records for ${WEARABLE_PROVIDERS[provider].name}.`,
-        telemetry: null,
-      })
+      return NextResponse.json(
+        {
+          success: true,
+          action: 'cleared',
+          message: `Cleared all telemetry records for ${WEARABLE_PROVIDERS[provider].name}.`,
+          telemetry: null,
+        },
+        { headers: NO_STORE_HEADERS }
+      )
     }
 
     let summary
@@ -214,7 +267,7 @@ export async function POST(req: NextRequest) {
           fat_grams: nutritionData.fatGrams,
           fiber_grams: nutritionData.fiberGrams,
           water_oz: nutritionData.waterOz,
-          raw_payload: body,
+          raw_payload: sanitizeWearableRawPayload(body),
           synced_at: now,
         },
         { onConflict: 'client_id,sample_date,provider' }
@@ -266,18 +319,20 @@ export async function POST(req: NextRequest) {
       console.error('[wearables/sync] Database persistence warning:', dbErr)
     }
 
-    return NextResponse.json({
-      success: true,
-      provider,
-      message: `${WEARABLE_PROVIDERS[provider].name} telemetry & dietary nutrition synchronized and persisted successfully.`,
-      syncedAt: now,
-      telemetry: summary,
-    })
+    return NextResponse.json(
+      {
+        success: true,
+        provider,
+        message: `${WEARABLE_PROVIDERS[provider].name} telemetry & dietary nutrition synchronized and persisted successfully.`,
+        syncedAt: now,
+        telemetry: summary,
+      },
+      { headers: NO_STORE_HEADERS }
+    )
   } catch (error) {
     if (error instanceof AuthzError) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
+      return NextResponse.json({ error: error.message }, { status: error.status, headers: NO_STORE_HEADERS })
     }
-    const message = error instanceof Error ? error.message : 'Unexpected error during wearable sync'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: 'Unexpected error during wearable sync' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 }

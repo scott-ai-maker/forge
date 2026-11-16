@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useId } from 'react'
 import ForgeIcon from '@/components/ui/ForgeIcon'
 import {
   SanctuaryAudioNote,
@@ -10,6 +10,7 @@ import {
 } from '@/lib/sanctuary-audio-notes-engine'
 import { configureAudioSession } from '@/lib/web-audio-cadence-engine'
 import { chunkTextIntoSpeechSentences } from '@/lib/coach-voice-synthesizer'
+import { isSfxMuted } from '@/lib/sfx-audio'
 
 // Module-level audio blob cache for zero-latency ElevenLabs playback
 const elevenLabsBlobCache = new Map<string, string>()
@@ -44,6 +45,7 @@ export default function SanctuaryAudioNotePlayer({
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const startPlaybackRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  const baseId = useId()
 
   const totalDuration = actualDuration || note.durationSeconds || 30
 
@@ -146,10 +148,10 @@ export default function SanctuaryAudioNotePlayer({
     return null
   }
 
-  // Pre-fetch ElevenLabs audio on note mount
+  // Pre-fetch ElevenLabs audio on note mount only when audio/SFX is not muted
   useEffect(() => {
     let isMounted = true
-    if (!note.audioDataUrl && typeof window !== 'undefined') {
+    if (!note.audioDataUrl && typeof window !== 'undefined' && !isSfxMuted()) {
       const targetVoiceId = note.voiceId || COACH_GORDON_ELEVENLABS_VOICE_ID
       const cacheKey = `${targetVoiceId}_${note.transcript}`
       if (elevenLabsBlobCache.has(cacheKey)) {
@@ -358,13 +360,14 @@ export default function SanctuaryAudioNotePlayer({
   }
 
   useEffect(() => {
-    if (autoPlayOnMount) {
-      const timer = setTimeout(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null
+    if (autoPlayOnMount && !isSfxMuted()) {
+      timer = setTimeout(() => {
         void startPlaybackRef.current()
       }, 350)
-      return () => clearTimeout(timer)
     }
     return () => {
+      if (timer) clearTimeout(timer)
       stopAllAudio()
     }
   }, [note.id, autoPlayOnMount])
@@ -523,6 +526,8 @@ export default function SanctuaryAudioNotePlayer({
               }}
               aria-label="Close Coach Note"
               style={{
+                minWidth: 44,
+                minHeight: 44,
                 background: 'transparent',
                 border: 'none',
                 color: '#94A3B8',
@@ -636,6 +641,29 @@ export default function SanctuaryAudioNotePlayer({
           })}
         </div>
 
+        {/* Accessible Keyboard Range Scrubber */}
+        <input
+          id={`${baseId}-scrubber`}
+          className="forge-range-slider"
+          type="range"
+          min={0}
+          max={totalDuration}
+          step={1}
+          value={currentTime}
+          aria-label={`Seek coach memo ${note.title}`}
+          aria-valuetext={`${currentTime} of ${totalDuration} seconds`}
+          onChange={e => handleSeek(Number(e.target.value))}
+          style={{
+            width: '100%',
+            marginBottom: 4,
+            ['--attr-min' as string]: 0,
+            ['--attr-max' as string]: totalDuration,
+            ['--control-value' as string]: currentTime,
+            ['--slider-fill-color' as string]: '#D4AF37',
+            ['--slider-thumb-color' as string]: '#D4AF37',
+          }}
+        />
+
         {/* Scrub Slider & Time Status */}
         <div
           style={{
@@ -696,7 +724,7 @@ export default function SanctuaryAudioNotePlayer({
           flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {/* Primary Play/Pause Button */}
           <button
             type="button"
@@ -704,12 +732,13 @@ export default function SanctuaryAudioNotePlayer({
             onClick={togglePlayback}
             className="tactile-btn"
             style={{
+              minHeight: 44,
               background: isPlaying
                 ? 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)'
                 : 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
               border: isPlaying ? '1px solid #EF4444' : '1px solid #D4AF37',
               color: isPlaying ? '#FFFFFF' : '#0A0E18',
-              padding: compact ? '6px 14px' : '8px 18px',
+              padding: compact ? '8px 14px' : '10px 18px',
               borderRadius: 6,
               fontSize: compact ? 11 : 12,
               fontWeight: 800,
@@ -739,10 +768,11 @@ export default function SanctuaryAudioNotePlayer({
                 if (!isPlaying) startPlayback()
               }}
               style={{
+                minHeight: 44,
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 color: '#CBD5E1',
-                padding: compact ? '6px 10px' : '8px 12px',
+                padding: compact ? '8px 12px' : '10px 14px',
                 borderRadius: 6,
                 fontSize: compact ? 10.5 : 11,
                 fontWeight: 600,
@@ -751,7 +781,7 @@ export default function SanctuaryAudioNotePlayer({
                 alignItems: 'center',
                 gap: 4,
               }}
-              title="Restart from beginning"
+              aria-label="Replay from beginning"
             >
               <ForgeIcon name="rotate-ccw" size={11} />
               <span>Replay</span>
@@ -761,8 +791,10 @@ export default function SanctuaryAudioNotePlayer({
           {/* Transcript Toggle */}
           <button
             type="button"
+            aria-expanded={showTranscript}
             onClick={() => setShowTranscript(prev => !prev)}
             style={{
+              minHeight: 44,
               background: 'transparent',
               border: 'none',
               color: showTranscript ? 'var(--gold-lt)' : '#94A3B8',
@@ -772,7 +804,7 @@ export default function SanctuaryAudioNotePlayer({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              padding: '4px 6px',
+              padding: '8px 10px',
             }}
           >
             <span>{showTranscript ? 'Hide Notes' : 'Read Transcript'}</span>

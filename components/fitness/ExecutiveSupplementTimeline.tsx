@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useId } from 'react'
 import GaaIcon, { GaaIconName, GaaTone } from '@/components/ui/GaaIcon'
 import {
   FTC_AFFILIATE_DISCLOSURE,
@@ -10,7 +10,8 @@ import {
   SupplementStackResult,
   PrescribedSupplementItem,
   TimingWindow,
-  SupplementGoal,
+  normalizeSupplementGoal,
+  normalizeClientSex,
   generateSupplementStack,
   getDispensaryPartnerInfo,
   isDispensaryAndSupplementsEnabled,
@@ -84,47 +85,81 @@ export default function ExecutiveSupplementTimeline({
   athleteSex = 'male',
   fitnessGoal = 'hypertrophy',
 }: ExecutiveSupplementTimelineProps) {
-  const [stack] = useState<SupplementStackResult>(() => {
+  const dialogTitleId = useId()
+  const detailDialogRef = useRef<HTMLDialogElement | null>(null)
+
+  const stack = useMemo<SupplementStackResult>(() => {
     if (initialStack) return initialStack
 
-    let normalizedGoal: SupplementGoal = 'hypertrophy'
-    const g = fitnessGoal.toLowerCase()
-    if (g.includes('fat') || g.includes('weight loss') || g.includes('cutting')) normalizedGoal = 'fat_loss'
-    else if (g.includes('power') || g.includes('speed') || g.includes('athletic')) normalizedGoal = 'athletic_power'
-    else if (g.includes('longevity') || g.includes('vitality')) normalizedGoal = 'longevity_vitality'
-    else if (g.includes('health')) normalizedGoal = 'general_health'
-
     return generateSupplementStack({
-      goal: normalizedGoal,
+      goal: normalizeSupplementGoal(fitnessGoal),
       age: athleteAge,
-      sex: athleteSex === 'female' ? 'female' : 'male',
+      sex: normalizeClientSex(athleteSex),
       fitnessLevel: 'intermediate',
     })
-  })
+  }, [initialStack, fitnessGoal, athleteAge, athleteSex])
 
-  // Adherence tracking state (persisted in localStorage or session)
+  // Adherence tracking state (persisted in localStorage)
   const todayKey = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const dispensaryInfo = useMemo(() => getDispensaryPartnerInfo(), [])
   const [adherenceMap, setAdherenceMap] = useState<Record<string, boolean>>({})
   const [selectedItemDetail, setSelectedItemDetail] = useState<PrescribedSupplementItem | null>(null)
 
-  // Initialize adherence from storage
+  // Initialize adherence from storage (supporting forge_* with legacy fallback)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem(`gaa_supp_adherence_${todayKey}`)
+        const stored =
+          localStorage.getItem(`forge_supp_adherence_${todayKey}`) ??
+          localStorage.getItem(`gaa_supp_adherence_${todayKey}`)
         if (stored) setAdherenceMap(JSON.parse(stored))
       } catch {}
     }
   }, [todayKey])
 
-  const toggleAdherence = (itemId: string, windowKey: string) => {
+  // Promote Science Mechanism modal into native top layer via showModal()
+  useEffect(() => {
+    const dialog = detailDialogRef.current
+    if (selectedItemDetail && dialog && !dialog.open) {
+      dialog.showModal()
+    }
+  }, [selectedItemDetail])
+
+  const closeDetailDialog = () => {
+    const dialog = detailDialogRef.current
+    if (dialog?.open) {
+      dialog.close()
+    } else {
+      setSelectedItemDetail(null)
+    }
+  }
+
+  const handleDialogBackdropClick = (event: React.MouseEvent<HTMLDialogElement>) => {
+    const dialog = detailDialogRef.current
+    if (!dialog) return
+    if (!('closedBy' in HTMLDialogElement.prototype)) {
+      if (event.target !== dialog) return
+      const rect = dialog.getBoundingClientRect()
+      const isDialogContent =
+        rect.top <= event.clientY &&
+        event.clientY <= rect.top + rect.height &&
+        rect.left <= event.clientX &&
+        event.clientX <= rect.left + rect.width
+      if (isDialogContent) return
+      dialog.close()
+    }
+  }
+
+  const toggleAdherence = (itemId: string, windowKey: TimingWindow) => {
     if (isCoachView) return
     const key = `${windowKey}_${itemId}`
+    const nextCompleted = !adherenceMap[key]
     setAdherenceMap(prev => {
       const next = { ...prev, [key]: !prev[key] }
       try {
-        localStorage.setItem(`gaa_supp_adherence_${todayKey}`, JSON.stringify(next))
+        const serialized = JSON.stringify(next)
+        localStorage.setItem(`forge_supp_adherence_${todayKey}`, serialized)
+        localStorage.setItem(`gaa_supp_adherence_${todayKey}`, serialized)
       } catch {}
       return next
     })
@@ -133,28 +168,35 @@ export default function ExecutiveSupplementTimeline({
     void fetch('/api/fitness/supplements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ timingWindow: windowKey, itemId, date: todayKey }),
-    })
+      body: JSON.stringify({
+        timingWindow: windowKey,
+        itemId,
+        date: todayKey,
+        completed: nextCompleted,
+      }),
+    }).catch(() => {})
   }
 
-  // Calculate adherence percentage
-  const totalItems = stack.prescribedItems.length || 1
-  const completedCount = stack.prescribedItems.filter(item => {
-    return adherenceMap[`${item.timingWindow}_${item.id}`]
-  }).length
-  const adherencePct = Math.round((completedCount / totalItems) * 100)
-
+  // Calculate adherence percentage across scheduled chrono windows
   const scheduleWindows: Array<{ key: TimingWindow; items: PrescribedSupplementItem[] }> = (
     [
       { key: 'morning_with_breakfast' as const, items: stack.chronoSchedule.morning },
       { key: 'pre_workout_45min' as const, items: stack.chronoSchedule.preWorkout },
       { key: 'post_workout_anabolic' as const, items: stack.chronoSchedule.postWorkout },
       { key: 'night_pre_sleep' as const, items: stack.chronoSchedule.night },
+      { key: 'daily_flexible' as const, items: stack.chronoSchedule.dailyFlexible },
     ] as Array<{ key: TimingWindow; items: PrescribedSupplementItem[] }>
   ).filter(w => w.items.length > 0)
 
+  const scheduledItems = scheduleWindows.flatMap(w => w.items)
+  const totalItems = scheduledItems.length || 1
+  const completedCount = scheduledItems.filter(item => {
+    return adherenceMap[`${item.timingWindow}_${item.id}`]
+  }).length
+  const adherencePct = Math.round((completedCount / totalItems) * 100)
+
   return (
-    <div style={{ display: 'grid', gap: 20 }}>
+    <div style={{ display: 'grid', gap: 20, minWidth: 0 }}>
       {/* Supplement plan and daily tracking */}
       <div
         style={{
@@ -168,7 +210,7 @@ export default function ExecutiveSupplementTimeline({
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
             <div
               style={{
                 width: 38,
@@ -180,29 +222,33 @@ export default function ExecutiveSupplementTimeline({
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'var(--gold-lt)',
+                flexShrink: 0,
               }}
             >
               <GaaIcon name="supplements" size={20} tone="gold" />
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 18, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em' }}>
                   Your daily supplement plan
                 </h3>
               </div>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--gray)' }}>
-                Goal: <strong style={{ color: 'var(--gold-lt)' }}>{stack.clientProfile.goal.replace('_', ' ').toUpperCase()}</strong> · For: <strong style={{ color: '#FFFFFF' }}>{athleteName}</strong> · Includes safety checks
+                Goal: <strong style={{ color: 'var(--gold-lt)' }}>{stack.clientProfile.goal.replace(/_/g, ' ').toUpperCase()}</strong> · For: <strong style={{ color: '#FFFFFF' }}>{athleteName}</strong> · Includes safety checks
               </p>
             </div>
           </div>
 
           {/* Daily progress badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase', fontWeight: 800 }}>
                 Today&apos;s progress:
               </div>
-              <div style={{ fontFamily: 'monospace', fontSize: 18, fontWeight: 800, color: adherencePct >= 80 ? '#10B981' : adherencePct >= 40 ? '#F59E0B' : 'var(--gold-lt)' }}>
+              <div
+                data-testid="supplement-adherence-summary"
+                style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 800, color: adherencePct >= 80 ? '#10B981' : adherencePct >= 40 ? '#F59E0B' : 'var(--gold-lt)' }}
+              >
                 {completedCount} / {totalItems} ({adherencePct}%)
               </div>
             </div>
@@ -226,27 +272,18 @@ export default function ExecutiveSupplementTimeline({
           </div>
         </div>
 
-        {/* Adherence Progress Bar */}
-        <div
-          style={{
-            height: 6,
-            width: '100%',
-            background: 'rgba(255, 255, 255, 0.08)',
-            borderRadius: 3,
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              height: '100%',
-              width: `${adherencePct}%`,
-              background: 'linear-gradient(90deg, var(--gold) 0%, #10B981 100%)',
-              borderRadius: 3,
-              boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)',
-              transition: 'width 0.3s ease',
-            }}
-          />
-        </div>
+        {/* Native Semantic Adherence Progress Bar */}
+        <progress
+          className="forge-progress-bar"
+          value={completedCount}
+          max={totalItems}
+          aria-label="Daily supplement adherence"
+          style={
+            {
+              '--progress-bar-fill': adherencePct >= 80 ? '#10B981' : '#D4A017',
+            } as React.CSSProperties
+          }
+        />
       </div>
 
       {/* Supplement shopping options */}
@@ -264,7 +301,7 @@ export default function ExecutiveSupplementTimeline({
           boxShadow: '0 8px 30px rgba(0,0,0,0.45)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', maxWidth: 660 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', maxWidth: 660, minWidth: 0 }}>
           <div
             style={{
               width: 84,
@@ -279,11 +316,14 @@ export default function ExecutiveSupplementTimeline({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/dispensary-stack.jpg"
-              alt="Supplement options"
+              alt="NSF Certified for Sport supplement formulations"
+              width={84}
+              height={64}
+              loading="lazy"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </div>
-          <div style={{ flex: 1, minWidth: 260 }}>
+          <div style={{ flex: 1, minWidth: 'min(100%, 220px)' }}>
             <div
               style={{
                 display: 'inline-flex',
@@ -297,7 +337,7 @@ export default function ExecutiveSupplementTimeline({
                 marginBottom: 4,
               }}
             >
-              <span>✦</span>
+              <span aria-hidden="true">✦</span>
               <span>
                 {isDispensaryAndSupplementsEnabled
                   ? 'Forge Athletic × Thorne Dispensary · 15% member discount'
@@ -334,13 +374,14 @@ export default function ExecutiveSupplementTimeline({
               rel="noopener noreferrer"
               className="tactile-btn"
               style={{
+                minHeight: 44,
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                 color: '#080E14',
                 fontFamily: 'var(--font-sans, Raleway), sans-serif',
                 fontSize: 13,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                padding: '10px 20px',
+                padding: '10px 18px',
                 borderRadius: 6,
                 textDecoration: 'none',
                 fontWeight: 800,
@@ -348,11 +389,11 @@ export default function ExecutiveSupplementTimeline({
                 alignItems: 'center',
                 gap: 6,
                 boxShadow: '0 4px 15px rgba(197, 160, 89, 0.4)',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'normal',
               }}
             >
               <span>Shop Thorne Dispensary (15% Off)</span>
-              <span>↗</span>
+              <span aria-hidden="true">↗</span>
             </a>
           ) : (
             <span
@@ -365,7 +406,6 @@ export default function ExecutiveSupplementTimeline({
                 fontWeight: 700,
                 padding: '10px 16px',
                 borderRadius: 6,
-                whiteSpace: 'nowrap',
               }}
             >
               Dispensary Offline
@@ -397,6 +437,8 @@ export default function ExecutiveSupplementTimeline({
       {/* Medication Safety Screening & Clinical Precautions Banner */}
       {stack.drugInteractions && stack.drugInteractions.length > 0 && (
         <div
+          role="region"
+          aria-label="Timeline medication safety flags"
           style={{
             padding: '14px 18px',
             background: 'rgba(239, 68, 68, 0.12)',
@@ -479,7 +521,7 @@ export default function ExecutiveSupplementTimeline({
               </div>
 
               {/* Supplement Items Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 10 }}>
                 {items.map(item => {
                   const isChecked = Boolean(adherenceMap[`${key}_${item.id}`])
 
@@ -499,7 +541,7 @@ export default function ExecutiveSupplementTimeline({
                       }}
                     >
                       {/* Left: Info */}
-                      <div style={{ display: 'grid', gap: 3 }}>
+                      <div style={{ display: 'grid', gap: 3, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 13, fontWeight: 800, color: isChecked ? '#6EE7B7' : '#FFFFFF' }}>
                             {item.name}
@@ -524,7 +566,7 @@ export default function ExecutiveSupplementTimeline({
                           )}
                         </div>
 
-                        <div style={{ fontSize: 11.5, color: 'var(--gold-lt)', fontFamily: 'monospace', fontWeight: 700 }}>
+                        <div style={{ fontSize: 11.5, color: 'var(--gold-lt)', fontFamily: 'var(--font-telemetry, monospace)', fontWeight: 700 }}>
                           {item.optimalDosage}
                         </div>
 
@@ -534,26 +576,29 @@ export default function ExecutiveSupplementTimeline({
                           </div>
                         )}
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
                           <button
                             type="button"
                             onClick={() => setSelectedItemDetail(item)}
+                            aria-label={`Science Mechanism for ${item.name}`}
                             style={{
-                              background: 'none',
-                              border: 'none',
-                              padding: 0,
-                              fontSize: 10.5,
-                              color: 'var(--gray)',
+                              minHeight: 44,
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.12)',
+                              borderRadius: 6,
+                              padding: '8px 10px',
+                              fontSize: 11,
+                              color: 'var(--gray-lt)',
                               textAlign: 'left',
                               cursor: 'pointer',
                               textDecoration: 'underline',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: 4,
+                              gap: 5,
                             }}
                           >
                             <span>Science Mechanism</span>
-                            <GaaIcon name="external-link" size={10} tone="slate" />
+                            <GaaIcon name="external-link" size={11} tone="slate" />
                           </button>
 
                           {item.recommendedBrand && isDispensaryAndSupplementsEnabled && (
@@ -563,9 +608,10 @@ export default function ExecutiveSupplementTimeline({
                               rel="noopener noreferrer"
                               className="tactile-btn"
                               style={{
-                                fontSize: 10.5,
-                                padding: '2px 8px',
-                                borderRadius: 4,
+                                minHeight: 44,
+                                fontSize: 11,
+                                padding: '8px 12px',
+                                borderRadius: 6,
                                 background: 'rgba(212,160,23,0.15)',
                                 color: 'var(--gold-lt)',
                                 border: '1px solid rgba(212,160,23,0.4)',
@@ -577,9 +623,9 @@ export default function ExecutiveSupplementTimeline({
                               }}
                             >
                               <span>{item.recommendedBrand}®</span>
-                              <span style={{ color: 'var(--white)' }}>·</span>
+                              <span style={{ color: 'var(--white)' }} aria-hidden="true">·</span>
                               <span>{item.clientDiscountPrice || '15% Off'}</span>
-                              <span style={{ fontSize: 9 }}>↗</span>
+                              <span style={{ fontSize: 10 }} aria-hidden="true">↗</span>
                             </a>
                           )}
                         </div>
@@ -588,11 +634,20 @@ export default function ExecutiveSupplementTimeline({
                       {/* Right: 1-Tap Adherence Button */}
                       <button
                         type="button"
+                        disabled={isCoachView}
+                        aria-pressed={isCoachView ? undefined : isChecked}
+                        aria-label={
+                          isCoachView
+                            ? `${item.name} coach preview`
+                            : `Log dose for ${item.name} (${cfg.label})`
+                        }
                         onClick={() => toggleAdherence(item.id, key)}
                         className="tactile-btn"
                         style={{
-                          width: 36,
-                          height: 36,
+                          minWidth: 44,
+                          minHeight: 44,
+                          width: 44,
+                          height: 44,
                           borderRadius: 8,
                           background: isChecked ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'rgba(255, 255, 255, 0.06)',
                           border: isChecked ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
@@ -601,12 +656,12 @@ export default function ExecutiveSupplementTimeline({
                           alignItems: 'center',
                           justifyContent: 'center',
                           cursor: isCoachView ? 'default' : 'pointer',
+                          opacity: isCoachView ? 0.55 : 1,
                           boxShadow: isChecked ? '0 0 12px rgba(16, 185, 129, 0.5)' : 'none',
                           flexShrink: 0,
                         }}
-                        title={isChecked ? 'Marked as completed' : 'Tap to log dose'}
                       >
-                        {isChecked ? <GaaIcon name="check" size={16} tone="inherit" /> : <span style={{ fontSize: 12 }}>○</span>}
+                        {isChecked ? <GaaIcon name="check" size={18} tone="inherit" /> : <span aria-hidden="true" style={{ fontSize: 14 }}>○</span>}
                       </button>
                     </div>
                   )
@@ -643,47 +698,58 @@ export default function ExecutiveSupplementTimeline({
         </div>
       </div>
 
-      {/* Science Rationale & ISSN Citations Detail Modal */}
-      {selectedItemDetail && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100050,
-            background: 'rgba(4, 7, 13, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              maxWidth: 520,
-              background: '#090F1B',
-              border: '1.5px solid var(--gold)',
-              borderRadius: 12,
-              padding: '20px 24px',
-              display: 'grid',
-              gap: 14,
-              boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Native Top-Layer Science Rationale & ISSN Citations Modal (<dialog closedby="any">) */}
+      <dialog
+        ref={detailDialogRef}
+        aria-labelledby={dialogTitleId}
+        {...({ closedby: 'any' } as Record<string, string>)}
+        onClose={() => setSelectedItemDetail(null)}
+        onClick={handleDialogBackdropClick}
+        className="forge-glass-modal"
+        style={{
+          width: 'min(92vw, 520px)',
+          maxWidth: 520,
+          margin: 'auto',
+          padding: 0,
+          background: '#090F1B',
+          color: '#FFFFFF',
+          border: '1.5px solid var(--gold)',
+          borderRadius: 12,
+          boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+        }}
+      >
+        {selectedItemDetail && (
+          <div style={{ padding: '20px 24px', display: 'grid', gap: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div>
                 <span style={{ fontSize: 10.5, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800 }}>
                   Supplement details
                 </span>
-                <h4 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, fontWeight: 700, color: '#FFFFFF' }}>
+                <h4
+                  id={dialogTitleId}
+                  style={{ margin: '2px 0 0', fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, fontWeight: 700, color: '#FFFFFF' }}
+                >
                   {selectedItemDetail.name}
                 </h4>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedItemDetail(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--gray)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                aria-label="Close supplement details"
+                onClick={closeDetailDialog}
+                style={{
+                  minWidth: 44,
+                  minHeight: 44,
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  borderRadius: 8,
+                  color: 'var(--gray-lt)',
+                  cursor: 'pointer',
+                  padding: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
               >
                 <GaaIcon name="close" size={16} tone="slate" />
               </button>
@@ -702,14 +768,14 @@ export default function ExecutiveSupplementTimeline({
 
               <div>
                 <strong style={{ color: 'var(--gold-lt)' }}>Research references:</strong>
-                <p style={{ margin: '3px 0 0', color: '#94A3B8', fontFamily: 'monospace', fontSize: 11 }}>
+                <p style={{ margin: '3px 0 0', color: '#94A3B8', fontFamily: 'var(--font-telemetry, monospace)', fontSize: 11 }}>
                   {selectedItemDetail.issnCitation}
                 </p>
               </div>
 
-              <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ color: 'var(--gray)' }}>Target Dosage:</span>
-                <strong style={{ color: '#FFFFFF', fontFamily: 'monospace' }}>{selectedItemDetail.optimalDosage}</strong>
+                <strong style={{ color: '#FFFFFF', fontFamily: 'var(--font-telemetry, monospace)' }}>{selectedItemDetail.optimalDosage}</strong>
               </div>
 
               {selectedItemDetail.recommendedBrand && isDispensaryAndSupplementsEnabled && (
@@ -735,21 +801,21 @@ export default function ExecutiveSupplementTimeline({
                     rel="noopener noreferrer"
                     className="tactile-btn"
                     style={{
+                      minHeight: 44,
                       background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                       color: '#080E14',
-                      padding: '8px 16px',
+                      padding: '10px 16px',
                       borderRadius: 4,
                       fontSize: 12.5,
                       fontWeight: 800,
                       textDecoration: 'none',
-                      whiteSpace: 'nowrap',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 4,
                     }}
                   >
                     <span>Order on Thorne</span>
-                    <span>↗</span>
+                    <span aria-hidden="true">↗</span>
                   </a>
                 </div>
               )}
@@ -757,24 +823,26 @@ export default function ExecutiveSupplementTimeline({
 
             <button
               type="button"
-              onClick={() => setSelectedItemDetail(null)}
+              autoFocus
+              onClick={closeDetailDialog}
               className="tactile-btn"
               style={{
-                padding: '10px',
+                minHeight: 44,
+                padding: '10px 16px',
                 borderRadius: 6,
                 background: 'var(--gold)',
                 border: 'none',
                 color: '#080E14',
                 fontWeight: 800,
-                fontSize: 12,
+                fontSize: 13,
                 cursor: 'pointer',
               }}
             >
               Close details
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </dialog>
     </div>
   )
 }

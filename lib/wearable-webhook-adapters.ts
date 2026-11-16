@@ -62,6 +62,68 @@ export function verifyGoogleHealthWebhookToken(
   }
 }
 
+/**
+ * Validates Vital Health Webhook secret using constant-time comparison
+ */
+export function verifyVitalWebhookSecret(
+  providedSecret: string | null | undefined,
+  expectedSecret: string
+): boolean {
+  if (!providedSecret || !expectedSecret) return false
+  const token = providedSecret.trim()
+  const expected = expectedSecret.trim()
+  if (!token || token.length !== expected.length) return false
+  try {
+    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))
+  } catch {
+    return false
+  }
+}
+
+const SENSITIVE_PAYLOAD_KEYS = new Set([
+  'authorization',
+  'access_token',
+  'refresh_token',
+  'id_token',
+  'secret',
+  'webhook_secret',
+  'token',
+  'api_key',
+  'apikey',
+  'password',
+  '__proto__',
+  'constructor',
+  'prototype',
+])
+
+/**
+ * Strips credential/token keys before persisting raw wearable webhook payloads at rest.
+ */
+export function sanitizeWearableRawPayload(
+  value: unknown,
+  depth: number = 0
+): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || depth > 5) {
+    return {}
+  }
+  const out: Record<string, unknown> = {}
+  for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+    if (SENSITIVE_PAYLOAD_KEYS.has(key.toLowerCase())) continue
+    if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+      out[key] = sanitizeWearableRawPayload(entry, depth + 1)
+    } else if (Array.isArray(entry)) {
+      out[key] = entry.slice(0, 100).map((item) =>
+        item && typeof item === 'object' && !Array.isArray(item)
+          ? sanitizeWearableRawPayload(item, depth + 1)
+          : item
+      )
+    } else {
+      out[key] = entry
+    }
+  }
+  return out
+}
+
 // ── 2. NORMALIZED TELEMETRY MODELS ────────────────────────────────────
 
 export interface NormalizedWearableDailyMetrics {

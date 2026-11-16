@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import FitnessTrackerClient from "@/components/fitness/FitnessTrackerClient"
 import ClientSettingsStudio from '@/components/settings/ClientSettingsStudio'
 import GlobalCoachGordonHost from '@/components/fitness/GlobalCoachGordonHost'
+import AuxiliaryLabTestStage from './AuxiliaryLabTestStage'
 import { buildWorkoutSchedule } from '@/lib/workout-schedule'
 import { generateCorrectiveExercisePlan, NasmAssessmentRecord } from '@/lib/nasm-assessments'
 
@@ -115,7 +116,7 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
   const isBodyCompScenario = params.scenario === 'bodycomp' || params.scenario === 'lab-bodycomp' || params.scenario === 'bodycomp-scanner'
   const isVideoScenario = params.scenario === 'video' || params.scenario === 'lab-video' || params.scenario === 'form-review'
   const isRoadmapScenario = params.scenario === 'roadmap' || params.scenario === 'lab-roadmap' || params.scenario === 'periodization'
-  const isNutritionScenario = params.scenario === 'nutrition' || params.scenario === 'lab-nutrition' || params.scenario === 'macros'
+  const isNutritionScenario = params.scenario === 'nutrition' || params.scenario === 'lab-nutrition' || params.scenario === 'macros' || params.scenario === 'nutrition-saved'
   const isTravelScenario = params.scenario === 'travel' || params.scenario === 'lab-travel' || params.scenario === 'hotel'
   const isAssessmentScenario = params.scenario === 'assessment' || params.scenario === 'lab-assessment' || params.scenario === 'movement'
   const isSleepScenario = params.scenario === 'sleep' || params.scenario === 'lab-sleep' || params.scenario === 'sleep-hud'
@@ -171,6 +172,20 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
         { name: 'Single-Leg Romanian Deadlift', sets: '2', reps: '12–15', tempo: '4/2/1', rest: '60s', block: 'strength' },
       ],
     }] },
+  } : params.scenario === 'nutrition-saved' ? {
+    ...MOCK_PLAN,
+    name: 'Phase 3: Muscular Development',
+    phase_name: 'Muscular Development',
+    nasm_opt_phase: 3,
+    plan_json: {
+      ...MOCK_PLAN.plan_json,
+      nutritionTargets: {
+        targetCalories: 2350,
+        proteinGrams: 190,
+        carbGrams: 245,
+        fatGrams: 68,
+      },
+    },
   } : variety ? {
     ...MOCK_PLAN,
     name: `Phase ${variety.phase}: Workout Variety UAT`,
@@ -282,7 +297,9 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
     <main style={{ minHeight: "100dvh", background: "#0D1B2A", overflowX: "hidden", paddingBottom: "calc(140px + env(safe-area-inset-bottom, 16px))" }}>
       <div className="dashboard-fitness-content" style={{ maxWidth: 1440, margin: "0 auto", width: "100%", minWidth: 0, overflowX: "hidden", boxSizing: "border-box" }}>
         <Suspense fallback={<div style={{ color: '#E2E8F0', padding: 20 }}>Loading test harness...</div>}>
-          {params.view === 'settings' ? (
+          {params.view === 'auxiliary-lab' ? (
+            <AuxiliaryLabTestStage />
+          ) : params.view === 'settings' ? (
             <ClientSettingsStudio
               initialProfile={{
                 email: 'uat@example.com',
@@ -323,7 +340,7 @@ export default async function FitnessMobileTestHarnessPage({ searchParams }: {
               session_date: `2026-10-${String(index + 1).padStart(2, '0')}`,
               completed: true,
               workout_plan_id: plan.id,
-              exertion_rpe: 7,
+              exertion_rpe: index === 0 ? undefined : 7,
             })) : []}
             setLogs={isReadinessScenario ? readinessSetLogs : params.scenario === 'progress' ? Array.from({ length: 24 }, (_, index) => ({
               id: `progress-set-${index}`,

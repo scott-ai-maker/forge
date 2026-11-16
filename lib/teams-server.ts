@@ -2,19 +2,26 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { notifyUser } from '@/lib/notifications'
 import { getTeamById } from '@/lib/teams'
 import { getBaseUrl } from '@/lib/marketing-email'
+import { AuthzError, isMasterCoachEmail } from '@/lib/authz'
 
 /**
  * Dispatches a real-time live session alert to all active team members:
- * 1. Posts an in-app concierge link into each member's private coach chat channel.
- * 2. Sends a push, email, and SMS notification alert with a direct link.
+ * 1. Verifies the requesting coach owns the team (or is a master coach).
+ * 2. Posts an in-app concierge link into each member's private coach chat channel.
+ * 3. Sends a push, email, and SMS notification alert with a direct link.
  */
 export async function dispatchTeamLiveSessionAlert(
   teamId: string,
-  coachId: string
+  coachId: string,
+  coachEmail?: string | null
 ): Promise<{ success: boolean; notifiedCount: number; teamName: string }> {
   const team = await getTeamById(teamId, coachId)
   if (!team) {
-    throw new Error(`Team not found: ${teamId}`)
+    throw new AuthzError(`Team not found: ${teamId}`, 404)
+  }
+
+  if (team.coachId && team.coachId !== coachId && !isMasterCoachEmail(coachEmail)) {
+    throw new AuthzError('Forbidden: Not assigned coach for this team.', 403)
   }
 
   const admin = supabaseAdmin()

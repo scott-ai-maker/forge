@@ -7,6 +7,8 @@ import {
   type WearableProvider,
 } from '@/lib/wearables-telemetry'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+
 export async function GET(req: NextRequest) {
   try {
     const authz = await getRequestAuthz(req)
@@ -50,13 +52,16 @@ export async function GET(req: NextRequest) {
     }
 
     if (!primarySource && !storedMetric) {
-      return NextResponse.json({
-        connections: [],
-        primarySource: null,
-        telemetry: null,
-        providerMeta: null,
-        syncCadence: 'No Single Source of Truth Configured',
-      })
+      return NextResponse.json(
+        {
+          connections: [],
+          primarySource: null,
+          telemetry: null,
+          providerMeta: null,
+          syncCadence: 'No Single Source of Truth Configured',
+        },
+        { headers: NO_STORE_HEADERS }
+      )
     }
 
     const effectiveProvider = primarySource || 'apple_health'
@@ -86,13 +91,13 @@ export async function GET(req: NextRequest) {
         activeCaloriesKcal: storedMetric.active_calories_kcal != null ? Number(storedMetric.active_calories_kcal) : null,
         nutrition: hasNutrition
           ? {
-              caloriesConsumedKcal: Number(storedMetric.calories_consumed_kcal || 0),
-              proteinGrams: Number(storedMetric.protein_grams || 0),
-              carbsGrams: Number(storedMetric.carbs_grams || 0),
-              fatGrams: Number(storedMetric.fat_grams || 0),
-              fiberGrams: storedMetric.fiber_grams != null ? Number(storedMetric.fiber_grams) : undefined,
-              waterOz: storedMetric.water_oz != null ? Number(storedMetric.water_oz) : undefined,
-            }
+            caloriesConsumedKcal: Number(storedMetric.calories_consumed_kcal || 0),
+            proteinGrams: Number(storedMetric.protein_grams || 0),
+            carbsGrams: Number(storedMetric.carbs_grams || 0),
+            fatGrams: Number(storedMetric.fat_grams || 0),
+            fiberGrams: storedMetric.fiber_grams != null ? Number(storedMetric.fiber_grams) : undefined,
+            waterOz: storedMetric.water_oz != null ? Number(storedMetric.water_oz) : undefined,
+          }
           : null,
         updatedAt: storedMetric.synced_at || now,
       }
@@ -113,18 +118,20 @@ export async function GET(req: NextRequest) {
       },
     ]
 
-    return NextResponse.json({
-      connections,
-      primarySource: effectiveProvider,
-      telemetry: activeTelemetry,
-      providerMeta,
-      syncCadence: 'Continuous 24/7 Auto-Sync (Zero Manual Sync Required)',
-    })
+    return NextResponse.json(
+      {
+        connections,
+        primarySource: effectiveProvider,
+        telemetry: activeTelemetry,
+        providerMeta,
+        syncCadence: 'Continuous 24/7 Auto-Sync (Zero Manual Sync Required)',
+      },
+      { headers: NO_STORE_HEADERS }
+    )
   } catch (error) {
     if (error instanceof AuthzError) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
+      return NextResponse.json({ error: error.message }, { status: error.status, headers: NO_STORE_HEADERS })
     }
-    const message = error instanceof Error ? error.message : 'Failed querying wearable status'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed querying wearable status' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 }

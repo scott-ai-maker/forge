@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { identifyHeartRateZone, StageConditioningWorkout } from '@/lib/nasm-cardio-stage-engine'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
@@ -39,6 +39,7 @@ interface CardioLogFormProps {
   preferredUnits?: 'metric' | 'imperial'
   athleteAge?: number
   athleteRestingHr?: number
+  athleteHasHeartMedications?: boolean
 }
 
 export default function CardioLogForm({
@@ -46,7 +47,21 @@ export default function CardioLogForm({
   preferredUnits = 'imperial',
   athleteAge = 35,
   athleteRestingHr = 65,
+  athleteHasHeartMedications = false,
 }: CardioLogFormProps) {
+  const uid = useId()
+  const studioPanelId = `${uid}-stage-studio-panel`
+  const formPanelId = `${uid}-cardio-form-panel`
+  const formHeadingId = `${uid}-cardio-form-heading`
+  const dateId = `${uid}-session-date`
+  const activityId = `${uid}-activity-type`
+  const durationId = `${uid}-duration-mins`
+  const distanceId = `${uid}-distance`
+  const avgHrId = `${uid}-avg-hr`
+  const caloriesId = `${uid}-calories`
+  const rpeId = `${uid}-rpe`
+  const notesId = `${uid}-notes`
+
   const [logs, setLogs] = useState<CardioLog[]>(initialLogs)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -70,10 +85,16 @@ export default function CardioLogForm({
 
   const currentBpm = Number(form.avg_heart_rate) || 0
   const liveZone = currentBpm > 40
-    ? identifyHeartRateZone(currentBpm, athleteAge, athleteRestingHr)
+    ? identifyHeartRateZone(currentBpm, athleteAge, athleteRestingHr, athleteHasHeartMedications)
     : null
 
+  const updateField = (key: keyof typeof form, value: string) => {
+    if (error) setError(null)
+    setForm(prev => ({ ...prev, [key]: value }))
+  }
+
   const handleLaunchStageWorkout = (workout: StageConditioningWorkout) => {
+    if (error) setError(null)
     setForm(prev => ({
       ...prev,
       duration_mins: String(workout.durationMins),
@@ -89,46 +110,66 @@ export default function CardioLogForm({
     setSaving(true)
     setError(null)
 
-    const distanceKm = form.distance
-      ? isImperial
-        ? Math.round(Number(form.distance) * 1.60934 * 1000) / 1000
-        : Number(form.distance)
-      : undefined
+    try {
+      const parsedDuration = Number(form.duration_mins)
+      if (!Number.isFinite(parsedDuration) || parsedDuration <= 0) {
+        setError('Please enter a valid duration in minutes.')
+        return
+      }
 
-    const res = await fetch('/api/fitness/cardio', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_date: form.session_date,
-        activity_type: form.activity_type,
-        duration_mins: Number(form.duration_mins),
-        distance_km: distanceKm || null,
-        avg_heart_rate: form.avg_heart_rate ? Number(form.avg_heart_rate) : null,
-        calories: form.calories ? Number(form.calories) : null,
-        perceived_effort: form.perceived_effort ? Number(form.perceived_effort) : null,
-        notes: form.notes || null,
-      }),
-    })
+      const distanceKm = form.distance
+        ? isImperial
+          ? Math.round(Number(form.distance) * 1.60934 * 1000) / 1000
+          : Number(form.distance)
+        : null
 
-    if (!res.ok) {
-      const data = await res.json()
-      setError(data.error ?? 'Failed to log session')
-    } else {
-      const data = await res.json()
-      setLogs(prev => [data, ...prev])
-      setForm({ session_date: today, activity_type: 'outdoor-running', duration_mins: '', distance: '', avg_heart_rate: '', calories: '', perceived_effort: '', notes: '' })
-      setShowForm(false)
+      const res = await fetch('/api/fitness/cardio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_date: form.session_date,
+          activity_type: form.activity_type,
+          duration_mins: parsedDuration,
+          distance_km: distanceKm && Number.isFinite(distanceKm) ? distanceKm : null,
+          avg_heart_rate: form.avg_heart_rate ? Number(form.avg_heart_rate) : null,
+          calories: form.calories ? Number(form.calories) : null,
+          perceived_effort: form.perceived_effort ? Number(form.perceived_effort) : null,
+          notes: form.notes || null,
+        }),
+      })
+
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        setError((data as { error?: string } | null)?.error ?? 'Failed to log session')
+      } else if (data) {
+        setLogs(prev => [data as CardioLog, ...prev])
+        setForm({
+          session_date: today,
+          activity_type: 'outdoor-running',
+          duration_mins: '',
+          distance: '',
+          avg_heart_rate: '',
+          calories: '',
+          perceived_effort: '',
+          notes: '',
+        })
+        setShowForm(false)
+      }
+    } catch {
+      setError('Network error while saving cardio session. Please try again.')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   const inputStyle = {
     width: '100%',
-    padding: '7px 10px',
+    minHeight: 44,
+    padding: '8px 10px',
     background: 'var(--navy-mid)',
     border: '1px solid var(--navy-lt)',
     color: 'var(--white)',
-    fontSize: 13,
+    fontSize: 16,
     borderRadius: 4,
     boxSizing: 'border-box' as const,
   }
@@ -139,7 +180,7 @@ export default function CardioLogForm({
     color: 'var(--gray)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.06em',
-    marginBottom: 3,
+    marginBottom: 4,
   }
 
   return (
@@ -149,13 +190,16 @@ export default function CardioLogForm({
           Cardio &amp; Metabolic Conditioning
         </h3>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             type="button"
+            aria-expanded={showStudio}
+            aria-controls={studioPanelId}
             onClick={() => setShowStudio(p => !p)}
             className="tactile-btn"
             style={{
-              padding: '7px 12px',
+              padding: '8px 12px',
+              minHeight: 44,
               background: showStudio ? 'rgba(212,160,23,0.15)' : 'rgba(255,255,255,0.06)',
               color: showStudio ? 'var(--gold-lt)' : 'var(--white)',
               border: showStudio ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.15)',
@@ -172,15 +216,18 @@ export default function CardioLogForm({
             }}
           >
             <GaaIcon name="lightning" size={13} tone={showStudio ? 'gold' : 'slate'} />
-            <span>{showStudio ? 'Hide Stage Studio' : 'Stage Studio & VO2max'}</span>
+            <span>Stage Studio &amp; VO2max</span>
           </button>
 
           <button
             type="button"
+            aria-expanded={showForm}
+            aria-controls={formPanelId}
             onClick={() => setShowForm(p => !p)}
             className="tactile-btn"
             style={{
-              padding: '7px 12px',
+              padding: '8px 12px',
+              minHeight: 44,
               background: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
               color: '#0D1B2A',
               border: 'none',
@@ -197,17 +244,18 @@ export default function CardioLogForm({
             }}
           >
             <GaaIcon name={showForm ? 'close' : 'plus'} size={13} tone="inherit" />
-            <span>{showForm ? 'Cancel' : 'Log Cardio'}</span>
+            <span>Log Cardio</span>
           </button>
         </div>
       </div>
 
       {/* Embedded Stage Studio */}
       {showStudio && (
-        <div style={{ marginBottom: 12, maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div id={studioPanelId} style={{ marginBottom: 12, maxWidth: '100%', boxSizing: 'border-box' }}>
           <CardioStageStudio
             initialAge={athleteAge}
             initialRestingHr={athleteRestingHr}
+            initialHasHeartMedications={athleteHasHeartMedications}
             onLaunchWorkout={handleLaunchStageWorkout}
           />
         </div>
@@ -216,6 +264,8 @@ export default function CardioLogForm({
       {/* ── Cardio Log Form ───────────────────────────────────────── */}
       {showForm && (
         <form
+          id={formPanelId}
+          aria-labelledby={formHeadingId}
           onSubmit={onSubmit}
           style={{
             display: 'grid',
@@ -229,27 +279,33 @@ export default function CardioLogForm({
             boxSizing: 'border-box',
           }}
         >
-          <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div id={formHeadingId} style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}>
             <GaaIcon name="lightning" size={12} tone="gold" />
             <span>New Cardio &amp; Conditioning Log Entry</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8 }}>
             <div>
-              <label style={fieldLabelStyle}>Session Date</label>
+              <label htmlFor={dateId} style={fieldLabelStyle}>
+                Session Date <span aria-hidden="true">*</span>
+              </label>
               <input
+                id={dateId}
+                name="session_date"
                 type="date"
                 value={form.session_date}
-                onChange={e => setForm(p => ({ ...p, session_date: e.target.value }))}
+                onChange={e => updateField('session_date', e.target.value)}
                 style={inputStyle}
                 required
               />
             </div>
             <div>
-              <label style={fieldLabelStyle}>Activity Type</label>
+              <label htmlFor={activityId} style={fieldLabelStyle}>Activity Type</label>
               <select
+                id={activityId}
+                name="activity_type"
                 value={form.activity_type}
-                onChange={e => setForm(p => ({ ...p, activity_type: e.target.value }))}
+                onChange={e => updateField('activity_type', e.target.value)}
                 style={inputStyle}
               >
                 {CARDIO_ACTIVITY_OPTIONS.map(opt => (
@@ -261,45 +317,53 @@ export default function CardioLogForm({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 100px), 1fr))', gap: 8 }}>
             <div>
-              <label style={fieldLabelStyle}>Duration (min)</label>
+              <label htmlFor={durationId} style={fieldLabelStyle}>
+                Duration (min) <span aria-hidden="true">*</span>
+              </label>
               <input
+                id={durationId}
+                name="duration_mins"
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
                 onFocus={selectOnFocus}
                 value={form.duration_mins}
-                onChange={e => setForm(p => ({ ...p, duration_mins: sanitizeNumericInput(e.target.value) }))}
+                onChange={e => updateField('duration_mins', sanitizeNumericInput(e.target.value))}
                 style={inputStyle}
                 required
                 placeholder="30"
               />
             </div>
             <div>
-              <label style={fieldLabelStyle}>
+              <label htmlFor={distanceId} style={fieldLabelStyle}>
                 Distance ({isImperial ? 'mi' : 'km'})
               </label>
               <input
+                id={distanceId}
+                name="distance"
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
                 onFocus={selectOnFocus}
                 value={form.distance}
-                onChange={e => setForm(p => ({ ...p, distance: sanitizeNumericInput(e.target.value) }))}
+                onChange={e => updateField('distance', sanitizeNumericInput(e.target.value))}
                 style={inputStyle}
                 placeholder="3.1"
               />
             </div>
             <div>
-              <label style={fieldLabelStyle}>Avg Heart Rate</label>
+              <label htmlFor={avgHrId} style={fieldLabelStyle}>Avg Heart Rate (BPM)</label>
               <input
+                id={avgHrId}
+                name="avg_heart_rate"
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
                 onFocus={selectOnFocus}
                 value={form.avg_heart_rate}
-                onChange={e => setForm(p => ({ ...p, avg_heart_rate: sanitizeNumericInput(e.target.value) }))}
+                onChange={e => updateField('avg_heart_rate', sanitizeNumericInput(e.target.value))}
                 style={inputStyle}
-                placeholder="145 BPM"
+                placeholder="145"
               />
             </div>
           </div>
@@ -307,6 +371,8 @@ export default function CardioLogForm({
           {/* Live NASM Zone Pill */}
           {liveZone && (
             <div
+              role="status"
+              aria-live="polite"
               style={{
                 background: 'rgba(0,0,0,0.4)',
                 border: `1px solid ${liveZone.color}`,
@@ -340,27 +406,31 @@ export default function CardioLogForm({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8 }}>
             <div>
-              <label style={fieldLabelStyle}>Calories (kcal)</label>
+              <label htmlFor={caloriesId} style={fieldLabelStyle}>Calories (kcal)</label>
               <input
+                id={caloriesId}
+                name="calories"
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
                 onFocus={selectOnFocus}
                 value={form.calories}
-                onChange={e => setForm(p => ({ ...p, calories: sanitizeNumericInput(e.target.value) }))}
+                onChange={e => updateField('calories', sanitizeNumericInput(e.target.value))}
                 style={inputStyle}
                 placeholder="320"
               />
             </div>
             <div>
-              <label style={fieldLabelStyle}>Perceived Exertion (RPE 1-10)</label>
+              <label htmlFor={rpeId} style={fieldLabelStyle}>Perceived Exertion (RPE 1-10)</label>
               <input
+                id={rpeId}
+                name="perceived_effort"
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
                 onFocus={selectOnFocus}
                 value={form.perceived_effort}
-                onChange={e => setForm(p => ({ ...p, perceived_effort: sanitizeNumericInput(e.target.value) }))}
+                onChange={e => updateField('perceived_effort', sanitizeNumericInput(e.target.value))}
                 style={inputStyle}
                 placeholder="7"
               />
@@ -368,23 +438,26 @@ export default function CardioLogForm({
           </div>
 
           <div>
-            <label style={fieldLabelStyle}>Session Notes / Intervals</label>
+            <label htmlFor={notesId} style={fieldLabelStyle}>Session Notes / Intervals</label>
             <textarea
+              id={notesId}
+              name="notes"
               value={form.notes}
-              onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-              style={{ ...inputStyle, minHeight: 56, resize: 'vertical' }}
+              onChange={e => updateField('notes', e.target.value)}
+              style={{ ...inputStyle, minHeight: 68, resize: 'vertical' }}
               placeholder="Stage protocol, interval work/rest ratios, or breathing cues"
             />
           </div>
 
-          {error && <p style={{ margin: 0, color: 'var(--error)', fontSize: 13 }}>{error}</p>}
+          {error && <p role="alert" style={{ margin: 0, color: 'var(--error)', fontSize: 13 }}>{error}</p>}
 
           <button
             type="submit"
             disabled={saving}
             className="tactile-btn"
             style={{
-              padding: '10px 0',
+              padding: '10px 14px',
+              minHeight: 46,
               background: saving ? 'var(--navy-lt)' : 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
               color: '#0D1B2A',
               border: 'none',

@@ -32,28 +32,45 @@ describe('Live Cardiorespiratory & Caloric Telemetry Engine', () => {
     expect(result.caloriesBurned).toBeLessThan(550)
   })
 
-  it('correctly maps heart rate into NASM Zone 2 threshold and %HRmax', () => {
-    const age = 30 // HRmax = 190
-    const bpm = 150 // ~79% HRmax => Zone 2 (76-85%)
+  it('correctly maps heart rate into NASM Zone 2 threshold and Tanaka %HRmax', () => {
+    const age = 30 // Tanaka HRmax = 208 - (0.7 * 30) = 187
+    const bpm = 150 // 150 / 187 = 80% HRmax => Zone 2 (76-85%)
     const duration = 900 // 15 mins
 
     const telemetry = evaluateLiveCardioTelemetry(bpm, duration, { age, weightKg: 75 })
 
     expect(telemetry.currentBpm).toBe(150)
-    expect(telemetry.hrMaxBpm).toBe(190)
-    expect(telemetry.hrPercentMax).toBe(79)
+    expect(telemetry.hrMaxBpm).toBe(187)
+    expect(telemetry.hrPercentMax).toBe(80)
     expect(telemetry.zoneCode).toBe('zone2')
     expect(telemetry.zoneColor).toBe('#F59E0B')
     expect(telemetry.caloriesBurned).toBeGreaterThan(100)
   })
 
-  it('identifies Zone 3 peak anaerobic intensity at high heart rates', () => {
-    const age = 30 // HRmax = 190
-    const bpm = 175 // ~92% HRmax => Zone 3 (86-95%)
+  it('identifies Zone 3 peak anaerobic intensity at high heart rates and stays consistent for older athletes', () => {
+    const age = 60 // Tanaka HRmax = 208 - (0.7 * 60) = 166
+    const bpm = 156 // 156 / 166 = 94% HRmax => Zone 3 (86-95%)
     const duration = 600
 
-    const telemetry = evaluateLiveCardioTelemetry(bpm, duration, { age })
+    const telemetry = evaluateLiveCardioTelemetry(bpm, duration, {
+      age,
+      hasHeartMedications: true,
+    })
+    expect(telemetry.hrMaxBpm).toBe(166)
+    expect(telemetry.hrPercentMax).toBe(94)
     expect(telemetry.zoneCode).toBe('zone3')
-    expect(telemetry.hrPercentMax).toBeGreaterThan(90)
+    expect(telemetry.isMedicationSuppressed).toBe(true)
+    expect(telemetry.zoneDescription).toContain('Medication Alert')
+  })
+
+  it('guards non-finite BPM and duration inputs gracefully', () => {
+    expect(calculateLiveCaloricBurn({ bpm: Number.NaN, durationSeconds: 600 })).toEqual({
+      caloriesBurned: 0,
+      caloriesPerMinute: 0,
+    })
+    const nanTelemetry = evaluateLiveCardioTelemetry(Number.NaN, Number.NaN, { age: Number.NaN })
+    expect(Number.isFinite(nanTelemetry.currentBpm)).toBe(true)
+    expect(Number.isFinite(nanTelemetry.hrPercentMax)).toBe(true)
+    expect(nanTelemetry.caloriesBurned).toBe(0)
   })
 })

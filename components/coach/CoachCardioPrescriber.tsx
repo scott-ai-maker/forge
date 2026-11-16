@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useId } from 'react'
 import {
   CARDIO_PATTERNS,
   buildCardioSession,
@@ -22,11 +22,22 @@ export default function CoachCardioPrescriber({
   clientAge: _clientAge = 35,
   onSavedPrescription,
 }: CoachCardioPrescriberProps) {
+  const uid = useId()
+  const patternGroupLabelId = `${uid}-pattern-group`
+  const durationGroupLabelId = `${uid}-duration-group`
+  const memoInputId = `${uid}-coach-memo`
+
   const [selectedPatternId, setSelectedPatternId] = useState<CardioPatternId>('zone2_aerobic_engine')
   const [durationMins, setDurationMins] = useState<number>(20)
   const [customNotes, setCustomNotes] = useState<string>('')
   const [isAudioPreviewPlaying, setIsAudioPreviewPlaying] = useState<boolean>(false)
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false)
+
+  useEffect(() => {
+    return () => {
+      stopCardioVoiceCue()
+    }
+  }, [])
 
   const activePattern = CARDIO_PATTERNS[selectedPatternId]
 
@@ -147,7 +158,7 @@ export default function CoachCardioPrescriber({
         </div>
 
         {/* Action Buttons: Preview & Save */}
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <button
             type="button"
             onClick={handleTestVoiceover}
@@ -156,7 +167,8 @@ export default function CoachCardioPrescriber({
               border: isAudioPreviewPlaying ? '1px solid #EF4444' : '1px solid #D4AF37',
               color: isAudioPreviewPlaying ? '#FFFFFF' : '#D4AF37',
               borderRadius: 6,
-              padding: '8px 14px',
+              padding: '10px 14px',
+              minHeight: 44,
               fontSize: 12,
               fontWeight: 800,
               cursor: 'pointer',
@@ -177,7 +189,8 @@ export default function CoachCardioPrescriber({
               color: '#0A0E18',
               border: 'none',
               borderRadius: 6,
-              padding: '8px 16px',
+              padding: '10px 16px',
+              minHeight: 44,
               fontSize: 12.5,
               fontWeight: 900,
               cursor: 'pointer',
@@ -190,15 +203,23 @@ export default function CoachCardioPrescriber({
             <GaaIcon name="shield-check" size={14} tone="dark" />
             <span>{saveSuccess ? '✓ Prescribed' : 'Save Prescription'}</span>
           </button>
+
+          {saveSuccess && (
+            <span role="status" aria-live="polite" style={{ fontSize: 11.5, color: '#34D399', fontWeight: 700 }}>
+              Saved to athlete plan
+            </span>
+          )}
         </div>
       </div>
 
       {/* ── Pattern Selection Grid ─────────────────────────────────── */}
       <div style={{ marginBottom: 18 }}>
-        <label style={{ fontSize: 11.5, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <div id={patternGroupLabelId} style={{ fontSize: 11.5, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           1. Select Cardiorespiratory Pattern:
-        </label>
+        </div>
         <div
+          role="group"
+          aria-labelledby={patternGroupLabelId}
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
@@ -212,6 +233,7 @@ export default function CoachCardioPrescriber({
               <button
                 key={pattern.id}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => {
                   setSelectedPatternId(pattern.id)
                   setDurationMins(pattern.defaultDurationMins)
@@ -221,9 +243,10 @@ export default function CoachCardioPrescriber({
                   border: isSelected ? '2px solid #D4AF37' : '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   padding: 12,
+                  minHeight: 48,
                   textAlign: 'left',
                   cursor: 'pointer',
-                  transition: 'all 0.15s ease',
+                  transition: 'background-color 0.15s ease, border-color 0.15s ease',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -262,21 +285,27 @@ export default function CoachCardioPrescriber({
       >
         {/* Duration Selector */}
         <div>
-          <label style={{ fontSize: 11.5, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <div id={durationGroupLabelId} style={{ fontSize: 11.5, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             2. Prescribed Session Length (Minutes):
-          </label>
-          <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+          </div>
+          <div
+            role="group"
+            aria-labelledby={durationGroupLabelId}
+            style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}
+          >
             {(activePattern.allowedDurations || [10, 15, 20, 30, 45]).map(mins => (
               <button
                 key={mins}
                 type="button"
+                aria-pressed={durationMins === mins}
                 onClick={() => setDurationMins(mins)}
                 style={{
                   background: durationMins === mins ? '#D4AF37' : 'rgba(255,255,255,0.05)',
                   color: durationMins === mins ? '#0A0E18' : '#FFFFFF',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 6,
-                  padding: '6px 12px',
+                  padding: '8px 14px',
+                  minHeight: 44,
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -293,22 +322,25 @@ export default function CoachCardioPrescriber({
 
         {/* Personalized Coach Notes */}
         <div>
-          <label style={{ fontSize: 11.5, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <label htmlFor={memoInputId} style={{ display: 'block', fontSize: 11.5, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             3. Personalized Coach Directive / Memo:
           </label>
           <textarea
+            id={memoInputId}
+            name="coach_cardio_memo"
             value={customNotes}
             onChange={e => setCustomNotes(e.target.value)}
             placeholder={activePattern.coachMemoTemplate}
             rows={3}
             style={{
               width: '100%',
+              minHeight: 72,
               marginTop: 6,
               background: '#0F172A',
               border: '1px solid rgba(212,160,23,0.3)',
               borderRadius: 6,
               padding: '8px 10px',
-              fontSize: 12,
+              fontSize: 16,
               color: '#FFFFFF',
               boxSizing: 'border-box',
               resize: 'vertical',

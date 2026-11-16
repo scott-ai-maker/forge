@@ -25,6 +25,8 @@ import { POST as disconnectPost } from '@/app/api/wearables/disconnect/route'
 import { GET as statusGet } from '@/app/api/wearables/status/route'
 import { POST as syncPost } from '@/app/api/wearables/sync/route'
 import { GET as webhookGet, POST as webhookPost } from '@/app/api/wearables/webhook/route'
+import { POST as vitalLinkPost } from '@/app/api/wearables/vital/link/route'
+import { POST as vitalWebhookPost } from '@/app/api/wearables/vital/webhook/route'
 
 describe('Single Source of Truth Wearables API Endpoints (Apple Health & Google Health Connect)', () => {
   beforeEach(() => {
@@ -430,6 +432,78 @@ describe('Single Source of Truth Wearables API Endpoints (Apple Health & Google 
 
       const res = await webhookPost(req)
       expect(res.status).toBe(401)
+      expect(res.headers.get('cache-control')).toBe('no-store, max-age=0')
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
+  it('enforces no-store headers, 413 payload limits, credential scrubbing, and Vital constant-time secret verification', async () => {
+    // 1. Rejects unsupported explicit provider on vital/link
+    const badVitalProviderReq = new NextRequest('http://localhost/api/wearables/vital/link', {
+      method: 'POST',
+      body: JSON.stringify({ provider: 'garmin_legacy' }),
+    })
+    const badVitalRes = await vitalLinkPost(badVitalProviderReq)
+    expect(badVitalRes.status).toBe(400)
+    expect(badVitalRes.headers.get('cache-control')).toBe('no-store, max-age=0')
+
+    // 2. Rejects oversized >256KB webhook payload with 413
+    const hugeBody = JSON.stringify({ user_id: 'client-123', pad: 'x'.repeat(270_000) })
+    const hugeReq = new NextRequest('http://localhost/api/wearables/webhook', {
+      method: 'POST',
+      body: hugeReqBody(hugeBody),
+    })
+    function hugeReqBody(s: string) {
+      return s
+    }
+    const hugeRes = await webhookPost(hugeReq)
+    expect(hugeRes.status).toBe(413)
+
+    // 3. Scrubs secret/token keys from persisted raw_payload and verifies Vital secret in constant time
+    vi.stubEnv('VITAL_WEBHOOK_SECRET', 'vital-prod-secret-999')
+    try {
+      const wrongSecretReq = new NextRequest('http://localhost/api/wearables/vital/webhook', {
+        method: 'POST',
+        headers: { 'x-vital-webhook-secret': 'wrong-secret' },
+        body: JSON.stringify({ client_user_id: 'client-123' }),
+      })
+      const wrongRes = await vitalWebhookPost(wrongSecretReq)
+      expect(wrongRes.status).toBe(401)
+
+      let persistedRow = null as Record<string, unknown> | null
+      supabaseAdminMock.mockReturnValue({
+        from: (table: string) => {
+          if (table === 'athlete_wearable_metrics') {
+            return {
+              upsert: async (row: Record<string, unknown>) => {
+                persistedRow = row
+                return { error: null }
+              },
+            }
+          }
+          return {
+            update: () => ({ eq: async () => ({ error: null }) }),
+          }
+        },
+      })
+
+      const validVitalReq = new NextRequest('http://localhost/api/wearables/vital/webhook', {
+        method: 'POST',
+        headers: { 'x-vital-webhook-secret': 'vital-prod-secret-999' },
+        body: JSON.stringify({
+          client_user_id: 'client-123',
+          access_token: 'super-secret-oauth-token',
+          data: {
+            resting_heart_rate: 54,
+            hrv_rmssd: 78,
+          },
+        }),
+      })
+      const okVitalRes = await vitalWebhookPost(validVitalReq)
+      expect(okVitalRes.status).toBe(200)
+      expect(okVitalRes.headers.get('cache-control')).toBe('no-store, max-age=0')
+      expect((persistedRow?.raw_payload as Record<string, unknown>)?.access_token).toBeUndefined()
     } finally {
       vi.unstubAllEnvs()
     }

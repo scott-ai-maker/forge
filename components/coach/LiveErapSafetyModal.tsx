@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import { ALL_PARTY_RECORDING_NOTICE } from '@/lib/legal-compliance'
+import { useNativeStudioDialog } from './useNativeStudioDialog'
 
 export interface ClientErapData {
   clientId: string
@@ -48,6 +49,9 @@ export default function LiveErapSafetyModal({
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [copiedPhone, setCopiedPhone] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+
+  useNativeStudioDialog(dialogRef, isOpen, onClose)
 
   const fetchErapData = useCallback(async () => {
     if (!clientId) return
@@ -70,26 +74,15 @@ export default function LiveErapSafetyModal({
 
   useEffect(() => {
     if (isOpen) {
-      fetchErapData()
+      void fetchErapData()
     }
   }, [isOpen, fetchErapData])
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
   const erap = data?.erap
   const resolvedAthleteName = data?.athleteName || athleteName
   const dispatchPhone = erap?.localEmergencyDispatchPhone || '911 (Local PSAP)'
-  const _hasLocalDispatch = dispatchPhone && !dispatchPhone.startsWith('911')
 
   const fullStreet = erap?.workoutStreetAddress
   const fullCityStateZip = [erap?.workoutCity, erap?.workoutState, erap?.workoutPostalCode]
@@ -126,26 +119,14 @@ export default function LiveErapSafetyModal({
   }
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       data-testid="live-erap-safety-modal"
-      role="dialog"
-      aria-modal="true"
+      className="forge-live-studio-dialog"
       aria-labelledby="erap-modal-title"
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 10000,
-        background: 'rgba(5, 7, 12, 0.88)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-        animation: 'fadeIn 0.2s ease-out',
-      }}
-      onClick={e => {
-        if (e.target === e.currentTarget) onClose()
+        maxWidth: 'min(780px, calc(100vw - 16px))',
       }}
     >
       <div
@@ -153,9 +134,8 @@ export default function LiveErapSafetyModal({
           background: '#090D16',
           border: '1px solid rgba(239, 68, 68, 0.45)',
           borderRadius: 14,
-          maxWidth: 780,
           width: '100%',
-          maxHeight: '90vh',
+          maxHeight: '90dvh',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 70px rgba(0,0,0,0.95), 0 0 35px rgba(239, 68, 68, 0.18)',
@@ -165,7 +145,7 @@ export default function LiveErapSafetyModal({
         {/* Header */}
         <div
           style={{
-            padding: '16px 20px',
+            padding: '16px clamp(14px, 2vw, 20px)',
             borderBottom: '1px solid rgba(239, 68, 68, 0.25)',
             background: 'linear-gradient(180deg, rgba(239, 68, 68, 0.14) 0%, rgba(9, 13, 22, 0) 100%)',
             display: 'flex',
@@ -174,7 +154,7 @@ export default function LiveErapSafetyModal({
             gap: 12,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minInlineSize: 0 }}>
             <div
               style={{
                 width: 36,
@@ -191,7 +171,7 @@ export default function LiveErapSafetyModal({
             >
               <GaaIcon name="shield-alert" size={20} tone="inherit" />
             </div>
-            <div>
+            <div style={{ minInlineSize: 0 }}>
               <div
                 style={{
                   fontSize: 10,
@@ -207,7 +187,7 @@ export default function LiveErapSafetyModal({
                 id="erap-modal-title"
                 style={{
                   margin: '2px 0 0',
-                  fontSize: 18,
+                  fontSize: 'clamp(16px, 2vw, 18px)',
                   fontWeight: 800,
                   color: '#FFFFFF',
                   letterSpacing: '0.01em',
@@ -226,14 +206,14 @@ export default function LiveErapSafetyModal({
               background: 'rgba(255, 255, 255, 0.08)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: 6,
-              width: 32,
-              height: 32,
-              display: 'flex',
+              minWidth: 44,
+              minHeight: 44,
+              display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#9CA3AF',
               cursor: 'pointer',
-              transition: 'all 0.15s ease',
+              flexShrink: 0,
             }}
           >
             <GaaIcon name="close" size={14} tone="inherit" />
@@ -243,7 +223,7 @@ export default function LiveErapSafetyModal({
         {/* Modal Body */}
         <div
           style={{
-            padding: 20,
+            padding: 'clamp(14px, 2.5vw, 20px)',
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
@@ -258,6 +238,7 @@ export default function LiveErapSafetyModal({
 
           {fetchError && (
             <div
+              role="alert"
               style={{
                 padding: '10px 14px',
                 borderRadius: 8,
@@ -306,6 +287,7 @@ export default function LiveErapSafetyModal({
                   href={`tel:${dispatchPhone.replace(/[^\d+]/g, '')}`}
                   data-testid="erap-dispatch-phone-btn"
                   style={{
+                    minHeight: 44,
                     padding: '8px 14px',
                     borderRadius: 6,
                     background: '#DC2626',
@@ -327,6 +309,7 @@ export default function LiveErapSafetyModal({
                   type="button"
                   onClick={handleCopyPhone}
                   style={{
+                    minHeight: 44,
                     padding: '8px 12px',
                     borderRadius: 6,
                     background: 'rgba(255, 255, 255, 0.1)',
@@ -355,7 +338,7 @@ export default function LiveErapSafetyModal({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
               gap: 14,
             }}
           >
@@ -371,7 +354,7 @@ export default function LiveErapSafetyModal({
                 gap: 8,
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#9CA3AF' }}>
                   Remote Physical Workout Location
                 </span>
@@ -380,6 +363,7 @@ export default function LiveErapSafetyModal({
                   data-testid="erap-copy-address-btn"
                   onClick={handleCopyAddress}
                   style={{
+                    minHeight: 36,
                     background: 'transparent',
                     border: 'none',
                     color: copiedAddress ? '#34D399' : '#60A5FA',
@@ -389,7 +373,7 @@ export default function LiveErapSafetyModal({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 4,
-                    padding: 0,
+                    padding: '4px 6px',
                   }}
                 >
                   <GaaIcon name="copy" size={11} tone="inherit" />
@@ -443,7 +427,7 @@ export default function LiveErapSafetyModal({
                 Emergency Contact & Athlete Details
               </span>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: 11, color: '#9CA3AF' }}>Primary Emergency Contact</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#FFF' }}>
@@ -454,7 +438,8 @@ export default function LiveErapSafetyModal({
                   <a
                     href={`tel:${data.emergencyContactPhone}`}
                     style={{
-                      padding: '4px 8px',
+                      minHeight: 38,
+                      padding: '6px 10px',
                       borderRadius: 4,
                       background: 'rgba(255,255,255,0.08)',
                       border: '1px solid rgba(255,255,255,0.15)',
@@ -473,7 +458,7 @@ export default function LiveErapSafetyModal({
                 )}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: 11, color: '#9CA3AF' }}>Athlete Mobile Phone</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#FFF' }}>
@@ -484,7 +469,8 @@ export default function LiveErapSafetyModal({
                   <a
                     href={`tel:${data.athletePhone}`}
                     style={{
-                      padding: '4px 8px',
+                      minHeight: 38,
+                      padding: '6px 10px',
                       borderRadius: 4,
                       background: 'rgba(255,255,255,0.08)',
                       border: '1px solid rgba(255,255,255,0.15)',
@@ -527,7 +513,7 @@ export default function LiveErapSafetyModal({
               NASM VCS 4-Step Acute Remote Incident Standard
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
               <div style={{ fontSize: 11, color: '#E2E8F0', lineHeight: 1.4 }}>
                 <strong style={{ color: '#93C5FD' }}>1. Maintain Live Audio/Video:</strong> Do not disconnect stream. Continue verbal contact with athlete or family.
               </div>
@@ -584,6 +570,8 @@ export default function LiveErapSafetyModal({
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 10,
               paddingTop: 4,
               borderTop: '1px solid rgba(255, 255, 255, 0.06)',
               fontSize: 11,
@@ -611,7 +599,8 @@ export default function LiveErapSafetyModal({
               type="button"
               onClick={onClose}
               style={{
-                padding: '6px 14px',
+                minHeight: 44,
+                padding: '8px 16px',
                 borderRadius: 6,
                 background: 'rgba(255, 255, 255, 0.08)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -626,6 +615,6 @@ export default function LiveErapSafetyModal({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

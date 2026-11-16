@@ -3,8 +3,11 @@ import { getRequestAuthz, requireRole, requireCoachAssignedClient, AuthzError } 
 import { supabaseAdmin } from '@/lib/supabase'
 import { parseParqAnswers } from '@/lib/coach-onboarding-progression'
 import { evaluateMedicalParq } from '@/lib/liability-shield'
+import { enforceRateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 export async function GET(
   req: NextRequest,
@@ -17,6 +20,21 @@ export async function GET(
     const { id: clientId } = await params
 
     await requireCoachAssignedClient(coachId, clientId)
+
+    const rl = await enforceRateLimit({
+      key: `erap:${coachId}`,
+      limit: 60,
+      windowSeconds: 60,
+      route: '/api/coach/clients/[id]/erap',
+      dimension: 'user',
+    })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many emergency record requests. Please retry shortly.' },
+        { status: 429, headers: NO_STORE_HEADERS }
+      )
+    }
+
     const admin = supabaseAdmin()
 
     const [{ data: client }, { data: intake }] = await Promise.all([
@@ -33,30 +51,33 @@ export async function GET(
     ])
 
     if (!client) {
-      return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Client not found' }, { status: 404, headers: NO_STORE_HEADERS })
     }
 
     const parqAnswers = parseParqAnswers(intake?.parq_answers, intake)
     const evaluation = evaluateMedicalParq(parqAnswers)
 
-    return NextResponse.json({
-      clientId,
-      athleteName: client.full_name || 'Athlete',
-      athleteEmail: client.email || null,
-      athletePhone: client.phone || null,
-      emergencyContactName: intake?.emergency_contact_name || null,
-      emergencyContactPhone: intake?.emergency_contact_phone || null,
-      medicalConditions: intake?.medical_conditions || null,
-      riskTier: evaluation.riskTier,
-      clearanceStatus: evaluation.clearanceStatus,
-      erap: evaluation.erapRecord,
-      virtualTelehealthDisclaimer: evaluation.virtualTelehealthDisclaimer,
-    })
+    return NextResponse.json(
+      {
+        clientId,
+        athleteName: client.full_name || 'Athlete',
+        athleteEmail: client.email || null,
+        athletePhone: client.phone || null,
+        emergencyContactName: intake?.emergency_contact_name || null,
+        emergencyContactPhone: intake?.emergency_contact_phone || null,
+        medicalConditions: intake?.medical_conditions || null,
+        riskTier: evaluation.riskTier,
+        clearanceStatus: evaluation.clearanceStatus,
+        erap: evaluation.erapRecord,
+        virtualTelehealthDisclaimer: evaluation.virtualTelehealthDisclaimer,
+      },
+      { headers: NO_STORE_HEADERS }
+    )
   } catch (error) {
     if (error instanceof AuthzError) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
+      return NextResponse.json({ error: error.message }, { status: error.status, headers: NO_STORE_HEADERS })
     }
     const message = error instanceof Error ? error.message : 'Internal server error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 500, headers: NO_STORE_HEADERS })
   }
 }

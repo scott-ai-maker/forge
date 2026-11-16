@@ -32,19 +32,23 @@ export function computeLiveSessionSummary(data: LiveSessionWrapUpData): Computed
   let heaviestLift: { exercise: string; weightLbs: number; reps: number } | null = null
 
   for (const s of data.sets) {
+    if (!s || typeof s.exercise_name !== 'string' || !s.exercise_name.trim()) continue
     totalSets += 1
-    uniqueExercises.add(s.exercise_name)
+    const cleanExerciseName = s.exercise_name.trim()
+    uniqueExercises.add(cleanExerciseName)
 
-    const wKg = Number(s.weight_kg) || 0
+    const rawWKg = Number(s.weight_kg)
+    const wKg = Number.isFinite(rawWKg) && rawWKg > 0 ? rawWKg : 0
     const wLbs = Math.round(wKg * 2.20462)
-    const r = Number(s.reps) || 0
+    const rawReps = Number(s.reps)
+    const r = Number.isFinite(rawReps) && rawReps > 0 ? Math.round(rawReps) : 0
 
     if (!s.is_warmup) {
       workingSets += 1
       totalTonnageLbs += wLbs * r
 
       if (!heaviestLift || wLbs > heaviestLift.weightLbs) {
-        heaviestLift = { exercise: s.exercise_name, weightLbs: wLbs, reps: r }
+        heaviestLift = { exercise: cleanExerciseName, weightLbs: wLbs, reps: r }
       }
     }
   }

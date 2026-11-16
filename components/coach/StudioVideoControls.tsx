@@ -15,6 +15,7 @@ import {
   type StudioLightingPresetId,
 } from '@/lib/studio-video-presets'
 import type { StudioVideoPipelineController } from '@/hooks/useStudioVideoPipeline'
+import { useNativeStudioDialog } from './useNativeStudioDialog'
 
 function triggerStudioTick() {
   if (!isSfxMuted()) {
@@ -478,6 +479,25 @@ export default function StudioVideoControls({
             outline: 2px solid Highlight;
           }
         }
+        @media (max-width: 640px) {
+          .forge-studio-fx-panel {
+            position: fixed !important;
+            left: 12px !important;
+            right: 12px !important;
+            width: auto !important;
+            max-width: calc(100vw - 24px) !important;
+            max-height: calc(100dvh - 96px);
+            overflow-y: auto;
+          }
+          .forge-studio-fx-panel[data-placement="dock"] {
+            bottom: max(76px, calc(env(safe-area-inset-bottom, 0px) + 64px)) !important;
+            top: auto !important;
+          }
+          .forge-studio-fx-panel[data-placement="header"] {
+            top: 64px !important;
+            bottom: auto !important;
+          }
+        }
       `}</style>
 
       {/* Screen-reader live region outside role="toolbar" per WAI-ARIA toolbar guidance */}
@@ -614,6 +634,8 @@ export default function StudioVideoControls({
         <div
           id={panelId}
           data-testid="studio-fx-panel"
+          data-placement={placement}
+          className="forge-studio-fx-panel"
           style={{
             position: 'absolute',
             ...(placement === 'dock'
@@ -992,8 +1014,11 @@ export function StudioGreenRoomPreview({
   isCoach = false,
   onJoinStudio,
 }: StudioGreenRoomPreviewProps) {
+  const greenRoomDialogRef = useRef<HTMLDialogElement | null>(null)
   const previewVideoRef = useRef<HTMLVideoElement | null>(null)
   const { sfxMuted } = useSfxMuted()
+
+  useNativeStudioDialog(greenRoomDialogRef, isOpen, onJoinStudio)
 
   // Default to a helpful Framing Guide when opening the Green Room if currently 'off'
   useEffect(() => {
@@ -1015,30 +1040,22 @@ export function StudioGreenRoomPreview({
   if (!isOpen) return null
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={greenRoomDialogRef}
+      className="forge-live-studio-dialog"
       aria-label="Forge Athletic Live Studio Green Room Preview"
       data-testid="studio-green-room-modal"
+      {...({ closedby: 'any' } as Record<string, unknown>)}
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 120,
-        background: 'rgba(4, 7, 14, 0.92)',
-        backdropFilter: 'blur(16px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'max(14px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) max(14px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px))',
-        overflowY: 'auto',
+        maxWidth: 'min(980px, calc(100vw - 16px))',
       }}
     >
       <div
         style={{
-          width: 'min(980px, 100%)',
+          width: '100%',
           maxHeight: '94dvh',
           overflowY: 'auto',
-          background: 'rgba(17, 19, 24, 0.86)',
+          background: 'rgba(17, 19, 24, 0.92)',
           backdropFilter: 'blur(24px) saturate(165%)',
           WebkitBackdropFilter: 'blur(24px) saturate(165%)',
           border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -1048,6 +1065,7 @@ export function StudioGreenRoomPreview({
           display: 'flex',
           flexDirection: 'column',
           gap: 16,
+          boxSizing: 'border-box',
         }}
       >
         {/* Top Studio Header */}
@@ -1637,6 +1655,6 @@ export function StudioGreenRoomPreview({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

@@ -5,18 +5,25 @@ import {
   verifyGoogleHealthWebhookToken,
   normalizeAppleHealthDailyMetrics,
   normalizeGoogleHealthDailyMetrics,
+  sanitizeWearableRawPayload,
 } from '@/lib/wearable-webhook-adapters'
 import { normalizeWearableWorkout } from '@/lib/wearables-telemetry'
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+const MAX_WEBHOOK_PAYLOAD_BYTES = 262_144
 
 /**
  * GET: Webhook verification and healthcheck
  */
 export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    message: 'Forge Athletic Single Source of Truth Webhook Engine Active (Apple Health & Google Health Connect)',
-    supportedProviders: ['apple_health', 'google_fit'],
-  })
+  return NextResponse.json(
+    {
+      ok: true,
+      message: 'Forge Athletic Single Source of Truth Webhook Engine Active (Apple Health & Google Health Connect)',
+      supportedProviders: ['apple_health', 'google_fit'],
+    },
+    { headers: NO_STORE_HEADERS }
+  )
 }
 
 /**
@@ -25,17 +32,25 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const rawText = await req.text()
-    let body: Record<string, unknown> | null = null
+    if (Buffer.byteLength(rawText, 'utf8') > MAX_WEBHOOK_PAYLOAD_BYTES) {
+      return NextResponse.json(
+        { error: 'Webhook payload exceeds maximum allowed size (256 KB)' },
+        { status: 413, headers: NO_STORE_HEADERS }
+      )
+    }
+
+    let parsed: unknown = null
 
     try {
-      body = JSON.parse(rawText) as Record<string, unknown>
+      parsed = JSON.parse(rawText)
     } catch {
-      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400, headers: NO_STORE_HEADERS })
     }
 
-    if (!body) {
-      return NextResponse.json({ error: 'Missing webhook body' }, { status: 400 })
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return NextResponse.json({ error: 'Missing or invalid webhook JSON object' }, { status: 400, headers: NO_STORE_HEADERS })
     }
+    const body = parsed as Record<string, unknown>
 
     const provider: WearableProvider =
       body.provider === 'google_fit' || body.provider === 'google_health' || body.platform === 'android'
@@ -47,16 +62,16 @@ export async function POST(req: NextRequest) {
 
     const userId = String(
       body.user_id ||
-        body.client_id ||
-        body.userId ||
-        body.clientId ||
-        (body.user as { reference_id?: string })?.reference_id ||
-        queryUserId ||
-        ''
-    )
+      body.client_id ||
+      body.userId ||
+      body.clientId ||
+      (body.user as { reference_id?: string })?.reference_id ||
+      queryUserId ||
+      ''
+    ).trim()
 
     if (!userId) {
-      return NextResponse.json({ error: 'Missing client_id/user_id in webhook payload' }, { status: 400 })
+      return NextResponse.json({ error: 'Missing client_id/user_id in webhook payload' }, { status: 400, headers: NO_STORE_HEADERS })
     }
 
     // ── Token Verification ──
@@ -67,18 +82,18 @@ export async function POST(req: NextRequest) {
     if (provider === 'apple_health') {
       if (process.env.APPLE_HEALTH_WEBHOOK_SECRET) {
         if (!verifyAppleHealthWebhookToken(authHeader || secretHeader, process.env.APPLE_HEALTH_WEBHOOK_SECRET)) {
-          return NextResponse.json({ error: 'Unauthorized: Invalid Apple Health secret' }, { status: 401 })
+          return NextResponse.json({ error: 'Unauthorized: Invalid Apple Health secret' }, { status: 401, headers: NO_STORE_HEADERS })
         }
       } else if (isProd) {
-        return NextResponse.json({ error: 'Unauthorized: Apple Health webhook secret not configured' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized: Apple Health webhook secret not configured' }, { status: 401, headers: NO_STORE_HEADERS })
       }
     } else if (provider === 'google_fit') {
       if (process.env.GOOGLE_HEALTH_WEBHOOK_SECRET) {
         if (!verifyGoogleHealthWebhookToken(authHeader || secretHeader, process.env.GOOGLE_HEALTH_WEBHOOK_SECRET)) {
-          return NextResponse.json({ error: 'Unauthorized: Invalid Google Health secret' }, { status: 401 })
+          return NextResponse.json({ error: 'Unauthorized: Invalid Google Health secret' }, { status: 401, headers: NO_STORE_HEADERS })
         }
       } else if (isProd) {
-        return NextResponse.json({ error: 'Unauthorized: Google Health webhook secret not configured' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized: Google Health webhook secret not configured' }, { status: 401, headers: NO_STORE_HEADERS })
       }
     }
 
@@ -111,7 +126,7 @@ export async function POST(req: NextRequest) {
         caloriesKcal: normalized.caloriesKcal,
         tanakaZone: normalized.tanakaZone,
         notes: `Auto-synced from ${provider === 'apple_health' ? 'Apple Health' : 'Google Health Connect'}. Peak HR: ${normalized.maxHeartRate || '--'} BPM.`,
-        rawPayload: body,
+        rawPayload: sanitizeWearableRawPayload(body),
       }
 
       const sessionDate = workoutEvent.startTime.split('T')[0]
@@ -133,16 +148,20 @@ export async function POST(req: NextRequest) {
         .single()
 
       if (error) {
-        return NextResponse.json({ error: `Failed inserting workout: ${error.message}` }, { status: 500 })
+        console.error('[wearables/webhook] Workout insert error:', error.message)
+        return NextResponse.json({ error: 'Failed inserting workout' }, { status: 500, headers: NO_STORE_HEADERS })
       }
 
-      return NextResponse.json({
-        success: true,
-        action: 'workout_logged',
-        provider,
-        workoutId: data?.id,
-        workout: workoutEvent,
-      })
+      return NextResponse.json(
+        {
+          success: true,
+          action: 'workout_logged',
+          provider,
+          workoutId: data?.id,
+          workout: workoutEvent,
+        },
+        { headers: NO_STORE_HEADERS }
+      )
     }
 
     // 2. Process Daily Biometrics / Recovery / Sleep Events
@@ -176,7 +195,7 @@ export async function POST(req: NextRequest) {
         fat_grams: dailyMetrics.nutrition?.fatGrams || 0,
         fiber_grams: dailyMetrics.nutrition?.fiberGrams || 0,
         water_oz: dailyMetrics.nutrition?.waterOz || 0,
-        raw_payload: dailyMetrics.rawPayload,
+        raw_payload: sanitizeWearableRawPayload(dailyMetrics.rawPayload),
         synced_at: now,
       },
       { onConflict: 'client_id,sample_date,provider' }
@@ -196,14 +215,16 @@ export async function POST(req: NextRequest) {
       console.warn('[wearables/webhook] Profile update notice:', profileErr)
     }
 
-    return NextResponse.json({
-      success: true,
-      action: 'daily_biometrics_synced',
-      provider,
-      metrics: dailyMetrics,
-    })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unexpected webhook error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: true,
+        action: 'daily_biometrics_synced',
+        provider,
+        metrics: dailyMetrics,
+      },
+      { headers: NO_STORE_HEADERS }
+    )
+  } catch {
+    return NextResponse.json({ error: 'Unexpected webhook error' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 }

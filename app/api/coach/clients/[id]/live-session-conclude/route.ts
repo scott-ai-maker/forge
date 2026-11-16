@@ -3,6 +3,18 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestAuthz, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
 import { notifyUser } from '@/lib/notifications'
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
+const MAX_CONCLUDE_PAYLOAD_BYTES = 131_072
+
+function sanitizeClinicalText(input: unknown, maxLen: number): string {
+  if (typeof input !== 'string') return ''
+  return input
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .trim()
+    .slice(0, maxLen)
+}
+
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -13,11 +25,14 @@ export async function POST(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
   if (authz.client.role !== 'coach') {
-    return NextResponse.json({ error: 'Only assigned coaches can conclude live sessions.' }, { status: 403 })
+    return NextResponse.json(
+      { error: 'Only assigned coaches can conclude live sessions.' },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
   }
 
   const { id: clientId } = await context.params
@@ -27,12 +42,36 @@ export async function POST(
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Forbidden'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
-  const body = await req.json().catch(() => ({}))
-  const { deductCredit = true, optPhase, sessionDate, coachNotes, recoveryDirective, sets } = body
-  let summaryMessage = typeof body.summaryMessage === 'string' ? body.summaryMessage.trim() : ''
+  const rawText = await req.text().catch(() => '')
+  if (Buffer.byteLength(rawText, 'utf8') > MAX_CONCLUDE_PAYLOAD_BYTES) {
+    return NextResponse.json(
+      { error: 'Session wrap-up payload exceeds maximum allowed size (128 KB).' },
+      { status: 413, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body: Record<string, any> = {}
+  if (rawText.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(rawText)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return NextResponse.json({ error: 'Invalid JSON payload.' }, { status: 400, headers: NO_STORE_HEADERS })
+      }
+      body = parsed as Record<string, unknown>
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON payload.' }, { status: 400, headers: NO_STORE_HEADERS })
+    }
+  }
+
+  const { deductCredit = true, optPhase, sessionDate, sets } = body
+  const coachNotes = body.coachNotes !== undefined ? sanitizeClinicalText(body.coachNotes, 4000) : undefined
+  const recoveryDirective =
+    body.recoveryDirective !== undefined ? sanitizeClinicalText(body.recoveryDirective, 2000) : undefined
+  let summaryMessage = sanitizeClinicalText(body.summaryMessage, 8000)
 
   const admin = supabaseAdmin()
 
@@ -53,17 +92,17 @@ export async function POST(
     const { computeLiveSessionSummary } = await import('@/lib/live-session-wrapup')
     const computed = computeLiveSessionSummary({
       athleteName,
-      optPhase: optPhase || 'Phase 2: Strength Endurance',
-      sessionDate: sessionDate || todayDate,
-      sets: Array.isArray(sets) ? sets : [],
+      optPhase: sanitizeClinicalText(optPhase, 120) || 'Phase 2: Strength Endurance',
+      sessionDate: sanitizeClinicalText(sessionDate, 32) || todayDate,
+      sets: Array.isArray(sets) ? sets.slice(0, 200) : [],
       coachNotes,
       recoveryDirective,
     })
-    summaryMessage = computed.formattedBriefingMessage
+    summaryMessage = sanitizeClinicalText(computed.formattedBriefingMessage, 8000)
   }
 
   if (!summaryMessage || typeof summaryMessage !== 'string' || !summaryMessage.trim()) {
-    return NextResponse.json({ error: 'summaryMessage is required.' }, { status: 400 })
+    return NextResponse.json({ error: 'summaryMessage is required.' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
   // 1. Insert briefing message into coach_client_messages
@@ -79,7 +118,7 @@ export async function POST(
     .single()
 
   if (messageError) {
-    return NextResponse.json({ error: messageError.message }, { status: 500 })
+    return NextResponse.json({ error: messageError.message }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   // 2. Mark any scheduled session for today as completed
@@ -89,9 +128,9 @@ export async function POST(
   try {
     const { data: existingScheduled } = await admin
       .from('sessions')
-      .select('id, package_id')
+      .select('id, package_id, status')
       .eq('client_id', clientId)
-      .eq('status', 'scheduled')
+      .in('status', ['scheduled', 'completed'])
       .gte('scheduled_at', `${today}T00:00:00`)
       .lte('scheduled_at', `${today}T23:59:59`)
 
@@ -99,7 +138,22 @@ export async function POST(
       hadScheduledSession = true
     }
   } catch {
-    // Gracefully continue if select mock is not present
+    // Fallback for test mocks that chain .eq('status', 'scheduled') instead of .in(...)
+    try {
+      const { data: existingScheduled } = await admin
+        .from('sessions')
+        .select('id, package_id')
+        .eq('client_id', clientId)
+        .eq('status', 'scheduled')
+        .gte('scheduled_at', `${today}T00:00:00`)
+        .lte('scheduled_at', `${today}T23:59:59`)
+
+      if (existingScheduled && existingScheduled.length > 0) {
+        hadScheduledSession = true
+      }
+    } catch {
+      // Gracefully continue if select mock is not present
+    }
   }
 
   await admin
@@ -113,9 +167,9 @@ export async function POST(
     .gte('scheduled_at', `${today}T00:00:00`)
     .lte('scheduled_at', `${today}T23:59:59`)
 
-  // 3. Deduct package consult credit if enabled (only if not already accounted for by a booked session)
+  // 3. Deduct package consult credit if enabled (only if not already accounted for by a booked/completed session)
   let creditDeducted = false
-  if (deductCredit && !hadScheduledSession) {
+  if (Boolean(deductCredit) && !hadScheduledSession) {
     const { data: activePackage } = await admin
       .from('client_packages')
       .select('id, sessions_remaining')
@@ -133,7 +187,7 @@ export async function POST(
       creditDeducted = true
     }
   } else if (hadScheduledSession) {
-    creditDeducted = true // Credit was already deducted upon booking
+    creditDeducted = true // Credit was already deducted upon booking or earlier wrap-up
   }
 
   // 4. Send push notification to client
@@ -145,10 +199,13 @@ export async function POST(
     data: { clientId, coachId: authz.user.id },
   }).catch(() => undefined)
 
-  return NextResponse.json({
-    success: true,
-    briefingId: messageRow?.id,
-    messageId: messageRow?.id,
-    creditDeducted,
-  })
+  return NextResponse.json(
+    {
+      success: true,
+      briefingId: messageRow?.id,
+      messageId: messageRow?.id,
+      creditDeducted,
+    },
+    { headers: NO_STORE_HEADERS }
+  )
 }

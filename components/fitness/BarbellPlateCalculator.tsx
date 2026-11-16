@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useId } from 'react'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
   BarbellType,
@@ -9,6 +9,7 @@ import {
   calculateBarbellPlates,
 } from '@/lib/barbell-plate-calculator'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
+import { useNativeStudioDialog } from '@/components/coach/useNativeStudioDialog'
 
 interface BarbellPlateCalculatorProps {
   initialWeightLbs?: number
@@ -26,6 +27,10 @@ export default function BarbellPlateCalculator({
   const [targetWeight, setTargetWeight] = useState<string>(String(initialWeightLbs))
   const [barType, setBarType] = useState<BarbellType>(initialBarType)
   const [availableDenoms, setAvailableDenoms] = useState<number[]>([45, 35, 25, 10, 5, 2.5])
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const baseId = useId()
+
+  useNativeStudioDialog(dialogRef, isModal, () => onClose?.())
 
   const numericTargetWeight = parseNumericInput(targetWeight, 0)
   const result = calculateBarbellPlates(numericTargetWeight, barType, availableDenoms)
@@ -59,7 +64,7 @@ export default function BarbellPlateCalculator({
           <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--gold-lt)', fontWeight: 800 }}>
             Tactical In-Gym Assistant
           </span>
-          <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, margin: '2px 0 0', color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 700 }}>
+          <h3 id={`${baseId}-title`} style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, margin: '2px 0 0', color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 700 }}>
             BARBELL &amp; PLATE LOADING CALCULATOR
           </h3>
         </div>
@@ -70,9 +75,9 @@ export default function BarbellPlateCalculator({
             onClick={onClose}
             aria-label="Close"
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 16,
+              minWidth: 44,
+              minHeight: 44,
+              borderRadius: 22,
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.15)',
               color: '#FFFFFF',
@@ -80,6 +85,7 @@ export default function BarbellPlateCalculator({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             <GaaIcon name="close" size={14} tone="slate" />
@@ -90,11 +96,13 @@ export default function BarbellPlateCalculator({
       {/* Target Weight & Barbell Selector Inputs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 14 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 6 }}>
+          <label htmlFor={`${baseId}-weight`} style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 6 }}>
             Target Barbell Weight (LBS)
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <input
+              id={`${baseId}-weight`}
+              name="targetWeight"
               type="text"
               inputMode="decimal"
               autoComplete="off"
@@ -102,9 +110,9 @@ export default function BarbellPlateCalculator({
               onFocus={selectOnFocus}
               onChange={e => setTargetWeight(sanitizeNumericInput(e.target.value))}
               placeholder="225"
-              aria-label="Target barbell weight in pounds"
               style={{
                 width: '100%',
+                minHeight: 44,
                 padding: '10px 14px',
                 background: 'rgba(0,0,0,0.5)',
                 border: '1px solid rgba(212,160,23,0.4)',
@@ -114,20 +122,20 @@ export default function BarbellPlateCalculator({
                 fontWeight: 700,
                 fontSize: 22,
                 letterSpacing: '0.04em',
-                outline: 'none',
+                boxSizing: 'border-box',
               }}
             />
             <button
               type="button"
               onClick={() => setTargetWeight(w => String(Math.max(0, parseNumericInput(w, 0) - 5)))}
-              style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', borderRadius: 6, fontWeight: 800, cursor: 'pointer' }}
+              style={{ minHeight: 44, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', borderRadius: 6, fontWeight: 800, cursor: 'pointer' }}
             >
               -5
             </button>
             <button
               type="button"
               onClick={() => setTargetWeight(w => String(parseNumericInput(w, 0) + 5))}
-              style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', borderRadius: 6, fontWeight: 800, cursor: 'pointer' }}
+              style={{ minHeight: 44, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFF', borderRadius: 6, fontWeight: 800, cursor: 'pointer' }}
             >
               +5
             </button>
@@ -135,21 +143,24 @@ export default function BarbellPlateCalculator({
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 6 }}>
+          <label htmlFor={`${baseId}-bartype`} style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', color: 'var(--gray)', fontWeight: 700, marginBottom: 6 }}>
             Barbell Type
           </label>
           <select
+            id={`${baseId}-bartype`}
+            name="barType"
             value={barType}
             onChange={e => setBarType(e.target.value as BarbellType)}
             style={{
               width: '100%',
-              padding: '12px 14px',
+              minHeight: 44,
+              padding: '10px 14px',
               background: 'var(--navy)',
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: 6,
               color: '#FFFFFF',
-              fontSize: 13,
-              outline: 'none',
+              fontSize: 16,
+              boxSizing: 'border-box',
             }}
           >
             {Object.values(BARBELL_OPTIONS).map(opt => (
@@ -380,30 +391,19 @@ export default function BarbellPlateCalculator({
 
   if (isModal) {
     return (
-      <div
+      <dialog
+        ref={dialogRef}
+        className="forge-live-studio-dialog"
+        {...({ closedby: 'any' } as Record<string, unknown>)}
+        aria-labelledby={`${baseId}-title`}
         style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 100002,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 16,
+          maxWidth: 'min(540px, calc(100vw - 16px))',
         }}
       >
-        <div
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0,0,0,0.82)',
-            backdropFilter: 'blur(8px)',
-          }}
-        />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 540, width: '100%' }}>
+        <div style={{ width: '100%', maxHeight: '90dvh', overflowY: 'auto' }}>
           {containerContent}
         </div>
-      </div>
+      </dialog>
     )
   }
 

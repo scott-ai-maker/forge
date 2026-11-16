@@ -1202,9 +1202,11 @@ function BuilderLineItemCard({
               type="button"
               onClick={() => onCopyPromoCode(item.sku, item.promoCode!)}
               aria-label={`Copy promo code ${item.promoCode} for ${item.name}`}
+              className="forge-hgb-card-cta"
               style={{
-                padding: '6px 10px',
-                minBlockSize: 36,
+                padding: '10px 12px',
+                minHeight: 44,
+                minBlockSize: '44px',
                 borderRadius: 5,
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.18)',
@@ -1224,9 +1226,11 @@ function BuilderLineItemCard({
             target="_blank"
             rel="noopener noreferrer"
             aria-label={ctaAria}
+            className="forge-hgb-card-cta"
             style={{
-              padding: '8px 13px',
-              minBlockSize: 36,
+              padding: '10px 14px',
+              minHeight: 44,
+              minBlockSize: '44px',
               borderRadius: 5,
               background: 'linear-gradient(135deg, var(--gold, #D4A017) 0%, var(--gold-lt, #F3D27A) 100%)',
               color: '#080E14',
@@ -1236,13 +1240,20 @@ function BuilderLineItemCard({
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              whiteSpace: 'nowrap',
+              whiteSpace: 'normal',
+              textAlign: 'center',
             }}
           >
             {ctaText}
           </a>
         </div>
       </footer>
+      <style jsx>{`
+        .forge-hgb-card-cta:focus-visible {
+          outline: 2px solid var(--gold-lt, #f3d27a);
+          outline-offset: 2px;
+        }
+      `}</style>
     </article>
   )
 }

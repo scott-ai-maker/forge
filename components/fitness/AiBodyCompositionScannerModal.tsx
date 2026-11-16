@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useId } from 'react'
 import Image from 'next/image'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 import {
@@ -8,6 +8,7 @@ import {
   ScanViewType,
 } from '@/lib/ai-body-composition-engine'
 import { selectOnFocus, sanitizeNumericInput, parseNumericInput } from '@/lib/form-input-helpers'
+import { useNativeStudioDialog } from '@/components/coach/useNativeStudioDialog'
 
 // Client-side image normalizer and compressor (max 1280px, clean image/jpeg)
 async function processAndCompressImageFile(file: File): Promise<string> {
@@ -219,6 +220,10 @@ export default function AiBodyCompositionScannerModal({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const baseId = useId()
+
+  useNativeStudioDialog(dialogRef, isOpen, onClose)
 
   // Explicit unit toggle with precise conversion
   const handleToggleUnits = (targetUnit: 'imperial' | 'metric') => {
@@ -296,6 +301,16 @@ export default function AiBodyCompositionScannerModal({
       stopCamera()
     }
   }, [isOpen, stopCamera])
+
+  // Always release hardware camera tracks on component unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+        streamRef.current = null
+      }
+    }
+  }, [])
 
   // Start live webcam capture
   const startCamera = async () => {
@@ -437,19 +452,13 @@ export default function AiBodyCompositionScannerModal({
   const totalPhotosCount = [anteriorPhoto, lateralPhoto, posteriorPhoto].filter(Boolean).length
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
+      className="forge-live-studio-dialog"
+      {...({ closedby: 'any' } as Record<string, unknown>)}
+      aria-labelledby={`${baseId}-title`}
       style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(3, 7, 18, 0.88)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        zIndex: 100050,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(8px, 2vw, 24px)',
-        overflowY: 'auto',
+        maxWidth: 'min(1140px, calc(100vw - 16px))',
       }}
     >
       <div
@@ -459,12 +468,13 @@ export default function AiBodyCompositionScannerModal({
           borderRadius: 14,
           width: '100%',
           maxWidth: 1140,
-          maxHeight: '92vh',
+          maxHeight: '92dvh',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 50px rgba(56, 189, 248, 0.12)',
           overflow: 'hidden',
           color: '#FFFFFF',
+          boxSizing: 'border-box',
         }}
       >
         {/* ── HEADER ── */}
@@ -499,10 +509,11 @@ export default function AiBodyCompositionScannerModal({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h2
+                  id={`${baseId}-title`}
                   style={{
                     margin: 0,
                     fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-                    fontSize: 22,
+                    fontSize: 'clamp(16px, 4vw, 22px)',
                     letterSpacing: '0.04em',
                     color: '#FFFFFF',
                     lineHeight: 1.2,
@@ -530,9 +541,11 @@ export default function AiBodyCompositionScannerModal({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             {/* Metric/Imperial Switcher */}
             <div
+              role="group"
+              aria-label="Measurement units"
               style={{
                 display: 'flex',
                 background: 'rgba(0,0,0,0.5)',
@@ -543,13 +556,15 @@ export default function AiBodyCompositionScannerModal({
             >
               <button
                 type="button"
+                aria-pressed={units === 'imperial'}
                 onClick={() => handleToggleUnits('imperial')}
                 style={{
+                  minHeight: 44,
                   background: units === 'imperial' ? '#D4A017' : 'transparent',
                   color: units === 'imperial' ? '#080E14' : '#94A3B8',
                   border: 'none',
                   borderRadius: 4,
-                  padding: '4px 10px',
+                  padding: '6px 12px',
                   fontSize: 11,
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -560,13 +575,15 @@ export default function AiBodyCompositionScannerModal({
               </button>
               <button
                 type="button"
+                aria-pressed={units === 'metric'}
                 onClick={() => handleToggleUnits('metric')}
                 style={{
+                  minHeight: 44,
                   background: units === 'metric' ? '#D4A017' : 'transparent',
                   color: units === 'metric' ? '#080E14' : '#94A3B8',
                   border: 'none',
                   borderRadius: 4,
-                  padding: '4px 10px',
+                  padding: '6px 12px',
                   fontSize: 11,
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -580,7 +597,10 @@ export default function AiBodyCompositionScannerModal({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close modal"
               style={{
+                minWidth: 44,
+                minHeight: 44,
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 6,
@@ -592,7 +612,6 @@ export default function AiBodyCompositionScannerModal({
                 justifyContent: 'center',
                 transition: 'all 0.15s ease',
               }}
-              title="Close modal"
             >
               <GaaIcon name="close" size={18} />
             </button>
@@ -603,20 +622,22 @@ export default function AiBodyCompositionScannerModal({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 440px), 1fr))',
             gap: 20,
-            padding: 20,
+            padding: 'clamp(12px, 3vw, 20px)',
             overflowY: 'auto',
             flex: 1,
           }}
         >
           {/* ── LEFT COLUMN: VIEWFINDER STAGE & BIOMETRIC CONTROLS ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
             {/* View Selector Tabs */}
             <div
+              role="group"
+              aria-label="Scan view angles"
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                 gap: 6,
                 background: 'rgba(0,0,0,0.4)',
                 padding: 4,
@@ -632,25 +653,27 @@ export default function AiBodyCompositionScannerModal({
                 <button
                   key={tab.id}
                   type="button"
+                  aria-pressed={activeTab === tab.id}
                   onClick={() => {
                     stopCamera()
                     setActiveTab(tab.id)
                   }}
                   style={{
+                    minHeight: 44,
                     background: activeTab === tab.id
                       ? 'linear-gradient(135deg, rgba(212,160,23,0.25) 0%, rgba(212,160,23,0.08) 100%)'
                       : 'transparent',
                     border: activeTab === tab.id ? '1px solid #D4A017' : '1px solid transparent',
                     borderRadius: 6,
-                    padding: '8px 6px',
+                    padding: '8px 4px',
                     color: activeTab === tab.id ? '#D4A017' : '#94A3B8',
                     cursor: 'pointer',
-                    fontSize: 12,
+                    fontSize: 11.5,
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 6,
+                    gap: 4,
                     transition: 'all 0.15s ease',
                   }}
                 >
@@ -852,17 +875,18 @@ export default function AiBodyCompositionScannerModal({
                       <strong>✕ Prohibited:</strong> Baggy sweatpants, oversized hoodies, loose t-shirts, robes, or casual wear. Photos with obscured contours will be rejected by the DEXA engine.
                     </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       onClick={startCamera}
                       style={{
+                        minHeight: 44,
                         background: 'linear-gradient(135deg, #D4A017 0%, #F59E0B 100%)',
                         color: '#080E14',
                         border: 'none',
                         borderRadius: 6,
-                        padding: '7px 12px',
-                        fontSize: 11.5,
+                        padding: '8px 14px',
+                        fontSize: 12,
                         fontWeight: 800,
                         cursor: 'pointer',
                         display: 'flex',
@@ -877,12 +901,13 @@ export default function AiBodyCompositionScannerModal({
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       style={{
+                        minHeight: 44,
                         background: 'rgba(255,255,255,0.06)',
                         color: '#FFF',
                         border: '1px solid rgba(255,255,255,0.15)',
                         borderRadius: 6,
-                        padding: '7px 12px',
-                        fontSize: 11.5,
+                        padding: '8px 14px',
+                        fontSize: 12,
                         fontWeight: 700,
                         cursor: 'pointer',
                         display: 'flex',
@@ -936,16 +961,18 @@ export default function AiBodyCompositionScannerModal({
                 borderRadius: 8,
                 padding: 12,
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 115px), 1fr))',
                 gap: 8,
               }}
             >
               <div>
-                <label style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 3, fontWeight: 700 }}>Sex</label>
+                <label htmlFor={`${baseId}-sex`} style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 3, fontWeight: 700 }}>Sex</label>
                 <select
+                  id={`${baseId}-sex`}
+                  name="sex"
                   value={sex}
                   onChange={e => setSex(e.target.value as 'male' | 'female' | 'other')}
-                  style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 4px', fontSize: 12 }}
+                  style={{ width: '100%', minHeight: 44, background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 8px', fontSize: 16, boxSizing: 'border-box' }}
                 >
                   <option value="male">Male</option>
                   <option value="female">Female</option>
@@ -954,10 +981,12 @@ export default function AiBodyCompositionScannerModal({
               </div>
 
               <div>
-                <label style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 3, fontWeight: 700 }}>
+                <label htmlFor={`${baseId}-height`} style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 3, fontWeight: 700 }}>
                   Height ({units === 'imperial' ? 'in' : 'cm'})
                 </label>
                 <input
+                  id={`${baseId}-height`}
+                  name="height"
                   type="text"
                   inputMode="decimal"
                   autoComplete="off"
@@ -965,15 +994,17 @@ export default function AiBodyCompositionScannerModal({
                   value={heightInput}
                   onChange={e => setHeightInput(sanitizeNumericInput(e.target.value))}
                   placeholder={units === 'imperial' ? '70' : '178'}
-                  style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 8px', fontSize: 12 }}
+                  style={{ width: '100%', minHeight: 44, background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 8px', fontSize: 16, boxSizing: 'border-box' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 3, fontWeight: 700 }}>
+                <label htmlFor={`${baseId}-weight`} style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 3, fontWeight: 700 }}>
                   Weight ({units === 'imperial' ? 'lbs' : 'kg'})
                 </label>
                 <input
+                  id={`${baseId}-weight`}
+                  name="weight"
                   type="text"
                   inputMode="decimal"
                   autoComplete="off"
@@ -981,20 +1012,22 @@ export default function AiBodyCompositionScannerModal({
                   value={weightInput}
                   onChange={e => setWeightInput(sanitizeNumericInput(e.target.value))}
                   placeholder={units === 'imperial' ? '185' : '84'}
-                  style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 8px', fontSize: 12 }}
+                  style={{ width: '100%', minHeight: 44, background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 8px', fontSize: 16, boxSizing: 'border-box' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 3, fontWeight: 700 }}>Age</label>
+                <label htmlFor={`${baseId}-age`} style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', display: 'block', marginBottom: 3, fontWeight: 700 }}>Age</label>
                 <input
+                  id={`${baseId}-age`}
+                  name="age"
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
                   onFocus={selectOnFocus}
                   value={age}
                   onChange={e => setAge(sanitizeNumericInput(e.target.value))}
-                  style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 8px', fontSize: 12 }}
+                  style={{ width: '100%', minHeight: 44, background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '6px 8px', fontSize: 16, boxSizing: 'border-box' }}
                 />
               </div>
             </div>
@@ -1003,8 +1036,10 @@ export default function AiBodyCompositionScannerModal({
             <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '8px 12px' }}>
               <button
                 type="button"
+                aria-expanded={showCircumferenceInputs}
                 onClick={() => setShowCircumferenceInputs(prev => !prev)}
                 style={{
+                  minHeight: 44,
                   background: 'none',
                   border: 'none',
                   padding: 0,
@@ -1015,16 +1050,19 @@ export default function AiBodyCompositionScannerModal({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
+                  textAlign: 'left',
                 }}
               >
                 <span>{showCircumferenceInputs ? '▲ Hide' : '▼ Optional:'} Manual Circumferences (US Navy Hybrid Calibration)</span>
               </button>
 
               {showCircumferenceInputs && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 110px), 1fr))', gap: 8, marginTop: 8 }}>
                   <div>
-                    <label style={{ fontSize: 10, color: '#94A3B8' }}>Waist ({units === 'imperial' ? 'in' : 'cm'})</label>
+                    <label htmlFor={`${baseId}-waist`} style={{ fontSize: 10, color: '#94A3B8', display: 'block', marginBottom: 3 }}>Waist ({units === 'imperial' ? 'in' : 'cm'})</label>
                     <input
+                      id={`${baseId}-waist`}
+                      name="waist"
                       type="text"
                       inputMode="decimal"
                       autoComplete="off"
@@ -1032,12 +1070,14 @@ export default function AiBodyCompositionScannerModal({
                       placeholder={units === 'imperial' ? '33' : '84'}
                       value={waistInput}
                       onChange={e => setWaistInput(sanitizeNumericInput(e.target.value))}
-                      style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '5px 6px', fontSize: 11 }}
+                      style={{ width: '100%', minHeight: 44, background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '5px 6px', fontSize: 16, boxSizing: 'border-box' }}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: 10, color: '#94A3B8' }}>Neck ({units === 'imperial' ? 'in' : 'cm'})</label>
+                    <label htmlFor={`${baseId}-neck`} style={{ fontSize: 10, color: '#94A3B8', display: 'block', marginBottom: 3 }}>Neck ({units === 'imperial' ? 'in' : 'cm'})</label>
                     <input
+                      id={`${baseId}-neck`}
+                      name="neck"
                       type="text"
                       inputMode="decimal"
                       autoComplete="off"
@@ -1045,12 +1085,14 @@ export default function AiBodyCompositionScannerModal({
                       placeholder={units === 'imperial' ? '15.5' : '39'}
                       value={neckInput}
                       onChange={e => setNeckInput(sanitizeNumericInput(e.target.value))}
-                      style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '5px 6px', fontSize: 11 }}
+                      style={{ width: '100%', minHeight: 44, background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '5px 6px', fontSize: 16, boxSizing: 'border-box' }}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: 10, color: '#94A3B8' }}>Hips ({units === 'imperial' ? 'in' : 'cm'})</label>
+                    <label htmlFor={`${baseId}-hips`} style={{ fontSize: 10, color: '#94A3B8', display: 'block', marginBottom: 3 }}>Hips ({units === 'imperial' ? 'in' : 'cm'})</label>
                     <input
+                      id={`${baseId}-hips`}
+                      name="hips"
                       type="text"
                       inputMode="decimal"
                       autoComplete="off"
@@ -1058,7 +1100,7 @@ export default function AiBodyCompositionScannerModal({
                       placeholder={units === 'imperial' ? '38' : '96'}
                       value={hipInput}
                       onChange={e => setHipInput(sanitizeNumericInput(e.target.value))}
-                      style={{ width: '100%', background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '5px 6px', fontSize: 11 }}
+                      style={{ width: '100%', minHeight: 44, background: 'var(--navy)', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '5px 6px', fontSize: 16, boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
@@ -1348,28 +1390,40 @@ export default function AiBodyCompositionScannerModal({
                   </div>
                 </div>
 
-                {/* 5. Interactive Body Recomposition Target Planner */}
+                  {/* 5. Interactive Body Recomposition Target Planner */}
                 <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 8, padding: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 14, letterSpacing: '0.04em', color: '#38BDF8' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                    <label htmlFor={`${baseId}-target-bf`} style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 14, letterSpacing: '0.04em', color: '#38BDF8', cursor: 'pointer' }}>
                       Target Body Recomposition Trajectory
-                    </div>
+                    </label>
                     <div style={{ fontSize: 12, fontWeight: 800, color: '#D4A017' }}>
                       Target: {targetBfSlider}% Body Fat
                     </div>
                   </div>
 
                   <input
+                    id={`${baseId}-target-bf`}
+                    name="targetBodyFatPercent"
+                    className="forge-range-slider"
                     type="range"
                     min={sex === 'male' ? 8 : 14}
                     max={sex === 'male' ? 24 : 32}
                     step={0.5}
                     value={targetBfSlider}
+                    aria-valuetext={`${targetBfSlider}% body fat`}
                     onChange={e => setTargetBfSlider(Number(e.target.value))}
-                    style={{ width: '100%', accentColor: '#38BDF8', marginBottom: 8 }}
+                    style={{
+                      width: '100%',
+                      marginBottom: 8,
+                      ['--attr-min' as string]: sex === 'male' ? 8 : 14,
+                      ['--attr-max' as string]: sex === 'male' ? 24 : 32,
+                      ['--control-value' as string]: targetBfSlider,
+                      ['--slider-fill-color' as string]: '#38BDF8',
+                      ['--slider-thumb-color' as string]: '#38BDF8',
+                    }}
                   />
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 105px), 1fr))', gap: 6, marginBottom: 8 }}>
                     <div style={{ background: 'var(--navy)', padding: '6px 8px', borderRadius: 4, textAlign: 'center' }}>
                       <div style={{ fontSize: 9.5, color: '#94A3B8' }}>Target Weight</div>
                       <div style={{ fontWeight: 700, fontSize: 12, color: '#FFF' }}>
@@ -1503,6 +1557,6 @@ export default function AiBodyCompositionScannerModal({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

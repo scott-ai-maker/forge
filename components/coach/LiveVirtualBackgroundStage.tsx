@@ -57,16 +57,27 @@ export default function LiveVirtualBackgroundStage({
     }
   }, [stream])
 
-  // Preload background image
+  // Preload background image with race-condition guard on rapid preset switches
   useEffect(() => {
+    let cancelled = false
     if (selectedBackground?.imageUrl && !selectedBackground.isBlur) {
       const img = new Image()
       img.src = selectedBackground.imageUrl
       img.onload = () => {
-        bgImageRef.current = img
+        if (!cancelled) {
+          bgImageRef.current = img
+        }
+      }
+      img.onerror = () => {
+        if (!cancelled) {
+          bgImageRef.current = null
+        }
       }
     } else {
       bgImageRef.current = null
+    }
+    return () => {
+      cancelled = true
     }
   }, [selectedBackground])
 
@@ -650,11 +661,12 @@ export default function LiveVirtualBackgroundStage({
             position: 'absolute',
             top: 10,
             right: 10,
+            minHeight: 36,
             background: 'rgba(0,0,0,0.75)',
             border: '1px solid rgba(212,160,23,0.4)',
             color: 'var(--gold-lt)',
-            padding: '2px 8px',
-            borderRadius: 4,
+            padding: '4px 10px',
+            borderRadius: 6,
             fontSize: 10.5,
             fontWeight: 800,
             cursor: 'pointer',
@@ -670,67 +682,129 @@ export default function LiveVirtualBackgroundStage({
       )}
 
       {/* Branded Logo Watermark Overlay on Bottom Right of Video Feed */}
-      <div
-        onClick={onOpenPicker}
-        title={onOpenPicker ? 'Click to change training background' : undefined}
-        style={{
-          position: 'absolute',
-          bottom: 12,
-          right: 12,
-          pointerEvents: onOpenPicker ? 'auto' : 'none',
-          cursor: onOpenPicker ? 'pointer' : 'default',
-          zIndex: 15,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: 'rgba(4,7,14,0.85)',
-          border: '1px solid rgba(212,160,23,0.4)',
-          borderRadius: 8,
-          padding: '4px 10px 4px 6px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.85)',
-          transition: 'transform 0.15s ease, border-color 0.15s ease',
-        }}
-      >
+      {onOpenPicker ? (
+        <button
+          type="button"
+          onClick={onOpenPicker}
+          aria-label="Open Studio Virtual Backgrounds Picker"
+          style={{
+            position: 'absolute',
+            bottom: 12,
+            right: 12,
+            minHeight: 44,
+            cursor: 'pointer',
+            zIndex: 15,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'rgba(4,7,14,0.85)',
+            border: '1px solid rgba(212,160,23,0.4)',
+            borderRadius: 8,
+            padding: '4px 10px 4px 6px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.85)',
+            textAlign: 'left',
+            transition: 'transform 0.15s ease, border-color 0.15s ease',
+          }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              backgroundImage: "url('/images/brand/forge-crest-mark.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              border: '1px solid rgba(212,160,23,0.5)',
+              boxShadow: '0 0 10px rgba(212,160,23,0.4)',
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
+                fontWeight: 700,
+                fontSize: 11,
+                letterSpacing: '0.08em',
+                color: 'var(--gold-lt)',
+                lineHeight: 1,
+              }}
+            >
+              FORGE ATHLETIC
+            </span>
+            <span
+              style={{
+                fontSize: 8.5,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: 'rgba(255,255,255,0.7)',
+                fontWeight: 700,
+                marginTop: 1,
+              }}
+            >
+              Private Performance Lab
+            </span>
+          </div>
+        </button>
+      ) : (
         <div
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: 6,
-            backgroundImage: "url('/images/brand/forge-crest-mark.png')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            border: '1px solid rgba(212,160,23,0.5)',
-            boxShadow: '0 0 10px rgba(212,160,23,0.4)',
-            flexShrink: 0,
+            position: 'absolute',
+            bottom: 12,
+            right: 12,
+            pointerEvents: 'none',
+            zIndex: 15,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'rgba(4,7,14,0.85)',
+            border: '1px solid rgba(212,160,23,0.4)',
+            borderRadius: 8,
+            padding: '4px 10px 4px 6px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.85)',
           }}
-        />
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span
+        >
+          <div
             style={{
-              fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
-              fontWeight: 700,
-              fontSize: 11,
-              letterSpacing: '0.08em',
-              color: 'var(--gold-lt)',
-              lineHeight: 1,
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              backgroundImage: "url('/images/brand/forge-crest-mark.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              border: '1px solid rgba(212,160,23,0.5)',
+              boxShadow: '0 0 10px rgba(212,160,23,0.4)',
+              flexShrink: 0,
             }}
-          >
-            FORGE ATHLETIC
-          </span>
-          <span
-            style={{
-              fontSize: 8.5,
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-              color: 'rgba(255,255,255,0.7)',
-              fontWeight: 700,
-              marginTop: 1,
-            }}
-          >
-            Private Performance Lab
-          </span>
+          />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-serif, Cinzel), Georgia, serif',
+                fontWeight: 700,
+                fontSize: 11,
+                letterSpacing: '0.08em',
+                color: 'var(--gold-lt)',
+                lineHeight: 1,
+              }}
+            >
+              FORGE ATHLETIC
+            </span>
+            <span
+              style={{
+                fontSize: 8.5,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: 'rgba(255,255,255,0.7)',
+                fontWeight: 700,
+                marginTop: 1,
+              }}
+            >
+              Private Performance Lab
+            </span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

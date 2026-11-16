@@ -91,11 +91,7 @@ const NasmAssessmentSuite = dynamic(
   () => import('./NasmAssessmentSuite'),
   { ssr: false }
 )
-const LiveConsultationPlaybookModal = dynamic(
-  () => import('./LiveConsultationPlaybookModal'),
-  { ssr: false }
-)
-import {
+import LiveConsultationPlaybookModal, {
   computeConsultationGate,
   formatConsultationCountdown,
   CONSULTATION_PLAYBOOK_GATES,
@@ -667,6 +663,18 @@ export default function UnifiedLiveStudioHud({
   // Rolling Video Buffer & Hardware References
   const rollingChunksRef = useRef<{ data: Blob; timestamp: number }[]>([])
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recorderMimeTypeRef = useRef<string>('video/webm')
+  const replayObjectUrlRef = useRef<string | null>(null)
+
+  const closeReplayModal = useCallback(() => {
+    if (replayObjectUrlRef.current) {
+      try {
+        URL.revokeObjectURL(replayObjectUrlRef.current)
+      } catch {}
+      replayObjectUrlRef.current = null
+    }
+    setReplayVideoUrl(null)
+  }, [])
   const localVideoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -1286,8 +1294,20 @@ export default function UnifiedLiveStudioHud({
 
     if (!ecoMode && typeof MediaRecorder !== 'undefined') {
       try {
-        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8' : 'video/webm'
-        const recorder = new MediaRecorder(mediaStream, { mimeType })
+        const candidateMimes = [
+          'video/webm;codecs=vp8,opus',
+          'video/webm;codecs=vp8',
+          'video/webm',
+          'video/mp4',
+        ]
+        const supportedMime =
+          typeof MediaRecorder.isTypeSupported === 'function'
+            ? candidateMimes.find(m => MediaRecorder.isTypeSupported(m))
+            : undefined
+        const recorder = supportedMime
+          ? new MediaRecorder(mediaStream, { mimeType: supportedMime })
+          : new MediaRecorder(mediaStream)
+        recorderMimeTypeRef.current = recorder.mimeType || supportedMime || 'video/webm'
         mediaRecorderRef.current = recorder
         recorder.ondataavailable = e => {
           if (e.data && e.data.size > 0) {
@@ -1313,13 +1333,19 @@ export default function UnifiedLiveStudioHud({
     }
   }, [mediaStream, ecoMode, isCameraActive])
 
-  // Close singleton WebAudio context on HUD unmount
+  // Close singleton WebAudio context and revoke any active replay ObjectURL on HUD unmount
   useEffect(() => {
     return () => {
       if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
         try {
           void audioCtxRef.current.close()
         } catch {}
+      }
+      if (replayObjectUrlRef.current) {
+        try {
+          URL.revokeObjectURL(replayObjectUrlRef.current)
+        } catch {}
+        replayObjectUrlRef.current = null
       }
     }
   }, [])
@@ -1700,8 +1726,32 @@ export default function UnifiedLiveStudioHud({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        // If sub-modals are active, let them handle close themselves
-        if (showWrapUpModal || showPlateCalc || showPostureModal || showBodyCompModal || showFormCritiqueModal || replayVideoUrl) {
+        if (e.defaultPrevented) return
+        if ((e.target as HTMLElement | null)?.closest?.('dialog')) {
+          return
+        }
+        if (typeof document !== 'undefined' && document.querySelector('dialog[open]')) {
+          return
+        }
+        // If sub-modals or drawers are active, let them handle close themselves
+        if (
+          showWrapUpModal ||
+          showPlateCalc ||
+          showPostureModal ||
+          showBodyCompModal ||
+          showFormCritiqueModal ||
+          showNasmSuiteModal ||
+          showConsultationPlaybook ||
+          showBackgroundPicker ||
+          showGreenRoom ||
+          showErapModal ||
+          showStillCameraModal ||
+          showSwapModal ||
+          showCircuitTimerModal ||
+          showTeamRosterDrawer ||
+          Boolean(demoVideoModal?.isOpen) ||
+          Boolean(replayVideoUrl)
+        ) {
           return
         }
         setShowExitModal(prev => !prev)
@@ -1709,16 +1759,41 @@ export default function UnifiedLiveStudioHud({
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [showWrapUpModal, showPlateCalc, showPostureModal, showBodyCompModal, showFormCritiqueModal, replayVideoUrl])
+  }, [
+    showWrapUpModal,
+    showPlateCalc,
+    showPostureModal,
+    showBodyCompModal,
+    showFormCritiqueModal,
+    showNasmSuiteModal,
+    showConsultationPlaybook,
+    showBackgroundPicker,
+    showGreenRoom,
+    showErapModal,
+    showStillCameraModal,
+    showSwapModal,
+    showCircuitTimerModal,
+    showTeamRosterDrawer,
+    demoVideoModal?.isOpen,
+    replayVideoUrl,
+  ])
 
   const triggerSlowMo = () => {
     if (rollingChunksRef.current.length === 0) {
       showHudToast('Buffering high-speed DVR buffer… please wait 3 seconds before replaying.', 'amber')
       return
     }
+    if (replayObjectUrlRef.current) {
+      try {
+        URL.revokeObjectURL(replayObjectUrlRef.current)
+      } catch {}
+      replayObjectUrlRef.current = null
+    }
     const blobs = rollingChunksRef.current.map(c => c.data)
-    const combined = new Blob(blobs, { type: 'video/webm' })
+    const mimeType = recorderMimeTypeRef.current || blobs[0]?.type || 'video/webm'
+    const combined = new Blob(blobs, { type: mimeType })
     const url = URL.createObjectURL(combined)
+    replayObjectUrlRef.current = url
     setReplayVideoUrl(url)
   }
 
@@ -5802,7 +5877,7 @@ export default function UnifiedLiveStudioHud({
           videoUrl={replayVideoUrl}
           clientName={athleteName}
           exerciseName={activeExercise?.name}
-          onClose={() => setReplayVideoUrl(null)}
+          onClose={closeReplayModal}
         />
       )}
 
