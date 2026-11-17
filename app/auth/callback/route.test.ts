@@ -238,4 +238,60 @@ describe('GET /auth/callback (OAuth & PKCE flow)', () => {
     expect(location.pathname).toBe('/dashboard')
     expect(updateMock).toHaveBeenCalledWith({ designated_coach_id: coachId })
   })
+
+  it('prevents privilege escalation when a client injects surface_role: coach in user_metadata', async () => {
+    exchangeCodeForSessionMock.mockResolvedValueOnce({ error: null })
+    getUserMock.mockResolvedValueOnce({
+      data: {
+        user: {
+          id: 'attacker-uuid-1',
+          email: 'attacker@example.com',
+          user_metadata: {
+            full_name: 'Attacker User',
+            surface_role: 'coach',
+          },
+        },
+      },
+    })
+
+    const updateMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })
+    adminFromMock.mockImplementation((table: string) => {
+      if (table === 'clients') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: {
+                  id: 'attacker-uuid-1',
+                  role: 'client',
+                  avatar_path: null,
+                },
+              }),
+            }),
+          }),
+          update: updateMock,
+        }
+      }
+      return {}
+    })
+
+    const req = new NextRequest('https://example.com/auth/callback')
+    const res = await GET(req)
+
+    expect(res.status).toBe(307)
+    const location = new URL(res.headers.get('location')!)
+    expect(location.pathname).toBe('/dashboard')
+    expect(updateMock).toHaveBeenCalledWith({
+      email: 'attacker@example.com',
+      full_name: 'Attacker User',
+    })
+    expect(adminUpdateUserByIdMock).toHaveBeenCalledWith('attacker-uuid-1', {
+      user_metadata: {
+        full_name: 'Attacker User',
+        surface_role: 'client',
+      },
+    })
+  })
 })

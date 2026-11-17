@@ -37,8 +37,8 @@ export default async function CoachClientDossierPage({ params }: PageProps) {
 
   if (clientError || !client) notFound()
 
-  // Verify coach assignment or master coach access
-  if (client.designated_coach_id && client.designated_coach_id !== user.id && !isMasterCoach) {
+  // Verify explicit coach assignment or Master Coach authority (never expose unassigned client dossiers to non-master coaches)
+  if (client.designated_coach_id !== user.id && !isMasterCoach) {
     notFound()
   }
 

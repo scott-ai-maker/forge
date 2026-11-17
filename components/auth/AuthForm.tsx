@@ -338,11 +338,9 @@ export default function AuthForm({
 
       let resolvedRedirectPath = redirectPath
       if (resolvedRedirectPath === '/dashboard' && data.user) {
-        const isCoach =
-          data.user.user_metadata?.surface_role === 'coach' ||
-          data.user.email?.toLowerCase() === 'coach@forge-athletic.app'
+        const isMasterEmail = data.user.email?.toLowerCase() === 'coach@forge-athletic.app'
 
-        if (isCoach) {
+        if (isMasterEmail) {
           resolvedRedirectPath = '/coach'
         } else {
           try {

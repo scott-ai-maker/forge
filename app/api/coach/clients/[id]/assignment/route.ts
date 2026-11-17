@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
+import { getRequestAuthz, isMasterCoachEmail, requireRole, AuthzError } from '@/lib/authz'
 import {
   assignClientToCoach,
   CoachAssignmentError,
@@ -20,6 +20,9 @@ export async function PATCH(
   try {
     const authz = await getRequestAuthz(_req)
     requireRole(authz.client.role, ['coach'])
+    if (!isMasterCoachEmail(authz.user.email)) {
+      throw new AuthzError('Only the Master Coach may claim unassigned clients from the intake pool', 403)
+    }
     coachId = authz.user.id
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500

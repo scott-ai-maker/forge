@@ -40,7 +40,7 @@ describe('coach assignment route', () => {
     vi.clearAllMocks()
     supabaseAdminMock.mockReturnValue({ from: vi.fn() })
     getRequestAuthzMock.mockResolvedValue({
-      user: { id: 'coach-1' },
+      user: { id: 'coach-1', email: 'coach@forge-athletic.app' },
       client: { role: 'coach' },
     })
   })
@@ -93,5 +93,19 @@ describe('coach assignment route', () => {
     expect(releaseClientFromCoachMock).toHaveBeenCalledWith(expect.any(Object), 'client-1', 'coach-1')
     expect(res.status).toBe(200)
     await expect(res.json()).resolves.toEqual({ client: { id: 'client-1', designated_coach_id: null } })
+  })
+
+  it('rejects unassigned pool claiming by non-master associate coaches', async () => {
+    getRequestAuthzMock.mockResolvedValue({
+      user: { id: 'associate-coach-2', email: 'associate@forge-athletic.app' },
+      client: { role: 'coach' },
+    })
+
+    const res = await PATCH(new NextRequest('http://localhost/api/coach/clients/client-1/assignment'), {
+      params: Promise.resolve({ id: 'client-1' }),
+    })
+
+    expect(res.status).toBe(403)
+    expect(assignClientToCoachMock).not.toHaveBeenCalled()
   })
 })

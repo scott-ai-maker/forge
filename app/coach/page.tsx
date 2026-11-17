@@ -1,5 +1,5 @@
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
-import { requireSurfaceRole } from '@/lib/authz'
+import { isMasterCoachEmail, requireSurfaceRole } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import {
   normalizeCoachFocusFilter,
@@ -101,21 +101,24 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
     .order('created_at', { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1)
 
-  const { data: unassignedClients } = await admin
-    .from('clients')
-    .select('id, email, full_name, role, designated_coach_id, status, status_reason, status_updated_at')
-    .is('designated_coach_id', null)
-    .eq('role', 'client')
-    .order('created_at', { ascending: false })
-    .limit(10) // Limit unassigned clients shown
+  const isMasterCoach = isMasterCoachEmail(user.email)
+  const { data: unassignedClients } = isMasterCoach
+    ? await admin
+      .from('clients')
+      .select('id, email, full_name, role, designated_coach_id, status, status_reason, status_updated_at')
+      .is('designated_coach_id', null)
+      .eq('role', 'client')
+      .order('created_at', { ascending: false })
+      .limit(10) // Limit unassigned clients shown
+    : { data: [] }
 
   const assignedClientIds = (assignedClients ?? []).map(client => client.id)
 
   const { data: packages } = assignedClientIds.length
     ? await admin
-        .from('client_packages')
-        .select('client_id, sessions_remaining, expires_at')
-        .in('client_id', assignedClientIds)
+      .from('client_packages')
+      .select('client_id, sessions_remaining, expires_at')
+      .in('client_id', assignedClientIds)
     : { data: [] }
 
   // Time windows for operational metrics.
@@ -138,12 +141,12 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
 
   const { data: weekSessions } = assignedClientIds.length
     ? await admin
-        .from('sessions')
-        .select('id, client_id, scheduled_at, status')
-        .in('client_id', assignedClientIds)
-        .gte('scheduled_at', weekStart.toISOString())
-        .lt('scheduled_at', weekEnd.toISOString())
-        .limit(1000) // Prevent unbounded query
+      .from('sessions')
+      .select('id, client_id, scheduled_at, status')
+      .in('client_id', assignedClientIds)
+      .gte('scheduled_at', weekStart.toISOString())
+      .lt('scheduled_at', weekEnd.toISOString())
+      .limit(1000) // Prevent unbounded query
     : { data: [] }
 
   const [
@@ -159,7 +162,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
     { data: clientAssessments },
     { data: recentWearables },
   ] = assignedClientIds.length
-    ? await Promise.all([
+      ? await Promise.all([
         admin
           .from('sessions')
           .select('id, client_id, scheduled_at, status')
@@ -226,7 +229,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
           .order('sample_date', { ascending: false })
           .limit(500),
       ])
-    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }]
+      : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }]
 
   // Build per-client remaining count (excluding expired packages)
   const remainingByClient: Record<string, number> = {}
@@ -509,8 +512,8 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
           tone: prog.isFullyOnboarded
             ? 'green'
             : prog.currentStageNumber === 2 && prog.isBlockedByMedicalClearance
-            ? 'red'
-            : 'gold',
+              ? 'red'
+              : 'gold',
         })
       }
 
@@ -866,8 +869,8 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
     const athleteReadinessScore = typeof clientWearable?.readiness_score === 'number' && Number.isFinite(clientWearable.readiness_score)
       ? clientWearable.readiness_score
       : typeof clientWearable?.cns_stress_score === 'number' && Number.isFinite(clientWearable.cns_stress_score)
-      ? clientWearable.cns_stress_score
-      : null
+        ? clientWearable.cns_stress_score
+        : null
 
     return evaluateClientTriage({
       clientId: client.id,
@@ -1312,214 +1315,214 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
             </div>
 
             {!assignedClients || assignedClients.length === 0 ? (
-          <div
-            style={{
-              background: 'var(--navy-mid)',
-              border: '1px solid var(--navy-lt)',
-              padding: '24px',
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 15, color: 'var(--gray)', margin: 0 }}>
-              No clients assigned to you yet.
-            </p>
-          </div>
+              <div
+                style={{
+                  background: 'var(--navy-mid)',
+                  border: '1px solid var(--navy-lt)',
+                  padding: '24px',
+                  textAlign: 'center',
+                }}
+              >
+                <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 15, color: 'var(--gray)', margin: 0 }}>
+                  No clients assigned to you yet.
+                </p>
+              </div>
             ) : filteredAssignedClients.length === 0 ? (
-          <div
-            style={{
-              background: 'var(--navy-mid)',
-              border: '1px solid var(--navy-lt)',
-              padding: '24px',
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 15, color: 'var(--gray)', margin: 0 }}>
-              No assigned clients match this filter.
-            </p>
-          </div>
+              <div
+                style={{
+                  background: 'var(--navy-mid)',
+                  border: '1px solid var(--navy-lt)',
+                  padding: '24px',
+                  textAlign: 'center',
+                }}
+              >
+                <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 15, color: 'var(--gray)', margin: 0 }}>
+                  No assigned clients match this filter.
+                </p>
+              </div>
             ) : (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1,
-              background: 'rgba(255,255,255,0.06)',
-            }}
-          >
-            {/* Header row */}
-            <div
-              className="coach-table-header"
-              style={{
-                background: 'var(--navy)',
-                padding: '12px 24px',
-                display: 'grid',
-                gridTemplateColumns: '2fr 2fr 1fr 1fr',
-                gap: 16,
-              }}
-            >
-              {['Name', 'Email', 'Sessions Left', ''].map(h => (
-                <span
-                  key={h}
-                  style={{
-                    fontFamily: 'Raleway, sans-serif',
-                    fontWeight: 600,
-                    fontSize: 11,
-                    color: 'var(--gray)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                  }}
-                >
-                  {h}
-                </span>
-              ))}
-            </div>
-
-            {filteredAssignedClients.map(client => (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  background: 'rgba(255,255,255,0.06)',
+                }}
+              >
+                {/* Header row */}
                 <div
-                  key={client.id}
-                  className="coach-table-row"
+                  className="coach-table-header"
                   style={{
-                    background: 'var(--navy-mid)',
-                    padding: '16px 24px',
+                    background: 'var(--navy)',
+                    padding: '12px 24px',
                     display: 'grid',
-                    gridTemplateColumns: '2fr 2fr 1fr auto auto',
+                    gridTemplateColumns: '2fr 2fr 1fr 1fr',
                     gap: 16,
-                    alignItems: 'center',
                   }}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 8,
-                    }}
-                  >
+                  {['Name', 'Email', 'Sessions Left', ''].map(h => (
                     <span
+                      key={h}
                       style={{
                         fontFamily: 'Raleway, sans-serif',
                         fontWeight: 600,
-                        fontSize: 14,
-                        color: 'var(--white)',
+                        fontSize: 11,
+                        color: 'var(--gray)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
                       }}
                     >
-                      {client.full_name ?? '—'}
+                      {h}
                     </span>
+                  ))}
+                </div>
+
+                {filteredAssignedClients.map(client => (
+                  <div
+                    key={client.id}
+                    className="coach-table-row"
+                    style={{
+                      background: 'var(--navy-mid)',
+                      padding: '16px 24px',
+                      display: 'grid',
+                      gridTemplateColumns: '2fr 2fr 1fr auto auto',
+                      gap: 16,
+                      alignItems: 'center',
+                    }}
+                  >
                     <div
                       style={{
                         display: 'flex',
-                        flexWrap: 'wrap',
+                        flexDirection: 'column',
                         gap: 8,
                       }}
                     >
-                      {(statusChipsByClient[client.id] ?? []).map(chip => {
-                        const chipStyle = chipStyles[chip.tone]
+                      <span
+                        style={{
+                          fontFamily: 'Raleway, sans-serif',
+                          fontWeight: 600,
+                          fontSize: 14,
+                          color: 'var(--white)',
+                        }}
+                      >
+                        {client.full_name ?? '—'}
+                      </span>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 8,
+                        }}
+                      >
+                        {(statusChipsByClient[client.id] ?? []).map(chip => {
+                          const chipStyle = chipStyles[chip.tone]
 
-                        return (
-                          <span
-                            key={chip.label}
-                            style={{
-                              fontFamily: 'Raleway, sans-serif',
-                              fontWeight: 700,
-                              fontSize: 10,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.08em',
-                              padding: '4px 8px',
-                              borderRadius: 999,
-                              background: chipStyle.background,
-                              color: chipStyle.color,
-                              lineHeight: 1,
-                            }}
-                          >
-                            {chip.label}
-                          </span>
-                        )
-                      })}
+                          return (
+                            <span
+                              key={chip.label}
+                              style={{
+                                fontFamily: 'Raleway, sans-serif',
+                                fontWeight: 700,
+                                fontSize: 10,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                padding: '4px 8px',
+                                borderRadius: 999,
+                                background: chipStyle.background,
+                                color: chipStyle.color,
+                                lineHeight: 1,
+                              }}
+                            >
+                              {chip.label}
+                            </span>
+                          )
+                        })}
+                      </div>
                     </div>
-                  </div>
-                  <span
-                    style={{
-                      fontFamily: 'Raleway, sans-serif',
-                      fontSize: 14,
-                      color: 'var(--gray)',
-                    }}
-                  >
-                    {client.email}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-telemetry, monospace)',
-                      fontWeight: 700,
-                      fontSize: 20,
-                      color: 'var(--gold)',
-                    }}
-                  >
-                    {remainingByClient[client.id] ?? 0}
-                  </span>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <a
-                      href={`/coach/clients/${client.id}?tab=sessions`}
-                      className="tactile-btn"
-                      title="Schedule or view sessions"
+                    <span
                       style={{
                         fontFamily: 'Raleway, sans-serif',
+                        fontSize: 14,
+                        color: 'var(--gray)',
+                      }}
+                    >
+                      {client.email}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-telemetry, monospace)',
                         fontWeight: 700,
-                        fontSize: 12,
-                        padding: '6px 10px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid var(--navy-lt)',
-                        color: 'var(--white)',
-                        borderRadius: 5,
-                        textDecoration: 'none',
-                        whiteSpace: 'nowrap',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 5,
-                      }}
-                    >
-                      <GaaIcon name="calendar" size={13} tone="gold" />
-                      <span>Schedule</span>
-                    </a>
-                    <a
-                      href={`/coach/clients/${client.id}/live`}
-                      className="tactile-btn"
-                      style={{
-                        fontFamily: 'Raleway, sans-serif',
-                        fontWeight: 800,
-                        fontSize: 12,
-                        padding: '6px 12px',
-                        background: 'linear-gradient(135deg, rgba(212, 160, 23, 0.25) 0%, rgba(212, 160, 23, 0.1) 100%)',
-                        border: '1.5px solid var(--gold)',
-                        color: 'var(--gold-lt)',
-                        borderRadius: 5,
-                        textDecoration: 'none',
-                        whiteSpace: 'nowrap',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 5,
-                        boxShadow: '0 2px 8px rgba(212, 160, 23, 0.2)',
-                      }}
-                    >
-                      <GaaIcon name="camera" size={13} tone="gold" />
-                      <span>Train Live →</span>
-                    </a>
-                    <a
-                      href={`/coach/clients/${client.id}`}
-                      style={{
-                        fontFamily: 'Raleway, sans-serif',
-                        fontWeight: 600,
-                        fontSize: 13,
+                        fontSize: 20,
                         color: 'var(--gold)',
-                        textDecoration: 'none',
-                        whiteSpace: 'nowrap',
                       }}
                     >
-                      View →
-                    </a>
+                      {remainingByClient[client.id] ?? 0}
+                    </span>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <a
+                        href={`/coach/clients/${client.id}?tab=sessions`}
+                        className="tactile-btn"
+                        title="Schedule or view sessions"
+                        style={{
+                          fontFamily: 'Raleway, sans-serif',
+                          fontWeight: 700,
+                          fontSize: 12,
+                          padding: '6px 10px',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid var(--navy-lt)',
+                          color: 'var(--white)',
+                          borderRadius: 5,
+                          textDecoration: 'none',
+                          whiteSpace: 'nowrap',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                      >
+                        <GaaIcon name="calendar" size={13} tone="gold" />
+                        <span>Schedule</span>
+                      </a>
+                      <a
+                        href={`/coach/clients/${client.id}/live`}
+                        className="tactile-btn"
+                        style={{
+                          fontFamily: 'Raleway, sans-serif',
+                          fontWeight: 800,
+                          fontSize: 12,
+                          padding: '6px 12px',
+                          background: 'linear-gradient(135deg, rgba(212, 160, 23, 0.25) 0%, rgba(212, 160, 23, 0.1) 100%)',
+                          border: '1.5px solid var(--gold)',
+                          color: 'var(--gold-lt)',
+                          borderRadius: 5,
+                          textDecoration: 'none',
+                          whiteSpace: 'nowrap',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          boxShadow: '0 2px 8px rgba(212, 160, 23, 0.2)',
+                        }}
+                      >
+                        <GaaIcon name="camera" size={13} tone="gold" />
+                        <span>Train Live →</span>
+                      </a>
+                      <a
+                        href={`/coach/clients/${client.id}`}
+                        style={{
+                          fontFamily: 'Raleway, sans-serif',
+                          fontWeight: 600,
+                          fontSize: 13,
+                          color: 'var(--gold)',
+                          textDecoration: 'none',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        View →
+                      </a>
+                    </div>
+                    <CoachClientAssignmentButton clientId={client.id} mode="release" />
                   </div>
-                  <CoachClientAssignmentButton clientId={client.id} mode="release" />
-                </div>
-              ))}
-          </div>
+                ))}
+              </div>
             )}
           </>
         )}
@@ -1552,90 +1555,90 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
             </p>
 
             {!unassignedClients || unassignedClients.length === 0 ? (
-          <div
-            style={{
-              background: 'var(--navy-mid)',
-              border: '1px solid var(--navy-lt)',
-              padding: '24px',
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 15, color: 'var(--gray)', margin: 0 }}>
-              No unassigned clients available.
-            </p>
-          </div>
-            ) : (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1,
-              background: 'rgba(255,255,255,0.06)',
-            }}
-          >
-            <div
-              className="coach-table-header"
-              style={{
-                background: 'var(--navy)',
-                padding: '12px 24px',
-                display: 'grid',
-                gridTemplateColumns: '2fr 2fr auto',
-                gap: 16,
-              }}
-            >
-              {['Name', 'Email', ''].map(h => (
-                <span
-                  key={h}
-                  style={{
-                    fontFamily: 'Raleway, sans-serif',
-                    fontWeight: 600,
-                    fontSize: 11,
-                    color: 'var(--gray)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                  }}
-                >
-                  {h}
-                </span>
-              ))}
-            </div>
-
-            {unassignedClients.map(client => (
               <div
-                key={client.id}
-                className="coach-table-row"
                 style={{
                   background: 'var(--navy-mid)',
-                  padding: '16px 24px',
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 2fr auto',
-                  gap: 16,
-                  alignItems: 'center',
+                  border: '1px solid var(--navy-lt)',
+                  padding: '24px',
+                  textAlign: 'center',
                 }}
               >
-                <span
-                  style={{
-                    fontFamily: 'Raleway, sans-serif',
-                    fontWeight: 600,
-                    fontSize: 14,
-                    color: 'var(--white)',
-                  }}
-                >
-                  {client.full_name ?? '—'}
-                </span>
-                <span
-                  style={{
-                    fontFamily: 'Raleway, sans-serif',
-                    fontSize: 14,
-                    color: 'var(--gray)',
-                  }}
-                >
-                  {client.email}
-                </span>
-                <CoachClientAssignmentButton clientId={client.id} mode="assign" />
+                <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 15, color: 'var(--gray)', margin: 0 }}>
+                  No unassigned clients available.
+                </p>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  background: 'rgba(255,255,255,0.06)',
+                }}
+              >
+                <div
+                  className="coach-table-header"
+                  style={{
+                    background: 'var(--navy)',
+                    padding: '12px 24px',
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 2fr auto',
+                    gap: 16,
+                  }}
+                >
+                  {['Name', 'Email', ''].map(h => (
+                    <span
+                      key={h}
+                      style={{
+                        fontFamily: 'Raleway, sans-serif',
+                        fontWeight: 600,
+                        fontSize: 11,
+                        color: 'var(--gray)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                      }}
+                    >
+                      {h}
+                    </span>
+                  ))}
+                </div>
+
+                {unassignedClients.map(client => (
+                  <div
+                    key={client.id}
+                    className="coach-table-row"
+                    style={{
+                      background: 'var(--navy-mid)',
+                      padding: '16px 24px',
+                      display: 'grid',
+                      gridTemplateColumns: '2fr 2fr auto',
+                      gap: 16,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: 'Raleway, sans-serif',
+                        fontWeight: 600,
+                        fontSize: 14,
+                        color: 'var(--white)',
+                      }}
+                    >
+                      {client.full_name ?? '—'}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: 'Raleway, sans-serif',
+                        fontSize: 14,
+                        color: 'var(--gray)',
+                      }}
+                    >
+                      {client.email}
+                    </span>
+                    <CoachClientAssignmentButton clientId={client.id} mode="assign" />
+                  </div>
+                ))}
+              </div>
             )}
           </>
         )}

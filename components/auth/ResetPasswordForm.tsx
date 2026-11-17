@@ -209,12 +209,11 @@ export default function ResetPasswordForm({ forceChange = false, nextPath = '/da
     try {
       const { data } = await supabase.auth.getUser()
       const user = data.user
-      const isCoachMeta = user?.user_metadata?.surface_role === 'coach'
       const isCoachEmail =
         user?.email &&
         user.email.toLowerCase() === 'coach@forge-athletic.app'
 
-      if (isCoachMeta || isCoachEmail) {
+      if (isCoachEmail) {
         isCoach = true
       }
 

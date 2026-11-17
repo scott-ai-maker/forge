@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from '@/lib/supabase'
+import { isMasterCoachEmail } from '@/lib/authz'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { attributeReferralSignup, getOrCreateClientReferralCode } from '@/lib/referrals'
 import { extractRequestIp, recordLegalConsentAudit } from '@/lib/legal-compliance'
@@ -130,9 +131,8 @@ export async function GET(request: NextRequest) {
     const displayName = rawFullName.length > 0 ? rawFullName : null
 
     const userEmail = (user.email ?? '').toLowerCase().trim()
-    const isMasterCoach =
-      userEmail === 'coach@forge-athletic.app' ||
-      user.user_metadata?.surface_role === 'coach'
+    // Never trust client-writable user_metadata.surface_role; derive coach authority strictly from DB or Master Coach allowlist.
+    const isMasterCoach = isMasterCoachEmail(user.email)
     const { data: existingProfile } = await admin
       .from('clients')
       .select('id, role, avatar_path')

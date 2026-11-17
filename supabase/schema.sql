@@ -358,23 +358,48 @@ drop policy if exists "Public can submit coaching application" on coaching_appli
 create policy "Public can submit coaching application" on coaching_applications
   for insert with check (true);
 
--- Clients: users can only read/update their own non-privileged record fields
+-- Clients: users can only read/update their own non-privileged record fields.
+-- Privileged columns (role, designated_coach_id, stripe_customer_id, status) are locked via BEFORE UPDATE trigger
+-- to prevent privilege escalation while avoiding 42P17 self-referential RLS subqueries.
+create or replace function public.enforce_clients_privileged_columns()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if current_setting('role', true) = 'authenticated' then
+    if new.role is distinct from old.role then
+      raise exception 'Insufficient privilege: cannot modify client role' using errcode = '42501';
+    end if;
+    if new.designated_coach_id is distinct from old.designated_coach_id then
+      raise exception 'Insufficient privilege: cannot modify designated_coach_id' using errcode = '42501';
+    end if;
+    if new.stripe_customer_id is distinct from old.stripe_customer_id then
+      raise exception 'Insufficient privilege: cannot modify stripe_customer_id' using errcode = '42501';
+    end if;
+    if new.status is distinct from old.status then
+      raise exception 'Insufficient privilege: cannot modify account status' using errcode = '42501';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_enforce_clients_privileged_columns on clients;
+create trigger trg_enforce_clients_privileged_columns
+  before update on clients
+  for each row
+  execute function public.enforce_clients_privileged_columns();
+
 drop policy if exists "Client reads own record" on clients;
 create policy "Client reads own record" on clients
   for select using (auth.uid() = id);
 drop policy if exists "Client updates own record" on clients;
 create policy "Client updates own record" on clients
-  for update using (auth.uid() = id)
-  with check (
-    auth.uid() = id
-    and role = (select c.role from clients c where c.id = auth.uid())
-    and (
-      designated_coach_id is not distinct from (select c.designated_coach_id from clients c where c.id = auth.uid())
-    )
-    and (
-      stripe_customer_id is not distinct from (select c.stripe_customer_id from clients c where c.id = auth.uid())
-    )
-  );
+  for update to authenticated
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
 
 -- Packages: clients see only their own
 drop policy if exists "Client sees own packages" on client_packages;
@@ -991,19 +1016,51 @@ update storage.buckets
 set public = false
 where id = 'coach-voice-notes';
 
+create or replace function public.can_access_client_storage_folder(folder_segment text)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  target_id uuid;
+begin
+  if folder_segment is null or folder_segment !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' then
+    return false;
+  end if;
+  target_id := folder_segment::uuid;
+  return target_id = auth.uid() or public.is_coach_assigned_to_client(target_id);
+end;
+$$;
+
+revoke all on function public.can_access_client_storage_folder(text) from public;
+grant execute on function public.can_access_client_storage_folder(text) to authenticated, service_role;
+
 drop policy if exists "Authenticated users upload voice notes" on storage.objects;
-create policy "Authenticated users upload voice notes" on storage.objects
+drop policy if exists "Assigned participants upload voice notes" on storage.objects;
+create policy "Assigned participants upload voice notes" on storage.objects
   for insert to authenticated
   with check (
     bucket_id = 'coach-voice-notes'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and public.can_access_client_storage_folder((storage.foldername(name))[1])
   );
 
 drop policy if exists "Authenticated users view voice notes" on storage.objects;
-create policy "Authenticated users view voice notes" on storage.objects
+drop policy if exists "Assigned participants view voice notes" on storage.objects;
+create policy "Assigned participants view voice notes" on storage.objects
   for select to authenticated
   using (
     bucket_id = 'coach-voice-notes'
+    and public.can_access_client_storage_folder((storage.foldername(name))[1])
+  );
+
+drop policy if exists "Assigned participants delete voice notes" on storage.objects;
+create policy "Assigned participants delete voice notes" on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'coach-voice-notes'
+    and public.can_access_client_storage_folder((storage.foldername(name))[1])
   );
 
 create or replace function public.book_client_session(
@@ -1462,10 +1519,7 @@ create policy "Users read own wearable metrics" on athlete_wearable_metrics
   for select to authenticated
   using (
     auth.uid() = client_id
-    or exists (
-      select 1 from clients c
-      where c.id = auth.uid() and c.role = 'coach'
-    )
+    or public.is_coach_assigned_to_client(client_id)
   );
 
 drop policy if exists "Users insert own wearable metrics" on athlete_wearable_metrics;
@@ -1513,10 +1567,7 @@ create policy "Users read own personal records" on client_personal_records
   for select to authenticated
   using (
     auth.uid() = user_id
-    or exists (
-      select 1 from clients c
-      where c.id = auth.uid() and c.role = 'coach'
-    )
+    or public.is_coach_assigned_to_client(user_id)
   );
 
 create index if not exists client_personal_records_lookup_idx 

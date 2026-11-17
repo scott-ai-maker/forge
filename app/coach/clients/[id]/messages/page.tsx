@@ -30,7 +30,11 @@ export default async function CoachClientMessagesPage({ params }: PageProps) {
     notFound()
   }
 
+  // Only Master Coach may auto-claim an unassigned client; non-master coaches require explicit prior assignment
   if (!client.designated_coach_id) {
+    if (!isMasterCoachEmail(user.email)) {
+      notFound()
+    }
     await admin
       .from('clients')
       .update({ designated_coach_id: user.id })

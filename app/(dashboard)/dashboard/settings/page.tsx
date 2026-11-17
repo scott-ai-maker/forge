@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { isMasterCoachEmail } from '@/lib/authz'
 import LogoutButton from '@/components/auth/LogoutButton'
 import SiteHeader from '@/components/ui/SiteHeader'
 import ClientSettingsStudio, { SettingsTab } from '@/components/settings/ClientSettingsStudio'
@@ -82,7 +83,7 @@ export default async function ClientSettingsPage({ searchParams }: ClientSetting
     email: profile?.email ?? user.email ?? '',
     fullName: profile?.full_name ?? '',
     phone: profile?.phone ?? '',
-    role: profile?.role === 'coach' || user.user_metadata?.surface_role === 'coach' ? 'coach' : 'client',
+    role: profile?.role === 'coach' || isMasterCoachEmail(user.email) ? 'coach' : 'client',
     avatarUrl,
     pendingEmail: user.new_email ?? null,
     preferredUnits: (fitnessProfile?.preferred_units === 'metric' ? 'metric' : 'imperial') as 'imperial' | 'metric',
