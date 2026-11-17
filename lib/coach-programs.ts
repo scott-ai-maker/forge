@@ -1,5 +1,5 @@
 import { detectExerciseEquipment } from './nasm-equipment-detector'
-import { resolveExerciseVideoEmbed, extractYouTubeVideoId } from './nasm-exercise-video-catalog'
+import { resolveExerciseVideoEmbed } from './nasm-exercise-video-catalog'
 import { resolveGaaExerciseImage, BRAND_LOGO_FALLBACK_IMAGE } from './nasm-generated-images'
 import { parseExerciseStepInstructions } from './nasm-clinical-movement-cards'
 import {
@@ -340,14 +340,19 @@ export function buildStoredProgramPlan(
 
           const match = findExerciseMatch(exercise, exerciseById, exerciseByName)
           const videoRes = resolveExerciseVideoEmbed(name, match?.media_video_url ?? exercise.videoUrl)
-          const ytId = extractYouTubeVideoId(videoRes.externalUrl) || extractYouTubeVideoId(videoRes.embedUrl)
-          const officialThumbnail = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null
           const gaaImage = resolveGaaExerciseImage(name, false)
+          const isThirdPartyYoutube = (url?: string | null) =>
+            Boolean(url && /(?:youtube\.com|youtube-nocookie\.com|youtu\.be|ytimg\.com)/i.test(url))
           const isLocalCreated = (url?: string | null) => Boolean(url && url.includes('/images/exercises/'))
-          const customExerciseImg = !isLocalCreated(exercise.imageUrl) ? normalizeOptionalText(exercise.imageUrl) : null
-          const customMatchImg = !isLocalCreated(match?.media_image_url) ? normalizeOptionalText(match?.media_image_url) : null
+          const customExerciseImg =
+            !isLocalCreated(exercise.imageUrl) && !isThirdPartyYoutube(exercise.imageUrl)
+              ? normalizeOptionalText(exercise.imageUrl)
+              : null
+          const customMatchImg =
+            !isLocalCreated(match?.media_image_url) && !isThirdPartyYoutube(match?.media_image_url)
+              ? normalizeOptionalText(match?.media_image_url)
+              : null
           const resolvedImageUrl =
-            officialThumbnail ??
             gaaImage ??
             customExerciseImg ??
             customMatchImg ??

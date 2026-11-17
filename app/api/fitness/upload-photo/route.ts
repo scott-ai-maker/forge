@@ -7,6 +7,7 @@ import {
   createSignedFitnessPhotoUrl,
   FITNESS_PHOTO_BUCKET,
 } from '@/lib/fitness-photos'
+import { checkClientAdultPhotoEligibility } from '@/lib/legal-compliance'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
@@ -53,6 +54,15 @@ export async function POST(req: NextRequest) {
     // Max 5MB
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json({ error: 'File too large (max 5MB)' }, { status: 400, headers: NO_STORE_HEADERS })
+    }
+
+    // COPPA & Minor Protection Gate: require verified 18+ adult profile before storing any body photograph
+    const adultEligibility = await checkClientAdultPhotoEligibility(admin, user.id)
+    if (!adultEligibility.eligible) {
+      return NextResponse.json(
+        { error: adultEligibility.error || 'Adult age verification (18+) is required before uploading photos.' },
+        { status: 403, headers: NO_STORE_HEADERS }
+      )
     }
 
     const buffer = await file.arrayBuffer()

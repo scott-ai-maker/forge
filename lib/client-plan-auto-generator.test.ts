@@ -386,5 +386,87 @@ describe('Client Plan Auto-Generator (lib/client-plan-auto-generator)', () => {
       expect(updatedRow.plan_json.autoGenerateTrigger).toBe('profile_update')
       expect(updatedRow.plan_json.updatedCoreFields).toEqual(['experienceLevel'])
     })
+
+    it('halts workout auto-generation (Phase 0 Hold) when PAR-Q+ flags cardiac/chest-pain risk without physician clearance', async () => {
+      const insertPlanMock = vi.fn()
+      const insertMessageMock = vi.fn().mockResolvedValue({ error: null })
+
+      mockFrom = vi.fn((table: string) => {
+        if (table === 'clients') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { id: mockClientId, full_name: 'Christine DeGreenia', designated_coach_id: mockCoachId },
+              error: null,
+            }),
+          }
+        }
+        if (table === 'fitness_profiles') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: {
+                user_id: mockClientId,
+                age: 41,
+                sex: 'female',
+                experience_level: 'advanced',
+                equipment_access: ['barbell'],
+                fitness_goal: 'HYPERTROPHY',
+                training_days_per_week: 4,
+              },
+              error: null,
+            }),
+          }
+        }
+        if (table === 'client_intake_forms') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: {
+                user_id: mockClientId,
+                parq_any_yes: true,
+                parq_answers: { q2: true }, // Chest pain
+                medical_conditions: null,
+                surgeries_or_injuries: null,
+              },
+              error: null,
+            }),
+          }
+        }
+        if (table === 'workout_plans') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+            insert: insertPlanMock,
+          }
+        }
+        if (table === 'coach_client_messages') {
+          return { insert: insertMessageMock }
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }
+      })
+      vi.mocked(supabaseAdmin).mockReturnValue({ from: mockFrom } as unknown as ReturnType<typeof supabaseAdmin>)
+
+      const result = await autoGenerateOrUpdateClientWorkoutPlan({
+        clientId: mockClientId,
+        trigger: 'onboarding',
+      })
+
+      expect(result.status).toBe('skipped')
+      expect(result.message).toContain('Phase 0')
+      expect(insertPlanMock).not.toHaveBeenCalled()
+      expect(insertMessageMock).toHaveBeenCalled()
+    })
   })
 })

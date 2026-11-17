@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
-import { evaluateMedicalParq, ParqAnswers } from '@/lib/liability-shield'
+import {
+  evaluateMedicalParq,
+  normalizeParqAnswersFromIntake,
+  ParqAnswers,
+} from '@/lib/liability-shield'
 import {
   extractRequestIp,
   isValidLegalSignature,
@@ -31,18 +35,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const parqAnswers: ParqAnswers = intake?.parq_answers ?? {
-    hasHeartCondition: false,
-    experiencesChestPain: false,
-    experiencesDizzinessOrSyncope: false,
-    hasBoneOrJointProblem: false,
-    takesBloodPressureOrHeartMedication: false,
-    hasChronicSpinalOrDiscCondition: false,
-    hasRecentSurgeryOrInjury: false,
-    reportedConditionsNotes: intake?.medical_conditions || '',
-    signedWaiverName: intake?.consent_signature_name || '',
-    signedAt: intake?.consent_signed_at || null,
-  }
+  const parqAnswers: ParqAnswers = normalizeParqAnswersFromIntake(intake?.parq_answers, intake)
 
   const evaluation = evaluateMedicalParq(parqAnswers)
 
@@ -100,6 +93,20 @@ export async function POST(req: NextRequest) {
       ? new Date(body.signedAt).toISOString()
       : new Date().toISOString()
 
+  const admin = supabaseAdmin()
+
+  // 1. Fetch client & existing intake record (preserving ERAP fields across PAR-Q updates)
+  const [{ data: clientRow }, { data: existingIntake }] = await Promise.all([
+    admin.from('clients').select('id, full_name, designated_coach_id').eq('id', userId).maybeSingle(),
+    admin
+      .from('client_intake_forms')
+      .select('parq_answers, emergency_contact_name, emergency_contact_phone')
+      .eq('user_id', userId)
+      .maybeSingle(),
+  ])
+
+  const existingNormalized = normalizeParqAnswersFromIntake(existingIntake?.parq_answers, existingIntake)
+
   const answers: ParqAnswers = {
     hasHeartCondition: Boolean(body.hasHeartCondition),
     experiencesChestPain: Boolean(body.experiencesChestPain),
@@ -111,16 +118,32 @@ export async function POST(req: NextRequest) {
     reportedConditionsNotes: String(body.reportedConditionsNotes ?? '').trim(),
     signedWaiverName: rawSignature,
     signedAt: signedAtIso,
+    workoutStreetAddress:
+      (typeof body.workoutStreetAddress === 'string' && body.workoutStreetAddress.trim()) ||
+      existingNormalized.workoutStreetAddress,
+    workoutUnitOrGateCode:
+      typeof body.workoutUnitOrGateCode === 'string'
+        ? body.workoutUnitOrGateCode.trim() || undefined
+        : existingNormalized.workoutUnitOrGateCode,
+    workoutCity:
+      (typeof body.workoutCity === 'string' && body.workoutCity.trim()) ||
+      existingNormalized.workoutCity,
+    workoutState:
+      (typeof body.workoutState === 'string' && body.workoutState.trim()) ||
+      existingNormalized.workoutState,
+    workoutPostalCode:
+      (typeof body.workoutPostalCode === 'string' && body.workoutPostalCode.trim()) ||
+      existingNormalized.workoutPostalCode,
+    localEmergencyDispatchPhone:
+      (typeof body.localEmergencyDispatchPhone === 'string' && body.localEmergencyDispatchPhone.trim()) ||
+      existingNormalized.localEmergencyDispatchPhone,
+    hasAcceptedVirtualTelehealthConsent:
+      typeof body.hasAcceptedVirtualTelehealthConsent === 'boolean'
+        ? body.hasAcceptedVirtualTelehealthConsent
+        : existingNormalized.hasAcceptedVirtualTelehealthConsent,
   }
 
   const evaluation = evaluateMedicalParq(answers)
-  const admin = supabaseAdmin()
-
-  // 1. Fetch client & profile record
-  const [{ data: clientRow }, { data: existingIntake }] = await Promise.all([
-    admin.from('clients').select('id, full_name, designated_coach_id').eq('id', userId).maybeSingle(),
-    admin.from('client_intake_forms').select('emergency_contact_name, emergency_contact_phone').eq('user_id', userId).maybeSingle(),
-  ])
 
   const emergencyName =
     (typeof body.emergencyContactName === 'string' && body.emergencyContactName.trim()) ||
@@ -130,6 +153,16 @@ export async function POST(req: NextRequest) {
     (typeof body.emergencyContactPhone === 'string' && body.emergencyContactPhone.trim()) ||
     existingIntake?.emergency_contact_phone ||
     null
+
+  if (!emergencyName || !emergencyPhone) {
+    return NextResponse.json(
+      {
+        error:
+          'Emergency contact name and phone number are required before saving your PAR-Q+ medical screening.',
+      },
+      { status: 400 }
+    )
+  }
 
   const resolvedLiabilityWaiver = body.consentLiabilityWaiver !== false
   const resolvedInformedConsent = body.consentInformedConsent !== false

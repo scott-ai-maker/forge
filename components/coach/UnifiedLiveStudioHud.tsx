@@ -1292,10 +1292,12 @@ export default function UnifiedLiveStudioHud({
       localVideoRef.current.play().catch(() => {})
     }
 
-    if (!ecoMode && typeof MediaRecorder !== 'undefined') {
+    const videoTracks = typeof mediaStream.getVideoTracks === 'function' ? mediaStream.getVideoTracks() : []
+    if (!ecoMode && typeof MediaRecorder !== 'undefined' && typeof MediaStream !== 'undefined' && videoTracks.length > 0) {
       try {
+        // M.G.L. c. 272, § 99 wiretap safeguard: rolling slow-motion telestrator replay captures VIDEO ONLY (zero audio tracks)
+        const videoOnlyStream = new MediaStream(videoTracks)
         const candidateMimes = [
-          'video/webm;codecs=vp8,opus',
           'video/webm;codecs=vp8',
           'video/webm',
           'video/mp4',
@@ -1305,8 +1307,8 @@ export default function UnifiedLiveStudioHud({
             ? candidateMimes.find(m => MediaRecorder.isTypeSupported(m))
             : undefined
         const recorder = supportedMime
-          ? new MediaRecorder(mediaStream, { mimeType: supportedMime })
-          : new MediaRecorder(mediaStream)
+          ? new MediaRecorder(videoOnlyStream, { mimeType: supportedMime })
+          : new MediaRecorder(videoOnlyStream)
         recorderMimeTypeRef.current = recorder.mimeType || supportedMime || 'video/webm'
         mediaRecorderRef.current = recorder
         recorder.ondataavailable = e => {
@@ -5209,7 +5211,7 @@ export default function UnifiedLiveStudioHud({
                         alignItems: 'center',
                         gap: 4,
                       }}
-                      title="Watch official NASM Edge demonstration"
+                      title="Watch Forge Athletic Studio demonstration"
                     >
                       <GaaIcon name="play" size={10} tone="inherit" />
                       <span>Watch Demo</span>
@@ -5896,7 +5898,7 @@ export default function UnifiedLiveStudioHud({
         athleteName={athleteName}
       />
 
-      {/* ── Official NASM Edge Video Demo Modal ── */}
+      {/* ── Forge Athletic Studio Video Demo Modal ── */}
       {demoVideoModal?.isOpen && demoVideoModal.embedUrl && (
         <div
           data-testid="exercise-demo-video-modal"
@@ -5946,7 +5948,7 @@ export default function UnifiedLiveStudioHud({
             >
               <div>
                 <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                  Official NASM Edge Demonstration
+                  Forge Athletic Studio Demonstration
                 </div>
                 <h3 id="demo-video-title" style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 18, letterSpacing: '0.04em', margin: '2px 0 0', color: '#FFF' }}>
                   {demoVideoModal.name}
@@ -5976,20 +5978,42 @@ export default function UnifiedLiveStudioHud({
 
             {/* Video Container (16:9) */}
             <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', background: '#000' }}>
-              <iframe
-                src={demoVideoModal.embedUrl}
-                title={`Official NASM Exercise Demo: ${demoVideoModal.name}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                }}
-              />
+              {demoVideoModal.embedUrl.startsWith('/') || demoVideoModal.embedUrl.endsWith('.mp4') ? (
+                <video
+                  src={demoVideoModal.embedUrl}
+                  controls
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  controlsList="nodownload noplaybackrate"
+                  disablePictureInPicture
+                  onContextMenu={e => e.preventDefault()}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <iframe
+                  src={demoVideoModal.embedUrl}
+                  title={`Forge Athletic Exercise Demo: ${demoVideoModal.name}`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                  }}
+                />
+              )}
             </div>
 
             {/* Quick Cue Footer */}

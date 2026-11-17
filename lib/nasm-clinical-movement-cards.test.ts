@@ -88,26 +88,26 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(novel.fallbackImageUrl).toBe('/images/exercises/image-not-available.jpg')
   })
 
-  it('correctly resolves official NASM CDN video and studio thumbnail for Glute Bridge', () => {
+  it('correctly resolves sovereign Forge Athletic studio video and thumbnail for Glute Bridge', () => {
     // 1. Bilateral Glute Bridge / Floor Bridge
     const gluteBridge = getNasmClinicalMovementCard('Glute Bridge')
     expect(gluteBridge.hasOfficialMedia).toBe(true)
     expect(gluteBridge.imageUrl).toBe('/images/exercises/glute-bridge.jpg')
     expect(gluteBridge.candidateStudioImageUrl).toBe('/images/exercises/glute-bridge.jpg')
-    expect(gluteBridge.videoUrl).toContain('Z3cY3d3BBo4')
-    expect(gluteBridge.embedUrl).toContain('Z3cY3d3BBo4')
+    expect(gluteBridge.videoUrl).toBe('/videos/exercises/glute-bridge.mp4')
+    expect(gluteBridge.embedUrl).toBe('/videos/exercises/glute-bridge.mp4')
 
     const floorBridge = getNasmClinicalMovementCard('Floor Bridge')
     expect(floorBridge.imageUrl).toBe('/images/exercises/floor-bridge.jpg')
     expect(floorBridge.candidateStudioImageUrl).toBe('/images/exercises/floor-bridge.jpg')
-    expect(floorBridge.videoUrl).toContain('Z3cY3d3BBo4')
+    expect(floorBridge.videoUrl).toBe('/videos/exercises/floor-bridge.mp4')
     expect(floorBridge.howToSteps.length).toBe(4)
     expect(floorBridge.howToSteps[0]).toContain('Lie on your back')
 
     // 2. Stability Ball Hamstring Curl canonical movement card
     const hamstringCurl = getNasmClinicalMovementCard('stability ball hamstring curl')
     expect(hamstringCurl.hasOfficialMedia).toBe(true)
-    expect(hamstringCurl.videoUrl).toContain('Z3cY3d3BBo4')
+    expect(hamstringCurl.videoUrl).toBe('/videos/exercises/floor-bridge.mp4')
     expect(hamstringCurl.howToSteps.length).toBe(4)
     expect(hamstringCurl.howToSteps[0]).toContain('Lie on your back')
 
@@ -116,18 +116,18 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(singleLegGluteBridge.hasOfficialMedia).toBe(true)
     expect(singleLegGluteBridge.imageUrl).toBe('/images/exercises/single-leg-glute-bridge.jpg')
     expect(singleLegGluteBridge.candidateStudioImageUrl).toBe('/images/exercises/single-leg-glute-bridge.jpg')
-    expect(singleLegGluteBridge.videoUrl).toContain('lHXShY-FivU')
-    expect(singleLegGluteBridge.embedUrl).toContain('lHXShY-FivU')
+    expect(singleLegGluteBridge.videoUrl).toBe('/videos/exercises/single-leg-glute-bridge.mp4')
+    expect(singleLegGluteBridge.embedUrl).toBe('/videos/exercises/single-leg-glute-bridge.mp4')
   })
 
-  it('correctly resolves verified studio image and official NASM video for Squat to Overhead Reach & Scaption', () => {
+  it('correctly resolves verified studio image and first-party studio MP4 for Squat to Overhead Reach & Scaption', () => {
     // 1. Squat to Overhead Reach & Scaption (Clinical Warmup / Integration)
     const squatReachScaption = getNasmClinicalMovementCard('Squat to Overhead Reach & Scaption')
     expect(squatReachScaption.hasOfficialMedia).toBe(true)
     expect(squatReachScaption.imageUrl).toBe('/images/exercises/squat-to-overhead-reach.jpg')
     expect(squatReachScaption.candidateStudioImageUrl).toBe('/images/exercises/squat-to-overhead-reach.jpg')
-    expect(squatReachScaption.videoUrl).toContain('9k6IfkGBAVQ')
-    expect(squatReachScaption.embedUrl).toContain('9k6IfkGBAVQ')
+    expect(squatReachScaption.videoUrl).toBe('/videos/exercises/squat-to-overhead-reach.mp4')
+    expect(squatReachScaption.embedUrl).toBe('/videos/exercises/squat-to-overhead-reach.mp4')
     expect(squatReachScaption.primeMover).toContain('Deltoid')
     expect(squatReachScaption.primeMover).toContain('Supraspinatus')
 
@@ -136,16 +136,16 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(squatReach.hasOfficialMedia).toBe(true)
     expect(squatReach.imageUrl).toBe('/images/exercises/squat-to-overhead-reach.jpg')
     expect(squatReach.candidateStudioImageUrl).toBe('/images/exercises/squat-to-overhead-reach.jpg')
-    expect(squatReach.videoUrl).toContain('9k6IfkGBAVQ')
-    expect(squatReach.embedUrl).toContain('9k6IfkGBAVQ')
+    expect(squatReach.videoUrl).toBe('/videos/exercises/squat-to-overhead-reach.mp4')
+    expect(squatReach.embedUrl).toBe('/videos/exercises/squat-to-overhead-reach.mp4')
 
     // 3. Bilateral / Standard Scaption
     const scaption = getNasmClinicalMovementCard('Scaption')
     expect(scaption.hasOfficialMedia).toBe(true)
     expect(scaption.imageUrl).toBe('/images/exercises/single-leg-scaption.jpg')
     expect(scaption.candidateStudioImageUrl).toBe('/images/exercises/single-leg-scaption.jpg')
-    expect(scaption.videoUrl).toContain('PKjDGnwpB_o')
-    expect(scaption.embedUrl).toContain('PKjDGnwpB_o')
+    expect(scaption.videoUrl).toBe('/videos/exercises/single-leg-scaption.mp4')
+    expect(scaption.embedUrl).toBe('/videos/exercises/single-leg-scaption.mp4')
     expect(scaption.clinicalCues.some(cue => cue.includes('scapular plane'))).toBe(true)
 
     // 4. Single-Leg Scaption (Core Stabilization Phase 1)
@@ -153,16 +153,16 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(singleLegScaption.hasOfficialMedia).toBe(true)
     expect(singleLegScaption.imageUrl).toBe('/images/exercises/single-leg-scaption.jpg')
     expect(singleLegScaption.candidateStudioImageUrl).toBe('/images/exercises/single-leg-scaption.jpg')
-    expect(singleLegScaption.videoUrl).toContain('PKjDGnwpB_o')
-    expect(singleLegScaption.embedUrl).toContain('PKjDGnwpB_o')
+    expect(singleLegScaption.videoUrl).toBe('/videos/exercises/single-leg-scaption.mp4')
+    expect(singleLegScaption.embedUrl).toBe('/videos/exercises/single-leg-scaption.mp4')
 
     // 5. Single-Leg Single-Arm Scaption
     const singleArmScaption = getNasmClinicalMovementCard('Single-Leg Single-Arm Scaption')
     expect(singleArmScaption.hasOfficialMedia).toBe(true)
     expect(singleArmScaption.imageUrl).toBe('/images/exercises/single-leg-single-arm-scaption.jpg')
     expect(singleArmScaption.candidateStudioImageUrl).toBe('/images/exercises/single-leg-single-arm-scaption.jpg')
-    expect(singleArmScaption.videoUrl).toContain('ikMg_3_jAWE')
-    expect(singleArmScaption.embedUrl).toContain('ikMg_3_jAWE')
+    expect(singleArmScaption.videoUrl).toBe('/videos/exercises/single-leg-single-arm-scaption.mp4')
+    expect(singleArmScaption.embedUrl).toBe('/videos/exercises/single-leg-single-arm-scaption.mp4')
   })
 
   it('resolves Glute Bridge with 2s Isometric Hold and demonstrates O(1) in-memory memoization', () => {
@@ -212,12 +212,12 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     expect(hammer.clinicalCues.some(c => c.toLowerCase().includes('zero wrist twisting or supination'))).toBe(true)
   })
 
-  it('resolves Single-Leg Dumbbell Overhead Press with Phase 1 stabilization, single-leg checkpoints, and official media', () => {
+  it('resolves Single-Leg Dumbbell Overhead Press with Phase 1 stabilization, single-leg checkpoints, and studio media', () => {
     const slPress = getNasmClinicalMovementCard('Single-Leg Dumbbell Overhead Press')
     expect(slPress.hasOfficialMedia).toBe(true)
     expect(slPress.imageUrl).toBe('/images/exercises/single-leg-dumbbell-overhead-press.jpg')
     expect(slPress.candidateStudioImageUrl).toBe('/images/exercises/single-leg-dumbbell-overhead-press.jpg')
-    expect(slPress.videoUrl).toContain('8o79mSC7ZZQ')
+    expect(slPress.videoUrl).toBe('/videos/exercises/single-leg-dumbbell-overhead-press.mp4')
     expect(slPress.optPhase).toContain('Stabilization Endurance')
     expect(slPress.stabilizers).toEqual(expect.arrayContaining([expect.stringContaining('Gluteus Medius')]))
     expect(slPress.setupInstructions.toLowerCase()).toContain('one leg')
@@ -229,16 +229,16 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     const slAlt = getNasmClinicalMovementCard('Single Leg Overhead Dumbbell Press')
     expect(slAlt.imageUrl).toBe('/images/exercises/single-leg-dumbbell-overhead-press.jpg')
     expect(slAlt.candidateStudioImageUrl).toBe('/images/exercises/single-leg-dumbbell-overhead-press.jpg')
-    expect(slAlt.videoUrl).toContain('8o79mSC7ZZQ')
+    expect(slAlt.videoUrl).toBe('/videos/exercises/single-leg-dumbbell-overhead-press.mp4')
     expect(slAlt.setupInstructions.toLowerCase()).toContain('one leg')
   })
 
-  it('resolves Dumbbell Bent-Over Extension with official video iRaoz2hbOXU and Triceps Brachii prime mover', () => {
+  it('resolves Dumbbell Bent-Over Extension with sovereign studio MP4 and Triceps Brachii prime mover', () => {
     const card = getNasmClinicalMovementCard('Dumbbell Bent-Over Extension')
     expect(card.hasOfficialMedia).toBe(true)
     expect(card.imageUrl).toBe('/images/exercises/dumbbell-bent-over-extension.jpg')
-    expect(card.videoUrl).toContain('iRaoz2hbOXU')
-    expect(card.embedUrl).toContain('iRaoz2hbOXU')
+    expect(card.videoUrl).toBe('/videos/exercises/dumbbell-bent-over-extension.mp4')
+    expect(card.embedUrl).toBe('/videos/exercises/dumbbell-bent-over-extension.mp4')
     expect(card.candidateStudioImageUrl).toBe('/images/exercises/dumbbell-bent-over-extension.jpg')
     expect(card.primeMover).toContain('Triceps Brachii')
     expect(card.category).toBe('Arms')
@@ -246,18 +246,18 @@ describe('NASM Clinical Movement Cards Engine — Strict Official Media Rules', 
     const slCard = getNasmClinicalMovementCard('Single-Leg Dumbbell Bent-Over Extension')
     expect(slCard.hasOfficialMedia).toBe(true)
     expect(slCard.imageUrl).toBe('/images/exercises/supported-bent-over-dumbbell-extension.jpg')
-    expect(slCard.videoUrl).toContain('iRaoz2hbOXU')
-    expect(slCard.embedUrl).toContain('iRaoz2hbOXU')
+    expect(slCard.videoUrl).toBe('/videos/exercises/supported-bent-over-dumbbell-extension.mp4')
+    expect(slCard.embedUrl).toBe('/videos/exercises/supported-bent-over-dumbbell-extension.mp4')
     expect(slCard.primeMover).toContain('Triceps Brachii')
 
-    // Regression: Stale plan in database passing legacy kZ-ReOdn2qk videoUrl and imageUrl
+    // Regression: Stale plan in database passing legacy YouTube videoUrl and imageUrl is stripped cleanly
     const stalePlanCard = getNasmClinicalMovementCard('Dumbbell Bent-Over Extension', {
       videoUrl: 'https://www.youtube.com/watch?v=kZ-ReOdn2qk',
       imageUrl: 'https://img.youtube.com/vi/kZ-ReOdn2qk/hqdefault.jpg',
     })
     expect(stalePlanCard.imageUrl).toBe('/images/exercises/dumbbell-bent-over-extension.jpg')
-    expect(stalePlanCard.videoUrl).toContain('iRaoz2hbOXU')
-    expect(stalePlanCard.embedUrl).toContain('iRaoz2hbOXU')
+    expect(stalePlanCard.videoUrl).toBe('/videos/exercises/dumbbell-bent-over-extension.mp4')
+    expect(stalePlanCard.embedUrl).toBe('/videos/exercises/dumbbell-bent-over-extension.mp4')
   })
 
   it('resolves promoted Forge Athletic self-hosted studio MP4 loops on studioVideoUrl across Benchmark, Wave 1, Wave 2, Wave 3, Wave 4, Wave 5, and Wave 6 movements', () => {

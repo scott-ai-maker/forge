@@ -3,6 +3,7 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
+  AlertTriangle,
   CheckCircle2,
   Clock,
   ExternalLink,
@@ -66,6 +67,11 @@ export default function CoachEscalationModal({
     smsHref: string
     messagesThreadHref: string
     channelUsed: 'email' | 'sms_priority'
+    emailDispatched: boolean
+    smsDispatched: boolean
+    threadInserted: boolean
+    safetyQueueInserted: boolean
+    quietHoursHeld: boolean
   } | null>(null)
 
   useEffect(() => {
@@ -81,9 +87,6 @@ export default function CoachEscalationModal({
     }
   }, [open, initialQuestion])
 
-  // Fallback for browsers without native <dialog closedby="any"> support:
-  // check pointer coordinates against dialog bounding box on both pointerdown and pointerup
-  // so padding clicks or text-selection drags from inside the textarea never dismiss the modal.
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog || typeof HTMLDialogElement === 'undefined') return
@@ -147,8 +150,8 @@ export default function CoachEscalationModal({
   const expectedWindowLabel = isCoachSupport
     ? 'Priority 24h SLA · Direct SMS + Priority In-App Thread'
     : tierId === 'plus'
-      ? 'Plus Direct Email · Expected reply within 1 business day'
-      : 'Core Lab Direct Email · Expected reply within 24–48 business hours'
+      ? 'Plus Direct Queue & Thread · Expected reply within 1 business day'
+      : 'Core Lab Direct Queue & Thread · Expected reply within 24–48 business hours'
 
   const buildLocalMailtoFallback = () => {
     const subject = `[${isCoachSupport ? '24h Priority' : tierId === 'plus' ? 'Plus' : 'Core Lab'}] Forge Athletic Question for Coach Gordon`
@@ -184,10 +187,14 @@ export default function CoachEscalationModal({
       })
       const data = await res.json().catch(() => null)
       if (!res.ok || !data?.ok) {
-        setErrorMsg(data?.error || 'Could not reach relay right now—use the 1-tap direct launch button below.')
+        setErrorMsg(
+          data?.error ||
+            'Could not confirm server delivery right now—please use the 1-tap Mail or SMS app button below so your note is not lost.'
+        )
       } else {
         const channelUsed: 'email' | 'sms_priority' =
           data.channelUsed === 'sms_priority' ? 'sms_priority' : 'email'
+        const safetyQueueInserted = Boolean(data.safetyQueueInserted)
         setDispatchResult({
           slaBadge: data.slaBadge,
           responseWindowCopy: data.responseWindowCopy,
@@ -195,22 +202,31 @@ export default function CoachEscalationModal({
           smsHref: data.smsHref,
           messagesThreadHref: data.messagesThreadHref || '/dashboard/messages',
           channelUsed,
+          emailDispatched: Boolean(data.emailDispatched),
+          smsDispatched: Boolean(data.smsDispatched),
+          threadInserted: Boolean(data.threadInserted),
+          safetyQueueInserted,
+          quietHoursHeld: Boolean(data.quietHoursHeld),
         })
-        void trackEvent(
-          channelUsed === 'sms_priority' ? 'escalation_sms' : 'escalation_email',
-          {
-            tier_id: tierId,
-            source_context: sourceContext,
-            sla_badge: data.slaBadge || (isCoachSupport ? '24h Priority SLA' : 'Direct Email'),
-            opt_phase: mergedTelemetry.optPhase ?? null,
-            comfort_score_100: mergedTelemetry.jointComfortScore ?? null,
-            readiness_score_100: mergedTelemetry.readinessIndex ?? null,
-            active_exercise: mergedTelemetry.activeExercise ?? null,
-            safety_flag_active: Boolean(mergedTelemetry.safetyFlagActive),
-            question_preview: sanitizePiiString(question.trim()).slice(0, 180),
-          },
-          { immediate: true }
-        )
+
+        // Only emit client-side fallback telemetry if the server did not already persist the queue event
+        if (!safetyQueueInserted) {
+          void trackEvent(
+            channelUsed === 'sms_priority' ? 'escalation_sms' : 'escalation_email',
+            {
+              tier_id: tierId,
+              source_context: sourceContext,
+              sla_badge: data.slaBadge || (isCoachSupport ? '24h Priority SLA' : 'Direct Email'),
+              opt_phase: mergedTelemetry.optPhase ?? null,
+              comfort_score_100: mergedTelemetry.jointComfortScore ?? null,
+              readiness_score_100: mergedTelemetry.readinessIndex ?? null,
+              active_exercise: mergedTelemetry.activeExercise ?? null,
+              safety_flag_active: Boolean(mergedTelemetry.safetyFlagActive),
+              question_preview: sanitizePiiString(question.trim()).slice(0, 180),
+            },
+            { immediate: true }
+          )
+        }
       }
     } catch {
       setErrorMsg('Offline right now—tap below to open your email or SMS client with your telemetry pre-filled.')
@@ -244,7 +260,7 @@ export default function CoachEscalationModal({
                 </span>
               ) : (
                 <span className="rounded-full border border-white/15 bg-[#181B22] px-2.5 py-0.5 font-mono text-[10.5px] font-semibold text-zinc-300">
-                  Direct Email Channel
+                  Direct Thread &amp; Email Channel
                 </span>
               )}
             </div>
@@ -266,6 +282,19 @@ export default function CoachEscalationModal({
             <X size={18} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
+
+        {/* Non-Emergency Safety Boundary Banner when safetyFlagActive is set */}
+        {mergedTelemetry.safetyFlagActive && (
+          <div
+            role="note"
+            className="mt-3.5 flex items-start gap-2.5 rounded-xl border border-rose-500/45 bg-rose-950/35 p-3 text-xs leading-relaxed text-rose-100"
+          >
+            <AlertTriangle size={16} className="mt-0.5 shrink-0 text-rose-300" aria-hidden="true" />
+            <div>
+              <strong className="text-white">Acute Pain / Safety Notice:</strong> Stop the movement immediately. Coaching escalation is asynchronous and not an emergency medical service—for chest pain, dizziness, shortness of breath, radiating numbness, or acute injury, <strong>call 911</strong> or seek immediate medical evaluation.
+            </div>
+          </div>
+        )}
 
         {/* Auto-Attached Sanitized Telemetry Card */}
         <div className="mt-3.5 rounded-xl border border-white/10 bg-[#111318] p-3">
@@ -333,33 +362,60 @@ export default function CoachEscalationModal({
               />
               <div>
                 <div className="text-sm font-bold text-white">
-                  Sent to Coach Gordon ({dispatchResult.slaBadge})
+                  Delivered to Coach Gordon ({dispatchResult.slaBadge})
                 </div>
                 <p className="mt-1 text-xs leading-relaxed text-zinc-200">
                   {dispatchResult.responseWindowCopy}
                 </p>
+                <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-[10.5px]">
+                  {dispatchResult.threadInserted && (
+                    <span className="rounded border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 text-emerald-200">
+                      ✓ Saved in Coach Thread
+                    </span>
+                  )}
+                  {dispatchResult.safetyQueueInserted && (
+                    <span className="rounded border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 text-emerald-200">
+                      ✓ Logged in Safety Queue
+                    </span>
+                  )}
+                  {dispatchResult.emailDispatched && (
+                    <span className="rounded border border-sky-400/35 bg-sky-500/15 px-2 py-0.5 text-sky-200">
+                      ✓ Direct Email Sent
+                    </span>
+                  )}
+                  {dispatchResult.smsDispatched && (
+                    <span className="rounded border border-amber-400/35 bg-amber-500/15 px-2 py-0.5 text-amber-200">
+                      ✓ Priority SMS Sent
+                    </span>
+                  )}
+                  {dispatchResult.quietHoursHeld && (
+                    <span className="rounded border border-white/15 bg-black/30 px-2 py-0.5 text-zinc-300">
+                      SMS Held (Quiet Hours)
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2 pt-1">
-              {isCoachSupport ? (
-                <>
-                  <a
-                    href={dispatchResult.smsHref}
-                    className="forge-tactile-press inline-flex min-h-[45px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-400 px-3.5 py-2 text-xs font-extrabold uppercase tracking-wider text-zinc-950"
-                  >
-                    <Smartphone size={14} strokeWidth={1.85} aria-hidden="true" />
-                    Open Native SMS Line
-                  </a>
-                  <Link
-                    href={dispatchResult.messagesThreadHref}
-                    onClick={onClose}
-                    className="forge-tactile-press inline-flex min-h-[45px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-[#181B22] px-3.5 py-2 text-xs font-bold text-white"
-                  >
-                    <MessageSquare size={14} strokeWidth={1.85} aria-hidden="true" />
-                    Open 24h Priority Thread
-                  </Link>
-                </>
+              {dispatchResult.threadInserted && (
+                <Link
+                  href={dispatchResult.messagesThreadHref}
+                  onClick={onClose}
+                  className="forge-tactile-press inline-flex min-h-[45px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-[#181B22] px-3.5 py-2 text-xs font-bold text-white"
+                >
+                  <MessageSquare size={14} strokeWidth={1.85} aria-hidden="true" />
+                  Open Secure Coach Thread
+                </Link>
+              )}
+              {dispatchResult.channelUsed === 'sms_priority' ? (
+                <a
+                  href={dispatchResult.smsHref}
+                  className="forge-tactile-press inline-flex min-h-[45px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-400 px-3.5 py-2 text-xs font-extrabold uppercase tracking-wider text-zinc-950"
+                >
+                  <Smartphone size={14} strokeWidth={1.85} aria-hidden="true" />
+                  Open Native SMS Line
+                </a>
               ) : (
                 <a
                   href={dispatchResult.mailtoHref}
@@ -387,7 +443,7 @@ export default function CoachEscalationModal({
               >
                 {isCoachSupport
                   ? 'Your Priority Note / Question for Coach Gordon'
-                  : 'Your Direct Email Note to Coach Gordon'}
+                  : 'Your Direct Note to Coach Gordon'}
               </label>
               <textarea
                 id={questionInputId}
@@ -417,7 +473,7 @@ export default function CoachEscalationModal({
                     ? 'Sending to Coach Gordon…'
                     : isCoachSupport
                       ? 'Send Priority Text + 24h Thread'
-                      : 'Send Direct Email to Coach Gordon'}
+                      : 'Send Direct Note to Coach Gordon'}
                 </span>
               </button>
 

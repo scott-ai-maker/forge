@@ -67,4 +67,6 @@ next-env.d.ts
 
 # third-party reference PDFs (never commit copyrighted publisher study guides)
 app/data/rag-sources/*.pdf
+data/rag-resources/
+
 

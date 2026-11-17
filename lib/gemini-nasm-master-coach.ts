@@ -92,8 +92,8 @@ Your Core Directives & Program Design Philosophy:
    - Screen for postural distortions (Lower Crossed, Upper Crossed, Pronation Distortion, thoracic restriction).
    - Dynamically inject 4-step CEx progressions: Inhibit (SMR), Lengthen (Static/Dynamic Stretch), Activate (Isolated Core/Gluteus Medius), and Integrate (Multiplanar Movements).
 
-3. STRICT NASM EDGE EXERCISE CATALOG & EQUIPMENT VALIDATION:
-   - You ONLY select authentic exercises from the provided Allowed Official NASM Edge Exercise Library.
+3. STRICT FORGE ATHLETIC MOVEMENT LIBRARY & EQUIPMENT VALIDATION:
+   - You ONLY select authentic exercises from the provided Allowed Forge Athletic Exercise Library.
    - You NEVER prescribe exercises requiring equipment the client does not have.
    - Every single exercise name in your output MUST be an exact string match from the allowed list.
 
@@ -432,9 +432,9 @@ Sports Science Coaching Context:
 ${citedDocs.map(d => `[${d.title}]: ${d.summary} (Key concepts: ${d.keyConcepts.join(', ')})`).join('\n')}
 
 STRICT EXERCISE & EQUIPMENT SELECTION INSTRUCTION:
-You MUST design each workout day by selecting EXCLUSIVELY from the Allowed Official NASM Edge Exercise list below. Do NOT prescribe any movement outside this list or requiring equipment the client does not have.
+You MUST design each workout day by selecting EXCLUSIVELY from the Allowed Forge Athletic Exercise list below. Do NOT prescribe any movement outside this list or requiring equipment the client does not have.
 
-ALLOWED OFFICIAL NASM EDGE EXERCISE LIST FOR THIS CLIENT (${allowedNasmExercises.length} VERIFIED MOVEMENTS):
+ALLOWED FORGE ATHLETIC EXERCISE LIST FOR THIS CLIENT (${allowedNasmExercises.length} VERIFIED MOVEMENTS):
 ${allowedNasmExercises.join(', ')}
 
 OPT MODEL WORKOUT DESIGN REQUIREMENTS:

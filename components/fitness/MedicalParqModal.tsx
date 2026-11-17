@@ -78,8 +78,10 @@ export default function MedicalParqModal({
   )
 
   const [notes, setNotes] = useState<string>(initialAnswers?.reportedConditionsNotes ?? '')
+  const [emergencyName, setEmergencyName] = useState<string>(initialAnswers?.emergencyContactName ?? '')
+  const [emergencyPhone, setEmergencyPhone] = useState<string>(initialAnswers?.emergencyContactPhone ?? '')
   const [signature, setSignature] = useState<string>(initialAnswers?.signedWaiverName ?? '')
-  const [agreedToWaiver, setAgreedToWaiver] = useState<boolean>(Boolean(initialAnswers?.signedWaiverName))
+  const [agreedToWaiver, setAgreedToWaiver] = useState<boolean>(false)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -116,11 +118,13 @@ export default function MedicalParqModal({
   }
 
   const handleSave = () => {
-    if (!signature.trim() || !agreedToWaiver) return
+    if (!signature.trim() || !agreedToWaiver || !emergencyName.trim() || !emergencyPhone.trim()) return
 
     const payload: ParqAnswers = {
       ...answers,
       reportedConditionsNotes: notes.trim(),
+      emergencyContactName: emergencyName.trim(),
+      emergencyContactPhone: emergencyPhone.trim(),
       signedWaiverName: signature.trim(),
       signedAt: new Date().toISOString(),
     }
@@ -252,7 +256,7 @@ export default function MedicalParqModal({
               {evaluation.clearanceStatus === 'physician_clearance_required' ? (
                 <>
                   <GaaIcon name="alert-triangle" size={14} tone="ruby" />
-                  <span>High cardiovascular/medical risk flag detected. Physician consultation required before Phase 4/5 heavy loading.</span>
+                  <span>Active cardiac, chest pain, or syncope flag detected. All exercise is paused (Phase 0 Hold) until written physician medical clearance is verified.</span>
                 </>
               ) : evaluation.clearanceStatus === 'cleared_with_modifications' ? (
                 <>
@@ -270,8 +274,8 @@ export default function MedicalParqModal({
 
           <div className="tabular-nums" style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase' }}>Max Allowed Phase</div>
-            <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 18, fontWeight: 700, color: 'var(--gold-lt)' }}>
-              Phase {evaluation.maxAllowedOptPhase} Max
+            <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontSize: 18, fontWeight: 700, color: evaluation.maxAllowedOptPhase === 0 ? 'var(--error)' : 'var(--gold-lt)' }}>
+              {evaluation.maxAllowedOptPhase === 0 ? 'Phase 0 Hold' : `Phase ${evaluation.maxAllowedOptPhase} Max`}
             </div>
           </div>
         </div>
@@ -395,6 +399,52 @@ export default function MedicalParqModal({
           />
         </div>
 
+        {/* Mandatory Emergency Contact Details */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 12 }}>
+          <div>
+            <label htmlFor="parq-emergency-name" style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+              Emergency Contact Name *
+            </label>
+            <input
+              id="parq-emergency-name"
+              name="emergencyContactName"
+              type="text"
+              value={emergencyName}
+              onChange={e => setEmergencyName(e.target.value)}
+              placeholder="e.g. Taylor Vance"
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                background: 'rgba(8,14,20,0.7)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                color: 'var(--white)',
+                fontSize: 13,
+              }}
+            />
+          </div>
+          <div>
+            <label htmlFor="parq-emergency-phone" style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+              Emergency Contact Phone *
+            </label>
+            <input
+              id="parq-emergency-phone"
+              name="emergencyContactPhone"
+              type="tel"
+              value={emergencyPhone}
+              onChange={e => setEmergencyPhone(e.target.value)}
+              placeholder="e.g. 617-555-0199"
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                background: 'rgba(8,14,20,0.7)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                color: 'var(--white)',
+                fontSize: 13,
+              }}
+            />
+          </div>
+        </div>
+
         {/* Informed Consent & Liability Acknowledgment */}
         <div style={{ background: 'rgba(8,14,20,0.7)', padding: 18, border: '1px solid rgba(255,255,255,0.08)', display: 'grid', gap: 12 }}>
           <div style={{ color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -446,20 +496,20 @@ export default function MedicalParqModal({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!agreedToWaiver || !signature.trim()}
+                disabled={!agreedToWaiver || !signature.trim() || !emergencyName.trim() || !emergencyPhone.trim()}
                 className="tactile-btn"
                 style={{
                   width: '100%',
                   padding: '11px 22px',
-                  background: agreedToWaiver && signature.trim() ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
+                  background: agreedToWaiver && signature.trim() && emergencyName.trim() && emergencyPhone.trim() ? 'var(--gold)' : 'rgba(255,255,255,0.06)',
                   border: 'none',
-                  color: agreedToWaiver && signature.trim() ? 'var(--navy)' : 'var(--gray)',
+                  color: agreedToWaiver && signature.trim() && emergencyName.trim() && emergencyPhone.trim() ? 'var(--navy)' : 'var(--gray)',
                   fontFamily: 'var(--font-sans, Raleway), sans-serif',
                   fontSize: 13,
                   fontWeight: 700,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  cursor: agreedToWaiver && signature.trim() ? 'pointer' : 'not-allowed',
+                  cursor: agreedToWaiver && signature.trim() && emergencyName.trim() && emergencyPhone.trim() ? 'pointer' : 'not-allowed',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',

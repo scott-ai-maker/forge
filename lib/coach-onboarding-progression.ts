@@ -259,6 +259,7 @@ export function parseParqAnswers(
     hasAcceptedVirtualTelehealthConsent: Boolean(
       rawParq.hasAcceptedVirtualTelehealthConsent ??
       (rawParq.erap as Record<string, unknown>)?.hasAcceptedVirtualTelehealthConsent ??
+      (rawParq.erap as Record<string, unknown>)?.virtualTelehealthConsent ??
       false
     ),
   }
@@ -372,7 +373,18 @@ export function evaluateClientOnboardingProgression(
   const hasIntakeForm = Boolean(intakeForm)
   const hasSignedWaiver = Boolean(intakeForm?.consent_signature_name?.trim())
   const hasParqCompleted = Boolean(intakeForm?.parq_answers)
-  const medicalClearanceSatisfied = !isPhysicianClearanceRequired
+  const stage2Meta =
+    clientGates[2]?.metadata && typeof clientGates[2].metadata === 'object'
+      ? clientGates[2].metadata
+      : null
+  const hasVerifiedPhysicianClearanceOnFile = Boolean(
+    clientGates[2]?.status === 'authorized' &&
+      stage2Meta?.clinicalClearanceVerified === true &&
+      typeof stage2Meta?.physicianName === 'string' &&
+      stage2Meta.physicianName.trim().length >= 3
+  )
+  const medicalClearanceSatisfied =
+    !isPhysicianClearanceRequired || hasVerifiedPhysicianClearanceOnFile
 
   const stage2Milestones: ProgressionMilestone[] = [
     {

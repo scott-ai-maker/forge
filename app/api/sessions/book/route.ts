@@ -160,6 +160,23 @@ export async function POST(req: NextRequest) {
   const { supabaseAdmin } = await import('@/lib/supabase')
   const admin = supabaseAdmin()
 
+  if (callerRole === 'client') {
+    const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+    const legalGate = await checkClientLegalConsentGate(admin, clientTargetId, {
+      requireTermsOfService: true,
+      requireLiabilityWaiver: true,
+    })
+    if (!legalGate.verified) {
+      return NextResponse.json(
+        {
+          error: legalGate.reason,
+          code: 'LEGAL_WAIVER_REQUIRED',
+        },
+        { status: 403, headers: NO_STORE_HEADERS }
+      )
+    }
+  }
+
   const { data, error } = await admin.rpc('book_client_session', {
     p_client_id: clientTargetId,
     p_package_id: packageId,

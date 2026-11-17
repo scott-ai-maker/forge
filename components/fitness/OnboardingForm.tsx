@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
+import {
+  calculateAgeFromDobIso,
+  getMaxAdultDobIso,
+  validateAdultAthleteEligibility,
+} from '@/lib/legal-compliance'
 
 type Units = 'metric' | 'imperial'
 type WorkoutLocation = 'home' | 'gym' | 'both'
@@ -59,6 +64,8 @@ function getDefaultPreferredTrainingDays(count: number) {
 
 export interface OnboardingInitialProfile {
   onboarding_completed_at?: string | null
+  date_of_birth?: string | null
+  age?: number | null
   height_cm?: number | null
   weight_kg?: number | null
   waist_cm?: number | null
@@ -72,12 +79,14 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
 
   const [equipmentOptions, setEquipmentOptions] = useState<string[]>(DEFAULT_EQUIPMENT_OPTIONS)
   const [form, setForm] = useState({
     preferredUnits: (initialProfile?.preferred_units ?? 'metric') as Units,
-    age: '30',
+    dateOfBirth: initialProfile?.date_of_birth ?? '',
+    age: initialProfile?.age != null ? String(initialProfile.age) : '',
     sex: 'male',
     heightCm: initialProfile?.height_cm != null ? String(initialProfile.height_cm) : '',
     heightFt: '',
@@ -507,41 +516,34 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
     })
   }
 
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    setUploading(true)
     setError(null)
+    const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/webp'])
+    if (!allowedTypes.has(file.type)) {
+      setError('Photo must be a PNG, JPEG, or WebP image.')
+      setPendingPhotoFile(null)
+      setPhotoPreview(null)
+      return
+    }
 
-    // Show preview
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Photo is too large (max 5MB).')
+      setPendingPhotoFile(null)
+      setPhotoPreview(null)
+      return
+    }
+
+    // COPPA / Minor Privacy Protection: stage preview locally in memory ONLY;
+    // do not transmit body photos to the server until adult (18+) DOB/age & consents are verified on submit.
+    setPendingPhotoFile(file)
     const reader = new FileReader()
-    reader.onload = (ev) => {
+    reader.onload = ev => {
       setPhotoPreview(ev.target?.result as string)
     }
     reader.readAsDataURL(file)
-
-    // Upload to server
-    const formData = new FormData()
-    formData.append('photo', file)
-
-    try {
-      const res = await fetch('/api/fitness/upload-photo', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.error ?? 'Photo upload failed')
-        setPhotoPreview(null)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Photo upload failed')
-      setPhotoPreview(null)
-    } finally {
-      setUploading(false)
-    }
   }
 
   function toNumber(value: string) {
@@ -578,6 +580,7 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
 
     return {
       preferredUnits,
+      dateOfBirth: form.dateOfBirth || undefined,
       age: form.age,
       sex: form.sex,
       heightCm,
@@ -647,6 +650,17 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
 
     const requestBody = buildPayload()
 
+    const ageValidation = validateAdultAthleteEligibility({
+      dateOfBirth: form.dateOfBirth,
+      age: form.age,
+      requireAgeOrDob: true,
+    })
+    if (!ageValidation.valid) {
+      setError(ageValidation.error ?? 'You must be at least 18 years old to use Forge Athletic.')
+      setSaving(false)
+      return
+    }
+
     const parqAnswered = ['parqQ1', 'parqQ2', 'parqQ3', 'parqQ4', 'parqQ5', 'parqQ6', 'parqQ7']
       .every(key => {
         const value = form[key as keyof typeof form]
@@ -665,7 +679,14 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
       return
     }
 
-    if (!form.legalConsentLiability || !form.legalConsentInformed || !form.legalConsentPrivacy || !form.legalConsentCoaching || !form.legalConsentEmergency) {
+    if (
+      !form.legalConsentLiability ||
+      !form.legalConsentVirtualTelehealth ||
+      !form.legalConsentInformed ||
+      !form.legalConsentPrivacy ||
+      !form.legalConsentCoaching ||
+      !form.legalConsentEmergency
+    ) {
       setError('All legal consent acknowledgements are required before continuing.')
       setSaving(false)
       return
@@ -707,6 +728,32 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
       setError(payload.error ?? 'Could not save onboarding profile')
       setSaving(false)
       return
+    }
+
+    if (pendingPhotoFile) {
+      setUploading(true)
+      try {
+        const photoFormData = new FormData()
+        photoFormData.append('photo', pendingPhotoFile)
+        const photoRes = await fetch('/api/fitness/upload-photo', {
+          method: 'POST',
+          body: photoFormData,
+        })
+        if (!photoRes.ok) {
+          const photoErr = await photoRes.json().catch(() => ({}))
+          setError(photoErr.error ?? 'Profile saved, but photo upload failed. You can re-upload in Settings.')
+          setUploading(false)
+          setSaving(false)
+          return
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Photo upload failed')
+        setUploading(false)
+        setSaving(false)
+        return
+      } finally {
+        setUploading(false)
+      }
     }
 
     try {
@@ -912,19 +959,45 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
         </div>
       </div>
 
-      <div style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: '12px' }}>
-        <label className="sgf-form-label">Legal Consents</label>
-        <div style={{ display: 'grid', gap: 8 }}>
-          <label htmlFor="legal-consent-liability"><input id="legal-consent-liability" type="checkbox" checked={form.legalConsentLiability} onChange={e => updateBooleanField('legalConsentLiability', e.target.checked)} /> I acknowledge and accept liability waiver terms for exercise participation.</label>
+      <div style={{ border: '1px solid var(--navy-lt)', background: 'var(--navy-mid)', padding: '14px' }}>
+        <label className="sgf-form-label">Legal Consents, Liability Waiver &amp; Arbitration Notice</label>
+        <div
+          style={{
+            marginBottom: 12,
+            padding: '10px 12px',
+            borderRadius: 6,
+            border: '1px solid rgba(212,160,23,0.45)',
+            background: 'rgba(212,160,23,0.08)',
+            fontSize: 12.5,
+            lineHeight: 1.55,
+            color: '#F1F5F9',
+          }}
+        >
+          <strong>IMPORTANT LEGAL NOTICE:</strong> Please read the{' '}
+          <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+            Terms of Service &amp; Athletic Liability Release
+          </a>
+          ,{' '}
+          <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+            Privacy Policy
+          </a>
+          , and{' '}
+          <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+            Consumer Health &amp; Biometric Data Policy
+          </a>{' '}
+          before signing. By checking the boxes and typing your full legal name below, you confirm you are <strong>18+</strong> and agree to a <strong>Voluntary Assumption of Risk &amp; Release of Ordinary Negligence</strong>, <strong>Mandatory Binding Individual Arbitration</strong>, and a <strong>Class-Action Waiver</strong>.
+        </div>
+        <div style={{ display: 'grid', gap: 10 }}>
+          <label htmlFor="legal-consent-liability"><input id="legal-consent-liability" type="checkbox" checked={form.legalConsentLiability} onChange={e => updateBooleanField('legalConsentLiability', e.target.checked)} /> I have read and affirmatively accept the <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Athletic Liability Waiver &amp; Assumption of Risk</a> (including release of ordinary negligence, binding individual arbitration, and class-action waiver) and confirm I am at least 18 years old.</label>
           <label htmlFor="legal-consent-telehealth"><input id="legal-consent-telehealth" type="checkbox" checked={form.legalConsentVirtualTelehealth} onChange={e => updateBooleanField('legalConsentVirtualTelehealth', e.target.checked)} /> <strong>NASM Virtual Coaching Telehealth Agreement:</strong> I acknowledge that training sessions and assessments are delivered remotely. The coach cannot physically spot lifts. I agree to maintain an 8x8 ft clear perimeter, verify non-slip flooring, and safely rack weights immediately if video drops. I consent to video transmission for biomechanical form analysis.</label>
-          <label htmlFor="legal-consent-informed"><input id="legal-consent-informed" type="checkbox" checked={form.legalConsentInformed} onChange={e => updateBooleanField('legalConsentInformed', e.target.checked)} /> I provide informed consent for exercise coaching and programming.</label>
-          <label htmlFor="legal-consent-privacy"><input id="legal-consent-privacy" type="checkbox" checked={form.legalConsentPrivacy} onChange={e => updateBooleanField('legalConsentPrivacy', e.target.checked)} /> I acknowledge privacy and data handling notices for sensitive health information.</label>
-          <label htmlFor="legal-consent-coaching"><input id="legal-consent-coaching" type="checkbox" checked={form.legalConsentCoaching} onChange={e => updateBooleanField('legalConsentCoaching', e.target.checked)} /> I agree to coaching terms, expectations, and communication standards.</label>
-          <label htmlFor="legal-consent-emergency"><input id="legal-consent-emergency" type="checkbox" checked={form.legalConsentEmergency} onChange={e => updateBooleanField('legalConsentEmergency', e.target.checked)} /> I consent to emergency response actions if urgent medical risk is identified.</label>
+          <label htmlFor="legal-consent-informed"><input id="legal-consent-informed" type="checkbox" checked={form.legalConsentInformed} onChange={e => updateBooleanField('legalConsentInformed', e.target.checked)} /> I provide informed consent for non-medical exercise coaching and programming (understanding Forge Athletic does not practice medicine or physical therapy).</label>
+          <label htmlFor="legal-consent-privacy"><input id="legal-consent-privacy" type="checkbox" checked={form.legalConsentPrivacy} onChange={e => updateBooleanField('legalConsentPrivacy', e.target.checked)} /> I separately consent to the <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Privacy Policy</a> and <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Consumer Health &amp; Biometric Data Policy</a> for processing my health readiness and training data.</label>
+          <label htmlFor="legal-consent-coaching"><input id="legal-consent-coaching" type="checkbox" checked={form.legalConsentCoaching} onChange={e => updateBooleanField('legalConsentCoaching', e.target.checked)} /> I agree to the <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Terms of Service</a>, coaching expectations, and communication standards.</label>
+          <label htmlFor="legal-consent-emergency"><input id="legal-consent-emergency" type="checkbox" checked={form.legalConsentEmergency} onChange={e => updateBooleanField('legalConsentEmergency', e.target.checked)} /> I authorize emergency response actions and notification of my emergency contact if urgent medical risk is identified.</label>
         </div>
         <div style={{ marginTop: 10 }}>
-          <label className="sgf-form-label">Electronic Signature (Full Legal Name)</label>
-          <input value={form.legalSignatureName} onChange={e => updateField('legalSignatureName', e.target.value)} className="sgf-form-input" required />
+          <label className="sgf-form-label">Electronic Signature — Full Legal Name (ESIGN / M.G.L. c. 110G)</label>
+          <input value={form.legalSignatureName} onChange={e => updateField('legalSignatureName', e.target.value)} className="sgf-form-input" placeholder="Type your full legal first and last name" required />
         </div>
       </div>
 
@@ -954,8 +1027,33 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
 
       <div className="sgf-form-grid">
         <div>
-          <label className="sgf-form-label">Age</label>
+          <label className="sgf-form-label" htmlFor="onboarding-dob">
+            Date of Birth (Adults 18+ Only)
+          </label>
           <input
+            id="onboarding-dob"
+            value={form.dateOfBirth}
+            max={getMaxAdultDobIso()}
+            onChange={e => {
+              const dobVal = e.target.value
+              updateField('dateOfBirth', dobVal)
+              const computed = calculateAgeFromDobIso(dobVal)
+              if (computed !== null && computed >= 0) {
+                updateField('age', String(computed))
+              }
+            }}
+            className="sgf-form-input"
+            type="date"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="sgf-form-label" htmlFor="onboarding-age">
+            Age (18+)
+          </label>
+          <input
+            id="onboarding-age"
             value={form.age}
             onChange={e => updateField('age', sanitizeNumericInput(e.target.value))}
             className="sgf-form-input"
@@ -963,6 +1061,7 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
             inputMode="numeric"
             autoComplete="off"
             onFocus={selectOnFocus}
+            placeholder="18+"
             required
           />
         </div>

@@ -4,7 +4,14 @@ import { supabaseAdmin } from '@/lib/supabase'
 import SiteHeader from '@/components/ui/SiteHeader'
 import LogoutButton from '@/components/auth/LogoutButton'
 import LiveVideoCameraHud from '@/components/coach/LiveVideoCameraHud'
-import { getTeamById } from '@/lib/teams'
+import LivePreSessionErapGate from '@/components/fitness/LivePreSessionErapGate'
+import MandatoryLegalClickwrapGate from '@/components/legal/MandatoryLegalClickwrapGate'
+import { checkClientLegalConsentGate } from '@/lib/legal-compliance'
+import {
+  checkClientMedicalClearanceGate,
+  evaluateMedicalParq,
+  normalizeParqAnswersFromIntake,
+} from '@/lib/liability-shield'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,25 +24,41 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const admin = supabaseAdmin()
+  // Team Live Studio is permanently disabled; strip legacy ?teamId=... links to 1:1 Live Studio
   const resolvedParams = searchParams ? await searchParams : {}
-  const targetTeamId = resolvedParams.teamId
+  if (resolvedParams.teamId) {
+    redirect('/dashboard/live')
+  }
 
-  // Get active workout plan
-  const { data: plan } = await admin
-    .from('workout_plans')
-    .select('id, name, plan_json, nasm_opt_phase, phase_name')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const admin = supabaseAdmin()
 
-  // Get client details
-  const { data: client } = await admin
-    .from('clients')
-    .select('full_name, email, designated_coach_id, role')
-    .eq('id', user.id)
-    .maybeSingle()
+  // Fetch plan, client profile, intake ERAP details, medical gate, and legal waiver gate in parallel
+  const [{ data: plan }, { data: client }, { data: intake }, medicalGate, legalConsentGate] = await Promise.all([
+    admin
+      .from('workout_plans')
+      .select('id, name, plan_json, nasm_opt_phase, phase_name')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    admin
+      .from('clients')
+      .select('full_name, email, designated_coach_id, role')
+      .eq('id', user.id)
+      .maybeSingle(),
+    admin
+      .from('client_intake_forms')
+      .select(
+        'parq_answers, medical_conditions, surgeries_or_injuries, emergency_contact_name, emergency_contact_phone, consent_signature_name, consent_signed_at'
+      )
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    checkClientMedicalClearanceGate(admin, user.id),
+    checkClientLegalConsentGate(admin, user.id, {
+      requireTermsOfService: true,
+      requireLiabilityWaiver: true,
+    }),
+  ])
 
   // If coach lands on athlete live page, redirect to coach live studio
   if (client?.role === 'coach') {
@@ -55,27 +78,11 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
     }
   }
 
-  // Resolve Team if teamId query parameter is provided — strictly verify active membership
-  let team = null
-  if (targetTeamId) {
-    const candidateTeam = await getTeamById(targetTeamId, client?.designated_coach_id || undefined)
-    if (
-      candidateTeam &&
-      candidateTeam.members.some(m => m.clientId === user.id && m.status !== 'inactive')
-    ) {
-      team = candidateTeam
-    }
-  }
-
-  const sanitizedTeamRoster = team?.members.map(m => ({
-    ...m,
-    email: '',
-    sessionsRemaining: undefined,
-  }))
-
-  const isTeamSession = Boolean(team)
-  const sessionId = team ? `team-${team.id}` : `live-${user.id}`
+  const sessionId = `live-${user.id}`
   const athleteName = client?.full_name || user.email?.split('@')[0] || 'Athlete'
+
+  const normalizedParq = normalizeParqAnswersFromIntake(intake?.parq_answers, intake)
+  const parqEval = evaluateMedicalParq(normalizedParq)
 
   return (
     <main
@@ -87,7 +94,7 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
       }}
     >
       <SiteHeader
-        badgeText={isTeamSession ? `Team Live Studio · ${team?.name}` : 'Live Studio'}
+        badgeText="1:1 Live Studio"
         links={[
           { href: '/dashboard', label: 'Today' },
           { href: '/dashboard/fitness', label: 'Training & progress' },
@@ -128,7 +135,7 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                  {isTeamSession ? `Forge Athletic · Team Telehealth Studio · ${team?.name}` : 'Forge Athletic · Live Telehealth Studio'}
+                  Forge Athletic · 1:1 Live Telehealth Studio
                 </span>
               </div>
               <h1
@@ -141,39 +148,76 @@ export default async function AthleteLiveSessionPage({ searchParams }: PageProps
                   lineHeight: 1.2,
                 }}
               >
-                {isTeamSession ? `${team?.name.toUpperCase()} · SQUAD LIVE COACHING` : '1:1 LIVE COACHING & MOVEMENT HUD'}
+                1:1 LIVE COACHING &amp; MOVEMENT HUD
               </h1>
               <p style={{ margin: '2px 0 0', color: 'var(--gray)', fontSize: 12, lineHeight: 1.35 }}>
-                {isTeamSession
-                  ? `Direct interactive squad video feed with ${coachName} and fellow teammates. Follow synchronized interval pacing, tempo pulse, and tactical form cues.`
-                  : `Direct interactive video feed with ${coachName}. Follow live pacing, joint alignment guides, and prescribed set cadences.`}
+                Direct 1:1 interactive video feed with {coachName}. Follow live pacing, joint alignment guides, and prescribed set cadences.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Live Video Camera HUD */}
+        {/* Legal Waiver Gate, Phase 0 Medical Clearance Hold, or Pre-Session ERAP Gate + Live Video Camera HUD */}
         <div style={{ marginBottom: 16 }}>
-          <LiveVideoCameraHud
-            coachName={coachName}
-            clientName={athleteName}
-            exerciseName={
-              (plan?.plan_json as { workouts?: Array<{ exercises?: Array<{ name?: string }> }> } | null)?.workouts?.[0]?.exercises?.[0]?.name ||
-              (isTeamSession ? 'Team Dynamic Movement & Kinetic Assessment' : 'Overhead Squat Assessment')
-            }
-            optPhase={plan?.phase_name ? `Phase ${plan.nasm_opt_phase}: ${plan.phase_name}` : 'Phase 2: Strength Endurance'}
-            currentTempo={
-              (plan?.plan_json as { workouts?: Array<{ exercises?: Array<{ tempo?: string }> }> } | null)?.workouts?.[0]?.exercises?.[0]?.tempo ||
-              '2-0-2'
-            }
-            sessionId={sessionId}
-            currentUserId={user.id}
-            isCoach={false}
-            isTeamSession={isTeamSession}
-            teamId={team?.id}
-            teamName={team?.name}
-            teamRoster={sanitizedTeamRoster}
-          />
+          {!legalConsentGate.verified ? (
+            <MandatoryLegalClickwrapGate defaultFullName={client?.full_name} />
+          ) : medicalGate.blocked ? (
+            <section
+              role="alert"
+              className="rounded-2xl border border-red-500/50 bg-red-950/35 p-6 text-zinc-100 shadow-2xl"
+            >
+              <div className="text-xs font-extrabold uppercase tracking-[0.12em] text-red-400">
+                ACSM / PAR-Q+ Phase 0 Medical Clearance Hold
+              </div>
+              <h2 className="mt-2 font-serif text-xl font-bold text-white">
+                Physician Clearance Required Before Live Exercise Sessions
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-200">
+                Your PAR-Q+ medical screening indicates cardiovascular, chest-pain, or dizziness/syncope criteria that require written clearance from a licensed physician before participating in live exercise sessions. Please provide your physician clearance note to {coachName} via secure messages.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <a
+                  href="/dashboard/messages"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-amber-400 px-4 py-2.5 text-xs font-extrabold uppercase tracking-[0.08em] text-zinc-950 hover:bg-amber-300"
+                >
+                  Message {coachName} →
+                </a>
+                <a
+                  href="/dashboard/settings"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.08em] text-white hover:bg-white/10"
+                >
+                  Review Medical Screening
+                </a>
+              </div>
+            </section>
+          ) : (
+            <LivePreSessionErapGate
+              athleteName={athleteName}
+              coachName={coachName}
+              hasExistingIntake={Boolean(intake)}
+              initialErap={parqEval.erapRecord}
+              initialEmergencyContactName={intake?.emergency_contact_name ?? ''}
+              initialEmergencyContactPhone={intake?.emergency_contact_phone ?? ''}
+            >
+              <LiveVideoCameraHud
+                coachName={coachName}
+                clientName={athleteName}
+                exerciseName={
+                  (plan?.plan_json as { workouts?: Array<{ exercises?: Array<{ name?: string }> }> } | null)?.workouts?.[0]?.exercises?.[0]?.name ||
+                  'Overhead Squat Assessment'
+                }
+                optPhase={plan?.phase_name ? `Phase ${plan.nasm_opt_phase}: ${plan.phase_name}` : 'Phase 2: Strength Endurance'}
+                currentTempo={
+                  (plan?.plan_json as { workouts?: Array<{ exercises?: Array<{ tempo?: string }> }> } | null)?.workouts?.[0]?.exercises?.[0]?.tempo ||
+                  '2-0-2'
+                }
+                sessionId={sessionId}
+                currentUserId={user.id}
+                isCoach={false}
+                isTeamSession={false}
+              />
+            </LivePreSessionErapGate>
+          )}
         </div>
 
         {/* Live Diagnostic Telemetry Info */}

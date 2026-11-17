@@ -6,8 +6,10 @@ import {
   createSignedFitnessPhotoUrl,
   extractPhotoPathFromLegacyUrl,
   FITNESS_PHOTO_BUCKET,
+  isUserOwnedPhotoPath,
   normalizePhotoPath,
 } from '@/lib/fitness-photos'
+import { checkClientAdultPhotoEligibility } from '@/lib/legal-compliance'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
@@ -61,7 +63,10 @@ export async function GET(req: NextRequest) {
     const storedPath = /^https?:\/\//i.test(rawValue)
       ? extractPhotoPathFromLegacyUrl(rawValue)
       : normalizePhotoPath(rawValue)
-    const signedUrl = storedPath ? await createSignedFitnessPhotoUrl(admin, storedPath) : null
+    const signedUrl =
+      storedPath && isUserOwnedPhotoPath(storedPath, userId)
+        ? await createSignedFitnessPhotoUrl(admin, storedPath)
+        : null
 
     return {
       ...row,
@@ -99,6 +104,14 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = supabaseAdmin()
+
+  const adultEligibility = await checkClientAdultPhotoEligibility(admin, userId)
+  if (!adultEligibility.eligible) {
+    return NextResponse.json(
+      { error: adultEligibility.error || 'Adult age verification (18+) is required before uploading progress photos.' },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
 
   const contentType = req.headers.get('content-type') ?? ''
 
@@ -175,7 +188,7 @@ export async function POST(req: NextRequest) {
     ? extractPhotoPathFromLegacyUrl(photoValue)
     : normalizePhotoPath(photoValue)
 
-  if (!storedPath || !storedPath.startsWith(`${userId}/`)) {
+  if (!storedPath || !isUserOwnedPhotoPath(storedPath, userId)) {
     return NextResponse.json({ error: 'Unauthorized photo path' }, { status: 403, headers: NO_STORE_HEADERS })
   }
 
@@ -187,7 +200,7 @@ export async function POST(req: NextRequest) {
     .from('progress_photos')
     .insert({
       user_id: userId,
-      photo_url: photoValue,
+      photo_url: storedPath,
       taken_at: takenAt,
       notes,
     })
@@ -198,9 +211,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to save progress photo' }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
-  const signedUrl = /^https?:\/\//i.test(data.photo_url)
-    ? data.photo_url
-    : await createSignedFitnessPhotoUrl(admin, data.photo_url)
+  const signedUrl = isUserOwnedPhotoPath(data.photo_url, userId)
+    ? await createSignedFitnessPhotoUrl(admin, data.photo_url)
+    : null
 
   return NextResponse.json(
     { photo: { ...data, photo_url: signedUrl ?? data.photo_url } },

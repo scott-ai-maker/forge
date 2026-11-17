@@ -7,6 +7,8 @@ import { StructuredSoapOutput, SoapNotesMode } from '@/lib/ai-soap-notes'
 import { ALL_PARTY_RECORDING_NOTICE } from '@/lib/legal-compliance'
 import { useNativeStudioDialog } from './useNativeStudioDialog'
 
+export type SoapVoiceCaptureContext = 'post_session_solo' | 'live_bilateral_consented'
+
 interface VoiceSoapNotesModalProps {
   isOpen: boolean
   sessionId: string
@@ -29,6 +31,9 @@ export default function VoiceSoapNotesModal({
   const [isSynthesizing, setIsSynthesizing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [mode, setMode] = useState<SoapNotesMode>('clinical_soap')
+  const [captureContext, setCaptureContext] = useState<SoapVoiceCaptureContext>('post_session_solo')
+  const [coachRecordingAttested, setCoachRecordingAttested] = useState(false)
+  const [voiceDictationUsed, setVoiceDictationUsed] = useState(false)
   const [soapResult, setSoapResult] = useState<StructuredSoapOutput | null>(null)
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -76,6 +81,13 @@ export default function VoiceSoapNotesModal({
 
   const startVoiceDictation = () => {
     setErrorMessage(null)
+    if (!coachRecordingAttested) {
+      setErrorMessage(
+        'Confirm the All-Party Recording & Dictation Compliance attestation below before activating the microphone (M.G.L. c. 272, § 99 / Cal. Penal Code § 632).'
+      )
+      return
+    }
+
     const windowSpeech = window as unknown as {
       SpeechRecognition?: new () => {
         continuous: boolean
@@ -115,6 +127,7 @@ export default function VoiceSoapNotesModal({
 
       recognition.onstart = () => {
         setIsRecording(true)
+        setVoiceDictationUsed(true)
       }
 
       recognition.onresult = (event: { results: Array<Array<{ transcript: string }>> }) => {
@@ -151,6 +164,13 @@ export default function VoiceSoapNotesModal({
       return
     }
 
+    if ((voiceDictationUsed || captureContext === 'live_bilateral_consented') && !coachRecordingAttested) {
+      setErrorMessage(
+        'Please confirm the All-Party Recording & Dictation Compliance attestation before synthesizing voice or live session notes.'
+      )
+      return
+    }
+
     setIsSynthesizing(true)
     setErrorMessage(null)
 
@@ -160,8 +180,10 @@ export default function VoiceSoapNotesModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rawNotes: rawInput,
-          clientName,
           mode,
+          captureContext,
+          coachRecordingAttested,
+          voiceDictationUsed,
         }),
       })
 
@@ -288,19 +310,104 @@ export default function VoiceSoapNotesModal({
           </button>
         </div>
 
-        {/* All-Party Recording & AI S.O.A.P. Transcription Consent Notice (M.G.L. c. 272, § 99) */}
+        {/* All-Party Recording & AI S.O.A.P. Transcription Consent Gate (M.G.L. c. 272, § 99 / Cal. Penal Code § 632) */}
         <div
+          data-testid="soap-wiretap-compliance-gate"
           style={{
-            padding: '10px 12px',
-            borderRadius: 8,
-            background: 'rgba(15, 23, 42, 0.9)',
-            border: '1px solid rgba(148, 163, 184, 0.32)',
-            fontSize: 11,
-            color: '#CBD5E1',
-            lineHeight: 1.45,
+            padding: '12px 14px',
+            borderRadius: 10,
+            background: 'rgba(15, 23, 42, 0.92)',
+            border: '1px solid rgba(212, 160, 23, 0.35)',
+            display: 'grid',
+            gap: 10,
           }}
         >
-          {ALL_PARTY_RECORDING_NOTICE}
+          <div style={{ fontSize: 11, color: '#CBD5E1', lineHeight: 1.45 }}>
+            {ALL_PARTY_RECORDING_NOTICE}
+          </div>
+
+          <div role="group" aria-label="Voice dictation capture context" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              aria-pressed={captureContext === 'post_session_solo'}
+              onClick={() => {
+                if (captureContext !== 'post_session_solo') {
+                  stopVoiceDictation()
+                  setCaptureContext('post_session_solo')
+                  setCoachRecordingAttested(false)
+                }
+              }}
+              style={{
+                minHeight: 38,
+                padding: '6px 12px',
+                borderRadius: 6,
+                background: captureContext === 'post_session_solo' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                border: captureContext === 'post_session_solo' ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.12)',
+                color: captureContext === 'post_session_solo' ? '#6EE7B7' : 'var(--gray)',
+                fontSize: 11.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Post-Session Solo Coach Dictation (Recommended)
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={captureContext === 'live_bilateral_consented'}
+              onClick={() => {
+                if (captureContext !== 'live_bilateral_consented') {
+                  stopVoiceDictation()
+                  setCaptureContext('live_bilateral_consented')
+                  setCoachRecordingAttested(false)
+                }
+              }}
+              style={{
+                minHeight: 38,
+                padding: '6px 12px',
+                borderRadius: 6,
+                background: captureContext === 'live_bilateral_consented' ? 'rgba(245, 158, 11, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                border: captureContext === 'live_bilateral_consented' ? '1px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.12)',
+                color: captureContext === 'live_bilateral_consented' ? '#FCD34D' : 'var(--gray)',
+                fontSize: 11.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Live 1:1 Session (Requires Signed Athlete Consent)
+            </button>
+          </div>
+
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 10,
+              fontSize: 11.5,
+              color: '#F1F5F9',
+              lineHeight: 1.45,
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              data-testid="soap-recording-attestation-checkbox"
+              checked={coachRecordingAttested}
+              onChange={e => {
+                const checked = e.target.checked
+                setCoachRecordingAttested(checked)
+                if (!checked) {
+                  stopVoiceDictation()
+                }
+              }}
+              style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, accentColor: '#D4A017' }}
+            />
+            <span>
+              {captureContext === 'post_session_solo'
+                ? 'I attest that the live coaching call has ended, no remote athlete audio or unconsented third party is on speaker/line, and this microphone captures only my solo post-session coach dictation.'
+                : 'I attest that the athlete has received contemporaneous visual/verbal notice of live note transcription (M.G.L. c. 272, § 99 / Cal. Penal Code § 632) and has executed Pre-Session All-Party Recording Consent on file.'}
+            </span>
+          </label>
         </div>
 
         {/* Mode Selector */}
@@ -388,6 +495,8 @@ export default function VoiceSoapNotesModal({
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
                   type="button"
+                  data-testid="soap-start-mic-btn"
+                  disabled={!isRecording && !coachRecordingAttested}
                   onClick={isRecording ? stopVoiceDictation : startVoiceDictation}
                   className="tactile-btn"
                   style={{
@@ -399,7 +508,8 @@ export default function VoiceSoapNotesModal({
                     color: isRecording ? '#FCA5A5' : 'var(--gold-lt)',
                     fontSize: 12.5,
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    cursor: !isRecording && !coachRecordingAttested ? 'not-allowed' : 'pointer',
+                    opacity: !isRecording && !coachRecordingAttested ? 0.5 : 1,
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 8,
@@ -407,7 +517,13 @@ export default function VoiceSoapNotesModal({
                   }}
                 >
                   <GaaIcon name={isRecording ? 'stop' : 'mic'} size={14} tone={isRecording ? 'ruby' : 'inherit'} />
-                  <span>{isRecording ? 'Stop Recording (Listening...)' : 'Click to Speak Notes'}</span>
+                  <span>
+                    {isRecording
+                      ? 'Stop Recording (Listening...)'
+                      : coachRecordingAttested
+                      ? 'Click to Speak Notes'
+                      : 'Check Attestation Above to Unlock Mic'}
+                  </span>
                 </button>
 
                 {isRecording && (

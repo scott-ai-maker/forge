@@ -26,7 +26,7 @@ describe('Master NASM AI Head Coach Persona Engine', () => {
     expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('NASM-MMACS')
     expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('NASM-GFS')
     expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('OPT™ Model Periodization')
-    expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('STRICT NASM EDGE EXERCISE CATALOG')
+    expect(MASTER_NASM_COACH_SYSTEM_PROMPT).toContain('STRICT FORGE ATHLETIC MOVEMENT LIBRARY')
   })
 
   it('filters NASM Edge exercise catalog accurately based on client equipment access', () => {
@@ -79,14 +79,14 @@ describe('Master NASM AI Head Coach Persona Engine', () => {
     expect(plan.phaseName).toBe('Stabilization Endurance')
     expect(plan.workouts.length).toBe(3)
 
-    // Check all exercises have non-null official NASM CDN media
+    // Check all exercises have non-null sovereign first-party Forge Athletic studio media
     for (const workout of plan.workouts) {
       expect(workout.exercises.length).toBeGreaterThan(0)
       for (const exercise of workout.exercises) {
         expect(exercise.name).toBeDefined()
-        expect(exercise.videoUrl).toMatch(/^https:\/\/www\.youtube\.com\/watch\?v=[a-zA-Z0-9_-]{11}$/)
-        expect(exercise.embedUrl).toMatch(/^https:\/\/www\.youtube-nocookie\.com\/embed\/[a-zA-Z0-9_-]{11}/)
-        expect(exercise.imageUrl).toMatch(/^(https:\/\/img\.youtube\.com\/vi\/[a-zA-Z0-9_-]{11}\/hqdefault\.jpg|\/images\/exercises\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp))$/)
+        expect(exercise.videoUrl).toMatch(/^\/videos\/exercises\/[a-zA-Z0-9_-]+\.mp4$/)
+        expect(exercise.embedUrl).toMatch(/^\/videos\/exercises\/[a-zA-Z0-9_-]+\.mp4$/)
+        expect(exercise.imageUrl).toMatch(/^\/images\/exercises\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/)
       }
     }
   })

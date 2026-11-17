@@ -13,12 +13,9 @@ vi.mock('@/lib/authz', () => ({
   },
 }))
 
-vi.mock('@/lib/rate-limit', () => ({
-  enforceRateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 59 }),
-}))
-
 const mockProfileSingle = vi.fn()
 const mockIntakeSingle = vi.fn()
+const mockIntakeEq = vi.fn()
 
 vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: vi.fn(() => ({
@@ -32,9 +29,11 @@ vi.mock('@/lib/supabase', () => ({
       }
       if (table === 'client_intake_forms') {
         return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: mockIntakeSingle,
+          select: vi.fn(() => ({
+            eq: mockIntakeEq.mockImplementation(() => ({
+              maybeSingle: mockIntakeSingle,
+            })),
+          })),
         }
       }
       return {
@@ -46,24 +45,22 @@ vi.mock('@/lib/supabase', () => ({
   })),
 }))
 
-describe('/api/fitness/supplements', () => {
+describe('/api/fitness/supplements (Goal-Based Thorne Storefront)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockProfileSingle.mockResolvedValue({
       data: {
-        user_id: 'athlete-1',
         fitness_goal: 'Athletic Hypertrophy',
-        age: 41,
-        sex: 'male',
-        training_experience: 'advanced',
       },
       error: null,
     })
     mockIntakeSingle.mockResolvedValue({
       data: {
+        parq_any_yes: true,
         parq_answers: {},
-        medications: 'Lisinopril 10mg daily; Levothyroxine 75mcg morning',
-        medical_conditions: 'Controlled Stage 1 Hypertension; Hypothyroidism',
+        medications: 'Lisinopril 10mg daily',
+        medical_conditions: 'Controlled Stage 1 Hypertension',
+        allergies: null,
       },
       error: null,
     })
@@ -81,14 +78,14 @@ describe('/api/fitness/supplements', () => {
     const postRes = await POST(
       new NextRequest('http://localhost/api/fitness/supplements', {
         method: 'POST',
-        body: JSON.stringify({ timingWindow: 'morning_with_breakfast' }),
+        body: JSON.stringify({}),
       })
     )
     expect(postRes.status).toBe(401)
     expect(postRes.headers.get('Cache-Control')).toBe('no-store, max-age=0')
   })
 
-  it('hydrates athlete supplement stack with intake medication contraindication shields on GET', async () => {
+  it('queries client_intake_forms by user_id and returns goal-based Thorne collection + physician consult alert', async () => {
     const { getRequestAuthz } = await import('@/lib/authz')
     vi.mocked(getRequestAuthz).mockResolvedValueOnce({
       user: { id: 'athlete-1' },
@@ -97,104 +94,24 @@ describe('/api/fitness/supplements', () => {
 
     const res = await GET(new NextRequest('http://localhost/api/fitness/supplements'))
     expect(res.status).toBe(200)
-    expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0')
+    expect(mockIntakeEq).toHaveBeenCalledWith('user_id', 'athlete-1')
 
     const json = await res.json()
     expect(json.ok).toBe(true)
-    expect(json.stack.clientProfile.goal).toBe('hypertrophy')
-    expect(json.stack.clientProfile.age).toBe(41)
-    expect(json.stack.drugInteractions.length).toBeGreaterThanOrEqual(2)
-    expect(
-      json.stack.drugInteractions.some((d: { medicationCategory: string }) =>
-        /Blood Pressure|Antihypertensive|Thyroid/i.test(d.medicationCategory)
-      )
-    ).toBe(true)
+    expect(json.supplementEngineDisabled).toBe(true)
+    expect(json.goal).toBe('hypertrophy')
+    expect(json.collection.products.length).toBeGreaterThan(0)
+    expect(json.physicianConsultAlert.requiresPhysicianConsultNotice).toBe(true)
+    expect(json.disclosures.ftcAffiliate).toContain('commission')
+    expect(json.disclosures.fdaDshea).toContain('Food and Drug Administration')
   })
 
-  it('validates adherence payloads on POST and rejects malformed JSON or invalid enums with 400', async () => {
+  it('returns 410 Gone on POST since personalized supplement adherence/dosing is disabled', async () => {
     const { getRequestAuthz } = await import('@/lib/authz')
-    const authzPayload = {
-      user: { id: 'athlete-1' },
-      client: { id: 'athlete-1', role: 'client', email: 'athlete@example.com', status: 'active', designated_coach_id: null },
-    } as unknown as Awaited<ReturnType<typeof getRequestAuthz>>
-
-    // Malformed JSON
-    vi.mocked(getRequestAuthz).mockResolvedValueOnce(authzPayload)
-    const badJsonRes = await POST(
-      new NextRequest('http://localhost/api/fitness/supplements', {
-        method: 'POST',
-        body: '{bad-json',
-      })
-    )
-    expect(badJsonRes.status).toBe(400)
-
-    // Invalid timingWindow
-    vi.mocked(getRequestAuthz).mockResolvedValueOnce(authzPayload)
-    const badWindowRes = await POST(
-      new NextRequest('http://localhost/api/fitness/supplements', {
-        method: 'POST',
-        body: JSON.stringify({ timingWindow: 'midnight_snack' }),
-      })
-    )
-    expect(badWindowRes.status).toBe(400)
-
-    // Invalid date
-    vi.mocked(getRequestAuthz).mockResolvedValueOnce(authzPayload)
-    const badDateRes = await POST(
-      new NextRequest('http://localhost/api/fitness/supplements', {
-        method: 'POST',
-        body: JSON.stringify({ timingWindow: 'morning_with_breakfast', date: '11/15/2026' }),
-      })
-    )
-    expect(badDateRes.status).toBe(400)
-
-    // Invalid itemId
-    vi.mocked(getRequestAuthz).mockResolvedValueOnce(authzPayload)
-    const badItemRes = await POST(
-      new NextRequest('http://localhost/api/fitness/supplements', {
-        method: 'POST',
-        body: JSON.stringify({
-          timingWindow: 'morning_with_breakfast',
-          date: '2026-11-15',
-          itemId: '<script>alert(1)</script>',
-        }),
-      })
-    )
-    expect(badItemRes.status).toBe(400)
-
-    // Valid adherence log
-    vi.mocked(getRequestAuthz).mockResolvedValueOnce(authzPayload)
-    const okRes = await POST(
-      new NextRequest('http://localhost/api/fitness/supplements', {
-        method: 'POST',
-        body: JSON.stringify({
-          timingWindow: 'daily_flexible',
-          itemId: 'creatine_monohydrate',
-          date: '2026-11-15',
-          completed: true,
-        }),
-      })
-    )
-    expect(okRes.status).toBe(200)
-    expect(okRes.headers.get('Cache-Control')).toBe('no-store, max-age=0')
-    const okJson = await okRes.json()
-    expect(okJson).toMatchObject({
-      ok: true,
-      timingWindow: 'daily_flexible',
-      itemId: 'creatine_monohydrate',
-      date: '2026-11-15',
-      completed: true,
-    })
-  })
-
-  it('enforces per-user rate limiting with 429', async () => {
-    const { getRequestAuthz } = await import('@/lib/authz')
-    const { enforceRateLimit } = await import('@/lib/rate-limit')
     vi.mocked(getRequestAuthz).mockResolvedValueOnce({
       user: { id: 'athlete-1' },
       client: { id: 'athlete-1', role: 'client', email: 'athlete@example.com', status: 'active', designated_coach_id: null },
     } as unknown as Awaited<ReturnType<typeof getRequestAuthz>>)
-    vi.mocked(enforceRateLimit).mockResolvedValueOnce({ allowed: false, remaining: 0 } as Awaited<ReturnType<typeof enforceRateLimit>>)
 
     const res = await POST(
       new NextRequest('http://localhost/api/fitness/supplements', {
@@ -202,7 +119,8 @@ describe('/api/fitness/supplements', () => {
         body: JSON.stringify({ timingWindow: 'morning_with_breakfast' }),
       })
     )
-    expect(res.status).toBe(429)
-    expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0')
+    expect(res.status).toBe(410)
+    const json = await res.json()
+    expect(json.supplementEngineDisabled).toBe(true)
   })
 })

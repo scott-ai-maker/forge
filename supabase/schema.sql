@@ -341,12 +341,25 @@ create table if not exists sessions (
 alter table waitlist enable row level security;
 alter table coaching_applications enable row level security;
 alter table marketing_email_queue enable row level security;
+alter table email_suppressions enable row level security;
 alter table clients enable row level security;
+alter table client_lifecycle_audit_logs enable row level security;
+alter table coach_onboarding_gates enable row level security;
 alter table client_packages enable row level security;
 alter table sessions enable row level security;
 alter table comp_session_grants enable row level security;
 alter table discount_codes enable row level security;
 alter table discount_code_redemptions enable row level security;
+
+-- Email suppressions: server-only (service_role); zero anon or authenticated client access
+revoke all on email_suppressions from anon, authenticated;
+
+-- Client lifecycle audit logs: append-only via server (service_role); assigned coaches may read
+revoke all on client_lifecycle_audit_logs from anon;
+revoke insert, update, delete on client_lifecycle_audit_logs from authenticated;
+
+-- Coach onboarding gates: zero anonymous access; RLS policies below govern authenticated reads/writes
+revoke all on coach_onboarding_gates from anon;
 
 -- Waitlist: anyone can insert, only service role can read
 drop policy if exists "Public can join waitlist" on waitlist;
@@ -511,22 +524,51 @@ create policy "Coach reads assigned sessions" on sessions
 drop policy if exists "Coach updates sessions" on sessions;
 drop policy if exists "Coach updates assigned sessions" on sessions;
 create policy "Coach updates assigned sessions" on sessions
-  for update using (
-    exists (
-      select 1
-      from clients c
-      join clients cl on cl.id = sessions.client_id
-      where c.id = auth.uid()
-        and c.role = 'coach'
-        and cl.designated_coach_id = auth.uid()
-    )
+  for update using (public.is_coach_assigned_to_client(sessions.client_id));
+
+-- Coach reads assigned client lifecycle audit logs (writes strictly via service_role)
+drop policy if exists "Coach reads assigned lifecycle audit logs" on client_lifecycle_audit_logs;
+create policy "Coach reads assigned lifecycle audit logs" on client_lifecycle_audit_logs
+  for select to authenticated
+  using (public.is_coach_assigned_to_client(client_lifecycle_audit_logs.client_id));
+
+-- Onboarding gates: athlete or assigned coach may read; ONLY assigned coach may insert/update/delete
+drop policy if exists "Coaches and admins can view and manage onboarding gates" on coach_onboarding_gates;
+drop policy if exists "Users and assigned coaches read onboarding gates" on coach_onboarding_gates;
+create policy "Users and assigned coaches read onboarding gates" on coach_onboarding_gates
+  for select to authenticated
+  using (
+    (select auth.uid()) = client_id
+    or public.is_coach_assigned_to_client(coach_onboarding_gates.client_id)
   );
+
+drop policy if exists "Assigned coaches insert onboarding gates" on coach_onboarding_gates;
+create policy "Assigned coaches insert onboarding gates" on coach_onboarding_gates
+  for insert to authenticated
+  with check (public.is_coach_assigned_to_client(coach_onboarding_gates.client_id));
+
+drop policy if exists "Assigned coaches update onboarding gates" on coach_onboarding_gates;
+create policy "Assigned coaches update onboarding gates" on coach_onboarding_gates
+  for update to authenticated
+  using (public.is_coach_assigned_to_client(coach_onboarding_gates.client_id))
+  with check (public.is_coach_assigned_to_client(coach_onboarding_gates.client_id));
+
+drop policy if exists "Assigned coaches delete onboarding gates" on coach_onboarding_gates;
+create policy "Assigned coaches delete onboarding gates" on coach_onboarding_gates
+  for delete to authenticated
+  using (public.is_coach_assigned_to_client(coach_onboarding_gates.client_id));
 
 -- ── FITNESS PROFILES / WORKOUT TRACKER ───────────────────
 create table if not exists fitness_profiles (
   user_id                  uuid primary key references auth.users(id) on delete cascade,
   preferred_units          text default 'metric' check (preferred_units in ('metric', 'imperial')),
-  age                      int,
+  date_of_birth            date check (
+    date_of_birth is null or (
+      date_of_birth >= date '1920-01-01'
+      and date_of_birth <= (current_date - interval '18 years')::date
+    )
+  ),
+  age                      int check (age is null or (age >= 18 and age <= 105)),
   sex                      text check (sex in ('male', 'female', 'other')),
   height_cm                numeric(5,2),
   weight_kg                numeric(5,2),
@@ -2023,3 +2065,53 @@ create policy "Assigned coach reads client telemetry snapshot"
         and c.designated_coach_id = auth.uid()
     )
   );
+
+
+-- ── IMMUTABLE LEGAL CONSENT & LITIGATION-DEFENSE AUDIT LEDGER ──
+create table if not exists public.legal_consent_audit_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  deleted_subject_sha256 text check (
+    deleted_subject_sha256 is null or char_length(deleted_subject_sha256) = 64
+  ),
+  retained_for_legal_defense boolean not null default true,
+  document_type text not null check (
+    document_type in (
+      'terms_of_service',
+      'privacy_policy',
+      'consumer_health_biometric_policy',
+      'athletic_liability_waiver',
+      'live_recording_soap_consent',
+      'predict_look_ai_simulation_consent'
+    )
+  ),
+  document_version text not null,
+  document_sha256 text not null check (char_length(document_sha256) = 64),
+  typed_signature text,
+  ip_address text,
+  user_agent text,
+  consented_at timestamptz not null default now(),
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_legal_consent_audit_user_doc
+  on public.legal_consent_audit_log (user_id, document_type, consented_at desc);
+
+create index if not exists idx_legal_consent_audit_deleted_subject
+  on public.legal_consent_audit_log (deleted_subject_sha256)
+  where deleted_subject_sha256 is not null;
+
+alter table public.legal_consent_audit_log enable row level security;
+
+revoke all on table public.legal_consent_audit_log from anon;
+revoke insert, update, delete on table public.legal_consent_audit_log from authenticated;
+grant select on table public.legal_consent_audit_log to authenticated;
+
+drop policy if exists "Users can insert own legal consent audit rows" on public.legal_consent_audit_log;
+drop policy if exists "Users can view own legal consent audit rows" on public.legal_consent_audit_log;
+create policy "Users can view own legal consent audit rows"
+  on public.legal_consent_audit_log
+  for select
+  to authenticated
+  using (user_id is not null and (select auth.uid()) = user_id);

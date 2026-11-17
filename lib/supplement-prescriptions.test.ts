@@ -1,292 +1,65 @@
 import { describe, expect, it } from 'vitest'
 import {
-  DEFAULT_THORNE_AFFILIATE_ID,
-  DEFAULT_THORNE_DISPENSARY_URL,
-  DISPENSARY_PARTNER_CONFIG,
-  SUPPLEMENT_DISPENSARY_MAP,
-  THORNE_SKU_PRODUCT_PATHS,
-  buildDispensaryItemUrl,
-  generateSupplementStack,
-  isDispensaryAndSupplementsEnabled,
-  isThorneAccountLinked,
+  evaluateIntakePhysicianConsultFlag,
+  FDA_DSHEA_DISCLAIMER,
+  FTC_PROXIMATE_AFFILIATE_DISCLOSURE,
+  getThorneGoalCollection,
+  MA_SAFE_HARBOR_SCOPE_NOTICE,
+  normalizeSupplementGoal,
+  THORNE_GOAL_COLLECTIONS,
+  VALID_SUPPLEMENT_GOALS,
 } from './supplement-prescriptions'
 
-describe('supplement-prescriptions & drug-nutrient interactions', () => {
-  it('enables the live Forge Athletic × Thorne dispensary by default with 15% member discount', () => {
-    expect(isDispensaryAndSupplementsEnabled).toBe(true)
-    expect(isThorneAccountLinked).toBe(true)
-    expect(DEFAULT_THORNE_DISPENSARY_URL).toBe('https://www.thorne.com/u/forgeathletic')
-    expect(DISPENSARY_PARTNER_CONFIG.isEnabled).toBe(true)
-    expect(DISPENSARY_PARTNER_CONFIG.discountPercentage).toBe(15)
-    expect(DISPENSARY_PARTNER_CONFIG.approvalProgressPercent).toBe(100)
-    expect(DISPENSARY_PARTNER_CONFIG.approvalEstimatedDaysRemaining).toBe(0)
-    expect(DISPENSARY_PARTNER_CONFIG.defaultThorneUrl).toContain('thorne.com/u/')
-  })
+describe('Thorne Goal-Based Partner Storefront (Custom Dosing Disabled)', () => {
+  it('maps every training goal to a stimulant-free NSF Certified for Sport® Thorne collection with zero dosages', () => {
+    for (const goal of VALID_SUPPLEMENT_GOALS) {
+      const collection = getThorneGoalCollection(goal)
+      expect(collection.goal).toBe(goal)
+      expect(collection.products.length).toBeGreaterThan(0)
 
-  it('generates a gold-standard Tier A foundational stack for a healthy 28yo male athlete', () => {
-    const res = generateSupplementStack({
-      goal: 'hypertrophy',
-      age: 28,
-      sex: 'male',
-      fitnessLevel: 'intermediate',
-      bodyweightKg: 85,
-    })
-
-    expect(res.prescribedItems.some(i => i.id === 'creatine_monohydrate')).toBe(true)
-    expect(res.prescribedItems.some(i => i.id === 'protein_isolate')).toBe(true)
-    expect(res.prescribedItems.some(i => i.id === 'omega_3_high')).toBe(true)
-    expect(res.prescribedItems.some(i => i.id === 'magnesium_glycinate')).toBe(true)
-    expect(res.prescribedItems.some(i => i.id === 'vit_d3_k2')).toBe(true)
-    expect(res.flaggedContraindications.length).toBe(0)
-    expect(res.legalDisclaimer).toContain('MANDATORY FDA & MEDICAL DISCLAIMER')
-    expect(res.thirdPartyQualityStandards).toContain('NSF Certified for Sport')
-  })
-
-  it('suppresses Vitamin K2 and prescribes Pure Vitamin D3 for clients on Anticoagulant blood thinners', () => {
-    const res = generateSupplementStack({
-      goal: 'general_health',
-      age: 58,
-      sex: 'male',
-      fitnessLevel: 'beginner',
-      healthConditions: {
-        takingAnticoagulants: true,
-      },
-    })
-
-    expect(res.prescribedItems.some(i => i.id === 'vit_d3_k2')).toBe(false)
-    expect(res.prescribedItems.some(i => i.id === 'vit_d3_pure')).toBe(true)
-    expect(res.prescribedItems.some(i => i.id === 'omega_3_mod')).toBe(true)
-    expect(res.drugInteractions.some(d => d.medicationCategory.includes('Anticoagulant'))).toBe(true)
-  })
-
-  it('suppresses high-potassium electrolytes and stimulants for clients on Antihypertensive medications', () => {
-    const res = generateSupplementStack({
-      goal: 'fat_loss',
-      age: 46,
-      sex: 'female',
-      fitnessLevel: 'intermediate',
-      healthConditions: {
-        takingAntihypertensives: true,
-      },
-    })
-
-    expect(res.prescribedItems.some(i => i.id === 'caffeine_theanine')).toBe(false)
-    expect(res.prescribedItems.some(i => i.id === 'l_citrulline_nonstim')).toBe(true)
-    expect(res.prescribedItems.some(i => i.id === 'low_potassium_hydration')).toBe(true)
-    expect(res.drugInteractions.some(d => d.medicationCategory.includes('Antihypertensives'))).toBe(true)
-  })
-
-  it('enforces a mandatory 4-hour separation rule for clients on Thyroid Hormone replacement (Levothyroxine)', () => {
-    const res = generateSupplementStack({
-      goal: 'longevity_vitality',
-      age: 44,
-      sex: 'female',
-      fitnessLevel: 'intermediate',
-      healthConditions: {
-        takingThyroidHormone: true,
-      },
-    })
-
-    expect(res.chronoSeparationRules.some(r => r.includes('4-Hour Separation'))).toBe(true)
-    const mg = res.prescribedItems.find(i => i.id === 'magnesium_glycinate')
-    expect(mg?.chronoSeparationNote).toContain('Levothyroxine')
-    expect(res.drugInteractions.some(d => d.severity === 'CHRONO_SEPARATION_REQUIRED')).toBe(true)
-  })
-
-  it('automatically adds active Ubiquinol CoQ10 as a beneficial co-prescription for clients on Statins', () => {
-    const res = generateSupplementStack({
-      goal: 'general_health',
-      age: 52,
-      sex: 'male',
-      fitnessLevel: 'intermediate',
-      healthConditions: {
-        takingStatins: true,
-      },
-    })
-
-    const coq10 = res.prescribedItems.find(i => i.id === 'ubiquinol_coq10')
-    expect(coq10).toBeDefined()
-    expect(coq10?.isBeneficialCoPrescription).toBe(true)
-    expect(coq10?.name).toContain('Statin Muscle Protection')
-    expect(res.drugInteractions.some(d => d.medicationCategory.includes('Statins'))).toBe(true)
-  })
-
-  it('blacklists 5-HTP and St. Johns Wort to prevent Serotonin Syndrome for clients on Antidepressants (SSRIs/SNRIs)', () => {
-    const res = generateSupplementStack({
-      goal: 'general_health',
-      age: 32,
-      sex: 'female',
-      fitnessLevel: 'beginner',
-      healthConditions: {
-        takingAntidepressants: true,
-      },
-    })
-
-    expect(res.drugInteractions.some(d => d.medicationCategory.includes('Antidepressants'))).toBe(true)
-    expect(res.drugInteractions.some(d => d.pharmacologicalRationale.includes('Serotonin Syndrome'))).toBe(true)
-  })
-
-  it('prescribes bioavailable Methyl-B12 and suppresses high-dose Berberine for clients on Diabetes/Metformin therapy', () => {
-    const res = generateSupplementStack({
-      goal: 'fat_loss',
-      age: 49,
-      sex: 'male',
-      fitnessLevel: 'intermediate',
-      healthConditions: {
-        takingDiabetesMedications: true,
-      },
-    })
-
-    expect(res.prescribedItems.some(i => i.id === 'methyl_b12')).toBe(true)
-    expect(res.drugInteractions.some(d => d.medicationCategory.includes('Diabetes Medications'))).toBe(true)
-  })
-
-  it('enforces 2-4 hour mineral separation for Oral Antibiotic regimens', () => {
-    const res = generateSupplementStack({
-      goal: 'general_health',
-      age: 36,
-      sex: 'female',
-      fitnessLevel: 'intermediate',
-      healthConditions: {
-        takingOralAntibiotics: true,
-      },
-    })
-
-    expect(res.chronoSeparationRules.some(r => r.includes('2–4 Hour Separation'))).toBe(true)
-    expect(res.drugInteractions.some(d => d.medicationCategory.includes('Oral Antibiotics'))).toBe(true)
-  })
-
-  it('suppresses immune-stimulating herbals and protects bone minerals for clients on Immunosuppressants/Steroids', () => {
-    const res = generateSupplementStack({
-      goal: 'general_health',
-      age: 41,
-      sex: 'male',
-      fitnessLevel: 'beginner',
-      healthConditions: {
-        takingImmunosuppressantsOrSteroids: true,
-      },
-    })
-
-    expect(res.drugInteractions.some(d => d.medicationCategory.includes('Immunosuppressants'))).toBe(true)
-  })
-
-  it('attaches Thorne-exclusive dispensary metadata, SKUs, direct product URLs, and exact 15% client discount pricing to all items', () => {
-    const res = generateSupplementStack({
-      goal: 'hypertrophy',
-      age: 32,
-      sex: 'male',
-      fitnessLevel: 'advanced_athlete',
-    })
-
-    expect(res.prescribedItems.length).toBeGreaterThan(0)
-    for (const item of res.prescribedItems) {
-      expect(item.recommendedBrand).toBe('Thorne')
-      expect(item.dispensarySku).toMatch(/^[A-Z]{1,3}\d{3}[A-Z0-9]*$/)
-      expect(item.clientDiscountPrice).toContain('$')
-      expect(item.dispensaryUrl).toContain('https://www.thorne.com/products/dp/')
-      expect(item.dispensaryUrl).toContain(`?affid=${DEFAULT_THORNE_AFFILIATE_ID}`)
-      expect(item.dispensaryUrl).not.toContain('thorne.com/u/')
+      for (const product of collection.products) {
+        expect(product.certificationBadge).toBe('NSF Certified for Sport®')
+        expect(product.productUrl).toContain('thorne.com')
+        expect(product.labelGuidance).toContain('Supplement Facts label')
+        // Never prescribe custom milligram/gram dosing or drug co-prescriptions
+        expect(product.name).not.toMatch(/Ubiquinol|CoQ10|B12|Caffeine|Pre-Workout/i)
+      }
     }
-
-    for (const meta of Object.values(SUPPLEMENT_DISPENSARY_MAP)) {
-      expect(meta.brand).toBe('Thorne')
-      expect(meta.sku).toMatch(/^[A-Z]{1,3}\d{3}[A-Z0-9]*$/)
-      expect(meta.productPath).toMatch(/^\/products\/dp\/[a-z0-9-]+$/)
-      expect(THORNE_SKU_PRODUCT_PATHS[meta.sku]).toBe(meta.productPath)
-      expect(buildDispensaryItemUrl(meta.sku)).toBe(
-        `https://www.thorne.com${meta.productPath}?affid=${DEFAULT_THORNE_AFFILIATE_ID}`
-      )
-      const retailNum = Number(meta.retail.replace('$', ''))
-      const expectedDiscount = `$${(retailNum * 0.85).toFixed(2)}`
-      expect(meta.discount).toBe(expectedDiscount)
-    }
-
-    expect(buildDispensaryItemUrl()).toBe('https://www.thorne.com/u/forgeathletic')
-
-    const creatine = res.prescribedItems.find(i => i.id === 'creatine_monohydrate')
-    expect(creatine?.recommendedBrand).toBe('Thorne')
-    expect(creatine?.dispensarySku).toBe('SF903')
-    expect(creatine?.clientDiscountPrice).toBe('$37.40')
-    expect(creatine?.dispensaryUrl).toBe('https://www.thorne.com/products/dp/creatine?affid=PR2650699')
-
-    const mag = res.prescribedItems.find(i => i.id === 'magnesium_glycinate')
-    expect(mag?.recommendedBrand).toBe('Thorne')
-    expect(mag?.dispensarySku).toBe('M204')
-    expect(mag?.clientDiscountPrice).toBe('$44.20')
-    expect(mag?.dispensaryUrl).toBe('https://www.thorne.com/products/dp/magnesium-bisglycinate?affid=PR2650699')
   })
 
-  it('categorizes supplements into clear tiers with explicit rest-day directives and meal instructions', () => {
-    const res = generateSupplementStack({
-      goal: 'hypertrophy',
-      age: 30,
-      sex: 'male',
-      fitnessLevel: 'intermediate',
-    })
-
-    // Verify tiered schedule breakdown
-    expect(res.tieredSchedule).toBeDefined()
-    expect(res.tieredSchedule.dailyCore.length).toBeGreaterThanOrEqual(2)
-    expect(res.tieredSchedule.workoutDays.length).toBeGreaterThanOrEqual(1)
-
-    // Verify all items have explicit tiers, directives, and meal instructions
-    for (const item of res.prescribedItems) {
-      expect(['daily_core', 'workout_days', 'conditional_adjunct']).toContain(item.routineTier)
-      expect(['Every Day', 'Workout Days Only', 'As Needed / Profile Specific']).toContain(item.dailyFrequency)
-      expect(['essential', 'performance', 'conditional']).toContain(item.necessityLevel)
-      expect(item.restDayDirective).toBeDefined()
-      expect(item.mealInstruction).toBeDefined()
-    }
-
-    // Verify specific rest-day directives
-    const creatine = res.prescribedItems.find(i => i.id === 'creatine_monohydrate')
-    expect(creatine?.routineTier).toBe('daily_core')
-    expect(creatine?.restDayDirective).toContain('Take daily')
-
-    const preWorkout = res.prescribedItems.find(i => i.id === 'caffeine_theanine')
-    if (preWorkout) {
-      expect(preWorkout.routineTier).toBe('workout_days')
-      expect(preWorkout.workoutDayOnly).toBe(true)
-      expect(preWorkout.restDayDirective).toContain('Skip on rest days')
-    }
-
-    // Verify routine summary counts and titration safety rule
-    expect(res.routineSummary.dailyCoreCount).toBe(res.tieredSchedule.dailyCore.length)
-    expect(res.routineSummary.workoutDaysCount).toBe(res.tieredSchedule.workoutDays.length)
-    expect(res.routineSummary.workoutOnlyCount).toBe(res.tieredSchedule.workoutDays.length)
-    expect(res.routineSummary.titrationRule).toContain('1 compound at a time')
-    expect(res.routineSummary.titrationRule).toContain('7–14 days')
+  it('normalizes natural-language training goals cleanly', () => {
+    expect(normalizeSupplementGoal('Muscle Hypertrophy')).toBe('hypertrophy')
+    expect(normalizeSupplementGoal('Weight Loss & Lean Cut')).toBe('fat_loss')
+    expect(normalizeSupplementGoal('Explosive Power')).toBe('athletic_power')
+    expect(normalizeSupplementGoal('Joint Mobility & Longevity')).toBe('longevity_vitality')
+    expect(normalizeSupplementGoal('General Wellness')).toBe('general_health')
+    expect(Object.keys(THORNE_GOAL_COLLECTIONS)).toHaveLength(5)
   })
 
-  it('safely handles unlinked Thorne accounts without exposing broken affiliate URLs', () => {
-    const res = generateSupplementStack({
-      goal: 'general_health',
-      age: 40,
-      sex: 'female',
-      fitnessLevel: 'intermediate',
+  it('flags physician/pharmacist consultation whenever PAR-Q+, medications, conditions, or allergies exist', () => {
+    const flagged = evaluateIntakePhysicianConsultFlag({
+      parq_any_yes: false,
+      medications: 'Eliquis 5mg twice daily',
+      medical_conditions: 'None',
+      allergies: '',
     })
+    expect(flagged.requiresPhysicianConsultNotice).toBe(true)
+    expect(flagged.reasons).toContain('reported medications')
+    expect(flagged.message).toContain('does not perform drug–supplement interaction screening')
 
-    const thorneItem = res.prescribedItems.find(i => i.recommendedBrand === 'Thorne')
-    expect(thorneItem).toBeDefined()
-
-    // Thorne link should point to safe verified catalog and never contain legacy gordonathletic handle
-    expect(thorneItem?.dispensaryUrl).not.toContain('gordonathletic')
-    expect(thorneItem?.dispensaryUrl).toContain('thorne.com')
+    const clean = evaluateIntakePhysicianConsultFlag({
+      parq_any_yes: false,
+      medications: 'None',
+      medical_conditions: 'N/A',
+      allergies: '',
+    })
+    expect(clean.requiresPhysicianConsultNotice).toBe(false)
   })
 
-  it('enforces multi-layer liability statements including DSHEA, Mass Safe Harbor, and physician warnings', () => {
-    const res = generateSupplementStack({
-      goal: 'fat_loss',
-      age: 45,
-      sex: 'male',
-      fitnessLevel: 'intermediate',
-    })
-
-    expect(res.medicalSupervisionWarning).toContain('PHYSICIAN CONSULTATION')
-    expect(res.wholeFoodFirstNotice).toContain('WHOLE-FOOD FIRST')
-    expect(res.discontinueAndConsultNotice).toContain('ADVERSE REACTION')
-    expect(res.scopeOfPracticeNotice).toContain('PROFESSIONAL SCOPE OF PRACTICE NOTICE')
-    expect(res.legalDisclaimer).toContain('MANDATORY FDA & MEDICAL DISCLAIMER')
-    expect(res.legalDisclaimer).toContain('DSHEA 1994')
+  it('includes FTC 16 CFR § 255.5 affiliate, FDA DSHEA, and MA Safe Harbor disclosures', () => {
+    expect(FTC_PROXIMATE_AFFILIATE_DISCLOSURE).toContain('15%')
+    expect(FTC_PROXIMATE_AFFILIATE_DISCLOSURE).toContain('commission')
+    expect(FDA_DSHEA_DISCLAIMER).toContain('Food and Drug Administration')
+    expect(MA_SAFE_HARBOR_SCOPE_NOTICE).toContain('M.G.L. c. 112, § 206')
   })
 })

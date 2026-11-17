@@ -132,6 +132,8 @@ describe('/api/account/parq', () => {
           hasChronicSpinalOrDiscCondition: false,
           hasRecentSurgeryOrInjury: true,
           reportedConditionsNotes: 'Torn meniscus left knee, no deep squats',
+          emergencyContactName: 'Sarah Doe',
+          emergencyContactPhone: '617-555-0144',
           signedWaiverName: 'John Doe',
           signedAt: new Date().toISOString(),
         }),
@@ -184,6 +186,36 @@ describe('/api/account/parq', () => {
       })
       const resRefused = await POST(reqRefused)
       expect(resRefused.status).toBe(400)
+    })
+
+    it('returns 400 instead of 500 DB crash when pre-onboarding user omits emergency contact details', async () => {
+      supabaseAdminMock.mockReturnValue({
+        from: (table: string) => {
+          if (table === 'clients' || table === 'client_intake_forms') {
+            return {
+              select: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({ data: null, error: null }),
+                }),
+              }),
+            }
+          }
+          return {}
+        },
+      })
+
+      const reqMissingEmergency = new NextRequest('http://localhost:3000/api/account/parq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hasHeartCondition: false,
+          signedWaiverName: 'John Doe',
+        }),
+      })
+      const res = await POST(reqMissingEmergency)
+      expect(res.status).toBe(400)
+      const json = await res.json()
+      expect(json.error).toContain('Emergency contact')
     })
   })
 })

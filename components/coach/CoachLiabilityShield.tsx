@@ -18,6 +18,7 @@ export default function CoachLiabilityShield({
   evaluation = {
     clearanceStatus: 'cleared_unrestricted',
     riskTier: 'Low Risk',
+    exercisePermitted: true,
     flaggedQuestionsCount: 0,
     flaggedItems: [],
     maxAllowedOptPhase: 5,
@@ -76,7 +77,7 @@ export default function CoachLiabilityShield({
         <div className="tabular-nums" style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 10, color: 'var(--gray)', textTransform: 'uppercase' }}>Max Authorized OPT Phase</div>
           <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontWeight: 800, fontSize: 22, color: isHighRisk ? 'var(--error)' : 'var(--gold-lt)', lineHeight: 1 }}>
-            Phase {evaluation?.maxAllowedOptPhase ?? 5} Max
+            {evaluation?.maxAllowedOptPhase === 0 ? 'Phase 0 Hold' : `Phase ${evaluation?.maxAllowedOptPhase ?? 5} Max`}
           </div>
         </div>
       </div>

@@ -15,6 +15,8 @@ export interface ParqAnswers {
   reportedConditionsNotes?: string
   signedWaiverName?: string
   signedAt?: string
+  emergencyContactName?: string
+  emergencyContactPhone?: string
   // NASM-VCS Emergency Remote Action Plan (ERAP) Fields
   workoutStreetAddress?: string
   workoutUnitOrGateCode?: string
@@ -33,9 +35,10 @@ export type MedicalClearanceStatus =
 export interface ParqEvaluationResult {
   clearanceStatus: MedicalClearanceStatus
   riskTier: 'Low Risk' | 'Moderate Risk' | 'High Risk - Medical Clearance Required'
+  exercisePermitted: boolean
   flaggedQuestionsCount: number
   flaggedItems: string[]
-  maxAllowedOptPhase: number // 1 (Stabilization) through 5 (Power)
+  maxAllowedOptPhase: number // 0 (Medical Hold — Stop All Exercise) or 1 (Stabilization) through 5 (Power)
   contraindicationTags: string[]
   legalDisclaimer: string
   virtualTelehealthDisclaimer: string
@@ -249,6 +252,7 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
   }
 
   const flaggedQuestionsCount = flaggedItems.length
+  let exercisePermitted = true
 
   if (
     answers.hasHeartCondition ||
@@ -257,7 +261,9 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
   ) {
     clearanceStatus = 'physician_clearance_required'
     riskTier = 'High Risk - Medical Clearance Required'
-    maxAllowedOptPhase = 1 // Restrict to gentle Phase 1 stabilization until clearance
+    // ACSM / PAR-Q+ standard: acute cardiac, chest pain, or syncope flags impose a Phase 0 exercise halt until physician clearance is verified
+    maxAllowedOptPhase = 0
+    exercisePermitted = false
   } else if (flaggedQuestionsCount > 0) {
     if (clearanceStatus === 'cleared_unrestricted') {
       clearanceStatus = 'cleared_with_modifications'
@@ -277,7 +283,8 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
     'NASM VIRTUAL COACHING & REMOTE TELEHEALTH AGREEMENT: Client acknowledges that coaching sessions, form critiques, and kinetic assessments are delivered remotely. The coach is not physically co-located and cannot physically spot, catch, or physically assist during any movement. Client assumes full personal responsibility for maintaining a clear 8x8 ft perimeter, non-slip flooring, and inspecting equipment prior to each workout. If digital audio/video latency occurs or communication disconnects during a loaded lift, client agrees to immediately and safely rack all weights. Client consents to secure video transmission and recording strictly for biomechanical movement analysis. In the event of an acute medical emergency during a session, client explicitly authorizes Forge Athletic to initiate local emergency dispatch and notify their designated emergency contact. Client agrees to hold harmless Forge Athletic Performance LLC from any injury sustained during remote or home training.'
 
   const hasAddress = Boolean(answers.workoutStreetAddress?.trim() && answers.workoutCity?.trim())
-  const hasDispatch = Boolean(answers.localEmergencyDispatchPhone?.trim())
+  const dispatchDigits = (answers.localEmergencyDispatchPhone ?? '').replace(/\D/g, '')
+  const hasDispatch = dispatchDigits.length >= 10
   const isErapComplete = hasAddress && hasDispatch
 
   const workoutLocationSummary = hasAddress
@@ -287,6 +294,7 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
   return {
     clearanceStatus,
     riskTier,
+    exercisePermitted,
     flaggedQuestionsCount,
     flaggedItems,
     maxAllowedOptPhase,
@@ -348,4 +356,224 @@ export function checkExerciseContraindications(
 
   return { isContraindicated: false }
 }
+
+export function normalizeParqAnswersFromIntake(
+  rawParq: unknown,
+  intakeRow?: {
+    medical_conditions?: string | null
+    surgeries_or_injuries?: string | null
+    consent_signature_name?: string | null
+    consent_signed_at?: string | null
+    emergency_contact_name?: string | null
+    emergency_contact_phone?: string | null
+  } | null
+): ParqAnswers {
+  const raw =
+    rawParq && typeof rawParq === 'object' && !Array.isArray(rawParq)
+      ? (rawParq as Record<string, unknown>)
+      : {}
+  const nestedErap =
+    raw.erap && typeof raw.erap === 'object' && !Array.isArray(raw.erap)
+      ? (raw.erap as Record<string, unknown>)
+      : {}
+
+  const combinedNotes = [
+    typeof raw.reportedConditionsNotes === 'string' ? raw.reportedConditionsNotes : '',
+    intakeRow?.medical_conditions ?? '',
+    intakeRow?.surgeries_or_injuries ?? '',
+  ]
+    .map(s => String(s || '').trim())
+    .filter(s => s && s.toLowerCase() !== 'none')
+    .join(' | ')
+
+  return {
+    hasHeartCondition: Boolean(raw.hasHeartCondition ?? raw.q1),
+    experiencesChestPain: Boolean(raw.experiencesChestPain ?? raw.chestPainPhysicalActivity ?? raw.q2),
+    experiencesDizzinessOrSyncope: Boolean(raw.experiencesDizzinessOrSyncope ?? raw.q3),
+    hasBoneOrJointProblem: Boolean(raw.hasBoneOrJointProblem ?? raw.boneOrJointProblem ?? raw.q4),
+    takesBloodPressureOrHeartMedication: Boolean(
+      raw.takesBloodPressureOrHeartMedication ?? raw.bloodPressureMedication ?? raw.q5
+    ),
+    hasChronicSpinalOrDiscCondition: Boolean(raw.hasChronicSpinalOrDiscCondition ?? raw.q6),
+    hasRecentSurgeryOrInjury: Boolean(raw.hasRecentSurgeryOrInjury ?? raw.q7),
+    reportedConditionsNotes: combinedNotes || undefined,
+    signedWaiverName:
+      (typeof raw.signedWaiverName === 'string' && raw.signedWaiverName.trim()) ||
+      intakeRow?.consent_signature_name ||
+      undefined,
+    signedAt:
+      (typeof raw.signedAt === 'string' && raw.signedAt) ||
+      intakeRow?.consent_signed_at ||
+      undefined,
+    emergencyContactName:
+      (typeof raw.emergencyContactName === 'string' && raw.emergencyContactName.trim()) ||
+      intakeRow?.emergency_contact_name ||
+      undefined,
+    emergencyContactPhone:
+      (typeof raw.emergencyContactPhone === 'string' && raw.emergencyContactPhone.trim()) ||
+      intakeRow?.emergency_contact_phone ||
+      undefined,
+    workoutStreetAddress:
+      String(raw.workoutStreetAddress ?? nestedErap.workoutStreetAddress ?? '').trim() || undefined,
+    workoutUnitOrGateCode:
+      String(raw.workoutUnitOrGateCode ?? nestedErap.workoutUnitOrGateCode ?? '').trim() || undefined,
+    workoutCity:
+      String(raw.workoutCity ?? nestedErap.workoutCity ?? '').trim() || undefined,
+    workoutState:
+      String(raw.workoutState ?? nestedErap.workoutState ?? '').trim() || undefined,
+    workoutPostalCode:
+      String(raw.workoutPostalCode ?? nestedErap.workoutPostalCode ?? '').trim() || undefined,
+    localEmergencyDispatchPhone:
+      String(raw.localEmergencyDispatchPhone ?? nestedErap.localEmergencyDispatchPhone ?? '').trim() || undefined,
+    hasAcceptedVirtualTelehealthConsent: Boolean(
+      raw.hasAcceptedVirtualTelehealthConsent ??
+        nestedErap.hasAcceptedVirtualTelehealthConsent ??
+        nestedErap.virtualTelehealthConsent ??
+        false
+    ),
+  }
+}
+
+export interface MedicalClearanceGateResult {
+  blocked: boolean
+  reason: string | null
+  evaluation: ParqEvaluationResult
+  stage2PhysicianCleared: boolean
+  effectiveMaxOptPhase: number
+}
+
+/**
+ * Server-side gatekeeper verifying whether an athlete has an un-cleared PAR-Q+ cardiac/syncope hold.
+ * Safely handles partial test mocks while enforcing strict Phase 0 holds whenever intake reports
+ * acute cardiovascular/syncope criteria without verified Stage 2 physician clearance on file.
+ */
+export async function checkClientMedicalClearanceGate(
+  admin: { from?: (table: string) => unknown } | null | undefined,
+  clientId: string
+): Promise<MedicalClearanceGateResult> {
+  const defaultEval = evaluateMedicalParq({
+    hasHeartCondition: false,
+    experiencesChestPain: false,
+    experiencesDizzinessOrSyncope: false,
+    hasBoneOrJointProblem: false,
+    takesBloodPressureOrHeartMedication: false,
+    hasChronicSpinalOrDiscCondition: false,
+    hasRecentSurgeryOrInjury: false,
+  })
+
+  if (!admin || typeof admin.from !== 'function' || !clientId) {
+    return {
+      blocked: false,
+      reason: null,
+      evaluation: defaultEval,
+      stage2PhysicianCleared: false,
+      effectiveMaxOptPhase: 5,
+    }
+  }
+
+  let intakeRow: {
+    parq_any_yes?: boolean | null
+    parq_answers?: unknown
+    medical_conditions?: string | null
+    surgeries_or_injuries?: string | null
+    consent_signature_name?: string | null
+    consent_signed_at?: string | null
+    emergency_contact_name?: string | null
+    emergency_contact_phone?: string | null
+  } | null = null
+
+  try {
+    const intakeBuilder = admin.from('client_intake_forms') as {
+      select?: (cols: string) => {
+        eq?: (col: string, val: string) => {
+          maybeSingle?: () => Promise<{ data: typeof intakeRow }>
+        }
+      }
+    }
+    const res = await intakeBuilder
+      ?.select?.(
+        'parq_any_yes, parq_answers, medical_conditions, surgeries_or_injuries, consent_signature_name, consent_signed_at, emergency_contact_name, emergency_contact_phone'
+      )
+      ?.eq?.('user_id', clientId)
+      ?.maybeSingle?.()
+    intakeRow = res?.data ?? null
+  } catch {
+    intakeRow = null
+  }
+
+  if (!intakeRow) {
+    return {
+      blocked: false,
+      reason: null,
+      evaluation: defaultEval,
+      stage2PhysicianCleared: false,
+      effectiveMaxOptPhase: 5,
+    }
+  }
+
+  const parsedAnswers = normalizeParqAnswersFromIntake(intakeRow.parq_answers, intakeRow)
+  const evaluation = evaluateMedicalParq(parsedAnswers)
+
+  if (evaluation.clearanceStatus !== 'physician_clearance_required') {
+    return {
+      blocked: false,
+      reason: null,
+      evaluation,
+      stage2PhysicianCleared: false,
+      effectiveMaxOptPhase: Math.max(1, evaluation.maxAllowedOptPhase),
+    }
+  }
+
+  // Check whether Stage 2 onboarding gate has documented physician clearance verification
+  let stage2PhysicianCleared = false
+  try {
+    const gateBuilder = admin.from('coach_onboarding_gates') as {
+      select?: (cols: string) => {
+        eq?: (col: string, val: unknown) => {
+          eq?: (col2: string, val2: unknown) => {
+            maybeSingle?: () => Promise<{ data: { status?: string; metadata?: Record<string, unknown> } | null }>
+          }
+        }
+      }
+    }
+    const gateRes = await gateBuilder
+      ?.select?.('status, metadata')
+      ?.eq?.('client_id', clientId)
+      ?.eq?.('stage_number', 2)
+      ?.maybeSingle?.()
+
+    const gateRow = gateRes?.data
+    const meta = gateRow?.metadata && typeof gateRow.metadata === 'object' ? gateRow.metadata : {}
+    if (
+      gateRow?.status === 'authorized' &&
+      meta.clinicalClearanceVerified === true &&
+      typeof meta.physicianName === 'string' &&
+      meta.physicianName.trim().length >= 3
+    ) {
+      stage2PhysicianCleared = true
+    }
+  } catch {
+    stage2PhysicianCleared = false
+  }
+
+  if (stage2PhysicianCleared) {
+    return {
+      blocked: false,
+      reason: null,
+      evaluation,
+      stage2PhysicianCleared: true,
+      effectiveMaxOptPhase: 2,
+    }
+  }
+
+  return {
+    blocked: true,
+    reason:
+      'Medical Clearance Hold (Phase 0): Athlete flagged acute cardiac, chest pain, or syncope criteria on PAR-Q+. Written physician clearance must be verified before generating, assigning, or logging exercise.',
+    evaluation,
+    stage2PhysicianCleared: false,
+    effectiveMaxOptPhase: 0,
+  }
+}
+
 

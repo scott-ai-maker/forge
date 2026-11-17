@@ -16,7 +16,7 @@ export default async function OnboardingPage() {
 
   const { data: _profile } = await supabase
     .from('fitness_profiles')
-    .select('onboarding_completed_at, height_cm, weight_kg, waist_cm, neck_cm, hip_cm, preferred_units')
+    .select('onboarding_completed_at, date_of_birth, age, height_cm, weight_kg, waist_cm, neck_cm, hip_cm, preferred_units')
     .eq('user_id', user.id)
     .maybeSingle()
 

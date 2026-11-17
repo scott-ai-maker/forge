@@ -7,7 +7,7 @@ import {
   type ClientProgressionTelemetry,
   type ProgressionStageId,
 } from '@/lib/coach-onboarding-progression'
-import { evaluateMedicalParq } from '@/lib/liability-shield'
+import { checkClientMedicalClearanceGate, evaluateMedicalParq } from '@/lib/liability-shield'
 import {
   loadClientOnboardingGates,
   recordGateAuthorization,
@@ -228,8 +228,13 @@ export async function POST(
         }
       }
 
-      // Stage 5 & 6: Update workout plan
+      // Stage 5 & 6: Update workout plan (blocked if Stage 2 PAR-Q+ Medical Clearance Hold is active)
       if (stageNumber === 5 || stageNumber === 6) {
+        const clearanceGate = await checkClientMedicalClearanceGate(admin, clientId)
+        if (clearanceGate.blocked) {
+          return NextResponse.json({ error: clearanceGate.reason }, { status: 409 })
+        }
+
         const { data: latestPlan } = await admin
           .from('workout_plans')
           .select('id, plan_json')
@@ -305,6 +310,9 @@ export async function POST(
       }
 
       // 2. Check Stage 2 Clinical Blocker (Medical Clearance)
+      let stage2Metadata: Record<string, unknown> = {
+        clinicalClearanceVerified: Boolean(body.clinicalClearanceVerified),
+      }
       if (stageNumber === 2) {
         const { data: intake } = await admin
           .from('client_intake_forms')
@@ -312,19 +320,43 @@ export async function POST(
           .eq('user_id', clientId)
           .maybeSingle()
 
-        if (intake?.parq_answers) {
-          const answers = parseParqAnswers(intake.parq_answers, intake)
-          const evaluation = evaluateMedicalParq(answers)
-          const requiresClearance = evaluation.clearanceStatus === 'physician_clearance_required'
+        if (!intake || !intake.parq_answers || !String(intake.consent_signature_name ?? '').trim()) {
+          return NextResponse.json(
+            {
+              error:
+                'Athlete must submit a signed PAR-Q+ medical readiness screening and liability waiver before Stage 2 can be authorized.',
+            },
+            { status: 400 }
+          )
+        }
 
-          if (requiresClearance && !body.clinicalClearanceVerified) {
+        const answers = parseParqAnswers(intake.parq_answers, intake)
+        const evaluation = evaluateMedicalParq(answers)
+        const requiresClearance = evaluation.clearanceStatus === 'physician_clearance_required'
+
+        if (requiresClearance) {
+          const physicianName = typeof body.physicianName === 'string' ? body.physicianName.trim() : ''
+          const clearanceDate = typeof body.clearanceDate === 'string' ? body.clearanceDate.trim() : ''
+          const restrictionsNote = typeof body.restrictionsNote === 'string' ? body.restrictionsNote.trim().slice(0, 600) : ''
+          const isIsoDate = /^\d{4}-\d{2}-\d{2}$/.test(clearanceDate) && !Number.isNaN(Date.parse(clearanceDate))
+          const isFutureDate = isIsoDate && new Date(`${clearanceDate}T00:00:00Z`).getTime() > Date.now() + 86400000
+
+          if (!body.clinicalClearanceVerified || physicianName.length < 3 || !isIsoDate || isFutureDate) {
             return NextResponse.json(
               {
-                error: 'Athlete flagged cardiovascular or clinical risk criteria in PAR-Q+. Physician clearance verification is required before authorizing Stage 2.',
+                error:
+                  'Athlete flagged cardiovascular or syncope criteria in PAR-Q+. To authorize Stage 2, confirm written physician clearance and enter the clearing physician name and valid clearance date (YYYY-MM-DD).',
                 riskTier: evaluation.riskTier,
               },
               { status: 400 }
             )
+          }
+
+          stage2Metadata = {
+            clinicalClearanceVerified: true,
+            physicianName,
+            clearanceDate,
+            restrictionsNote: restrictionsNote || null,
           }
         }
       }
@@ -337,9 +369,7 @@ export async function POST(
         stageNumber,
         stageId,
         notes: String(notes || '').trim() || null,
-        metadata: {
-          clinicalClearanceVerified: Boolean(body.clinicalClearanceVerified),
-        },
+        metadata: stage2Metadata,
       })
 
       // 4. If Stage 7 is authorized, mark onboarding complete on fitness profile

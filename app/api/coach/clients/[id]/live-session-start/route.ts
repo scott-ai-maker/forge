@@ -4,6 +4,7 @@ import { getRequestAuthz, requireCoachAssignedClient, AuthzError } from '@/lib/a
 import { notifyUser } from '@/lib/notifications'
 import { getBaseUrl } from '@/lib/marketing-email'
 import { enforceRateLimit } from '@/lib/rate-limit'
+import { checkClientMedicalClearanceGate } from '@/lib/liability-shield'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
@@ -53,12 +54,37 @@ export async function POST(
 
   const admin = supabaseAdmin()
 
-  // 1. Get client name
-  const { data: clientRow } = await admin
-    .from('clients')
-    .select('full_name, email')
-    .eq('id', clientId)
-    .maybeSingle()
+  // Enforce Phase 0 Medical Clearance Hold prior to initiating any live exercise session
+  const medicalGate = await checkClientMedicalClearanceGate(admin, clientId)
+  if (medicalGate.blocked) {
+    return NextResponse.json(
+      {
+        error:
+          medicalGate.reason ||
+          'Medical Clearance Hold (Phase 0): Written physician clearance must be verified before starting a Live Studio exercise session.',
+        code: 'MEDICAL_CLEARANCE_HOLD',
+      },
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  // 1. Get client name & intake ERAP status
+  const [{ data: clientRow }, { data: intakeRow }] = await Promise.all([
+    admin.from('clients').select('full_name, email').eq('id', clientId).maybeSingle(),
+    admin
+      .from('client_intake_forms')
+      .select('emergency_contact_name, emergency_contact_phone')
+      .eq('user_id', clientId)
+      .maybeSingle(),
+  ])
+
+  const hasEmergencyContact = Boolean(
+    intakeRow?.emergency_contact_name?.trim() && intakeRow?.emergency_contact_phone?.trim()
+  )
+  const erapComplete = Boolean(medicalGate.evaluation.erapRecord?.isErapComplete && hasEmergencyContact)
+  const erapWarning = erapComplete
+    ? null
+    : 'Athlete does not yet have a complete 10-digit local dispatch & workout address on file; they will be required to complete ERAP check-in before their live camera connects.'
 
   const athleteName = clientRow?.full_name || 'Athlete'
   const baseUrl = typeof getBaseUrl === 'function' ? getBaseUrl() : 'https://forge-athletic.app'
@@ -66,7 +92,7 @@ export async function POST(
   const liveUrl = `${baseUrl}${livePath}`
 
   // 2. Insert invitation message into Concierge line
-  const inviteMessage = `**1:1 LIVE VIDEO CONSULTATION IN PROGRESS**\n\nCoach Gordon is waiting in your Live Movement Studio. Tap below to join your live coaching stream:\n\n[**Join Live Consultation Room**](${livePath})\n\nDirect Link: ${liveUrl}`
+  const inviteMessage = `**1:1 LIVE VIDEO CONSULTATION IN PROGRESS**\n\nCoach Gordon is waiting in your 1:1 Live Movement Studio. Before your camera connects, you will be prompted to confirm your current physical training address and local emergency dispatch details (ERAP):\n\n[**Join 1:1 Live Studio**](${livePath})\n\nDirect Link: ${liveUrl}`
 
   await admin
     .from('coach_client_messages')
@@ -84,7 +110,7 @@ export async function POST(
       userId: clientId,
       type: 'live_session_started',
       title: 'Coach Gordon is Live!',
-      body: `Your 1:1 Live Movement & Advisory Consultation is starting now. Tap to join: ${liveUrl}`,
+      body: `Your 1:1 Live Movement & Advisory Consultation is starting now. Confirm your training location & join: ${liveUrl}`,
       url: livePath,
       data: {
         clientId,
@@ -103,6 +129,8 @@ export async function POST(
       success: true,
       athleteName,
       pushSent,
+      erapComplete,
+      erapWarning,
       message: 'Live session alert and notification dispatched to athlete.',
     },
     { headers: NO_STORE_HEADERS }

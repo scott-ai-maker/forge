@@ -1926,7 +1926,7 @@ export default function AskCoachGordonModal({
           </div>
         )}
 
-        {/* Official NASM Edge Video Demo Modal Overlay */}
+        {/* Forge Athletic Studio Video Demo Modal Overlay */}
         {activeDemoVideo && (
           <div
             style={{
@@ -1944,7 +1944,7 @@ export default function AskCoachGordonModal({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <GaaIcon name="play" size={18} tone="gold" />
                 <h4 style={{ margin: 0, color: '#FFFFFF', fontSize: '15px', fontWeight: 800 }}>
-                  {activeDemoVideo.title} — Official NASM Demonstration
+                  {activeDemoVideo.title} — Forge Athletic Studio Demonstration
                 </h4>
               </div>
               <button
@@ -1956,12 +1956,17 @@ export default function AskCoachGordonModal({
               </button>
             </div>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <iframe
-                src={activeDemoVideo.embedUrl || `https://www.youtube-nocookie.com/embed/${activeDemoVideo.videoId}?autoplay=1`}
-                title={activeDemoVideo.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{ width: '100%', height: '100%', maxHeight: '420px', borderRadius: '12px', border: '1px solid rgba(212,160,23,0.4)' }}
+              <video
+                src={activeDemoVideo.embedUrl}
+                controls
+                autoPlay
+                loop
+                muted
+                playsInline
+                controlsList="nodownload noplaybackrate"
+                disablePictureInPicture
+                onContextMenu={e => e.preventDefault()}
+                style={{ width: '100%', height: '100%', maxHeight: '420px', borderRadius: '12px', border: '1px solid rgba(212,160,23,0.4)', objectFit: 'cover', background: '#000' }}
               />
             </div>
           </div>

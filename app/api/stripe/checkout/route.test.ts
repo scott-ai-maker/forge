@@ -1,10 +1,15 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { getRequestAuthzMock, requireRoleMock, createSessionMock } = vi.hoisted(() => ({
+const { getRequestAuthzMock, requireRoleMock, createSessionMock, supabaseAdminMock } = vi.hoisted(() => ({
   getRequestAuthzMock: vi.fn(),
   requireRoleMock: vi.fn(),
   createSessionMock: vi.fn(),
+  supabaseAdminMock: vi.fn(),
+}))
+
+vi.mock('@/lib/supabase', () => ({
+  supabaseAdmin: supabaseAdminMock,
 }))
 
 vi.mock('@/lib/authz', async () => {
@@ -119,7 +124,48 @@ describe('stripe checkout route', () => {
       user: { id: 'client-1' },
       client: { role: 'client' },
     })
+    supabaseAdminMock.mockReturnValue({})
     createSessionMock.mockResolvedValue({ url: 'https://checkout.stripe.com/test' })
+  })
+
+  it('rejects checkout with 403 LEGAL_CONSENT_REQUIRED when client has no Terms consent on file', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co')
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'srv_test_key')
+    supabaseAdminMock.mockReturnValueOnce({
+      from: (table: string) => {
+        if (table === 'client_intake_forms') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: null, error: null }),
+              }),
+            }),
+          }
+        }
+        if (table === 'legal_consent_audit_log') {
+          return {
+            select: () => ({
+              eq: () => ({
+                limit: async () => ({ data: [], error: null }),
+              }),
+            }),
+          }
+        }
+        return {}
+      },
+    })
+
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ packageId: 'forge-core', cadence: 'monthly' }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(403)
+    const body = await res.json()
+    expect(body.code).toBe('LEGAL_CONSENT_REQUIRED')
+    expect(createSessionMock).not.toHaveBeenCalled()
+    vi.unstubAllEnvs()
   })
 
   it('retires the old private coaching packages from new checkout', async () => {

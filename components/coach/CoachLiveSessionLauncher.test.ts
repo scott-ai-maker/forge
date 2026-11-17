@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { AssignedClientLauncherItem } from './CoachLiveSessionLauncher'
 
-describe('CoachLiveSessionLauncher Logic & Architecture', () => {
+describe('CoachLiveSessionLauncher Logic & Architecture (1:1 ERAP Verified Only)', () => {
   const sampleClients: AssignedClientLauncherItem[] = [
     {
       id: 'client-123',
@@ -22,13 +24,13 @@ describe('CoachLiveSessionLauncher Logic & Architecture', () => {
     expect(defaultSelectedId).toBe('client-123')
   })
 
-  it('generates the correct live session destination room URL for selected client', () => {
+  it('generates the correct 1:1 live session destination room URL for selected client', () => {
     const selectedId = 'client-456'
     const targetUrl = `/coach/clients/${selectedId}/live`
     expect(targetUrl).toBe('/coach/clients/client-456/live')
   })
 
-  it('generates the matching webrtc room identifier between coach and client', () => {
+  it('generates the matching 1:1 webrtc room identifier between coach and client', () => {
     const clientId = 'client-123'
     const coachSessionId = `live-${clientId}`
     const athleteSessionId = `live-${clientId}`
@@ -81,31 +83,13 @@ describe('CoachLiveSessionLauncher Logic & Architecture', () => {
     expect(getLaunchButtonText(undefined, false)).toBe('Select Athlete to Begin')
   })
 
-  it('generates the correct live session destination room URL for selected team', () => {
-    const teamId = 'team-apex-performance'
-    const targetUrl = `/coach/teams/${teamId}/live`
-    expect(targetUrl).toBe('/coach/teams/team-apex-performance/live')
-  })
-
-  it('generates the matching webrtc room identifier between coach and team members', () => {
-    const teamId = 'team-squad-42'
-    const coachSessionId = `team-${teamId}`
-    const athleteSessionId = `team-${teamId}`
-
-    expect(coachSessionId).toBe(athleteSessionId)
-    expect(coachSessionId).toBe('team-team-squad-42')
-  })
-
-  it('formats team launch CTA based on waiting lobby counts', () => {
-    function getTeamLaunchButtonText(teamName: string, memberCount: number, waitingCount: number): string {
-      if (waitingCount > 0) {
-        return `Join ${teamName} in Studio Lobby (${waitingCount} Waiting) →`
-      }
-      return `Enter Team Studio with ${teamName} (${memberCount} Athletes) →`
-    }
-
-    expect(getTeamLaunchButtonText('Apex Performance', 6, 2)).toBe('Join Apex Performance in Studio Lobby (2 Waiting) →')
-    expect(getTeamLaunchButtonText('Executive Cohort', 10, 0)).toBe('Enter Team Studio with Executive Cohort (10 Athletes) →')
+  it('permanently disables Team Live Studio channels and team session endpoints in launcher source', () => {
+    const launcherSource = readFileSync(
+      resolve(process.cwd(), 'components/coach/CoachLiveSessionLauncher.tsx'),
+      'utf8'
+    )
+    expect(launcherSource).not.toContain('webrtc:team-')
+    expect(launcherSource).not.toContain('/api/coach/teams/')
+    expect(launcherSource).not.toContain('launch-team-studio-btn')
   })
 })
-

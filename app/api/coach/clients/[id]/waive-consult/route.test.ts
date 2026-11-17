@@ -72,4 +72,45 @@ describe('POST /api/coach/clients/[id]/waive-consult', () => {
     expect(json.success).toBe(true)
     expect(json.sessionId).toBe('session-waived-99')
   })
+
+  it('blocks consultation waiver with 409 when athlete has PAR-Q+ medical or orthopedic flags', async () => {
+    vi.mocked(getRequestAuthz).mockResolvedValue(coachUser as unknown as Awaited<ReturnType<typeof getRequestAuthz>>)
+    vi.mocked(requireCoachAssignedClient).mockResolvedValue(undefined)
+
+    const insertSessionMock = vi.fn()
+    const mockAdmin = {
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table === 'client_intake_forms') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: {
+                    parq_any_yes: true,
+                    parq_answers: { experiencesChestPain: true },
+                    medical_conditions: null,
+                    surgeries_or_injuries: null,
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          }
+        }
+        if (table === 'sessions') {
+          return { insert: insertSessionMock }
+        }
+        return {}
+      }),
+    }
+
+    vi.mocked(supabaseAdmin).mockReturnValue(mockAdmin as unknown as ReturnType<typeof supabaseAdmin>)
+
+    const req = new NextRequest('http://localhost/api/coach/clients/c-1/waive-consult', {
+      method: 'POST',
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: 'c-1' }) })
+    expect(res.status).toBe(409)
+    expect(insertSessionMock).not.toHaveBeenCalled()
+  })
 })

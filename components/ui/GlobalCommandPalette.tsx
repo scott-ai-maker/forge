@@ -99,12 +99,12 @@ const GLOBAL_COMMAND_ITEMS: CommandItem[] = [
   },
   {
     id: 'feat-supplements',
-    title: 'Supplement Guidance & Thorne Dispensary',
-    subtitle: 'Chrono-dosing protocols, medication screening & 15%-off Thorne storefront',
+    title: 'Thorne Partner Storefront',
+    subtitle: 'Optional goal-based NSF Certified for Sport® Thorne collections (15% member discount)',
     category: 'Features & Tools',
     icon: 'supplements',
     href: '/dashboard/fitness?workspace=supplements',
-    keywords: ['supplements', 'thorne', 'dispensary', 'creatine', 'whey', 'protein', 'magnesium', 'dosing', 'prescriptions', 'nutrition'],
+    keywords: ['supplements', 'thorne', 'storefront', 'creatine', 'whey', 'protein', 'magnesium', 'nutrition'],
     badge: '15% Off',
   },
   {

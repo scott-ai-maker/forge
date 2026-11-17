@@ -4,7 +4,11 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { isMasterCoachEmail } from '@/lib/authz'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { attributeReferralSignup, getOrCreateClientReferralCode } from '@/lib/referrals'
-import { extractRequestIp, recordLegalConsentAudit } from '@/lib/legal-compliance'
+import {
+  checkClientLegalConsentGate,
+  extractRequestIp,
+  recordLegalConsentAudit,
+} from '@/lib/legal-compliance'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -166,7 +170,12 @@ export async function GET(request: NextRequest) {
         await recordLegalConsentAudit({
           adminClient: admin,
           userId: user.id,
-          documentTypes: ['terms_of_service', 'privacy_policy', 'consumer_health_biometric_policy'],
+          documentTypes: [
+            'terms_of_service',
+            'privacy_policy',
+            'consumer_health_biometric_policy',
+            'athletic_liability_waiver',
+          ],
           typedSignature: displayName,
           ipAddress: extractRequestIp(request.headers),
           userAgent: request.headers.get('user-agent'),
@@ -208,7 +217,12 @@ export async function GET(request: NextRequest) {
         await recordLegalConsentAudit({
           adminClient: admin,
           userId: user.id,
-          documentTypes: ['terms_of_service', 'privacy_policy', 'consumer_health_biometric_policy'],
+          documentTypes: [
+            'terms_of_service',
+            'privacy_policy',
+            'consumer_health_biometric_policy',
+            'athletic_liability_waiver',
+          ],
           typedSignature: displayName,
           ipAddress: extractRequestIp(request.headers),
           userAgent: request.headers.get('user-agent'),
@@ -287,6 +301,25 @@ export async function GET(request: NextRequest) {
         coachRedirect.cookies.set(cookie.name, cookie.value, cookie)
       })
       return coachRedirect
+    }
+
+    // Close OAuth zero-clickwrap bypass: if an authenticated client signed in via Google/Apple
+    // on /auth/login without having executed Terms of Service + Athletic Liability Waiver,
+    // route them to onboarding/consent before granting access to training dashboards.
+    if (resolvedRole === 'client' && !isRecoveryResetRedirect) {
+      const consentGate = await checkClientLegalConsentGate(admin, user.id, {
+        requireTermsOfService: true,
+        requireLiabilityWaiver: true,
+      })
+      if (!consentGate.verified) {
+        const mandatoryConsentUrl = new URL('/dashboard', origin)
+        mandatoryConsentUrl.searchParams.set('requireConsent', '1')
+        const consentRedirect = NextResponse.redirect(mandatoryConsentUrl.toString())
+        response.cookies.getAll().forEach(cookie => {
+          consentRedirect.cookies.set(cookie.name, cookie.value, cookie)
+        })
+        return consentRedirect
+      }
     }
   }
 

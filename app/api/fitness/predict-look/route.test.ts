@@ -163,7 +163,7 @@ describe('POST /api/fitness/predict-look', () => {
     expect(generatePredictionImageMock).not.toHaveBeenCalled()
   })
 
-  it('blocks underage athletes (< 18) with 403', async () => {
+  it('blocks underage athletes (< 18) or unverified null age profiles with 403', async () => {
     mockAuthenticatedProfile({ age: 16 })
     const req = new NextRequest('http://localhost/api/fitness/predict-look', {
       method: 'POST',
@@ -172,6 +172,14 @@ describe('POST /api/fitness/predict-look', () => {
 
     const res = await POST(req)
     expect(res!.status).toBe(403)
+
+    mockAuthenticatedProfile({ age: null })
+    const nullAgeReq = new NextRequest('http://localhost/api/fitness/predict-look', {
+      method: 'POST',
+      body: JSON.stringify({ targetBodyfatPercent: 14, fitnessGoal: 'performance' }),
+    })
+    const nullAgeRes = await POST(nullAgeReq)
+    expect(nullAgeRes!.status).toBe(403)
   })
 
   it('enforces male shirt-on wardrobe rule, records consent audit, and sets Cache-Control: no-store', async () => {

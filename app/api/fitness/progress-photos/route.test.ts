@@ -149,6 +149,26 @@ describe('POST /api/fitness/progress-photos (JSON body)', () => {
     await expect(res.json()).resolves.toMatchObject({ error: 'Unauthorized photo path' })
   })
 
+  it('rejects path-traversal attempts (.. and URL-encoded %2e%2e) targeting another user folder', async () => {
+    getRequestAuthzMock.mockResolvedValue(authedUser)
+    supabaseAdminMock.mockReturnValue(makeAdmin())
+
+    const dotDotRes = await POST(
+      makeJsonRequest({ photo_url: 'user-1/../victim-user-2/before-photo-1.jpg', taken_at: '2026-04-01' })
+    )
+    expect(dotDotRes.status).toBe(403)
+    expect(createSignedFitnessPhotoUrlMock).not.toHaveBeenCalled()
+
+    const encodedRes = await POST(
+      makeJsonRequest({
+        photo_url: 'https://proj.supabase.co/storage/v1/object/sign/fitness-photos/user-1/%2e%2e/victim-user-2/before-photo-1.jpg',
+        taken_at: '2026-04-01',
+      })
+    )
+    expect(encodedRes.status).toBe(403)
+    expect(createSignedFitnessPhotoUrlMock).not.toHaveBeenCalled()
+  })
+
   it('rejects invalid taken_at format and impossible calendar dates', async () => {
     getRequestAuthzMock.mockResolvedValue(authedUser)
     supabaseAdminMock.mockReturnValue(makeAdmin())

@@ -55,6 +55,7 @@ export default function MedicalClearanceStudio({
   )
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null)
+  const [saveErrorMsg, setSaveErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -80,14 +81,8 @@ export default function MedicalClearanceStudio({
   }, [answers])
 
   const handleSaveParq = async (newAnswers: ParqAnswers, newEval: ParqEvaluationResult) => {
-    setAnswers(newAnswers)
-    setEvaluation(newEval)
-    setIsModalOpen(false)
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('gaa_parq_answers', JSON.stringify(newAnswers))
-      } catch {}
-    }
+    setSaveSuccessMsg(null)
+    setSaveErrorMsg(null)
 
     try {
       const res = await fetch('/api/account/parq', {
@@ -102,15 +97,30 @@ export default function MedicalClearanceStudio({
           consentEmergencyCare: true,
         }),
       })
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        console.warn('Failed to sync PAR-Q to database:', data.error)
+        setIsModalOpen(false)
+        setSaveErrorMsg(
+          data?.error || 'Could not save your PAR-Q+ medical screening to the server. Please verify your emergency contact details and try again.'
+        )
+        return
       }
-    } catch (err) {
-      console.warn('Network error syncing PAR-Q to database:', err)
+    } catch {
+      setIsModalOpen(false)
+      setSaveErrorMsg('Network error while saving your PAR-Q+ medical screening. Your coach has NOT been notified yet—please retry.')
+      return
     }
 
-    setSaveSuccessMsg(`✓ PAR-Q+ Medical Screening updated (${newEval.riskTier}). Your assigned coach has been alerted.`)
+    setAnswers(newAnswers)
+    setEvaluation(newEval)
+    setIsModalOpen(false)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('gaa_parq_answers', JSON.stringify(newAnswers))
+      } catch {}
+    }
+
+    setSaveSuccessMsg(`✓ PAR-Q+ Medical Screening saved (${newEval.riskTier}). Your assigned coach has been alerted.`)
     setTimeout(() => setSaveSuccessMsg(null), 5000)
   }
 
@@ -233,6 +243,26 @@ export default function MedicalClearanceStudio({
           <span>Retake / Update PAR-Q+</span>
         </button>
       </div>
+
+      {saveErrorMsg && (
+        <div
+          role="alert"
+          style={{
+            padding: '12px 16px',
+            background: 'rgba(239,68,68,0.14)',
+            border: '1px solid rgba(239,68,68,0.45)',
+            borderRadius: 8,
+            color: '#FCA5A5',
+            fontSize: 13,
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <GaaIcon name="alert-triangle" size={14} tone="ruby" /> {saveErrorMsg}
+        </div>
+      )}
 
       {saveSuccessMsg && (
         <div

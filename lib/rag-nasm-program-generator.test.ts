@@ -280,11 +280,11 @@ describe('rag-nasm-program-generator', () => {
         for (const workout of plan.workouts) {
           for (const exercise of workout.exercises) {
             expect(exercise.videoUrl).toBeDefined()
-            expect(exercise.videoUrl).toMatch(/^https:\/\/www\.youtube\.com\/watch\?v=[a-zA-Z0-9_-]{11}$/)
+            expect(exercise.videoUrl).toMatch(/^\/videos\/exercises\/[a-zA-Z0-9_-]+\.mp4$/)
             expect(exercise.embedUrl).toBeDefined()
-            expect(exercise.embedUrl).toMatch(/^https:\/\/www\.youtube-nocookie\.com\/embed\/[a-zA-Z0-9_-]{11}/)
+            expect(exercise.embedUrl).toMatch(/^\/videos\/exercises\/[a-zA-Z0-9_-]+\.mp4$/)
             expect(exercise.imageUrl).toBeDefined()
-            expect(exercise.imageUrl).toMatch(/^(https:\/\/img\.youtube\.com\/vi\/[a-zA-Z0-9_-]{11}\/hqdefault\.jpg|\/images\/exercises\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp))$/)
+            expect(exercise.imageUrl).toMatch(/^\/images\/exercises\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/)
           }
         }
       }

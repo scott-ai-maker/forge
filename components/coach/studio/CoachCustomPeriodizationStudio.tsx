@@ -204,7 +204,7 @@ export default function CoachCustomPeriodizationStudio({
                 tempo: String(ex.tempo || '4/2/1'),
                 rest: String(ex.rest || '60s'),
                 coachingCues: ex.notes ? [String(ex.notes)] : ['Focus on kinetic alignment and core bracing.'],
-                nasmClinicalSource: String(ex.description || 'NASM Edge Catalog'),
+                nasmClinicalSource: String(ex.description || 'Forge Athletic Movement Library'),
                 whyForYou: typeof ex.personalReason === 'string' ? ex.personalReason : undefined,
               }
             }),
@@ -631,7 +631,7 @@ export default function CoachCustomPeriodizationStudio({
               >
                 <div>
                   <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                    Official NASM Edge Video Demonstration
+                    Forge Athletic Studio Demonstration
                   </div>
                   <h3
                     id="video-modal-title"
@@ -669,33 +669,50 @@ export default function CoachCustomPeriodizationStudio({
 
               {/* Video Player */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, background: '#000000' }}>
-                <iframe
-                  src={videoRes.embedUrl}
-                  title={`Demonstration for ${videoModalExercise}`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                  }}
-                />
+                {videoRes.embedUrl.startsWith('/') || videoRes.embedUrl.endsWith('.mp4') ? (
+                  <video
+                    src={videoRes.embedUrl}
+                    controls
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    controlsList="nodownload noplaybackrate"
+                    disablePictureInPicture
+                    onContextMenu={e => e.preventDefault()}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <iframe
+                    src={videoRes.embedUrl}
+                    title={`Demonstration for ${videoModalExercise}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                    }}
+                  />
+                )}
               </div>
 
               {/* Video Footer */}
               <div style={{ padding: '12px 20px', fontSize: 12, color: '#94A3B8', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                 <span>{videoRes.sourceTitle}</span>
-                <a
-                  href={videoRes.externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: 'var(--gold-lt)', textDecoration: 'none', fontWeight: 600 }}
-                >
-                  Open on YouTube ↗
-                </a>
+                <span style={{ color: 'var(--gold-lt)', fontWeight: 600 }}>
+                  Sovereign First-Party Studio Loop
+                </span>
               </div>
             </div>
           )

@@ -117,6 +117,28 @@ describe('/api/workouts/log-set route', () => {
     expect(postRes.headers.get('Cache-Control')).toBe('no-store, max-age=0')
   })
 
+  it('blocks POST set logging with 403 when athlete status is paused on an Injury / Medical Hold', async () => {
+    mockGetRequestAuthz.mockResolvedValueOnce({
+      user: { id: 'athlete-uuid-001', email: 'athlete@forge-athletic.app' },
+      client: {
+        id: 'athlete-uuid-001',
+        role: 'client',
+        status: 'paused',
+        designated_coach_id: 'coach-gordon',
+      },
+    })
+
+    const postRes = await POST(
+      new NextRequest('http://localhost:3000/api/workouts/log-set', {
+        method: 'POST',
+        body: JSON.stringify({ exerciseName: 'Back Squat', reps: 8 }),
+      })
+    )
+    expect(postRes.status).toBe(403)
+    const body = await postRes.json()
+    expect(body.error).toContain('temporary hold')
+  })
+
   it('validates exerciseName and positive reps with 400 errors', async () => {
     const missingExercise = await POST(
       new NextRequest('http://localhost:3000/api/workouts/log-set', {

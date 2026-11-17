@@ -390,7 +390,7 @@ export default function MetabolicNutritionProtocol({
           {nutritionMode === 'hand_portions'
             ? 'Precision Nutrition (PN1) hand-portion calibration. Calibrates per-meal palms, fists, cupped hands, and thumbs to eliminate food-scale obsession and promote sustainable, mindful eating.'
             : nutritionMode === 'supplements'
-            ? 'Evidence-based ergogenic compound scheduling. Tiered by daily core vs training-day essentials with strict drug-nutrient safety screening and 1-compound-at-a-time titration.'
+            ? 'Optional Thorne Partner Storefront collections organized by broad training goal (15% member courtesy discount on NSF Certified for Sport® staples; always follow official Supplement Facts labels and physician guidance).'
             : nutritionMode === 'equipment'
             ? 'Clinical corrective mobility, scapular/hip stabilization, and home-gym strength hardware direct-shipped via Perform Better (10% off) and Crossover Symmetry (15% off).'
             : 'Calibrated using clinical Mifflin-St Jeor & Katch-McArdle energy balance algorithms. Synchronizes exact protein, carbohydrate, fat, and hydration targets to your active OPT™ phase.'}

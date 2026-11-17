@@ -60,7 +60,8 @@ describe('Feature #1 — Auth, HIPAA PAR-Q+ Modal & 3-Tier Founding Signup Contr
       hasHeartCondition: true,
     })
     expect(cardiacEval.clearanceStatus).toBe('physician_clearance_required')
-    expect(cardiacEval.maxAllowedOptPhase).toBe(1)
+    expect(cardiacEval.maxAllowedOptPhase).toBe(0)
+    expect(cardiacEval.exercisePermitted).toBe(false)
   })
 
   it('wires Founding Rate Lock ?plan=core_lab|plus|coach_support from landing cards through /auth/signup and AuthForm', () => {

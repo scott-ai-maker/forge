@@ -54,7 +54,7 @@ const PILLARS: HubPillar[] = [
     tone: 'emerald',
     tabs: [
       { key: 'shield', label: 'Liability Shield & PAR-Q', icon: 'shield', tone: 'emerald', desc: 'Medical clearance & liability status', badge: 'Clinical' },
-      { key: 'prescriptions', label: 'Toolboxes & Supplements', icon: 'toolbox', tone: 'emerald', desc: 'Specialized movement relief toolkits & Thorne 15%-off supplement guides', badge: 'Protocols' },
+      { key: 'prescriptions', label: 'Toolboxes & Thorne Storefront', icon: 'toolbox', tone: 'emerald', desc: 'Movement relief toolkits & optional goal-based Thorne collections (15% off)', badge: 'Toolkits' },
       { key: 'equipment', label: 'Home-Gym Builder & Gear', icon: 'dumbbell', tone: 'gold', desc: 'Custom Home-Gym Planner, REP Fitness, Crossover Symmetry & Perform Better', badge: 'Custom' },
     ],
   },

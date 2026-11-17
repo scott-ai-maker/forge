@@ -2,51 +2,18 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
-  generateSupplementStack,
+  getThorneGoalCollection,
   normalizeSupplementGoal,
   normalizeClientSex,
   normalizeFitnessLevel,
 } from '@/lib/supplement-prescriptions'
 
 describe('ExecutiveSupplementTimeline & Nutrition Accessibility Contracts', () => {
-  it('generates all chrono-dosing windows including dailyFlexible for hypertrophy goal', () => {
-    const stack = generateSupplementStack({
-      goal: 'hypertrophy',
-      age: 35,
-      sex: 'male',
-      fitnessLevel: 'intermediate',
-    })
-
-    expect(stack.chronoSchedule.morning.length).toBeGreaterThan(0)
-    expect(stack.chronoSchedule.preWorkout.length).toBeGreaterThan(0)
-    expect(stack.chronoSchedule.postWorkout.length).toBeGreaterThan(0)
-    expect(stack.chronoSchedule.night.length).toBeGreaterThan(0)
-    expect(stack.chronoSchedule.dailyFlexible.length).toBeGreaterThan(0)
-
-    const scheduledTotal =
-      stack.chronoSchedule.morning.length +
-      stack.chronoSchedule.preWorkout.length +
-      stack.chronoSchedule.postWorkout.length +
-      stack.chronoSchedule.night.length +
-      stack.chronoSchedule.dailyFlexible.length
-    expect(scheduledTotal).toBe(stack.prescribedItems.length)
-  })
-
-  it('correctly categorizes protein into postWorkout, omega-3 into morning, and creatine into dailyFlexible', () => {
-    const stack = generateSupplementStack({
-      goal: 'hypertrophy',
-      age: 35,
-      sex: 'male',
-      fitnessLevel: 'intermediate',
-    })
-
-    const hasProtein = stack.chronoSchedule.postWorkout.some(s => s.name.includes('Protein') || s.id.includes('protein'))
-    const hasOmega3 = stack.chronoSchedule.morning.some(s => s.name.includes('Omega-3'))
-    const hasCreatine = stack.chronoSchedule.dailyFlexible.some(s => s.name.includes('Creatine'))
-
-    expect(hasProtein).toBe(true)
-    expect(hasOmega3).toBe(true)
-    expect(hasCreatine).toBe(true)
+  it('maps training goals to curated stimulant-free Thorne collections without personalized dosing', () => {
+    const collection = getThorneGoalCollection('hypertrophy')
+    expect(collection.products.length).toBe(3)
+    expect(collection.products.some(p => p.name.includes('Creatine'))).toBe(true)
+    expect(collection.products.some(p => p.name.includes('Whey'))).toBe(true)
   })
 
   it('normalizes natural-language goals, biological sex, and fitness level safely', () => {
@@ -73,8 +40,6 @@ describe('ExecutiveSupplementTimeline & Nutrition Accessibility Contracts', () =
     expect(timelineSrc).toContain('<dialog')
     expect(timelineSrc).toContain('closedby')
     expect(timelineSrc).toContain('.showModal(')
-    expect(timelineSrc).toContain('<progress')
-    expect(timelineSrc).toContain('daily_flexible')
     expect(timelineSrc).not.toContain('role="dialog"')
 
     const nutritionSrc = fs.readFileSync(

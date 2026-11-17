@@ -1600,6 +1600,25 @@ export const VERIFIED_FORGE_EXERCISE_VIDEOS: Record<string, string> = {
   'side lying open book thoracic rotations': '/videos/exercises/readiness-open-book-thoracic-rotations.mp4',
   'wall scapular upward rotation slides chin nod': '/videos/exercises/readiness-wall-scapular-slides-chin-nod.mp4',
   'controlled scapular external rotation pulses': '/videos/exercises/readiness-scapular-external-rotation-pulses.mp4',
+
+  // Canonical catalog alias coverage (100% sovereign first-party studio MP4 resolution)
+  'how to foam roll adductors': '/videos/exercises/foam-roll-adductors.mp4',
+  'self myofascial release smr latissimus dorsi': '/videos/exercises/self-myofascial-release-smr-latissimus-dorsi.mp4',
+  'incline dumbbell biceps curl': '/videos/exercises/incline-dumbbell-curl.mp4',
+  'dumbbell walking lunges': '/videos/exercises/lunge-to-balance.mp4',
+  'walking lunges': '/videos/exercises/lunge-to-balance.mp4',
+  'single leg standing tubing overhead press': '/videos/exercises/dumbbell-overhead-press.mp4',
+  'single leg dumbbell bent over row': '/videos/exercises/dumbbell-bent-over-row.mp4',
+  'single leg standing tubing row': '/videos/exercises/standing-tubing-row.mp4',
+  'single leg dumbbell bent over extension': '/videos/exercises/supported-bent-over-dumbbell-extension.mp4',
+  'single-leg dumbbell bent-over extension': '/videos/exercises/supported-bent-over-dumbbell-extension.mp4',
+  'single leg dumbbell bent-over extension': '/videos/exercises/supported-bent-over-dumbbell-extension.mp4',
+  'single-leg dumbbell bent over extension': '/videos/exercises/supported-bent-over-dumbbell-extension.mp4',
+  'bent-over dumbbell extension': '/videos/exercises/dumbbell-bent-over-extension.mp4',
+  'bent over dumbbell extension': '/videos/exercises/dumbbell-bent-over-extension.mp4',
+  'dumbbell kickback': '/videos/exercises/dumbbell-bent-over-extension.mp4',
+  'stability ball hamstring curl': '/videos/exercises/floor-bridge.mp4',
+  'ball hamstring curl': '/videos/exercises/floor-bridge.mp4',
 }
 
 export function resolveForgeExerciseVideo(

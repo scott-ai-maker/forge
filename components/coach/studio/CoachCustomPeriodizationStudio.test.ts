@@ -9,27 +9,27 @@ import type { GeneratedMacrocyclePlan } from '@/lib/rag-nasm-program-generator'
 import type { CoachAiIntakeFormData } from './CoachAiIntakeDrawer'
 
 describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
-  it('resolves official NASM Edge video demonstrations with verified YouTube embed URLs', () => {
+  it('resolves sovereign Forge Athletic Studio video demonstrations with verified first-party MP4 paths', () => {
     const burpeeRes = resolveExerciseVideoEmbed('burpee')
-    expect(burpeeRes.embedUrl).toContain('youtube-nocookie.com/embed')
-    expect(burpeeRes.sourceTitle).toContain('NASM Edge')
+    expect(burpeeRes.embedUrl).toBe('/videos/exercises/squat-thrust-burpees.mp4')
+    expect(burpeeRes.sourceTitle).toContain('Forge Athletic Studio')
 
     const stepUpRes = resolveExerciseVideoEmbed('dumbbell step-up')
-    expect(stepUpRes.embedUrl).toContain('youtube-nocookie.com/embed')
+    expect(stepUpRes.embedUrl).toMatch(/^\/videos\/exercises\/.*\.mp4$/)
 
     const deadliftRes = resolveExerciseVideoEmbed('dumbbell romanian deadlift')
-    expect(deadliftRes.videoId).toBe('V8Hdl1FiNt4')
-    expect(deadliftRes.embedUrl).toContain('V8Hdl1FiNt4')
+    expect(deadliftRes.videoId).toBeNull()
+    expect(deadliftRes.embedUrl).toBe('/videos/exercises/dumbbell-romanian-deadlift.mp4')
   })
 
   it('resolves verified exercise thumbnail images for studio matrix display', () => {
     const gobletSquatImg = resolveGaaExerciseImage('goblet squat')
     expect(gobletSquatImg).toBeTruthy()
-    expect(gobletSquatImg).toMatch(/(img\.youtube\.com|\/images\/exercises\/)/)
+    expect(gobletSquatImg).toMatch(/^\/images\/exercises\//)
 
     const pushUpImg = resolveGaaExerciseImage('push up')
     expect(pushUpImg).toBeTruthy()
-    expect(pushUpImg).toMatch(/(img\.youtube\.com|\/images\/exercises\/)/)
+    expect(pushUpImg).toMatch(/^\/images\/exercises\//)
   })
 
   it('powers 1-click smart exercise swaps with joint-protective biomechanical alternatives', () => {
@@ -111,7 +111,7 @@ describe('CoachCustomPeriodizationStudio UI & Integration Logic', () => {
               tempo: '4/2/1',
               rest: '60s',
               coachingCues: ['Drive through front heel with strong core brace'],
-              nasmClinicalSource: 'NASM Edge Catalog',
+              nasmClinicalSource: 'Forge Athletic Movement Library',
             },
           ],
           dailyPeriodizationMemo: 'Focus on 4/2/1 eccentric control.',

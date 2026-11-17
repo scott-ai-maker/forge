@@ -8,6 +8,8 @@ import SuccessBanner from '@/components/dashboard/SuccessBanner'
 import SiteHeader from '@/components/ui/SiteHeader'
 import ClientMembershipStatusBanner from '@/components/dashboard/ClientMembershipStatusBanner'
 import ExecutiveCommandCenterClient from '@/components/dashboard/ExecutiveCommandCenterClient'
+import MandatoryLegalClickwrapGate from '@/components/legal/MandatoryLegalClickwrapGate'
+import { checkClientLegalConsentGate } from '@/lib/legal-compliance'
 import { generateSundayDossier } from '@/lib/sunday-dossier-engine'
 import {
   filterSetLogsForMicrocycleWeek,
@@ -111,7 +113,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
 
-  const [{ data: profile }, { data: intakeForm }, { data: wearableMetric }, { data: recentMessages }] = await Promise.all([
+  const [{ data: profile }, { data: intakeForm }, { data: wearableMetric }, { data: recentMessages }, legalConsentGate] = await Promise.all([
     supabase
       .from('fitness_profiles')
       .select('onboarding_completed_at, fitness_goal, age, height_cm, weight_kg, updated_at')
@@ -136,6 +138,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .gte('created_at', threeHoursAgo)
       .order('created_at', { ascending: false })
       .limit(5),
+    checkClientLegalConsentGate(admin, user.id, {
+      requireTermsOfService: true,
+      requireLiabilityWaiver: true,
+    }),
   ])
 
   let activeLiveSessionHref: string | null = null
@@ -325,30 +331,34 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           statusReason={(clientRow as { status_reason?: string } | null)?.status_reason}
         />
 
-        <ExecutiveCommandCenterClient
-          clientName={clientName}
-          activePackage={activePackage ? { package_name: activePackage.package_name } : null}
-          currentPlanPhase={currentPlanPhase}
-          currentGoal={currentGoal}
-          isWorkoutInProgress={isWorkoutInProgress}
-          isWorkoutCompleted={isWorkoutCompleted}
-          activeWorkout={activeWorkout}
-          activeDayLoggedWorkingSets={activeDayLoggedWorkingSets}
-          activeDayTotalTargetSets={activeDayTotalTargetSets}
-          activeDayExerciseCount={activeDayExerciseCount}
-          activeWorkoutDurationMins={activeWorkoutDurationMins}
-          totalVolumeMovedLbs={totalVolumeMovedLbs}
-          latestPlan={latestPlan ? { nasm_opt_phase: latestPlan.nasm_opt_phase, phase_name: latestPlan.phase_name, estimated_duration_mins: activeWorkoutDurationMins || latestPlan.estimated_duration_mins || 75 } : null}
-          needsOnboarding={needsOnboarding}
-          isOnboardingCompleted={isOnboardingCompleted}
-          isOnboardingStarted={isOnboardingStarted}
-          dossier={dossier}
-          packages={(packages ?? []).map(p => ({ id: p.id, package_name: p.package_name, purchased_at: p.purchased_at, sessions_remaining: p.sessions_remaining, sessions_total: p.sessions_total, expires_at: p.expires_at }))}
-          sessions={(sessions ?? []).map(s => ({ id: s.id, scheduled_at: s.scheduled_at, duration_mins: s.duration_mins, notes: s.notes, status: s.status }))}
-          totalRemaining={totalRemaining}
-          initialWorkspace={workspace}
-          activeLiveSessionHref={activeLiveSessionHref}
-        />
+        {!isCoach && !legalConsentGate.verified ? (
+          <MandatoryLegalClickwrapGate defaultFullName={clientRow?.full_name} />
+        ) : (
+          <ExecutiveCommandCenterClient
+            clientName={clientName}
+            activePackage={activePackage ? { package_name: activePackage.package_name } : null}
+            currentPlanPhase={currentPlanPhase}
+            currentGoal={currentGoal}
+            isWorkoutInProgress={isWorkoutInProgress}
+            isWorkoutCompleted={isWorkoutCompleted}
+            activeWorkout={activeWorkout}
+            activeDayLoggedWorkingSets={activeDayLoggedWorkingSets}
+            activeDayTotalTargetSets={activeDayTotalTargetSets}
+            activeDayExerciseCount={activeDayExerciseCount}
+            activeWorkoutDurationMins={activeWorkoutDurationMins}
+            totalVolumeMovedLbs={totalVolumeMovedLbs}
+            latestPlan={latestPlan ? { nasm_opt_phase: latestPlan.nasm_opt_phase, phase_name: latestPlan.phase_name, estimated_duration_mins: activeWorkoutDurationMins || latestPlan.estimated_duration_mins || 75 } : null}
+            needsOnboarding={needsOnboarding}
+            isOnboardingCompleted={isOnboardingCompleted}
+            isOnboardingStarted={isOnboardingStarted}
+            dossier={dossier}
+            packages={(packages ?? []).map(p => ({ id: p.id, package_name: p.package_name, purchased_at: p.purchased_at, sessions_remaining: p.sessions_remaining, sessions_total: p.sessions_total, expires_at: p.expires_at }))}
+            sessions={(sessions ?? []).map(s => ({ id: s.id, scheduled_at: s.scheduled_at, duration_mins: s.duration_mins, notes: s.notes, status: s.status }))}
+            totalRemaining={totalRemaining}
+            initialWorkspace={workspace}
+            activeLiveSessionHref={activeLiveSessionHref}
+          />
+        )}
       </div>
     </main>
   )

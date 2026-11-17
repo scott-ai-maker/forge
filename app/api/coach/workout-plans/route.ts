@@ -13,6 +13,7 @@ import {
   type StrengthCardioBlendSummary,
 } from '@/lib/rag-nasm-program-generator'
 import { supabaseAdmin } from '@/lib/supabase'
+import { checkClientMedicalClearanceGate } from '@/lib/liability-shield'
 import { calculatePrecisionMacros, type NasmOptPhase, type NutritionGoal } from '@/lib/metabolic-nutrition'
 import { normalizeActivity, parseNutritionTargets, type NutritionTargetsSnapshot } from '@/lib/weight-loss-program'
 
@@ -225,6 +226,16 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = supabaseAdmin()
+
+  // Enforce PAR-Q+ Phase 0 Medical Clearance Hold before allowing a coach to publish or overwrite a workout plan
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, payload.clientId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason },
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
+  }
+
   let handPortionPlan = payload.handPortionPlan
   if (!nutritionTargets && !handPortionPlan) {
     try {
@@ -362,11 +373,16 @@ export async function POST(req: NextRequest) {
     (payload.periodizationWeeklyMemos ? { weeklyMemos: payload.periodizationWeeklyMemos } : undefined) ||
     existingPlanJson?.periodizationPlan
 
+  const clampedNasmPhase = Math.max(
+    1,
+    Math.min(clearanceGate.effectiveMaxOptPhase, Math.min(5, Number(payload.nasmOptPhase)))
+  )
+
   const row = {
     user_id: payload.clientId,
     name: buildPlanName(payload),
     goal: payload.goal,
-    nasm_opt_phase: Math.max(1, Math.min(5, Number(payload.nasmOptPhase))),
+    nasm_opt_phase: clampedNasmPhase,
     phase_name: payload.phaseName,
     sessions_per_week: Math.max(1, Math.min(7, Number(payload.sessionsPerWeek))),
     estimated_duration_mins: Math.max(15, Math.min(240, Number(payload.estimatedDurationMins))),

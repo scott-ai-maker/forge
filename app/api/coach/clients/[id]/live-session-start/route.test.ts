@@ -1,98 +1,146 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { POST } from './route'
-import { getRequestAuthz, requireCoachAssignedClient } from '@/lib/authz'
-import { supabaseAdmin } from '@/lib/supabase'
-import { notifyUser } from '@/lib/notifications'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/lib/authz', () => ({
-  getRequestAuthz: vi.fn(),
-  requireCoachAssignedClient: vi.fn(),
-  AuthzError: class AuthzError extends Error {
-    status = 403
-  },
+const {
+  getRequestAuthzMock,
+  requireCoachAssignedClientMock,
+  supabaseAdminMock,
+  enforceRateLimitMock,
+  notifyUserMock,
+} = vi.hoisted(() => ({
+  getRequestAuthzMock: vi.fn(),
+  requireCoachAssignedClientMock: vi.fn(),
+  supabaseAdminMock: vi.fn(),
+  enforceRateLimitMock: vi.fn(),
+  notifyUserMock: vi.fn(),
 }))
 
+vi.mock('@/lib/authz', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/authz')>('@/lib/authz')
+  return {
+    ...actual,
+    getRequestAuthz: getRequestAuthzMock,
+    requireCoachAssignedClient: requireCoachAssignedClientMock,
+  }
+})
+
 vi.mock('@/lib/supabase', () => ({
-  supabaseAdmin: vi.fn(),
+  supabaseAdmin: supabaseAdminMock,
+}))
+
+vi.mock('@/lib/rate-limit', () => ({
+  enforceRateLimit: enforceRateLimitMock,
 }))
 
 vi.mock('@/lib/notifications', () => ({
-  notifyUser: vi.fn().mockResolvedValue({ channels: ['push'] }),
+  notifyUser: notifyUserMock,
 }))
 
-describe('Live Session Start Alert API', () => {
+import { POST } from './route'
+
+describe('POST /api/coach/clients/[id]/live-session-start (Phase 0 Hold & ERAP Readiness)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getRequestAuthzMock.mockResolvedValue({
+      user: { id: 'coach-1', email: 'coach@forge-athletic.app' },
+      client: { role: 'coach' },
+    })
+    requireCoachAssignedClientMock.mockResolvedValue(undefined)
+    enforceRateLimitMock.mockResolvedValue({ allowed: true, remaining: 9, resetAt: Date.now() + 60_000 })
+    notifyUserMock.mockResolvedValue({ channels: ['push'] })
   })
 
-  it('rejects unassigned coach requests', async () => {
-    vi.mocked(getRequestAuthz).mockResolvedValue({
-      user: { id: 'coach-123' },
-      client: { role: 'coach' },
-    } as unknown as Awaited<ReturnType<typeof getRequestAuthz>>)
-
-    vi.mocked(requireCoachAssignedClient).mockRejectedValue(new Error('Forbidden'))
-
-    const req = new NextRequest('http://localhost/api/coach/clients/client-456/live-session-start', {
-      method: 'POST',
+  it('blocks live session start with 409 when client has an uncleared PAR-Q+ cardiac/syncope hold', async () => {
+    supabaseAdminMock.mockReturnValue({
+      from: (table: string) => {
+        if (table === 'client_intake_forms') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: {
+                    parq_any_yes: true,
+                    parq_answers: { experiencesChestPain: true },
+                    emergency_contact_name: 'Jane Doe',
+                    emergency_contact_phone: '617-555-0199',
+                  },
+                }),
+              }),
+            }),
+          }
+        }
+        if (table === 'coach_onboarding_gates') {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({ data: null }),
+                }),
+              }),
+            }),
+          }
+        }
+        return {}
+      },
     })
 
-    const res = await POST(req, { params: Promise.resolve({ id: 'client-456' }) })
-    expect(res.status).toBe(500)
+    const req = new NextRequest('http://localhost/api/coach/clients/client-1/live-session-start', {
+      method: 'POST',
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: 'client-1' }) })
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.code).toBe('MEDICAL_CLEARANCE_HOLD')
+    expect(notifyUserMock).not.toHaveBeenCalled()
   })
 
-  it('successfully dispatches push and concierge alert to client', async () => {
-    vi.mocked(getRequestAuthz).mockResolvedValue({
-      user: { id: 'coach-123' },
-      client: { role: 'coach' },
-    } as unknown as Awaited<ReturnType<typeof getRequestAuthz>>)
-
-    vi.mocked(requireCoachAssignedClient).mockResolvedValue(undefined)
-
-    const mockAdmin = {
-      from: vi.fn().mockImplementation((table: string) => {
+  it('dispatches 1:1 live invite and surfaces erapWarning when athlete has not yet entered 10-digit local dispatch', async () => {
+    const insertSpy = vi.fn().mockResolvedValue({ error: null })
+    supabaseAdminMock.mockReturnValue({
+      from: (table: string) => {
+        if (table === 'client_intake_forms') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: {
+                    parq_any_yes: false,
+                    parq_answers: { hasHeartCondition: false, localEmergencyDispatchPhone: '911' },
+                    emergency_contact_name: 'Jane Doe',
+                    emergency_contact_phone: '617-555-0199',
+                  },
+                }),
+              }),
+            }),
+          }
+        }
         if (table === 'clients') {
           return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({ data: { full_name: 'Jordan Reed' }, error: null }),
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: { full_name: 'Alex Mercer', email: 'alex@example.com' },
+                }),
               }),
             }),
           }
         }
         if (table === 'coach_client_messages') {
-          return {
-            insert: vi.fn().mockResolvedValue({ data: null, error: null }),
-          }
+          return { insert: insertSpy }
         }
         return {}
-      }),
-    }
-
-    vi.mocked(supabaseAdmin).mockReturnValue(mockAdmin as unknown as ReturnType<typeof supabaseAdmin>)
-
-    const req = new NextRequest('http://localhost/api/coach/clients/client-456/live-session-start', {
-      method: 'POST',
+      },
     })
 
-    const res = await POST(req, { params: Promise.resolve({ id: 'client-456' }) })
+    const req = new NextRequest('http://localhost/api/coach/clients/client-1/live-session-start', {
+      method: 'POST',
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: 'client-1' }) })
     expect(res.status).toBe(200)
-    const json = await res.json()
-    expect(json.success).toBe(true)
-    expect(json.pushSent).toBe(true)
-    expect(notifyUser).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: 'client-456',
-        type: 'live_session_started',
-        url: '/dashboard/live',
-        body: expect.stringContaining('/dashboard/live'),
-        data: expect.objectContaining({
-          clientId: 'client-456',
-          coachId: 'coach-123',
-          url: '/dashboard/live',
-        }),
-      })
-    )
+    const body = await res.json()
+    expect(body.success).toBe(true)
+    expect(body.erapComplete).toBe(false)
+    expect(body.erapWarning).toContain('10-digit local dispatch')
+    expect(insertSpy).toHaveBeenCalledTimes(1)
   })
 })

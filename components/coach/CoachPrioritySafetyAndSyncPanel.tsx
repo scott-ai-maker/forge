@@ -1,7 +1,17 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, BookOpen, CheckCircle2, Mail, RefreshCw, ShieldAlert, Smartphone } from 'lucide-react'
+import {
+  AlertTriangle,
+  BookOpen,
+  CheckCircle2,
+  Mail,
+  PauseCircle,
+  PlayCircle,
+  RefreshCw,
+  ShieldAlert,
+  Smartphone,
+} from 'lucide-react'
 import type { CoachSafetyQueueItem } from '@/app/api/coach/safety-queue/route'
 
 interface LibraryIndexSummary {
@@ -25,6 +35,8 @@ export default function CoachPrioritySafetyAndSyncPanel() {
   const [items, setItems] = useState<CoachSafetyQueueItem[]>([])
   const [libraryIndex, setLibraryIndex] = useState<LibraryIndexSummary | null>(null)
   const [loading, setLoading] = useState(true)
+  const [busyEventId, setBusyEventId] = useState<string | null>(null)
+  const [triageFeedback, setTriageFeedback] = useState<string | null>(null)
   const [syncingIndex, setSyncingIndex] = useState(false)
   const [syncNotice, setSyncNotice] = useState('')
 
@@ -47,6 +59,49 @@ export default function CoachPrioritySafetyAndSyncPanel() {
   useEffect(() => {
     void fetchQueue()
   }, [fetchQueue])
+
+  const handleTriageAction = async (
+    item: CoachSafetyQueueItem,
+    action: 'acknowledge' | 'acknowledge_and_pause_training' | 'release_injury_hold'
+  ) => {
+    if (busyEventId) return
+    setBusyEventId(item.eventId)
+    setTriageFeedback(null)
+    try {
+      const res = await fetch('/api/coach/safety-queue', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: item.eventId,
+          clientId: item.clientId,
+          action,
+          notes:
+            action === 'acknowledge_and_pause_training'
+              ? `Safety queue red-flag triage on ${item.headline}`
+              : action === 'release_injury_hold'
+                ? 'Coach verified clearance and resumed active training.'
+                : 'Reviewed and acknowledged by Coach Gordon.',
+        }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.ok) {
+        setTriageFeedback(data?.error || 'Could not update safety queue item.')
+      } else {
+        setTriageFeedback(
+          action === 'acknowledge_and_pause_training'
+            ? `✓ ${item.clientName} placed on Injury / Medical Hold (workout logging paused) & notified.`
+            : action === 'release_injury_hold'
+              ? `✓ Injury hold lifted for ${item.clientName}.`
+              : `✓ Acknowledged ${item.clientName}'s queue item.`
+        )
+        await fetchQueue()
+      }
+    } catch {
+      setTriageFeedback('Network error while updating safety queue.')
+    } finally {
+      setBusyEventId(null)
+    }
+  }
 
   const handleSyncCoachingLibrary = async () => {
     if (syncingIndex) return
@@ -90,7 +145,7 @@ export default function CoachPrioritySafetyAndSyncPanel() {
               Priority Safety &amp; Member Escalation Queue
             </h2>
             <span className="rounded-full border border-emerald-400/35 bg-emerald-500/12 px-2.5 py-0.5 font-mono text-[10.5px] font-bold text-emerald-300">
-              {items.length} Recent
+              {items.length} Open
             </span>
           </div>
 
@@ -104,6 +159,15 @@ export default function CoachPrioritySafetyAndSyncPanel() {
             <span>Refresh Queue</span>
           </button>
         </header>
+
+        {triageFeedback && (
+          <div
+            role="status"
+            className="rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-100"
+          >
+            {triageFeedback}
+          </div>
+        )}
 
         <div>
           {items.length === 0 ? (
@@ -119,6 +183,8 @@ export default function CoachPrioritySafetyAndSyncPanel() {
                 const isCritical =
                   item.severity === 'emergency_911' || item.severity === 'clinical_stop'
                 const isPrioritySms = item.eventType === 'escalation_sms'
+                const isPaused = item.clientStatus === 'paused'
+                const isBusy = busyEventId === item.eventId
                 return (
                   <li
                     key={item.eventId}
@@ -151,8 +217,13 @@ export default function CoachPrioritySafetyAndSyncPanel() {
                               : 'Joint Regression'
                             : isPrioritySms
                               ? '24h Priority SMS'
-                              : 'Direct Email'}
+                              : 'Direct Note'}
                         </span>
+                        {isPaused && (
+                          <span className="rounded border border-rose-400/45 bg-rose-500/20 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase text-rose-200">
+                            Paused · Injury Hold
+                          </span>
+                        )}
                         <span className="font-mono text-[10.5px] text-zinc-400">
                           {formatShortTimestamp(item.occurredAt)}
                         </span>
@@ -163,12 +234,47 @@ export default function CoachPrioritySafetyAndSyncPanel() {
                       </div>
                     </div>
 
-                    <a
-                      href={`/coach/clients/${encodeURIComponent(item.clientId)}`}
-                      className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-lg border border-white/15 bg-[#0A0F1A] px-3 py-1.5 text-xs font-bold text-amber-300 no-underline hover:border-amber-400/50 hover:text-amber-200"
-                    >
-                      Review {item.clientName}
-                    </a>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {isPaused ? (
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => void handleTriageAction(item, 'release_injury_hold')}
+                          className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-1.5 text-xs font-bold text-emerald-200 hover:bg-emerald-500/25 disabled:opacity-60"
+                        >
+                          <PlayCircle size={13} aria-hidden="true" />
+                          <span>Release Hold</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() =>
+                            void handleTriageAction(item, 'acknowledge_and_pause_training')
+                          }
+                          className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-rose-400/50 bg-rose-500/20 px-2.5 py-1.5 text-xs font-bold text-rose-100 hover:bg-rose-500/30 disabled:opacity-60"
+                        >
+                          <PauseCircle size={13} aria-hidden="true" />
+                          <span>Pause Plan (Injury Hold)</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => void handleTriageAction(item, 'acknowledge')}
+                        className="inline-flex min-h-[44px] items-center rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-white/10 disabled:opacity-60"
+                      >
+                        Acknowledge
+                      </button>
+
+                      <a
+                        href={`/coach/clients/${encodeURIComponent(item.clientId)}`}
+                        className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-lg border border-white/15 bg-[#0A0F1A] px-3 py-1.5 text-xs font-bold text-amber-300 no-underline hover:border-amber-400/50 hover:text-amber-200"
+                      >
+                        Review {item.clientName}
+                      </a>
+                    </div>
                   </li>
                 )
               })}

@@ -29,6 +29,36 @@ export interface StructuredSoapOutput {
   }
 }
 
+function escapeRegExp(literal: string): string {
+  return literal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Scrubs identifiable client names from raw coach dictation before sending notes
+ * to external LLM endpoints (minimum-necessary de-identification safeguard).
+ */
+export function redactClientNameFromNotes(rawNotes: string, clientName?: string | null): string {
+  if (!rawNotes) return ''
+  if (!clientName) return rawNotes
+
+  const cleanedName = clientName.trim()
+  if (!cleanedName || cleanedName.toLowerCase() === 'athlete' || cleanedName.toLowerCase() === 'client') {
+    return rawNotes
+  }
+
+  let redacted = rawNotes.replace(new RegExp(`\\b${escapeRegExp(cleanedName)}\\b`, 'gi'), 'Athlete')
+  const nameTokens = cleanedName
+    .split(/\s+/)
+    .map(t => t.replace(/[^a-zA-Z'-]/g, '').trim())
+    .filter(t => t.length >= 3 && !['the', 'coach', 'athlete', 'client'].includes(t.toLowerCase()))
+
+  for (const token of nameTokens) {
+    redacted = redacted.replace(new RegExp(`\\b${escapeRegExp(token)}\\b`, 'gi'), 'Athlete')
+  }
+
+  return redacted
+}
+
 /**
  * Transforms raw text/dictation into high-end clinical SOAP documentation.
  */
@@ -45,18 +75,20 @@ export async function generateClinicalSoapNotes(
 
   if (apiKey) {
     try {
+      const deidentifiedRawNotes = redactClientNameFromNotes(rawNotes.trim(), clientName)
       const systemInstruction = `You are Coach Gordon, Director of Human Performance at Forge Athletic, Master NASM-CPT, Performance Enhancement Specialist (PES), Corrective Exercise Specialist (CES), Physique & Bodybuilding Coach (PBC), and Certified Nutrition Coach (CNC).
 You coach with deep empathy, compassionate care, uncompromising client safety, and results-driven sports science.
-Your task is to convert raw, unstructured coach dictation / session notes into impeccable, professional sports-science clinical documentation for an executive athlete.
+Your task is to convert raw, unstructured coach dictation / session notes into impeccable, professional sports-science session documentation for an executive athlete.
 
 Format requirements:
-- Tone: Clinical, empathetic, biomechanically rigorous, and professional.
-- Scope of Practice: Maintain strict training scope (zero medical diagnosing/prescribing; emphasize corrective regressions and orthopedic longevity).
-- Use the standard clinical S.O.A.P. framework:
+- Tone: Empathetic, biomechanically rigorous, and professional.
+- Scope of Practice: Maintain strict athletic training scope (zero medical diagnosing/prescribing; emphasize corrective regressions and orthopedic longevity).
+- Privacy: Refer to the subject strictly as "Athlete" (never invent or guess personal names).
+- Use the standard S.O.A.P. framework:
   • S (Subjective): Athlete energy, readiness, reported joint sensation, soreness, life/work stress, self-reported adherence.
   • O (Objective): Exercises performed, working loads (lbs/kg), completed sets x reps, RPE (Rate of Perceived Exertion), tempo cadence adherence (e.g. 4/2/1/1), heart rate / cardio stage if mentioned.
   • A (Assessment): Coach observations on movement quality, kinetic chain alignment, compensation patterns (e.g. knee valgus, excessive forward lean, lumbar hyperextension), fatigue threshold.
-  • P (Plan): Prescribed homework, CEx continuum adjustments (SMR, static stretch, activation), next session progression targets, recovery directives.
+  • P (Plan): Next-session focus, CEx continuum adjustments (SMR, static stretch, activation), progression targets, recovery habits.
 
 Ensure output is formatted clearly with bold headers and bullet points. Return valid JSON adhering to:
 {
@@ -73,7 +105,7 @@ Ensure output is formatted clearly with bold headers and bullet points. Return v
   }
 }`
 
-      const userPrompt = `Client: ${clientName}
+      const userPrompt = `Subject: Athlete (De-Identified)
 Session Date: ${sessionDate}
 Primary Goal: ${clientGoal}
 Current Periodization: ${nasmPhase}
@@ -81,10 +113,10 @@ Synthesis Mode: ${mode}
 
 Raw Coach Dictation / Notes:
 """
-${rawNotes.trim()}
+${deidentifiedRawNotes}
 """
 
-Generate the structured clinical SOAP output in JSON format.`
+Generate the structured SOAP output in JSON format.`
 
       const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
 

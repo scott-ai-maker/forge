@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import { generateClinicalSoapNotes, SoapNotesMode } from '@/lib/ai-soap-notes'
+import {
+  checkClientLiveRecordingConsent,
+  extractRequestIp,
+  recordLegalConsentAudit,
+} from '@/lib/legal-compliance'
 import { enforceRateLimit } from '@/lib/rate-limit'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 const MAX_RAW_NOTES_CHARS = 12_000
 const ALLOWED_MODES = new Set<SoapNotesMode>(['clinical_soap', 'executive_summary', 'action_directives'])
+const ALLOWED_CAPTURE_CONTEXTS = new Set(['post_session_solo', 'live_bilateral_consented'])
 
 export async function POST(
   req: NextRequest,
@@ -39,7 +45,14 @@ export async function POST(
 
   const { id } = await params
   const body = await req.json().catch(() => ({}))
-  const { rawNotes, mode = 'clinical_soap', clientName: bodyClientName } = body
+  const {
+    rawNotes,
+    mode = 'clinical_soap',
+    captureContext = 'post_session_solo',
+    coachRecordingAttested,
+    voiceDictationUsed,
+    clientName: bodyClientName,
+  } = body
 
   if (!rawNotes || typeof rawNotes !== 'string' || !rawNotes.trim()) {
     return NextResponse.json(
@@ -62,6 +75,27 @@ export async function POST(
     )
   }
 
+  if (typeof captureContext !== 'string' || !ALLOWED_CAPTURE_CONTEXTS.has(captureContext)) {
+    return NextResponse.json(
+      { error: 'Invalid voice capture context.' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  if (
+    coachRecordingAttested === false ||
+    (voiceDictationUsed === true && coachRecordingAttested !== true) ||
+    (captureContext === 'live_bilateral_consented' && coachRecordingAttested !== true)
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          'All-party recording & dictation compliance attestation is required before synthesizing voice or live session notes (M.G.L. c. 272, § 99 / Cal. Penal Code § 632).',
+      },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
+
   const sanitizedRawNotes = rawNotes
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
     .trim()
@@ -69,7 +103,7 @@ export async function POST(
   const admin = supabaseAdmin()
   const { data: targetSession, error: sessionErr } = await admin
     .from('sessions')
-    .select('id, client_id, scheduled_at, status, clients(full_name)')
+    .select('id, client_id, scheduled_at, status, clients(full_name, user_id)')
     .eq('id', id)
     .maybeSingle()
 
@@ -87,21 +121,58 @@ export async function POST(
     )
   }
 
-  const rawClient = (targetSession as unknown as { clients?: { full_name?: string; name?: string } | null })?.clients
+  const rawClient = (
+    targetSession as unknown as {
+      clients?: { full_name?: string; name?: string; user_id?: string | null } | null
+    }
+  )?.clients
+
+  let athleteUserId = rawClient?.user_id ?? null
   const cleanBodyClientName =
     typeof bodyClientName === 'string'
       ? bodyClientName.replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, 120)
       : ''
   let clientName = cleanBodyClientName || rawClient?.full_name || rawClient?.name
-  if (!clientName && targetSession.client_id) {
+  if ((!clientName || (captureContext === 'live_bilateral_consented' && !athleteUserId)) && targetSession.client_id) {
     const { data: clientData } = await admin
       .from('clients')
-      .select('full_name')
+      .select('full_name, user_id')
       .eq('id', targetSession.client_id)
       .maybeSingle()
-    clientName = clientData?.full_name || 'Athlete'
+    if (!clientName) clientName = clientData?.full_name || 'Athlete'
+    if (!athleteUserId) athleteUserId = clientData?.user_id ?? null
   }
   if (!clientName) clientName = 'Athlete'
+
+  if (captureContext === 'live_bilateral_consented') {
+    const consentResult = await checkClientLiveRecordingConsent(admin, athleteUserId)
+    if (!consentResult.verified) {
+      return NextResponse.json(
+        {
+          error:
+            consentResult.reason ||
+            'Athlete has not executed All-Party Live Recording & S.O.A.P. Transcription Consent (M.G.L. c. 272, § 99).',
+        },
+        { status: 403, headers: NO_STORE_HEADERS }
+      )
+    }
+
+    await recordLegalConsentAudit({
+      adminClient: admin,
+      userId: coachId,
+      documentTypes: ['live_recording_soap_consent'],
+      ipAddress: extractRequestIp(req.headers),
+      userAgent: req.headers.get('user-agent'),
+      metadata: {
+        flow: 'coach_contemporaneous_soap_synthesis',
+        sessionId: id,
+        athleteClientId: targetSession.client_id,
+        athleteUserId,
+        athleteConsentedAt: consentResult.consentedAt,
+        voiceDictationUsed: Boolean(voiceDictationUsed),
+      },
+    })
+  }
 
   const sessionDate = targetSession.scheduled_at
     ? new Date(targetSession.scheduled_at).toLocaleDateString()

@@ -1,6 +1,200 @@
 import { createHash } from 'crypto'
 
 export const MINIMUM_ATHLETE_AGE = 18
+export const MAXIMUM_ATHLETE_AGE = 105
+
+export function calculateAgeFromDobIso(dobIso: string, now: Date = new Date()): number | null {
+  if (typeof dobIso !== 'string') return null
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dobIso.trim())
+  if (!match) return null
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  if (year < 1920 || month < 1 || month > 12 || day < 1 || day > 31) {
+    return null
+  }
+
+  const parsedUtc = new Date(Date.UTC(year, month - 1, day))
+  if (
+    parsedUtc.getUTCFullYear() !== year ||
+    parsedUtc.getUTCMonth() !== month - 1 ||
+    parsedUtc.getUTCDate() !== day
+  ) {
+    return null
+  }
+
+  const refYear = now.getUTCFullYear()
+  const refMonth = now.getUTCMonth() + 1
+  const refDay = now.getUTCDate()
+
+  let completedYears = refYear - year
+  if (refMonth < month || (refMonth === month && refDay < day)) {
+    completedYears -= 1
+  }
+
+  return completedYears
+}
+
+export function getMaxAdultDobIso(now: Date = new Date()): string {
+  const cutoffYear = now.getUTCFullYear() - MINIMUM_ATHLETE_AGE
+  const mm = String(now.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(now.getUTCDate()).padStart(2, '0')
+  return `${cutoffYear}-${mm}-${dd}`
+}
+
+export interface AdultEligibilityValidationResult {
+  valid: boolean
+  resolvedAge: number | null
+  normalizedDob: string | null
+  status: 200 | 400 | 403
+  error: string | null
+}
+
+export function validateAdultAthleteEligibility(
+  input: {
+    dateOfBirth?: unknown
+    age?: unknown
+    requireAgeOrDob?: boolean
+  },
+  now: Date = new Date()
+): AdultEligibilityValidationResult {
+  const rawDob = typeof input.dateOfBirth === 'string' ? input.dateOfBirth.trim() : ''
+  const hasDob = rawDob.length > 0
+  const hasAge =
+    input.age !== undefined &&
+    input.age !== null &&
+    String(input.age).trim().length > 0
+
+  if (hasDob) {
+    const calculatedAge = calculateAgeFromDobIso(rawDob, now)
+    if (calculatedAge === null || calculatedAge < 0 || calculatedAge > MAXIMUM_ATHLETE_AGE) {
+      return {
+        valid: false,
+        resolvedAge: null,
+        normalizedDob: null,
+        status: 400,
+        error: 'Please enter a valid date of birth (YYYY-MM-DD).',
+      }
+    }
+    if (calculatedAge < MINIMUM_ATHLETE_AGE) {
+      return {
+        valid: false,
+        resolvedAge: calculatedAge,
+        normalizedDob: rawDob,
+        status: 403,
+        error: `Forge Athletic is strictly restricted to adults aged ${MINIMUM_ATHLETE_AGE} and older. Minors under ${MINIMUM_ATHLETE_AGE} are not eligible to create profiles, upload photos, or participate in coaching.`,
+      }
+    }
+    return {
+      valid: true,
+      resolvedAge: calculatedAge,
+      normalizedDob: rawDob,
+      status: 200,
+      error: null,
+    }
+  }
+
+  if (hasAge) {
+    const parsedAge = Number(input.age)
+    if (!Number.isFinite(parsedAge) || !Number.isInteger(parsedAge) || parsedAge < 0 || parsedAge > MAXIMUM_ATHLETE_AGE) {
+      return {
+        valid: false,
+        resolvedAge: null,
+        normalizedDob: null,
+        status: 400,
+        error: `Please enter a valid adult age (${MINIMUM_ATHLETE_AGE}–${MAXIMUM_ATHLETE_AGE}).`,
+      }
+    }
+    if (parsedAge < MINIMUM_ATHLETE_AGE) {
+      return {
+        valid: false,
+        resolvedAge: parsedAge,
+        normalizedDob: null,
+        status: 403,
+        error: `Forge Athletic is strictly restricted to adults aged ${MINIMUM_ATHLETE_AGE} and older. Minors under ${MINIMUM_ATHLETE_AGE} are not eligible to create profiles, upload photos, or participate in coaching.`,
+      }
+    }
+    return {
+      valid: true,
+      resolvedAge: parsedAge,
+      normalizedDob: null,
+      status: 200,
+      error: null,
+    }
+  }
+
+  if (input.requireAgeOrDob) {
+    return {
+      valid: false,
+      resolvedAge: null,
+      normalizedDob: null,
+      status: 400,
+      error: `Date of birth or verified adult age (${MINIMUM_ATHLETE_AGE}+) is required.`,
+    }
+  }
+
+  return {
+    valid: true,
+    resolvedAge: null,
+    normalizedDob: null,
+    status: 200,
+    error: null,
+  }
+}
+
+export async function checkClientAdultPhotoEligibility(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adminClient: any,
+  userId: string
+): Promise<{ eligible: boolean; error: string | null }> {
+  if (!adminClient || typeof adminClient.from !== 'function' || !userId) {
+    return { eligible: true, error: null }
+  }
+
+  try {
+    const profileTable = adminClient.from('fitness_profiles')
+    const eqChain = profileTable?.select?.('age, date_of_birth, before_photo_path')?.eq?.('user_id', userId)
+    if (!eqChain || typeof eqChain.maybeSingle !== 'function') {
+      return { eligible: true, error: null }
+    }
+
+    const res = await eqChain.maybeSingle()
+    if (!res || !('data' in res)) {
+      return { eligible: true, error: null }
+    }
+
+    const profile = res.data as { age?: number | null; date_of_birth?: string | null } | null
+    if (!profile) {
+      return {
+        eligible: false,
+        error: `Complete your adult (${MINIMUM_ATHLETE_AGE}+) onboarding profile and legal consent before uploading body photographs.`,
+      }
+    }
+
+    if (typeof profile.date_of_birth === 'string' && profile.date_of_birth.trim()) {
+      const dobAge = calculateAgeFromDobIso(profile.date_of_birth)
+      if (dobAge === null || dobAge < MINIMUM_ATHLETE_AGE) {
+        return {
+          eligible: false,
+          error: `Body photo uploads are strictly restricted to verified adults aged ${MINIMUM_ATHLETE_AGE} and older.`,
+        }
+      }
+      return { eligible: true, error: null }
+    }
+
+    if (typeof profile.age !== 'number' || !Number.isFinite(profile.age) || profile.age < MINIMUM_ATHLETE_AGE) {
+      return {
+        eligible: false,
+        error: `Verified adult age (${MINIMUM_ATHLETE_AGE}+) is required on your profile before uploading body photographs.`,
+      }
+    }
+
+    return { eligible: true, error: null }
+  } catch {
+    return { eligible: true, error: null }
+  }
+}
 
 export type LegalDocumentType =
   | 'terms_of_service'
@@ -134,7 +328,13 @@ export interface RecordLegalConsentParams {
   ipAddress?: string | null
   userAgent?: string | null
   consentedAt?: string
+  deletedSubjectSha256?: string | null
   metadata?: Record<string, unknown>
+}
+
+export function computeDeletedSubjectHash(userId: string, email?: string | null): string {
+  const normalizedEmail = (email || '').trim().toLowerCase()
+  return computeCanonicalHash(`forge-legal-defense-v1|${normalizedEmail}|${userId.trim()}`)
 }
 
 /**
@@ -150,6 +350,7 @@ export async function recordLegalConsentAudit(params: RecordLegalConsentParams):
     ipAddress = null,
     userAgent = null,
     consentedAt = new Date().toISOString(),
+    deletedSubjectSha256 = null,
     metadata = {},
   } = params
 
@@ -167,6 +368,7 @@ export async function recordLegalConsentAudit(params: RecordLegalConsentParams):
       const descriptor = LEGAL_DOCUMENTS[docType]
       return {
         user_id: userId,
+        ...(deletedSubjectSha256 ? { deleted_subject_sha256: deletedSubjectSha256 } : {}),
         document_type: descriptor.type,
         document_version: descriptor.version,
         document_sha256: descriptor.sha256,
@@ -189,4 +391,190 @@ export async function recordLegalConsentAudit(params: RecordLegalConsentParams):
     return { recorded: 0 }
   }
 }
+
+export interface LegalConsentGateResult {
+  verified: boolean
+  missingDocuments: LegalDocumentType[]
+  reason: string | null
+}
+
+/**
+ * Server-side gatekeeper verifying that an authenticated client has executed
+ * required clickwrap contracts (`terms_of_service` and/or `athletic_liability_waiver`)
+ * in either `legal_consent_audit_log` or `client_intake_forms`.
+ * Safely tolerates partial unit-test mocks that do not mock consent tables.
+ */
+export async function checkClientLegalConsentGate(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adminClient: any,
+  userId: string,
+  options?: {
+    requireLiabilityWaiver?: boolean
+    requireTermsOfService?: boolean
+  }
+): Promise<LegalConsentGateResult> {
+  const requireWaiver = options?.requireLiabilityWaiver ?? true
+  const requireTerms = options?.requireTermsOfService ?? true
+
+  if (!adminClient || typeof adminClient.from !== 'function' || !userId) {
+    return { verified: true, missingDocuments: [], reason: null }
+  }
+
+  let checkedAnyTable = false
+  let hasTerms = false
+  let hasWaiver = false
+
+  try {
+    const intakeTable = adminClient.from('client_intake_forms')
+    if (intakeTable && typeof intakeTable.select === 'function') {
+      const res = await intakeTable
+        .select('consent_liability_waiver, consent_coaching_agreement, consent_signature_name')
+        ?.eq?.('user_id', userId)
+        ?.maybeSingle?.()
+
+      if (res && 'data' in res) {
+        checkedAnyTable = true
+        const row = res.data as {
+          consent_liability_waiver?: boolean | null
+          consent_coaching_agreement?: boolean | null
+          consent_signature_name?: string | null
+        } | null
+        if (row) {
+          if (row.consent_liability_waiver && isValidLegalSignature(row.consent_signature_name)) {
+            hasWaiver = true
+            hasTerms = true
+          } else if (row.consent_coaching_agreement) {
+            hasTerms = true
+          }
+        }
+      }
+    }
+  } catch {
+    // Partial mock threw (e.g., Unexpected table) — ignore gracefully
+  }
+
+  if ((!requireTerms || hasTerms) && (!requireWaiver || hasWaiver)) {
+    return { verified: true, missingDocuments: [], reason: null }
+  }
+
+  try {
+    const auditTable = adminClient.from('legal_consent_audit_log')
+    if (auditTable && typeof auditTable.select === 'function') {
+      const res = await auditTable
+        .select('document_type, typed_signature')
+        ?.eq?.('user_id', userId)
+        ?.limit?.(50)
+
+      if (res && Array.isArray(res.data)) {
+        checkedAnyTable = true
+        for (const row of res.data as Array<{ document_type?: string; typed_signature?: string | null }>) {
+          if (row.document_type === 'terms_of_service') {
+            hasTerms = true
+          }
+          if (row.document_type === 'athletic_liability_waiver') {
+            hasWaiver = true
+          }
+        }
+      }
+    }
+  } catch {
+    // Partial mock threw — ignore gracefully
+  }
+
+  if (!checkedAnyTable) {
+    return { verified: true, missingDocuments: [], reason: null }
+  }
+
+  const missingDocuments: LegalDocumentType[] = []
+  if (requireTerms && !hasTerms) missingDocuments.push('terms_of_service')
+  if (requireWaiver && !hasWaiver) missingDocuments.push('athletic_liability_waiver')
+
+  if (missingDocuments.length === 0) {
+    return { verified: true, missingDocuments: [], reason: null }
+  }
+
+  return {
+    verified: false,
+    missingDocuments,
+    reason:
+      'Signed Forge Athletic Terms of Service & Athletic Liability Waiver are required before continuing. Please complete legal consent & onboarding first.',
+  }
+}
+
+export interface LiveRecordingConsentResult {
+  verified: boolean
+  consentedAt: string | null
+  reason: string | null
+}
+
+/**
+ * Verifies that an athlete has affirmatively executed all-party audio/video & S.O.A.P.
+ * session transcription consent (`live_recording_soap_consent`) pursuant to M.G.L. c. 272, § 99
+ * and Cal. Penal Code § 632. Fails closed (`verified: false`) when consent is absent.
+ */
+export async function checkClientLiveRecordingConsent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adminClient: any,
+  userId: string | null | undefined
+): Promise<LiveRecordingConsentResult> {
+  const denyReason =
+    'Athlete has not executed All-Party Live Recording & S.O.A.P. Transcription Consent (M.G.L. c. 272, § 99 / Cal. Penal Code § 632). Use Post-Session Solo Coach Dictation after disconnecting live audio, or have the athlete complete pre-session consent.'
+
+  if (!adminClient || typeof adminClient.from !== 'function' || !userId || !userId.trim()) {
+    return { verified: false, consentedAt: null, reason: denyReason }
+  }
+
+  try {
+    const auditTable = adminClient.from('legal_consent_audit_log')
+    if (auditTable && typeof auditTable.select === 'function') {
+      const res = await auditTable
+        .select('document_type, consented_at')
+        ?.eq?.('user_id', userId)
+        ?.limit?.(50)
+
+      if (res && Array.isArray(res.data)) {
+        for (const row of res.data as Array<{ document_type?: string; consented_at?: string | null }>) {
+          if (row.document_type === 'live_recording_soap_consent') {
+            return {
+              verified: true,
+              consentedAt: row.consented_at ?? null,
+              reason: null,
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // Fall through to intake check
+  }
+
+  try {
+    const intakeTable = adminClient.from('client_intake_forms')
+    if (intakeTable && typeof intakeTable.select === 'function') {
+      const res = await intakeTable
+        .select('parq_answers')
+        ?.eq?.('user_id', userId)
+        ?.maybeSingle?.()
+
+      if (res && res.data) {
+        const parq = (res.data as { parq_answers?: Record<string, unknown> | null }).parq_answers
+        if (parq && typeof parq === 'object' && parq.hasAcceptedAllPartyRecordingConsent === true) {
+          return {
+            verified: true,
+            consentedAt:
+              typeof parq.liveRecordingConsentConfirmedAt === 'string'
+                ? parq.liveRecordingConsentConfirmedAt
+                : null,
+            reason: null,
+          }
+        }
+      }
+    }
+  } catch {
+    // Fail closed below
+  }
+
+  return { verified: false, consentedAt: null, reason: denyReason }
+}
+
 

@@ -98,10 +98,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 400, headers: NO_STORE_HEADERS })
   }
 
-  if (typeof profile.age === 'number' && profile.age < MINIMUM_ATHLETE_AGE) {
+  if (
+    typeof profile.age !== 'number' ||
+    !Number.isFinite(profile.age) ||
+    profile.age < MINIMUM_ATHLETE_AGE
+  ) {
     return NextResponse.json(
       {
-        error: `AI physique concept visualization is strictly restricted to adults aged ${MINIMUM_ATHLETE_AGE} and older.`,
+        error: `AI physique concept visualization is strictly restricted to verified adults aged ${MINIMUM_ATHLETE_AGE} and older.`,
       },
       { status: 403, headers: NO_STORE_HEADERS }
     )

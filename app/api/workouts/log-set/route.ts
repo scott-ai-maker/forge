@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
+import { getRequestAuthz, requireRole, requireActiveClient, AuthzError } from '@/lib/authz'
+import { checkClientMedicalClearanceGate } from '@/lib/liability-shield'
+import { checkClientLegalConsentGate } from '@/lib/legal-compliance'
 import { toValidUuidOrNull } from '@/lib/uuid-utils'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
@@ -59,6 +61,7 @@ export async function POST(req: NextRequest) {
   try {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['client', 'coach'])
+    requireActiveClient(authz.client)
     userId = authz.user.id
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
@@ -89,6 +92,34 @@ export async function POST(req: NextRequest) {
   const validPlanId = toValidUuidOrNull(body.workoutPlanId)
   const validLogId = toValidUuidOrNull(body.workoutLogId)
   const validEventId = toValidUuidOrNull(body.eventId)
+
+  // Verify executed Athletic Liability Waiver & Terms of Service before logging sets
+  const adminClient = supabaseAdmin()
+  const legalGate = await checkClientLegalConsentGate(adminClient, userId, {
+    requireTermsOfService: true,
+    requireLiabilityWaiver: true,
+  })
+  if (!legalGate.verified) {
+    return NextResponse.json(
+      {
+        error: legalGate.reason,
+        code: 'LEGAL_WAIVER_REQUIRED',
+      },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  // Block exercise logging while an un-cleared PAR-Q+ Phase 0 Medical Clearance Hold is active
+  const clearanceGate = await checkClientMedicalClearanceGate(adminClient, userId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      {
+        error: clearanceGate.reason,
+        code: 'MEDICAL_CLEARANCE_REQUIRED',
+      },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
 
   // Strict idempotency guard: prevent network retries from double-counting logged sets
   if (validEventId) {

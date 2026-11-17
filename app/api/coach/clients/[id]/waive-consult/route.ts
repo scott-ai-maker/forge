@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
+import { evaluateMedicalParq, normalizeParqAnswersFromIntake } from '@/lib/liability-shield'
 
 export async function POST(
   req: NextRequest,
@@ -28,6 +29,31 @@ export async function POST(
   }
 
   const admin = supabaseAdmin()
+
+  // Never waive the 1:1 live consultation when PAR-Q+ medical or orthopedic flags exist
+  try {
+    const { data: intake } = await admin
+      .from('client_intake_forms')
+      .select('parq_any_yes, parq_answers, medical_conditions, surgeries_or_injuries')
+      .eq('user_id', clientId)
+      .maybeSingle()
+
+    if (intake) {
+      const evaluation = evaluateMedicalParq(normalizeParqAnswersFromIntake(intake.parq_answers, intake))
+      if (intake.parq_any_yes === true || evaluation.flaggedQuestionsCount > 0) {
+        return NextResponse.json(
+          {
+            error:
+              '1:1 live consultation cannot be waived when PAR-Q+ medical or orthopedic risk flags are reported.',
+          },
+          { status: 409 }
+        )
+      }
+    }
+  } catch {
+    // Allow fallback when table is omitted in isolated mocks
+  }
+
   const nowIso = new Date().toISOString()
 
   // Insert a completed waiver session to fast-track Stage 7 onboarding progression

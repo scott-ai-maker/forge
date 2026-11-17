@@ -12,6 +12,7 @@ import {
   extractPhotoPathFromLegacyUrl,
   normalizePhotoPath,
 } from '@/lib/fitness-photos'
+import { checkClientLegalConsentGate } from '@/lib/legal-compliance'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,7 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
     { data: assessments },
     { data: clientRow },
     { data: intake },
+    legalConsentGate,
   ] = await Promise.all([
     supabase.from('fitness_profiles').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('workout_plans').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(12),
@@ -72,15 +74,29 @@ export default async function FitnessTrackerPage({ searchParams }: FitnessTracke
       .maybeSingle(),
     admin
       .from('clients')
-      .select('id, email')
+      .select('id, email, role')
       .eq('id', user.id)
       .maybeSingle(),
     supabase
       .from('client_intake_forms')
-      .select('parq_answers, parq_any_yes, medical_conditions, surgeries_or_injuries, medications, allergies')
+      .select('parq_answers, parq_any_yes, medical_conditions, surgeries_or_injuries, medications, allergies, consent_liability_waiver')
       .eq('user_id', user.id)
       .maybeSingle(),
+    checkClientLegalConsentGate(admin, user.id, {
+      requireTermsOfService: true,
+      requireLiabilityWaiver: true,
+    }),
   ])
+
+  const isCoachAccount = (clientRow as { role?: string } | null)?.role === 'coach'
+  if (!isCoachAccount) {
+    if (!legalConsentGate.verified) {
+      redirect('/dashboard?requireConsent=1')
+    }
+    if (!profile?.onboarding_completed_at && !intake?.consent_liability_waiver) {
+      redirect('/dashboard/onboarding')
+    }
+  }
 
   const safeProfile = profile || {
     preferred_units: 'imperial' as const,

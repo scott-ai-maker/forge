@@ -9,12 +9,22 @@ const {
   isWithinSmsQuietHoursMock,
   resendSendMock,
   insertMsgMock,
+  insertQueueMock,
+  entitlementRowsRef,
+  packageRowsRef,
+  checkEntitlementsRef,
 } = vi.hoisted(() => ({
   getRequestAuthzMock: vi.fn(),
   sendSmsMock: vi.fn(),
   isWithinSmsQuietHoursMock: vi.fn(),
   resendSendMock: vi.fn(),
   insertMsgMock: vi.fn(),
+  insertQueueMock: vi.fn(),
+  entitlementRowsRef: { current: [] as Array<{ addon_id: string }> },
+  packageRowsRef: {
+    current: [] as Array<{ package_name: string; sessions_remaining: number; expires_at?: string | null }>,
+  },
+  checkEntitlementsRef: { current: false },
 }))
 
 vi.mock('@/lib/authz', async () => {
@@ -35,9 +45,31 @@ vi.mock('resend', () => ({
 
 vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: () => ({
-    from: () => ({
-      insert: insertMsgMock,
-    }),
+    from: (table: string) => {
+      if (table === 'coach_client_messages') {
+        return { insert: insertMsgMock }
+      }
+      if (table === 'client_telemetry_events') {
+        return { insert: insertQueueMock }
+      }
+      if (checkEntitlementsRef.current && table === 'client_addon_entitlements') {
+        return {
+          select: () => ({
+            eq: () => ({
+              gt: async () => ({ data: entitlementRowsRef.current, error: null }),
+            }),
+          }),
+        }
+      }
+      if (checkEntitlementsRef.current && table === 'client_packages') {
+        return {
+          select: () => ({
+            eq: async () => ({ data: packageRowsRef.current, error: null }),
+          }),
+        }
+      }
+      return { insert: insertMsgMock }
+    },
   }),
 }))
 
@@ -48,6 +80,9 @@ describe('/api/coach/escalate', () => {
     vi.clearAllMocks()
     vi.unstubAllEnvs()
     resetRateLimiterForTests()
+    entitlementRowsRef.current = []
+    packageRowsRef.current = []
+    checkEntitlementsRef.current = false
 
     getRequestAuthzMock.mockResolvedValue({
       user: { id: 'client-uuid-1', email: 'member@forge-athletic.app', user_metadata: {} },
@@ -62,10 +97,11 @@ describe('/api/coach/escalate', () => {
     sendSmsMock.mockResolvedValue({ sent: true })
     resendSendMock.mockResolvedValue({ data: { id: 'email_1' }, error: null })
     insertMsgMock.mockResolvedValue({ error: null })
+    insertQueueMock.mockResolvedValue({ error: null })
   })
 
-  it('rejects unauthenticated requests in production even when NEXT_PUBLIC_ALLOW_ANON_PREVIEW is true', async () => {
-    vi.stubEnv('NODE_ENV', 'production')
+  it('rejects unauthenticated requests across all environments even when NEXT_PUBLIC_ALLOW_ANON_PREVIEW is true', async () => {
+    vi.stubEnv('NODE_ENV', 'development')
     vi.stubEnv('NEXT_PUBLIC_ALLOW_ANON_PREVIEW', 'true')
     getRequestAuthzMock.mockRejectedValueOnce(new AuthzError('Unauthorized', 401))
 
@@ -92,7 +128,7 @@ describe('/api/coach/escalate', () => {
     expect(res.status).toBe(400)
   })
 
-  it('routes Core Lab ($19.99) escalations to 24-48h Direct Email and scrubs PII', async () => {
+  it('routes Core Lab escalations to Direct Email + durable Coach Thread & Safety Queue and scrubs PII', async () => {
     vi.stubEnv('RESEND_API_KEY', 're_test_key')
 
     const req = new NextRequest('http://localhost:3000/api/coach/escalate', {
@@ -119,6 +155,10 @@ describe('/api/coach/escalate', () => {
     expect(data.channelUsed).toBe('email')
     expect(data.slaBadge).toBe('24–48h Email Window')
     expect(data.emailDispatched).toBe(true)
+    expect(data.threadInserted).toBe(true)
+    expect(data.safetyQueueInserted).toBe(true)
+    expect(insertMsgMock).toHaveBeenCalledTimes(1)
+    expect(insertQueueMock).toHaveBeenCalledTimes(1)
     expect(sendSmsMock).not.toHaveBeenCalled()
 
     const emailPayload = resendSendMock.mock.calls[0][0]
@@ -127,9 +167,54 @@ describe('/api/coach/escalate', () => {
     expect(emailPayload.text).toContain('Phase 02 (20m Express ON)')
   })
 
-  it('routes Coach Support ($199) to 24h Priority SLA SMS + in-app thread and overrides quiet hours for active safety flags', async () => {
-    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co')
-    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'srv_test_key')
+  it('returns 503 Service Unavailable (never a silent 200 OK drop) when both DB persistence and Resend fail', async () => {
+    vi.stubEnv('RESEND_API_KEY', 're_broken_key')
+    insertMsgMock.mockResolvedValueOnce({ error: { message: 'db down' } })
+    insertQueueMock.mockResolvedValueOnce({ error: { message: 'db down' } })
+    resendSendMock.mockResolvedValueOnce({ data: null, error: { message: 'Invalid API key' } })
+
+    const req = new NextRequest('http://localhost:3000/api/coach/escalate', {
+      method: 'POST',
+      body: JSON.stringify({
+        tierId: 'core_lab',
+        sourceContext: 'safety_override',
+        question: 'Sharp lumbar pain during deadlifts.',
+        telemetrySummary: { safetyFlagActive: true },
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(503)
+    const data = await res.json()
+    expect(data.ok).toBe(false)
+    expect(data.mailtoHref).toContain('mailto:')
+  })
+
+  it('prevents a Core Lab user from spoofing tierId="coach_support" to trigger Twilio SMS', async () => {
+    checkEntitlementsRef.current = true
+    entitlementRowsRef.current = [] // zero paid Coach Support entitlements
+    packageRowsRef.current = []
+    vi.stubEnv('COACH_GORDON_SMS_NUMBER', '+15550001111')
+
+    const req = new NextRequest('http://localhost:3000/api/coach/escalate', {
+      method: 'POST',
+      body: JSON.stringify({
+        tierId: 'coach_support',
+        question: 'Trying to spoof priority SMS without Coach Support subscription',
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    expect(data.tierId).toBe('core_lab')
+    expect(data.channelUsed).toBe('email')
+    expect(sendSmsMock).not.toHaveBeenCalled()
+  })
+
+  it('routes verified Coach Support to 24h Priority SLA SMS + in-app thread and overrides quiet hours for active safety flags', async () => {
+    checkEntitlementsRef.current = true
+    entitlementRowsRef.current = [{ addon_id: 'forge-transformation-direct' }]
     vi.stubEnv('COACH_GORDON_SMS_NUMBER', '+15550001111')
     isWithinSmsQuietHoursMock.mockReturnValue(true)
 
@@ -155,9 +240,11 @@ describe('/api/coach/escalate', () => {
     expect(data.channelUsed).toBe('sms_priority')
     expect(data.slaBadge).toBe('24h Priority SLA')
     expect(data.threadInserted).toBe(true)
+    expect(data.safetyQueueInserted).toBe(true)
     expect(data.smsDispatched).toBe(true)
     expect(data.quietHoursHeld).toBe(false)
     expect(insertMsgMock).toHaveBeenCalledTimes(1)
+    expect(insertQueueMock).toHaveBeenCalledTimes(1)
     expect(sendSmsMock).toHaveBeenCalledTimes(1)
   })
 

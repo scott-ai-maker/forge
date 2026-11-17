@@ -766,7 +766,7 @@ export default function CoachProgramPreviewCanvas({
                               {(ex.block || 'resistance').replace(/_/g, ' ')}
                             </span>
                             <span style={{ fontSize: 11, color: '#94A3B8' }}>
-                              {ex.nasmClinicalSource || 'NASM Edge Catalog'}
+                              {ex.nasmClinicalSource || 'Forge Athletic Movement Library'}
                             </span>
                           </div>
 

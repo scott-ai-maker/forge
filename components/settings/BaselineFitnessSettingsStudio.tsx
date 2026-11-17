@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { selectOnFocus, sanitizeNumericInput } from '@/lib/form-input-helpers'
+import { validateAdultAthleteEligibility } from '@/lib/legal-compliance'
 import { triggerHaptic } from '@/lib/offline-sync-queue'
 import GaaIcon from '@/components/ui/GaaIcon'
 import {
@@ -314,6 +315,19 @@ export default function BaselineFitnessSettingsStudio({
     const targetWeightKg = isMetric
       ? toNumber(form.targetWeightKg)
       : poundsToKg(toNumber(form.targetWeightLb))
+
+    const ageValidation = validateAdultAthleteEligibility({
+      age: form.age,
+      requireAgeOrDob: true,
+    })
+    if (!ageValidation.valid) {
+      setStatusMessage({
+        type: 'error',
+        text: ageValidation.error || 'Forge Athletic is restricted to adults aged 18 and older.',
+      })
+      setSaving(false)
+      return
+    }
 
     if (!heightCm || !weightKg) {
       setStatusMessage({ type: 'error', text: 'Height and weight are required.' })

@@ -11,7 +11,12 @@ import {
 } from '@/lib/discount-codes'
 import { getForgeMembership, getForgeMembershipPrice } from '@/lib/forge-memberships'
 import { getForgeAddon } from '@/lib/forge-addons'
-import { LEGAL_DOCUMENTS } from '@/lib/legal-compliance'
+import {
+  LEGAL_DOCUMENTS,
+  checkClientLegalConsentGate,
+  extractRequestIp,
+  recordLegalConsentAudit,
+} from '@/lib/legal-compliance'
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,6 +73,49 @@ export async function POST(req: NextRequest) {
       (!addonId || typeof addonId !== 'string')
     ) {
       return NextResponse.json({ error: 'packageId, productId, or addonId is required' }, { status: 400 })
+    }
+
+    if (
+      authz.client.role === 'client' &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    ) {
+      try {
+        const { supabaseAdmin } = await import('@/lib/supabase')
+        const admin = supabaseAdmin()
+
+        if (body?.acceptedTerms === true) {
+          await recordLegalConsentAudit({
+            adminClient: admin,
+            userId,
+            documentTypes: ['terms_of_service', 'privacy_policy'],
+            typedSignature: authz.client.full_name ?? null,
+            ipAddress: extractRequestIp(req.headers),
+            userAgent: req.headers.get('user-agent'),
+            metadata: {
+              flow: 'stripe_checkout_clickwrap',
+              packageId: packageId || productId || addonId,
+            },
+          })
+        } else {
+          const legalGate = await checkClientLegalConsentGate(admin, userId, {
+            requireTermsOfService: true,
+            requireLiabilityWaiver: false,
+          })
+          if (!legalGate.verified) {
+            return NextResponse.json(
+              {
+                error:
+                  'Please review and accept the Forge Athletic Terms of Service & Privacy Policy before completing checkout.',
+                code: 'LEGAL_CONSENT_REQUIRED',
+              },
+              { status: 403 }
+            )
+          }
+        }
+      } catch {
+        // Non-fatal in isolated environments without DB bindings
+      }
     }
 
     const { stripe, PACKAGES, COACHING_ADDONS, STANDALONE_PRODUCTS } = await import('@/lib/stripe')

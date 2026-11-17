@@ -159,7 +159,7 @@ export default function ExerciseVideoModal({
           </button>
         </div>
 
-        {/* Visual Hero: Official GAA Form Photography & NASM Edge Video */}
+        {/* Visual Hero: Sovereign Forge Athletic Studio Photography & Video Loop */}
         <div
           style={{
             background: 'rgba(0,0,0,0.5)',
@@ -167,7 +167,7 @@ export default function ExerciseVideoModal({
             padding: '16px 20px',
           }}
         >
-          {(card.studioVideoUrl || (card.embedUrl && (card.imageUrl || card.fallbackImageUrl))) && (
+          {(card.studioVideoUrl || (card.embedUrl && card.embedUrl !== card.studioVideoUrl && (card.imageUrl || card.fallbackImageUrl))) && (
             <div role="group" aria-label="Exercise demonstration media format" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
               {card.studioVideoUrl && (
                 <button
@@ -243,7 +243,7 @@ export default function ExerciseVideoModal({
                 />
                 <span>Verified Form Photo</span>
               </button>
-              {card.embedUrl && (
+              {card.embedUrl && card.embedUrl !== card.studioVideoUrl && (
                 <button
                   type="button"
                   aria-pressed={activeMediaTab === 'video'}
@@ -353,20 +353,43 @@ export default function ExerciseVideoModal({
                 boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
               }}
             >
-              <iframe
-                src={card.embedUrl}
-                title={`Official NASM Exercise Video: ${card.name}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                }}
-              />
+              {card.embedUrl.startsWith('/') || card.embedUrl.endsWith('.mp4') ? (
+                <video
+                  src={card.embedUrl}
+                  poster={card.candidateStudioImageUrl || card.imageUrl || undefined}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  controls
+                  controlsList="nodownload noplaybackrate"
+                  disablePictureInPicture
+                  onContextMenu={e => e.preventDefault()}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <iframe
+                  src={card.embedUrl}
+                  title={`Forge Athletic Exercise Video: ${card.name}`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                  }}
+                />
+              )}
             </div>
           ) : card.imageUrl || card.fallbackImageUrl ? (
             <div
@@ -860,39 +883,19 @@ export default function ExerciseVideoModal({
               paddingTop: 14,
             }}
           >
-            {card.videoUrl ? (
-              <a
-                href={card.videoUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  color: 'var(--gold-lt)',
-                  fontSize: 12,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  fontWeight: 600,
-                }}
-              >
-                <GaaIcon name="video-studio" size={13} tone="ruby" />
-                <span>Open Official NASM Edge Video in YouTube ↗</span>
-              </a>
-            ) : (
-              <span
-                style={{
-                  color: 'var(--gray)',
-                  fontSize: 12,
-                  fontStyle: 'italic',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                <GaaIcon name="video-studio" size={13} tone="slate" />
-                <span>Video Demo Available via NASM Edge</span>
-              </span>
-            )}
+            <span
+              style={{
+                color: 'var(--gray)',
+                fontSize: 12,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                fontWeight: 600,
+              }}
+            >
+              <GaaIcon name="video-studio" size={13} tone="gold" />
+              <span>Forge Athletic Studio Biomechanical Reference</span>
+            </span>
 
             <button
               type="button"

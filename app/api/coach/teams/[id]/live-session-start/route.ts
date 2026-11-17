@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, AuthzError } from '@/lib/authz'
-import { dispatchTeamLiveSessionAlert } from '@/lib/teams-server'
-import { enforceRateLimit } from '@/lib/rate-limit'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  _context: { params: Promise<{ id: string }> }
 ) {
   let authz
   try {
@@ -25,36 +23,12 @@ export async function POST(
     )
   }
 
-  const { id: teamId } = await context.params
-
-  const rl = await enforceRateLimit({
-    key: `team-live-start:${authz.user.id}:${teamId}`,
-    limit: 10,
-    windowSeconds: 300,
-    route: '/api/coach/teams/[id]/live-session-start',
-    dimension: 'user',
-  })
-  if (!rl.allowed) {
-    return NextResponse.json(
-      { error: 'Too many team live session alerts sent recently. Please wait a few minutes.' },
-      { status: 429, headers: NO_STORE_HEADERS }
-    )
-  }
-
-  try {
-    const result = await dispatchTeamLiveSessionAlert(teamId, authz.user.id, authz.user.email)
-    return NextResponse.json(
-      {
-        success: true,
-        notifiedCount: result.notifiedCount,
-        teamName: result.teamName,
-        message: `Alert dispatched to ${result.notifiedCount} team members of ${result.teamName}.`,
-      },
-      { headers: NO_STORE_HEADERS }
-    )
-  } catch (err) {
-    const status = err instanceof AuthzError ? err.status : 500
-    const message = err instanceof Error ? err.message : 'Failed to dispatch team alert'
-    return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
-  }
+  return NextResponse.json(
+    {
+      error:
+        'Team Live Studio is disabled. Launch a 1:1 Live Coaching session instead so each athlete has a verified Emergency Response Action Plan (ERAP).',
+      teamStudioDisabled: true,
+    },
+    { status: 410, headers: NO_STORE_HEADERS }
+  )
 }

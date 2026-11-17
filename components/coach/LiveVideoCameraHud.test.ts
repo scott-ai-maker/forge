@@ -189,12 +189,12 @@ describe('Live Video Camera HUD Architecture & WebRTC Bridge', () => {
     expect(result.isUncropped).toBe(true)
   })
 
-  it('attaches official NASM Edge demonstration thumbnail image and kinetic cues to compare form benchmark model', () => {
+  it('attaches sovereign Forge Athletic Studio thumbnail image and kinetic cues to compare form benchmark model', () => {
     function resolveBenchmarkDetails(exerciseName: string) {
       const isSquat = exerciseName.toLowerCase().includes('squat')
       return {
         exerciseName,
-        imageUrl: isSquat ? 'https://img.youtube.com/vi/W9jJaI4cHJU/hqdefault.jpg' : null,
+        imageUrl: isSquat ? '/images/exercises/barbell-back-squat.jpg' : null,
         hasVideoDemo: isSquat,
         cues: [
           'Shin parallel to torso angle at parallel depth.',
@@ -204,7 +204,7 @@ describe('Live Video Camera HUD Architecture & WebRTC Bridge', () => {
     }
 
     const squatDetails = resolveBenchmarkDetails('Barbell Back Squat')
-    expect(squatDetails.imageUrl).toContain('img.youtube.com')
+    expect(squatDetails.imageUrl).toContain('/images/exercises/')
     expect(squatDetails.hasVideoDemo).toBe(true)
     expect(squatDetails.cues).toHaveLength(2)
   })
@@ -220,11 +220,11 @@ describe('Live Video Camera HUD Architecture & WebRTC Bridge', () => {
       demoModalState = null
     }
 
-    openDemo('Barbell Bench Press', 'https://www.youtube-nocookie.com/embed/CayG6UYqL8g')
+    openDemo('Barbell Bench Press', '/videos/exercises/barbell-bench-press.mp4')
     const activeState = demoModalState as { isOpen: boolean; embedUrl?: string | null; name: string } | null
     expect(activeState?.isOpen).toBe(true)
     expect(activeState?.name).toBe('Barbell Bench Press')
-    expect(activeState?.embedUrl).toContain('CayG6UYqL8g')
+    expect(activeState?.embedUrl).toBe('/videos/exercises/barbell-bench-press.mp4')
 
     closeDemo()
     expect(demoModalState).toBeNull()

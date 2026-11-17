@@ -50,7 +50,26 @@ describe('liability-shield', () => {
     expect(res.erapRecord?.localEmergencyDispatchPhone).toBe('541-555-0911')
   })
 
-  it('triggers physician clearance required and locks Phase 4/5 for chest pain or dizziness', () => {
+  it('marks ERAP incomplete if only bare 911 is supplied instead of a 10-digit local municipal dispatch phone', () => {
+    const res = evaluateMedicalParq({
+      hasHeartCondition: false,
+      experiencesChestPain: false,
+      experiencesDizzinessOrSyncope: false,
+      hasBoneOrJointProblem: false,
+      takesBloodPressureOrHeartMedication: false,
+      hasChronicSpinalOrDiscCondition: false,
+      hasRecentSurgeryOrInjury: false,
+      workoutStreetAddress: '742 Evergreen Terrace',
+      workoutCity: 'Springfield',
+      workoutState: 'OR',
+      workoutPostalCode: '97477',
+      localEmergencyDispatchPhone: '911',
+    })
+
+    expect(res.erapRecord?.isErapComplete).toBe(false)
+  })
+
+  it('triggers physician clearance required and imposes a Phase 0 complete exercise halt for chest pain or dizziness', () => {
     const res = evaluateMedicalParq({
       hasHeartCondition: false,
       experiencesChestPain: true,
@@ -63,7 +82,8 @@ describe('liability-shield', () => {
 
     expect(res.clearanceStatus).toBe('physician_clearance_required')
     expect(res.riskTier).toContain('High Risk')
-    expect(res.maxAllowedOptPhase).toBe(1)
+    expect(res.maxAllowedOptPhase).toBe(0)
+    expect(res.exercisePermitted).toBe(false)
     expect(res.contraindicationTags).toContain('cardiovascular_hypertension')
   })
 

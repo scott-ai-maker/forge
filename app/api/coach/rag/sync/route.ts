@@ -112,11 +112,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const corpusIds = new Set(corpusChunks.map(c => c.id))
+    const staleIds: string[] = []
     const existingHashes = new Map<string, string>()
     for (const row of existingRows || []) {
-      if (row.id && row.content_hash) {
-        existingHashes.set(String(row.id), String(row.content_hash))
+      if (row.id) {
+        const idStr = String(row.id)
+        if (!corpusIds.has(idStr)) {
+          staleIds.push(idStr)
+        } else if (row.content_hash) {
+          existingHashes.set(idStr, String(row.content_hash))
+        }
       }
+    }
+
+    if (staleIds.length > 0) {
+      await admin.from('forge_rag_chunks').delete().in('id', staleIds)
     }
 
     const pendingChunks = corpusChunks.filter(chunk => {

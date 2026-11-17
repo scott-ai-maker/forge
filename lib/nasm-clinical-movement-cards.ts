@@ -5,7 +5,7 @@
  */
 
 import { searchNasmLibraryMedia, EXERCISE_ALIASES } from './nasm-fuzzy-matcher'
-import { cleanExerciseName, resolveExerciseVideoEmbed, extractYouTubeVideoId } from './nasm-exercise-video-catalog'
+import { cleanExerciseName, resolveExerciseVideoEmbed } from './nasm-exercise-video-catalog'
 import { detectExerciseEquipment } from './nasm-equipment-detector'
 import {
   VERIFIED_GAA_EXERCISE_IMAGES,
@@ -1716,57 +1716,68 @@ function getNasmClinicalMovementCardUncached(
     overrides?.primaryEquipment || fuzzyMatch?.record.primaryEquipment
   )
 
-  // Strict Media Verification — 100% Official NASM Edge Video & Verified Luxury GAA Photography
-  const officialVideoResolution = resolveExerciseVideoEmbed(exerciseName, overrides?.videoUrl || (fuzzyMatch?.record.videoUrl ?? null))
-  const directYtId = extractYouTubeVideoId(officialVideoResolution.externalUrl) || extractYouTubeVideoId(officialVideoResolution.embedUrl)
+  // Strict Sovereign Media Verification — 100% First-Party Forge Athletic Studio Video & Photography
+  const isThirdPartyYoutubeUrl = (url?: string | null) =>
+    Boolean(url && /(?:youtube\.com|youtube-nocookie\.com|youtu\.be|ytimg\.com)/i.test(url))
+
+  const sanitizedOverrideVideoUrl =
+    overrides?.videoUrl && !isThirdPartyYoutubeUrl(overrides.videoUrl) ? overrides.videoUrl : null
+  const sanitizedFuzzyVideoUrl =
+    fuzzyMatch?.record.videoUrl && !isThirdPartyYoutubeUrl(fuzzyMatch.record.videoUrl)
+      ? fuzzyMatch.record.videoUrl
+      : null
+  const sanitizedOverrideImageUrl =
+    overrides?.imageUrl && !isThirdPartyYoutubeUrl(overrides.imageUrl) ? overrides.imageUrl : null
+  const sanitizedFuzzyImageUrl =
+    fuzzyMatch?.record.imageUrl && !isThirdPartyYoutubeUrl(fuzzyMatch.record.imageUrl)
+      ? fuzzyMatch.record.imageUrl
+      : null
+
+  const officialVideoResolution = resolveExerciseVideoEmbed(
+    exerciseName,
+    sanitizedOverrideVideoUrl || sanitizedFuzzyVideoUrl
+  )
 
   const verifiedGaaImage = resolveGaaExerciseImage(exerciseName, false)
+  const studioVideoUrl = resolveForgeExerciseVideo(exerciseName)
 
   const hasOfficialNasmMatch = Boolean(
     NASM_MOVEMENT_PROFILES[cleaned] ||
     Object.keys(NASM_MOVEMENT_PROFILES).some(k => cleaned.includes(k) || k.includes(cleaned)) ||
     (fuzzyMatch !== null && fuzzyMatch.score >= 75) ||
-    overrides?.videoUrl ||
-    overrides?.imageUrl ||
-    Boolean(verifiedGaaImage)
+    sanitizedOverrideVideoUrl ||
+    sanitizedOverrideImageUrl ||
+    Boolean(verifiedGaaImage) ||
+    Boolean(studioVideoUrl)
   )
 
-  const officialNasmThumbnail = directYtId && hasOfficialNasmMatch
-    ? `https://img.youtube.com/vi/${directYtId}/hqdefault.jpg`
-    : null
-
-  const isBentOverExtension = cleaned.includes('bent') && (cleaned.includes('extension') || cleaned.includes('kickback'))
-
-  const validCustomOverride = (
-    overrides?.imageUrl &&
-    !overrides.imageUrl.startsWith('/images/exercises/') &&
-    !(isBentOverExtension && overrides.imageUrl.includes('kZ-ReOdn2qk'))
-  )
-    ? overrides.imageUrl
-    : null
+  const validCustomOverride =
+    sanitizedOverrideImageUrl && !sanitizedOverrideImageUrl.startsWith('/images/exercises/')
+      ? sanitizedOverrideImageUrl
+      : null
 
   const candidateStudioImageUrl =
     (verifiedGaaImage && verifiedGaaImage !== BRAND_LOGO_FALLBACK_IMAGE) ? verifiedGaaImage : null
-  const studioVideoUrl = resolveForgeExerciseVideo(exerciseName)
 
-  // Prioritize verified Forge Athletic studio photography first, falling back to official NASM Edge video thumbnail
   const resolvedImageUrl =
     candidateStudioImageUrl ||
-    officialNasmThumbnail ||
-    (hasOfficialNasmMatch && fuzzyMatch?.record.imageUrl ? fuzzyMatch.record.imageUrl : null) ||
+    (hasOfficialNasmMatch && sanitizedFuzzyImageUrl ? sanitizedFuzzyImageUrl : null) ||
     validCustomOverride ||
     null
 
   const resolvedVideoUrl = hasOfficialNasmMatch
     ? (
+        studioVideoUrl ||
         officialVideoResolution.externalUrl ||
-        (overrides?.videoUrl && !(isBentOverExtension && overrides.videoUrl.includes('kZ-ReOdn2qk')) ? overrides.videoUrl : null) ||
-        (fuzzyMatch ? fuzzyMatch.record.videoUrl : null) ||
+        sanitizedOverrideVideoUrl ||
+        sanitizedFuzzyVideoUrl ||
         null
       )
     : null
 
-  const resolvedEmbedUrl = hasOfficialNasmMatch ? (officialVideoResolution.embedUrl || null) : null
+  const resolvedEmbedUrl = hasOfficialNasmMatch
+    ? (studioVideoUrl || officialVideoResolution.embedUrl || null)
+    : null
   const hasOfficialMedia = Boolean(hasOfficialNasmMatch && (resolvedImageUrl || resolvedVideoUrl))
 
   const officialDesc = overrides?.description || fuzzyMatch?.record.description

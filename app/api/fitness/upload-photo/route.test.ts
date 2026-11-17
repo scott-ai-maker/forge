@@ -115,7 +115,10 @@ describe('POST /api/fitness/upload-photo', () => {
       from: vi.fn(() => ({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: { before_photo_path: 'user-123/old.jpg' }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: { before_photo_path: 'user-123/old.jpg', age: 28 },
+          error: null,
+        }),
         update: updateMock,
       })),
       storage: {
@@ -144,5 +147,42 @@ describe('POST /api/fitness/upload-photo', () => {
         before_photo_url: null,
       })
     )
+  })
+
+  it('blocks photo uploads with 403 when user has no adult verified profile or is under 18 (COPPA safeguard)', async () => {
+    const uploadSpy = vi.fn()
+    supabaseAdminMock.mockReturnValueOnce({
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      })),
+      storage: { from: vi.fn(() => ({ upload: uploadSpy })) },
+    })
+
+    const form1 = new FormData()
+    form1.set('photo', new File(['jpeg-bytes'], 'front.jpg', { type: 'image/jpeg' }))
+    const res1 = await POST(
+      new NextRequest('http://localhost/api/fitness/upload-photo', { method: 'POST', body: form1 })
+    )
+    expect(res1!.status).toBe(403)
+    expect(uploadSpy).not.toHaveBeenCalled()
+
+    supabaseAdminMock.mockReturnValueOnce({
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { age: 15 }, error: null }),
+      })),
+      storage: { from: vi.fn(() => ({ upload: uploadSpy })) },
+    })
+
+    const form2 = new FormData()
+    form2.set('photo', new File(['jpeg-bytes'], 'front.jpg', { type: 'image/jpeg' }))
+    const res2 = await POST(
+      new NextRequest('http://localhost/api/fitness/upload-photo', { method: 'POST', body: form2 })
+    )
+    expect(res2!.status).toBe(403)
+    expect(uploadSpy).not.toHaveBeenCalled()
   })
 })

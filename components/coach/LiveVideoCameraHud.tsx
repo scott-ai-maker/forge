@@ -867,7 +867,10 @@ export default function LiveVideoCameraHud({
     }
 
     const isMobileDevice = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
-    if (!isMobileDevice && typeof MediaRecorder !== 'undefined') {
+    const videoTracks = typeof mediaStream.getVideoTracks === 'function' ? mediaStream.getVideoTracks() : []
+    if (!isMobileDevice && typeof MediaRecorder !== 'undefined' && typeof MediaStream !== 'undefined' && videoTracks.length > 0) {
+      // M.G.L. c. 272, § 99 wiretap safeguard: rolling slow-motion telestrator replay captures VIDEO ONLY (zero audio tracks)
+      const videoOnlyStream = new MediaStream(videoTracks)
       const attachDataHandler = (recorder: MediaRecorder) => {
         recorder.ondataavailable = e => {
           if (e.data && e.data.size > 0) {
@@ -881,7 +884,6 @@ export default function LiveVideoCameraHud({
 
       try {
         const candidateMimes = [
-          'video/webm;codecs=vp8,opus',
           'video/webm;codecs=vp8',
           'video/webm',
           'video/mp4',
@@ -891,15 +893,15 @@ export default function LiveVideoCameraHud({
             ? candidateMimes.find(m => MediaRecorder.isTypeSupported(m))
             : undefined
         const recorder = supportedMime
-          ? new MediaRecorder(mediaStream, { mimeType: supportedMime })
-          : new MediaRecorder(mediaStream)
+          ? new MediaRecorder(videoOnlyStream, { mimeType: supportedMime })
+          : new MediaRecorder(videoOnlyStream)
         recorderMimeTypeRef.current = recorder.mimeType || supportedMime || 'video/webm'
         mediaRecorderRef.current = recorder
         attachDataHandler(recorder)
         recorder.start(1000)
       } catch {
         try {
-          const recorder = new MediaRecorder(mediaStream)
+          const recorder = new MediaRecorder(videoOnlyStream)
           recorderMimeTypeRef.current = recorder.mimeType || 'video/webm'
           mediaRecorderRef.current = recorder
           attachDataHandler(recorder)
@@ -3346,7 +3348,7 @@ export default function LiveVideoCameraHud({
         />
       )}
 
-      {/* ── Official NASM Edge Video Demo Modal ── */}
+      {/* ── Forge Athletic Studio Video Demo Modal ── */}
       {demoVideoModal?.isOpen && demoVideoModal.embedUrl && (
         <div
           data-testid="benchmark-demo-video-modal"
@@ -3395,7 +3397,7 @@ export default function LiveVideoCameraHud({
             >
               <div>
                 <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                  Official NASM Edge Demonstration
+                  Forge Athletic Studio Demonstration
                 </div>
                 <h3 id="benchmark-demo-video-title" style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 18, margin: '2px 0 0', color: '#FFF', letterSpacing: '0.04em' }}>
                   {demoVideoModal.name}
@@ -3424,20 +3426,42 @@ export default function LiveVideoCameraHud({
             </div>
 
             <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', background: '#000' }}>
-              <iframe
-                src={demoVideoModal.embedUrl}
-                title={`Official NASM Exercise Demo: ${demoVideoModal.name}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                }}
-              />
+              {demoVideoModal.embedUrl.startsWith('/') || demoVideoModal.embedUrl.endsWith('.mp4') ? (
+                <video
+                  src={demoVideoModal.embedUrl}
+                  controls
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  controlsList="nodownload noplaybackrate"
+                  disablePictureInPicture
+                  onContextMenu={e => e.preventDefault()}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <iframe
+                  src={demoVideoModal.embedUrl}
+                  title={`Forge Athletic Exercise Demo: ${demoVideoModal.name}`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                  }}
+                />
+              )}
             </div>
 
             <div style={{ padding: '12px 18px', background: 'rgba(0, 0, 0, 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11.5, color: 'var(--gray)' }}>

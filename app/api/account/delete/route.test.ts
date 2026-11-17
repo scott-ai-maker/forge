@@ -9,6 +9,8 @@ const {
   adminUpdateMock,
   adminDeleteUserMock,
   transitionClientStatusMock,
+  auditInsertMock,
+  auditUpdateEqMock,
 } = vi.hoisted(() => ({
   getRequestAuthzMock: vi.fn(),
   subscriptionsListMock: vi.fn(),
@@ -16,6 +18,8 @@ const {
   adminUpdateMock: vi.fn(),
   adminDeleteUserMock: vi.fn(),
   transitionClientStatusMock: vi.fn(),
+  auditInsertMock: vi.fn(),
+  auditUpdateEqMock: vi.fn(),
 }))
 
 vi.mock('@/lib/authz', async () => {
@@ -44,19 +48,48 @@ vi.mock('@/lib/client-lifecycle', () => ({
 
 vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: vi.fn(() => ({
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: { email: 'client@example.com', stripe_customer_id: 'cus_client_1' },
-            error: null,
+    from: vi.fn((table: string) => {
+      if (table === 'client_intake_forms') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  consent_liability_waiver: true,
+                  consent_informed_consent: true,
+                  consent_coaching_agreement: true,
+                  consent_signature_name: 'Marcus Vance',
+                  consent_signed_at: '2026-10-01T12:00:00Z',
+                  parq_any_yes: false,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        }
+      }
+      if (table === 'legal_consent_audit_log') {
+        return {
+          insert: auditInsertMock,
+          update: vi.fn().mockReturnValue({
+            eq: auditUpdateEqMock,
+          }),
+        }
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { email: 'client@example.com', stripe_customer_id: 'cus_client_1' },
+              error: null,
+            }),
           }),
         }),
-      }),
-      update: vi.fn().mockReturnValue({
-        eq: adminUpdateMock,
-      }),
-    })),
+        update: vi.fn().mockReturnValue({
+          eq: adminUpdateMock,
+        }),
+      }
+    }),
     auth: {
       admin: {
         deleteUser: adminDeleteUserMock,
@@ -72,11 +105,13 @@ describe('DELETE /api/account/delete', () => {
     vi.clearAllMocks()
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_123')
     getRequestAuthzMock.mockResolvedValue({
-      user: { id: 'client-del-1' },
-      client: { role: 'client' },
+      user: { id: 'client-del-1', email: 'client@example.com' },
+      client: { role: 'client', email: 'client@example.com' },
     })
     adminUpdateMock.mockResolvedValue({ error: null })
     adminDeleteUserMock.mockResolvedValue({ error: null })
+    auditInsertMock.mockResolvedValue({ error: null })
+    auditUpdateEqMock.mockResolvedValue({ error: null })
     subscriptionsListMock.mockResolvedValue({
       data: [
         { id: 'sub_active_1', status: 'active' },
@@ -94,7 +129,7 @@ describe('DELETE /api/account/delete', () => {
     expect(res.status).toBe(401)
   })
 
-  it('cancels active subscriptions, records lifecycle deactivation, and deletes user profile', async () => {
+  it('cancels active subscriptions, preserves pseudonymized waiver defense proof, and deletes user profile', async () => {
     const req = new NextRequest('http://localhost:3000/api/account/delete', { method: 'DELETE' })
     const res = await DELETE(req)
 
@@ -105,6 +140,13 @@ describe('DELETE /api/account/delete', () => {
     // Verify Stripe active subscriptions were cancelled
     expect(subscriptionsCancelMock).toHaveBeenCalledWith('sub_active_1')
     expect(subscriptionsCancelMock).toHaveBeenCalledWith('sub_trial_2')
+
+    // Verify intake waiver & arbitration proof was preserved with deleted_subject_sha256 before auth deletion
+    expect(auditInsertMock).toHaveBeenCalledTimes(1)
+    const preservedRows = auditInsertMock.mock.calls[0][0]
+    expect(preservedRows[0].typed_signature).toBe('Marcus Vance')
+    expect(preservedRows[0].deleted_subject_sha256).toMatch(/^[a-f0-9]{64}$/)
+    expect(auditUpdateEqMock).toHaveBeenCalledWith('user_id', 'client-del-1')
 
     // Verify lifecycle audit transition was logged
     expect(transitionClientStatusMock).toHaveBeenCalledWith(
@@ -120,4 +162,3 @@ describe('DELETE /api/account/delete', () => {
     expect(adminDeleteUserMock).toHaveBeenCalledWith('client-del-1')
   })
 })
-

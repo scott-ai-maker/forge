@@ -62,6 +62,44 @@ describe('sessions book route', () => {
     await expect(res.json()).resolves.toEqual({ error: 'Unauthorized' })
   })
 
+  it('blocks booking with 403 LEGAL_WAIVER_REQUIRED when client has no executed waiver or Terms consent', async () => {
+    supabaseAdminMock.mockReturnValueOnce({
+      rpc: rpcMock,
+      from: (table: string) => {
+        if (table === 'client_intake_forms') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: null, error: null }),
+              }),
+            }),
+          }
+        }
+        if (table === 'legal_consent_audit_log') {
+          return {
+            select: () => ({
+              eq: () => ({
+                limit: async () => ({ data: [], error: null }),
+              }),
+            }),
+          }
+        }
+        return {}
+      },
+    })
+
+    const req = new NextRequest('http://localhost/api/sessions/book', {
+      method: 'POST',
+      body: JSON.stringify({ packageId: 'pkg-1', scheduledAt: '2030-01-01T10:00:00.000Z' }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(403)
+    const body = await res.json()
+    expect(body.code).toBe('LEGAL_WAIVER_REQUIRED')
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
   it('rejects invalid scheduledAt before rpc call', async () => {
     const req = new NextRequest('http://localhost/api/sessions/book', {
       method: 'POST',

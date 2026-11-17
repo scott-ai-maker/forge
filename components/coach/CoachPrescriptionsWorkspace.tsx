@@ -78,7 +78,7 @@ export default function CoachPrescriptionsWorkspace({
                 border: '1px solid rgba(52, 211, 153, 0.3)',
               }}
             >
-              Thorne Dispensary Live
+              Thorne Partner Storefront
             </span>
           </div>
           <h2
@@ -91,10 +91,10 @@ export default function CoachPrescriptionsWorkspace({
               color: 'var(--white)',
             }}
           >
-            TOOLBOXES &amp; SPORTS SUPPLEMENTS
+            TOOLBOXES &amp; PARTNER STOREFRONT
           </h2>
           <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--gray)' }}>
-            Configure targeted movement relief toolkits and evidence-based Thorne supplement guides (15% member discount).
+            Configure targeted movement relief toolkits and share optional goal-based Thorne storefront collections (15% member discount).
           </p>
         </div>
 
@@ -165,7 +165,7 @@ export default function CoachPrescriptionsWorkspace({
             }}
           >
             <GaaIcon name="supplements" size={14} tone={activeSubtab === 'supplements' ? 'gold' : 'slate'} />
-            <span>Sports Supplements (Thorne)</span>
+            <span>Thorne Partner Storefront</span>
           </button>
 
           <button

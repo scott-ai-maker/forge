@@ -272,6 +272,24 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
       expect(data.draftSaved).toBe(true)
       expect(data.profile).toBeDefined()
     })
+
+    it('rejects minor onboarding submissions (< 18) and minor drafts with 403 Forbidden', async () => {
+      const minorSubmit = await POST(
+        new NextRequest('http://localhost/api/fitness/profile', {
+          method: 'POST',
+          body: JSON.stringify({ ...validIntakeBody, age: 15 }),
+        })
+      )
+      expect(minorSubmit.status).toBe(403)
+
+      const minorDraft = await POST(
+        new NextRequest('http://localhost/api/fitness/profile', {
+          method: 'POST',
+          body: JSON.stringify({ saveDraft: true, dateOfBirth: '2014-03-10' }),
+        })
+      )
+      expect(minorDraft.status).toBe(403)
+    })
   })
 
   describe('PATCH /api/fitness/profile', () => {
@@ -326,6 +344,16 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
 
       const res = await PATCH(req)
       expect(res.status).toBe(400)
+    })
+
+    it('rejects underage age (< 18) on PATCH with 403 Forbidden', async () => {
+      const req = new NextRequest('http://localhost/api/fitness/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({ age: 13 }),
+      })
+
+      const res = await PATCH(req)
+      expect(res.status).toBe(403)
     })
   })
 })

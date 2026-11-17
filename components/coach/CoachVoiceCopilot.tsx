@@ -35,7 +35,7 @@ interface SpeechRecognitionInstance extends EventTarget {
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance
 
-export default function CoachVoiceCopilot({ onCommand, isEnabled = true }: CoachVoiceCopilotProps) {
+export default function CoachVoiceCopilot({ onCommand, isEnabled = false }: CoachVoiceCopilotProps) {
   const [isListening, setIsListening] = useState(false)
   const [lastTranscript, setLastTranscript] = useState<string>('')
   const [lastActionFeedback, setLastActionFeedback] = useState<string | null>(null)
@@ -97,7 +97,7 @@ export default function CoachVoiceCopilot({ onCommand, isEnabled = true }: Coach
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || !isEnabled) return
 
     const windowWithSpeech = window as unknown as {
       SpeechRecognition?: SpeechRecognitionConstructor
@@ -158,7 +158,7 @@ export default function CoachVoiceCopilot({ onCommand, isEnabled = true }: Coach
         }
       }
     }
-  }, [handleResult])
+  }, [handleResult, isEnabled])
 
   if (!supported || !isEnabled) return null
 

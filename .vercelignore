@@ -8,3 +8,5 @@ test-results
 out
 build
 .env*
+data/rag-resources
+app/data/rag-sources/*.pdf

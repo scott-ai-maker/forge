@@ -388,6 +388,9 @@ export default function CoachOnboardingProgressionCard({
   const [isSavingData, setIsSavingData] = useState(false)
   const [gateNotes, setGateNotes] = useState('')
   const [clinicalClearanceChecked, setClinicalClearanceChecked] = useState(false)
+  const [physicianName, setPhysicianName] = useState('')
+  const [clearanceDate, setClearanceDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [restrictionsNote, setRestrictionsNote] = useState('')
   const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   // Synchronize when activeTab or profile changes
@@ -563,6 +566,9 @@ export default function CoachOnboardingProgressionCard({
           action: 'authorize',
           notes: gateNotes,
           clinicalClearanceVerified: selectedStageNumber === 2 ? clinicalClearanceChecked : undefined,
+          physicianName: selectedStageNumber === 2 && clinicalClearanceChecked ? physicianName.trim() : undefined,
+          clearanceDate: selectedStageNumber === 2 && clinicalClearanceChecked ? clearanceDate.trim() : undefined,
+          restrictionsNote: selectedStageNumber === 2 && clinicalClearanceChecked ? restrictionsNote.trim() : undefined,
         }),
       })
 
@@ -1321,17 +1327,17 @@ export default function CoachOnboardingProgressionCard({
                   {currentGate.status === 'blocked' && selectedStage.stageNumber === 2 && (
                     <button
                       type="button"
-                      disabled={isAuthorizing || !clinicalClearanceChecked}
+                      disabled={isAuthorizing || !clinicalClearanceChecked || physicianName.trim().length < 3 || !clearanceDate}
                       onClick={handleAuthorizeGate}
                       className="tactile-btn"
                       style={{
                         padding: '9px 18px',
                         borderRadius: 6,
-                        background: clinicalClearanceChecked ? 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)' : 'rgba(255,255,255,0.1)',
-                        color: clinicalClearanceChecked ? '#080E14' : '#94A3B8',
+                        background: clinicalClearanceChecked && physicianName.trim().length >= 3 && clearanceDate ? 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)' : 'rgba(255,255,255,0.1)',
+                        color: clinicalClearanceChecked && physicianName.trim().length >= 3 && clearanceDate ? '#080E14' : '#94A3B8',
                         fontSize: 12.5,
                         fontWeight: 800,
-                        cursor: clinicalClearanceChecked ? 'pointer' : 'not-allowed',
+                        cursor: clinicalClearanceChecked && physicianName.trim().length >= 3 && clearanceDate ? 'pointer' : 'not-allowed',
                       }}
                     >
                       {isAuthorizing ? 'Authorizing...' : 'Authorize with Physician Clearance ➔'}
@@ -1363,28 +1369,72 @@ export default function CoachOnboardingProgressionCard({
                 </div>
               </div>
 
-              {/* Special Checkbox for Step 2 Physician Clearance Verification */}
+              {/* Special Checkbox & Physician Attestation for Step 2 Physician Clearance Verification */}
               {selectedStage.stageNumber === 2 && (currentGate.status === 'blocked' || (currentGate.status === 'awaiting_authorization' && hasParqRisk)) && (
                 <div
                   style={{
                     marginTop: 12,
                     paddingTop: 10,
                     borderTop: '1px solid rgba(255,255,255,0.08)',
-                    display: 'flex',
-                    alignItems: 'center',
+                    display: 'grid',
                     gap: 10,
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    id="clinical-clearance-check"
-                    checked={clinicalClearanceChecked}
-                    onChange={e => setClinicalClearanceChecked(e.target.checked)}
-                    style={{ width: 16, height: 16, cursor: 'pointer' }}
-                  />
-                  <label htmlFor="clinical-clearance-check" style={{ fontSize: 12, color: 'var(--white)', cursor: 'pointer', fontWeight: 600 }}>
-                    I confirm that the athlete's physician medical clearance documentation has been verified and logged in records.
-                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <input
+                      type="checkbox"
+                      id="clinical-clearance-check"
+                      checked={clinicalClearanceChecked}
+                      onChange={e => setClinicalClearanceChecked(e.target.checked)}
+                      style={{ width: 16, height: 16, cursor: 'pointer' }}
+                    />
+                    <label htmlFor="clinical-clearance-check" style={{ fontSize: 12, color: 'var(--white)', cursor: 'pointer', fontWeight: 600 }}>
+                      I confirm that written physician medical clearance documentation has been verified and archived on file.
+                    </label>
+                  </div>
+
+                  {clinicalClearanceChecked && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                      <div>
+                        <label htmlFor="clearance-md-name" style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: 'var(--gold-lt)', marginBottom: 4 }}>
+                          Clearing Physician Name *
+                        </label>
+                        <input
+                          id="clearance-md-name"
+                          type="text"
+                          value={physicianName}
+                          onChange={e => setPhysicianName(e.target.value)}
+                          placeholder="e.g. Dr. Sarah Chen, MD"
+                          style={{ width: '100%', padding: '7px 10px', borderRadius: 5, background: '#09111E', border: '1px solid rgba(255,255,255,0.16)', color: '#FFFFFF', fontSize: 12 }}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="clearance-md-date" style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: 'var(--gold-lt)', marginBottom: 4 }}>
+                          Clearance Date *
+                        </label>
+                        <input
+                          id="clearance-md-date"
+                          type="date"
+                          value={clearanceDate}
+                          onChange={e => setClearanceDate(e.target.value)}
+                          style={{ width: '100%', padding: '7px 10px', borderRadius: 5, background: '#09111E', border: '1px solid rgba(255,255,255,0.16)', color: '#FFFFFF', fontSize: 12 }}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="clearance-md-notes" style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: 'var(--gold-lt)', marginBottom: 4 }}>
+                          MD Restrictions (Optional)
+                        </label>
+                        <input
+                          id="clearance-md-notes"
+                          type="text"
+                          value={restrictionsNote}
+                          onChange={e => setRestrictionsNote(e.target.value)}
+                          placeholder="e.g. Keep HR < 150 bpm, avoid Valsalva"
+                          style={{ width: '100%', padding: '7px 10px', borderRadius: 5, background: '#09111E', border: '1px solid rgba(255,255,255,0.16)', color: '#FFFFFF', fontSize: 12 }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

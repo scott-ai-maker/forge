@@ -11,6 +11,12 @@ import {
   autoGenerateOrUpdateClientWorkoutPlan,
   CORE_TRAINING_PROFILE_FIELDS,
 } from '@/lib/client-plan-auto-generator'
+import {
+  extractRequestIp,
+  isValidLegalSignature,
+  recordLegalConsentAudit,
+  validateAdultAthleteEligibility,
+} from '@/lib/legal-compliance'
 
 const OFFICIAL_EXERCISE_SOURCES = ['nasm_exercise_library']
 const EXCLUDED_EQUIPMENT_TERMS = ['chains', 'chain', 'safety collar', 'safety collars', 'none', 'no equipment']
@@ -120,6 +126,16 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
   const isDraft = Boolean(body.saveDraft)
+
+  const ageCheck = validateAdultAthleteEligibility({
+    dateOfBirth: body.dateOfBirth,
+    age: body.age,
+    requireAgeOrDob: !isDraft,
+  })
+  if (!ageCheck.valid) {
+    return NextResponse.json({ error: ageCheck.error }, { status: ageCheck.status })
+  }
+
   const intake = typeof body.intake === 'object' && body.intake ? body.intake : {}
   const parq = typeof intake.parqAnswers === 'object' && intake.parqAnswers ? intake.parqAnswers as Record<string, unknown> : {}
   const parqKeys = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7'] as const
@@ -135,7 +151,10 @@ export async function POST(req: NextRequest) {
     privacyPractices: Boolean(intake.privacyPractices),
     coachingAgreement: Boolean(intake.coachingAgreement),
     emergencyCare: Boolean(intake.emergencyCare),
-    virtualTelehealth: Boolean(intake.virtualTelehealth || intake.liabilityWaiver),
+    virtualTelehealth:
+      intake.virtualTelehealth === undefined
+        ? Boolean(intake.liabilityWaiver)
+        : Boolean(intake.virtualTelehealth),
   }
 
   if (!isDraft && !Object.values(consents).every(Boolean)) {
@@ -146,7 +165,7 @@ export async function POST(req: NextRequest) {
   const emergencyContactName = String(intake.emergencyContactName ?? '').trim()
   const emergencyContactPhone = String(intake.emergencyContactPhone ?? '').trim()
 
-  if (!isDraft && !signatureName) {
+  if (!isDraft && !isValidLegalSignature(signatureName)) {
     return NextResponse.json({ error: 'Full legal name is required for electronic signature.' }, { status: 400 })
   }
 
@@ -211,7 +230,8 @@ export async function POST(req: NextRequest) {
   const payload: Record<string, unknown> = {
     user_id: userId,
     preferred_units: body.preferredUnits === 'imperial' ? 'imperial' : 'metric',
-    age: body.age ? Number(body.age) : null,
+    age: ageCheck.resolvedAge,
+    ...(ageCheck.normalizedDob ? { date_of_birth: ageCheck.normalizedDob } : {}),
     sex: body.sex ?? null,
     height_cm: body.heightCm ? Number(body.heightCm) : null,
     weight_kg: body.weightKg ? Number(body.weightKg) : null,
@@ -264,6 +284,28 @@ export async function POST(req: NextRequest) {
       .upsert(intakePayload, { onConflict: 'user_id' })
 
     if (intakeError && !isDraft) return NextResponse.json({ error: intakeError.message }, { status: 500 })
+
+    if (!isDraft) {
+      await recordLegalConsentAudit({
+        adminClient: supabaseAdmin(),
+        userId,
+        documentTypes: [
+          'terms_of_service',
+          'privacy_policy',
+          'consumer_health_biometric_policy',
+          'athletic_liability_waiver',
+        ],
+        typedSignature: signatureName,
+        ipAddress: extractRequestIp(req.headers),
+        userAgent: req.headers.get('user-agent'),
+        consentedAt: intakePayload.consent_signed_at,
+        metadata: {
+          flow: 'onboarding_profile_submission',
+          parqAnyYes,
+          virtualTelehealthConsent: Boolean(consents.virtualTelehealth),
+        },
+      })
+    }
   }
 
   const { data, error } = await supabaseAdmin()
@@ -328,7 +370,20 @@ export async function PATCH(req: NextRequest) {
     updates.preferred_units = units
   }
 
-  if ('age' in body) updates.age = body.age ? Number(body.age) : null
+  if ('age' in body || 'dateOfBirth' in body) {
+    const ageCheck = validateAdultAthleteEligibility({
+      dateOfBirth: body.dateOfBirth,
+      age: body.age,
+      requireAgeOrDob: true,
+    })
+    if (!ageCheck.valid) {
+      return NextResponse.json({ error: ageCheck.error }, { status: ageCheck.status })
+    }
+    updates.age = ageCheck.resolvedAge
+    if (ageCheck.normalizedDob) {
+      updates.date_of_birth = ageCheck.normalizedDob
+    }
+  }
   if ('sex' in body) updates.sex = body.sex ?? null
   if ('heightCm' in body) updates.height_cm = body.heightCm ? Number(body.heightCm) : null
   if ('weightKg' in body) updates.weight_kg = body.weightKg ? Number(body.weightKg) : null

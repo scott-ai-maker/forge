@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseParqMedicationsAndConditions } from '@/lib/muscle-recovery-telemetry'
-import { generateSupplementStack } from '@/lib/supplement-prescriptions'
+import { evaluateIntakePhysicianConsultFlag } from '@/lib/supplement-prescriptions'
 import type { ClientIntakeData } from './hub-views/CoachAdvisoryView'
 import type { HubProfileData } from './hub-views/FitnessLabDiagnosticsView'
 
@@ -88,24 +88,14 @@ describe('CoachAdvisoryView Client Needs & Current Medicines Integration', () =>
     expect(parsed.takingAnticoagulants).toBe(false)
   })
 
-  it('triggers pharmacological contraindication shields when generating supplement stacks for detected meds', () => {
-    // When intake reports blood pressure medications
-    const stack = generateSupplementStack({
-      goal: 'athletic_power',
-      age: 42,
-      sex: 'male',
-      fitnessLevel: 'intermediate',
-      healthConditions: {
-        takingAntihypertensives: true,
-      },
+  it('displays mandatory physician/pharmacist consultation notice when intake reports medications', () => {
+    const consultAlert = evaluateIntakePhysicianConsultFlag({
+      parq_any_yes: true,
+      medications: 'Lisinopril 10mg daily',
+      medical_conditions: 'Essential hypertension',
     })
 
-    // Pre-workout stimulants and high-potassium electrolytes should be suppressed
-    expect(stack.drugInteractions.length).toBeGreaterThan(0)
-    const bpAlert = stack.drugInteractions.find(i =>
-      i.medicationCategory.includes('Antihypertensive')
-    )
-    expect(bpAlert).toBeDefined()
-    expect(bpAlert?.actionDirective).toContain('Suppressed all caffeine anhydrous pre-workouts')
+    expect(consultAlert.requiresPhysicianConsultNotice).toBe(true)
+    expect(consultAlert.message).toContain('prescribing physician or licensed pharmacist')
   })
 })

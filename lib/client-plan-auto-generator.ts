@@ -17,6 +17,11 @@
 import { supabaseAdmin } from './supabase'
 import { parseInjuriesFromText } from './sports-injuries'
 import {
+  checkClientMedicalClearanceGate,
+  evaluateMedicalParq,
+  normalizeParqAnswersFromIntake,
+} from './liability-shield'
+import {
   recommendPeriodizationFromScans,
   generateProgramDesignFromScans,
   ClientOnboardingProfileInput,
@@ -146,6 +151,34 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
     return { status: 'skipped', message: 'No fitness profile found for client.' }
   }
 
+  // Enforce ACSM / PAR-Q+ Phase 0 Medical Clearance Hold before synthesizing or updating any workout plan
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, clientId)
+  const parqEval = intakeRecord
+    ? evaluateMedicalParq(normalizeParqAnswersFromIntake(intakeRecord.parq_answers, intakeRecord))
+    : clearanceGate.evaluation
+
+  if (clearanceGate.blocked || (parqEval.clearanceStatus === 'physician_clearance_required' && !clearanceGate.stage2PhysicianCleared)) {
+    const coachId = clientRecord?.designated_coach_id
+    if (coachId) {
+      try {
+        await admin.from('coach_client_messages').insert({
+          client_id: clientId,
+          coach_id: coachId,
+          sender_id: clientId,
+          message_body: `[Medical Clearance Hold — Phase 0]: Automated workout program generation was blocked because PAR-Q+ flagged acute cardiovascular or syncope criteria (${parqEval.flaggedItems.join(', ')}). Written physician clearance must be verified in Stage 2 before programming.`,
+        })
+      } catch {
+        // Non-blocking coach alert
+      }
+    }
+    return {
+      status: 'skipped',
+      message:
+        clearanceGate.reason ||
+        'Medical Clearance Hold (Phase 0): Written physician clearance is required before generating an exercise program.',
+    }
+  }
+
   const latestPlan = existingPlans?.[0] ?? null
   const planJson = (latestPlan?.plan_json as Record<string, unknown> | undefined) ?? null
 
@@ -196,6 +229,9 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
   // 3. Prepare AI synthesis inputs
   const injuries = (profileRecord.injuries_limitations || intakeRecord?.surgeries_or_injuries || intakeRecord?.medical_conditions || undefined) as string | undefined
   const detectedInjuries = parseInjuriesFromText(injuries)
+  const mergedContraindicationTags = Array.from(
+    new Set([...detectedInjuries.selectedInjuryIds, ...parqEval.contraindicationTags])
+  )
 
   const effectiveGoal = params.fitnessGoal || profileRecord.fitness_goal || 'Body Recomposition & Joint Longevity'
   const effectiveDays = Math.min(6, Math.max(2, Number(params.trainingDaysPerWeek || profileRecord.training_days_per_week) || 3))
@@ -221,7 +257,7 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
       ? profileRecord.cardio_equipment_access
       : [],
     injuriesLimitations: injuries,
-    contraindicationTags: detectedInjuries.selectedInjuryIds,
+    contraindicationTags: mergedContraindicationTags,
     experienceLevel: effectiveExperience,
   }
 
@@ -301,6 +337,18 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
     postureScan,
   })
 
+  const maxPermittedPhase = clearanceGate.stage2PhysicianCleared
+    ? clearanceGate.effectiveMaxOptPhase
+    : Math.max(1, parqEval.maxAllowedOptPhase)
+
+  const phaseTitleMap: Record<number, string> = {
+    1: 'Phase 1: Stabilization Endurance',
+    2: 'Phase 2: Strength Endurance',
+    3: 'Phase 3: Muscular Development (Hypertrophy)',
+    4: 'Phase 4: Maximal Strength',
+    5: 'Phase 5: Power',
+  }
+
   if (params.targetNasmPhase && params.targetNasmPhase >= 1 && params.targetNasmPhase <= 5) {
     // Respect NASM OPT safety gate for beginners/compensations
     const isBeginnerOrComp =
@@ -309,15 +357,13 @@ export async function autoGenerateOrUpdateClientWorkoutPlan(
     const safePhase = params.targetNasmPhase >= 4 && isBeginnerOrComp
       ? (String(effectiveExperience || '').toLowerCase() === 'beginner' ? 1 : 2)
       : params.targetNasmPhase
-    const phaseTitleMap: Record<number, string> = {
-      1: 'Phase 1: Stabilization Endurance',
-      2: 'Phase 2: Strength Endurance',
-      3: 'Phase 3: Muscular Development (Hypertrophy)',
-      4: 'Phase 4: Maximal Strength',
-      5: 'Phase 5: Power',
-    }
     periodizationRec.targetNasmPhase = safePhase
     periodizationRec.targetPhaseName = phaseTitleMap[safePhase] || periodizationRec.targetPhaseName
+  }
+
+  if (periodizationRec.targetNasmPhase > maxPermittedPhase) {
+    periodizationRec.targetNasmPhase = maxPermittedPhase as 1 | 2 | 3 | 4 | 5
+    periodizationRec.targetPhaseName = phaseTitleMap[maxPermittedPhase] || periodizationRec.targetPhaseName
   }
 
   if (params.cardioBlendStyle) {
