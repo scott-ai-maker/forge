@@ -28,11 +28,11 @@ BEGIN
 END $$;
 
 -- 2. Authorize private WebRTC signaling & presence channels (`realtime.messages`) (#30)
+-- Note: `realtime.messages` is owned by `supabase_realtime_admin` with RLS already enabled by Supabase;
+-- do NOT run `ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY` from the `postgres` role.
 DO $$
 BEGIN
   IF to_regclass('realtime.messages') IS NOT NULL THEN
-    ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
-
     DROP POLICY IF EXISTS "Authorized coach and athlete WebRTC private channels"
       ON realtime.messages;
     CREATE POLICY "Authorized coach and athlete WebRTC private channels"
