@@ -101,9 +101,10 @@ describe('lib/voice-notes-storage', () => {
     }
 
     const rawMessages = [
-      { id: '1', message_body: 'Great workout today!' },
-      { id: '2', message_body: '[voice-note]:10:client-1/voice_1.mp4' },
-      { id: '3', message_body: '[retracted]:[voice-note]:20:client-1/voice_2.mp4' },
+      { id: '1', client_id: 'client-1', message_body: 'Great workout today!' },
+      { id: '2', client_id: 'client-1', message_body: '[voice-note]:10:client-1/voice_1.mp4' },
+      { id: '3', client_id: 'client-1', message_body: '[retracted]:[voice-note]:20:client-1/voice_2.mp4' },
+      { id: '4', client_id: 'client-1', message_body: '[voice-note]:15:other-victim/voice_9.mp4' },
     ]
 
     const enriched = await enrichMessagesWithSignedVoiceUrls(
@@ -113,7 +114,11 @@ describe('lib/voice-notes-storage', () => {
 
     expect(enriched[0].message_body).toBe('Great workout today!')
     expect(enriched[1].message_body).toBe('[voice-note]:10:https://cdn.example.com/signed_1.mp4')
-    expect(enriched[2].message_body).toBe('[retracted]:[voice-note]:20:https://cdn.example.com/signed_2.mp4')
+    // Retracted voice notes must never mint or return signed audio URLs over the wire (#27)
+    expect(enriched[2].message_body).toBe('[retracted]')
+    expect(enriched[2].clean_body).toBe('')
+    // Cross-tenant storage path injection must never be signed
+    expect(enriched[3].message_body).toBe('[voice-note]:15:other-victim/voice_9.mp4')
   })
 })
 

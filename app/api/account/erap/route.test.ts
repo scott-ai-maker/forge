@@ -186,4 +186,45 @@ describe('POST /api/account/erap (Pre-Session 1:1 ERAP Location & Dispatch Check
       'live_recording_soap_consent'
     )
   })
+
+  it('rejects ERAP submission with 409 PARQ_SCREENING_REQUIRED when PAR-Q+ intake does not exist instead of fabricating all-false medical answers', async () => {
+    const insertSpy = vi.fn()
+    supabaseAdminMock.mockReturnValue({
+      from: (table: string) => {
+        if (table === 'client_intake_forms') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: null }),
+              }),
+            }),
+            insert: insertSpy,
+          }
+        }
+        return {}
+      },
+    })
+
+    const req = new NextRequest('http://localhost/api/account/erap', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workoutStreetAddress: '500 Boylston St',
+        workoutCity: 'Boston',
+        workoutState: 'MA',
+        workoutPostalCode: '02116',
+        localEmergencyDispatchPhone: '617-343-4911',
+        emergencyContactName: 'Elena Vance',
+        emergencyContactPhone: '617-555-0188',
+        hasAcceptedVirtualTelehealthConsent: true,
+        hasAcceptedAllPartyRecordingConsent: true,
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.code).toBe('PARQ_SCREENING_REQUIRED')
+    expect(insertSpy).not.toHaveBeenCalled()
+  })
 })

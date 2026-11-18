@@ -119,17 +119,27 @@ export async function loadClientEntitlements(clientId: string): Promise<AddonEnt
   return (data ?? []) as AddonEntitlementRow[]
 }
 
-export async function resolveClientActiveTier(
+export interface ResolvedClientMembershipState {
+  tierId: VerifiedForgeTierId
+  hasActiveMembership: boolean
+}
+
+export async function resolveClientMembershipState(
   clientId: string,
   entitlementRows?: AddonEntitlementRow[]
-): Promise<VerifiedForgeTierId> {
+): Promise<ResolvedClientMembershipState> {
   let highest: VerifiedForgeTierId = 'core_lab'
+  let hasActiveMembership = false
   const rows = entitlementRows ?? (await loadClientEntitlements(clientId).catch(() => []))
+
+  if (rows.length > 0) {
+    hasActiveMembership = true
+  }
 
   for (const row of rows) {
     const addonId = String(row.addon_id ?? '').toLowerCase()
     if (addonId === 'forge-transformation-direct' || addonId.includes('coach_support')) {
-      return 'coach_support'
+      return { tierId: 'coach_support', hasActiveMembership: true }
     }
     if (addonId === 'forge-pro-athlete' || addonId.includes('plus')) {
       highest = 'plus'
@@ -147,15 +157,26 @@ export async function resolveClientActiveTier(
 
     for (const pkg of pkgRows ?? []) {
       if (pkg.expires_at && new Date(pkg.expires_at).getTime() <= nowMs) continue
+      hasActiveMembership = true
       const inferred = inferForgeTierFromPackageName(pkg.package_name, pkg.sessions_remaining)
-      if (inferred === 'coach_support') return 'coach_support'
+      if (inferred === 'coach_support') {
+        return { tierId: 'coach_support', hasActiveMembership: true }
+      }
       if (inferred === 'plus') highest = 'plus'
     }
   } catch {
     // Fallback to entitlement rows if client_packages query fails
   }
 
-  return highest
+  return { tierId: highest, hasActiveMembership }
+}
+
+export async function resolveClientActiveTier(
+  clientId: string,
+  entitlementRows?: AddonEntitlementRow[]
+): Promise<VerifiedForgeTierId> {
+  const resolved = await resolveClientMembershipState(clientId, entitlementRows)
+  return resolved.tierId
 }
 
 // Consumes one use from the soonest-expiring metered entitlement. Compare-and-set avoids double-spend on concurrent requests.

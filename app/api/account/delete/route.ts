@@ -99,7 +99,7 @@ export async function DELETE(req: NextRequest) {
       .eq('id', userId)
       .maybeSingle()
 
-    if (clientRow?.email) {
+    if (!resolvedEmail && clientRow?.email) {
       resolvedEmail = clientRow.email
     }
     if (typeof clientRow?.phone === 'string' && clientRow.phone.trim()) {
@@ -115,9 +115,12 @@ export async function DELETE(req: NextRequest) {
       const { stripe } = await import('@/lib/stripe')
       if (stripe) {
         if (!stripeCustomerId && resolvedEmail && !resolvedEmail.endsWith('@placeholder.local')) {
-          const customers = await stripe.customers.list({ email: resolvedEmail, limit: 1 })
-          if (customers.data.length > 0) {
-            stripeCustomerId = customers.data[0].id
+          const customers = await stripe.customers.list({ email: resolvedEmail, limit: 5 })
+          const matchedCustomer = customers.data.find(
+            cust => !cust.metadata?.user_id || cust.metadata.user_id === userId
+          )
+          if (matchedCustomer) {
+            stripeCustomerId = matchedCustomer.id
           }
         }
 
@@ -185,10 +188,11 @@ export async function DELETE(req: NextRequest) {
     try {
       const { data: progressRows } = await admin
         .from('progress_photos')
-        .select('photo_path')
+        .select('photo_url')
         .eq('user_id', userId)
-      for (const row of progressRows ?? []) {
-        fitnessPhotoCandidates.push(row?.photo_path, extractPhotoPathFromLegacyUrl(row?.photo_path))
+      for (const row of (progressRows ?? []) as Array<{ photo_url?: string | null; photo_path?: string | null }>) {
+        const candidate = row?.photo_url ?? row?.photo_path
+        fitnessPhotoCandidates.push(candidate, extractPhotoPathFromLegacyUrl(candidate))
       }
     } catch {
       // ignore
@@ -198,7 +202,7 @@ export async function DELETE(req: NextRequest) {
       const { data: bodyCompRows } = await admin
         .from('body_composition_analyses')
         .select('photo_data_url')
-        .eq('client_id', userId)
+        .eq('user_id', userId)
       for (const row of bodyCompRows ?? []) {
         fitnessPhotoCandidates.push(
           row?.photo_data_url,
@@ -217,14 +221,16 @@ export async function DELETE(req: NextRequest) {
     try {
       const msgTable = admin.from('coach_client_messages') as unknown as {
         select?: (cols: string) => {
-          or?: (expr: string) => Promise<{ data?: Array<{ body?: string | null }> | null }>
+          or?: (expr: string) => Promise<{
+            data?: Array<{ message_body?: string | null; body?: string | null }> | null
+          }>
         }
       }
       const msgRes = await msgTable
-        ?.select?.('body')
+        ?.select?.('message_body')
         ?.or?.(`client_id.eq.${userId},sender_id.eq.${userId}`)
       for (const msg of msgRes?.data ?? []) {
-        const parsed = parseVoiceNoteBody(msg?.body)
+        const parsed = parseVoiceNoteBody(msg?.message_body ?? msg?.body)
         if (parsed?.payload && !parsed.payload.startsWith('data:') && !parsed.payload.startsWith('http')) {
           voiceNoteCandidates.push(parsed.payload)
         }
@@ -318,7 +324,6 @@ export async function DELETE(req: NextRequest) {
           {
             phone: normalizedPhone,
             reason: 'account_deleted',
-            source: 'account_delete_endpoint',
             suppressed_at: new Date().toISOString(),
           },
           { onConflict: 'phone' }

@@ -61,7 +61,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(loginUrl.toString())
   }
 
-  const redirectUrl = getSafeRedirectUrl(nextParam, origin)
+  const requestedPlanRaw = (searchParams.get('plan') || '').trim().toLowerCase()
+  const validPlanParam =
+    requestedPlanRaw === 'core_lab' ||
+    requestedPlanRaw === 'plus' ||
+    requestedPlanRaw === 'coach_support'
+      ? requestedPlanRaw
+      : null
+
+  const effectiveNextParam =
+    (!nextParam || nextParam === '/dashboard') && validPlanParam && isPublicRegistrationOpen()
+      ? `/packages?plan=${validPlanParam}#memberships`
+      : nextParam
+
+  const redirectUrl = getSafeRedirectUrl(effectiveNextParam, origin)
   const isRecoveryResetRedirect = Boolean(tokenHash && type === 'recovery' && redirectUrl.pathname === '/auth/reset-password')
   let keepRecoveryTokenOnRedirect = false
 

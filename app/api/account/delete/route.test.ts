@@ -129,7 +129,7 @@ vi.mock('@/lib/supabase', () => ({
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockResolvedValue({
-              data: [{ photo_path: 'client-del-1/progress-wk4.jpg' }],
+              data: [{ photo_url: 'client-del-1/progress-wk4.jpg' }],
               error: null,
             }),
           }),
@@ -149,7 +149,7 @@ vi.mock('@/lib/supabase', () => ({
         return {
           select: vi.fn().mockReturnValue({
             or: vi.fn().mockResolvedValue({
-              data: [{ body: '[voice-note]:12:client-del-1/msg_voice_1.mp4' }],
+              data: [{ message_body: '[voice-note]:12:client-del-1/msg_voice_1.mp4' }],
               error: null,
             }),
           }),

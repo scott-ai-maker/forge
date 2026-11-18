@@ -150,11 +150,27 @@ export async function enrichMessagesWithSignedVoiceUrls(
   const pathsToSign: string[] = []
 
   for (const m of messages) {
-    const parsed = parseVoiceNoteBody(m.message_body)
+    const rawBody = String(m.message_body ?? '')
+    if (rawBody.startsWith('[retracted]') || m.is_deleted === true) {
+      continue
+    }
+    const parsed = parseVoiceNoteBody(rawBody)
     if (parsed) {
       const payload = parsed.payload
-      // If it's a storage path (not data: or http/https)
-      if (!payload.startsWith('data:') && !payload.startsWith('http://') && !payload.startsWith('https://') && !payload.startsWith('blob:')) {
+      // If it's a storage path (not data: or http/https), enforce strict thread folder ownership before signing
+      if (
+        !payload.startsWith('data:') &&
+        !payload.startsWith('http://') &&
+        !payload.startsWith('https://') &&
+        !payload.startsWith('blob:')
+      ) {
+        if (payload.includes('..') || payload.includes('\\')) {
+          continue
+        }
+        const expectedClientId = typeof m.client_id === 'string' ? m.client_id.trim() : ''
+        if (expectedClientId && !payload.startsWith(`${expectedClientId}/`)) {
+          continue
+        }
         pathsToSign.push(payload)
       }
     }
@@ -189,19 +205,25 @@ export async function enrichMessagesWithSignedVoiceUrls(
   }
 
   return messages.map(m => {
-    const parsed = parseVoiceNoteBody(m.message_body)
+    const rawBody = String(m.message_body ?? '')
+    if (rawBody.startsWith('[retracted]') || m.is_deleted === true) {
+      return {
+        ...m,
+        message_body: '[retracted]',
+        clean_body: '',
+      }
+    }
+    const parsed = parseVoiceNoteBody(rawBody)
     if (!parsed) return m
 
     const signedUrl = signedUrlMap.get(parsed.payload)
     if (!signedUrl) return m
 
-    const isRetracted = String(m.message_body).startsWith('[retracted]:')
     const replacedBody = formatVoiceNoteBody(parsed.duration, signedUrl)
-    const finalBody = isRetracted ? `[retracted]:${replacedBody}` : replacedBody
 
     return {
       ...m,
-      message_body: finalBody,
+      message_body: replacedBody,
       clean_body: replacedBody,
     }
   })

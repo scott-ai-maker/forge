@@ -4,6 +4,7 @@ import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import {
   createSignedFitnessPhotoUrl,
   extractPhotoPathFromLegacyUrl,
+  isUserOwnedPhotoPath,
   normalizePhotoPath,
 } from '@/lib/fitness-photos'
 import { dispatchCoachOnboardingAlert } from '@/lib/coach-onboarding-alerts'
@@ -87,10 +88,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ profile: null, intake: intakeData ?? null, availableEquipment })
   }
 
-  const beforePhotoPath = normalizePhotoPath(
+  const rawBeforePhotoPath = normalizePhotoPath(
     data.before_photo_path ?? extractPhotoPathFromLegacyUrl(data.before_photo_url)
   )
-  const signedBeforePhotoUrl = await createSignedFitnessPhotoUrl(admin, beforePhotoPath)
+  const beforePhotoPath = isUserOwnedPhotoPath(rawBeforePhotoPath, userId)
+    ? rawBeforePhotoPath
+    : ''
+  const signedBeforePhotoUrl = beforePhotoPath
+    ? await createSignedFitnessPhotoUrl(admin, beforePhotoPath)
+    : null
 
   const profile = {
     ...data,

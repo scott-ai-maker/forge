@@ -4,6 +4,7 @@ import { getRequestAuthz, AuthzError } from '@/lib/authz'
 import {
   createSignedFitnessPhotoUrl,
   FITNESS_PHOTO_BUCKET,
+  isUserOwnedPhotoPath,
 } from '@/lib/fitness-photos'
 
 const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -32,7 +33,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const avatarUrl = await createSignedFitnessPhotoUrl(admin, existing?.avatar_path ?? null)
+  const safeAvatarPath = isUserOwnedPhotoPath(existing?.avatar_path ?? null, userId)
+    ? existing!.avatar_path
+    : null
+  const avatarUrl = await createSignedFitnessPhotoUrl(admin, safeAvatarPath)
   return NextResponse.json({ avatarUrl })
 }
 
@@ -76,7 +80,7 @@ export async function POST(req: NextRequest) {
       .eq('id', userId)
       .maybeSingle()
 
-    if (existing?.avatar_path) {
+    if (existing?.avatar_path && isUserOwnedPhotoPath(existing.avatar_path, userId)) {
       await admin.storage.from(FITNESS_PHOTO_BUCKET).remove([existing.avatar_path])
     }
 
@@ -144,7 +148,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  if (existing?.avatar_path) {
+  if (existing?.avatar_path && isUserOwnedPhotoPath(existing.avatar_path, userId)) {
     await admin.storage.from(FITNESS_PHOTO_BUCKET).remove([existing.avatar_path])
   }
 

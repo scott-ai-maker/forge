@@ -85,10 +85,25 @@ export async function POST(req: NextRequest) {
 
   const admin = supabaseAdmin()
 
-  // Clear any prior STOP suppression on explicit new opt-in
-  await admin.from('sms_suppressions').delete().eq('phone', phoneE164)
-
   if (user && user.email?.trim().toLowerCase() === normalizedEmail) {
+    // Only clear a prior STOP suppression when an authenticated account holder owns this number or has no conflicting account claim
+    const { data: existingClient } = await admin
+      .from('clients')
+      .select('phone')
+      .eq('id', user.id)
+      .maybeSingle()
+    const { data: existingPref } = await admin
+      .from('notification_preferences')
+      .select('sms_phone')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const ownedClientPhone = toE164(existingClient?.phone ?? null)
+    const ownedPrefPhone = toE164(existingPref?.sms_phone ?? null)
+    if (ownedClientPhone === phoneE164 || ownedPrefPhone === phoneE164) {
+      await admin.from('sms_suppressions').delete().eq('phone', phoneE164)
+    }
+
     await admin.from('notification_preferences').upsert(
       {
         user_id: user.id,
@@ -117,7 +132,25 @@ export async function POST(req: NextRequest) {
       },
     })
   } else {
-    // Prospective member / waitlist opt-in prior to account login
+    // Unauthenticated waitlist / prospective visitor: NEVER delete prior carrier STOP suppressions
+    // (must reply START/UNSTOP from the handset or sign in to a verified account owning that phone).
+    const { data: suppressedRow } = await admin
+      .from('sms_suppressions')
+      .select('phone')
+      .eq('phone', phoneE164)
+      .maybeSingle()
+
+    if (suppressedRow?.phone) {
+      return NextResponse.json(
+        {
+          error:
+            'This mobile number previously opted out via STOP. To re-enable SMS alerts, reply START from that mobile device or sign in to your verified account.',
+          code: 'SMS_OPTED_OUT_HANDSET_START_REQUIRED',
+        },
+        { status: 409, headers: NO_STORE_HEADERS }
+      )
+    }
+
     await admin.from('waitlist').upsert(
       {
         email: normalizedEmail,
@@ -128,7 +161,7 @@ export async function POST(req: NextRequest) {
         ...(timezone ? { timezone } : {}),
         source: 'sms_consent_form',
       },
-      { onConflict: 'email' }
+      { onConflict: 'email', ignoreDuplicates: true }
     )
   }
 

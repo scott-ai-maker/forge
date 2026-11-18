@@ -169,13 +169,14 @@ export async function POST(req: NextRequest) {
     .eq('user_id', userId)
     .maybeSingle()
 
-  if (!existingIntake && !isValidLegalSignature(typedSignature)) {
+  if (!existingIntake) {
     return NextResponse.json(
       {
         error:
-          'Please enter your full legal name signature to execute your Emergency Response Action Plan (ERAP) before entering Live Studio.',
+          'Please complete and sign your 7-point PAR-Q+ medical screening on the Onboarding page before submitting a Live Studio Emergency Remote Action Plan (ERAP).',
+        code: 'PARQ_SCREENING_REQUIRED',
       },
-      { status: 400, headers: NO_STORE_HEADERS }
+      { status: 409, headers: NO_STORE_HEADERS }
     )
   }
 
@@ -220,46 +221,30 @@ export async function POST(req: NextRequest) {
     erap: updatedErapBlock,
   }
 
-  if (existingIntake) {
-    const { error: updateError } = await admin
-      .from('client_intake_forms')
-      .update({
-        parq_answers: updatedParqJson,
-        emergency_contact_name: emergencyContactName,
-        emergency_contact_phone: emergencyContactPhone,
-        consent_emergency_care: true,
-        updated_at: nowIso,
-      })
-      .eq('user_id', userId)
-
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500, headers: NO_STORE_HEADERS })
-    }
-  } else {
-    const { error: insertError } = await admin.from('client_intake_forms').insert({
-      user_id: userId,
-      parq_answers: {
-        hasHeartCondition: false,
-        experiencesChestPain: false,
-        experiencesDizzinessOrSyncope: false,
-        hasBoneOrJointProblem: false,
-        takesBloodPressureOrHeartMedication: false,
-        hasChronicSpinalOrDiscCondition: false,
-        hasRecentSurgeryOrInjury: false,
-        ...updatedParqJson,
+  if (!existingIntake) {
+    return NextResponse.json(
+      {
+        error:
+          'Please complete and sign your 7-point PAR-Q+ medical screening on the Onboarding page before submitting a Live Studio Emergency Remote Action Plan (ERAP).',
+        code: 'PARQ_SCREENING_REQUIRED',
       },
-      parq_any_yes: false,
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  const { error: updateError } = await admin
+    .from('client_intake_forms')
+    .update({
+      parq_answers: updatedParqJson,
       emergency_contact_name: emergencyContactName,
       emergency_contact_phone: emergencyContactPhone,
       consent_emergency_care: true,
-      consent_signature_name: typedSignature,
-      consent_signed_at: nowIso,
       updated_at: nowIso,
     })
+    .eq('user_id', userId)
 
-    if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500, headers: NO_STORE_HEADERS })
-    }
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500, headers: NO_STORE_HEADERS })
   }
 
   const effectiveSignature = existingIntake?.consent_signature_name || typedSignature

@@ -27,11 +27,15 @@ vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: vi.fn(),
 }))
 
-vi.mock('@/lib/fitness-photos', () => ({
-  createSignedFitnessPhotoUrl: vi.fn().mockResolvedValue('https://cdn.example.com/signed-before.jpg'),
-  extractPhotoPathFromLegacyUrl: vi.fn().mockReturnValue(null),
-  normalizePhotoPath: vi.fn((path) => path),
-}))
+vi.mock('@/lib/fitness-photos', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/fitness-photos')>()
+  return {
+    ...actual,
+    createSignedFitnessPhotoUrl: vi.fn().mockResolvedValue('https://cdn.example.com/signed-before.jpg'),
+    extractPhotoPathFromLegacyUrl: vi.fn().mockReturnValue(null),
+    normalizePhotoPath: vi.fn((path) => path),
+  }
+})
 
 vi.mock('@/lib/client-plan-auto-generator', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/client-plan-auto-generator')>()
@@ -73,7 +77,7 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
                   age: 32,
                   weight_kg: 82,
                   preferred_units: 'imperial',
-                  before_photo_path: 'profiles/client-user-123/before.jpg',
+                  before_photo_path: 'client-user-123/before.jpg',
                 },
                 error: null,
               }),

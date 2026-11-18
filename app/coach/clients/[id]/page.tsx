@@ -22,6 +22,7 @@ import { parseInjuriesFromText } from '@/lib/sports-injuries'
 import {
   createSignedFitnessPhotoUrl,
   extractPhotoPathFromLegacyUrl,
+  isUserOwnedPhotoPath,
   normalizePhotoPath,
 } from '@/lib/fitness-photos'
 
@@ -479,11 +480,14 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
     const storedPath = /^https?:\/\//i.test(rawValue)
       ? extractPhotoPathFromLegacyUrl(rawValue)
       : normalizePhotoPath(rawValue)
-    const signedUrl = storedPath ? await createSignedFitnessPhotoUrl(admin, storedPath) : null
+    const signedUrl =
+      storedPath && isUserOwnedPhotoPath(storedPath, id)
+        ? await createSignedFitnessPhotoUrl(admin, storedPath)
+        : null
 
     return {
       ...photo,
-      photo_url: signedUrl ?? rawValue,
+      photo_url: signedUrl ?? (isUserOwnedPhotoPath(storedPath, id) ? rawValue : ''),
     }
   }))
 

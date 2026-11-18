@@ -61,16 +61,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Normalize message list with soft-delete metadata
+  // Normalize message list with soft-delete metadata (never transmit retracted body or audio over the wire)
   const normalizedMessages = (data ?? []).map(m => {
     const bodyStr = String(m.message_body ?? '')
-    const isRetracted = bodyStr.startsWith('[retracted]:')
-    const cleanBody = isRetracted ? bodyStr.slice('[retracted]:'.length) : bodyStr
+    const isRetracted = bodyStr.startsWith('[retracted]:') || bodyStr === '[retracted]'
 
     return {
       ...m,
-      message_body: bodyStr,
-      clean_body: cleanBody,
+      message_body: isRetracted ? '[retracted]' : bodyStr,
+      clean_body: isRetracted ? '' : bodyStr,
       is_deleted: isRetracted,
       deleted_at: isRetracted ? m.created_at : null,
     }
@@ -140,13 +139,17 @@ export async function POST(req: NextRequest) {
 
   if (isVoiceNote) {
     const parsed = parseVoiceNoteBody(messageBody)
-    if (parsed && parsed.payload.startsWith('data:')) {
-      bodyToInsert = await uploadVoiceNoteAudio(admin, {
-        clientId,
-        audioDataUrl: parsed.payload,
-        duration: parsed.duration,
-      })
+    if (!parsed || !parsed.payload.startsWith('data:audio/')) {
+      return NextResponse.json(
+        { error: 'Invalid voice note audio payload.' },
+        { status: 400 }
+      )
     }
+    bodyToInsert = await uploadVoiceNoteAudio(admin, {
+      clientId,
+      audioDataUrl: parsed.payload,
+      duration: parsed.duration,
+    })
   }
 
   const { data, error } = await admin

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, AuthzError } from '@/lib/authz'
 import {
   loadClientEntitlements,
-  resolveClientActiveTier,
+  resolveClientMembershipState,
   summarizeAllFeatureAccess,
 } from '@/lib/addon-entitlements'
 
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         {
           tierId: 'coach_support',
+          hasActiveMembership: true,
           role: 'coach',
           allowQaPreview: true,
           features: { 'video-review': open, nutrition: open, travel: open },
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         {
           tierId: 'coach_support',
+          hasActiveMembership: true,
           role: 'coach',
           allowQaPreview: true,
           features: { 'video-review': open, nutrition: open, travel: open },
@@ -44,10 +46,11 @@ export async function GET(req: NextRequest) {
     }
 
     const rows = await loadClientEntitlements(authz.user.id)
-    const tierId = await resolveClientActiveTier(authz.user.id, rows)
+    const { tierId, hasActiveMembership } = await resolveClientMembershipState(authz.user.id, rows)
     return NextResponse.json(
       {
         tierId,
+        hasActiveMembership,
         role: 'client',
         allowQaPreview: isDev,
         features: summarizeAllFeatureAccess(rows),

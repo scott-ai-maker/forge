@@ -6,6 +6,7 @@ import { enforceRateLimit } from '@/lib/rate-limit'
 import {
   createSignedFitnessPhotoUrl,
   FITNESS_PHOTO_BUCKET,
+  isUserOwnedPhotoPath,
 } from '@/lib/fitness-photos'
 import { checkClientAdultPhotoEligibility } from '@/lib/legal-compliance'
 
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
       .maybeSingle()
 
-    if (profile?.before_photo_path) {
+    if (profile?.before_photo_path && isUserOwnedPhotoPath(profile.before_photo_path, user.id)) {
       await admin.storage.from(FITNESS_PHOTO_BUCKET).remove([profile.before_photo_path])
     }
 

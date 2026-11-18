@@ -124,7 +124,22 @@ describe('Client Plan Auto-Generator (lib/client-plan-auto-generator)', () => {
             }),
           }
         }
-        if (table === 'client_intake_forms' || table === 'body_composition_analyses' || table === 'nasm_assessments') {
+        if (table === 'client_intake_forms') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: {
+                user_id: mockClientId,
+                parq_any_yes: false,
+                parq_answers: {},
+                consent_signature_name: 'Christine DeGreenia',
+              },
+              error: null,
+            }),
+          }
+        }
+        if (table === 'body_composition_analyses' || table === 'nasm_assessments') {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
@@ -150,6 +165,21 @@ describe('Client Plan Auto-Generator (lib/client-plan-auto-generator)', () => {
         if (table === 'coach_client_messages') {
           return {
             insert: insertMessageMock,
+          }
+        }
+        if (table === 'client_intake_forms') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: {
+                user_id: mockClientId,
+                parq_any_yes: false,
+                parq_answers: {},
+                consent_signature_name: 'Christine DeGreenia',
+              },
+              error: null,
+            }),
           }
         }
         return {
@@ -257,6 +287,21 @@ describe('Client Plan Auto-Generator (lib/client-plan-auto-generator)', () => {
             insert: insertMessageMock,
           }
         }
+        if (table === 'client_intake_forms') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: {
+                user_id: mockClientId,
+                parq_any_yes: false,
+                parq_answers: {},
+                consent_signature_name: 'Christine DeGreenia',
+              },
+              error: null,
+            }),
+          }
+        }
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
@@ -360,6 +405,21 @@ describe('Client Plan Auto-Generator (lib/client-plan-auto-generator)', () => {
         if (table === 'coach_client_messages') {
           return {
             insert: vi.fn().mockResolvedValue({ error: null }),
+          }
+        }
+        if (table === 'client_intake_forms') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: {
+                user_id: mockClientId,
+                parq_any_yes: false,
+                parq_answers: {},
+                consent_signature_name: 'Christine DeGreenia',
+              },
+              error: null,
+            }),
           }
         }
         return {
@@ -467,6 +527,78 @@ describe('Client Plan Auto-Generator (lib/client-plan-auto-generator)', () => {
       expect(result.message).toContain('Phase 0')
       expect(insertPlanMock).not.toHaveBeenCalled()
       expect(insertMessageMock).toHaveBeenCalled()
+    })
+
+    it('fails closed (blocks workout auto-generation) when client_intake_forms row is missing (onboarding skipped)', async () => {
+      const insertPlanMock = vi.fn()
+      const insertMessageMock = vi.fn().mockResolvedValue({ error: null })
+
+      mockFrom = vi.fn((table: string) => {
+        if (table === 'clients') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { id: mockClientId, full_name: 'Christine DeGreenia', designated_coach_id: mockCoachId },
+              error: null,
+            }),
+          }
+        }
+        if (table === 'fitness_profiles') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: {
+                user_id: mockClientId,
+                age: 41,
+                sex: 'female',
+                experience_level: 'intermediate',
+                equipment_access: ['dumbbells'],
+                fitness_goal: 'STRENGTH',
+                training_days_per_week: 3,
+              },
+              error: null,
+            }),
+          }
+        }
+        if (table === 'client_intake_forms') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }
+        }
+        if (table === 'workout_plans') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+            insert: insertPlanMock,
+          }
+        }
+        if (table === 'coach_client_messages') {
+          return { insert: insertMessageMock }
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }
+      })
+      vi.mocked(supabaseAdmin).mockReturnValue({ from: mockFrom } as unknown as ReturnType<typeof supabaseAdmin>)
+
+      const result = await autoGenerateOrUpdateClientWorkoutPlan({
+        clientId: mockClientId,
+        trigger: 'onboarding',
+      })
+
+      expect(result.status).toBe('skipped')
+      expect(result.message).toContain('PAR-Q+ Medical Screening Required')
+      expect(insertPlanMock).not.toHaveBeenCalled()
     })
   })
 })
