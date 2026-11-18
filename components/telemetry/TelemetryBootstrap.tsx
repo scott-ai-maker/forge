@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { isCompanionApp } from '@/lib/native-companion'
 import { clearOfflineQueue } from '@/lib/offline-sync-queue'
 import {
   rehydratePostureProfileFromServer,
@@ -65,6 +66,17 @@ export default function TelemetryBootstrap() {
   }, [])
 
   useEffect(() => {
+    // Route standalone PWA / native companion root `/` launches away from public checkout CTAs
+    if (typeof window !== 'undefined' && window.location.pathname === '/' && isCompanionApp()) {
+      const search = new URLSearchParams(window.location.search)
+      const isExplicitMarketingPreview =
+        search.has('preview') || search.has('unmask') || search.has('unmasked') || search.has('splash')
+      if (!isExplicitMarketingPreview) {
+        window.location.replace('/dashboard/fitness?source=pwa')
+        return
+      }
+    }
+
     let unsubscribeAuth: (() => void) | null = null
     try {
       const supabase = createClient()

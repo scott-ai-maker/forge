@@ -142,10 +142,10 @@ const COMPARISON_ROWS = [
   },
   {
     feature: 'Athlete Roster Limit',
-    core: 'Founding Cohort',
-    plus: 'Founding Cohort',
-    support: 'Capped at 25 Spots',
-    note: 'Roster cap protects coach attention, response speed, and programming depth.',
+    core: '50-Pass Founding Cohort',
+    plus: '50-Pass Founding Cohort',
+    support: 'Capped at 15 Active Seats',
+    note: 'Founding Cohort rate lock is limited to 50 passes across tiers; 1-on-1 Coach Support is capped at 15 active seats.',
   },
 ]
 

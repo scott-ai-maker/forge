@@ -405,15 +405,14 @@ export default function GymMusicAudioStudio({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px', fontSize: 11, color: 'var(--gray)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <GaaIcon name="volume" size={12} tone="slate" />
-          <span>AirPods Pro &amp; Watch Sync Active</span>
+          <span>Solo Personal Playback Only</span>
         </span>
         <Link
-          href="/dashboard/settings?tab=spotify"
+          href="/terms"
           onClick={onClose}
           style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}
         >
-          <GaaIcon name="settings" size={12} tone="gold" />
-          <span>Music Settings</span>
+          <span>Audio &amp; Trademark Terms</span>
         </Link>
       </div>
     </div>

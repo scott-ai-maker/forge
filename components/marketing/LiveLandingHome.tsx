@@ -204,6 +204,17 @@ export default function LiveLandingHome({ isPreview = false }: { isPreview?: boo
           <Link href="/terms">Terms</Link>
           <Link href="/accessibility">Accessibility</Link>
         </nav>
+        <p className="mx-auto mt-3 max-w-2xl text-[11px] leading-relaxed text-zinc-500">
+          <strong>Trademark &amp; Non-Affiliation Notice:</strong> NASM®, Optimum Performance
+          Training™, OPT™, and Certified Personal Trainer (CPT®) are registered trademarks or
+          service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning,
+          LLC. Forge Athletic Performance LLC is an independent private entity and is not affiliated
+          with, sponsored by, or endorsed by NASM or Ascend Learning, LLC.
+        </p>
+        <p className="mt-1 text-xs text-zinc-500">
+          © {new Date().getFullYear()} Forge Athletic Performance LLC (MA ID #002010312). All Rights
+          Reserved.
+        </p>
       </footer>
     </main>
   )

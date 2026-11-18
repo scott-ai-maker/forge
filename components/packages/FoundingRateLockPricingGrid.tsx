@@ -430,6 +430,24 @@ export default function FoundingRateLockPricingGrid({
           )
         })}
       </div>
+
+      {/* Statutory ROSCA / California ARL Auto-Renewal & Promotional Rate-Lock Terms (Terms § 4) */}
+      <p
+        style={{
+          margin: '1.15rem auto 0',
+          maxWidth: 980,
+          fontSize: '0.76rem',
+          lineHeight: 1.55,
+          color: '#94A3B8',
+          textAlign: 'center',
+        }}
+      >
+        <strong>Recurring Billing &amp; Promotional Rate-Lock Terms:</strong> All memberships bill month-to-month and renew automatically each month until canceled ($0 cancellation fee; cancel anytime in 1 click inside Account Settings). Core Lab’s 7-day free trial converts automatically on Day 7 to $49.00/mo ($36.75/mo with code {HOLIDAY_DEAL_PROMO.code}) unless canceled before the trial ends; Plus renews at $99.00/mo ($74.25/mo with {HOLIDAY_DEAL_PROMO.code}); Coach Support renews at $299.00/mo ($224.25/mo with {HOLIDAY_DEAL_PROMO.code}). Code {HOLIDAY_DEAL_PROMO.code} expires {HOLIDAY_DEAL_PROMO.expiresFormatted} and applies for as long as continuous active enrollment on the selected tier is maintained (changing tiers transitions to that tier’s prevailing rate; see{' '}
+        <Link href="/terms" style={{ color: '#FBBF24', textDecoration: 'underline' }}>
+          Terms of Service § 4
+        </Link>
+        ).
+      </p>
     </div>
   )
 }

@@ -36,6 +36,8 @@ const appsStructuredData = {
     '@type': 'Offer',
     price: '0',
     priceCurrency: 'USD',
+    description:
+      'Included at $0 additional app fee with an active paid Forge Athletic membership ($49.00–$299.00/mo).',
   },
   description:
     'Progressive Web App training companion with local in-browser 33-point posture screening, offline set logging, NASM OPT™ environment switching, and Coach Gordon’s real voice pacing.',
@@ -48,7 +50,7 @@ const appsStructuredData = {
 
 export default function AppsPage() {
   return (
-    <main style={{ minHeight: '100dvh', background: '#080E14' }}>
+    <main id="main-content" style={{ minHeight: '100dvh', background: '#080E14' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(appsStructuredData) }}
@@ -221,7 +223,7 @@ export default function AppsPage() {
               ZERO IN-APP PURCHASE ARCHITECTURE &amp; STORE COMPLIANCE
             </h4>
             <p style={{ margin: 0, fontSize: 13, color: '#94A3B8', lineHeight: 1.6 }}>
-              In full accordance with <strong>Apple App Store Guideline 3.1.3 (Multiplatform / Reader Services)</strong> and <strong>Google Play store policies</strong>, Forge Athletic mobile apps are strictly dedicated gym telemetry and workout tracking companions. No memberships, retainers, or digital add-ons can be purchased within mobile helper apps; all subscription management occurs securely on our web portal at <strong>forge-athletic.app</strong>.
+              In full accordance with <strong>Apple App Store Guideline 3.1.3 (Multiplatform / Reader Services)</strong> and <strong>Google Play store policies</strong>, Forge Athletic mobile apps are strictly dedicated training and workout tracking companions for existing members. No memberships, retainers, plan upgrades, or digital add-ons are sold or modified inside mobile companion apps.
             </p>
           </div>
         </div>

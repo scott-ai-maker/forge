@@ -305,7 +305,7 @@ export const FOUNDING_PRICING_CARDS: ReadonlyArray<LandingPricingTierCard> = [
       '8 Form Lab Video Reviews / month with priority 24h telestration turnaround',
       'Bespoke OPT™ Program Overrides & custom injury-history modifications by Coach Gordon',
       'Quarterly Certified Biomechanical Mesh Review signed off by Coach Gordon',
-      'Strictly capped active coaching roster to protect 1-on-1 coach focus',
+      'Strictly capped at 15 active 1-on-1 coaching seats to protect coach focus',
     ],
     imageSrc: '/images/coach-client-plan.jpg',
     imageAlt: 'Coach Gordon reviewing bespoke biomechanical program design 1-on-1',

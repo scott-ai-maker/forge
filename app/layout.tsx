@@ -184,8 +184,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en-US" className={`${barlowCondensed.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <meta name="darkreader-lock" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Apple iOS PWA / Standalone Web App Splash Screens */}
         <link rel="apple-touch-startup-image" href="/splash/apple-splash-1290-2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
         <link rel="apple-touch-startup-image" href="/splash/apple-splash-1179-2556.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />

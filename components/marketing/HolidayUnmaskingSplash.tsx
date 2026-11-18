@@ -745,8 +745,16 @@ export default function HolidayUnmaskingSplash({
             </Link>
           </nav>
 
+          <p className="max-w-2xl text-[11px] leading-relaxed text-zinc-500">
+            <strong>Trademark &amp; Non-Affiliation Notice:</strong> NASM®, Optimum Performance
+            Training™, OPT™, and Certified Personal Trainer (CPT®) are registered trademarks or
+            service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning,
+            LLC. Forge Athletic Performance LLC is an independent private entity and is not
+            affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC.
+          </p>
+
           <div className="text-xs text-zinc-500">
-            © {new Date().getFullYear()} Forge Athletic. Built From The Ground Up. Precision Science For Real Lives.
+            © {new Date().getFullYear()} Forge Athletic Performance LLC (MA ID #002010312). Built From The Ground Up. Precision Science For Real Lives.
           </div>
         </footer>
       </div>
