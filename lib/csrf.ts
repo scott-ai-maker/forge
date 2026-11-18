@@ -135,20 +135,7 @@ export async function protectCSRF(request: NextRequest) {
       return { valid: true }
     }
 
-    // 2. If origin host matches current request host header (standard same-origin)
-    const hostHeader = request.headers.get('host') || request.headers.get('x-forwarded-host')
-    if (hostHeader) {
-      try {
-        const originHost = new URL(origin).host
-        if (originHost === hostHeader) {
-          return { valid: true }
-        }
-      } catch {
-        // Invalid origin URL format
-      }
-    }
-
-    // 3. Check environment-configured trusted origins & development loopback
+    // 2. Check environment-configured trusted origins & development loopback (never spoofable x-forwarded-host)
     const trustedOrigins = trustedOriginsFromEnv()
     if (process.env.NODE_ENV === 'development') {
       trustedOrigins.add('http://localhost:3000')

@@ -285,7 +285,7 @@ export default function AppStoreBadges({
           ...style,
         }}
       >
-        {/* ── Official Apple App Store Badge ── */}
+        {/* ── iOS Companion Store Link (Neutral Preview Pill Until App Store Approval) ── */}
         <TrackedCtaLink
           href={MOBILE_APPS_CONFIG.ios.url}
           target={isIosPlaceholder ? '_self' : '_blank'}
@@ -294,22 +294,47 @@ export default function AppStoreBadges({
           eventName={`${sourceEventPrefix}_app_store_click`}
           eventPayload={{ platform: 'ios', bundleId: MOBILE_APPS_CONFIG.ios.bundleId, isPlaceholder: isIosPlaceholder }}
           className="tactile-btn official-app-store-badge"
-          aria-label="Download on the App Store"
+          aria-label={isIosPlaceholder ? 'iOS Companion Coming Soon — View Setup Details' : 'Download on the App Store'}
           style={{
-            display: 'inline-block',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 9,
             textDecoration: 'none',
-            lineHeight: 0,
+            lineHeight: isIosPlaceholder ? 1.2 : 0,
             transition: 'transform 0.15s ease, filter 0.15s ease',
             borderRadius: 7,
             overflow: 'hidden',
             boxShadow: '0 4px 14px rgba(0, 0, 0, 0.6)',
             cursor: 'pointer',
+            ...(isIosPlaceholder
+              ? {
+                  minHeight: badgeHeight,
+                  padding: '6px 14px',
+                  background: '#080E14',
+                  border: '1px solid rgba(197, 160, 89, 0.45)',
+                  color: '#FFFFFF',
+                }
+              : {}),
           }}
         >
-          <AppleAppStoreBadgeSvg width={badgeWidth} height={badgeHeight} />
+          {isIosPlaceholder ? (
+            <>
+              <AppleLogoIcon size={18} color="#FFFFFF" />
+              <span style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold-lt)' }}>
+                  Coming Soon
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF' }}>
+                  iOS Companion
+                </span>
+              </span>
+            </>
+          ) : (
+            <AppleAppStoreBadgeSvg width={badgeWidth} height={badgeHeight} />
+          )}
         </TrackedCtaLink>
 
-        {/* ── Official Google Play Badge ── */}
+        {/* ── Android Companion Store Link (Neutral Preview Pill Until Google Play Approval) ── */}
         <TrackedCtaLink
           href={MOBILE_APPS_CONFIG.android.url}
           target={isAndroidPlaceholder ? '_self' : '_blank'}
@@ -318,19 +343,44 @@ export default function AppStoreBadges({
           eventName={`${sourceEventPrefix}_play_store_click`}
           eventPayload={{ platform: 'android', bundleId: MOBILE_APPS_CONFIG.android.bundleId, isPlaceholder: isAndroidPlaceholder }}
           className="tactile-btn official-google-play-badge"
-          aria-label="Get it on Google Play"
+          aria-label={isAndroidPlaceholder ? 'Android Companion Coming Soon — View Setup Details' : 'Get it on Google Play'}
           style={{
-            display: 'inline-block',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 9,
             textDecoration: 'none',
-            lineHeight: 0,
+            lineHeight: isAndroidPlaceholder ? 1.2 : 0,
             transition: 'transform 0.15s ease, filter 0.15s ease',
             borderRadius: 7,
             overflow: 'hidden',
             boxShadow: '0 4px 14px rgba(0, 0, 0, 0.6)',
             cursor: 'pointer',
+            ...(isAndroidPlaceholder
+              ? {
+                  minHeight: badgeHeight,
+                  padding: '6px 14px',
+                  background: '#080E14',
+                  border: '1px solid rgba(197, 160, 89, 0.45)',
+                  color: '#FFFFFF',
+                }
+              : {}),
           }}
         >
-          <GooglePlayBadgeSvg width={badgeWidth} height={badgeHeight} />
+          {isAndroidPlaceholder ? (
+            <>
+              <AndroidLogoIcon size={18} color="#3DDC84" />
+              <span style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold-lt)' }}>
+                  Coming Soon
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF' }}>
+                  Android Companion
+                </span>
+              </span>
+            </>
+          ) : (
+            <GooglePlayBadgeSvg width={badgeWidth} height={badgeHeight} />
+          )}
         </TrackedCtaLink>
 
         {/* ── Optional PWA Badge ── */}

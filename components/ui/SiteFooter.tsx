@@ -19,7 +19,43 @@ const SOCIAL_LINKS = [
 export default function SiteFooter() {
   const { isHelper } = useHelperAppMode()
   if (isHelper || isCompanionApp()) {
-    return null
+    return (
+      <footer
+        className="site-footer site-footer-companion"
+        style={{
+          borderTop: '1px solid rgba(197, 160, 89, 0.2)',
+          background: '#060A10',
+          padding: '1rem 1.25rem 1.5rem',
+        }}
+      >
+        <nav
+          aria-label="Legal and privacy policies"
+          style={{
+            maxWidth: 960,
+            margin: '0 auto',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.85rem 1.25rem',
+            fontSize: '0.78rem',
+          }}
+        >
+          <Link href="/privacy" style={{ color: '#CBD5E1', textDecoration: 'underline' }}>
+            Privacy Policy
+          </Link>
+          <Link href="/health-privacy" style={{ color: '#CBD5E1', textDecoration: 'underline' }}>
+            Consumer Health Data Privacy
+          </Link>
+          <Link href="/terms" style={{ color: '#CBD5E1', textDecoration: 'underline' }}>
+            Terms of Service
+          </Link>
+          <Link href="/accessibility" style={{ color: '#CBD5E1', textDecoration: 'underline' }}>
+            Accessibility
+          </Link>
+        </nav>
+      </footer>
+    )
   }
   return (
     <footer className="site-footer" style={{ borderTop: '1px solid rgba(197, 160, 89, 0.25)', background: 'linear-gradient(180deg, #080E14 0%, #04070D 100%)', padding: '3rem 1.5rem 2rem' }}>

@@ -8,7 +8,7 @@
 
 This Master Corporate Wellness Services Agreement ("**Agreement**") is entered into as of `[EFFECTIVE DATE]` ("**Effective Date**") by and between:
 
-- **Provider:** **Forge Athletic Performance LLC**, a Massachusetts limited liability company with its principal office in Boston, Massachusetts ("**Forge Athletic**"); and
+- **Provider:** **Forge Athletic Performance LLC**, a Massachusetts limited liability company (MA Secretary of the Commonwealth ID `#002010312`) with its registered office and legal notice address at 82 Wendell Ave., Ste 100, Pittsfield, MA 01201 ("**Forge Athletic**"); and
 - **Client:** `[CORPORATE CLIENT LEGAL NAME]`, a `[STATE]` `[CORPORATION / LLC]` with its principal office at `[ADDRESS]` ("**Sponsor**" or "**Company**").
 
 ### 1. Scope of Voluntary Executive & Team Performance Services
@@ -41,7 +41,7 @@ This Master Corporate Wellness Services Agreement ("**Agreement**") is entered i
 6.2 **Cap on Liability.** EXCEPT FOR WILLFUL MISCONDUCT OR GROSS NEGLIGENCE, NEITHER PARTY'S AGGREGATE LIABILITY ARISING OUT OF OR RELATED TO THIS AGREEMENT SHALL EXCEED THE TOTAL FEES ACTUALLY PAID BY COMPANY TO FORGE ATHLETIC IN THE TWELVE (12) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO LIABILITY. NEITHER PARTY SHALL BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.
 
 ### 7. Governing Law & Venue
-7.1 This Agreement is governed by the laws of the **Commonwealth of Massachusetts**, without regard to conflict-of-laws principles. Exclusive venue for any commercial dispute not resolved through 30-day executive escalation shall lie in the state or federal courts sitting in **Suffolk County (Boston), Massachusetts**.
+7.1 This Agreement is governed by the laws of the **Commonwealth of Massachusetts**, without regard to conflict-of-laws principles. Exclusive venue for any commercial dispute not resolved through 30-day executive escalation shall lie in the state or federal courts sitting in **Suffolk County or Middlesex County, Commonwealth of Massachusetts**.
 
 ---
 

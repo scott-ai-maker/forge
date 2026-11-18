@@ -25,13 +25,19 @@ export function resolveRequestSubjectKey(
   if (authenticatedUserId && authenticatedUserId.trim()) {
     return `uid:${authenticatedUserId.trim()}`
   }
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) {
-    const firstIp = forwarded.split(',')[0]?.trim()
-    if (firstIp) return `ip:${firstIp}`
+  const vercelIp = req.headers.get('x-vercel-forwarded-for')
+  if (vercelIp) {
+    const trustedIp = vercelIp.split(',')[0]?.trim()
+    if (trustedIp) return `ip:${trustedIp}`
   }
   const realIp = req.headers.get('x-real-ip')?.trim()
   if (realIp) return `ip:${realIp}`
+  const forwarded = req.headers.get('x-forwarded-for')
+  if (forwarded) {
+    const parts = forwarded.split(',').map(part => part.trim()).filter(Boolean)
+    const lastIp = parts[parts.length - 1]
+    if (lastIp) return `ip:${lastIp}`
+  }
   return 'ip:local'
 }
 

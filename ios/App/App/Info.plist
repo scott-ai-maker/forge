@@ -28,10 +28,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.gordonathletic.app</string>
+			<string>com.forgeathletic.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.gordonathletic.app</string>
+				<string>com.forgeathletic.app</string>
 			</array>
 		</dict>
 	</array>
@@ -78,9 +78,9 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Forge Athletic reads your heart rate, HRV, active calories, sleep architecture, workouts, and dietary nutrition to calculate real-time CNS readiness and calibrate your periodized coaching program.</string>
+	<string>Forge Athletic reads your heart rate, resting heart rate, HRV, step count, walking/running distance, active and basal energy burned, sleep duration, and workouts solely to calculate recovery readiness and calibrate your periodized training program.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Forge Athletic logs completed workout sessions and cardio telemetry directly into Apple Health.</string>
+	<string>Forge Athletic logs completed workout sessions, active energy, and walking/running distance directly into Apple Health.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Forge Athletic uses your camera for live video coaching, real-time 3D postural screening, and lifting form critique capture.</string>
 	<key>NSMicrophoneUsageDescription</key>
@@ -89,8 +89,6 @@
 	<string>Forge Athletic accesses your photo library to allow you to upload training progress photos and movement critique videos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Forge Athletic saves postural screen reports and milestone workout summary cards to your photo library.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Forge Athletic uses your location to track outdoor running distance, split pace, and route elevation during cardio sessions.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIBackgroundModes</key>
@@ -101,7 +99,7 @@
 	</array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>com.gordonathletic.app.healthkit.refresh</string>
+		<string>com.forgeathletic.app.healthkit.refresh</string>
 	</array>
 </dict>
 </plist>

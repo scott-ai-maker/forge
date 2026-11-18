@@ -78,16 +78,19 @@ export default function SpotifySettingsStudio() {
           </div>
           <div>
             <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#1DB954', fontWeight: 800 }}>
-              Audio &amp; Entertainment Integration
+              Personal Solo Workout Audio Links
             </div>
             <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.04em' }}>
-              Spotify In-Gym Soundtracks &amp; Playlists
+              Recommended Workout Playlists on Spotify®
             </h3>
           </div>
         </div>
 
-        <p style={{ fontSize: 13, lineHeight: 1.5, color: '#CBD5E1', margin: '8px 0 16px', maxWidth: 720 }}>
-          Calibrate your in-gym atmosphere with Coach Gordon&apos;s curated high-drive Spotify soundscapes. 1-tap launching streams full master-quality audio continuously in the background on your phone, AirPods Pro, and Apple Watch while Forge Athletic logs sets and announces voice cadence over your music.
+        <p style={{ fontSize: 13, lineHeight: 1.5, color: '#CBD5E1', margin: '8px 0 12px', maxWidth: 720 }}>
+          Open recommended tempo-matched playlists directly in your personal <strong>Spotify®</strong> account during solo workouts while Forge Athletic logs sets and plays coaching tempo cues.
+        </p>
+        <p style={{ fontSize: 11.5, lineHeight: 1.5, color: '#94A3B8', margin: '0 0 16px', maxWidth: 720 }}>
+          <strong>Trademark &amp; Copyright Notice (17 U.S.C. § 106):</strong> Spotify® is a registered trademark of Spotify AB, which is not affiliated with or endorsing Forge Athletic. Editorial playlists are curated and owned by Spotify® and respective rights holders, are strictly for private solo listening in your personal Spotify account, and must not be broadcast during 1:1 Live Coaching sessions or captured in Form Lab video recordings.
         </p>
 
         {/* 3 Pillars Banner */}

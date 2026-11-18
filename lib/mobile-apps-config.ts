@@ -35,17 +35,17 @@ export interface MobileMarketingConfig {
 
 export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
   headline: 'CONTINUOUS BIOMETRIC TELEMETRY & IN-GYM EXECUTION',
-  subheadline: 'Available on iOS, Android & Progressive Web App',
+  subheadline: 'Instant Progressive Web App · iOS & Android Companion Apps Coming Soon',
   description:
     'Experience seamless 24/7 background biometric telemetry synchronization with Apple Health and Android Health Connect, real-time auditory cadence pacing, offline workout tracking, and 1:1 telestrator consultation studios on your mobile device.',
   ios: {
     platform: 'ios',
     storeName: 'Apple App Store',
     name: 'Forge Athletic for iOS',
-    bundleId: 'com.gordonathletic.app',
+    bundleId: 'com.forgeathletic.app',
     url: process.env.NEXT_PUBLIC_APP_STORE_URL || 'https://apps.apple.com/app/forge-athletic/id0000000000',
     minVersion: 'iOS 16.0+',
-    badgeText: 'Download on the App Store',
+    badgeText: 'iOS Companion · Coming Soon',
     tagline: 'Native HealthKit Background Delivery & Apple Watch Sync',
     isPlaceholder: true,
     keyFeatures: [
@@ -59,10 +59,10 @@ export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
     platform: 'android',
     storeName: 'Google Play Store',
     name: 'Forge Athletic for Android',
-    bundleId: 'com.gordonathletic.app',
-    url: process.env.NEXT_PUBLIC_PLAY_STORE_URL || 'https://play.google.com/store/apps/details?id=com.gordonathletic.app',
+    bundleId: 'com.forgeathletic.app',
+    url: process.env.NEXT_PUBLIC_PLAY_STORE_URL || 'https://play.google.com/store/apps/details?id=com.forgeathletic.app',
     minVersion: 'Android 10.0+ (Health Connect)',
-    badgeText: 'Get it on Google Play',
+    badgeText: 'Android Companion · Coming Soon',
     tagline: 'Android Health Connect & Wear OS Telemetry Stream',
     isPlaceholder: true,
     keyFeatures: [
@@ -131,7 +131,8 @@ export function isPlaceholderAppStoreUrl(url?: string): boolean {
 export function isPlaceholderPlayStoreUrl(url?: string): boolean {
   if (!url) return true
   return (
-    (url.includes('com.gordonathletic.app') && !process.env.NEXT_PUBLIC_PLAY_STORE_LIVE) ||
+    ((url.includes('com.forgeathletic.app') || url.includes('com.gordonathletic.app')) &&
+      !process.env.NEXT_PUBLIC_PLAY_STORE_LIVE) ||
     url === '#'
   )
 }

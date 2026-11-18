@@ -1,5 +1,5 @@
 {
-	"appId": "com.gordonathletic.app",
+	"appId": "com.forgeathletic.app",
 	"appName": "Forge Athletic",
 	"webDir": "public",
 	"server": {
@@ -23,7 +23,7 @@
 		"scrollEnabled": true,
 		"backgroundColor": "#080E14",
 		"preferredContentMode": "mobile",
-		"scheme": "com.gordonathletic.app"
+		"scheme": "com.forgeathletic.app"
 	},
 	"android": {
 		"backgroundColor": "#080E14",

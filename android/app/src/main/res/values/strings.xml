@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Forge Athletic</string>
     <string name="title_activity_main">Forge Athletic</string>
-    <string name="package_name">com.gordonathletic.app</string>
-    <string name="custom_url_scheme">com.gordonathletic.app</string>
-    <string name="health_permissions_rationale">Forge Athletic reads your heart rate, HRV, active calories, sleep stages, dietary nutrition, and workouts to calculate real-time CNS readiness and dynamically calibrate your periodized coaching program.</string>
+    <string name="package_name">com.forgeathletic.app</string>
+    <string name="custom_url_scheme">com.forgeathletic.app</string>
+    <string name="health_permissions_rationale">Forge Athletic reads your heart rate, resting heart rate, HRV, steps, walking/running distance, active and total calories burned, sleep, and workouts solely to calculate recovery readiness and calibrate your periodized training program.</string>
 </resources>

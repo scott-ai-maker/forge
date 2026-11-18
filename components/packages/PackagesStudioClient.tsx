@@ -86,7 +86,7 @@ export default function PackagesStudioClient({
                 Forge Athletic mobile app
               </div>
               <div style={{ fontSize: 13.5, color: '#FFFFFF', fontWeight: 600 }}>
-                Memberships and billing are available on our website at <strong style={{ color: 'var(--gold)' }}>forge-athletic.app</strong>.
+                Membership enrollment, plan changes, and billing are not available in the mobile companion app.
               </div>
             </div>
           </div>

@@ -129,6 +129,8 @@ export async function proxy(request: NextRequest) {
     supabaseResponse.cookies.set('gaa_helper_mode', '1', {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
     })
   }

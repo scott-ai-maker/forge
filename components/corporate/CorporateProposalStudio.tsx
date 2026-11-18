@@ -478,14 +478,18 @@ export default function CorporateProposalStudio({
 
             <div>
               <div style={{ fontSize: 9.5, textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.08em' }}>
-                Estimated time value
+                Illustrative time model (6.5 hrs/mo input)
               </div>
               <div className="font-telemetry font-mono" style={{ fontSize: 18, color: '#34D399', fontWeight: 700 }}>
                 +{financials.estimatedAnnualHoursRecovered.toLocaleString()} hrs
-                <span style={{ fontSize: 11, color: 'var(--gray)', fontWeight: 400 }}> /yr</span>
+                <span style={{ fontSize: 11, color: 'var(--gray)', fontWeight: 400 }}> /yr hypothetical</span>
               </div>
             </div>
           </div>
+
+          <p style={{ margin: '10px 0 0', fontSize: 11, color: '#94A3B8', lineHeight: 1.45, width: '100%' }}>
+            <strong>Illustrative Scenario Formula Disclosure:</strong> Time and dollar scenarios model a hypothetical customer input of <code>6.5 hrs/seat/mo × $350/hr</code> for internal budgeting comparisons only and do not represent guaranteed, clinical, or empirically audited productivity outcomes.
+          </p>
         </div>
       </div>
 
@@ -753,25 +757,25 @@ export default function CorporateProposalStudio({
           >
             <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 14 }}>
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)' }}>
-                Estimated time and energy benefits
+                Illustrative scenario: time model (6.5 hrs/seat/mo)
               </div>
               <div className="font-telemetry font-mono" style={{ fontSize: 20, color: '#34D399', fontWeight: 700, marginTop: 4 }}>
                 ~{financials.estimatedAnnualHoursRecovered.toLocaleString()} Hours / Year
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2 }}>
-                Illustrative estimate; individual results will vary
+                Hypothetical scenario input (`seats × 6.5 hrs/mo × 12`); not a guaranteed outcome
               </div>
             </div>
 
             <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 14 }}>
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)' }}>
-                Illustrative program value
+                Illustrative scenario: value model ($350/hr input)
               </div>
               <div className="font-telemetry font-mono" style={{ fontSize: 20, color: 'var(--gold-lt)', fontWeight: 700, marginTop: 4 }}>
                 ~${(financials.estimatedEnterpriseValueCreated).toLocaleString()}
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2 }}>
-                Illustrative estimate; individual results will vary
+                Hypothetical scenario input (`hours × $350/hr`); not a guaranteed financial return
               </div>
             </div>
           </div>

@@ -7,7 +7,7 @@ const defaultServerUrl = process.env.CAPACITOR_SERVER_URL
   : 'https://forge-athletic.app/dashboard/fitness?source=native'
 
 const config: CapacitorConfig = {
-  appId: 'com.gordonathletic.app',
+  appId: 'com.forgeathletic.app',
   appName: 'Forge Athletic',
   webDir: 'public',
   server: {
@@ -33,7 +33,7 @@ const config: CapacitorConfig = {
     scrollEnabled: true,
     backgroundColor: '#080E14',
     preferredContentMode: 'mobile',
-    scheme: 'com.gordonathletic.app',
+    scheme: 'com.forgeathletic.app',
   },
   android: {
     backgroundColor: '#080E14',

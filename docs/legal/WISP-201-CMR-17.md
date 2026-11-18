@@ -1,7 +1,7 @@
 # Forge Athletic Performance LLC — Written Information Security Program (WISP) & Health Breach Incident Runbook
 
 **Entity:** Forge Athletic Performance LLC (Massachusetts Secretary of the Commonwealth ID `#002010312`)
-**Principal Place of Business:** 82 Wendell Ave., Ste 100, Pittsfield, MA 01201
+**Registered Office & Legal Notice Address:** 82 Wendell Ave., Ste 100, Pittsfield, MA 01201 (Commonwealth of Massachusetts)
 **Statutory Frameworks:** Massachusetts `201 CMR 17.00` · `M.G.L. c. 93H` · FTC Health Breach Notification Rule (`16 CFR Part 318`) · Washington MHMDA (`RCW 19.373`) · Illinois BIPA (`740 ILCS 14/`) · HIPAA Security Safeguard Parity (`45 CFR § 164.308–312`)
 **Document Version:** `wisp-2026.11.18`
 

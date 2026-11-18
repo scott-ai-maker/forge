@@ -103,7 +103,16 @@ export const CORPORATE_TIER_PRESETS: CorporateTierPreset[] = [
   },
 ]
 
-export function computeCorporateFinancials(seats: number, cadence: CorporateCadence): CorporateFinancials {
+export interface CorporateRoiAssumptions {
+  assumedMonthlyHoursRecoveredPerSeat?: number
+  assumedHourlyValueUsd?: number
+}
+
+export function computeCorporateFinancials(
+  seats: number,
+  cadence: CorporateCadence,
+  assumptions: CorporateRoiAssumptions = {}
+): CorporateFinancials {
   const safeSeats = Math.max(1, Math.min(250, Math.round(seats || 10)))
 
   // Check if matches an exact preset
@@ -137,13 +146,13 @@ export function computeCorporateFinancials(seats: number, cadence: CorporateCade
     cadence === 'annual' ? (annualInvestment / 12) / safeSeats : monthlyInvestment / safeSeats
   )
 
-  // Productivity & cognitive fatigue metrics
-  // Average executive recovers ~6.5 high-performance hours/month from reduced afternoon crashes,
-  // alleviated spinal/cervical pain, and rapid redeye flight adaptation.
-  const estimatedMonthlyHoursRecovered = Math.round(safeSeats * 6.5)
+  // Illustrative hypothetical customer-input scenario (not an empirically audited ROI guarantee):
+  // Default model input: 6.5 hrs/mo per participant × $350/hr customer-adjustable blended rate.
+  const monthlyHoursInput = Math.max(0, assumptions.assumedMonthlyHoursRecoveredPerSeat ?? 6.5)
+  const hourlyValueInput = Math.max(0, assumptions.assumedHourlyValueUsd ?? 350)
+  const estimatedMonthlyHoursRecovered = Math.round(safeSeats * monthlyHoursInput)
   const estimatedAnnualHoursRecovered = estimatedMonthlyHoursRecovered * 12
-  // Blended executive hourly value estimated at $350/hr
-  const estimatedEnterpriseValueCreated = estimatedAnnualHoursRecovered * 350
+  const estimatedEnterpriseValueCreated = estimatedAnnualHoursRecovered * hourlyValueInput
 
   return {
     seats: safeSeats,

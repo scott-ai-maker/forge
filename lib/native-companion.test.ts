@@ -32,10 +32,11 @@ describe('lib/native-companion', () => {
     delete (global as { window?: unknown }).window
   })
 
-  it('exports valid web portal constants and compliant disclosure text', () => {
+  it('exports valid web portal constants and Apple Guideline 3.1.3(b) non-steering disclosure text', () => {
     expect(WEB_PORTAL_URL).toBe('https://forge-athletic.app')
-    expect(COMPANION_BILLING_DISCLOSURE).toContain('Gym Companion')
-    expect(COMPANION_BILLING_DISCLOSURE).toContain('forge-athletic.app')
+    expect(COMPANION_BILLING_DISCLOSURE).toContain('Companion App')
+    expect(COMPANION_BILLING_DISCLOSURE).toContain('not available in the mobile companion app')
+    expect(COMPANION_BILLING_DISCLOSURE).not.toContain('forge-athletic.app')
   })
 
   describe('when running in Web browser environment', () => {

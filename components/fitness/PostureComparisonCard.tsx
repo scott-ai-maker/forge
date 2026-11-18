@@ -74,14 +74,8 @@ function getOrInitStandingPoseLandmarker(): Promise<CachedStandingPoseLandmarker
   if (sharedStandingLandmarkerPromise) return sharedStandingLandmarkerPromise
   sharedStandingLandmarkerPromise = (async () => {
     const vision = await import('@mediapipe/tasks-vision')
-    let fileset
-    try {
-      fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
-    } catch {
-      fileset = await vision.FilesetResolver.forVisionTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
-      )
-    }
+    // Strictly self-hosted WASM & model weights (#55 — zero third-party CDN IP/Referer leaks)
+    const fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
     const createWith = async (modelAssetPath: string, delegate: 'GPU' | 'CPU') =>
       (await vision.PoseLandmarker.createFromOptions(fileset, {
         baseOptions: { modelAssetPath, delegate },
@@ -92,21 +86,11 @@ function getOrInitStandingPoseLandmarker(): Promise<CachedStandingPoseLandmarker
         minTrackingConfidence: 0.35,
       })) as unknown as CachedStandingPoseLandmarker
 
-    for (const modelPath of [
-      '/models/pose_landmarker_lite.task',
-      'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-    ]) {
-      try {
-        return await createWith(modelPath, 'GPU')
-      } catch {
-        try {
-          return await createWith(modelPath, 'CPU')
-        } catch {
-          // Try next model path
-        }
-      }
+    try {
+      return await createWith('/models/pose_landmarker_lite.task', 'GPU')
+    } catch {
+      return await createWith('/models/pose_landmarker_lite.task', 'CPU')
     }
-    throw new Error('Unable to initialize MediaPipe PoseLandmarker')
   })().catch(err => {
     sharedStandingLandmarkerPromise = null
     throw err

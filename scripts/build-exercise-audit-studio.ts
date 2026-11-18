@@ -1224,7 +1224,9 @@ async function build() {
 </html>
 `
 
-  const outputPath = path.resolve(process.cwd(), 'public/exercise-audit.html')
+  const outputDir = path.resolve(process.cwd(), '.local-artifacts')
+  fs.mkdirSync(outputDir, { recursive: true })
+  const outputPath = path.resolve(outputDir, 'exercise-audit.html')
   fs.writeFileSync(outputPath, htmlContent)
   console.log(`\n🎉 Visual Audit Studio successfully generated at ${outputPath}`)
 }

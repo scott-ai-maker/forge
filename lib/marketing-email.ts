@@ -208,11 +208,27 @@ export function getMissingEmailConfigKeys() {
   return missing
 }
 
+function resolveUnsubscribeHmacSecret(): string {
+  const configured =
+    process.env.UNSUBSCRIBE_HMAC_SECRET?.trim() ||
+    process.env.MARKETING_CRON_SECRET?.trim() ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+
+  if (configured) {
+    return configured
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Missing UNSUBSCRIBE_HMAC_SECRET, MARKETING_CRON_SECRET, or SUPABASE_SERVICE_ROLE_KEY for unsubscribe HMAC signing'
+    )
+  }
+
+  return 'dev-test-only-unsubscribe-hmac-key'
+}
+
 export function createUnsubscribeToken(email: string): string {
-  const secret =
-    process.env.MARKETING_CRON_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    'gaa-unsubscribe-fallback-secret'
+  const secret = resolveUnsubscribeHmacSecret()
   return crypto
     .createHmac('sha256', secret)
     .update(normalizeEmail(email))
@@ -413,7 +429,9 @@ export async function sendWelcomeEmail(input: WelcomeInput) {
   <li><strong>Review your training plan:</strong> get started with the periodization and training tools in your dashboard.</li>
 </ol>
 <p><a href="${baseUrl}/dashboard/onboarding">Continue to onboarding</a></p>
-<p>If you have questions, reply to this email or message your coach in the app.</p>`,
+<p>If you have questions, reply to this email or message your coach in the app.</p>
+<hr style="margin: 24px 0 12px; border: 0; border-top: 1px solid #E2E8F0;" />
+<p style="font-size: 11px; color: #64748B; margin: 0;">Forge Athletic Performance LLC · 82 Wendell Ave., Ste 100, Pittsfield, MA 01201</p>`,
     text: [
       `Welcome to Forge Athletic, ${name}!`,
       '',
@@ -427,6 +445,9 @@ export async function sendWelcomeEmail(input: WelcomeInput) {
       `Continue to onboarding: ${baseUrl}/dashboard/onboarding`,
       '',
       'If you have questions, reply to this email or message your coach in the app.',
+      '',
+      '---',
+      'Forge Athletic Performance LLC · 82 Wendell Ave., Ste 100, Pittsfield, MA 01201',
     ].join('\n'),
     replyTo,
   })

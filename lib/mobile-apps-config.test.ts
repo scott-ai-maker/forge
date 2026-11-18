@@ -9,14 +9,14 @@ import {
 describe('MOBILE_APPS_CONFIG', () => {
   it('defines valid iOS and Android app metadata', () => {
     expect(MOBILE_APPS_CONFIG.ios.platform).toBe('ios')
-    expect(MOBILE_APPS_CONFIG.ios.bundleId).toBe('com.gordonathletic.app')
+    expect(MOBILE_APPS_CONFIG.ios.bundleId).toBe('com.forgeathletic.app')
     expect(MOBILE_APPS_CONFIG.ios.url).toBeDefined()
     expect(MOBILE_APPS_CONFIG.ios.url).toContain('http')
     expect(MOBILE_APPS_CONFIG.ios.minVersion).toContain('iOS')
     expect(MOBILE_APPS_CONFIG.ios.keyFeatures.length).toBeGreaterThan(0)
 
     expect(MOBILE_APPS_CONFIG.android.platform).toBe('android')
-    expect(MOBILE_APPS_CONFIG.android.bundleId).toBe('com.gordonathletic.app')
+    expect(MOBILE_APPS_CONFIG.android.bundleId).toBe('com.forgeathletic.app')
     expect(MOBILE_APPS_CONFIG.android.url).toBeDefined()
     expect(MOBILE_APPS_CONFIG.android.url).toContain('http')
     expect(MOBILE_APPS_CONFIG.android.minVersion).toContain('Android')
@@ -46,6 +46,7 @@ describe('MOBILE_APPS_CONFIG', () => {
     expect(isPlaceholderAppStoreUrl(undefined)).toBe(true)
     expect(isPlaceholderAppStoreUrl('https://apps.apple.com/app/forge-athletic/id1234567890')).toBe(false)
 
+    expect(isPlaceholderPlayStoreUrl('https://play.google.com/store/apps/details?id=com.forgeathletic.app')).toBe(true)
     expect(isPlaceholderPlayStoreUrl('https://play.google.com/store/apps/details?id=com.gordonathletic.app')).toBe(true)
     expect(isPlaceholderPlayStoreUrl('#')).toBe(true)
     expect(isPlaceholderPlayStoreUrl(undefined)).toBe(true)

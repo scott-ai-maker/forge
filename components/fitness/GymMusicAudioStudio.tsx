@@ -61,8 +61,16 @@ export const GAA_CURATED_PLAYLISTS: CuratedPlaylist[] = [
   },
 ]
 
+export function isCommercialMusicBlockedInLiveOrRecording(): boolean {
+  if (typeof document === 'undefined') return false
+  return Boolean(
+    document.querySelector('[data-forge-live-broadcast="true"], [data-forge-recording-active="true"]')
+  )
+}
+
 export function launchSpotifyNative(url: string) {
   if (typeof window === 'undefined') return
+  if (isCommercialMusicBlockedInLiveOrRecording()) return
   configureAudioSession('transient')
   const playlistId = url.split('playlist/')[1]?.split('?')[0]
   const albumId = url.split('album/')[1]?.split('?')[0]
@@ -85,17 +93,21 @@ export function launchSpotifyNative(url: string) {
 
 export function launchSpotifyWeb(url: string) {
   if (typeof window === 'undefined') return
+  if (isCommercialMusicBlockedInLiveOrRecording()) return
   configureAudioSession('transient')
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 export default function GymMusicAudioStudio({
   activeStage = 'strength',
+  isLiveOrRecordingSession = false,
   onClose,
 }: {
   activeStage?: 'warmup' | 'strength' | 'cardio' | 'cooldown' | 'idle'
+  isLiveOrRecordingSession?: boolean
   onClose?: () => void
 }) {
+  const isBroadcastBlocked = isLiveOrRecordingSession || isCommercialMusicBlockedInLiveOrRecording()
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>(() => {
     if (activeStage === 'cardio') return 'zone-2-cadence-flow'
     if (activeStage === 'cooldown') return 'alpha-wave-recovery'
@@ -144,16 +156,16 @@ export default function GymMusicAudioStudio({
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
             <GaaIcon name="music" size={15} tone="emerald" />
             <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#1DB954' }}>
-              Spotify In-Gym Audio Studio
+              Personal Solo Workout Audio Link
             </span>
           </div>
-          <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, fontWeight: 700, letterSpacing: '0.04em', color: '#FFFFFF' }}>
-            Coach Gordon&apos;s Training Soundtracks
+          <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 19, fontWeight: 700, letterSpacing: '0.04em', color: '#FFFFFF' }}>
+            Recommended Workout Playlists on Spotify®
           </h3>
         </div>
         {onClose && (
@@ -164,6 +176,31 @@ export default function GymMusicAudioStudio({
           >
             <GaaIcon name="close" size={16} tone="slate" />
           </button>
+        )}
+      </div>
+
+      {/* Trademark & 17 U.S.C. § 106 Solo-Listening Licensing Guardrail */}
+      <div
+        role={isBroadcastBlocked ? 'alert' : 'note'}
+        style={{
+          marginBottom: 14,
+          padding: '10px 12px',
+          borderRadius: 8,
+          background: isBroadcastBlocked ? 'rgba(239, 68, 68, 0.14)' : 'rgba(255, 255, 255, 0.04)',
+          border: isBroadcastBlocked ? '1px solid rgba(239, 68, 68, 0.45)' : '1px solid rgba(255, 255, 255, 0.1)',
+          fontSize: 11,
+          lineHeight: 1.45,
+          color: isBroadcastBlocked ? '#FCA5A5' : '#94A3B8',
+        }}
+      >
+        {isBroadcastBlocked ? (
+          <strong>
+            Commercial Music Disabled During Live Broadcasts &amp; Recordings (17 U.S.C. § 106): External Spotify® playback is paused during 1:1 Live Coaching sessions and Form Lab video recordings to prevent unlicensed public performance or synchronization.
+          </strong>
+        ) : (
+          <span>
+            <strong>Private Solo Listening Only:</strong> Editorial playlists are curated and owned by <strong>Spotify®</strong> (Spotify AB) and respective rights holders—not Forge Athletic. Links open in your personal Spotify account solely for private individual workouts and must not be played into live coaching calls or recorded form-check videos.
+          </span>
         )}
       </div>
 
@@ -243,41 +280,45 @@ export default function GymMusicAudioStudio({
         {/* 1-Tap Launch in Spotify App Button */}
         <button
           type="button"
+          disabled={isBroadcastBlocked}
           onClick={() => launchSpotifyNative(selectedPlaylist.spotifyUrl)}
           className="tactile-btn"
           style={{
             width: '100%',
             padding: '14px 20px',
-            background: 'linear-gradient(135deg, #1DB954 0%, #169C46 100%)',
+            background: isBroadcastBlocked ? 'rgba(100,116,139,0.35)' : 'linear-gradient(135deg, #1DB954 0%, #169C46 100%)',
             border: 'none',
             borderRadius: 8,
             color: '#FFFFFF',
             fontWeight: 800,
             fontSize: 14,
-            cursor: 'pointer',
+            cursor: isBroadcastBlocked ? 'not-allowed' : 'pointer',
+            opacity: isBroadcastBlocked ? 0.6 : 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 10,
-            boxShadow: '0 6px 20px rgba(29, 185, 84, 0.45)',
+            boxShadow: isBroadcastBlocked ? 'none' : '0 6px 20px rgba(29, 185, 84, 0.45)',
             marginBottom: 8,
           }}
         >
           <GaaIcon name="play" size={16} tone="white" />
-          <span>LAUNCH IN SPOTIFY APP</span>
+          <span>{isBroadcastBlocked ? 'DISABLED DURING LIVE / RECORDING' : 'OPEN IN YOUR SPOTIFY® APP'}</span>
         </button>
 
         {/* Web Tab Secondary Launch */}
         <div style={{ textAlign: 'center' }}>
           <button
             type="button"
+            disabled={isBroadcastBlocked}
             onClick={() => launchSpotifyWeb(selectedPlaylist.spotifyUrl)}
             style={{
               background: 'transparent',
               border: 'none',
               color: 'var(--gold-lt)',
               fontSize: 12,
-              cursor: 'pointer',
+              cursor: isBroadcastBlocked ? 'not-allowed' : 'pointer',
+              opacity: isBroadcastBlocked ? 0.5 : 1,
               textDecoration: 'underline',
               padding: 4,
               display: 'inline-flex',
@@ -286,7 +327,7 @@ export default function GymMusicAudioStudio({
             }}
           >
             <GaaIcon name="external-link" size={12} tone="gold" />
-            <span>Or open in Spotify Web Tab</span>
+            <span>Or open in Spotify® Web Player</span>
           </button>
         </div>
       </div>

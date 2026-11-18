@@ -524,7 +524,7 @@
 				);
 				MARKETING_VERSION = 1.58.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
-				PRODUCT_BUNDLE_IDENTIFIER = com.gordonathletic.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.forgeathletic.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.0;
@@ -546,7 +546,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.58.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.gordonathletic.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.forgeathletic.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.0;
@@ -567,7 +567,7 @@
 				INFOPLIST_FILE = ForgeWatch/Info.plist;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
 				MARKETING_VERSION = 1.58.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.gordonathletic.app.watchkitapp";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.forgeathletic.app.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -577,7 +577,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
-				WK_COMPANION_APP_BUNDLE_IDENTIFIER = com.gordonathletic.app;
+				WK_COMPANION_APP_BUNDLE_IDENTIFIER = com.forgeathletic.app;
 			};
 			name = Debug;
 		};
@@ -594,7 +594,7 @@
 				INFOPLIST_FILE = ForgeWatch/Info.plist;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
 				MARKETING_VERSION = 1.58.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.gordonathletic.app.watchkitapp";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.forgeathletic.app.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -604,7 +604,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
-				WK_COMPANION_APP_BUNDLE_IDENTIFIER = com.gordonathletic.app;
+				WK_COMPANION_APP_BUNDLE_IDENTIFIER = com.forgeathletic.app;
 			};
 			name = Release;
 		};

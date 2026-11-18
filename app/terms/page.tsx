@@ -319,7 +319,7 @@ export default function TermsOfServicePage() {
             </p>
           </div>
           <p style={{ fontSize: '0.92rem', color: '#94A3B8' }}>
-            All other third-party marks—including Apple®, HealthKit®, Google®, Health Connect™, Whoop®, Garmin®, Thorne®, REP Fitness®, Crossover Symmetry®, Perform Better®, and Stripe®—are the property of their respective owners.
+            All other third-party product names, logos, and trademarks—including Apple®, Apple Watch®, AirPods Pro®, HealthKit®, TestFlight®, Google®, Health Connect™, Wear OS™, Samsung Health®, Spotify®, Whoop®, Garmin®, Oura®, Polar®, Thorne®, REP Fitness®, Crossover Symmetry®, Perform Better®, and Stripe®—are the property of their respective owners. Forge Athletic Performance LLC is not affiliated with, sponsored by, or endorsed by any third-party wearable hardware, audio-streaming, app-store, supplement, equipment, or payment provider referenced on the platform.
           </p>
         </section>
 
@@ -353,7 +353,7 @@ export default function TermsOfServicePage() {
           </p>
           <p style={{ margin: '0.4rem 0 0', fontSize: '0.95rem', color: 'var(--gold-lt)' }}>
             <strong>Forge Athletic Performance LLC</strong><br />
-            Attn: Legal, DMCA &amp; Intellectual Property Department<br />
+            Attn: Legal, DMCA &amp; Intellectual Property Department (Registered Office)<br />
             82 Wendell Ave., Ste 100<br />
             Pittsfield, MA 01201<br />
             Phone: <a href="tel:+14132426370" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>413-242-6370</a><br />

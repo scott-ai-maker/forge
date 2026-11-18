@@ -13,7 +13,7 @@ import { useState, useEffect } from 'react'
 export const WEB_PORTAL_URL = 'https://forge-athletic.app'
 
 export const COMPANION_BILLING_DISCLOSURE =
-  'Forge Athletic Gym Companion: Memberships and billing methods are managed on our web portal. Visit forge-athletic.app in your web browser to manage your account or membership.'
+  'Forge Athletic Companion App: Membership enrollment, plan upgrades, and billing changes are not available in the mobile companion app.'
 
 /**
  * Returns true if currently running inside a native Capacitor mobile container (iOS or Android).

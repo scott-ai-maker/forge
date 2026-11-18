@@ -71,7 +71,7 @@ export default function ConsumerHealthBiometricPrivacyPage() {
               <strong>Physical Readiness &amp; Orthopedic Screening Indicators:</strong> PAR-Q+ cardiovascular/musculoskeletal readiness responses, prior surgery or injury notes, and movement contraindications necessary to prevent unsafe exercise prescription.
             </li>
             <li style={{ marginBottom: '0.4rem' }}>
-              <strong>Physiological, Biometric &amp; Recovery Telemetry:</strong> Resting heart rate, heart-rate variability (HRV), sleep duration, active expenditure, body weight, estimated body-fat percentage, and resistance-training workload metrics.
+              <strong>Physiological, Biometric &amp; Recovery Telemetry:</strong> Heart rate, resting heart rate, heart-rate variability (HRV), sleep duration and stages, step count, walking/running distance, active and basal/total energy expenditure, user-entered body weight and estimated body-fat percentage, and resistance-training workload metrics (with zero mobile GPS location tracking).
             </li>
             <li style={{ marginBottom: '0.4rem' }}>
               <strong>Postural, Movement &amp; Visual Assessment Data:</strong> Joint-angle kinematics (e.g., Overhead Squat Assessment ankle, knee, hip, and shoulder alignment), optional athlete-uploaded form-check videos, progress photos, and live studio telestrator recordings.

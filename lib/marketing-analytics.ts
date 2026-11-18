@@ -2,9 +2,7 @@ export type MarketingEventPayload = Record<string, string | number | boolean | n
 
 declare global {
   interface Window {
-    gtag?: (...args: unknown[]) => void
     plausible?: (event: string, options?: { props?: Record<string, string | number | boolean> }) => void
-    dataLayer?: Array<Record<string, unknown>>
   }
 }
 
@@ -20,14 +18,16 @@ function plausiblePayload(payload: Record<string, string | number | boolean | nu
   ) as Record<string, string | number | boolean>
 }
 
+/**
+ * First-party / privacy-preserving marketing event dispatcher.
+ * Forge Athletic maintains a strict Zero Google Analytics / Zero Behavioral Ad Pixel policy (#52).
+ */
 export function trackMarketingEvent(eventName: string, payload: MarketingEventPayload = {}) {
   if (typeof window === 'undefined') return
 
   const normalized = normalizePayload(payload) as Record<string, string | number | boolean | null>
 
-  window.gtag?.('event', eventName, normalized)
   window.plausible?.(eventName, { props: plausiblePayload(normalized) })
-  window.dataLayer?.push({ event: eventName, ...normalized })
   window.dispatchEvent(new CustomEvent('sgf:marketing-event', { detail: { eventName, payload: normalized } }))
 
   if (process.env.NODE_ENV !== 'production') {

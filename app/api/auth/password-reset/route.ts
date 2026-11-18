@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendPasswordResetEmail, getMissingEmailConfigKeys } from '@/lib/marketing-email'
 import { supabaseAdmin } from '@/lib/supabase'
+import { isAuthorizedW2OrFounderCoachEmail } from '@/lib/coach-w2-gatekeeper'
 import { getTrustedAppBaseUrl } from '@/lib/app-base-url'
 import { detectEmailTypo } from '@/lib/email-validation'
 import {
@@ -129,8 +130,8 @@ export async function POST(req: NextRequest) {
 
     let hashedToken = linkData?.properties?.hashed_token
 
-    // If master coach is not yet provisioned in auth.users, auto-provision and retry
-    if ((error || !hashedToken) && isMasterCoach) {
+    // If master coach is not yet provisioned in auth.users, auto-provision only if W-2/Founder gatekeeper approves
+    if ((error || !hashedToken) && isMasterCoach && isAuthorizedW2OrFounderCoachEmail(email)) {
       console.warn('[PasswordReset] Master coach account missing in auth.users, provisioning now:', { email })
       try {
         const { data: newUser, error: createErr } = await admin.auth.admin.createUser({

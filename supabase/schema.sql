@@ -1633,7 +1633,11 @@ create index if not exists client_personal_records_lookup_idx
 
 -- Auto-Sync Trigger Function for Instant PR Updates on Set Log Insert/Update
 create or replace function sync_client_personal_record()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 declare
   v_e1rm numeric(6,2);
 begin
@@ -1689,7 +1693,7 @@ begin
   end if;
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
 drop trigger if exists trg_sync_personal_records on workout_set_logs;
 create trigger trg_sync_personal_records
@@ -1875,6 +1879,7 @@ create or replace function increment_referral_code_clicks(p_code text)
 returns void
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
   update referral_codes
@@ -1883,6 +1888,9 @@ begin
   where code = upper(trim(p_code)) or custom_slug = lower(trim(p_code));
 end;
 $$;
+
+revoke all on function public.increment_referral_code_clicks(text) from public, anon, authenticated;
+grant execute on function public.increment_referral_code_clicks(text) to service_role;
 
 alter table referral_programs enable row level security;
 alter table referral_codes enable row level security;

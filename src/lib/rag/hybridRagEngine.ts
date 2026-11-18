@@ -498,7 +498,7 @@ export async function embedTextWithGemini(
   const timeout = setTimeout(() => controller.abort(), 2800)
 
   try {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_RAG_EMBEDDING_MODEL}:embedContent?key=${apiKey}`
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_RAG_EMBEDDING_MODEL)}:embedContent`
     const embedContentConfig: Record<string, unknown> = {
       taskType,
       outputDimensionality: GEMINI_RAG_EMBEDDING_DIMS,
@@ -509,7 +509,10 @@ export async function embedTextWithGemini(
 
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
       signal: controller.signal,
       body: JSON.stringify({
         model: `models/${GEMINI_RAG_EMBEDDING_MODEL}`,

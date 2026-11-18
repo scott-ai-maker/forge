@@ -57,8 +57,6 @@ interface CachedPoseLandmarker {
 }
 
 const LOCAL_POSE_MODEL_PATH = '/models/pose_landmarker_lite.task'
-const FALLBACK_POSE_MODEL_URL =
-  'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'
 
 let sharedPoseLandmarkerPromise: Promise<CachedPoseLandmarker> | null = null
 
@@ -67,14 +65,8 @@ function getOrInitDeskPoseLandmarker(): Promise<CachedPoseLandmarker> {
 
   sharedPoseLandmarkerPromise = (async () => {
     const vision = await import('@mediapipe/tasks-vision')
-    let fileset
-    try {
-      fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
-    } catch {
-      fileset = await vision.FilesetResolver.forVisionTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
-      )
-    }
+    // Strictly self-hosted WASM & model weights (#55 — zero third-party CDN IP/Referer leaks)
+    const fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
 
     const createWith = async (modelAssetPath: string, delegate: 'GPU' | 'CPU') =>
       (await vision.PoseLandmarker.createFromOptions(fileset, {
@@ -86,18 +78,11 @@ function getOrInitDeskPoseLandmarker(): Promise<CachedPoseLandmarker> {
         minTrackingConfidence: 0.35,
       })) as unknown as CachedPoseLandmarker
 
-    for (const modelPath of [LOCAL_POSE_MODEL_PATH, FALLBACK_POSE_MODEL_URL]) {
-      try {
-        return await createWith(modelPath, 'GPU')
-      } catch {
-        try {
-          return await createWith(modelPath, 'CPU')
-        } catch {
-          // Try fallback model source
-        }
-      }
+    try {
+      return await createWith(LOCAL_POSE_MODEL_PATH, 'GPU')
+    } catch {
+      return await createWith(LOCAL_POSE_MODEL_PATH, 'CPU')
     }
-    throw new Error('Unable to initialize MediaPipe PoseLandmarker')
   })().catch(err => {
     sharedPoseLandmarkerPromise = null
     throw err

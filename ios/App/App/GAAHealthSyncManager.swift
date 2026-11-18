@@ -193,7 +193,7 @@ import UIKit
     public var readTypes: Set<HKObjectType> {
         var types = Set<HKObjectType>()
         
-        // Quantity Types (Autonomic Vitals & Metrics)
+        // Quantity Types (Disclosed Autonomic Vitals & Training Workload Metrics Only — Apple Guideline 5.1.3)
         let quantityIdentifiers: [HKQuantityTypeIdentifier] = [
             .heartRate,
             .restingHeartRate,
@@ -201,16 +201,7 @@ import UIKit
             .activeEnergyBurned,
             .basalEnergyBurned,
             .stepCount,
-            .distanceWalkingRunning,
-            .vo2Max,
-            .respiratoryRate,
-            .oxygenSaturation,
-            .dietaryEnergyConsumed,
-            .dietaryProtein,
-            .dietaryCarbohydrates,
-            .dietaryFatTotal,
-            .dietaryFiber,
-            .dietaryWater
+            .distanceWalkingRunning
         ]
         
         for id in quantityIdentifiers {
@@ -219,12 +210,9 @@ import UIKit
             }
         }
         
-        // Category Types (Sleep Architecture & Mindfulness)
+        // Category Types (Sleep Recovery Duration & Stages)
         if let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) {
             types.insert(sleepType)
-        }
-        if let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession) {
-            types.insert(mindfulType)
         }
         
         // Workout Type
@@ -241,9 +229,6 @@ import UIKit
         }
         if let distance = HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning) {
             types.insert(distance)
-        }
-        if let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession) {
-            types.insert(mindfulType)
         }
         return types
     }
@@ -292,8 +277,7 @@ import UIKit
             .restingHeartRate,
             .heartRateVariabilitySDNN,
             .activeEnergyBurned,
-            .stepCount,
-            .dietaryWater
+            .stepCount
         ]
 
         let group = DispatchGroup()
@@ -347,8 +331,7 @@ import UIKit
             .restingHeartRate,
             .heartRateVariabilitySDNN,
             .stepCount,
-            .activeEnergyBurned,
-            .dietaryWater
+            .activeEnergyBurned
         ]
 
         var sampleTypesToObserve: [HKSampleType] = []

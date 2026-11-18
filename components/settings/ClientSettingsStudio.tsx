@@ -366,14 +366,14 @@ export default function ClientSettingsStudio({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <GaaIcon name="shield-check" size={18} tone="gold" />
                   <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)' }}>
-                    Account &amp; Billing Managed Exclusively on Web
+                    Companion App Reader Mode
                   </span>
                 </div>
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--gray)', lineHeight: 1.6 }}>
-                  In compliance with mobile companion app guidelines, all membership retainers, add-on accelerators, invoice downloads, and credit card updates are securely managed on our website.
+                  Membership enrollment, plan changes, add-on purchases, and payment method updates are not available inside the mobile companion app.
                 </p>
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--white)', lineHeight: 1.6 }}>
-                  To make any changes to your subscription or billing methods, please sign in to <strong style={{ color: 'var(--gold)' }}>forge-athletic.app</strong> in your desktop or mobile web browser.
+                  Your existing Forge Athletic membership unlocks full workout execution, readiness telemetry, and coach messaging on this device.
                 </p>
               </div>
 
@@ -637,6 +637,58 @@ export default function ClientSettingsStudio({
           <TelemetryDiagnosticsPanel />
         </section>
       )}
+
+      {/* ── Always-Visible Legal, Health Privacy & Account Deletion Links (Apple 5.1.1 / Google Play User Data Policy) ── */}
+      <nav
+        aria-label="Legal policies and account data controls"
+        style={{
+          marginTop: 8,
+          padding: '14px 18px',
+          borderRadius: 10,
+          background: 'rgba(13, 20, 34, 0.72)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '10px 16px',
+          fontSize: 12,
+        }}
+      >
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 14px', alignItems: 'center' }}>
+          <span style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gold-lt)' }}>
+            Legal &amp; Privacy:
+          </span>
+          <a href="/privacy" style={{ color: '#CBD5E1', textDecoration: 'underline' }}>
+            Privacy Policy
+          </a>
+          <a href="/health-privacy" style={{ color: '#CBD5E1', textDecoration: 'underline' }}>
+            Consumer Health Data Privacy
+          </a>
+          <a href="/terms" style={{ color: '#CBD5E1', textDecoration: 'underline' }}>
+            Terms of Service
+          </a>
+          <a href="/accessibility" style={{ color: '#CBD5E1', textDecoration: 'underline' }}>
+            Accessibility
+          </a>
+        </div>
+        <button
+          type="button"
+          onClick={() => handleTabChange('security')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            color: '#FCA5A5',
+            fontSize: 12,
+            fontWeight: 700,
+            textDecoration: 'underline',
+            cursor: 'pointer',
+          }}
+        >
+          Delete Account &amp; Data →
+        </button>
+      </nav>
     </div>
   )
 }

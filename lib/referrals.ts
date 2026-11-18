@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { checkSlidingWindowRateLimit } from '@/src/lib/security/rateLimiter'
 import { notifyUser } from '@/lib/notifications'
 
 export interface ReferralProgram {
@@ -402,14 +403,23 @@ export async function validateReferralCode(
 }
 
 /**
- * Tracks link clicks asynchronously.
+ * Tracks link clicks asynchronously with per-code burst throttling (#56).
  */
 export async function recordReferralClick(
   admin: SupabaseClient,
-  rawCode: string
+  rawCode: string,
+  subjectKey = 'global'
 ): Promise<void> {
   const normalized = normalizeReferralCode(rawCode)
   if (!normalized) return
+
+  const rate = checkSlidingWindowRateLimit({
+    namespace: 'referral-click',
+    subjectKey: `${normalized}:${subjectKey}`,
+    maxRequests: 15,
+    windowMs: 60_000,
+  })
+  if (!rate.allowed) return
 
   try {
     await admin.rpc('increment_referral_code_clicks', { p_code: normalized })

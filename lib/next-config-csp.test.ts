@@ -36,11 +36,14 @@ describe('Content Security Policy & CDN Whitelisting (next.config.ts)', () => {
     // media-src must whitelist Supabase
     expect(cspValue).toMatch(/media-src[^;]*https:\/\/\*\.supabase\.co/)
 
-    // script-src and connect-src must whitelist Google Analytics, GTM, and MediaPipe fallback CDN
-    expect(cspValue).toMatch(/script-src[^;]*https:\/\/www\.googletagmanager\.com/)
-    expect(cspValue).toMatch(/connect-src[^;]*https:\/\/\*\.google-analytics\.com/)
-    expect(cspValue).toMatch(/connect-src[^;]*https:\/\/\*\.googletagmanager\.com/)
-    expect(cspValue).toMatch(/connect-src[^;]*https:\/\/storage\.googleapis\.com/)
+    // Strict Zero-GA / Zero-Third-Party-Model-CDN Sanctuary enforcement (#46, #52, #55)
+    expect(cspValue).not.toContain('googletagmanager.com')
+    expect(cspValue).not.toContain('google-analytics.com')
+    expect(cspValue).not.toContain('analytics.google.com')
+    expect(cspValue).not.toContain('storage.googleapis.com')
+    expect(cspValue).not.toContain('cdn.jsdelivr.net')
+    expect(cspValue).not.toContain("'unsafe-eval'")
+    expect(cspValue).toContain("'wasm-unsafe-eval'")
   })
 
   it('does not permanently lock static images with immutable cache-control', async () => {

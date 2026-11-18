@@ -51,7 +51,7 @@ public class GAAHealthSyncUnitTest {
 
     @Test
     public void testPackageIdentifierConfiguration() {
-        String expectedApplicationId = "com.gordonathletic.app";
-        assertEquals("com.gordonathletic.app", expectedApplicationId);
+        String expectedApplicationId = "com.forgeathletic.app";
+        assertEquals("com.forgeathletic.app", expectedApplicationId);
     }
 }
