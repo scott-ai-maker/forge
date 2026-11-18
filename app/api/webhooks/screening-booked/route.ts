@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { constantTimeSecretMatch } from '@/lib/webhook-security'
 
 function isAuthorizedWebhook(req: NextRequest): boolean {
   const candidates = [
@@ -12,7 +13,9 @@ function isAuthorizedWebhook(req: NextRequest): boolean {
   const bearer = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
   const webhookHeader = req.headers.get('x-webhook-secret')?.trim()
 
-  return candidates.some(secret => secret === bearer || secret === webhookHeader)
+  return candidates.some(
+    secret => constantTimeSecretMatch(bearer, secret) || constantTimeSecretMatch(webhookHeader, secret)
+  )
 }
 
 export async function POST(req: NextRequest) {

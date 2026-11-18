@@ -444,7 +444,7 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // Record redemption once on subscription creation invoice.
+          // Record redemption once on subscription creation invoice & fulfill Founding 1-on-1 Screening bonus (#33)
           if (
             grantResult.inserted &&
             grantResult.normalizedDiscountCode &&
@@ -456,19 +456,65 @@ export async function POST(req: NextRequest) {
               discountCode: grantResult.normalizedDiscountCode,
               amountCents: grantResult.parsedDiscountAmount,
             })
+
+            if (
+              grantResult.normalizedDiscountCode === 'HOLIDAY25' ||
+              grantResult.normalizedDiscountCode === 'FOUNDING25'
+            ) {
+              try {
+                await grantClientPackageCycle(admin, {
+                  clientId,
+                  packageName: 'Founding Member 1-on-1 Movement Screening Bonus',
+                  sessionsTotal: 1,
+                  stripePaymentId: `founding-screening:${clientId}`,
+                  discountCode: grantResult.normalizedDiscountCode,
+                  discountAmountCents: 0,
+                })
+              } catch (bonusErr) {
+                console.warn('[stripe:webhook] Founding screening bonus grant warning:', bonusErr)
+              }
+            }
           }
 
-          // Process referral conversion and grant reward to the referrer
-          try {
-            const { processReferralConversion } = await import('@/lib/referrals')
-            await processReferralConversion(admin, {
-              refereeId: clientId,
-              stripeSubscriptionId: subscriptionId,
-              stripePaymentId: invoiceId,
-              amountPaidCents: invoice.amount_paid ?? 0,
-            })
-          } catch (refErr) {
-            console.warn('[stripe:webhook] Referral conversion processing warning:', refErr)
+          // Process referral conversion ONLY when actual payment > $0 has cleared (#33)
+          const paidCents = invoice.amount_paid ?? 0
+          if (paidCents > 0) {
+            try {
+              const { processReferralConversion } = await import('@/lib/referrals')
+              const refResult = await processReferralConversion(admin, {
+                refereeId: clientId,
+                stripeSubscriptionId: subscriptionId,
+                stripePaymentId: invoiceId,
+                amountPaidCents: paidCents,
+              })
+
+              // Apply real -$20.00 Stripe Customer Balance Credit to referrer so next invoice auto-deducts (#33)
+              if (
+                refResult.converted &&
+                refResult.rewardGranted &&
+                refResult.referrerId &&
+                typeof stripe?.customers?.createBalanceTransaction === 'function'
+              ) {
+                const { data: referrerRow } = await admin
+                  .from('clients')
+                  .select('stripe_customer_id')
+                  .eq('id', refResult.referrerId)
+                  .maybeSingle()
+                if (referrerRow?.stripe_customer_id) {
+                  await stripe.customers.createBalanceTransaction(
+                    referrerRow.stripe_customer_id,
+                    {
+                      amount: -2000,
+                      currency: 'usd',
+                      description: `Forge Athletic Referral Credit ($20.00) — Invoice ${invoiceId}`,
+                    },
+                    { idempotencyKey: `ref-balance-credit:${clientId}` }
+                  )
+                }
+              }
+            } catch (refErr) {
+              console.warn('[stripe:webhook] Referral conversion processing warning:', refErr)
+            }
           }
         }
       }

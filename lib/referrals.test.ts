@@ -324,6 +324,19 @@ describe('lib/referrals', () => {
       expect(insertedRewards.some(r => r.reward_type === 'form_lab_review')).toBe(true)
       expect(insertedEntitlements.some(e => e.feature === 'video-review' && e.uses_total === 1)).toBe(true)
     })
+
+    it('refuses to award $20 referral credit on $0 free-trial invoices before real payment clears (#33)', async () => {
+      const mockAdmin = { from: vi.fn() } as any
+      const zeroPaid = await processReferralConversion(mockAdmin, {
+        refereeId: 'trial-referee',
+        stripeSubscriptionId: 'sub_trial_1',
+        stripePaymentId: 'in_trial_0',
+        amountPaidCents: 0,
+      })
+      expect(zeroPaid.converted).toBe(false)
+      expect(zeroPaid.rewardGranted).toBe(false)
+      expect(mockAdmin.from).not.toHaveBeenCalled()
+    })
   })
 
   describe('schema resilience (missing referral_codes table fallback)', () => {

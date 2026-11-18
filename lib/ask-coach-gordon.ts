@@ -348,14 +348,9 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
   if (apiKey) {
     const modelsToTry = [
       ...(process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : []),
-      'gemini-4-hydrogen',
-      'gemini-3.8-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.5-flash',
-      'gemini-flash-latest',
-      'gemini-3.1-flash-lite',
-      'gemini-3.1-pro-preview',
-      'gemini-pro-latest',
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+      'gemini-2.0-flash',
     ]
 
     // Strictly text-only sanitized context (raw camera images stripped per privacy rules)
@@ -384,10 +379,13 @@ This inquiry is OUTSIDE your scope of athletic training and sports science. In a
 
     for (const model of modelsToTry) {
       try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`
         const res = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
           body: JSON.stringify({
             systemInstruction: {
               parts: [{ text: fullSystemInstruction }],

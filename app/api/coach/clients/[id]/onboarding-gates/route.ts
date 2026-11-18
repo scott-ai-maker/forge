@@ -157,10 +157,16 @@ export async function POST(
 
       const now = new Date().toISOString()
 
-      // Stage 1: Update client coach assignment, phone, or goal
+      // Stage 1: Update client phone or goal (#38: block cross-coach reassignment to arbitrary UUIDs)
       if (stageNumber === 1) {
+        if (data.designatedCoachId && data.designatedCoachId !== coachId) {
+          return NextResponse.json(
+            { error: 'Coaches may only confirm assignment to their own authenticated coach ID.' },
+            { status: 403 }
+          )
+        }
         const clientUpdates: Record<string, unknown> = {}
-        if (data.designatedCoachId) clientUpdates.designated_coach_id = data.designatedCoachId
+        if (data.designatedCoachId === coachId) clientUpdates.designated_coach_id = coachId
         if (data.phone !== undefined) clientUpdates.phone = data.phone
         if (Object.keys(clientUpdates).length > 0) {
           await admin.from('clients').update(clientUpdates).eq('id', clientId)

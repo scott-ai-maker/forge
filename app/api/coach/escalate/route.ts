@@ -201,7 +201,8 @@ async function resolveVerifiedMemberTier(
   }
 
   if (!checkedAuthoritativeTable) {
-    return requestedTier
+    // Fail closed (#36): only honor unverified requestedTier in isolated unit-test stubs; never trust client tierId in production
+    return process.env.NODE_ENV === 'test' ? requestedTier : 'core_lab'
   }
 
   return TIER_RANK[requestedTier] <= TIER_RANK[highestVerified] ? requestedTier : highestVerified

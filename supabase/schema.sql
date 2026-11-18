@@ -1506,7 +1506,7 @@ create policy "Coach reads assigned client assessments" on nasm_assessments
     )
   );
 
--- Coach can insert assessments for assigned clients
+-- Coach can insert assessments strictly for assigned clients (#38)
 drop policy if exists "Coach inserts client assessments" on nasm_assessments;
 create policy "Coach inserts client assessments" on nasm_assessments
   for insert with check (
@@ -1514,8 +1514,10 @@ create policy "Coach inserts client assessments" on nasm_assessments
     and exists (
       select 1
       from clients c
+      join clients cl on cl.id = nasm_assessments.client_id
       where c.id = auth.uid()
         and c.role = 'coach'
+        and cl.designated_coach_id = auth.uid()
     )
   );
 
@@ -1956,7 +1958,7 @@ alter table team_live_sessions enable row level security;
 
 drop policy if exists "Coaches can manage own teams" on teams;
 create policy "Coaches can manage own teams" on teams
-  for all using (auth.uid() = coach_id or exists (select 1 from clients where id = auth.uid() and role = 'coach'));
+  for all using (auth.uid() = coach_id) with check (auth.uid() = coach_id);
 
 drop policy if exists "Members can view their teams" on teams;
 create policy "Members can view their teams" on teams
@@ -1964,15 +1966,16 @@ create policy "Members can view their teams" on teams
 
 drop policy if exists "Coaches can manage team members" on team_members;
 create policy "Coaches can manage team members" on team_members
-  for all using (exists (select 1 from teams where teams.id = team_members.team_id and (teams.coach_id = auth.uid() or exists (select 1 from clients where id = auth.uid() and role = 'coach'))));
+  for all using (exists (select 1 from teams where teams.id = team_members.team_id and teams.coach_id = auth.uid()))
+  with check (exists (select 1 from teams where teams.id = team_members.team_id and teams.coach_id = auth.uid()));
 
 drop policy if exists "Members can view teammates" on team_members;
 create policy "Members can view teammates" on team_members
-  for select using (client_id = auth.uid() or exists (select 1 from team_members tm where tm.team_id = team_members.team_id and tm.client_id = auth.uid()));
+  for select using (client_id = auth.uid());
 
 drop policy if exists "Coaches can manage team live sessions" on team_live_sessions;
 create policy "Coaches can manage team live sessions" on team_live_sessions
-  for all using (coach_id = auth.uid() or exists (select 1 from clients where id = auth.uid() and role = 'coach'));
+  for all using (coach_id = auth.uid()) with check (coach_id = auth.uid());
 
 drop policy if exists "Members can view team live sessions" on team_live_sessions;
 create policy "Members can view team live sessions" on team_live_sessions

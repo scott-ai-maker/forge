@@ -3,6 +3,7 @@ import { notifyUser } from '@/lib/notifications'
 import { supabaseAdmin } from '@/lib/supabase'
 import { pickReminderBucket } from '@/lib/notification-templates'
 import { getForgeAddon } from '@/lib/forge-addons'
+import { constantTimeSecretMatch } from '@/lib/webhook-security'
 
 const DAY_MS = 86_400_000
 const GRACE_ADDON_ID = 'legacy-grace'
@@ -13,8 +14,10 @@ function isAuthorized(req: NextRequest): boolean {
   const bearer = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
   const headerSecret = req.headers.get('x-internal-cron-secret')?.trim()
 
-  if (expected && (bearer === expected || headerSecret === expected)) return true
-  return Boolean(vercelCronSecret && bearer === vercelCronSecret)
+  if (expected && (constantTimeSecretMatch(bearer, expected) || constantTimeSecretMatch(headerSecret, expected))) {
+    return true
+  }
+  return Boolean(vercelCronSecret && constantTimeSecretMatch(bearer, vercelCronSecret))
 }
 
 async function run() {

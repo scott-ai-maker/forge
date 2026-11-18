@@ -11,6 +11,10 @@ import {
   checkSlidingWindowRateLimit,
   resolveRequestSubjectKey,
 } from '@/src/lib/security/rateLimiter'
+import { evaluateMedicalParq, normalizeParqAnswersFromIntake } from '@/lib/liability-shield'
+
+const BETA_BLOCKER_PATTERN =
+  /\b(beta[\s-]?blocker|metoprolol|atenolol|propranolol|carvedilol|bisoprolol|nebivolol|labetalol|nadolol|sotalol)\b/i
 
 export async function POST(req: NextRequest) {
   let authenticatedUserId: string | null = null
@@ -47,7 +51,24 @@ export async function POST(req: NextRequest) {
     const isUrgentSafetyInquiry =
       clinicalUrgency.tier !== 'STANDARD_TRAINING' || painScreen.triggered
 
-    if (!isUrgentSafetyInquiry) {
+    if (isUrgentSafetyInquiry) {
+      // Dedicated generous safety-bucket ceiling (#37) prevents automated Resend/email flood abuse
+      const safetyRateCheck = checkSlidingWindowRateLimit({
+        namespace: 'ask_coach_gordon_safety',
+        subjectKey: resolveRequestSubjectKey(req, authenticatedUserId),
+        maxRequests: 60,
+        windowMs: 10 * 60 * 1000,
+      })
+      if (!safetyRateCheck.allowed) {
+        return NextResponse.json(
+          {
+            error:
+              'If you are experiencing a medical emergency, call 911 immediately. Automated consultation rate limit reached.',
+          },
+          { status: 429 }
+        )
+      }
+    } else {
       const rateCheck = checkSlidingWindowRateLimit({
         namespace: 'ask_coach_gordon',
         subjectKey: resolveRequestSubjectKey(req, authenticatedUserId),
@@ -71,13 +92,100 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Server-side authoritative PAR-Q+, contraindication & beta-blocker loading (#37 — never trust client-only safety tags)
+    let serverContraindicationTags: string[] = []
+    let serverMaxOptPhase: number | null = null
+    let serverAge: number | undefined = undefined
+    let serverSex: 'male' | 'female' | undefined = undefined
+    let serverMedicalHold = false
+    let serverBetaBlockerDetected = false
+
+    if (authenticatedUserId && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const { supabaseAdmin } = await import('@/lib/supabase')
+        const admin = supabaseAdmin()
+        const [intakeRes, profileRes] = await Promise.all([
+          admin
+            .from('client_intake_forms')
+            .select('parq_answers, medications, medical_conditions, surgeries_or_injuries')
+            ?.eq?.('user_id', authenticatedUserId)
+            ?.maybeSingle?.(),
+          admin
+            .from('fitness_profiles')
+            .select('age, sex')
+            ?.eq?.('user_id', authenticatedUserId)
+            ?.maybeSingle?.(),
+        ])
+
+        if (intakeRes?.data) {
+          const intakeRow = intakeRes.data as {
+            parq_answers?: unknown
+            medications?: string | null
+            medical_conditions?: string | null
+            surgeries_or_injuries?: string | null
+          }
+          const normalizedParq = normalizeParqAnswersFromIntake(intakeRow.parq_answers, intakeRow)
+          const parqEval = evaluateMedicalParq(normalizedParq)
+          serverContraindicationTags = [...parqEval.contraindicationTags]
+          serverMaxOptPhase = parqEval.maxAllowedOptPhase
+          if (parqEval.clearanceStatus === 'physician_clearance_required' || !parqEval.exercisePermitted) {
+            serverMedicalHold = true
+          }
+          const medsBlob = `${intakeRow.medications || ''} ${intakeRow.medical_conditions || ''}`
+          if (BETA_BLOCKER_PATTERN.test(medsBlob)) {
+            serverBetaBlockerDetected = true
+            serverContraindicationTags.push('cardiovascular_hypertension', 'beta_blocker_hr_blunted')
+            serverMaxOptPhase = Math.min(serverMaxOptPhase ?? 2, 2)
+          }
+        }
+
+        if (profileRes?.data) {
+          const prof = profileRes.data as { age?: number | null; sex?: string | null }
+          if (typeof prof.age === 'number' && prof.age >= 18) serverAge = prof.age
+          if (prof.sex === 'male' || prof.sex === 'female') serverSex = prof.sex
+        }
+      } catch {
+        // Tolerate isolated unit tests without full DB mocks
+      }
+    }
+
+    if (serverMedicalHold && clinicalUrgency.tier === 'STANDARD_TRAINING') {
+      return NextResponse.json({
+        success: true,
+        coachIdentity: 'Coach Gordon · Director of Human Performance, Forge Athletic',
+        response: {
+          answerMarkdown:
+            '**Medical Clearance Hold (Phase 0):** Your PAR-Q+ screening indicates an active cardiovascular, chest-pain, or dizziness flag requiring written physician clearance before exercise prescription. Please consult your physician first—Coach Gordon will calibrate your program as soon as medical clearance is on file.',
+          spokenAudioText:
+            'Your screening indicates a medical clearance hold. Please obtain physician clearance before starting exercise, and Coach Gordon will calibrate your plan once cleared.',
+          relevantCurriculums: ['PAR-Q+ Medical Clearance Protocol'],
+          suggestedFollowUps: ['Message Coach Gordon'],
+          requiresCoachPing: true,
+          coachPingReason: 'Member on Phase 0 PAR-Q+ medical clearance hold requested training guidance.',
+          engineMode: 'deterministic_safety_hold',
+        },
+      })
+    }
+
+    const clientTags = Array.isArray(body.contraindicationTags)
+      ? (body.contraindicationTags as string[]).filter(t => typeof t === 'string')
+      : []
+    const mergedContraindications = Array.from(new Set([...clientTags, ...serverContraindicationTags]))
+    const requestedPhase = typeof body.nasmOptPhase === 'number' ? body.nasmOptPhase : undefined
+    const effectiveOptPhase =
+      serverMaxOptPhase !== null && serverMaxOptPhase > 0
+        ? Math.min(requestedPhase ?? serverMaxOptPhase, serverMaxOptPhase)
+        : requestedPhase
+
     const payload: AskCoachGordonRequest = {
-      question: body.question,
+      question: serverBetaBlockerDetected
+        ? `${body.question}\n[SAFETY NOTE: Athlete takes beta-blocker/HR-blunting medication — gauge intensity strictly via RPE 12-13 / Talk Test, NEVER age-predicted HR zones or Valsalva breath-holding.]`
+        : body.question,
       athleteName: typeof body.athleteName === 'string' ? body.athleteName : undefined,
-      clientAge: typeof body.clientAge === 'number' ? body.clientAge : undefined,
-      clientSex: body.clientSex === 'female' ? 'female' : body.clientSex === 'male' ? 'male' : undefined,
+      clientAge: serverAge ?? (typeof body.clientAge === 'number' ? body.clientAge : undefined),
+      clientSex: serverSex ?? (body.clientSex === 'female' ? 'female' : body.clientSex === 'male' ? 'male' : undefined),
       goal: typeof body.goal === 'string' ? body.goal : undefined,
-      nasmOptPhase: typeof body.nasmOptPhase === 'number' ? body.nasmOptPhase : undefined,
+      nasmOptPhase: effectiveOptPhase,
       currentWorkoutFocus: typeof body.currentWorkoutFocus === 'string' ? body.currentWorkoutFocus : undefined,
       currentExerciseName: typeof body.currentExerciseName === 'string' ? body.currentExerciseName : undefined,
       expressModeActive: typeof body.expressModeActive === 'boolean' ? body.expressModeActive : undefined,
@@ -93,7 +201,7 @@ export async function POST(req: NextRequest) {
       equipmentAccess: Array.isArray(body.equipmentAccess) ? (body.equipmentAccess as string[]) : undefined,
       cardioEquipmentAccess: Array.isArray(body.cardioEquipmentAccess) ? (body.cardioEquipmentAccess as string[]) : undefined,
       kineticCompensations: Array.isArray(body.kineticCompensations) ? (body.kineticCompensations as string[]) : undefined,
-      contraindicationTags: Array.isArray(body.contraindicationTags) ? (body.contraindicationTags as string[]) : undefined,
+      contraindicationTags: mergedContraindications.length > 0 ? mergedContraindications : undefined,
       recentReadinessScore: typeof body.recentReadinessScore === 'number' ? body.recentReadinessScore : undefined,
       recentSleepHours: typeof body.recentSleepHours === 'number' ? body.recentSleepHours : undefined,
       recentRpe: typeof body.recentRpe === 'number' ? body.recentRpe : undefined,

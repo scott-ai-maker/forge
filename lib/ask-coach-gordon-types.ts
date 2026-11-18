@@ -176,8 +176,52 @@ export function evaluateClinicalUrgencyTriage(question: string): ClinicalTriageE
   // Helper matching functions
   const has = (...terms: string[]) => terms.some(t => q.includes(t))
 
-  // 1. Emergency Red Flags (Call 911 / ER)
+  // 0. Acute Suicidal Ideation / Self-Harm Crisis (#37 — Immediate 988 & 911 Intervention)
+  const isSelfHarmCrisis =
+    has(
+      'suicide',
+      'suicidal',
+      'kill myself',
+      'end my life',
+      'want to die',
+      'better off dead',
+      'hurt myself',
+      'self-harm',
+      'self harm'
+    )
+
+  if (isSelfHarmCrisis) {
+    const crisisMarkdown = `**IMMEDIATE CRISIS SUPPORT — YOU ARE NOT ALONE**
+
+Please pause everything right now and reach out for immediate confidential support:
+
+- **Call or text \`988\`** (24/7 Suicide & Crisis Lifeline — free, confidential, available nationwide in the U.S. & Canada)
+- **Call \`911\`** or go to the nearest emergency room if you are in immediate physical danger
+
+Your life and well-being matter deeply. Please connect with a crisis counselor or emergency medical team right now—I have also alerted Coach Gordon's safety queue.`
+
+    const crisisAudioText =
+      'Please pause right now. You are not alone. Call or text 9 8 8 for the 24 7 Suicide and Crisis Lifeline, or call 9 1 1 if you are in immediate danger. Please reach out right now.'
+
+    return {
+      tier: 'EMERGENCY_911',
+      isEmergency911: true,
+      requiresCoachPing: true,
+      pingReason: 'Acute mental-health / self-harm crisis cue detected; 988 & 911 crisis directive delivered.',
+      overrideMarkdown: crisisMarkdown,
+      overrideAudioText: crisisAudioText,
+    }
+  }
+
+  // 1. Emergency Red Flags (Call 911 / ER — includes anginal equivalents #37)
+  const isAnginalEquivalent =
+    (has('jaw', 'left arm', 'neck', 'throat', 'between shoulder blades') &&
+      has('pain', 'numb', 'numbness', 'tight', 'pressure', 'radiating', 'aching')) ||
+    (has('cold sweat', 'cold sweats', 'clammy') &&
+      has('nausea', 'nauseous', 'dizzy', 'short of breath', 'shortness of breath', 'chest', 'jaw', 'arm'))
+
   const isEmergency =
+    isAnginalEquivalent ||
     // Cardiac / Pulmonary
     (has('chest') && has('pain', 'tight', 'pressure', 'heavy')) ||
     has('heart racing', 'palpitations', 'shortness of breath', 'can\'t breathe', 'cant breathe', 'trouble breathing', 'difficulty breathing') ||
@@ -232,6 +276,42 @@ Do not attempt to stretch, foam roll, or continue training. Cardiac symptoms, su
     has('mri showed', 'x-ray showed', 'orthopedic surgeon said', 'doctor told me i have', 'cortisone injection') ||
     has('hernia', 'groin bulge', 'inguinal hernia', 'umbilical hernia', 'abdominal bulge') ||
     has('compartment syndrome', 'pacemaker', 'cardiac stent')
+
+  // 2b. Disordered Eating / Purging / Severe Restriction Red Flags (#37)
+  const isDisorderedEatingRedFlag =
+    has(
+      'make myself throw up',
+      'making myself throw up',
+      'binge and purge',
+      'purging after',
+      'bulimia',
+      'anorexia',
+      'laxatives to lose weight',
+      'starving myself',
+      'haven\'t eaten in days',
+      'havent eaten in days',
+      'fainting from fasting'
+    )
+
+  if (isDisorderedEatingRedFlag) {
+    const edMarkdown = `I want to pause any calorie, weight-loss, or high-intensity exercise guidance right here. What you described involves clinical nutrition and medical care that is **outside the scope of fitness coaching**, and your health comes first.
+
+Please speak with your physician or a licensed eating-disorder specialist right away. Free, confidential support is also available through the **Alliance for Eating Disorders Helpline at \`1-866-662-1235\`** (or call/text \`988\` for immediate emotional support).
+
+I have paused deficit/intensity recommendations and notified Coach Gordon so we prioritize your health and medical care.`
+
+    const edAudioText =
+      'Let us pause calorie and workout intensity guidance right now. Your health comes first, and this requires care from a physician or licensed specialist. You can also call the Alliance for Eating Disorders Helpline at 1 866 662 1235.'
+
+    return {
+      tier: 'SERIOUS_MEDICAL_REFERRAL',
+      isEmergency911: false,
+      requiresCoachPing: true,
+      pingReason: 'Disordered eating / purging / severe restriction red flag detected; deficit & intensity guidance halted.',
+      overrideMarkdown: edMarkdown,
+      overrideAudioText: edAudioText,
+    }
+  }
 
   if (isSeriousInjury) {
     const overrideMarkdown = `I need you to stop this workout right now. Diagnosing, treating, or prescribing exercise for acute structural injuries, ligament/tendon tears, spinal disc herniations, or post-surgical joints is **strictly outside the professional scope of personal training and sports science**.

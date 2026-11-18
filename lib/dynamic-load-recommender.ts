@@ -30,8 +30,16 @@ export interface DynamicLoadRecommendationParams {
   dailyReadinessScore?: number | null // 0 - 100
   acwrRatio?: number | null // e.g. 1.15
   preferredUnits?: 'imperial' | 'metric'
-  specialPopulation?: 'osteoporosis_osteopenia' | 'cardiovascular_hypertension' | 'pregnancy_prenatal' | 'asthma_respiratory' | null
+  specialPopulation?:
+    | 'osteoporosis_osteopenia'
+    | 'cardiovascular_hypertension'
+    | 'beta_blocker_hr_blunted'
+    | 'pregnancy_prenatal'
+    | 'asthma_respiratory'
+    | null
   hasHeartMedications?: boolean
+  takesBetaBlocker?: boolean
+  parqClearanceRequired?: boolean
 }
 
 export interface DynamicLoadRecommendation {
@@ -277,7 +285,31 @@ export function recommendWorkingLoad({
   preferredUnits = 'imperial',
   specialPopulation = null,
   hasHeartMedications = false,
+  takesBetaBlocker = false,
+  parqClearanceRequired = false,
 }: DynamicLoadRecommendationParams): DynamicLoadRecommendation {
+  // Phase 0 / PAR-Q+ Cardiac Hold (#37): block external load prescription until physician clearance is verified
+  if (parqClearanceRequired || nasmOptPhase === 0) {
+    return {
+      recommendedWeight: 0,
+      recommendedWeightLbs: 0,
+      recommendedWeightKg: 0,
+      recommendedReps: 0,
+      recommendedRpe: 0,
+      recommendedRir: 5,
+      recommendedTempo: '0-0-0-0',
+      estimated1RmLbs: 0,
+      estimated1RmKg: 0,
+      targetIntensityPercentage: 0,
+      appliedReadinessModifier: 0,
+      badge: 'Medical Hold · Phase 0',
+      badgeColor: 'amber',
+      rationale:
+        'PAR-Q+ physician clearance is required prior to prescribing external resistance loads.',
+      isAutoregulated: true,
+    }
+  }
+
   const phaseNumber = Math.min(5, Math.max(1, nasmOptPhase || 1))
   const phaseConfig = NASM_PHASE_CONFIGS[phaseNumber] || NASM_PHASE_CONFIGS[1]
 
@@ -339,11 +371,20 @@ export function recommendWorkingLoad({
 
   let effectivePercentage = Math.max(30, Math.min(100, basePercentage + readinessModifier))
 
-  // ── Special Populations & Clinical Safety Capping ──
-  const isHypertensiveOrCardiac = hasHeartMedications || specialPopulation === 'cardiovascular_hypertension'
+  // ── Special Populations & Clinical Safety Capping (#37: includes beta-blocker HR blunting) ──
+  const isBetaBlocker = takesBetaBlocker || specialPopulation === 'beta_blocker_hr_blunted'
+  const isHypertensiveOrCardiac =
+    isBetaBlocker || hasHeartMedications || specialPopulation === 'cardiovascular_hypertension'
   const isOsteoporosis = specialPopulation === 'osteoporosis_osteopenia'
 
-  if (isHypertensiveOrCardiac && effectivePercentage > 75) {
+  if (isBetaBlocker && effectivePercentage > 70) {
+    effectivePercentage = 70
+    badge = 'Beta-Blocker · RPE/Talk-Test Guard'
+    badgeColor = 'amber'
+    rationale =
+      'Beta-blocker protocol: Intensity capped at 70% 1RM. Heart-rate zones are pharmacologically blunted—regulate effort strictly via RPE (6.5–7.0 / Talk Test) and avoid Valsalva breath-holding.'
+    isAutoregulated = true
+  } else if (isHypertensiveOrCardiac && effectivePercentage > 75) {
     effectivePercentage = 75
     badge = 'Cardiac Guard · BP Shield'
     badgeColor = 'amber'
@@ -381,7 +422,9 @@ export function recommendWorkingLoad({
   let recommendedRpe = phaseConfig.defaultRpe
   if (readinessModifier > 0) recommendedRpe = Math.min(9.5, recommendedRpe + 0.5)
   if (readinessModifier < 0) recommendedRpe = Math.max(6.0, recommendedRpe - 1.0)
-  if (isHypertensiveOrCardiac && recommendedRpe > 7.5) {
+  if (isBetaBlocker && recommendedRpe > 7.0) {
+    recommendedRpe = 7.0
+  } else if (isHypertensiveOrCardiac && recommendedRpe > 7.5) {
     recommendedRpe = 7.5
   }
 

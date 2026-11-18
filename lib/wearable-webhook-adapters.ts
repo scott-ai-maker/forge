@@ -63,6 +63,48 @@ export function verifyGoogleHealthWebhookToken(
 }
 
 /**
+ * Generates a per-user HMAC-SHA256 wearable ingestion token (`fwt1_<hex>`) bound to a
+ * specific `userId` and `provider` (#35), preventing any holder of a token for User A
+ * from spoofing or overwriting biometrics for User B.
+ */
+export function generateUserScopedWearableToken(
+  userId: string,
+  provider: WearableProvider,
+  masterSecret: string
+): string {
+  const normalizedUid = userId.trim()
+  const normalizedSecret = masterSecret.trim()
+  if (!normalizedUid || !normalizedSecret) return ''
+  const digest = crypto
+    .createHmac('sha256', normalizedSecret)
+    .update(`forge-wearable-v1:${provider}:${normalizedUid}`, 'utf8')
+    .digest('hex')
+  return `fwt1_${digest}`
+}
+
+/**
+ * Verifies a per-user HMAC-SHA256 wearable ingestion token in constant time (#35).
+ */
+export function verifyUserScopedWearableToken(
+  authHeader: string | null | undefined,
+  userId: string,
+  provider: WearableProvider,
+  masterSecret: string
+): boolean {
+  if (!authHeader || !userId?.trim() || !masterSecret?.trim()) return false
+  const provided = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7).trim()
+    : authHeader.trim()
+  const expected = generateUserScopedWearableToken(userId, provider, masterSecret)
+  if (!provided || !expected || provided.length !== expected.length) return false
+  try {
+    return crypto.timingSafeEqual(Buffer.from(provided, 'utf8'), Buffer.from(expected, 'utf8'))
+  } catch {
+    return false
+  }
+}
+
+/**
  * Validates Vital Health Webhook secret using constant-time comparison
  */
 export function verifyVitalWebhookSecret(

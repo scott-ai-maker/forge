@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { WearableProvider, WEARABLE_PROVIDERS } from '@/lib/wearables-telemetry'
+import { generateUserScopedWearableToken } from '@/lib/wearable-webhook-adapters'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
@@ -42,12 +43,21 @@ export async function POST(req: NextRequest) {
       console.warn('[wearables/connect] Profile source update notice:', persistErr)
     }
 
+    const masterSecret =
+      provider === 'google_fit'
+        ? process.env.GOOGLE_HEALTH_WEBHOOK_SECRET?.trim()
+        : process.env.APPLE_HEALTH_WEBHOOK_SECRET?.trim()
+    const syncToken = masterSecret
+      ? generateUserScopedWearableToken(userId, provider, masterSecret)
+      : undefined
+
     return NextResponse.json(
       {
         success: true,
         provider,
         connected: true,
         authUrl: null,
+        ...(syncToken ? { syncToken } : {}),
         message: `Successfully established ${WEARABLE_PROVIDERS[provider].name} as your single source of truth for telemetry.`,
         clientId: userId,
       },

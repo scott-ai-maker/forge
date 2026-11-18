@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { normalizeVitalDailyPayload } from '@/lib/vital-health-bridge'
-import { sanitizeWearableRawPayload, verifyVitalWebhookSecret } from '@/lib/wearable-webhook-adapters'
+import { sanitizeWearableRawPayload } from '@/lib/wearable-webhook-adapters'
+import { verifySvixWebhookSignature } from '@/lib/webhook-security'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 const MAX_VITAL_PAYLOAD_BYTES = 262_144
@@ -18,25 +19,24 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const isProd = process.env.NODE_ENV === 'production'
-    const expectedSecret = process.env.VITAL_WEBHOOK_SECRET?.trim()
-    const providedSecret =
-      req.headers.get('x-vital-webhook-secret')?.trim() ||
-      req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
-
-    if (expectedSecret) {
-      if (!verifyVitalWebhookSecret(providedSecret, expectedSecret)) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid Vital webhook secret' }, { status: 401, headers: NO_STORE_HEADERS })
-      }
-    } else if (isProd) {
-      return NextResponse.json({ error: 'Unauthorized: Vital webhook secret not configured' }, { status: 401, headers: NO_STORE_HEADERS })
-    }
-
     const rawText = await req.text()
     if (Buffer.byteLength(rawText, 'utf8') > MAX_VITAL_PAYLOAD_BYTES) {
       return NextResponse.json(
         { error: 'Vital webhook payload exceeds maximum allowed size (256 KB)' },
         { status: 413, headers: NO_STORE_HEADERS }
+      )
+    }
+
+    const authorized = verifySvixWebhookSignature({
+      rawBody: rawText,
+      headers: req.headers,
+      secret: process.env.VITAL_WEBHOOK_SECRET,
+      legacySecretHeaderNames: ['x-vital-webhook-secret'],
+    })
+    if (!authorized) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid Vital webhook signature or secret' },
+        { status: 401, headers: NO_STORE_HEADERS }
       )
     }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { DEFAULT_GO_LIVE_DATE_ISO, isPublicRegistrationOpen } from '@/lib/launch-config'
+import { constantTimeSecretMatch } from '@/lib/webhook-security'
 
 function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.MARKETING_CRON_SECRET?.trim()
@@ -8,9 +9,9 @@ function isAuthorized(req: NextRequest): boolean {
   const headerSecret = req.headers.get('x-marketing-cron-secret')?.trim()
   const bearer = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
 
-  if (secret && headerSecret === secret) return true
-  if (secret && bearer === secret) return true
-  if (vercelCronSecret && bearer === vercelCronSecret) return true
+  if (secret && constantTimeSecretMatch(headerSecret, secret)) return true
+  if (secret && constantTimeSecretMatch(bearer, secret)) return true
+  if (vercelCronSecret && constantTimeSecretMatch(bearer, vercelCronSecret)) return true
 
   return false
 }

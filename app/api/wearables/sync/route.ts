@@ -11,8 +11,7 @@ import {
 import { computeWearableCnsScore, type WearableProvider, WEARABLE_PROVIDERS } from '@/lib/wearables-telemetry'
 import {
   sanitizeWearableRawPayload,
-  verifyAppleHealthWebhookToken,
-  verifyGoogleHealthWebhookToken,
+  verifyUserScopedWearableToken,
 } from '@/lib/wearable-webhook-adapters'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
@@ -78,12 +77,20 @@ export async function POST(req: NextRequest) {
 
       const isGoogleCandidate =
         body.provider === 'google_fit' || body.provider === 'google_health' || body.platform === 'android'
+      const candidateProvider: WearableProvider = isGoogleCandidate ? 'google_fit' : 'apple_health'
+      const masterSecret = isGoogleCandidate
+        ? process.env.GOOGLE_HEALTH_WEBHOOK_SECRET?.trim()
+        : process.env.APPLE_HEALTH_WEBHOOK_SECRET?.trim()
 
-      let secretValid = process.env.NODE_ENV !== 'production'
-      if (isGoogleCandidate && process.env.GOOGLE_HEALTH_WEBHOOK_SECRET) {
-        secretValid = verifyGoogleHealthWebhookToken(authHeader, process.env.GOOGLE_HEALTH_WEBHOOK_SECRET)
-      } else if (!isGoogleCandidate && process.env.APPLE_HEALTH_WEBHOOK_SECRET) {
-        secretValid = verifyAppleHealthWebhookToken(authHeader, process.env.APPLE_HEALTH_WEBHOOK_SECRET)
+      // Per-user HMAC token verification (#35): never trust a global shared secret across arbitrary user_ids
+      let secretValid = false
+      if (masterSecret) {
+        secretValid = Boolean(
+          candidateId &&
+          verifyUserScopedWearableToken(authHeader, candidateId, candidateProvider, masterSecret)
+        )
+      } else if (process.env.NODE_ENV === 'test') {
+        secretValid = Boolean(candidateId)
       }
 
       if (candidateId && secretValid) {

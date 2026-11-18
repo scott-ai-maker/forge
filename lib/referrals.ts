@@ -537,6 +537,11 @@ export async function processReferralConversion(
   referrerId?: string
   rewardGranted?: boolean
 }> {
+  // Anti-abuse (#33): Never grant $20 referral rewards on $0 free-trial invoices before real payment clears
+  if (typeof params.amountPaidCents !== 'number' || !Number.isFinite(params.amountPaidCents) || params.amountPaidCents <= 0) {
+    return { converted: false, rewardGranted: false }
+  }
+
   // Find attribution row for referee
   const { data: attribution, error: attrError } = await admin
     .from('referral_attributions')

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendWeeklyCheckinNudges } from '@/lib/notifications'
+import { constantTimeSecretMatch } from '@/lib/webhook-security'
 
 function isAuthorized(req: NextRequest): boolean {
   const expected = process.env.INTERNAL_CRON_SECRET?.trim()
@@ -8,9 +9,9 @@ function isAuthorized(req: NextRequest): boolean {
   const bearer = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
   const headerSecret = req.headers.get('x-internal-cron-secret')?.trim()
 
-  if (expected && bearer === expected) return true
-  if (expected && headerSecret === expected) return true
-  if (vercelCronSecret && bearer === vercelCronSecret) return true
+  if (expected && constantTimeSecretMatch(bearer, expected)) return true
+  if (expected && constantTimeSecretMatch(headerSecret, expected)) return true
+  if (vercelCronSecret && constantTimeSecretMatch(bearer, vercelCronSecret)) return true
 
   return false
 }

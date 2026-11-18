@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { AutomationTemplateId } from '@/lib/automations/launchSequence'
 import { DEFAULT_GO_LIVE_DATE_ISO, isPublicRegistrationOpen } from '@/lib/launch-config'
+import { constantTimeSecretMatch } from '@/lib/webhook-security'
 
 function isAuthorized(req: NextRequest): boolean {
   const internalSecret = process.env.INTERNAL_CRON_SECRET?.trim()
@@ -11,13 +12,19 @@ function isAuthorized(req: NextRequest): boolean {
   const internalHeader = req.headers.get('x-internal-cron-secret')?.trim()
   const marketingHeader = req.headers.get('x-marketing-cron-secret')?.trim()
 
-  if (internalSecret && (bearer === internalSecret || internalHeader === internalSecret)) {
+  if (
+    internalSecret &&
+    (constantTimeSecretMatch(bearer, internalSecret) || constantTimeSecretMatch(internalHeader, internalSecret))
+  ) {
     return true
   }
-  if (marketingSecret && (bearer === marketingSecret || marketingHeader === marketingSecret)) {
+  if (
+    marketingSecret &&
+    (constantTimeSecretMatch(bearer, marketingSecret) || constantTimeSecretMatch(marketingHeader, marketingSecret))
+  ) {
     return true
   }
-  if (vercelCronSecret && bearer === vercelCronSecret) {
+  if (vercelCronSecret && constantTimeSecretMatch(bearer, vercelCronSecret)) {
     return true
   }
 

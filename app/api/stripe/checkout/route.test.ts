@@ -198,11 +198,10 @@ describe('stripe checkout route', () => {
     expect(createSessionMock).not.toHaveBeenCalled()
   })
 
-  it('rejects annual and 12-week prepayment cadences by default under month-to-month billing', async () => {
+  it('rejects annual prepayments by default under month-to-month billing', async () => {
     for (const payload of [
       { packageId: 'forge-core', cadence: 'annual', autoRenewalConsent: true },
       { packageId: 'forge-pro-athlete', cadence: 'annual', autoRenewalConsent: true },
-      { packageId: 'corporate', cadence: 'twelve_week' },
     ]) {
       const req = new NextRequest('http://localhost/api/stripe/checkout', {
         method: 'POST',
@@ -218,45 +217,23 @@ describe('stripe checkout route', () => {
     expect(createSessionMock).not.toHaveBeenCalled()
   })
 
-  it('allows corporate team plan monthly checkout with proper recurring interval and cancel_url', async () => {
-    const req = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({ packageId: 'corporate', cadence: 'monthly', autoRenewalConsent: true }),
-    })
-
-    const res = await POST(req)
-    expect(res.status).toBe(200)
-
-    expect(createSessionMock).toHaveBeenCalledTimes(1)
-    const createArgs = createSessionMock.mock.calls[0][0]
-    expect(createArgs.mode).toBe('subscription')
-    expect(createArgs.line_items[0].price_data.unit_amount).toBe(350000)
-    expect(createArgs.line_items[0].price_data.recurring.interval).toBe('month')
-    expect(createArgs.cancel_url).toBe('http://localhost/corporate#pricing')
-    expect(createArgs.metadata.packageId).toBe('corporate')
-  })
-
-  it('allows corporate team plan annual checkout in payment mode when NEXT_PUBLIC_ENABLE_ANNUAL_PLANS=true', async () => {
-    vi.stubEnv('NEXT_PUBLIC_ENABLE_ANNUAL_PLANS', 'true')
-    try {
+  it('retires self-serve $3,500/mo corporate checkout until countersigned B2B MSA is executed (#34)', async () => {
+    for (const payload of [
+      { packageId: 'corporate', cadence: 'monthly', autoRenewalConsent: true },
+      { packageId: 'corporate', cadence: 'twelve_week' },
+    ]) {
       const req = new NextRequest('http://localhost/api/stripe/checkout', {
         method: 'POST',
-        body: JSON.stringify({ packageId: 'corporate', cadence: 'twelve_week' }),
+        body: JSON.stringify(payload),
       })
 
       const res = await POST(req)
-      expect(res.status).toBe(200)
-
-      expect(createSessionMock).toHaveBeenCalledTimes(1)
-      const createArgs = createSessionMock.mock.calls[0][0]
-      expect(createArgs.mode).toBe('payment')
-      expect(createArgs.line_items[0].price_data.unit_amount).toBe(3500000)
-      expect(createArgs.line_items[0].price_data.product_data.name).toContain('Annual Team Plan')
-      expect(createArgs.cancel_url).toBe('http://localhost/corporate#pricing')
-      expect(createArgs.metadata.packageName).toContain('(Annual)')
-    } finally {
-      vi.unstubAllEnvs()
+      expect(res.status).toBe(410)
+      await expect(res.json()).resolves.toMatchObject({
+        code: 'B2B_MSA_REQUIRED',
+      })
     }
+    expect(createSessionMock).not.toHaveBeenCalled()
   })
 
   it('handles standalone product checkout (e.g. ai-postural-audit) in payment mode', async () => {

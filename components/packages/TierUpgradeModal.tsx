@@ -127,6 +127,14 @@ export default function TierUpgradeModal({
       }
 
       const data = await res.json().catch(() => null)
+      if (res.status === 409 && (data?.code === 'EXISTING_ACTIVE_SUBSCRIPTION' || data?.useBillingPortal)) {
+        const portalRes = await fetch('/api/stripe/portal', { method: 'POST' })
+        const portalData = await portalRes.json().catch(() => null)
+        if (portalRes.ok && portalData?.url) {
+          window.location.href = portalData.url
+          return
+        }
+      }
       if (!res.ok || !data?.url) {
         setError(data?.error || 'Unable to start Stripe Checkout. You can also upgrade directly on /packages.')
         setLoading(false)

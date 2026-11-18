@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { WearableProvider } from '@/lib/wearables-telemetry'
 import {
-  verifyAppleHealthWebhookToken,
-  verifyGoogleHealthWebhookToken,
+  verifyUserScopedWearableToken,
   normalizeAppleHealthDailyMetrics,
   normalizeGoogleHealthDailyMetrics,
   sanitizeWearableRawPayload,
@@ -74,26 +73,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing client_id/user_id in webhook payload' }, { status: 400, headers: NO_STORE_HEADERS })
     }
 
-    // ── Token Verification ──
-    const isProd = process.env.NODE_ENV === 'production'
+    // ── Per-User Scoped HMAC Token Verification (#35) ──
+    const isTestEnv = process.env.NODE_ENV === 'test'
     const authHeader = req.headers.get('authorization') || req.headers.get('Authorization')
     const secretHeader = req.headers.get('x-webhook-secret')
+    const providedToken = authHeader || secretHeader
 
     if (provider === 'apple_health') {
-      if (process.env.APPLE_HEALTH_WEBHOOK_SECRET) {
-        if (!verifyAppleHealthWebhookToken(authHeader || secretHeader, process.env.APPLE_HEALTH_WEBHOOK_SECRET)) {
-          return NextResponse.json({ error: 'Unauthorized: Invalid Apple Health secret' }, { status: 401, headers: NO_STORE_HEADERS })
+      const appleMasterSecret = process.env.APPLE_HEALTH_WEBHOOK_SECRET?.trim()
+      if (appleMasterSecret) {
+        if (!verifyUserScopedWearableToken(providedToken, userId, 'apple_health', appleMasterSecret)) {
+          return NextResponse.json(
+            { error: 'Unauthorized: Invalid user-scoped Apple Health token' },
+            { status: 401, headers: NO_STORE_HEADERS }
+          )
         }
-      } else if (isProd) {
-        return NextResponse.json({ error: 'Unauthorized: Apple Health webhook secret not configured' }, { status: 401, headers: NO_STORE_HEADERS })
+      } else if (!isTestEnv) {
+        return NextResponse.json(
+          { error: 'Unauthorized: Apple Health webhook secret not configured' },
+          { status: 401, headers: NO_STORE_HEADERS }
+        )
       }
     } else if (provider === 'google_fit') {
-      if (process.env.GOOGLE_HEALTH_WEBHOOK_SECRET) {
-        if (!verifyGoogleHealthWebhookToken(authHeader || secretHeader, process.env.GOOGLE_HEALTH_WEBHOOK_SECRET)) {
-          return NextResponse.json({ error: 'Unauthorized: Invalid Google Health secret' }, { status: 401, headers: NO_STORE_HEADERS })
+      const googleMasterSecret = process.env.GOOGLE_HEALTH_WEBHOOK_SECRET?.trim()
+      if (googleMasterSecret) {
+        if (!verifyUserScopedWearableToken(providedToken, userId, 'google_fit', googleMasterSecret)) {
+          return NextResponse.json(
+            { error: 'Unauthorized: Invalid user-scoped Google Health token' },
+            { status: 401, headers: NO_STORE_HEADERS }
+          )
         }
-      } else if (isProd) {
-        return NextResponse.json({ error: 'Unauthorized: Google Health webhook secret not configured' }, { status: 401, headers: NO_STORE_HEADERS })
+      } else if (!isTestEnv) {
+        return NextResponse.json(
+          { error: 'Unauthorized: Google Health webhook secret not configured' },
+          { status: 401, headers: NO_STORE_HEADERS }
+        )
       }
     }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { suppressEmail } from '@/lib/marketing-email'
+import { verifySvixWebhookSignature } from '@/lib/webhook-security'
 
 type ResendWebhookPayload = {
   type: string
@@ -16,27 +17,21 @@ type ResendWebhookPayload = {
   }
 }
 
-function isAuthorized(req: NextRequest): boolean {
-  const webhookSecret = process.env.RESEND_WEBHOOK_SECRET?.trim()
-  if (!webhookSecret) {
-    // If not configured, allow in development/test, or fail closed in production
-    return process.env.NODE_ENV !== 'production'
-  }
-
-  const headerSecret = req.headers.get('x-resend-webhook-secret')?.trim()
-  const bearer = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
-
-  return headerSecret === webhookSecret || bearer === webhookSecret
-}
-
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  const rawBody = await req.text().catch(() => '')
+  const authorized = verifySvixWebhookSignature({
+    rawBody,
+    headers: req.headers,
+    secret: process.env.RESEND_WEBHOOK_SECRET,
+    legacySecretHeaderNames: ['x-resend-webhook-secret'],
+  })
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized webhook request' }, { status: 401 })
   }
 
   let body: ResendWebhookPayload
   try {
-    body = (await req.json()) as ResendWebhookPayload
+    body = JSON.parse(rawBody) as ResendWebhookPayload
   } catch {
     return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
   }

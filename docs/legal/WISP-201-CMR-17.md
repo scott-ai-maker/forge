@@ -1,9 +1,9 @@
 # Forge Athletic Performance LLC — Written Information Security Program (WISP) & Health Breach Incident Runbook
 
 **Entity:** Forge Athletic Performance LLC (Massachusetts Secretary of the Commonwealth ID `#002010312`)
-**Principal Place of Business:** Boston, Massachusetts
+**Principal Place of Business:** 82 Wendell Ave., Ste 100, Pittsfield, MA 01201
 **Statutory Frameworks:** Massachusetts `201 CMR 17.00` · `M.G.L. c. 93H` · FTC Health Breach Notification Rule (`16 CFR Part 318`) · Washington MHMDA (`RCW 19.373`) · Illinois BIPA (`740 ILCS 14/`) · HIPAA Security Safeguard Parity (`45 CFR § 164.308–312`)
-**Document Version:** `wisp-2026.11.11`
+**Document Version:** `wisp-2026.11.18`
 
 ---
 
@@ -17,7 +17,7 @@
 ## 2. Scope of Protected Records
 
 1. **Statutory Personal Information (`201 CMR 17.02`):** Full name paired with payment tokens (delegated exclusively to Stripe PCI-DSS Level 1), authentication credentials, or financial billing identifiers.
-2. **Consumer Health & Fitness Records (`16 CFR Part 318` / `RCW 19.373`):** PAR-Q+ intake questionnaires, orthopedic contraindications, medication screening flags, NASM Overhead Squat Assessment (OHSA) findings, workout logs, body-composition entries, S.O.A.P. coaching notes, and synchronized Apple HealthKit / Google Health Connect / Vital wearable metrics.
+2. **Consumer Health & Fitness Records (`16 CFR Part 318` / `RCW 19.373`):** PAR-Q+ intake questionnaires, orthopedic contraindications, medication screening flags, NASM Overhead Squat Assessment (OHSA) findings, workout logs, body-composition entries, coaching session notes, and synchronized Apple HealthKit / Google Health Connect / Vital wearable metrics.
 3. **Private Assessment Media:** Movement screen videos, posture photos, and live WebRTC coaching studio clips stored exclusively in private Supabase Storage buckets accessed via short-lived cryptographic signed URLs.
 
 ---
@@ -26,9 +26,10 @@
 
 | Safeguard Domain | Production Control | Verification Cadence |
 | :--- | :--- | :--- |
-| **Encryption in Transit** | Mandatory HTTPS / TLS 1.3 (HSTS preload) across all web, API, WebRTC (DTLS-SRTP), and subprocessor connections. | Continuous |
-| **Encryption at Rest** | AES-256 encryption across PostgreSQL database volumes (`fitness_profiles`, `client_intake_forms`, `nasm_assessments`, `legal_consent_audit_log`) and private object storage buckets. | Continuous |
+| **Encryption in Transit** | Mandatory HTTPS / TLS 1.3 (HSTS preload) across all web, API, WebRTC (DTLS-SRTP + authenticated TURN over TLS `:443`), and subprocessor connections. | Continuous |
+| **Encryption at Rest** | AES-256 encryption across PostgreSQL database volumes (`fitness_profiles`, `client_intake_forms`, `nasm_assessments`, `legal_consent_audit_log`), iOS Keychain / Android Keystore tokens, and private object storage buckets. | Continuous |
 | **Access Control & Least Privilege** | PostgreSQL Row-Level Security (RLS) restricting athlete queries to `auth.uid() = user_id` and restricting coach queries to `requireCoachAssignedClient` (`designated_coach_id === authz.user.id`). | Automated CI / Vitest suite |
+| **Minimum-Necessary Notification Hygiene** | Outbound Resend emails and Twilio SMS omit PAR-Q+ responses, symptom descriptions, contraindication tags, and biometric scores, directing coaches/members to sign in to the encrypted portal. | Automated CI / Vitest suite |
 | **Zero Ad-Tech / Tracking Sanctuary** | Complete prohibition on Google Analytics 4, Meta Pixel, TikTok Pixel, and third-party behavioral ad trackers across the entire platform. | Verified at build time (`app/layout.tsx`) |
 | **Client-Side Pose Landmarking** | 33-point skeletal joint angle inference runs locally inside the user's browser via WebAssembly/WebGL (`MediaPipe Pose`); raw biometric templates are never sold or retained as facial/voiceprint identifiers. | Continuous |
 | **Authentication & MFA** | Hardware passkey / WebAuthn + TOTP multi-factor authentication required on GitHub, Vercel, Supabase, Stripe, Google Cloud/Workspace, Resend, Twilio, and DNS registrar accounts. | Quarterly audit |
@@ -38,21 +39,33 @@
 
 ## 4. Subprocessor Zero-Data-Retention (ZDR) & DPA Checklist (`201 CMR 17.03(2)(f)`)
 
-Before transmitting athlete data to any cloud or AI vendor, the Data Security Coordinator must verify and archive signed Data Processing Addenda (DPAs) and Zero-Data-Retention settings:
+Before opening public enrollment on **January 4, 2027**, the Data Security Coordinator verifies and archives signed Data Processing Addenda (DPAs) and Zero-Data-Retention settings across every active production vendor:
 
-- [ ] **Supabase:** Enterprise/Pro DPA executed; PostgreSQL RLS enabled on 100% of `public` tables; Storage buckets set to `public = false`.
-- [ ] **Google Gemini API / Vertex AI:** Strictly bound to **Paid Billing Tier** or **Google Cloud Vertex AI** (`GEMINI_API_KEY`) where API prompts and responses are contractually excluded from human review and public foundation model training. Never attach a Free-Tier AI Studio key in production.
-- [ ] **OpenAI API:** Organization Data Sharing / Model Training toggles disabled (`Zero Data Retention` API tier).
-- [ ] **ElevenLabs:** API Zero-Retention / Enterprise privacy mode verified; custom voice clones limited exclusively to authorized W-2 personnel with written right-of-publicity consent.
-- [ ] **Leonardo AI (`predict-look`):** Invoked strictly upon per-request opt-in by verified 18+ adult athletes; prompt/image privacy settings locked to private/non-public generation.
-- [ ] **Stripe:** PCI-DSS Level 1 attestation; raw card/bank numbers never touch Forge Athletic servers.
-- [ ] **Vital / Apple HealthKit / Google Health Connect:** Read-only physiological scopes limited to recovery/training calibration; strict adherence to Google Health Connect Limited Use and Apple App Store Guideline `5.1.3`.
+- [ ] **Supabase (Database, Auth, Private Storage, Realtime):** Pro/Enterprise DPA executed & archived; PostgreSQL RLS verified on 100% of `public` tables and `realtime.messages`; Storage buckets locked to `public = false`.
+- [ ] **Vercel (Edge/Serverless Hosting):** Vercel DPA active; production secrets stored encrypted; preview deployments isolated from production database/keys.
+- [ ] **Stripe (PCI-DSS Level 1 Billing):** Stripe Services Agreement & DPA active; raw payment card/ACH numbers never touch Forge Athletic servers.
+- [ ] **Google Gemini Paid Commercial API / Vertex AI (`GEMINI_API_KEY`):** Bound strictly to a **Paid Billing Project** (never AI Studio Free Tier) so prompts/outputs are contractually excluded from human review and foundation-model training; API key transmitted exclusively via `x-goog-api-key` header.
+- [ ] **OpenAI API (if enabled):** Organization Data Sharing / Model Training toggles disabled (`Zero Data Retention` commercial API tier).
+- [ ] **ElevenLabs (Coach Voice Synthesis):** Commercial/Zero-Retention privacy mode enabled; `voiceId` locked to allowlisted W-2 coach voice IDs with written right-of-publicity authorization.
+- [ ] **Resend & Twilio (Transactional Email & Opt-In SMS):** DPAs executed; clinical/PAR-Q+/biometric content redacted from message bodies; Svix HMAC webhook verification active.
+- [ ] **Vital / Apple HealthKit / Google Health Connect:** Per-user HMAC ingestion tokens enforced; read-only physiological scopes limited to training/recovery; Apple App Store Guideline `5.1.3` & Google Health Connect Limited Use verified.
+- *Retired Subprocessors:* **Leonardo AI (`predict-look`)** and public community TURN relays (`openrelay.metered.ca`) are **permanently retired/removed** from production.
 
 ---
 
-## 5. 60-Day Security & Health Breach Incident Response Runbook
+## 5. Pre-Launch Insurance & Commercial Risk Sign-Off Gate (`#40` — Target: Prior to Jan 4, 2027)
 
-In the event of suspected or confirmed unauthorized acquisition of unencrypted personal information (`M.G.L. c. 93H`) or unauthorized disclosure/exfiltration of unsecured PHR identifiable health information (`16 CFR Part 318` — including unauthorized pixel/SDK transmission or credential compromise):
+> **Founder Action Item (`#40`):** While Commercial General Liability & Fitness Professional Liability (E&O) carry `$2,000,000` per-occurrence / `$4,000,000` aggregate limits, standalone forensic + multistate health/biometric breach response (`16 CFR Part 318` / `M.G.L. c. 93H` / `WA MHMDA` / `IL BIPA`) routinely exceeds a `$50,000` cyber sublimit. Complete the following founder sign-offs prior to public go-live:
+
+- [ ] **Cyber & Privacy Breach Aggregate Limit Endorsement:** Obtain broker quote and bind standalone Cyber / Tech E&O & Privacy Breach coverage of at least **`$250,000`–`$1,000,000` aggregate** (confirming first-party forensic investigation, breach counsel, regulatory defense, and consumer health/biometric notification coverage without an unendorsed biometric exclusion).
+- [ ] **Archive Counter-Signed Vendor DPAs:** Save PDF copies of Supabase, Vercel, Google Cloud/Gemini Paid Tier, Stripe, Resend, Twilio, and ElevenLabs DPAs in the offline Forge Athletic Legal Vault.
+- [ ] **Verify Paid-Tier AI Billing Binding:** Confirm in Google Cloud Console that the production `GEMINI_API_KEY` project has active Cloud Billing enabled (`Paid Tier`).
+
+---
+
+## 6. 60-Day Security & Health Breach Incident Response Runbook
+
+In the event of suspected or confirmed unauthorized acquisition of unencrypted personal information (`M.G.L. c. 93H`) or unauthorized disclosure/exfiltration of unsecured PHR identifiable health information (`16 CFR Part 318`):
 
 ### Phase 1: Containment & Forensics (Hours `0–24`)
 1. Rotate affected API secrets (`SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `GEMINI_API_KEY`, webhook secrets) immediately in Vercel and provider consoles.
@@ -74,9 +87,8 @@ In the event of suspected or confirmed unauthorized acquisition of unencrypted p
 
 ---
 
-## 6. Annual Review & Retention Destruction Audit
+## 7. Annual Review & Retention Destruction Audit
 
 Every 12 months (or upon any material platform architecture change), the Data Security Coordinator executes:
 1. Automated test suite verification (`npm run test`) confirming RLS, CSRF, 18+ age gate, and append-only `legal_consent_audit_log` integrity.
-2. Automated biometric/assessment media purge verification (`IL BIPA 740 ILCS 14/15(a)`): permanent cryptographic destruction immediately upon user-initiated account deletion or within **3 years** of the athlete's last interaction with Forge Athletic.
-
+2. Storage retention sweep purging movement media or biometric coordinates inactive `>= 3` years (`chd-bipa-2026.11.11`).

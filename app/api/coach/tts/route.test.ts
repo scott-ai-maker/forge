@@ -120,4 +120,35 @@ describe('/api/coach/tts', () => {
   it('exports COACH_GORDON_ELEVENLABS_VOICE_ID matching Coach Gordon authentic custom clone', () => {
     expect(COACH_GORDON_ELEVENLABS_VOICE_ID).toBe('UPezm4CtrvcD6aNXjeU1')
   })
+
+  it('blocks ElevenLabs path traversal / non-allowlisted voiceId and oversized text payloads (#36)', async () => {
+    const traversalReq = new NextRequest('http://localhost:3000/api/coach/tts', {
+      method: 'POST',
+      body: JSON.stringify({
+        text: 'Brace core.',
+        voiceId: '../../v1/voices',
+      }),
+    })
+    const traversalRes = await POST(traversalReq)
+    expect(traversalRes.status).toBe(400)
+
+    const foreignVoiceReq = new NextRequest('http://localhost:3000/api/coach/tts', {
+      method: 'POST',
+      body: JSON.stringify({
+        text: 'Brace core.',
+        voiceId: 'AbCdEfGhIjKlMnOpQrSt1',
+      }),
+    })
+    const foreignRes = await POST(foreignVoiceReq)
+    expect(foreignRes.status).toBe(403)
+
+    const hugeTextReq = new NextRequest('http://localhost:3000/api/coach/tts', {
+      method: 'POST',
+      body: JSON.stringify({
+        text: 'A'.repeat(2600),
+      }),
+    })
+    const hugeRes = await POST(hugeTextReq)
+    expect(hugeRes.status).toBe(400)
+  })
 })

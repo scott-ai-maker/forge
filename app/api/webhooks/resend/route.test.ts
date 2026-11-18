@@ -89,5 +89,54 @@ describe('Resend Webhook Route (/api/webhooks/resend)', () => {
     expect(res.status).toBe(200)
     expect(suppressEmailMock).toHaveBeenCalledWith(expect.anything(), 'complainer@example.com', 'complained')
   })
+
+  it('enforces cryptographic Svix HMAC + timestamp replay verification when whsec_ secret is configured (#35)', async () => {
+    const { createHmac } = await import('crypto')
+    const rawKey = Buffer.from('super-secret-svix-signing-key-32b', 'utf8')
+    vi.stubEnv('RESEND_WEBHOOK_SECRET', `whsec_${rawKey.toString('base64')}`)
+
+    const payloadStr = JSON.stringify({
+      type: 'email.bounced',
+      created_at: new Date().toISOString(),
+      data: { email_id: 're_svix_1', to: ['svix-bounce@example.com'] },
+    })
+    const msgId = 'msg_2abc123'
+    const freshTs = String(Math.floor(Date.now() / 1000))
+    const validSig = createHmac('sha256', rawKey)
+      .update(`${msgId}.${freshTs}.${payloadStr}`, 'utf8')
+      .digest('base64')
+
+    // Rejects stale replay (>5 minutes old)
+    const staleTs = String(Math.floor(Date.now() / 1000) - 900)
+    const staleSig = createHmac('sha256', rawKey)
+      .update(`${msgId}.${staleTs}.${payloadStr}`, 'utf8')
+      .digest('base64')
+    const staleRes = await POST(
+      new NextRequest('http://localhost:3000/api/webhooks/resend', {
+        method: 'POST',
+        headers: {
+          'svix-id': msgId,
+          'svix-timestamp': staleTs,
+          'svix-signature': `v1,${staleSig}`,
+        },
+        body: payloadStr,
+      })
+    )
+    expect(staleRes.status).toBe(401)
+
+    // Accepts valid fresh Svix HMAC signature
+    const okRes = await POST(
+      new NextRequest('http://localhost:3000/api/webhooks/resend', {
+        method: 'POST',
+        headers: {
+          'svix-id': msgId,
+          'svix-timestamp': freshTs,
+          'svix-signature': `v1,${validSig}`,
+        },
+        body: payloadStr,
+      })
+    )
+    expect(okRes.status).toBe(200)
+  })
 })
 
