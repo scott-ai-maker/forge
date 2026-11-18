@@ -224,4 +224,36 @@ describe('WebRtcMultiPeerBridge Team Mesh Architecture', () => {
 
     bridge.destroy()
   })
+
+  it('prevents athlete-to-athlete direct P2P mesh connections by default to protect residential IP privacy', async () => {
+    const channel = createMockChannel()
+    const athleteBridge = new WebRtcMultiPeerBridge({
+      sessionId: 'team-squad-ip-privacy',
+      currentUserId: 'athlete-a',
+      currentUserName: 'Athlete Alpha',
+      isCoach: false,
+      channel,
+    })
+
+    athleteBridge.init()
+
+    // Direct athlete-to-athlete peer creation must be blocked
+    expect(athleteBridge.getOrCreatePeer('athlete-b', 'Athlete Beta', 'athlete')).toBeNull()
+
+    // Incoming join/offer from another squad athlete must be ignored
+    await athleteBridge.handleSignal({
+      type: 'join',
+      senderId: 'athlete-b',
+      senderRole: 'athlete',
+      senderName: 'Athlete Beta',
+    })
+    expect(athleteBridge.getConnectedPeerCount()).toBe(0)
+
+    // Coach connection IS allowed
+    const coachPeer = athleteBridge.getOrCreatePeer('coach-1', 'Coach Gordon', 'coach')
+    expect(coachPeer).not.toBeNull()
+    expect(athleteBridge.getConnectedPeerCount()).toBe(1)
+
+    athleteBridge.destroy()
+  })
 })

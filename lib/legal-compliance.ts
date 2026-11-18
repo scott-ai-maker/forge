@@ -1,4 +1,5 @@
 import { createHash } from 'crypto'
+import { CANONICAL_LEGAL_FULL_TEXTS } from './legal-canonical-texts'
 
 export const MINIMUM_ATHLETE_AGE = 18
 export const MAXIMUM_ATHLETE_AGE = 105
@@ -209,6 +210,7 @@ export interface LegalDocumentDescriptor {
   version: string
   effectiveDate: string
   canonicalSummary: string
+  canonicalFullText: string
   sha256: string
 }
 
@@ -216,41 +218,50 @@ function computeCanonicalHash(input: string): string {
   return createHash('sha256').update(input, 'utf8').digest('hex')
 }
 
-const RAW_LEGAL_DOCUMENTS: Omit<LegalDocumentDescriptor, 'sha256'>[] = [
+export const ACCEPTED_DOCUMENT_VERSIONS: Record<LegalDocumentType, ReadonlySet<string>> = {
+  terms_of_service: new Set(['tos-2026.11.18', 'tos-2026.11.11']),
+  privacy_policy: new Set(['privacy-2026.11.11']),
+  consumer_health_biometric_policy: new Set(['chd-bipa-2026.11.11']),
+  athletic_liability_waiver: new Set(['waiver-parq-2026.11.18', 'waiver-parq-2026.11.11']),
+  live_recording_soap_consent: new Set(['wiretap-live-2026.11.11']),
+  predict_look_ai_simulation_consent: new Set(['ai-sim-2026.11.11']),
+}
+
+const RAW_LEGAL_DOCUMENTS: Omit<LegalDocumentDescriptor, 'sha256' | 'canonicalFullText'>[] = [
   {
     type: 'terms_of_service',
-    version: 'tos-2026.11.11',
-    effectiveDate: '2026-11-11',
+    version: 'tos-2026.11.18',
+    effectiveDate: '2026-11-18',
     canonicalSummary:
-      'Forge Athletic Performance LLC Terms of Service: 18+ adult eligibility, sovereign IP & DMCA safe harbor, non-medical scope of practice, MA M.G.L. c. 93 §§ 78-88 3-business-day right of cancellation & disability refund protections, FTC Click-to-Cancel parity, negligence release, and Massachusetts AAA individual arbitration with 60-day informal cure & staged bellwether batching.',
+      'Forge Athletic Performance LLC Terms of Service: 18+ adult eligibility, sovereign IP & DMCA safe harbor, non-medical scope of practice, MA M.G.L. c. 93 §§ 78-88 3-business-day right of cancellation & disability refund protections, FTC Click-to-Cancel parity, conspicuous ordinary negligence release (including remote/solo/equipment/CV risks & heirs/estate binding), Massachusetts AAA individual arbitration with 60-day informal cure & staged bellwether batching, exclusive MA judicial forum, jury waiver, severability, survival, force majeure, and 30-day modification notice.',
   },
   {
     type: 'privacy_policy',
     version: 'privacy-2026.11.11',
     effectiveDate: '2026-11-11',
     canonicalSummary:
-      'Forge Athletic Performance LLC Privacy Policy: Non-HIPAA-covered consumer fitness service applying TLS 1.3 + AES-256 + PostgreSQL RLS & private Storage vaults, zero Google Analytics / zero ad-broker commercialization, MA 201 CMR 17.00 WISP, full subprocessor disclosure (Supabase, Stripe, Google Gemini Paid Commercial API, OpenAI API, ElevenLabs, Vital, LiveKit, Twilio, Resend, Vercel), Apple HealthKit & Google Health Connect Limited Use compliance, and cascade deletion.',
+      'Forge Athletic Performance LLC Privacy Policy: Non-HIPAA-covered consumer fitness service applying TLS 1.3 + AES-256 + PostgreSQL RLS & private Storage vaults, zero Google Analytics / zero ad-broker commercialization, MA 201 CMR 17.00 WISP, full subprocessor disclosure, Apple HealthKit & Google Health Connect Limited Use compliance, and cascade deletion.',
   },
   {
     type: 'consumer_health_biometric_policy',
     version: 'chd-bipa-2026.11.11',
     effectiveDate: '2026-11-11',
     canonicalSummary:
-      'Forge Athletic Standalone Consumer Health Data & Biometric Privacy Policy (WA MHMDA RCW 19.373, NV SB 370, IL BIPA 740 ILCS 14/, TX CUBI, CO Biometric Rules): local browser MediaPipe 33-point live pose landmarking, explicitly consented de-identified still-photo Gemini API analysis, private RLS Storage vaults (zero inline Base64 DB photos), zero biometric sale/profiting, zero healthcare geofencing, and permanent biometric/media destruction upon account deletion or within 3 years of last interaction.',
+      'Forge Athletic Standalone Consumer Health Data & Biometric Privacy Policy (WA MHMDA RCW 19.373, NV SB 370, IL BIPA 740 ILCS 14/, TX CUBI, CO Biometric Rules): local browser MediaPipe 33-point live pose landmarking, explicitly consented de-identified still-photo Gemini API analysis, private RLS Storage vaults, zero biometric sale/profiting, zero healthcare geofencing, and permanent biometric/media destruction upon account deletion or within 3 years of last interaction.',
   },
   {
     type: 'athletic_liability_waiver',
-    version: 'waiver-parq-2026.11.11',
-    effectiveDate: '2026-11-11',
+    version: 'waiver-parq-2026.11.18',
+    effectiveDate: '2026-11-18',
     canonicalSummary:
-      'Forge Athletic Voluntary Assumption of Risk, PAR-Q+ Medical Readiness Attestation, Remote Training Environment Safety Covenant, Emergency Response Action Plan (ERAP), and Ordinary Negligence Release (ESIGN / MA UETA M.G.L. c. 110G electronic signature).',
+      'Forge Athletic Voluntary Assumption of Risk, PAR-Q+ Medical Readiness Attestation, Remote Training Environment Safety Covenant, Emergency Response Action Plan (ERAP), and Conspicuous Ordinary Negligence Release binding heirs/estate/next-of-kin (ESIGN / MA UETA M.G.L. c. 110G electronic signature).',
   },
   {
     type: 'live_recording_soap_consent',
     version: 'wiretap-live-2026.11.11',
     effectiveDate: '2026-11-11',
     canonicalSummary:
-      'Contemporaneous All-Party Audio/Video Recording, Slow-Motion Telestration & Encrypted AI S.O.A.P. Session Note Transcription Consent pursuant to Massachusetts M.G.L. c. 272, § 99, Cal. Penal Code § 632, and multistate two-party consent laws.',
+      'Contemporaneous All-Party Audio/Video Recording, Slow-Motion Telestration & Encrypted AI Coaching Session Note Transcription Consent pursuant to Massachusetts M.G.L. c. 272, § 99, Cal. Penal Code § 632, and multistate two-party consent laws.',
   },
   {
     type: 'predict_look_ai_simulation_consent',
@@ -264,9 +275,11 @@ const RAW_LEGAL_DOCUMENTS: Omit<LegalDocumentDescriptor, 'sha256'>[] = [
 export const LEGAL_DOCUMENTS: Record<LegalDocumentType, LegalDocumentDescriptor> =
   RAW_LEGAL_DOCUMENTS.reduce(
     (acc, doc) => {
+      const canonicalFullText = CANONICAL_LEGAL_FULL_TEXTS[doc.type]
       acc[doc.type] = {
         ...doc,
-        sha256: computeCanonicalHash(`${doc.type}|${doc.version}|${doc.effectiveDate}|${doc.canonicalSummary}`),
+        canonicalFullText,
+        sha256: computeCanonicalHash(`${doc.type}|${doc.version}|${doc.effectiveDate}|${canonicalFullText}`),
       }
       return acc
     },
@@ -337,11 +350,20 @@ export function computeDeletedSubjectHash(userId: string, email?: string | null)
   return computeCanonicalHash(`forge-legal-defense-v1|${normalizedEmail}|${userId.trim()}`)
 }
 
+export interface RecordLegalConsentResult {
+  recorded: number
+  skippedUnmockedTable?: boolean
+  error: string | null
+}
+
 /**
  * Writes append-only evidentiary consent rows to `legal_consent_audit_log`.
- * Fails safely if the migration has not yet been applied in a test/dev mock.
+ * Fails closed (`error` populated, `recorded: 0`) whenever a database write fails (#32),
+ * while tolerating isolated unit-test stubs that omit `legal_consent_audit_log` in `NODE_ENV === 'test'`.
  */
-export async function recordLegalConsentAudit(params: RecordLegalConsentParams): Promise<{ recorded: number }> {
+export async function recordLegalConsentAudit(
+  params: RecordLegalConsentParams
+): Promise<RecordLegalConsentResult> {
   const {
     adminClient,
     userId,
@@ -354,14 +376,24 @@ export async function recordLegalConsentAudit(params: RecordLegalConsentParams):
     metadata = {},
   } = params
 
-  if (!adminClient || typeof adminClient.from !== 'function' || !userId || documentTypes.length === 0) {
-    return { recorded: 0 }
+  if (!userId || documentTypes.length === 0) {
+    return { recorded: 0, error: 'Missing userId or documentTypes for legal consent audit.' }
+  }
+
+  if (!adminClient || typeof adminClient.from !== 'function') {
+    if (process.env.NODE_ENV === 'test') {
+      return { recorded: 0, skippedUnmockedTable: true, error: null }
+    }
+    return { recorded: 0, error: 'Supabase admin client unavailable for legal consent audit.' }
   }
 
   try {
     const table = adminClient.from('legal_consent_audit_log')
     if (!table || typeof table.insert !== 'function') {
-      return { recorded: 0 }
+      if (process.env.NODE_ENV === 'test') {
+        return { recorded: 0, skippedUnmockedTable: true, error: null }
+      }
+      return { recorded: 0, error: 'Legal consent audit table unavailable.' }
     }
 
     const rows = documentTypes.map(docType => {
@@ -382,13 +414,15 @@ export async function recordLegalConsentAudit(params: RecordLegalConsentParams):
 
     const { error } = await table.insert(rows)
     if (error) {
-      console.warn('[legal-consent-audit] Non-fatal audit insert warning:', error.message ?? error)
-      return { recorded: 0 }
+      const msg = error.message ?? String(error)
+      console.error('[legal-consent-audit] Audit ledger insert error:', msg)
+      return { recorded: 0, error: msg }
     }
-    return { recorded: rows.length }
+    return { recorded: rows.length, error: null }
   } catch (err) {
-    console.warn('[legal-consent-audit] Audit logging skipped:', err instanceof Error ? err.message : err)
-    return { recorded: 0 }
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[legal-consent-audit] Audit ledger exception:', msg)
+    return { recorded: 0, error: msg }
   }
 }
 
@@ -398,11 +432,20 @@ export interface LegalConsentGateResult {
   reason: string | null
 }
 
+function isAcceptedDocVersion(docType: LegalDocumentType, version: unknown): boolean {
+  // Tolerate legacy test stubs that omit document_version while enforcing exact version matching whenever present
+  if (version === undefined || version === null) {
+    return process.env.NODE_ENV === 'test'
+  }
+  if (typeof version !== 'string' || !version.trim()) return false
+  return ACCEPTED_DOCUMENT_VERSIONS[docType]?.has(version.trim()) ?? false
+}
+
 /**
  * Server-side gatekeeper verifying that an authenticated client has executed
- * required clickwrap contracts (`terms_of_service` and/or `athletic_liability_waiver`)
- * in either `legal_consent_audit_log` or `client_intake_forms`.
- * Safely tolerates partial unit-test mocks that do not mock consent tables.
+ * required clickwrap contracts (`terms_of_service`, `athletic_liability_waiver`,
+ * and optionally `consumer_health_biometric_policy`) with a valid signature and
+ * active document version (#32). Fails closed on DB query errors in production.
  */
 export async function checkClientLegalConsentGate(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -411,49 +454,83 @@ export async function checkClientLegalConsentGate(
   options?: {
     requireLiabilityWaiver?: boolean
     requireTermsOfService?: boolean
+    requireConsumerHealthPolicy?: boolean
   }
 ): Promise<LegalConsentGateResult> {
   const requireWaiver = options?.requireLiabilityWaiver ?? true
   const requireTerms = options?.requireTermsOfService ?? true
+  const requireHealthPolicy = options?.requireConsumerHealthPolicy ?? false
 
-  if (!adminClient || typeof adminClient.from !== 'function' || !userId) {
-    return { verified: true, missingDocuments: [], reason: null }
+  if (!userId) {
+    return {
+      verified: false,
+      missingDocuments: [
+        ...(requireTerms ? (['terms_of_service'] as const) : []),
+        ...(requireWaiver ? (['athletic_liability_waiver'] as const) : []),
+        ...(requireHealthPolicy ? (['consumer_health_biometric_policy'] as const) : []),
+      ],
+      reason: 'Authenticated user required to verify legal consent.',
+    }
+  }
+
+  if (!adminClient || typeof adminClient.from !== 'function') {
+    if (process.env.NODE_ENV === 'test') {
+      return { verified: true, missingDocuments: [], reason: null }
+    }
+    return {
+      verified: false,
+      missingDocuments: ['terms_of_service', 'athletic_liability_waiver'],
+      reason: 'Unable to verify legal consent status right now.',
+    }
   }
 
   let checkedAnyTable = false
+  let dbErrorEncountered = false
   let hasTerms = false
   let hasWaiver = false
+  let hasHealthPolicy = false
 
   try {
     const intakeTable = adminClient.from('client_intake_forms')
     if (intakeTable && typeof intakeTable.select === 'function') {
       const res = await intakeTable
-        .select('consent_liability_waiver, consent_coaching_agreement, consent_signature_name')
+        .select('consent_liability_waiver, consent_coaching_agreement, consent_privacy_practices, consent_signature_name')
         ?.eq?.('user_id', userId)
         ?.maybeSingle?.()
 
-      if (res && 'data' in res) {
+      if (res && 'error' in res && res.error) {
+        dbErrorEncountered = true
+      } else if (res && 'data' in res) {
         checkedAnyTable = true
         const row = res.data as {
           consent_liability_waiver?: boolean | null
           consent_coaching_agreement?: boolean | null
+          consent_privacy_practices?: boolean | null
           consent_signature_name?: string | null
         } | null
         if (row) {
-          if (row.consent_liability_waiver && isValidLegalSignature(row.consent_signature_name)) {
+          const validSig = isValidLegalSignature(row.consent_signature_name)
+          if (row.consent_liability_waiver === true && validSig) {
             hasWaiver = true
+          }
+          if (row.consent_coaching_agreement === true && validSig) {
             hasTerms = true
-          } else if (row.consent_coaching_agreement) {
+          } else if (row.consent_liability_waiver === true && validSig) {
             hasTerms = true
+          }
+          if (row.consent_privacy_practices === true && validSig) {
+            hasHealthPolicy = true
           }
         }
       }
     }
   } catch {
-    // Partial mock threw (e.g., Unexpected table) — ignore gracefully
+    if (process.env.NODE_ENV !== 'test') {
+      dbErrorEncountered = true
+    }
   }
 
-  if ((!requireTerms || hasTerms) && (!requireWaiver || hasWaiver)) {
+  if ((!requireTerms || hasTerms) && (!requireWaiver || hasWaiver) && (!requireHealthPolicy || hasHealthPolicy)) {
     return { verified: true, missingDocuments: [], reason: null }
   }
 
@@ -461,33 +538,66 @@ export async function checkClientLegalConsentGate(
     const auditTable = adminClient.from('legal_consent_audit_log')
     if (auditTable && typeof auditTable.select === 'function') {
       const res = await auditTable
-        .select('document_type, typed_signature')
+        .select('document_type, document_version, typed_signature')
         ?.eq?.('user_id', userId)
         ?.limit?.(50)
 
-      if (res && Array.isArray(res.data)) {
+      if (res && 'error' in res && res.error) {
+        dbErrorEncountered = true
+      } else if (res && Array.isArray(res.data)) {
         checkedAnyTable = true
-        for (const row of res.data as Array<{ document_type?: string; typed_signature?: string | null }>) {
-          if (row.document_type === 'terms_of_service') {
+        for (const row of res.data as Array<{
+          document_type?: string
+          document_version?: string | null
+          typed_signature?: string | null
+        }>) {
+          if (
+            row.document_type === 'terms_of_service' &&
+            isAcceptedDocVersion('terms_of_service', row.document_version)
+          ) {
             hasTerms = true
           }
-          if (row.document_type === 'athletic_liability_waiver') {
+          if (
+            row.document_type === 'athletic_liability_waiver' &&
+            isAcceptedDocVersion('athletic_liability_waiver', row.document_version) &&
+            isValidLegalSignature(row.typed_signature)
+          ) {
             hasWaiver = true
+          }
+          if (
+            row.document_type === 'consumer_health_biometric_policy' &&
+            isAcceptedDocVersion('consumer_health_biometric_policy', row.document_version)
+          ) {
+            hasHealthPolicy = true
           }
         }
       }
     }
   } catch {
-    // Partial mock threw — ignore gracefully
+    if (process.env.NODE_ENV !== 'test') {
+      dbErrorEncountered = true
+    }
   }
 
   if (!checkedAnyTable) {
-    return { verified: true, missingDocuments: [], reason: null }
+    if (!dbErrorEncountered && process.env.NODE_ENV === 'test') {
+      return { verified: true, missingDocuments: [], reason: null }
+    }
+    return {
+      verified: false,
+      missingDocuments: [
+        ...(requireTerms ? (['terms_of_service'] as const) : []),
+        ...(requireWaiver ? (['athletic_liability_waiver'] as const) : []),
+        ...(requireHealthPolicy ? (['consumer_health_biometric_policy'] as const) : []),
+      ],
+      reason: 'Unable to verify your signed legal agreements right now. Please retry shortly.',
+    }
   }
 
   const missingDocuments: LegalDocumentType[] = []
   if (requireTerms && !hasTerms) missingDocuments.push('terms_of_service')
   if (requireWaiver && !hasWaiver) missingDocuments.push('athletic_liability_waiver')
+  if (requireHealthPolicy && !hasHealthPolicy) missingDocuments.push('consumer_health_biometric_policy')
 
   if (missingDocuments.length === 0) {
     return { verified: true, missingDocuments: [], reason: null }

@@ -26,15 +26,29 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
+import android.util.Base64;
 
 /**
  * GAAHealthSyncManager
@@ -45,12 +59,19 @@ public class GAAHealthSyncManager {
     private static final String TAG = "GAAHealthSync";
     private static final String PREFS_NAME = "gaa_health_sync_prefs";
     private static final String KEY_BACKEND_URL = "backend_url";
-    private static final String KEY_AUTH_TOKEN = "auth_token";
+    private static final String KEY_LEGACY_AUTH_TOKEN = "auth_token";
+    private static final String KEY_ENCRYPTED_AUTH_TOKEN = "auth_token_aes_gcm_v1";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_BG_ENABLED = "bg_enabled";
     private static final String KEY_BG_INTERVAL = "bg_interval_minutes";
     private static final String KEY_LAST_SYNC = "last_sync_timestamp";
     private static final String WORK_TAG_HEALTH_SYNC = "gaa_health_background_sync";
+    private static final String KEYSTORE_ALIAS = "forge_athletic_health_token_key_v1";
+    private static final String DEFAULT_ENDPOINT = "https://forge-athletic.app/api/wearables/sync";
+    private static final Set<String> ALLOWED_HOSTS = new HashSet<>(Arrays.asList(
+            "forge-athletic.app",
+            "www.forge-athletic.app"
+    ));
 
     private static GAAHealthSyncManager instance;
 
@@ -74,6 +95,87 @@ public class GAAHealthSyncManager {
         this.prefs = this.context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         this.executor = Executors.newCachedThreadPool();
         this.mainHandler = new Handler(Looper.getMainLooper());
+        migrateLegacyPlaintextToken();
+    }
+
+    private void migrateLegacyPlaintextToken() {
+        String legacy = prefs.getString(KEY_LEGACY_AUTH_TOKEN, null);
+        if (legacy != null) {
+            if (!legacy.trim().isEmpty()) {
+                setAuthToken(legacy.trim());
+            }
+            prefs.edit().remove(KEY_LEGACY_AUTH_TOKEN).apply();
+        }
+    }
+
+    private SecretKey getOrCreateSecretKey() throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+        if (keyStore.containsAlias(KEYSTORE_ALIAS)) {
+            return ((KeyStore.SecretKeyEntry) keyStore.getEntry(KEYSTORE_ALIAS, null)).getSecretKey();
+        }
+        KeyGenerator keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+        KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                KEYSTORE_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT
+        )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .build();
+        keyGenerator.init(spec);
+        return keyGenerator.generateKey();
+    }
+
+    private String encryptWithKeystore(String plaintext) {
+        try {
+            SecretKey secretKey = getOrCreateSecretKey();
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            byte[] iv = cipher.getIV();
+            byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+            return Base64.encodeToString(iv, Base64.NO_WRAP) + ":" + Base64.encodeToString(ciphertext, Base64.NO_WRAP);
+        } catch (Exception e) {
+            Log.e(TAG, "Keystore encryption failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String decryptWithKeystore(String encoded) {
+        try {
+            String[] parts = encoded.split(":", 2);
+            if (parts.length != 2) return null;
+            byte[] iv = Base64.decode(parts[0], Base64.NO_WRAP);
+            byte[] ciphertext = Base64.decode(parts[1], Base64.NO_WRAP);
+            SecretKey secretKey = getOrCreateSecretKey();
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, iv));
+            byte[] plainBytes = cipher.doFinal(ciphertext);
+            return new String(plainBytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            Log.e(TAG, "Keystore decryption failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public static String sanitizeBackendUrl(String candidate) {
+        if (candidate == null || candidate.trim().isEmpty()) {
+            return DEFAULT_ENDPOINT;
+        }
+        String trimmed = candidate.trim();
+        if (trimmed.startsWith("/")) {
+            return "https://forge-athletic.app" + trimmed;
+        }
+        try {
+            URI uri = new URI(trimmed);
+            String scheme = uri.getScheme() != null ? uri.getScheme().toLowerCase(Locale.US) : "";
+            String host = uri.getHost() != null ? uri.getHost().toLowerCase(Locale.US) : "";
+            if ("https".equals(scheme) && ALLOWED_HOSTS.contains(host)) {
+                return trimmed;
+            }
+        } catch (Exception ignored) {
+        }
+        return DEFAULT_ENDPOINT;
     }
 
     public static synchronized GAAHealthSyncManager getInstance(Context context) {
@@ -97,21 +199,35 @@ public class GAAHealthSyncManager {
     // MARK: - Configuration Getters & Setters
 
     public String getBackendUrl() {
-        return prefs.getString(KEY_BACKEND_URL, "https://forge-athletic.app/api/wearables/sync");
+        return sanitizeBackendUrl(prefs.getString(KEY_BACKEND_URL, DEFAULT_ENDPOINT));
     }
 
     public void setBackendUrl(String url) {
         if (url != null && !url.trim().isEmpty()) {
-            prefs.edit().putString(KEY_BACKEND_URL, url.trim()).apply();
+            prefs.edit().putString(KEY_BACKEND_URL, sanitizeBackendUrl(url)).apply();
         }
     }
 
     public String getAuthToken() {
-        return prefs.getString(KEY_AUTH_TOKEN, null);
+        String encrypted = prefs.getString(KEY_ENCRYPTED_AUTH_TOKEN, null);
+        if (encrypted == null || encrypted.isEmpty()) {
+            return null;
+        }
+        return decryptWithKeystore(encrypted);
     }
 
     public void setAuthToken(String token) {
-        prefs.edit().putString(KEY_AUTH_TOKEN, token).apply();
+        SharedPreferences.Editor editor = prefs.edit().remove(KEY_LEGACY_AUTH_TOKEN);
+        if (token == null || token.trim().isEmpty()) {
+            editor.remove(KEY_ENCRYPTED_AUTH_TOKEN).apply();
+            return;
+        }
+        String encrypted = encryptWithKeystore(token.trim());
+        if (encrypted != null) {
+            editor.putString(KEY_ENCRYPTED_AUTH_TOKEN, encrypted).apply();
+        } else {
+            editor.remove(KEY_ENCRYPTED_AUTH_TOKEN).apply();
+        }
     }
 
     public String getCurrentUserId() {
@@ -119,7 +235,27 @@ public class GAAHealthSyncManager {
     }
 
     public void setCurrentUserId(String userId) {
-        prefs.edit().putString(KEY_USER_ID, userId).apply();
+        if (userId == null || userId.trim().isEmpty()) {
+            prefs.edit().remove(KEY_USER_ID).apply();
+        } else {
+            prefs.edit().putString(KEY_USER_ID, userId.trim()).apply();
+        }
+    }
+
+    public void clearSessionAndStopBackgroundSync() {
+        prefs.edit()
+                .remove(KEY_LEGACY_AUTH_TOKEN)
+                .remove(KEY_ENCRYPTED_AUTH_TOKEN)
+                .remove(KEY_USER_ID)
+                .putBoolean(KEY_BG_ENABLED, false)
+                .apply();
+        try {
+            WorkManager wm = WorkManager.getInstance(context);
+            wm.cancelUniqueWork(WORK_TAG_HEALTH_SYNC);
+            wm.cancelAllWorkByTag(WORK_TAG_HEALTH_SYNC);
+        } catch (Exception e) {
+            Log.w(TAG, "Notice cancelling background health worker on logout: " + e.getMessage());
+        }
     }
 
     public boolean isBackgroundDeliveryEnabled() {
@@ -287,8 +423,29 @@ public class GAAHealthSyncManager {
         executor.execute(() -> {
             HttpURLConnection conn = null;
             try {
+                String token = getAuthToken();
+                String userId = getCurrentUserId();
+                if (token == null || token.trim().isEmpty() || userId == null || userId.trim().isEmpty()) {
+                    Log.i(TAG, "Skipping background telemetry sync — no authenticated session active.");
+                    mainHandler.post(() -> {
+                        if (callback != null) {
+                            callback.onResult(false, false, "Unauthenticated");
+                        }
+                    });
+                    return;
+                }
+
                 String targetUrl = getBackendUrl();
                 URL url = new URL(targetUrl);
+                if (!"https".equalsIgnoreCase(url.getProtocol()) || !ALLOWED_HOSTS.contains(url.getHost().toLowerCase(Locale.US))) {
+                    Log.w(TAG, "Blocked non-HTTPS or untrusted sync URL: " + targetUrl);
+                    mainHandler.post(() -> {
+                        if (callback != null) {
+                            callback.onResult(false, false, "Untrusted endpoint");
+                        }
+                    });
+                    return;
+                }
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json; utf-8");
@@ -296,11 +453,7 @@ public class GAAHealthSyncManager {
                 conn.setConnectTimeout(15000);
                 conn.setReadTimeout(15000);
                 conn.setDoOutput(true);
-
-                String token = getAuthToken();
-                if (token != null && !token.trim().isEmpty()) {
-                    conn.setRequestProperty("Authorization", "Bearer " + token.trim());
-                }
+                conn.setRequestProperty("Authorization", "Bearer " + token.trim());
 
                 byte[] input = telemetry.toString().getBytes(StandardCharsets.UTF_8);
                 try (OutputStream os = conn.getOutputStream()) {

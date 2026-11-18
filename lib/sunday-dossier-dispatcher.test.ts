@@ -118,7 +118,8 @@ describe('dispatchSundayPerformanceDossiers', () => {
     expect(callArgs.body).toContain('lbs across')
     expect(callArgs.url).toBe('/dashboard/dossier')
     expect(callArgs.dedupeKey).toBe('sunday-dossier:2026-10-25:c1')
-    expect(callArgs.data.shareToken).toBeDefined()
+    expect(callArgs.data.shareToken).toBeUndefined()
+    expect(callArgs.data.weekEndingDate).toBe('2026-10-25')
   })
 
   it('skips clients already notified in the current week dedupe window', async () => {

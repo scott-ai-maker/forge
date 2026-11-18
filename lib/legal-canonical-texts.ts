@@ -1,0 +1,52 @@
+import type { LegalDocumentType } from './legal-compliance'
+
+/**
+ * Full canonical operative contract texts hashed into `LEGAL_DOCUMENTS[type].sha256`
+ * and logged in `public.legal_consent_audit_log` for evidentiary clickwrap proof (#32)
+ * under Massachusetts law (Kauders v. Uber Techs., Inc., 486 Mass. 557), ESIGN (15 U.S.C. § 7001),
+ * and MA UETA (M.G.L. c. 110G).
+ */
+export const CANONICAL_LEGAL_FULL_TEXTS: Record<LegalDocumentType, string> = {
+  terms_of_service: [
+    'FORGE ATHLETIC PERFORMANCE LLC — TERMS OF SERVICE & PROPRIETARY RIGHTS (tos-2026.11.18)',
+    '1. BINDING ELECTRONIC FORMATION & 18+ ELIGIBILITY: By checking the affirmative clickwrap consent box and/or executing a typed electronic signature under ESIGN (15 U.S.C. § 7001) and MA UETA (M.G.L. c. 110G), you agree to be bound by these Terms, the Privacy Policy, and the Consumer Health & Biometric Data Policy. Access is strictly restricted to adults aged 18+ (or age of majority in your residence, e.g., 19 in AL/NE, 21 in MS).',
+    '2. INTELLECTUAL PROPERTY & DMCA SAFE HARBOR: All software, periodization algorithms, NASM OPT-aligned templates, CV coaching pipelines, and media belong exclusively to Forge Athletic Performance LLC (82 Wendell Ave., Ste 100, Pittsfield, MA 01201).',
+    '3. NON-MEDICAL SCOPE OF PRACTICE & DIETETICS/PT SAFE HARBOR: Forge Athletic provides non-clinical strength, conditioning, movement education, and general wellness macro estimation (M.G.L. c. 112, § 206; M.G.L. c. 112, §§ 23A-23Q). Coaches are Certified Personal Trainers (NASM-CPT) and are NOT physicians, physical therapists, or licensed dietitians/nutritionists. Platform tools are not medical devices (21 U.S.C. § 360j(o)). Call 911 immediately for any medical emergency.',
+    '4. BILLING, FTC CLICK-TO-CANCEL & MA M.G.L. c. 93 §§ 78-88 CONSUMER RIGHTS: Subscriptions renew automatically until cancelled online in Account Settings > Billing. Qualifying contracts carry an unconditional 3-business-day penalty-free cancellation right with full refund within 15 days (M.G.L. c. 93, §§ 81-82), a 36-month financing horizon cap, and statutory pro-rata disability/death/relocation cancellation rights.',
+    '5. CONSPICUOUS ASSUMPTION OF RISK & ORDINARY NEGLIGENCE RELEASE: YOU EXPRESSLY ACKNOWLEDGE THAT RESISTANCE TRAINING, PLYOMETRICS, CARDIOVASCULAR CONDITIONING, UNSUPERVISED SOLO TRAINING, HOME/HOTEL EQUIPMENT FAILURE OR COLLAPSE, FLOOR/TRIP HAZARDS, COMPUTER-VISION POSE ESTIMATION INACCURACY, WEBRTC AUDIO/VIDEO LATENCY OR DISCONNECTION, AI-ASSISTED PROGRAMMING GUIDANCE, AND REMOTE 911 PSAP ROUTING LIMITATIONS CARRY INHERENT RISKS OF SERIOUS BODILY INJURY, RHABDOMYOLYSIS, CARDIOVASCULAR EVENTS, PERMANENT DISABILITY, PARALYSIS, AND WRONGFUL DEATH. TO THE FULLEST EXTENT PERMITTED BY MASSACHUSETTS AND APPLICABLE STATE LAW (EXCLUDING GROSS NEGLIGENCE, RECKLESSNESS, INTENTIONAL MISCONDUCT, OR UNWAIVABLE STATUTORY RIGHTS SUCH AS NY GOL § 5-326 WHERE APPLICABLE), YOU—ON BEHALF OF YOURSELF, YOUR ESTATE, HEIRS, EXECUTORS, PERSONAL REPRESENTATIVES, AND NEXT OF KIN—VOLUNTARILY ASSUME ALL SUCH RISKS AND FOREVER RELEASE, WAIVE, AND DISCHARGE FORGE ATHLETIC PERFORMANCE LLC, ITS MANAGERS, COACHES, EMPLOYEES, AND AGENTS FROM ANY AND ALL CLAIMS OR LIABILITIES ARISING OUT OF ORDINARY NEGLIGENCE. AGGREGATE LIABILITY IS CAPPED AT THE GREATER OF 12 MONTHS OF FEES PAID OR $100.00.',
+    '6. GOVERNING LAW, 60-DAY INFORMAL CURE, AAA INDIVIDUAL ARBITRATION, EXCLUSIVE FORUM & JURY TRIAL WAIVER: Governed by Massachusetts law and the Federal Arbitration Act (9 U.S.C. § 1 et seq.). Mandatory 60-day signed Notice of Dispute cure period (scott@forge-athletic.app) precedes AAA Consumer Arbitration (and staged bellwether batching for >=25 coordinated claims), with a 30-day arbitration opt-out right. CLASS ACTION WAIVER APPLIES. Non-arbitrable or timely opted-out disputes are subject to exclusive jurisdiction and venue in the state and federal courts sitting in Suffolk County or Middlesex County, Massachusetts (except mandatory small-claims residence forums). BOTH PARTIES IRREVOCABLY WAIVE TRIAL BY JURY TO THE FULLEST EXTENT PERMITTED BY LAW.',
+    '7. SEVERABILITY, SURVIVAL, FORCE MAJEURE, 30-DAY MODIFICATION NOTICE & ENTIRE AGREEMENT: Invalid provisions are severed/reformed to preserve remaining Terms. Intellectual property, disclaimers, releases, liability caps, arbitration, forum, and jury-waiver provisions survive termination. Force majeure excuses uncontrollable infrastructure/carrier/act-of-God delays. Material modifications require at least 30 days advance electronic notice before taking prospective effect. These Terms and incorporated policies constitute the entire agreement.',
+  ].join('\n\n'),
+
+  privacy_policy: [
+    'FORGE ATHLETIC PERFORMANCE LLC — PRIVACY POLICY (privacy-2026.11.11)',
+    '1. DATA CONTROLLER & SCOPE: Forge Athletic Performance LLC (82 Wendell Ave., Ste 100, Pittsfield, MA 01201; scott@forge-athletic.app) operates a direct-to-consumer athletic coaching platform. Forge Athletic is not a HIPAA covered entity, while voluntarily enforcing TLS 1.3 transit encryption, AES-256 encryption at rest, PostgreSQL Row-Level Security (RLS), private signed-URL media vaults, and a Massachusetts 201 CMR 17.00 Written Information Security Program (WISP).',
+    '2. ZERO AD-TECH / ZERO DATA BROKER SALE: Forge Athletic never sells, rents, or shares personal or health data for cross-context behavioral advertising and runs zero third-party ad-network pixels.',
+    '3. VETTED SUBPROCESSORS: Infrastructure and optional features utilize Supabase (database/auth/private storage), Stripe (PCI-DSS Level 1 billing), Vercel (hosting), Resend (transactional email), Twilio (explicitly opted-in SMS), Google Gemini Paid Commercial API & OpenAI API (zero-training commercial tiers for opted-in coaching synthesis), ElevenLabs (coach voice synthesis), and Apple HealthKit / Google Health Connect / Vital (user-authorized wearable sync under strict Limited Use rules).',
+    '4. RETENTION, ACCESS, EXPORT & CASCADE DELETION: Users may export account data or trigger authenticated cascade account deletion at any time in Account Settings, purging personal records, private storage media, and wearable tokens while retaining only pseudonymized SHA-256 statutory legal-consent defense hashes and legally required tax/accounting ledgers.',
+  ].join('\n\n'),
+
+  consumer_health_biometric_policy: [
+    'FORGE ATHLETIC PERFORMANCE LLC — CONSUMER HEALTH DATA & BIOMETRIC PRIVACY POLICY (chd-bipa-2026.11.11)',
+    '1. STATUTORY DISCLOSURES (WA MHMDA RCW 19.373, NV SB 370, IL BIPA 740 ILCS 14/, TX CUBI, CO BIOMETRIC RULES): Separate affirmative consent governs collection and processing of consumer health data (PAR-Q+ readiness responses, orthopedic notes, RPE/workout logs, wearable recovery metrics) and optional movement/posture media.',
+    '2. BIOMETRIC & COMPUTER-VISION SAFEGUARDS: Live 33-point MediaPipe skeletal landmarking executes ephemerally in local client memory to compute joint angles for exercise coaching and never extracts facial recognition templates or persistent voiceprints. Still movement/physique photos are stored exclusively in private RLS-isolated Supabase Storage buckets and transmitted to commercial zero-retention AI endpoints only upon explicit per-feature user initiation.',
+    '3. PROHIBITIONS & DESTRUCTION SCHEDULE: Zero sale, lease, or trade of consumer health or biometric data; zero geofencing around healthcare facilities. Biometric/movement media and derived coordinates are permanently destroyed immediately upon user deletion or no later than three (3) years after the user’s last interaction with Forge Athletic.',
+  ].join('\n\n'),
+
+  athletic_liability_waiver: [
+    'FORGE ATHLETIC PERFORMANCE LLC — VOLUNTARY ASSUMPTION OF RISK, PAR-Q+ ATTESTATION, ERAP & ORDINARY NEGLIGENCE RELEASE (waiver-parq-2026.11.18)',
+    '1. ADULT CAPACITY & TRUTHFUL PAR-Q+ DISCLOSURE: Signer affirms they are at least 18 years old (and of legal age of majority), have truthfully completed all PAR-Q+ medical readiness questions, and will immediately cease exercise and obtain physician clearance if cardiac symptoms, chest pain, syncope, dizziness, or acute joint trauma occur.',
+    '2. REMOTE TRAINING SAFETY & EMERGENCY RESPONSE ACTION PLAN (ERAP): Signer acknowledges remote coaches cannot physically spot, catch, or assist lifts; covenants to maintain a clear 8x8 ft training space, inspect all home/gym equipment before each session, rack weights immediately upon video/audio lag or disconnect, and maintain an accurate physical workout street address and 10-digit local municipal emergency dispatch number for ERAP response, understanding remote 911 PSAP routing limitations.',
+    '3. CONSPICUOUS RELEASE OF ORDINARY NEGLIGENCE: TO THE FULLEST EXTENT PERMITTED BY MASSACHUSETTS AND APPLICABLE LAW (EXCLUDING GROSS NEGLIGENCE, RECKLESSNESS, OR INTENTIONAL MISCONDUCT), SIGNER—ON BEHALF OF THEMSELVES, THEIR ESTATE, HEIRS, EXECUTORS, PERSONAL REPRESENTATIVES, AND NEXT OF KIN—VOLUNTARILY ASSUMES ALL INHERENT AND REMOTE-TRAINING RISKS (INCLUDING UNSUPERVISED SOLO WORKOUTS, EQUIPMENT FAILURE, TRIP HAZARDS, CV/AI LIMITATIONS, SERIOUS INJURY, PARALYSIS, AND WRONGFUL DEATH) AND RELEASES AND HOLDS HARMLESS FORGE ATHLETIC PERFORMANCE LLC AND ITS COACHES FROM ALL CLAIMS ARISING OUT OF ORDINARY NEGLIGENCE.',
+  ].join('\n\n'),
+
+  live_recording_soap_consent: [
+    'FORGE ATHLETIC PERFORMANCE LLC — ALL-PARTY LIVE AUDIO/VIDEO RECORDING & COACHING NOTE TRANSCRIPTION CONSENT (wiretap-live-2026.11.11)',
+    'Pursuant to Massachusetts M.G.L. c. 272, § 99, Cal. Penal Code § 632, Fla. Stat. § 934.03, 18 Pa. C.S. § 5704, and multistate all-party consent statutes, athlete affirmatively consents to contemporaneous audio/video capture, slow-motion telestration replay, and encrypted AI coaching session note transcription strictly when an active REC indicator is displayed during a live session, and agrees to notify any bystanders entering the training space.',
+  ].join('\n\n'),
+
+  predict_look_ai_simulation_consent: [
+    'FORGE ATHLETIC PERFORMANCE LLC — 18+ ADULT ILLUSTRATIVE AI PHYSIQUE CONCEPT VISUALIZATION CONSENT (ai-sim-2026.11.11)',
+    'Verified adult (18+) user affirmatively authorizes encrypted processing of their uploaded clothed progress photograph strictly to generate an illustrative, non-guaranteed AI physique concept visualization, acknowledging individual physical adaptations depend on genetics, adherence, nutrition, sleep, and health history.',
+  ].join('\n\n'),
+}

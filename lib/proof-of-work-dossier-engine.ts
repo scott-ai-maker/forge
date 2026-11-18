@@ -24,6 +24,7 @@ import {
   type RawPersonalRecord,
 } from './sunday-dossier-engine'
 import { getSanctuaryBadge } from './sanctuary-mode-engine'
+import { computeSealHmacHex, constantTimeEqualString } from './cryptographic-seal'
 
 export interface CompoundLiftProgression {
   exerciseName: string
@@ -111,23 +112,6 @@ export interface BuildProofOfWorkParams {
   referralCode?: string
   targetGoal?: string
   coachNote?: string
-}
-
-/**
- * Multiplicative FNV-1a hash derivative for deterministic hex tokens.
- */
-function hashString(str: string): number {
-  let hash = 0x811c9dc5
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i)
-    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24)
-  }
-  return hash >>> 0
-}
-
-function toHex4(val: number): string {
-  const unsigned = (val >>> 0)
-  return unsigned.toString(16).toUpperCase().padStart(8, '0').slice(0, 4)
 }
 
 /**
@@ -322,11 +306,11 @@ export function buildProofOfWorkDossier(params: BuildProofOfWorkParams): ProofOf
     plan: `Progress to Next Microcycle. Maintain working set RPE between 8.0 and 9.0. Continue strict 90-120s down-regulation intervals using Box 4x4 breathing pacer in Sanctuary Mode.`,
   }
 
-  // 9. Coach Gordon Attestation & Verification Hash
+  // 9. Coach Gordon Attestation & Keyed HMAC-SHA256 Verification Seal
   const hashSource = `${athleteName}|${totalTonnageLbs}|${focusScore}|${totalWorkingSets}|${periodizationStage}|FORGE-POW-AUTHENTIC-2026`
-  const hash = hashString(hashSource)
-  const docRefId = `FORGE-POW-${toHex4(hash)}-${new Date().getFullYear()}`
-  const verificationSeal = `FORGE-SEAL-${toHex4(hash ^ 0x5a5a)}-VERIFIED`
+  const hmac8 = computeSealHmacHex(hashSource, 8)
+  const docRefId = `FORGE-POW-${hmac8.slice(0, 4)}-${new Date().getFullYear()}`
+  const verificationSeal = `FORGE-SEAL-${hmac8.slice(4, 8)}-VERIFIED`
 
   const coachGordonAttestation = {
     signOff: 'Scott Gordon',
@@ -336,7 +320,7 @@ export function buildProofOfWorkDossier(params: BuildProofOfWorkParams): ProofOf
   }
 
   // 10. Peer Recommendation Invitation
-  const rawCode = (params.referralCode || `${athleteInitials}-${toHex4(hash)}`).toUpperCase()
+  const rawCode = (params.referralCode || `${athleteInitials}-${hmac8.slice(0, 4)}`).toUpperCase()
   const shareUrl = `https://forgeathletic.com/r/${rawCode}`
 
   const peerInvitation = {
@@ -377,11 +361,13 @@ export function buildProofOfWorkDossier(params: BuildProofOfWorkParams): ProofOf
 }
 
 /**
- * Encodes a ProofOfWorkDossier into a URL-safe, compact base64 token.
+ * Encodes a ProofOfWorkDossier into an HMAC-authenticated URL-safe base64 token.
+ * Coaching S.O.A.P. notes (`soapAssessment`) are intentionally omitted from URL tokens
+ * to prevent sensitive health/orthopedic note leakage in browser history or logs.
  */
 export function encodeProofOfWorkToken(dossier: ProofOfWorkDossier): string {
   try {
-    const compactPayload = {
+    const unsignedPayload = {
       id: dossier.docRefId,
       seal: dossier.verificationSeal,
       d: dossier.generatedAt.slice(0, 10),
@@ -420,9 +406,15 @@ export function encodeProofOfWorkToken(dossier: ProofOfWorkDossier): string {
         hng: dossier.kineticDistribution.hingePct,
         cor: dossier.kineticDistribution.carryCorePct,
       },
-      soap: dossier.soapAssessment,
       cg: dossier.coachGordonAttestation,
       ref: dossier.peerInvitation.referralCode,
+    }
+
+    const canonicalPayload = JSON.stringify(unsignedPayload)
+    const sig = computeSealHmacHex(`forge-pow-token-v1|${canonicalPayload}`, 32)
+    const compactPayload = {
+      ...unsignedPayload,
+      sig,
     }
 
     const jsonStr = JSON.stringify(compactPayload)
@@ -440,7 +432,8 @@ export function encodeProofOfWorkToken(dossier: ProofOfWorkDossier): string {
 }
 
 /**
- * Decodes a URL-safe base64 token back into a ProofOfWorkDossier.
+ * Decodes and verifies an HMAC-authenticated URL-safe base64 token into a ProofOfWorkDossier.
+ * Rejects unsigned or tampered Base64 payloads (`null`).
  */
 export function decodeProofOfWorkToken(token: string): ProofOfWorkDossier | null {
   if (!token || token.length < 10) return null
@@ -460,6 +453,16 @@ export function decodeProofOfWorkToken(token: string): ProofOfWorkDossier | null
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c: any = JSON.parse(jsonStr)
+    if (!c || typeof c !== 'object' || typeof c.sig !== 'string' || c.sig.length !== 32) {
+      return null
+    }
+
+    const { sig, ...unsigned } = c
+    delete unsigned.soap
+    const expectedSig = computeSealHmacHex(`forge-pow-token-v1|${JSON.stringify(unsigned)}`, 32)
+    if (!constantTimeEqualString(sig, expectedSig)) {
+      return null
+    }
 
     const athleteName = c.n || 'Forge Athlete'
     const nameParts = athleteName.split(' ').filter(Boolean)

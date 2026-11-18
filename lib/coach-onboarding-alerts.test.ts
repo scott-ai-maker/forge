@@ -45,7 +45,8 @@ describe('dispatchCoachOnboardingAlert', () => {
       goal: 'Strength Endurance & Athletic Conditioning',
       trainingDaysPerWeek: 3,
       equipmentAccess: ['Dumbbells', 'Bench', 'Cables'],
-      parqAnyYes: false,
+      parqAnyYes: true,
+      injuriesLimitations: 'C5-C6 cervical disc bulge and beta-blocker prescription',
     })
 
     expect(result.sent).toBe(true)
@@ -59,6 +60,9 @@ describe('dispatchCoachOnboardingAlert', () => {
         text: expect.stringContaining('/coach/clients/test-user-123?tab=ai-onboarding'),
       })
     )
+    const sentMail = mockSend.mock.calls[0][0]
+    expect(sentMail.text).not.toContain('C5-C6 cervical disc bulge')
+    expect(sentMail.html).not.toContain('C5-C6 cervical disc bulge')
   })
 
   it('handles resend error gracefully without throwing', async () => {

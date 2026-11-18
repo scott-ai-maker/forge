@@ -84,6 +84,10 @@ export default function MedicalParqModal({
   const [agreedToWaiver, setAgreedToWaiver] = useState<boolean>(false)
 
   useEffect(() => {
+    setAgreedToWaiver(false)
+  }, [initialAnswers])
+
+  useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
     if (!dialog.open) {

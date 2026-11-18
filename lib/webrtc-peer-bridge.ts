@@ -12,40 +12,48 @@ import {
 } from './live-bandwidth-profiles'
 import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
-export function getIceServers(): RTCIceServer[] {
+/**
+ * Returns vetted STUN servers plus any server-issued ephemeral TURN servers.
+ * SECURITY (#30): Unvetted public community TURN relays (`openrelay.metered.ca`)
+ * and client-exposed `NEXT_PUBLIC_TURN_*` secrets are strictly prohibited.
+ * Enterprise TURN credentials are fetched dynamically from `/api/webrtc/ice-servers`.
+ */
+export function getIceServers(ephemeralTurnServers?: RTCIceServer[]): RTCIceServer[] {
   const servers: RTCIceServer[] = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
     { urls: 'stun:stun3.l.google.com:19302' },
-    { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:stun.cloudflare.com:3478' },
     { urls: 'stun:global.stun.twilio.com:3478' },
-    // Public community TURN relay fallbacks for mobile cellular / symmetric NAT traversal
-    {
-      urls: [
-        'turn:relay.metered.ca:80',
-        'turn:relay.metered.ca:443',
-        'turns:relay.metered.ca:443?transport=tcp',
-        'turn:openrelay.metered.ca:80',
-        'turn:openrelay.metered.ca:443',
-        'turns:openrelay.metered.ca:443?transport=tcp',
-      ],
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
   ]
 
-  // Optional custom TURN relay from environment variable
-  if (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_TURN_URL) {
-    servers.unshift({
-      urls: process.env.NEXT_PUBLIC_TURN_URL.split(',').map(s => s.trim()),
-      username: process.env.NEXT_PUBLIC_TURN_USERNAME || undefined,
-      credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL || undefined,
-    })
+  if (Array.isArray(ephemeralTurnServers) && ephemeralTurnServers.length > 0) {
+    return [...ephemeralTurnServers, ...servers]
   }
 
   return servers
+}
+
+export async function fetchAuthenticatedIceServers(): Promise<RTCIceServer[]> {
+  if (typeof window === 'undefined' || typeof fetch !== 'function') {
+    return getIceServers()
+  }
+  try {
+    const res = await fetch('/api/webrtc/ice-servers', {
+      method: 'GET',
+      cache: 'no-store',
+      credentials: 'same-origin',
+    })
+    if (!res.ok) return getIceServers()
+    const payload = (await res.json()) as { iceServers?: RTCIceServer[] }
+    if (Array.isArray(payload?.iceServers) && payload.iceServers.length > 0) {
+      return payload.iceServers
+    }
+  } catch {
+    // Fall back to vetted STUN servers when offline or in test environments
+  }
+  return getIceServers()
 }
 
 export const DEFAULT_ICE_SERVERS: RTCIceServer[] = getIceServers()
@@ -87,6 +95,7 @@ export interface WebRtcSignalPayload {
     | 'request-snapshot'
     | 'coaching-sync'
   senderId: string
+  senderRole?: 'coach' | 'athlete'
   targetUserId?: string
   senderName?: string
   sdp?: RTCSessionDescriptionInit
@@ -103,6 +112,7 @@ export interface WebRtcBridgeOptions {
   isPolite?: boolean
   channel?: RealtimeChannel | null
   localStream?: MediaStream | null
+  iceServers?: RTCIceServer[]
   initialBandwidthMode?: BandwidthMode
   onRemoteStream?: (stream: MediaStream) => void
   onConnectionStateChange?: (state: RTCPeerConnectionState) => void
@@ -212,8 +222,26 @@ export class WebRtcPeerBridge {
     try {
       this.pc = new RTCPeerConnectionClass({
         ...DEFAULT_RTC_CONFIG,
-        iceServers: getIceServers(),
+        iceServers: this.options.iceServers?.length
+          ? this.options.iceServers
+          : getIceServers(),
       })
+
+      // Asynchronously upgrade peer configuration with server-authenticated TURN servers when available
+      if (!this.options.iceServers?.length && typeof window !== 'undefined' && typeof this.pc.setConfiguration === 'function') {
+        void fetchAuthenticatedIceServers().then(authenticatedServers => {
+          if (!this.isDestroyed && this.pc && typeof this.pc.setConfiguration === 'function') {
+            try {
+              this.pc.setConfiguration({
+                ...DEFAULT_RTC_CONFIG,
+                iceServers: authenticatedServers,
+              })
+            } catch {
+              // Browser may disallow setConfiguration during active negotiation
+            }
+          }
+        })
+      }
       const globalMediaStream = typeof globalThis !== 'undefined' && 'MediaStream' in globalThis
         ? (globalThis as unknown as { MediaStream: typeof MediaStream }).MediaStream
         : undefined

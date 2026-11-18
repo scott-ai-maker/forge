@@ -250,13 +250,19 @@ describe('GAA Native HealthKit & Health Connect Bridge', () => {
       )
     })
 
-    it('resolves relative sync endpoints to absolute URLs', () => {
+    it('resolves relative sync endpoints to HTTPS-pinned URLs and blocks arbitrary/http domains (#26)', () => {
       const resolvedRelative = resolveSyncEndpoint('/api/wearables/sync')
-      expect(resolvedRelative.startsWith('http://') || resolvedRelative.startsWith('https://')).toBe(true)
+      expect(resolvedRelative.startsWith('https://')).toBe(true)
       expect(resolvedRelative.endsWith('/api/wearables/sync')).toBe(true)
 
-      const resolvedAbsolute = resolveSyncEndpoint('https://custom.domain.com/sync')
-      expect(resolvedAbsolute).toBe('https://custom.domain.com/sync')
+      const resolvedAllowed = resolveSyncEndpoint('https://www.forge-athletic.app/api/wearables/sync')
+      expect(resolvedAllowed).toBe('https://www.forge-athletic.app/api/wearables/sync')
+
+      const blockedExternal = resolveSyncEndpoint('https://custom.domain.com/sync')
+      expect(blockedExternal).toBe('https://forge-athletic.app/api/wearables/sync')
+
+      const blockedHttp = resolveSyncEndpoint('http://forge-athletic.app/api/wearables/sync')
+      expect(blockedHttp).toBe('https://forge-athletic.app/api/wearables/sync')
     })
 
     it('sanitizes capacitor:// and localhost origins to production endpoint', () => {

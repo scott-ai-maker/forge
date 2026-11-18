@@ -114,10 +114,25 @@ describe('Proof of Work Dossier Engine', () => {
       expect(decoded!.compoundLifts.length).toBe(original.compoundLifts.length)
     })
 
-    it('returns null for corrupted or invalid tokens', () => {
+    it('returns null for corrupted, unsigned, or tampered tokens and omits SOAP notes from URL tokens', () => {
       expect(decodeProofOfWorkToken('')).toBeNull()
       expect(decodeProofOfWorkToken('short')).toBeNull()
       expect(decodeProofOfWorkToken('invalid-base-64-corrupted-!@#$%')).toBeNull()
+
+      const original = buildProofOfWorkDossier({ athleteName: 'Tamper Check' })
+      const token = encodeProofOfWorkToken(original)
+      const rawJson = Buffer.from(token.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8')
+      expect(rawJson).not.toContain('"soap"')
+
+      // Tamper with athlete name inside Base64 payload while keeping old HMAC sig
+      const parsed = JSON.parse(rawJson)
+      parsed.n = 'Forged Impersonator'
+      const forgedToken = Buffer.from(JSON.stringify(parsed), 'utf-8')
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
+      expect(decodeProofOfWorkToken(forgedToken)).toBeNull()
     })
   })
 })

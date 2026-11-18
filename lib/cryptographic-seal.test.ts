@@ -1,9 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   generateExecutiveVerificationHash,
   generatePersonalRecordSeal,
   generateLongitudinalAuditSeal,
   verifyCryptographicSeal,
+  verifyExecutiveVerificationHash,
+  verifyPersonalRecordSeal,
 } from './cryptographic-seal'
 
 describe('cryptographic-seal', () => {
@@ -81,5 +83,29 @@ describe('cryptographic-seal', () => {
     expect(verifyCryptographicSeal('INVALID-HASH')).toBe(false)
     expect(verifyCryptographicSeal('GAA-SIG-123-EXEC')).toBe(false)
     expect(verifyCryptographicSeal('GAA-SIG-12345-EXEC')).toBe(false)
+  })
+
+  it('keys HMAC-SHA256 seals with FORGE_SEAL_HMAC_SECRET and rejects forged seals', () => {
+    vi.stubEnv('FORGE_SEAL_HMAC_SECRET', 'secret-alpha-key')
+    const params = {
+      athleteId: 'athlete-sec-1',
+      sessionDate: '2026-11-18',
+      totalVolumeKg: 8400,
+      totalSets: 18,
+      nasmOptPhase: 2,
+    }
+    const sealAlpha = generateExecutiveVerificationHash(params)
+    expect(verifyExecutiveVerificationHash(sealAlpha, params)).toBe(true)
+    expect(verifyExecutiveVerificationHash('GAA-SIG-0000-EXEC', params)).toBe(false)
+
+    vi.stubEnv('FORGE_SEAL_HMAC_SECRET', 'secret-beta-key')
+    const sealBeta = generateExecutiveVerificationHash(params)
+    expect(sealBeta).not.toBe(sealAlpha)
+
+    const prParams = { exerciseName: 'Deadlift', weightLbsOrKg: 405, reps: 3, date: '2026-11-18' }
+    const prSeal = generatePersonalRecordSeal(prParams)
+    expect(verifyPersonalRecordSeal(prSeal, prParams)).toBe(true)
+    expect(verifyPersonalRecordSeal(prSeal, { ...prParams, weightLbsOrKg: 495 })).toBe(false)
+    vi.unstubAllEnvs()
   })
 })

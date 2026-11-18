@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { generateSundayDossier, resolveSetWeightLbs } from '@/lib/sunday-dossier-engine'
-import { buildProofOfWorkDossier, encodeProofOfWorkToken } from '@/lib/proof-of-work-dossier-engine'
 import { notifyUser } from '@/lib/notifications'
 
 export interface SundayDossierDispatchResult {
@@ -138,27 +137,15 @@ export async function dispatchSundayPerformanceDossiers(
         chronicWorkloadTonnage
       )
 
-      const powDossier = buildProofOfWorkDossier({
-        athleteName,
-        athleteEmail: client.email,
-        optPhase: latestPlan?.nasm_opt_phase ?? 1,
-        phaseName: latestPlan?.phase_name ?? 'Stabilization Endurance',
-        setLogs: acuteSetLogs,
-        cardioLogs: cardioLogs ?? [],
-        personalRecords: recentPrs ?? [],
-      })
-
-      const shareToken = encodeProofOfWorkToken(powDossier)
-
       let title: string
       let body: string
 
       if (dossierMetrics.totalTonnageLbs > 0) {
         title = 'Weekly Performance Dossier Ready'
-        body = `${firstName}, you moved ${dossierMetrics.totalTonnageLbs.toLocaleString()} lbs across ${dossierMetrics.totalWorkingSets} sets this week (${dossierMetrics.adherencePct}% adherence). Tap to review your verified proof of work.`
+        body = `${firstName}, you moved ${dossierMetrics.totalTonnageLbs.toLocaleString()} lbs across ${dossierMetrics.totalWorkingSets} sets this week (${dossierMetrics.adherencePct}% adherence). Sign in to review your weekly dossier.`
       } else {
         title = 'Weekly Training & Recovery Briefing'
-        body = `${firstName}, your weekly sports science briefing is ready. Check your upcoming OPT™ phase and recovery benchmarks for next week.`
+        body = `${firstName}, your weekly sports science briefing is ready. Sign in to check your upcoming OPT™ phase and schedule for next week.`
       }
 
       const notifyResult = await notifyUser({
@@ -168,8 +155,7 @@ export async function dispatchSundayPerformanceDossiers(
         body,
         url: `/dashboard/dossier`,
         data: {
-          shareToken,
-          totalTonnage: String(dossierMetrics.totalTonnageLbs),
+          weekEndingDate: weekEndingIso,
           workingSets: String(dossierMetrics.totalWorkingSets),
           adherencePct: String(dossierMetrics.adherencePct),
         },

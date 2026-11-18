@@ -26,16 +26,18 @@ export interface SafetyAlertDispatchResult {
 }
 
 /**
- * Dispatches an automated real-time safety alert to Coach Gordon
- * when an athlete's consultation triggers clinical escalation, emergency 911 protocols,
- * or orthopedic contraindication red flags.
+ * Dispatches a minimum-necessary real-time safety alert to Coach Gordon when an athlete's
+ * consultation triggers escalation or emergency 911 protocols.
+ *
+ * PRIVACY SAFEGUARD (#29): Raw symptom statements, medical/orthopedic contraindication tags,
+ * readiness biometrics, and triage transcripts are NEVER transmitted in plaintext email.
+ * The email directs the coach to review the encrypted Coach Portal safety queue.
  */
 export async function dispatchCoachSafetyAlert(
   params: SafetyAlertDispatchParams
 ): Promise<SafetyAlertDispatchResult> {
   const { request, response } = params
 
-  // Only dispatch if coach ping is required or it's an emergency
   if (!response.requiresCoachPing && !response.isEmergency911) {
     return { sent: false, skipped: true, reason: 'No coach escalation required' }
   }
@@ -46,27 +48,19 @@ export async function dispatchCoachSafetyAlert(
     process.env.COACH_ALERT_FROM_EMAIL ||
     process.env.MARKETING_FROM_EMAIL ||
     'Forge Athletic Safety <onboarding@resend.dev>'
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://forge-athletic.app').replace(/\/+$/, '')
+  const portalUrl = `${baseUrl}/coach/dashboard?tab=safety-queue`
 
-  const sanitizedQuestion = sanitizePiiString(request.question || '')
-  const safeAthleteName = sanitizePiiString(request.athleteName || 'Athlete')
+  const safeAthleteName = sanitizePiiString(request.athleteName || 'Athlete').slice(0, 64) || 'Athlete'
 
-  // Always log structured audit entry to server console for accountability
   const auditLog = {
     eventType: 'COACH_GORDON_SAFETY_ALERT',
     timestamp: new Date().toISOString(),
     urgencyTier: response.isEmergency911 ? 'EMERGENCY_911' : 'COACH_CLINICAL_REVIEW',
-    athleteName: safeAthleteName || 'Anonymous Athlete',
-    clientAge: request.clientAge,
-    clientSex: request.clientSex,
-    optPhase: request.nasmOptPhase,
-    goal: request.goal,
-    readinessScore: request.recentReadinessScore,
-    contraindicationTags: request.contraindicationTags || [],
-    pingReason: response.coachPingReason || 'Flagged consultation requiring coach review',
-    question: sanitizedQuestion,
-    aiAnswerExcerpt: response.answerMarkdown ? response.answerMarkdown.slice(0, 300) : '',
+    optPhase: Number(request.nasmOptPhase) || 1,
+    hasContraindications: Boolean(request.contraindicationTags && request.contraindicationTags.length > 0),
   }
-  console.warn('[SAFETY_AUDIT_LOG]', JSON.stringify(auditLog, null, 2))
+  console.warn('[SAFETY_AUDIT_LOG]', JSON.stringify(auditLog))
 
   if (!apiKey) {
     console.warn('[SafetyAlert] RESEND_API_KEY is not configured; skipping email dispatch.')
@@ -76,80 +70,58 @@ export async function dispatchCoachSafetyAlert(
   try {
     const resend = new Resend(apiKey)
     const urgencyLabel = response.isEmergency911
-      ? '🚨 [CRITICAL 911 EMERGENCY] Athlete In-Session Alert'
-      : '⚠️ [COACH ACTION REQUIRED] Coach Gordon Consultation Escalation'
+      ? '🚨 [CRITICAL 911 EMERGENCY] Secure Athlete Safety Alert'
+      : '⚠️ [COACH ACTION REQUIRED] Secure Coaching Escalation'
 
     const subject = `${urgencyLabel} — ${safeAthleteName}`
     const safeHtmlAthlete = escapeHtml(safeAthleteName)
-    const safeHtmlPingReason = escapeHtml(
-      response.coachPingReason || 'Direct coach review requested or orthopedic safety trigger'
-    )
-    const safeHtmlGoal = escapeHtml(request.goal || 'General Fitness')
-    const safeHtmlContraindications = (request.contraindicationTags || [])
-      .map(tag => escapeHtml(String(tag)))
-      .join(', ')
-    const safeHtmlExercise = request.currentExerciseName
-      ? escapeHtml(request.currentExerciseName)
-      : ''
-    const safeHtmlQuestion = escapeHtml(sanitizedQuestion)
-    const safeHtmlAnswer = escapeHtml(response.answerMarkdown || '').replace(/\n/g, '<br/>')
+    const safePhase = Number(request.nasmOptPhase) || 1
 
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0A0E18; color: #FFFFFF; padding: 24px; border-radius: 8px; border: 1px solid #D4A017;">
         <div style="border-bottom: 1px solid rgba(212, 160, 23, 0.4); padding-bottom: 16px; margin-bottom: 20px;">
           <h2 style="color: ${response.isEmergency911 ? '#EF4444' : '#F59E0B'}; margin: 0 0 8px 0; font-size: 20px;">
-            ${response.isEmergency911 ? '🚨 CRITICAL MEDICAL EMERGENCY DETECTED' : '🛡️ COACH GORDON AI SAFETY ESCALATION'}
+            ${response.isEmergency911 ? '🚨 CRITICAL MEDICAL EMERGENCY DETECTED' : '🛡️ SECURE COACHING SAFETY ESCALATION'}
           </h2>
           <p style="margin: 0; color: #9CA3AF; font-size: 13px;">
-            Forge Athletic Real-Time Human-in-the-Loop Safeguard Shield
+            Forge Athletic Minimum-Necessary Safeguard Notification
           </p>
         </div>
 
-        <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 6px; margin-bottom: 16px;">
-          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Athlete:</strong> ${safeHtmlAthlete}</p>
-          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Urgency Reason:</strong> <span style="color: #FCD34D;">${safeHtmlPingReason}</span></p>
-          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>OPT™ Phase:</strong> Phase ${Number(request.nasmOptPhase) || 1} | <strong>Goal:</strong> ${safeHtmlGoal}</p>
-          ${safeHtmlContraindications ? `<p style="margin: 0 0 8px 0; font-size: 14px; color: #F87171;"><strong>Known Contraindications:</strong> ${safeHtmlContraindications}</p>` : ''}
-          ${safeHtmlExercise ? `<p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Active Movement:</strong> ${safeHtmlExercise}</p>` : ''}
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 6px; margin-bottom: 20px;">
+          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Member:</strong> ${safeHtmlAthlete}</p>
+          <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Urgency Tier:</strong> <span style="color: #FCD34D;">${response.isEmergency911 ? 'Emergency 911 Stop Triggered' : 'Priority Coach Review Required'}</span></p>
+          <p style="margin: 0; font-size: 14px;"><strong>OPT™ Phase:</strong> Phase ${safePhase}</p>
         </div>
 
-        <div style="margin-bottom: 20px;">
-          <h4 style="margin: 0 0 8px 0; color: #D4A017; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Athlete's Question / Statement:</h4>
-          <blockquote style="margin: 0; padding: 12px 16px; background: rgba(255, 255, 255, 0.03); border-left: 3px solid #D4A017; font-style: italic; color: #E5E7EB;">
-            "${safeHtmlQuestion}"
-          </blockquote>
-        </div>
+        <p style="margin: 0 0 20px 0; font-size: 13px; line-height: 1.6; color: #CBD5E1;">
+          To protect member health privacy, symptom statements, orthopedic flags, and biometric readiness scores are withheld from unencrypted email. Sign in to the authenticated Forge Coach Portal to review the encrypted safety queue.
+        </p>
 
-        <div style="margin-bottom: 24px;">
-          <h4 style="margin: 0 0 8px 0; color: #9CA3AF; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">AI Coach Gordon Response Delivered:</h4>
-          <div style="padding: 12px 16px; background: rgba(0, 0, 0, 0.4); border-radius: 6px; font-size: 13px; line-height: 1.5; color: #D1D5DB;">
-            ${safeHtmlAnswer}
-          </div>
+        <div style="text-align: center; margin-bottom: 20px;">
+          <a href="${portalUrl}" style="display: inline-block; background: #D4A017; color: #0A0E18; font-weight: 800; font-size: 13px; padding: 12px 24px; border-radius: 6px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em;">
+            Open Secure Safety Queue →
+          </a>
         </div>
 
         <div style="text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 16px;">
           <p style="margin: 0; font-size: 11px; color: #6B7280;">
-            This automated alert was dispatched by Forge Athletic Liability Shield to protect client safety and maintain coach supervision.
+            Dispatched by Forge Athletic Minimum-Necessary Notification Shield.
           </p>
         </div>
       </div>
     `
 
-    const text = `
-FORGE ATHLETIC SAFETY ALERT
-===========================
-Athlete: ${safeAthleteName}
-Urgency Tier: ${response.isEmergency911 ? 'EMERGENCY 911' : 'COACH CLINICAL REVIEW'}
-Reason: ${response.coachPingReason || 'Review requested'}
-OPT Phase: Phase ${Number(request.nasmOptPhase) || 1}
-Contraindications: ${(request.contraindicationTags || []).join(', ') || 'None'}
-
-ATHLETE'S QUESTION:
-"${sanitizedQuestion}"
-
-AI RESPONSE DELIVERED:
-${response.answerMarkdown || ''}
-    `.trim()
+    const text = [
+      'FORGE ATHLETIC SECURE SAFETY ALERT',
+      '==================================',
+      `Member: ${safeAthleteName}`,
+      `Urgency Tier: ${response.isEmergency911 ? 'EMERGENCY 911' : 'COACH REVIEW REQUIRED'}`,
+      `OPT Phase: Phase ${safePhase}`,
+      '',
+      'Health details, orthopedic flags, and symptom statements are withheld from plaintext email.',
+      `Sign in to review the encrypted safety queue: ${portalUrl}`,
+    ].join('\n')
 
     const { data, error } = await resend.emails.send({
       from: fromEmail,

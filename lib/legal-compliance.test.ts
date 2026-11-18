@@ -12,12 +12,15 @@ import {
 } from './legal-compliance'
 
 describe('lib/legal-compliance', () => {
-  it('enforces 18+ adult minimum athlete eligibility and deterministic SHA-256 document hashes', () => {
+  it('enforces 18+ adult minimum athlete eligibility and deterministic SHA-256 hashes over full canonical text', () => {
     expect(MINIMUM_ATHLETE_AGE).toBe(18)
     for (const doc of Object.values(LEGAL_DOCUMENTS)) {
       expect(doc.sha256).toMatch(/^[a-f0-9]{64}$/)
       expect(doc.version.length).toBeGreaterThan(5)
+      expect(doc.canonicalFullText.length).toBeGreaterThan(doc.canonicalSummary.length)
     }
+    expect(LEGAL_DOCUMENTS.terms_of_service.canonicalFullText).toContain('ORDINARY NEGLIGENCE')
+    expect(LEGAL_DOCUMENTS.terms_of_service.canonicalFullText).toContain('JURY TRIAL WAIVER')
   })
 
   it('computes deterministic 64-hex pseudonymized subject hashes for deleted account defense records', () => {
@@ -130,6 +133,40 @@ describe('lib/legal-compliance', () => {
     const allowed = await checkClientLegalConsentGate(signedAuditAdmin, 'consented-user')
     expect(allowed.verified).toBe(true)
     expect(allowed.missingDocuments).toEqual([])
+
+    // Rejects unsigned or placeholder waiver rows in legal_consent_audit_log (#32)
+    const unsignedAuditAdmin = {
+      from: (table: string) => {
+        if (table === 'client_intake_forms') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: null, error: null }),
+              }),
+            }),
+          }
+        }
+        if (table === 'legal_consent_audit_log') {
+          return {
+            select: () => ({
+              eq: () => ({
+                limit: async () => ({
+                  data: [
+                    { document_type: 'terms_of_service', document_version: 'tos-2026.11.18', typed_signature: null },
+                    { document_type: 'athletic_liability_waiver', document_version: 'waiver-parq-2026.11.18', typed_signature: 'Verified Athlete' },
+                  ],
+                  error: null,
+                }),
+              }),
+            }),
+          }
+        }
+        return {}
+      },
+    }
+    const rejectedUnsigned = await checkClientLegalConsentGate(unsignedAuditAdmin, 'placeholder-sig-user')
+    expect(rejectedUnsigned.verified).toBe(false)
+    expect(rejectedUnsigned.missingDocuments).toEqual(['athletic_liability_waiver'])
   })
 
   it('validates adult Date of Birth & 18+ age eligibility and blocks minor DOB even if age=25 is spoofed', () => {

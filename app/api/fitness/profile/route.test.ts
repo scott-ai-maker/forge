@@ -196,6 +196,7 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
         privacyPractices: true,
         coachingAgreement: true,
         emergencyCare: true,
+        virtualTelehealth: true,
         signatureName: 'John Doe',
         emergencyContactName: 'Jane Doe',
         emergencyContactPhone: '555-0199',
@@ -293,6 +294,20 @@ describe('Fitness Profile API Routes (/api/fitness/profile)', () => {
         })
       )
       expect(minorDraft.status).toBe(403)
+    })
+
+    it('rejects with 400 when virtualTelehealth consent is omitted instead of coercing from liabilityWaiver (#32)', async () => {
+      const { virtualTelehealth: _omitted, ...intakeWithoutVirtual } = validIntakeBody.intake
+      const req = new NextRequest('http://localhost/api/fitness/profile', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...validIntakeBody,
+          intake: intakeWithoutVirtual,
+        }),
+      })
+
+      const res = await POST(req)
+      expect(res.status).toBe(400)
     })
   })
 

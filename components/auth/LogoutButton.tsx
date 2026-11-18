@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { clearOfflineQueue } from '@/lib/offline-sync-queue'
+import { teardownNativeHealthSyncOnLogout } from '@/lib/native-healthkit-bridge'
 import { clearTelemetryQueue } from '@/src/lib/telemetry/telemetryClient'
 
 export default function LogoutButton() {
@@ -10,7 +11,10 @@ export default function LogoutButton() {
 
   async function handleLogout() {
     clearOfflineQueue()
-    await clearTelemetryQueue()
+    await Promise.allSettled([
+      clearTelemetryQueue(),
+      teardownNativeHealthSyncOnLogout(),
+    ])
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/auth/login')

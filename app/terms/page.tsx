@@ -45,7 +45,7 @@ export default function TermsOfServicePage() {
             Terms of Service &amp; Proprietary Rights
           </h1>
           <p style={{ color: '#94A3B8', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
-            Effective &amp; Last Updated: November 11, 2026 · Version {LEGAL_DOCUMENTS.terms_of_service.version} · Forge Athletic Performance LLC (MA ID #002010312)
+            Effective &amp; Last Updated: November 18, 2026 · Version {LEGAL_DOCUMENTS.terms_of_service.version} · Forge Athletic Performance LLC (MA ID #002010312)
           </p>
         </div>
 
@@ -253,11 +253,24 @@ export default function TermsOfServicePage() {
 
         <section style={{ marginBottom: '2.5rem' }}>
           <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.4rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
-            6. Assumption of Risk, Ordinary Negligence Release &amp; Limitation of Liability
+            6. Conspicuous Assumption of Risk, Ordinary Negligence Release &amp; Limitation of Liability
           </h2>
-          <p style={{ fontSize: '0.95rem' }}>
-            <strong>Voluntary Assumption of Risk &amp; Ordinary Negligence Release:</strong> You acknowledge that resistance training, plyometrics, cardiovascular conditioning, and movement assessments carry inherent risks of musculoskeletal injury, rhabdomyolysis, cardiovascular events, or property damage. To the fullest extent permitted by Massachusetts law (excluding gross negligence, reckless or intentional misconduct, or unwaivable statutory rights), you voluntarily assume all inherent risks and release, waive, and discharge Forge Athletic Performance LLC, its managers, coaches, employees, and agents from claims or liabilities arising out of ordinary negligence in connection with your training participation.
-          </p>
+          <div
+            style={{
+              border: '2px solid rgba(245, 158, 11, 0.55)',
+              background: 'rgba(15, 23, 42, 0.88)',
+              padding: '1.25rem 1.4rem',
+              borderRadius: 8,
+              marginBottom: '1rem',
+            }}
+          >
+            <p style={{ margin: '0 0 0.7rem', fontSize: '0.95rem', fontWeight: 700, color: '#FDE68A', lineHeight: 1.65 }}>
+              IMPORTANT LEGAL NOTICE — PLEASE READ CAREFULLY: THIS SECTION RELEASES FORGE ATHLETIC PERFORMANCE LLC FROM LIABILITY FOR ORDINARY NEGLIGENCE TO THE MAXIMUM EXTENT PERMITTED BY LAW.
+            </p>
+            <p style={{ margin: 0, fontSize: '0.95rem', color: '#F8FAFC', lineHeight: 1.7 }}>
+              <strong>Voluntary Assumption of Risk &amp; Ordinary Negligence Release:</strong> You expressly understand and acknowledge that strength training, plyometrics, cardiovascular conditioning, movement screenings, <strong>unsupervised solo workouts, home-gym or hotel-room equipment failure or collapse, floor or trip hazards, computer-vision / MediaPipe pose-estimation inaccuracy, WebRTC audio/video latency or disconnection, AI-assisted programming recommendations, and remote 911 Public Safety Answering Point (PSAP) routing limitations</strong> carry inherent and significant risks—up to and including musculoskeletal sprains or tears, fractures, rhabdomyolysis, heat illness, stroke, acute cardiovascular events, <strong>permanent disability, paralysis, and wrongful death</strong>. To the fullest extent permitted by the laws of the Commonwealth of Massachusetts and applicable state law (expressly excluding gross negligence, reckless or intentional misconduct, or statutory rights that cannot be waived as a matter of public policy, including New York General Obligations Law § 5-326 where applicable), <strong>you—on behalf of yourself, your estate, heirs, executors, administrators, personal representatives, and next of kin</strong> (subject to applicable Massachusetts statutory wrongful-death beneficiaries&apos; rights under M.G.L. c. 229, § 2)—voluntarily assume all such risks and forever release, waive, discharge, and covenant not to sue Forge Athletic Performance LLC, its managers, coaches, employees, and agents from any and all claims, demands, or liabilities arising out of <strong>ordinary negligence</strong> in connection with your use of the platform or participation in training.
+            </p>
+          </div>
           <p style={{ fontSize: '0.95rem' }}>
             <strong>Aggregate Liability Cap:</strong> To the maximum extent permitted by applicable law, Forge Athletic Performance LLC shall not be liable for indirect, incidental, special, consequential, or punitive damages, and our total cumulative liability for any claim arising out of or relating to the platform shall not exceed the greater of (a) the total fees paid by you to Forge Athletic in the twelve (12) months preceding the event giving rise to the claim or (b) one hundred U.S. dollars ($100.00).
           </p>
@@ -268,22 +281,28 @@ export default function TermsOfServicePage() {
 
         <section style={{ marginBottom: '2.5rem' }}>
           <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.4rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
-            7. Governing Law, Pre-Dispute Cure, Individual Arbitration &amp; Batching Protocol
+            7. Governing Law, Pre-Dispute Cure, Individual Arbitration, Exclusive Forum &amp; Jury Waiver
           </h2>
           <p style={{ fontSize: '0.95rem' }}>
-            These Terms are governed by the laws of the Commonwealth of Massachusetts (and the Federal Arbitration Act, 9 U.S.C. § 1 et seq., as to arbitration), without regard to conflict-of-law rules.
+            These Terms are governed by the laws of the Commonwealth of Massachusetts (and the Federal Arbitration Act, 9 U.S.C. § 1 et seq., as to arbitration), without regard to conflict-of-law rules, subject to any non-waivable consumer protection statutes of your state of residence.
           </p>
           <p style={{ fontSize: '0.95rem' }}>
             <strong>Mandatory 60-Day Informal Pre-Arbitration Notice &amp; Cure:</strong> Before initiating arbitration or small-claims litigation, the claiming party must send an individualized written Notice of Dispute personally signed by the claimant (including full name, account email, factual description of the claim, and specific relief sought) to <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a>. The parties shall engage in good-faith informal resolution (including an individualized teleconference if requested) for sixty (60) days before any arbitration demand may be filed; applicable statutes of limitation are tolled during this 60-day period.
           </p>
           <p style={{ fontSize: '0.95rem' }}>
-            <strong>Binding Individual Arbitration &amp; Staged Mass-Arbitration Protocol:</strong> Unresolved disputes (except small-claims court actions or emergency intellectual-property injunctive relief) shall be resolved exclusively by confidential, binding individual arbitration administered by the <strong>American Arbitration Association (AAA)</strong> under its Consumer Arbitration Rules (and, where 25 or more coordinated or substantially similar demands are asserted by or with the assistance of the same counsel, under AAA&apos;s Mass Arbitration Supplementary Rules and a staged bellwether process of up to 15 bilateral test cases per stage before additional filing fees are assessed), conducted in Massachusetts or via video teleconference.
+            <strong>Binding Individual Arbitration &amp; Staged Mass-Arbitration Protocol:</strong> Unresolved disputes (except individual small-claims court actions or emergency intellectual-property injunctive relief) shall be resolved exclusively by confidential, binding individual arbitration administered by the <strong>American Arbitration Association (AAA)</strong> under its Consumer Arbitration Rules (and, where 25 or more coordinated or substantially similar demands are asserted by or with the assistance of the same counsel, under AAA&apos;s Mass Arbitration Supplementary Rules and a staged bellwether process of up to 15 bilateral test cases per stage before additional filing fees are assessed), conducted in Massachusetts or via video teleconference.
           </p>
           <p style={{ fontSize: '0.95rem' }}>
             <strong>Class &amp; Representative Action Waiver:</strong> ALL CLAIMS MUST BE BROUGHT SOLELY IN AN INDIVIDUAL CAPACITY AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS, COLLECTIVE, CONSOLIDATED, OR REPRESENTATIVE PROCEEDING.
           </p>
           <p style={{ fontSize: '0.95rem' }}>
             <strong>30-Day Arbitration Opt-Out Right:</strong> You may opt out of arbitration within thirty (30) days of initial account creation by emailing <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>scott@forge-athletic.app</a> with your full legal name, account email, and an unambiguous statement opting out of arbitration.
+          </p>
+          <p style={{ fontSize: '0.95rem' }}>
+            <strong>Exclusive Judicial Forum &amp; Venue (Non-Arbitrable or Opted-Out Claims):</strong> For any dispute not subject to arbitration (including where you timely exercise your 30-day opt-out right or where a court seeks provisional equitable relief, excluding qualifying local small-claims actions), you and Forge Athletic Performance LLC irrevocably submit to the exclusive personal jurisdiction and venue of the state and federal courts sitting in <strong>Suffolk County or Middlesex County, Commonwealth of Massachusetts</strong>.
+          </p>
+          <p style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FDE68A' }}>
+            MUTUAL JURY TRIAL WAIVER: TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, YOU AND FORGE ATHLETIC PERFORMANCE LLC KNOWINGLY, VOLUNTARILY, AND IRREVOCABLY WAIVE ANY CONSTITUTIONAL OR STATUTORY RIGHT TO A TRIAL BY JURY IN ANY COURT ACTION OR PROCEEDING ARISING OUT OF OR RELATING TO THESE TERMS OR THE PLATFORM.
           </p>
         </section>
 
@@ -304,9 +323,30 @@ export default function TermsOfServicePage() {
           </p>
         </section>
 
+        <section style={{ marginBottom: '2.5rem' }}>
+          <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.4rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
+            9. General Contractual Provisions (Severability, Survival, Force Majeure, Modifications &amp; Entire Agreement)
+          </h2>
+          <p style={{ fontSize: '0.95rem' }}>
+            <strong>Severability &amp; Reformation:</strong> If any provision or portion of these Terms (including any sub-clause of Section 6 or Section 7) is held invalid, void, or unenforceable under applicable state or federal law, that provision shall be enforced to the maximum extent permissible and the remaining provisions of these Terms shall remain in full force and effect.
+          </p>
+          <p style={{ fontSize: '0.95rem' }}>
+            <strong>Survival:</strong> Sections 2 (Intellectual Property), 3 (Medical &amp; Coaching Scope), 6 (Assumption of Risk, Ordinary Negligence Release &amp; Liability Cap), 7 (Governing Law, Arbitration, Exclusive Forum &amp; Jury Waiver), 8 (Trademarks), 9 (General Provisions), and 10 (Legal Notices) survive cancellation, expiration, or termination of your account.
+          </p>
+          <p style={{ fontSize: '0.95rem' }}>
+            <strong>Force Majeure:</strong> Forge Athletic Performance LLC shall not be liable for any delay or failure to perform resulting from causes outside its reasonable control, including internet, cloud, ISP, or telecommunications outages, acts of God, natural disasters, public health emergencies, labor disputes, or governmental actions.
+          </p>
+          <p style={{ fontSize: '0.95rem' }}>
+            <strong>Material Modifications &amp; 30-Day Advance Notice:</strong> We may update these Terms prospectively to reflect legal, safety, or platform changes. For any material change—including any modification to fees, cancellation rights, liability terms, or dispute-resolution procedures—we will provide at least <strong>thirty (30) days&apos; prior written notice</strong> via email and/or in-app notification before the updated Terms take effect, and changes to Section 7 shall not apply retroactively to any dispute of which a party had actual written notice prior to the effective date.
+          </p>
+          <p style={{ fontSize: '0.95rem' }}>
+            <strong>Entire Agreement &amp; Non-Waiver:</strong> These Terms, together with our Privacy Policy, Consumer Health &amp; Biometric Data Policy, and any executed Athletic Liability Waiver / PAR-Q+ intake agreement, constitute the entire agreement between you and Forge Athletic Performance LLC regarding the platform and supersede prior understandings. Failure to enforce any right or provision shall not constitute a waiver of future enforcement. You may not assign your account or rights under these Terms without our prior written consent.
+          </p>
+        </section>
+
         <section style={{ borderTop: '1px solid rgba(197, 160, 89, 0.3)', paddingTop: '1.5rem' }}>
           <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.3rem', color: 'var(--gold-lt)', marginBottom: '0.5rem', letterSpacing: '0.04em' }}>
-            9. Legal, DMCA &amp; Intellectual Property Inquiries
+            10. Legal, DMCA &amp; Intellectual Property Inquiries
           </h2>
           <p style={{ fontSize: '0.92rem', margin: 0 }}>
             For legal notices, DMCA notifications, dispute notices, or licensing inquiries, contact:

@@ -503,7 +503,7 @@ describe('stripe checkout route', () => {
       expect(res.status).toBe(200)
       const createArgs = createSessionMock.mock.calls[0][0]
       expect(createArgs.automatic_tax).toEqual({ enabled: true })
-      expect(createArgs.metadata.legalTermsVersion).toBe('tos-2026.11.11')
+      expect(createArgs.metadata.legalTermsVersion).toBe('tos-2026.11.18')
     } finally {
       if (previousTaxEnv === undefined) {
         delete process.env.STRIPE_AUTOMATIC_TAX_ENABLED

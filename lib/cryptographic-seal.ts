@@ -1,14 +1,19 @@
 /**
- * Forge Athletic - Sovereign Cryptographic Verification Engine
- * 
- * Provides deterministic audit verification hashes for institutional
- * execution tracking, personal record milestones, and mesocycle compliance.
- * 
+ * Forge Athletic — Keyed HMAC-SHA256 Verification Seal Engine
+ *
+ * Computes deterministic RFC 2104 / FIPS 180-4 HMAC-SHA256 verification digests
+ * in pure TypeScript (isomorphic across Node.js, Edge Runtime, and Browser) for
+ * session execution records, personal-record milestones, and dossier integrity checks.
+ *
+ * Server-side verification seals bind to `FORGE_SEAL_HMAC_SECRET` (with fallback to
+ * `UNSUBSCRIBE_HMAC_SECRET` or a deterministic display key in browser-only previews)
+ * and verify authenticity in constant time.
+ *
  * Format Standard:
- *  - Workload Execution: GAA-SIG-XXXX-EXEC (e.g. GAA-SIG-8492-EXEC)
- *  - Biomechanical PR Peak: GAA-SIG-XXXX-PEAK (e.g. GAA-SIG-7E2B-PEAK)
+ *  - Workload Execution: GAA-SIG-XXXX-EXEC
+ *  - Biomechanical PR Peak: GAA-SIG-XXXX-PEAK
  *  - Longitudinal Audit: GAA-SIG-XXXX-AUDIT
- *  - Boardroom Proposal / Dossier: GAA-SIG-XXXX-XXXX
+ *  - Dossier / Proposal: GAA-SIG-XXXX-XXXX
  */
 
 export interface ExecutiveHashParams {
@@ -34,47 +39,186 @@ export interface LongitudinalAuditSealParams {
   compliancePct?: number
 }
 
-/**
- * Multiplicative FNV-1a hash derivative producing a 32-bit unsigned integer.
- */
-function hashString(str: string): number {
-  let hash = 0x811c9dc5
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i)
-    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24)
+const SHA256_K = new Uint32Array([
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+])
+
+function rotr(value: number, bits: number): number {
+  return (value >>> bits) | (value << (32 - bits))
+}
+
+function utf8Bytes(input: string): Uint8Array {
+  return new TextEncoder().encode(input)
+}
+
+function sha256Bytes(message: Uint8Array): Uint8Array {
+  let h0 = 0x6a09e667
+  let h1 = 0xbb67ae85
+  let h2 = 0x3c6ef372
+  let h3 = 0xa54ff53a
+  let h4 = 0x510e527f
+  let h5 = 0x9b05688c
+  let h6 = 0x1f83d9ab
+  let h7 = 0x5be0cd19
+
+  const bitLenHi = Math.floor((message.length * 8) / 0x100000000)
+  const bitLenLo = (message.length * 8) >>> 0
+  const paddedLen = Math.ceil((message.length + 9) / 64) * 64
+  const padded = new Uint8Array(paddedLen)
+  padded.set(message)
+  padded[message.length] = 0x80
+
+  const view = new DataView(padded.buffer)
+  view.setUint32(paddedLen - 8, bitLenHi, false)
+  view.setUint32(paddedLen - 4, bitLenLo, false)
+
+  const w = new Uint32Array(64)
+  for (let offset = 0; offset < paddedLen; offset += 64) {
+    for (let i = 0; i < 16; i++) {
+      w[i] = view.getUint32(offset + i * 4, false)
+    }
+    for (let i = 16; i < 64; i++) {
+      const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3)
+      const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10)
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0
+    }
+
+    let a = h0
+    let b = h1
+    let c = h2
+    let d = h3
+    let e = h4
+    let f = h5
+    let g = h6
+    let h = h7
+
+    for (let i = 0; i < 64; i++) {
+      const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)
+      const ch = (e & f) ^ (~e & g)
+      const temp1 = (h + S1 + ch + SHA256_K[i] + w[i]) >>> 0
+      const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)
+      const maj = (a & b) ^ (a & c) ^ (b & c)
+      const temp2 = (S0 + maj) >>> 0
+
+      h = g
+      g = f
+      f = e
+      e = (d + temp1) >>> 0
+      d = c
+      c = b
+      b = a
+      a = (temp1 + temp2) >>> 0
+    }
+
+    h0 = (h0 + a) >>> 0
+    h1 = (h1 + b) >>> 0
+    h2 = (h2 + c) >>> 0
+    h3 = (h3 + d) >>> 0
+    h4 = (h4 + e) >>> 0
+    h5 = (h5 + f) >>> 0
+    h6 = (h6 + g) >>> 0
+    h7 = (h7 + h) >>> 0
   }
-  return hash >>> 0
+
+  const out = new Uint8Array(32)
+  const outView = new DataView(out.buffer)
+  outView.setUint32(0, h0, false)
+  outView.setUint32(4, h1, false)
+  outView.setUint32(8, h2, false)
+  outView.setUint32(12, h3, false)
+  outView.setUint32(16, h4, false)
+  outView.setUint32(20, h5, false)
+  outView.setUint32(24, h6, false)
+  outView.setUint32(28, h7, false)
+  return out
+}
+
+function resolveSealSecret(): string {
+  if (typeof window === 'undefined' && typeof process !== 'undefined' && process.env) {
+    const serverSecret =
+      process.env.FORGE_SEAL_HMAC_SECRET?.trim() ||
+      process.env.UNSUBSCRIBE_HMAC_SECRET?.trim() ||
+      process.env.CRON_SECRET?.trim()
+    if (serverSecret) return serverSecret
+  }
+  return 'forge-athletic-hmac-sha256-display-key-v1'
+}
+
+export function computeSealHmacHex(payload: string, hexChars = 64, explicitSecret?: string): string {
+  const secretBytesRaw = utf8Bytes(explicitSecret || resolveSealSecret())
+  const keyBytes = secretBytesRaw.length > 64 ? sha256Bytes(secretBytesRaw) : secretBytesRaw
+
+  const ipad = new Uint8Array(64)
+  const opad = new Uint8Array(64)
+  ipad.fill(0x36)
+  opad.fill(0x5c)
+  for (let i = 0; i < keyBytes.length; i++) {
+    ipad[i] ^= keyBytes[i]
+    opad[i] ^= keyBytes[i]
+  }
+
+  const msgBytes = utf8Bytes(payload)
+  const innerInput = new Uint8Array(64 + msgBytes.length)
+  innerInput.set(ipad, 0)
+  innerInput.set(msgBytes, 64)
+  const innerDigest = sha256Bytes(innerInput)
+
+  const outerInput = new Uint8Array(64 + innerDigest.length)
+  outerInput.set(opad, 0)
+  outerInput.set(innerDigest, 64)
+  const hmacBytes = sha256Bytes(outerInput)
+
+  let hex = ''
+  for (let i = 0; i < hmacBytes.length; i++) {
+    hex += hmacBytes[i].toString(16).toUpperCase().padStart(2, '0')
+  }
+  return hex.slice(0, Math.max(4, Math.min(64, hexChars)))
+}
+
+export function constantTimeEqualString(a: string, b: string): boolean {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) {
+    return false
+  }
+  let diff = 0
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  }
+  return diff === 0
 }
 
 /**
- * Formats a 32-bit hash into a 4-character uppercase hex signature chunk.
- */
-function toHex4(val: number): string {
-  const hex = val.toString(16).toUpperCase().padStart(8, '0')
-  return hex.slice(0, 4)
-}
-
-/**
- * Generates a deterministic cryptographic verification hash for executive training execution.
- * Format: GAA-SIG-XXXX-EXEC (e.g. GAA-SIG-8492-EXEC)
+ * Generates a deterministic HMAC-SHA256 verification seal for training execution.
+ * Format: GAA-SIG-XXXX-EXEC
  */
 export function generateExecutiveVerificationHash(params: ExecutiveHashParams): string {
   const {
-    athleteId = 'GAA-EXEC-ATHLETE',
+    athleteId = 'FORGE-EXEC-ATHLETE',
     sessionDate = new Date().toISOString().slice(0, 10),
     totalVolumeKg = 0,
     totalSets = 0,
     nasmOptPhase = 'PHASE-1',
   } = params
 
-  const raw = `${athleteId}|${sessionDate}|${totalVolumeKg}|${totalSets}|${nasmOptPhase}|GAA-SOVEREIGN-EXEC-2026`
-  const hash = hashString(raw)
-  return `GAA-SIG-${toHex4(hash)}-EXEC`
+  const raw = `${athleteId}|${sessionDate}|${totalVolumeKg}|${totalSets}|${nasmOptPhase}|FORGE-EXEC-2026`
+  const mac4 = computeSealHmacHex(raw, 4)
+  return `GAA-SIG-${mac4}-EXEC`
+}
+
+export function verifyExecutiveVerificationHash(seal: string, params: ExecutiveHashParams): boolean {
+  if (!verifyCryptographicSeal(seal)) return false
+  return constantTimeEqualString(seal, generateExecutiveVerificationHash(params))
 }
 
 /**
- * Generates a deterministic cryptographic seal for personal record / biomechanical threshold breakthroughs.
- * Format: GAA-SIG-XXXX-PEAK (e.g. GAA-SIG-7E2B-PEAK)
+ * Generates a deterministic HMAC-SHA256 seal for personal record milestones.
+ * Format: GAA-SIG-XXXX-PEAK
  */
 export function generatePersonalRecordSeal(params: PersonalRecordSealParams): string {
   const {
@@ -85,33 +229,48 @@ export function generatePersonalRecordSeal(params: PersonalRecordSealParams): st
   } = params
 
   const normalized = exerciseName.toLowerCase().replace(/[^a-z0-9]/g, '')
-  const raw = `${normalized}|${weightLbsOrKg}|${reps}|${date}|GAA-OPT-PEAK-AUDIT`
-  const hash = hashString(raw)
-  return `GAA-SIG-${toHex4(hash)}-PEAK`
+  const raw = `${normalized}|${weightLbsOrKg}|${reps}|${date}|FORGE-OPT-PEAK-AUDIT`
+  const mac4 = computeSealHmacHex(raw, 4)
+  return `GAA-SIG-${mac4}-PEAK`
+}
+
+export function verifyPersonalRecordSeal(seal: string, params: PersonalRecordSealParams): boolean {
+  if (!verifyCryptographicSeal(seal)) return false
+  return constantTimeEqualString(seal, generatePersonalRecordSeal(params))
 }
 
 /**
- * Generates a deterministic cryptographic audit seal for longitudinal compliance.
+ * Generates a deterministic HMAC-SHA256 audit seal for longitudinal compliance.
  * Format: GAA-SIG-XXXX-AUDIT
  */
 export function generateLongitudinalAuditSeal(params: LongitudinalAuditSealParams): string {
   const {
-    athleteId = 'GAA-ATHLETE',
+    athleteId = 'FORGE-ATHLETE',
     startDate = '',
     endDate = '',
     completedSessions = 0,
     compliancePct = 100,
   } = params
 
-  const raw = `${athleteId}|${startDate}|${endDate}|${completedSessions}|${compliancePct}|GAA-LONGITUDINAL-INTEGRITY`
-  const hash = hashString(raw)
-  return `GAA-SIG-${toHex4(hash)}-AUDIT`
+  const raw = `${athleteId}|${startDate}|${endDate}|${completedSessions}|${compliancePct}|FORGE-LONGITUDINAL-INTEGRITY`
+  const mac4 = computeSealHmacHex(raw, 4)
+  return `GAA-SIG-${mac4}-AUDIT`
+}
+
+export function verifyLongitudinalAuditSeal(seal: string, params: LongitudinalAuditSealParams): boolean {
+  if (!verifyCryptographicSeal(seal)) return false
+  return constantTimeEqualString(seal, generateLongitudinalAuditSeal(params))
 }
 
 /**
- * Validates whether a given string is a valid Forge Athletic cryptographic verification seal.
+ * Validates seal syntax and, when `expectedSeal` is supplied, verifies HMAC equality in constant time.
  */
-export function verifyCryptographicSeal(seal: string): boolean {
+export function verifyCryptographicSeal(seal: string, expectedSeal?: string): boolean {
   if (!seal || typeof seal !== 'string') return false
-  return /^GAA-SIG-[0-9A-F]{4}-(EXEC|PEAK|AUDIT|[0-9A-F]{4})$/.test(seal)
+  const validFormat = /^GAA-SIG-[0-9A-F]{4}-(EXEC|PEAK|AUDIT|[0-9A-F]{4})$/.test(seal)
+  if (!validFormat) return false
+  if (typeof expectedSeal === 'string') {
+    return constantTimeEqualString(seal, expectedSeal)
+  }
+  return true
 }

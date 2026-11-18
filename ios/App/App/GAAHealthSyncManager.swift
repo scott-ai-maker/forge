@@ -1,11 +1,12 @@
 import Foundation
 import HealthKit
+import Security
 import UIKit
 
 /**
  * GAAHealthSyncManager
  * Native HealthKit Background Delivery & Biometric Telemetry Coordinator
- * Gordon Athletic Advisory
+ * Forge Athletic
  */
 @objc public class GAAHealthSyncManager: NSObject {
     @objc public static let shared = GAAHealthSyncManager()
@@ -15,12 +16,22 @@ import UIKit
     private var isBackgroundDeliveryEnabled = false
     private var observerQueries: [HKObserverQuery] = []
     
-    // UserDefaults Keys
+    // UserDefaults Keys (non-secret configuration only; authToken lives exclusively in iOS Keychain)
     private let defaults = UserDefaults.standard
     private let kBackendUrlKey = "GAA_HealthKit_BackendUrl"
     private let kBackendBaseUrlKey = "GAA_HealthKit_BackendBaseUrl"
-    private let kAuthTokenKey = "GAA_HealthKit_AuthToken"
+    private let kLegacyAuthTokenKey = "GAA_HealthKit_AuthToken"
     private let kUserIdKey = "GAA_HealthKit_UserId"
+
+    // Keychain Identifiers
+    private let kKeychainService = "com.forgeathletic.healthkit.auth"
+    private let kKeychainAccount = "bearer_auth_token"
+
+    // Pinned HTTPS Backend Origins (never plaintext http:// or arbitrary third-party domains)
+    private static let allowedHosts: Set<String> = [
+        "forge-athletic.app",
+        "www.forge-athletic.app"
+    ]
     
     public static let defaultBaseUrl = "https://forge-athletic.app"
     public static let defaultEndpoint = "https://forge-athletic.app/api/wearables/sync"
@@ -36,46 +47,144 @@ import UIKit
     private override init() {
         super.init()
         let savedUrl = defaults.string(forKey: kBackendUrlKey)
-        self.backendUrl = savedUrl ?? GAAHealthSyncManager.defaultEndpoint
-        self.authToken = defaults.string(forKey: kAuthTokenKey)
+        self.backendUrl = sanitizeUrl(savedUrl ?? GAAHealthSyncManager.defaultEndpoint)
         self.currentUserId = defaults.string(forKey: kUserIdKey)
+
+        // Migrate and purge any legacy plaintext UserDefaults token into Keychain
+        if let legacyToken = defaults.string(forKey: kLegacyAuthTokenKey), !legacyToken.isEmpty {
+            saveTokenToKeychain(legacyToken)
+            defaults.removeObject(forKey: kLegacyAuthTokenKey)
+        } else {
+            defaults.removeObject(forKey: kLegacyAuthTokenKey)
+        }
+        self.authToken = readTokenFromKeychain()
     }
 
     private let syncLock = DispatchQueue(label: "com.gordonathletic.healthkit.syncLock")
 
+    // MARK: - Keychain Secure Token Storage (OWASP MASVS-STORAGE)
+
+    private func saveTokenToKeychain(_ token: String) {
+        deleteTokenFromKeychain()
+        guard let data = token.data(using: .utf8) else { return }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: kKeychainService,
+            kSecAttrAccount as String: kKeychainAccount,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+        SecItemAdd(query as CFDictionary, nil)
+    }
+
+    private func readTokenFromKeychain() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: kKeychainService,
+            kSecAttrAccount as String: kKeychainAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        guard status == errSecSuccess, let data = item as? Data else {
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
+    }
+
+    private func deleteTokenFromKeychain() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: kKeychainService,
+            kSecAttrAccount as String: kKeychainAccount
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
+    private func isAllowedHost(_ host: String) -> Bool {
+        let lower = host.lowercased()
+        return GAAHealthSyncManager.allowedHosts.contains(lower)
+    }
+
     public func sanitizeUrl(_ input: String) -> String {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.hasPrefix("/") {
-            let base = defaults.string(forKey: kBackendBaseUrlKey) ?? GAAHealthSyncManager.defaultBaseUrl
-            return "\(base)\(trimmed)"
+            let savedBase = defaults.string(forKey: kBackendBaseUrlKey) ?? GAAHealthSyncManager.defaultBaseUrl
+            if let baseUrl = URL(string: savedBase),
+               baseUrl.scheme?.lowercased() == "https",
+               let baseHost = baseUrl.host,
+               isAllowedHost(baseHost) {
+                return "https://\(baseHost.lowercased())\(trimmed)"
+            }
+            return "\(GAAHealthSyncManager.defaultBaseUrl)\(trimmed)"
         }
         if let url = URL(string: trimmed),
-           let scheme = url.scheme?.lowercased(),
+           url.scheme?.lowercased() == "https",
            let host = url.host?.lowercased(),
-           (scheme == "http" || scheme == "https"),
-           !host.isEmpty,
-           !host.contains("localhost"),
-           scheme != "capacitor",
-           scheme != "ionic" {
-            defaults.set("\(scheme)://\(host)", forKey: kBackendBaseUrlKey)
+           isAllowedHost(host) {
+            defaults.set("https://\(host)", forKey: kBackendBaseUrlKey)
             return trimmed
         }
         return GAAHealthSyncManager.defaultEndpoint
     }
 
     public func updateConfiguration(endpoint: String?, token: String?, userId: String?) {
-        if let token = token, !token.isEmpty {
-            self.authToken = token
-            defaults.set(token, forKey: kAuthTokenKey)
+        if let token = token {
+            let cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+            if cleanToken.isEmpty {
+                self.authToken = nil
+                deleteTokenFromKeychain()
+            } else {
+                self.authToken = cleanToken
+                saveTokenToKeychain(cleanToken)
+            }
+            defaults.removeObject(forKey: kLegacyAuthTokenKey)
         }
-        if let userId = userId, !userId.isEmpty {
-            self.currentUserId = userId
-            defaults.set(userId, forKey: kUserIdKey)
+        if let userId = userId {
+            let cleanUid = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+            if cleanUid.isEmpty {
+                self.currentUserId = nil
+                defaults.removeObject(forKey: kUserIdKey)
+            } else {
+                self.currentUserId = cleanUid
+                defaults.set(cleanUid, forKey: kUserIdKey)
+            }
         }
         if let endpoint = endpoint, !endpoint.isEmpty {
             let sanitized = sanitizeUrl(endpoint)
             self.backendUrl = sanitized
             defaults.set(sanitized, forKey: kBackendUrlKey)
+        }
+    }
+
+    /**
+     * Purges Keychain credentials, stops active HKObserverQuery instances, and disables
+     * HealthKit background delivery immediately upon user sign-out.
+     */
+    public func clearSessionAndStopBackgroundSync(completion: ((Bool) -> Void)? = nil) {
+        self.authToken = nil
+        self.currentUserId = nil
+        deleteTokenFromKeychain()
+        defaults.removeObject(forKey: kLegacyAuthTokenKey)
+        defaults.removeObject(forKey: kUserIdKey)
+
+        for query in observerQueries {
+            healthStore.stop(query)
+        }
+        observerQueries.removeAll()
+        isObserversRegistered = false
+        isBackgroundDeliveryEnabled = false
+
+        guard isHealthDataAvailable() else {
+            completion?(true)
+            return
+        }
+
+        healthStore.disableAllBackgroundDelivery { success, _ in
+            DispatchQueue.main.async {
+                completion?(success)
+            }
         }
     }
 
@@ -973,27 +1082,32 @@ import UIKit
     
     public func syncTelemetryToBackend(telemetry: [String: Any], completion: @escaping (Bool) -> Void) {
         let targetUrl = sanitizeUrl(backendUrl)
-        guard let url = URL(string: targetUrl), let scheme = url.scheme, !scheme.isEmpty, let host = url.host, !host.isEmpty else {
-            print("[GAA HealthKit] Invalid backend URL: \(targetUrl)")
+        guard let url = URL(string: targetUrl),
+              url.scheme?.lowercased() == "https",
+              let host = url.host,
+              isAllowedHost(host) else {
+            print("[Forge HealthKit] Blocked non-HTTPS or untrusted backend URL: \(targetUrl)")
+            completion(false)
+            return
+        }
+
+        let effectiveUserId = currentUserId ?? defaults.string(forKey: kUserIdKey)
+        let effectiveToken = authToken ?? readTokenFromKeychain()
+        guard let uid = effectiveUserId, !uid.isEmpty,
+              let token = effectiveToken, !token.isEmpty else {
+            print("[Forge HealthKit] Skipping background sync — no authenticated session active.")
             completion(false)
             return
         }
 
         var payload = telemetry
-        let effectiveUserId = currentUserId ?? defaults.string(forKey: kUserIdKey)
-        if let uid = effectiveUserId, !uid.isEmpty {
-            if payload["client_id"] == nil { payload["client_id"] = uid }
-            if payload["user_id"] == nil { payload["user_id"] = uid }
-        }
+        if payload["client_id"] == nil { payload["client_id"] = uid }
+        if payload["user_id"] == nil { payload["user_id"] = uid }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let effectiveToken = authToken ?? defaults.string(forKey: kAuthTokenKey)
-        if let token = effectiveToken, !token.isEmpty {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])

@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Require explicit affirmative `true` on every consent flag (#32 — never default omitted flags to true)
   const explicitConsentFields = [
     body.consentLiabilityWaiver,
     body.consentInformedConsent,
@@ -78,11 +79,11 @@ export async function POST(req: NextRequest) {
     body.consentCoachingAgreement,
     body.consentEmergencyCare,
   ]
-  if (explicitConsentFields.some(flag => flag === false)) {
+  if (explicitConsentFields.some(flag => flag !== true)) {
     return NextResponse.json(
       {
         error:
-          'All informed consent, assumption of risk, and liability release acknowledgments must be affirmatively accepted.',
+          'All informed consent, assumption of risk, privacy, coaching, and emergency care acknowledgments must be explicitly accepted.',
       },
       { status: 400 }
     )
@@ -164,11 +165,11 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const resolvedLiabilityWaiver = body.consentLiabilityWaiver !== false
-  const resolvedInformedConsent = body.consentInformedConsent !== false
-  const resolvedPrivacyPractices = body.consentPrivacyPractices !== false
-  const resolvedCoachingAgreement = body.consentCoachingAgreement !== false
-  const resolvedEmergencyCare = body.consentEmergencyCare !== false
+  const resolvedLiabilityWaiver = body.consentLiabilityWaiver === true
+  const resolvedInformedConsent = body.consentInformedConsent === true
+  const resolvedPrivacyPractices = body.consentPrivacyPractices === true
+  const resolvedCoachingAgreement = body.consentCoachingAgreement === true
+  const resolvedEmergencyCare = body.consentEmergencyCare === true
 
   // 2. Upsert client_intake_forms
   const intakePayload = {
@@ -199,7 +200,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: intakeError.message }, { status: 500 })
   }
 
-  await recordLegalConsentAudit({
+  const auditRes = await recordLegalConsentAudit({
     adminClient: admin,
     userId,
     documentTypes: ['athletic_liability_waiver'],
@@ -214,6 +215,13 @@ export async function POST(req: NextRequest) {
       flaggedQuestionsCount: evaluation.flaggedQuestionsCount,
     },
   })
+
+  if (auditRes.error) {
+    return NextResponse.json(
+      { error: 'Unable to record evidentiary legal consent audit log right now. Please retry.' },
+      { status: 500 }
+    )
+  }
 
   // 3. Update fitness_profiles with formatted injuries/limitations
   const limitationParts: string[] = []

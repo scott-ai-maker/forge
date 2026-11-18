@@ -334,17 +334,35 @@ export async function POST(req: NextRequest) {
     sanitizedTelemetry.safetyFlagActive ? '[SAFETY PRIORITY] ' : ''
   }[${slaHeaderLabel}] ${memberName} — Forge Athletic Coaching Question`
 
-  const plainBody = `${cleanQuestion}\n\n--- Attached Forge Athletic Diagnostic Context ---\n${telemetryBlock}`
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://forge-athletic.app').replace(/\/+$/, '')
+  const securePortalUrl = `${baseUrl}/coach/messages`
+  const phaseLabel = `Phase 0${sanitizedTelemetry.optPhase || 1}${
+    sanitizedTelemetry.expressModeActive ? ' (20m Express ON)' : ''
+  }`
 
+  // Minimum-necessary notification body for external unencrypted SMTP / SMS channels (#29).
+  // Full question text, orthopedic flags, joint comfort, and readiness scores are stored ONLY in
+  // encrypted RLS-protected `coach_client_messages` and `client_telemetry_events`.
+  const redactedExternalEmailBody = [
+    `New secure coaching escalation from ${memberName}.`,
+    `SLA Window: ${slaHeaderLabel}`,
+    `Training Context: ${phaseLabel} · ${sourceContext.replace(/_/g, ' ')}`,
+    sanitizedTelemetry.safetyFlagActive
+      ? 'Priority Flag: Active safety escalation queued — immediate portal review requested.'
+      : 'Message & diagnostic context saved to encrypted Coach Thread.',
+    '',
+    'To protect member health privacy, symptom notes and biometric readiness scores are withheld from plaintext email.',
+    `Sign in to review and reply: ${securePortalUrl}`,
+  ].join('\n')
+
+  const mailtoFallbackBody = `Hi Coach Gordon,\n\nPlease check my latest secure note in the Forge Athletic portal (${phaseLabel}).`
   const mailtoHref = `mailto:${encodeURIComponent(coachEmail)}?subject=${encodeURIComponent(
     subjectLine
-  )}&body=${encodeURIComponent(plainBody)}`
+  )}&body=${encodeURIComponent(mailtoFallbackBody)}`
 
-  const smsCompactBody = `[Forge 24h Priority · ${memberName}] ${cleanQuestion.slice(0, 220)} | Phase 0${
-    sanitizedTelemetry.optPhase || 1
-  } · Comfort ${sanitizedTelemetry.jointComfortScore ?? '—'}/100 · Readiness ${
-    sanitizedTelemetry.readinessIndex ?? '—'
-  }/100`
+  const smsCompactBody = `[Forge ${slaHeaderLabel} · ${memberName}] ${
+    sanitizedTelemetry.safetyFlagActive ? 'Priority safety alert' : 'New coaching message'
+  } (${phaseLabel}) — sign in to Forge Coach Portal: ${securePortalUrl}`
   const smsHref = coachSmsPhone
     ? `sms:${encodeURIComponent(coachSmsPhone)}?&body=${encodeURIComponent(smsCompactBody)}`
     : `sms:?&body=${encodeURIComponent(smsCompactBody)}`
@@ -451,7 +469,7 @@ export async function POST(req: NextRequest) {
         to: [coachEmail],
         ...(memberEmail ? { replyTo: memberEmail } : {}),
         subject: subjectLine,
-        text: plainBody,
+        text: redactedExternalEmailBody,
       })
       emailDispatched = !sendResult?.error
       if (sendResult?.error) {

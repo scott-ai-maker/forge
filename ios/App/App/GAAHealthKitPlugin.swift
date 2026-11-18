@@ -18,6 +18,7 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "queryLatestBiometrics", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "syncHealthData", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setSyncConfiguration", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "clearSyncSession", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "writeWorkout", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "writeMindfulSession", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getCurrentHeartRate", returnType: CAPPluginReturnPromise),
@@ -201,6 +202,12 @@ public class GAAHealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
 
         GAAHealthSyncManager.shared.updateConfiguration(endpoint: endpoint, token: token, userId: userId)
         call.resolve(["success": true])
+    }
+
+    @objc public func clearSyncSession(_ call: CAPPluginCall) {
+        GAAHealthSyncManager.shared.clearSessionAndStopBackgroundSync { success in
+            call.resolve(["success": success])
+        }
     }
 
     @objc public func writeWorkout(_ call: CAPPluginCall) {

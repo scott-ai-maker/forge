@@ -151,20 +151,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Please answer all PAR-Q questions.' }, { status: 400 })
   }
 
+  // Require explicit affirmative boolean consent on every legal agreement (#32 — never coerce virtualTelehealth from liabilityWaiver)
   const consents = {
-    liabilityWaiver: Boolean(intake.liabilityWaiver),
-    informedConsent: Boolean(intake.informedConsent),
-    privacyPractices: Boolean(intake.privacyPractices),
-    coachingAgreement: Boolean(intake.coachingAgreement),
-    emergencyCare: Boolean(intake.emergencyCare),
-    virtualTelehealth:
-      intake.virtualTelehealth === undefined
-        ? Boolean(intake.liabilityWaiver)
-        : Boolean(intake.virtualTelehealth),
+    liabilityWaiver: intake.liabilityWaiver === true,
+    informedConsent: intake.informedConsent === true,
+    privacyPractices: intake.privacyPractices === true,
+    coachingAgreement: intake.coachingAgreement === true,
+    emergencyCare: intake.emergencyCare === true,
+    virtualTelehealth: intake.virtualTelehealth === true,
   }
 
   if (!isDraft && !Object.values(consents).every(Boolean)) {
-    return NextResponse.json({ error: 'All legal consents are required.' }, { status: 400 })
+    return NextResponse.json({ error: 'All legal consents (including remote virtual coaching consent) are required.' }, { status: 400 })
   }
 
   const signatureName = String(intake.signatureName ?? '').trim()
@@ -187,7 +185,7 @@ export async function POST(req: NextRequest) {
     workoutState: String(intake.workoutState ?? rawErap.workoutState ?? '').trim(),
     workoutPostalCode: String(intake.workoutPostalCode ?? rawErap.workoutPostalCode ?? '').trim(),
     localEmergencyDispatchPhone: String(intake.localEmergencyDispatchPhone ?? rawErap.localEmergencyDispatchPhone ?? '').trim(),
-    virtualTelehealthConsent: Boolean(intake.virtualTelehealth ?? consents.liabilityWaiver),
+    virtualTelehealthConsent: consents.virtualTelehealth,
   }
 
   const parqAnswers = {
@@ -292,7 +290,7 @@ export async function POST(req: NextRequest) {
     if (intakeError && !isDraft) return NextResponse.json({ error: intakeError.message }, { status: 500 })
 
     if (!isDraft) {
-      await recordLegalConsentAudit({
+      const auditRes = await recordLegalConsentAudit({
         adminClient: supabaseAdmin(),
         userId,
         documentTypes: [
@@ -308,9 +306,15 @@ export async function POST(req: NextRequest) {
         metadata: {
           flow: 'onboarding_profile_submission',
           parqAnyYes,
-          virtualTelehealthConsent: Boolean(consents.virtualTelehealth),
+          virtualTelehealthConsent: consents.virtualTelehealth,
         },
       })
+      if (auditRes.error) {
+        return NextResponse.json(
+          { error: 'Unable to record evidentiary legal consent audit log right now. Please retry.' },
+          { status: 500 }
+        )
+      }
     }
   }
 

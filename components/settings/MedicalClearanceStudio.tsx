@@ -34,12 +34,6 @@ export default function MedicalClearanceStudio({
 }: MedicalClearanceStudioProps) {
   const [answers, setAnswers] = useState<ParqAnswers>(() => {
     if (initialAnswers) return initialAnswers
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('gaa_parq_answers')
-        if (stored) return JSON.parse(stored)
-      } catch {}
-    }
     const cleanInitialName =
       clientName && !['vip athlete', 'verified athlete', 'athlete'].includes(clientName.trim().toLowerCase())
         ? clientName.trim()
@@ -116,7 +110,7 @@ export default function MedicalClearanceStudio({
     setIsModalOpen(false)
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('gaa_parq_answers', JSON.stringify(newAnswers))
+        localStorage.removeItem('gaa_parq_answers')
       } catch {}
     }
 

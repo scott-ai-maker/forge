@@ -43,7 +43,11 @@ export default function CoachLiveSessionLauncher({ assignedClients }: CoachLiveS
     const channels: RealtimeChannel[] = []
 
     assignedClients.forEach(client => {
-      const channel = supabase.channel(`webrtc:live-${client.id}`)
+      const channel = supabase.channel(`webrtc:live-${client.id}`, {
+        config: {
+          private: true,
+        },
+      })
       channel
         .on('presence', { event: 'sync' }, () => {
           const presenceState = channel.presenceState()

@@ -842,6 +842,7 @@ export default function UnifiedLiveStudioHud({
     const sessionId = isTeamSession && teamId ? `team-${teamId}` : `live-${clientId}`
     const channel = supabase.channel(`webrtc:${sessionId}`, {
       config: {
+        private: true,
         presence: { key: senderId },
       },
     })

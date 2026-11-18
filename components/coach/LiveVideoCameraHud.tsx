@@ -558,6 +558,7 @@ export default function LiveVideoCameraHud({
     const supabase = createClient()
     const channel = supabase.channel(`webrtc:${sessionId}`, {
       config: {
+        private: true,
         presence: { key: currentUserId },
       },
     })

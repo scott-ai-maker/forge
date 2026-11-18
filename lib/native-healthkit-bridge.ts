@@ -45,6 +45,7 @@ export interface GAAHealthKitPluginInterface {
     authToken?: string
     userId?: string
   }): Promise<{ success: boolean }>
+  clearSyncSession?(): Promise<{ success: boolean }>
   writeWorkout(workout: {
     activityType: string
     calories: number
@@ -459,24 +460,40 @@ export function normalizeNativeMobileTelemetry(raw: RawMobileHealthPayload): {
   }
 }
 
+const ALLOWED_SYNC_HOSTS = new Set(['forge-athletic.app', 'www.forge-athletic.app'])
+
 /**
- * Resolves a reliable absolute API endpoint for native background and manual syncing.
+ * Resolves a reliable HTTPS-pinned API endpoint for native background and manual syncing.
+ * Rejects plaintext `http://` and arbitrary external domains to prevent HealthKit/Bearer exfiltration.
  */
 export function resolveSyncEndpoint(endpoint?: string): string {
+  const defaultEndpoint = 'https://forge-athletic.app/api/wearables/sync'
   if (endpoint && (endpoint.startsWith('http://') || endpoint.startsWith('https://'))) {
-    return endpoint
+    try {
+      const parsed = new URL(endpoint)
+      if (parsed.protocol === 'https:' && ALLOWED_SYNC_HOSTS.has(parsed.hostname.toLowerCase())) {
+        return parsed.toString()
+      }
+    } catch {
+      return defaultEndpoint
+    }
+    return defaultEndpoint
   }
   const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : ''
-  const isInvalidOrigin =
-    !origin ||
-    origin.startsWith('capacitor://') ||
-    origin.startsWith('ionic://') ||
-    origin.startsWith('file://') ||
-    origin.includes('localhost')
+  let safeBase = 'https://forge-athletic.app'
+  if (origin) {
+    try {
+      const parsedOrigin = new URL(origin)
+      if (parsedOrigin.protocol === 'https:' && ALLOWED_SYNC_HOSTS.has(parsedOrigin.hostname.toLowerCase())) {
+        safeBase = `https://${parsedOrigin.hostname.toLowerCase()}`
+      }
+    } catch {
+      safeBase = 'https://forge-athletic.app'
+    }
+  }
 
-  const base = isInvalidOrigin ? 'https://forge-athletic.app' : origin
-  const path = endpoint || '/api/wearables/sync'
-  return `${base}${path.startsWith('/') ? '' : '/'}${path}`
+  const path = endpoint && !endpoint.includes('://') ? endpoint : '/api/wearables/sync'
+  return `${safeBase}${path.startsWith('/') ? '' : '/'}${path}`
 }
 
 /**
@@ -505,6 +522,27 @@ export async function getSupabaseAuthCredentials(): Promise<{ authToken?: string
 let authListenerRegistered = false
 
 /**
+ * Purges native iOS Keychain / Android Keystore credentials and tears down active
+ * HealthKit / WorkManager background delivery observers upon user sign-out.
+ */
+export async function teardownNativeHealthSyncOnLogout(): Promise<void> {
+  if (!isNativeMobile()) return
+  try {
+    const plugin = getNativeHealthPlugin()
+    if (typeof plugin.clearSyncSession === 'function') {
+      await plugin.clearSyncSession()
+    } else {
+      await plugin.setSyncConfiguration({
+        authToken: '',
+        userId: '',
+      })
+    }
+  } catch {
+    // Never block web logout if native bridge teardown encounters an error
+  }
+}
+
+/**
  * Registers an auth state change observer to propagate refreshed session tokens to native mobile health stores.
  */
 export function registerAuthSyncListener(): void {
@@ -515,18 +553,21 @@ export function registerAuthSyncListener(): void {
     try {
       const { createClient } = await import('@/lib/supabase-browser')
       const supabase = createClient()
-      supabase.auth.onAuthStateChange(async (_event, session) => {
-        if (session && isNativeMobile()) {
-          const plugin = getNativeHealthPlugin()
-          const endpoint = resolveSyncEndpoint('/api/wearables/sync')
-          await plugin
-            .setSyncConfiguration({
-              endpoint,
-              authToken: session.access_token,
-              userId: session.user.id,
-            })
-            .catch(() => {})
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!isNativeMobile()) return
+        if (event === 'SIGNED_OUT' || !session) {
+          await teardownNativeHealthSyncOnLogout()
+          return
         }
+        const plugin = getNativeHealthPlugin()
+        const endpoint = resolveSyncEndpoint('/api/wearables/sync')
+        await plugin
+          .setSyncConfiguration({
+            endpoint,
+            authToken: session.access_token,
+            userId: session.user.id,
+          })
+          .catch(() => {})
       })
     } catch {}
   })()

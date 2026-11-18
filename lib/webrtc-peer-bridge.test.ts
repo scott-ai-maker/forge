@@ -153,13 +153,17 @@ describe('lib/webrtc-peer-bridge', () => {
     vi.restoreAllMocks()
   })
 
-  it('provides default STUN and fallback TURN servers in RTC configuration', () => {
+  it('provides vetted STUN servers and excludes unvetted public openrelay TURN servers or bundle secrets', () => {
+    vi.stubEnv('NEXT_PUBLIC_TURN_URL', 'turn:leak.example.com:3478')
+    vi.stubEnv('NEXT_PUBLIC_TURN_CREDENTIAL', 'leaked_bundle_secret')
     const servers = getIceServers()
     expect(servers.length).toBeGreaterThanOrEqual(4)
     expect(servers.some(s => Array.isArray(s.urls) ? s.urls.some(u => u.includes('stun.l.google.com')) : s.urls.includes('stun.l.google.com'))).toBe(true)
-    expect(servers.some(s => Array.isArray(s.urls) ? s.urls.some(u => u.includes('openrelay.metered.ca')) : s.urls.includes('openrelay.metered.ca'))).toBe(true)
+    expect(servers.some(s => Array.isArray(s.urls) ? s.urls.some(u => u.includes('openrelay.metered.ca')) : s.urls.includes('openrelay.metered.ca'))).toBe(false)
+    expect(JSON.stringify(servers)).not.toContain('leaked_bundle_secret')
     expect(DEFAULT_RTC_CONFIG.iceServers).toEqual(DEFAULT_ICE_SERVERS)
     expect(DEFAULT_RTC_CONFIG.iceCandidatePoolSize).toBe(10)
+    vi.unstubAllEnvs()
   })
 
   it('detects WebRTC support correctly based on window context', () => {

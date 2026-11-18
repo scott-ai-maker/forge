@@ -141,6 +141,14 @@ public class GAAHealthKitPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void clearSyncSession(PluginCall call) {
+        syncManager.clearSessionAndStopBackgroundSync();
+        JSObject ret = new JSObject();
+        ret.put("success", true);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
     public void writeWorkout(PluginCall call) {
         String activityType = call.getString("activityType");
         Double calories = call.getDouble("calories");

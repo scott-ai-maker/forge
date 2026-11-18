@@ -134,6 +134,11 @@ describe('/api/account/parq', () => {
           reportedConditionsNotes: 'Torn meniscus left knee, no deep squats',
           emergencyContactName: 'Sarah Doe',
           emergencyContactPhone: '617-555-0144',
+          consentLiabilityWaiver: true,
+          consentInformedConsent: true,
+          consentPrivacyPractices: true,
+          consentCoachingAgreement: true,
+          consentEmergencyCare: true,
           signedWaiverName: 'John Doe',
           signedAt: new Date().toISOString(),
         }),
@@ -174,7 +179,20 @@ describe('/api/account/parq', () => {
       expect(resPlaceholder.status).toBe(400)
     })
 
-    it('rejects explicit liability waiver refusal with 400', async () => {
+    it('rejects explicit or omitted liability waiver consent flags with 400 (#32)', async () => {
+      const reqOmitted = new NextRequest('http://localhost:3000/api/account/parq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hasHeartCondition: false,
+          emergencyContactName: 'Sarah Doe',
+          emergencyContactPhone: '617-555-0144',
+          signedWaiverName: 'John Doe',
+        }),
+      })
+      const resOmitted = await POST(reqOmitted)
+      expect(resOmitted.status).toBe(400)
+
       const reqRefused = new NextRequest('http://localhost:3000/api/account/parq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -209,6 +227,11 @@ describe('/api/account/parq', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           hasHeartCondition: false,
+          consentLiabilityWaiver: true,
+          consentInformedConsent: true,
+          consentPrivacyPractices: true,
+          consentCoachingAgreement: true,
+          consentEmergencyCare: true,
           signedWaiverName: 'John Doe',
         }),
       })

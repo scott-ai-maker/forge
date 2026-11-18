@@ -46,6 +46,13 @@ export interface WebRtcMultiPeerBridgeOptions {
   currentUserId: string
   currentUserName?: string
   isCoach: boolean
+  /**
+   * PRIVACY SAFEGUARD (#30): Defaults to `false` (Coach-Hub Star Topology) so squad athletes
+   * connect strictly to the Coach and NEVER establish direct P2P ICE connections that expose
+   * residential IP addresses to other squad members.
+   */
+  allowAthleteToAthleteMesh?: boolean
+  iceServers?: RTCIceServer[]
   channel?: RealtimeChannel | null
   localStream?: MediaStream | null
   onPeerStream?: (peerId: string, stream: MediaStream, info: LobbyParticipant) => void
@@ -107,6 +114,7 @@ export class WebRtcMultiPeerBridge {
         event: 'webrtc_signal',
         payload: {
           ...payload,
+          senderRole: payload.senderRole || (this.options.isCoach ? 'coach' : 'athlete'),
           timestamp: payload.timestamp || Date.now(),
         },
       })
@@ -121,6 +129,11 @@ export class WebRtcMultiPeerBridge {
   public getOrCreatePeer(peerId: string, peerName = 'Teammate', role: 'coach' | 'athlete' = 'athlete'): PeerEntry | null {
     if (this.isDestroyed || peerId === this.options.currentUserId) return null
 
+    // Enforce Coach-Hub Star Topology by default (#30): block direct athlete-to-athlete P2P IP exposure
+    if (!this.options.isCoach && role !== 'coach' && !this.options.allowAthleteToAthleteMesh) {
+      return null
+    }
+
     const existing = this.peers.get(peerId)
     if (existing) return existing
 
@@ -128,9 +141,19 @@ export class WebRtcMultiPeerBridge {
     if (!RTCPeerConnectionClass) return null
 
     try {
+      const configuredIceServers = this.options.iceServers?.length
+        ? this.options.iceServers
+        : getIceServers()
+      const hasTurnRelay = configuredIceServers.some(server => {
+        const urls = Array.isArray(server.urls) ? server.urls : [server.urls]
+        return urls.some(u => typeof u === 'string' && (u.startsWith('turn:') || u.startsWith('turns:')))
+      })
       const pc = new RTCPeerConnectionClass({
         ...DEFAULT_RTC_CONFIG,
-        iceServers: getIceServers(),
+        iceServers: configuredIceServers,
+        ...(!this.options.isCoach && role !== 'coach' && hasTurnRelay
+          ? { iceTransportPolicy: 'relay' as RTCIceTransportPolicy }
+          : {}),
       })
 
       const globalMediaStream =
@@ -433,8 +456,9 @@ export class WebRtcMultiPeerBridge {
     }
 
     try {
-      // 1. Team Broadcast Signals (No peer connection needed)
+      // 1. Team Broadcast Signals (Coach-originated only; ignore spoofed athlete directives)
       if (payload.type === 'spotlight') {
+        if (payload.senderRole === 'athlete') return
         const spotlightId = (payload.data as string | null) ?? null
         this.spotlightUserId = spotlightId
         this.options.onSpotlightChange?.(spotlightId)
@@ -442,18 +466,21 @@ export class WebRtcMultiPeerBridge {
       }
 
       if (payload.type === 'mute') {
+        if (payload.senderRole === 'athlete') return
         const isMuted = Boolean((payload.data as { muted?: boolean })?.muted ?? true)
         this.options.onMuteDirective?.(isMuted)
         return
       }
 
       if (payload.type === 'team-cue') {
+        if (payload.senderRole === 'athlete') return
         const cueText = String(payload.data || '')
         this.options.onTeamCue?.(cueText, payload.senderName || 'Coach')
         return
       }
 
       if (payload.type === 'circuit-timer') {
+        if (payload.senderRole === 'athlete') return
         this.options.onCircuitTimerSync?.(payload.data)
         return
       }
@@ -498,23 +525,27 @@ export class WebRtcMultiPeerBridge {
         return
       }
 
+      const resolvedSenderRole: 'coach' | 'athlete' =
+        payload.senderRole || (this.options.isCoach ? 'athlete' : 'coach')
+
       // 3. Presence & Handshake Discovery
       if (payload.type === 'join' || payload.type === 'ready') {
-        const entry = this.getOrCreatePeer(payload.senderId, payload.senderName)
+        const entry = this.getOrCreatePeer(payload.senderId, payload.senderName, resolvedSenderRole)
+        if (!entry) return
         this.sendSignal({
           type: 'ready-ack',
           senderId: this.options.currentUserId,
           senderName: this.options.currentUserName,
           targetUserId: payload.senderId,
         })
-        if (entry && !entry.isPolite && entry.pc.signalingState === 'stable' && entry.pc.connectionState !== 'connected') {
+        if (!entry.isPolite && entry.pc.signalingState === 'stable' && entry.pc.connectionState !== 'connected') {
           void this.createOfferForPeer(payload.senderId)
         }
         return
       }
 
       if (payload.type === 'ready-ack') {
-        const entry = this.getOrCreatePeer(payload.senderId, payload.senderName)
+        const entry = this.getOrCreatePeer(payload.senderId, payload.senderName, resolvedSenderRole)
         if (entry && !entry.isPolite && entry.pc.signalingState === 'stable' && entry.pc.connectionState !== 'connected') {
           void this.createOfferForPeer(payload.senderId)
         }
@@ -523,7 +554,7 @@ export class WebRtcMultiPeerBridge {
 
       // 4. Perfect Negotiation SDP Offer
       if (payload.type === 'offer' && payload.sdp) {
-        const entry = this.getOrCreatePeer(payload.senderId, payload.senderName)
+        const entry = this.getOrCreatePeer(payload.senderId, payload.senderName, resolvedSenderRole)
         if (!entry) return
 
         const readyForOffer =
