@@ -151,7 +151,8 @@ describe('Public Funnel & Architecture', () => {
 
   it('lists the Forge Founding Rate Lock memberships and founder story on the public landing page', () => {
     expect(homePageSource).toMatch(/FoundingRateLockPricingGrid|ForgeMembershipPlans/)
-    expect(homePageSource).toContain('NASM Master Trainer')
+    expect(homePageSource).toContain('Prior ACE-CPT (2008–2021)')
+    expect(homePageSource).not.toContain('NASM Master Trainer')
     expect(homePageSource).toContain('COACH_GORDON_TRUST_PROFILE')
     expect(homePageSource).toContain('/images/brand/forge-crest-mark.png')
   })

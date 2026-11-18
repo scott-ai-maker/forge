@@ -214,6 +214,7 @@ export default function AiBodyCompositionScannerModal({
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false)
   const [showCircumferenceInputs, setShowCircumferenceInputs] = useState<boolean>(false)
   const [attireConfirmed, setAttireConfirmed] = useState<boolean>(false)
+  const [biometricScanConsent, setBiometricScanConsent] = useState<boolean>(false)
 
   // Camera stream state
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false)
@@ -373,6 +374,13 @@ export default function AiBodyCompositionScannerModal({
       return
     }
 
+    if (!biometricScanConsent) {
+      setErrorMessage(
+        'Please confirm the standalone Biometric & Consumer Health Scan Release (IL BIPA 740 ILCS 14/15(b), WA MHMDA RCW 19.373, TX CUBI) before analyzing body-composition photographs.'
+      )
+      return
+    }
+
     setIsScanning(true)
     setErrorMessage(null)
     setSaveSuccess(false)
@@ -409,6 +417,7 @@ export default function AiBodyCompositionScannerModal({
           photoDataUrl: anteriorPhoto || undefined,
           clientName,
           targetBodyFatPercent: targetBfSlider,
+          biometricScanConsent: true,
         }),
       })
 
@@ -424,7 +433,7 @@ export default function AiBodyCompositionScannerModal({
       }
     } catch (err: unknown) {
       const errObj = err as { message?: string }
-      setErrorMessage(errObj?.message || 'Biomechanical DEXA scan failed.')
+      setErrorMessage(errObj?.message || 'Body-composition estimation failed.')
     } finally {
       setIsScanning(false)
     }
@@ -519,12 +528,13 @@ export default function AiBodyCompositionScannerModal({
                     lineHeight: 1.2,
                   }}
                 >
-                  AI DEXA-Vision Body Composition Estimator
+                  Visual &amp; Anthropometric Body Composition Estimator
                 </h2>
                 <span
                   style={{
-                    background: 'linear-gradient(135deg, #D4A017 0%, #F59E0B 100%)',
-                    color: '#080E14',
+                    background: 'rgba(212, 160, 23, 0.16)',
+                    border: '1px solid rgba(212, 160, 23, 0.45)',
+                    color: '#FDE68A',
                     fontSize: 10,
                     fontWeight: 800,
                     padding: '2px 8px',
@@ -532,11 +542,11 @@ export default function AiBodyCompositionScannerModal({
                     letterSpacing: '0.06em',
                   }}
                 >
-                  4C GOLD STANDARD
+                  NON-MEDICAL WELLNESS ESTIMATE
                 </span>
               </div>
               <p style={{ margin: '2px 0 0', color: '#94A3B8', fontSize: 12 }}>
-                Spatial Multi-View Anthropometry · 7-Zone Computer Vision · Cunningham LBM Engine
+                Multi-View Visual Anthropometry · US Navy &amp; Cunningham LBM Formulas (Not a Clinical X-Ray DEXA Scan)
               </p>
             </div>
           </div>
@@ -866,13 +876,13 @@ export default function AiBodyCompositionScannerModal({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, color: 'var(--gold-lt)', fontWeight: 700, textTransform: 'uppercase', fontSize: 10.5 }}>
                       <GaaIcon name="shield-check" size={13} tone="gold" />
-                      <span>Attire Acceptance Standard (DEXA Precision ±1.0%)</span>
+                      <span>Attire Acceptance Standard (Unobstructed Silhouette View)</span>
                     </div>
                     <div style={{ color: '#E2E8F0', fontSize: 11 }}>
                       <strong>Approved:</strong> Form-fitting athletic apparel (sports bra + fitted shorts for women; fitted athletic shorts + fitted top for men). Natural waistline and joint contours must be visible.
                     </div>
                     <div style={{ color: '#FCA5A5', fontSize: 10.5, marginTop: 4 }}>
-                      <strong>✕ Prohibited:</strong> Baggy sweatpants, oversized hoodies, loose t-shirts, robes, or casual wear. Photos with obscured contours will be rejected by the DEXA engine.
+                      <strong>✕ Prohibited:</strong> Baggy sweatpants, oversized hoodies, loose t-shirts, robes, or casual wear. Photos with obscured contours will be rejected by the visual estimator.
                     </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -1134,6 +1144,39 @@ export default function AiBodyCompositionScannerModal({
               </label>
             </div>
 
+            {/* Standalone Biometric & Consumer Health Scan Release (BIPA / WA MHMDA / TX CUBI) */}
+            <div
+              data-testid="body-comp-biometric-release-card"
+              style={{
+                padding: '10px 12px',
+                background: 'rgba(15, 23, 42, 0.88)',
+                border: '1px solid rgba(56, 189, 248, 0.32)',
+                borderRadius: 6,
+                fontSize: 11.5,
+                lineHeight: 1.45,
+              }}
+            >
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontWeight: 500 }}>
+                <input
+                  type="checkbox"
+                  data-testid="body-comp-biometric-consent-checkbox"
+                  checked={biometricScanConsent}
+                  onChange={e => {
+                    setBiometricScanConsent(e.target.checked)
+                    if (e.target.checked) setErrorMessage(null)
+                  }}
+                  style={{ accentColor: '#38BDF8', marginTop: 2 }}
+                />
+                <span style={{ fontSize: 11.5, color: '#E2E8F0' }}>
+                  <strong>Standalone Biometric &amp; Consumer Health Scan Release:</strong> Pursuant to the{' '}
+                  <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                    Consumer Health &amp; Biometric Data Policy
+                  </a>{' '}
+                  (IL BIPA 740 ILCS 14/15(b), WA MHMDA RCW 19.373, NV SB 370, TX CUBI), I separately authorize Forge Athletic to transmit submitted body-composition photographs over TLS 1.3 to Google Gemini API solely to estimate anthropometric ratios for training tracking (zero biometric sale/profiting; destroyed immediately upon account deletion or within statutory retention limits).
+                </span>
+              </label>
+            </div>
+
             {/* Scan Trigger CTA Button */}
             <button
               type="button"
@@ -1172,15 +1215,27 @@ export default function AiBodyCompositionScannerModal({
                       animation: 'spin 1s linear infinite',
                     }}
                   />
-                  <span>Computing Multi-Compartment 4C Model...</span>
+                  <span>Computing Body-Composition Estimate...</span>
                 </>
               ) : (
                 <>
                   <GaaIcon name="dna" size={18} />
-                  <span>Execute DEXA Multi-Compartment Scan</span>
+                  <span>Run Body-Composition Estimate</span>
                 </>
               )}
             </button>
+
+            <p
+              data-testid="bodycomp-non-medical-disclaimer"
+              style={{
+                margin: '4px 0 0',
+                fontSize: 10.5,
+                color: '#94A3B8',
+                lineHeight: 1.45,
+              }}
+            >
+              <strong>Non-Medical Wellness Estimate:</strong> Camera and tape-measure body-fat estimates typically vary ±3–5% from clinical dual-energy X-ray absorptiometry (DEXA) and are not intended to diagnose, monitor, or treat any medical condition.
+            </p>
 
             {errorMessage && (
               <div style={{ color: 'var(--error)', fontSize: 12, background: 'rgba(239,68,68,0.1)', padding: 8, borderRadius: 5, border: '1px solid var(--error)' }}>
@@ -1262,7 +1317,7 @@ export default function AiBodyCompositionScannerModal({
                   >
                     <div>
                       <div style={{ fontSize: 10.5, color: 'var(--gold-lt)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 800 }}>
-                        DEXA-Calibrated Body Fat
+                        Estimated Body Fat %
                       </div>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
                         <span style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 40, fontWeight: 700, color: '#FFFFFF', lineHeight: 1 }}>
@@ -1550,7 +1605,7 @@ export default function AiBodyCompositionScannerModal({
                   Awaiting Spatial Biometric Scan
                 </h3>
                 <p style={{ margin: 0, color: '#94A3B8', fontSize: 12.5, maxWidth: 340, lineHeight: 1.5 }}>
-                  Capture or upload athlete photo(s) on the left and click <strong>Execute DEXA Multi-Compartment Scan</strong> to generate full 4C metrics.
+                  Capture or upload athlete photo(s) or enter tape measurements on the left and click <strong>Run Body-Composition Estimate</strong> to generate wellness body-composition trends.
                 </p>
               </div>
             )}

@@ -20,6 +20,8 @@ export default function MasterAllocationModal({
   const [orthopedicHistory, setOrthopedicHistory] = useState('')
   const [autonomousExecution, setAutonomousExecution] = useState<'yes' | 'no' | ''>('')
   const [capitalAllocated, setCapitalAllocated] = useState<'yes' | 'no' | ''>('')
+  const [acceptedHealthDataConsent, setAcceptedHealthDataConsent] = useState(false)
+  const [acceptedSmsConsent, setAcceptedSmsConsent] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,12 +35,26 @@ export default function MasterAllocationModal({
     setError(null)
 
     if (!fullName.trim() || !email.trim() || !occupationalVelocity.trim() || !orthopedicHistory.trim()) {
-      setError('Please complete all required clinical profiling fields.')
+      setError('Please complete all required intake fields.')
       return
     }
 
     if (!autonomousExecution || !capitalAllocated) {
       setError('Please answer both coaching fit questions.')
+      return
+    }
+
+    if (!acceptedHealthDataConsent) {
+      setError(
+        'Please check the standalone Consumer Health Data Privacy authorization before submitting injury or movement history (WA MHMDA RCW 19.373 / NV SB 370).'
+      )
+      return
+    }
+
+    if (phone.trim() && !acceptedSmsConsent) {
+      setError(
+        'Please check the optional SMS consent box to submit a mobile number, or leave the optional phone field blank.'
+      )
       return
     }
 
@@ -57,11 +73,13 @@ export default function MasterAllocationModal({
         body: JSON.stringify({
           fullName,
           email,
-          phone,
+          phone: acceptedSmsConsent && phone.trim() ? phone.trim() : undefined,
+          smsConsent: Boolean(acceptedSmsConsent && phone.trim()),
           occupationalVelocity,
           orthopedicHistory,
           autonomousExecution,
           capitalAllocated,
+          healthDataConsent: true,
           startTimeMs: Date.now() - 5000,
         }),
       })
@@ -168,7 +186,7 @@ export default function MasterAllocationModal({
               Another option may suit you better
             </h3>
             <p style={{ color: 'var(--gray)', fontSize: 14.5, lineHeight: 1.7, maxWidth: 480, margin: '0 auto 24px' }}>
-              <strong>Coach Support ($199/month)</strong> includes quarterly video reviews with Coach Gordon.
+              <strong>Coach Support ($299/month)</strong> includes quarterly video reviews with Coach Gordon.
             </p>
             <p style={{ color: 'var(--gold-lt)', fontSize: 14, lineHeight: 1.6, maxWidth: 460, margin: '0 auto 28px' }}>
               You can start with Core for a personalized training plan, or choose Plus for audio-guided sessions, recovery insights, nutrition planning, and travel workout tools.
@@ -240,7 +258,7 @@ export default function MasterAllocationModal({
                   ✦ Limited coaching spaces
                 </span>
                 <span style={{ fontSize: 11, color: '#34D399', fontWeight: 700, background: 'rgba(52, 211, 153, 0.1)', padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(52, 211, 153, 0.25)' }}>
-                  ● 2 places currently open
+                  ● Capped at 15 active 1-on-1 athletes
                 </span>
               </div>
               <p style={{ fontSize: 13, color: 'var(--gray)', lineHeight: 1.5, margin: '10px 0 0' }}>
@@ -324,6 +342,45 @@ export default function MasterAllocationModal({
                     boxSizing: 'border-box',
                   }}
                 />
+                {phone.trim() ? (
+                  <label
+                    style={{
+                      marginTop: 8,
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 6,
+                      background: 'rgba(11, 17, 32, 0.85)',
+                      border: '1px solid rgba(197, 160, 89, 0.3)',
+                      fontSize: 11.5,
+                      color: '#CBD5E1',
+                      lineHeight: 1.45,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={acceptedSmsConsent}
+                      onChange={e => setAcceptedSmsConsent(e.target.checked)}
+                      style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0 }}
+                    />
+                    <span>
+                      Optional SMS Consent: By checking this box, I consent to receive automated coaching &amp; scheduling text
+                      messages from <strong>Forge Athletic</strong> at the number provided.{' '}
+                      <strong>Consent is not a condition of purchase.</strong> Msg &amp; data rates may apply. Reply{' '}
+                      <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. View{' '}
+                      <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+                        Terms
+                      </a>{' '}
+                      &amp;{' '}
+                      <a href="/privacy#sms-privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+                        Privacy Policy
+                      </a>
+                      .
+                    </span>
+                  </label>
+                ) : null}
               </div>
 
               {/* Question 1: Schedule and routine */}
@@ -414,7 +471,7 @@ export default function MasterAllocationModal({
                   4. Monthly budget *
                 </label>
                 <p style={{ fontSize: 12, color: 'var(--gray)', margin: '0 0 8px' }}>
-                  Coach Support is $199/month and includes quarterly video reviews with Coach Gordon.
+                  Coach Support is $299/month and includes quarterly video reviews with Coach Gordon.
                 </p>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#FFFFFF', cursor: 'pointer' }}>
@@ -438,6 +495,37 @@ export default function MasterAllocationModal({
                     <span>Not right now—I&apos;d like to explore other options</span>
                   </label>
                 </div>
+              </div>
+
+              {/* Standalone Consumer Health Data Consent (WA MHMDA RCW 19.373 / NV SB 370) */}
+              <div
+                style={{
+                  padding: '12px 14px',
+                  borderRadius: 8,
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  border: '1px solid rgba(197, 160, 89, 0.3)',
+                }}
+              >
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 12, color: '#E2E8F0', lineHeight: 1.5, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    data-testid="master-allocation-health-consent-checkbox"
+                    checked={acceptedHealthDataConsent}
+                    onChange={e => setAcceptedHealthDataConsent(e.target.checked)}
+                    style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, accentColor: '#C5A059' }}
+                  />
+                  <span>
+                    <strong>Standalone Consumer Health Data Consent:</strong> I affirmatively authorize Forge Athletic Performance LLC to collect and review the injury and movement readiness information I entered above solely to evaluate coaching fit, as described in our{' '}
+                    <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                      Consumer Health &amp; Biometric Data Policy
+                    </a>{' '}
+                    and{' '}
+                    <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                      Privacy Policy
+                    </a>
+                    .
+                  </span>
+                </label>
               </div>
 
               {/* Submit CTA */}

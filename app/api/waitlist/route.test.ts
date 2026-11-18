@@ -85,17 +85,38 @@ describe('POST /api/waitlist', () => {
     expect(json.error).toBeDefined()
   })
 
-  it('accepts founding cohort intake submission and passes cohort metadata to email automation', async () => {
+  it('rejects phone submissions missing affirmative TCPA written smsConsent', async () => {
+    const req = new NextRequest('http://localhost/api/waitlist', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: 'founder@gordonadvisory.com',
+        firstName: 'Alexander Vance',
+        phone: '+1 617 555 0199',
+        honeypot: '',
+        startTimeMs: Date.now() - 5000,
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.error).toContain('TCPA')
+    expect(insertMock).not.toHaveBeenCalled()
+  })
+
+  it('accepts founding cohort intake submission with TCPA smsConsent and passes E.164 phone to email automation', async () => {
     const req = new NextRequest('http://localhost/api/waitlist', {
       method: 'POST',
       body: JSON.stringify({
         email: 'founder@gordonadvisory.com',
         firstName: 'Alexander Vance',
         trainingLevel: 'intermediate',
-        primaryGoal: '[Founding Intake] Goal: structural_longevity | Phone: +1 617 555 0199 | Notes: None',
+        primaryGoal: '[Founding Intake] Goal: structural_longevity | Notes: None',
         source: 'founding_cohort_intake',
         assignedCohortNumber: 11,
         phone: '+1 617 555 0199',
+        smsConsent: true,
+        timezone: 'America/New_York',
         profileType: 'executive',
         honeypot: '',
         startTimeMs: Date.now() - 5000,
@@ -112,6 +133,9 @@ describe('POST /api/waitlist', () => {
         email: 'founder@gordonadvisory.com',
         first_name: 'Alexander Vance',
         source: 'founding_cohort_intake',
+        phone: '+16175550199',
+        sms_opt_in: true,
+        timezone: 'America/New_York',
       })
     )
 
@@ -122,7 +146,7 @@ describe('POST /api/waitlist', () => {
         firstName: 'Alexander Vance',
         source: 'founding_cohort',
         cohortReservationNumber: 11,
-        phone: '+1 617 555 0199',
+        phone: '+16175550199',
         profileType: 'executive',
       })
     )
@@ -198,10 +222,11 @@ describe('POST /api/waitlist', () => {
         email: 'jordan@example.com',
         firstName: '  Jordan <script>Smith  ',
         trainingLevel: 'intermediate',
-        primaryGoal: '[Founding Cohort Pass] Goal: posture_joint_health | Phone: +1 555 0100',
+        primaryGoal: '[Founding Cohort Pass] Goal: posture_joint_health',
         source: 'holiday_unmasking_drop',
         assignedCohortNumber: 24,
-        phone: '+1 555 0100',
+        phone: '+1 617 555 0100',
+        smsConsent: true,
         profileType: 'posture_joint_health',
         honeypot: '',
         startTimeMs: Date.now() - 5000,
@@ -217,6 +242,8 @@ describe('POST /api/waitlist', () => {
         email: 'jordan@example.com',
         first_name: 'Jordan scriptSmith',
         source: 'holiday_unmasking_drop',
+        phone: '+16175550100',
+        sms_opt_in: true,
       })
     )
 
@@ -227,7 +254,7 @@ describe('POST /api/waitlist', () => {
         firstName: 'Jordan scriptSmith',
         source: 'founding_cohort',
         cohortReservationNumber: 24,
-        phone: '+1 555 0100',
+        phone: '+16175550100',
         profileType: 'posture_joint_health',
       })
     )

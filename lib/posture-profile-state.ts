@@ -95,13 +95,13 @@ export function getDefaultPostureProfileState(): PersistedPostureProfileState {
     injectedWarmupRemovedForDate: null,
     dailyLogs: {},
     postureDelta: {
-      baselineDate: '2026-10-16',
-      latestDate: '2026-11-13',
-      forwardHeadDeltaDeg: -4.5,
-      shoulderSymmetryDeltaDeg: -2.1,
-      pelvicTiltDeltaDeg: -3.0,
-      overallPostureScore: 84,
-      strainFlag: 'amber',
+      baselineDate: '',
+      latestDate: '',
+      forwardHeadDeltaDeg: 0,
+      shoulderSymmetryDeltaDeg: 0,
+      pelvicTiltDeltaDeg: 0,
+      overallPostureScore: 0,
+      strainFlag: 'optimal',
     },
     updatedAt: new Date().toISOString(),
   }
@@ -393,16 +393,30 @@ export function computePostureDailyStreak(
   return streak
 }
 
-export function runQuickPostureCheckDelta(): PostureDeltaSummary {
+export function runQuickPostureCheckDelta(
+  measuredScore = 84,
+  measuredForwardHeadDeltaDeg?: number
+): PostureDeltaSummary {
+  const today = getTodayIsoDate()
   const next = savePostureProfileState(prev => {
-    const improvedDelta = Number((prev.postureDelta.forwardHeadDeltaDeg - 0.3).toFixed(1))
+    const isInitialBaseline = prev.postureDelta.overallPostureScore === 0 && !prev.postureDelta.baselineDate
+    const nextDelta =
+      typeof measuredForwardHeadDeltaDeg === 'number' && Number.isFinite(measuredForwardHeadDeltaDeg)
+        ? Number(measuredForwardHeadDeltaDeg.toFixed(1))
+        : isInitialBaseline
+          ? 0
+          : Number((prev.postureDelta.forwardHeadDeltaDeg - 0.3).toFixed(1))
+    const nextScore = isInitialBaseline
+      ? Math.max(0, Math.min(100, Math.round(measuredScore)))
+      : Math.min(96, prev.postureDelta.overallPostureScore + 2)
     return {
       ...prev,
       postureDelta: {
         ...prev.postureDelta,
-        latestDate: getTodayIsoDate(),
-        forwardHeadDeltaDeg: Math.max(-7.5, improvedDelta),
-        overallPostureScore: Math.min(96, prev.postureDelta.overallPostureScore + 2),
+        baselineDate: prev.postureDelta.baselineDate || today,
+        latestDate: today,
+        forwardHeadDeltaDeg: Math.max(-7.5, nextDelta),
+        overallPostureScore: nextScore,
       },
     }
   })

@@ -7,37 +7,48 @@ import {
   sanitizeAthleteFirstName,
 } from './ai-postural-mesh-scanner'
 
+const SAMPLE_PHOTO_BASE64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/'
+
 describe('analyzePosturalMesh engine', () => {
-  it('returns valid biomechanical landmarks, postureScore, and angles for anterior view', async () => {
+  it('rejects missing or empty posture photographs rather than fabricating distortion syndromes', async () => {
+    await expect(
+      analyzePosturalMesh({
+        view: 'anterior',
+        clientName: 'Alex Mercer',
+      })
+    ).rejects.toThrow(/posture photograph is required/i)
+  })
+
+  it('returns neutral unverified fallback (zero fabricated syndromes) when AI vision key is absent', async () => {
     const result = await analyzePosturalMesh({
       view: 'anterior',
+      imageBase64: SAMPLE_PHOTO_BASE64,
       clientName: 'Alex Mercer',
     })
 
     expect(result.view).toBe('anterior')
-    expect(result.postureScore).toBeGreaterThanOrEqual(48)
-    expect(result.postureScore).toBeLessThanOrEqual(100)
-    expect(result.landmarks.length).toBeGreaterThanOrEqual(6)
-    expect(result.angles.length).toBeGreaterThanOrEqual(2)
-    expect(result.ohsaObservations.length).toBeGreaterThanOrEqual(1)
-    expect(result.cexPrescription.inhibit.length).toBeGreaterThan(0)
-    expect(result.cexPrescription.lengthen.length).toBeGreaterThan(0)
-    expect(result.cexPrescription.activate.length).toBeGreaterThan(0)
-    expect(result.cexPrescription.integrate.length).toBeGreaterThan(0)
+    expect(result.isUnverifiedFallback).toBe(true)
+    expect(result.syndromeDetected).toBe('Optimal Alignment')
+    expect(result.detectedCompensations).toEqual([])
+    expect(result.landmarks).toEqual([])
+    expect(result.angles).toEqual([])
+    expect(result.ohsaObservations).toEqual([])
     // HIPAA Minimum Necessary: surname stripped from summary
     expect(result.clinicalSummary).toContain('Alex')
     expect(result.clinicalSummary).not.toContain('Mercer')
+    expect(result.clinicalSummary).toContain('No synthetic postural distortion syndrome was inferred')
   })
 
-  it('returns valid lateral sagittal alignment landmarks and angles', async () => {
+  it('returns neutral unverified fallback for lateral view with surname stripped', async () => {
     const result = await analyzePosturalMesh({
       view: 'lateral',
+      imageBase64: SAMPLE_PHOTO_BASE64,
       clientName: 'Jennifer Rainville',
     })
 
     expect(result.view).toBe('lateral')
-    expect(result.landmarks.some(l => l.id === 'c7' || l.id === 'ear')).toBe(true)
-    expect(result.angles.some(a => a.name.includes('Head') || a.name.includes('Pelvic'))).toBe(true)
+    expect(result.isUnverifiedFallback).toBe(true)
+    expect(result.syndromeDetected).toBe('Optimal Alignment')
     expect(result.clinicalSummary).toContain('Jennifer')
     expect(result.clinicalSummary).not.toContain('Rainville')
   })
@@ -159,11 +170,15 @@ describe('analyzePosturalMesh engine', () => {
     expect(content).toContain('min-height: 44px')
   })
 
-  it('aggregates multi-pose findings cleanly across all 4 views without duplicate compensation keys', async () => {
+  it('aggregates multi-pose findings cleanly across all 4 views without duplicate compensation keys', () => {
+    const sampleRawByView: Record<PosturalViewType, { syndromeDetected: string; detectedCompensations: string[] }> = {
+      anterior: { syndromeDetected: 'Pronation Distortion', detectedCompensations: ['knees_cave_in', 'feet_turn_out'] },
+      lateral: { syndromeDetected: 'Lower Crossed', detectedCompensations: ['low_back_arches', 'excessive_forward_lean', 'head_protrudes'] },
+      posterior: { syndromeDetected: 'Pronation Distortion', detectedCompensations: ['feet_flatten', 'asymmetric_weight_shift'] },
+      overhead_squat: { syndromeDetected: 'Lower Crossed', detectedCompensations: ['knees_cave_in', 'excessive_forward_lean', 'arms_fall_forward'] },
+    }
     const views: PosturalViewType[] = ['anterior', 'lateral', 'posterior', 'overhead_squat']
-    const results = await Promise.all(
-      views.map(view => analyzePosturalMesh({ view, clientName: 'Julian Gordon' }))
-    )
+    const results = views.map(view => formatScanResult(sampleRawByView[view], view, 'Julian Gordon'))
 
     expect(results).toHaveLength(4)
 

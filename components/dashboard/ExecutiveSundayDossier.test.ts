@@ -56,7 +56,7 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
     },
     authSignature: 'GAA-SIG-E3A9-7B14',
     authTimestamp: '2026-09-06T20:00:00.000Z',
-    auditorCredential: 'COACH GORDON, NASM MASTER TRAINER · FORGE ATHLETIC',
+    auditorCredential: 'COACH GORDON, B.S., NASM-CPT® · FORGE ATHLETIC',
   }
 
   describe('computeDossierDocRefId', () => {
@@ -182,8 +182,9 @@ describe('ExecutiveSundayDossier Swiss Private Wealth Standard Engine', () => {
         'utf8'
       )
 
-      expect(dossierSource).toContain('COACH GORDON, NASM MASTER TRAINER')
-      expect(dossierSource).toContain('Founder &amp; Performance Director · NASM-CPT® · CES® · PES® · CNC™ · CSNC')
+      expect(dossierSource).toContain('COACH GORDON, B.S., NASM-CPT®')
+      expect(dossierSource).not.toContain('NASM MASTER TRAINER')
+      expect(dossierSource).toContain('Founder &amp; Performance Director · NASM-CPT® (#1261890687) · Prior ACE-CPT (2008–2021) · ASTI CPR/AED')
       expect(dossierSource).toContain('Report reference:')
     })
 

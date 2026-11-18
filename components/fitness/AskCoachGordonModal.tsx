@@ -393,19 +393,17 @@ export default function AskCoachGordonModal({
     }
   }
 
-  // Quick 5-Second Video Form Check Simulation & Execution
+  // Lift Technique Checkpoint & Cue Briefing (no hardcoded mock load or fabricated video faults)
   const handleRunVideoCritique = async (liftType: LiftType) => {
     setIsAnalyzingVideo(true)
     triggerHaptic('tap')
 
     try {
-      // Analyze lift kinetics
       const analysis = analyzeLiftForm({
         liftType,
-        loadLbs: 185,
-        repsCount: 3,
-        observedDeviations: ['knee_valgus', 'butt_wink'],
-        clientNotes: 'Felt my knees collapse inward at the bottom of the squat',
+        repsCount: 5,
+        observedDeviations: [],
+        clientNotes: 'Requested NASM OPT™ technique checkpoint briefing prior to set.',
       })
 
       const spokenSummary = generateQuickBiomechanicalSpokenSummary(analysis)
@@ -413,14 +411,14 @@ export default function AskCoachGordonModal({
       const critiqueMsg: ChatMessage = {
         id: `critique_${Date.now()}`,
         role: 'assistant',
-        text: `**Biomechanical Video Critique: ${analysis.liftName}** (Form Score: **${analysis.overallFormScore}/100** — *${analysis.rating}*)\n\n${analysis.masterCoachSummary}\n\n**Key Kinetic Checkpoints:**\n${analysis.checkpoints.map(c => `• **${c.name}**: ${c.status === 'optimal' ? 'Optimal' : c.observation} → *${c.prescribedCue}*`).join('\n')}\n\n**Prescribed Corrective Continuum:**\n• **Inhibit**: ${analysis.prescribedCorrectiveContinuum.inhibit.join(', ')}\n• **Activate**: ${analysis.prescribedCorrectiveContinuum.activate.join(', ')}`,
+        text: `**Technique Checkpoint Briefing: ${analysis.liftName}**\n\n${analysis.masterCoachSummary}\n\n**Key Kinetic Checkpoints to Focus On:**\n${analysis.checkpoints.map(c => `• **${c.name}**: *${c.prescribedCue}*`).join('\n')}\n\n*Want frame-by-frame feedback on an actual video of your set? Upload a 45° clip inside **Form Lab** on your Fitness dashboard.*`,
         audioText: spokenSummary,
         videoCritique: analysis,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         followUps: [
           'What tempo should I use on set 2?',
-          'Show me banded monster walks demo',
-          'Message Coach Gordon about knee tracking',
+          'What warm-up helps prep this lift?',
+          'Message Coach Gordon for human form review',
         ],
       }
 
@@ -1809,10 +1807,10 @@ export default function AskCoachGordonModal({
                 <GaaIcon name="camera" size={20} tone="gold" />
                 <div>
                   <h3 style={{ margin: 0, fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '18px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.04em' }}>
-                    5-Second Video Form Check
+                    Lift Technique Checkpoint Briefing
                   </h3>
                   <span style={{ fontSize: '11px', color: '#9ca3af' }}>
-                    Gemini Multimodal Biomechanical Audit &amp; In-Ear Spoken Feedback
+                    NASM OPT™ Key Setup Cues &amp; Spoken Earbud Briefing (Upload Real Video in Form Lab)
                   </span>
                 </div>
               </div>
@@ -1904,7 +1902,7 @@ export default function AskCoachGordonModal({
                   }}
                 >
                   <GaaIcon name={isAnalyzingVideo ? 'rotate-ccw' : 'lightning'} size={13} tone="inherit" />
-                  <span>{isAnalyzingVideo ? 'Analyzing Joint Angles...' : 'Analyze Lift & Speak Feedback'}</span>
+                  <span>{isAnalyzingVideo ? 'Preparing Briefing...' : 'Generate Cue Briefing & Speak'}</span>
                 </button>
                 <button
                   type="button"

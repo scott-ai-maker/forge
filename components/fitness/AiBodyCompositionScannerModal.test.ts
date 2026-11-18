@@ -100,12 +100,16 @@ describe('AiBodyCompositionScannerModal Biometric Input Engine', () => {
     const modalFilePath = path.resolve(__dirname, 'AiBodyCompositionScannerModal.tsx')
     const modalContent = fs.readFileSync(modalFilePath, 'utf-8')
 
-    it('enforces DEXA attire acceptance standard card and guidance', () => {
-      expect(modalContent).toContain('Attire Acceptance Standard (DEXA Precision ±1.0%)')
+    it('enforces attire acceptance standard card and non-medical wellness framing (no 4C GOLD STANDARD claim)', () => {
+      expect(modalContent).toContain('Attire Acceptance Standard (Unobstructed Silhouette View)')
       expect(modalContent).toContain('Form-fitting athletic apparel')
       expect(modalContent).toContain('sports bra + fitted shorts for women; fitted athletic shorts + fitted top for men')
       expect(modalContent).toContain('Baggy sweatpants, oversized hoodies, loose t-shirts, robes, or casual wear')
-      expect(modalContent).toContain('Photos with obscured contours will be rejected by the DEXA engine')
+      expect(modalContent).toContain('Photos with obscured contours will be rejected by the visual estimator')
+      expect(modalContent).toContain('NON-MEDICAL WELLNESS ESTIMATE')
+      expect(modalContent).toContain('Not a Clinical X-Ray DEXA Scan')
+      expect(modalContent).not.toContain('4C GOLD STANDARD')
+      expect(modalContent).not.toContain('AI DEXA-Vision')
     })
 
     it('requires mandatory client attire confirmation before running scan', () => {

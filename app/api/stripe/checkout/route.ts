@@ -9,7 +9,7 @@ import {
   normalizeDiscountCode,
   type DiscountCodeRecord,
 } from '@/lib/discount-codes'
-import { getForgeMembership, getForgeMembershipPrice } from '@/lib/forge-memberships'
+import { getForgeMembership, getForgeMembershipPrice, isAnnualBillingEnabled } from '@/lib/forge-memberships'
 import { getForgeAddon } from '@/lib/forge-addons'
 import {
   LEGAL_DOCUMENTS,
@@ -75,6 +75,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'packageId, productId, or addonId is required' }, { status: 400 })
     }
 
+    const RETIRED_LEGACY_PACKAGES = ['lab', 'alumni', 'starter', 'momentum', 'transformation']
+    if (typeof packageId === 'string' && RETIRED_LEGACY_PACKAGES.includes(packageId)) {
+      return NextResponse.json(
+        { error: 'This legacy plan is no longer available. Choose a current Forge Athletic membership.' },
+        { status: 410 }
+      )
+    }
+
     if (
       authz.client.role === 'client' &&
       process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -126,9 +134,30 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'A valid membership billing cadence is required' }, { status: 400 })
       }
 
+      if (body.cadence === 'annual' && !isAnnualBillingEnabled()) {
+        return NextResponse.json(
+          {
+            error: 'Forge Athletic memberships are billed month-to-month with zero multi-month prepayment lock-in.',
+            code: 'ANNUAL_BILLING_DISABLED',
+          },
+          { status: 400 }
+        )
+      }
+
       const membershipPrice = getForgeMembershipPrice(forgeMembership, body.cadence)
       if (!membershipPrice) {
         return NextResponse.json({ error: 'Annual billing is not available for this membership' }, { status: 400 })
+      }
+
+      if (authz.client.role === 'client' && body?.autoRenewalConsent !== true) {
+        return NextResponse.json(
+          {
+            error:
+              'Affirmative auto-renewal consent is required before starting a recurring membership subscription.',
+            code: 'AUTO_RENEWAL_CONSENT_REQUIRED',
+          },
+          { status: 400 }
+        )
       }
 
       let appUrl: string
@@ -214,12 +243,42 @@ export async function POST(req: NextRequest) {
 
       const finalMembershipCents = Math.max(membershipPrice.amountCents - discountAmountCents, 50)
 
+      if (
+        authz.client.role === 'client' &&
+        body?.autoRenewalConsent === true &&
+        process.env.NEXT_PUBLIC_SUPABASE_URL &&
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      ) {
+        try {
+          await recordLegalConsentAudit({
+            adminClient: admin,
+            userId,
+            documentTypes: ['terms_of_service', 'privacy_policy'],
+            typedSignature: authz.client.full_name ?? null,
+            ipAddress: extractRequestIp(req.headers),
+            userAgent: req.headers.get('user-agent'),
+            metadata: {
+              flow: 'stripe_subscription_autorenewal_consent',
+              autoRenewalConsent: true,
+              packageId: forgeMembership.id,
+              cadence: body.cadence,
+              finalPriceCents: finalMembershipCents,
+              trialDays: effectiveTrialDays ?? 0,
+              discountCode: appliedDiscountCode,
+            },
+          })
+        } catch {
+          // Non-fatal in isolated environments without DB bindings
+        }
+      }
+
       const metadataPayload = {
         clientId: userId,
         packageId: forgeMembership.id,
         packageName: forgeMembership.name,
         sessionsTotal: '0',
         cadence: body.cadence,
+        trialDays: String(effectiveTrialDays ?? 0),
         basePriceCents: String(membershipPrice.amountCents),
         finalPriceCents: String(finalMembershipCents),
         discountCode: appliedDiscountCode || '',
@@ -422,17 +481,30 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const RETIRED_LEGACY_PACKAGES = ['lab', 'alumni', 'starter', 'momentum', 'transformation']
-    if (typeof packageId === 'string' && RETIRED_LEGACY_PACKAGES.includes(packageId)) {
-      return NextResponse.json(
-        { error: 'This legacy plan is no longer available. Choose a current Forge Athletic membership.' },
-        { status: 410 }
-      )
-    }
-
     const pkg = PACKAGES.find(p => p.id === packageId)
     if (!pkg) {
       return NextResponse.json({ error: 'Package not found' }, { status: 404 })
+    }
+
+    if (isPif && !isAnnualBillingEnabled()) {
+      return NextResponse.json(
+        {
+          error: 'Multi-month upfront prepayments are disabled; Forge Athletic bills strictly month-to-month.',
+          code: 'ANNUAL_BILLING_DISABLED',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (!isPif && authz.client.role === 'client' && body?.autoRenewalConsent !== true) {
+      return NextResponse.json(
+        {
+          error:
+            'Affirmative auto-renewal consent is required before starting a recurring membership subscription.',
+          code: 'AUTO_RENEWAL_CONSENT_REQUIRED',
+        },
+        { status: 400 }
+      )
     }
 
     const basePriceCents = isPif ? (pkg.pifPriceCents ?? pkg.price * 3) : pkg.price

@@ -8,6 +8,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 vi.mock('@/lib/authz', () => ({
   getRequestAuthz: vi.fn(),
   requireRole: vi.fn(),
+  requireActiveClient: vi.fn(),
   AuthzError: class AuthzError extends Error {
     status: number
     constructor(message: string, status = 403) {
@@ -19,6 +20,14 @@ vi.mock('@/lib/authz', () => ({
 
 vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: vi.fn(),
+}))
+
+vi.mock('@/lib/liability-shield', () => ({
+  checkClientMedicalClearanceGate: vi.fn().mockResolvedValue({ cleared: true, error: null }),
+}))
+
+vi.mock('@/lib/legal-compliance', () => ({
+  checkClientLegalConsentGate: vi.fn().mockResolvedValue({ verified: true, error: null }),
 }))
 
 describe('Workout Logging API Routes', () => {

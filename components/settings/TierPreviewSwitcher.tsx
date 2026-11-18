@@ -17,7 +17,11 @@ export interface TierPreviewSwitcherProps {
 const TIER_ORDER: ForgeTierId[] = ['core_lab', 'plus', 'coach_support']
 
 export default function TierPreviewSwitcher({ compact = false }: TierPreviewSwitcherProps) {
-  const { tierId, entitlements, remainingFormLabCredits, setTier } = useTierAccess()
+  const { tierId, allowQaPreview, entitlements, remainingFormLabCredits, setTier } = useTierAccess()
+
+  if (!allowQaPreview) {
+    return null
+  }
 
   if (compact) {
     return (

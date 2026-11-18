@@ -192,10 +192,19 @@ describe('Live Studio Stress & Adversarial Test Suite ("Run It Hot")', () => {
   describe('AI Postural Mesh & Corrective Exercise Stress', () => {
     const views: PosturalViewType[] = ['anterior', 'lateral', 'posterior', 'overhead_squat']
 
-    it('evaluates all 4 postural views under empty / missing image conditions without crashing', async () => {
+    it('rejects empty image payloads explicitly and evaluates all 4 postural views safely on valid photo payloads', async () => {
+      await expect(
+        analyzePosturalMesh({
+          imageBase64: '',
+          view: 'anterior',
+          clientName: 'Stress Test Athlete',
+        })
+      ).rejects.toThrow(/posture photograph is required/i)
+
+      const samplePhoto = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/'
       for (const view of views) {
         const result = await analyzePosturalMesh({
-          imageBase64: '',
+          imageBase64: samplePhoto,
           view,
           clientName: 'Stress Test Athlete',
         })

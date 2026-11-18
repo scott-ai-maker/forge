@@ -93,10 +93,12 @@ describe('MovementScreenInstructionsModal & Client Movement Screen Protocol', ()
     expect(modalContent).toContain('Forge Athletic')
   })
 
-  it('enforces HIPAA (1996) privacy notice and secure storage for client assessment videos', () => {
+  it('enforces truthful encryption & RLS privacy notice without deceptive HIPAA covered-entity seals', () => {
     const modalContent = fs.readFileSync(modalFilePath, 'utf-8')
 
-    expect(modalContent).toContain('HIPAA')
+    expect(modalContent).toContain('HIPAA-inspired technical security controls')
+    expect(modalContent).toContain('not a HIPAA-covered healthcare provider')
+    expect(modalContent).not.toContain('PROTECTED HEALTH DATA')
     expect(modalContent).toContain('AES-256')
     expect(modalContent).toContain('TLS 1.3')
     expect(modalContent).toContain('Row-Level Security')

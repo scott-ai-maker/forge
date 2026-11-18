@@ -129,6 +129,7 @@ export interface BodyCompositionScanResult {
   // Recomposition Trajectory
   recompositionProjection: RecompositionPlan
 
+  estimationMode?: 'ai_vision_plus_anthropometric' | 'anthropometric_formula_only'
   methodDescription: string
   coachSummaryNotes: string
 }
@@ -621,11 +622,11 @@ export async function analyzeBodyCompositionFromImages(
       }
 
       if (imagesParts.length > 0) {
-        const promptText = `You are Coach Gordon, Director of Human Performance at Forge Athletic, Master NASM-CPT, Sports Science Biomechanist, and clinical DEXA body composition analyst.
+        const promptText = `You are Coach Gordon, Head Coach & Director of Human Performance at Forge Athletic (NASM-CPT® #1261890687, B.S. IT), providing educational fitness body-composition estimation.
 You are evaluating body composition from athlete photo(s) using clinical sports-science standards (calibrated against 4-Compartment DEXA / Hydrostatic weighing scans).
 
-ATHLETE CLINICAL PROFILE:
-- Name: ${clientName}
+ATHLETE CLINICAL PROFILE (DE-IDENTIFIED):
+- Subject: Athlete
 - Biological Sex: ${sex}
 - Age: ${age} years
 - Stature / Height: ${heightCm} cm (${Math.round(heightCm / 2.54)} inches)
@@ -794,24 +795,27 @@ Return ONLY valid JSON matching this schema:
   // Calibrate Ensemble Body Fat %
   let finalBf: number
   let confidenceScore = 0.65
-  let confidenceInterval = 1.8 // Default +/- 1.8%
+  let confidenceInterval = 3.5 // Honest wellness estimation margin (+/- %)
+  const hasVerifiedAiVision = Boolean(
+    visionResult?.estimatedBodyFatPercent && Number.isFinite(visionResult.estimatedBodyFatPercent)
+  )
 
-  if (visionResult?.estimatedBodyFatPercent && Number.isFinite(visionResult.estimatedBodyFatPercent)) {
+  if (hasVerifiedAiVision && visionResult) {
     const visionBf = Number(visionResult.estimatedBodyFatPercent)
     // 70% Vision AI + 30% Navy & Anthropometric Cross-Validation
     finalBf = roundToOne(visionBf * 0.7 + navyBf * 0.3)
-    confidenceScore = Math.min(0.96, Math.max(0.75, visionResult.confidenceScore || 0.9))
-    confidenceInterval = lateralPhotoBase64 && posteriorPhotoBase64 ? 1.0 : 1.4
+    confidenceScore = Math.min(0.9, Math.max(0.7, visionResult.confidenceScore || 0.82))
+    confidenceInterval = lateralPhotoBase64 && posteriorPhotoBase64 ? 3.0 : 3.5
   } else if (inputWaistCm && inputNeckCm) {
-    // Circumference validated intake
+    // Circumference validated US Navy formula intake
     finalBf = roundToOne(navyBf)
-    confidenceScore = 0.82
-    confidenceInterval = 1.6
+    confidenceScore = 0.78
+    confidenceInterval = 3.5
   } else {
     // Fallback: Blend Navy estimate + BMI formula
     finalBf = roundToOne(navyBf * 0.6 + baselineBmiBf * 0.4)
-    confidenceScore = primaryPhoto ? 0.72 : 0.58
-    confidenceInterval = 2.4
+    confidenceScore = 0.55
+    confidenceInterval = 4.5
   }
 
   // Constrain physiological bounds
@@ -847,10 +851,10 @@ Return ONLY valid JSON matching this schema:
   const katchMcArdleBmr = cunninghamBmr
   const maintenanceCaloriesTdee = Math.round(cunninghamBmr * 1.55)
 
-  // Landmarks & Visual Overlay
+  // Landmarks & Visual Overlay (never fabricate synthetic landmarks when AI vision did not run)
   const landmarks = visionResult?.landmarks && visionResult.landmarks.length > 0
     ? visionResult.landmarks
-    : generateSyntheticLandmarks('anterior')
+    : []
 
   // Regional Distribution
   const regionalBreakdown: RegionalComposition[] = visionResult?.regionalBreakdown && visionResult.regionalBreakdown.length > 0
@@ -919,20 +923,27 @@ Return ONLY valid JSON matching this schema:
   // Recomposition Trajectory
   const recompositionProjection = generateRecompositionPlan(weightKg, finalBf, sex, targetBodyFatPercent)
 
+  const estimationMode: BodyCompositionScanResult['estimationMode'] = hasVerifiedAiVision
+    ? 'ai_vision_plus_anthropometric'
+    : 'anthropometric_formula_only'
+
   const methodDescription = isRejected
     ? 'Rejected Scan — Non-Compliant Attire Detected'
-    : (multiViewEnhanced
-      ? 'DEXA 4C Multi-View AI Spatial Anthropometry (Anterior + Lateral + Posterior) + Cunningham LBM Engine'
-      : (primaryPhoto ? 'DEXA-Calibrated Single-View AI Vision + US Navy Ensemble' : 'Circumference & Anthropometric Mathematical Ensemble'))
+    : hasVerifiedAiVision
+      ? (multiViewEnhanced
+          ? 'Multi-View Visual Anthropometry + US Navy & Cunningham LBM Wellness Estimate (Non-Medical)'
+          : 'Single-View Visual Anthropometry + US Navy Wellness Estimate (Non-Medical)')
+      : 'US Navy & Anthropometric Formula Wellness Estimate (Formula-Only — No AI Vision Landmarks)'
 
   const coachSummaryNotes = isRejected
     ? `SCAN REJECTED: ${rejectionReason} Please re-take wearing proper fitted athletic attire (sports bra/shorts or fitted compression top/shorts).`
     : (visionResult?.coachSummaryNotes ||
-      `DEXA-calibrated body composition analysis shows ${finalBf}% body fat (${classification}) with ${leanBodyMassLbs} lbs Lean Body Mass and FFMI of ${ffmi} (${ffmiCategory}). Basal metabolic burn is ${cunninghamBmr} kcal/day.`)
+      `Educational non-medical body-composition estimate (not a clinical X-ray DEXA scan) indicates ~${finalBf}% body fat (±${confidenceInterval}%, ${classification}) with ${leanBodyMassLbs} lbs estimated Lean Body Mass and FFMI of ${ffmi} (${ffmiCategory}). Estimated basal metabolic rate is ${cunninghamBmr} kcal/day.`)
 
   return {
     isRejected,
     rejectionReason,
+    estimationMode,
     estimatedBodyFatPercent: finalBf,
     confidenceIntervalPercent: confidenceInterval,
     confidenceScore,

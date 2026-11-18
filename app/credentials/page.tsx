@@ -259,7 +259,7 @@ export default function CredentialsPage() {
               </span>
             </div>
             <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.9rem', lineHeight: 1.5 }}>
-              Head Coach &amp; Performance Director. 18+ years of practical coaching experience, former Bally Total Fitness Director, BSIT graduate (3.72 GPA), and holder of 34 verified technical &amp; sports science credentials.
+              Head Coach &amp; Performance Director. NASM-CPT® Certified (#1261890687, issued Oct 2026), formerly ACE-CPT certified (2008–2021), BSIT graduate (3.72 GPA), ASTI CPR/AED certified (#1261890193), and holder of 34 verified technical credentials.
             </p>
           </div>
         </div>
@@ -275,12 +275,12 @@ export default function CredentialsPage() {
           }}
         >
           {[
-            { label: 'Primary Credential', val: 'NASM-CPT® #1261890687', tone: 'gold' },
+            { label: 'Primary Credential', val: 'NASM-CPT® #1261890687 (Oct 2026)', tone: 'gold' },
+            { label: 'Prior Certification', val: 'ACE-CPT (2008–2021)', tone: 'gold' },
             { label: 'Higher Education', val: 'B.S. Information Technology · 3.72 GPA', tone: 'blue' },
             { label: 'Cloud & AI Badges', val: '34 Verified Credly Badges (AWS, IBM, LF, MSFT)', tone: 'cyan' },
             { label: 'Accreditation', val: 'NCCA Accredited by ICE', tone: 'green' },
             { label: 'Emergency Safety', val: 'ASTI CPR/AED Certified #1261890193', tone: 'red' },
-            { label: 'Pathway', val: 'NASM Master Trainer Candidate', tone: 'gold' },
           ].map((item, idx) => (
             <div
               key={idx}

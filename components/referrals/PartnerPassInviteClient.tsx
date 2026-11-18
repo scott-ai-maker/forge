@@ -78,6 +78,12 @@ export default function PartnerPassInviteClient({
             </div>
           </div>
         </section>
+
+        <footer className="mt-8 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-400">
+          <Link href="/terms" className="underline hover:text-amber-300">Terms of Service</Link>
+          <Link href="/privacy" className="underline hover:text-amber-300">Privacy Policy</Link>
+          <Link href="/health-privacy" className="underline hover:text-amber-300">Consumer Health Data Privacy</Link>
+        </footer>
       </div>
     </main>
   )

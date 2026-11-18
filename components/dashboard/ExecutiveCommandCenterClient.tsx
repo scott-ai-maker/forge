@@ -42,6 +42,7 @@ import {
 } from '@/lib/posture-profile-state'
 import {
   getUpgradeTriggerCopy,
+  inferForgeTierFromPackageNameClient,
   UpgradeTriggerId,
   useTierAccess,
 } from '@/lib/tierEntitlements'
@@ -70,7 +71,16 @@ export interface ExecutiveCommandCenterClientProps {
   activeDayExerciseCount: number
   totalVolumeMovedLbs: number
   activeWorkoutDurationMins?: number
-  latestPlan: { nasm_opt_phase?: number; phase_name?: string; estimated_duration_mins?: number } | null
+  latestPlan: {
+    nasm_opt_phase?: number
+    phase_name?: string
+    estimated_duration_mins?: number
+    plan_json?: {
+      isCertifiedByCoach?: boolean | null
+      safetyGateCertified?: boolean | null
+      coachCertifiedAt?: string | null
+    } | null
+  } | null
   needsOnboarding?: boolean
   isOnboardingCompleted?: boolean
   isOnboardingStarted?: boolean
@@ -206,7 +216,12 @@ export default function ExecutiveCommandCenterClient({
   const deskAuditDialogRef = useRef<HTMLDialogElement | null>(null)
   const deskAuditHeadingId = useId()
 
-  const { tierId, entitlements, remainingFormLabCredits, shouldShowTrigger } = useTierAccess()
+  const initialVerifiedTier = inferForgeTierFromPackageNameClient(
+    activePackage?.package_name,
+    totalRemaining
+  )
+  const { tierId, allowQaPreview, entitlements, remainingFormLabCredits, shouldShowTrigger } =
+    useTierAccess(initialVerifiedTier)
   const { tileStatusLabel: partnerPassStatusLabel } = usePartnerPass(clientName)
 
   useEffect(() => {
@@ -499,6 +514,11 @@ export default function ExecutiveCommandCenterClient({
       {/* Subtle Human-Backed Guarantee Badge ("AI guides every rep · Coach Gordon is 1 tap away") */}
       <HumanBackedGuaranteeBadge
         optPhase={latestPlan?.nasm_opt_phase || 2}
+        isCoachCertified={Boolean(
+          latestPlan?.plan_json?.isCertifiedByCoach ||
+            latestPlan?.plan_json?.safetyGateCertified ||
+            latestPlan?.plan_json?.coachCertifiedAt
+        )}
         onOpenCoachAssistant={() =>
           openCoachGordon({
             athleteName: clientName?.split(' ')[0] || 'Athlete',
@@ -693,8 +713,8 @@ export default function ExecutiveCommandCenterClient({
         </div>
       </div>
 
-      {/* Compact QA Tier Switcher */}
-      <TierPreviewSwitcher compact />
+      {/* Compact QA Tier Switcher (Coach / Local Dev Only) */}
+      {allowQaPreview ? <TierPreviewSwitcher compact /> : null}
 
       {/* Desk Ergonomics Audit Modal (with Trigger 1 Post-Scan & Trigger 2 Second Workstation Gate) */}
       <dialog

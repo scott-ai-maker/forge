@@ -154,14 +154,7 @@ export default function VideoCritiqueStudio({
   } | null>(null)
 
   const [usageError, setUsageError] = useState<string | null>(null)
-  const [critique, setCritique] = useState<VideoCritiqueAnalysis | null>(
-    initialCritique ??
-      analyzeLiftForm({
-        liftType: initialLift ?? 'barbell_back_squat',
-        loadLbs: initialLift === 'overhead_squat_assessment' ? 0 : 275,
-        repsCount: 5,
-      })
-  )
+  const [critique, setCritique] = useState<VideoCritiqueAnalysis | null>(initialCritique ?? null)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const videoPlayerRef = useRef<HTMLVideoElement | null>(null)
@@ -216,6 +209,16 @@ export default function VideoCritiqueStudio({
     const faultsToAnalyze = overrideFaults ?? selectedFaults
     const numericLoad = loadLbs !== '' ? parseNumericInput(loadLbs, 0) : undefined
     const numericReps = parseNumericInput(repsCount, 5)
+    const resolvedVideoRef =
+      fileNameOrUrlHint ||
+      videoFileName ||
+      (activeYouTubeInfo ? `https://youtu.be/${activeYouTubeInfo.videoId}` : '') ||
+      youtubeUrlInput.trim()
+
+    if (meterUsage && !resolvedVideoRef) {
+      setUsageError('Upload a lift video clip or attach a valid video link before running a Technique Video Review.')
+      return
+    }
 
     if (meterUsage) {
       try {
@@ -226,6 +229,7 @@ export default function VideoCritiqueStudio({
             lift_type: lift,
             load_lbs: numericLoad,
             reps_count: numericReps,
+            video_file_name: resolvedVideoRef,
             observed_deviations: faultsToAnalyze,
             notes: clientNotes || undefined,
           }),
@@ -246,38 +250,22 @@ export default function VideoCritiqueStudio({
 
     clearScanTimers()
     setAnalyzing(true)
-    const scanLabel =
-      sourceType === 'youtube'
-        ? 'Connecting to YouTube kinematic video stream & parsing joint anchors...'
-        : 'Extracting 60fps kinetic frame vectors & joint anchors...'
-
-    setScanProgress({ step: 1, totalSteps: 4, label: scanLabel, percent: 25 })
+    setScanProgress({
+      step: 1,
+      totalSteps: 2,
+      label: 'Preparing NASM OPT™ technique checklist & queuing clip details...',
+      percent: 50,
+    })
 
     scanTimersRef.current.push(
       setTimeout(() => {
         setScanProgress({
           step: 2,
-          totalSteps: 4,
-          label: 'Scanning spinal alignment & lumbar curvature...',
-          percent: 50,
-        })
-      }, 300),
-      setTimeout(() => {
-        setScanProgress({
-          step: 3,
-          totalSteps: 4,
-          label: 'Evaluating knee frontal tracking & bar velocity...',
-          percent: 75,
-        })
-      }, 600),
-      setTimeout(() => {
-        setScanProgress({
-          step: 4,
-          totalSteps: 4,
-          label: 'Synthesizing NASM 4-Phase OPT™ Corrective Continuum...',
+          totalSteps: 2,
+          label: 'Building self-reported checkpoint cues & corrective warm-up notes...',
           percent: 100,
         })
-      }, 900),
+      }, 200),
       setTimeout(() => {
         const result = analyzeLiftForm({
           liftType: lift,
@@ -285,18 +273,18 @@ export default function VideoCritiqueStudio({
           repsCount: numericReps,
           observedDeviations: faultsToAnalyze,
           clientNotes:
-            clientNotes || (fileNameOrUrlHint ? `Footage analyzed: ${fileNameOrUrlHint}` : undefined),
+            clientNotes || (resolvedVideoRef ? `Footage attached: ${resolvedVideoRef}` : undefined),
           videoUrl:
-            fileNameOrUrlHint &&
-            (fileNameOrUrlHint.startsWith('http') || Boolean(parseYouTubeVideoUrl(fileNameOrUrlHint)))
-              ? fileNameOrUrlHint
+            resolvedVideoRef &&
+            (resolvedVideoRef.startsWith('http') || Boolean(parseYouTubeVideoUrl(resolvedVideoRef)))
+              ? resolvedVideoRef
               : undefined,
           videoSourceType: sourceType,
         })
         setCritique(result)
         setAnalyzing(false)
         setScanProgress(null)
-      }, 1200)
+      }, 350)
     )
   }
 

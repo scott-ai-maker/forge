@@ -83,6 +83,16 @@ describe('POST /api/fitness/video-critique', () => {
     )
     expect(badDeviationsRes.status).toBe(400)
 
+    const noVideoRes = await POST(
+      buildRequest({
+        lift_type: 'barbell_back_squat',
+        load_lbs: 225,
+        reps_count: 5,
+      })
+    )
+    expect(noVideoRes.status).toBe(400)
+    await expect(noVideoRes.json()).resolves.toMatchObject({ code: 'VIDEO_REQUIRED' })
+
     expect(mocks.consumeFeatureUse).not.toHaveBeenCalled()
   })
 
@@ -93,7 +103,13 @@ describe('POST /api/fitness/video-critique', () => {
     })
     mocks.consumeFeatureUse.mockResolvedValueOnce(false)
 
-    const res = await POST(buildRequest({ lift_type: 'barbell_deadlift', load_lbs: 315 }))
+    const res = await POST(
+      buildRequest({
+        lift_type: 'barbell_deadlift',
+        load_lbs: 315,
+        video_file_name: 'deadlift-set3.mp4',
+      })
+    )
     expect(res.status).toBe(402)
     expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0')
     const json = await res.json()
@@ -101,7 +117,7 @@ describe('POST /api/fitness/video-critique', () => {
     expect(json.addonId).toBe('addon-video-review-pack')
   })
 
-  it('consumes 1 credit for valid client requests, preserves 0 lb OHSA load, and sanitizes clinical notes', async () => {
+  it('consumes 1 credit for valid client requests with attached video, preserves 0 lb OHSA load, and sanitizes clinical notes', async () => {
     mocks.getRequestAuthz.mockResolvedValueOnce({
       user: { id: 'athlete-2' },
       client: { role: 'client' },
@@ -113,6 +129,7 @@ describe('POST /api/fitness/video-critique', () => {
         lift_type: 'overhead_squat_assessment',
         load_lbs: 0,
         reps_count: 5,
+        video_file_name: 'ohsa-front-view.mp4',
         observed_deviations: ['knee_valgus', 'arms_fall_forward'],
         notes: '  <script>alert(1)</script>Tight ankles on reps 4-5  ',
       })

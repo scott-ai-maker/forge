@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const authz = await getRequestAuthz(req)
     const admin = supabaseAdmin()
 
-    let baseUrl = 'https://forgeathletic.com'
+    let baseUrl = 'https://forge-athletic.app'
     try {
       baseUrl = getTrustedAppBaseUrl()
     } catch {

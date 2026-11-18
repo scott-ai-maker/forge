@@ -10,10 +10,12 @@ type MasterAllocationPayload = {
   fullName: string
   email: string
   phone?: string
+  smsConsent?: boolean
   occupationalVelocity: string
   orthopedicHistory: string
   autonomousExecution: 'yes' | 'no'
   capitalAllocated: 'yes' | 'no'
+  healthDataConsent?: boolean
   honeypot?: string
   startTimeMs?: number
 }
@@ -69,6 +71,26 @@ export async function POST(req: NextRequest) {
 
     if (!payload.email || !fullName || !occupationalVelocity || !orthopedicHistory) {
       return jsonNoStore({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    if (payload.healthDataConsent !== true) {
+      return jsonNoStore(
+        {
+          error:
+            'Standalone Consumer Health Data consent (WA MHMDA RCW 19.373 / NV SB 370) is required before submitting orthopedic or injury history.',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (phone && payload.smsConsent !== true) {
+      return jsonNoStore(
+        {
+          error:
+            'Affirmative TCPA written SMS consent is required when providing a mobile number (or leave the optional phone field blank).',
+        },
+        { status: 400 }
+      )
     }
 
     if (fullName.length > 100) {
@@ -127,7 +149,7 @@ export async function POST(req: NextRequest) {
         budget_band: payload.capitalAllocated === 'yes' ? '$4500+/quarter' : 'exploring',
         readiness: payload.autonomousExecution === 'yes' ? 'autonomous_ready' : 'needs_motivation',
         recommended_tier: 'transformation',
-        coaching_history: `Phone/WhatsApp: ${phone || 'N/A'}`,
+        coaching_history: phone && payload.smsConsent === true ? `Phone (TCPA Consented): ${phone}` : 'Phone: N/A',
         source: 'master_allocation_modal',
       })
 

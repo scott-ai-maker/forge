@@ -330,7 +330,7 @@ export function buildProofOfWorkDossier(params: BuildProofOfWorkParams): ProofOf
 
   const coachGordonAttestation = {
     signOff: 'Scott Gordon',
-    credentials: 'NASM Master Trainer Candidate · CPT® · CES® · PES® · CNC™ · CSNC',
+    credentials: 'NASM-CPT® (#1261890687) · Prior ACE-CPT (2008–2021) · B.S. IT · ASTI CPR/AED',
     clinicalNote: params.coachNote || 'Biomechanical and workload integrity verified. Movement patterns execute within NASM OPT™ optimal kinetic alignment with verified progressive overload.',
     signedDate: new Date().toISOString().slice(0, 10),
   }
@@ -534,7 +534,7 @@ export function decodeProofOfWorkToken(token: string): ProofOfWorkDossier | null
       },
       coachGordonAttestation: c.cg || {
         signOff: 'Scott Gordon',
-        credentials: 'NASM Master Trainer Candidate · CPT® · CES® · PES® · CNC™ · CSNC',
+        credentials: 'NASM-CPT® (#1261890687) · Prior ACE-CPT (2008–2021) · B.S. IT · ASTI CPR/AED',
         clinicalNote: 'Biomechanical and workload integrity verified.',
         signedDate: c.d,
       },

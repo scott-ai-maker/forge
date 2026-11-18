@@ -146,5 +146,71 @@ describe('POST /api/fitness/bodyfat', () => {
     expect(Number.isFinite(planNegative.targetWeightKg)).toBe(true)
     expect(planNegative.targetBodyFatPercent).toBeGreaterThanOrEqual(10)
   })
+
+  it('blocks body-composition photograph upload without standalone BIPA/MHMDA biometric release (403)', async () => {
+    const req = new NextRequest('http://localhost/api/fitness/bodyfat', {
+      method: 'POST',
+      body: JSON.stringify({
+        sex: 'male',
+        heightCm: 182,
+        weightKg: 82,
+        anteriorPhotoBase64: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/',
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res!.status).toBe(403)
+    const json = await res!.json()
+    expect(json.error).toContain('740 ILCS 14/15(b)')
+  })
+
+  it('never persists raw data:image Base64 strings into body_composition_analyses.photo_data_url', async () => {
+    const { supabaseAdmin } = await import('@/lib/supabase')
+    let capturedInsertRow: Record<string, unknown> | null = null
+
+    vi.mocked(supabaseAdmin).mockReturnValue({
+      storage: {
+        from: vi.fn(() => ({
+          upload: vi.fn().mockResolvedValue({ data: { path: 'ok' }, error: null }),
+        })),
+      },
+      from: vi.fn((table: string) => {
+        if (table === 'legal_consent_audit_log') {
+          return { insert: vi.fn().mockResolvedValue({ error: null }) }
+        }
+        return {
+          insert: vi.fn((row: Record<string, unknown>) => {
+            capturedInsertRow = row
+            return {
+              select: vi.fn(() => ({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: 'analysis-vault-1', ...row },
+                  error: null,
+                }),
+              })),
+            }
+          }),
+        }
+      }),
+    } as unknown as ReturnType<typeof supabaseAdmin>)
+
+    const req = new NextRequest('http://localhost/api/fitness/bodyfat', {
+      method: 'POST',
+      body: JSON.stringify({
+        sex: 'male',
+        heightCm: 182,
+        weightKg: 82,
+        biometricScanConsent: true,
+        anteriorPhotoBase64: 'data:image/jpeg;base64,' + Buffer.from('valid-scan-bytes').toString('base64'),
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res!.status).toBe(200)
+    expect(capturedInsertRow).not.toBeNull()
+    const storedRef = String(capturedInsertRow!['photo_data_url'] ?? '')
+    expect(storedRef.startsWith('data:')).toBe(false)
+    expect(storedRef).toMatch(/^user-123\/bodycomp-\d+-[a-f0-9]+\.jpg$/)
+  })
 })
 

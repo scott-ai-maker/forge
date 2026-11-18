@@ -252,9 +252,9 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
     ).toEqual({ allowed: false, reason: 'guest_pass_not_redeemed' })
   })
 
-  it('computes simultaneous EST launch blast, local-timezone wall-clock schedules, and Day-30 post-activation windows accurately', () => {
-    // 1. Global Launch Blast: Friday, Nov 20, 2026 at 06:00 AM EST (11:00 UTC) for BOTH NY and LA leads simultaneously
-    const launchInstant = new Date('2026-11-20T11:05:00Z')
+  it('computes TCPA-compliant 12:00 PM EST (09:00 AM PST) launch blast, local-timezone wall-clock schedules, and Day-30 post-activation windows accurately', () => {
+    // 1. Global Launch Blast: Friday, Nov 20, 2026 at 12:00 PM EST / 09:00 AM PST (17:00 UTC)
+    const launchInstant = new Date('2026-11-20T17:05:00Z')
     expect(
       evaluateScheduleReadiness(
         'launch_01a_sms',
@@ -266,7 +266,7 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
       evaluateScheduleReadiness(
         'launch_01b_email',
         { timezone: 'America/New_York', guest_pass_redeemed: false },
-        new Date('2026-11-20T10:59:00Z')
+        new Date('2026-11-20T16:59:00Z')
       ).due
     ).toBe(false)
 
@@ -404,7 +404,7 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
     expect(sentMail.text).toContain('December 20, 2026')
   })
 
-  it('dispatches simultaneous Launch Blast SMS + Email at Nov 20, 2026 06:00 AM EST and respects SMS opt-in flags', async () => {
+  it('dispatches simultaneous Launch Blast SMS + Email at Nov 20, 2026 12:00 PM EST (09:00 AM PST) and respects SMS opt-in & quiet-hours guards', async () => {
     const mockAdmin = {
       from: vi.fn((table: string) => {
         if (table === 'waitlist') {
@@ -451,7 +451,7 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
     } as unknown as SupabaseClient
 
     const summary = await dispatchDueLaunchAutomations(mockAdmin, {
-      now: new Date('2026-11-20T11:02:00Z'), // 06:02 AM EST
+      now: new Date('2026-11-20T17:02:00Z'), // 12:02 PM EST / 09:02 AM PST
     })
 
     expect(summary.evaluatedRecipients).toBe(2)

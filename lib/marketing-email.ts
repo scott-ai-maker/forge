@@ -108,21 +108,21 @@ const sequenceTemplates = [
       text: [
         'Choose the Forge Athletic membership that fits your training goals:',
         '',
-        'Core Membership: $49/month or $399/year, with a 7-day free trial. Includes personalized NASM OPT™ periodization, 1RM strength tracking, and a 3D AI posture audit.',
-        'Plus Membership: $99/month or $899/year. Includes full nutrition planning, travel workout tools, strength and body composition analytics, and 4 video form reviews per month.',
-        'Coach Support: $299/month. Includes direct coach messaging, weekly program adjustments, unlimited video form reviews, and a monthly 1-on-1 check-in call.',
+        'Core Membership: $49/month, with a 7-day free trial. Includes personalized NASM OPT™ periodization, 1RM strength tracking, and a 3D AI posture audit.',
+        'Plus Membership: $99/month. Includes full nutrition planning, travel workout tools, strength and body composition analytics, and 4 video form reviews per month.',
+        'Coach Support: $299/month. Includes direct coach messaging, weekly program adjustments, 8 Form Lab video reviews per month, and quarterly 1-on-1 check-in reviews.',
         '',
-        'Memberships renew automatically until cancelled.',
+        'All memberships are billed month-to-month and renew automatically until cancelled anytime in Account Settings ($0 cancellation fees).',
         '',
         `Compare memberships: ${baseUrl}/packages`,
       ].join('\n'),
       html: `<p>Choose the Forge Athletic membership that fits your training goals:</p>
 <ol>
-  <li><strong>Core Membership — $49/month or $399/year:</strong> 7-day free trial, personalized NASM OPT™ periodization, 1RM strength tracking, and a 3D AI posture audit.</li>
-  <li><strong>Plus Membership — $99/month or $899/year:</strong> Full nutrition planning, travel workout tools, strength and body composition analytics, and 4 video form reviews per month.</li>
-  <li><strong>Coach Support — $299/month:</strong> Direct coach messaging, weekly program adjustments, unlimited video form reviews, and a monthly 1-on-1 check-in call.</li>
+  <li><strong>Core Membership — $49/month:</strong> 7-day free trial, personalized NASM OPT™ periodization, 1RM strength tracking, and a 3D AI posture audit.</li>
+  <li><strong>Plus Membership — $99/month:</strong> Full nutrition planning, travel workout tools, strength and body composition analytics, and 4 video form reviews per month.</li>
+  <li><strong>Coach Support — $299/month:</strong> Direct coach messaging, weekly program adjustments, 8 Form Lab video reviews per month, and quarterly 1-on-1 check-in reviews.</li>
 </ol>
-<p>Memberships renew automatically until cancelled.</p>
+<p>All memberships are billed month-to-month and renew automatically until cancelled anytime in Account Settings ($0 cancellation fees).</p>
 <p><a href="${baseUrl}/packages">Compare memberships</a></p>`,
     }),
   },
@@ -157,8 +157,8 @@ const sequenceTemplates = [
       text: [
         'Start with practical training tools and add coaching support as your needs change.',
         '',
-        'Core Membership offers a 7-day free trial and starts at $49/month, or $399/year.',
-        'Plus Membership is $99/month (or $899/year). Coach Support is $299/month.',
+        'Core Membership offers a 7-day free trial at $49/month (billed month-to-month).',
+        'Plus Membership is $99/month. Coach Support is $299/month.',
         '',
         'Explore the plans, compare features, and choose the option that fits your goals.',
         '',
@@ -166,7 +166,7 @@ const sequenceTemplates = [
         `Find your starting point: ${baseUrl}/apply`,
       ].join('\n'),
       html: `<p>Start with practical training tools and add coaching support as your needs change.</p>
-<p>Core Membership offers a 7-day free trial and starts at $49/month, or $399/year. Plus Membership is $99/month (or $899/year). Coach Support is $299/month.</p>
+<p>Core Membership offers a 7-day free trial at $49/month (billed month-to-month). Plus Membership is $99/month. Coach Support is $299/month.</p>
 <p>Explore the plans, compare features, and choose the option that fits your goals.</p>
 <p><a href="${baseUrl}/packages">Explore memberships</a> | <a href="${baseUrl}/apply">Find your starting point</a></p>`,
     }),
@@ -347,10 +347,47 @@ async function sendEmail(params: {
 }
 
 // Transactional emails (receipts, session alerts) share the Resend setup but are governed by notification preferences, not marketing unsubscribes.
-export async function sendTransactionalEmail(params: { to: string; subject: string; html: string; text: string }) {
+export async function sendTransactionalEmail(params: {
+  to: string
+  subject: string
+  html: string
+  text: string
+  headers?: Record<string, string>
+}) {
   const email = normalizeEmail(params.to)
   if (!EMAIL_REGEX.test(email)) throw new Error('Invalid notification email address')
   return sendEmail({ ...params, to: email, disableTracking: true })
+}
+
+// Commercial / bounty-induced referral invitations must check email_suppressions and carry a CAN-SPAM postal address + RFC 8058 1-click unsubscribe.
+export async function sendCommercialInviteEmail(
+  supabase: SupabaseClient,
+  params: { to: string; subject: string; html: string; text: string }
+): Promise<{ skipped: boolean; reason?: 'suppressed' | 'missing_config'; id?: string | null }> {
+  const email = normalizeEmail(params.to)
+  if (!EMAIL_REGEX.test(email)) throw new Error('Invalid recipient email address')
+
+  if (await isEmailSuppressed(supabase, email)) {
+    return { skipped: true, reason: 'suppressed' }
+  }
+
+  const compliance = appendComplianceFooter(params.html, params.text, email)
+  const res = await sendEmail({
+    to: email,
+    subject: params.subject,
+    html: compliance.html,
+    text: compliance.text,
+    disableTracking: true,
+    headers: {
+      'List-Unsubscribe': `<${compliance.unsubUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
+  })
+
+  if (res.skipped) {
+    return { skipped: true, reason: 'missing_config' }
+  }
+  return { skipped: false, id: res.id }
 }
 
 export async function sendWelcomeEmail(input: WelcomeInput) {
@@ -443,36 +480,38 @@ export async function triggerLeadEmailAutomation(
 
   const name = safeName(input.firstName)
   const baseUrl = getBaseUrl()
-  const reservationNum =
-    input.cohortReservationNumber && input.cohortReservationNumber > 0
-      ? input.cohortReservationNumber
-      : 12
+  const hasVerifiedReservationNum =
+    typeof input.cohortReservationNumber === 'number' && input.cohortReservationNumber > 0
+  const reservationTag = hasVerifiedReservationNum ? ` (#${input.cohortReservationNumber})` : ''
+  const allocationBannerText = hasVerifiedReservationNum
+    ? `OFFICIAL REGISTRATION: CONFIRMED (#${input.cohortReservationNumber})`
+    : 'OFFICIAL REGISTRATION: CONFIRMED · 1-ON-1 COACH SUPPORT CAPPED AT 15 ACTIVE SEATS'
 
   try {
     let confirmation: { subject: string; text: string; html: string }
 
     if (input.source === 'founding_cohort') {
       confirmation = {
-        subject: `Forge Athletic Founding Cohort Confirmed (#${reservationNum})`,
+        subject: `Forge Athletic Founding Cohort Confirmed${reservationTag}`,
         text: [
           `Hi ${name},`,
           '',
           'Your registration for the Forge Athletic Founding Cohort has been recorded.',
           '',
-          `OFFICIAL ALLOCATION: RESERVATION #${reservationNum} OF 20`,
+          allocationBannerText,
           '',
           '--- COACH GORDON BRIEFING MEMO ---',
           "Thank you for submitting your profile. I am reviewing each applicant's training experience, movement background, and performance goals.",
           '',
           'CREDENTIALING & METHODOLOGY UPDATE:',
-          'In pursuit of unmatched sports science rigor, our advisory methodology is anchored by our 13-point curriculum across 13 NASM® disciplines—led by NASM-CPT® Certified (#1261890687) and Master Trainer Candidate tracks including Corrective Exercise Specialist (CES), Performance Enhancement Specialist (PES), Certified Nutrition Coach (CNC), and Certified Sports Nutrition Coach (CSNC).',
+          'Our coaching methodology is anchored in the NASM® Optimum Performance Training (OPT™) 5-phase model—led directly by Coach Gordon (NASM-CPT® Certified #1261890687, Oct 2026 · Prior ACE-CPT 2008–2021 · ASTI CPR/AED #1261890193 · B.S. in Information Technology, 3.72 GPA).',
           '',
           'WHAT HAPPENS NEXT:',
           '1. Intake & Biomechanical Review: Your profile answers have been logged into our triage queue.',
           '2. Priority Consultation Booking: Founding cohort members will receive 48-hour advance access to schedule their 1:1 Live Biomechanics Screen before public availability.',
           '3. Membership Follow-up: We will share current membership options and next steps as your application is reviewed.',
           '',
-          `Explore the 13-Point Accreditation Portfolio: ${baseUrl}/intake#accreditation-portfolio`,
+          `Explore Verified Credentials & Methodology: ${baseUrl}/credentials`,
           `Explore Forge Athletic memberships: ${baseUrl}/packages`,
           '',
           'If you have immediate questions or specific requirements, you may reply directly to this transmission.',
@@ -488,8 +527,8 @@ export async function triggerLeadEmailAutomation(
   </div>
 
   <div style="margin: 24px 0; text-align: center; background: rgba(245, 158, 11, 0.08); border: 1px solid #F59E0B; border-radius: 6px; padding: 14px 16px;">
-    <p style="margin: 0; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #F59E0B; font-weight: 700;">Official Allocation Confirmed</p>
-    <p style="margin: 4px 0 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 18px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.05em;">RESERVATION #${reservationNum} OF 20</p>
+    <p style="margin: 0; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #F59E0B; font-weight: 700;">Official Registration Confirmed</p>
+    <p style="margin: 4px 0 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 16px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.04em;">${allocationBannerText}</p>
   </div>
 
   <p style="font-size: 16px; line-height: 1.6; margin-bottom: 16px; color: #FFFFFF;">Hi ${name},</p>
@@ -497,7 +536,7 @@ export async function triggerLeadEmailAutomation(
 
   <div style="background: rgba(15, 23, 42, 0.6); border-left: 3px solid #F59E0B; padding: 14px 16px; margin: 20px 0;">
     <p style="margin: 0 0 6px; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #F59E0B; font-weight: 700;">Coach Gordon Briefing Memo</p>
-    <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #E2E8F0;">In pursuit of unmatched sports science rigor, our advisory methodology is anchored by our 13-point curriculum across 13 NASM® disciplines—led by NASM-CPT® Certified (#1261890687) and Master Trainer Candidate tracks including CES, PES, CNC, and CSNC.</p>
+    <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #E2E8F0;">Our coaching methodology is anchored in the NASM® Optimum Performance Training (OPT™) 5-phase model—led directly by Coach Gordon (NASM-CPT® Certified #1261890687, Oct 2026 · Prior ACE-CPT 2008–2021 · ASTI CPR/AED #1261890193 · B.S. in Information Technology, 3.72 GPA).</p>
   </div>
 
   <h3 style="font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: #F59E0B; margin: 24px 0 12px; font-weight: 700;">What Happens Next</h3>
@@ -545,14 +584,15 @@ export async function triggerLeadEmailAutomation(
           `Hi ${name},`,
           '',
           'You are on the Forge Athletic updates list.',
-          'We will share product updates, training resources, and membership news by email.',
+          'Your Founding Member promo code HOLIDAY25 unlocks a 25% Rate Lock on your selected monthly tier (valid while continuously enrolled on that tier, redeemable through December 31, 2026), and Core Membership includes a 7-day free trial.',
           '',
+          `Explore memberships & start your 7-day free trial: ${baseUrl}/packages`,
           `Complete your diagnostic fit quiz at any time: ${baseUrl}/apply`,
         ].join('\n'),
         html: `<p>Hi ${name},</p>
 <p>You are on the Forge Athletic updates list.</p>
-<p>We will share product updates, training resources, and membership news by email.</p>
-<p><a href="${baseUrl}/apply">Complete your diagnostic fit quiz</a></p>`,
+<p>Your Founding Member promo code <strong>HOLIDAY25</strong> unlocks a <strong>25% Rate Lock</strong> on your selected monthly tier (valid while continuously enrolled on that tier, redeemable through December 31, 2026), and Core Membership includes a <strong>7-day free trial</strong>.</p>
+<p><a href="${baseUrl}/packages">Explore memberships &amp; start your 7-day free trial</a> | <a href="${baseUrl}/apply">Complete your diagnostic fit quiz</a></p>`,
       }
     }
 
@@ -577,7 +617,7 @@ export async function triggerLeadEmailAutomation(
     if (internalTo) {
       const subject =
         input.source === 'founding_cohort'
-          ? `[Forge Athletic] Founding Cohort Intake (#${reservationNum}): ${email}`
+          ? `[Forge Athletic] Founding Cohort Intake${reservationTag}: ${email}`
           : `[Forge Athletic] New ${input.source === 'apply' ? 'application' : 'waitlist lead'}: ${email}`
 
       await sendEmail({

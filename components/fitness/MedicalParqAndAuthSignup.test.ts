@@ -70,9 +70,15 @@ describe('Feature #1 — Auth, HIPAA PAR-Q+ Modal & 3-Tier Founding Signup Contr
       '/auth/signup?plan=plus',
       '/auth/signup?plan=coach_support',
     ])
-    expect(FORGE_TIER_ENTITLEMENTS.core_lab.foundingPriceFormatted).toBe('$19.99')
-    expect(FORGE_TIER_ENTITLEMENTS.plus.foundingPriceFormatted).toBe('$49.00')
-    expect(FORGE_TIER_ENTITLEMENTS.coach_support.foundingPriceFormatted).toBe('$199.00')
+    expect(FORGE_TIER_ENTITLEMENTS.core_lab.foundingPriceFormatted).toBe('$49.00')
+    expect(FORGE_TIER_ENTITLEMENTS.plus.foundingPriceFormatted).toBe('$99.00')
+    expect(FORGE_TIER_ENTITLEMENTS.coach_support.foundingPriceFormatted).toBe('$299.00')
+
+    const packagesPageSource = fs.readFileSync(path.join(REPO_ROOT, 'app/packages/page.tsx'), 'utf8')
+    expect(packagesPageSource).toContain("lowPrice: '49.00'")
+    expect(packagesPageSource).toContain("price: '99.00'")
+    expect(packagesPageSource).toContain("price: '299.00'")
+    expect(packagesPageSource).not.toContain("'19.99'")
 
     expect(signupPageSource).toContain('selected-founding-plan-banner')
     expect(signupPageSource).toContain('Founding Member Rate Lock')
@@ -82,5 +88,29 @@ describe('Feature #1 — Auth, HIPAA PAR-Q+ Modal & 3-Tier Founding Signup Contr
     expect(authFormSource).toContain('aria-pressed={showPassword}')
     expect(authFormSource).toContain('id="password-constraints"')
     expect(authFormSource).toContain('id="password-toggle-warning"')
+  })
+
+  it('enforces WA MHMDA / NV SB 370 / IL BIPA unbundled Consumer Health & Biometric consent and homepage /health-privacy links', () => {
+    expect(authFormSource).toContain('id="legal-consent-checkbox"')
+    expect(authFormSource).toContain('id="health-biometric-consent-checkbox"')
+    expect(authFormSource).toContain('Standalone Consumer Health &amp; Biometric Data Consent:')
+
+    const homeSource = fs.readFileSync(path.join(REPO_ROOT, 'app/page.tsx'), 'utf8')
+    const splashSource = fs.readFileSync(
+      path.join(REPO_ROOT, 'components/marketing/HolidayUnmaskingSplash.tsx'),
+      'utf8'
+    )
+    const healthPrivacySource = fs.readFileSync(
+      path.join(REPO_ROOT, 'app/health-privacy/page.tsx'),
+      'utf8'
+    )
+
+    expect(homeSource).toContain('href="/health-privacy"')
+    expect(splashSource).toContain('href="/health-privacy"')
+    expect(healthPrivacySource).toContain('Google LLC (Gemini API)')
+    expect(healthPrivacySource).not.toContain('Leonardo Interactive Pty Ltd')
+    expect(healthPrivacySource).toContain('ElevenLabs Inc.')
+    expect(healthPrivacySource).toContain('Twilio Inc.')
+    expect(healthPrivacySource).toContain('Resend, Inc.')
   })
 })

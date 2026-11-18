@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 
-export type CredentialCategory = 'all' | 'clinical' | 'performance' | 'metabolic' | 'specialized'
+export type CredentialCategory = 'all' | 'clinical' | 'safety' | 'academic'
 
 export interface NasmCredential {
   id: string
@@ -14,7 +14,7 @@ export interface NasmCredential {
   badgeTone: string
   icon: GaaIconName
   status: string
-  statusType: 'board_review' | 'candidate' | 'specialization' | 'pinnacle' | 'certified'
+  statusType: 'certified' | 'historical'
   summary: string
   curriculum: string[]
   gaaEngineIntegration: string
@@ -25,17 +25,17 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
   {
     id: 'cpt',
     code: 'NASM-CPT®',
-    title: 'Certified Personal Trainer',
+    title: 'Certified Personal Trainer (#1261890687)',
     category: 'clinical',
     categoryLabel: 'Clinical & Biomechanics',
     badgeTone: '#C5A059',
     icon: 'award',
-    status: 'Certified & Active',
+    status: 'Certified & Active (Oct 2026)',
     statusType: 'certified',
-    summary: 'Core foundation of the Optimum Performance Training (OPT™) model spanning 5 physiological periodization phases.',
+    summary: 'NCCA-accredited Certified Personal Trainer credential issued October 2026, grounded in the Optimum Performance Training (OPT™) model across 5 progressive periodization phases.',
     curriculum: [
       '5-Phase OPT™ Periodization Architecture',
-      'Kinetic Chain Anatomy & Dynamic Posture',
+      'Kinetic Chain Anatomy & Overhead Squat Assessment (OHSA)',
       'Neuromuscular Stabilization & Proprioception',
       'Acute Training Variable Modulation (Tempo, Reps, Rest)',
     ],
@@ -43,259 +43,77 @@ export const NASM_CREDENTIALS_DATA: NasmCredential[] = [
     keyAlgorithmicModule: 'OPT™ 5-Phase Periodization Engine',
   },
   {
-    id: 'ces',
-    code: 'NASM-CES®',
-    title: 'Corrective Exercise Specialist',
+    id: 'cpr',
+    code: 'ASTI CPR/AED',
+    title: 'Adult, Child & Infant CPR/AED (#1261890193)',
+    category: 'safety',
+    categoryLabel: 'Emergency Care & Safety',
+    badgeTone: '#EF4444',
+    icon: 'heart-rate',
+    status: 'Certified & Active (Oct 2026)',
+    statusType: 'certified',
+    summary: 'Emergency cardiovascular care certification covering Adult, Child, and Infant CPR, AED deployment, and emergency dispatch readiness.',
+    curriculum: [
+      'Adult, Child & Infant Cardiopulmonary Resuscitation (CPR)',
+      'Automated External Defibrillator (AED) Operation',
+      'Sudden Cardiac Arrest Recognition & Emergency Escalation',
+      'Pre-Exercise PAR-Q+ Risk Triage & ERAP Readiness',
+    ],
+    gaaEngineIntegration: 'Anchors pre-exercise PAR-Q+ medical hold guardrails and 1:1 Live Studio Emergency Remote Action Plan (ERAP) verification.',
+    keyAlgorithmicModule: 'PAR-Q+ & ERAP Safety Gatekeeper',
+  },
+  {
+    id: 'ace-historical',
+    code: 'ACE-CPT (2008–2021)',
+    title: 'Certified Personal Trainer (Historical, 2008–2021)',
     category: 'clinical',
     categoryLabel: 'Clinical & Biomechanics',
     badgeTone: '#60A5FA',
     icon: 'movement-screen',
-    status: 'Board Review Finalization',
-    statusType: 'board_review',
-    summary: 'Systematic movement diagnostics and kinetic restoration through the clinical 4-Step Corrective Exercise Continuum.',
+    status: 'Held 2008–2021 (Historical)',
+    statusType: 'historical',
+    summary: 'Prior Certified Personal Trainer credential held from 2008 through 2021 via the American Council on Exercise (ACE), preceding October 2026 NASM-CPT® certification.',
     curriculum: [
-      'Overhead Squat Assessment (OHSA) 5 Checkpoints',
-      'Phase 1: Inhibit (Self-Myofascial Release / SMR)',
-      'Phase 2: Lengthen (Static & Neuromuscular Stretch)',
-      'Phase 3: Activate (Isolated Strengthening & Isometrics)',
-      'Phase 4: Integrate (Dynamic Multi-Planar Integration)',
+      'Integrated Fitness Training (IFT®) Progression Foundations',
+      'Functional Movement & Postural Screening',
+      'Cardiorespiratory Conditioning & Heart-Rate Zone Pacing',
+      'Practical Gym-Floor Coaching & Sustainable Adherence',
     ],
-    gaaEngineIntegration: 'Drives the AI Posture & OHSA Diagnostics Suite, kinetic chain compensation alerts (LPHC, knee valgus, asymmetrical weight shift), and auto-prescribed 4-phase CEx warmups.',
-    keyAlgorithmicModule: 'OHSA 5-Point Diagnostic & CEx Protocol Generator',
+    gaaEngineIntegration: 'Informs joint-friendly exercise regressions, plain-English rep coaching cues, and adaptable home/travel workout swaps.',
+    keyAlgorithmicModule: 'Adaptive Exercise Regression Matrix',
   },
   {
-    id: 'pes',
-    code: 'NASM-PES®',
-    title: 'Performance Enhancement Specialist',
-    category: 'performance',
-    categoryLabel: 'Athletic Performance',
-    badgeTone: '#F59E0B',
-    icon: 'lightning',
-    status: 'Board Review Finalization',
-    statusType: 'board_review',
-    summary: 'Athletic development, speed and agility training, and plans that progress over time.',
-    curriculum: [
-      'Rate of Force Development (RFD) & Explosive Power',
-      'Speed, Agility, and Quickness (SAQ) Mechanics',
-      'Olympic Lifting Derivatives & Ground Reaction Forces',
-      'Triphasic & Contrast Training Periodization',
-    ],
-    gaaEngineIntegration: 'Powers the Athletic Performance Studio (`components/fitness/AthleticPerformanceStudio.tsx`) and field power diagnostics (Margaria-Kalamen, Pro Agility 5-10-5, reactive jump profiling).',
-    keyAlgorithmicModule: 'SAQ & Neuromuscular Power Matrix',
-  },
-  {
-    id: 'cnc',
-    code: 'NASM-CNC™',
-    title: 'Certified Nutrition Coach',
-    category: 'metabolic',
-    categoryLabel: 'Metabolic & Nutrition',
-    badgeTone: '#34D399',
-    icon: 'apple',
-    status: 'Board Review Finalization',
-    statusType: 'board_review',
-    summary: 'Clinical macronutrient periodization, bioenergetic math (TDEE, BMR, NEAT, TEF), and behavioral dietary adherence.',
-    curriculum: [
-      'Macronutrient Periodization & Caloric Allocation',
-      'Metabolic Expenditure Math (BMR, NEAT, TEF, EAT)',
-      'Hydration Physiology & Micronutrient Sufficiency',
-      'Eating habits and practical nutrition choices',
-    ],
-    gaaEngineIntegration: 'Supports Forge Athletic nutrition estimates, meal planning, and progress tracking.',
-    keyAlgorithmicModule: 'Bioenergetic TDEE & Macro Allocation Algorithm',
-  },
-  {
-    id: 'csnc',
-    code: 'NASM-CSNC',
-    title: 'Certified Sports Nutrition Coach',
-    category: 'metabolic',
-    categoryLabel: 'Metabolic & Nutrition',
-    badgeTone: '#10B981',
-    icon: 'utensils',
-    status: 'Candidate Track',
-    statusType: 'candidate',
-    summary: 'Advanced athletic nutrient timing, glycogen supercompensation, intra-workout kinetics, and competition fueling.',
-    curriculum: [
-      'Glycogen Supercompensation & Depletion Cycling',
-      'Intra-Session Fueling & Exogenous Carb Kinetics',
-      'Electrolyte Osmolality & Thermoregulation',
-      'Ergogenic Aids & Evidence-Based Supplement Protocols',
-    ],
-    gaaEngineIntegration: 'Regulates pre/intra/post-workout nutritional timing algorithms for high-output athletic conditioning.',
-    keyAlgorithmicModule: 'Peri-Workout Nutrient Timing Engine',
-  },
-  {
-    id: 'pbc',
-    code: 'NASM-PBC',
-    title: 'Physique & Bodybuilding Coach',
-    category: 'performance',
-    categoryLabel: 'Athletic Performance',
-    badgeTone: '#EC4899',
-    icon: 'dumbbell',
-    status: 'Specialization Track',
-    statusType: 'specialization',
-    summary: 'Hypertrophy biomechanics, stimulus-to-fatigue ratios (SFR), volume landmarks (MEV/MAV/MRV), and structural symmetry.',
-    curriculum: [
-      'Volume Landmarks (MEV, MAV, MRV Periodization)',
-      'Stimulus-to-Fatigue Ratio (SFR) Optimization',
-      'Resistance Curve Vectoring & Peak Tension Matching',
-      'Intra-Set Stretch Loading & Muscle Architecture',
-    ],
-    gaaEngineIntegration: 'Guides Phase 3 Muscular Development programming with optimal joint angles, peak tension curves, and hypertrophy loading.',
-    keyAlgorithmicModule: 'Volume Landmark (MEV/MAV/MRV) Optimizer',
-  },
-  {
-    id: 'wls',
-    code: 'NASM-WLS',
-    title: 'Weight Loss Specialist',
-    category: 'metabolic',
-    categoryLabel: 'Metabolic & Nutrition',
-    badgeTone: '#06B6D4',
-    icon: 'scale',
-    status: 'Specialization Track',
-    statusType: 'specialization',
-    summary: 'Adaptive thermogenesis defense, reverse dieting protocols, hormone mitigation (leptin/ghrelin), and lean tissue defense.',
-    curriculum: [
-      'Adaptive Thermogenesis & Metabolic Rate Preservation',
-      'NEAT (Non-Exercise Activity) Defense Mechanisms',
-      'Reverse Dieting & Caloric Step-Up Protocols',
-      'Hormonal Optimization During Caloric Deficits',
-    ],
-    gaaEngineIntegration: 'Powers fat loss periodization microcycles without metabolic crash or muscle catabolism.',
-    keyAlgorithmicModule: 'Metabolic Adaptation & NEAT Preserver',
-  },
-  {
-    id: 'bcs',
-    code: 'NASM-BCS',
-    title: 'Behavior Change Specialist',
-    category: 'clinical',
-    categoryLabel: 'Clinical & Biomechanics',
-    badgeTone: '#A855F7',
+    id: 'bsit',
+    code: 'BSIT · B.S.',
+    title: 'Bachelor of Science in Information Technology (3.72 GPA)',
+    category: 'academic',
+    categoryLabel: 'Academic & Systems Architecture',
+    badgeTone: '#38BDF8',
     icon: 'brain',
-    status: 'Specialization Track',
-    statusType: 'specialization',
-    summary: 'Neuroscience of adherence, Transtheoretical Stages of Change, motivational interviewing, and habit architecture.',
+    status: 'Conferred Sep 2020',
+    statusType: 'certified',
+    summary: 'Regionally accredited Bachelor of Science in Information Technology (Advanced Software Development track, 3.72 GPA), paired with 34 verified Cloud & AI engineering badges.',
     curriculum: [
-      'Transtheoretical Model (Stages of Change Dynamics)',
-      'Motivational interviewing and supportive coaching',
-      'Habit Stacking & Implementation Intentions',
-      'Decision-making, habit building, and consistency',
+      'Algorithmic Logic, Data Structures & Object-Oriented Engineering',
+      'Relational Database Architecture & Row-Level Security Isolation',
+      'Information Assurance, Cryptography & Privacy Controls',
+      'Cloud Infrastructure & Production AI Application Engineering',
     ],
-    gaaEngineIntegration: 'Calibrates AI Coach Gordon’s cognitive tone, weekly check-in responsiveness, and client barrier friction resolution.',
-    keyAlgorithmicModule: 'Adherence Friction Scoring & Cognitive Coach Tone',
-  },
-  {
-    id: 'vcs',
-    code: 'NASM-VCS',
-    title: 'Virtual Coaching Specialist',
-    category: 'specialized',
-    categoryLabel: 'Lifespan & Specialized',
-    badgeTone: '#3B82F6',
-    icon: 'video-studio',
-    status: 'Specialization Track',
-    statusType: 'specialization',
-    summary: 'Remote coaching workflows, asynchronous biomechanical video review, digital studio ergonomics, and telehealth delivery.',
-    curriculum: [
-      'Asynchronous Video Movement Analysis & Feedback',
-      'Remote Biomechanical Cues & Voice Telemetry',
-      'WebRTC Studio Lighting, Framing & Optical Truth',
-      'Digital Telehealth Client Onboarding Protocols',
-    ],
-    gaaEngineIntegration: 'Standardizes the 1:1 Live WebRTC Consultation Studio and asynchronous video movement review pipelines.',
-    keyAlgorithmicModule: 'WebRTC Studio Diagnostics & Voice Cues Engine',
-  },
-  {
-    id: 'sfs',
-    code: 'NASM-SFS',
-    title: 'Senior Fitness Specialist',
-    category: 'specialized',
-    categoryLabel: 'Lifespan & Specialized',
-    badgeTone: '#F97316',
-    icon: 'shield-check',
-    status: 'Specialization Track',
-    statusType: 'specialization',
-    summary: 'Longevity biomechanics, fall prevention, osteopenia/sarcopenia mitigation, and joint-friendly loading adaptations.',
-    curriculum: [
-      'Joint Longevity & Cartilage Protection Protocols',
-      'Proprioceptive Balance Progressions & Fall Defense',
-      'Osteopenia & Sarcopenia Neuromuscular Defense',
-      'Contraindicated Movement Swapping Matrix',
-    ],
-    gaaEngineIntegration: 'Supports mobility and healthy-aging tools, with exercise options adapted to a person’s needs.',
-    keyAlgorithmicModule: 'Joint Preservation & Contraindication Swapper',
-  },
-  {
-    id: 'gfs',
-    code: 'NASM-GFS',
-    title: 'Golf Fitness Specialist',
-    category: 'specialized',
-    categoryLabel: 'Lifespan & Specialized',
-    badgeTone: '#84CC16',
-    icon: 'target',
-    status: 'Specialization Track',
-    statusType: 'specialization',
-    summary: 'Rotational kinetics, thoracic spine mobility, X-Factor stretch mechanics, and kinetic ground power transfer.',
-    curriculum: [
-      'Transverse Plane Rotational Power Delivery',
-      'Thoracic Spine Mobility & Pelvic Dissociation',
-      'X-Factor Stretch Biomechanics & Coil Mechanics',
-      'Ground Reaction Force Vectoring for Swings',
-    ],
-    gaaEngineIntegration: 'Supplies rotational kinetic chain screening and transverse power conditioning for rotational athletes.',
-    keyAlgorithmicModule: 'Transverse Plane Rotational Diagnostics',
-  },
-  {
-    id: 'mmacs',
-    code: 'NASM-MMACS',
-    title: 'MMA Conditioning Specialist',
-    category: 'performance',
-    categoryLabel: 'Athletic Performance',
-    badgeTone: '#EF4444',
-    icon: 'crosshair',
-    status: 'Specialization Track',
-    statusType: 'specialization',
-    summary: 'Multi-planar combat conditioning, 3-system energy conditioning, rotational anti-flexion, and neck/grip endurance.',
-    curriculum: [
-      'Tri-System Bioenergetics (ATP-PC, Glycolytic, Aerobic)',
-      'Cervical Spine Stabilization & Whiplash Defense',
-      'Anti-Rotational & Anti-Lateral Core Bracing',
-      'Sustained Isometric Grip & Kinetic Clamping',
-    ],
-    gaaEngineIntegration: 'Powers functional combat conditioning modules and multi-planar athletic resilience.',
-    keyAlgorithmicModule: 'Tri-System Intermittent Conditioning Engine',
-  },
-  {
-    id: 'master',
-    code: '🏆 NASM Master Trainer',
-    title: 'Master Performance Director (Pinnacle Status)',
-    category: 'clinical',
-    categoryLabel: 'Clinical & Biomechanics',
-    badgeTone: '#EAB308',
-    icon: 'crown',
-    status: 'Advanced credential pathway',
-    statusType: 'pinnacle',
-    summary: 'The pinnacle practitioner credential awarded upon mastering the comprehensive NASM continuum across assessment, correction, performance, and nutrition.',
-    curriculum: [
-      'Full-Spectrum Kinetic Chain Synthesis',
-      'Master Clinical Diagnostic Screening',
-      'Macro-to-Micro Periodization Architecture',
-      'Integrated Human Performance Ecosystem Leadership',
-    ],
-    gaaEngineIntegration: 'Informs coaching recommendations, movement screening, and training plans across Forge Athletic.',
-    keyAlgorithmicModule: 'Integrated Training and Performance Plan',
+    gaaEngineIntegration: 'Powers Forge Athletic’s browser-side MediaPipe pose math, PostgreSQL RLS security architecture, and deterministic workout engines.',
+    keyAlgorithmicModule: '33-Point Pose & Periodization Software Engine',
   },
 ]
 
 export default function NasmAccreditationPortfolio() {
   const [selectedCategory, setSelectedCategory] = useState<CredentialCategory>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [expandedId, setExpandedId] = useState<string | null>('ces')
+  const [expandedId, setExpandedId] = useState<string | null>('cpt')
 
   const categories: { key: CredentialCategory; label: string; count: number }[] = useMemo(() => [
     { key: 'all', label: 'All Credentials', count: NASM_CREDENTIALS_DATA.length },
-    { key: 'clinical', label: 'Clinical & Biomechanics', count: NASM_CREDENTIALS_DATA.filter((c) => c.category === 'clinical').length },
-    { key: 'performance', label: 'Athletic Performance', count: NASM_CREDENTIALS_DATA.filter((c) => c.category === 'performance').length },
-    { key: 'metabolic', label: 'Metabolic & Nutrition', count: NASM_CREDENTIALS_DATA.filter((c) => c.category === 'metabolic').length },
-    { key: 'specialized', label: 'Lifespan & Specialized', count: NASM_CREDENTIALS_DATA.filter((c) => c.category === 'specialized').length },
+    { key: 'clinical', label: 'Coaching & Biomechanics', count: NASM_CREDENTIALS_DATA.filter((c) => c.category === 'clinical').length },
+    { key: 'safety', label: 'Emergency Safety', count: NASM_CREDENTIALS_DATA.filter((c) => c.category === 'safety').length },
+    { key: 'academic', label: 'Academic & Engineering', count: NASM_CREDENTIALS_DATA.filter((c) => c.category === 'academic').length },
   ], [])
 
   const filteredCredentials = useMemo(() => {
@@ -353,7 +171,7 @@ export default function NasmAccreditationPortfolio() {
               color: 'var(--gold-lt)',
             }}
           >
-            Sports Science Pedigree · Board Accreditations In Progress
+            Verified Credentials &amp; Academic Foundation
           </span>
         </div>
 
@@ -367,7 +185,7 @@ export default function NasmAccreditationPortfolio() {
             letterSpacing: '0.02em',
           }}
         >
-          The 13-Point NASM® Clinical &amp; Performance Portfolio
+          Verified Coaching, Safety &amp; Technical Accreditations
         </h2>
 
         <p
@@ -380,7 +198,7 @@ export default function NasmAccreditationPortfolio() {
             lineHeight: 1.6,
           }}
         >
-          Every algorithmic periodization model, kinetic movement screen, and corrective protocol inside Forge Athletic is anchored to the following National Academy of Sports Medicine accreditations.
+          Every periodization model, movement screen, and safety gate inside Forge Athletic is anchored to Coach Gordon’s verified credentials and academic engineering background.
         </p>
       </div>
 
@@ -394,10 +212,10 @@ export default function NasmAccreditationPortfolio() {
         }}
       >
         {[
-          { label: 'Total Accreditations', value: '13 Specialized', note: 'OPT™ Ecosystem' },
-          { label: 'Diagnostic Continuum', value: '4-Step CEx', note: 'Inhibit · Lengthen · Activate · Integrate' },
-          { label: 'Kinetic Screen Scope', value: '5 Checkpoints', note: 'Foot/Ankle to Cervical Spine' },
-          { label: 'Periodization Architecture', value: '5 OPT™ Phases', note: 'Stabilization to Peak Power' },
+          { label: 'Primary Certification', value: 'NASM-CPT®', note: 'Cert #1261890687 (Oct 2026)' },
+          { label: 'Prior Certification', value: 'ACE-CPT', note: 'Held 2008–2021 (Historical)' },
+          { label: 'Emergency Safety', value: 'ASTI CPR/AED', note: 'Cert #1261890193 (Active)' },
+          { label: 'Academic & Tech', value: 'B.S. IT (3.72)', note: '+ 34 Verified Credly Badges' },
         ].map((stat, idx) => (
           <div
             key={idx}
@@ -535,7 +353,6 @@ export default function NasmAccreditationPortfolio() {
       >
         {filteredCredentials.map((cred) => {
           const isExpanded = expandedId === cred.id
-          const isPinnacle = cred.statusType === 'pinnacle'
           const isCertified = cred.statusType === 'certified'
 
           return (
@@ -545,13 +362,9 @@ export default function NasmAccreditationPortfolio() {
               style={{
                 background: isExpanded
                   ? 'rgba(19, 30, 48, 0.95)'
-                  : isPinnacle
-                  ? 'linear-gradient(135deg, rgba(30, 24, 10, 0.8) 0%, rgba(14, 23, 36, 0.85) 100%)'
                   : 'rgba(14, 23, 36, 0.75)',
                 border: isExpanded
                   ? `1.5px solid ${cred.badgeTone}`
-                  : isPinnacle
-                  ? '1.5px solid rgba(234, 179, 8, 0.6)'
                   : '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: 10,
                 padding: '16px 18px',
@@ -625,14 +438,10 @@ export default function NasmAccreditationPortfolio() {
                     borderRadius: 4,
                     background: isCertified
                       ? 'rgba(52, 211, 153, 0.18)'
-                      : isPinnacle
-                      ? 'rgba(234, 179, 8, 0.2)'
                       : 'rgba(255, 255, 255, 0.08)',
-                    color: isCertified ? '#34D399' : isPinnacle ? '#FEF08A' : '#94A3B8',
+                    color: isCertified ? '#34D399' : '#94A3B8',
                     border: isCertified
                       ? '1px solid rgba(52, 211, 153, 0.45)'
-                      : isPinnacle
-                      ? '1px solid rgba(234, 179, 8, 0.5)'
                       : '1px solid rgba(255, 255, 255, 0.12)',
                     whiteSpace: 'nowrap',
                   }}
@@ -842,7 +651,7 @@ export default function NasmAccreditationPortfolio() {
           fontFamily: 'Raleway, sans-serif',
         }}
       >
-        <strong style={{ color: '#94A3B8' }}>Legal Non-Affiliation &amp; Nominative Fair Use:</strong> NASM®, Optimum Performance Training™, OPT™, Corrective Exercise Specialist (CES®), Performance Enhancement Specialist (PES®), Certified Nutrition Coach (CNC™), and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. Forge Athletic Performance LLC is an independent private entity and is not affiliated with, sponsored by, or endorsed by NASM or Ascend Learning, LLC. All references to NASM credentials and the OPT™ model are made strictly for educational, methodological compatibility, and scientific periodization reference purposes under the Nominative Fair Use doctrine.
+        <strong style={{ color: '#94A3B8' }}>Legal Non-Affiliation &amp; Nominative Fair Use:</strong> NASM®, Optimum Performance Training™, OPT™, and Certified Personal Trainer (CPT®) are registered trademarks or service marks of the National Academy of Sports Medicine (NASM) and/or Ascend Learning, LLC. ACE® is a registered trademark of the American Council on Exercise. Forge Athletic Performance LLC is an independent private entity and is not affiliated with, sponsored by, or endorsed by NASM, Ascend Learning, LLC, or ACE. All references to credentials and the OPT™ model are made strictly for truthful credential verification and educational methodology reference under the Nominative Fair Use doctrine.
       </div>
     </section>
   )

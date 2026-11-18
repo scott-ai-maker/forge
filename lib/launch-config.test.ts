@@ -26,10 +26,10 @@ describe('lib/launch-config', () => {
     expect(date.getDate()).toBe(20)
   })
 
-  it('exposes the HOLIDAY25 25% Lifetime Rate Lock holiday deal promo configuration', () => {
+  it('exposes the HOLIDAY25 25% Rate Lock holiday deal promo configuration', () => {
     expect(HOLIDAY_DEAL_PROMO.code).toBe('HOLIDAY25')
     expect(HOLIDAY_DEAL_PROMO.discountPercent).toBe(25)
-    expect(HOLIDAY_DEAL_PROMO.headline).toContain('25% Lifetime Rate Lock')
+    expect(HOLIDAY_DEAL_PROMO.headline).toContain('25% Rate Lock')
     expect(HOLIDAY_DEAL_PROMO.headline).toContain('Free 60-Min Pre-Holiday Movement Screen')
   })
 

@@ -124,6 +124,7 @@ export default function AiPostureMeshScannerModal({
   })
 
   const [isScanning, setIsScanning] = useState<boolean>(false)
+  const [biometricScanConsent, setBiometricScanConsent] = useState<boolean>(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Derived state for the active pose
@@ -431,6 +432,16 @@ export default function AiPostureMeshScannerModal({
   // Trigger AI Biomechanical Scan for active pose
   const handleScan = useCallback(async () => {
     const currentPhoto = photosByView[activeView]
+    if (!currentPhoto) {
+      setErrorMessage('Capture or upload a posture photograph for this view before running a scan.')
+      return
+    }
+    if (!biometricScanConsent) {
+      setErrorMessage(
+        'Confirm standalone Biometric & Consumer Health Scan Release (IL BIPA 740 ILCS 14/15(b), WA MHMDA RCW 19.373, TX CUBI) before transmitting posture photographs for AI landmark analysis.'
+      )
+      return
+    }
     setIsScanning(true)
     setErrorMessage(null)
 
@@ -442,6 +453,7 @@ export default function AiPostureMeshScannerModal({
           imageBase64: currentPhoto || undefined,
           view: activeView,
           clientName,
+          biometricScanConsent: true,
         }),
       })
 
@@ -465,10 +477,16 @@ export default function AiPostureMeshScannerModal({
     } finally {
       setIsScanning(false)
     }
-  }, [clientId, activeView, clientName, photosByView, extractTelemetryPayload])
+  }, [clientId, activeView, clientName, photosByView, biometricScanConsent, extractTelemetryPayload])
 
   // Batch scan all captured poses
   const handleBatchScan = useCallback(async () => {
+    if (!biometricScanConsent) {
+      setErrorMessage(
+        'Confirm standalone Biometric & Consumer Health Scan Release (IL BIPA 740 ILCS 14/15(b), WA MHMDA RCW 19.373, TX CUBI) before batch-scanning posture photographs.'
+      )
+      return
+    }
     const posesToScan = (Object.keys(photosByView) as PosturalViewType[]).filter(
       v => photosByView[v] && !scanResultsByView[v]
     )
@@ -493,6 +511,7 @@ export default function AiPostureMeshScannerModal({
             imageBase64: photo || undefined,
             view: v,
             clientName,
+            biometricScanConsent: true,
           }),
         })
 
@@ -512,7 +531,7 @@ export default function AiPostureMeshScannerModal({
     } finally {
       setIsScanning(false)
     }
-  }, [clientId, clientName, photosByView, scanResultsByView])
+  }, [clientId, clientName, photosByView, scanResultsByView, biometricScanConsent])
 
   // Apply all scanned posture findings to the NASM Assessment Form
   const handleApplyAllFindings = useCallback(() => {
@@ -1486,12 +1505,12 @@ export default function AiPostureMeshScannerModal({
                   className="tactile-btn"
                   style={{
                     padding: '8px 12px',
-                    background: imageSrc
+                    background: imageSrc && biometricScanConsent
                       ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
                       : 'rgba(255,255,255,0.06)',
-                    border: imageSrc ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                    border: imageSrc && biometricScanConsent ? 'none' : '1px solid rgba(255,255,255,0.12)',
                     borderRadius: 5,
-                    color: imageSrc ? '#080E14' : '#CBD5E1',
+                    color: imageSrc && biometricScanConsent ? '#080E14' : '#CBD5E1',
                     fontSize: 11.5,
                     fontWeight: 800,
                     cursor: (isScanning || !imageSrc) ? 'not-allowed' : 'pointer',
@@ -1499,14 +1518,48 @@ export default function AiPostureMeshScannerModal({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 5,
-                    boxShadow: imageSrc ? '0 2px 10px rgba(16,185,129,0.3)' : 'none',
+                    boxShadow: imageSrc && biometricScanConsent ? '0 2px 10px rgba(16,185,129,0.3)' : 'none',
                   }}
                 >
-                  <GaaIcon name="lightning" size={12} tone={imageSrc ? 'inherit' : 'gold'} />
+                  <GaaIcon name="lightning" size={12} tone={imageSrc && biometricScanConsent ? 'inherit' : 'gold'} />
                   <span>{scanResult ? 'Re-Analyze' : 'Run AI Scan'}</span>
                 </button>
               </div>
             )}
+
+            {/* Standalone Biometric & Consumer Health Scan Release (BIPA 740 ILCS 14/15(b) / WA MHMDA / TX CUBI) */}
+            <div
+              data-testid="posture-biometric-release-card"
+              style={{
+                padding: '9px 11px',
+                borderRadius: 6,
+                background: 'rgba(15, 23, 42, 0.88)',
+                border: '1px solid rgba(197, 160, 89, 0.32)',
+                fontSize: 11,
+                lineHeight: 1.4,
+                color: '#E2E8F0',
+              }}
+            >
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  data-testid="posture-biometric-consent-checkbox"
+                  checked={biometricScanConsent}
+                  onChange={e => {
+                    setBiometricScanConsent(e.target.checked)
+                    if (e.target.checked) setErrorMessage(null)
+                  }}
+                  style={{ width: 16, height: 16, marginTop: 2, flexShrink: 0, accentColor: '#10B981' }}
+                />
+                <span>
+                  <strong>Standalone Biometric &amp; Health Scan Release:</strong> Athlete has provided written consent under the{' '}
+                  <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                    Consumer Health &amp; Biometric Data Policy
+                  </a>{' '}
+                  (IL BIPA 740 ILCS 14/15(b), WA MHMDA, TX CUBI) for encrypted cloud Gemini pose-landmark analysis solely for training alignment (zero biometric sale; destroyed upon account deletion or within statutory limits).
+                </span>
+              </label>
+            </div>
 
             {/* Quick Mobile Link to Setup Guide */}
             <button

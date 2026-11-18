@@ -79,7 +79,7 @@ export default function FormLabRecorder({
   const previewUrlRef = useRef<string | null>(null)
 
   const outOfCredits = remainingFormLabCredits <= 0
-  const nextTierName = tierId === 'core_lab' ? 'Plus ($49/mo)' : 'Coach Support ($199/mo)'
+  const nextTierName = tierId === 'core_lab' ? 'Plus ($99/mo)' : 'Coach Support ($299/mo)'
   const effectiveClipLabel = localClipFile?.name ?? attachedVideoLabel ?? null
 
   const revokePreviewUrl = useCallback(() => {

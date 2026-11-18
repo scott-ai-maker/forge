@@ -4,6 +4,12 @@ import { buildEntitlementGrant, buildMembershipEntitlementGrants } from '@/lib/a
 import { getForgeAddon } from '@/lib/forge-addons'
 import { notifyUser } from '@/lib/notifications'
 import { getForgeMembership } from '@/lib/forge-memberships'
+import {
+  buildSubscriptionConfirmationEmail,
+  buildTrialEndingReminderEmail,
+  buildUpcomingRenewalNoticeEmail,
+  dispatchDeduplicatedBillingComplianceEmail,
+} from '@/lib/billing-compliance-emails'
 
 type PackageGrantPayload = {
   clientId: string
@@ -260,6 +266,36 @@ export async function POST(req: NextRequest) {
             'new_enrollment',
             `Subscription enrollment started via checkout session ${session.id}.`
           )
+
+          const parsedRecurringCents = Number.parseInt(session.metadata?.finalPriceCents ?? '', 10)
+          const recurringAmountCents = Number.isFinite(parsedRecurringCents) && parsedRecurringCents > 0
+            ? parsedRecurringCents
+            : (session.amount_total ?? 0)
+          const parsedTrialDays = Number.parseInt(session.metadata?.trialDays ?? '0', 10)
+          const resolvedMembership = session.metadata?.packageId
+            ? getForgeMembership(session.metadata.packageId)
+            : undefined
+          const trialDays =
+            Number.isFinite(parsedTrialDays) && parsedTrialDays > 0
+              ? parsedTrialDays
+              : (resolvedMembership?.trialDays ?? null)
+          const cadence = session.metadata?.cadence === 'annual' ? 'annual' : 'monthly'
+
+          const confirmationEmail = buildSubscriptionConfirmationEmail({
+            packageName,
+            recurringAmountCents,
+            cadence,
+            trialDays,
+            discountCode: discountCode || null,
+          })
+
+          await dispatchDeduplicatedBillingComplianceEmail(admin, {
+            userId: clientId,
+            toEmail: checkoutEmail,
+            dedupeKey: `billing-ack:${session.id}`,
+            logType: 'subscription_confirmation',
+            ...confirmationEmail,
+          })
         }
 
         const isAddonPurchase = source === 'forge_addon'
@@ -524,6 +560,84 @@ export async function POST(req: NextRequest) {
             `Subscription ${subscription.id} entered status '${subscription.status}'.`
           )
         }
+      }
+    }
+
+    if (event.type === 'customer.subscription.trial_will_end') {
+      const subscription = event.data.object as Stripe.Subscription
+      const admin = supabaseAdmin()
+      const stripeCustomerId = typeof subscription.customer === 'string' ? subscription.customer : null
+
+      let clientId: string | null = subscription.metadata?.clientId || subscription.metadata?.client_id || null
+      if (!clientId && stripeCustomerId) {
+        clientId = await resolveClientIdFromCustomer(admin, stripeCustomerId)
+      }
+
+      if (clientId) {
+        const metadata = subscription.metadata ?? {}
+        const packageName = metadata.packageName || 'Forge Athletic Membership'
+        const cadence = metadata.cadence === 'annual' ? 'annual' : 'monthly'
+        const parsedMetaAmount = Number.parseInt(metadata.finalPriceCents ?? '', 10)
+        const itemUnitAmount = subscription.items?.data?.[0]?.price?.unit_amount ?? 0
+        const recurringAmountCents =
+          Number.isFinite(parsedMetaAmount) && parsedMetaAmount > 0 ? parsedMetaAmount : itemUnitAmount
+        const trialEndUnix = subscription.trial_end ?? null
+
+        const reminderEmail = buildTrialEndingReminderEmail({
+          packageName,
+          recurringAmountCents,
+          cadence,
+          trialEndUnix,
+        })
+
+        await dispatchDeduplicatedBillingComplianceEmail(admin, {
+          userId: clientId,
+          toEmail: null,
+          dedupeKey: `trial-ending:${subscription.id}:${String(trialEndUnix ?? 'none')}`,
+          logType: 'trial_ending_reminder',
+          ...reminderEmail,
+        })
+      }
+    }
+
+    if (event.type === 'invoice.upcoming') {
+      const invoice = event.data.object as Stripe.Invoice
+      const admin = supabaseAdmin()
+      const subscriptionDetails = invoice.parent?.subscription_details ?? null
+      const stripeCustomerId = typeof invoice.customer === 'string' ? invoice.customer : null
+
+      let clientId: string | null = subscriptionDetails?.metadata?.clientId ?? null
+      if (!clientId && stripeCustomerId) {
+        clientId = await resolveClientIdFromCustomer(admin, stripeCustomerId)
+      }
+
+      if (clientId) {
+        const metadata = subscriptionDetails?.metadata ?? {}
+        const packageName = metadata.packageName || 'Forge Athletic Membership'
+        const cadence = metadata.cadence === 'annual' ? 'annual' : 'monthly'
+        const parsedMetaAmount = Number.parseInt(metadata.finalPriceCents ?? '', 10)
+        const amountDueCents =
+          typeof invoice.amount_due === 'number' && invoice.amount_due > 0
+            ? invoice.amount_due
+            : Number.isFinite(parsedMetaAmount) && parsedMetaAmount > 0
+            ? parsedMetaAmount
+            : 0
+        const renewalUnix = invoice.next_payment_attempt ?? invoice.period_end ?? null
+
+        const renewalEmail = buildUpcomingRenewalNoticeEmail({
+          packageName,
+          amountDueCents,
+          cadence,
+          renewalUnix,
+        })
+
+        await dispatchDeduplicatedBillingComplianceEmail(admin, {
+          userId: clientId,
+          toEmail: invoice.customer_email ?? null,
+          dedupeKey: `invoice-upcoming:${stripeCustomerId || clientId}:${String(renewalUnix ?? event.id)}`,
+          logType: 'upcoming_renewal_notice',
+          ...renewalEmail,
+        })
       }
     }
 

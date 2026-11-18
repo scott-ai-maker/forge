@@ -53,6 +53,7 @@ export interface PosturalMeshScanResult {
     activate: Array<{ muscle: string; protocol: string }>
     integrate: Array<{ exercise: string; protocol: string }>
   }
+  isUnverifiedFallback?: boolean
   clinicalSummary: string
 }
 
@@ -176,6 +177,9 @@ export async function analyzePosturalMesh(
   params: ScanPostureParams
 ): Promise<PosturalMeshScanResult> {
   const { imageBase64, view, clientName = 'Athlete' } = params
+  if (!imageBase64 || !imageBase64.trim()) {
+    throw new Error('A captured or uploaded posture photograph is required to run postural mesh analysis.')
+  }
   const safeView: PosturalViewType = VALID_POSTURAL_VIEWS.includes(view) ? view : 'anterior'
   const safeAthleteLabel = sanitizeAthleteFirstName(clientName)
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
@@ -189,7 +193,7 @@ export async function analyzePosturalMesh(
           ? 'image/webp'
           : 'image/jpeg'
 
-      const prompt = `You are Coach Gordon, Director of Human Performance at Forge Athletic, Master NASM-CPT, Corrective Exercise Specialist (CES), and Golf Fitness Specialist (GFS).
+      const prompt = `You are Coach Gordon, Head Coach & Director of Human Performance at Forge Athletic (NASM-CPT® #1261890687, B.S. IT).
 You analyze movement and posture with deep empathy, compassionate encouragement, and orthopedic safety (never catastrophizing or body-shaming; focus on empowering corrective progressions and longevity).
 Analyze this athlete's ${safeView.replace('_', ' ')} posture / movement screen.
 Extract anatomical landmarks (x, y coordinates in percentages 0-100), measure biomechanical deviation angles, and identify NASM kinetic chain compensations.
@@ -512,42 +516,22 @@ function getDefaultAngles(view: PosturalViewType): BiomechanicalAngle[] {
 
 function generateDeterministicPostureScan(view: PosturalViewType, clientName: string): PosturalMeshScanResult {
   const safeName = sanitizeAthleteFirstName(clientName)
-  const presetByView: Record<
-    PosturalViewType,
-    { syndrome: PosturalMeshScanResult['syndromeDetected']; compensations: string[]; focusLabel: string }
-  > = {
-    anterior: {
-      syndrome: 'Pronation Distortion',
-      compensations: ['knees_cave_in', 'feet_turn_out'],
-      focusLabel: 'frontal-plane Knee and Foot/Ankle checkpoints (Knees Cave In, Feet Turn Out)',
-    },
-    lateral: {
-      syndrome: 'Lower Crossed',
-      compensations: ['low_back_arches', 'excessive_forward_lean', 'head_protrudes'],
-      focusLabel: 'sagittal-plane LPHC and Cervical checkpoints (Anterior Pelvic Tilt, Forward Head)',
-    },
-    posterior: {
-      syndrome: 'Pronation Distortion',
-      compensations: ['feet_flatten', 'asymmetric_weight_shift', 'shoulders_elevate'],
-      focusLabel: 'posterior-plane Calcaneal, LPHC, and Scapular checkpoints (Subtalar Pronation, Asymmetric Shift)',
-    },
-    overhead_squat: {
-      syndrome: 'Lower Crossed',
-      compensations: ['knees_cave_in', 'excessive_forward_lean', 'arms_fall_forward'],
-      focusLabel: 'dynamic OHSA LPHC, Shoulder, and Knee checkpoints (Knees Cave In, Forward Lean, Arms Fall Forward)',
-    },
-  }
-  const preset = presetByView[view]
-
-  return formatScanResult(
+  const neutralResult = formatScanResult(
     {
-      syndromeDetected: preset.syndrome,
-      landmarks: getDefaultLandmarks(view),
-      angles: getDefaultAngles(view),
-      detectedCompensations: preset.compensations,
-      clinicalSummary: `Kinetic mesh analysis for ${safeName} identified primary compensations in ${preset.focusLabel}. Corrective continuum initialized.`,
+      syndromeDetected: 'Optimal Alignment',
+      landmarks: [],
+      angles: [],
+      detectedCompensations: [],
+      clinicalSummary: `Automated AI vision landmark extraction was unavailable for ${safeName}. No synthetic postural distortion syndrome was inferred—complete manual visual OHSA checkpoint observation before saving assessment findings.`,
     },
     view,
     safeName
   )
+
+  return {
+    ...neutralResult,
+    landmarks: [],
+    angles: [],
+    isUnverifiedFallback: true,
+  }
 }

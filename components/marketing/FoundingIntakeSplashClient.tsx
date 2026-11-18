@@ -11,6 +11,7 @@ export default function FoundingIntakeSplashClient() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [smsConsent, setSmsConsent] = useState(false)
   const [profileType, setProfileType] = useState('executive')
   const [primaryGoal, setPrimaryGoal] = useState('structural_longevity')
   const [notes, setNotes] = useState('')
@@ -18,13 +19,10 @@ export default function FoundingIntakeSplashClient() {
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [assignedNumber, setAssignedNumber] = useState<number>(12)
   const mountTimeRef = useRef<number>(0)
 
   useEffect(() => {
     mountTimeRef.current = Date.now()
-    // Deterministic pleasant cohort reservation number between 7 and 14
-    setAssignedNumber(Math.floor(Math.random() * 8) + 7)
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,8 +41,24 @@ export default function FoundingIntakeSplashClient() {
       return
     }
 
+    if (phone.trim() && !smsConsent) {
+      setStatus('error')
+      setErrorMessage(
+        'Please check the optional SMS consent box to submit a mobile number, or leave the optional phone field blank.'
+      )
+      return
+    }
+
     setStatus('loading')
     try {
+      let detectedTz: string | undefined
+      try {
+        detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+      } catch {
+        // ignore
+      }
+      const consentedPhone = smsConsent && phone.trim() ? phone.trim() : undefined
+
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,10 +66,11 @@ export default function FoundingIntakeSplashClient() {
           email: email.trim(),
           firstName: fullName.trim(),
           trainingLevel: profileType === 'athlete' ? 'advanced' : 'intermediate',
-          primaryGoal: `[Founding Intake] Goal: ${primaryGoal} | Phone: ${phone || 'N/A'} | Notes: ${notes || 'None'}`,
+          primaryGoal: `[Founding Intake] Goal: ${primaryGoal} | Notes: ${notes || 'None'}`,
           source: 'founding_cohort_intake',
-          assignedCohortNumber: assignedNumber,
-          phone: phone.trim() || undefined,
+          phone: consentedPhone,
+          smsConsent: Boolean(consentedPhone),
+          timezone: detectedTz,
           profileType,
           honeypot,
           startTimeMs: mountTimeRef.current,
@@ -211,13 +226,13 @@ export default function FoundingIntakeSplashClient() {
                 fontSize: 10,
                 padding: '1px 6px',
                 borderRadius: 4,
-                background: 'rgba(239, 68, 68, 0.25)',
-                color: '#fca5a5',
-                border: '1px solid rgba(239, 68, 68, 0.4)',
+                background: 'rgba(52, 211, 153, 0.16)',
+                color: '#6EE7B7',
+                border: '1px solid rgba(52, 211, 153, 0.35)',
                 fontWeight: 700,
               }}
             >
-              Early access · 15 places
+              1-on-1 Coach Support Capped at 15 Active Seats
             </span>
           </div>
         </div>
@@ -276,7 +291,7 @@ export default function FoundingIntakeSplashClient() {
           >
             <GaaIcon name="shield-check" size={20} tone="gold" />
             <div style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--gold-lt)' }}>100% Remote Virtual Performance:</strong> Coach Gordon brings 18+ years of dedicated coaching experience (NASM-CPT® since 2008, ASTI CPR/AED, B.S. IT 3.72 GPA) directly into your private home gym, apartment facility, or hotel with zero commute friction. Join the early-access list for membership updates and introductory pricing.
+              <strong style={{ color: 'var(--gold-lt)' }}>100% Remote Virtual Performance:</strong> Coach Gordon (NASM-CPT® Certified #1261890687, Oct 2026 · Prior ACE-CPT 2008–2021 · ASTI CPR/AED · B.S. IT 3.72 GPA) delivers structured personal coaching directly into your home gym, apartment facility, or hotel with zero commute friction. Join the early-access list for membership updates and introductory pricing.
               <div style={{ marginTop: 6 }}>
                 <a
                   href="#accreditation-portfolio"
@@ -514,17 +529,17 @@ export default function FoundingIntakeSplashClient() {
                 }}
               >
                 <span style={{ fontSize: 12, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
-                  Your request number
+                  Registration Status
                 </span>
                 <span
                   style={{
                     fontFamily: 'var(--font-telemetry, monospace)',
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: 800,
                     color: 'var(--gold-lt)',
                   }}
                 >
-                  Early-access request #{assignedNumber}
+                  Early-Access Registration Confirmed
                 </span>
               </div>
 
@@ -642,6 +657,45 @@ export default function FoundingIntakeSplashClient() {
                   </div>
                 </div>
 
+                {phone.trim() ? (
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      background: 'rgba(11, 17, 32, 0.85)',
+                      border: '1px solid rgba(197, 160, 89, 0.3)',
+                      fontSize: 11.5,
+                      color: '#CBD5E1',
+                      lineHeight: 1.5,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={smsConsent}
+                      onChange={(e) => setSmsConsent(e.target.checked)}
+                      style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0 }}
+                    />
+                    <span>
+                      Optional SMS Consent: I agree to receive automated launch and coaching text messages from{' '}
+                      <strong>Forge Athletic</strong> at the mobile number provided.{' '}
+                      <strong>Consent is not a condition of purchase.</strong> Msg &amp; data rates may apply. Msg frequency
+                      varies. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. View{' '}
+                      <Link href="/terms" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+                        Terms
+                      </Link>{' '}
+                      &amp;{' '}
+                      <Link href="/privacy#sms-privacy" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+                        Privacy Policy
+                      </Link>
+                      .
+                    </span>
+                  </label>
+                ) : null}
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 12 }}>
                   <div>
                     <label style={labelStyle}>What best describes your training?</label>
@@ -706,6 +760,24 @@ export default function FoundingIntakeSplashClient() {
               </form>
             </div>
           )}
+
+          <div
+            style={{
+              marginTop: 28,
+              paddingTop: 16,
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: 16,
+              fontSize: 12,
+              color: '#94A3B8',
+            }}
+          >
+            <a href="/terms" style={{ color: 'inherit', textDecoration: 'underline' }}>Terms of Service</a>
+            <a href="/privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>Privacy Policy</a>
+            <a href="/health-privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>Consumer Health Data Privacy</a>
+          </div>
         </div>
       </div>
     </div>

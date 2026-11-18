@@ -229,14 +229,14 @@ const RAW_LEGAL_DOCUMENTS: Omit<LegalDocumentDescriptor, 'sha256'>[] = [
     version: 'privacy-2026.11.11',
     effectiveDate: '2026-11-11',
     canonicalSummary:
-      'Forge Athletic Performance LLC Privacy Policy: Zero Google Analytics / zero ad-broker commercialization, TLS 1.3 + AES-256 + PostgreSQL RLS, MA 201 CMR 17.00 WISP, full subprocessor disclosure (Supabase, Stripe, Google Gemini Paid/Vertex ZDR, OpenAI ZDR, ElevenLabs, Leonardo AI opt-in, Vital, LiveKit, Twilio, Resend, Vercel), Apple HealthKit & Google Health Connect Limited Use compliance, and cascade deletion.',
+      'Forge Athletic Performance LLC Privacy Policy: Non-HIPAA-covered consumer fitness service applying TLS 1.3 + AES-256 + PostgreSQL RLS & private Storage vaults, zero Google Analytics / zero ad-broker commercialization, MA 201 CMR 17.00 WISP, full subprocessor disclosure (Supabase, Stripe, Google Gemini Paid Commercial API, OpenAI API, ElevenLabs, Vital, LiveKit, Twilio, Resend, Vercel), Apple HealthKit & Google Health Connect Limited Use compliance, and cascade deletion.',
   },
   {
     type: 'consumer_health_biometric_policy',
     version: 'chd-bipa-2026.11.11',
     effectiveDate: '2026-11-11',
     canonicalSummary:
-      'Forge Athletic Standalone Consumer Health Data & Biometric Privacy Policy (WA MHMDA RCW 19.373, NV SB 370, IL BIPA 740 ILCS 14/, TX CUBI, CO Biometric Rules): client-side MediaPipe 33-point pose landmarking, zero biometric sale/profiting, zero healthcare geofencing, and permanent biometric/media destruction immediately upon account deletion or within 3 years of last interaction.',
+      'Forge Athletic Standalone Consumer Health Data & Biometric Privacy Policy (WA MHMDA RCW 19.373, NV SB 370, IL BIPA 740 ILCS 14/, TX CUBI, CO Biometric Rules): local browser MediaPipe 33-point live pose landmarking, explicitly consented de-identified still-photo Gemini API analysis, private RLS Storage vaults (zero inline Base64 DB photos), zero biometric sale/profiting, zero healthcare geofencing, and permanent biometric/media destruction upon account deletion or within 3 years of last interaction.',
   },
   {
     type: 'athletic_liability_waiver',

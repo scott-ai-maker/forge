@@ -387,7 +387,7 @@ export default function FirstVisitLeadCapture({
               </h3>
             </div>
             <p style={{ fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, margin: '0 0 16px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-              Your training and movement information and $97 voucher have been sent to{' '}
+              Your Forge Athletic training overview and <strong>HOLIDAY25</strong> (25% Rate Lock + 7-day Core Lab trial) details have been sent to{' '}
               <strong style={{ color: '#FFFFFF' }}>{email}</strong>.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -433,12 +433,12 @@ export default function FirstVisitLeadCapture({
                 fontWeight: 600,
               }}
             >
-              {isLive ? 'Request Live Consultation Window' : 'Claim Your 3D AI Audit Voucher'}
+              {isLive ? 'Request Live Consultation Window' : 'Claim Your 25% Rate Lock & 7-Day Trial'}
             </h2>
             <p style={{ fontSize: 12.5, color: '#94A3B8', lineHeight: 1.45, margin: '0 0 16px' }}>
               {isLive
-                ? 'Coach Gordon is reviewing active client biomechanics. Enter your details for priority queue allocation.'
-                : 'Get the 5-phase NASM OPT™ sports science blueprint and $97 credit for your 3D AI movement audit.'}
+                ? 'Coach Gordon is reviewing active client biomechanics. Enter your details for consultation scheduling.'
+                : 'Get the 5-Phase NASM OPT™ training overview, 7-day Core Lab free-trial access details, and code HOLIDAY25 (25% Rate Lock) by email.'}
             </p>
 
             {/* Invisible Bot Honeypot Shield */}
@@ -565,7 +565,7 @@ export default function FirstVisitLeadCapture({
                   ? 'Connecting...'
                   : isLive
                     ? 'Request Live Slot'
-                    : 'Get the assessment & voucher'}
+                    : 'Send Rate Lock & Trial Details'}
               </button>
             </form>
 

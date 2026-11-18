@@ -105,7 +105,7 @@ export default function ReferralLandingClient({
               margin: 0,
             }}
           >
-            You have been granted an exclusive <strong style={{ color: '#F8FAFC' }}>{refereeTrialDays}-Day Extended VIP Pass</strong> (normally 7 days) and a <strong style={{ color: '#10B981' }}>$20 Welcome Credit</strong> to Forge Athletic.
+            You have been granted an exclusive <strong style={{ color: '#F8FAFC' }}>{refereeTrialDays}-Day Extended Free Trial Pass</strong> (normally 7 days) to Forge Athletic ($0.00 due today · cancel anytime in 1 click before Day {refereeTrialDays}).
           </p>
         </div>
 
@@ -186,10 +186,10 @@ export default function ReferralLandingClient({
               </div>
               <div>
                 <h2 style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 700, color: '#F8FAFC' }}>
-                  $20 Welcome Credit
+                  $0.00 Due Today · Month-to-Month Flexibility
                 </h2>
                 <p style={{ margin: 0, fontSize: 13, color: '#94A3B8', lineHeight: 1.45 }}>
-                  Applied automatically at membership checkout. Gifted by {referrerName}.
+                  Extended {refereeTrialDays}-day free trial gifted by {referrerName}. Cancel online in 1 click inside Account Settings before Day {refereeTrialDays} with $0 fees.
                 </p>
               </div>
             </div>
@@ -253,8 +253,11 @@ export default function ReferralLandingClient({
               boxSizing: 'border-box',
             }}
           >
-            Claim 30-Day VIP Pass &amp; Create Account →
+            Claim 30-Day Free Trial Pass &amp; Create Account →
           </Link>
+          <p style={{ margin: '10px 0 0', fontSize: 11, color: '#64748B', lineHeight: 1.45, textAlign: 'center' }}>
+            FTC Disclosure (16 CFR &sect; 255.5): {referrerName} is a Forge Athletic member and may earn referral rewards if you enroll in a paid membership after your trial.
+          </p>
 
           <div
             style={{
@@ -374,6 +377,24 @@ export default function ReferralLandingClient({
           </div>
         </div>
       )}
+
+      <footer
+        style={{
+          marginTop: 40,
+          padding: '16px 20px 28px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: 18,
+          fontSize: 12,
+          color: '#94A3B8',
+        }}
+      >
+        <a href="/terms" style={{ color: 'inherit', textDecoration: 'underline' }}>Terms of Service</a>
+        <a href="/privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>Privacy Policy</a>
+        <a href="/health-privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>Consumer Health Data Privacy</a>
+      </footer>
     </main>
   )
 }

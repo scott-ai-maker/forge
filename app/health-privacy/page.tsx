@@ -55,7 +55,7 @@ export default function ConsumerHealthBiometricPrivacyPage() {
           <p style={{ fontSize: '0.95rem' }}>
             This standalone Consumer Health Data &amp; Biometric Privacy Policy supplements the Forge Athletic{' '}
             <Link href="/privacy" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Privacy Policy</Link>{' '}
-            and is published pursuant to the <strong>Washington My Health My Data Act (RCW 19.373)</strong>, <strong>Nevada Consumer Health Data Privacy Law (SB 370)</strong>, <strong>Illinois Biometric Information Privacy Act (740 ILCS 14/ — &quot;BIPA&quot;)</strong>, <strong>Texas Capture or Use of Biometric Identifier Act (Tex. Bus. &amp; Com. Code § 503.001 — &quot;CUBI&quot;)</strong>, and the <strong>Colorado Privacy Act Biometric Amendments</strong>.
+            and is published pursuant to the <strong>Washington My Health My Data Act (RCW 19.373)</strong>, <strong>Nevada Consumer Health Data Privacy Law (SB 370)</strong>, <strong>Illinois Biometric Information Privacy Act (740 ILCS 14/ — &quot;BIPA&quot;)</strong>, <strong>Texas Capture or Use of Biometric Identifier Act (Tex. Bus. &amp; Com. Code § 503.001 — &quot;CUBI&quot;)</strong>, and the <strong>Colorado Privacy Act Biometric Amendments</strong>. Forge Athletic is a direct-to-consumer personal training and wellness platform—not a licensed healthcare provider, health plan, or HIPAA &quot;covered entity&quot;—and protects consumer health information with HIPAA-inspired encryption (TLS 1.3 / AES-256), PostgreSQL Row-Level Security (RLS), and state/FTC consumer health privacy controls.
           </p>
         </section>
 
@@ -86,18 +86,18 @@ export default function ConsumerHealthBiometricPrivacyPage() {
           <div style={{ background: 'rgba(14, 23, 38, 0.75)', border: '1px solid rgba(197, 160, 89, 0.35)', borderRadius: 8, padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
             <p style={{ margin: '0 0 0.5rem', fontWeight: 700, color: 'var(--gold-lt)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <GaaIcon name="shield-check" size={14} tone="gold" />
-              <span>No Facial Recognition Identification · Ephemeral Client-Side Segmentation</span>
+              <span>No Facial Recognition Identification · Local Segmentation &amp; Opt-In Cloud Photo Analysis</span>
             </p>
             <p style={{ margin: 0, fontSize: '0.92rem', color: '#CBD5E1' }}>
-              Forge Athletic does <strong>not</strong> use facial recognition to biometrically identify individuals across databases. Live studio virtual background segmentation masks and real-time MediaPipe 33-point skeletal joint overlays execute locally in your browser/device memory to measure joint angles (knee valgus, trunk lean, shoulder elevation) and render virtual studio backgrounds.
+              Forge Athletic does <strong>not</strong> use facial recognition to biometrically identify individuals across databases, and does <strong>not</strong> generate AI image-to-image physique simulations from athlete photographs. Live studio virtual background segmentation masks and real-time MediaPipe 33-point skeletal joint overlays execute locally in your browser/device memory. When you or your assigned coach explicitly execute a standalone biometric release to run a still-image <strong>Posture Mesh Scan</strong> or <strong>Body-Composition Scan</strong>, de-identified photographs (without your name or email) are transmitted over TLS 1.3 to our bound AI vision processor (Google Gemini Paid Commercial API—excluded from model training, with standard up-to-55-day provider abuse-monitoring log retention) solely to estimate anatomical alignment checkpoints and anthropometric ratios, and any saved reference image is stored exclusively in a private RLS-protected Supabase Storage bucket.
             </p>
           </div>
           <p style={{ fontSize: '0.95rem' }}>
-            To the extent any skeletal pose coordinates, posture scan images, body-composition photos, or opt-in AI physique visualizations could be construed as a &quot;biometric identifier&quot; or &quot;biometric information&quot; under 740 ILCS 14/10, Tex. Bus. &amp; Com. Code § 503.001, or Colorado law:
+            To the extent any skeletal pose coordinates, posture scan images, or body-composition photos could be construed as a &quot;biometric identifier&quot; or &quot;biometric information&quot; under 740 ILCS 14/10, Tex. Bus. &amp; Com. Code § 503.001, or Colorado law:
           </p>
           <ul style={{ paddingLeft: '1.25rem', margin: '0.5rem 0 1rem', fontSize: '0.92rem' }}>
             <li style={{ marginBottom: '0.4rem' }}>
-              <strong>Purpose of Collection:</strong> Collected strictly to compute biomechanical joint-alignment checkpoints, track athletic training adaptations, or generate an athlete-requested illustrative physique visualization.
+              <strong>Purpose of Collection:</strong> Collected strictly to compute biomechanical joint-alignment checkpoints, estimate educational body-composition trends, and track athletic training adaptations.
             </li>
             <li style={{ marginBottom: '0.4rem' }}>
               <strong>Zero Sale, Lease, or Profiting (740 ILCS 14/15(c)):</strong> Forge Athletic <strong>never</strong> sells, leases, trades, or otherwise profits from any athlete&apos;s biometric identifiers, biometric information, or consumer health data.
@@ -130,12 +130,29 @@ export default function ConsumerHealthBiometricPrivacyPage() {
 
         <section style={{ marginBottom: '2.5rem' }}>
           <h2 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: '1.35rem', letterSpacing: '0.04em', color: 'var(--gold-lt)', marginBottom: '0.75rem' }}>
-            5. Sharing &amp; Service-Provider Disclosures
+            5. Sharing &amp; Bound Service-Provider Disclosures (RCW 19.373.040)
           </h2>
           <p style={{ fontSize: '0.95rem' }}>
-            Forge Athletic does <strong>not</strong> share or sell consumer health data to third-party advertisers, data brokers, or corporate employers. Consumer health data is processed solely by bound infrastructure processors (detailed in Section 5 of our{' '}
-            <Link href="/privacy" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Privacy Policy</Link>) strictly as necessary to host encrypted databases/media (Supabase), stream live coaching video (LiveKit), sync athlete-connected wearables (Vital), or synthesize coaching summaries/visualizations you initiate. Forge Athletic does not have corporate affiliates with whom consumer health data is shared.
+            Forge Athletic does <strong>not</strong> share or sell consumer health data to third-party advertisers, data brokers, or corporate employers, and has no corporate affiliates with whom consumer health data is shared. Consumer health data is processed strictly on our instructions by the following bound infrastructure and AI service providers (also detailed in our{' '}
+            <Link href="/privacy" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Privacy Policy</Link>):
           </p>
+          <ul style={{ paddingLeft: '1.25rem', margin: '0.5rem 0 1rem', fontSize: '0.92rem' }}>
+            <li style={{ marginBottom: '0.35rem' }}>
+              <strong>Supabase Inc. &amp; Vercel Inc.:</strong> Encrypted PostgreSQL database, private object storage (AES-256 at rest, TLS 1.3 in transit, Row-Level Security), and application hosting.
+            </li>
+            <li style={{ marginBottom: '0.35rem' }}>
+              <strong>Google LLC (Gemini API) &amp; OpenAI OpCo, LLC:</strong> Opt-in posture/body-composition visual landmark estimation, de-identified coaching session note structuring, and individualized periodization synthesis.
+            </li>
+            <li style={{ marginBottom: '0.35rem' }}>
+              <strong>ElevenLabs Inc. &amp; LiveKit:</strong> Synthesized audio coaching cues and encrypted WebRTC 1:1 live video/audio coaching transport.
+            </li>
+            <li style={{ marginBottom: '0.35rem' }}>
+              <strong>Vital (TRYVITAL, Inc.):</strong> Athlete-authorized wearable and Apple HealthKit / Google Health Connect telemetry synchronization.
+            </li>
+            <li style={{ marginBottom: '0.35rem' }}>
+              <strong>Stripe, Inc., Resend, Inc. &amp; Twilio Inc.:</strong> PCI-DSS payment processing and transactional/escalation coaching notifications (containing no diagnostic media).
+            </li>
+          </ul>
         </section>
 
         <section style={{ borderTop: '1px solid rgba(197, 160, 89, 0.3)', paddingTop: '1.5rem' }}>

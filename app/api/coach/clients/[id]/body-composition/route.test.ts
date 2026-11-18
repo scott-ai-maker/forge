@@ -100,5 +100,30 @@ describe('POST /api/coach/clients/[id]/body-composition', () => {
       error: 'heightCm must be between 100 and 260',
     })
   })
+
+  it('blocks body-composition photograph analysis without standalone BIPA/MHMDA biometric release (403)', async () => {
+    const { getRequestAuthz, requireRole, requireCoachAssignedClient } = await import('@/lib/authz')
+    vi.mocked(getRequestAuthz).mockResolvedValueOnce({
+      user: { id: 'coach-123' },
+      client: { id: 'coach-123', role: 'coach', email: 'coach@example.com', status: 'active', designated_coach_id: null },
+    } as unknown as Awaited<ReturnType<typeof getRequestAuthz>>)
+    vi.mocked(requireRole).mockReturnValue(undefined)
+    vi.mocked(requireCoachAssignedClient).mockResolvedValue(undefined)
+
+    const req = new NextRequest('http://localhost/api/coach/clients/client-123/body-composition', {
+      method: 'POST',
+      body: JSON.stringify({
+        heightCm: 168,
+        weightKg: 62,
+        sex: 'female',
+        anteriorPhotoBase64: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/',
+      }),
+    })
+
+    const res = await POST(req, { params: Promise.resolve({ id: 'client-123' }) })
+    expect(res.status).toBe(403)
+    const json = await res.json()
+    expect(json.error).toContain('740 ILCS 14/15(b)')
+  })
 })
 

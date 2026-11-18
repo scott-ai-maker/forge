@@ -395,13 +395,13 @@ export default function ProofOfWorkDossierModal({
 
         <div>
           <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#64748B', fontWeight: 800, letterSpacing: '0.06em' }}>
-            Master Coach Stewardship
+            Coach Stewardship
           </div>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#FFFFFF', marginTop: 3 }}>
             Scott Gordon
           </div>
           <div style={{ fontSize: 10.5, color: '#38BDF8', marginTop: 2 }}>
-            NASM Master Trainer Candidate · CPT® · CES®
+            NASM-CPT® (#1261890687) · B.S. IT · ASTI CPR/AED
           </div>
         </div>
       </section>

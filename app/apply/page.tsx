@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ApplyQuiz from '@/components/marketing/ApplyQuiz'
 import SiteHeader from '@/components/ui/SiteHeader'
+import SiteFooter from '@/components/ui/SiteFooter'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
 import GaaIcon from '@/components/ui/GaaIcon'
 
@@ -100,6 +101,9 @@ export default function ApplyPage() {
         </div>
 
         <ApplyQuiz />
+      </div>
+      <div style={{ marginTop: 48 }}>
+        <SiteFooter />
       </div>
     </main>
   )

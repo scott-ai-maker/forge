@@ -120,7 +120,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: true,
-        coachIdentity: 'Coach Gordon · Master NASM Head Coach & Periodization Architect',
+        coachIdentity: 'Coach Gordon · NASM-CPT® (#1261890687) Head Coach & Periodization Architect',
         plan,
         targets,
         missingStats: targets ? [] : ['weight_kg'],

@@ -32,7 +32,7 @@ export default function CoachAuthoritySection() {
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={COACH_GORDON_TRUST_PROFILE.portraitSrc}
-                alt="Coach Gordon — NASM-CPT Certified Since 2008"
+                alt="Coach Gordon — NASM-CPT Certified (#1261890687)"
                 onError={() => setPortraitFailed(true)}
                 className="relative z-10 h-full w-full object-cover"
               />
@@ -43,10 +43,10 @@ export default function CoachAuthoritySection() {
           </div>
           <div className="mt-2.5 rounded-xl border border-white/[0.08] bg-[#111318] px-3 py-2 text-center">
             <div className="font-mono text-base font-extrabold tabular-nums text-amber-300">
-              18+ Years
+              NASM-CPT®
             </div>
             <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-zinc-400">
-              Personal Coaching
+              Cert #1261890687
             </div>
           </div>
         </div>

@@ -89,13 +89,13 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(applicantCall.subject).toBe(
       'Forge Athletic Founding Cohort Confirmed (#9)'
     )
-    expect(applicantCall.text).toContain('OFFICIAL ALLOCATION: RESERVATION #9 OF 20')
+    expect(applicantCall.text).toContain('OFFICIAL REGISTRATION: CONFIRMED (#9)')
     expect(applicantCall.text).toContain('COACH GORDON BRIEFING MEMO')
-    expect(applicantCall.text).toContain('13 NASM® disciplines')
-    expect(applicantCall.text).toContain('https://forge-athletic.app/intake#accreditation-portfolio')
+    expect(applicantCall.text).toContain('NASM-CPT® Certified #1261890687')
+    expect(applicantCall.text).toContain('https://forge-athletic.app/credentials')
     expect(applicantCall.text).toContain('https://forge-athletic.app/packages')
 
-    expect(applicantCall.html).toContain('RESERVATION #9 OF 20')
+    expect(applicantCall.html).toContain('OFFICIAL REGISTRATION: CONFIRMED (#9)')
     expect(applicantCall.html).toContain('Coach Gordon Briefing Memo')
     expect(applicantCall.html).toContain('Forge Athletic')
 
@@ -111,7 +111,7 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(internalCall.text).toContain('Primary Goal / Notes: Spinal decompression & rotational power')
   })
 
-  it('falls back cleanly to reservation #12 when cohort number is omitted', async () => {
+  it('does not fabricate a fake reservation number when cohort number is omitted', async () => {
     const supabase = createMockSupabase(false)
 
     await triggerLeadEmailAutomation(supabase, {
@@ -123,9 +123,10 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(sendMock).toHaveBeenCalledTimes(2)
     const applicantCall = sendMock.mock.calls[0][0]
     expect(applicantCall.subject).toBe(
-      'Forge Athletic Founding Cohort Confirmed (#12)'
+      'Forge Athletic Founding Cohort Confirmed'
     )
-    expect(applicantCall.text).toContain('RESERVATION #12 OF 20')
+    expect(applicantCall.text).toContain('1-ON-1 COACH SUPPORT CAPPED AT 15 ACTIVE SEATS')
+    expect(applicantCall.text).not.toContain('RESERVATION #12')
   })
 
   it('sends application received confirmation for apply source with [Forge Athletic] notification', async () => {
@@ -161,6 +162,8 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
 
     const applicantCall = sendMock.mock.calls[0][0]
     expect(applicantCall.subject).toBe('Forge Athletic Updates | You are on the list')
+    expect(applicantCall.text).toContain('HOLIDAY25')
+    expect(applicantCall.text).toContain('7-day free trial')
 
     const internalCall = sendMock.mock.calls[1][0]
     expect(internalCall.subject).toBe('[Forge Athletic] New waitlist lead: waitlist_user@gmail.com')
@@ -222,9 +225,10 @@ describe('Marketing Email Subsystem (lib/marketing-email)', () => {
     expect(result).toEqual({ processed: 1, sent: 1, failed: 0 })
     const email = sendMock.mock.calls[0][0]
     expect(email.subject).toBe('Choose your Forge Athletic membership')
-    expect(email.text).toContain('Core Membership: $49/month or $399/year')
+    expect(email.text).toContain('Core Membership: $49/month, with a 7-day free trial.')
     expect(email.text).toContain('Plus Membership: $99/month')
     expect(email.text).toContain('Coach Support: $299/month')
+    expect(email.text).not.toContain('$399/year')
     expect(email.text).not.toContain('$1,495')
     expect(email.text).not.toContain('retainer')
   })

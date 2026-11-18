@@ -24,9 +24,9 @@ const SUBPROCESSORS = [
     dataScope: 'Billing identifiers and payment tokens (card numbers never touch Forge Athletic servers).',
   },
   {
-    vendor: 'Google Cloud / Gemini API (Paid Enterprise ZDR Tier)',
-    purpose: 'Periodization synthesis, biomechanical movement summaries, and coach S.O.A.P. note drafting.',
-    dataScope: 'De-identified or scoped training context over TLS 1.3 with Zero Data Retention for public model training.',
+    vendor: 'Google LLC (Gemini Paid Commercial API)',
+    purpose: 'Periodization synthesis, explicitly consented posture/body-composition photo landmark estimation, and de-identified coach S.O.A.P. note drafting.',
+    dataScope: 'De-identified training/S.O.A.P. text context and athlete-consented posture/body-composition scan photos over TLS 1.3. Paid API prompts are excluded from Google model training; Google may retain encrypted abuse-monitoring logs for up to 55 days under standard Gemini Paid API terms.',
   },
   {
     vendor: 'OpenAI, L.L.C. (API Platform)',
@@ -37,11 +37,6 @@ const SUBPROCESSORS = [
     vendor: 'ElevenLabs, Inc.',
     purpose: 'Synthesized audio workout cues and coaching briefings.',
     dataScope: 'Workout cue script text converted to audio.',
-  },
-  {
-    vendor: 'Leonardo Interactive Pty Ltd (Opt-In Only)',
-    purpose: 'Optional 18+ AI physique concept visualization (/api/fitness/predict-look) only when explicitly initiated by the athlete.',
-    dataScope: 'Target fitness prompt and optional athlete-selected reference image.',
   },
   {
     vendor: 'LiveKit / WebRTC Media Relay',
@@ -130,7 +125,7 @@ export default function PrivacyPolicyPage() {
             </p>
           </div>
           <p style={{ fontSize: '0.95rem' }}>
-            <strong>Paid Enterprise AI API Isolation:</strong> When Forge Athletic transmits structured training context to AI inference providers (listed in Section 5) to draft periodization blocks, movement summaries, or S.O.A.P. coaching notes, requests are transmitted over TLS 1.3 using paid commercial API tiers configured so customer inputs and outputs are not used to train public foundation models.
+            <strong>Local Browser Pose Tracking vs. Paid Commercial AI API Processing:</strong> Real-time 33-point MediaPipe posture, desk-ergonomics, and readiness overlays execute locally in your browser memory without uploading live video frames. When Forge Athletic transmits structured text context (with direct identifiers such as full names and email addresses stripped) or explicitly consented still photographs (for optional <em>Posture Mesh</em> or <em>Body-Composition</em> scans) to paid commercial AI APIs (listed in Section 5), requests travel over TLS 1.3 under paid API terms that prohibit using customer inputs or outputs to train foundation models. Standard provider abuse-monitoring log retention (up to 55 days for Google Gemini Paid API; up to 30 days for OpenAI API unless zero-retention endpoints apply) governs transient API transport; Forge Athletic is a direct-to-consumer fitness platform and is not a HIPAA-covered healthcare provider or insurer.
           </p>
         </section>
 
@@ -146,7 +141,7 @@ export default function PrivacyPolicyPage() {
               <strong>Readiness &amp; Training Telemetry:</strong> PAR-Q+ health readiness answers, orthopedic limitation flags, workout sets, tonnage, RPE, 1RM estimates, and optional nutrition/body-composition logs.
             </li>
             <li style={{ marginBottom: '0.4rem' }}>
-              <strong>Private Assessment Media:</strong> Athlete-submitted form-check videos, posture photos, and consented live telestrator clips stored strictly in private Supabase Storage buckets with Row-Level Security (RLS) and accessed solely via time-limited signed URLs.
+              <strong>Private Assessment Media:</strong> Athlete-submitted form-check videos, progress/body-composition reference photos, and consented live telestrator clips stored strictly as object paths in private Supabase Storage buckets protected by Row-Level Security (RLS)—never as inline Base64 database rows—and accessed solely via time-limited signed URLs.
             </li>
             <li style={{ marginBottom: '0.4rem' }}>
               <strong>Billing Metadata:</strong> Processed directly by Stripe; Forge Athletic stores only subscription status, plan tier, and Stripe customer/invoice identifiers.

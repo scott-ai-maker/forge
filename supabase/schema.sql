@@ -21,6 +21,18 @@ alter table waitlist
 alter table waitlist
   add column if not exists source text not null default 'waitlist';
 
+alter table waitlist
+  add column if not exists phone text;
+
+alter table waitlist
+  add column if not exists sms_opt_in boolean not null default false;
+
+alter table waitlist
+  add column if not exists sms_consent_at timestamptz;
+
+alter table waitlist
+  add column if not exists timezone text;
+
 -- ── COACHING APPLICATIONS (FUNNEL QUIZ) ─────────────────
 create table if not exists coaching_applications (
   id                    uuid primary key default gen_random_uuid(),
@@ -834,7 +846,9 @@ create table if not exists workout_video_events (
 create table if not exists body_composition_analyses (
   id                        uuid primary key default gen_random_uuid(),
   user_id                   uuid references auth.users(id) on delete cascade,
-  photo_data_url            text,
+  photo_data_url            text constraint body_comp_no_inline_base64_chk check (
+    photo_data_url is null or (photo_data_url not like 'data:%' and char_length(photo_data_url) <= 512)
+  ),
   estimated_bodyfat_percent numeric(5,2),
   method                    text,
   confidence_score          numeric(5,2),
@@ -1745,11 +1759,20 @@ create table if not exists notification_preferences (
   sms_enabled    boolean not null default false,
   sms_phone      text,
   sms_consent_at timestamptz,
+  timezone       text,
   muted_categories text[] not null default '{}',
   updated_at     timestamptz not null default now()
 );
 
 alter table notification_preferences enable row level security;
+
+create table if not exists sms_suppressions (
+  phone         text primary key,
+  reason        text not null default 'user_stop',
+  suppressed_at timestamptz not null default now()
+);
+
+alter table sms_suppressions enable row level security;
 
 drop policy if exists "User reads own notification preferences" on notification_preferences;
 create policy "User reads own notification preferences" on notification_preferences

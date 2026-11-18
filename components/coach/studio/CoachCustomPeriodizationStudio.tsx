@@ -365,7 +365,7 @@ export default function CoachCustomPeriodizationStudio({
           },
           isCertifiedByCoach: true,
           coachCertifiedAt: new Date().toISOString(),
-          certifiedBy: 'Coach Gordon (NASM Master Trainer)',
+          certifiedBy: 'Coach Gordon (NASM-CPT®)',
           safetyGateCertified: true,
         }),
       })
@@ -376,7 +376,7 @@ export default function CoachCustomPeriodizationStudio({
       }
 
       setDeploySuccessMessage(
-        `Approved & Sent to ${clientFirstName}. Master Coach approved · "${currentPlan.planTitle}"${currentPlan.coachPersonalNote?.trim() ? ' with your personal note' : ''} is active.`
+        `Approved & Sent to ${clientFirstName}. Coach Gordon approved · "${currentPlan.planTitle}"${currentPlan.coachPersonalNote?.trim() ? ' with your personal note' : ''} is active.`
       )
 
       if (onPlanAssigned) {

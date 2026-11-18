@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const FITNESS_PHOTO_BUCKET = 'fitness-photos'
@@ -120,4 +121,94 @@ export async function createSignedFitnessPhotoUrlsBatch(
   }
 
   return normalizedList.map(p => (p ? urlMap.get(p) ?? null : null))
+}
+
+const MAX_VAULT_PHOTO_BYTES = 15 * 1024 * 1024
+
+type MinimalStorageUploadClient = {
+  storage?: {
+    from: (bucket: string) => {
+      upload: (
+        path: string,
+        body: Buffer,
+        options: { contentType: string; upsert: boolean }
+      ) => Promise<{ data?: { path?: string } | null; error?: unknown }>
+    }
+  }
+}
+
+/**
+ * Ensures body-composition reference images are NEVER persisted as raw inline
+ * `data:image/...;base64` blobs inside PostgreSQL (`body_composition_analyses.photo_data_url`).
+ * Uploads decoded image bytes into the private RLS-protected `fitness-photos` bucket
+ * under `${userId}/bodycomp-...` and returns ONLY the private object path (or `null`).
+ */
+export async function persistBodyCompPhotoToPrivateVault(
+  supabase: MinimalStorageUploadClient | SupabaseClient | null | undefined,
+  userId: string | null | undefined,
+  rawPhotoDataUrlOrPath: string | null | undefined
+): Promise<string | null> {
+  const cleanUserId = String(userId ?? '').trim()
+  if (
+    !cleanUserId ||
+    cleanUserId.includes('/') ||
+    cleanUserId.includes('\\') ||
+    cleanUserId === '.' ||
+    cleanUserId === '..'
+  ) {
+    return null
+  }
+
+  const raw = String(rawPhotoDataUrlOrPath ?? '').trim()
+  if (!raw) return null
+
+  if (isUserOwnedPhotoPath(raw, cleanUserId)) {
+    return normalizePhotoPath(raw) || null
+  }
+
+  const legacyPath = extractPhotoPathFromLegacyUrl(raw)
+  if (legacyPath && isUserOwnedPhotoPath(legacyPath, cleanUserId)) {
+    return legacyPath
+  }
+
+  const dataUriMatch = raw.match(
+    /^data:image\/(jpeg|jpg|png|webp)(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=\r\n\s]+)$/i
+  )
+  if (!dataUriMatch) {
+    return null
+  }
+
+  const rawSubtype = dataUriMatch[1].toLowerCase()
+  const ext = rawSubtype === 'jpg' ? 'jpeg' : rawSubtype
+  const fileExt = ext === 'jpeg' ? 'jpg' : ext
+  const contentType = `image/${ext}`
+  const base64Clean = dataUriMatch[2].replace(/\s+/g, '')
+  if (!base64Clean) return null
+
+  const bytes = Buffer.from(base64Clean, 'base64')
+  if (bytes.byteLength === 0 || bytes.byteLength > MAX_VAULT_PHOTO_BYTES) {
+    return null
+  }
+
+  if (!supabase?.storage || typeof supabase.storage.from !== 'function') {
+    return null
+  }
+
+  const objectPath = `${cleanUserId}/bodycomp-${Date.now()}-${randomUUID().slice(0, 8)}.${fileExt}`
+  try {
+    const bucketClient = supabase.storage.from(FITNESS_PHOTO_BUCKET)
+    if (!bucketClient || typeof bucketClient.upload !== 'function') {
+      return null
+    }
+    const { error } = await bucketClient.upload(objectPath, bytes, {
+      contentType,
+      upsert: false,
+    })
+    if (error) {
+      return null
+    }
+    return objectPath
+  } catch {
+    return null
+  }
 }

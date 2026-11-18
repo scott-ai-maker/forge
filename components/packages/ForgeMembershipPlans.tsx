@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import PurchaseButton from '@/components/packages/PurchaseButton'
-import { FORGE_MEMBERSHIPS } from '@/lib/forge-memberships'
+import { FORGE_MEMBERSHIPS, isAnnualBillingEnabled } from '@/lib/forge-memberships'
 import { HOLIDAY_DEAL_PROMO } from '@/lib/launch-config'
 
 const formatPrice = (priceCents: number) => `$${(priceCents / 100).toFixed(priceCents % 100 === 0 ? 0 : 2)}`
@@ -156,9 +156,10 @@ export default function ForgeMembershipPlans() {
 
       <div className="forge-plans-grid">
         {FORGE_MEMBERSHIPS.map((membership, index) => {
+          const annualEnabled = isAnnualBillingEnabled() && membership.annualPriceCents !== undefined
           const discountedMonthly = getDiscountedCents(membership.monthlyPriceCents)
           const discountedAnnual =
-            membership.annualPriceCents !== undefined
+            annualEnabled && membership.annualPriceCents !== undefined
               ? getDiscountedCents(membership.annualPriceCents)
               : undefined
 
@@ -196,7 +197,7 @@ export default function ForgeMembershipPlans() {
                 </div>
               )}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                {index === 0 && <span className="forge-plan-label">7-day free trial</span>}
+                {membership.trialDays ? <span className="forge-plan-label">{membership.trialDays}-day free trial</span> : null}
                 {holidayDealActive && (
                   <span
                     className="forge-plan-label"
@@ -206,7 +207,7 @@ export default function ForgeMembershipPlans() {
                       border: '1px solid rgba(52, 211, 153, 0.35)',
                     }}
                   >
-                    25% Lifetime Rate Lock ({HOLIDAY_DEAL_PROMO.code})
+                    25% Rate Lock ({HOLIDAY_DEAL_PROMO.code} · Continuous Tier)
                   </span>
                 )}
                 {membership.seatCapLabel && (
@@ -228,7 +229,7 @@ export default function ForgeMembershipPlans() {
                   {PLAN_SUBTITLES[membership.id]}
                 </p>
               )}
-              {membership.annualPriceCents !== undefined ? (
+              {annualEnabled && membership.annualPriceCents !== undefined ? (
                 <>
                   <p className="forge-plan-price">
                     {holidayDealActive ? (
@@ -278,7 +279,7 @@ export default function ForgeMembershipPlans() {
                 {membership.features.map(feature => <li key={feature}>{feature}</li>)}
               </ul>
               <div className="forge-plan-actions">
-                {membership.annualPriceCents !== undefined ? (
+                {annualEnabled ? (
                   <>
                     <PurchaseButton
                       packageId={membership.id}
@@ -301,7 +302,7 @@ export default function ForgeMembershipPlans() {
                   <PurchaseButton
                     packageId={membership.id}
                     cadence="monthly"
-                    buttonLabel="Choose plan"
+                    buttonLabel={membership.trialDays ? 'Start 7-day free trial' : 'Choose monthly plan'}
                     redirectNext="/packages"
                     showDiscountCode={false}
                     defaultDiscountCode={holidayDealActive ? HOLIDAY_DEAL_PROMO.code : ''}

@@ -45,12 +45,10 @@ interface WeeklyFrequencyRecommendation {
 }
 
 function getSystemPrompt(): string {
-  return `You are a master NASM-certified personal trainer with 20+ years of professional experience. 
-You are expert in NASM's OPT (Optimum Performance Training) model and hold certifications in:
-- NASM Personal Training Certification (NASM-CPT)
-- NASM Corrective Exercise Specialization (CES)
-- NASM Performance Enhancement Specialization (PES)
-- NASM Senior Fitness Specialization
+  return `You are an NCCA-accredited NASM Certified Personal Trainer (NASM-CPT®). 
+You apply NASM's OPT™ (Optimum Performance Training) model and hold verified credentials in:
+- NASM Certified Personal Trainer (NASM-CPT® #1261890687)
+- Adult, Child & Infant CPR/AED (ASTI #1261890193)
 
 Your expertise includes:
 - Detailed understanding of human movement and biomechanics
@@ -383,7 +381,7 @@ export async function generateIntelligentNotes(
     throw new Error('OPENAI_API_KEY environment variable is not set')
   }
 
-  const prompt = `As a master NASM personal trainer, provide 2-3 key coaching points for performing "${exerciseName}" 
+  const prompt = `As an NASM-CPT® certified personal trainer, provide 2-3 key coaching points for performing "${exerciseName}" 
 in Phase ${context.phase} (${getPhaseNameFromNumber(context.phase)}) for a ${context.clientExperienceLevel} 
 client with ${context.equipment.length > 0 ? context.equipment.join(', ') : 'bodyweight only'} available.
 Keep it concise, actionable, and specific to form and safety.`

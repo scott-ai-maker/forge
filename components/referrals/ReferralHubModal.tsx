@@ -145,7 +145,7 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
   }
 
   const shareText = encodeURIComponent(
-    'Join me on Forge Athletic. Claim your 30-Day Extended VIP Pass + $20 Welcome Credit: '
+    'Join me on Forge Athletic (referral invite). Claim your 30-Day Extended Free Trial Pass: '
   )
   const shareUrlEnc = encodeURIComponent(data?.shareUrl || '')
 
@@ -216,7 +216,7 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
                 AMBASSADOR REFERRAL ENGINE
               </h2>
               <p style={{ margin: 0, fontSize: 12, color: '#94A3B8' }}>
-                Give 30 Days Free + $20 Credit · Earn $20 Credit &amp; Milestones
+                Gift a 30-Day Extended Free Trial Pass · Earn $20 Credit &amp; Milestones
               </p>
             </div>
           </div>

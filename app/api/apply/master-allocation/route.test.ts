@@ -45,17 +45,61 @@ describe('POST /api/apply/master-allocation', () => {
     expect(json.error).toContain('Missing required fields')
   })
 
-  it('accepts qualified master allocation submission and triggers high-priority pipeline', async () => {
+  it('rejects submissions without standalone Consumer Health Data consent (WA MHMDA / NV SB 370)', async () => {
+    const req = new NextRequest('http://localhost/api/apply/master-allocation', {
+      method: 'POST',
+      body: JSON.stringify({
+        fullName: 'Julian Sterling',
+        email: 'julian@sterlingadvisory.com',
+        occupationalVelocity: 'Managing Partner, Private Equity.',
+        orthopedicHistory: 'L4/L5 lumbar compression.',
+        autonomousExecution: 'yes',
+        capitalAllocated: 'yes',
+        healthDataConsent: false,
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.error).toContain('Consumer Health Data consent')
+  })
+
+  it('rejects mobile phone submission without TCPA smsConsent', async () => {
     const req = new NextRequest('http://localhost/api/apply/master-allocation', {
       method: 'POST',
       body: JSON.stringify({
         fullName: 'Julian Sterling',
         email: 'julian@sterlingadvisory.com',
         phone: '+1 (555) 234-5678',
+        occupationalVelocity: 'Managing Partner, Private Equity.',
+        orthopedicHistory: 'L4/L5 lumbar compression.',
+        autonomousExecution: 'yes',
+        capitalAllocated: 'yes',
+        healthDataConsent: true,
+        smsConsent: false,
+      }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.error).toContain('TCPA')
+  })
+
+  it('accepts qualified master allocation submission with TCPA smsConsent and triggers high-priority pipeline', async () => {
+    const req = new NextRequest('http://localhost/api/apply/master-allocation', {
+      method: 'POST',
+      body: JSON.stringify({
+        fullName: 'Julian Sterling',
+        email: 'julian@sterlingadvisory.com',
+        phone: '+1 (555) 234-5678',
+        smsConsent: true,
         occupationalVelocity: 'Managing Partner, Private Equity, weekly transcontinental travel.',
         orthopedicHistory: 'L4/L5 lumbar compression from flight seating, right AC joint impingement.',
         autonomousExecution: 'yes',
         capitalAllocated: 'yes',
+        healthDataConsent: true,
       }),
     })
 

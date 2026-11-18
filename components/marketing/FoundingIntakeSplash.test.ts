@@ -43,26 +43,19 @@ describe('Founding Principal Intake Splash & Video Engine', () => {
     expect(reservedPosition).toBeGreaterThan(0)
   })
 
-  it('validates the complete 13-point NASM credential matrix for Forge Athletic', async () => {
+  it('validates the verified achieved credential matrix for Forge Athletic', async () => {
     const { NASM_CREDENTIALS_DATA } = await import('./NasmAccreditationPortfolio')
-    expect(NASM_CREDENTIALS_DATA).toHaveLength(13)
+    expect(NASM_CREDENTIALS_DATA).toHaveLength(4)
 
     const codes = NASM_CREDENTIALS_DATA.map((c) => c.code)
     expect(codes).toContain('NASM-CPT®')
-    expect(codes).toContain('NASM-CES®')
-    expect(codes).toContain('NASM-PES®')
-    expect(codes).toContain('NASM-CNC™')
-    expect(codes).toContain('NASM-CSNC')
-    expect(codes).toContain('NASM-PBC')
-    expect(codes).toContain('NASM-WLS')
-    expect(codes).toContain('NASM-BCS')
-    expect(codes).toContain('NASM-VCS')
-    expect(codes).toContain('NASM-SFS')
-    expect(codes).toContain('NASM-GFS')
-    expect(codes).toContain('NASM-MMACS')
-    expect(codes).toContain('🏆 NASM Master Trainer')
+    expect(codes).toContain('ASTI CPR/AED')
+    expect(codes).toContain('ACE-CPT (2008–2021)')
+    expect(codes).toContain('BSIT · B.S.')
+    expect(codes).not.toContain('🏆 NASM Master Trainer')
+    expect(codes).not.toContain('NASM-CES®')
 
-    // Every credential must define curriculum and GAA software integration
+    // Every credential must define curriculum and software integration
     NASM_CREDENTIALS_DATA.forEach((cred) => {
       expect(cred.curriculum.length).toBeGreaterThanOrEqual(3)
       expect(cred.gaaEngineIntegration.length).toBeGreaterThan(15)

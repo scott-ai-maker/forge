@@ -3,10 +3,37 @@ import type { ForgeAddon, ForgeAddonFeature } from '@/lib/forge-addons'
 
 export interface AddonEntitlementRow {
   id: string
+  addon_id?: string | null
   feature: ForgeAddonFeature
   uses_total: number | null
   uses_remaining: number | null
   expires_at: string
+}
+
+export type VerifiedForgeTierId = 'core_lab' | 'plus' | 'coach_support'
+
+export function inferForgeTierFromPackageName(
+  packageName?: string | null,
+  sessionsRemaining?: number | null
+): VerifiedForgeTierId {
+  const normalized = String(packageName ?? '').trim().toLowerCase()
+  if (
+    normalized.includes('coach support') ||
+    normalized.includes('transformation direct') ||
+    normalized.includes('1:1') ||
+    normalized.includes('concierge') ||
+    (typeof sessionsRemaining === 'number' && sessionsRemaining > 0)
+  ) {
+    return 'coach_support'
+  }
+  if (
+    normalized.includes('plus') ||
+    normalized.includes('pro athlete') ||
+    normalized.includes('hybrid')
+  ) {
+    return 'plus'
+  }
+  return 'core_lab'
 }
 
 export interface FeatureAccess {
@@ -83,13 +110,52 @@ export async function loadClientEntitlements(clientId: string): Promise<AddonEnt
   const { supabaseAdmin } = await import('@/lib/supabase')
   const { data, error } = await supabaseAdmin()
     .from('client_addon_entitlements')
-    .select('id, feature, uses_total, uses_remaining, expires_at')
+    .select('id, addon_id, feature, uses_total, uses_remaining, expires_at')
     .eq('client_id', clientId)
     .gt('expires_at', new Date().toISOString())
     .order('expires_at', { ascending: true })
 
   if (error) throw new Error(`Failed loading add-on entitlements: ${error.message}`)
   return (data ?? []) as AddonEntitlementRow[]
+}
+
+export async function resolveClientActiveTier(
+  clientId: string,
+  entitlementRows?: AddonEntitlementRow[]
+): Promise<VerifiedForgeTierId> {
+  let highest: VerifiedForgeTierId = 'core_lab'
+  const rows = entitlementRows ?? (await loadClientEntitlements(clientId).catch(() => []))
+
+  for (const row of rows) {
+    const addonId = String(row.addon_id ?? '').toLowerCase()
+    if (addonId === 'forge-transformation-direct' || addonId.includes('coach_support')) {
+      return 'coach_support'
+    }
+    if (addonId === 'forge-pro-athlete' || addonId.includes('plus')) {
+      highest = 'plus'
+    }
+  }
+
+  try {
+    const { supabaseAdmin } = await import('@/lib/supabase')
+    const nowMs = Date.now()
+    const { data: pkgRows } = await supabaseAdmin()
+      .from('client_packages')
+      .select('package_name, sessions_remaining, expires_at')
+      .eq('client_id', clientId)
+      .order('purchased_at', { ascending: false })
+
+    for (const pkg of pkgRows ?? []) {
+      if (pkg.expires_at && new Date(pkg.expires_at).getTime() <= nowMs) continue
+      const inferred = inferForgeTierFromPackageName(pkg.package_name, pkg.sessions_remaining)
+      if (inferred === 'coach_support') return 'coach_support'
+      if (inferred === 'plus') highest = 'plus'
+    }
+  } catch {
+    // Fallback to entitlement rows if client_packages query fails
+  }
+
+  return highest
 }
 
 // Consumes one use from the soonest-expiring metered entitlement. Compare-and-set avoids double-spend on concurrent requests.

@@ -184,10 +184,44 @@ describe('stripe checkout route', () => {
     expect(createSessionMock).not.toHaveBeenCalled()
   })
 
+  it('rejects recurring subscription checkout with 400 AUTO_RENEWAL_CONSENT_REQUIRED when autoRenewalConsent is missing', async () => {
+    const req = new NextRequest('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ packageId: 'forge-core', cadence: 'monthly', acceptedTerms: true }),
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+    await expect(res.json()).resolves.toMatchObject({
+      code: 'AUTO_RENEWAL_CONSENT_REQUIRED',
+    })
+    expect(createSessionMock).not.toHaveBeenCalled()
+  })
+
+  it('rejects annual and 12-week prepayment cadences by default under month-to-month billing', async () => {
+    for (const payload of [
+      { packageId: 'forge-core', cadence: 'annual', autoRenewalConsent: true },
+      { packageId: 'forge-pro-athlete', cadence: 'annual', autoRenewalConsent: true },
+      { packageId: 'corporate', cadence: 'twelve_week' },
+    ]) {
+      const req = new NextRequest('http://localhost/api/stripe/checkout', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+
+      const res = await POST(req)
+      expect(res.status).toBe(400)
+      await expect(res.json()).resolves.toMatchObject({
+        code: 'ANNUAL_BILLING_DISABLED',
+      })
+    }
+    expect(createSessionMock).not.toHaveBeenCalled()
+  })
+
   it('allows corporate team plan monthly checkout with proper recurring interval and cancel_url', async () => {
     const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',
-      body: JSON.stringify({ packageId: 'corporate', cadence: 'monthly' }),
+      body: JSON.stringify({ packageId: 'corporate', cadence: 'monthly', autoRenewalConsent: true }),
     })
 
     const res = await POST(req)
@@ -202,22 +236,27 @@ describe('stripe checkout route', () => {
     expect(createArgs.metadata.packageId).toBe('corporate')
   })
 
-  it('allows corporate team plan annual checkout in payment mode with 35,000 upfront', async () => {
-    const req = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({ packageId: 'corporate', cadence: 'twelve_week' }),
-    })
+  it('allows corporate team plan annual checkout in payment mode when NEXT_PUBLIC_ENABLE_ANNUAL_PLANS=true', async () => {
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_ANNUAL_PLANS', 'true')
+    try {
+      const req = new NextRequest('http://localhost/api/stripe/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ packageId: 'corporate', cadence: 'twelve_week' }),
+      })
 
-    const res = await POST(req)
-    expect(res.status).toBe(200)
+      const res = await POST(req)
+      expect(res.status).toBe(200)
 
-    expect(createSessionMock).toHaveBeenCalledTimes(1)
-    const createArgs = createSessionMock.mock.calls[0][0]
-    expect(createArgs.mode).toBe('payment')
-    expect(createArgs.line_items[0].price_data.unit_amount).toBe(3500000)
-    expect(createArgs.line_items[0].price_data.product_data.name).toContain('Annual Team Plan')
-    expect(createArgs.cancel_url).toBe('http://localhost/corporate#pricing')
-    expect(createArgs.metadata.packageName).toContain('(Annual)')
+      expect(createSessionMock).toHaveBeenCalledTimes(1)
+      const createArgs = createSessionMock.mock.calls[0][0]
+      expect(createArgs.mode).toBe('payment')
+      expect(createArgs.line_items[0].price_data.unit_amount).toBe(3500000)
+      expect(createArgs.line_items[0].price_data.product_data.name).toContain('Annual Team Plan')
+      expect(createArgs.cancel_url).toBe('http://localhost/corporate#pricing')
+      expect(createArgs.metadata.packageName).toContain('(Annual)')
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 
   it('handles standalone product checkout (e.g. ai-postural-audit) in payment mode', async () => {
@@ -288,7 +327,7 @@ describe('stripe checkout route', () => {
   it('creates Core monthly subscriptions with a seven-day free trial', async () => {
     const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',
-      body: JSON.stringify({ packageId: 'forge-core', cadence: 'monthly' }),
+      body: JSON.stringify({ packageId: 'forge-core', cadence: 'monthly', autoRenewalConsent: true }),
     })
 
     const res = await POST(req)
@@ -299,37 +338,48 @@ describe('stripe checkout route', () => {
     expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'month' })
     expect(createArgs.subscription_data.trial_period_days).toBe(7)
     expect(createArgs.metadata.packageName).toBe('Core')
+    expect(createArgs.metadata.trialDays).toBe('7')
   })
 
-  it('bills Core annually at $399 with the same seven-day trial', async () => {
-    const req = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({ packageId: 'forge-core', cadence: 'annual' }),
-    })
+  it('bills Core annually at $399 with the same seven-day trial when NEXT_PUBLIC_ENABLE_ANNUAL_PLANS=true', async () => {
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_ANNUAL_PLANS', 'true')
+    try {
+      const req = new NextRequest('http://localhost/api/stripe/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ packageId: 'forge-core', cadence: 'annual', autoRenewalConsent: true }),
+      })
 
-    const res = await POST(req)
-    expect(res.status).toBe(200)
-    const createArgs = createSessionMock.mock.calls[0][0]
-    expect(createArgs.line_items[0].price_data.unit_amount).toBe(39900)
-    expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'year' })
-    expect(createArgs.subscription_data.trial_period_days).toBe(7)
-    expect(createArgs.metadata.cadence).toBe('annual')
+      const res = await POST(req)
+      expect(res.status).toBe(200)
+      const createArgs = createSessionMock.mock.calls[0][0]
+      expect(createArgs.line_items[0].price_data.unit_amount).toBe(39900)
+      expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'year' })
+      expect(createArgs.subscription_data.trial_period_days).toBe(7)
+      expect(createArgs.metadata.cadence).toBe('annual')
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 
-  it('bills Plus annually at $899 without a trial', async () => {
-    createSessionMock.mockClear()
-    const req = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({ packageId: 'forge-pro-athlete', cadence: 'annual' }),
-    })
+  it('bills Plus annually at $899 without a trial when NEXT_PUBLIC_ENABLE_ANNUAL_PLANS=true', async () => {
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_ANNUAL_PLANS', 'true')
+    try {
+      createSessionMock.mockClear()
+      const req = new NextRequest('http://localhost/api/stripe/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ packageId: 'forge-pro-athlete', cadence: 'annual', autoRenewalConsent: true }),
+      })
 
-    const res = await POST(req)
-    expect(res.status).toBe(200)
-    const createArgs = createSessionMock.mock.calls[0][0]
-    expect(createArgs.line_items[0].price_data.unit_amount).toBe(89900)
-    expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'year' })
-    expect(createArgs.subscription_data.trial_period_days).toBeUndefined()
-    expect(createArgs.metadata.cadence).toBe('annual')
+      const res = await POST(req)
+      expect(res.status).toBe(200)
+      const createArgs = createSessionMock.mock.calls[0][0]
+      expect(createArgs.line_items[0].price_data.unit_amount).toBe(89900)
+      expect(createArgs.line_items[0].price_data.recurring).toEqual({ interval: 'year' })
+      expect(createArgs.subscription_data.trial_period_days).toBeUndefined()
+      expect(createArgs.metadata.cadence).toBe('annual')
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 
   it('creates Pro Athlete and Transformation Direct monthly subscriptions without a trial', async () => {
@@ -340,7 +390,7 @@ describe('stripe checkout route', () => {
       createSessionMock.mockClear()
       const req = new NextRequest('http://localhost/api/stripe/checkout', {
         method: 'POST',
-        body: JSON.stringify({ packageId, cadence: 'monthly' }),
+        body: JSON.stringify({ packageId, cadence: 'monthly', autoRenewalConsent: true }),
       })
 
       const res = await POST(req)
@@ -352,13 +402,14 @@ describe('stripe checkout route', () => {
     }
   })
 
-  it('applies HOLIDAY25 25% Lifetime Rate Lock discount to Forge memberships', async () => {
+  it('applies HOLIDAY25 25% Rate Lock discount to Forge memberships', async () => {
     const req = new NextRequest('http://localhost/api/stripe/checkout', {
       method: 'POST',
       body: JSON.stringify({
         packageId: 'forge-core',
         cadence: 'monthly',
         discountCode: 'HOLIDAY25',
+        autoRenewalConsent: true,
       }),
     })
 
@@ -373,18 +424,27 @@ describe('stripe checkout route', () => {
     expect(createArgs.metadata.discountAmountCents).toBe('1225')
   })
 
-  it('rejects unsupported membership billing cadences', async () => {
-    const req = new NextRequest('http://localhost/api/stripe/checkout', {
-      method: 'POST',
-      body: JSON.stringify({ packageId: 'forge-transformation-direct', cadence: 'annual' }),
-    })
+  it('rejects unsupported membership billing cadences even when annual plans are enabled', async () => {
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_ANNUAL_PLANS', 'true')
+    try {
+      const req = new NextRequest('http://localhost/api/stripe/checkout', {
+        method: 'POST',
+        body: JSON.stringify({
+          packageId: 'forge-transformation-direct',
+          cadence: 'annual',
+          autoRenewalConsent: true,
+        }),
+      })
 
-    const res = await POST(req)
-    expect(res.status).toBe(400)
-    await expect(res.json()).resolves.toEqual({
-      error: 'Annual billing is not available for this membership',
-    })
-    expect(createSessionMock).not.toHaveBeenCalled()
+      const res = await POST(req)
+      expect(res.status).toBe(400)
+      await expect(res.json()).resolves.toEqual({
+        error: 'Annual billing is not available for this membership',
+      })
+      expect(createSessionMock).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 
   it('strictly rejects native companion app checkout requests with 403 Forbidden', async () => {
@@ -437,7 +497,7 @@ describe('stripe checkout route', () => {
     try {
       const req = new NextRequest('http://localhost/api/stripe/checkout', {
         method: 'POST',
-        body: JSON.stringify({ packageId: 'forge-core', cadence: 'monthly' }),
+        body: JSON.stringify({ packageId: 'forge-core', cadence: 'monthly', autoRenewalConsent: true }),
       })
       const res = await POST(req)
       expect(res.status).toBe(200)

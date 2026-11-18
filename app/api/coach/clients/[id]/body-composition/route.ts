@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import { analyzeBodyCompositionFromImages } from '@/lib/ai-body-composition-engine'
+import { persistBodyCompPhotoToPrivateVault } from '@/lib/fitness-photos'
+import { extractRequestIp, recordLegalConsentAudit } from '@/lib/legal-compliance'
 import { enforceRateLimit } from '@/lib/rate-limit'
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
@@ -149,6 +151,40 @@ export async function POST(
   const posteriorPhoto = typeof body.posteriorPhotoBase64 === 'string' ? body.posteriorPhotoBase64 : undefined
   const photoDataUrl = typeof body.photoDataUrl === 'string' ? body.photoDataUrl : undefined
 
+  const hasPhotoPayload = Boolean(
+    (anteriorPhoto && anteriorPhoto.trim()) ||
+      (lateralPhoto && lateralPhoto.trim()) ||
+      (posteriorPhoto && posteriorPhoto.trim()) ||
+      (photoDataUrl && photoDataUrl.trim())
+  )
+  if (
+    body.biometricScanConsent === false ||
+    (hasPhotoPayload && body.biometricScanConsent !== true)
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          'Standalone Biometric & Consumer Health Scan Release (IL BIPA 740 ILCS 14/15(b), WA MHMDA RCW 19.373, TX CUBI) is required before analyzing body-composition photographs.',
+      },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  if (body.biometricScanConsent === true) {
+    await recordLegalConsentAudit({
+      adminClient: admin,
+      userId: coachId,
+      documentTypes: ['consumer_health_biometric_policy'],
+      ipAddress: extractRequestIp(req.headers),
+      userAgent: req.headers.get('user-agent'),
+      metadata: {
+        flow: 'coach_body_composition_scan',
+        athleteClientId: clientId,
+        hasPhotoPayload,
+      },
+    })
+  }
+
   try {
     const scanResult = await analyzeBodyCompositionFromImages({
       sex,
@@ -170,9 +206,14 @@ export async function POST(
 
     // Optionally save to database only if scan is compliant and not rejected
     if (body.saveRecord !== false && !scanResult.isRejected) {
+      const vaultPhotoPath = await persistBodyCompPhotoToPrivateVault(
+        admin,
+        clientId,
+        photoDataUrl ?? anteriorPhoto ?? null
+      )
       await admin.from('body_composition_analyses').insert({
         user_id: clientId,
-        photo_data_url: photoDataUrl ?? anteriorPhoto ?? null,
+        photo_data_url: vaultPhotoPath,
         estimated_bodyfat_percent: scanResult.estimatedBodyFatPercent,
         method: scanResult.methodDescription,
         confidence_score: scanResult.confidenceScore,

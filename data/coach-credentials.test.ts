@@ -100,9 +100,21 @@ describe('data/coach-credentials.ts', () => {
     }
   })
 
+  it('excludes unconferred candidate/in_progress credentials and records historical ACE-CPT (2008–2021)', () => {
+    const unconferred = COACH_CREDENTIALS.filter(
+      (c) => c.status === 'in_progress' || c.status === 'pinnacle'
+    )
+    expect(unconferred).toHaveLength(0)
+
+    const aceHistorical = getCredentialById('ace-cpt-historical')
+    expect(aceHistorical).toBeDefined()
+    expect(aceHistorical?.status).toBe('completed')
+    expect(aceHistorical?.statusLabel).toContain('2008–2021')
+  })
+
   it('computes accurate category counts and stats including Credly portfolio', () => {
     const categories = getCredentialCategories()
-    expect(categories.length).toBeGreaterThanOrEqual(8)
+    expect(categories.length).toBe(6)
 
     const allCat = categories.find((c) => c.key === 'all')
     expect(allCat?.count).toBe(COACH_CREDENTIALS.length)

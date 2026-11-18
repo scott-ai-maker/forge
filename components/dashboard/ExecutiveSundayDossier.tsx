@@ -1372,10 +1372,10 @@ export default function ExecutiveSundayDossier({
               fontWeight: 700,
             }}
           >
-            COACH GORDON, NASM MASTER TRAINER
+            COACH GORDON, B.S., NASM-CPT®
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 2 }}>
-            Founder &amp; Performance Director · NASM-CPT® · CES® · PES® · CNC™ · CSNC
+            Founder &amp; Performance Director · NASM-CPT® (#1261890687) · Prior ACE-CPT (2008–2021) · ASTI CPR/AED
           </div>
         </div>
 

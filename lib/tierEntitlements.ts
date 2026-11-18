@@ -42,11 +42,11 @@ export const FORGE_TIER_ENTITLEMENTS: Record<ForgeTierId, ForgeTierEntitlement> 
   core_lab: {
     id: 'core_lab',
     name: 'Core Lab',
-    shortLabel: 'Core Lab · $19.99/mo',
-    foundingMonthlyCents: 1999,
-    foundingPriceFormatted: '$19.99',
-    postLaunchMonthlyCents: 2999,
-    postLaunchPriceFormatted: '$29.99',
+    shortLabel: 'Core Lab · $49.00/mo',
+    foundingMonthlyCents: 4900,
+    foundingPriceFormatted: '$49.00',
+    postLaunchMonthlyCents: 4900,
+    postLaunchPriceFormatted: '$49.00',
     rosterCap: null,
     remainingSpots: null,
     optEngineAccess: true,
@@ -68,11 +68,11 @@ export const FORGE_TIER_ENTITLEMENTS: Record<ForgeTierId, ForgeTierEntitlement> 
   plus: {
     id: 'plus',
     name: 'Plus',
-    shortLabel: 'Plus · $49.00/mo',
-    foundingMonthlyCents: 4900,
-    foundingPriceFormatted: '$49.00',
-    postLaunchMonthlyCents: 6900,
-    postLaunchPriceFormatted: '$69.00',
+    shortLabel: 'Plus · $99.00/mo',
+    foundingMonthlyCents: 9900,
+    foundingPriceFormatted: '$99.00',
+    postLaunchMonthlyCents: 9900,
+    postLaunchPriceFormatted: '$99.00',
     rosterCap: null,
     remainingSpots: null,
     optEngineAccess: true,
@@ -94,13 +94,13 @@ export const FORGE_TIER_ENTITLEMENTS: Record<ForgeTierId, ForgeTierEntitlement> 
   coach_support: {
     id: 'coach_support',
     name: 'Coach Support',
-    shortLabel: 'Coach Support · $199.00/mo',
-    foundingMonthlyCents: 19900,
-    foundingPriceFormatted: '$199.00',
-    postLaunchMonthlyCents: 24900,
-    postLaunchPriceFormatted: '$249.00',
-    rosterCap: 25,
-    remainingSpots: 6,
+    shortLabel: 'Coach Support · $299.00/mo',
+    foundingMonthlyCents: 29900,
+    foundingPriceFormatted: '$299.00',
+    postLaunchMonthlyCents: 29900,
+    postLaunchPriceFormatted: '$299.00',
+    rosterCap: 15,
+    remainingSpots: null,
     optEngineAccess: true,
     expressModeAccess: true,
     deskResetAccess: true,
@@ -144,7 +144,7 @@ export function getUpgradeTriggerCopy(
         'Your scan flagged elevated joint strain. Upgrade to Plus for 2 monthly Coach Gordon Form Lab video reviews, Dual-Screen Readiness trend alerts, and unlimited Desk Ergonomics profiles.',
       bannerCopy:
         'Want Coach Gordon to verify your form on this? Upgrade to Plus for 2 monthly Form Lab reviews, Dual-Screen Readiness trend alerts, and unlimited workstation profiles.',
-      ctaLabel: 'Unlock Plus · $49/mo Founding Rate',
+      ctaLabel: 'Unlock Plus · $99/mo',
       highlights: [
         '2 monthly Coach Gordon Form Lab video critiques with joint-angle markup',
         'Full Dual-Screen Readiness (Overhead Squat + Scapular Wall Slide) & trend alerts',
@@ -163,7 +163,7 @@ export function getUpgradeTriggerCopy(
         'Core Lab includes 1 saved Desk Ergonomics workstation profile. Upgrade to Plus to save unlimited workstation setups and track posture improvements across every desk you use.',
       bannerCopy:
         'Core Lab includes 1 saved workstation profile. Upgrade to Plus for unlimited workstation profiles.',
-      ctaLabel: 'Upgrade to Plus · $49/mo Founding Rate',
+      ctaLabel: 'Upgrade to Plus · $99/mo',
       highlights: [
         'Unlimited saved Desk Ergonomics workstation profiles (Home, Office, Travel)',
         '2 monthly Coach Gordon Form Lab video reviews',
@@ -182,7 +182,7 @@ export function getUpgradeTriggerCopy(
         'Core Lab covers single-session environment swaps. Upgrade to Plus to schedule Multi-Day Travel Passes so Hotel Gym and Bodyweight sessions preserve your 5-Phase OPT™ progression automatically.',
       bannerCopy:
         'Traveling multiple days in a row? Activate Multi-Day Travel Pass in Plus to auto-adapt your week.',
-      ctaLabel: 'Unlock Multi-Day Travel Pass · $49/mo',
+      ctaLabel: 'Unlock Multi-Day Travel Pass · $99/mo',
       highlights: [
         'Multi-Day Travel Pass auto-adapts equipment across entire work trips',
         'Zero lost progression across Phases 01–05 when away from your home gym',
@@ -202,7 +202,7 @@ export function getUpgradeTriggerCopy(
         description:
           'You have used your complimentary Core Lab onboarding clip. Upgrade to Plus for 2 monthly Coach Gordon telestrator video reviews plus full Nutrition Periodization.',
         bannerCopy: '0 Form Lab credits remaining this month. Upgrade to Plus for 2 monthly Coach Gordon reviews.',
-        ctaLabel: 'Upgrade to Plus · $49/mo Founding Rate',
+        ctaLabel: 'Upgrade to Plus · $99/mo',
         highlights: [
           '2 Coach Gordon Form Lab video critiques every month',
           'Unlimited Desk Ergonomics profiles & Multi-Day Travel Pass',
@@ -214,13 +214,13 @@ export function getUpgradeTriggerCopy(
     return {
       trigger,
       recommendedTier: 'coach_support',
-      eyebrow: 'Priority Coaching Roster · Capped at 25',
+      eyebrow: 'Priority Coaching Roster',
       headline: 'Step up to 8 Priority Form Lab Reviews + Direct 1-on-1 Coach Chat',
       description:
         'You have used both monthly Plus Form Lab credits. Coach Support unlocks 8 monthly video reviews with 24-hour priority turnaround and direct 1-on-1 messaging with Coach Gordon.',
       bannerCopy:
         '0 Form Lab credits left this month. Upgrade to Coach Support for 8 priority reviews/mo + 1-on-1 Coach Chat.',
-      ctaLabel: 'Claim Coach Support Spot · $199/mo',
+      ctaLabel: 'Claim Coach Support Spot · $299/mo',
       highlights: [
         '8 monthly Form Lab reviews with 24-hour priority turnaround',
         'Direct 1-on-1 Chat with Coach Gordon (24h SLA)',
@@ -230,17 +230,15 @@ export function getUpgradeTriggerCopy(
   }
 
   // phase_02_load_milestone
-  const spotsLeft = FORGE_TIER_ENTITLEMENTS.coach_support.remainingSpots ?? 6
-  const cap = FORGE_TIER_ENTITLEMENTS.coach_support.rosterCap ?? 25
   return {
     trigger,
     recommendedTier: 'coach_support',
-    eyebrow: `Coach Support · ${spotsLeft} of ${cap} Spots Remaining`,
+    eyebrow: `Coach Support · Priority 1-on-1 Roster`,
     headline: 'Phase 02 Strength Endurance Unlocked — Certify Your Load Progression',
     description:
-      'Moving into heavier Phase 02 superset loads is where individualized cueing pays off most. Reserve one of the 25 Coach Support roster spots for bespoke plan adjustments and 24-hour 1-on-1 access to Coach Gordon.',
-    bannerCopy: `Phase 02 Load Milestone unlocked · ${spotsLeft} of ${cap} Coach Support spots open for 1-on-1 plan certification.`,
-    ctaLabel: `Reserve Coach Support (${spotsLeft}/${cap} Left) · $199/mo`,
+      'Moving into heavier Phase 02 superset loads is where individualized cueing pays off most. Step up to Coach Support for bespoke plan adjustments and 24-hour 1-on-1 access to Coach Gordon.',
+    bannerCopy: `Phase 02 Load Milestone unlocked · Coach Support open for 1-on-1 plan certification.`,
+    ctaLabel: `Upgrade to Coach Support · $299/mo`,
     highlights: [
       'Direct 1-on-1 Chat with Coach Gordon (24h SLA)',
       '8 monthly Form Lab video reviews (24h priority)',
@@ -255,8 +253,58 @@ const COOLDOWN_STORAGE_KEY = 'forge_upgrade_cooldown_v1'
 const FORM_LAB_USAGE_KEY = 'forge_form_lab_used_v1'
 const TIER_EVENT = 'forge:tier-preview-change'
 
+export function tierIdToForgePackageId(tier: ForgeTierId): string {
+  if (tier === 'coach_support') return 'forge-transformation-direct'
+  if (tier === 'plus') return 'forge-pro-athlete'
+  return 'forge-core'
+}
+
+export function inferForgeTierFromPackageNameClient(
+  packageName?: string | null,
+  sessionsRemaining?: number | null
+): ForgeTierId {
+  const normalized = String(packageName ?? '').trim().toLowerCase()
+  if (
+    normalized.includes('coach support') ||
+    normalized.includes('transformation direct') ||
+    normalized.includes('1:1') ||
+    normalized.includes('concierge') ||
+    (typeof sessionsRemaining === 'number' && sessionsRemaining > 0)
+  ) {
+    return 'coach_support'
+  }
+  if (
+    normalized.includes('plus') ||
+    normalized.includes('pro athlete') ||
+    normalized.includes('hybrid')
+  ) {
+    return 'plus'
+  }
+  return 'core_lab'
+}
+
+interface ServerEntitlementCache {
+  tierId: ForgeTierId
+  allowQaPreview: boolean
+  serverVideoReviewCredits: number | null
+  fetchedAtMs: number
+}
+
+let cachedServerEntitlements: ServerEntitlementCache | null = null
+let inflightEntitlementsPromise: Promise<ServerEntitlementCache | null> | null = null
+
+export function isQaTierPreviewAllowed(): boolean {
+  if (cachedServerEntitlements !== null) {
+    return cachedServerEntitlements.allowQaPreview
+  }
+  return process.env.NODE_ENV !== 'production'
+}
+
 export function getStoredTierId(): ForgeTierId {
-  if (typeof window === 'undefined') return 'core_lab'
+  if (!isQaTierPreviewAllowed()) {
+    return cachedServerEntitlements?.tierId ?? 'core_lab'
+  }
+  if (typeof window === 'undefined') return cachedServerEntitlements?.tierId ?? 'core_lab'
   try {
     const raw = window.localStorage.getItem(TIER_STORAGE_KEY)
     if (raw === 'core_lab' || raw === 'plus' || raw === 'coach_support') {
@@ -265,11 +313,12 @@ export function getStoredTierId(): ForgeTierId {
   } catch {
     // ignore
   }
-  return 'core_lab'
+  return cachedServerEntitlements?.tierId ?? 'core_lab'
 }
 
 export function setStoredTierId(tier: ForgeTierId): void {
   if (typeof window === 'undefined') return
+  if (!isQaTierPreviewAllowed()) return
   try {
     window.localStorage.setItem(TIER_STORAGE_KEY, tier)
     window.dispatchEvent(new CustomEvent<ForgeTierId>(TIER_EVENT, { detail: tier }))
@@ -354,6 +403,7 @@ export function consumeFormLabCredit(tier: ForgeTierId): { allowed: boolean; rem
 
 export function resetFormLabCreditsForQa(): void {
   if (typeof window === 'undefined') return
+  if (!isQaTierPreviewAllowed()) return
   try {
     window.localStorage.removeItem(FORM_LAB_USAGE_KEY)
     window.dispatchEvent(new CustomEvent(TIER_EVENT))
@@ -368,28 +418,98 @@ export function canSaveAnotherWorkstation(tier: ForgeTierId, savedCount: number)
   return savedCount < max
 }
 
-export function useTierAccess() {
-  const [tierId, setTierId] = useState<ForgeTierId>('core_lab')
-  const [remainingFormLabCredits, setRemainingFormLabCredits] = useState<number>(1)
+async function fetchAuthoritativeEntitlementsOnce(): Promise<ServerEntitlementCache | null> {
+  if (typeof window === 'undefined' || typeof fetch !== 'function') return null
+  if (cachedServerEntitlements && Date.now() - cachedServerEntitlements.fetchedAtMs < 30_000) {
+    return cachedServerEntitlements
+  }
+  if (inflightEntitlementsPromise) {
+    return inflightEntitlementsPromise
+  }
+
+  inflightEntitlementsPromise = fetch('/api/account/entitlements', {
+    method: 'GET',
+    cache: 'no-store',
+  })
+    .then(async res => {
+      if (!res.ok) return null
+      const data = await res.json().catch(() => null)
+      if (!data) return null
+      const rawTier = data.tierId
+      const resolvedTier: ForgeTierId =
+        rawTier === 'coach_support' || rawTier === 'plus' || rawTier === 'core_lab'
+          ? rawTier
+          : 'core_lab'
+      const allowQaPreview = Boolean(data.allowQaPreview)
+      const uses = data.features?.['video-review']?.usesRemaining
+      const serverVideoReviewCredits =
+        typeof uses === 'number' && Number.isFinite(uses) ? Math.max(0, uses) : null
+
+      if (!allowQaPreview) {
+        try {
+          window.localStorage.removeItem(TIER_STORAGE_KEY)
+        } catch {
+          // ignore
+        }
+      }
+
+      cachedServerEntitlements = {
+        tierId: resolvedTier,
+        allowQaPreview,
+        serverVideoReviewCredits,
+        fetchedAtMs: Date.now(),
+      }
+      window.dispatchEvent(new CustomEvent(TIER_EVENT))
+      return cachedServerEntitlements
+    })
+    .catch(() => null)
+    .finally(() => {
+      inflightEntitlementsPromise = null
+    })
+
+  return inflightEntitlementsPromise
+}
+
+export function useTierAccess(initialServerTier?: ForgeTierId) {
+  const [tierId, setTierId] = useState<ForgeTierId>(initialServerTier ?? 'core_lab')
+  const [allowQaPreview, setAllowQaPreview] = useState<boolean>(
+    process.env.NODE_ENV !== 'production'
+  )
+  const [remainingFormLabCredits, setRemainingFormLabCredits] = useState<number>(
+    FORGE_TIER_ENTITLEMENTS[initialServerTier ?? 'core_lab'].monthlyFormLabCredits
+  )
   const [, setTick] = useState(0)
 
   useEffect(() => {
     const sync = () => {
-      const stored = getStoredTierId()
-      setTierId(stored)
-      setRemainingFormLabCredits(getRemainingFormLabCredits(stored))
+      const qaAllowed = isQaTierPreviewAllowed()
+      setAllowQaPreview(qaAllowed)
+      const effectiveTier: ForgeTierId = qaAllowed
+        ? getStoredTierId()
+        : (cachedServerEntitlements?.tierId ?? initialServerTier ?? 'core_lab')
+      setTierId(effectiveTier)
+
+      if (!qaAllowed && cachedServerEntitlements?.serverVideoReviewCredits !== null && cachedServerEntitlements?.serverVideoReviewCredits !== undefined) {
+        setRemainingFormLabCredits(cachedServerEntitlements.serverVideoReviewCredits)
+      } else {
+        setRemainingFormLabCredits(getRemainingFormLabCredits(effectiveTier))
+      }
       setTick(t => t + 1)
     }
+
     sync()
+    void fetchAuthoritativeEntitlementsOnce()
+
     window.addEventListener(TIER_EVENT, sync)
     window.addEventListener('storage', sync)
     return () => {
       window.removeEventListener(TIER_EVENT, sync)
       window.removeEventListener('storage', sync)
     }
-  }, [])
+  }, [initialServerTier])
 
   const setTier = useCallback((nextTier: ForgeTierId) => {
+    if (!isQaTierPreviewAllowed()) return
     setStoredTierId(nextTier)
     setTierId(nextTier)
     setRemainingFormLabCredits(getRemainingFormLabCredits(nextTier))
@@ -417,6 +537,7 @@ export function useTierAccess() {
 
   return {
     tierId,
+    allowQaPreview,
     entitlements: FORGE_TIER_ENTITLEMENTS[tierId],
     remainingFormLabCredits,
     setTier,

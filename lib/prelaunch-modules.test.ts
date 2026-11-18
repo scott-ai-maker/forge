@@ -130,14 +130,15 @@ describe('Forge Athletic Pre-Launch Modules (Phases 1–4)', () => {
   })
 
   it('enforces Core Lab, Plus, and Coach Support entitlements and 5 contextual upgrade triggers', () => {
-    expect(FORGE_TIER_ENTITLEMENTS.core_lab.foundingMonthlyCents).toBe(1999)
+    expect(FORGE_TIER_ENTITLEMENTS.core_lab.foundingMonthlyCents).toBe(4900)
     expect(FORGE_TIER_ENTITLEMENTS.core_lab.maxWorkstationProfiles).toBe(1)
     expect(FORGE_TIER_ENTITLEMENTS.core_lab.monthlyFormLabCredits).toBe(1)
-    expect(FORGE_TIER_ENTITLEMENTS.plus.foundingMonthlyCents).toBe(4900)
+    expect(FORGE_TIER_ENTITLEMENTS.plus.foundingMonthlyCents).toBe(9900)
     expect(FORGE_TIER_ENTITLEMENTS.plus.maxWorkstationProfiles).toBeNull()
     expect(FORGE_TIER_ENTITLEMENTS.plus.monthlyFormLabCredits).toBe(2)
-    expect(FORGE_TIER_ENTITLEMENTS.coach_support.foundingMonthlyCents).toBe(19900)
-    expect(FORGE_TIER_ENTITLEMENTS.coach_support.rosterCap).toBe(25)
+    expect(FORGE_TIER_ENTITLEMENTS.coach_support.foundingMonthlyCents).toBe(29900)
+    expect(FORGE_TIER_ENTITLEMENTS.coach_support.rosterCap).toBe(15)
+    expect(FORGE_TIER_ENTITLEMENTS.coach_support.remainingSpots).toBeNull()
     expect(FORGE_TIER_ENTITLEMENTS.coach_support.monthlyFormLabCredits).toBe(8)
 
     expect(canSaveAnotherWorkstation('core_lab', 0)).toBe(true)
@@ -162,7 +163,9 @@ describe('Forge Athletic Pre-Launch Modules (Phases 1–4)', () => {
 
   it('validates landing social proof profiles and Founding Member Lifetime Rate Lock pricing', () => {
     expect(COACH_GORDON_TRUST_PROFILE.monogram).toBe('CG')
-    expect(COACH_GORDON_TRUST_PROFILE.verificationBadge).toBe('NASM-CPT® Certified Since 2008')
+    expect(COACH_GORDON_TRUST_PROFILE.verificationBadge).toBe('NASM-CPT® Certified (#1261890687)')
+    expect(COACH_GORDON_TRUST_PROFILE.secondaryCredentials).toContain('Prior ACE-CPT (2008–2021)')
+    expect(COACH_GORDON_TRUST_PROFILE.secondaryCredentials).not.toContain('Master Trainer')
     expect(COACH_GORDON_TRUST_PROFILE.philosophySentences).toHaveLength(3)
 
     expect(EVERYDAY_MOMENTS_SCENARIOS).toHaveLength(3)
@@ -171,15 +174,20 @@ describe('Forge Athletic Pre-Launch Modules (Phases 1–4)', () => {
 
     expect(CLIENT_OUTCOMES_GRID).toHaveLength(3)
     expect(CLIENT_OUTCOMES_GRID.map(c => c.nameAndAge)).toEqual([
-      'Marcus T., 38',
-      'Elena R., 41',
-      'David K., 45',
+      'Workflow 01',
+      'Workflow 02',
+      'Workflow 03',
     ])
+    for (const card of CLIENT_OUTCOMES_GRID) {
+      expect(card.personaBadge).toContain('Illustrative Workflow')
+      expect(card.story).not.toContain('cleared years of knee pinching')
+      expect(card.keyMetricBadge).not.toContain('-4.5°')
+    }
 
     expect(FOUNDING_PRICING_CARDS.map(p => `${p.name}:${p.foundingPrice}->${p.postLaunchPrice}`)).toEqual([
-      'Core Lab:$19.99->$29.99',
-      'Plus:$49.00->$69.00',
-      'Coach Support:$199.00->$249.00',
+      'Core Lab:$49.00->$49.00',
+      'Plus:$99.00->$99.00',
+      'Coach Support:$299.00->$299.00',
     ])
   })
 })

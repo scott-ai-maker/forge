@@ -5,14 +5,21 @@ const {
   constructEventMock,
   transitionClientStatusMock,
   adminFromMock,
+  sendTransactionalEmailMock,
 } = vi.hoisted(() => ({
   constructEventMock: vi.fn(),
   transitionClientStatusMock: vi.fn(),
   adminFromMock: vi.fn(),
+  sendTransactionalEmailMock: vi.fn().mockResolvedValue({ id: 'email_123' }),
 }))
 
 vi.mock('@/lib/notifications', () => ({
   notifyUser: vi.fn().mockResolvedValue({ channels: [] }),
+}))
+
+vi.mock('@/lib/marketing-email', () => ({
+  getBaseUrl: () => 'https://forge-athletic.app',
+  sendTransactionalEmail: sendTransactionalEmailMock,
 }))
 
 vi.mock('@/lib/stripe', () => ({
@@ -133,7 +140,8 @@ describe('POST /api/stripe/webhook', () => {
     expect(packageInsert).not.toHaveBeenCalled()
   })
 
-  it('handles checkout.session.completed for subscription: links customer and activates client', async () => {
+  it('handles checkout.session.completed for subscription: links customer, activates client, and sends MA 3-business-day statutory confirmation email', async () => {
+    const notificationInsertMock = vi.fn().mockResolvedValue({ error: null })
     adminFromMock.mockImplementation((table: string) => {
       if (table === 'clients') {
         return {
@@ -142,11 +150,21 @@ describe('POST /api/stripe/webhook', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               maybeSingle: vi.fn().mockResolvedValue({
-                data: { id: 'client-1', status: 'inactive', stripe_customer_id: null },
+                data: { id: 'client-1', status: 'inactive', stripe_customer_id: null, email: 'athlete@example.com' },
                 error: null,
               }),
             }),
           }),
+        }
+      }
+      if (table === 'notification_log') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+          insert: notificationInsertMock,
         }
       }
       return {
@@ -171,8 +189,12 @@ describe('POST /api/stripe/webhook', () => {
           customer_details: { email: 'athlete@example.com' },
           metadata: {
             clientId: 'client-1',
-            packageName: 'VIP Coaching',
-            sessionsTotal: '12',
+            packageId: 'forge-core',
+            packageName: 'Core',
+            sessionsTotal: '0',
+            cadence: 'monthly',
+            finalPriceCents: '4900',
+            trialDays: '7',
           },
         },
       },
@@ -187,6 +209,24 @@ describe('POST /api/stripe/webhook', () => {
         clientId: 'client-1',
         newStatus: 'active',
         reasonCode: 'new_enrollment',
+      })
+    )
+
+    expect(sendTransactionalEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'athlete@example.com',
+        subject: expect.stringContaining('Subscription Confirmation & Cancellation Rights'),
+        text: expect.stringContaining('M.G.L. c. 93, §§ 81–82'),
+      })
+    )
+    expect(sendTransactionalEmailMock.mock.calls[0][0].text).toContain(
+      'https://forge-athletic.app/dashboard/settings'
+    )
+    expect(notificationInsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'client-1',
+        type: 'subscription_confirmation',
+        dedupe_key: 'billing-ack:cs_123',
       })
     )
   })
@@ -276,6 +316,125 @@ describe('POST /api/stripe/webhook', () => {
         clientId: 'client-1',
         newStatus: 'paused',
         reasonCode: 'financial_hold',
+      })
+    )
+  })
+
+  it('handles customer.subscription.trial_will_end: sends 3-day free-trial-ending reminder email with 1-click cancellation link', async () => {
+    const notificationInsertMock = vi.fn().mockResolvedValue({ error: null })
+    adminFromMock.mockImplementation((table: string) => {
+      if (table === 'clients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: 'client-1', email: 'trial@example.com' },
+                error: null,
+              }),
+            }),
+          }),
+        }
+      }
+      if (table === 'notification_log') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+          insert: notificationInsertMock,
+        }
+      }
+      return {}
+    })
+
+    constructEventMock.mockReturnValueOnce({
+      type: 'customer.subscription.trial_will_end',
+      data: {
+        object: {
+          id: 'sub_trial_1',
+          customer: 'cus_123',
+          trial_end: 1795478400,
+          metadata: {
+            clientId: 'client-1',
+            packageName: 'Core',
+            cadence: 'monthly',
+            finalPriceCents: '4900',
+          },
+        },
+      },
+    })
+
+    const res = await POST(makeWebhookRequest())
+    expect(res.status).toBe(200)
+    expect(sendTransactionalEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'trial@example.com',
+        subject: expect.stringContaining('Core free trial ends'),
+        text: expect.stringContaining('$49.00/month'),
+      })
+    )
+    expect(notificationInsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'client-1',
+        type: 'trial_ending_reminder',
+        dedupe_key: 'trial-ending:sub_trial_1:1795478400',
+      })
+    )
+  })
+
+  it('handles invoice.upcoming: sends upcoming subscription renewal notice email', async () => {
+    const notificationInsertMock = vi.fn().mockResolvedValue({ error: null })
+    adminFromMock.mockImplementation((table: string) => {
+      if (table === 'notification_log') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+          insert: notificationInsertMock,
+        }
+      }
+      return {}
+    })
+
+    constructEventMock.mockReturnValueOnce({
+      id: 'evt_upcoming_1',
+      type: 'invoice.upcoming',
+      data: {
+        object: {
+          customer: 'cus_123',
+          customer_email: 'renewal@example.com',
+          amount_due: 9900,
+          next_payment_attempt: 1796083200,
+          parent: {
+            subscription_details: {
+              metadata: {
+                clientId: 'client-1',
+                packageName: 'Plus',
+                cadence: 'monthly',
+              },
+            },
+          },
+        },
+      },
+    })
+
+    const res = await POST(makeWebhookRequest())
+    expect(res.status).toBe(200)
+    expect(sendTransactionalEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'renewal@example.com',
+        subject: expect.stringContaining('Upcoming Plus Renewal'),
+        text: expect.stringContaining('$99.00'),
+      })
+    )
+    expect(notificationInsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'client-1',
+        type: 'upcoming_renewal_notice',
+        dedupe_key: 'invoice-upcoming:cus_123:1796083200',
       })
     )
   })

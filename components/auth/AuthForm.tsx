@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase-browser'
 import { LEGAL_DOCUMENTS } from '@/lib/legal-compliance'
-import { ForgeTierId, setStoredTierId } from '@/lib/tierEntitlements'
+import type { ForgeTierId } from '@/lib/tierEntitlements'
 
 type Mode = 'login' | 'signup' | 'reset'
 
@@ -21,6 +21,7 @@ interface ValidationErrors {
   email?: string
   password?: string
   legalConsent?: string
+  healthConsent?: string
 }
 
 function formatAuthErrorMessage(rawMessage: string, provider?: 'google' | 'apple') {
@@ -147,6 +148,7 @@ export default function AuthForm({
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [acceptedLegalTerms, setAcceptedLegalTerms] = useState(false)
+  const [acceptedHealthBiometricConsent, setAcceptedHealthBiometricConsent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<'google' | 'apple' | null>(null)
   const [error, setError] = useState<string | null>(initialError ? formatAuthErrorMessage(initialError) : null)
@@ -159,16 +161,11 @@ export default function AuthForm({
   const emailInputRef = useRef<HTMLInputElement | null>(null)
   const passwordInputRef = useRef<HTMLInputElement | null>(null)
   const legalCheckboxRef = useRef<HTMLInputElement | null>(null)
+  const healthCheckboxRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     setIsHydrated(true)
   }, [])
-
-  useEffect(() => {
-    if (initialMode === 'signup' && selectedPlan) {
-      setStoredTierId(selectedPlan)
-    }
-  }, [initialMode, selectedPlan])
 
   useEffect(() => {
     if (!resetCooldownEndsAt) return
@@ -198,7 +195,12 @@ export default function AuthForm({
 
     if (mode === 'signup' && !acceptedLegalTerms) {
       newErrors.legalConsent =
-        'You must confirm you are 18+ and accept the Terms of Service, Liability Release, Arbitration Agreement, Privacy Policy, and Consumer Health & Biometric Policy.'
+        'You must confirm you are 18+ and accept the Terms of Service, Athletic Liability Release, Arbitration Agreement, and Privacy Policy.'
+    }
+
+    if (mode === 'signup' && !acceptedHealthBiometricConsent) {
+      newErrors.healthConsent =
+        'Separate Consumer Health & Biometric Data consent is required (WA MHMDA RCW 19.373 / NV SB 370 / IL BIPA).'
     }
 
     setFieldErrors(newErrors)
@@ -208,6 +210,8 @@ export default function AuthForm({
       passwordInputRef.current?.focus()
     } else if (newErrors.legalConsent) {
       legalCheckboxRef.current?.focus()
+    } else if (newErrors.healthConsent) {
+      healthCheckboxRef.current?.focus()
     }
     return Object.keys(newErrors).length === 0
   }
@@ -298,6 +302,7 @@ export default function AuthForm({
           data: {
             age_verified_18_plus: true,
             legal_terms_accepted: true,
+            health_biometric_consent_accepted: true,
             legal_consented_at: consentedAt,
             legal_terms_version: LEGAL_DOCUMENTS.terms_of_service.version,
             legal_privacy_version: LEGAL_DOCUMENTS.privacy_policy.version,
@@ -367,13 +372,27 @@ export default function AuthForm({
   }
 
   async function handleOAuth(provider: 'google' | 'apple') {
-    if (mode === 'signup' && !acceptedLegalTerms) {
+    if (mode === 'signup' && (!acceptedLegalTerms || !acceptedHealthBiometricConsent)) {
       setFieldErrors(prev => ({
         ...prev,
-        legalConsent:
-          'Please confirm you are 18+ and check the agreement box before creating an account with Google or Apple.',
+        ...(!acceptedLegalTerms
+          ? {
+              legalConsent:
+                'Please confirm you are 18+ and accept the Terms of Service & Privacy Policy before creating an account.',
+            }
+          : {}),
+        ...(!acceptedHealthBiometricConsent
+          ? {
+              healthConsent:
+                'Please check the separate Consumer Health & Biometric Data Consent box before creating an account.',
+            }
+          : {}),
       }))
-      legalCheckboxRef.current?.focus()
+      if (!acceptedLegalTerms) {
+        legalCheckboxRef.current?.focus()
+      } else {
+        healthCheckboxRef.current?.focus()
+      }
       return
     }
 
@@ -752,60 +771,106 @@ export default function AuthForm({
         )}
 
         {mode === 'signup' && (
-          <div>
-            <div
-              className="forge-legal-consent-row"
-              data-invalid={fieldErrors.legalConsent ? 'true' : undefined}
-            >
-              <input
-                ref={legalCheckboxRef}
-                id="legal-consent-checkbox"
-                name="legalConsent"
-                type="checkbox"
-                className="forge-legal-checkbox"
-                checked={acceptedLegalTerms}
-                disabled={isAnyLoading}
-                onChange={e => {
-                  setAcceptedLegalTerms(e.target.checked)
-                  if (e.target.checked && fieldErrors.legalConsent) {
-                    const rest = { ...fieldErrors }
-                    delete rest.legalConsent
-                    setFieldErrors(rest)
-                  }
-                }}
-                aria-invalid={!!fieldErrors.legalConsent}
-                aria-describedby={fieldErrors.legalConsent ? 'legal-consent-error' : undefined}
-              />
-              <label
-                htmlFor="legal-consent-checkbox"
-                style={{
-                  fontFamily: 'Raleway, sans-serif',
-                  fontSize: 12.5,
-                  color: '#E2E8F0',
-                  lineHeight: 1.5,
-                  cursor: 'pointer',
-                }}
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <div
+                className="forge-legal-consent-row"
+                data-invalid={fieldErrors.legalConsent ? 'true' : undefined}
               >
-                I confirm that I am at least <strong>18 years of age</strong> (or the age of legal majority in my jurisdiction) and I affirmatively agree to the Forge Athletic{' '}
-                <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
-                  Terms of Service
-                </a>{' '}
-                (including the <strong>Athletic Liability Release</strong>, <strong>Mandatory Binding Individual Arbitration</strong>, and <strong>Class Action Waiver</strong>),{' '}
-                <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
-                  Privacy Policy
-                </a>
-                , and{' '}
-                <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
-                  Consumer Health &amp; Biometric Data Policy
-                </a>
-                .
-              </label>
-            </div>
-            {fieldErrors.legalConsent && (
-              <div id="legal-consent-error" role="alert" style={errorMessageStyle}>
-                {fieldErrors.legalConsent}
+                <input
+                  ref={legalCheckboxRef}
+                  id="legal-consent-checkbox"
+                  name="legalConsent"
+                  type="checkbox"
+                  className="forge-legal-checkbox"
+                  checked={acceptedLegalTerms}
+                  disabled={isAnyLoading}
+                  onChange={e => {
+                    setAcceptedLegalTerms(e.target.checked)
+                    if (e.target.checked && fieldErrors.legalConsent) {
+                      const rest = { ...fieldErrors }
+                      delete rest.legalConsent
+                      setFieldErrors(rest)
+                    }
+                  }}
+                  aria-invalid={!!fieldErrors.legalConsent}
+                  aria-describedby={fieldErrors.legalConsent ? 'legal-consent-error' : undefined}
+                />
+                <label
+                  htmlFor="legal-consent-checkbox"
+                  style={{
+                    fontFamily: 'Raleway, sans-serif',
+                    fontSize: 12.5,
+                    color: '#E2E8F0',
+                    lineHeight: 1.5,
+                    cursor: 'pointer',
+                  }}
+                >
+                  I confirm that I am at least <strong>18 years of age</strong> (or the age of legal majority in my jurisdiction) and I affirmatively agree to the Forge Athletic{' '}
+                  <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                    Terms of Service
+                  </a>{' '}
+                  (including the <strong>Athletic Liability Release</strong>, <strong>Mandatory Binding Individual Arbitration</strong>, and <strong>Class Action Waiver</strong>) and{' '}
+                  <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                    Privacy Policy
+                  </a>
+                  .
+                </label>
               </div>
-            )}
+              {fieldErrors.legalConsent && (
+                <div id="legal-consent-error" role="alert" style={errorMessageStyle}>
+                  {fieldErrors.legalConsent}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div
+                className="forge-legal-consent-row"
+                data-invalid={fieldErrors.healthConsent ? 'true' : undefined}
+              >
+                <input
+                  ref={healthCheckboxRef}
+                  id="health-biometric-consent-checkbox"
+                  name="healthBiometricConsent"
+                  type="checkbox"
+                  className="forge-legal-checkbox"
+                  checked={acceptedHealthBiometricConsent}
+                  disabled={isAnyLoading}
+                  onChange={e => {
+                    setAcceptedHealthBiometricConsent(e.target.checked)
+                    if (e.target.checked && fieldErrors.healthConsent) {
+                      const rest = { ...fieldErrors }
+                      delete rest.healthConsent
+                      setFieldErrors(rest)
+                    }
+                  }}
+                  aria-invalid={!!fieldErrors.healthConsent}
+                  aria-describedby={fieldErrors.healthConsent ? 'health-consent-error' : undefined}
+                />
+                <label
+                  htmlFor="health-biometric-consent-checkbox"
+                  style={{
+                    fontFamily: 'Raleway, sans-serif',
+                    fontSize: 12.5,
+                    color: '#E2E8F0',
+                    lineHeight: 1.5,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <strong>Standalone Consumer Health &amp; Biometric Data Consent:</strong> I separately authorize Forge Athletic to collect and process my fitness, PAR-Q+ readiness, and movement/posture data solely to deliver coaching services as described in the{' '}
+                  <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline', fontWeight: 700 }}>
+                    Consumer Health &amp; Biometric Data Policy
+                  </a>
+                  .
+                </label>
+              </div>
+              {fieldErrors.healthConsent && (
+                <div id="health-consent-error" role="alert" style={errorMessageStyle}>
+                  {fieldErrors.healthConsent}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

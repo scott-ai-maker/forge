@@ -33,7 +33,7 @@ describe('POST /api/referrals/claim', () => {
     const { validateReferralCode } = await import('@/lib/referrals')
     vi.mocked(validateReferralCode).mockResolvedValue({
       valid: false,
-      refereeDiscountCents: 2000,
+      refereeDiscountCents: 0,
       refereeTrialDays: 30,
       error: 'Invalid or expired referral code',
     })
@@ -56,7 +56,7 @@ describe('POST /api/referrals/claim', () => {
       code: 'SCOTT-7B3K',
       referrerId: 'user-1',
       referrerName: 'Scott Gordon',
-      refereeDiscountCents: 2000,
+      refereeDiscountCents: 0,
       refereeTrialDays: 30,
     })
 

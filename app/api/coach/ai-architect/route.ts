@@ -40,14 +40,14 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      coachIdentity: 'Coach Gordon · Master NASM Head Coach & Periodization Architect (20+ Yrs Exp)',
+      coachIdentity: 'Coach Gordon · NASM-CPT® (#1261890687) Head Coach & Periodization Architect',
       plan,
       clinicalRationale: plan.clinicalRationale,
     })
   } catch (error) {
-    console.error('Master NASM AI Coach Architect generation failed:', error)
+    console.error('Forge Athletic AI Coach Architect generation failed:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate program with Master NASM Coach' },
+      { error: error instanceof Error ? error.message : 'Failed to generate program with Forge AI Coach' },
       { status: 500 }
     )
   }

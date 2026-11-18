@@ -166,7 +166,35 @@ describe('lib/referrals', () => {
       expect(result.referrerId).toBe('client-referrer-1')
       expect(result.referrerName).toBe('Scott Gordon')
       expect(result.refereeTrialDays).toBe(30)
-      expect(result.refereeDiscountCents).toBe(2000)
+      expect(result.refereeDiscountCents).toBe(0)
+    })
+
+    it('rejects arbitrary unbacked XXXX-XXXX strings instead of granting wildcard 30-day trials', async () => {
+      const mockAdmin = {
+        from: vi.fn().mockImplementation((table: string) => {
+          if (table === 'referral_codes') {
+            return {
+              select: vi.fn().mockReturnValue({
+                or: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+                }),
+              }),
+            }
+          }
+          if (table === 'clients') {
+            return {
+              select: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }
+          }
+          return {}
+        }),
+      } as any
+
+      const result = await validateReferralCode(mockAdmin, 'FAKE-9999')
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('Invalid or expired referral code')
     })
   })
 
@@ -370,7 +398,7 @@ describe('lib/referrals', () => {
 
       const dashboard = await getClientReferralDashboard(mockAdmin, '72dfb51e-1638-4f43-951e-a488e5576fd1')
       expect(dashboard.code).toBe('SCOTT-72DF')
-      expect(dashboard.shareUrl).toBe('https://forgeathletic.com/r/SCOTT-72DF')
+      expect(dashboard.shareUrl).toBe('https://forge-athletic.app/r/SCOTT-72DF')
       expect(dashboard.milestones.currentTier.name).toBe('Athlete')
       expect(dashboard.milestones.nextTier?.name).toBe('Recruit')
       expect(dashboard.history).toEqual([])

@@ -76,11 +76,32 @@ describe('POST /api/coach/clients/[id]/posture-scanner', () => {
 
     const req = new NextRequest('http://localhost/api/coach/clients/client-999/posture-scanner', {
       method: 'POST',
-      body: JSON.stringify({ view: 'lateral' }),
+      body: JSON.stringify({
+        view: 'lateral',
+        imageBase64: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/',
+        biometricScanConsent: true,
+      }),
     })
 
     const res = await POST(req, { params: Promise.resolve({ id: 'client-999' }) })
     expect(res.status).toBe(403)
+  })
+
+  it('rejects missing imageBase64 with 400 rather than fabricating posture syndromes', async () => {
+    await mockAuthorizedCoach()
+
+    const req = new NextRequest('http://localhost/api/coach/clients/client-123/posture-scanner', {
+      method: 'POST',
+      body: JSON.stringify({
+        view: 'anterior',
+        biometricScanConsent: true,
+      }),
+    })
+
+    const res = await POST(req, { params: Promise.resolve({ id: 'client-123' }) })
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.error).toMatch(/posture photograph is required/i)
   })
 
   it('rejects invalid view enum payloads with 400 (prevents prompt injection)', async () => {
@@ -121,6 +142,22 @@ describe('POST /api/coach/clients/[id]/posture-scanner', () => {
     expect(hugeRes.status).toBe(413)
   })
 
+  it('blocks posture photograph scan when standalone BIPA/MHMDA biometric release is missing (403)', async () => {
+    await mockAuthorizedCoach()
+
+    const unconsentedPhotoReq = new NextRequest('http://localhost/api/coach/clients/client-123/posture-scanner', {
+      method: 'POST',
+      body: JSON.stringify({
+        view: 'anterior',
+        imageBase64: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/',
+      }),
+    })
+    const res = await POST(unconsentedPhotoReq, { params: Promise.resolve({ id: 'client-123' }) })
+    expect(res.status).toBe(403)
+    const json = await res.json()
+    expect(json.error).toContain('740 ILCS 14/15(b)')
+  })
+
   it('returns valid postural mesh analysis for assigned client with HIPAA minimum-necessary fields', async () => {
     await mockAuthorizedCoach()
 
@@ -128,6 +165,8 @@ describe('POST /api/coach/clients/[id]/posture-scanner', () => {
       method: 'POST',
       body: JSON.stringify({
         view: 'overhead_squat',
+        imageBase64: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/',
+        biometricScanConsent: true,
         clientName: 'Jennifer Rainville',
       }),
     })
@@ -141,10 +180,8 @@ describe('POST /api/coach/clients/[id]/posture-scanner', () => {
     const json = await res.json()
     expect(json.ok).toBe(true)
     expect(json.data.view).toBe('overhead_squat')
-    expect(json.data.postureScore).toBeGreaterThan(0)
-    expect(json.data.landmarks.length).toBeGreaterThan(0)
-    expect(json.data.angles.length).toBeGreaterThan(0)
-    expect(json.data.cexPrescription.inhibit.length).toBeGreaterThan(0)
+    expect(json.data.syndromeDetected).toBe('Optimal Alignment')
+    expect(json.data.detectedCompensations).toEqual([])
     expect(json.data.clinicalSummary).toContain('Jennifer')
     expect(json.data.clinicalSummary).not.toContain('Rainville')
   })

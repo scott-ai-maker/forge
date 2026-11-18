@@ -14,9 +14,20 @@ describe('toE164', () => {
 })
 
 describe('isWithinSmsQuietHours', () => {
-  it('blocks overnight, allows daytime (Eastern)', () => {
+  it('blocks overnight and early morning coast-to-coast, allows safe daytime window', () => {
     expect(isWithinSmsQuietHours(new Date('2026-06-01T03:00:00Z'))).toBe(true) // 11pm ET
-    expect(isWithinSmsQuietHours(new Date('2026-06-01T16:00:00Z'))).toBe(false) // noon ET
+    expect(isWithinSmsQuietHours(new Date('2026-11-20T11:00:00Z'))).toBe(true) // 6am EST / 3am PST
+    expect(isWithinSmsQuietHours(new Date('2026-06-01T16:00:00Z'))).toBe(false) // noon ET / 9am PT
+    // Explicit recipient timezone & area-code inference (8am - 8pm local)
+    expect(
+      isWithinSmsQuietHours(new Date('2026-11-20T14:00:00Z'), 'America/Los_Angeles')
+    ).toBe(true) // 6am PST
+    expect(
+      isWithinSmsQuietHours(new Date('2026-11-20T17:00:00Z'), undefined, '+12135550199')
+    ).toBe(false) // 9am PST via LA area code 213
+    expect(
+      isWithinSmsQuietHours(new Date('2026-11-20T17:00:00Z'), undefined, '+18085550199')
+    ).toBe(true) // 7am HST via Hawaii area code 808
   })
 })
 

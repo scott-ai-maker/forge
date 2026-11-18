@@ -124,6 +124,57 @@ export async function generateVitalLinkToken(
 }
 
 /**
+ * Permanently revokes OAuth connections and deletes the Vital user record
+ * associated with a Forge client ID upon account deletion (WA MHMDA RCW 19.373.040(1)(c)).
+ */
+export async function deleteVitalUser(
+  clientUserId: string
+): Promise<{ deleted: boolean; simulated?: boolean }> {
+  const apiKey = process.env.VITAL_API_KEY
+  if (!apiKey) {
+    return { deleted: true, simulated: true }
+  }
+
+  const baseUrl = getVitalApiBaseUrl()
+  const resolveRes = await fetch(
+    `${baseUrl}/user/resolve/${encodeURIComponent(clientUserId)}`,
+    {
+      method: 'GET',
+      headers: {
+        'x-vital-api-key': apiKey,
+      },
+    }
+  )
+
+  if (resolveRes.status === 404) {
+    return { deleted: true }
+  }
+
+  if (!resolveRes.ok) {
+    throw new Error(`Vital user resolve failed: ${resolveRes.status}`)
+  }
+
+  const resolved = (await resolveRes.json().catch(() => null)) as { user_id?: string } | null
+  const vitalUserId = resolved?.user_id
+  if (!vitalUserId) {
+    return { deleted: true }
+  }
+
+  const delRes = await fetch(`${baseUrl}/user/${encodeURIComponent(vitalUserId)}`, {
+    method: 'DELETE',
+    headers: {
+      'x-vital-api-key': apiKey,
+    },
+  })
+
+  if (!delRes.ok && delRes.status !== 404) {
+    throw new Error(`Vital user deletion failed: ${delRes.status}`)
+  }
+
+  return { deleted: true }
+}
+
+/**
  * Normalizes an incoming Vital webhook event payload into a Forge DailyBiometricSummary.
  */
 export function normalizeVitalDailyPayload(

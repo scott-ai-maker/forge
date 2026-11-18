@@ -9,7 +9,7 @@ import ForgeAddons from '@/components/packages/ForgeAddons'
 export const metadata: Metadata = {
   title: 'Online Personal Training Memberships & Pricing | Forge Athletic',
   description:
-    'Transparent, science-led online personal training memberships. Core ($49/mo or $399/yr with 7-day trial), Plus ($99/mo or $899/yr), and 1-on-1 Coach Support ($299/mo) with NASM periodization and master coach oversight.',
+    'Transparent, science-led online personal training memberships. Core ($49/mo with 7-day free trial), Plus ($99/mo), and 1-on-1 Coach Support ($299/mo) billed month-to-month with NASM OPT™ periodization and certified coach oversight.',
   openGraph: {
     title: 'Online Personal Training Memberships & Pricing | Forge Athletic',
     description:
@@ -25,7 +25,7 @@ const packagesStructuredData = {
   '@type': 'Product',
   name: 'Forge Athletic Personal Training Memberships',
   description:
-    'Evidence-based online personal training memberships featuring NASM OPT™ periodization, video form reviews, and master coaching access.',
+    'Evidence-based online personal training memberships featuring NASM OPT™ periodization, video form reviews, and direct certified coaching access.',
   image: 'https://forge-athletic.app/images/brand/logo-concept-1-kinetic-f.jpg',
   brand: {
     '@type': 'Brand',
@@ -34,36 +34,36 @@ const packagesStructuredData = {
   offers: {
     '@type': 'AggregateOffer',
     priceCurrency: 'USD',
-    lowPrice: '19.99',
+    lowPrice: '49.00',
     highPrice: '299.00',
     offerCount: '3',
     offers: [
       {
         '@type': 'Offer',
         name: 'Core Lab Membership',
-        price: '19.99',
-        priceCurrency: 'USD',
-        availability: 'https://schema.org/InStock',
-        url: 'https://forge-athletic.app/packages',
-        description: 'Autonomous AI Foundation & Daily Posture Care: 5-Phase NASM OPT™ engine, 20m Express Mode, Coach Gordon’s real voice pacing, 33-point posture checks, and direct Email access (48h).',
-      },
-      {
-        '@type': 'Offer',
-        name: 'Plus Membership',
         price: '49.00',
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: 'Guided Hybrid Coaching & Monthly Video Reviews: 2 Form Lab slow-motion video reviews/month, unlimited Desk Ergonomics Audits, Multi-Day Travel Pass, phase-synced nutrition, and Priority Email access (24h).',
+        description: 'Autonomous AI Foundation & Daily Posture Care: 5-Phase NASM OPT™ engine, 20m Express Mode, Coach Gordon’s real voice pacing, 33-point posture checks, and direct Email access (48h). $49/mo month-to-month with 7-day free trial.',
+      },
+      {
+        '@type': 'Offer',
+        name: 'Plus Membership',
+        price: '99.00',
+        priceCurrency: 'USD',
+        availability: 'https://schema.org/InStock',
+        url: 'https://forge-athletic.app/packages',
+        description: 'Guided Hybrid Coaching & Monthly Video Reviews: Form Lab slow-motion video reviews, unlimited Desk Ergonomics Audits, Multi-Day Travel Pass, phase-synced nutrition, and Priority Email access (24h). $99/mo month-to-month.',
       },
       {
         '@type': 'Offer',
         name: 'Coach Support Membership',
-        price: '199.00',
+        price: '299.00',
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: '1-on-1 Master Coaching & Direct Text Line: Direct SMS Text Line & Priority In-App Chat with Coach Gordon (24h SLA), 8 Form Lab reviews/month, bespoke OPT™ overrides, and quarterly mesh review (capped at 25 spots).',
+        description: '1-on-1 Certified Personal Coaching & Direct Text Line: Direct SMS Text Line & Priority In-App Chat with Coach Gordon (24h SLA), 8 Form Lab reviews/month, bespoke OPT™ overrides, and quarterly mesh review.',
       },
     ],
   },
@@ -74,7 +74,7 @@ const COMPARISON_ROWS = [
     feature: 'Personalized 5-Phase NASM OPT™ Plan',
     core: 'Included',
     plus: 'Included',
-    support: 'Included (Master-Certified)',
+    support: 'Included (Coach-Reviewed)',
     note: 'Periodized stabilization, strength endurance, hypertrophy, max strength, and power.',
   },
   {
@@ -134,7 +134,7 @@ const COMPARISON_ROWS = [
     note: 'Comprehensive 5-angle movement screen & kinetic chain evaluation signed off by Coach Gordon.',
   },
   {
-    feature: 'Master Coach Safety Gate Oversight',
+    feature: 'Coach Safety Gate Oversight',
     core: 'Algorithmic + Pinchy Alert',
     plus: 'Algorithmic + Pinchy Alert',
     support: 'Bespoke Overrides by Coach Gordon',
@@ -200,7 +200,7 @@ export default function PackagesPage() {
               MASSACHUSETTS &amp; NATIONWIDE
             </span>
             <span style={{ color: '#E2E8F0', fontSize: '0.92rem', fontWeight: 600 }}>
-              Master Coach Scott Gordon · 18+ Years Coaching Since 2008 · NASM-CPT® #1261890687
+              Coach Scott Gordon · NASM-CPT® #1261890687 · Prior ACE-CPT (2008–2021) · ASTI CPR/AED
             </span>
           </div>
           <Link
@@ -225,13 +225,13 @@ export default function PackagesPage() {
 
         {/* Intro */}
         <div className="forge-packages-intro">
-          <p className="forge-eyebrow">NASM VCS Certified Offerings</p>
+          <p className="forge-eyebrow">Remote &amp; Virtual Coaching Offerings</p>
           <h1 id="forge-membership-title">
             Train with a plan that fits your life.
           </h1>
           <p>
-            Structured on the National Academy of Sports Medicine Virtual Coaching Specialization (NASM VCS) standards. 
-            Self-run training labs, guided hybrid coaching, and limited-seat coach-certified programs.
+            Structured on the NASM Optimum Performance Training (OPT™) 5-phase methodology.
+            Self-run training labs, guided hybrid coaching, and limited-seat coach-reviewed programs.
           </p>
         </div>
 
@@ -336,7 +336,7 @@ export default function PackagesPage() {
                 color: 'var(--gold-lt)',
               }}
             >
-              NASM VIRTUAL COACHING SPECIALIST (VCS) STANDARD
+              EVIDENCE-BASED OPT™ COACHING ARCHITECTURE
             </span>
             <h2
               style={{
@@ -349,9 +349,9 @@ export default function PackagesPage() {
               Why We Structure Coaching in 3 Dedicated Tiers
             </h2>
             <p style={{ color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
-              Following Chapter 2 of the NASM Virtual Coaching curriculum, a sustainable coaching relationship requires 
-              clear scope and progressive biological adaptation. Most fitness plateaus happen because trainees bounce 
-              between random workout apps without structured progressive overload or movement screening.
+              A sustainable remote coaching relationship requires clear scope and progressive biological
+              adaptation. Most fitness plateaus happen because trainees bounce between random workout apps
+              without structured progressive overload or movement screening.
             </p>
             <div
               style={{
@@ -375,9 +375,9 @@ export default function PackagesPage() {
                 </p>
               </div>
               <div style={{ background: 'rgba(8, 14, 20, 0.6)', padding: '1.25rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <strong style={{ color: '#34D399', display: 'block', marginBottom: '0.35rem' }}>Massachusetts Senior Rates</strong>
+                <strong style={{ color: '#34D399', display: 'block', marginBottom: '0.35rem' }}>Massachusetts Rate Value</strong>
                 <p style={{ color: '#94A3B8', fontSize: '0.86rem', margin: 0, lineHeight: 1.5 }}>
-                  In Greater Boston, commercial personal training costs $120–$200/hour. Forge Athletic gives you an entire month of master coaching for less than the cost of one in-person session.
+                  In Greater Boston, commercial in-person personal training often costs $120–$200/hour. Forge Athletic gives you a full month of structured remote coaching for a clear flat monthly rate.
                 </p>
               </div>
             </div>

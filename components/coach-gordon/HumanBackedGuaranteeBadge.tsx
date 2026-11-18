@@ -9,12 +9,14 @@ import AudioModeSelector from '@/components/audio/AudioModeSelector'
 export interface HumanBackedGuaranteeBadgeProps {
   optPhase?: number | null
   activeExercise?: string | null
+  isCoachCertified?: boolean
   onOpenCoachAssistant?: () => void
 }
 
 export default function HumanBackedGuaranteeBadge({
   optPhase = 2,
   activeExercise = null,
+  isCoachCertified = false,
   onOpenCoachAssistant,
 }: HumanBackedGuaranteeBadgeProps) {
   const { tierId } = useTierAccess()
@@ -38,10 +40,12 @@ export default function HumanBackedGuaranteeBadge({
           </span>
           <div className="min-w-0">
             <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-emerald-300">
-              Human-Backed Guarantee
+              {isCoachCertified ? 'Coach-Reviewed Program · Human-Backed' : 'Human-Backed Support · AI-Generated Plan'}
             </div>
             <p className="truncate text-xs font-medium text-zinc-200">
-              AI guides every rep · Coach Gordon is 1 tap away
+              {isCoachCertified
+                ? 'Coach Gordon reviewed your plan · 1 tap away anytime'
+                : 'AI-generated plan · Request direct human review from Coach Gordon anytime'}
             </p>
           </div>
         </div>

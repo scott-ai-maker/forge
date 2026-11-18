@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import GeneralSettingsForm from '@/components/settings/GeneralSettingsForm'
+import DeleteAccountSection from '@/components/settings/DeleteAccountSection'
 import WearablesDeviceStudio from '@/components/fitness/WearablesDeviceStudio'
 import NotificationPreferencesStudio from '@/components/settings/NotificationPreferencesStudio'
 import BillingPortalButton from '@/components/packages/BillingPortalButton'
@@ -148,8 +149,10 @@ export default function ClientSettingsStudio({
         </div>
       </div>
 
-      {/* ── Tier Entitlements Preview Switcher (Core Lab / Plus / Coach Support) ── */}
-      <TierPreviewSwitcher />
+      {/* ── Tier Entitlements Preview Switcher (Coach / Local QA Only) ── */}
+      {(initialProfile.role === 'coach' || process.env.NODE_ENV !== 'production') && (
+        <TierPreviewSwitcher />
+      )}
 
       {/* ── Compact Horizontal Tabbed Workspace Navigation ── */}
       <div
@@ -548,6 +551,24 @@ export default function ClientSettingsStudio({
             </h3>
           </div>
           <GeneralSettingsForm initialProfile={initialProfile} settingsPath="/dashboard/settings" mode="profile" />
+          <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <button
+              type="button"
+              onClick={() => handleTabChange('security')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '6px 0',
+                color: '#FCA5A5',
+                fontSize: 12.5,
+                fontWeight: 600,
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              Need to permanently delete your account &amp; biometric data? Open Security &amp; Access →
+            </button>
+          </div>
         </section>
       )}
 
@@ -573,6 +594,7 @@ export default function ClientSettingsStudio({
             </p>
           </div>
           <GeneralSettingsForm initialProfile={initialProfile} settingsPath="/dashboard/settings" mode="security" />
+          <DeleteAccountSection userEmail={initialProfile.email} />
         </section>
       )}
 

@@ -191,10 +191,12 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
                 </div>
               </div>
               <div className="tabular-nums" style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: 11, color: '#94A3B8', textDecoration: 'line-through' }}>
-                  {selectedPlanCard.postLaunchPrice}
-                  {selectedPlanCard.billingUnit}
-                </div>
+                {selectedPlanCard.postLaunchPrice !== selectedPlanCard.foundingPrice && (
+                  <div style={{ fontSize: 11, color: '#94A3B8', textDecoration: 'line-through' }}>
+                    {selectedPlanCard.postLaunchPrice}
+                    {selectedPlanCard.billingUnit}
+                  </div>
+                )}
                 <div style={{ fontSize: 15, fontWeight: 800, color: '#FFFFFF' }}>
                   {selectedPlanCard.foundingPrice}
                   <span style={{ fontSize: 11, fontWeight: 500, color: '#CBD5E1' }}>

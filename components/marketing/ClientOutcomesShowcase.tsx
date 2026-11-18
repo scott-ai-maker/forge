@@ -23,9 +23,9 @@ export default function ClientOutcomesShowcase() {
             marginBottom: 10,
           }}
         >
-          <span>EVERYDAY CLIENT OUTCOMES</span>
+          <span>ILLUSTRATIVE TRAINING WORKFLOWS</span>
           <span>·</span>
-          <span>REAL SCHEDULES</span>
+          <span>REAL-WORLD SCHEDULES</span>
         </div>
         <h3
           style={{
@@ -253,6 +253,18 @@ export default function ClientOutcomesShowcase() {
           </article>
         ))}
       </div>
+
+      <p
+        style={{
+          margin: '0.95rem 0 0',
+          color: '#94A3B8',
+          fontSize: '0.78rem',
+          lineHeight: 1.5,
+          textAlign: 'left',
+        }}
+      >
+        Illustrative workflow examples showing how Forge Athletic tools adapt to common schedules and training environments (not individual client testimonials or guaranteed outcomes). Individual fitness, strength, and comfort results vary based on baseline health, effort, and consistency.
+      </p>
     </div>
   )
 }

@@ -1002,7 +1002,7 @@ export default function MovementScreenInstructionsModal({
                 </a>
               </div>
 
-              {/* HIPAA (1996) Security & Client Privacy Safeguards */}
+              {/* HIPAA-Aligned Technical Security & Consumer Health Privacy Safeguards */}
               <div
                 style={{
                   background: 'rgba(16, 185, 129, 0.05)',
@@ -1016,14 +1016,14 @@ export default function MovementScreenInstructionsModal({
               >
                 <span style={{ fontSize: 18, color: '#10B981' }}>🔒</span>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#10B981', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span>Client Privacy &amp; HIPAA (1996) Technical Standards</span>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#10B981', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span>TLS 1.3 &amp; AES-256 Encrypted · Private RLS Vault</span>
                     <span style={{ fontSize: 10, background: 'rgba(16,185,129,0.15)', color: '#10B981', padding: '1px 6px', borderRadius: 4, fontWeight: 800 }}>
-                      PROTECTED HEALTH DATA
+                      ENCRYPTED ASSESSMENT MEDIA
                     </span>
                   </div>
                   <div style={{ fontSize: 11.5, color: 'var(--gray)', marginTop: 4, lineHeight: 1.45 }}>
-                    Your movement screen videos and assessment diagnostics are encrypted in transit via <strong>TLS 1.3</strong> and at rest via <strong>AES-256</strong>. Enforced by PostgreSQL <strong>Row-Level Security (RLS)</strong> and private storage vaults, client biomechanical records are accessible exclusively to you and Coach Gordon.
+                    Your movement screen videos and assessment diagnostics are encrypted in transit via <strong>TLS 1.3</strong> and at rest via <strong>AES-256</strong>. Enforced by PostgreSQL <strong>Row-Level Security (RLS)</strong> and private storage vaults, client biomechanical records are accessible exclusively to you and Coach Gordon. Forge Athletic applies HIPAA-inspired technical security controls as a direct-to-consumer fitness platform (not a HIPAA-covered healthcare provider or health plan).
                   </div>
                 </div>
               </div>

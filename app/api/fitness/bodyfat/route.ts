@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { analyzeBodyCompositionFromImages } from '@/lib/ai-body-composition-engine'
+import { persistBodyCompPhotoToPrivateVault } from '@/lib/fitness-photos'
+import { extractRequestIp, recordLegalConsentAudit } from '@/lib/legal-compliance'
 import { protectCSRF } from '@/lib/csrf'
 import { enforceRateLimit, getClientIp } from '@/lib/rate-limit'
 
@@ -156,6 +158,39 @@ export async function POST(req: NextRequest) {
   const posteriorPhoto = typeof body.posteriorPhotoBase64 === 'string' ? body.posteriorPhotoBase64 : undefined
   const photoDataUrl = typeof body.photoDataUrl === 'string' ? body.photoDataUrl : undefined
 
+  const hasPhotoPayload = Boolean(
+    (anteriorPhoto && anteriorPhoto.trim()) ||
+      (lateralPhoto && lateralPhoto.trim()) ||
+      (posteriorPhoto && posteriorPhoto.trim()) ||
+      (photoDataUrl && photoDataUrl.trim())
+  )
+  if (
+    body.biometricScanConsent === false ||
+    (hasPhotoPayload && body.biometricScanConsent !== true)
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          'Standalone Biometric & Consumer Health Scan Release (IL BIPA 740 ILCS 14/15(b), WA MHMDA RCW 19.373, TX CUBI) is required before analyzing body-composition photographs.',
+      },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  if (user && body.biometricScanConsent === true) {
+    await recordLegalConsentAudit({
+      adminClient: supabaseAdmin(),
+      userId: user.id,
+      documentTypes: ['consumer_health_biometric_policy'],
+      ipAddress: extractRequestIp(req.headers),
+      userAgent: req.headers.get('user-agent'),
+      metadata: {
+        flow: 'athlete_body_composition_scan',
+        hasPhotoPayload,
+      },
+    })
+  }
+
   const scanResult = await analyzeBodyCompositionFromImages({
     sex: body.sex,
     heightCm,
@@ -176,11 +211,17 @@ export async function POST(req: NextRequest) {
 
   let insertedData: Record<string, unknown> = {}
   if (user && !scanResult.isRejected) {
-    const { data, error } = await supabaseAdmin()
+    const admin = supabaseAdmin()
+    const vaultPhotoPath = await persistBodyCompPhotoToPrivateVault(
+      admin,
+      user.id,
+      photoDataUrl ?? anteriorPhoto ?? null
+    )
+    const { data, error } = await admin
       .from('body_composition_analyses')
       .insert({
         user_id: user.id,
-        photo_data_url: photoDataUrl ?? anteriorPhoto ?? null,
+        photo_data_url: vaultPhotoPath,
         estimated_bodyfat_percent: scanResult.estimatedBodyFatPercent,
         method: scanResult.methodDescription,
         confidence_score: scanResult.confidenceScore,

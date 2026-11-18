@@ -192,6 +192,7 @@ export async function POST(
       periodization: periodizationRec,
     })
 
+    const explicitlyCoachCertified = body.certifySafetyGate === true
     const planJson = {
       periodizationPlan: periodizationRec.macrocyclePlan,
       workouts: programRec.macrocyclePlan.workouts,
@@ -199,6 +200,16 @@ export async function POST(
       embeddedCEx: programRec.embeddedCEx,
       masterCoachCues: programRec.masterCoachCues,
       clinicalRationale: periodizationRec.clinicalRationale,
+      generatedBy: explicitlyCoachCertified ? 'coach' : 'ai_onboarding_orchestrator',
+      isCertifiedByCoach: explicitlyCoachCertified,
+      safetyGateCertified: explicitlyCoachCertified,
+      reviewStatus: explicitlyCoachCertified ? 'coach_certified' : 'pending_coach_review',
+      ...(explicitlyCoachCertified
+        ? {
+            coachCertifiedAt: new Date().toISOString(),
+            certifiedBy: 'Coach Gordon (NASM-CPT®)',
+          }
+        : {}),
     }
 
     const row = {

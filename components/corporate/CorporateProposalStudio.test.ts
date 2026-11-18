@@ -122,15 +122,16 @@ describe('CorporateProposalStudio & Financial Engine', () => {
   })
 
   describe('Proposal branding, credentials, and typography', () => {
-    it('verifies Coach Gordon master credentials in CorporateProposalStudio.tsx', () => {
+    it('verifies Coach Gordon verified credentials in CorporateProposalStudio.tsx', () => {
       const componentSource = fs.readFileSync(
         path.join(process.cwd(), 'components/corporate/CorporateProposalStudio.tsx'),
         'utf8'
       )
 
-      expect(componentSource).toContain('COACH GORDON, NASM MASTER TRAINER')
+      expect(componentSource).toContain('COACH GORDON, B.S., NASM-CPT®')
+      expect(componentSource).not.toContain('NASM MASTER TRAINER')
       expect(componentSource).toContain('Founder &amp; Performance Director · Forge Athletic')
-      expect(componentSource).toContain('NASM-CPT® · CES® · PES® · CNC™ · CSNC')
+      expect(componentSource).toContain('NASM-CPT® (#1261890687) · Prior ACE-CPT (2008–2021) · B.S. IT · ASTI CPR/AED')
       expect(componentSource).toContain('Proposal ready for review')
     })
 

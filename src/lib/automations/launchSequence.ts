@@ -10,12 +10,12 @@ import { isWithinSmsQuietHours, sendSms } from '@/lib/sms'
 
 /**
  * Forge Athletic — Launch, Rescue, Referral & Retention Email/SMS Automation Suite
- * Window: November 20, 2026 (06:00 AM EST) through January 1, 2027 (08:00 AM Local) + Evergreen Day-30 / Partner Pass Triggers
+ * Window: November 20, 2026 (12:00 PM EST / 09:00 AM PST nationwide TCPA-safe window) through January 1, 2027 (08:00 AM Local)
  */
 
 export const FORGE_CANONICAL_ORIGIN = 'https://forge-athletic.app'
 export const DEFAULT_AUTOMATION_TIMEZONE = 'America/New_York'
-export const LAUNCH_BLAST_ISO_EST = '2026-11-20T06:00:00-05:00'
+export const LAUNCH_BLAST_ISO_EST = '2026-11-20T12:00:00-05:00'
 
 export type AutomationChannel = 'email' | 'sms'
 
@@ -196,7 +196,7 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
       'Glad to have you in our founding cohort of 50,',
       '',
       '**Coach Gordon**',
-      'Founder & Head Coach, Forge Athletic · NASM-CPT® (Since 2008)',
+      'Founder & Head Coach, Forge Athletic · NASM-CPT® (#1261890687)',
     ].join('\n'),
   },
 
@@ -240,7 +240,7 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
       'Best,',
       '',
       '**Coach Gordon**',
-      'Founder & Head Coach, Forge Athletic · NASM-CPT® (Since 2008)',
+      'Founder & Head Coach, Forge Athletic · NASM-CPT® (#1261890687)',
     ].join('\n'),
   },
 
@@ -445,7 +445,7 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
       'Glad to have you training alongside {{Referrer First Name}},',
       '',
       '**Coach Gordon**',
-      'Founder & Head Coach, Forge Athletic · NASM-CPT® (Since 2008)',
+      'Founder & Head Coach, Forge Athletic · NASM-CPT® (#1261890687)',
       '',
       '*P.S. Your 30-day Founding Partner Pass runs through {{Expiration Date}}. If you decide to stay on after your guest month, let me know and I’ll make sure you get preferred partner pricing.*',
     ].join('\n'),
@@ -1058,13 +1058,11 @@ export async function deliverAutomationPayload(
   }
 
   if (payload.channel === 'sms') {
-    const safeTz = resolveSafeTimeZone(options?.timeZone)
-    // Launch Blast (01A at 6:00 AM EST) is explicitly scheduled for 6:00 AM EST; all local reminders respect 8am-9pm quiet hours unless bypassed.
-    const allowEarlyLaunchBlast = payload.templateId === 'launch_01a_sms'
+    // Strictly enforce TCPA / state mini-TCPA 8:00 AM – 8:00 PM local quiet hours on EVERY SMS (zero early-morning bypass)
+    const explicitTz = options?.timeZone?.trim() ? resolveSafeTimeZone(options.timeZone) : null
     if (
-      !allowEarlyLaunchBlast &&
       !options?.bypassSmsQuietHours &&
-      isWithinSmsQuietHours(options?.now ?? new Date(), safeTz)
+      isWithinSmsQuietHours(options?.now ?? new Date(), explicitTz, payload.to)
     ) {
       return { delivered: false, skipped: true, reason: 'sms_quiet_hours' }
     }
@@ -1311,8 +1309,29 @@ export async function releaseWaitlistPassOnReply(
   params: { phone?: string | null; email?: string | null }
 ): Promise<{ released: boolean }> {
   if (typeof admin?.from !== 'function') return { released: false }
-  const normalizedEmail = params.email?.trim().toLowerCase() || null
-  if (normalizedEmail) {
+  const normalizedPhone = toE164(params.phone)
+  let resolvedEmail = params.email?.trim().toLowerCase() || null
+
+  if (normalizedPhone) {
+    try {
+      if (!resolvedEmail) {
+        const { data: leadRow } = await admin
+          .from('waitlist')
+          .select('email')
+          .eq('phone', normalizedPhone)
+          .maybeSingle()
+        resolvedEmail = leadRow?.email?.trim().toLowerCase() || null
+      }
+      await admin
+        .from('waitlist')
+        .update({ sms_opt_in: false })
+        .eq('phone', normalizedPhone)
+    } catch {
+      // ignore
+    }
+  }
+
+  if (resolvedEmail) {
     try {
       await admin
         .from('marketing_email_queue')
@@ -1320,7 +1339,7 @@ export async function releaseWaitlistPassOnReply(
           status: 'cancelled',
           last_error: 'Suppressed: standby_released (PASS reply)',
         })
-        .eq('email', normalizedEmail)
+        .eq('email', resolvedEmail)
         .in('template_key', ['rescue_02a_email', 'rescue_02b_sms'])
         .eq('status', 'pending')
     } catch {
@@ -1549,6 +1568,21 @@ async function hydrateCronRecipients(admin: SupabaseClient): Promise<HydratedCro
     if (norm) clientsByEmail.set(norm, c)
   }
 
+  // Load SMS suppressions so opted-out phones are never texted by cron automations
+  const suppressedPhones = new Set<string>()
+  try {
+    const { data: smsSupRows } = await admin
+      .from('sms_suppressions')
+      .select('phone')
+      .limit(5000)
+    for (const r of (smsSupRows ?? []) as Array<{ phone?: string | null }>) {
+      const normP = toE164(r.phone)
+      if (normP) suppressedPhones.add(normP)
+    }
+  } catch {
+    // non-fatal if table not yet migrated in mock env
+  }
+
   const recipientsByKey = new Map<string, HydratedCronRecipient>()
 
   // 1. Hydrate Founding Waitlist Leads (capped at 50 Founding Member cohort spots for Launch Blast if > 50, or full waitlist)
@@ -1559,9 +1593,12 @@ async function hydrateCronRecipients(admin: SupabaseClient): Promise<HydratedCro
     const prefs = matchedClient ? prefsByUserId.get(matchedClient.id) : undefined
 
     const phone = prefs?.sms_phone || lead.phone || null
+    const phoneE164 = toE164(phone)
+    const isSuppressedPhone = Boolean(phoneE164 && suppressedPhones.has(phoneE164))
     const smsOptIn = Boolean(
-      (prefs?.sms_enabled && prefs?.sms_consent_at && phone) ||
-        (lead.sms_opt_in && phone)
+      !isSuppressedPhone &&
+        ((prefs?.sms_enabled && prefs?.sms_consent_at && phone) ||
+          (lead.sms_opt_in && phone))
     )
 
     recipientsByKey.set(email, {
@@ -1572,7 +1609,7 @@ async function hydrateCronRecipients(admin: SupabaseClient): Promise<HydratedCro
         phone,
         firstName:
           matchedClient?.full_name || lead.first_name || email.split('@')[0],
-        timezone: prefs?.timezone || lead.timezone || DEFAULT_AUTOMATION_TIMEZONE,
+        timezone: prefs?.timezone || lead.timezone || null,
         account_activated: Boolean(matchedClient?.id),
         screening_booked: matchedClient ? bookedClientIds.has(matchedClient.id) : false,
         guest_pass_redeemed: false,
@@ -1582,7 +1619,7 @@ async function hydrateCronRecipients(admin: SupabaseClient): Promise<HydratedCro
         is_waitlist_lead: true,
         email_suppressed:
           suppressedEmails.has(email) || prefs?.email_enabled === false,
-        sms_suppressed: prefs?.sms_enabled === false,
+        sms_suppressed: prefs?.sms_enabled === false || isSuppressedPhone,
       },
     })
   }
@@ -1592,7 +1629,11 @@ async function hydrateCronRecipients(admin: SupabaseClient): Promise<HydratedCro
     if (recipientsByKey.has(email)) continue
     const prefs = prefsByUserId.get(client.id)
     const phone = prefs?.sms_phone || null
-    const smsOptIn = Boolean(prefs?.sms_enabled && prefs?.sms_consent_at && phone)
+    const phoneE164 = toE164(phone)
+    const isSuppressedPhone = Boolean(phoneE164 && suppressedPhones.has(phoneE164))
+    const smsOptIn = Boolean(
+      !isSuppressedPhone && prefs?.sms_enabled && prefs?.sms_consent_at && phone
+    )
 
     recipientsByKey.set(email, {
       userId: client.id,
@@ -1601,7 +1642,7 @@ async function hydrateCronRecipients(admin: SupabaseClient): Promise<HydratedCro
         email,
         phone,
         firstName: client.full_name || email.split('@')[0],
-        timezone: prefs?.timezone || DEFAULT_AUTOMATION_TIMEZONE,
+        timezone: prefs?.timezone || null,
         account_activated: true,
         screening_booked: bookedClientIds.has(client.id),
         guest_pass_redeemed: false,
@@ -1611,7 +1652,7 @@ async function hydrateCronRecipients(admin: SupabaseClient): Promise<HydratedCro
         is_waitlist_lead: false,
         email_suppressed:
           suppressedEmails.has(email) || prefs?.email_enabled === false,
-        sms_suppressed: prefs?.sms_enabled === false,
+        sms_suppressed: prefs?.sms_enabled === false || isSuppressedPhone,
       },
     })
   }

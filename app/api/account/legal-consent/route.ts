@@ -18,11 +18,10 @@ const VALID_DOC_TYPES = [
   'consumer_health_biometric_policy',
   'athletic_liability_waiver',
   'live_recording_soap_consent',
-  'predict_look_ai_simulation_consent',
 ] as const satisfies readonly LegalDocumentType[]
 
 const PostConsentSchema = z.object({
-  documentTypes: z.array(z.enum(VALID_DOC_TYPES)).min(1).max(6),
+  documentTypes: z.array(z.enum(VALID_DOC_TYPES)).min(1).max(5),
   ageVerified18Plus: z.literal(true, {
     error: 'You must confirm you are at least 18 years of age (or legal age of majority).',
   }),

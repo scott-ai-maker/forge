@@ -85,8 +85,9 @@ describe('HolidayUnmaskingSplash & Overhauled Public Landing Showcase', () => {
     expect(componentSource).toContain('Coach Portal')
     expect(componentSource).toContain('Founding Partner Pass')
     expect(componentSource.toLowerCase()).not.toContain('executive')
-    expect(componentSource).toContain('First 50 Founding Members')
-    expect(componentSource).toContain('12 of 50 Spots Left')
+    expect(componentSource).toContain('Founding Launch Registration')
+    expect(componentSource).not.toContain('Spots Left')
+    expect(componentSource).not.toContain('Math.random() * 36')
   })
 
   it('verifies all 6 smooth-scroll navigation anchors exist and zero benched Live Studio / $180 strings remain', () => {
@@ -129,11 +130,9 @@ describe('HolidayUnmaskingSplash & Overhauled Public Landing Showcase', () => {
     expect(previewSource).toContain('isPreview={true}')
   })
 
-  it('verifies cohort cap of 50 with initial reservation allocation', () => {
-    expect(LAUNCH_CAMPAIGN_INFO.cohortCap).toBe(50)
-    expect(LAUNCH_CAMPAIGN_INFO.cohortClaimedInitial).toBe(38)
-    const remaining = LAUNCH_CAMPAIGN_INFO.cohortCap - LAUNCH_CAMPAIGN_INFO.cohortClaimedInitial
-    expect(remaining).toBe(12)
+  it('verifies truthful 15-seat active Coach Support roster cap with zero fabricated claimed-spot counters', () => {
+    expect(LAUNCH_CAMPAIGN_INFO.activeCoachSupportRosterCap).toBe(15)
+    expect('cohortClaimedInitial' in LAUNCH_CAMPAIGN_INFO).toBe(false)
   })
 
   it('verifies Precision Training Sanctuary, Clinical Sports Science, and Human + AI manifesto tokens across marketing surfaces', () => {

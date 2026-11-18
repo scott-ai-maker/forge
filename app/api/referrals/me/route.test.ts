@@ -47,13 +47,13 @@ describe('GET /api/referrals/me', () => {
 
     vi.mocked(getClientReferralDashboard).mockResolvedValue({
       code: 'SCOTT-7B3K',
-      shareUrl: 'https://forgeathletic.com/r/SCOTT-7B3K',
+      shareUrl: 'https://forge-athletic.app/r/SCOTT-7B3K',
       clicks: 12,
       signupsCount: 3,
       conversionsCount: 1,
       totalRewardsEarnedCents: 2000,
       availableBalanceCents: 2000,
-      refereeDiscountCents: 2000,
+      refereeDiscountCents: 0,
       refereeTrialDays: 30,
       milestones: {
         currentTier: { level: 1, name: 'Recruit' } as unknown as Awaited<ReturnType<typeof getClientReferralDashboard>>['milestones']['currentTier'],

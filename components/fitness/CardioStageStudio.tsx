@@ -459,7 +459,7 @@ export default function CardioStageStudio({
                 <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: 6, padding: '10px 12px', fontSize: 12, color: 'var(--gray)' }}>
                   <strong style={{ color: 'var(--gold-lt)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
                     <GaaIcon name="sparkles" size={12} tone="gold" />
-                    <span>NASM Master Trainer Coaching Cues:</span>
+                    <span>NASM-CPT® Coaching Cues:</span>
                   </strong>
                   <ul style={{ margin: 0, paddingLeft: 18 }}>
                     {stageWorkout.coachingCues.map((cue, idx) => (

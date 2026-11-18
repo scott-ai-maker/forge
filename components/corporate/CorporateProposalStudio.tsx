@@ -643,7 +643,7 @@ export default function CorporateProposalStudio({
                 Coach
               </div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#FFFFFF', marginTop: 2 }}>
-                COACH GORDON, NASM MASTER TRAINER
+                COACH GORDON, B.S., NASM-CPT®
               </div>
             </div>
           </div>
@@ -899,7 +899,7 @@ export default function CorporateProposalStudio({
             gap: 24,
           }}
         >
-          {/* Master Trainer Signature */}
+          {/* Head Coach Signature */}
           <div style={{ minWidth: 260 }}>
             <div
               className="font-serif"
@@ -910,13 +910,13 @@ export default function CorporateProposalStudio({
                 fontWeight: 700,
               }}
             >
-              COACH GORDON, NASM MASTER TRAINER
+              COACH GORDON, B.S., NASM-CPT®
             </div>
             <div style={{ fontSize: 11, color: 'var(--gray)', marginTop: 2 }}>
               Founder &amp; Performance Director · Forge Athletic
             </div>
             <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>
-              NASM-CPT® · CES® · PES® · CNC™ · CSNC · Master Credentialed
+              NASM-CPT® (#1261890687) · Prior ACE-CPT (2008–2021) · B.S. IT · ASTI CPR/AED
             </div>
             <div
               style={{
@@ -930,7 +930,7 @@ export default function CorporateProposalStudio({
                 color: 'var(--gold)',
               }}
             >
-              Coach Gordon (Authorized Master Desk)
+              Coach Gordon (Authorized Signatory)
             </div>
           </div>
 

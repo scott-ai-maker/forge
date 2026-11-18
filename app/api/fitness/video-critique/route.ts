@@ -104,6 +104,27 @@ export async function POST(req: NextRequest) {
 
   const clientNotes = sanitizeClinicalNote(body.notes)
 
+  const rawVideoRef =
+    (typeof body.video_url === 'string' && body.video_url.trim()) ||
+    (typeof body.storage_path === 'string' && body.storage_path.trim()) ||
+    (typeof body.video_file_name === 'string' && body.video_file_name.trim()) ||
+    ''
+  const videoReference = rawVideoRef
+    .replace(/[\u0000-\u001F\u007F<>]/g, '')
+    .trim()
+    .slice(0, 512)
+
+  if (!isCoach && !videoReference) {
+    return NextResponse.json(
+      {
+        error:
+          'A recorded or uploaded lift video clip is required before consuming a Technique Video Review credit.',
+        code: 'VIDEO_REQUIRED',
+      },
+      { status: 400, headers: NO_STORE_HEADERS }
+    )
+  }
+
   try {
     if (!isCoach) {
       consumed = await consumeFeatureUse(userId, 'video-review')

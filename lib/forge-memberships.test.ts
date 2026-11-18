@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import { FORGE_MEMBERSHIPS, getForgeMembership, getForgeMembershipPrice, getMembershipDisplayName, getMembershipsIncluding } from '@/lib/forge-memberships'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  FORGE_MEMBERSHIPS,
+  getForgeMembership,
+  getForgeMembershipPrice,
+  getMembershipDisplayName,
+  getMembershipsIncluding,
+  isAnnualBillingEnabled,
+} from '@/lib/forge-memberships'
 
 describe('Forge Athletic membership catalog', () => {
   it('defines the specified memberships, prices, and features', () => {
@@ -23,16 +30,28 @@ describe('Forge Athletic membership catalog', () => {
     expect(FORGE_MEMBERSHIPS[2].features).toContain('Direct messaging with your coach')
   })
 
-  it('provides annual billing for Core and Plus', () => {
+  it('defaults strictly to month-to-month billing unless NEXT_PUBLIC_ENABLE_ANNUAL_PLANS is enabled', () => {
     const core = getForgeMembership('forge-core')
     const pro = getForgeMembership('forge-pro-athlete')
     const transformation = getForgeMembership('forge-transformation-direct')
     expect(core).toBeDefined()
     expect(pro).toBeDefined()
     expect(transformation).toBeDefined()
-    expect(getForgeMembershipPrice(core!, 'annual')).toEqual({ amountCents: 39900, interval: 'year' })
-    expect(getForgeMembershipPrice(pro!, 'annual')).toEqual({ amountCents: 89900, interval: 'year' })
+
+    expect(isAnnualBillingEnabled()).toBe(false)
+    expect(getForgeMembershipPrice(core!, 'annual')).toBeUndefined()
+    expect(getForgeMembershipPrice(pro!, 'annual')).toBeUndefined()
     expect(getForgeMembershipPrice(transformation!, 'annual')).toBeUndefined()
+
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_ANNUAL_PLANS', 'true')
+    try {
+      expect(isAnnualBillingEnabled()).toBe(true)
+      expect(getForgeMembershipPrice(core!, 'annual')).toEqual({ amountCents: 39900, interval: 'year' })
+      expect(getForgeMembershipPrice(pro!, 'annual')).toEqual({ amountCents: 89900, interval: 'year' })
+      expect(getForgeMembershipPrice(transformation!, 'annual')).toBeUndefined()
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 
   it('includes self-serve tools only in Plus and Coach Support', () => {

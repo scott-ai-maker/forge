@@ -1,9 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { trackMarketingEvent } from '@/lib/marketing-analytics'
 import { isCompanionApp } from '@/lib/native-companion'
+import { getForgeMembership, getForgeMembershipPrice } from '@/lib/forge-memberships'
+import { calculateDiscountAmountCents, getBuiltInPromoCode } from '@/lib/discount-codes'
 
 interface PurchaseButtonProps {
   packageId?: string
@@ -32,13 +35,41 @@ export default function PurchaseButton({
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [discountCode, setDiscountCode] = useState(() => defaultDiscountCode.trim().toUpperCase())
+  const [autoRenewalAccepted, setAutoRenewalAccepted] = useState(false)
   const [isCompanion, setIsCompanion] = useState(false)
 
   const targetIdentifier = addonId || productId || packageId || 'unknown'
+  const isSubscriptionCheckout = Boolean(packageId && !addonId && !productId && cadence !== 'twelve_week')
+  const membership = packageId ? getForgeMembership(packageId) : undefined
+  const membershipPrice =
+    membership && (cadence === 'monthly' || cadence === 'annual')
+      ? getForgeMembershipPrice(membership, cadence)
+      : undefined
+  const builtInPromo = discountCode.trim() ? getBuiltInPromoCode(discountCode.trim()) : null
+  const effectiveRecurringCents = membershipPrice
+    ? Math.max(
+        membershipPrice.amountCents -
+          (builtInPromo
+            ? calculateDiscountAmountCents(
+                membershipPrice.amountCents,
+                builtInPromo.discount_type,
+                builtInPromo.discount_value
+              )
+            : 0),
+        50
+      )
+    : null
+  const formattedRecurringRate =
+    effectiveRecurringCents !== null && membershipPrice
+      ? `$${(effectiveRecurringCents / 100).toFixed(2)}/${membershipPrice.interval}`
+      : cadence === 'annual'
+      ? 'the selected annual rate'
+      : 'the selected monthly rate'
+  const trialDays = membership?.trialDays ?? 0
 
   useEffect(() => {
     setIsCompanion(isCompanionApp())
-    if (defaultDiscountCode) {
+    if (defaultDiscountCode !== undefined) {
       setDiscountCode(defaultDiscountCode.trim().toUpperCase())
     }
   }, [defaultDiscountCode])
@@ -55,6 +86,11 @@ export default function PurchaseButton({
   async function handlePurchase() {
     if (isCompanionApp()) {
       setError('In-app purchases are disabled on mobile companion devices. Please visit the Forge Athletic website.')
+      return
+    }
+
+    if (isSubscriptionCheckout && !autoRenewalAccepted) {
+      setError('Please check the box above to confirm recurring auto-renewal and cancellation terms before continuing.')
       return
     }
 
@@ -79,6 +115,8 @@ export default function PurchaseButton({
         cadence,
         selectedAddonIds,
         discountCode: discountCode.trim() || undefined,
+        acceptedTerms: isSubscriptionCheckout ? true : undefined,
+        autoRenewalConsent: isSubscriptionCheckout ? autoRenewalAccepted : undefined,
       }),
     })
 
@@ -135,6 +173,8 @@ export default function PurchaseButton({
     )
   }
 
+  const checkboxId = `autorenew-${packageId || targetIdentifier}-${cadence}`
+
   return (
     <div>
       {showDiscountCode && (
@@ -176,6 +216,77 @@ export default function PurchaseButton({
           />
         </>
       )}
+
+      {isSubscriptionCheckout && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: '10px 12px',
+            borderRadius: 8,
+            background: 'rgba(8, 14, 24, 0.78)',
+            border: '1px solid rgba(148, 163, 184, 0.25)',
+            textAlign: 'left',
+          }}
+        >
+          <div style={{ fontSize: 11.5, color: '#CBD5E1', lineHeight: 1.48, marginBottom: 8 }}>
+            <strong style={{ color: '#F8FAFC' }}>Auto-Renewal Summary:</strong>{' '}
+            {trialDays > 0 ? (
+              <>
+                $0.00 due today for your {trialDays}-day free trial, then automatically billed{' '}
+                <strong style={{ color: '#FDE68A' }}>{formattedRecurringRate}</strong> after {trialDays} days unless cancelled before trial ends.
+              </>
+            ) : (
+              <>
+                Billed today at <strong style={{ color: '#FDE68A' }}>{formattedRecurringRate}</strong> (no free trial) and renews automatically each {cadence === 'annual' ? 'year' : 'month'} until cancelled.
+              </>
+            )}{' '}
+            {builtInPromo ? (
+              <>Promotional rate remains locked while continuous active enrollment on this tier is maintained. </>
+            ) : null}
+            Cancel anytime in 1 click ($0 fees) under <em>Account Settings &gt; Billing</em> or email{' '}
+            <a href="mailto:scott@forge-athletic.app" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+              scott@forge-athletic.app
+            </a>
+            . Includes 3-business-day cancellation right (M.G.L. c. 93, &sect;&sect; 80&ndash;82).
+          </div>
+
+          <label
+            htmlFor={checkboxId}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 8,
+              cursor: 'pointer',
+              fontSize: 12,
+              color: '#E2E8F0',
+              lineHeight: 1.45,
+            }}
+          >
+            <input
+              id={checkboxId}
+              type="checkbox"
+              checked={autoRenewalAccepted}
+              onChange={e => {
+                setAutoRenewalAccepted(e.target.checked)
+                if (e.target.checked) setError(null)
+              }}
+              style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0, accentColor: '#D4AF37' }}
+            />
+            <span>
+              I agree to the{' '}
+              <Link href="/terms" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+                Terms of Service
+              </Link>{' '}
+              &amp;{' '}
+              <Link href="/privacy" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>
+                Privacy Policy
+              </Link>{' '}
+              and authorize recurring {cadence === 'annual' ? 'annual' : 'monthly'} charges ({formattedRecurringRate}) until I cancel.
+            </span>
+          </label>
+        </div>
+      )}
+
       <button
         onClick={handlePurchase}
         disabled={loading}

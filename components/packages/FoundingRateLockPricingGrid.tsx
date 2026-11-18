@@ -277,22 +277,40 @@ export default function FoundingRateLockPricingGrid({
                   <span style={{ color: '#94A3B8', fontSize: '0.88rem', fontWeight: 600 }}>
                     {tier.billingUnit}
                   </span>
-                  <span
-                    style={{
-                      color: '#94A3B8',
-                      fontFamily: 'var(--font-telemetry)',
-                      fontSize: '0.82rem',
-                      fontWeight: 500,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    (Post-launch{' '}
-                    <span style={{ textDecoration: 'line-through', color: '#64748B' }}>
-                      {tier.postLaunchPrice}
-                      {tier.billingUnit}
+                  {tier.postLaunchPrice && tier.postLaunchPrice !== tier.foundingPrice ? (
+                    <span
+                      style={{
+                        color: '#94A3B8',
+                        fontFamily: 'var(--font-telemetry)',
+                        fontSize: '0.82rem',
+                        fontWeight: 500,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      (Post-launch{' '}
+                      <span style={{ textDecoration: 'line-through', color: '#64748B' }}>
+                        {tier.postLaunchPrice}
+                        {tier.billingUnit}
+                      </span>
+                      )
                     </span>
-                    )
-                  </span>
+                  ) : (
+                    <span
+                      style={{
+                        color: '#94A3B8',
+                        fontFamily: 'var(--font-telemetry)',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {tier.id === 'core_lab'
+                        ? '(7-day free trial · cancel anytime)'
+                        : tier.id === 'plus'
+                        ? '(month-to-month · cancel anytime)'
+                        : '(monthly · active seat cap)'}
+                    </span>
+                  )}
                 </div>
 
                 {tier.leadIn ? (

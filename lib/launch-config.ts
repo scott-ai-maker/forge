@@ -18,11 +18,11 @@ export const DEFAULT_GO_LIVE_DATE_ISO = '2026-11-20T06:00:00-05:00'
 export const HOLIDAY_DEAL_PROMO = {
   code: 'HOLIDAY25',
   discountPercent: 25,
-  badge: 'FOUNDING MEMBER LAUNCH · LIFETIME RATE LOCK',
-  headline: '25% Lifetime Rate Lock + Free 60-Min Pre-Holiday Movement Screen',
+  badge: 'FOUNDING MEMBER LAUNCH · CONTINUOUS TIER RATE LOCK',
+  headline: '25% Rate Lock + Free 60-Min Pre-Holiday Movement Screen',
   summary:
-    'Lock in Founding Member Lifetime Rate Lock pricing on any tier plus a complimentary 60-minute 1-on-1 remote movement screen with Coach Gordon.',
-  expiresFormatted: 'Cyber Monday, November 30, 2026 at 11:59 PM EST',
+    'Lock in 25% off your selected monthly membership tier for as long as continuous active enrollment on that tier is maintained (redeemable through December 31, 2026), plus a complimentary 60-minute 1-on-1 remote movement screen with Coach Gordon.',
+  expiresFormatted: 'December 31, 2026 at 11:59 PM EST',
 } as const
 
 export const LAUNCH_CAMPAIGN_INFO = {
@@ -30,8 +30,7 @@ export const LAUNCH_CAMPAIGN_INFO = {
   dateFormatted: 'Friday, November 20, 2026',
   timeFormatted: '06:00 AM EST',
   tagline: 'Don’t wait for January to repair what November broke.',
-  cohortCap: 50,
-  cohortClaimedInitial: 38,
+  activeCoachSupportRosterCap: 15,
   promoCode: HOLIDAY_DEAL_PROMO.code,
   promoDiscountPercent: HOLIDAY_DEAL_PROMO.discountPercent,
   promoHeadline: HOLIDAY_DEAL_PROMO.headline,

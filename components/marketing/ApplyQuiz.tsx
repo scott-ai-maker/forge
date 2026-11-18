@@ -81,8 +81,8 @@ const QUESTIONS: Question[] = [
     title: 'What monthly membership fits your budget?',
     description: 'Choose the level of training support that works for you.',
     choices: [
-      { value: 'under_50', label: 'Core ($49/month or $399/year)' },
-      { value: '50_150', label: 'Plus ($99/month or $899/year)' },
+      { value: 'under_50', label: 'Core ($49/month · 7-day free trial)' },
+      { value: '50_150', label: 'Plus ($99/month)' },
       { value: '150_plus', label: 'Coach Support ($299/month)' },
     ],
   },

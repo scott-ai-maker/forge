@@ -22,7 +22,7 @@ export default function ReferralSignupBanner({ initialCode, initialPartnerPass }
           valid: true,
           code: initialCode.toUpperCase(),
           referrerName: 'Founding Member',
-          refereeDiscountCents: 2000,
+          refereeDiscountCents: 0,
           refereeTrialDays: 30,
         }
       : null
@@ -109,7 +109,7 @@ export default function ReferralSignupBanner({ initialCode, initialPartnerPass }
             </>
           ) : (
             <>
-              {referralInfo.referrerName} gifted you a <strong>{referralInfo.refereeTrialDays}-Day Extended VIP Pass</strong> + <strong>${(referralInfo.refereeDiscountCents / 100).toFixed(0)} Welcome Credit</strong>.
+              {referralInfo.referrerName} gifted you a <strong>{referralInfo.refereeTrialDays}-Day Extended Free Trial Pass</strong> ($0.00 due today).
             </>
           )}
         </div>

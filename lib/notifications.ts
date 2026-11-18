@@ -101,14 +101,28 @@ export async function notifyUser(params: NotifyParams): Promise<NotifyResult> {
       }
     }
 
-    // SMS requires explicit opt-in consent recorded against the exact number
+    // SMS requires explicit opt-in consent recorded against the exact number, zero suppression, and local quiet-hours compliance
     const smsPhone = toE164(prefs?.sms_phone)
     const smsAllowed =
       def.sms && prefs?.sms_enabled === true && prefs?.sms_consent_at && smsPhone
-    if (smsAllowed && !isWithinSmsQuietHours()) {
+    if (
+      smsAllowed &&
+      !isWithinSmsQuietHours(
+        new Date(),
+        typeof prefs?.timezone === 'string' ? prefs.timezone : null,
+        smsPhone
+      )
+    ) {
       try {
-        const res = await sendSms(smsPhone, buildNotificationSms(content, baseUrl))
-        if (res.sent) channels.push('sms')
+        const { data: suppressedPhone } = await admin
+          .from('sms_suppressions')
+          .select('phone')
+          .eq('phone', smsPhone)
+          .maybeSingle()
+        if (!suppressedPhone) {
+          const res = await sendSms(smsPhone, buildNotificationSms(content, baseUrl))
+          if (res.sent) channels.push('sms')
+        }
       } catch (err) {
         console.warn('[notify] sms failed', err)
       }

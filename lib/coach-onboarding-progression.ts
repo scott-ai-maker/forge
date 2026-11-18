@@ -1036,7 +1036,7 @@ export function evaluateClientOnboardingProgression(
       actionLabel: 'Review & Publish Workout Program',
       summary: stage6Completed
         ? 'Workouts, tempos, and AI coaching cues published.'
-        : 'Select exercises, generate master trainer cues, and publish plan.',
+        : 'Select exercises, generate coaching cues, and publish plan.',
     },
     {
       stageNumber: 7,

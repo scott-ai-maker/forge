@@ -179,8 +179,8 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
             Partner Pass to gift a spouse or friend.
           </p>
           <p className="forge-hero-proof">
-            {COACH_GORDON_TRUST_PROFILE.verificationBadge} <span>·</span> NASM Master Trainer
-            Candidate <span>·</span> 18+ Years Personal Coaching
+            {COACH_GORDON_TRUST_PROFILE.verificationBadge} <span>·</span> Prior ACE-CPT (2008–2021){' '}
+            <span>·</span> ASTI CPR/AED · B.S. IT
           </p>
         </div>
 
@@ -334,9 +334,9 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
               margin: '0 auto 2rem',
             }}
           >
-            Built around NASM Virtual Coaching standards, Forge Athletic focuses on practical
-            biomechanics tools and attentive human coaching—combining on-device camera diagnostics
-            with 18+ years of personal coaching experience and zero social-feed noise.
+            Built around structured remote coaching standards, Forge Athletic focuses on practical
+            biomechanics tools and attentive human coaching—combining browser-based camera posture
+            screening with NASM-CPT® certified oversight and zero social-feed noise.
           </p>
           <div
             style={{
@@ -412,8 +412,9 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
                 Best Tools × Best Coaching
               </h3>
               <p style={{ color: '#94A3B8', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
-                On-device computer vision handles 33-point posture angles and daily readiness checks
-                while Coach Gordon oversees form reviews, safety alerts, and progression.
+                Browser-based 33-point MediaPipe tracking handles live posture angles and daily
+                readiness checks locally on your device, while Coach Gordon oversees Form Lab
+                reviews, safety alerts, and progression.
               </p>
             </div>
             <div
@@ -499,6 +500,7 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           <Link href="/auth/login">Log in</Link>
           <Link href="/auth/signup">Create account</Link>
           <Link href="/privacy">Privacy</Link>
+          <Link href="/health-privacy">Consumer Health Data Privacy</Link>
           <Link href="/terms">Terms</Link>
         </nav>
       </footer>

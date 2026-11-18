@@ -155,10 +155,12 @@ describe('AI Body Composition Engine', () => {
       expect(result.ffmi).toBeGreaterThan(18)
       expect(result.cunninghamBmr).toBeGreaterThan(1600)
       expect(result.regionalBreakdown.length).toBe(4)
-      expect(result.landmarks.length).toBeGreaterThanOrEqual(10)
+      expect(result.landmarks).toEqual([])
+      expect(result.estimationMode).toBe('anthropometric_formula_only')
+      expect(result.methodDescription).toContain('Formula-Only')
       expect(result.recompositionProjection).toBeDefined()
-      expect(result.confidenceIntervalPercent).toBeLessThanOrEqual(2.5)
-      expect(result.confidenceScore).toBeGreaterThanOrEqual(0.6)
+      expect(result.confidenceIntervalPercent).toBeGreaterThanOrEqual(3.0)
+      expect(result.confidenceScore).toBeGreaterThanOrEqual(0.55)
     })
 
     it('handles female profile with height, weight, and multi-compartment outputs', async () => {

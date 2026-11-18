@@ -21,7 +21,8 @@ export const BUILT_IN_PROMO_CODES: Readonly<Record<string, DiscountCodeRecord>> 
   HOLIDAY25: {
     id: 'builtin-holiday25',
     code: 'HOLIDAY25',
-    description: '25% Lifetime Rate Lock on any tier + Free 60-Min Pre-Holiday Movement Screen',
+    description:
+      '25% Rate Lock while continuously enrolled on your selected membership tier + Free 60-Min Pre-Holiday Movement Screen',
     discount_type: 'percent',
     discount_value: 25,
     is_active: true,

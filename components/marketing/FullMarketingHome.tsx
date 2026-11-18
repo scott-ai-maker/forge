@@ -113,8 +113,8 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
             Partner Pass to gift a spouse or friend.
           </p>
           <p className="forge-hero-proof">
-            {COACH_GORDON_TRUST_PROFILE.verificationBadge} <span>·</span> NASM Master Trainer
-            Candidate <span>·</span> 18+ Years Personal Coaching
+            {COACH_GORDON_TRUST_PROFILE.verificationBadge} <span>·</span> Prior ACE-CPT (2008–2021){' '}
+            <span>·</span> ASTI CPR/AED · B.S. IT
           </p>
         </div>
         <div className="forge-hero-showcase">

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, AuthzError } from '@/lib/authz'
-import { loadClientEntitlements, summarizeAllFeatureAccess } from '@/lib/addon-entitlements'
+import {
+  loadClientEntitlements,
+  resolveClientActiveTier,
+  summarizeAllFeatureAccess,
+} from '@/lib/addon-entitlements'
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, max-age=0',
@@ -13,25 +17,41 @@ export async function GET(req: NextRequest) {
     if (isTestHarness) {
       const open = { active: true, expiresAt: null, usesRemaining: null }
       return NextResponse.json(
-        { features: { 'video-review': open, nutrition: open, travel: open } },
+        {
+          tierId: 'coach_support',
+          role: 'coach',
+          allowQaPreview: true,
+          features: { 'video-review': open, nutrition: open, travel: open },
+        },
         { headers: NO_STORE_HEADERS }
       )
     }
 
     const authz = await getRequestAuthz(req)
 
-    // Coaches use every feature for client work, so they are never gated.
+    // Coaches use every feature for client work and may use the QA Tier Preview Switcher.
     if (authz.client.role === 'coach') {
       const open = { active: true, expiresAt: null, usesRemaining: null }
       return NextResponse.json(
-        { features: { 'video-review': open, nutrition: open, travel: open } },
+        {
+          tierId: 'coach_support',
+          role: 'coach',
+          allowQaPreview: true,
+          features: { 'video-review': open, nutrition: open, travel: open },
+        },
         { headers: NO_STORE_HEADERS }
       )
     }
 
     const rows = await loadClientEntitlements(authz.user.id)
+    const tierId = await resolveClientActiveTier(authz.user.id, rows)
     return NextResponse.json(
-      { features: summarizeAllFeatureAccess(rows) },
+      {
+        tierId,
+        role: 'client',
+        allowQaPreview: isDev,
+        features: summarizeAllFeatureAccess(rows),
+      },
       { headers: NO_STORE_HEADERS }
     )
   } catch (error) {

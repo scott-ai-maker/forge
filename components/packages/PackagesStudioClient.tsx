@@ -7,6 +7,7 @@ import PurchaseButton from '@/components/packages/PurchaseButton'
 import MasterAllocationModal from '@/components/packages/MasterAllocationModal'
 import GaaMasterWatermarkSeal from '@/components/ui/GaaMasterWatermarkSeal'
 import { isCompanionApp } from '@/lib/native-companion'
+import { isAnnualBillingEnabled } from '@/lib/forge-memberships'
 
 interface PackagesStudioClientProps {
   packages: CoachingPackage[]
@@ -19,9 +20,10 @@ export default function PackagesStudioClient({
   addons,
   packageImages,
 }: PackagesStudioClientProps) {
+  const allowMultiMonthPrepay = isAnnualBillingEnabled()
   const [selectedPackageId, setSelectedPackageId] = useState<string>('momentum')
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([])
-  const [cadence, setCadence] = useState<'monthly' | 'twelve_week'>('twelve_week')
+  const [cadence, setCadence] = useState<'monthly' | 'twelve_week'>('monthly')
   const [isAllocationModalOpen, setIsAllocationModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function PackagesStudioClient({
     }
   }, [packages])
 
-  const isPif = cadence === 'twelve_week'
+  const isPif = allowMultiMonthPrepay && cadence === 'twelve_week'
   const isCompanion = isCompanionApp()
   const currentPackage = packages.find(p => p.id === selectedPackageId) ?? packages[1] ?? packages[0]
 
@@ -118,43 +120,45 @@ export default function PackagesStudioClient({
               gap: 4,
             }}
           >
-            <button
-              type="button"
-              onClick={() => setCadence('twelve_week')}
-              style={{
-                padding: '10px 22px',
-                borderRadius: 24,
-                border: 'none',
-                background: isPif
-                  ? 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)'
-                  : 'transparent',
-                color: isPif ? '#0A0E18' : 'var(--gray)',
-                fontFamily: 'Raleway, sans-serif',
-                fontWeight: 800,
-                fontSize: 13,
-                letterSpacing: '0.04em',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              <span>12-week plan</span>
-              <span
+            {allowMultiMonthPrepay && (
+              <button
+                type="button"
+                onClick={() => setCadence('twelve_week')}
                 style={{
-                  background: isPif ? '#0A0E18' : 'rgba(212, 160, 23, 0.2)',
-                  color: isPif ? 'var(--gold-lt)' : 'var(--gold)',
-                  fontSize: 10,
-                  fontWeight: 900,
-                  padding: '3px 8px',
-                  borderRadius: 12,
-                  letterSpacing: '0.06em',
+                  padding: '10px 22px',
+                  borderRadius: 24,
+                  border: 'none',
+                  background: isPif
+                    ? 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)'
+                    : 'transparent',
+                  color: isPif ? '#0A0E18' : 'var(--gray)',
+                  fontFamily: 'Raleway, sans-serif',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  letterSpacing: '0.04em',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
                 }}
               >
-                Save up to $590
-              </span>
-            </button>
+                <span>12-week plan</span>
+                <span
+                  style={{
+                    background: isPif ? '#0A0E18' : 'rgba(212, 160, 23, 0.2)',
+                    color: isPif ? 'var(--gold-lt)' : 'var(--gold)',
+                    fontSize: 10,
+                    fontWeight: 900,
+                    padding: '3px 8px',
+                    borderRadius: 12,
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  Save up to $590
+                </span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -439,7 +443,7 @@ export default function PackagesStudioClient({
                     }}
                   >
                     <span style={{ fontSize: 13, color: 'var(--gold)' }}>✦</span>
-                    <span>Strictly Capped at 8 Principals · 2 Allocations Remaining</span>
+                    <span>Active 1-on-1 Coaching Roster Capped at 15 Athletes</span>
                   </div>
                 )}
 

@@ -54,6 +54,8 @@ export async function POST(req: NextRequest) {
     assignedCohortNumber?: unknown
     cohortReservationNumber?: unknown
     phone?: unknown
+    smsConsent?: unknown
+    timezone?: unknown
     profileType?: unknown
   }
 
@@ -82,6 +84,8 @@ export async function POST(req: NextRequest) {
       assignedCohortNumber,
       cohortReservationNumber,
       phone,
+      smsConsent,
+      timezone,
       profileType,
     } = parsedBody
 
@@ -178,6 +182,34 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = supabaseAdmin()
+    const { toE164 } = await import('@/lib/phone')
+    const rawPhoneStr = typeof phone === 'string' ? sanitizeText(phone).slice(0, 40) : ''
+    if (rawPhoneStr && smsConsent !== true) {
+      return jsonNoStore(
+        {
+          error:
+            'Affirmative TCPA written SMS consent is required when submitting a mobile number (or leave the optional phone field blank).',
+        },
+        { status: 400 }
+      )
+    }
+    const consentedPhoneE164 = smsConsent === true && rawPhoneStr ? toE164(rawPhoneStr) : null
+    if (smsConsent === true && rawPhoneStr && !consentedPhoneE164) {
+      return jsonNoStore(
+        { error: 'Please enter a valid 10-digit US or international mobile number.' },
+        { status: 400 }
+      )
+    }
+    let validTimezone: string | null = null
+    if (typeof timezone === 'string' && timezone.trim() && timezone.length <= 64) {
+      try {
+        Intl.DateTimeFormat('en-US', { timeZone: timezone.trim() }).format(new Date())
+        validTimezone = timezone.trim()
+      } catch {
+        validTimezone = null
+      }
+    }
+    const nowIso = new Date().toISOString()
 
     const insertPayload = {
       email: normalizedEmail,
@@ -185,6 +217,16 @@ export async function POST(req: NextRequest) {
       training_level: normalizedTrainingLevel || null,
       primary_goal: normalizedPrimaryGoal || null,
       source: normalizedSource,
+      ...(consentedPhoneE164
+        ? {
+            phone: consentedPhoneE164,
+            sms_opt_in: true,
+            sms_consent_at: nowIso,
+          }
+        : {
+            sms_opt_in: false,
+          }),
+      ...(validTimezone ? { timezone: validTimezone } : {}),
     }
 
     const shouldFallbackToEmailOnly = (errorCode: string | null, message: string) => {
@@ -215,7 +257,6 @@ export async function POST(req: NextRequest) {
             ? parseInt(rawCohort, 10)
             : null
       const validCohortNumber = parsedCohort && parsedCohort >= 1 && parsedCohort <= 99 ? parsedCohort : null
-      const normalizedPhone = typeof phone === 'string' ? sanitizeText(phone).slice(0, 40) || null : null
       const normalizedProfileType = typeof profileType === 'string' ? sanitizeText(profileType).slice(0, 40) || null : null
       const isFoundingCohort = FOUNDING_COHORT_SOURCES.has(normalizedSource)
 
@@ -224,7 +265,7 @@ export async function POST(req: NextRequest) {
         firstName: normalizedFirstName || null,
         source: isFoundingCohort ? 'founding_cohort' : 'waitlist',
         cohortReservationNumber: validCohortNumber,
-        phone: normalizedPhone,
+        phone: consentedPhoneE164,
         profileType: normalizedProfileType,
         primaryGoal: normalizedPrimaryGoal || null,
       })

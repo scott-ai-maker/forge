@@ -238,8 +238,7 @@ export default function OptPhaseRoadmap({
   const { tierId, shouldShowTrigger } = useTierAccess()
 
   const activeSpec = OPT_PHASES.find(p => p.phase === selectedPhase) ?? OPT_PHASES[0]
-  const coachSpotsLeft = FORGE_TIER_ENTITLEMENTS.coach_support.remainingSpots ?? 6
-  const coachRosterCap = FORGE_TIER_ENTITLEMENTS.coach_support.rosterCap ?? 25
+  const coachRosterCap = FORGE_TIER_ENTITLEMENTS.coach_support.rosterCap ?? 15
 
   // Trigger 5: Phase 02 / Load Milestone (Plus -> Coach Support)
   const showCoachMilestoneBanner =
@@ -479,7 +478,7 @@ export default function OptPhaseRoadmap({
             <ShieldCheck size={17} strokeWidth={1.75} className="mt-0.5 shrink-0 text-amber-300" aria-hidden="true" />
             <div>
               <div className="font-bold tabular-nums text-amber-200">
-                Phase 02 Load Milestone Unlocked · {coachSpotsLeft} of {coachRosterCap} Coach Support Spots Open
+                Phase 02 Load Milestone Unlocked · Coach Support Capped at {coachRosterCap} Active Seats
               </div>
               <div className="mt-0.5 text-[11px] leading-relaxed text-zinc-300">
                 Add 1-on-1 Coach Gordon chat (24h SLA), bespoke load calibration &amp; 8 Form Lab reviews/mo.
@@ -491,7 +490,7 @@ export default function OptPhaseRoadmap({
             onClick={() => setUpgradeOpen(true)}
             className="forge-tactile-press inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-xl bg-amber-400 px-3.5 py-2 text-xs font-extrabold uppercase tracking-wider text-[#090A0D] transition-colors duration-150 hover:bg-amber-300"
           >
-            <span className="tabular-nums">Claim Spot ({coachSpotsLeft}/{coachRosterCap})</span>{' '}
+            <span className="tabular-nums">Upgrade to Coach Support</span>{' '}
             <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>

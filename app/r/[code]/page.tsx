@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: ReferralPageProps): Promise<M
   const referral = await validateReferralCode(admin, resolvedParams.code)
 
   const inviter = referral.valid && referral.referrerName ? referral.referrerName : 'A Forge Athlete'
-  const title = `${inviter} gifted you a 30-Day VIP Pass | Forge Athletic`
-  const description = `Claim your exclusive 30-Day Extended VIP Pass + $20 Welcome Credit to Forge Athletic. Evidence-led periodization, NASM OPT™ tracking, and elite sports science.`
+  const title = `${inviter} gifted you a 30-Day Free Trial Pass | Forge Athletic`
+  const description = `Claim your exclusive 30-Day Extended Free Trial Pass to Forge Athletic. Evidence-led NASM OPT™ periodization, posture screening, and performance telemetry.`
 
   return {
     title,

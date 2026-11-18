@@ -6537,7 +6537,7 @@ export default function UnifiedLiveStudioHud({
             >
               <div>
                 <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gold-lt)', fontWeight: 800 }}>
-                  NASM Virtual Coaching Specialist · Group Conditioning
+                  Forge Athletic · Conditioning Circuit Timer
                 </span>
                 <h3 id="circuit-timer-title" style={{ margin: '2px 0 0', color: '#FFF', fontSize: 16, fontWeight: 800 }}>
                   Synchronized Squad Circuit Timer
@@ -6908,7 +6908,7 @@ export default function UnifiedLiveStudioHud({
             >
               <GaaIcon name="lock" size={14} tone="inherit" />
               <div>
-                <strong>HIPAA (1996) Privacy Standard:</strong> Client health histories, PAR-Q+, and orthopedic indicators are strictly confidential to the coach and never shared between teammates.
+                <strong>Confidential Health Safeguard (Non-Covered Fitness Service):</strong> Client health histories, PAR-Q+ responses, and orthopedic indicators are protected with TLS 1.3 / AES-256 / RLS controls and remain strictly confidential to your assigned coach—never shared with other members.
               </div>
             </div>
 

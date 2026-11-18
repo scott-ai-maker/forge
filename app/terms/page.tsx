@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { FORGE_MEMBERSHIPS } from '@/lib/forge-memberships'
+import { FORGE_MEMBERSHIPS, isAnnualBillingEnabled } from '@/lib/forge-memberships'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SiteFooter from '@/components/ui/SiteFooter'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
@@ -153,7 +153,7 @@ export default function TermsOfServicePage() {
             <strong>FDA DSHEA, WADA/NCAA &amp; Affiliate Dispensary Transparency:</strong> Educational statements regarding dietary supplements have not been evaluated by the U.S. Food and Drug Administration and are not intended to diagnose, treat, cure, or prevent any disease. Drug-tested athletes (NCAA, WADA, USADA, military) bear sole responsibility for verifying third-party batch certification (NSF Certified for Sport® / Informed-Sport). Where Forge Athletic provides optional partner links or courtesy discount codes (such as Thorne, REP Fitness, Crossover Symmetry, or Perform Better), Forge Athletic may earn an affiliate commission at no extra cost to you (16 CFR Part 255).
           </p>
           <p style={{ fontSize: '0.95rem' }}>
-            <strong>AI, Computer Vision &amp; Synthesized Audio Transparency:</strong> Self-serve periodization, posture landmark summaries, S.O.A.P. session summaries, studio exercise loops, physique concept visualizations, and synthesized audio briefings utilize artificial intelligence models calibrated to sports-science protocols. Studio exercise loops and simulated physique visualizations are illustrative concepts only and never guarantee biomechanical perfection or physical outcomes; always rely on official video demonstrations, written cues, and pain-free biomechanical judgment during execution.
+            <strong>AI, Computer Vision &amp; Synthesized Audio Transparency:</strong> Self-serve periodization, posture landmark summaries, S.O.A.P. session summaries, studio exercise loops, and synthesized audio briefings utilize artificial intelligence models calibrated to sports-science protocols. Studio exercise loops are illustrative demonstrations only and never guarantee biomechanical perfection or physical outcomes; always rely on official video demonstrations, written cues, and pain-free biomechanical judgment during execution.
           </p>
           <p style={{ fontSize: '0.95rem' }}>
             <strong>Remote Safety, ERAP &amp; All-Party Recording Consent (M.G.L. c. 272, § 99):</strong> Virtual coaches are not physically co-located and cannot physically spot you. You assume sole responsibility for maintaining a clear 8x8 ft training space, using barbell safety pins/collars, inspecting all hardware before every lift, and maintaining an accurate Emergency Response Action Plan (ERAP) physical address prior to live WebRTC sessions. Live telestrator capture or S.O.A.P. audio transcription occurs strictly with contemporaneous visual notice (`REC` indicator) and explicit consent of all session participants; you agree to notify any bystanders entering your room. Stop exercising immediately and call 911 if you experience chest discomfort, syncope, dizziness, or acute pain.
@@ -165,7 +165,10 @@ export default function TermsOfServicePage() {
             4. Billing, Auto-Renewal, FTC Click-to-Cancel &amp; Massachusetts Statutory Rights
           </h2>
           <p style={{ fontSize: '0.95rem' }}>
-            Memberships are billed on a recurring monthly or annual basis as clearly disclosed at checkout and automatically renew at the conclusion of each billing cycle unless cancelled prior to the renewal date. Core Membership includes a seven-day free trial; unless cancelled before trial expiration, your designated payment method will be charged the recurring subscription rate shown at checkout. We send electronic pre-renewal reminder notices at least 3 days prior to 7-day trial conversion and 15–45 days prior to annual membership renewal.
+            Memberships are billed on a recurring month-to-month basis (with zero multi-month prepayment lock-in unless an optional annual plan is explicitly enabled and selected at checkout) and automatically renew at the conclusion of each billing cycle unless cancelled prior to the renewal date. <strong>Core Membership</strong> includes a seven-day free trial ($0.00 due at enrollment); unless cancelled before trial expiration, your designated payment method will automatically be charged the recurring monthly rate shown at checkout. <strong>Plus</strong> and <strong>Coach Support</strong> memberships do not include a free trial and are billed immediately upon enrollment. We send an immediate retainable post-purchase confirmation email upon enrollment, electronic reminder notices prior to 7-day trial conversion (approx. 3 days before trial end), and advance reminder notices prior to any scheduled annual renewal.
+          </p>
+          <p style={{ fontSize: '0.95rem' }}>
+            <strong>Promotional &amp; Founding Rate Lock Terms:</strong> Where a promotional or Founding Rate Lock discount code (such as <code>HOLIDAY25</code>, redeemable through its published expiration date) is applied at checkout, the discounted recurring rate remains locked <strong>for as long as continuous active enrollment on that selected membership tier is maintained</strong>. Cancelling and subsequently re-subscribing, or switching to a different membership tier, bills at the then-current published rate for the newly selected tier.
           </p>
 
           <div style={{ background: 'rgba(14, 23, 38, 0.78)', border: '1px solid rgba(197, 160, 89, 0.4)', borderRadius: 8, padding: '1.15rem 1.4rem', margin: '1rem 0' }}>
@@ -229,11 +232,16 @@ export default function TermsOfServicePage() {
               <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', margin: '0 0 0.3rem', color: 'var(--gold-lt)', letterSpacing: '0.03em' }}>
                 {membership.name} (<span style={{ fontFamily: 'var(--font-telemetry, monospace)' }}>${membership.monthlyPriceCents / 100}/month</span>)
               </h3>
-              {membership.annualPriceCents !== undefined && (
-                <p style={{ margin: '0 0 0.5rem', fontSize: '0.88rem' }}>
-                  Annual option: <span style={{ fontFamily: 'var(--font-telemetry, monospace)' }}>${membership.annualPriceCents / 100}/year</span>. Seven-day free trial.
-                </p>
-              )}
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.88rem', color: '#CBD5E1' }}>
+                {membership.trialDays
+                  ? `Includes a ${membership.trialDays}-day free trial ($0.00 today, then $${membership.monthlyPriceCents / 100}/month unless cancelled before trial ends).`
+                  : 'Billed month-to-month upon enrollment (no free trial period).'}
+                {isAnnualBillingEnabled() && membership.annualPriceCents !== undefined ? (
+                  <>
+                    {' '}Annual option: <span style={{ fontFamily: 'var(--font-telemetry, monospace)' }}>${membership.annualPriceCents / 100}/year</span>.
+                  </>
+                ) : null}
+              </p>
               <ul style={{ margin: '0 0 0.5rem 1.1rem', padding: 0, fontSize: '0.88rem' }}>
                 {membership.features.map(feature => (
                   <li key={feature} style={{ marginBottom: '0.2rem' }}>{feature}</li>

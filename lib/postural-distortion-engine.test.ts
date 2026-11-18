@@ -119,10 +119,15 @@ describe('Postural Distortion Engine & Alignment Comparison Suite', () => {
     expect(mixed.kineticChainDysfunctionLevel).toBe('Severe Dysfunction')
   })
 
-  it('updates posture delta and computes consecutive posture streaks accurately', () => {
-    const delta = runQuickPostureCheckDelta()
-    expect(delta.forwardHeadDeltaDeg).toBeLessThanOrEqual(-4.5)
-    expect(delta.overallPostureScore).toBeGreaterThanOrEqual(84)
+  it('starts unscanned profiles at zeroed deltas and updates posture delta & streaks accurately upon scan', () => {
+    const freshDefaults = getDefaultPostureProfileState()
+    expect(freshDefaults.postureDelta.forwardHeadDeltaDeg).toBe(0)
+    expect(freshDefaults.postureDelta.overallPostureScore).toBe(0)
+    expect(freshDefaults.postureDelta.baselineDate).toBe('')
+
+    const delta = runQuickPostureCheckDelta(84)
+    expect(delta.forwardHeadDeltaDeg).toBe(0)
+    expect(delta.overallPostureScore).toBe(84)
 
     const baseState = getDefaultPostureProfileState()
     baseState.dailyLogs = {

@@ -324,7 +324,7 @@ export async function validateReferralCode(
   if (!normalized) {
     return {
       valid: false,
-      refereeDiscountCents: 2000,
+      refereeDiscountCents: 0,
       refereeTrialDays: 30,
       error: 'Referral code is empty',
     }
@@ -354,7 +354,7 @@ export async function validateReferralCode(
         code: codeRow.code,
         referrerId: codeRow.client_id,
         referrerName,
-        refereeDiscountCents: 2000,
+        refereeDiscountCents: 0,
         refereeTrialDays: 30,
       }
     }
@@ -362,12 +362,12 @@ export async function validateReferralCode(
     console.warn('[referrals:validate] DB lookup skipped:', err)
   }
 
-  // 2. Deterministic client fallback: check if code matches any client in clients table
+  // 2. Deterministic client fallback: require exact deterministic code match against a real client record
   try {
     const parts = normalized.split('-')
     const hexSuffix = parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ''
 
-    if (hexSuffix.length >= 3) {
+    if (hexSuffix.length >= 4) {
       const { data: clients } = await admin
         .from('clients')
         .select('id, full_name, email')
@@ -375,7 +375,7 @@ export async function validateReferralCode(
 
       const matched = (clients || []).find(c => {
         const cCode = generateDeterministicReferralCode(c.id, c.full_name || c.email)
-        return cCode === normalized || c.id.replace(/-/g, '').toLowerCase().startsWith(hexSuffix)
+        return cCode === normalized
       })
 
       if (matched) {
@@ -384,7 +384,7 @@ export async function validateReferralCode(
           code: normalized,
           referrerId: matched.id,
           referrerName: matched.full_name?.trim() || matched.email?.split('@')[0] || 'A Forge Athlete',
-          refereeDiscountCents: 2000,
+          refereeDiscountCents: 0,
           refereeTrialDays: 30,
         }
       }
@@ -393,21 +393,9 @@ export async function validateReferralCode(
     console.warn('[referrals:validate] Client fallback lookup skipped:', err)
   }
 
-  // 3. Fallback for validly formatted Forge codes (e.g. FORGE-XXXX or NAME-XXXX)
-  if (/^[A-Z0-9]{2,10}-[A-Z0-9]{2,8}$/.test(normalized)) {
-    return {
-      valid: true,
-      code: normalized,
-      referrerId: 'ambassador',
-      referrerName: 'A Forge Athlete',
-      refereeDiscountCents: 2000,
-      refereeTrialDays: 30,
-    }
-  }
-
   return {
     valid: false,
-    refereeDiscountCents: 2000,
+    refereeDiscountCents: 0,
     refereeTrialDays: 30,
     error: 'Invalid or expired referral code',
   }
@@ -681,7 +669,7 @@ export async function processReferralConversion(
 export async function getClientReferralDashboard(
   admin: SupabaseClient,
   clientId: string,
-  baseUrl = 'https://forgeathletic.com'
+  baseUrl = 'https://forge-athletic.app'
 ): Promise<ReferralDashboardData> {
   let clientName: string | null = null
   try {
@@ -744,7 +732,7 @@ export async function getClientReferralDashboard(
     conversionsCount,
     totalRewardsEarnedCents: codeRecord.totalRewardsEarnedCents || 0,
     availableBalanceCents,
-    refereeDiscountCents: 2000,
+    refereeDiscountCents: 0,
     refereeTrialDays: 30,
     milestones,
     history: (attributions || []).map(a => ({

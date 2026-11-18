@@ -88,8 +88,19 @@ export function getMembershipDisplayName(name: string): string {
   return LEGACY_MEMBERSHIP_NAMES[name.trim().toLowerCase()] ?? name
 }
 
+const MEMBERSHIP_ID_ALIASES: Readonly<Record<string, string>> = {
+  core_lab: 'forge-core',
+  plus: 'forge-pro-athlete',
+  coach_support: 'forge-transformation-direct',
+}
+
 export function getForgeMembership(id: string): ForgeMembership | undefined {
-  return FORGE_MEMBERSHIPS.find(membership => membership.id === id)
+  const canonicalId = MEMBERSHIP_ID_ALIASES[id.trim().toLowerCase()] ?? id
+  return FORGE_MEMBERSHIPS.find(membership => membership.id === canonicalId)
+}
+
+export function isAnnualBillingEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_ANNUAL_PLANS === 'true'
 }
 
 export function getForgeMembershipPrice(
@@ -97,9 +108,10 @@ export function getForgeMembershipPrice(
   cadence: ForgeMembershipCadence
 ): { amountCents: number; interval: 'month' | 'year' } | undefined {
   if (cadence === 'annual') {
-    return membership.annualPriceCents === undefined
-      ? undefined
-      : { amountCents: membership.annualPriceCents, interval: 'year' }
+    if (!isAnnualBillingEnabled() || membership.annualPriceCents === undefined) {
+      return undefined
+    }
+    return { amountCents: membership.annualPriceCents, interval: 'year' }
   }
 
   return { amountCents: membership.monthlyPriceCents, interval: 'month' }

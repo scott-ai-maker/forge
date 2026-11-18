@@ -54,6 +54,7 @@ export default function HolidayUnmaskingSplash({
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [smsConsent, setSmsConsent] = useState(false)
   const [primaryGoal, setPrimaryGoal] = useState('posture_joint_health')
   const [honeypot, setHoneypot] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
@@ -61,7 +62,6 @@ export default function HolidayUnmaskingSplash({
   const [invalidField, setInvalidField] = useState<'name' | 'email' | null>(null)
   const [activeChapterCode, setActiveChapterCode] = useState<string>('01')
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-  const [assignedPassNumber, setAssignedPassNumber] = useState<number>(42)
   const [copiedSerial, setCopiedSerial] = useState(false)
 
   // Global SFX Muted state (strictly defaults to SFX MUTED = true)
@@ -83,8 +83,6 @@ export default function HolidayUnmaskingSplash({
     const resolvedTarget = getGoLiveDate()
     setTargetDate(resolvedTarget)
     setTimeRemaining(calculateTimeRemaining(resolvedTarget))
-
-    setAssignedPassNumber(Math.floor(Math.random() * 36) + 14)
 
     const timer = setInterval(() => {
       setTimeRemaining(calculateTimeRemaining(resolvedTarget))
@@ -244,10 +242,27 @@ export default function HolidayUnmaskingSplash({
       return
     }
 
+    if (showSmsInput && phone.trim() && !smsConsent) {
+      setStatus('error')
+      setErrorMessage(
+        'Please check the optional SMS consent box to receive text alerts, or clear the mobile number field to register by email only.'
+      )
+      playTactileTone('tick')
+      return
+    }
+
     setStatus('submitting')
     playTactileTone('chime')
 
     try {
+      let detectedTz: string | undefined
+      try {
+        detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+      } catch {
+        // ignore
+      }
+      const consentedPhone = showSmsInput && smsConsent && phone.trim() ? phone.trim() : undefined
+
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -255,10 +270,11 @@ export default function HolidayUnmaskingSplash({
           email: email.trim(),
           firstName: fullName.trim(),
           trainingLevel: 'intermediate',
-          primaryGoal: `[Founding Cohort Pass] Goal: ${primaryGoal} | Phone: ${phone || 'N/A'}`,
+          primaryGoal: `[Founding Cohort Pass] Goal: ${primaryGoal}`,
           source: 'holiday_unmasking_drop',
-          assignedCohortNumber: assignedPassNumber,
-          phone: phone.trim() || undefined,
+          phone: consentedPhone,
+          smsConsent: Boolean(consentedPhone),
+          timezone: detectedTz,
           profileType: primaryGoal,
           honeypot,
           startTimeMs: mountTimeRef.current,
@@ -292,7 +308,16 @@ export default function HolidayUnmaskingSplash({
     }
   }
 
-  const formattedSerial = `FORGE-HOLIDAY-2026-${String(assignedPassNumber).padStart(4, '0')}`
+  const deterministicEmailRef = (() => {
+    const normalized = email.trim().toLowerCase()
+    if (!normalized) return '0001'
+    let hash = 0
+    for (let i = 0; i < normalized.length; i += 1) {
+      hash = (hash * 31 + normalized.charCodeAt(i)) >>> 0
+    }
+    return String((hash % 9000) + 1000)
+  })()
+  const formattedSerial = `FORGE-HOLIDAY-2026-${deterministicEmailRef}`
 
   const copyVipSerial = async () => {
     try {
@@ -601,16 +626,16 @@ export default function HolidayUnmaskingSplash({
                 boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 48px rgba(0, 0, 0, 0.5)',
               }}
             >
-              {/* Cohort Allocation Header */}
+              {/* Cohort Registration Header */}
               <div className="mb-5 flex items-center justify-between gap-2 rounded-xl border border-amber-400/25 bg-amber-500/[0.08] px-3.5 py-2">
                 <div className="flex items-center gap-2">
                   <ForgeIcon name="crown" size={15} style={{ color: '#F59E0B' }} />
                   <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-300">
-                    First 50 Founding Members
+                    Founding Launch Registration
                   </span>
                 </div>
                 <span className="font-mono text-xs font-bold tabular-nums text-emerald-400">
-                  12 of 50 Spots Left
+                  Open · Code {HOLIDAY_DEAL_PROMO.code}
                 </span>
               </div>
 
@@ -620,8 +645,9 @@ export default function HolidayUnmaskingSplash({
                     Reserve Your Founding Member Pass
                   </h2>
                   <p className="mt-1.5 text-sm leading-relaxed text-zinc-300">
-                    No payment today. Hold your spot in the 50-member cohort ahead of Friday, Nov 20
-                    and receive your private pre-Thanksgiving screening link from Coach Gordon.
+                    No payment today. Register ahead of Friday, Nov 20 to receive your{' '}
+                    {HOLIDAY_DEAL_PROMO.code} 25% Rate Lock code and private pre-Thanksgiving
+                    screening link from Coach Gordon.
                   </p>
 
                   <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
@@ -741,22 +767,47 @@ export default function HolidayUnmaskingSplash({
                       </button>
 
                       {showSmsInput ? (
-                        <div className="mt-1.5">
-                          <label
-                            htmlFor={phoneInputId}
-                            className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.1em] text-zinc-400"
-                          >
-                            Mobile Number (Single Nov 20 opening text)
+                        <div className="mt-1.5 space-y-2.5">
+                          <div>
+                            <label
+                              htmlFor={phoneInputId}
+                              className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.1em] text-zinc-400"
+                            >
+                              Mobile Number (Optional Launch &amp; Account SMS)
+                            </label>
+                            <input
+                              id={phoneInputId}
+                              type="tel"
+                              autoComplete="tel"
+                              value={phone}
+                              onChange={e => setPhone(e.target.value)}
+                              placeholder="+1 (555) 000-0000"
+                              className="min-h-[46px] w-full rounded-xl border border-white/15 bg-[#090A0D] px-3.5 py-2.5 text-base text-white placeholder:text-zinc-500 focus:border-amber-400"
+                            />
+                          </div>
+
+                          <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-amber-400/25 bg-[#090A0D]/90 p-3 text-[11px] leading-relaxed text-zinc-300">
+                            <input
+                              type="checkbox"
+                              checked={smsConsent}
+                              onChange={e => setSmsConsent(e.target.checked)}
+                              className="mt-0.5 h-4 w-4 shrink-0 accent-amber-400"
+                            />
+                            <span>
+                              By checking this box, I provide prior express written consent to receive automated launch and
+                              coaching text messages from <strong>Forge Athletic</strong> at the number provided.{' '}
+                              <strong>Consent is not a condition of purchase.</strong> Msg &amp; data rates may apply. Msg
+                              frequency varies. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. View{' '}
+                              <Link href="/terms" className="text-amber-300 underline">
+                                Terms
+                              </Link>{' '}
+                              &amp;{' '}
+                              <Link href="/privacy#sms-privacy" className="text-amber-300 underline">
+                                Privacy Policy
+                              </Link>
+                              .
+                            </span>
                           </label>
-                          <input
-                            id={phoneInputId}
-                            type="tel"
-                            autoComplete="tel"
-                            value={phone}
-                            onChange={e => setPhone(e.target.value)}
-                            placeholder="+1 (555) 000-0000"
-                            className="min-h-[46px] w-full rounded-xl border border-white/15 bg-[#090A0D] px-3.5 py-2.5 text-base text-white placeholder:text-zinc-500 focus:border-amber-400"
-                          />
                         </div>
                       ) : null}
                     </div>
@@ -782,9 +833,9 @@ export default function HolidayUnmaskingSplash({
                     </button>
 
                     <p className="text-xs leading-relaxed text-zinc-400">
-                      Includes your permanent Founding Member Lifetime Rate Lock, a complimentary
-                      1-on-1 movement screening with Coach Gordon before Thanksgiving, and 1 free
-                      30-day Founding Partner Pass to gift a spouse or friend.
+                      Includes your 25% Founding Rate Lock (valid while continuously enrolled on
+                      your selected tier), a complimentary 1-on-1 movement screening with Coach
+                      Gordon, and 1 free 30-day Founding Partner Pass to gift a spouse or friend.
                     </p>
                   </form>
                 </>
@@ -829,7 +880,7 @@ export default function HolidayUnmaskingSplash({
                         </div>
                       </div>
                       <span className="rounded-md border border-amber-400/30 bg-amber-500/10 px-2 py-1 font-mono text-[11px] text-amber-300">
-                        #{String(assignedPassNumber).padStart(2, '0')} / 50
+                        VERIFIED PASS
                       </span>
                     </div>
 
@@ -850,7 +901,7 @@ export default function HolidayUnmaskingSplash({
                         </div>
                       </div>
                       <div className="font-mono text-[10px] font-semibold text-emerald-300">
-                        ● Lifetime Rate Lock ({HOLIDAY_DEAL_PROMO.code})
+                        ● 25% Rate Lock ({HOLIDAY_DEAL_PROMO.code})
                       </div>
                     </div>
                   </div>
@@ -1077,8 +1128,9 @@ export default function HolidayUnmaskingSplash({
                 Best Tools × Best Coaching
               </h3>
               <p className="mt-2 text-xs leading-relaxed text-zinc-300 sm:text-sm">
-                On-device computer vision handles 33-point posture angles and daily readiness checks
-                while Coach Gordon oversees form reviews, safety alerts, and progression.
+                Browser-based 33-point MediaPipe tracking handles live posture angles and daily
+                readiness checks locally on your device, while Coach Gordon oversees Form Lab
+                reviews, safety alerts, and progression.
               </p>
             </div>
 
@@ -1106,7 +1158,7 @@ export default function HolidayUnmaskingSplash({
         {/* Bottom Accreditation & Trust Footer */}
         <footer className="mt-12 flex flex-col items-center gap-4 border-t border-white/[0.08] pt-8 text-center">
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[11px] text-zinc-400">
-            <span>NASM-CPT® CERTIFIED SINCE 2008</span>
+            <span>NASM-CPT® CERTIFIED (#1261890687)</span>
             <span aria-hidden="true">·</span>
             <span>5-PHASE NASM OPT™ ARCHITECTURE</span>
             <span aria-hidden="true">·</span>
@@ -1124,6 +1176,9 @@ export default function HolidayUnmaskingSplash({
             </Link>
             <Link href="/privacy" className="inline-flex min-h-[44px] items-center text-inherit no-underline hover:text-amber-300">
               Privacy Policy
+            </Link>
+            <Link href="/health-privacy" className="inline-flex min-h-[44px] items-center text-inherit no-underline hover:text-amber-300">
+              Consumer Health Data Privacy
             </Link>
             <Link href="/terms" className="inline-flex min-h-[44px] items-center text-inherit no-underline hover:text-amber-300">
               Terms of Service
