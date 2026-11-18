@@ -36,7 +36,7 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
           }}
         >
           <strong>INTERNAL PREVIEW:</strong> Viewing full unmasked site. Public visitors currently
-          see the Founding Cohort Pre-Launch experience until Friday, Nov 20 at 6:00 AM EST.
+          see the Founding Cohort Pre-Launch experience until Monday, Jan 4, 2027 at 6:00 AM EST.
         </div>
       )}
 
@@ -89,14 +89,14 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
         <div className="forge-hero-copy">
           <p className="forge-eyebrow">
             <span />
-            FOUNDING COHORT (50 SPOTS) · OPENS FRIDAY, NOV 20 AT 6:00 AM EST
+            FOUNDING COHORT (50 SPOTS) · OPENS MONDAY, JAN 4, 2027 AT 6:00 AM EST
           </p>
           <h1 id="forge-hero-title">
-            Don’t wait for January to repair what November broke.
+            Start 2027 with joint-first precision—not a 3-week resolution.
           </h1>
           <p className="forge-hero-description">
             A real NASM-certified personal trainer at your side—combining 33-point phone camera
-            posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct email or
+            posture screening, Coach Gordon’s real voice pacing every rep, and direct email or
             text access whenever you want human eyes on your training.
           </p>
           <div className="forge-hero-actions">
@@ -108,8 +108,8 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
             </a>
           </div>
           <p className="mt-3 max-w-xl text-xs leading-relaxed text-zinc-400">
-            Includes your permanent Founding Member Lifetime Rate Lock, a complimentary 1-on-1
-            movement screening with Coach Gordon before Thanksgiving, and 1 free 30-day Founding
+            Includes your Founding Member Continuous Tier Rate Lock, a complimentary 1-on-1
+            kickoff movement screening with Coach Gordon, and 1 free 30-day Founding
             Partner Pass to gift a spouse or friend.
           </p>
           <p className="forge-hero-proof">

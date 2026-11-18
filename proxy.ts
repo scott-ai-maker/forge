@@ -1,5 +1,35 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isPublicRegistrationOpen } from '@/lib/launch-config'
+import { isMasterCoachEmail } from '@/lib/authz'
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+function isPreLaunchBlockedPublicPath(pathname: string, searchParams: URLSearchParams, isProduction: boolean): boolean {
+  if (pathname === '/auth/signup') {
+    const coachInvite = searchParams.get('coach') || ''
+    return !UUID_PATTERN.test(coachInvite)
+  }
+  if (
+    pathname === '/packages' ||
+    pathname.startsWith('/packages/') ||
+    pathname === '/pricing' ||
+    pathname.startsWith('/pricing/') ||
+    pathname === '/audit' ||
+    pathname.startsWith('/audit/') ||
+    pathname === '/corporate' ||
+    pathname.startsWith('/corporate/') ||
+    pathname === '/async-coaching' ||
+    pathname.startsWith('/invite/') ||
+    pathname.startsWith('/r/')
+  ) {
+    return true
+  }
+  if (isProduction && (pathname === '/preview' || pathname.startsWith('/preview/'))) {
+    return true
+  }
+  return false
+}
 
 export async function proxy(request: NextRequest) {
   // IMPORTANT: Do not add logic between createServerClient and supabase.auth.getUser().
@@ -59,6 +89,15 @@ export async function proxy(request: NextRequest) {
       }
       return NextResponse.redirect(url)
     }
+    if (
+      !isPublicRegistrationOpen() &&
+      isPreLaunchBlockedPublicPath(pathname, searchParams, process.env.NODE_ENV === 'production')
+    ) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      url.search = '?waitlist=prelaunch'
+      return NextResponse.redirect(url)
+    }
     return supabaseResponse
   }
 
@@ -107,6 +146,19 @@ export async function proxy(request: NextRequest) {
       url.searchParams.set('next', '/dashboard/fitness')
       return NextResponse.redirect(url)
     }
+  }
+
+  // 1b. Enforce Pre-Launch Public Signup & Checkout Route Lockdown (bypasses Master Coach / staff)
+  const isStaffCoach = Boolean(user?.email && isMasterCoachEmail(user.email))
+  if (
+    !isPublicRegistrationOpen() &&
+    !isStaffCoach &&
+    isPreLaunchBlockedPublicPath(pathname, searchParams, process.env.NODE_ENV === 'production')
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    url.search = '?waitlist=prelaunch'
+    return NextResponse.redirect(url)
   }
 
   // 2. Protect /dashboard routes

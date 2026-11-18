@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import crypto from 'node:crypto'
+import { getGoLiveDate } from '@/lib/launch-config'
 
 export type LeadSource = 'apply' | 'waitlist' | 'founding_cohort'
 
@@ -584,14 +585,14 @@ export async function triggerLeadEmailAutomation(
           `Hi ${name},`,
           '',
           'You are on the Forge Athletic updates list.',
-          'Your Founding Member promo code HOLIDAY25 unlocks a 25% Rate Lock on your selected monthly tier (valid while continuously enrolled on that tier, redeemable through December 31, 2026), and Core Membership includes a 7-day free trial.',
+          'Your Founding Member promo code HOLIDAY25 unlocks a 25% Rate Lock on your selected monthly tier (valid while continuously enrolled on that tier, redeemable through January 31, 2027), and Core Membership includes a 7-day free trial.',
           '',
           `Explore memberships & start your 7-day free trial: ${baseUrl}/packages`,
           `Complete your diagnostic fit quiz at any time: ${baseUrl}/apply`,
         ].join('\n'),
         html: `<p>Hi ${name},</p>
 <p>You are on the Forge Athletic updates list.</p>
-<p>Your Founding Member promo code <strong>HOLIDAY25</strong> unlocks a <strong>25% Rate Lock</strong> on your selected monthly tier (valid while continuously enrolled on that tier, redeemable through December 31, 2026), and Core Membership includes a <strong>7-day free trial</strong>.</p>
+<p>Your Founding Member promo code <strong>HOLIDAY25</strong> unlocks a <strong>25% Rate Lock</strong> on your selected monthly tier (valid while continuously enrolled on that tier, redeemable through January 31, 2027), and Core Membership includes a <strong>7-day free trial</strong>.</p>
 <p><a href="${baseUrl}/packages">Explore memberships &amp; start your 7-day free trial</a> | <a href="${baseUrl}/apply">Complete your diagnostic fit quiz</a></p>`,
       }
     }
@@ -652,13 +653,13 @@ ${input.primaryGoal ? `<p><strong>Primary Goal / Notes:</strong> ${input.primary
   try {
     const sequenceEnabled = process.env.MARKETING_SEQUENCE_ENABLED !== '0'
     if (sequenceEnabled) {
-      const now = Date.now()
+      const anchorMs = Math.max(Date.now(), getGoLiveDate().getTime())
       const queueRows = sequenceTemplates.map((template, index) => ({
         email,
         first_name: input.firstName?.trim() || null,
         template_key: template.key,
         source: `launch_sequence_${input.source}`,
-        send_after: new Date(now + index * DAY_MS).toISOString(),
+        send_after: new Date(anchorMs + index * DAY_MS).toISOString(),
       }))
 
       const { error } = await supabase

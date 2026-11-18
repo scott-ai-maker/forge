@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { AutomationTemplateId } from '@/lib/automations/launchSequence'
+import { DEFAULT_GO_LIVE_DATE_ISO, isPublicRegistrationOpen } from '@/lib/launch-config'
 
 function isAuthorized(req: NextRequest): boolean {
   const internalSecret = process.env.INTERNAL_CRON_SECRET?.trim()
@@ -47,6 +48,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const dryRun = req.nextUrl.searchParams.get('dryRun') === '1'
+  if (
+    !dryRun &&
+    (process.env.LAUNCH_AUTOMATIONS_DISARMED === 'true' || !isPublicRegistrationOpen())
+  ) {
+    return NextResponse.json({
+      success: true,
+      skippedPreLaunchLockdown: true,
+      targetGoLiveIso: DEFAULT_GO_LIVE_DATE_ISO,
+    })
+  }
   return runDispatch({ dryRun })
 }
 
@@ -66,6 +77,18 @@ export async function POST(req: NextRequest) {
     typeof body.simulatedNowIso === 'string' && !Number.isNaN(new Date(body.simulatedNowIso).getTime())
       ? new Date(body.simulatedNowIso)
       : undefined
+
+  if (
+    !body.dryRun &&
+    !parsedNow &&
+    (process.env.LAUNCH_AUTOMATIONS_DISARMED === 'true' || !isPublicRegistrationOpen())
+  ) {
+    return NextResponse.json({
+      success: true,
+      skippedPreLaunchLockdown: true,
+      targetGoLiveIso: DEFAULT_GO_LIVE_DATE_ISO,
+    })
+  }
 
   return runDispatch({
     dryRun: Boolean(body.dryRun),

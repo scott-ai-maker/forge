@@ -59,7 +59,7 @@ export default function BlackFridayShowcaseSection() {
         <div className="flex flex-wrap items-center justify-center gap-2.5 border-b border-amber-400/25 bg-amber-500/10 px-4 py-2.5 text-center font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-200">
           <span>FOUNDING COHORT (50 SPOTS) · {LAUNCH_CAMPAIGN_INFO.dateFormatted}</span>
           <span aria-hidden="true">·</span>
-          <span>PERMANENT LIFETIME RATE LOCK + PRE-THANKSGIVING SCREENING</span>
+          <span>CONTINUOUS TIER RATE LOCK + KICKOFF MOVEMENT SCREENING</span>
         </div>
 
         {/* Header Copy */}
@@ -160,8 +160,8 @@ export default function BlackFridayShowcaseSection() {
               Founding Member Benefits Included
             </div>
             <p className="mt-1 text-xs leading-relaxed text-zinc-300 sm:text-sm">
-              Includes your permanent Founding Member Lifetime Rate Lock, a complimentary 1-on-1
-              movement screening with Coach Gordon before Thanksgiving, and 1 free 30-day Founding
+              Includes your Founding Member Continuous Tier Rate Lock, a complimentary 1-on-1
+              kickoff movement screening with Coach Gordon, and 1 free 30-day Founding
               Partner Pass to gift a spouse or friend.
             </p>
           </div>

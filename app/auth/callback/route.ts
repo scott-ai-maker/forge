@@ -7,8 +7,10 @@ import { attributeReferralSignup, getOrCreateClientReferralCode } from '@/lib/re
 import {
   checkClientLegalConsentGate,
   extractRequestIp,
+  isValidLegalSignature,
   recordLegalConsentAudit,
 } from '@/lib/legal-compliance'
+import { isPublicRegistrationOpen } from '@/lib/launch-config'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -166,7 +168,7 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      if (searchParams.get('consent') === '1' || user.user_metadata?.legal_terms_accepted === true) {
+      if (user.user_metadata?.legal_terms_accepted === true) {
         await recordLegalConsentAudit({
           adminClient: admin,
           userId: user.id,
@@ -174,9 +176,9 @@ export async function GET(request: NextRequest) {
             'terms_of_service',
             'privacy_policy',
             'consumer_health_biometric_policy',
-            'athletic_liability_waiver',
+            ...(isValidLegalSignature(displayName) ? (['athletic_liability_waiver'] as const) : []),
           ],
-          typedSignature: displayName,
+          typedSignature: isValidLegalSignature(displayName) ? displayName : null,
           ipAddress: extractRequestIp(request.headers),
           userAgent: request.headers.get('user-agent'),
           consentedAt:
@@ -190,6 +192,45 @@ export async function GET(request: NextRequest) {
         })
       }
     } else {
+      // Pre-launch defense-in-depth: block uninvited new public OAuth/auth registrations until Jan 4, 2027
+      let hasVerifiedCoachInvite = false
+      if (requestedCoachId) {
+        const { data: validCoach } = await admin
+          .from('clients')
+          .select('id')
+          .eq('id', requestedCoachId)
+          .eq('role', 'coach')
+          .maybeSingle()
+        hasVerifiedCoachInvite = Boolean(validCoach?.id)
+      }
+
+      const enforcePrelaunchSignupLock =
+        process.env.ENFORCE_PRELAUNCH_SIGNUP_LOCK === 'true' ||
+        process.env.NODE_ENV === 'production' ||
+        process.env.VERCEL_ENV === 'production'
+
+      if (
+        enforcePrelaunchSignupLock &&
+        !isMasterCoach &&
+        !hasVerifiedCoachInvite &&
+        !isPublicRegistrationOpen()
+      ) {
+        if (typeof supabase.auth.signOut === 'function') {
+          await supabase.auth.signOut()
+        }
+        try {
+          await admin.auth.admin.deleteUser(user.id)
+        } catch {
+          // Non-fatal cleanup
+        }
+        const blockedUrl = new URL('/auth/login', origin)
+        blockedUrl.searchParams.set(
+          'error',
+          'Public enrollment opens Monday, January 4, 2027. Join the Founding Cohort waitlist on our homepage.'
+        )
+        return NextResponse.redirect(blockedUrl.toString())
+      }
+
       // Create first-time profiles as clients (or coach if master coach) without mutating pre-existing rows.
       await admin
         .from('clients')
@@ -213,7 +254,7 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      if (searchParams.get('consent') === '1' || user.user_metadata?.legal_terms_accepted === true) {
+      if (user.user_metadata?.legal_terms_accepted === true) {
         await recordLegalConsentAudit({
           adminClient: admin,
           userId: user.id,
@@ -221,9 +262,9 @@ export async function GET(request: NextRequest) {
             'terms_of_service',
             'privacy_policy',
             'consumer_health_biometric_policy',
-            'athletic_liability_waiver',
+            ...(isValidLegalSignature(displayName) ? (['athletic_liability_waiver'] as const) : []),
           ],
-          typedSignature: displayName,
+          typedSignature: isValidLegalSignature(displayName) ? displayName : null,
           ipAddress: extractRequestIp(request.headers),
           userAgent: request.headers.get('user-agent'),
           consentedAt:

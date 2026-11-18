@@ -17,12 +17,34 @@ import {
   extractRequestIp,
   recordLegalConsentAudit,
 } from '@/lib/legal-compliance'
+import { isPublicRegistrationOpen } from '@/lib/launch-config'
 
 export async function POST(req: NextRequest) {
   try {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['client', 'coach'])
     const userId = authz.user.id
+
+    // Pre-Launch Checkout Lockdown: block uninvited public self-serve checkouts before Jan 4, 2027
+    const enforcePrelaunchLockdown =
+      process.env.ENFORCE_PRELAUNCH_CHECKOUT_LOCK === 'true' ||
+      process.env.NODE_ENV === 'production' ||
+      process.env.VERCEL_ENV === 'production'
+    if (
+      enforcePrelaunchLockdown &&
+      authz.client.role !== 'coach' &&
+      !authz.client.designated_coach_id &&
+      !isPublicRegistrationOpen()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Public membership checkout opens Monday, January 4, 2027 at 6:00 AM EST. Join the Founding Cohort waitlist on our homepage to reserve your 25% Rate Lock.',
+          code: 'PRELAUNCH_LOCKDOWN_ACTIVE',
+        },
+        { status: 403 }
+      )
+    }
     const automaticTaxOption =
       process.env.STRIPE_AUTOMATIC_TAX_ENABLED === 'true'
         ? { automatic_tax: { enabled: true as const } }

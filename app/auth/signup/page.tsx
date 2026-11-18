@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import { redirect } from 'next/navigation'
 import AuthForm from '@/components/auth/AuthForm'
 import { Camera, CirclePlay, Users, BriefcaseBusiness, ShieldCheck } from 'lucide-react'
 import { supabaseAdmin } from '@/lib/supabase'
 import ReferralSignupBanner from '@/components/referrals/ReferralSignupBanner'
 import { FOUNDING_PRICING_CARDS } from '@/lib/landingSocialProof'
 import type { ForgeTierId } from '@/lib/tierEntitlements'
+import { isPublicRegistrationOpen } from '@/lib/launch-config'
 
 export const metadata: Metadata = {
   title: 'Create Your Forge Athletic Account',
@@ -80,6 +82,11 @@ export default async function SignupPage({ searchParams }: { searchParams: Signu
       inviteCoachId = coach.id
       inviteCoachName = coach.full_name?.trim() || 'your coach'
     }
+  }
+
+  // Pre-launch defense-in-depth: block uninvited public self-serve signups until Jan 4, 2027
+  if (!isPublicRegistrationOpen() && !inviteCoachId) {
+    redirect('/?waitlist=prelaunch')
   }
 
   return (

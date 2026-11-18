@@ -93,4 +93,31 @@ describe('proxy - In-Gym Helper App & Telemetry Decoupling', () => {
     expect(location).toContain('/auth/login')
     expect(location).toContain('mode=companion')
   })
+
+  it('redirects public pre-launch /auth/signup and /packages requests to the waitlist splash while allowing Master Coach and coach-invite links', async () => {
+    delete process.env.NEXT_PUBLIC_SITE_UNMASKED
+    delete process.env.ALLOW_PRELAUNCH_PUBLIC_SIGNUP
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+
+    const signupRes = await proxy(new NextRequest('http://127.0.0.1:3000/auth/signup'))
+    expect(signupRes.status).toBe(307)
+    expect(signupRes.headers.get('location')).toContain('/?waitlist=prelaunch')
+
+    const packagesRes = await proxy(new NextRequest('http://127.0.0.1:3000/packages'))
+    expect(packagesRes.status).toBe(307)
+    expect(packagesRes.headers.get('location')).toContain('/?waitlist=prelaunch')
+
+    // Coach-invite link remains accessible for controlled pre-launch testing
+    const invitedRes = await proxy(
+      new NextRequest('http://127.0.0.1:3000/auth/signup?coach=123e4567-e89b-12d3-a456-426614174000')
+    )
+    expect(invitedRes.headers.get('location')).toBeNull()
+
+    // Master Coach bypasses pre-launch public lockdown on /packages
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'coach-1', email: 'coach@forge-athletic.app', user_metadata: {} } },
+    })
+    const coachPackagesRes = await proxy(new NextRequest('http://127.0.0.1:3000/packages'))
+    expect(coachPackagesRes.headers.get('location')).toBeNull()
+  })
 })

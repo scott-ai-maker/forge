@@ -61,7 +61,7 @@ export default function FoundingRateLockPricingGrid({
                 borderRadius: 4,
               }}
             >
-              FOUNDING MEMBER LIFETIME RATE LOCK
+              FOUNDING MEMBER CONTINUOUS TIER RATE LOCK
             </span>
             <span
               style={{
@@ -89,10 +89,10 @@ export default function FoundingRateLockPricingGrid({
               letterSpacing: '0.02em',
             }}
           >
-            Permanent Founding Rate Protection + Complimentary Pre-Thanksgiving 1-on-1 Movement Screening
+            Founding Rate Protection + Complimentary 1-on-1 Kickoff Movement Screening
           </div>
           <p style={{ margin: '4px 0 0', color: '#CBD5E1', fontSize: '0.88rem', lineHeight: 1.55 }}>
-            Lock in your Founding Member rate before post-launch pricing takes effect. Your monthly rate stays locked while active—even if you upgrade tiers later.
+            Lock in 25% off your selected monthly tier with code {HOLIDAY_DEAL_PROMO.code} for as long as continuous active enrollment on that tier is maintained.
           </p>
         </div>
 

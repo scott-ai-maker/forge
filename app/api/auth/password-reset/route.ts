@@ -187,7 +187,7 @@ export async function POST(req: NextRequest) {
     // which prevents accidental one-time token consumption before the user clicks.
     const resetLink = `${baseUrl}/auth/reset-password#token_hash=${encodeURIComponent(hashedToken)}&type=recovery&next=${encodeURIComponent(targetNext)}`
 
-    if (process.env.NODE_ENV === 'development' || process.env.ENABLE_DEMO_LOGIN === 'true') {
+    if (process.env.NODE_ENV === 'development') {
       console.info(
         `\n===================================================================\n` +
         `🔑 [PasswordReset Dev Link] Generated recovery link for ${email}:\n` +

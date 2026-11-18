@@ -20,7 +20,24 @@ describe('Marketing Dispatch Route (/api/marketing/dispatch)', () => {
     vi.clearAllMocks()
     vi.stubEnv('MARKETING_CRON_SECRET', 'test-marketing-secret')
     vi.stubEnv('CRON_SECRET', 'test-vercel-cron-secret')
+    vi.stubEnv('NEXT_PUBLIC_SITE_UNMASKED', 'true')
     dispatchPendingSequenceEmailsMock.mockResolvedValue({ dispatchedCount: 3, failedCount: 0 })
+  })
+
+  it('skips sequence email dispatch during pre-launch lockdown before Jan 4, 2027', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_UNMASKED', 'false')
+    const req = new NextRequest('http://localhost:3000/api/marketing/dispatch', {
+      method: 'GET',
+      headers: {
+        authorization: 'Bearer test-vercel-cron-secret',
+      },
+    })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.success).toBe(true)
+    expect(json.skippedPreLaunchLockdown).toBe(true)
+    expect(dispatchPendingSequenceEmailsMock).not.toHaveBeenCalled()
   })
 
   it('rejects unauthorized GET and POST with 401', async () => {

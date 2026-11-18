@@ -73,8 +73,22 @@ describe('GET /api/auth/demo', () => {
     vi.unstubAllEnvs()
   })
 
-  it('allows demo login in production when ENABLE_DEMO_LOGIN=true', async () => {
+  it('blocks demo login in production even when ENABLE_DEMO_LOGIN=true (prevents production takeover)', async () => {
     vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('ENABLE_DEMO_LOGIN', 'true')
+
+    const req = new NextRequest('http://localhost:3000/api/auth/demo')
+    const res = await GET(req)
+
+    expect(res.status).toBe(403)
+    const data = await res.json()
+    expect(data.error).toContain('disabled in this environment')
+
+    vi.unstubAllEnvs()
+  })
+
+  it('allows demo login in non-production test/staging when ENABLE_DEMO_LOGIN=true', async () => {
+    vi.stubEnv('NODE_ENV', 'test')
     vi.stubEnv('ENABLE_DEMO_LOGIN', 'true')
 
     const req = new NextRequest('http://localhost:3000/api/auth/demo')
@@ -100,8 +114,8 @@ describe('GET /api/auth/demo', () => {
     vi.unstubAllEnvs()
   })
 
-  it('allows coach demo login when ENABLE_DEMO_LOGIN=true', async () => {
-    vi.stubEnv('NODE_ENV', 'production')
+  it('allows coach demo login in non-production when ENABLE_DEMO_LOGIN=true and blocks protocol-relative open redirects', async () => {
+    vi.stubEnv('NODE_ENV', 'test')
     vi.stubEnv('ENABLE_DEMO_LOGIN', 'true')
 
     listUsersMock.mockResolvedValueOnce({
@@ -109,7 +123,7 @@ describe('GET /api/auth/demo', () => {
       error: null,
     })
 
-    const req = new NextRequest('http://localhost:3000/api/auth/demo?role=coach')
+    const req = new NextRequest('http://localhost:3000/api/auth/demo?role=coach&redirect=//evil.example')
     const res = await GET(req)
 
     expect(res.status).toBe(307)

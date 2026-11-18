@@ -27,9 +27,30 @@ describe('/api/internal/automations/launch-sequence', () => {
     expect(dispatchDueLaunchAutomationsMock).not.toHaveBeenCalled()
   })
 
+  it('short-circuits live GET cron dispatch during pre-launch lockdown without invoking Resend or Twilio', async () => {
+    delete process.env.NEXT_PUBLIC_SITE_UNMASKED
+    delete process.env.ALLOW_PRELAUNCH_PUBLIC_SIGNUP
+
+    const req = new NextRequest(
+      'https://forge-athletic.app/api/internal/automations/launch-sequence',
+      {
+        headers: {
+          authorization: 'Bearer test-cron-secret',
+        },
+      }
+    )
+    const res = await GET(req)
+    const json = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(json.success).toBe(true)
+    expect(json.skippedPreLaunchLockdown).toBe(true)
+    expect(dispatchDueLaunchAutomationsMock).not.toHaveBeenCalled()
+  })
+
   it('dispatches due launch automations on authorized POST with dryRun and simulatedNowIso', async () => {
     dispatchDueLaunchAutomationsMock.mockResolvedValueOnce({
-      evaluatedNowIso: '2026-11-20T11:00:00.000Z',
+      evaluatedNowIso: '2027-01-04T17:00:00.000Z',
       dryRun: true,
       sentEmails: 50,
       sentSms: 32,
@@ -49,7 +70,7 @@ describe('/api/internal/automations/launch-sequence', () => {
         },
         body: JSON.stringify({
           dryRun: true,
-          simulatedNowIso: '2026-11-20T06:00:00-05:00',
+          simulatedNowIso: '2027-01-04T12:00:00-05:00',
           onlyTemplates: ['launch_01a_sms', 'launch_01b_email'],
         }),
       }

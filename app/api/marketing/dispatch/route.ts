@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { DEFAULT_GO_LIVE_DATE_ISO, isPublicRegistrationOpen } from '@/lib/launch-config'
 
 function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.MARKETING_CRON_SECRET?.trim()
@@ -16,6 +17,17 @@ function isAuthorized(req: NextRequest): boolean {
 
 async function handleDispatch() {
   try {
+    if (process.env.LAUNCH_AUTOMATIONS_DISARMED === 'true' || !isPublicRegistrationOpen()) {
+      return NextResponse.json({
+        success: true,
+        skippedPreLaunchLockdown: true,
+        targetGoLiveIso: DEFAULT_GO_LIVE_DATE_ISO,
+        processed: 0,
+        sent: 0,
+        failed: 0,
+      })
+    }
+
     const { supabaseAdmin } = await import('@/lib/supabase')
     const { dispatchPendingSequenceEmails } = await import('@/lib/marketing-email')
 

@@ -510,7 +510,7 @@ export default function HolidayUnmaskingSplash({
             <div className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-amber-400/40 bg-[#111318] px-4 py-2 shadow-[0_4px_20px_rgba(245,158,11,0.12)]">
               <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399]" />
               <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-200 sm:text-xs">
-                FOUNDING COHORT (50 SPOTS) · OPENS FRIDAY, NOV 20 AT 6:00 AM EST
+                FOUNDING COHORT (50 SPOTS) · OPENS MONDAY, JAN 4, 2027 AT 6:00 AM EST
               </span>
             </div>
 
@@ -524,7 +524,7 @@ export default function HolidayUnmaskingSplash({
               }}
               className="mx-auto font-serif font-extrabold tracking-tight text-white"
             >
-              Don’t wait for January to repair what November broke.
+              Start 2027 with joint-first precision—not a 3-week resolution.
             </h1>
 
             {/* Subheadline */}
@@ -537,7 +537,7 @@ export default function HolidayUnmaskingSplash({
               className="mx-auto mt-5 max-w-3xl text-zinc-300"
             >
               A real NASM-certified personal trainer at your side—combining 33-point phone camera
-              posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct email or
+              posture screening, Coach Gordon’s real voice pacing every rep, and direct email or
               text access whenever you want human eyes on your training.
             </p>
 
@@ -563,8 +563,8 @@ export default function HolidayUnmaskingSplash({
               style={{ textWrap: 'pretty' }}
               className="mx-auto mt-4 max-w-2xl text-xs leading-relaxed text-zinc-400 sm:text-[13px]"
             >
-              Includes your permanent Founding Member Lifetime Rate Lock, a complimentary 1-on-1
-              movement screening with Coach Gordon before Thanksgiving, and 1 free 30-day Founding
+              Includes your Founding Member Continuous Tier Rate Lock, a complimentary 1-on-1
+              kickoff movement screening with Coach Gordon, and 1 free 30-day Founding
               Partner Pass to gift a spouse or friend.
             </p>
           </div>
@@ -582,7 +582,7 @@ export default function HolidayUnmaskingSplash({
                 <span>Founding Cohort Opening Countdown</span>
               </div>
               <div className="font-semibold tabular-nums text-amber-300">
-                Friday, Nov 20, 2026 · 6:00 AM EST
+                Monday, Jan 4, 2027 · 6:00 AM EST
               </div>
             </div>
 
@@ -645,8 +645,8 @@ export default function HolidayUnmaskingSplash({
                     Reserve Your Founding Member Pass
                   </h2>
                   <p className="mt-1.5 text-sm leading-relaxed text-zinc-300">
-                    No payment today. Register ahead of Friday, Nov 20 to receive your{' '}
-                    {HOLIDAY_DEAL_PROMO.code} 25% Rate Lock code and private pre-Thanksgiving
+                    No payment today. Register ahead of Monday, Jan 4 to receive your{' '}
+                    {HOLIDAY_DEAL_PROMO.code} 25% Rate Lock code and private kickoff
                     screening link from Coach Gordon.
                   </p>
 
@@ -850,7 +850,7 @@ export default function HolidayUnmaskingSplash({
                     Welcome to the Founding Cohort, {fullName.split(' ')[0]}
                   </h3>
                   <p className="mt-2 text-xs leading-relaxed text-zinc-300">
-                    Your Founding Member Pass and pre-Thanksgiving movement screening invitation have
+                    Your Founding Member Pass and kickoff movement screening invitation have
                     been sent to <strong>{email}</strong>.
                   </p>
 
@@ -1048,9 +1048,9 @@ export default function HolidayUnmaskingSplash({
               Permanent Pre-Launch Pricing Across Three Clear Tiers
             </h2>
             <p className="mx-auto mt-2.5 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-              Founding Cohort members lock in pre-launch monthly rates for as long as their
-              membership stays active, alongside a complimentary pre-Thanksgiving movement screening
-              and 1 free 30-day Founding Partner Pass.
+              Founding Cohort members lock in pre-launch monthly rates for as long as continuous
+              active enrollment on their selected tier is maintained, alongside a complimentary
+              kickoff movement screening and 1 free 30-day Founding Partner Pass.
             </p>
           </div>
 

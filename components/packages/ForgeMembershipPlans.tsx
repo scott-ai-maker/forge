@@ -95,7 +95,7 @@ export default function ForgeMembershipPlans() {
                 borderRadius: '4px',
               }}
             >
-              + FREE 60-MIN PRE-HOLIDAY MOVEMENT SCREEN
+              + FREE 60-MIN KICKOFF MOVEMENT SCREEN
             </span>
           </div>
           <div style={{ color: '#FFFFFF', fontSize: '1.05rem', fontWeight: 700, fontFamily: 'var(--font-heading)', letterSpacing: '0.02em' }}>
@@ -273,7 +273,7 @@ export default function ForgeMembershipPlans() {
               <ul>
                 {holidayDealActive && (
                   <li style={{ color: '#34D399', fontWeight: 600 }}>
-                    ★ Bonus: Free 60-Min Pre-Holiday Movement Screen with Coach Gordon
+                    ★ Bonus: Free 60-Min Kickoff Movement Screen with Coach Gordon
                   </li>
                 )}
                 {membership.features.map(feature => <li key={feature}>{feature}</li>)}

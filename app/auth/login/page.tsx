@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import AuthForm from '@/components/auth/AuthForm'
 import { Camera, CirclePlay, Users, BriefcaseBusiness } from 'lucide-react'
+import { isPublicRegistrationOpen } from '@/lib/launch-config'
 
 export const metadata: Metadata = {
   title: 'Athlete & Coach Sign In',
@@ -62,8 +63,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const surface = getLoginSurface(nextPath, isCompanionMode)
   const rawError = resolvedSearchParams.error_description || resolvedSearchParams.error
   const initialError = Array.isArray(rawError) ? rawError[0] : rawError
-  const isDemoEnabled = process.env.ENABLE_DEMO_LOGIN === 'true' || process.env.NODE_ENV === 'development'
+  const isProductionEnv =
+    process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
+  const isDemoEnabled =
+    !isProductionEnv &&
+    (process.env.ENABLE_DEMO_LOGIN === 'true' || process.env.NODE_ENV === 'development')
   const isCoachSurface = nextPath.startsWith('/coach')
+  const publicSignupOpen = isPublicRegistrationOpen()
 
   return (
     <main
@@ -267,7 +273,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </div>
             </div>
           )}
-          <AuthForm mode="login" redirectPath={nextPath} initialError={initialError} />
+          <AuthForm
+            mode="login"
+            redirectPath={nextPath}
+            initialError={initialError}
+            publicSignupOpen={publicSignupOpen}
+          />
         </div>
         {isCompanionMode && (
           <div

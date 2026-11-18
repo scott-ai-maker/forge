@@ -2,34 +2,35 @@
  * Forge Athletic Launch & Unmasking Configuration
  *
  * Target Go-Live Date Strategy:
- * Black Friday, November 27, 2026 at 06:00:00 EST.
+ * Monday, January 4, 2027 at 06:00:00 EST.
  *
- * Strategic Black Friday Event Rationale:
- * 1. Flagship Black Friday Unmasking Event (Friday, Nov 27 at 06:00 AM EST), giving an exclusive
- *    3-week pre-launch waitlist runway to build high-intent Founding Member reservations.
- * 2. Captures peak Black Friday / Cyber Weekend attention right after Thanksgiving (Nov 26),
- *    when people are ready to lock in a structured game plan before December and January.
- * 3. Includes the Holiday Founding Member Deal (Code: HOLIDAY25): 25% Lifetime Rate Lock on any tier
- *    plus a complimentary 60-minute Pre-Holiday Movement Screen with Coach Gordon.
+ * Pre-Launch Readiness & New Year Founding Cohort Rationale:
+ * 1. Provides a full ~7-week pre-launch runway for 100% liability, security, RLS, billing,
+ *    and clinical guardrail sign-off ahead of public enrollment.
+ * 2. Launches on the first Monday of 2027 (Jan 4 at 06:00 AM EST), capturing peak New Year
+ *    training commitment while keeping public signups & Stripe checkout strictly locked down pre-launch.
+ * 3. Includes the Founding Member Deal (Code: HOLIDAY25 / FOUNDING25): 25% Continuous Tier Rate Lock
+ *    plus a complimentary 60-minute Kickoff Movement Screen with Coach Gordon (redeemable through Jan 31, 2027).
  */
 
-export const DEFAULT_GO_LIVE_DATE_ISO = '2026-11-20T06:00:00-05:00'
+export const DEFAULT_GO_LIVE_DATE_ISO = '2027-01-04T06:00:00-05:00'
 
 export const HOLIDAY_DEAL_PROMO = {
   code: 'HOLIDAY25',
   discountPercent: 25,
   badge: 'FOUNDING MEMBER LAUNCH · CONTINUOUS TIER RATE LOCK',
-  headline: '25% Rate Lock + Free 60-Min Pre-Holiday Movement Screen',
+  headline: '25% Rate Lock + Free 60-Min Kickoff Movement Screen',
   summary:
-    'Lock in 25% off your selected monthly membership tier for as long as continuous active enrollment on that tier is maintained (redeemable through December 31, 2026), plus a complimentary 60-minute 1-on-1 remote movement screen with Coach Gordon.',
-  expiresFormatted: 'December 31, 2026 at 11:59 PM EST',
+    'Lock in 25% off your selected monthly membership tier for as long as continuous active enrollment on that tier is maintained (redeemable through January 31, 2027), plus a complimentary 60-minute 1-on-1 remote movement screen with Coach Gordon.',
+  expiresFormatted: 'January 31, 2027 at 11:59 PM EST',
 } as const
 
 export const LAUNCH_CAMPAIGN_INFO = {
   title: 'The Forge Athletic Founding Launch',
-  dateFormatted: 'Friday, November 20, 2026',
+  dateFormatted: 'Monday, January 4, 2027',
+  shortDateFormatted: 'Monday, Jan 4, 2027',
   timeFormatted: '06:00 AM EST',
-  tagline: 'Don’t wait for January to repair what November broke.',
+  tagline: 'Start 2027 with joint-first precision—not a 3-week resolution.',
   activeCoachSupportRosterCap: 15,
   promoCode: HOLIDAY_DEAL_PROMO.code,
   promoDiscountPercent: HOLIDAY_DEAL_PROMO.discountPercent,
@@ -68,6 +69,23 @@ export function isSiteUnmasked(previewParam?: string | null): boolean {
 
   const goLiveTime = getGoLiveDate().getTime()
   return Date.now() >= goLiveTime
+}
+
+/**
+ * Determines whether public self-serve account registration and Stripe checkout are open.
+ * Unlike `isSiteUnmasked()`, this CANNOT be bypassed via `?preview=true` URL query parameters.
+ * Before `getGoLiveDate()`, only Coach/Staff accounts (checked by callers) or explicit
+ * environment overrides (`NEXT_PUBLIC_SITE_UNMASKED=true` / `ALLOW_PRELAUNCH_PUBLIC_SIGNUP=true`)
+ * may create accounts or start checkouts.
+ */
+export function isPublicRegistrationOpen(now: Date = new Date()): boolean {
+  if (process.env.NEXT_PUBLIC_SITE_UNMASKED === 'true') {
+    return true
+  }
+  if (process.env.ALLOW_PRELAUNCH_PUBLIC_SIGNUP === 'true') {
+    return true
+  }
+  return now.getTime() >= getGoLiveDate().getTime()
 }
 
 export interface TimeRemaining {

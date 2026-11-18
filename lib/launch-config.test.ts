@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   getGoLiveDate,
   isSiteUnmasked,
+  isPublicRegistrationOpen,
   calculateTimeRemaining,
   DEFAULT_GO_LIVE_DATE_ISO,
   HOLIDAY_DEAL_PROMO,
@@ -19,18 +20,31 @@ describe('lib/launch-config', () => {
     vi.useRealTimers()
   })
 
-  it('defaults to Friday, November 20, 2026 at 06:00:00 EST', () => {
+  it('defaults to Monday, January 4, 2027 at 06:00:00 EST', () => {
     delete process.env.NEXT_PUBLIC_GO_LIVE_DATE
     const date = getGoLiveDate()
     expect(date.toISOString()).toBe(new Date(DEFAULT_GO_LIVE_DATE_ISO).toISOString())
-    expect(date.getDate()).toBe(20)
+    expect(date.getFullYear()).toBe(2027)
+    expect(date.getMonth()).toBe(0) // January
+    expect(date.getDate()).toBe(4)
   })
 
-  it('exposes the HOLIDAY25 25% Rate Lock holiday deal promo configuration', () => {
+  it('exposes the HOLIDAY25 25% Rate Lock founding deal promo configuration extended through Jan 31, 2027', () => {
     expect(HOLIDAY_DEAL_PROMO.code).toBe('HOLIDAY25')
     expect(HOLIDAY_DEAL_PROMO.discountPercent).toBe(25)
     expect(HOLIDAY_DEAL_PROMO.headline).toContain('25% Rate Lock')
-    expect(HOLIDAY_DEAL_PROMO.headline).toContain('Free 60-Min Pre-Holiday Movement Screen')
+    expect(HOLIDAY_DEAL_PROMO.headline).toContain('Free 60-Min Kickoff Movement Screen')
+    expect(HOLIDAY_DEAL_PROMO.expiresFormatted).toContain('January 31, 2027')
+  })
+
+  it('keeps public registration locked before Jan 4, 2027 and immune to URL preview params', () => {
+    delete process.env.NEXT_PUBLIC_SITE_UNMASKED
+    delete process.env.ALLOW_PRELAUNCH_PUBLIC_SIGNUP
+    delete process.env.NEXT_PUBLIC_GO_LIVE_DATE
+
+    expect(isPublicRegistrationOpen(new Date('2026-11-20T12:00:00-05:00'))).toBe(false)
+    expect(isPublicRegistrationOpen(new Date('2027-01-04T05:59:59-05:00'))).toBe(false)
+    expect(isPublicRegistrationOpen(new Date('2027-01-04T06:00:00-05:00'))).toBe(true)
   })
 
   it('respects NEXT_PUBLIC_GO_LIVE_DATE when provided', () => {

@@ -15,13 +15,13 @@ import { COACH_GORDON_TRUST_PROFILE, LANDING_FAQ_ITEMS } from '@/lib/landingSoci
 import { isSiteUnmasked } from '@/lib/launch-config'
 
 export const metadata: Metadata = {
-  title: 'Forge Athletic | Online Personal Training, 33-Point Posture Diagnostics & NASM OPT™',
+  title: 'Forge Athletic | Online Personal Training, 33-Point Posture Screening & NASM OPT™',
   description:
-    'Don’t wait for January to repair what November broke. A real NASM-certified personal trainer at your side—combining 33-point phone camera posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct email or text access.',
+    'Start 2027 with joint-first precision—not a 3-week resolution. A real NASM-certified personal trainer at your side—combining 33-point phone camera posture screening, Coach Gordon’s real voice pacing every rep, and direct email or text access.',
   openGraph: {
-    title: 'Forge Athletic | Online Personal Training & 33-Point Camera Posture Diagnostics',
+    title: 'Forge Athletic | Online Personal Training & 33-Point Camera Posture Screening',
     description:
-      'A real NASM-certified personal trainer at your side—33-point phone camera posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct coaching access.',
+      'A real NASM-certified personal trainer at your side—33-point phone camera posture screening, Coach Gordon’s real voice pacing every rep, and direct coaching access.',
     images: ['/images/brand/logo-concept-1-kinetic-f.jpg'],
   },
 }
@@ -98,7 +98,7 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
           }}
         >
           <strong>INTERNAL PREVIEW:</strong> Viewing full unmasked site. Public visitors currently
-          see the Founding Cohort Pre-Launch experience until Friday, Nov 20 at 6:00 AM EST.
+          see the Founding Cohort Pre-Launch experience until Monday, Jan 4, 2027 at 6:00 AM EST.
         </div>
       )}
 
@@ -155,14 +155,14 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
         <div className="forge-hero-copy">
           <p className="forge-eyebrow">
             <span />
-            FOUNDING COHORT (50 SPOTS) · OPENS FRIDAY, NOV 20 AT 6:00 AM EST
+            FOUNDING COHORT (50 SPOTS) · OPENS MONDAY, JAN 4, 2027 AT 6:00 AM EST
           </p>
           <h1 id="forge-hero-title">
-            Don’t wait for January to repair what November broke.
+            Start 2027 with joint-first precision—not a 3-week resolution.
           </h1>
           <p className="forge-hero-description">
             A real NASM-certified personal trainer at your side—combining 33-point phone camera
-            posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct email or
+            posture screening, Coach Gordon’s real voice pacing every rep, and direct email or
             text access whenever you want human eyes on your training.
           </p>
           <div className="forge-hero-actions">
@@ -174,8 +174,8 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
             </a>
           </div>
           <p className="mt-3 max-w-xl text-xs leading-relaxed text-zinc-400">
-            Includes your permanent Founding Member Lifetime Rate Lock, a complimentary 1-on-1
-            movement screening with Coach Gordon before Thanksgiving, and 1 free 30-day Founding
+            Includes your Founding Member Continuous Tier Rate Lock, a complimentary 1-on-1
+            kickoff movement screening with Coach Gordon, and 1 free 30-day Founding
             Partner Pass to gift a spouse or friend.
           </p>
           <p className="forge-hero-proof">
@@ -463,11 +463,12 @@ function UnmaskedLandingMarkup({ isPreview = false }: { isPreview?: boolean }) {
         aria-labelledby="forge-pricing-title"
       >
         <div className="forge-section-intro">
-          <p className="forge-eyebrow">Founding Member Lifetime Rate Lock</p>
-          <h2 id="forge-pricing-title">Lock in your Founding Member rate permanently.</h2>
+          <p className="forge-eyebrow">Founding Member Continuous Tier Rate Lock</p>
+          <h2 id="forge-pricing-title">Lock in your Founding Member tier rate.</h2>
           <p>
-            Post-launch rates apply after our 50-spot Founding Cohort fills. Your monthly rate stays
-            locked for life while active, and carries over if you upgrade tiers later.
+            Post-launch rates apply after our 50-spot Founding Cohort fills. Your Founding Member
+            monthly rate stays locked for as long as continuous active enrollment on your selected
+            tier is maintained.
           </p>
         </div>
 

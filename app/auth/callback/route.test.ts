@@ -132,6 +132,49 @@ describe('GET /auth/callback (OAuth & PKCE flow)', () => {
     )
   })
 
+  it('blocks uninvited new OAuth signups during pre-launch lockdown and redirects to /auth/login', async () => {
+    vi.stubEnv('ENFORCE_PRELAUNCH_SIGNUP_LOCK', 'true')
+    delete process.env.NEXT_PUBLIC_SITE_UNMASKED
+    delete process.env.ALLOW_PRELAUNCH_PUBLIC_SIGNUP
+
+    exchangeCodeForSessionMock.mockResolvedValueOnce({ error: null })
+    getUserMock.mockResolvedValueOnce({
+      data: {
+        user: {
+          id: 'uninvited-oauth-user',
+          email: 'stranger@example.com',
+          user_metadata: { full_name: 'Stranger' },
+        },
+      },
+    })
+
+    const upsertMock = vi.fn()
+    adminFromMock.mockImplementation((table: string) => {
+      if (table === 'clients') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: null }),
+            }),
+          }),
+          upsert: upsertMock,
+        }
+      }
+      return {}
+    })
+
+    const req = new NextRequest('https://example.com/auth/callback?code=oauth-code')
+    const res = await GET(req)
+
+    expect(res.status).toBe(307)
+    const location = new URL(res.headers.get('location')!)
+    expect(location.pathname).toBe('/auth/login')
+    expect(location.searchParams.get('error')).toContain('January 4, 2027')
+    expect(upsertMock).not.toHaveBeenCalled()
+
+    vi.unstubAllEnvs()
+  })
+
   it('redirects coach users to /coach when target is default /dashboard', async () => {
     exchangeCodeForSessionMock.mockResolvedValueOnce({ error: null })
     getUserMock.mockResolvedValueOnce({

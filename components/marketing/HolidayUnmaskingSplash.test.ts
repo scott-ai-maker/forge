@@ -29,20 +29,20 @@ describe('HolidayUnmaskingSplash & Overhauled Public Landing Showcase', () => {
     'utf-8'
   )
 
-  it('verifies target go-live date is positioned for Friday, November 20, 2026 at 06:00 AM EST', () => {
+  it('verifies target go-live date is positioned for Monday, January 4, 2027 at 06:00 AM EST', () => {
     const goLiveDate = new Date(DEFAULT_GO_LIVE_DATE_ISO)
-    expect(goLiveDate.getFullYear()).toBe(2026)
-    expect(goLiveDate.getMonth()).toBe(10) // November (0-indexed)
-    expect(goLiveDate.getDate()).toBe(20) // Friday, Nov 20, 2026
+    expect(goLiveDate.getFullYear()).toBe(2027)
+    expect(goLiveDate.getMonth()).toBe(0) // January (0-indexed)
+    expect(goLiveDate.getDate()).toBe(4) // Monday, Jan 4, 2027
     expect(goLiveDate.getHours()).toBe(6) // 06:00 AM EST
 
-    const thanksgiving2026 = new Date('2026-11-26T00:00:00-05:00')
-    expect(goLiveDate.getTime()).toBeLessThan(thanksgiving2026.getTime())
+    const newYear2027 = new Date('2027-01-01T00:00:00-05:00')
+    expect(goLiveDate.getTime()).toBeGreaterThan(newYear2027.getTime())
   })
 
   it('validates countdown ticker math correctly decrements towards launch date', () => {
-    const launch = new Date('2026-11-27T06:00:00-05:00')
-    const simulatedNow = new Date('2026-11-07T06:00:00-05:00') // 20 days out
+    const launch = new Date('2027-01-04T06:00:00-05:00')
+    const simulatedNow = new Date('2026-12-15T06:00:00-05:00') // 20 days out
 
     const result = calculateTimeRemaining(launch, simulatedNow)
     expect(result.days).toBe(20)
@@ -55,16 +55,16 @@ describe('HolidayUnmaskingSplash & Overhauled Public Landing Showcase', () => {
   it('verifies grounded Hero copy, showcase video, SMS friction guardrail, and pass minting tokens', () => {
     const normalizedComponent = componentSource.replace(/\s+/g, ' ')
     expect(normalizedComponent).toContain(
-      'FOUNDING COHORT (50 SPOTS) · OPENS FRIDAY, NOV 20 AT 6:00 AM EST'
+      'FOUNDING COHORT (50 SPOTS) · OPENS MONDAY, JAN 4, 2027 AT 6:00 AM EST'
     )
-    expect(normalizedComponent).toContain('Don’t wait for January to repair what November broke.')
+    expect(normalizedComponent).toContain('Start 2027 with joint-first precision—not a 3-week resolution.')
     expect(normalizedComponent).toContain(
-      'A real NASM-certified personal trainer at your side—combining 33-point phone camera posture diagnostics, Coach Gordon’s real voice pacing every rep, and direct email or text access whenever you want human eyes on your training.'
+      'A real NASM-certified personal trainer at your side—combining 33-point phone camera posture screening, Coach Gordon’s real voice pacing every rep, and direct email or text access whenever you want human eyes on your training.'
     )
     expect(normalizedComponent).toContain('Claim Your Founding Member Pass →')
     expect(normalizedComponent).toContain('Add SMS launch alert (optional)')
     expect(normalizedComponent).toContain(
-      'Includes your permanent Founding Member Lifetime Rate Lock, a complimentary 1-on-1 movement screening with Coach Gordon before Thanksgiving, and 1 free 30-day Founding Partner Pass to gift a spouse or friend.'
+      'Includes your Founding Member Continuous Tier Rate Lock, a complimentary 1-on-1 kickoff movement screening with Coach Gordon, and 1 free 30-day Founding Partner Pass to gift a spouse or friend.'
     )
     expect(componentSource).toContain('/videos/forge-black-friday-showcase.mp4')
     expect(componentSource).toContain('/images/forge-black-friday-showcase-poster.jpg')

@@ -189,7 +189,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const isCoach = searchParams.get('role') === 'coach' || searchParams.get('as') === 'coach'
 
-  const allowDemo = process.env.ENABLE_DEMO_LOGIN === 'true' || process.env.NODE_ENV === 'development'
+  const isProductionEnv =
+    process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
+  const allowDemo =
+    !isProductionEnv &&
+    (process.env.ENABLE_DEMO_LOGIN === 'true' || process.env.NODE_ENV === 'development')
   if (!allowDemo) {
     return NextResponse.json(
       { error: 'Demo authentication is disabled in this environment.' },
@@ -215,9 +219,16 @@ export async function GET(request: NextRequest) {
   const targetEmail = isCoach ? COACH_DEMO_EMAIL : DEMO_EMAIL
   const targetPassword = isCoach ? COACH_DEMO_PASSWORD : DEMO_PASSWORD
   const redirectParam = searchParams.get('redirect')
-  const redirectPath = redirectParam && redirectParam.startsWith('/')
-    ? redirectParam
-    : (isCoach ? '/coach' : '/dashboard/fitness?workspace=train')
+  const redirectPath =
+    redirectParam &&
+    redirectParam.startsWith('/') &&
+    !redirectParam.startsWith('//') &&
+    !redirectParam.startsWith('/\\') &&
+    !redirectParam.includes('\\')
+      ? redirectParam
+      : isCoach
+        ? '/coach'
+        : '/dashboard/fitness?workspace=train'
 
   const { origin } = new URL(request.url)
   const redirectUrl = new URL(redirectPath, origin)

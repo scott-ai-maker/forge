@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase-browser'
 import { LEGAL_DOCUMENTS } from '@/lib/legal-compliance'
@@ -15,6 +16,7 @@ interface AuthFormProps {
   coachName?: string
   selectedPlan?: ForgeTierId
   initialError?: string
+  publicSignupOpen?: boolean
 }
 
 interface ValidationErrors {
@@ -141,6 +143,7 @@ export default function AuthForm({
   coachName,
   selectedPlan,
   initialError,
+  publicSignupOpen = true,
 }: AuthFormProps) {
   const resetCooldownMs = 30_000
   const [mode, setMode] = useState<Mode>(initialMode)
@@ -983,12 +986,21 @@ export default function AuthForm({
             }}
           >
             {mode === 'login' ? (
-              <>
-                Don&apos;t have an account?{' '}
-                <a href="/auth/signup" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 600 }}>
-                  Sign up
-                </a>
-              </>
+              publicSignupOpen ? (
+                <>
+                  Don&apos;t have an account?{' '}
+                  <a href="/auth/signup" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 600 }}>
+                    Sign up
+                  </a>
+                </>
+              ) : (
+                <>
+                  Public enrollment opens Jan 4, 2027.{' '}
+                  <Link href="/#main-content" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 600 }}>
+                    Join Founding Waitlist →
+                  </Link>
+                </>
+              )
             ) : (
               <>
                 Already have an account?{' '}

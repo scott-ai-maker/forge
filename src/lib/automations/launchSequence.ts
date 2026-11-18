@@ -10,12 +10,12 @@ import { isWithinSmsQuietHours, sendSms } from '@/lib/sms'
 
 /**
  * Forge Athletic — Launch, Rescue, Referral & Retention Email/SMS Automation Suite
- * Window: November 20, 2026 (12:00 PM EST / 09:00 AM PST nationwide TCPA-safe window) through January 1, 2027 (08:00 AM Local)
+ * Window: Monday, January 4, 2027 (12:00 PM EST / 09:00 AM PST nationwide TCPA-safe window) through February 15, 2027 (08:00 AM Local)
  */
 
 export const FORGE_CANONICAL_ORIGIN = 'https://forge-athletic.app'
 export const DEFAULT_AUTOMATION_TIMEZONE = 'America/New_York'
-export const LAUNCH_BLAST_ISO_EST = '2026-11-20T12:00:00-05:00'
+export const LAUNCH_BLAST_ISO_EST = '2027-01-04T12:00:00-05:00'
 
 export type AutomationChannel = 'email' | 'sms'
 
@@ -140,7 +140,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const UNRESOLVED_TOKEN_REGEX = /\{\{[^}]+\}\}/
 
 /**
- * Complete catalog of all 8 steps (10 Email/SMS templates) spanning Nov 20, 2026 – Jan 1, 2027.
+ * Complete catalog of all 8 steps (10 Email/SMS templates) anchored to the Jan 4, 2027 Founding Launch.
  */
 export const LAUNCH_AUTOMATION_TEMPLATES: Record<
   AutomationTemplateId,
@@ -208,30 +208,30 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     channel: 'email',
     schedule: {
       mode: 'local_wall_clock',
-      localDate: '2026-11-22',
+      localDate: '2027-01-06',
       hour: 10,
       minute: 0,
     },
     requiredVariables: ['First Name'],
     subjectTemplate: 'Still holding your Founding Member Pass (before spots release)',
     previewTextTemplate:
-      'Quick heads-up before Thanksgiving—your Lifetime Rate Lock, 33-point camera diagnostics, real voice guidance, and direct Email/Text access are still reserved.',
+      'Quick heads-up this week—your Founding Rate Lock, 33-point camera posture checks, real voice guidance, and direct Email/Text access are still reserved.',
     ctaLabel: 'Claim & Activate My Founding Member Pass →',
     ctaUrl: `${FORGE_CANONICAL_ORIGIN}/portal`,
     bodyMarkdownTemplate: [
       'Hi {{First Name}},',
       '',
-      'Quick heads-up—since you reserved early access on our waitlist, I’m still holding your **Founding Member Pass** and permanent **Lifetime Rate Lock** ahead of Thanksgiving week.',
+      'Quick heads-up—since you reserved early access on our waitlist, I’m still holding your **Founding Member Pass** and **Continuous Tier Rate Lock** this week.',
       '',
       'Because we capped this founding cohort at **50 members** so I can personally answer every **direct Email and Text** and review member **Form Lab** clips myself, we’ll be releasing any unclaimed waitlist passes to the standby list early next week.',
       '',
-      'Even if holiday travel has your week packed, everything inside is built to fit real schedules with zero appointments to book:',
+      'Even if work or travel has your week packed, everything inside is built to fit real schedules with zero appointments to book:',
       '',
       '- **33-Point Camera Diagnostics:** Run a hands-free **2-Minute Quick Posture Check** or 30-second readiness screen from your phone camera anytime—no wearables, sensors, or tripods required.',
       '- **Coach Gordon’s Real Voice Guidance:** Hear my actual voice brief each session around how your joints feel that day and pace your tempos and rest intervals—at home or on `20m Express` in a hotel room.',
       '- **Direct Email/Text Access:** Reach me directly via **Email** (Core Lab & Plus) or **Direct SMS Text Line** (Coach Support) whenever you want a modification or human eyes on your training, with your posture and readiness telemetry attached automatically.',
       '',
-      'It takes less than 60 seconds to lock in your Founding Member dues for life today, and your Phase 01 plan will be ready whenever you are:',
+      'It takes less than 60 seconds to lock in your Founding Member rate today, and your Phase 01 plan will be ready whenever you are:',
       '',
       '**[Claim & Activate My Founding Member Pass →]** (`https://forge-athletic.app/portal`)',
       '',
@@ -252,7 +252,7 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     channel: 'sms',
     schedule: {
       mode: 'local_wall_clock',
-      localDate: '2026-11-22',
+      localDate: '2027-01-06',
       hour: 11,
       minute: 30,
     },
@@ -270,14 +270,14 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     channel: 'email',
     schedule: {
       mode: 'local_wall_clock',
-      localDate: '2026-11-22',
+      localDate: '2027-01-06',
       hour: 9,
       minute: 0,
     },
     requiredVariables: ['First Name'],
-    subjectTemplate: 'Quick reminder: Your 1-on-1 screening with Coach Gordon (before Thursday)',
+    subjectTemplate: 'Quick reminder: Your 1-on-1 kickoff screening with Coach Gordon',
     previewTextTemplate:
-      'Grab one of the remaining Mon–Wed pre-Thanksgiving slots before holiday travel starts.',
+      'Grab one of the remaining kickoff screening slots this week to dial in your Phase 01 setup.',
     ctaLabel: 'Book My 1-on-1 Screening Slot →',
     ctaUrl: `${FORGE_CANONICAL_ORIGIN}/portal/screening`,
     bodyMarkdownTemplate: [
@@ -285,7 +285,7 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
       '',
       'Welcome inside Forge Athletic! I noticed you haven’t grabbed your complimentary **1-on-1 Movement & Posture Screening** slot yet.',
       '',
-      'I opened extra Mon–Wed times before Thursday so we can review your 33-point posture scan, talk through any nagging neck, shoulder, or lower-back tightness, and customize your Phase 01 setup before holiday travel kicks off.',
+      'I opened extra kickoff slots this week so we can review your 33-point posture scan, talk through any nagging neck, shoulder, or lower-back tightness, and customize your Phase 01 setup.',
       '',
       '**[Book My 1-on-1 Screening Slot →]** (`https://forge-athletic.app/portal/screening`)',
       '',
@@ -299,34 +299,34 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     id: 'thanksgiving_04_email',
     step: 4,
     code: '04',
-    name: 'Thanksgiving Travel Mode Guide',
+    name: 'Busy Week & Travel Mode Guide',
     channel: 'email',
     schedule: {
       mode: 'local_wall_clock',
-      localDate: '2026-11-24',
+      localDate: '2027-01-11',
       hour: 10,
       minute: 0,
     },
     requiredVariables: ['First Name'],
-    subjectTemplate: 'Traveling for Thanksgiving? Keep your momentum in 20 minutes',
+    subjectTemplate: 'Packed week or traveling? Keep your momentum in 20 minutes',
     previewTextTemplate:
-      'Hotel gym missing weights? Tap Hotel Travel + 20m Express and stay loose all weekend.',
+      'Short on time or missing weights? Tap Hotel Travel + 20m Express and stay loose all week.',
     ctaLabel: 'Open My Dashboard →',
     ctaUrl: `${FORGE_CANONICAL_ORIGIN}/portal`,
     bodyMarkdownTemplate: [
       'Hi {{First Name}},',
       '',
-      'Heading out of town or hosting family this week? Don’t worry about finding a full gym or carving out an hour.',
+      'Heading into a packed week or traveling for work? Don’t worry about finding a full gym or carving out an hour.',
       '',
-      'Three tools built right into your dashboard keep your joints feeling great all holiday weekend:',
+      'Three tools built right into your dashboard keep your joints feeling great on busy days:',
       '',
       '- **Hotel Travel / Bodyweight Switcher:** Tap your Environment Profile pill to adapt any session to a bare-bones hotel gym or living room floor—then reset back to your home setup in one tap when you return.',
       '- **20m Express Mode:** Toggle `20m Express` for a complete, joint-safe NASM workout in 20 minutes flat.',
-      '- **5-Minute Desk & Flight Reset:** Stiff from driving or flying? Run a quick 5-minute mobility reset right from your phone.',
+      '- **5-Minute Desk & Flight Reset:** Stiff from desk hours, driving, or flying? Run a quick 5-minute mobility reset right from your phone.',
       '',
       '**[Open My Dashboard →]** (`https://forge-athletic.app/portal`)',
       '',
-      'Enjoy the holiday—zero guilt, zero all-or-nothing pressure.',
+      'Consistency over perfection—zero all-or-nothing pressure.',
       '',
       '**Coach Gordon**',
     ].join('\n'),
@@ -336,16 +336,16 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     id: 'post_thanksgiving_05_email',
     step: 5,
     code: '05',
-    name: 'Post-Thanksgiving Rhythm Reset',
+    name: 'Week-3 Rhythm & Joint Check-In',
     channel: 'email',
     schedule: {
       mode: 'local_wall_clock',
-      localDate: '2026-11-30',
+      localDate: '2027-01-18',
       hour: 7,
       minute: 30,
     },
     requiredVariables: ['First Name'],
-    subjectTemplate: 'Ease back into your rhythm today (no "punishment workouts" required)',
+    subjectTemplate: 'Week 3 check-in: Ease into your rhythm today (zero burnout)',
     previewTextTemplate:
       'Start with a 10-second Joint Comfort Check-In and a smooth Phase 01 session.',
     ctaLabel: "Check In & Start Today's Session →",
@@ -353,12 +353,12 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     bodyMarkdownTemplate: [
       'Hi {{First Name}},',
       '',
-      'Welcome back from Thanksgiving weekend. If you traveled, ate great food, or took a few extra rest days—good. You don’t need a punishing "burn it off" workout today.',
+      'You are entering Week 3—the exact point where crash January resolutions usually burn out, and where steady joint-first training starts compounding.',
       '',
       'Here is all we’re focusing on this Monday:',
       '',
-      '1. **Log a 10-Second Joint Comfort Check-In** on your dashboard so your load engine knows how your back, hips, and shoulders feel after the weekend.',
-      '2. **Run a 30-Second Camera Readiness Check** before Set 1 if you’re stiff from travel—we’ll automatically inject 2–3 targeted warm-up drills before you touch a weight.',
+      '1. **Log a 10-Second Joint Comfort Check-In** on your dashboard so your load engine knows how your back, hips, and shoulders feel starting the week.',
+      '2. **Run a 30-Second Camera Readiness Check** before Set 1 if you’re stiff—we’ll automatically inject 2–3 targeted warm-up drills before you touch a weight.',
       '',
       "**[Check In & Start Today's Session →]** (`https://forge-athletic.app/portal`)",
       '',
@@ -455,32 +455,32 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     id: 'new_year_phase02_08_email',
     step: 8,
     code: '08',
-    name: 'New Year Phase 02 Transition',
+    name: 'Week-6 Phase 02 Transition',
     channel: 'email',
     schedule: {
       mode: 'local_wall_clock',
-      localDate: '2027-01-01',
+      localDate: '2027-02-15',
       hour: 8,
       minute: 0,
     },
     requiredVariables: ['First Name'],
-    subjectTemplate: "While everyone else starts Day 1, you're stepping into Phase 02",
+    subjectTemplate: "6 weeks in — you're ready to step into Phase 02",
     previewTextTemplate:
-      'Happy New Year—your 6-week foundation is locked in. Here is what unlocks next.',
-    ctaLabel: 'Start My 2027 Phase 02 Session →',
+      'Your 6-week Phase 01 stabilization foundation is locked in. Here is what unlocks next.',
+    ctaLabel: 'Start My Phase 02 Session →',
     ctaUrl: `${FORGE_CANONICAL_ORIGIN}/portal`,
     bodyMarkdownTemplate: [
       'Hi {{First Name}},',
       '',
-      'Happy New Year! While millions of people are starting from scratch today with random January resolutions that burn out by February, you already have a **6-week joint-first foundation** under your belt.',
+      'Six weeks into 2027—while most January resolutions have already faded, you now have a **6-week joint-first foundation** under your belt.',
       '',
       'As you step into **Phase 02 · Strength Endurance**, we pair controlled stabilization work with crisp strength supersets to build durable, everyday power without joint flare-ups.',
       '',
-      '**Your New Year Action Step:** Prop your phone at a 45° angle during your main compound lift this week and submit a quick clip in **Form Lab** so we can verify your mechanics as loads climb.',
+      '**Your Phase 02 Action Step:** Prop your phone at a 45° angle during your main compound lift this week and submit a quick clip in **Form Lab** so we can verify your mechanics as loads climb.',
       '',
-      '**[Start My 2027 Phase 02 Session →]** (`https://forge-athletic.app/portal`)',
+      '**[Start My Phase 02 Session →]** (`https://forge-athletic.app/portal`)',
       '',
-      'Proud of the consistency you built in November and December—let’s make 2027 your strongest, most pain-free year yet.',
+      'Proud of the consistency you built over your first 6 weeks—let’s make 2027 your strongest, most comfortable year yet.',
       '',
       '**Coach Gordon**',
     ].join('\n'),

@@ -44,24 +44,17 @@ async function resolvePartnerInvite(rawCode: string): Promise<{
       }
     }
   } catch {
-    // Graceful fallback when Supabase admin service key is offline in local/sandbox QA
-    if (/^[A-Z0-9]{2,12}(-[A-Z0-9]{2,10})+$/.test(normalized)) {
+    // Graceful fallback ONLY when Supabase admin service key is offline in non-production local/sandbox QA
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      /^[A-Z0-9]{2,12}(-[A-Z0-9]{2,10})+$/.test(normalized)
+    ) {
       return {
         valid: true,
         code: normalized,
         giftedByName: inferInviterDisplayNameFromCode(normalized, null),
         trialDays: 30,
       }
-    }
-  }
-
-  // Accept multi-segment founding codes such as FORGE-PARTNER-2026
-  if (/^[A-Z0-9]{2,12}(-[A-Z0-9]{2,10})+$/.test(normalized)) {
-    return {
-      valid: true,
-      code: normalized,
-      giftedByName: inferInviterDisplayNameFromCode(normalized, null),
-      trialDays: 30,
     }
   }
 

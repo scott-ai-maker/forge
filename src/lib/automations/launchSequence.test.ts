@@ -253,8 +253,8 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
   })
 
   it('computes TCPA-compliant 12:00 PM EST (09:00 AM PST) launch blast, local-timezone wall-clock schedules, and Day-30 post-activation windows accurately', () => {
-    // 1. Global Launch Blast: Friday, Nov 20, 2026 at 12:00 PM EST / 09:00 AM PST (17:00 UTC)
-    const launchInstant = new Date('2026-11-20T17:05:00Z')
+    // 1. Global Launch Blast: Monday, Jan 4, 2027 at 12:00 PM EST / 09:00 AM PST (17:00 UTC)
+    const launchInstant = new Date('2027-01-04T17:05:00Z')
     expect(
       evaluateScheduleReadiness(
         'launch_01a_sms',
@@ -266,18 +266,18 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
       evaluateScheduleReadiness(
         'launch_01b_email',
         { timezone: 'America/New_York', guest_pass_redeemed: false },
-        new Date('2026-11-20T16:59:00Z')
+        new Date('2027-01-04T16:59:00Z')
       ).due
     ).toBe(false)
 
-    // 2. Local Wall-Clock: Nov 22, 2026 at 10:00 AM Local (15:00 UTC in NY vs 18:00 UTC in LA)
-    const ny10amUtc = computeLocalWallClockUtc('2026-11-22', 10, 0, 'America/New_York')
-    const la10amUtc = computeLocalWallClockUtc('2026-11-22', 10, 0, 'America/Los_Angeles')
-    expect(ny10amUtc.toISOString()).toBe('2026-11-22T15:00:00.000Z')
-    expect(la10amUtc.toISOString()).toBe('2026-11-22T18:00:00.000Z')
+    // 2. Local Wall-Clock: Jan 6, 2027 at 10:00 AM Local (15:00 UTC in NY vs 18:00 UTC in LA)
+    const ny10amUtc = computeLocalWallClockUtc('2027-01-06', 10, 0, 'America/New_York')
+    const la10amUtc = computeLocalWallClockUtc('2027-01-06', 10, 0, 'America/Los_Angeles')
+    expect(ny10amUtc.toISOString()).toBe('2027-01-06T15:00:00.000Z')
+    expect(la10amUtc.toISOString()).toBe('2027-01-06T18:00:00.000Z')
 
     // At 15:10 UTC, NY lead is due for Rescue 02A, while LA lead is NOT due yet (still 7:10 AM PST)
-    const at1510Utc = new Date('2026-11-22T15:10:00Z')
+    const at1510Utc = new Date('2027-01-06T15:10:00Z')
     expect(
       evaluateScheduleReadiness(
         'rescue_02a_email',
@@ -293,25 +293,25 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
       ).due
     ).toBe(false)
 
-    // 3. Day-30 Posture Scan Milestone: Activated Nov 20, 2026 -> Due Dec 20, 2026 at 09:00 AM Local
+    // 3. Day-30 Posture Scan Milestone: Activated Jan 4, 2027 -> Due Feb 3, 2027 at 09:00 AM Local
     const day30Eval = evaluateScheduleReadiness(
       'day_30_posture_06_email',
       {
         timezone: 'America/New_York',
-        activated_at: '2026-11-20T13:30:00Z',
+        activated_at: '2027-01-04T13:30:00Z',
         guest_pass_redeemed: false,
       },
-      new Date('2026-12-20T14:15:00Z') // 09:15 AM EST on Dec 20
+      new Date('2027-02-03T14:15:00Z') // 09:15 AM EST on Feb 3
     )
     expect(day30Eval.due).toBe(true)
-    expect(day30Eval.targetLocalDate).toBe('2026-12-20')
+    expect(day30Eval.targetLocalDate).toBe('2027-02-03')
 
-    // 4. Jan 1, 2027 · 08:00 AM Local Phase 02 Transition
+    // 4. Feb 15, 2027 · 08:00 AM Local Week-6 Phase 02 Transition
     expect(
       evaluateScheduleReadiness(
         'new_year_phase02_08_email',
         { timezone: 'America/New_York', guest_pass_redeemed: false },
-        new Date('2027-01-01T13:05:00Z') // 08:05 AM EST
+        new Date('2027-02-15T13:05:00Z') // 08:05 AM EST
       ).due
     ).toBe(true)
   })
@@ -404,7 +404,7 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
     expect(sentMail.text).toContain('December 20, 2026')
   })
 
-  it('dispatches simultaneous Launch Blast SMS + Email at Nov 20, 2026 12:00 PM EST (09:00 AM PST) and respects SMS opt-in & quiet-hours guards', async () => {
+  it('dispatches simultaneous Launch Blast SMS + Email at Jan 4, 2027 12:00 PM EST (09:00 AM PST) and respects SMS opt-in & quiet-hours guards', async () => {
     const mockAdmin = {
       from: vi.fn((table: string) => {
         if (table === 'waitlist') {
@@ -451,7 +451,7 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
     } as unknown as SupabaseClient
 
     const summary = await dispatchDueLaunchAutomations(mockAdmin, {
-      now: new Date('2026-11-20T17:02:00Z'), // 12:02 PM EST / 09:02 AM PST
+      now: new Date('2027-01-04T17:02:00Z'), // 12:02 PM EST / 09:02 AM PST
     })
 
     expect(summary.evaluatedRecipients).toBe(2)
@@ -462,7 +462,7 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
     expect(summary.templateBreakdown.launch_01a_sms.suppressed).toBe(1)
     expect(LAUNCH_AUTOMATION_TEMPLATES.post_thanksgiving_05_email.schedule).toEqual({
       mode: 'local_wall_clock',
-      localDate: '2026-11-30',
+      localDate: '2027-01-18',
       hour: 7,
       minute: 30,
     })
