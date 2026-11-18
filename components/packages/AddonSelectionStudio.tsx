@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import {
   FORGE_ADDONS,
   type ForgeAddon,
@@ -28,9 +28,21 @@ interface AddonSelectionStudioProps {
 }
 
 export default function AddonSelectionStudio({
-  redirectNext = '/dashboard/settings?tab=packages',
+  redirectNext = '/dashboard/settings?tab=billing',
 }: AddonSelectionStudioProps) {
   const [activeAddon, setActiveAddon] = useState<ForgeAddon | null>(null)
+  const dialogTitleId = useId()
+
+  useEffect(() => {
+    if (!activeAddon) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveAddon(null)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [activeAddon])
 
   return (
     <div
@@ -173,6 +185,9 @@ export default function AddonSelectionStudio({
       {/* Modal / Detail Drawer for selected add-on */}
       {activeAddon && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={dialogTitleId}
           onClick={() => setActiveAddon(null)}
           style={{
             position: 'fixed',
@@ -217,9 +232,12 @@ export default function AddonSelectionStudio({
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800 }}>
-                    {activeAddon.id === 'addon-movement-screen' ? 'Diagnostic Screen' : activeAddon.category === 'private-session' ? 'Private Coaching' : 'Targeted Upgrade'} · One-Time
+                    {activeAddon.id === 'addon-movement-screen' ? 'Movement Screen' : activeAddon.category === 'private-session' ? 'Private Coaching' : 'Targeted Upgrade'} · One-Time
                   </div>
-                  <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.04em' }}>
+                  <h3
+                    id={dialogTitleId}
+                    style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '0.04em' }}
+                  >
                     {activeAddon.name}
                   </h3>
                   {(activeAddon.seatCapLabel || activeAddon.availabilityLabel) && (
@@ -240,14 +258,17 @@ export default function AddonSelectionStudio({
               </div>
               <button
                 type="button"
+                aria-label="Close add-on details"
                 onClick={() => setActiveAddon(null)}
                 style={{
                   background: 'rgba(255,255,255,0.08)',
                   border: 'none',
                   color: '#FFFFFF',
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
+                  minWidth: 44,
+                  minHeight: 44,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',

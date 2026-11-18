@@ -965,6 +965,12 @@ export default function HolidayUnmaskingSplash({
                   className="block h-full w-full object-cover"
                 >
                   <source src="/videos/forge-black-friday-showcase.mp4" type="video/mp4" />
+                  <track
+                    kind="captions"
+                    src="/captions/forge-showcase.vtt"
+                    srcLang="en"
+                    label="English captions"
+                  />
                 </video>
 
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#090A0D]/95 via-[#090A0D]/60 to-transparent px-4 pb-3.5 pt-10">

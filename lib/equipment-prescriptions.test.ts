@@ -219,7 +219,7 @@ describe('equipment-prescriptions & REP Fitness / CEx hardware dispensary', () =
     expect(widgetSource).toContain('<article')
     expect(widgetSource).toContain('Turnkey Home-Gym Blueprints')
     expect(nasmSummarySource).toContain('EquipmentDispensaryWidget')
-    expect(nutritionSource).toContain('Prescribed Gear &amp; Home Gym')
+    expect(nutritionSource).toContain('Recommended Gear &amp; Home Gym')
     expect(coachWorkspaceSource).toContain('Corrective &amp; Home-Gym Gear')
   })
 })

@@ -40,7 +40,8 @@ describe('weight loss program', () => {
     expect(req.goal).toBe('fat_loss')
     expect(req.targetNasmPhase).toBe(1)
     expect(req.trainingDaysPerWeek).toBe(6)
-    expect(req.coachGuidanceNotes).toContain('Weight Loss Specialization')
+    expect(req.coachGuidanceNotes).toContain('NASM OPT™ Evidence-Based Fat Loss')
+    expect(req.coachGuidanceNotes).not.toContain('Weight Loss Specialization')
   })
 })
 
@@ -52,9 +53,13 @@ describe('nutrition targets snapshot', () => {
     expect(parseNutritionTargets(snapshot)).toMatchObject({ targetCalories: targets.macros.targetCalories })
   })
 
-  it('rejects missing or out-of-range values', () => {
+  it('rejects missing, starvation (<1200 kcal), or zero-fat/protein out-of-range values', () => {
+    const valid = buildNutritionTargetsSnapshot(targets)
     expect(parseNutritionTargets(null)).toBeNull()
-    expect(parseNutritionTargets({ ...buildNutritionTargetsSnapshot(targets), targetCalories: 99999 })).toBeNull()
+    expect(parseNutritionTargets({ ...valid, targetCalories: 99999 })).toBeNull()
+    expect(parseNutritionTargets({ ...valid, targetCalories: 800 })).toBeNull()
+    expect(parseNutritionTargets({ ...valid, fatGrams: 0 })).toBeNull()
+    expect(parseNutritionTargets({ ...valid, proteinGrams: 0 })).toBeNull()
     expect(parseNutritionTargets({ targetCalories: 2000 })).toBeNull()
   })
 })

@@ -28,7 +28,7 @@ type ActiveFilterKey =
   | HomeGymBuildoutTierId
 
 const FILTER_OPTIONS: Array<{ key: ActiveFilterKey; label: string }> = [
-  { key: 'all', label: 'All Prescribed Gear' },
+  { key: 'all', label: 'All Recommended Gear' },
   { key: 'rep_home_gym', label: 'REP Home-Gym Buildout' },
   { key: 'inhibit_smr', label: 'Phase 1 · SMR / Inhibit' },
   { key: 'lengthen_mobility', label: 'Phase 2 · Lengthen' },
@@ -123,7 +123,7 @@ export default function EquipmentDispensaryWidget({
                   borderRadius: 4,
                 }}
               >
-                Prescribed Corrective Hardware Kit
+                Recommended Mobility &amp; Training Kit
               </span>
               <span
                 style={{
@@ -313,13 +313,13 @@ export default function EquipmentDispensaryWidget({
               }}
             >
               {athleteName
-                ? `PRESCRIBED CORRECTIVE & HOME-GYM ARCHITECTURE · ${athleteName.toUpperCase()}`
-                : 'PRESCRIBED CORRECTIVE & HOME-GYM ARCHITECTURE'}
+                ? `RECOMMENDED MOBILITY & HOME-GYM ARCHITECTURE · ${athleteName.toUpperCase()}`
+                : 'RECOMMENDED MOBILITY & HOME-GYM ARCHITECTURE'}
             </h3>
             <p style={{ margin: 0, color: 'var(--gray)', fontSize: 13.5, lineHeight: 1.6, maxWidth: 820 }}>
               {prescription.hasActiveAssessmentMapping
-                ? 'Automatically calibrated to your latest NASM Overhead Squat & Kinetic Chain Assessment—pairing clinical corrective tools with REP Fitness commercial home-gym strength hardware.'
-                : 'Direct-shipped clinical corrective tools (10%–15% member privilege) paired with REP Fitness commercial home-gym strength equipment (free US shipping & zero inventory markups).'}
+                ? 'Automatically matched to your latest NASM Overhead Squat & Movement Screen—pairing targeted mobility tools with REP Fitness commercial home-gym strength hardware.'
+                : 'Direct-shipped mobility & warm-up tools (10%–15% member privilege) paired with REP Fitness commercial home-gym strength equipment (free US shipping & zero inventory markups).'}
             </p>
             <p
               style={{
@@ -905,7 +905,7 @@ function EquipmentCard({ item, compact, copiedSku, onCopyPromoCode }: EquipmentC
               lineHeight: 1.45,
             }}
           >
-            <strong>Why Prescribed:</strong> {item.prescribedReasons.join(' ')}
+            <strong>Why Recommended:</strong> {item.prescribedReasons.join(' ')}
           </div>
         )}
 

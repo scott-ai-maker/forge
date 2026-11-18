@@ -273,7 +273,18 @@ export function calculateEnergyExpenditure(input: MetabolicProfileInput): Metabo
     goalLabel = 'Energy Availability for Athletic Power (+200 kcal)'
   }
 
-  const targetCalories = Math.max(1200, tdee + delta)
+  // Non-medical ACSM/NIH safety floors: 1,500 kcal/day for males, 1,200 kcal/day for females/other;
+  // never apply a caloric deficit when BMI < 18.5 (underweight safety guardrail).
+  const heightMeters = Math.max(1.2, heightCm / 100)
+  const bmi = weightKg / (heightMeters * heightMeters)
+  const isUnderweight = bmi < 18.5
+  if (isUnderweight && delta < 0) {
+    delta = 0
+    goalLabel = 'Maintenance Floor (Underweight BMI < 18.5 Safety Guardrail — Zero Deficit)'
+  }
+
+  const minSafeCalories = sex === 'male' ? 1500 : 1200
+  const targetCalories = Math.max(minSafeCalories, tdee + delta)
   const tefCalories = Math.round(targetCalories * 0.1) // 10% TEF
   const eatCalories = Math.round((tdee - bmr) * 0.4)
   const neatCalories = Math.round((tdee - bmr) * 0.6)
@@ -351,7 +362,7 @@ export function calculatePrecisionMacros(input: MetabolicProfileInput): Precisio
   // Guard extreme bodyweight + aggressive deficit cases so protein + fat never exceed targetCalories
   if (proteinCalories + fatCalories > targetCalories) {
     const scale = targetCalories / (proteinCalories + fatCalories)
-    fatGrams = Math.max(25, Math.floor((fatCalories * scale) / 9))
+    fatGrams = Math.max(30, Math.floor((fatCalories * scale) / 9))
     fatCalories = fatGrams * 9
     proteinGrams = Math.max(60, Math.floor(Math.max(0, targetCalories - fatCalories) / 4))
     proteinCalories = proteinGrams * 4

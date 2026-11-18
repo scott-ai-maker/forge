@@ -120,7 +120,7 @@ export function buildWeightLossGenerationRequest(
     experienceLevel: experience,
     equipmentAccess: stats.equipmentAccess?.length ? stats.equipmentAccess : undefined,
     cardioBlendStyle: 'integrated_finishers',
-    coachGuidanceNotes: `NASM Weight Loss Specialization program. ${targetLine}${bfLine}${coachGuidanceNotes ?? ''}`.trim(),
+    coachGuidanceNotes: `NASM OPT™ Evidence-Based Fat Loss program. ${targetLine}${bfLine}${coachGuidanceNotes ?? ''}`.trim(),
     contraindicationTags: stats.contraindicationTags,
     injuriesLimitations: stats.injuriesLimitations ?? undefined,
   }
@@ -151,14 +151,14 @@ export function buildNutritionTargetsSnapshot(targets: WeightLossTargets): Nutri
 }
 
 const NUTRITION_TARGET_LIMITS: Record<keyof NutritionTargetsSnapshot, [number, number]> = {
-  currentWeightLbs: [50, 1000],
-  targetWeightLbs: [50, 1000],
-  weeklyLossLbs: [0, 5],
+  currentWeightLbs: [75, 1000],
+  targetWeightLbs: [75, 1000],
+  weeklyLossLbs: [0, 3],
   estimatedWeeks: [1, 520],
-  targetCalories: [800, 6000],
-  proteinGrams: [0, 600],
+  targetCalories: [1200, 6000],
+  proteinGrams: [40, 600],
   carbGrams: [0, 1000],
-  fatGrams: [0, 400],
+  fatGrams: [25, 400],
 }
 
 // Validates untrusted input before it is persisted with a plan; returns null unless every field is a sane number.

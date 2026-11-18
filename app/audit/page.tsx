@@ -121,15 +121,15 @@ const auditStructuredData = {
   '@graph': [
     {
       '@type': 'Service',
-      name: '3D Movement and Posture Screening Diagnostic',
-      serviceType: 'Biomechanical Movement Assessment',
+      name: '3D Movement and Posture Alignment Screen',
+      serviceType: 'Fitness Movement & Posture Screening',
       provider: {
         '@type': 'Organization',
         name: 'Forge Athletic',
         url: 'https://forge-athletic.app',
       },
       description:
-        'Smartphone-guided 3D movement screening analyzing 33 kinetic chain landmarks across feet, knees, hips, and shoulders during overhead squats, providing instant corrective exercise prescriptions.',
+        'Smartphone-guided 3D movement screening analyzing 33 kinetic chain landmarks across feet, knees, hips, and shoulders during overhead squats, providing personalized NASM mobility and warm-up routines.',
       offers: {
         '@type': 'Offer',
         price: '97.00',
@@ -230,7 +230,7 @@ export default function AuditLandingPage() {
               maxWidth: 780,
             }}
           >
-            Get a clearer picture of how you move, then explore practical exercises that support your goals. Get an instant, clinical-grade 3D computer-vision assessment of all 5 kinetic chain checkpoints with custom 4-phase corrective exercise protocols.
+            Get a clearer picture of how you move, then explore practical exercises that support your goals. Get a research-informed 33-point computer-vision movement screen across all 5 kinetic chain checkpoints with personalized 4-phase NASM warm-up and mobility routines (non-medical wellness guidance—not physical therapy or medical diagnosis).
           </p>
 
           {/* High-Ticket Bridge Banner */}
@@ -464,7 +464,7 @@ export default function AuditLandingPage() {
                   Personalized Movement Coaching &amp; Form Analysis
                 </span>
                 <p style={{ fontSize: 12, color: 'var(--gray)', margin: '4px 0 0' }}>
-                  Identifies movement compensations to prevent injury and improve squat depth.
+                  Highlights movement compensations to support joint comfort, alignment, and squat depth.
                 </p>
               </div>
             </div>

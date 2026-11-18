@@ -41,7 +41,7 @@ export default function AccessibilityStatementPage() {
             Digital Accessibility Statement
           </h1>
           <p style={{ color: '#94A3B8', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
-            Last Reviewed: November 11, 2026 · Conformance Target: W3C WCAG 2.1 / 2.2 Level AA
+            Last Reviewed: November 17, 2026 · Conformance Target: W3C WCAG 2.1 / 2.2 Level AA
           </p>
         </div>
 
@@ -60,7 +60,10 @@ export default function AccessibilityStatementPage() {
           </h2>
           <ul style={{ paddingLeft: '1.25rem', margin: '0.5rem 0 1rem', fontSize: '0.92rem' }}>
             <li style={{ marginBottom: '0.4rem' }}>
-              <strong>Keyboard &amp; Screen-Reader Navigation:</strong> Skip-to-main-content links, semantic HTML5 landmarks (<code>header</code>, <code>nav</code>, <code>main</code>, <code>footer</code>), sequential heading outlines, programmatic <code>label</code> / <code>aria-describedby</code> form bindings, and high-contrast <code>:focus-visible</code> indicators (&ge; 3:1 contrast).
+              <strong>Keyboard &amp; Screen-Reader Navigation:</strong> Skip-to-main-content links, semantic HTML5 landmarks (<code>header</code>, <code>nav</code>, <code>main</code>, <code>footer</code>), sequential heading outlines, programmatic <code>label</code> / <code>aria-describedby</code> form bindings, accessible modal dialogs (<code>role=&quot;dialog&quot;</code>, <code>Escape</code> dismissal), and high-contrast <code>:focus-visible</code> indicators (&ge; 3:1 contrast).
+            </li>
+            <li style={{ marginBottom: '0.4rem' }}>
+              <strong>Unrestricted Display Orientation &amp; Media Captions:</strong> Full support for both portrait and landscape orientations across mobile, tablet, and assistive mounted displays (WCAG 1.3.4) plus WebVTT closed-caption tracks on walkthrough media (WCAG 1.2.2).
             </li>
             <li style={{ marginBottom: '0.4rem' }}>
               <strong>Visual Contrast &amp; Tabular Telemetry:</strong> High-contrast ivory/gold typography on deep obsidian surfaces, minimum 24x24px (44px+ on touch) interactive tap targets, and tabular numerals without horizontal scroll lock at 200% browser zoom.

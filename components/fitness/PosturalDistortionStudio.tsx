@@ -66,18 +66,18 @@ export default function PosturalDistortionStudio() {
   const [activeView, setActiveView] = useState<'screener' | 'synergy' | 'cex'>('screener')
   const [selectedPreset, setSelectedPreset] = useState<PresetId | null>(null)
 
-  // Checkpoint 1: Feet & Ankles
-  const [feetFlatten, setFeetFlatten] = useState<boolean>(true)
+  // Checkpoint 1: Feet & Ankles (default unscanned/unchecked so zero synthetic conditions are pre-populated)
+  const [feetFlatten, setFeetFlatten] = useState<boolean>(false)
   const [feetTurnOut, setFeetTurnOut] = useState<boolean>(false)
   const [heelsElevate, setHeelsElevate] = useState<boolean>(false)
 
   // Checkpoint 2: Knees
-  const [kneesValgus, setKneesValgus] = useState<boolean>(true)
+  const [kneesValgus, setKneesValgus] = useState<boolean>(false)
   const [kneesVarus, setKneesVarus] = useState<boolean>(false)
   const [kneesHyperextend, setKneesHyperextend] = useState<boolean>(false)
 
   // Checkpoint 3: LPHC
-  const [anteriorTilt, setAnteriorTilt] = useState<boolean>(true)
+  const [anteriorTilt, setAnteriorTilt] = useState<boolean>(false)
   const [posteriorTilt, setPosteriorTilt] = useState<boolean>(false)
   const [forwardLean, setForwardLean] = useState<boolean>(false)
   const [asymShift, setAsymShift] = useState<boolean>(false)
@@ -197,8 +197,11 @@ export default function PosturalDistortionStudio() {
               color: '#FFFFFF',
             }}
           >
-            POSTURAL DISTORTION & MUSCLE SYNERGY DIAGNOSTIC STUDIO
+            POSTURAL ALIGNMENT &amp; MUSCLE SYNERGY SCREENING STUDIO
           </h3>
+          <p style={{ margin: '6px 0 0', fontSize: 11.5, color: '#94A3B8', lineHeight: 1.45 }}>
+            Educational NASM fitness movement screen—not physical therapy, chiropractic care, or orthopedic diagnosis (M.G.L. c. 112, §§ 23A–23Q). Stop immediately if any movement causes sharp or radiating pain.
+          </p>
         </div>
 
         {/* View Navigation */}

@@ -254,7 +254,7 @@ export default function VoiceSoapNotesModal({
         }}
       >
         <div aria-hidden="true" style={{ position: 'absolute', top: -15, right: -15, zIndex: 0, pointerEvents: 'none' }}>
-          <GaaMasterWatermarkSeal size={140} opacity={0.06} subtitle="CLINICAL S.O.A.P. RECORD" />
+          <GaaMasterWatermarkSeal size={140} opacity={0.06} subtitle="COACHING SESSION NOTES" />
         </div>
 
         {/* Header Bar */}

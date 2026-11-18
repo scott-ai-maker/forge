@@ -100,6 +100,12 @@ export default function BlackFridayShowcaseSection() {
             className="block h-full w-full object-cover"
           >
             <source src="/videos/forge-black-friday-showcase.mp4" type="video/mp4" />
+            <track
+              kind="captions"
+              src="/captions/forge-showcase.vtt"
+              srcLang="en"
+              label="English captions"
+            />
           </video>
 
           {/* Top-right Sound Toggle */}

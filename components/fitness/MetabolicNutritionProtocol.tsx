@@ -367,7 +367,7 @@ export default function MetabolicNutritionProtocol({
                 }}
               >
                 <GaaIcon name="dumbbell" size={14} tone={nutritionMode === 'equipment' ? 'inherit' : 'gold'} />
-                <span>Prescribed Gear &amp; Home Gym</span>
+                <span>Recommended Gear &amp; Home Gym</span>
                 <span
                   style={{
                     fontSize: 9.5,
@@ -761,12 +761,32 @@ export default function MetabolicNutritionProtocol({
               <span>Massachusetts Non-Medical Nutrition Safe Harbor (M.G.L. c. 112, §§ 196–208)</span>
             </div>
             <p style={{ margin: 0, color: 'var(--gray)', fontSize: 11.5, lineHeight: 1.55 }}>
-              Hand-portion targets and nutritional coaching presented here are strictly educational lifestyle and fitness recommendations provided under the Massachusetts Non-Medical Nutrition &amp; Dietetics Safe Harbor and NASM Certified Sports Nutrition Coach (CSNC) scope of practice. Forge Athletic does not diagnose nutritional deficiencies, treat medical conditions, or provide Medical Nutrition Therapy (MNT). Individuals managing medical conditions (including kidney disease, diabetes, cardiovascular disease, gastrointestinal illness, or pregnancy) must obtain approval from their primary care physician or a licensed registered dietitian before making dietary alterations.
+              Hand-portion targets and nutritional coaching presented here are strictly general educational lifestyle and fitness recommendations provided under the Massachusetts Non-Medical Nutrition &amp; Dietetics Safe Harbor (M.G.L. c. 112, § 206) within NASM-CPT® general wellness scope. Forge Athletic does not diagnose nutritional deficiencies, treat medical conditions or eating disorders, or provide Medical Nutrition Therapy (MNT). Individuals managing medical conditions (including kidney disease, diabetes, cardiovascular disease, gastrointestinal illness, eating disorders, or pregnancy) should consult their physician or a licensed registered dietitian (RD/LDN) before making dietary changes.
             </p>
           </div>
         </div>
       ) : (
       <>
+      {/* Massachusetts Safe Harbor Legal Notice (Displayed on Default Macros & Dining View — #24) */}
+      <div
+        style={{
+          background: 'rgba(8,14,20,0.85)',
+          border: '1px solid rgba(212,160,23,0.3)',
+          borderRadius: 8,
+          padding: '14px 18px',
+          display: 'grid',
+          gap: 5,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--gold-lt)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <GaaIcon name="shield-check" size={14} tone="gold" />
+          <span>Non-Medical Nutrition Safe Harbor Notice (M.G.L. c. 112, § 206)</span>
+        </div>
+        <p style={{ margin: 0, color: 'var(--gray)', fontSize: 11.5, lineHeight: 1.55 }}>
+          Calorie and macronutrient estimates are general fitness and wellness education—not Medical Nutrition Therapy (MNT) or individualized dietetics care. Consult a physician or licensed registered dietitian (RD/LDN) if you are pregnant, underweight, recovering from disordered eating, or managing diabetes, renal, cardiac, or gastrointestinal conditions.
+        </p>
+      </div>
+
       {/* ── Interactive Energy Balance & BMR Telemetry Bar ──────────── */}
       <details
         className="fitness-card-disclosure"
@@ -914,7 +934,7 @@ export default function MetabolicNutritionProtocol({
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: '#34D399' }}>{energy.tdeeCalories} kcal</div>
           </div>
           <div style={{ textAlign: 'center', background: 'rgba(212,160,23,0.1)', border: '1px solid rgba(212,160,23,0.3)', padding: '8px', borderRadius: 6 }}>
-            <div style={{ fontSize: 10, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 700 }}>Target Prescribed</div>
+            <div style={{ fontSize: 10, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 700 }}>Estimated Daily Target</div>
             <div style={{ fontFamily: 'var(--font-telemetry, monospace)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: 'var(--gold)' }}>{energy.targetCalories} kcal</div>
           </div>
         </div>

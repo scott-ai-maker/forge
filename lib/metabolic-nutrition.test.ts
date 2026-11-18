@@ -55,6 +55,30 @@ describe('Precision Metabolic Nutrition & Energy Balance Engine', () => {
     expect(energy.targetCalories).toBe(Math.max(1200, energy.tdeeCalories - 750))
   })
 
+  it('enforces a 1,500 kcal floor for males and prevents caloric deficits when BMI < 18.5 (#24)', () => {
+    const maleFloor = calculateEnergyExpenditure({
+      weightLbs: 130,
+      heightInches: 68,
+      age: 75,
+      sex: 'male',
+      activityLevel: 'sedentary',
+      goal: 'fat_loss',
+      calorieDeficitCalories: 900,
+    })
+    expect(maleFloor.targetCalories).toBeGreaterThanOrEqual(1500)
+
+    const underweight = calculateEnergyExpenditure({
+      weightLbs: 105,
+      heightInches: 70, // BMI ~15.1 (< 18.5)
+      age: 28,
+      sex: 'female',
+      activityLevel: 'lightly_active',
+      goal: 'fat_loss',
+    })
+    expect(underweight.calorieDelta).toBe(0)
+    expect(underweight.targetCalories).toBeGreaterThanOrEqual(underweight.tdeeCalories)
+  })
+
   it('computes exact protein, carbohydrate, fat grams, and hydration prescriptions', () => {
     const macros = calculatePrecisionMacros({
       weightLbs: 185,
@@ -173,7 +197,7 @@ describe('Precision Metabolic Nutrition & Energy Balance Engine', () => {
     expect(macros.proteinPct + macros.carbPct + macros.fatPct).toBeLessThanOrEqual(101)
   })
 
-  it('prevents protein + fat calories from exceeding the 1200 kcal floor under extreme bodyweight and deficit', () => {
+  it('prevents protein + fat calories from exceeding the 1500 kcal male safety floor under extreme bodyweight and deficit', () => {
     const macros = calculatePrecisionMacros({
       weightLbs: 380,
       heightInches: 74,
@@ -181,13 +205,13 @@ describe('Precision Metabolic Nutrition & Energy Balance Engine', () => {
       sex: 'male',
       activityLevel: 'sedentary',
       goal: 'fat_loss',
-      calorieDeficitCalories: 2800, // forces 1200 kcal safety floor
+      calorieDeficitCalories: 2800, // forces 1500 kcal male safety floor
       phase: 'phase1_stabilization',
     })
 
-    expect(macros.targetCalories).toBe(1200)
+    expect(macros.targetCalories).toBe(1500)
     const macroCalories = macros.proteinGrams * 4 + macros.fatGrams * 9 + macros.carbGrams * 4
-    expect(macroCalories).toBeLessThanOrEqual(1220)
+    expect(macroCalories).toBeLessThanOrEqual(1520)
     expect(macros.carbGrams).toBeGreaterThanOrEqual(0)
     expect(macros.proteinGrams).toBeGreaterThan(0)
     expect(macros.fatGrams).toBeGreaterThanOrEqual(35)

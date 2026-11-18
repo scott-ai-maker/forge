@@ -151,7 +151,8 @@ describe('Postural Distortion Engine & Alignment Comparison Suite', () => {
     expect(fullCardHtml).toContain('closedby="any"')
 
     const studioHtml = renderToStaticMarkup(React.createElement(PosturalDistortionStudio))
-    expect(studioHtml).toContain('POSTURAL DISTORTION &amp; MUSCLE SYNERGY DIAGNOSTIC STUDIO')
+    expect(studioHtml).toContain('POSTURAL ALIGNMENT &amp; MUSCLE SYNERGY SCREENING STUDIO')
+    expect(studioHtml).toContain('Educational NASM fitness movement screen')
     expect(studioHtml).toContain('Asymmetric Weight Shift')
     expect(studioHtml).toContain('Scapular Winging')
     const checkboxMatches = studioHtml.match(/type="checkbox"/g) || []
