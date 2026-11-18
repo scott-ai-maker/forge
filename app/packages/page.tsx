@@ -92,11 +92,11 @@ const COMPARISON_ROWS = [
     note: 'Zero-distraction HUD with tabular numbers, tempo pulses, and screen wake lock.',
   },
   {
-    feature: 'Wearable Telemetry & Recovery Sync',
-    core: 'Self-Serve',
-    plus: 'Active Sync',
-    support: 'Continuous Autoregulation',
-    note: 'Ingests Apple Watch, Garmin, Polar, and Health Connect signals.',
+    feature: '10-Second Joint Comfort & Camera Readiness',
+    core: 'Included',
+    plus: 'Included + Trend Alerts',
+    support: 'Included + Coach Safety Queue',
+    note: 'Daily neck, back, and hip comfort check-ins paired with 1-tap joint-safe NASM regressions.',
   },
   {
     feature: 'Nutrition & Macronutrient Blueprint',

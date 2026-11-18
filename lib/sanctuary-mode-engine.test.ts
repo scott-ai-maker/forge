@@ -111,15 +111,15 @@ describe('Sanctuary Mode Engine', () => {
 
     it('escalates intervention cues on repeated distractions', () => {
       const cue1 = getDistractionInterceptionCue(1, 'Barbell Back Squat')
-      expect(cue1.headline).toContain('FOCUS RESTORED')
+      expect(cue1.headline).toContain('Focus Restored')
       expect(cue1.coachMessage).toContain('Barbell Back Squat')
 
       const cue2 = getDistractionInterceptionCue(2)
-      expect(cue2.headline).toContain('SANCTUARY ALERT')
+      expect(cue2.headline).toContain('Protect Your Focus')
 
       const cue3 = getDistractionInterceptionCue(3)
-      expect(cue3.headline).toContain('COACH GORDON')
-      expect(cue3.coachMessage).toContain('We do not sell your attention')
+      expect(cue3.headline).toContain('Coach Gordon')
+      expect(cue3.coachMessage).toContain('zero more screen switches')
     })
   })
 })

@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import FullMarketingHome from '@/components/marketing/FullMarketingHome'
+import LiveLandingHome from '@/components/marketing/LiveLandingHome'
 import { getRequestAuthz } from '@/lib/authz'
 
 export const metadata: Metadata = {
   title: 'Full Site Preview (Staff)',
-  description: 'Internal preview of the complete Forge Athletic unmasked marketing experience.',
+  description: 'Internal preview of the complete Forge Athletic live marketing homepage.',
   robots: {
     index: false,
     follow: false,
@@ -24,5 +24,5 @@ export default async function PreviewPage() {
     }
   }
 
-  return <FullMarketingHome isPreview={true} />
+  return <LiveLandingHome isPreview={true} />
 }

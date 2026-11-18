@@ -97,7 +97,6 @@ import SessionFatigueCnsSummaryModal from '@/components/fitness/tracker/SessionF
 import { calculateSessionFatigueCnsIndex } from '@/lib/session-fatigue-cns-index'
 import FloatingRestTimerDock from '@/components/fitness/tracker/FloatingRestTimerDock'
 import LiveSessionStickyDock from '@/components/fitness/tracker/LiveSessionStickyDock'
-import AppleWatchSimulatorModal from '@/components/fitness/watch/AppleWatchSimulatorModal'
 import HoldToQuitWorkoutButton from '@/components/fitness/tracker/HoldToQuitWorkoutButton'
 import ExercisePrBadge from '@/components/fitness/tracker/ExercisePrBadge'
 import { HorizontalSetsCarousel } from '@/components/fitness/tracker/HorizontalSetsCarousel'
@@ -772,7 +771,6 @@ export default function FitnessTrackerClient({
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(
     latestPlan?.id ?? (allPlans[0]?.id ?? null)
   )
-  const [isWatchSimulatorOpen, setIsWatchSimulatorOpen] = useState(false)
   const [preWorkoutReadinessSignal, setPreWorkoutReadinessSignal] = useState(0)
 
   const [offlineCachedPlan, setOfflineCachedPlan] = useState<WorkoutPlanRecord | null>(null)
@@ -6788,65 +6786,6 @@ export default function FitnessTrackerClient({
           }}
         />
       )}
-
-      {/* ── INTERACTIVE APPLE WATCH ULTRA 49MM HARDWARE SIMULATOR (Disabled in Tier 4 cleanup) ── */}
-      {Boolean(false) && (() => {
-        const simulatorPayload = isWatchSimulatorOpen ? constructWatchWorkoutPayload(effectiveActiveWorkoutDay) : null
-        return (
-          <AppleWatchSimulatorModal
-            isOpen={isWatchSimulatorOpen}
-            onClose={() => setIsWatchSimulatorOpen(false)}
-            currentExerciseName={
-              activeRestState?.exerciseName ||
-              simulatorPayload?.activeExercise?.exerciseName ||
-              (expandedExerciseKey ? planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.find(e => normalizeExerciseName(e.name) === normalizeExerciseName(getExerciseNameFromKey(expandedExerciseKey) || ''))?.name : undefined) ||
-              planWorkouts.find(w => w.day === effectiveActiveWorkoutDay)?.exercises?.[0]?.name ||
-              'Barbell Flat Bench Press'
-            }
-            currentSetNumber={simulatorPayload?.activeExercise?.setNumber || (activeRestState ? 2 : 1)}
-            currentTotalSets={simulatorPayload?.activeExercise?.totalSets || 3}
-            prescribedWeight={simulatorPayload?.activeExercise?.prescribedWeight || 185}
-            prescribedReps={simulatorPayload?.activeExercise?.prescribedReps || 10}
-            tempo={simulatorPayload?.activeExercise?.tempo || '2-0-2-0'}
-            restSeconds={simulatorPayload?.activeExercise?.restSeconds ?? 60}
-            isSuperset={simulatorPayload?.activeExercise?.isSuperset}
-            supersetRole={simulatorPayload?.activeExercise?.supersetRole}
-            exercises={simulatorPayload?.exercises}
-            activeExerciseIndex={simulatorPayload?.activeExerciseIndex}
-            cardioProtocol={simulatorPayload?.cardioProtocol}
-            onSimulateSetLogged={(data) => {
-              const activeWorkout = planWorkouts.find(w => w.day === effectiveActiveWorkoutDay) || planWorkouts[0]
-              if (!activeWorkout) return
-              const matchingEx = activeWorkout.exercises?.find(
-                e => normalizeExerciseName(e.name) === normalizeExerciseName(data.exerciseName)
-              ) || activeWorkout.exercises?.[0]
-              if (!matchingEx) return
-
-              const draftKey = exerciseDraftKey(activeWorkout.day, matchingEx.name)
-              const currentDraft = inlineSetDrafts[draftKey] || defaultInlineSetDraft(
-                todayDateOnly(),
-                matchingEx.reps,
-                plan?.nasm_opt_phase,
-                matchingEx.block,
-                matchingEx.rest,
-                matchingEx.tempo,
-                matchingEx.name
-              )
-              const constructedDraft: InlineSetDraft = {
-                ...currentDraft,
-                setNumber: String(data.setIndex || currentDraft.setNumber),
-                reps: String(data.reps),
-                weight: String(data.weightLbs),
-                rpe: data.rpe !== undefined ? String(data.rpe) : currentDraft.rpe,
-                isWarmup: false,
-              }
-              void executeSetLog(activeWorkout, matchingEx, constructedDraft)
-            }}
-          />
-        )
-      })()}
-
-
     </>
   )
 }

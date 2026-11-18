@@ -15,7 +15,6 @@ import { isCompanionApp } from '@/lib/native-companion'
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
 import WorkoutCalendarView, { WorkoutCalendarEntry } from '@/components/fitness/WorkoutCalendarView'
 import TierPreviewSwitcher from '@/components/settings/TierPreviewSwitcher'
-import { TelemetryDiagnosticsPanel } from '@/components/telemetry/TelemetryDiagnosticsDrawer'
 
 export type SettingsTab =
   | 'schedule'
@@ -28,7 +27,6 @@ export type SettingsTab =
   | 'profile'
   | 'security'
   | 'notifications'
-  | 'diagnostics'
 
 interface GeneralSettingsProfile {
   email: string
@@ -193,7 +191,6 @@ export default function ClientSettingsStudio({
           { key: 'profile' as const, label: 'Profile', icon: 'user' as GaaIconName },
           { key: 'security' as const, label: 'Security', icon: 'lock' as GaaIconName },
           { key: 'notifications' as const, label: 'Alert Preferences', icon: 'bell' as GaaIconName },
-          { key: 'diagnostics' as const, label: 'System Diagnostics', icon: 'activity' as GaaIconName, badge: 'Telemetry' },
         ].map(tab => {
           const isSelected = activeTab === tab.key
           return (
@@ -621,20 +618,6 @@ export default function ClientSettingsStudio({
           </div>
 
           <NotificationPreferencesStudio defaultPhone={initialProfile.phone} />
-        </section>
-      )}
-
-      {/* ── 6. Tab: System Diagnostics & Store-Launch Telemetry Verifier ── */}
-      {activeTab === 'diagnostics' && (
-        <section
-          style={{
-            background: 'linear-gradient(180deg, #101626 0%, #080C16 100%)',
-            border: '1px solid rgba(212,160,23,0.3)',
-            borderRadius: 12,
-            padding: '24px 20px',
-          }}
-        >
-          <TelemetryDiagnosticsPanel />
         </section>
       )}
 

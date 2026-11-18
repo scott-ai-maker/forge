@@ -12,7 +12,6 @@ import {
   UpgradeTriggerId,
 } from '@/lib/tierEntitlements'
 import { isCompanionApp } from '@/lib/native-companion'
-import { playForgeTactileTone } from '@/lib/sfx-audio'
 
 export interface TierUpgradeModalProps {
   open: boolean
@@ -107,7 +106,6 @@ export default function TierUpgradeModal({
 
     setLoading(true)
     setError(null)
-    playForgeTactileTone('success')
 
     try {
       const res = await fetch('/api/stripe/checkout', {

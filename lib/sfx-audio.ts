@@ -114,6 +114,8 @@ export function setSfxMuted(muted: boolean): void {
 }
 
 export function playForgeTactileTone(type: TactileToneType): void {
+  // Synthetic UI button click/tick tones are disabled; only workout rest/tempo chimes remain active.
+  if (type === 'tick') return
   if (isSfxMuted()) return
   if (typeof window === 'undefined') return
 
@@ -126,19 +128,7 @@ export function playForgeTactileTone(type: TactileToneType): void {
 
     const now = ctx.currentTime
 
-    if (type === 'tick') {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(540, now)
-      osc.frequency.exponentialRampToValueAtTime(320, now + 0.04)
-      gain.gain.setValueAtTime(0.04, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(now)
-      osc.stop(now + 0.04)
-    } else if (type === 'countdown') {
+    if (type === 'countdown') {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.type = 'sine'
@@ -220,9 +210,6 @@ export function useSfxMuted() {
     setSfxMuted(nextMuted)
     setSfxMutedState(nextMuted)
     setAudioModeState(getCoachAudioMode())
-    if (!nextMuted) {
-      playForgeTactileTone('chime')
-    }
   }, [])
 
   const updateSfxMuted = useCallback((muted: boolean) => {
@@ -235,9 +222,6 @@ export function useSfxMuted() {
     setCoachAudioMode(mode)
     setAudioModeState(mode)
     setSfxMutedState(mode === 'muted')
-    if (mode !== 'muted') {
-      playForgeTactileTone('chime')
-    }
   }, [])
 
   return {

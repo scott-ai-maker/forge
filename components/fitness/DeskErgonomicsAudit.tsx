@@ -769,7 +769,7 @@ export default function DeskErgonomicsAudit({
             <button
               type="button"
               onClick={toggleSfxMuted}
-              aria-label="Desk timer sound effects"
+              aria-label="Coach Gordon voice cues"
               aria-pressed={!sfxMuted}
               className={`forge-tactile-press inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border px-3 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
                 sfxMuted
@@ -777,7 +777,7 @@ export default function DeskErgonomicsAudit({
                   : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15'
               }`}
             >
-              {sfxMuted ? 'SFX MUTED' : 'SFX ON'}
+              {sfxMuted ? 'Voice Off' : 'Coach Voice'}
             </button>
           )}
         </div>

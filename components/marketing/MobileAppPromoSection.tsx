@@ -114,7 +114,7 @@ export default function MobileAppPromoSection({
               lineHeight: 1.15,
             }}
           >
-            NATIVE MOBILE EXECUTION &amp; <span style={{ color: 'var(--gold-lt)' }}>BIOMETRIC TELEMETRY</span>
+            ZERO-DOWNLOAD PWA &amp; <span style={{ color: 'var(--gold-lt)' }}>MOBILE COMPANIONS</span>
           </h2>
 
           <p
@@ -172,11 +172,11 @@ export default function MobileAppPromoSection({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
               <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 600, letterSpacing: '0.04em' }}>
-                Native Biometric Velocity &amp; Cadence Engine
+                In-Browser Camera Screening &amp; Voice Pacing
               </span>
             </div>
             <span style={{ fontSize: 11, color: 'var(--gold-lt)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
-              Apple HealthKit · Garmin &amp; Oura · Android Biometrics
+              Installable PWA · Offline Set Logging · Zero Sensors Needed
             </span>
           </div>
         </div>
@@ -248,12 +248,12 @@ export default function MobileAppPromoSection({
                     border: '1px solid rgba(56,189,248,0.3)',
                   }}
                 >
-                  HealthKit Background Delivery
+                  Coming Soon
                 </span>
               </div>
 
               <p style={{ margin: 0, fontSize: 13.5, color: '#CBD5E1', lineHeight: 1.55 }}>
-                Directly connects to Apple Health and Apple Watch. Wakes in the background to deliver resting heart rate, morning HRV rMSSD, deep/REM sleep architecture, active calories, and completed workout sessions without manual effort.
+                Add Forge Athletic to your iPhone Home Screen today via Safari for instant access to 33-point camera posture checks, Coach Gordon’s real voice pacing, and offline workout logging. A dedicated App Store companion is planned post-launch.
               </p>
 
               <div style={{ display: 'grid', gap: 8, borderTop: '1px solid rgba(197, 160, 89, 0.2)', paddingTop: 14 }}>
@@ -368,12 +368,12 @@ export default function MobileAppPromoSection({
                     border: '1px solid rgba(52,211,153,0.3)',
                   }}
                 >
-                  Health Connect Engine
+                  Coming Soon
                 </span>
               </div>
 
               <p style={{ margin: 0, fontSize: 13.5, color: '#CBD5E1', lineHeight: 1.55 }}>
-                Integrates with Android Health Connect to ingest Samsung Health, Google Fit, Oura, Garmin, and Wear OS biometrics. Background WorkManager coordinates periodic telemetry pushes with battery-optimized scheduling.
+                Install Forge Athletic directly to your Android Home Screen via Chrome today for full offline workout logging, local 33-point posture screening, and Form Lab uploads. A dedicated Google Play companion is planned post-launch.
               </p>
 
               <div style={{ display: 'grid', gap: 8, borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: 14 }}>
@@ -487,7 +487,7 @@ export default function MobileAppPromoSection({
                 Universal Web &amp; Progressive Web App (PWA) Access
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--gray)' }}>
-                All workout plans, video consults, nutrition logs, and synchronized telemetry stats are readable and interactive in any web browser or installed PWA. Real-time background telemetry sync is powered via our native iOS and Android apps.
+                All workout plans, 33-point camera posture checks, Coach Gordon’s real voice cues, and Form Lab video reviews run directly in any modern mobile or desktop browser—or installed on your Home Screen as a PWA.
               </div>
             </div>
           </div>

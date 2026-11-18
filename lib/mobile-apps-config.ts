@@ -34,10 +34,10 @@ export interface MobileMarketingConfig {
 }
 
 export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
-  headline: 'CONTINUOUS BIOMETRIC TELEMETRY & IN-GYM EXECUTION',
-  subheadline: 'Instant Progressive Web App · iOS & Android Companion Apps Coming Soon',
+  headline: 'INSTALLABLE PROGRESSIVE WEB APP & TRAINING COMPANION',
+  subheadline: 'Live Today as a Zero-Download PWA · Native iOS & Android Companions Coming Soon',
   description:
-    'Experience seamless 24/7 background biometric telemetry synchronization with Apple Health and Android Health Connect, real-time auditory cadence pacing, offline workout tracking, and 1:1 telestrator consultation studios on your mobile device.',
+    'Install Forge Athletic directly to your iPhone or Android Home Screen today for local 33-point camera posture checks, Coach Gordon’s real voice pacing, offline workout logging, and adaptive NASM OPT™ sessions.',
   ios: {
     platform: 'ios',
     storeName: 'Apple App Store',
@@ -46,13 +46,13 @@ export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
     url: process.env.NEXT_PUBLIC_APP_STORE_URL || 'https://apps.apple.com/app/forge-athletic/id0000000000',
     minVersion: 'iOS 16.0+',
     badgeText: 'iOS Companion · Coming Soon',
-    tagline: 'Native HealthKit Background Delivery & Apple Watch Sync',
+    tagline: 'Native iOS Companion (Planned Release)',
     isPlaceholder: true,
     keyFeatures: [
-      '24/7 Native Apple HealthKit background delivery',
-      'Apple Watch heart rate and HRV rMSSD synchronization',
-      'Offline in-gym set logging with instant cloud catchup',
-      'Real-time auditory cadences & Taptic Engine haptic pulses',
+      'Full workout tracking and NASM OPT™ phase progression',
+      'Local on-device 33-point camera posture & readiness checks',
+      'Offline in-gym set logging with automatic sync',
+      'Coach Gordon’s real voice tempo and rest pacing',
     ],
   },
   android: {
@@ -61,15 +61,15 @@ export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
     name: 'Forge Athletic for Android',
     bundleId: 'com.forgeathletic.app',
     url: process.env.NEXT_PUBLIC_PLAY_STORE_URL || 'https://play.google.com/store/apps/details?id=com.forgeathletic.app',
-    minVersion: 'Android 10.0+ (Health Connect)',
+    minVersion: 'Android 10.0+',
     badgeText: 'Android Companion · Coming Soon',
-    tagline: 'Android Health Connect & Wear OS Telemetry Stream',
+    tagline: 'Native Android Companion (Planned Release)',
     isPlaceholder: true,
     keyFeatures: [
-      'Automated Android Health Connect background sync',
-      'Wear OS and Samsung Galaxy Watch telemetry ingestion',
-      'Offline in-gym set logging with instant cloud catchup',
-      '3D AI movement scanner & live WebRTC video consultation studio',
+      'Full workout tracking and NASM OPT™ phase progression',
+      'Local on-device 33-point camera posture & readiness checks',
+      'Offline in-gym set logging with automatic sync',
+      'Async Form Lab video capture & direct coach messaging',
     ],
   },
   pwa: {
@@ -85,34 +85,34 @@ export const MOBILE_APPS_CONFIG: MobileMarketingConfig = {
     keyFeatures: [
       'Instant Home Screen installation on iOS Safari & Android Chrome',
       'Full offline set, rep, weight, and RPE tracking with auto-sync',
-      'Tactile Barbell Plate Calculator & floating rest timer dock',
-      'Real-time visual & auditory NASM OPT™ tempo cadence HUD',
+      'Local in-browser 33-point MediaPipe posture & readiness screening',
+      'Coach Gordon’s real voice tempo, rest cues & 10-second joint regressions',
     ],
   },
   highlights: [
     {
       icon: 'radio',
-      title: 'Background Telemetry Sync',
+      title: 'Zero-Upload Camera Screening',
       description:
-        'Continuous automatic synchronization of Resting Heart Rate, HRV rMSSD, sleep stages, and active calorie burn via native Apple HealthKit and Android Health Connect.',
+        'Run 33-point posture checks, overhead squat screens, and 30-second readiness checks locally in your mobile browser with zero cloud video uploads.',
     },
     {
       icon: 'lightning',
       title: 'Offline Gym Logging',
       description:
-        'Log sets, reps, tempos, and RPE even with zero cellular signal in basement hotel gyms. Syncs effortlessly when reconnected.',
+        'Log sets, reps, tempos, and RPE even with weak cellular signal in apartment or hotel gyms. Syncs automatically when reconnected.',
     },
     {
       icon: 'music',
-      title: 'Auditory Cadence & Haptics',
+      title: 'Real Voice Pacing',
       description:
-        'In-gym Cadence Pulse HUD and synthesized tempo cadences matching NASM OPT phases (4-2-1, 2-0-2, 1-1-1) with native Taptic Engine physical feedback.',
+        'Hands-free tempo counts, pre-workout briefings, and rest cues recorded in Coach Gordon’s real voice so your phone stays propped across the room.',
     },
     {
       icon: 'video-studio',
-      title: '1:1 Video Telestrator Studio',
+      title: 'Async Form Lab Reviews',
       description:
-        'High-definition WebRTC video consults with live coach telestrator drawing, slow-motion movement replay, and automated SOAP notes.',
+        'Capture guided 45-degree lift clips directly from your phone for frame-by-frame coaching feedback from Coach Gordon.',
     },
   ],
 }

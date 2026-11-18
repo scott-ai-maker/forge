@@ -3,7 +3,6 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import ClientOutcomesShowcase from '@/components/marketing/ClientOutcomesShowcase'
 import { COACH_GORDON_TRUST_PROFILE } from '@/lib/landingSocialProof'
 
 export default function CoachAuthoritySection() {
@@ -124,11 +123,6 @@ export default function CoachAuthoritySection() {
             </div>
           </details>
         </div>
-      </div>
-
-      {/* 3-Column Everyday Client Outcome Cards */}
-      <div className="mt-8 border-t border-white/10 pt-4">
-        <ClientOutcomesShowcase />
       </div>
     </section>
   )

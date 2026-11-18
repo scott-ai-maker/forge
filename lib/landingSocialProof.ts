@@ -180,9 +180,9 @@ export const ECOSYSTEM_PILLARS: ReadonlyArray<EcosystemPillar> = [
           'Calorie and macro targets that adapt automatically as you move from Stabilization to Strength phases.',
       },
       {
-        title: 'Optional Apple Watch Companion & Giftable Partner Pass',
+        title: 'Giftable Founding Partner Pass',
         description:
-          'Optional wrist app for hands-free camera remote triggers, silent haptic tempo cues, and Apple Health ring sync—plus 1 free 30-day Founding Partner Pass to share with a friend or spouse.',
+          'Founding Cohort members receive 1 free 30-day Founding Partner Pass to share with a friend or spouse—all running directly in any mobile or desktop browser.',
       },
     ],
   },
@@ -334,10 +334,10 @@ export const LANDING_FAQ_ITEMS: ReadonlyArray<LandingFaqItem> = [
       'You never deal with an outsourced support desk or generic chatbot wall. Core Lab includes direct Email access to Coach Gordon (48-hour response window), Plus includes Priority Email access (24-hour business-day response), and Coach Support unlocks Coach Gordon’s Direct SMS Text Line and Priority In-App Chat (24-hour SLA). Whenever you reach out, your latest 33-point posture deltas, readiness scores, and workout logs are attached automatically so he has full context.',
   },
   {
-    id: 'equipment-and-watch',
-    question: 'Do I need a gym, weights, or an Apple Watch?',
+    id: 'equipment-needed',
+    question: 'Do I need a gym, weights, or special equipment?',
     answer:
-      'No special hardware or gym membership is required. Every posture scan, Desk Ergonomics Audit, and 30-second Camera Readiness Check runs on your phone camera with zero sensors or tripods. You can switch between Bodyweight Only, Home Dumbbells, Apartment Gym, and Hotel Travel at any time while keeping your 5-Phase NASM progression intact. The Apple Watch app is completely optional—adding wrist camera remote triggers, silent haptic tempo cues, and Apple Health sync if you wear one.',
+      'No special hardware or gym membership is required. Every 33-point posture check, Desk Ergonomics Audit, and 30-second Camera Readiness Check runs locally in your phone or laptop browser with zero cloud video uploads, sensors, or tripods. You can switch between Bodyweight Only, Home Dumbbells, Apartment Gym, and Hotel Travel at any time while keeping your 5-Phase NASM OPT™ progression intact.',
   },
   {
     id: 'lifetime-rate-lock-upgrades',

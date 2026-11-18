@@ -134,7 +134,7 @@ describe('Commercial Retainers & Tier 3 Architecture Enforcements', () => {
 })
 
 describe('Public Funnel & Architecture', () => {
-  const homePageSource = fs.readFileSync(path.resolve(process.cwd(), 'app/page.tsx'), 'utf-8')
+  const homePageSource = fs.readFileSync(path.resolve(process.cwd(), 'components/marketing/LiveLandingHome.tsx'), 'utf-8')
   const packagesStudioSource = fs.readFileSync(path.resolve(process.cwd(), 'components/packages/PackagesStudioClient.tsx'), 'utf-8')
   const corporatePageSource = fs.readFileSync(path.resolve(process.cwd(), 'app/corporate/page.tsx'), 'utf-8')
   const asyncCoachingSource = fs.readFileSync(path.resolve(process.cwd(), 'app/async-coaching/page.tsx'), 'utf-8')

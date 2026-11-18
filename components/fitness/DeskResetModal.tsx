@@ -9,7 +9,7 @@ import {
   POSTURE_PROFILE_EVENT,
   recordDeskResetCompletedOnDate,
 } from '@/lib/posture-profile-state'
-import { playForgeTactileTone, useSfxMuted } from '@/lib/sfx-audio'
+import { useSfxMuted } from '@/lib/sfx-audio'
 import { playCoachStaticCue } from '@/src/lib/audio/coachVoiceEngine'
 import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 
@@ -129,7 +129,6 @@ export function DeskResetGuidedPlayer({
     setCompleted(true)
     if (!completionFiredRef.current) {
       completionFiredRef.current = true
-      playForgeTactileTone('success')
       if (!sandboxMode) {
         recordDeskResetCompletedOnDate()
         const totalDurationSec = drills.reduce((acc, d) => acc + d.durationSec, 0)
@@ -188,7 +187,7 @@ export function DeskResetGuidedPlayer({
               playCoachStaticCue('desk_reset_transition', { forceUnlockVoiceOnTap: true })
             }
           }}
-          aria-label="Desk reset audio cues"
+          aria-label="Coach Gordon voice cues"
           aria-pressed={!sfxMuted}
           className={`forge-tactile-press inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border px-3 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0D] ${
             sfxMuted
@@ -201,7 +200,7 @@ export function DeskResetGuidedPlayer({
           ) : (
             <Volume2 size={13} strokeWidth={1.75} className="text-emerald-300" />
           )}
-          {sfxMuted ? 'SFX MUTED' : 'SFX LIVE'}
+          {sfxMuted ? 'Voice Off' : 'Voice On'}
         </button>
       </div>
 

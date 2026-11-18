@@ -1,26 +1,23 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import MobileAppPromoSection from '@/components/marketing/MobileAppPromoSection'
-import BlackFridayShowcaseSection from '@/components/marketing/BlackFridayShowcaseSection'
 import AppSneakPeekShowcase from '@/components/marketing/AppSneakPeekShowcase'
 import EverydayMomentsStrip from '@/components/marketing/EverydayMomentsStrip'
-import CompleteFeatureEcosystem from '@/components/marketing/CompleteFeatureEcosystem'
-import CoachAuthoritySection from '@/components/marketing/CoachAuthoritySection'
 import LandingFaqAccordion from '@/components/marketing/LandingFaqAccordion'
-import LandingHeaderSfxToggle from '@/components/marketing/LandingHeaderSfxToggle'
 import FoundingRateLockPricingGrid from '@/components/packages/FoundingRateLockPricingGrid'
 import { COACH_GORDON_TRUST_PROFILE } from '@/lib/landingSocialProof'
+import { HOLIDAY_DEAL_PROMO } from '@/lib/launch-config'
 
 const NAV_ANCHORS = [
-  { href: '#sneak-peek', label: 'Sneak Peek' },
-  { href: '#features', label: 'Features' },
   { href: '#how-it-works', label: 'How It Works' },
-  { href: '#coach', label: 'Coach' },
+  { href: '#movement-lab', label: 'Movement Lab' },
   { href: '#pricing', label: 'Pricing' },
   { href: '#faq', label: 'FAQ' },
 ] as const
 
-export default function FullMarketingHome({ isPreview = false }: { isPreview?: boolean }) {
+/**
+ * Streamlined 5-part live marketing homepage shared by `/` (post-launch / preview) and `/preview`.
+ */
+export default function LiveLandingHome({ isPreview = false }: { isPreview?: boolean }) {
   return (
     <main className="foundation-home forge-marketing" id="main-content">
       {isPreview && (
@@ -32,25 +29,23 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
             padding: '10px 16px',
             fontSize: '13px',
             textAlign: 'center',
-            fontFamily: 'var(--font-telemetry)',
           }}
         >
-          <strong>INTERNAL PREVIEW:</strong> Viewing full unmasked site. Public visitors currently
-          see the Founding Cohort Pre-Launch experience until Monday, Jan 4, 2027 at 6:00 AM EST.
+          <strong>Internal Preview:</strong> Viewing full live homepage. Public visitors currently
+          see the Founding Cohort pre-launch pass until Monday, Jan 4, 2027 at 6:00 AM EST.
         </div>
       )}
 
+      {/* 1. TOP NAV */}
       <header className="forge-home-header">
         <Link className="forge-home-brand" href="/" aria-label="Forge Athletic home">
-          <Image
-            src="/images/brand/forge-crest-mark.png"
-            alt=""
-            width={48}
-            height={48}
-          />
+          <Image src="/images/brand/forge-crest-mark.png" alt="" width={44} height={44} />
           <span>Forge Athletic</span>
         </Link>
-        <nav aria-label="Primary landing page sections and account" className="flex flex-wrap items-center gap-3">
+        <nav
+          aria-label="Primary landing page sections and account"
+          className="flex flex-wrap items-center gap-3"
+        >
           {NAV_ANCHORS.map(anchor => (
             <a
               key={anchor.href}
@@ -60,15 +55,14 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
               {anchor.label}
             </a>
           ))}
-          <LandingHeaderSfxToggle />
-          <Link href="/auth/login">Log in</Link>
+          <Link href="/auth/login">Member Sign In</Link>
           <Link className="forge-header-cta" href="/auth/signup">
-            Get started
+            Claim Founding Pass
           </Link>
         </nav>
       </header>
 
-      {/* Mobile / Tablet Anchor Navigation Strip */}
+      {/* Mobile Anchor Strip */}
       <nav
         aria-label="Mobile section navigation"
         className="mx-auto mb-4 flex max-w-[1160px] items-center gap-2 overflow-x-auto px-4 py-1 text-xs font-semibold text-zinc-300 lg:hidden"
@@ -85,43 +79,48 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
         ))}
       </nav>
 
+      {/* 2. HERO + FOUNDING COHORT PASS */}
       <section className="forge-hero" aria-labelledby="forge-hero-title">
         <div className="forge-hero-copy">
           <p className="forge-eyebrow">
             <span />
-            FOUNDING COHORT (50 SPOTS) · OPENS MONDAY, JAN 4, 2027 AT 6:00 AM EST
+            Founding Cohort (50 Spots) · Code {HOLIDAY_DEAL_PROMO.code} (25% Rate Lock)
           </p>
           <h1 id="forge-hero-title">
             Start 2027 with joint-first precision—not a 3-week resolution.
           </h1>
           <p className="forge-hero-description">
-            A real NASM-certified personal trainer at your side—combining 33-point phone camera
-            posture screening, Coach Gordon’s real voice pacing every rep, and direct email or
-            text access whenever you want human eyes on your training.
+            NASM-certified human coaching paired with local in-browser 33-point phone camera posture
+            screening, adaptive 5-Phase OPT™ workouts, and Coach Gordon’s real voice pacing every
+            session.
           </p>
           <div className="forge-hero-actions">
             <Link className="forge-primary-link" href="/auth/signup">
               Claim Your Founding Member Pass →
             </Link>
-            <a className="forge-secondary-link" href="#sneak-peek">
-              Explore Sneak Peek <span aria-hidden="true">→</span>
+            <a className="forge-secondary-link" href="#movement-lab">
+              Try Movement Lab <span aria-hidden="true">→</span>
             </a>
           </div>
           <p className="mt-3 max-w-xl text-xs leading-relaxed text-zinc-400">
-            Includes your Founding Member Continuous Tier Rate Lock, a complimentary 1-on-1
-            kickoff movement screening with Coach Gordon, and 1 free 30-day Founding
-            Partner Pass to gift a spouse or friend.
+            Use code <strong>{HOLIDAY_DEAL_PROMO.code}</strong> for your 25% Founding Continuous
+            Tier Rate Lock, a complimentary 1-on-1 kickoff movement screening with Coach Gordon, and
+            1 free 30-day Founding Partner Pass.
           </p>
           <p className="forge-hero-proof">
             {COACH_GORDON_TRUST_PROFILE.verificationBadge} <span>·</span> Prior ACE-CPT (2008–2021){' '}
-            <span>·</span> ASTI CPR/AED · B.S. IT
+            <span>·</span> ASTI CPR/AED ·{' '}
+            <Link href="/credentials" className="text-amber-300 underline-offset-4 hover:underline">
+              Verify Credentials
+            </Link>
           </p>
         </div>
+
         <div className="forge-hero-showcase">
           <div className="forge-hero-image-wrapper">
             <Image
               src="/images/hero-personal-coaching.jpg"
-              alt="Coach Gordon coaching an everyday client through dumbbell goblet squat form during a personalized training session"
+              alt="Coach Gordon guiding controlled dumbbell goblet squat alignment during a personalized training session"
               width={680}
               height={510}
               loading="eager"
@@ -151,42 +150,35 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
         </div>
       </section>
 
-      <BlackFridayShowcaseSection />
-
+      {/* 3. SINGLE FOCUSED INTERACTIVE DEMO (#movement-lab) */}
       <div className="px-4 sm:px-6">
         <AppSneakPeekShowcase />
       </div>
 
+      {/* 4. HOW IT FITS REAL LIFE (#how-it-works) */}
       <div className="px-4 sm:px-6">
         <EverydayMomentsStrip />
       </div>
 
-      <div className="px-4 sm:px-6">
-        <CompleteFeatureEcosystem />
-      </div>
-
-      <div className="px-4 sm:px-6">
-        <CoachAuthoritySection />
-      </div>
-
+      {/* 5. MEMBERSHIP TIERS SUMMARY (#pricing) + TIGHT FAQ (#faq) + FOOTER */}
       <section
         className="forge-pricing-section scroll-mt-24"
         id="pricing"
         aria-labelledby="forge-pricing-title"
       >
         <div className="forge-section-intro">
-          <p className="forge-eyebrow">Founding Member Lifetime Rate Lock</p>
-          <h2 id="forge-pricing-title">Lock in your Founding Member rate permanently.</h2>
+          <p className="forge-eyebrow">Founding Member Continuous Tier Rate Lock</p>
+          <h2 id="forge-pricing-title">Three clear month-to-month tiers.</h2>
           <p>
-            Post-launch rates apply after our 50-spot Founding Cohort fills. Your monthly rate stays
-            locked for life while active.
+            Lock in 25% off your selected monthly tier with code {HOLIDAY_DEAL_PROMO.code} for as
+            long as continuous active enrollment on that tier is maintained.
           </p>
         </div>
 
         <FoundingRateLockPricingGrid mode="live" />
 
         <p className="forge-billing-note">
-          Secure checkout. Includes 1 free 30-day Founding Partner Pass. Cancel recurring
+          Secure Stripe checkout. Includes 1 free 30-day Founding Partner Pass. Cancel recurring
           memberships at any time.
         </p>
       </section>
@@ -195,22 +187,22 @@ export default function FullMarketingHome({ isPreview = false }: { isPreview?: b
         <LandingFaqAccordion />
       </div>
 
-      <MobileAppPromoSection />
-
       <footer className="forge-home-footer">
         <Link href="/" aria-label="Forge Athletic home">
           Forge Athletic
         </Link>
         <p>Built From The Ground Up. Precision Science For Real Lives.</p>
         <nav aria-label="Footer">
-          <Link href="/packages">Memberships</Link>
+          <Link href="/packages">Pricing</Link>
+          <Link href="/audit">Movement Screen</Link>
+          <Link href="/apply">Apply</Link>
           <Link href="/credentials">Credentials</Link>
-          <Link href="/apps">Mobile Apps &amp; PWA</Link>
-          <Link href="/#mobile-apps">iOS &amp; Android</Link>
-          <Link href="/auth/login">Log in</Link>
-          <Link href="/auth/signup">Create account</Link>
+          <Link href="/apps">PWA Guide</Link>
+          <Link href="/auth/login">Member Sign In</Link>
           <Link href="/privacy">Privacy</Link>
+          <Link href="/health-privacy">Health Privacy</Link>
           <Link href="/terms">Terms</Link>
+          <Link href="/accessibility">Accessibility</Link>
         </nav>
       </footer>
     </main>

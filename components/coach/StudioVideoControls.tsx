@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
 import ForgeIcon from '@/components/ui/ForgeIcon'
-import { isSfxMuted, playForgeTactileTone, useSfxMuted } from '@/lib/sfx-audio'
 import {
   STUDIO_BACKGROUND_MODES,
   STUDIO_BACKGROUND_MODE_LIST,
@@ -18,9 +17,7 @@ import type { StudioVideoPipelineController } from '@/hooks/useStudioVideoPipeli
 import { useNativeStudioDialog } from './useNativeStudioDialog'
 
 function triggerStudioTick() {
-  if (!isSfxMuted()) {
-    playForgeTactileTone('tick')
-  }
+  // Synthetic UI button click SFX removed
 }
 
 /**
@@ -1016,7 +1013,6 @@ export function StudioGreenRoomPreview({
 }: StudioGreenRoomPreviewProps) {
   const greenRoomDialogRef = useRef<HTMLDialogElement | null>(null)
   const previewVideoRef = useRef<HTMLVideoElement | null>(null)
-  const { sfxMuted } = useSfxMuted()
 
   useNativeStudioDialog(greenRoomDialogRef, isOpen, onJoinStudio)
 
@@ -1120,19 +1116,6 @@ export function StudioGreenRoomPreview({
               {pipeline.lightingPreset !== 'raw'
                 ? `HD · Studio LUT Active (${pipeline.captureResolutionLabel})`
                 : `${pipeline.captureResolutionLabel} · 2.5 Mbps HD Ready`}
-            </span>
-            <span
-              style={{
-                fontSize: 10.5,
-                fontWeight: 700,
-                padding: '5px 11px',
-                borderRadius: 999,
-                background: '#181B22',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                color: '#A1A1AA',
-              }}
-            >
-              UI SFX: {sfxMuted ? 'Muted' : 'Active'}
             </span>
           </div>
         </div>

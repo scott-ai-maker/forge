@@ -45,8 +45,8 @@ describe('Studio Video Pipeline & Controls Architectural Invariants', () => {
     expect(pipelineSource).toContain('localCtx.close()')
   })
 
-  it('respects global SFX MUTED rules across StudioVideoControls and UnifiedLiveStudioHud', () => {
-    expect(controlsSource).toContain('isSfxMuted()')
+  it('keeps synthetic UI click SFX disabled in StudioVideoControls while respecting mute in UnifiedLiveStudioHud', () => {
+    expect(controlsSource).not.toContain('playForgeTactileTone')
     expect(unifiedHudSource).toContain('if (isSfxMuted()) return')
   })
 

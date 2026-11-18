@@ -16,7 +16,6 @@ import {
   POSTURE_PROFILE_EVENT,
   recordDailyReadinessAndComfort,
 } from '@/lib/posture-profile-state'
-import { playForgeTactileTone } from '@/lib/sfx-audio'
 import { trackEvent } from '@/src/lib/telemetry/telemetryClient'
 import {
   dispatchSafetyFlagTelemetry,
@@ -116,7 +115,6 @@ export default function JointComfortScoreStrip() {
     }
 
     setSafetyOverride(null)
-    playForgeTactileTone('success')
     window.setTimeout(() => {
       setJustLogged(false)
       setExpanded(false)
@@ -195,7 +193,6 @@ export default function JointComfortScoreStrip() {
                         aria-pressed={selected}
                         onClick={() => {
                           item.onChange(step.points)
-                          playForgeTactileTone('tick')
                         }}
                         className={`forge-tactile-press flex min-h-[44px] flex-col items-center justify-center rounded-xl border text-center transition-colors duration-150 ${
                           selected

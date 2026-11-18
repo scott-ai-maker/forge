@@ -35,7 +35,7 @@ describe('MOBILE_APPS_CONFIG', () => {
   it('includes key mobile marketing highlights', () => {
     expect(MOBILE_APPS_CONFIG.highlights.length).toBeGreaterThanOrEqual(4)
     const titles = MOBILE_APPS_CONFIG.highlights.map(h => h.title)
-    expect(titles).toContain('Background Telemetry Sync')
+    expect(titles).toContain('Zero-Upload Camera Screening')
     expect(titles).toContain('Offline Gym Logging')
   })
 

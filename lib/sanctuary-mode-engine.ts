@@ -315,22 +315,22 @@ export function getDistractionInterceptionCue(
 ): SanctuaryInterventionCue {
   if (distractionCount <= 1) {
     return {
-      headline: 'SANCTUARY MODE // FOCUS RESTORED',
-      coachMessage: `Leave notifications outside. Your nervous system needs this rest period to resynthesize ATP-CP before ${exerciseName}.`,
+      headline: 'Focus Restored',
+      coachMessage: `Leave notifications outside. Your nervous system needs this rest period to recover before ${exerciseName}.`,
       voiceCue: 'Focus restored. Hands on the bar, breathe through the nose.',
       suggestedAction: 'Take 3 down-regulation breaths',
     }
   } else if (distractionCount === 2) {
     return {
-      headline: 'SANCTUARY ALERT // PROTECT YOUR FOCUS',
-      coachMessage: 'The training zone is where champions adapt. Losing focus between sets elevates sympathetic strain and reduces power output. Dial back in.',
+      headline: 'Protect Your Focus',
+      coachMessage: 'Staying dialed in between sets protects rep quality and keeps your pacing steady. Lock back in.',
       voiceCue: 'Lock back in. Breathe through your nose.',
       suggestedAction: 'Resume box breathing',
     }
   } else {
     return {
-      headline: 'COACH GORDON // EYES ON THE WEIGHTS',
-      coachMessage: 'We do not sell your attention; we build your body. Finish this session with zero more screen switches.',
+      headline: 'Coach Gordon: Eyes on the Weights',
+      coachMessage: 'Finish this session with zero more screen switches—one controlled rep at a time.',
       voiceCue: 'Own this set. Complete focus.',
       suggestedAction: 'Commit to 100% focus',
     }

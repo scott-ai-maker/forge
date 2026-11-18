@@ -3,7 +3,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
 import { Check, Copy, Mail, MessageSquare, RefreshCw, Send, Share2, ShieldCheck, X } from 'lucide-react'
 import { buildPartnerPassShareChannels, usePartnerPass } from '@/lib/partner-pass'
-import { playForgeTactileTone } from '@/lib/sfx-audio'
 
 export interface PartnerPassModalProps {
   open: boolean
@@ -58,7 +57,6 @@ export default function PartnerPassModal({ open, onClose, memberName }: PartnerP
       document.execCommand('copy')
       document.body.removeChild(textarea)
     }
-    playForgeTactileTone('success')
     setCopied(true)
     markSent()
     window.setTimeout(() => setCopied(false), 2000)
@@ -83,7 +81,6 @@ export default function PartnerPassModal({ open, onClose, memberName }: PartnerP
     const trimmed = directEmail.trim()
     if (!trimmed || !trimmed.includes('@')) return
     markSent(trimmed)
-    playForgeTactileTone('success')
     setDirectSentBanner(`Partner pass dispatched to ${trimmed}`)
     setDirectEmail('')
     window.location.href = `mailto:${encodeURIComponent(trimmed)}?subject=${encodeURIComponent(channels.subject)}&body=${encodeURIComponent(channels.message)}`
@@ -93,7 +90,6 @@ export default function PartnerPassModal({ open, onClose, memberName }: PartnerP
     setRegenerating(true)
     setDirectSentBanner(null)
     await revokeAndRegenerate()
-    playForgeTactileTone('cue')
     setRegenerating(false)
   }
 

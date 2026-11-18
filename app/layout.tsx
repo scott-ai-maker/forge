@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     default: 'Forge Athletic | Online Personal Training & 3D Movement Screening',
     template: '%s | Forge Athletic',
   },
-  description: 'Precision sports science and online personal training for real lives. Evidence-based NASM OPT™ 5-phase periodization, computer-vision 3D movement screening, and biometric telemetry.',
+  description: 'Precision sports science and online personal training for real lives. Evidence-based NASM OPT™ 5-phase periodization, in-browser 33-point camera movement screening, and direct human coaching.',
   metadataBase: new URL(siteUrl),
   alternates: {
     canonical: './',
@@ -140,12 +140,11 @@ const forgeStructuredData = {
       },
       knowsAbout: [
         'NASM OPT 5-Phase Periodization',
-        'MediaPipe 33-Point 3D Postural & Kinetic Chain Screening',
-        'Overhead Squat Biomechanical Diagnostics',
-        'Closed-Loop Wearable Telemetry (Apple HealthKit & Health Connect)',
-        'Tanaka Stage Cardiorespiratory Conditioning',
-        'Ergogenic Chrono-Dosing & Travel Recalibration',
-        'Executive Physique & Athletic Longevity Architecture',
+        'In-Browser MediaPipe 33-Point Posture & Readiness Screening',
+        'Overhead Squat Movement Screening',
+        'Adaptive Home, Apartment Gym & Hotel Travel Training',
+        'Asynchronous Form Lab Video Coaching',
+        'Joint-First Strength & Longevity Coaching',
       ],
     },
     {

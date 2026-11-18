@@ -3,51 +3,10 @@
 import React, { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import CoachCardioVoiceoverPlayer from "@/components/fitness/CoachCardioVoiceoverPlayer"
-import CardioLogForm from "@/components/fitness/CardioLogForm"
 import BluetoothHeartRateMonitor from "@/components/fitness/BluetoothHeartRateMonitor"
-import CoachCardioPrescriber from "@/components/coach/CoachCardioPrescriber"
 import ActiveRestCardioPacerTray from "@/components/fitness/tracker/ActiveRestCardioPacerTray"
-import AppleWatchSimulatorModal from "@/components/fitness/watch/AppleWatchSimulatorModal"
-import type { WatchExerciseItemPayload } from "@/lib/native-healthkit-bridge"
 
 export const dynamic = "force-dynamic"
-
-const SUPERSET_STATIONS: WatchExerciseItemPayload[] = [
-  {
-    exerciseName: "Barbell Bench Press",
-    phaseLabel: "Phase 3 · Hypertrophy",
-    orderIndex: 0,
-    setNumber: 1,
-    totalSets: 3,
-    prescribedWeight: 185,
-    prescribedReps: 10,
-    repsDisplay: "10",
-    targetRpe: 8,
-    tempo: "2-0-2-0",
-    restSeconds: 0,
-    isCompound: true,
-    isSuperset: true,
-    supersetRole: "A",
-    supersetPartnerIndex: 1,
-  },
-  {
-    exerciseName: "Bent-Over Barbell Row",
-    phaseLabel: "Phase 3 · Hypertrophy",
-    orderIndex: 1,
-    setNumber: 1,
-    totalSets: 3,
-    prescribedWeight: 165,
-    prescribedReps: 10,
-    repsDisplay: "10",
-    targetRpe: 8,
-    tempo: "2-1-2-0",
-    restSeconds: 60,
-    isCompound: true,
-    isSuperset: true,
-    supersetRole: "B",
-    supersetPartnerIndex: 0,
-  },
-]
 
 function CardioStudioHarnessInner() {
   const searchParams = useSearchParams()
@@ -66,20 +25,10 @@ function CardioStudioHarnessInner() {
     calories: number
   } | null>(null)
   const [flowedToCoolDown, setFlowedToCoolDown] = useState(false)
-
-  // Suite scenario states
   const [btSyncedStats, setBtSyncedStats] = useState<{
     avgBpm: number
     maxBpm: number
     durationMins: number
-  } | null>(null)
-  const [isWatchOpen, setIsWatchOpen] = useState(false)
-  const [watchLoggedSet, setWatchLoggedSet] = useState<{
-    exerciseName: string
-    setIndex: number
-    reps: number
-    weightLbs: number
-    rpe: number
   } | null>(null)
 
   if (scenario === "suite") {
@@ -100,48 +49,13 @@ function CardioStudioHarnessInner() {
           <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div>
               <h1 style={{ margin: 0, fontSize: "clamp(20px, 4vw, 26px)", color: "#FFFFFF" }}>
-                Forge Athletic Cardio &amp; Companion Bridge Suite
+                Forge Athletic Cardio Pacer Test Suite
               </h1>
               <p style={{ margin: "4px 0 0", fontSize: 13, color: "#94A3B8" }}>
-                Tanaka Stage Conditioning, Web Bluetooth GATT Telemetry &amp; Apple Watch Companion
+                Conditioning Voiceover &amp; Heart Rate Pacing Harness
               </p>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setIsWatchOpen(true)}
-              style={{
-                minHeight: 44,
-                padding: "10px 16px",
-                background: "linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)",
-                color: "#0A0E18",
-                border: "none",
-                borderRadius: 6,
-                fontWeight: 800,
-                fontSize: 12.5,
-                cursor: "pointer",
-              }}
-            >
-              Launch Apple Watch Simulator
-            </button>
           </header>
-
-          {watchLoggedSet && (
-            <div
-              data-testid="watch-set-logged-banner"
-              role="status"
-              style={{
-                padding: "10px 14px",
-                background: "rgba(16, 185, 129, 0.14)",
-                border: "1px solid rgba(16, 185, 129, 0.45)",
-                borderRadius: 8,
-                color: "#34D399",
-                fontSize: 13,
-              }}
-            >
-              Watch Logged: {watchLoggedSet.exerciseName} · Set #{watchLoggedSet.setIndex} · {watchLoggedSet.reps} reps @ {watchLoggedSet.weightLbs} lbs (RPE {watchLoggedSet.rpe})
-            </div>
-          )}
 
           {btSyncedStats && (
             <div
@@ -166,43 +80,12 @@ function CardioStudioHarnessInner() {
             onSyncSessionStats={(stats) => setBtSyncedStats(stats)}
           />
 
-          <CardioLogForm
-            initialLogs={[]}
-            preferredUnits="imperial"
-            athleteAge={35}
-            athleteRestingHr={60}
-          />
-
           <ActiveRestCardioPacerTray
             exerciseName="Dumbbell Hammer Curl"
             elapsedRestSeconds={30}
             totalRestSeconds={60}
             restingHeartRateBpm={60}
             userAge={35}
-          />
-
-          <CoachCardioPrescriber
-            clientId="test-athlete-14"
-            clientName="Julian"
-            clientAge={35}
-          />
-
-          <AppleWatchSimulatorModal
-            isOpen={isWatchOpen}
-            onClose={() => setIsWatchOpen(false)}
-            exercises={SUPERSET_STATIONS}
-            activeExerciseIndex={0}
-            isSuperset={true}
-            supersetRole="A"
-            cardioProtocol={{
-              modality: "Zone 2 Aerobic Engine",
-              durationMins: 20,
-              targetZone: 2,
-              targetBpmMin: 132,
-              targetBpmMax: 148,
-              isCompleted: false,
-            }}
-            onSimulateSetLogged={(payload) => setWatchLoggedSet(payload)}
           />
         </div>
       </main>
@@ -250,7 +133,7 @@ function CardioStudioHarnessInner() {
           athleteWeightKg={82}
           athleteGender="male"
           initialModality="Treadmill Incline Walk"
-          clientNotes="Maintain nasal breathing and stay locked into Tanaka 184 ceiling."
+          clientNotes="Maintain nasal breathing and steady aerobic rhythm."
           onClose={() => setIsStudioOpen(false)}
           onFlowToCoolDown={() => {
             setFlowedToCoolDown(true)

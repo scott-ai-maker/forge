@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { clearOfflineQueue } from '@/lib/offline-sync-queue'
 import {
@@ -13,13 +13,11 @@ import {
   initTelemetryLifecycle,
   setTelemetryAuthContext,
 } from '@/src/lib/telemetry/telemetryClient'
-import TelemetryDiagnosticsDrawer from './TelemetryDiagnosticsDrawer'
 
-export const OPEN_TELEMETRY_DIAGNOSTICS_EVENT = 'forge:open-telemetry-diagnostics'
 const REHYDRATION_MIN_INTERVAL_MS = 5 * 60_000
 
 /**
- * Global client telemetry lifecycle bootstrapper & `?debug=telemetry` inspector host.
+ * Global client lifecycle bootstrapper.
  *
  * Responsibilities:
  * 1. Caches the active Supabase `access_token` synchronously in `telemetryClient` so iOS
@@ -29,10 +27,8 @@ const REHYDRATION_MIN_INTERVAL_MS = 5 * 60_000
  * 3. Rehydrates baseline posture scores, OPT™ phase/environment state, Desk Audit flags,
  *    and Joint Comfort history from `/api/telemetry` on launch to mitigate iOS 7-day
  *    script-writable storage eviction.
- * 4. Opens the Store-Launch Telemetry Diagnostic Drawer whenever `?debug=telemetry` is present.
  */
 export default function TelemetryBootstrap() {
-  const [drawerOpen, setDrawerOpen] = useState(false)
   const lastRehydratedAtRef = useRef<number>(0)
 
   const rehydrateFromServer = useCallback(async (force = false) => {
@@ -69,23 +65,6 @@ export default function TelemetryBootstrap() {
   }, [])
 
   useEffect(() => {
-    const checkDebugQueryParam = () => {
-      try {
-        const params = new URLSearchParams(window.location.search)
-        if (params.get('debug') === 'telemetry') {
-          setDrawerOpen(true)
-        }
-      } catch {
-        // Ignore malformed query string
-      }
-    }
-
-    checkDebugQueryParam()
-
-    const handleOpenDrawer = () => setDrawerOpen(true)
-    window.addEventListener('popstate', checkDebugQueryParam)
-    window.addEventListener(OPEN_TELEMETRY_DIAGNOSTICS_EVENT, handleOpenDrawer)
-
     let unsubscribeAuth: (() => void) | null = null
     try {
       const supabase = createClient()
@@ -130,27 +109,10 @@ export default function TelemetryBootstrap() {
     })
 
     return () => {
-      window.removeEventListener('popstate', checkDebugQueryParam)
-      window.removeEventListener(OPEN_TELEMETRY_DIAGNOSTICS_EVENT, handleOpenDrawer)
       unsubscribeAuth?.()
       cleanupLifecycle()
     }
   }, [rehydrateFromServer])
 
-  const handleCloseDrawer = useCallback(() => {
-    setDrawerOpen(false)
-    if (typeof window !== 'undefined') {
-      try {
-        const url = new URL(window.location.href)
-        if (url.searchParams.get('debug') === 'telemetry') {
-          url.searchParams.delete('debug')
-          window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
-        }
-      } catch {
-        // Ignore history state errors
-      }
-    }
-  }, [])
-
-  return <TelemetryDiagnosticsDrawer open={drawerOpen} onClose={handleCloseDrawer} />
+  return null
 }

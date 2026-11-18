@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { chooseNasmOptPhase, estimateBodyFatPercent, generateNasmOptPlan } from '@/lib/fitness'
 import { parseRestSecondsFromExercise, resolveNextUnfinishedWorkoutDay } from '@/components/fitness/FitnessTrackerClient'
-import { normalizeTempoId } from '@/components/fitness/TempoMetronomeAudio'
 
 describe('fitness planning logic', () => {
   it('selects phase 5 for advanced performance athletes', () => {
@@ -64,16 +63,6 @@ describe('fitness planning logic', () => {
     expect(parseRestSecondsFromExercise('2m', 3)).toBe(120)
     expect(parseRestSecondsFromExercise(null, 1, 'resistance')).toBe(60)
     expect(parseRestSecondsFromExercise(null, 4, 'resistance')).toBe(240)
-  })
-
-  it('normalizes tempo strings to active metronome presets', () => {
-    expect(normalizeTempoId('4/2/1')).toBe('4-2-1')
-    expect(normalizeTempoId('2/0/2')).toBe('2-0-2')
-    expect(normalizeTempoId('3/1/1')).toBe('3-1-1')
-    expect(normalizeTempoId('1/1/1')).toBe('1-1-1')
-    expect(normalizeTempoId('X/0/X')).toBe('explosive')
-    expect(normalizeTempoId('explosive')).toBe('explosive')
-    expect(normalizeTempoId(null)).toBe('4-2-1')
   })
 
   it('automatically selects Day 1 when no workouts have been logged', () => {

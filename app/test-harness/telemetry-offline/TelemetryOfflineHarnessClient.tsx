@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import OfflineTelemetryBadge from '@/components/ui/OfflineTelemetryBadge'
 import { useOfflineSyncManager } from '@/components/fitness/hooks/useOfflineSyncManager'
-import { OPEN_TELEMETRY_DIAGNOSTICS_EVENT } from '@/components/telemetry/TelemetryBootstrap'
 import {
   clearOfflineQueue,
   enqueueOfflineSet,
@@ -74,10 +73,6 @@ export default function TelemetryOfflineHarnessClient() {
     setHealth(getTelemetryHealth())
   }
 
-  const handleOpenDiagnostics = () => {
-    window.dispatchEvent(new CustomEvent(OPEN_TELEMETRY_DIAGNOSTICS_EVENT))
-  }
-
   return (
     <div
       data-testid="telemetry-offline-harness"
@@ -118,15 +113,6 @@ export default function TelemetryOfflineHarnessClient() {
           className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-cyan-200 hover:bg-cyan-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
         >
           Queue Joint Comfort Telemetry
-        </button>
-
-        <button
-          type="button"
-          data-testid="harness-open-diagnostics-btn"
-          onClick={handleOpenDiagnostics}
-          className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-zinc-100 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-        >
-          Open Diagnostics Inspector
         </button>
 
         <button

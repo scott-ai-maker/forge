@@ -95,7 +95,10 @@ describe('Feature #1 — Auth, HIPAA PAR-Q+ Modal & 3-Tier Founding Signup Contr
     expect(authFormSource).toContain('id="health-biometric-consent-checkbox"')
     expect(authFormSource).toContain('Standalone Consumer Health &amp; Biometric Data Consent:')
 
-    const homeSource = fs.readFileSync(path.join(REPO_ROOT, 'app/page.tsx'), 'utf8')
+    const liveHomeSource = fs.readFileSync(
+      path.join(REPO_ROOT, 'components/marketing/LiveLandingHome.tsx'),
+      'utf8'
+    )
     const splashSource = fs.readFileSync(
       path.join(REPO_ROOT, 'components/marketing/HolidayUnmaskingSplash.tsx'),
       'utf8'
@@ -105,7 +108,7 @@ describe('Feature #1 — Auth, HIPAA PAR-Q+ Modal & 3-Tier Founding Signup Contr
       'utf8'
     )
 
-    expect(homeSource).toContain('href="/health-privacy"')
+    expect(liveHomeSource).toContain('href="/health-privacy"')
     expect(splashSource).toContain('href="/health-privacy"')
     expect(healthPrivacySource).toContain('Google LLC (Gemini API)')
     expect(healthPrivacySource).not.toContain('Leonardo Interactive Pty Ltd')

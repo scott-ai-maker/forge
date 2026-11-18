@@ -6,13 +6,13 @@ import GaaIcon from '@/components/ui/GaaIcon'
 import { AppleLogoIcon, AndroidLogoIcon } from '@/components/marketing/AppStoreBadges'
 
 export const metadata: Metadata = {
-  title: 'Mobile Apps & PWA In-Gym Companions | Apple iOS, Android & Web | Forge Athletic',
+  title: 'Mobile Web App (PWA) & Training Companion | Forge Athletic',
   description:
-    'Download and install Forge Athletic mobile companions for Apple iOS (HealthKit), Android (Health Connect), and Progressive Web App (PWA). Full offline set logging, plate calculator, rest timers, and biometric telemetry.',
+    'Install the Forge Athletic Progressive Web App (PWA) on iPhone, Android, or desktop for local 33-point camera posture checks, Coach Gordon’s real voice pacing, and offline workout logging.',
   openGraph: {
-    title: 'Forge Athletic Mobile Apps & PWA Gym Companion',
+    title: 'Forge Athletic Mobile Web App (PWA) & Companion',
     description:
-      'Continuous biometric telemetry and in-gym tactical execution across Apple iOS, Android, and Progressive Web App.',
+      'Zero-download Progressive Web App with local 33-point camera posture screening, offline set logging, and NASM OPT™ training.',
     url: 'https://forge-athletic.app/apps',
     siteName: 'Forge Athletic',
     images: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
         url: '/images/mobile-apps-telemetry.jpg',
         width: 1200,
         height: 630,
-        alt: 'Forge Athletic Mobile Telemetry and Smartwatch HUD',
+        alt: 'Forge Athletic Mobile Training Companion',
       },
     ],
   },
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
 const appsStructuredData = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'Forge Athletic Gym Companion',
-  operatingSystem: 'iOS, Android, Web',
+  name: 'Forge Athletic Training Companion',
+  operatingSystem: 'Web, iOS Safari (PWA), Android Chrome (PWA)',
   applicationCategory: 'HealthApplication',
   offers: {
     '@type': 'Offer',
@@ -38,7 +38,7 @@ const appsStructuredData = {
     priceCurrency: 'USD',
   },
   description:
-    'Tactical training companion with offline set logging, barbell plate calculators, NASM tempo cadence guidance, and biometric telemetry for Forge Athletic members.',
+    'Progressive Web App training companion with local in-browser 33-point posture screening, offline set logging, NASM OPT™ environment switching, and Coach Gordon’s real voice pacing.',
   publisher: {
     '@type': 'Organization',
     name: 'Forge Athletic',
@@ -110,7 +110,7 @@ export default function AppsPage() {
             maxWidth: 900,
           }}
         >
-          IN-GYM EXECUTION &amp; <span style={{ color: 'var(--gold-lt)' }}>BIOMETRIC TELEMETRY</span>
+          MOBILE TRAINING <span style={{ color: 'var(--gold-lt)' }}>WITHOUT HARDWARE FRICTION</span>
         </h1>
 
         <p
@@ -122,7 +122,7 @@ export default function AppsPage() {
             margin: '0 auto 2rem',
           }}
         >
-          Whether on Apple iOS, Android, or installed instantly via our Progressive Web App (PWA), Forge Athletic provides seamless set logging, plate calculations, rest timers, and wearable telemetry sync.
+          Install Forge Athletic instantly to your iPhone or Android Home Screen as a Progressive Web App (PWA) for local 33-point camera posture checks, offline set logging, and Coach Gordon’s real voice pacing.
         </p>
 
         {/* Quick Platform Jump Anchors */}
@@ -145,7 +145,7 @@ export default function AppsPage() {
             }}
           >
             <AppleLogoIcon size={16} />
-            <span>Apple iOS (HealthKit)</span>
+            <span>iPhone &amp; iOS (PWA / Coming Soon)</span>
           </a>
 
           <a
@@ -166,7 +166,7 @@ export default function AppsPage() {
             }}
           >
             <span>⚡</span>
-            <span>Progressive Web App (Live)</span>
+            <span>Progressive Web App (Live Today)</span>
           </a>
 
           <a
@@ -187,7 +187,7 @@ export default function AppsPage() {
             }}
           >
             <AndroidLogoIcon size={16} color="#3DDC84" />
-            <span>Android (Health Connect)</span>
+            <span>Android (PWA / Coming Soon)</span>
           </a>
         </div>
       </section>
