@@ -90,9 +90,16 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       )
     }
-    const automaticTaxOption =
-      process.env.STRIPE_AUTOMATIC_TAX_ENABLED === 'true'
-        ? { automatic_tax: { enabled: true as const } }
+    const isAutomaticTaxEnabled = process.env.STRIPE_AUTOMATIC_TAX_ENABLED === 'true'
+    const automaticTaxOption = isAutomaticTaxEnabled
+      ? { automatic_tax: { enabled: true as const } }
+      : {}
+    const buildStripeCustomerOptions = (customerId: string | null) =>
+      customerId
+        ? {
+            customer: customerId,
+            ...(isAutomaticTaxEnabled ? { customer_update: { address: 'auto' as const } } : {}),
+          }
         : {}
     const legalTermsVersion = LEGAL_DOCUMENTS.terms_of_service.version
 
@@ -399,7 +406,7 @@ export async function POST(req: NextRequest) {
         const session = await stripe.checkout.sessions.create({
           mode: 'subscription',
           client_reference_id: userId,
-          ...(existingCustomerId ? { customer: existingCustomerId } : {}),
+          ...buildStripeCustomerOptions(existingCustomerId),
           ...automaticTaxOption,
           line_items: [
             {
@@ -488,7 +495,7 @@ export async function POST(req: NextRequest) {
         const session = await stripe.checkout.sessions.create({
           mode: 'payment',
           client_reference_id: userId,
-          ...(existingAddonCustomerId ? { customer: existingAddonCustomerId } : {}),
+          ...buildStripeCustomerOptions(existingAddonCustomerId),
           ...automaticTaxOption,
           line_items: [
             {
@@ -569,7 +576,7 @@ export async function POST(req: NextRequest) {
         session = await stripe.checkout.sessions.create({
           mode: 'payment',
           client_reference_id: userId,
-          ...(existingProductCustomerId ? { customer: existingProductCustomerId } : {}),
+          ...buildStripeCustomerOptions(existingProductCustomerId),
           ...automaticTaxOption,
           line_items: [
             {
@@ -921,7 +928,7 @@ export async function POST(req: NextRequest) {
       session = await stripe.checkout.sessions.create({
         mode: isPif ? 'payment' : 'subscription',
         client_reference_id: userId,
-        ...(existingPkgCustomerId ? { customer: existingPkgCustomerId } : {}),
+        ...buildStripeCustomerOptions(existingPkgCustomerId),
         ...automaticTaxOption,
         line_items: lineItems,
         ...(isPif
