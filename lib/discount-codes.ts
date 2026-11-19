@@ -109,3 +109,27 @@ export function calculateDiscountAmountCents(priceCents: number, discountType: D
 
   return Math.min(discountValue, priceCents)
 }
+
+/**
+ * Full-comp (`>= 100%` off) codes must never be open-ended public words: they must
+ * either be locked to a specific `restricted_client_id` OR carry an explicit finite
+ * `max_redemptions` cap.
+ */
+export function isFullCompDiscountSafelyScoped(
+  code: DiscountCodeRecord,
+  basePriceCents: number
+): boolean {
+  const isFullComp =
+    (code.discount_type === 'percent' && code.discount_value >= 100) ||
+    (basePriceCents > 0 && code.discount_type === 'fixed_amount' && code.discount_value >= basePriceCents)
+
+  if (!isFullComp) {
+    return true
+  }
+
+  const hasClientLock = Boolean(code.restricted_client_id && code.restricted_client_id.trim())
+  const hasFiniteRedemptionCap =
+    typeof code.max_redemptions === 'number' && Number.isInteger(code.max_redemptions) && code.max_redemptions > 0
+
+  return hasClientLock || hasFiniteRedemptionCap
+}

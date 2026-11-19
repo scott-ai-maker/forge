@@ -9,6 +9,7 @@ import {
   assertAuthorizedCoachProvisioning,
   isAuthorizedW2OrFounderCoachEmail,
 } from '@/lib/coach-w2-gatekeeper'
+import { isFullCompDiscountSafelyScoped, type DiscountCodeRecord } from '@/lib/discount-codes'
 import { trackMarketingEvent } from '@/lib/marketing-analytics'
 
 vi.mock('@/lib/supabase', () => ({
@@ -132,5 +133,29 @@ describe('Tier 4 & Tier 5 Security, Privacy & App Store Hardening (#41-#56)', ()
     )
     expect(analyticsSource).not.toContain('window.gtag')
     expect(() => trackMarketingEvent('test_event', { ok: true })).not.toThrow()
+  })
+
+  it('blocks unrestricted 100%-off promo codes while permitting client-bound or capped comp codes (#33)', () => {
+    const baseFullComp: DiscountCodeRecord = {
+      id: 'dc-1',
+      code: 'VIPDEMO',
+      description: 'Legacy demo pass',
+      discount_type: 'percent',
+      discount_value: 100,
+      is_active: true,
+      max_redemptions: null,
+      redemptions_count: 0,
+      starts_at: '2026-01-01T00:00:00Z',
+      expires_at: null,
+      applies_to_package_ids: null,
+      restricted_client_id: null,
+    }
+
+    expect(isFullCompDiscountSafelyScoped(baseFullComp, 29900)).toBe(false)
+    expect(
+      isFullCompDiscountSafelyScoped({ ...baseFullComp, restricted_client_id: 'client-uuid-1' }, 29900)
+    ).toBe(true)
+    expect(isFullCompDiscountSafelyScoped({ ...baseFullComp, max_redemptions: 1 }, 29900)).toBe(true)
+    expect(isFullCompDiscountSafelyScoped({ ...baseFullComp, discount_value: 25 }, 29900)).toBe(true)
   })
 })

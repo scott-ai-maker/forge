@@ -6,6 +6,7 @@ import {
   getBuiltInPromoCode,
   isDiscountCodeActive,
   isDiscountCodeEligibleForPackage,
+  isFullCompDiscountSafelyScoped,
   normalizeDiscountCode,
   type DiscountCodeRecord,
 } from '@/lib/discount-codes'
@@ -321,6 +322,17 @@ export async function POST(req: NextRequest) {
 
         if (!isDiscountCodeEligibleForPackage(discount, forgeMembership.id)) {
           return NextResponse.json({ error: 'This discount code does not apply to this membership' }, { status: 400 })
+        }
+
+        if (!isFullCompDiscountSafelyScoped(discount, membershipPrice.amountCents)) {
+          return NextResponse.json(
+            {
+              error:
+                'Full-complimentary discount codes must be assigned to a specific member account or have an explicit redemption cap.',
+              code: 'UNRESTRICTED_FULL_COMP_BLOCKED',
+            },
+            { status: 403 }
+          )
         }
 
         appliedDiscountCode = discount.code
@@ -663,6 +675,17 @@ export async function POST(req: NextRequest) {
 
       if (!isDiscountCodeEligibleForPackage(discount, packageId)) {
         return NextResponse.json({ error: 'This discount code does not apply to this package' }, { status: 400 })
+      }
+
+      if (!isFullCompDiscountSafelyScoped(discount, basePriceCents)) {
+        return NextResponse.json(
+          {
+            error:
+              'Full-complimentary discount codes must be assigned to a specific member account or have an explicit redemption cap.',
+            code: 'UNRESTRICTED_FULL_COMP_BLOCKED',
+          },
+          { status: 403 }
+        )
       }
 
       appliedDiscountCode = discount.code
