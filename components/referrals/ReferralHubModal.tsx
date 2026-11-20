@@ -81,8 +81,8 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
-          title: 'Forge Athletic VIP Invitation',
-          text: 'Here is an exclusive 30-Day VIP Pass + $20 Credit to train on Forge Athletic with me:',
+          title: 'Forge Athletic Partner Referral Pass',
+          text: 'Join me on Forge Athletic (#ForgePartner referral invite — I may earn a $20 credit if you become a paid member). Claim your 30-Day Extended Core Lab Free Trial Pass:',
           url: data.shareUrl,
         })
       } catch {
@@ -153,6 +153,11 @@ export default function ReferralHubModal({ isOpen, onClose }: ReferralHubModalPr
     <div
       role="dialog"
       aria-modal="true"
+      aria-label="Forge Athletic Referral Hub"
+      tabIndex={-1}
+      onKeyDown={e => {
+        if (e.key === 'Escape') onClose()
+      }}
       style={{
         position: 'fixed',
         inset: 0,

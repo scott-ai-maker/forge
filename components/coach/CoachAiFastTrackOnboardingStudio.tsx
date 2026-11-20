@@ -293,7 +293,7 @@ export default function CoachAiFastTrackOnboardingStudio({
             AI SCANNERS ➔ PERIODIZATION ➔ PROGRAM DESIGN CONTINUUM
           </h2>
           <p style={{ color: 'var(--gray)', fontSize: 13, margin: '6px 0 0', maxWidth: 880, lineHeight: 1.5 }}>
-            Exclusive dual-scanner flow: AI Posture &amp; OHSA Scanner + AI DEXA Body Comp Scanner. AI Coach Gordon synthesizes both scans to recommend 12-week OPT™ periodization and generate bespoke programs with integrated 4-phase CEx warmups in seconds.
+            Dual-estimator workflow: Postural Alignment &amp; OHSA Estimator + Visual &amp; Anthropometric Body Comp Estimator. Synthesizes movement and anthropometric inputs to recommend 12-week OPT™ periodization and draft programs with warmups for coach review.
           </p>
         </div>
 
@@ -521,7 +521,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                   Stage 3 Body Composition
                 </span>
                 <h3 style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 16, color: 'var(--white)', margin: 0, letterSpacing: '0.04em' }}>
-                  AI DEXA BODY COMP SCANNER
+                  VISUAL &amp; ANTHROPOMETRIC BODY COMP ESTIMATOR
                 </h3>
               </div>
             </div>
@@ -580,7 +580,7 @@ export default function CoachAiFastTrackOnboardingStudio({
                 cursor: 'pointer',
               }}
             >
-              {dexaScan ? 'Re-Run AI DEXA Scanner' : 'Launch AI DEXA Body Comp Scanner'}
+              {dexaScan ? 'Re-Run Body Comp Estimator' : 'Launch Body Comp Estimator'}
             </button>
             {!dexaScan && (
               <button

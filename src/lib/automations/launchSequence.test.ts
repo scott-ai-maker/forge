@@ -99,7 +99,7 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
       expect(launchEmail.text).toContain('https://forge-athletic.app/portal')
       expect(launchEmail.text).toMatch(/33-point camera diagnostics/i)
       expect(launchEmail.text).toMatch(/real voice guidance/i)
-      expect(launchEmail.text).toMatch(/direct Email\/Text access/i)
+      expect(launchEmail.text).toMatch(/Priority Email on Plus and Direct SMS on Coach Support/i)
       expect(launchEmail.text).not.toMatch(/Live Studio/i)
       expect(launchEmail.html).not.toMatch(/Live Studio/i)
       expect(launchEmail.previewText).not.toMatch(/Live Studio/i)
@@ -120,7 +120,8 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
       expect(rescueEmail.text).toContain('https://forge-athletic.app/portal')
       expect(rescueEmail.text).toMatch(/33-Point Camera Diagnostics/i)
       expect(rescueEmail.text).toMatch(/Real Voice Guidance/i)
-      expect(rescueEmail.text).toMatch(/Direct Email\/Text Access/i)
+      expect(rescueEmail.text).toMatch(/Priority Email/i)
+      expect(rescueEmail.text).toMatch(/Direct SMS/i)
       expect(rescueEmail.text).not.toMatch(/Live Studio/i)
       expect(rescueEmail.html).not.toMatch(/Live Studio/i)
       expect(rescueEmail.previewText).not.toMatch(/Live Studio/i)
@@ -139,7 +140,7 @@ describe('Launch, Rescue, Referral & Retention Email/SMS Automation Suite', () =
     if (rescueSms.channel === 'sms') {
       expect(rescueSms.to).toBe('+16175550199')
       expect(rescueSms.body).toBe(
-        'Forge Athletic: Hey Sam, still holding your Founding Member Pass + Lifetime Rate Lock before we release unclaimed spots to standby. Activate in 60s here: https://forge-athletic.app/portal Reply STOP to opt out'
+        'Forge Athletic: Hey Sam, still holding your Founding Member Pass + 25% Rate Lock (while continuously enrolled) before unclaimed passes release. Activate here: https://forge-athletic.app/portal Reply STOP to opt out'
       )
     }
 

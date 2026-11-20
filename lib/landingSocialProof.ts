@@ -246,7 +246,7 @@ export const FOUNDING_PRICING_CARDS: ReadonlyArray<LandingPricingTierCard> = [
     postLaunchPrice: '$49.00',
     billingUnit: '/mo',
     summary:
-      'Autonomous AI Foundation & Daily Posture Care—structured 5-Phase OPT™ workouts, camera posture diagnostics, Coach Gordon’s real voice cues, and direct email access (month-to-month, cancel anytime).',
+      'Autonomous AI Foundation & Daily Posture Care—structured 5-Phase OPT™ workouts, camera posture diagnostics, Coach Gordon’s real voice cues, and 1 complimentary onboarding Form Lab video diagnostic (month-to-month, cancel anytime).',
     highlights: [
       'Full 5-Phase NASM OPT™ Engine + 20m Express Mode',
       'Coach Gordon AI + Real Voice briefings, tempo pacing & mid-set regressions',
@@ -254,8 +254,7 @@ export const FOUNDING_PRICING_CARDS: ReadonlyArray<LandingPricingTierCard> = [
       '1 Saved Desk Ergonomics Audit profile + personalized 5-Min Desk Reset',
       '30-Second Camera Readiness Check (1 movement screen + auto warm-up injection)',
       'Single-session Environment & Travel workout swaps + 10s Joint Comfort tracking',
-      '1 Complimentary Form Lab onboarding video diagnostic',
-      'Direct Email access to Coach Gordon (48h response window)',
+      '1 Complimentary Form Lab onboarding video diagnostic (first paid cycle; self-guided thereafter)',
       '7-day free trial · $49/mo month-to-month billing',
     ],
     imageSrc: '/images/pillar-progress-telemetry.jpg',
@@ -275,7 +274,7 @@ export const FOUNDING_PRICING_CARDS: ReadonlyArray<LandingPricingTierCard> = [
       'Guided Hybrid Coaching & Monthly Video Reviews—monthly slow-motion Form Lab reviews from Coach Gordon, unlimited workstation audits, multi-day travel adaptation, and nutrition (month-to-month, cancel anytime).',
     leadIn: 'Everything in Core Lab, plus:',
     highlights: [
-      'Form Lab Video Reviews with slow-motion telestration from Coach Gordon',
+      '4 Form Lab Video Reviews / month with slow-motion telestration from Coach Gordon',
       'Unlimited Desk Ergonomics Audits (Home Office, Corporate Desk & Hotel Workstations)',
       'Full Dual-Screen Camera Readiness + multi-week joint stiffness trend alerts',
       'Multi-Day Travel Pass (rebuilds multi-day trip schedules around hotel gyms)',
@@ -331,7 +330,7 @@ export const LANDING_FAQ_ITEMS: ReadonlyArray<LandingFaqItem> = [
     id: 'reach-coach-gordon',
     question: 'How do I reach the real Coach Gordon?',
     answer:
-      'You never deal with an outsourced support desk or generic chatbot wall. Core Lab includes direct Email access to Coach Gordon (48-hour response window), Plus includes Priority Email access (24-hour business-day response), and Coach Support unlocks Coach Gordon’s Direct SMS Text Line and Priority In-App Chat (24-hour SLA). Whenever you reach out, your latest 33-point posture deltas, readiness scores, and workout logs are attached automatically so he has full context.',
+      'Core Lab is a self-guided platform that includes 1 complimentary onboarding Form Lab video diagnostic on your first paid cycle (plus automated safety escalation if a joint feels pinchy). Plus includes 4 monthly Form Lab reviews and Priority Email access (24-hour business-day response), and Coach Support unlocks Coach Gordon’s Direct SMS Text Line and Priority In-App Chat (24-hour SLA) with your posture deltas and workout logs attached automatically.',
   },
   {
     id: 'equipment-needed',

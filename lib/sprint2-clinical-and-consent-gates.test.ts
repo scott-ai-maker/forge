@@ -110,11 +110,11 @@ describe('Sprint 2 — Clinical Safety, Contraindications, Waivers & Dietetics F
       sex: 'female',
       age: 31,
       heightCm: 168,
-      weightKg: 68,
-      activityTier: 'moderately_active',
+      weightLbs: 150,
+      activityLevel: 'moderately_active',
       goal: 'fat_loss',
       medicalNotes: 'Second trimester pregnancy',
-    } as Parameters<typeof calculateEnergyExpenditure>[0] & { medicalNotes: string })
+    } as unknown as Parameters<typeof calculateEnergyExpenditure>[0])
     expect(prenatalEnergy.calorieDelta).toBe(0)
   })
 

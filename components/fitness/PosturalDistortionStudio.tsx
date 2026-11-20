@@ -180,7 +180,7 @@ export default function PosturalDistortionStudio() {
                 letterSpacing: '0.08em',
               }}
             >
-              NASM CPT-7 Ch 11 & CES
+              NASM CPT-7 Ch 11 Movement Screen
             </span>
             <span style={{ fontSize: 12, color: 'var(--gold-lt)', fontWeight: 600 }}>
               Kinetic Chain Checkpoints & Muscle Synergy Decoder

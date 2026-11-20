@@ -45,7 +45,7 @@ const packagesStructuredData = {
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         url: 'https://forge-athletic.app/packages',
-        description: 'Autonomous AI Foundation & Daily Posture Care: 5-Phase NASM OPT™ engine, 20m Express Mode, Coach Gordon’s real voice pacing, 33-point posture checks, and direct Email access (48h). $49/mo month-to-month with 7-day free trial.',
+        description: 'Autonomous AI Foundation & Daily Posture Care: 5-Phase NASM OPT™ engine, 20m Express Mode, Coach Gordon’s real voice pacing, 33-point posture checks, and 1 complimentary onboarding Form Lab video diagnostic (first paid cycle; self-guided thereafter). $49/mo month-to-month with 7-day free trial.',
       },
       {
         '@type': 'Offer',
@@ -114,17 +114,17 @@ const COMPARISON_ROWS = [
   },
   {
     feature: 'Form Lab Technique Video Reviews',
-    core: 'Add-on ($49 pack)',
+    core: '1 onboarding clip (first paid cycle) · Add-on thereafter',
     plus: '4 reviews / month',
     support: '8 reviews / month (Priority)',
     note: 'Frame-by-frame concentric velocity, bar path, and joint angle breakdown.',
   },
   {
     feature: 'Direct Access to Coach Gordon',
-    core: 'Direct Email (48h)',
+    core: 'Self-Guided (Safety Alerts Only)',
     plus: 'Priority Email (24h)',
     support: 'Direct SMS + Chat (24h SLA)',
-    note: 'Direct human access with your posture deltas and readiness telemetry attached automatically.',
+    note: 'Direct human access on Plus and Coach Support with your posture deltas and readiness telemetry attached automatically.',
   },
   {
     feature: 'Biomechanical & Diagnostic Testing',

@@ -79,7 +79,7 @@ export function buildPartnerPassShareChannels(code: string, senderName?: string 
   const url = buildPartnerPassInviteUrl(code)
   const sender = senderName?.trim() || 'A Founding Member'
   const subject = `${sender} gifted you a 30-Day Founding Partner Pass to Forge Athletic`
-  const message = `I saved my 30-Day Founding Partner Pass to Forge Athletic for you ($0.00, no credit card required). Claim your pass here: ${url}`
+  const message = `I saved my 30-Day Core Lab Partner Pass to Forge Athletic for you (#ForgePartner referral invite — I may earn a $20 account credit if you stay past your trial). Claim your pass here: ${url}`
 
   return {
     url,

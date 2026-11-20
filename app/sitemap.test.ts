@@ -19,7 +19,7 @@ describe('app/sitemap.ts', () => {
     expect(urls).not.toContain('https://forge-athletic.app/exercises/stability-ball')
     expect(urls).not.toContain('https://forge-athletic.app/async-coaching')
     expect(urls).toContain('https://forge-athletic.app/apply')
-    expect(urls).toContain('https://forge-athletic.app/whats-new')
+    expect(urls).not.toContain('https://forge-athletic.app/whats-new')
     expect(urls).toContain('https://forge-athletic.app/privacy')
     expect(urls).toContain('https://forge-athletic.app/terms')
 

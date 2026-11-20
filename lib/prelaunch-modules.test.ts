@@ -135,7 +135,7 @@ describe('Forge Athletic Pre-Launch Modules (Phases 1–4)', () => {
     expect(FORGE_TIER_ENTITLEMENTS.core_lab.monthlyFormLabCredits).toBe(1)
     expect(FORGE_TIER_ENTITLEMENTS.plus.foundingMonthlyCents).toBe(9900)
     expect(FORGE_TIER_ENTITLEMENTS.plus.maxWorkstationProfiles).toBeNull()
-    expect(FORGE_TIER_ENTITLEMENTS.plus.monthlyFormLabCredits).toBe(2)
+    expect(FORGE_TIER_ENTITLEMENTS.plus.monthlyFormLabCredits).toBe(4)
     expect(FORGE_TIER_ENTITLEMENTS.coach_support.foundingMonthlyCents).toBe(29900)
     expect(FORGE_TIER_ENTITLEMENTS.coach_support.rosterCap).toBe(15)
     expect(FORGE_TIER_ENTITLEMENTS.coach_support.remainingSpots).toBeNull()

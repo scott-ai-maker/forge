@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
+import { getRequestAuthz, isMasterCoachEmail, requireRole, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import { validateClientUniqueness } from '@/lib/client-lifecycle'
 import { checkSlidingWindowRateLimit, resolveRequestSubjectKey } from '@/src/lib/security/rateLimiter'
@@ -8,10 +8,12 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   let coachId = ''
+  let coachEmail: string | null | undefined = null
   try {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['coach'])
     coachId = authz.user.id
+    coachEmail = authz.user.email
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
@@ -47,13 +49,16 @@ export async function POST(req: NextRequest) {
   try {
     const uniqueness = await validateClientUniqueness(admin, email.trim(), phone, excludeClientId)
 
-    // Cross-coach minimum-necessary isolation (#38): never leak PII of clients assigned to another coach
-    if (
+    // Cross-coach minimum-necessary isolation (#38): never leak PII of clients assigned to another coach,
+    // or unassigned clients when queried by a non-master associate coach.
+    const assignedCoachId = uniqueness.existingClient?.designated_coach_id ?? null
+    const isForeignOrUnauthorizedUnassigned =
       !uniqueness.isUnique &&
-      uniqueness.existingClient &&
-      uniqueness.existingClient.designated_coach_id &&
-      uniqueness.existingClient.designated_coach_id !== coachId
-    ) {
+      Boolean(uniqueness.existingClient) &&
+      ((assignedCoachId && assignedCoachId !== coachId) ||
+        (!assignedCoachId && !isMasterCoachEmail(coachEmail)))
+
+    if (isForeignOrUnauthorizedUnassigned) {
       return NextResponse.json({
         isUnique: false,
         duplicateField: uniqueness.duplicateField,

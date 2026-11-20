@@ -76,7 +76,16 @@ export default function AddonSelectionStudio({
           return (
             <div
               key={addon.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Inspect ${addon.name} add-on`}
               onClick={() => setActiveAddon(addon)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setActiveAddon(addon)
+                }
+              }}
               style={{
                 background: 'rgba(255,255,255,0.03)',
                 border: activeAddon?.id === addon.id ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.08)',

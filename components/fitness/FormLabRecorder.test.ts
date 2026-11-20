@@ -19,7 +19,7 @@ describe('FormLabRecorder Credit Metering, Watch Remote Guard & Hardware Safety'
 
   it('enforces tier-specific Form Lab credit allowances and upgrade escalation paths', () => {
     expect(FORGE_TIER_ENTITLEMENTS.core_lab.monthlyFormLabCredits).toBe(1)
-    expect(FORGE_TIER_ENTITLEMENTS.plus.monthlyFormLabCredits).toBe(2)
+    expect(FORGE_TIER_ENTITLEMENTS.plus.monthlyFormLabCredits).toBe(4)
     expect(FORGE_TIER_ENTITLEMENTS.coach_support.monthlyFormLabCredits).toBe(8)
     expect(FORGE_TIER_ENTITLEMENTS.coach_support.priority24hSla).toBe(true)
 

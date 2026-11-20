@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { requireSurfaceRole } from '@/lib/authz'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SiteFooter from '@/components/ui/SiteFooter'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
@@ -11,12 +12,16 @@ import {
   RELEASE_LOG,
 } from '@/lib/app-version'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
-  title: `What's New · v${APP_VERSION} | Forge Athletic`,
-  description: `Latest updates, features, and sports science intelligence releases for Forge Athletic (v${APP_VERSION} - ${APP_RELEASE_CODENAME}).`,
+  title: `Internal Release Log · v${APP_VERSION} | Forge Athletic`,
+  description: `Coach-only release changelog for Forge Athletic (v${APP_VERSION}).`,
+  robots: { index: false, follow: false },
 }
 
-export default function WhatsNewPage() {
+export default async function WhatsNewPage() {
+  await requireSurfaceRole('coach')
   return (
     <main id="main-content" style={{ minHeight: '100dvh', background: 'var(--navy)' }}>
       <SiteHeader

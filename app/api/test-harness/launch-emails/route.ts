@@ -89,6 +89,26 @@ export async function POST(req: NextRequest) {
   const blocked = ensureDevOnly()
   if (blocked) return blocked
 
+  // Require authenticated coach session or internal cron secret even in dev before sending live Resend/Twilio messages (#39)
+  if (process.env.NODE_ENV !== 'test') {
+    const { constantTimeSecretMatch } = await import('@/lib/webhook-security')
+    const bearer = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
+    const expectedSecret = process.env.INTERNAL_CRON_SECRET?.trim() || process.env.CRON_SECRET?.trim()
+    const secretOk = Boolean(expectedSecret && constantTimeSecretMatch(bearer, expectedSecret))
+    if (!secretOk) {
+      try {
+        const { getRequestAuthz, requireRole } = await import('@/lib/authz')
+        const authz = await getRequestAuthz(req)
+        requireRole(authz.client.role, ['coach'])
+      } catch {
+        return NextResponse.json(
+          { error: 'Coach session or internal secret required to dispatch test-harness notifications.' },
+          { status: 401 }
+        )
+      }
+    }
+  }
+
   const body = (await req.json().catch(() => ({}))) as {
     templateId?: AutomationTemplateId
     sendAllEmails?: boolean

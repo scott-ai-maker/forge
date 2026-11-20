@@ -87,10 +87,6 @@ export default function SiteFooter() {
           <Link href="/credentials" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Credentials &amp; Badges</Link>
           <Link href="/audit" style={{ color: '#CBD5E1', textDecoration: 'none' }}>AI Posture Audit</Link>
           <Link href="/apply" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Find your starting point</Link>
-          <Link href="/whats-new" style={{ color: 'var(--gold-lt)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
-            <span>What&apos;s New</span>
-            <span style={{ fontSize: 9, background: 'var(--gold)', color: '#080E14', padding: '1px 5px', borderRadius: 3, fontWeight: 800 }}>v{APP_VERSION}</span>
-          </Link>
         </nav>
 
         <nav className="site-footer-nav" aria-label="Mobile Apps" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.88rem' }}>
@@ -152,13 +148,11 @@ export default function SiteFooter() {
 
       <div style={{ maxWidth: 1200, margin: '2rem auto 0', paddingTop: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.06)', textAlign: 'center', display: 'grid', gap: '0.85rem' }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Link
-            href="/whats-new"
-            className="tactile-btn"
+          <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              minHeight: 44,
+              minHeight: 36,
               gap: 6,
               padding: '4px 10px',
               borderRadius: 4,
@@ -168,14 +162,12 @@ export default function SiteFooter() {
               fontSize: 11,
               fontFamily: 'Raleway, sans-serif',
               fontWeight: 700,
-              textDecoration: 'none',
               letterSpacing: '0.04em',
             }}
           >
             <span style={{ width: 6, height: 6, borderRadius: 3, background: 'var(--gold)' }} />
-            <span>Forge Athletic v{APP_VERSION} · {APP_RELEASE_CODENAME}</span>
-            <span style={{ color: 'var(--gold)' }}>→ What&apos;s New</span>
-          </Link>
+            <span>Forge Athletic Platform v{APP_VERSION}</span>
+          </span>
         </div>
 
         <p style={{ fontSize: '0.72rem', color: '#64748B', margin: 0, lineHeight: 1.55, maxWidth: '48ch', marginInline: 'auto' }}>

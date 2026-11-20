@@ -12,17 +12,48 @@ export interface AddonEntitlementRow {
 
 export type VerifiedForgeTierId = 'core_lab' | 'plus' | 'coach_support'
 
+export function isRecurringMembershipPackageName(packageName?: string | null): boolean {
+  const normalized = String(packageName ?? '').trim().toLowerCase()
+  if (!normalized) return false
+  if (
+    normalized.includes('bonus') ||
+    normalized.includes('screening') ||
+    normalized.includes('add-on') ||
+    normalized.includes('addon') ||
+    normalized.includes('movement screen') ||
+    normalized.includes('coach scheduled session') ||
+    normalized.includes('form lab') ||
+    normalized.includes('postural audit') ||
+    normalized.includes('movement and posture assessment')
+  ) {
+    return false
+  }
+  return (
+    normalized === 'core' ||
+    normalized.includes('core lab') ||
+    normalized.includes('core membership') ||
+    normalized === 'plus' ||
+    normalized.includes('forge plus') ||
+    normalized.includes('pro athlete') ||
+    normalized.includes('coach support') ||
+    normalized.includes('transformation direct') ||
+    normalized.includes('concierge') ||
+    normalized.includes('hybrid')
+  )
+}
+
 export function inferForgeTierFromPackageName(
   packageName?: string | null,
-  sessionsRemaining?: number | null
+  _sessionsRemaining?: number | null
 ): VerifiedForgeTierId {
   const normalized = String(packageName ?? '').trim().toLowerCase()
+  if (!isRecurringMembershipPackageName(normalized)) {
+    return 'core_lab'
+  }
   if (
     normalized.includes('coach support') ||
     normalized.includes('transformation direct') ||
-    normalized.includes('1:1') ||
-    normalized.includes('concierge') ||
-    (typeof sessionsRemaining === 'number' && sessionsRemaining > 0)
+    normalized.includes('concierge')
   ) {
     return 'coach_support'
   }
@@ -132,10 +163,6 @@ export async function resolveClientMembershipState(
   let hasActiveMembership = false
   const rows = entitlementRows ?? (await loadClientEntitlements(clientId).catch(() => []))
 
-  if (rows.length > 0) {
-    hasActiveMembership = true
-  }
-
   for (const row of rows) {
     const addonId = String(row.addon_id ?? '').toLowerCase()
     if (addonId === 'forge-transformation-direct' || addonId.includes('coach_support')) {
@@ -143,13 +170,29 @@ export async function resolveClientMembershipState(
     }
     if (addonId === 'forge-pro-athlete' || addonId.includes('plus')) {
       highest = 'plus'
+      hasActiveMembership = true
+    } else if (addonId === 'forge-core' || addonId.includes('core_lab')) {
+      hasActiveMembership = true
     }
   }
 
   try {
     const { supabaseAdmin } = await import('@/lib/supabase')
+    const admin = supabaseAdmin()
     const nowMs = Date.now()
-    const { data: pkgRows } = await supabaseAdmin()
+
+    // Check whether the client record is explicitly inactive (cancelled subscription) (#20)
+    const { data: clientRow } = await admin
+      .from('clients')
+      .select('status')
+      .eq('id', clientId)
+      .maybeSingle()
+
+    if (clientRow?.status === 'inactive') {
+      return { tierId: highest, hasActiveMembership }
+    }
+
+    const { data: pkgRows } = await admin
       .from('client_packages')
       .select('package_name, sessions_remaining, expires_at')
       .eq('client_id', clientId)
@@ -157,6 +200,7 @@ export async function resolveClientMembershipState(
 
     for (const pkg of pkgRows ?? []) {
       if (pkg.expires_at && new Date(pkg.expires_at).getTime() <= nowMs) continue
+      if (!isRecurringMembershipPackageName(pkg.package_name)) continue
       hasActiveMembership = true
       const inferred = inferForgeTierFromPackageName(pkg.package_name, pkg.sessions_remaining)
       if (inferred === 'coach_support') {

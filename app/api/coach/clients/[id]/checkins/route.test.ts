@@ -174,7 +174,7 @@ describe('PATCH /api/coach/clients/[id]/checkins', () => {
     expect(notifyUserMock).toHaveBeenCalledWith({
       userId: clientId,
       title: 'Coach feedback posted',
-      body: 'Great week!',
+      body: 'Coach Gordon posted feedback on your weekly check-in. Sign in to view.',
       type: 'coach_feedback',
       data: {
         checkinId: 'ci-1',

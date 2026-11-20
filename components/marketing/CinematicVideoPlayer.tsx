@@ -18,7 +18,7 @@ export default function CinematicVideoPlayer({
   title = 'Kinetic Architecture & Biomechanical Precision',
   autoPlay = true,
   loop = true,
-  allowCustomUrl = true,
+  allowCustomUrl = false,
 }: CinematicVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -166,7 +166,15 @@ export default function CinematicVideoPlayer({
           display: 'block',
           cursor: 'pointer',
         }}
-      />
+      >
+        <track
+          kind="captions"
+          src="/captions/forge-showcase.vtt"
+          srcLang="en"
+          label="English captions"
+          default
+        />
+      </video>
 
       {/* Atmospheric Vignette Overlay */}
       <div

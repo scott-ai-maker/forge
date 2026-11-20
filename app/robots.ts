@@ -13,12 +13,12 @@ export default function robots(): MetadataRoute.Robots {
           '/apps',
           '/exercises/',
           '/apply',
-          '/whats-new',
           '/privacy',
+          '/health-privacy',
           '/terms',
           '/async-coaching',
         ],
-        disallow: ['/coach/', '/dashboard/', '/api/', '/auth/', '/preview/', '/test-harness/', '/credentials', '/documents/'],
+        disallow: ['/coach/', '/dashboard/', '/api/', '/auth/', '/preview/', '/test-harness/', '/credentials', '/documents/', '/whats-new'],
       },
       {
         userAgent: [

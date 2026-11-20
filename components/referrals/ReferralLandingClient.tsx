@@ -312,6 +312,11 @@ export default function ReferralLandingClient({
         <div
           role="dialog"
           aria-modal="true"
+          aria-label="Referral QR Code"
+          tabIndex={-1}
+          onKeyDown={e => {
+            if (e.key === 'Escape') setShowQrModal(false)
+          }}
           style={{
             position: 'fixed',
             inset: 0,

@@ -321,7 +321,7 @@ export default function FoundingIntakeSplashClient() {
             title="Forge Athletic Laboratory & Kinetic Architecture Manifesto"
             autoPlay={true}
             loop={true}
-            allowCustomUrl={true}
+            allowCustomUrl={false}
           />
           <div
             style={{

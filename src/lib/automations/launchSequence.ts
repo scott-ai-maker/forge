@@ -159,7 +159,7 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     requiredVariables: [],
     ctaUrl: `${FORGE_CANONICAL_ORIGIN}/portal`,
     bodyMarkdownTemplate:
-      'Forge Athletic is LIVE! Claim your Founding Member Lifetime Rate Lock + book your 1-on-1 screening with Coach Gordon before spots fill: https://forge-athletic.app/portal Reply STOP to opt out',
+      'Forge Athletic is LIVE! Claim your 25% Founding Rate Lock (while continuously enrolled on your tier) + book your 1-on-1 screening: https://forge-athletic.app/portal Reply STOP to opt out',
   },
 
   launch_01b_email: {
@@ -175,21 +175,21 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     requiredVariables: ['First Name'],
     subjectTemplate: 'Your Founding Member Pass is live — start here (takes 2 mins)',
     previewTextTemplate:
-      'Your Lifetime Rate Lock is active—33-point camera diagnostics, Coach Gordon’s real voice guidance, and direct Email/Text access.',
+      'Your Founding Rate Lock is active—33-point camera diagnostics, Coach Gordon’s real voice guidance, and month-to-month flexibility.',
     ctaLabel: 'Activate My Founding Member Pass →',
     ctaUrl: `${FORGE_CANONICAL_ORIGIN}/portal`,
     bodyMarkdownTemplate: [
       'Hi {{First Name}},',
       '',
-      'The doors to **Forge Athletic** are officially open—and your **Founding Member Pass** (with your permanent **Lifetime Rate Lock** and giftable **30-Day Founding Partner Pass**) is ready to activate.',
+      'The doors to **Forge Athletic** are officially open—and your **Founding Member Pass** (with your **25% Continuous-Enrollment Founding Rate Lock** and giftable **30-Day Core Lab Partner Pass**) is ready to activate.',
       '',
-      'You now have a NASM-certified personal trainer in your corner on your schedule—combining **33-point camera diagnostics**, **Coach Gordon’s real voice guidance**, and **direct Email/Text access** whenever you want human eyes on your training.',
+      'You now have a NASM-certified training system on your schedule—combining **33-point camera diagnostics**, **Coach Gordon’s real voice guidance**, and **Form Lab video reviews** (with Priority Email on Plus and Direct SMS on Coach Support).',
       '',
       'Here is how to get your baseline dialed in today in under 3 minutes:',
       '',
-      '1. **Activate Your Founding Pass:** Sign in at `https://forge-athletic.app/portal` using this email address to lock in your Founding Member rate for life.',
+      '1. **Activate Your Founding Pass:** Sign in at `https://forge-athletic.app/portal` using this email address to lock in your Founding Member rate for as long as you maintain continuous active enrollment on your selected tier.',
       '2. **Run Your 33-Point Camera Posture Check (2 Mins):** Prop your phone upright at hip-to-chest height—our zero-hardware **33-point camera diagnostics** map your front and side alignment right in your browser, unlock your custom **5-Minute Desk Reset**, and calibrate your 30-second pre-workout readiness checks.',
-      '3. **Train With Real Voice Guidance & Direct Email/Text Access:** Turn your sound on for **my real recorded voice** greeting you by name, briefing your posture takeaways, and counting calm rep tempos across your 5-Phase NASM OPT™ plan. Need an exercise swap or feedback on a Form Lab clip? Reach me directly via **Email or Text**—your latest posture deltas and readiness scores attach automatically, with zero chatbots or rigid video scheduling.',
+      '3. **Train With Real Voice Guidance & Form Lab Reviews:** Turn your sound on for **my real recorded voice** greeting you by name, briefing your posture takeaways, and counting calm rep tempos across your 5-Phase NASM OPT™ plan. Core Lab includes 1 complimentary onboarding Form Lab video diagnostic on your first paid cycle, Plus includes 4 monthly Form Lab reviews + Priority Email, and Coach Support unlocks 8 monthly reviews + Direct SMS.',
       '',
       '**[Activate My Founding Member Pass →]** (`https://forge-athletic.app/portal`)',
       '',
@@ -215,7 +215,7 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     requiredVariables: ['First Name'],
     subjectTemplate: 'Still holding your Founding Member Pass (before spots release)',
     previewTextTemplate:
-      'Quick heads-up this week—your Founding Rate Lock, 33-point camera posture checks, real voice guidance, and direct Email/Text access are still reserved.',
+      'Quick heads-up this week—your Founding Rate Lock, 33-point camera posture checks, and real voice guidance are still reserved.',
     ctaLabel: 'Claim & Activate My Founding Member Pass →',
     ctaUrl: `${FORGE_CANONICAL_ORIGIN}/portal`,
     bodyMarkdownTemplate: [
@@ -223,19 +223,19 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
       '',
       'Quick heads-up—since you reserved early access on our waitlist, I’m still holding your **Founding Member Pass** and **Continuous Tier Rate Lock** this week.',
       '',
-      'Because we capped this founding cohort at **50 members** so I can personally answer every **direct Email and Text** and review member **Form Lab** clips myself, we’ll be releasing any unclaimed waitlist passes to the standby list early next week.',
+      'Because we capped this founding cohort at **50 passes** (and strictly 15 active 1-on-1 Coach Support seats) so I can personally review member **Form Lab** clips and support active athletes, we’ll be releasing any unclaimed waitlist passes to the standby list early next week.',
       '',
       'Even if work or travel has your week packed, everything inside is built to fit real schedules with zero appointments to book:',
       '',
       '- **33-Point Camera Diagnostics:** Run a hands-free **2-Minute Quick Posture Check** or 30-second readiness screen from your phone camera anytime—no wearables, sensors, or tripods required.',
       '- **Coach Gordon’s Real Voice Guidance:** Hear my actual voice brief each session around how your joints feel that day and pace your tempos and rest intervals—at home or on `20m Express` in a hotel room.',
-      '- **Direct Email/Text Access:** Reach me directly via **Email** (Core Lab & Plus) or **Direct SMS Text Line** (Coach Support) whenever you want a modification or human eyes on your training, with your posture and readiness telemetry attached automatically.',
+      '- **Scalable Coaching Tiers:** Start self-guided on **Core Lab** (includes 1 complimentary onboarding Form Lab video diagnostic on your first paid cycle), step up to **Plus** (4 Form Lab reviews/mo + Priority Email), or claim one of 15 active **Coach Support** seats (8 Form Lab reviews/mo + Direct SMS).',
       '',
-      'It takes less than 60 seconds to lock in your Founding Member rate today, and your Phase 01 plan will be ready whenever you are:',
+      'It takes less than 60 seconds to lock in your Founding Member rate today (valid while continuously enrolled on your selected tier), and your Phase 01 plan will be ready whenever you are:',
       '',
       '**[Claim & Activate My Founding Member Pass →]** (`https://forge-athletic.app/portal`)',
       '',
-      'No pressure at all if the timing isn\'t right—just reply *"PASS"* if you\'d like me to release your spot to someone on standby. Otherwise, activate your pass today and reach out by email or text anytime once you\'re inside.',
+      'No pressure at all if the timing isn\'t right—just reply *"PASS"* if you\'d like me to release your spot to someone on standby. Otherwise, activate your pass today.',
       '',
       'Best,',
       '',
@@ -259,7 +259,7 @@ export const LAUNCH_AUTOMATION_TEMPLATES: Record<
     requiredVariables: ['First Name'],
     ctaUrl: `${FORGE_CANONICAL_ORIGIN}/portal`,
     bodyMarkdownTemplate:
-      'Forge Athletic: Hey {{First Name}}, still holding your Founding Member Pass + Lifetime Rate Lock before we release unclaimed spots to standby. Activate in 60s here: https://forge-athletic.app/portal Reply STOP to opt out',
+      'Forge Athletic: Hey {{First Name}}, still holding your Founding Member Pass + 25% Rate Lock (while continuously enrolled) before unclaimed passes release. Activate here: https://forge-athletic.app/portal Reply STOP to opt out',
   },
 
   screening_03_email: {

@@ -1034,7 +1034,7 @@ export default function VideoCritiqueStudio({
                 <button
                   type="button"
                   onClick={() => {
-                    const url = 'https://www.youtube.com/watch?v=bEv6CCg2BC8'
+                    const url = '/videos/exercises/barbell-back-squat.mp4'
                     setYoutubeUrlInput(url)
                     setSelectedLift('barbell_back_squat')
                     handleLoadYouTubeUrl(url, 'barbell_back_squat')
@@ -1057,7 +1057,7 @@ export default function VideoCritiqueStudio({
                 <button
                   type="button"
                   onClick={() => {
-                    const url = 'https://www.youtube.com/watch?v=op9kVnSso6Q'
+                    const url = '/videos/exercises/barbell-deadlift.mp4'
                     setYoutubeUrlInput(url)
                     setSelectedLift('barbell_deadlift')
                     handleLoadYouTubeUrl(url, 'barbell_deadlift')
@@ -1080,7 +1080,7 @@ export default function VideoCritiqueStudio({
                 <button
                   type="button"
                   onClick={() => {
-                    const url = 'https://www.youtube.com/shorts/dQw4w9WgXcQ'
+                    const url = '/videos/exercises/dumbbell-goblet-squat.mp4'
                     setYoutubeUrlInput(url)
                     handleLoadYouTubeUrl(url)
                   }}

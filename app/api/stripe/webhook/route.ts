@@ -18,6 +18,7 @@ type PackageGrantPayload = {
   stripePaymentId: string
   discountCode?: string | null
   discountAmountCents?: number
+  expiresAt?: string | null
 }
 
 async function ensureClientExists(
@@ -91,6 +92,7 @@ async function grantClientPackageCycle(
     source: 'purchase',
     discount_code: normalizedDiscountCode || null,
     discount_amount_cents: parsedDiscountAmount,
+    ...(payload.expiresAt ? { expires_at: payload.expiresAt } : {}),
   })
 
   if (packageError) {
@@ -421,6 +423,10 @@ export async function POST(req: NextRequest) {
             `Subscription renewal invoice ${invoiceId} paid successfully.`
           )
 
+          const cycleDays = metadata.cadence === 'annual' ? 365 : 30
+          const paidCents = invoice.amount_paid ?? 0
+          const cycleExpiresAt = new Date(Date.now() + (cycleDays + 5) * 86_400_000).toISOString()
+
           const grantResult = await grantClientPackageCycle(admin, {
             clientId,
             packageName,
@@ -428,12 +434,28 @@ export async function POST(req: NextRequest) {
             stripePaymentId: invoiceId,
             discountCode,
             discountAmountCents: discountAmount,
+            expiresAt: cycleExpiresAt,
           })
 
           const membership = metadata.source === 'forge_membership' ? getForgeMembership(metadata.packageId ?? '') : undefined
           if (membership) {
-            const cycleDays = metadata.cadence === 'annual' ? 365 : 30
             const grants = buildMembershipEntitlementGrants(membership, clientId, invoiceId, new Date(), cycleDays)
+            // Grant one-time onboarding entitlements (e.g. Core Lab's 1 complimentary Form Lab clip) strictly on first paid ($ > 0) invoice
+            if (paidCents > 0 && Array.isArray(membership.onboardingFeatures) && membership.onboardingFeatures.length > 0) {
+              const onboardingExpiresAt = new Date(Date.now() + 90 * 86_400_000).toISOString()
+              for (const ob of membership.onboardingFeatures) {
+                grants.push({
+                  client_id: clientId,
+                  addon_id: membership.id,
+                  feature: ob.feature,
+                  uses_total: ob.uses ?? 1,
+                  uses_remaining: ob.uses ?? 1,
+                  stripe_payment_id: `onboarding:${membership.id}:${clientId}:${ob.feature}`,
+                  granted_at: new Date().toISOString(),
+                  expires_at: onboardingExpiresAt,
+                })
+              }
+            }
             if (grants.length > 0) {
               const { error: membershipGrantError } = await admin
                 .from('client_addon_entitlements')
@@ -444,7 +466,7 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // Record redemption once on subscription creation invoice & fulfill Founding 1-on-1 Screening bonus (#33)
+          // Record discount code redemption once on subscription creation invoice (#33)
           if (
             grantResult.inserted &&
             grantResult.normalizedDiscountCode &&
@@ -456,28 +478,30 @@ export async function POST(req: NextRequest) {
               discountCode: grantResult.normalizedDiscountCode,
               amountCents: grantResult.parsedDiscountAmount,
             })
+          }
 
-            if (
-              grantResult.normalizedDiscountCode === 'HOLIDAY25' ||
-              grantResult.normalizedDiscountCode === 'FOUNDING25'
-            ) {
-              try {
-                await grantClientPackageCycle(admin, {
-                  clientId,
-                  packageName: 'Founding Member 1-on-1 Movement Screening Bonus',
-                  sessionsTotal: 1,
-                  stripePaymentId: `founding-screening:${clientId}`,
-                  discountCode: grantResult.normalizedDiscountCode,
-                  discountAmountCents: 0,
-                })
-              } catch (bonusErr) {
-                console.warn('[stripe:webhook] Founding screening bonus grant warning:', bonusErr)
-              }
+          // Fulfill Founding 1-on-1 Movement Screening Bonus strictly when actual payment > $0 clears (prevents $0 trial farming — #20)
+          const normalizedPromoCode = (discountCode ?? '').trim().toUpperCase()
+          if (
+            paidCents > 0 &&
+            (normalizedPromoCode === 'HOLIDAY25' || normalizedPromoCode === 'FOUNDING25')
+          ) {
+            try {
+              await grantClientPackageCycle(admin, {
+                clientId,
+                packageName: 'Founding Member 1-on-1 Movement Screening Bonus',
+                sessionsTotal: 1,
+                stripePaymentId: `founding-screening:${clientId}`,
+                discountCode: normalizedPromoCode,
+                discountAmountCents: 0,
+                expiresAt: new Date(Date.now() + 180 * 86_400_000).toISOString(),
+              })
+            } catch (bonusErr) {
+              console.warn('[stripe:webhook] Founding screening bonus grant warning:', bonusErr)
             }
           }
 
           // Process referral conversion ONLY when actual payment > $0 has cleared (#33)
-          const paidCents = invoice.amount_paid ?? 0
           if (paidCents > 0) {
             try {
               const { processReferralConversion } = await import('@/lib/referrals')
@@ -567,6 +591,27 @@ export async function POST(req: NextRequest) {
           : `Stripe subscription ${subscription.id} cancelled.`
 
         await syncClientStatusSafely(admin, clientId, 'inactive', reasonCode, reasonNotes)
+
+        // Expire recurring client_packages and membership entitlements on subscription deletion (#20)
+        const nowIso = new Date().toISOString()
+        try {
+          await admin
+            .from('client_packages')
+            .update({ expires_at: nowIso })
+            .eq('client_id', clientId)
+            .eq('source', 'purchase')
+        } catch {
+          // Non-fatal in isolated mocks
+        }
+        try {
+          await admin
+            .from('client_addon_entitlements')
+            .update({ expires_at: nowIso })
+            .eq('client_id', clientId)
+            .in('addon_id', ['forge-core', 'forge-pro-athlete', 'forge-transformation-direct'])
+        } catch {
+          // Non-fatal in isolated mocks
+        }
       }
     }
 

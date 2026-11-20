@@ -291,7 +291,15 @@ export async function GET(request: NextRequest) {
   })
 
   if (signInError && userId) {
-    // If password mismatch, update password and re-attempt sign in
+    // Defense-in-depth (#39): never overwrite the live Master Coach account password, even in local dev
+    const { isMasterCoachEmail } = await import('@/lib/authz')
+    if (isMasterCoachEmail(targetEmail)) {
+      return NextResponse.json(
+        { error: 'Demo login cannot overwrite a live Master Coach account password.' },
+        { status: 403 }
+      )
+    }
+    // If password mismatch on a dedicated demo account, update password and re-attempt sign in
     await admin.auth.admin.updateUserById(userId, {
       password: targetPassword,
       email_confirm: true,

@@ -39,7 +39,7 @@ export default function ProgressPhotoTimeline({
   initialPhotos,
   canUpload = false,
   title = 'Progress Photos & Body Composition',
-  subtitle = 'Track visual physique evolution and calculate ultra-accurate DEXA-calibrated body composition metrics over time.',
+  subtitle = 'Track visual physique progress and run non-medical visual & anthropometric body composition estimates over time.',
   bodyFatInputs,
   onEstimatedBodyfat,
   estimatedBodyfat,
@@ -186,7 +186,7 @@ export default function ProgressPhotoTimeline({
           }}
         >
           <GaaIcon name="dna" size={16} />
-          <span>Launch AI DEXA Scanner</span>
+          <span>Launch Body Comp Estimator</span>
           <span
             style={{
               background: '#000000',
@@ -294,7 +294,7 @@ export default function ProgressPhotoTimeline({
                   flex: 1,
                 }}
               >
-                {estimating ? 'Analyzing Vision Models...' : 'Quick Photo DEXA Estimate'}
+                {estimating ? 'Analyzing Vision Models...' : 'Quick Photo Body Comp Estimate'}
               </button>
             )}
           </div>
@@ -365,7 +365,7 @@ export default function ProgressPhotoTimeline({
         onApplyScan={scan => {
           setLatestScanResult(scan)
           onEstimatedBodyfat?.(scan.estimatedBodyFatPercent)
-          setBodyFatStatus(`DEXA-Calibrated Estimate: ${scan.estimatedBodyFatPercent}% body fat (±${scan.confidenceIntervalPercent}%)`)
+          setBodyFatStatus(`Visual & Anthropometric Estimate (Non-Medical): ${scan.estimatedBodyFatPercent}% body fat (±${scan.confidenceIntervalPercent}%)`)
         }}
       />
     </section>

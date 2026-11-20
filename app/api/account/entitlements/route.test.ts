@@ -119,7 +119,8 @@ describe('GET /api/account/entitlements & QA Tier Preview Hardening (#20)', () =
     expect(inferForgeTierFromPackageNameClient('Core', 0)).toBe('core_lab')
     expect(inferForgeTierFromPackageNameClient('Plus', 0)).toBe('plus')
     expect(inferForgeTierFromPackageNameClient('Coach Support', 0)).toBe('coach_support')
-    expect(inferForgeTierFromPackageNameClient('Core', 2)).toBe('coach_support')
+    // Bonus/add-on session credits must NOT escalate a Core Lab subscriber to $299/mo coach_support (#20)
+    expect(inferForgeTierFromPackageNameClient('Core', 2)).toBe('core_lab')
 
     expect(tierIdToForgePackageId('core_lab')).toBe('forge-core')
     expect(tierIdToForgePackageId('plus')).toBe('forge-pro-athlete')

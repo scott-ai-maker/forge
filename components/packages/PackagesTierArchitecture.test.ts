@@ -129,7 +129,7 @@ describe('Commercial Retainers & Tier 3 Architecture Enforcements', () => {
     const audit = STANDALONE_PRODUCTS[0]
     expect(audit.id).toBe('ai-postural-audit')
     expect(audit.priceCents).toBe(9700)
-    expect(audit.upsellCreditCents).toBe(9700)
+    expect(audit.upsellCreditCents).toBe(0)
   })
 })
 

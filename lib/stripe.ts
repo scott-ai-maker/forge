@@ -345,9 +345,8 @@ export const STANDALONE_PRODUCTS: StandaloneProduct[] = [
       'AI-assisted feedback on selected movement patterns',
       'Suggested exercises to support your movement goals',
       'Interactive results and a downloadable summary',
-      'A $97 credit toward an eligible 12-week training plan or coaching membership',
     ],
     valueProposition: 'Learn more about your movement patterns and possible next steps.',
-    upsellCreditCents: 9700,
+    upsellCreditCents: 0,
   },
 ]

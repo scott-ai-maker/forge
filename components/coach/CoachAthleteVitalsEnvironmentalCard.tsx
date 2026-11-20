@@ -203,7 +203,7 @@ export default function CoachAthleteVitalsEnvironmentalCard({
               gap: 5,
             }}
           >
-            <span>Launch AI DEXA</span>
+            <span>Launch Body Comp Estimator</span>
             <span>➔</span>
           </a>
 
@@ -269,7 +269,7 @@ export default function CoachAthleteVitalsEnvironmentalCard({
         </div>
 
         <div style={vitalCardStyle}>
-          <span style={vitalLabelStyle}>AI DEXA Body Fat</span>
+          <span style={vitalLabelStyle}>Estimated Body Fat (Non-Medical)</span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
             <span style={vitalValueStyle}>
               {bodyFatPercent !== null ? `${bodyFatPercent}%` : 'Pending Scan'}

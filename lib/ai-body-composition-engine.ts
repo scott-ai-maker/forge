@@ -745,7 +745,7 @@ Return ONLY valid JSON matching this schema:
   },
   "androidGynoidRatio": 0.88,
   "visceralFatRisk": "Low",
-  "coachSummaryNotes": "DEXA-calibrated multi-compartment body composition analysis indicates athletic lean mass."
+  "coachSummaryNotes": "Non-medical visual and anthropometric body composition estimate indicates athletic lean mass."
 }`
 
       const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'

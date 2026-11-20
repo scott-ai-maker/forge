@@ -471,21 +471,12 @@ export default function CameraReadinessCheck({
     }
     try {
       const vision = await import('@mediapipe/tasks-vision')
-      let fileset
-      try {
-        fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
-      } catch {
-        fileset = await vision.FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
-        )
-      }
-
+      // Sovereign self-hosted WASM & model assets only — zero third-party CDN fallbacks (#55)
+      const fileset = await vision.FilesetResolver.forVisionTasks('/wasm')
       const localModelPath = '/models/pose_landmarker_lite.task'
-      const remoteModelPath =
-        'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'
 
       let landmarker: PoseLandmarkerLike | null = null
-      for (const modelAssetPath of [localModelPath, remoteModelPath]) {
+      for (const modelAssetPath of [localModelPath]) {
         try {
           landmarker = (await vision.PoseLandmarker.createFromOptions(fileset, {
             baseOptions: { modelAssetPath, delegate: 'GPU' },

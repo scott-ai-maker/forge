@@ -25,7 +25,8 @@ async function resolveExistingStripeCustomerState(
   admin: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   stripeClient: any,
-  userId: string
+  userId: string,
+  userEmail?: string | null
 ): Promise<{ customerId: string | null; hasActiveSubscription: boolean }> {
   let customerId: string | null = null
   try {
@@ -41,6 +42,29 @@ async function resolveExistingStripeCustomerState(
     }
   } catch {
     // Tolerate partial test mocks that do not stub `clients`
+  }
+
+  // Fallback by authenticated email to prevent parallel-tab duplicate cus_... accounts (#33)
+  if (
+    !customerId &&
+    typeof userEmail === 'string' &&
+    userEmail.trim() &&
+    typeof stripeClient?.customers?.list === 'function'
+  ) {
+    try {
+      const found = await stripeClient.customers.list({
+        email: userEmail.trim().toLowerCase(),
+        limit: 5,
+      })
+      const firstMatch = Array.isArray(found?.data)
+        ? found.data.find((c: { id?: string; deleted?: boolean }) => c?.id && !c?.deleted)
+        : null
+      if (firstMatch?.id) {
+        customerId = firstMatch.id
+      }
+    } catch {
+      // Non-fatal if Stripe customer lookup fails
+    }
   }
 
   let hasActiveSubscription = false
@@ -100,7 +124,9 @@ export async function POST(req: NextRequest) {
             customer: customerId,
             ...(isAutomaticTaxEnabled ? { customer_update: { address: 'auto' as const } } : {}),
           }
-        : {}
+        : authz.user.email
+          ? { customer_email: authz.user.email }
+          : {}
     const legalTermsVersion = LEGAL_DOCUMENTS.terms_of_service.version
 
     // Zero In-App Purchase Compliance: In accordance with Apple App Store Guideline 3.1.3,
@@ -264,7 +290,7 @@ export async function POST(req: NextRequest) {
 
       // Prevent duplicate concurrent recurring subscriptions & orphaned `cus_...` accounts (#33)
       const { customerId: existingCustomerId, hasActiveSubscription } =
-        await resolveExistingStripeCustomerState(admin, stripe, userId)
+        await resolveExistingStripeCustomerState(admin, stripe, userId, authz.user.email)
       if (hasActiveSubscription) {
         return NextResponse.json(
           {
@@ -294,9 +320,11 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const effectiveTrialDays = referralPromotion
-        ? referralPromotion.refereeTrialDays
-        : forgeMembership.trialDays
+      // Extended 30-day referral trial applies strictly to Core Lab (matching Terms § 4 & ROSCA disclosure — #19)
+      const effectiveTrialDays =
+        referralPromotion && forgeMembership.id === 'forge-core'
+          ? referralPromotion.refereeTrialDays
+          : forgeMembership.trialDays
 
       let appliedDiscountCode: string | null = null
       let appliedDiscountType: 'percent' | 'fixed_amount' | null = null
@@ -402,6 +430,9 @@ export async function POST(req: NextRequest) {
         legalTermsVersion,
       }
 
+      const membershipTaxCode =
+        forgeMembership.id === 'forge-transformation-direct' ? 'txcd_20030000' : 'txcd_10103000'
+
       try {
         const session = await stripe.checkout.sessions.create({
           mode: 'subscription',
@@ -412,11 +443,13 @@ export async function POST(req: NextRequest) {
             {
               price_data: {
                 currency: 'usd',
+                tax_behavior: 'exclusive',
                 product_data: {
                   name: appliedDiscountCode
                     ? `${forgeMembership.name} (${appliedDiscountCode} Rate Lock)`
                     : forgeMembership.name,
                   description: forgeMembership.features.join(' · '),
+                  tax_code: membershipTaxCode,
                 },
                 recurring: { interval: membershipPrice.interval },
                 unit_amount: finalMembershipCents,
@@ -488,8 +521,11 @@ export async function POST(req: NextRequest) {
       const { customerId: existingAddonCustomerId } = await resolveExistingStripeCustomerState(
         addonAdmin,
         stripe,
-        userId
+        userId,
+        authz.user.email
       )
+
+      const addonTaxCode = addon.sessions > 0 ? 'txcd_20030000' : 'txcd_10103000'
 
       try {
         const session = await stripe.checkout.sessions.create({
@@ -501,9 +537,11 @@ export async function POST(req: NextRequest) {
             {
               price_data: {
                 currency: 'usd',
+                tax_behavior: 'exclusive',
                 product_data: {
                   name: addon.name,
                   description: addon.includes.join(' · '),
+                  tax_code: addonTaxCode,
                 },
                 unit_amount: addon.priceCents,
               },
@@ -568,7 +606,8 @@ export async function POST(req: NextRequest) {
       const { customerId: existingProductCustomerId } = await resolveExistingStripeCustomerState(
         productAdmin,
         stripe,
-        userId
+        userId,
+        authz.user.email
       )
 
       let session
@@ -582,9 +621,11 @@ export async function POST(req: NextRequest) {
             {
               price_data: {
                 currency: 'usd',
+                tax_behavior: 'exclusive',
                 product_data: {
                   name: product.name,
                   description: product.description,
+                  tax_code: 'txcd_10103000',
                 },
                 unit_amount: product.priceCents,
               },

@@ -1064,7 +1064,7 @@ export default async function CoachClientPage({ params, searchParams }: PageProp
                 <ProgressPhotoTimeline
                   initialPhotos={signedProgressPhotos}
                   title="Progress Photo Timeline"
-                  subtitle="Recent physique check-ins for coach review and AI DEXA scans."
+                  subtitle="Recent physique check-ins for coach review and visual body composition estimates."
                   clientId={id}
                   clientName={client.full_name ?? 'Member'}
                   bodyFatInputs={{

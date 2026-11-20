@@ -484,14 +484,14 @@ export function evaluateClientOnboardingProgression(
     },
     {
       key: 'dexa_body_comp_scanned',
-      label: 'AI DEXA body composition scan',
+      label: 'Body composition visual estimation scan',
       completed: hasDexaScan,
       required: false,
       actionHref: `/coach/clients/${clientId}?tab=assessment&subtab=bodycomp#workspace-tab-content`,
-      actionLabel: 'Launch AI DEXA Scanner',
+      actionLabel: 'Launch Body Comp Estimator',
       detail: hasDexaScan
-        ? `DEXA Estimate: ${telemetry.latestBodyComposition?.estimated_bodyfat_percent}% body fat (${telemetry.latestBodyComposition?.method || 'DEXA 4C Vision'})`
-        : 'AI DEXA body composition scan available',
+        ? `Visual Estimate: ${telemetry.latestBodyComposition?.estimated_bodyfat_percent}% body fat (${telemetry.latestBodyComposition?.method || 'AI 4C Vision Estimate'})`
+        : 'Body composition visual estimation scan available',
     },
     {
       key: 'fitness_goal_defined',

@@ -87,7 +87,7 @@ const GOAL_OPTIONS: Array<{ value: HomeGymPrimaryGoal; label: string }> = [
   { value: 'hypertrophy', label: 'Hypertrophy & Physique Development (OPT™ Phase 3)' },
   { value: 'maximal_strength', label: 'Maximal Compound Strength (OPT™ Phase 4)' },
   { value: 'athletic_power', label: 'Explosive Athletic Power & Conditioning (OPT™ Phase 5)' },
-  { value: 'posture_longevity', label: 'Posture Restoration, Joint Health & Longevity (NASM-CES)' },
+  { value: 'posture_longevity', label: 'Posture Alignment, Joint Health & Longevity (OPT™ Phase 1)' },
   { value: 'golf_rotational', label: 'Rotational Power & Thoracic Mobility (Golf / Court Sports)' },
 ]
 
@@ -96,7 +96,7 @@ const MODALITY_OPTIONS: Array<{ value: HomeGymModalityPreference; label: string 
   { value: 'cables_functional', label: 'Functional Pulley / Cable Vector Training' },
   { value: 'barbell_rack', label: 'Barbell, Bumper Plates & Enclosed Power Rack' },
   { value: 'kettlebell_conditioning', label: 'Kettlebell Swings, Carries & Conditioning' },
-  { value: 'corrective_mobility', label: 'Clinical Shoulder, Hip & SMR Pre-Hab Suite' },
+  { value: 'corrective_mobility', label: 'Shoulder, Hip & SMR Mobility Training Suite' },
 ]
 
 const CONCERN_OPTIONS: Array<{ value: HomeGymClientConcern; label: string }> = [

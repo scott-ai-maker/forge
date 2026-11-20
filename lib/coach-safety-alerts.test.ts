@@ -65,13 +65,14 @@ describe('Coach Safety Alerts Subsystem (lib/coach-safety-alerts)', () => {
     expect(sendMock).toHaveBeenCalledTimes(1)
     const callArgs = sendMock.mock.calls[0][0]
     expect(callArgs.to).toBe('coach@forge-athletic.app')
-    expect(callArgs.subject).toContain('COACH ACTION REQUIRED')
-    expect(callArgs.subject).toContain('Alex Mercer')
+    expect(callArgs.subject).toContain('ACTION REQUIRED')
+    expect(callArgs.subject).not.toContain('Alex Mercer')
     expect(callArgs.html).not.toContain('lumbar_disc_condition')
     expect(callArgs.html).not.toContain('lumbar fusion surgery')
     expect(callArgs.text).not.toContain('lumbar_disc_condition')
     expect(callArgs.text).not.toContain('lumbar fusion surgery')
-    expect(callArgs.html).toContain('/coach/dashboard?tab=safety-queue')
+    expect(callArgs.html).toContain('/coach')
+    expect(callArgs.html).not.toContain('/coach/dashboard')
   })
 
   it('dispatches critical 911 alert when isEmergency911 is true', async () => {
@@ -94,7 +95,8 @@ describe('Coach Safety Alerts Subsystem (lib/coach-safety-alerts)', () => {
     expect(result.sent).toBe(true)
     expect(sendMock).toHaveBeenCalledTimes(1)
     const callArgs = sendMock.mock.calls[0][0]
-    expect(callArgs.subject).toContain('CRITICAL 911 EMERGENCY')
+    expect(callArgs.subject).toContain('URGENT ACTION')
+    expect(callArgs.subject).not.toContain('Dave')
     expect(callArgs.html).toContain('CRITICAL MEDICAL EMERGENCY DETECTED')
   })
 

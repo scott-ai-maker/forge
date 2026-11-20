@@ -36,7 +36,7 @@ export default function PartnerPassInviteClient({
         {/* Exclusive Metallic Partner Pass Credential */}
         <section className="forge-metallic-pass rounded-2xl p-6 sm:p-8">
           <div className="font-mono text-[11px] font-extrabold uppercase tracking-[0.14em] tabular-nums text-amber-300">
-            FORGE ATHLETIC // FOUNDING PARTNER PASS · {trialDays} DAYS FULL ACCESS · $0.00 / No Credit Card Required
+            FORGE ATHLETIC // FOUNDING PARTNER PASS · {trialDays}-DAY EXTENDED CORE LAB TRIAL
           </div>
 
           <h1 className="mt-4 font-serif text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl">
@@ -44,7 +44,7 @@ export default function PartnerPassInviteClient({
           </h1>
 
           <p className="mt-3 text-sm leading-relaxed text-zinc-300">
-            Step inside Forge Athletic with full access to the 33-point posture and desk ergonomics lab,
+            Step inside Forge Athletic with extended Core Lab trial access to the 33-point posture and desk ergonomics lab,
             5-Phase NASM OPT™ strength progressions, 20-minute express workouts, and 5-minute desk resets.
           </p>
 
@@ -52,7 +52,7 @@ export default function PartnerPassInviteClient({
             <li className="flex items-center gap-2.5">
               <CheckCircle2 size={16} strokeWidth={1.75} className="shrink-0 text-emerald-400" />
               <span className="tabular-nums">
-                <strong className="text-white">$0.00 for {trialDays} full days</strong> — no credit card required to activate
+                <strong className="text-white">$0.00 due today for {trialDays} days on Core Lab</strong> — cancel online anytime before renewal ($49/mo thereafter unless cancelled)
               </span>
             </li>
             <li className="flex items-center gap-2.5">
@@ -61,9 +61,13 @@ export default function PartnerPassInviteClient({
             </li>
             <li className="flex items-center gap-2.5">
               <CheckCircle2 size={16} strokeWidth={1.75} className="shrink-0 text-emerald-400" />
-              <span>Founding Member Lifetime Rate Lock reserved if you choose to stay</span>
+              <span>Continuous-enrollment Founding Rate Lock eligible while active on your selected tier</span>
             </li>
           </ul>
+
+          <p className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] leading-relaxed text-zinc-400">
+            <strong className="text-zinc-200">Referral Disclosure (#ForgePartner · 16 CFR § 255.5):</strong> This is a member referral link. If you subscribe and complete your first paid billing cycle after your {trialDays}-day Core Lab trial, {giftedByName} may earn a $20 account credit or referral milestone reward at no extra cost to you.
+          </p>
 
           <div className="mt-6 flex flex-col gap-3">
             <Link

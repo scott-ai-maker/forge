@@ -59,7 +59,7 @@ export const FORGE_TIER_ENTITLEMENTS: Record<ForgeTierId, ForgeTierEntitlement> 
     readinessTrendAlerts: false,
     multiDayTravelPass: false,
     monthlyFormLabCredits: 1,
-    formLabCreditLabel: '1 complimentary onboarding Form Lab clip',
+    formLabCreditLabel: '1 complimentary onboarding Form Lab clip (first paid cycle)',
     nutritionPeriodization: false,
     directCoachChat: false,
     bespokeMeshCertification: false,
@@ -84,8 +84,8 @@ export const FORGE_TIER_ENTITLEMENTS: Record<ForgeTierId, ForgeTierEntitlement> 
     dualScreenReadiness: true,
     readinessTrendAlerts: true,
     multiDayTravelPass: true,
-    monthlyFormLabCredits: 2,
-    formLabCreditLabel: '2 Coach Gordon Form Lab reviews/mo',
+    monthlyFormLabCredits: 4,
+    formLabCreditLabel: '4 Coach Gordon Form Lab reviews/mo',
     nutritionPeriodization: true,
     directCoachChat: false,
     bespokeMeshCertification: false,
@@ -141,12 +141,12 @@ export function getUpgradeTriggerCopy(
       eyebrow: 'Form & Posture Verification',
       headline: 'Have Coach Gordon verify your alignment on video',
       description:
-        'Your scan flagged elevated joint strain. Upgrade to Plus for 2 monthly Coach Gordon Form Lab video reviews, Dual-Screen Readiness trend alerts, and unlimited Desk Ergonomics profiles.',
+        'Your scan flagged elevated joint strain. Upgrade to Plus for 4 monthly Coach Gordon Form Lab video reviews, Dual-Screen Readiness trend alerts, and unlimited Desk Ergonomics profiles.',
       bannerCopy:
-        'Want Coach Gordon to verify your form on this? Upgrade to Plus for 2 monthly Form Lab reviews, Dual-Screen Readiness trend alerts, and unlimited workstation profiles.',
+        'Want Coach Gordon to verify your form on this? Upgrade to Plus for 4 monthly Form Lab reviews, Dual-Screen Readiness trend alerts, and unlimited workstation profiles.',
       ctaLabel: 'Unlock Plus · $99/mo',
       highlights: [
-        '2 monthly Coach Gordon Form Lab video critiques with joint-angle markup',
+        '4 monthly Coach Gordon Form Lab video critiques with joint-angle markup',
         'Full Dual-Screen Readiness (Overhead Squat + Scapular Wall Slide) & trend alerts',
         'Unlimited Desk Ergonomics workstation profiles + Nutrition Periodization',
       ],
@@ -166,7 +166,7 @@ export function getUpgradeTriggerCopy(
       ctaLabel: 'Upgrade to Plus · $99/mo',
       highlights: [
         'Unlimited saved Desk Ergonomics workstation profiles (Home, Office, Travel)',
-        '2 monthly Coach Gordon Form Lab video reviews',
+        '4 monthly Coach Gordon Form Lab video reviews',
         'Full Nutrition Periodization synced to your training days',
       ],
     }
@@ -186,7 +186,7 @@ export function getUpgradeTriggerCopy(
       highlights: [
         'Multi-Day Travel Pass auto-adapts equipment across entire work trips',
         'Zero lost progression across Phases 01–05 when away from your home gym',
-        'Includes 2 monthly Coach Gordon Form Lab reviews & Nutrition Periodization',
+        'Includes 4 monthly Coach Gordon Form Lab reviews & Nutrition Periodization',
       ],
     }
   }
@@ -198,13 +198,13 @@ export function getUpgradeTriggerCopy(
         trigger,
         recommendedTier: 'plus',
         eyebrow: 'Form Lab Credits Used',
-        headline: 'Unlock 2 Monthly Coach Gordon Form Lab Reviews',
+        headline: 'Unlock 4 Monthly Coach Gordon Form Lab Reviews',
         description:
-          'You have used your complimentary Core Lab onboarding clip. Upgrade to Plus for 2 monthly Coach Gordon telestrator video reviews plus full Nutrition Periodization.',
-        bannerCopy: '0 Form Lab credits remaining this month. Upgrade to Plus for 2 monthly Coach Gordon reviews.',
+          'You have used your complimentary Core Lab onboarding clip. Upgrade to Plus for 4 monthly Coach Gordon telestrator video reviews plus full Nutrition Periodization.',
+        bannerCopy: '0 Form Lab credits remaining this month. Upgrade to Plus for 4 monthly Coach Gordon reviews.',
         ctaLabel: 'Upgrade to Plus · $99/mo',
         highlights: [
-          '2 Coach Gordon Form Lab video critiques every month',
+          '4 Coach Gordon Form Lab video critiques every month',
           'Unlimited Desk Ergonomics profiles & Multi-Day Travel Pass',
           'Full Nutrition Periodization macro targets',
         ],
@@ -217,7 +217,7 @@ export function getUpgradeTriggerCopy(
       eyebrow: 'Priority Coaching Roster',
       headline: 'Step up to 8 Priority Form Lab Reviews + Direct 1-on-1 Coach Chat',
       description:
-        'You have used both monthly Plus Form Lab credits. Coach Support unlocks 8 monthly video reviews with 24-hour priority turnaround and direct 1-on-1 messaging with Coach Gordon.',
+        'You have used all 4 monthly Plus Form Lab credits. Coach Support unlocks 8 monthly video reviews with 24-hour priority turnaround and direct 1-on-1 messaging with Coach Gordon.',
       bannerCopy:
         '0 Form Lab credits left this month. Upgrade to Coach Support for 8 priority reviews/mo + 1-on-1 Coach Chat.',
       ctaLabel: 'Claim Coach Support Spot · $299/mo',
@@ -261,15 +261,23 @@ export function tierIdToForgePackageId(tier: ForgeTierId): string {
 
 export function inferForgeTierFromPackageNameClient(
   packageName?: string | null,
-  sessionsRemaining?: number | null
+  _sessionsRemaining?: number | null
 ): ForgeTierId {
   const normalized = String(packageName ?? '').trim().toLowerCase()
   if (
+    normalized.includes('bonus') ||
+    normalized.includes('screening') ||
+    normalized.includes('add-on') ||
+    normalized.includes('addon') ||
+    normalized.includes('movement screen') ||
+    normalized.includes('coach scheduled session')
+  ) {
+    return 'core_lab'
+  }
+  if (
     normalized.includes('coach support') ||
     normalized.includes('transformation direct') ||
-    normalized.includes('1:1') ||
-    normalized.includes('concierge') ||
-    (typeof sessionsRemaining === 'number' && sessionsRemaining > 0)
+    normalized.includes('concierge')
   ) {
     return 'coach_support'
   }

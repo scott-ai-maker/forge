@@ -218,7 +218,7 @@ function buildClinicalRationale(
   // DEXA narrative
   let bodyCompAnalysis = ''
   if (dexaScan) {
-    bodyCompAnalysis = `AI DEXA scan indicates ${dexaScan.estimatedBodyFatPercent}% body fat (±${dexaScan.confidenceIntervalPercent}%) categorized as "${dexaScan.classification}". Lean Body Mass is ${dexaScan.leanBodyMassLbs} lbs with a Fat-Free Mass Index (FFMI) of ${dexaScan.ffmi} (${dexaScan.ffmiCategory}). Cunningham Basal Metabolic Rate is ${dexaScan.cunninghamBmr} kcal/day with maintenance TDEE at ${dexaScan.maintenanceCaloriesTdee} kcal/day.`
+    bodyCompAnalysis = `Visual & anthropometric estimate indicates ${dexaScan.estimatedBodyFatPercent}% body fat (±${dexaScan.confidenceIntervalPercent}%) categorized as "${dexaScan.classification}". Lean Body Mass is ${dexaScan.leanBodyMassLbs} lbs with a Fat-Free Mass Index (FFMI) of ${dexaScan.ffmi} (${dexaScan.ffmiCategory}). Cunningham Basal Metabolic Rate is ${dexaScan.cunninghamBmr} kcal/day with maintenance TDEE at ${dexaScan.maintenanceCaloriesTdee} kcal/day.`
   } else {
     bodyCompAnalysis = `Baseline biometrics established without prior DEXA scan. Calibrated using standard anthropometric ensemble (${client.heightCm || 178}cm / ${client.weightKg || 80}kg).`
   }

@@ -107,8 +107,8 @@ const FAQS = [
     a: 'No. Any smartphone or laptop camera works. You just need a well-lit space where your entire body from head to bare feet is visible in frame (approx. 8–10 feet away).',
   },
   {
-    q: 'Can I use the $97 fee toward coaching?',
-    a: 'Yes. The full $97 fee can be applied toward a 12-week coaching plan or membership.',
+    q: 'Is this a recurring subscription?',
+    a: 'No. The 3D Movement and Posture Assessment is a standalone one-time $97 purchase with zero recurring billing or auto-renewal commitment.',
   },
   {
     q: 'Are my photos private and secure?',
@@ -251,7 +251,7 @@ export default function AuditLandingPage() {
           >
             <span style={{ fontSize: 18 }}>✦</span>
             <span style={{ fontFamily: 'Raleway, sans-serif', fontSize: 13.5, color: '#FFFFFF', fontWeight: 600 }}>
-              <strong style={{ color: 'var(--gold-lt)' }}>Full $97 credit:</strong> Apply the cost of this assessment toward a 12-week coaching plan or membership.
+              <strong style={{ color: 'var(--gold-lt)' }}>One-time $97 assessment:</strong> Standalone guided camera movement check with zero recurring subscription required.
             </span>
           </div>
 
@@ -325,7 +325,7 @@ export default function AuditLandingPage() {
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 13, color: 'var(--gray)', textDecoration: 'line-through' }}>$250 Value</div>
+                <div style={{ fontSize: 11, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>One-Time</div>
                 <div className="font-serif" style={{ fontSize: 34, color: 'var(--gold)', lineHeight: 1, letterSpacing: '0.02em', fontWeight: 700 }}>$97</div>
               </div>
             </div>
@@ -546,7 +546,7 @@ export default function AuditLandingPage() {
             START YOUR 3D BIOMECHANICAL AUDIT TODAY
           </h2>
           <p style={{ fontFamily: 'Raleway, sans-serif', fontSize: 16, color: 'var(--gray)', maxWidth: 600, margin: '0 auto 28px', lineHeight: 1.6 }}>
-            See how you move and get practical exercises to support your goals. Your $97 fee can be applied toward a coaching plan or membership.
+            See how you move and get practical corrective exercises to support your goals — one-time $97 purchase with zero subscription required.
           </p>
 
           <div style={{ maxWidth: 380, margin: '0 auto' }}>
@@ -558,7 +558,7 @@ export default function AuditLandingPage() {
           </div>
 
           <div style={{ marginTop: 20, fontSize: 12, color: 'var(--gray)' }}>
-            Instant access · Guided camera check · Full coaching credit
+            Instant access · Guided camera check · One-time purchase
           </div>
         </div>
       </div>

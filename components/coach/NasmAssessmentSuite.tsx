@@ -383,7 +383,7 @@ export default function NasmAssessmentSuite({
             }}
           >
             <GaaIcon name="dna" size={14} style={{ color: '#38BDF8' }} />
-            <span>AI DEXA Body Comp Scan</span>
+            <span>Body Composition Estimate</span>
           </button>
 
           <button

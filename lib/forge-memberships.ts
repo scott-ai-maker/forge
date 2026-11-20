@@ -12,6 +12,8 @@ export interface ForgeMembership {
   seatCapLabel?: string
   // Self-serve tools unlocked while the membership is paid; uses are per billing cycle (omitted = unlimited)
   includedFeatures?: readonly { feature: ForgeAddonFeature; uses?: number }[]
+  // One-time onboarding entitlements granted once on the first paid ($ > 0) invoice
+  onboardingFeatures?: readonly { feature: ForgeAddonFeature; uses?: number }[]
   features: readonly string[]
 }
 
@@ -22,11 +24,13 @@ export const FORGE_MEMBERSHIPS: readonly ForgeMembership[] = [
     monthlyPriceCents: 4900,
     annualPriceCents: 39900,
     trialDays: 7,
+    onboardingFeatures: [{ feature: 'video-review', uses: 1 }],
     features: [
       'Personalized NASM OPT™ training plan',
       'Workout, 1RM strength, and goal progress tracking',
       'Movement screening and practical guidance',
       'Instant exercise cues & 24/7 automated pacing',
+      '1 complimentary Form Lab onboarding video diagnostic (granted on first paid cycle; self-guided thereafter)',
     ],
   },
   {
