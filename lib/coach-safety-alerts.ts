@@ -49,7 +49,7 @@ export async function dispatchCoachSafetyAlert(
     process.env.MARKETING_FROM_EMAIL ||
     'Forge Athletic Safety <onboarding@resend.dev>'
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://forge-athletic.app').replace(/\/+$/, '')
-  const portalUrl = `${baseUrl}/coach/dashboard?tab=safety-queue`
+  const portalUrl = `${baseUrl}/coach`
 
   const safeAthleteName = sanitizePiiString(request.athleteName || 'Athlete').slice(0, 64) || 'Athlete'
 
@@ -69,11 +69,9 @@ export async function dispatchCoachSafetyAlert(
 
   try {
     const resend = new Resend(apiKey)
-    const urgencyLabel = response.isEmergency911
-      ? '🚨 [CRITICAL 911 EMERGENCY] Secure Athlete Safety Alert'
-      : '⚠️ [COACH ACTION REQUIRED] Secure Coaching Escalation'
-
-    const subject = `${urgencyLabel} — ${safeAthleteName}`
+    const subject = response.isEmergency911
+      ? '🚨 [URGENT ACTION] Forge Athletic Safety Queue Alert'
+      : '⚠️ [ACTION REQUIRED] Forge Athletic Coaching Escalation'
     const safeHtmlAthlete = escapeHtml(safeAthleteName)
     const safePhase = Number(request.nasmOptPhase) || 1
 

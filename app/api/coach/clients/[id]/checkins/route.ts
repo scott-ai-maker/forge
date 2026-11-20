@@ -111,7 +111,7 @@ export async function PATCH(
       userId: clientId,
       type: 'coach_feedback',
       title: 'Coach feedback posted',
-      body: patch.coach_feedback.slice(0, 140),
+      body: 'Coach Gordon posted feedback on your weekly check-in. Sign in to view.',
       data: { checkinId },
     }).catch(() => undefined)
   }

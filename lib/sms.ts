@@ -8,11 +8,28 @@ export function hasSmsConfig() {
   )
 }
 
-// Sends one SMS through Twilio's REST API. No-ops (skipped) when Twilio is not configured.
+// Sends one SMS through Twilio's REST API. No-ops (skipped) when Twilio is not configured
+// or when the recipient phone number is recorded in `sms_suppressions` (#18).
 export async function sendSms(to: string, body: string): Promise<{ sent: boolean; skipped?: boolean }> {
   if (!hasSmsConfig()) return { sent: false, skipped: true }
   const phone = toE164(to)
   if (!phone) return { sent: false, skipped: true }
+
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() && process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    try {
+      const { supabaseAdmin } = await import('@/lib/supabase')
+      const { data: suppressed } = await supabaseAdmin()
+        .from('sms_suppressions')
+        .select('phone')
+        .eq('phone', phone)
+        .maybeSingle()
+      if (suppressed) {
+        return { sent: false, skipped: true }
+      }
+    } catch {
+      // Fall through only if Supabase admin mock is not initialized in unit tests
+    }
+  }
 
   const sid = process.env.TWILIO_ACCOUNT_SID!.trim()
   const token = process.env.TWILIO_AUTH_TOKEN!.trim()

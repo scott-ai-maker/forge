@@ -224,7 +224,7 @@ describe('POST /api/coach/sessions/[id]/soap-notes', () => {
           client_id: 'c-live-1',
           scheduled_at: '2026-11-17T15:00:00Z',
           status: 'scheduled',
-          clients: { full_name: 'Jordan Brooks', user_id: 'athlete-user-1' },
+          clients: { id: 'c-live-1', full_name: 'Jordan Brooks' },
         },
         { auditConsents: [] }
       )
@@ -256,7 +256,7 @@ describe('POST /api/coach/sessions/[id]/soap-notes', () => {
           client_id: 'c-live-2',
           scheduled_at: '2026-11-17T15:00:00Z',
           status: 'scheduled',
-          clients: { full_name: 'Jordan Brooks', user_id: 'athlete-user-2' },
+          clients: { id: 'c-live-2', full_name: 'Jordan Brooks' },
         },
         {
           auditConsents: [
@@ -283,6 +283,45 @@ describe('POST /api/coach/sessions/[id]/soap-notes', () => {
     expect(res.status).toBe(200)
     expect(auditInsertSpy).toHaveBeenCalledTimes(1)
     expect(auditInsertSpy.mock.calls[0][0][0].document_type).toBe('live_recording_soap_consent')
+    expect(auditInsertSpy.mock.calls[0][0][0].metadata.athleteUserId).toBe('c-live-2')
+  })
+
+  it('fails closed (500) when mandatory wiretap audit log insert fails during live_bilateral_consented synthesis', async () => {
+    getRequestAuthzMock.mockResolvedValue(coachUser)
+    requireCoachAssignedClientMock.mockResolvedValue(undefined)
+    const auditInsertSpy = vi.fn().mockResolvedValue({ error: { message: 'db down' } })
+    supabaseAdminMock.mockReturnValue(
+      makeAdmin(
+        {
+          id: 's-live-3',
+          client_id: 'c-live-3',
+          scheduled_at: '2026-11-17T15:00:00Z',
+          status: 'scheduled',
+          clients: { id: 'c-live-3', full_name: 'Jordan Brooks' },
+        },
+        {
+          auditConsents: [
+            {
+              document_type: 'live_recording_soap_consent',
+              consented_at: '2026-11-17T14:58:00Z',
+            },
+          ],
+          auditInsertSpy,
+        }
+      )
+    )
+
+    const req = new NextRequest('http://localhost/api/coach/sessions/s-live-3/soap-notes', {
+      method: 'POST',
+      body: JSON.stringify({
+        rawNotes: 'Back squat 225x5x3.',
+        captureContext: 'live_bilateral_consented',
+        coachRecordingAttested: true,
+        voiceDictationUsed: true,
+      }),
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: 's-live-3' }) })
+    expect(res.status).toBe(500)
   })
 })
 

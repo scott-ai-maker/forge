@@ -168,18 +168,17 @@ export async function POST(req: NextRequest) {
   }
 
   const recipientUserId = authz.user.id === clientId ? coachId : clientId
-  let alertSnippet = messageBody
-  if (isVoiceNote) {
-    const match = messageBody.match(/^\[voice-note\]:(\d+(?:\.\d+)?):/)
-    const duration = match ? Math.round(Number(match[1])) : ''
-    alertSnippet = `Voice memo ${duration ? `(${duration}s)` : ''}`
-  }
+  const redactedNotificationBody = isVoiceNote
+    ? 'A new encrypted voice memo is waiting in your Forge Athletic portal.'
+    : authz.client.role === 'coach'
+      ? 'Coach Gordon sent a new secure message. Sign in to view.'
+      : 'You have a new secure client message. Sign in to view.'
 
   void notifyUser({
     userId: recipientUserId,
     type: 'new_message',
     title: authz.client.role === 'coach' ? 'New coach message' : 'New client message',
-    body: alertSnippet.slice(0, 140),
+    body: redactedNotificationBody,
     data: { clientId, coachId },
   }).catch(() => undefined)
 
@@ -311,7 +310,7 @@ export async function DELETE(req: NextRequest) {
 
     const { data: messagesToClear, error: fetchErr } = await admin
       .from('coach_client_messages')
-      .select('id, message_body')
+      .select('id, sender_id, message_body')
       .eq('client_id', clientId)
       .eq('coach_id', coachId)
 
@@ -319,14 +318,56 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: fetchErr.message }, { status: 500 })
     }
 
-    const unretracted = (messagesToClear ?? []).filter(m => !String(m.message_body ?? '').startsWith('[retracted]:'))
+    const unretracted = (messagesToClear ?? []).filter(m => {
+      const b = String(m.message_body ?? '')
+      return b !== '[retracted]' && !b.startsWith('[retracted]:')
+    })
 
+    const voicePathsToPurge: string[] = []
     for (const msg of unretracted) {
-      const taggedBody = `[retracted]:${msg.message_body}`
+      const rawBody = String(msg.message_body ?? '')
+      const parsedVoice = parseVoiceNoteBody(rawBody)
+      if (
+        parsedVoice &&
+        !parsedVoice.payload.startsWith('data:') &&
+        !parsedVoice.payload.startsWith('http://') &&
+        !parsedVoice.payload.startsWith('https://') &&
+        !parsedVoice.payload.startsWith('blob:') &&
+        !parsedVoice.payload.includes('..') &&
+        parsedVoice.payload.startsWith(`${clientId}/`)
+      ) {
+        voicePathsToPurge.push(parsedVoice.payload)
+      }
+
+      try {
+        await admin.from('retracted_message_forensic_archive').upsert(
+          {
+            message_id: msg.id,
+            client_id: clientId,
+            coach_id: coachId,
+            sender_id: (msg as { sender_id?: string | null }).sender_id ?? null,
+            retracted_by: authz.user.id,
+            original_body: rawBody,
+            retracted_at: new Date().toISOString(),
+          },
+          { onConflict: 'message_id' }
+        )
+      } catch {
+        // Ignore if forensic archive migration is not active in local/test mock
+      }
+
       await admin
         .from('coach_client_messages')
-        .update({ message_body: taggedBody })
+        .update({ message_body: '[retracted]' })
         .eq('id', msg.id)
+    }
+
+    if (voicePathsToPurge.length > 0 && admin.storage?.from) {
+      try {
+        await admin.storage.from('coach-voice-notes').remove(voicePathsToPurge)
+      } catch {
+        // Ignore storage purge errors on non-existent mock paths
+      }
     }
 
     return NextResponse.json({
@@ -365,14 +406,53 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'You do not have permission to retract this message.' }, { status: 403 })
   }
 
-  // 3. Soft-delete: prepend [retracted]: tag to message_body to preserve full text/audio in DB
+  // 3. Scrub PostgREST-visible row to literal '[retracted]', archive original in service_role-only vault,
+  //    and delete any client-accessible voice-note object (#27).
   const originalBody = String(existingMsg.message_body ?? '')
-  const taggedBody = originalBody.startsWith('[retracted]:') ? originalBody : `[retracted]:${originalBody}`
+  const cleanOriginal = originalBody.replace(/^\[retracted\]:/, '')
+  const deletedAtIso = new Date().toISOString()
+
+  if (originalBody !== '[retracted]') {
+    try {
+      await admin.from('retracted_message_forensic_archive').upsert(
+        {
+          message_id: targetMsgId,
+          client_id: existingMsg.client_id,
+          coach_id: existingMsg.coach_id,
+          sender_id: existingMsg.sender_id,
+          retracted_by: authz.user.id,
+          original_body: cleanOriginal,
+          retracted_at: deletedAtIso,
+        },
+        { onConflict: 'message_id' }
+      )
+    } catch {
+      // Ignore if forensic archive migration is not active in local/test mock
+    }
+
+    const parsedVoice = parseVoiceNoteBody(cleanOriginal)
+    if (
+      parsedVoice &&
+      !parsedVoice.payload.startsWith('data:') &&
+      !parsedVoice.payload.startsWith('http://') &&
+      !parsedVoice.payload.startsWith('https://') &&
+      !parsedVoice.payload.startsWith('blob:') &&
+      !parsedVoice.payload.includes('..') &&
+      parsedVoice.payload.startsWith(`${existingMsg.client_id}/`) &&
+      admin.storage?.from
+    ) {
+      try {
+        await admin.storage.from('coach-voice-notes').remove([parsedVoice.payload])
+      } catch {
+        // Ignore storage purge errors
+      }
+    }
+  }
 
   const { error: updateErr } = await admin
     .from('coach_client_messages')
     .update({
-      message_body: taggedBody,
+      message_body: '[retracted]',
     })
     .eq('id', targetMsgId)
 
@@ -383,6 +463,6 @@ export async function DELETE(req: NextRequest) {
   return NextResponse.json({
     success: true,
     messageId: targetMsgId,
-    deleted_at: new Date().toISOString(),
+    deleted_at: deletedAtIso,
   })
 }

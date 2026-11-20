@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { enforceRateLimit, getClientIp } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 import { validateReferralCode, normalizeReferralCode, recordReferralClick } from '@/lib/referrals'
 
@@ -6,6 +7,23 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
+    if (process.env.NODE_ENV !== 'test') {
+      const rateLimit = await enforceRateLimit({
+        key: `referral_claim:ip:${clientIp}`,
+        limit: 20,
+        windowSeconds: 600,
+        route: '/api/referrals/claim',
+        dimension: 'ip',
+      })
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { error: 'Too many referral validation attempts. Please wait a few minutes.' },
+          { status: 429 }
+        )
+      }
+    }
+
     const body = await req.json().catch(() => ({}))
     const rawCode = typeof body?.code === 'string' ? body.code : ''
     const normalized = normalizeReferralCode(rawCode)
@@ -27,8 +45,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Record click
-    await recordReferralClick(admin, normalized)
+    // Record click scoped to caller IP
+    await recordReferralClick(admin, normalized, clientIp)
 
     const response = NextResponse.json({
       valid: true,

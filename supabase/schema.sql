@@ -340,7 +340,7 @@ alter table discount_code_redemptions
 create table if not exists sessions (
   id              uuid primary key default gen_random_uuid(),
   client_id       uuid references clients(id) on delete cascade,
-  package_id      uuid references client_packages(id),
+  package_id      uuid references client_packages(id) on delete set null,
   scheduled_at    timestamptz not null,
   duration_mins   int default 60,
   status          text default 'scheduled'  -- scheduled | completed | cancelled | no_show
@@ -373,19 +373,16 @@ revoke insert, update, delete on client_lifecycle_audit_logs from authenticated;
 -- Coach onboarding gates: zero anonymous access; RLS policies below govern authenticated reads/writes
 revoke all on coach_onboarding_gates from anon;
 
--- Waitlist: anyone can insert, only service role can read
+-- Waitlist & Coaching applications: server-only writes via rate-limited, TCPA/MHMDA-enforced API routes
 drop policy if exists "Public can join waitlist" on waitlist;
-create policy "Public can join waitlist" on waitlist
-  for insert with check (true);
+revoke all on waitlist from anon, authenticated;
 
--- Coaching applications: anyone can submit, only service role reads
 drop policy if exists "Public can submit coaching application" on coaching_applications;
-create policy "Public can submit coaching application" on coaching_applications
-  for insert with check (true);
+revoke all on coaching_applications from anon, authenticated;
 
 -- Clients: users can only read/update their own non-privileged record fields.
--- Privileged columns (role, designated_coach_id, stripe_customer_id, status) are locked via BEFORE UPDATE trigger
--- to prevent privilege escalation while avoiding 42P17 self-referential RLS subqueries.
+-- Privileged columns (role, designated_coach_id, stripe_customer_id, status, email, must_reset_password, avatar_path)
+-- are locked via BEFORE UPDATE trigger to prevent privilege escalation while avoiding 42P17 self-referential RLS subqueries.
 create or replace function public.enforce_clients_privileged_columns()
 returns trigger
 language plpgsql
@@ -405,6 +402,19 @@ begin
     end if;
     if new.status is distinct from old.status then
       raise exception 'Insufficient privilege: cannot modify account status' using errcode = '42501';
+    end if;
+    if new.email is distinct from old.email then
+      raise exception 'Insufficient privilege: email must be updated via Supabase Auth verification' using errcode = '42501';
+    end if;
+    if new.must_reset_password is distinct from old.must_reset_password then
+      raise exception 'Insufficient privilege: cannot clear must_reset_password directly' using errcode = '42501';
+    end if;
+    if new.avatar_path is not null and (
+      split_part(ltrim(new.avatar_path, '/'), '/', 1) <> new.id::text
+      or position('..' in new.avatar_path) > 0
+      or position('\' in new.avatar_path) > 0
+    ) then
+      raise exception 'Invalid avatar_path: must reside within own user storage folder' using errcode = '42501';
     end if;
   end if;
   return new;
@@ -470,6 +480,9 @@ as $$
   );
 $$;
 
+revoke all on function public.is_authenticated_coach() from public;
+grant execute on function public.is_authenticated_coach() to authenticated;
+
 create or replace function public.is_coach_assigned_to_client(target_client_id uuid)
 returns boolean
 language sql
@@ -486,6 +499,9 @@ as $$
       and cl.designated_coach_id = auth.uid()
   );
 $$;
+
+revoke all on function public.is_coach_assigned_to_client(uuid) from public;
+grant execute on function public.is_coach_assigned_to_client(uuid) to authenticated;
 
 -- ── COACH POLICIES ────────────────────────────────────────
 -- Coach can read assigned clients
@@ -634,14 +650,28 @@ create table if not exists coach_client_messages (
   read_at                        timestamptz,
   is_deleted                     boolean default false,
   deleted_at                     timestamptz,
-  deleted_by                     uuid references clients(id),
+  deleted_by                     uuid references clients(id) on delete set null,
   created_at                     timestamptz default now()
 );
 
 alter table coach_client_messages
   add column if not exists is_deleted boolean default false,
   add column if not exists deleted_at timestamptz,
-  add column if not exists deleted_by uuid references clients(id);
+  add column if not exists deleted_by uuid references clients(id) on delete set null;
+
+create table if not exists retracted_message_forensic_archive (
+  id                             uuid primary key default gen_random_uuid(),
+  message_id                     uuid not null unique,
+  client_id                      uuid references clients(id) on delete cascade,
+  coach_id                       uuid references clients(id) on delete cascade,
+  sender_id                      uuid references clients(id) on delete set null,
+  retracted_by                   uuid references clients(id) on delete set null,
+  original_body                  text not null,
+  retracted_at                   timestamptz not null default now()
+);
+
+alter table retracted_message_forensic_archive enable row level security;
+revoke all on retracted_message_forensic_archive from public, anon, authenticated;
 
 alter table fitness_profiles
   add column if not exists preferred_units text default 'metric'
@@ -879,8 +909,13 @@ drop policy if exists "User reads own intake form" on client_intake_forms;
 create policy "User reads own intake form" on client_intake_forms
   for select using (auth.uid() = user_id);
 drop policy if exists "User writes own intake form" on client_intake_forms;
-create policy "User writes own intake form" on client_intake_forms
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "User inserts own intake form" on client_intake_forms;
+create policy "User inserts own intake form" on client_intake_forms
+  for insert to authenticated with check (auth.uid() = user_id);
+drop policy if exists "User updates own intake form" on client_intake_forms;
+create policy "User updates own intake form" on client_intake_forms
+  for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+revoke delete on client_intake_forms from anon, authenticated;
 
 drop policy if exists "Client reads own messages" on coach_client_messages;
 create policy "Client reads own messages" on coach_client_messages
@@ -928,8 +963,7 @@ drop policy if exists "User reads own workout plans" on workout_plans;
 create policy "User reads own workout plans" on workout_plans
   for select using (auth.uid() = user_id);
 drop policy if exists "User writes own workout plans" on workout_plans;
-create policy "User writes own workout plans" on workout_plans
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+revoke insert, update, delete on workout_plans from anon, authenticated;
 
 drop policy if exists "User reads own workout logs" on workout_logs;
 create policy "User reads own workout logs" on workout_logs
@@ -1521,20 +1555,23 @@ create policy "Coach inserts client assessments" on nasm_assessments
     )
   );
 
--- Coach can update own client assessments
+-- Coach can update own assigned client assessments
 drop policy if exists "Coach updates client assessments" on nasm_assessments;
 create policy "Coach updates client assessments" on nasm_assessments
-  for update using (
-    auth.uid() = coach_id
+  for update to authenticated using (
+    (select auth.uid()) = coach_id
+    and public.is_coach_assigned_to_client(client_id)
   ) with check (
-    auth.uid() = coach_id
+    (select auth.uid()) = coach_id
+    and public.is_coach_assigned_to_client(client_id)
   );
 
--- Coach can delete own client assessments
+-- Coach can delete own assigned client assessments
 drop policy if exists "Coach deletes client assessments" on nasm_assessments;
 create policy "Coach deletes client assessments" on nasm_assessments
-  for delete using (
-    auth.uid() = coach_id
+  for delete to authenticated using (
+    (select auth.uid()) = coach_id
+    and public.is_coach_assigned_to_client(client_id)
   );
 
 create index if not exists nasm_assessments_client_idx on nasm_assessments(client_id, assessment_date desc);
@@ -1905,13 +1942,9 @@ create policy "Users can view their own referral code"
   on referral_codes for select
   using (auth.uid() = client_id);
 
-create policy "Users can insert their own referral code"
-  on referral_codes for insert
-  with check (auth.uid() = client_id);
-
-create policy "Users can update their own referral code"
-  on referral_codes for update
-  using (auth.uid() = client_id);
+drop policy if exists "Users can insert their own referral code" on referral_codes;
+drop policy if exists "Users can update their own referral code" on referral_codes;
+revoke insert, update, delete on referral_codes from anon, authenticated;
 
 create policy "Users can view their own sent referral attributions"
   on referral_attributions for select
@@ -1964,30 +1997,49 @@ alter table teams enable row level security;
 alter table team_members enable row level security;
 alter table team_live_sessions enable row level security;
 
+create or replace function public.is_enrolled_in_team(target_team_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.team_members tm
+    where tm.team_id = target_team_id
+      and tm.client_id = auth.uid()
+  );
+$$;
+
+revoke all on function public.is_enrolled_in_team(uuid) from public;
+grant execute on function public.is_enrolled_in_team(uuid) to authenticated;
+
 drop policy if exists "Coaches can manage own teams" on teams;
 create policy "Coaches can manage own teams" on teams
-  for all using (auth.uid() = coach_id) with check (auth.uid() = coach_id);
+  for all to authenticated using ((select auth.uid()) = coach_id) with check ((select auth.uid()) = coach_id);
 
 drop policy if exists "Members can view their teams" on teams;
 create policy "Members can view their teams" on teams
-  for select using (exists (select 1 from team_members where team_members.team_id = teams.id and team_members.client_id = auth.uid()));
+  for select to authenticated using (public.is_enrolled_in_team(id));
 
 drop policy if exists "Coaches can manage team members" on team_members;
 create policy "Coaches can manage team members" on team_members
-  for all using (exists (select 1 from teams where teams.id = team_members.team_id and teams.coach_id = auth.uid()))
-  with check (exists (select 1 from teams where teams.id = team_members.team_id and teams.coach_id = auth.uid()));
+  for all to authenticated
+  using (exists (select 1 from teams where teams.id = team_members.team_id and teams.coach_id = (select auth.uid())))
+  with check (exists (select 1 from teams where teams.id = team_members.team_id and teams.coach_id = (select auth.uid())));
 
 drop policy if exists "Members can view teammates" on team_members;
 create policy "Members can view teammates" on team_members
-  for select using (client_id = auth.uid());
+  for select to authenticated using (public.is_enrolled_in_team(team_id));
 
 drop policy if exists "Coaches can manage team live sessions" on team_live_sessions;
 create policy "Coaches can manage team live sessions" on team_live_sessions
-  for all using (coach_id = auth.uid()) with check (coach_id = auth.uid());
+  for all to authenticated using (coach_id = (select auth.uid())) with check (coach_id = (select auth.uid()));
 
 drop policy if exists "Members can view team live sessions" on team_live_sessions;
 create policy "Members can view team live sessions" on team_live_sessions
-  for select using (exists (select 1 from team_members where team_members.team_id = team_live_sessions.team_id and team_members.client_id = auth.uid()));
+  for select to authenticated using (public.is_enrolled_in_team(team_id));
 
 
 
@@ -2149,3 +2201,45 @@ create policy "Users can view own legal consent audit rows"
   for select
   to authenticated
   using (user_id is not null and (select auth.uid()) = user_id);
+
+create or replace function public.protect_legal_consent_audit_log_immutability()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'DELETE' then
+    raise exception 'legal_consent_audit_log is append-only; DELETE is prohibited for statutory litigation defense';
+  end if;
+
+  if tg_op = 'UPDATE' then
+    if new.id is distinct from old.id
+      or new.retained_for_legal_defense is distinct from old.retained_for_legal_defense
+      or new.document_type is distinct from old.document_type
+      or new.document_version is distinct from old.document_version
+      or new.document_sha256 is distinct from old.document_sha256
+      or new.typed_signature is distinct from old.typed_signature
+      or new.ip_address is distinct from old.ip_address
+      or new.user_agent is distinct from old.user_agent
+      or new.consented_at is distinct from old.consented_at
+      or new.metadata is distinct from old.metadata
+      or new.created_at is distinct from old.created_at
+      or (new.user_id is not null and new.user_id is distinct from old.user_id)
+      or (old.deleted_subject_sha256 is not null and new.deleted_subject_sha256 is distinct from old.deleted_subject_sha256)
+    then
+      raise exception 'legal_consent_audit_log is immutable except for user_id NULLing and one-time deleted_subject_sha256 stamping on account deletion';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.protect_legal_consent_audit_log_immutability() from public;
+
+drop trigger if exists trg_protect_legal_consent_audit_log on public.legal_consent_audit_log;
+create trigger trg_protect_legal_consent_audit_log
+  before update or delete on public.legal_consent_audit_log
+  for each row
+  execute function public.protect_legal_consent_audit_log_immutability();

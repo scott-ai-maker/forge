@@ -195,7 +195,7 @@ describe('messages route', () => {
     expect(notifyUserMock).toHaveBeenCalledWith({
       userId: 'coach-1',
       title: 'New client message',
-      body: 'Need to reschedule',
+      body: 'You have a new secure client message. Sign in to view.',
       type: 'new_message',
       data: {
         clientId: 'client-1',
@@ -233,7 +233,7 @@ describe('messages route', () => {
     expect(notifyUserMock).toHaveBeenCalledWith({
       userId: 'coach-1',
       title: 'New client message',
-      body: 'Voice memo (15s)',
+      body: 'A new encrypted voice memo is waiting in your Forge Athletic portal.',
       type: 'new_message',
       data: {
         clientId: 'client-1',

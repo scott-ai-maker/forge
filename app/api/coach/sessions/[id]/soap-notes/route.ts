@@ -103,7 +103,7 @@ export async function POST(
   const admin = supabaseAdmin()
   const { data: targetSession, error: sessionErr } = await admin
     .from('sessions')
-    .select('id, client_id, scheduled_at, status, clients(full_name, user_id)')
+    .select('id, client_id, scheduled_at, status, clients(id, full_name)')
     .eq('id', id)
     .maybeSingle()
 
@@ -123,11 +123,11 @@ export async function POST(
 
   const rawClient = (
     targetSession as unknown as {
-      clients?: { full_name?: string; name?: string; user_id?: string | null } | null
+      clients?: { id?: string | null; full_name?: string; name?: string } | null
     }
   )?.clients
 
-  let athleteUserId = rawClient?.user_id ?? null
+  let athleteUserId = targetSession.client_id ?? rawClient?.id ?? null
   const cleanBodyClientName =
     typeof bodyClientName === 'string'
       ? bodyClientName.replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, 120)
@@ -136,11 +136,11 @@ export async function POST(
   if ((!clientName || (captureContext === 'live_bilateral_consented' && !athleteUserId)) && targetSession.client_id) {
     const { data: clientData } = await admin
       .from('clients')
-      .select('full_name, user_id')
+      .select('id, full_name')
       .eq('id', targetSession.client_id)
       .maybeSingle()
     if (!clientName) clientName = clientData?.full_name || 'Athlete'
-    if (!athleteUserId) athleteUserId = clientData?.user_id ?? null
+    if (!athleteUserId) athleteUserId = clientData?.id ?? targetSession.client_id
   }
   if (!clientName) clientName = 'Athlete'
 
@@ -157,7 +157,7 @@ export async function POST(
       )
     }
 
-    await recordLegalConsentAudit({
+    const auditWrite = await recordLegalConsentAudit({
       adminClient: admin,
       userId: coachId,
       documentTypes: ['live_recording_soap_consent'],
@@ -172,6 +172,12 @@ export async function POST(
         voiceDictationUsed: Boolean(voiceDictationUsed),
       },
     })
+    if (auditWrite.error) {
+      return NextResponse.json(
+        { error: 'Unable to record mandatory all-party transcription audit log. Please retry.' },
+        { status: 500, headers: NO_STORE_HEADERS }
+      )
+    }
   }
 
   const sessionDate = targetSession.scheduled_at

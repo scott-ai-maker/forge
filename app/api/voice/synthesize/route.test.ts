@@ -25,8 +25,8 @@ describe('/api/voice/synthesize', () => {
     })
   })
 
-  it('rejects unauthenticated requests in production even when NEXT_PUBLIC_ALLOW_ANON_PREVIEW is true', async () => {
-    vi.stubEnv('NODE_ENV', 'production')
+  it('rejects unauthenticated requests across all environments even when NEXT_PUBLIC_ALLOW_ANON_PREVIEW is true', async () => {
+    vi.stubEnv('NODE_ENV', 'development')
     vi.stubEnv('NEXT_PUBLIC_ALLOW_ANON_PREVIEW', 'true')
     getRequestAuthzMock.mockRejectedValueOnce(new AuthzError('Unauthorized', 401))
 
@@ -36,6 +36,34 @@ describe('/api/voice/synthesize', () => {
     })
     const res = await POST(req)
     expect(res.status).toBe(401)
+  })
+
+  it('rejects paused/inactive client accounts and clamps client text at 800 characters (#36)', async () => {
+    getRequestAuthzMock.mockResolvedValueOnce({
+      user: { id: 'client-paused' },
+      client: { role: 'client', status: 'paused' },
+    })
+
+    const pausedRes = await POST(
+      new NextRequest('http://localhost:3000/api/voice/synthesize', {
+        method: 'POST',
+        body: JSON.stringify({ text: 'Test cue.' }),
+      })
+    )
+    expect(pausedRes.status).toBe(403)
+
+    delete process.env.ELEVENLABS_API_KEY
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL
+    const longText = 'Brace your core and control the eccentric tempo. '.repeat(40)
+    const activeRes = await POST(
+      new NextRequest('http://localhost:3000/api/voice/synthesize', {
+        method: 'POST',
+        body: JSON.stringify({ text: longText }),
+      })
+    )
+    expect(activeRes.status).toBe(200)
+    const payload = await activeRes.json()
+    expect(payload.spokenText.length).toBeLessThanOrEqual(800)
   })
 
   it('returns 400 when text is missing', async () => {

@@ -66,9 +66,9 @@ export async function dispatchCoachOnboardingAlert(
     ? equipmentAccess.join(', ')
     : 'None specified'
 
-  const reviewNotice = parqAnyYes
-    ? 'Priority Coach Review Requested — Open Secure Portal to inspect intake record'
-    : 'Intake & Consents On File — Open Secure Portal to review'
+  // Never reveal PAR-Q+ boolean flags in plaintext email; direct coach to authenticated portal (#29)
+  void parqAnyYes
+  const reviewNotice = 'Intake & Consents On File — Open Secure Portal to review'
 
   const safeHtmlName = escapeHtml(clientName)
   const safeHtmlEmail = escapeHtml(clientEmail)

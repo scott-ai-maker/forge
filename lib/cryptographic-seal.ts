@@ -147,6 +147,11 @@ function resolveSealSecret(): string {
       process.env.UNSUBSCRIBE_HMAC_SECRET?.trim() ||
       process.env.CRON_SECRET?.trim()
     if (serverSecret) return serverSecret
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'Missing server HMAC secret for cryptographic seal (set FORGE_SEAL_HMAC_SECRET, UNSUBSCRIBE_HMAC_SECRET, or CRON_SECRET).'
+      )
+    }
   }
   return 'forge-athletic-hmac-sha256-display-key-v1'
 }

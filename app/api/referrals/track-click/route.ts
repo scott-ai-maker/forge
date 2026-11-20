@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getClientIp } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 import { recordReferralClick } from '@/lib/referrals'
 
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = supabaseAdmin()
-    await recordReferralClick(admin, code)
+    await recordReferralClick(admin, code, getClientIp(req))
 
     return NextResponse.json({ success: true })
   } catch (error) {

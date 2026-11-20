@@ -193,12 +193,29 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    const consentedPhoneE164 = smsConsent === true && rawPhoneStr ? toE164(rawPhoneStr) : null
-    if (smsConsent === true && rawPhoneStr && !consentedPhoneE164) {
+    const rawConsentedPhoneE164 = smsConsent === true && rawPhoneStr ? toE164(rawPhoneStr) : null
+    if (smsConsent === true && rawPhoneStr && !rawConsentedPhoneE164) {
       return jsonNoStore(
         { error: 'Please enter a valid 10-digit US or international mobile number.' },
         { status: 400 }
       )
+    }
+
+    // Honor prior STOP / account-deletion SMS suppressions on unauthenticated waitlist submissions (#18)
+    let consentedPhoneE164 = rawConsentedPhoneE164
+    if (consentedPhoneE164) {
+      try {
+        const { data: suppressedRow } = await supabase
+          .from('sms_suppressions')
+          .select('phone')
+          .eq('phone', consentedPhoneE164)
+          .maybeSingle()
+        if (suppressedRow) {
+          consentedPhoneE164 = null
+        }
+      } catch {
+        // Proceed if sms_suppressions table is unavailable in local mock
+      }
     }
     let validTimezone: string | null = null
     if (typeof timezone === 'string' && timezone.trim() && timezone.length <= 64) {

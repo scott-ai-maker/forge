@@ -296,6 +296,30 @@ export async function DELETE(req: NextRequest) {
       } catch {
         // ignore
       }
+      try {
+        await admin.from('email_suppressions').upsert(
+          {
+            email: normalizedEmail,
+            reason: 'account_deleted',
+            suppressed_at: new Date().toISOString(),
+          },
+          { onConflict: 'email' }
+        )
+      } catch {
+        // ignore
+      }
+      try {
+        await admin
+          .from('api_rate_limits')
+          .delete()
+          .in('key', [
+            `apply:email:${normalizedEmail}`,
+            `waitlist:email:${normalizedEmail}`,
+            `master_allocation:email:${normalizedEmail}`,
+          ])
+      } catch {
+        // ignore
+      }
     }
 
     try {

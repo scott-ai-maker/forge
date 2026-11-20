@@ -31,7 +31,7 @@ function verifyCandidateUrlSignature(
 
 function isValidSignature(req: NextRequest, params: URLSearchParams) {
   const token = process.env.TWILIO_AUTH_TOKEN?.trim()
-  if (!token) return process.env.NODE_ENV !== 'production'
+  if (!token) return process.env.NODE_ENV === 'test'
   const signature = req.headers.get('x-twilio-signature')
   if (!signature) return false
 
