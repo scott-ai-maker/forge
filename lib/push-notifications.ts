@@ -90,8 +90,15 @@ export async function sendPushToUser({ userId, alert, data }: PushSendInput) {
   const host = config.useSandbox ? 'https://api.sandbox.push.apple.com' : 'https://api.push.apple.com'
   let delivered = 0
 
+  const APNS_HEX_RE = /^[a-fA-F0-9]{64,200}$/
+
   for (const token of tokens) {
-    const response = await fetch(`${host}/3/device/${token.device_token}`, {
+    if (!APNS_HEX_RE.test(token.device_token)) {
+      await removeInvalidToken(token.device_token)
+      continue
+    }
+
+    const response = await fetch(`${host}/3/device/${encodeURIComponent(token.device_token)}`, {
       method: 'POST',
       headers: {
         authorization: `bearer ${providerToken}`,

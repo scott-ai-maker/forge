@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestAuthz, AuthzError } from '@/lib/authz'
+import { enforceRateLimit } from '@/lib/rate-limit'
 import {
   createSignedFitnessPhotoUrl,
+  detectSafeImageMimeFromBytes,
   FITNESS_PHOTO_BUCKET,
   isUserOwnedPhotoPath,
 } from '@/lib/fitness-photos'
 
 const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 const MAX_FILE_BYTES = 5 * 1024 * 1024
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 export async function GET(req: NextRequest) {
   let userId = ''
@@ -54,25 +57,47 @@ export async function POST(req: NextRequest) {
 
   const admin = supabaseAdmin()
 
+  const rl = await enforceRateLimit({
+    key: `account_avatar:${userId}`,
+    limit: 20,
+    windowSeconds: 300,
+    route: '/api/account/avatar',
+    dimension: 'user',
+  })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many avatar updates. Please wait before trying again.' },
+      { status: 429, headers: NO_STORE_HEADERS }
+    )
+  }
+
   try {
     const formData = await req.formData()
     const file = formData.get('avatar') as File | null
 
     if (!file) {
-      return NextResponse.json({ error: 'No avatar provided.' }, { status: 400 })
+      return NextResponse.json({ error: 'No avatar provided.' }, { status: 400, headers: NO_STORE_HEADERS })
     }
 
     if (!ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json({ error: 'Avatar must be PNG, JPEG, or WebP.' }, { status: 400 })
+      return NextResponse.json({ error: 'Avatar must be PNG, JPEG, or WebP.' }, { status: 400, headers: NO_STORE_HEADERS })
     }
 
     if (file.size > MAX_FILE_BYTES) {
-      return NextResponse.json({ error: 'Avatar must be 5MB or smaller.' }, { status: 400 })
+      return NextResponse.json({ error: 'Avatar must be 5MB or smaller.' }, { status: 400, headers: NO_STORE_HEADERS })
     }
 
-    const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
-    const filename = `${userId}/account-avatar-${Date.now()}.${ext}`
     const buffer = await file.arrayBuffer()
+    const verifiedMime = detectSafeImageMimeFromBytes(buffer)
+    if (!verifiedMime) {
+      return NextResponse.json(
+        { error: 'Avatar contents do not match a valid PNG, JPEG, or WebP image.' },
+        { status: 400, headers: NO_STORE_HEADERS }
+      )
+    }
+
+    const ext = verifiedMime === 'image/png' ? 'png' : verifiedMime === 'image/webp' ? 'webp' : 'jpg'
+    const filename = `${userId}/account-avatar-${Date.now()}.${ext}`
 
     const { data: existing } = await admin
       .from('clients')
@@ -98,7 +123,7 @@ export async function POST(req: NextRequest) {
     const { error: uploadError } = await admin.storage
       .from(FITNESS_PHOTO_BUCKET)
       .upload(filename, buffer, {
-        contentType: file.type,
+        contentType: verifiedMime,
         upsert: false,
       })
 
@@ -117,7 +142,7 @@ export async function POST(req: NextRequest) {
 
     const avatarUrl = await createSignedFitnessPhotoUrl(admin, filename)
 
-    return NextResponse.json({ avatarUrl })
+    return NextResponse.json({ avatarUrl }, { headers: NO_STORE_HEADERS })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Avatar upload failed.'
     return NextResponse.json({ error: message }, { status: 500 })

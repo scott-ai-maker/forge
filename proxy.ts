@@ -181,8 +181,25 @@ export async function proxy(request: NextRequest) {
   }
 
   // Force password reset for accounts flagged by admin provisioning.
+  // Verify server-authoritative sources (app_metadata & RLS-locked clients.must_reset_password)
+  // in addition to user_metadata so a client cannot bypass the flag via updateUser().
   if (user && (pathname.startsWith('/dashboard') || pathname.startsWith('/coach'))) {
-    if (user.user_metadata?.must_reset_password === true) {
+    let mustResetPassword =
+      user.app_metadata?.must_reset_password === true ||
+      user.user_metadata?.must_reset_password === true
+
+    if (!mustResetPassword) {
+      const { data: clientFlag } = await supabase
+        .from('clients')
+        .select('must_reset_password')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (clientFlag?.must_reset_password === true) {
+        mustResetPassword = true
+      }
+    }
+
+    if (mustResetPassword) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/reset-password'
       url.searchParams.set('required', '1')

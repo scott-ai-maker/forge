@@ -2,17 +2,17 @@ import { describe, it, expect } from 'vitest'
 import nextConfig from '../next.config'
 
 describe('Content Security Policy & CDN Whitelisting (next.config.ts)', () => {
-  it('whitelists official NASM exercise CDN domains in remotePatterns', () => {
+  it('whitelists trusted image CDN domains and excludes retired YouTube domains in remotePatterns', () => {
     const patterns = nextConfig.images?.remotePatterns || []
     const hostnames = patterns.map(p => ('hostname' in p ? p.hostname : ''))
 
-    expect(hostnames).toContain('img.youtube.com')
-    expect(hostnames).toContain('i.ytimg.com')
+    expect(hostnames).not.toContain('img.youtube.com')
+    expect(hostnames).not.toContain('i.ytimg.com')
     expect(hostnames).toContain('images.credly.com')
     expect(hostnames).toContain('*.supabase.co')
   })
 
-  it('whitelists official NASM CDN images and YouTube embed domains in Content-Security-Policy', async () => {
+  it('enforces hardened Content-Security-Policy without retired YouTube or client Gemini origins', async () => {
     const headersFn = nextConfig.headers
     expect(headersFn).toBeDefined()
     if (!headersFn) return
@@ -25,13 +25,16 @@ describe('Content Security Policy & CDN Whitelisting (next.config.ts)', () => {
     expect(cspHeader).toBeDefined()
     const cspValue = cspHeader?.value || ''
 
-    // img-src must whitelist YouTube CDN
-    expect(cspValue).toMatch(/img-src[^;]*https:\/\/img\.youtube\.com/)
-    expect(cspValue).toMatch(/img-src[^;]*https:\/\/i\.ytimg\.com/)
+    // Retired YouTube & client-side Gemini origins must be excluded
+    expect(cspValue).not.toContain('img.youtube.com')
+    expect(cspValue).not.toContain('i.ytimg.com')
+    expect(cspValue).not.toContain('youtube-nocookie.com')
+    expect(cspValue).not.toContain('www.youtube.com')
+    expect(cspValue).not.toContain('generativelanguage.googleapis.com')
 
-    // frame-src must whitelist YouTube embed domains
-    expect(cspValue).toMatch(/frame-src[^;]*https:\/\/www\.youtube-nocookie\.com/)
-    expect(cspValue).toMatch(/frame-src[^;]*https:\/\/www\.youtube\.com/)
+    // Clickjacking & form-hijacking defenses
+    expect(cspValue).toContain("frame-ancestors 'self'")
+    expect(cspValue).toContain("form-action 'self'")
 
     // media-src must whitelist Supabase
     expect(cspValue).toMatch(/media-src[^;]*https:\/\/\*\.supabase\.co/)

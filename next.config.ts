@@ -14,14 +14,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'img.youtube.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.ytimg.com',
-      },
-      {
-        protocol: 'https',
         hostname: '*.supabase.co',
       },
       {
@@ -86,12 +78,14 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''} 'wasm-unsafe-eval' https://js.stripe.com`,
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://images.credly.com https://*.supabase.co https://img.youtube.com https://i.ytimg.com https://*.ytimg.com https://images.unsplash.com",
+              "img-src 'self' data: blob: https://images.credly.com https://*.supabase.co https://images.unsplash.com",
               "font-src 'self' data:",
               "media-src 'self' blob: data: https://*.supabase.co",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://img.youtube.com https://i.ytimg.com https://www.youtube.com https://www.youtube-nocookie.com https://api.tryvital.io https://link.tryvital.io https://generativelanguage.googleapis.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.tryvital.io https://link.tryvital.io",
               "worker-src 'self' blob:",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.youtube-nocookie.com https://www.youtube.com https://youtube.com https://open.spotify.com",
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://open.spotify.com",
+              "frame-ancestors 'self'",
+              "form-action 'self'",
               "object-src 'none'",
               "base-uri 'self'",
             ].join('; '),

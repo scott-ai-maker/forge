@@ -1,12 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { getTrustedAppBaseUrl } from '@/lib/app-base-url'
+import { enforceRateLimit } from '@/lib/rate-limit'
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 export async function POST(req: NextRequest) {
   try {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['client', 'coach'])
     const userId = authz.user.id
+
+    const rl = await enforceRateLimit({
+      key: `stripe_portal:${userId}`,
+      limit: 20,
+      windowSeconds: 600,
+      route: '/api/stripe/portal',
+      dimension: 'user',
+    })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many billing portal requests. Please wait a moment and try again.' },
+        { status: 429, headers: NO_STORE_HEADERS }
+      )
+    }
 
     const { stripe } = await import('@/lib/stripe')
     if (!stripe) {

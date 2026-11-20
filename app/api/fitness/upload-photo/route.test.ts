@@ -130,8 +130,9 @@ describe('POST /api/fitness/upload-photo', () => {
       },
     })
 
+    const validJpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01])
     const form = new FormData()
-    form.set('photo', new File(['jpeg-bytes'], 'front.jpg', { type: 'image/jpeg' }))
+    form.set('photo', new File([validJpegBytes], 'front.jpg', { type: 'image/jpeg' }))
     const req = new NextRequest('http://localhost/api/fitness/upload-photo', {
       method: 'POST',
       body: form,
@@ -160,8 +161,9 @@ describe('POST /api/fitness/upload-photo', () => {
       storage: { from: vi.fn(() => ({ upload: uploadSpy })) },
     })
 
+    const validJpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01])
     const form1 = new FormData()
-    form1.set('photo', new File(['jpeg-bytes'], 'front.jpg', { type: 'image/jpeg' }))
+    form1.set('photo', new File([validJpegBytes], 'front.jpg', { type: 'image/jpeg' }))
     const res1 = await POST(
       new NextRequest('http://localhost/api/fitness/upload-photo', { method: 'POST', body: form1 })
     )
@@ -178,11 +180,28 @@ describe('POST /api/fitness/upload-photo', () => {
     })
 
     const form2 = new FormData()
-    form2.set('photo', new File(['jpeg-bytes'], 'front.jpg', { type: 'image/jpeg' }))
+    form2.set('photo', new File([validJpegBytes], 'front.jpg', { type: 'image/jpeg' }))
     const res2 = await POST(
       new NextRequest('http://localhost/api/fitness/upload-photo', { method: 'POST', body: form2 })
     )
     expect(res2!.status).toBe(403)
     expect(uploadSpy).not.toHaveBeenCalled()
+  })
+
+  it('rejects spoofed MIME uploads whose magic bytes are not a valid PNG, JPEG, or WebP', async () => {
+    supabaseAdminMock.mockReturnValue({
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { age: 30 }, error: null }),
+      })),
+    })
+
+    const form = new FormData()
+    form.set('photo', new File(['<svg onload=alert(1)>'], 'spoof.jpg', { type: 'image/jpeg' }))
+    const res = await POST(
+      new NextRequest('http://localhost/api/fitness/upload-photo', { method: 'POST', body: form })
+    )
+    expect(res!.status).toBe(400)
   })
 })

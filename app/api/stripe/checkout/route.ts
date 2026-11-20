@@ -114,6 +114,24 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       )
     }
+
+    if (process.env.NODE_ENV !== 'test') {
+      const { enforceRateLimit } = await import('@/lib/rate-limit')
+      const rl = await enforceRateLimit({
+        key: `stripe_checkout:${userId}`,
+        limit: 30,
+        windowSeconds: 600,
+        route: '/api/stripe/checkout',
+        dimension: 'user',
+      })
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: 'Too many checkout attempts. Please wait a moment and try again.' },
+          { status: 429 }
+        )
+      }
+    }
+
     const isAutomaticTaxEnabled = process.env.STRIPE_AUTOMATIC_TAX_ENABLED === 'true'
     const automaticTaxOption = isAutomaticTaxEnabled
       ? { automatic_tax: { enabled: true as const } }

@@ -5,6 +5,7 @@ import { protectCSRF } from '@/lib/csrf'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import {
   createSignedFitnessPhotoUrl,
+  detectSafeImageMimeFromBytes,
   FITNESS_PHOTO_BUCKET,
   isUserOwnedPhotoPath,
 } from '@/lib/fitness-photos'
@@ -67,7 +68,15 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = await file.arrayBuffer()
-    const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+    const verifiedMime = detectSafeImageMimeFromBytes(buffer)
+    if (!verifiedMime) {
+      return NextResponse.json(
+        { error: 'File contents do not match a valid PNG, JPEG, or WebP image.' },
+        { status: 400, headers: NO_STORE_HEADERS }
+      )
+    }
+
+    const ext = verifiedMime === 'image/png' ? 'png' : verifiedMime === 'image/webp' ? 'webp' : 'jpg'
     const filename = `${user.id}/before-photo-${Date.now()}.${ext}`
 
     const { data: profile } = await admin
@@ -95,7 +104,7 @@ export async function POST(req: NextRequest) {
     const { error: uploadError } = await admin.storage
       .from(FITNESS_PHOTO_BUCKET)
       .upload(filename, buffer, {
-        contentType: file.type,
+        contentType: verifiedMime,
         upsert: false,
       })
 

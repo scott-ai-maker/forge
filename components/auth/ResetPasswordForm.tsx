@@ -202,8 +202,13 @@ export default function ResetPasswordForm({ forceChange = false, nextPath = '/da
       window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
     )
     const urlNext = params.get('next') ?? hashParams.get('next')
-    let redirectPath =
-      urlNext && urlNext.startsWith('/') ? urlNext : nextPath && nextPath.startsWith('/') ? nextPath : '/dashboard'
+    const isSafeRelativePath = (candidate: string | null | undefined): candidate is string =>
+      Boolean(candidate && candidate.startsWith('/') && !candidate.startsWith('//') && !candidate.startsWith('/\\'))
+    let redirectPath = isSafeRelativePath(urlNext)
+      ? urlNext
+      : isSafeRelativePath(nextPath)
+        ? nextPath
+        : '/dashboard'
 
     let isCoach = false
     try {

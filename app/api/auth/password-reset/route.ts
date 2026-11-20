@@ -229,14 +229,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[PasswordReset] Failed to generate or dispatch recovery email:', err)
-    if (email === 'coach@forge-athletic.app' || process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development') {
       const msg = err instanceof Error ? err.message : 'Email dispatch provider error'
       return NextResponse.json(
-        { error: `Email dispatch failed: ${msg}. Please use 1-Click Coach Fast Pass on the login page to access your console.` },
+        { error: `Email dispatch failed: ${msg}.` },
         { status: 502 }
       )
     }
-    // Keep response generic to avoid exposing user existence.
+    // Keep response generic to avoid exposing user existence or internal coach paths.
     return NextResponse.json({ success: true })
   }
 }

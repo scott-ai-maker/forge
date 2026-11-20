@@ -91,6 +91,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status })
   }
 
+  if (process.env.NODE_ENV !== 'test') {
+    const { enforceRateLimit } = await import('@/lib/rate-limit')
+    const rl = await enforceRateLimit({
+      key: `messages_post:${authz.user.id}`,
+      limit: 100,
+      windowSeconds: 300,
+      route: '/api/messages',
+      dimension: 'user',
+    })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many messages sent. Please wait a moment before sending more.' },
+        { status: 429 }
+      )
+    }
+  }
+
   const body = await req.json().catch(() => ({}))
   const messageBody = String(body.message ?? '').trim()
   if (!messageBody) {
@@ -209,6 +226,23 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: message }, { status })
   }
 
+  if (process.env.NODE_ENV !== 'test') {
+    const { enforceRateLimit } = await import('@/lib/rate-limit')
+    const rl = await enforceRateLimit({
+      key: `messages_post:${authz.user.id}`,
+      limit: 100,
+      windowSeconds: 300,
+      route: '/api/messages',
+      dimension: 'user',
+    })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many messages sent. Please wait a moment before sending more.' },
+        { status: 429 }
+      )
+    }
+  }
+
   const role = authz.client.role
   const admin = supabaseAdmin()
 
@@ -272,6 +306,23 @@ export async function DELETE(req: NextRequest) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
     return NextResponse.json({ error: message }, { status })
+  }
+
+  if (process.env.NODE_ENV !== 'test') {
+    const { enforceRateLimit } = await import('@/lib/rate-limit')
+    const rl = await enforceRateLimit({
+      key: `messages_post:${authz.user.id}`,
+      limit: 100,
+      windowSeconds: 300,
+      route: '/api/messages',
+      dimension: 'user',
+    })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many messages sent. Please wait a moment before sending more.' },
+        { status: 429 }
+      )
+    }
   }
 
   const admin = supabaseAdmin()

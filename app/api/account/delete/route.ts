@@ -86,6 +86,23 @@ export async function DELETE(req: NextRequest) {
     return getAuthzErrorResponse(error)
   }
 
+  if (process.env.NODE_ENV !== 'test') {
+    const { enforceRateLimit } = await import('@/lib/rate-limit')
+    const rl = await enforceRateLimit({
+      key: `account_delete:${userId}`,
+      limit: 10,
+      windowSeconds: 3600,
+      route: '/api/account/delete',
+      dimension: 'user',
+    })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many account deletion attempts. Please try again later.' },
+        { status: 429, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+      )
+    }
+  }
+
   const admin = supabaseAdmin()
   let resolvedEmail = authEmail
   let resolvedPhone: string | null = null

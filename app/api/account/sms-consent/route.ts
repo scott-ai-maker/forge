@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { protectCSRF } from '@/lib/csrf'
 import { toE164 } from '@/lib/phone'
 import { enforceRateLimit, getClientIp } from '@/lib/rate-limit'
 import { validateInboundEmail } from '@/lib/email-validation'
@@ -19,6 +20,9 @@ function isValidTimeZone(tz: unknown): tz is string {
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = await protectCSRF(req)
+  if (!csrf.valid) return csrf.error
+
   const ip = getClientIp(req)
   const rl = await enforceRateLimit({
     key: `sms_consent:${ip}`,
