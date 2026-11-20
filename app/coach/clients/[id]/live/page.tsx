@@ -20,7 +20,7 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
 
   const { data: client } = await admin
     .from('clients')
-    .select('id, full_name, email, designated_coach_id')
+    .select('id, full_name, email, status, designated_coach_id')
     .eq('id', clientId)
     .maybeSingle()
 
@@ -45,13 +45,31 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
   }
 
   const athleteName = client.full_name ?? client.email ?? 'Member'
-  const medicalGate = await checkClientMedicalClearanceGate(admin, clientId)
+  const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+  const [medicalGate, legalGate] = await Promise.all([
+    checkClientMedicalClearanceGate(admin, clientId),
+    checkClientLegalConsentGate(admin, clientId, {
+      requireTermsOfService: true,
+      requireLiabilityWaiver: true,
+    }),
+  ])
 
-  if (medicalGate.blocked) {
+  const isPausedOrInactive = client.status && client.status !== 'active'
+  const isMissingErap = !medicalGate.evaluation.erapRecord?.isErapComplete
+  const liveGateBlocked = medicalGate.blocked || !legalGate.verified || Boolean(isPausedOrInactive) || isMissingErap
+  const liveGateReason = medicalGate.blocked
+    ? medicalGate.reason
+    : isPausedOrInactive
+      ? `Athlete account status is "${client.status}" (Medical / Administrative Hold). Reactivate the athlete in Member Profile before starting a live session.`
+      : !legalGate.verified
+        ? legalGate.reason || 'Athlete must execute the Athletic Liability Waiver & Terms of Service before starting a live session.'
+        : 'Athlete has not completed their Pre-Session Emergency Remote Action Plan (ERAP physical workout street address & 10-digit municipal dispatch number) on /dashboard/live yet.'
+
+  if (liveGateBlocked) {
     return (
       <main style={{ minHeight: '100dvh', background: '#04070E' }}>
         <SiteHeader
-          badgeText="Live Coaching · Phase 0 Hold"
+          badgeText="Live Coaching · Safety Gate"
           links={[
             { href: '/coach', label: 'Overview' },
             { href: '/coach#assigned-clients', label: 'Members' },
@@ -68,13 +86,13 @@ export default async function CoachLiveSessionPage({ params }: PageProps) {
             className="rounded-2xl border border-red-500/50 bg-red-950/35 p-6 text-zinc-100 shadow-2xl"
           >
             <div className="text-xs font-extrabold uppercase tracking-[0.12em] text-red-400">
-              ACSM / PAR-Q+ Phase 0 Medical Clearance Hold
+              ACSM / PAR-Q+ / ERAP Pre-Session Safety Hold
             </div>
             <h1 className="mt-2 font-serif text-xl font-bold text-white">
-              Live Exercise Screening Paused for {athleteName}
+              Live Exercise Session Gated for {athleteName}
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-zinc-200">
-              {medicalGate.reason}
+              {liveGateReason}
             </p>
             {medicalGate.evaluation.flaggedItems.length > 0 && (
               <ul className="mt-4 list-disc space-y-1 pl-5 text-xs text-red-200">

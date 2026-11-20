@@ -151,14 +151,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Please answer all PAR-Q questions.' }, { status: 400 })
   }
 
-  // Require explicit affirmative boolean consent on every legal agreement (#32 — never coerce virtualTelehealth from liabilityWaiver)
+  // Require explicit affirmative boolean consent on every legal agreement (#11 / #32 — unbundled health consent, never coerced)
   const consents = {
     liabilityWaiver: intake.liabilityWaiver === true,
     informedConsent: intake.informedConsent === true,
-    privacyPractices: intake.privacyPractices === true,
+    privacyPractices:
+      intake.privacyPractices === true &&
+      (intake.healthBiometricConsent === undefined || intake.healthBiometricConsent === true),
     coachingAgreement: intake.coachingAgreement === true,
     emergencyCare: intake.emergencyCare === true,
-    virtualTelehealth: intake.virtualTelehealth === true,
+    virtualTelehealth:
+      intake.virtualTelehealth === true || parq.virtualTelehealthConsent === true,
   }
 
   if (!isDraft && !Object.values(consents).every(Boolean)) {

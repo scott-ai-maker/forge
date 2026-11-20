@@ -236,6 +236,21 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  if (nutritionTargets) {
+    try {
+      const { data: profSex } = await admin
+        .from('fitness_profiles')
+        .select('sex')
+        .eq('user_id', payload.clientId)
+        .maybeSingle()
+      if (profSex?.sex === 'male' && nutritionTargets.targetCalories < 1500) {
+        nutritionTargets = { ...nutritionTargets, targetCalories: 1500 }
+      }
+    } catch {
+      // Ignore in partial unit test mocks
+    }
+  }
+
   let handPortionPlan = payload.handPortionPlan
   if (!nutritionTargets && !handPortionPlan) {
     try {

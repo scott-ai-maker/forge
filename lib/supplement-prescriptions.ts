@@ -359,9 +359,76 @@ export const THORNE_GOAL_COLLECTIONS: Record<SupplementGoal, ThorneGoalCollectio
   },
 }
 
-export function getThorneGoalCollection(rawGoal?: unknown): ThorneGoalCollection {
+export interface SupplementIntakeScreeningInput {
+  parq_any_yes?: boolean | null
+  parq_answers?: unknown
+  medications?: string | null
+  medical_conditions?: string | null
+  allergies?: string | null
+}
+
+const ANTICOAGULANT_OR_BLEEDING_PATTERN =
+  /\b(warfarin|coumadin|eliquis|apixaban|xarelto|rivaroxaban|pradaxa|dabigatran|plavix|clopidogrel|heparin|lovenox|enoxaparin|brilinta|ticagrelor|anticoagulant|blood\s*thinner|bleeding\s*disorder|hemophilia)\b/i
+
+const RENAL_IMPAIRMENT_PATTERN =
+  /\b(ckd|chronic\s*kidney|renal\s*failure|renal\s*insufficiency|dialysis|kidney\s*disease|nephropathy|single\s*kidney)\b/i
+
+const PREGNANCY_OR_LACTATION_PATTERN =
+  /\b(pregnant|pregnancy|prenatal|trimester|breastfeeding|nursing|lactating|postpartum\s*nursing)\b/i
+
+const DAIRY_WHEY_ALLERGY_PATTERN =
+  /\b(dairy\s*allergy|milk\s*allergy|whey\s*allergy|casein\s*allergy|anaphylaxis.*milk|anaphylaxis.*dairy)\b/i
+
+export function filterContraindicatedThorneProducts(
+  products: ThorneGoalCollection['products'],
+  intake?: SupplementIntakeScreeningInput | null
+): ThorneGoalCollection['products'] {
+  if (!intake) return products
+  const combined = [
+    intake.medications ?? '',
+    intake.medical_conditions ?? '',
+    intake.allergies ?? '',
+    typeof intake.parq_answers === 'object' && intake.parq_answers && !Array.isArray(intake.parq_answers)
+      ? String((intake.parq_answers as Record<string, unknown>).reportedConditionsNotes ?? '')
+      : '',
+  ]
+    .join(' ')
+    .trim()
+
+  if (!combined) return products
+
+  if (PREGNANCY_OR_LACTATION_PATTERN.test(combined)) {
+    return []
+  }
+
+  const excludedSkus = new Set<string>()
+  if (ANTICOAGULANT_OR_BLEEDING_PATTERN.test(combined)) {
+    excludedSkus.add(THORNE_PRODUCTS.super_epa.sku)
+  }
+  if (RENAL_IMPAIRMENT_PATTERN.test(combined)) {
+    excludedSkus.add(THORNE_PRODUCTS.creatine.sku)
+    excludedSkus.add(THORNE_PRODUCTS.whey_isolate.sku)
+    excludedSkus.add(THORNE_PRODUCTS.magnesium_bisglycinate.sku)
+  }
+  if (DAIRY_WHEY_ALLERGY_PATTERN.test(combined)) {
+    excludedSkus.add(THORNE_PRODUCTS.whey_isolate.sku)
+  }
+
+  if (excludedSkus.size === 0) return products
+  return products.filter(p => !excludedSkus.has(p.sku))
+}
+
+export function getThorneGoalCollection(
+  rawGoal?: unknown,
+  intake?: SupplementIntakeScreeningInput | null
+): ThorneGoalCollection {
   const goal = normalizeSupplementGoal(rawGoal)
-  return THORNE_GOAL_COLLECTIONS[goal]
+  const base = THORNE_GOAL_COLLECTIONS[goal]
+  if (!intake) return base
+  return {
+    ...base,
+    products: filterContraindicatedThorneProducts(base.products, intake),
+  }
 }
 
 export interface IntakePhysicianConsultAlert {

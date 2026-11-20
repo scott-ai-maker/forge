@@ -39,6 +39,15 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized coach access' }, { status: 403, headers: NO_STORE_HEADERS })
   }
 
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, clientId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
+  }
+
   try {
     // 1. Check for stored periodization in latest workout plan
     const { data: latestPlan } = await admin
@@ -158,6 +167,15 @@ export async function POST(
 
   if (clientError || !client || client.designated_coach_id !== userId) {
     return NextResponse.json({ error: 'Unauthorized coach access' }, { status: 403, headers: NO_STORE_HEADERS })
+  }
+
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, clientId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
   }
 
   try {

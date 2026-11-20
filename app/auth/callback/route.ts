@@ -181,17 +181,20 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      if (user.user_metadata?.legal_terms_accepted === true) {
-        await recordLegalConsentAudit({
+      if (
+        user.user_metadata?.legal_terms_accepted === true &&
+        user.user_metadata?.legal_callback_logged !== true
+      ) {
+        const healthAccepted = user.user_metadata?.health_biometric_consented === true
+        const auditRes = await recordLegalConsentAudit({
           adminClient: admin,
           userId: user.id,
           documentTypes: [
             'terms_of_service',
             'privacy_policy',
-            'consumer_health_biometric_policy',
-            ...(isValidLegalSignature(displayName) ? (['athletic_liability_waiver'] as const) : []),
+            ...(healthAccepted ? (['consumer_health_biometric_policy'] as const) : []),
           ],
-          typedSignature: isValidLegalSignature(displayName) ? displayName : null,
+          typedSignature: null,
           ipAddress: extractRequestIp(request.headers),
           userAgent: request.headers.get('user-agent'),
           consentedAt:
@@ -201,8 +204,18 @@ export async function GET(request: NextRequest) {
           metadata: {
             flow: 'signup_clickwrap_callback',
             ageVerified18Plus: true,
+            healthBiometricConsented: healthAccepted,
           },
         })
+        if (!auditRes.error) {
+          await admin.auth.admin.updateUserById(user.id, {
+            user_metadata: {
+              ...(user.user_metadata ?? {}),
+              surface_role: resolvedRole,
+              legal_callback_logged: true,
+            },
+          })
+        }
       }
     } else {
       // Pre-launch defense-in-depth: block uninvited new public OAuth/auth registrations until Jan 4, 2027
@@ -267,17 +280,20 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      if (user.user_metadata?.legal_terms_accepted === true) {
-        await recordLegalConsentAudit({
+      if (
+        user.user_metadata?.legal_terms_accepted === true &&
+        user.user_metadata?.legal_callback_logged !== true
+      ) {
+        const healthAccepted = user.user_metadata?.health_biometric_consented === true
+        const auditRes = await recordLegalConsentAudit({
           adminClient: admin,
           userId: user.id,
           documentTypes: [
             'terms_of_service',
             'privacy_policy',
-            'consumer_health_biometric_policy',
-            ...(isValidLegalSignature(displayName) ? (['athletic_liability_waiver'] as const) : []),
+            ...(healthAccepted ? (['consumer_health_biometric_policy'] as const) : []),
           ],
-          typedSignature: isValidLegalSignature(displayName) ? displayName : null,
+          typedSignature: null,
           ipAddress: extractRequestIp(request.headers),
           userAgent: request.headers.get('user-agent'),
           consentedAt:
@@ -287,8 +303,18 @@ export async function GET(request: NextRequest) {
           metadata: {
             flow: 'signup_clickwrap_callback',
             ageVerified18Plus: true,
+            healthBiometricConsented: healthAccepted,
           },
         })
+        if (!auditRes.error) {
+          await admin.auth.admin.updateUserById(user.id, {
+            user_metadata: {
+              ...(user.user_metadata ?? {}),
+              surface_role: resolvedRole,
+              legal_callback_logged: true,
+            },
+          })
+        }
       }
     }
 

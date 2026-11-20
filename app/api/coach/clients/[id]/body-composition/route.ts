@@ -114,7 +114,9 @@ export async function POST(
   const hipParsed = parseOptionalBounded(body.hipCm, 45, 250, 'hipCm')
   const chestParsed = parseOptionalBounded(body.chestCm, 45, 250, 'chestCm')
   const thighParsed = parseOptionalBounded(body.thighCm, 25, 150, 'thighCm')
-  const targetBfParsed = parseOptionalBounded(body.targetBodyFatPercent, 4, 55, 'targetBodyFatPercent')
+  const sexHint = body.sex === 'female' ? 'female' : 'male'
+  const minTargetBf = sexHint === 'female' ? 12 : 6
+  const targetBfParsed = parseOptionalBounded(body.targetBodyFatPercent, minTargetBf, 55, 'targetBodyFatPercent')
 
   const validationError =
     heightParsed.error ||
@@ -170,8 +172,27 @@ export async function POST(
     )
   }
 
+  if (hasPhotoPayload) {
+    const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+    const athleteBiometricGate = await checkClientLegalConsentGate(admin, clientId, {
+      requireTermsOfService: false,
+      requireLiabilityWaiver: false,
+      requireConsumerHealthPolicy: true,
+    })
+    if (!athleteBiometricGate.verified) {
+      return NextResponse.json(
+        {
+          error:
+            'Athlete Biometric Release Required: The athlete must execute the Consumer Health & Biometric Data Policy consent in their own account before body-composition photographs can be analyzed (740 ILCS 14/15(b) / RCW 19.373.030).',
+          code: 'ATHLETE_BIOMETRIC_CONSENT_REQUIRED',
+        },
+        { status: 403, headers: NO_STORE_HEADERS }
+      )
+    }
+  }
+
   if (body.biometricScanConsent === true) {
-    await recordLegalConsentAudit({
+    const auditWrite = await recordLegalConsentAudit({
       adminClient: admin,
       userId: coachId,
       documentTypes: ['consumer_health_biometric_policy'],
@@ -180,9 +201,16 @@ export async function POST(
       metadata: {
         flow: 'coach_body_composition_scan',
         athleteClientId: clientId,
+        athleteConsentVerified: hasPhotoPayload,
         hasPhotoPayload,
       },
     })
+    if (auditWrite.error) {
+      return NextResponse.json(
+        { error: 'Unable to record biometric scan audit proof. Please retry.' },
+        { status: 500, headers: NO_STORE_HEADERS }
+      )
+    }
   }
 
   try {

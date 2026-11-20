@@ -65,6 +65,15 @@ export async function POST(
     )
   }
 
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, clientId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
+  }
+
   // 1. Fetch current active plan
   const { data: latestPlan, error: planFetchErr } = await admin
     .from('workout_plans')

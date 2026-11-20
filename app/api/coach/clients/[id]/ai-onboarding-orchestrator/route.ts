@@ -140,8 +140,8 @@ export async function POST(
       weeklyDeficitOrSurplusCalories: -3500,
       coachingDirectives: ['Preserve Lean Body Mass'],
     },
-    methodDescription: latestBodyComp.method || 'DEXA 4C Vision Scan',
-    coachSummaryNotes: 'DEXA calibrated scan on record.',
+    methodDescription: latestBodyComp.method || 'Visual & Anthropometric Body Composition Estimate',
+    coachSummaryNotes: 'Body composition estimate on record.',
   } : null)
 
   const postureScan: PosturalMeshScanResult | null = body.postureScan || (latestAssessment ? {
@@ -149,19 +149,28 @@ export async function POST(
     landmarks: [],
     angles: [],
     detectedCompensations: Array.isArray(latestAssessment.ohsa_findings)
-      ? latestAssessment.ohsa_findings.map((f: unknown) => (typeof f === 'string' ? f : (f as { compensation?: string })?.compensation || ''))
-      : ['knees_cave_in', 'excessive_forward_lean'],
+      ? latestAssessment.ohsa_findings.map((f: unknown) => (typeof f === 'string' ? f : (f as { compensation?: string })?.compensation || '')).filter(Boolean)
+      : [],
     ohsaObservations: [],
     staticFindings: latestAssessment.static_posture || [],
-    syndromeDetected: 'Lower Crossed',
+    syndromeDetected: 'Optimal Alignment',
     cexPrescription: {
-      inhibit: (latestAssessment.overactive_muscles || ['Gastrocnemius', 'TFL']).map((m: string) => ({ muscle: m, protocol: 'SMR 30-60s' })),
-      lengthen: (latestAssessment.overactive_muscles || ['Hip Flexors']).map((m: string) => ({ muscle: m, protocol: 'Static Stretch 30s' })),
-      activate: (latestAssessment.underactive_muscles || ['Gluteus Medius']).map((m: string) => ({ muscle: m, protocol: 'Isolated Activation 3x15' })),
-      integrate: [{ exercise: 'Ball Squat to Press', protocol: '3x12 (4/2/1 tempo)' }],
+      inhibit: (latestAssessment.overactive_muscles || []).map((m: string) => ({ muscle: m, protocol: 'SMR 30-60s' })),
+      lengthen: (latestAssessment.overactive_muscles || []).map((m: string) => ({ muscle: m, protocol: 'Static Stretch 30s' })),
+      activate: (latestAssessment.underactive_muscles || []).map((m: string) => ({ muscle: m, protocol: 'Isolated Activation 3x15' })),
+      integrate: [],
     },
-    clinicalSummary: latestAssessment.coach_summary_notes || 'Kinetic chain compensations identified.',
+    clinicalSummary: latestAssessment.coach_summary_notes || 'Recorded movement screen findings.',
   } : null)
+
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, clientId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+      { status: 409 }
+    )
+  }
 
   // ── Action: Recommend ─────────────────────────────────────
   if (action === 'recommend') {

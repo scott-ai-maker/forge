@@ -280,10 +280,10 @@ export default function VoiceSoapNotesModal({
                 id={titleId}
                 style={{ margin: 0, fontSize: 16, fontFamily: 'Raleway, sans-serif', fontWeight: 800, color: '#FFFFFF' }}
               >
-                AI Voice-to-Clinical S.O.A.P. Notes
+                AI Voice-to-Session S.O.A.P. Notes
               </h2>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--gray)' }}>
-                {clientName} · Clinical Sports Science Documentation
+                {clientName} · Non-Medical Athletic Coaching Documentation (Not Medical / PT Charting)
               </p>
             </div>
           </div>
@@ -636,7 +636,7 @@ export default function VoiceSoapNotesModal({
 
                   <div style={{ padding: '12px 14px', background: 'rgba(168, 85, 247, 0.06)', border: '1px solid rgba(168, 85, 247, 0.25)', borderRadius: 8 }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: '#C084FC', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
-                      P — Plan & Prescription
+                      P — Plan &amp; Coaching Next Steps
                     </div>
                     <div style={{ fontSize: 12.5, color: '#FFFFFF', lineHeight: 1.5 }}>
                       {soapResult.plan}
@@ -714,7 +714,7 @@ export default function VoiceSoapNotesModal({
             }}
           >
             <GaaIcon name="sparkles" size={15} tone="gold" />
-            <span>{isSynthesizing ? 'Synthesizing S.O.A.P. with AI...' : 'Synthesize Clinical S.O.A.P.'}</span>
+            <span>{isSynthesizing ? 'Synthesizing S.O.A.P. with AI...' : 'Synthesize Session S.O.A.P.'}</span>
           </button>
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>

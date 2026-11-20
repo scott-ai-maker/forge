@@ -39,9 +39,9 @@ const SUBPROCESSORS = [
     dataScope: 'Workout cue script text converted to audio.',
   },
   {
-    vendor: 'LiveKit / WebRTC Media Relay',
-    purpose: 'Real-time encrypted peer-to-peer / SFU audio-video streaming for 1:1 live coaching sessions.',
-    dataScope: 'Ephemeral encrypted audio/video streams (recorded only upon explicit all-party consent).',
+    vendor: 'Encrypted WebRTC STUN/TURN Infrastructure (Google, Cloudflare, Twilio / Managed TURN)',
+    purpose: 'Real-time DTLS-SRTP encrypted 1:1 audio-video transport for live coaching sessions.',
+    dataScope: 'Ephemeral encrypted audio/video streams and ICE network candidates (recorded only upon explicit all-party consent).',
   },
   {
     vendor: 'Vital (Thryve / Junction API — Opt-In Only)',

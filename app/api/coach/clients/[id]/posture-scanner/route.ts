@@ -133,8 +133,27 @@ export async function POST(
     bodyClientName || clientRecord?.full_name || 'Athlete'
   )
 
+  // BIPA (740 ILCS 14/15(b)) & WA MHMDA (RCW 19.373.030): verify the ATHLETE (not only the coach) executed
+  // written Consumer Health & Biometric Policy consent before processing athlete photographs (#11).
+  const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+  const athleteBiometricGate = await checkClientLegalConsentGate(admin, clientId, {
+    requireTermsOfService: false,
+    requireLiabilityWaiver: false,
+    requireConsumerHealthPolicy: true,
+  })
+  if (!athleteBiometricGate.verified) {
+    return NextResponse.json(
+      {
+        error:
+          'Athlete Biometric Release Required: The athlete must execute the Consumer Health & Biometric Data Policy consent in their own account before posture photographs can be analyzed (740 ILCS 14/15(b) / RCW 19.373.030).',
+        code: 'ATHLETE_BIOMETRIC_CONSENT_REQUIRED',
+      },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
+
   if (biometricScanConsent === true) {
-    await recordLegalConsentAudit({
+    const auditWrite = await recordLegalConsentAudit({
       adminClient: admin,
       userId: coachId,
       documentTypes: ['consumer_health_biometric_policy'],
@@ -143,10 +162,17 @@ export async function POST(
       metadata: {
         flow: 'coach_posture_mesh_scan',
         athleteClientId: clientId,
+        athleteConsentVerified: true,
         view,
         hasPhotoPayload,
       },
     })
+    if (auditWrite.error) {
+      return NextResponse.json(
+        { error: 'Unable to record biometric scan audit proof. Please retry.' },
+        { status: 500, headers: NO_STORE_HEADERS }
+      )
+    }
   }
 
   try {

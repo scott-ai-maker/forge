@@ -160,21 +160,31 @@ export async function POST(req: NextRequest) {
   const { supabaseAdmin } = await import('@/lib/supabase')
   const admin = supabaseAdmin()
 
-  if (callerRole === 'client') {
-    const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
-    const legalGate = await checkClientLegalConsentGate(admin, clientTargetId, {
-      requireTermsOfService: true,
-      requireLiabilityWaiver: true,
-    })
-    if (!legalGate.verified) {
-      return NextResponse.json(
-        {
-          error: legalGate.reason,
-          code: 'LEGAL_WAIVER_REQUIRED',
-        },
-        { status: 403, headers: NO_STORE_HEADERS }
-      )
-    }
+  const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+  const legalGate = await checkClientLegalConsentGate(admin, clientTargetId, {
+    requireTermsOfService: true,
+    requireLiabilityWaiver: true,
+  })
+  if (!legalGate.verified) {
+    return NextResponse.json(
+      {
+        error: legalGate.reason,
+        code: 'LEGAL_WAIVER_REQUIRED',
+      },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, clientTargetId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      {
+        error: clearanceGate.reason,
+        code: 'MEDICAL_CLEARANCE_REQUIRED',
+      },
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
   }
 
   const { data, error } = await admin.rpc('book_client_session', {

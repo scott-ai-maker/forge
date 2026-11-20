@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
   const requestedGoal = req.nextUrl.searchParams.get('goal')
   const goal = normalizeSupplementGoal(requestedGoal || profile?.fitness_goal)
-  const collection = getThorneGoalCollection(goal)
+  const collection = getThorneGoalCollection(goal, intake)
   const physicianConsultAlert = evaluateIntakePhysicianConsultFlag(intake)
 
   return NextResponse.json(

@@ -11,7 +11,11 @@ import {
   checkSlidingWindowRateLimit,
   resolveRequestSubjectKey,
 } from '@/src/lib/security/rateLimiter'
-import { evaluateMedicalParq, normalizeParqAnswersFromIntake } from '@/lib/liability-shield'
+import {
+  checkClientMedicalClearanceGate,
+  evaluateMedicalParq,
+  normalizeParqAnswersFromIntake,
+} from '@/lib/liability-shield'
 
 const BETA_BLOCKER_PATTERN =
   /\b(beta[\s-]?blocker|metoprolol|atenolol|propranolol|carvedilol|bisoprolol|nebivolol|labetalol|nadolol|sotalol)\b/i
@@ -98,13 +102,16 @@ export async function POST(req: NextRequest) {
     let serverAge: number | undefined = undefined
     let serverSex: 'male' | 'female' | undefined = undefined
     let serverMedicalHold = false
+    let serverMedicalHoldReason =
+      '**Medical Clearance Hold (Phase 0):** Your PAR-Q+ screening indicates an active cardiovascular, chest-pain, or dizziness flag requiring written physician clearance before exercise prescription. Please consult your physician first—Coach Gordon will calibrate your program as soon as medical clearance is on file.'
     let serverBetaBlockerDetected = false
 
     if (authenticatedUserId && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const { supabaseAdmin } = await import('@/lib/supabase')
         const admin = supabaseAdmin()
-        const [intakeRes, profileRes] = await Promise.all([
+        const [clearanceGate, intakeRes, profileRes] = await Promise.all([
+          checkClientMedicalClearanceGate(admin, authenticatedUserId),
           admin
             .from('client_intake_forms')
             .select('parq_answers, medications, medical_conditions, surgeries_or_injuries')
@@ -117,6 +124,17 @@ export async function POST(req: NextRequest) {
             ?.maybeSingle?.(),
         ])
 
+        if (clearanceGate.blocked) {
+          serverMedicalHold = true
+          if (clearanceGate.reason?.startsWith('PAR-Q+ Medical Screening Required') || clearanceGate.reason?.startsWith('Signed PAR-Q+')) {
+            serverMedicalHoldReason =
+              '**PAR-Q+ Screening & Waiver Required:** Please complete and sign your 7-point PAR-Q+ health readiness screening and Athletic Liability Release in Onboarding before requesting personalized exercise prescriptions.'
+          }
+        } else {
+          serverContraindicationTags = [...clearanceGate.evaluation.contraindicationTags]
+          serverMaxOptPhase = clearanceGate.effectiveMaxOptPhase
+        }
+
         if (intakeRes?.data) {
           const intakeRow = intakeRes.data as {
             parq_answers?: unknown
@@ -126,10 +144,11 @@ export async function POST(req: NextRequest) {
           }
           const normalizedParq = normalizeParqAnswersFromIntake(intakeRow.parq_answers, intakeRow)
           const parqEval = evaluateMedicalParq(normalizedParq)
-          serverContraindicationTags = [...parqEval.contraindicationTags]
-          serverMaxOptPhase = parqEval.maxAllowedOptPhase
-          if (parqEval.clearanceStatus === 'physician_clearance_required' || !parqEval.exercisePermitted) {
-            serverMedicalHold = true
+          serverContraindicationTags = Array.from(
+            new Set([...serverContraindicationTags, ...parqEval.contraindicationTags])
+          )
+          if (!clearanceGate.blocked && serverMaxOptPhase === null) {
+            serverMaxOptPhase = parqEval.maxAllowedOptPhase
           }
           const medsBlob = `${intakeRow.medications || ''} ${intakeRow.medical_conditions || ''}`
           if (BETA_BLOCKER_PATTERN.test(medsBlob)) {
@@ -154,14 +173,13 @@ export async function POST(req: NextRequest) {
         success: true,
         coachIdentity: 'Coach Gordon · Director of Human Performance, Forge Athletic',
         response: {
-          answerMarkdown:
-            '**Medical Clearance Hold (Phase 0):** Your PAR-Q+ screening indicates an active cardiovascular, chest-pain, or dizziness flag requiring written physician clearance before exercise prescription. Please consult your physician first—Coach Gordon will calibrate your program as soon as medical clearance is on file.',
+          answerMarkdown: serverMedicalHoldReason,
           spokenAudioText:
-            'Your screening indicates a medical clearance hold. Please obtain physician clearance before starting exercise, and Coach Gordon will calibrate your plan once cleared.',
+            'Please complete your health screening or physician clearance before starting exercise. Coach Gordon will calibrate your plan once cleared.',
           relevantCurriculums: ['PAR-Q+ Medical Clearance Protocol'],
-          suggestedFollowUps: ['Message Coach Gordon'],
+          suggestedFollowUps: ['Complete Health Screening', 'Message Coach Gordon'],
           requiresCoachPing: true,
-          coachPingReason: 'Member on Phase 0 PAR-Q+ medical clearance hold requested training guidance.',
+          coachPingReason: 'Member with incomplete screening or Phase 0 PAR-Q+ hold requested training guidance.',
           engineMode: 'deterministic_safety_hold',
         },
       })

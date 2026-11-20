@@ -162,10 +162,15 @@ const NUTRITION_TARGET_LIMITS: Record<keyof NutritionTargetsSnapshot, [number, n
 }
 
 // Validates untrusted input before it is persisted with a plan; returns null unless every field is a sane number.
-export function parseNutritionTargets(value: unknown): NutritionTargetsSnapshot | null {
+// Enforces ACSM/NIH non-medical calorie floors: 1,500 kcal/day for males, 1,200 kcal/day for females/other (#24).
+export function parseNutritionTargets(
+  value: unknown,
+  sex?: string | null
+): NutritionTargetsSnapshot | null {
   if (!value || typeof value !== 'object') return null
   const source = value as Record<string, unknown>
   const result = {} as Record<string, number>
+  const minCaloriesForSex = sex === 'male' ? 1500 : 1200
   const requiredKeys: Array<keyof NutritionTargetsSnapshot> = [
     'targetCalories',
     'proteinGrams',
@@ -173,7 +178,8 @@ export function parseNutritionTargets(value: unknown): NutritionTargetsSnapshot 
     'fatGrams',
   ]
   for (const key of requiredKeys) {
-    const [min, max] = NUTRITION_TARGET_LIMITS[key]
+    const [baseMin, max] = NUTRITION_TARGET_LIMITS[key]
+    const min = key === 'targetCalories' ? Math.max(baseMin, minCaloriesForSex) : baseMin
     const n = Number(source[key])
     if (!Number.isFinite(n) || n < min || n > max) return null
     result[key] = Math.round(n * 10) / 10

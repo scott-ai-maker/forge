@@ -57,6 +57,15 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized coach access' }, { status: 403, headers: NO_STORE_HEADERS })
   }
 
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, clientId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
+  }
+
   try {
     const body = await req.json()
     const rawAction = typeof body?.action === 'string' ? body.action.trim() : ''
@@ -72,9 +81,10 @@ export async function POST(
     const action = rawAction as Exclude<PeriodizationAutoTriageAction, null>
     const reason = sanitizeCoachReason(body?.reason, 'Biometric workload & recovery triage')
     const parsedTargetPhase = Number(body?.targetPhase)
+    const maxPhase = clearanceGate.effectiveMaxOptPhase
     const targetPhase = Number.isFinite(parsedTargetPhase)
-      ? Math.max(1, Math.min(5, Math.round(parsedTargetPhase)))
-      : 2
+      ? Math.max(1, Math.min(maxPhase, Math.round(parsedTargetPhase)))
+      : Math.min(2, maxPhase)
 
     // 1. Fetch current macrocycle from workout_plans or generate baseline
     const { data: existingPlanRecord } = await admin

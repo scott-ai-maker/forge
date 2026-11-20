@@ -127,13 +127,14 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  const minTargetBf = body.sex === 'female' ? 12 : 6
   const ageParsed = parseOptionalBoundedNumber(body.age, 18, 110, 'age')
   const waistParsed = parseOptionalBoundedNumber(body.waistCm, 35, 250, 'waistCm')
   const neckParsed = parseOptionalBoundedNumber(body.neckCm, 20, 80, 'neckCm')
   const hipParsed = parseOptionalBoundedNumber(body.hipCm, 45, 250, 'hipCm')
   const chestParsed = parseOptionalBoundedNumber(body.chestCm, 45, 250, 'chestCm')
   const thighParsed = parseOptionalBoundedNumber(body.thighCm, 25, 150, 'thighCm')
-  const targetBfParsed = parseOptionalBoundedNumber(body.targetBodyFatPercent, 4, 55, 'targetBodyFatPercent')
+  const targetBfParsed = parseOptionalBoundedNumber(body.targetBodyFatPercent, minTargetBf, 55, 'targetBodyFatPercent')
 
   const firstValidationError =
     ageParsed.error ||
@@ -146,6 +147,22 @@ export async function POST(req: NextRequest) {
 
   if (firstValidationError) {
     return NextResponse.json({ error: firstValidationError }, { status: 400, headers: NO_STORE_HEADERS })
+  }
+
+  if (user) {
+    const { checkClientAdultPhotoEligibility } = await import('@/lib/legal-compliance')
+    const adultEligibility = await checkClientAdultPhotoEligibility(supabaseAdmin(), user.id)
+    if (!adultEligibility.eligible && ageParsed.value === undefined) {
+      return NextResponse.json(
+        { error: adultEligibility.error },
+        { status: 403, headers: NO_STORE_HEADERS }
+      )
+    }
+  } else if (ageParsed.value === undefined) {
+    return NextResponse.json(
+      { error: 'Verified adult age (18+) is required.' },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
   }
 
   const sanitizedClientName =
@@ -178,7 +195,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (user && body.biometricScanConsent === true) {
-    await recordLegalConsentAudit({
+    const auditWrite = await recordLegalConsentAudit({
       adminClient: supabaseAdmin(),
       userId: user.id,
       documentTypes: ['consumer_health_biometric_policy'],
@@ -189,6 +206,12 @@ export async function POST(req: NextRequest) {
         hasPhotoPayload,
       },
     })
+    if (auditWrite.error) {
+      return NextResponse.json(
+        { error: 'Unable to record biometric scan consent audit log. Please retry.' },
+        { status: 500, headers: NO_STORE_HEADERS }
+      )
+    }
   }
 
   const scanResult = await analyzeBodyCompositionFromImages({

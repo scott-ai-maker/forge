@@ -274,11 +274,20 @@ export function calculateEnergyExpenditure(input: MetabolicProfileInput): Metabo
   }
 
   // Non-medical ACSM/NIH safety floors: 1,500 kcal/day for males, 1,200 kcal/day for females/other;
-  // never apply a caloric deficit when BMI < 18.5 (underweight safety guardrail).
+  // never apply a caloric deficit when BMI < 18.5, during pregnancy/lactation, or with eating-disorder history (#24).
   const heightMeters = Math.max(1.2, heightCm / 100)
   const bmi = weightKg / (heightMeters * heightMeters)
   const isUnderweight = bmi < 18.5
-  if (isUnderweight && delta < 0) {
+  const rawNotes = String((input as { medicalNotes?: string | null }).medicalNotes ?? '')
+  const isPregnancyOrDisorderedEating =
+    /\b(pregnant|pregnancy|prenatal|trimester|lactating|breastfeeding|anorexia|bulimia|eating\s*disorder|disordered\s*eating|binge\s*eating|red-s)\b/i.test(
+      rawNotes
+    )
+
+  if (isPregnancyOrDisorderedEating && delta < 0) {
+    delta = 0
+    goalLabel = 'Maintenance Floor (Prenatal / Disordered-Eating Safety Guardrail — Zero Deficit; Consult RD/Physician)'
+  } else if (isUnderweight && delta < 0) {
     delta = 0
     goalLabel = 'Maintenance Floor (Underweight BMI < 18.5 Safety Guardrail — Zero Deficit)'
   }

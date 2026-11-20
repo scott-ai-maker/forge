@@ -70,6 +70,28 @@ export async function POST(
     return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
   }
 
+  const adminGate = supabaseAdmin()
+  const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+  const legalGate = await checkClientLegalConsentGate(adminGate, clientId, {
+    requireTermsOfService: true,
+    requireLiabilityWaiver: true,
+  })
+  if (!legalGate.verified) {
+    return NextResponse.json(
+      { error: legalGate.reason, code: 'LEGAL_WAIVER_REQUIRED' },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(adminGate, clientId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
+  }
+
   const rl = await enforceRateLimit({
     key: `live-session-set:${coachId}`,
     limit: 120,
@@ -191,6 +213,28 @@ export async function GET(
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Forbidden'
     return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
+  }
+
+  const adminGate = supabaseAdmin()
+  const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+  const legalGate = await checkClientLegalConsentGate(adminGate, clientId, {
+    requireTermsOfService: true,
+    requireLiabilityWaiver: true,
+  })
+  if (!legalGate.verified) {
+    return NextResponse.json(
+      { error: legalGate.reason, code: 'LEGAL_WAIVER_REQUIRED' },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(adminGate, clientId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+      { status: 409, headers: NO_STORE_HEADERS }
+    )
   }
 
   const admin = supabaseAdmin()

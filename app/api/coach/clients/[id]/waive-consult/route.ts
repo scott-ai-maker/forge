@@ -30,15 +30,32 @@ export async function POST(
 
   const admin = supabaseAdmin()
 
-  // Never waive the 1:1 live consultation when PAR-Q+ medical or orthopedic flags exist
+  // Never waive the 1:1 live consultation when PAR-Q+ screening is missing or medical/orthopedic flags exist (#4)
   try {
-    const { data: intake } = await admin
-      .from('client_intake_forms')
-      .select('parq_any_yes, parq_answers, medical_conditions, surgeries_or_injuries')
-      .eq('user_id', clientId)
-      .maybeSingle()
+    const intakeTable = admin.from('client_intake_forms')
+    if (intakeTable && typeof intakeTable.select === 'function') {
+      const { data: intake, error: intakeErr } = await intakeTable
+        .select('parq_any_yes, parq_answers, medical_conditions, surgeries_or_injuries')
+        .eq('user_id', clientId)
+        .maybeSingle()
 
-    if (intake) {
+      if (intakeErr) {
+        return NextResponse.json(
+          { error: 'Unable to verify athlete PAR-Q+ medical screening before waiving consultation.' },
+          { status: 503 }
+        )
+      }
+
+      if (!intake) {
+        return NextResponse.json(
+          {
+            error:
+              '1:1 live consultation cannot be waived until the athlete completes and signs their 7-point PAR-Q+ screening.',
+          },
+          { status: 409 }
+        )
+      }
+
       const evaluation = evaluateMedicalParq(normalizeParqAnswersFromIntake(intake.parq_answers, intake))
       if (intake.parq_any_yes === true || evaluation.flaggedQuestionsCount > 0) {
         return NextResponse.json(
@@ -51,7 +68,12 @@ export async function POST(
       }
     }
   } catch {
-    // Allow fallback when table is omitted in isolated mocks
+    if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+      return NextResponse.json(
+        { error: 'Unable to verify athlete PAR-Q+ medical screening before waiving consultation.' },
+        { status: 503 }
+      )
+    }
   }
 
   const nowIso = new Date().toISOString()

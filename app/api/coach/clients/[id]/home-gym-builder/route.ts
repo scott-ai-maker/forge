@@ -99,7 +99,7 @@ export async function POST(
 **${blueprint.blueprintTitle}**
 ${blueprint.architectSummaryMemo}
 
-**Phase 1 Prescribed Buildout (${blueprint.phase1MemberFormatted} · Target Cap ${blueprint.resolvedBudgetFormatted}):**
+**Phase 1 Recommended Buildout (${blueprint.phase1MemberFormatted} · Target Cap ${blueprint.resolvedBudgetFormatted}):**
 ${phase1Lines || '• Your existing home-gym equipment already covers Phase 1 requirements!'}
 
 **NASM HGD Site, Clearance & Safety Specs:**
@@ -111,8 +111,7 @@ ${customNote ? `**Coach's Personal Setup Note:**\n"${customNote}"\n\n` : ''}*${b
       coach_id: coachId,
       client_id: clientId,
       sender_id: coachId,
-      sender_role: 'coach',
-      body: conciergeMessage,
+      message_body: conciergeMessage,
     })
     conciergeNotified = !msgErr
   }

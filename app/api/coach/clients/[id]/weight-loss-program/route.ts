@@ -74,6 +74,18 @@ export async function POST(
 
     const admin = supabaseAdmin()
 
+    const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+    const clearanceGate = await checkClientMedicalClearanceGate(admin, clientId)
+    if (clearanceGate.blocked) {
+      return NextResponse.json(
+        { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+        { status: 409, headers: NO_STORE_HEADERS }
+      )
+    }
+    if (body.targetNasmPhase !== undefined) {
+      body.targetNasmPhase = Math.min(Number(body.targetNasmPhase), clearanceGate.effectiveMaxOptPhase)
+    }
+
     const [{ data: client }, { data: profile }, { data: intake }, { data: bodyComp }] = await Promise.all([
       admin.from('clients').select('id, full_name').eq('id', clientId).maybeSingle(),
       admin.from('fitness_profiles').select('*').eq('user_id', clientId).maybeSingle(),

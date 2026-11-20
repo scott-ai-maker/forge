@@ -154,8 +154,8 @@ export default function EquipmentDispensaryWidget({
               Tools Matched to Your 4-Phase Corrective Plan
             </h3>
             <p style={{ margin: 0, color: 'var(--gray)', fontSize: 13, lineHeight: 1.5 }}>
-              Direct-shipped clinical tools from <strong>Crossover Symmetry</strong> (15% off) and{' '}
-              <strong>Perform Better</strong> (10% off) mapped directly to your NASM movement screen findings.
+              Direct-shipped mobility &amp; strength training tools from <strong>Crossover Symmetry</strong> (15% off) and{' '}
+              <strong>Perform Better</strong> (10% off) matched to your NASM movement screen observations (non-medical fitness training aids).
             </p>
             <p style={{ margin: '6px 0 0', fontSize: 11.5, color: '#CBD5E1', lineHeight: 1.45 }}>
               <strong>Affiliate Disclosure:</strong> {prescription.ftcAffiliateDisclosure} {prescription.voluntarySourcingNotice}

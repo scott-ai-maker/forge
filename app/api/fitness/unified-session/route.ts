@@ -41,6 +41,21 @@ export async function POST(req: NextRequest) {
 
   const admin = supabaseAdmin()
 
+  const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+  const legalGate = await checkClientLegalConsentGate(admin, userId, {
+    requireTermsOfService: true,
+    requireLiabilityWaiver: true,
+  })
+  if (!legalGate.verified) {
+    return NextResponse.json({ error: legalGate.reason, code: 'LEGAL_WAIVER_REQUIRED' }, { status: 403 })
+  }
+
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, userId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json({ error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' }, { status: 403 })
+  }
+
   // 1. Log the Strength / Primary Workout Day Completion
   const strengthNotes = [
     `[workout-day:${workoutDay}]`,

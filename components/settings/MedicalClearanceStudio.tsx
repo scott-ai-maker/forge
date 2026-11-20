@@ -323,7 +323,7 @@ export default function MedicalClearanceStudio({
           <div style={{ fontSize: 12.5, color: '#E2E8F0', lineHeight: 1.5 }}>
             {isCleared && 'All 7 diagnostic screening criteria are clear. Athlete is fully cleared to execute NASM OPT™ Phases 1 through 5 (Stabilization, Strength Endurance, Hypertrophy, Maximal Strength, and Power).'}
             {isModRisk && `Active musculoskeletal or cardiovascular adaptations in place. Training intensity is automatically modulated up to OPT™ Phase ${evaluation.maxAllowedOptPhase}.`}
-            {isHighRisk && 'One or more high-severity cardiovascular or medical symptoms were flagged. Training must be restricted to gentle Phase 1 stabilization under licensed physician supervision.'}
+            {isHighRisk && 'One or more acute cardiovascular, chest-pain, or syncope criteria were flagged. Complete Exercise Stop (Phase 0 Hold) is active until written physician medical clearance is verified on file.'}
           </div>
         </div>
 
@@ -343,7 +343,7 @@ export default function MedicalClearanceStudio({
             OPT™ Phase Cap &amp; Max Load
           </div>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--gold-lt)' }}>
-            Max Intensity: Phase {evaluation.maxAllowedOptPhase} ({evaluation.maxAllowedOptPhase === 5 ? 'Power (100% 1RM)' : evaluation.maxAllowedOptPhase === 1 ? 'Stabilization Endurance' : `Phase ${evaluation.maxAllowedOptPhase}`})
+            Max Intensity: Phase {evaluation.maxAllowedOptPhase} ({evaluation.maxAllowedOptPhase === 0 ? 'Complete Exercise Halt — Physician Clearance Required' : evaluation.maxAllowedOptPhase === 5 ? 'Power (100% 1RM)' : evaluation.maxAllowedOptPhase === 1 ? 'Stabilization Endurance' : `Phase ${evaluation.maxAllowedOptPhase}`})
           </div>
           <div style={{ fontSize: 12.5, color: '#E2E8F0', lineHeight: 1.5 }}>
             Flagged items: <strong>{evaluation.flaggedQuestionsCount}</strong> of 7 questions.

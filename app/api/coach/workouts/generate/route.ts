@@ -537,6 +537,15 @@ export async function POST(req: NextRequest) {
 
   const admin = supabaseAdmin()
 
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, clientId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+      { status: 409 }
+    )
+  }
+
   const { data: profile } = await admin
     .from('fitness_profiles')
     .select('*')

@@ -67,11 +67,35 @@ export async function POST(req: NextRequest) {
   let userId = ''
   try {
     const authz = await getRequestAuthz(req)
+    const { requireActiveClient } = await import('@/lib/authz')
+    requireActiveClient(authz.client)
     userId = authz.user.id
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
     return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
+  }
+
+  const adminGateClient = supabaseAdmin()
+  const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+  const legalGate = await checkClientLegalConsentGate(adminGateClient, userId, {
+    requireTermsOfService: true,
+    requireLiabilityWaiver: true,
+  })
+  if (!legalGate.verified) {
+    return NextResponse.json(
+      { error: legalGate.reason, code: 'LEGAL_WAIVER_REQUIRED' },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
+  }
+
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(adminGateClient, userId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json(
+      { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+      { status: 403, headers: NO_STORE_HEADERS }
+    )
   }
 
   const rate = await enforceRateLimit({

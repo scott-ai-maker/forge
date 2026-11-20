@@ -417,6 +417,19 @@ export default function OneRepMaxPercentageMatrix({
               gap: 6,
             }}
           >
+            <div
+              style={{
+                fontSize: 11,
+                lineHeight: 1.45,
+                color: '#FDE68A',
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: 6,
+                padding: '6px 10px',
+              }}
+            >
+              <strong>Safety Notice (Phase 4–5 Maximal Loads &ge;85% 1RM):</strong> Reserved strictly for cleared adults (0 cardiovascular/BP/acute joint PAR-Q+ flags) using safety spotter arms or a live spotter. Avoid prolonged breath-holding (Valsalva maneuver).
+            </div>
             {percentageTiers.map(tier => {
               const phaseColor = getPhaseColor(tier.optPhase)
               const isApplied = appliedTierPct === tier.percentage

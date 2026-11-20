@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
+import { getRequestAuthz, requireRole, requireCoachAssignedClient, AuthzError } from '@/lib/authz'
+import { checkClientMedicalClearanceGate } from '@/lib/liability-shield'
 import { generateRagNasmProgram } from '@/lib/rag-nasm-program-generator'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,6 +11,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const {
+      clientId,
       clientName,
       clientAge,
       clientSex,
@@ -22,12 +25,37 @@ export async function POST(req: NextRequest) {
       kineticCompensations,
     } = body
 
+    let maxPhase = 5
+    if (typeof clientId === 'string' && clientId.trim()) {
+      await requireCoachAssignedClient(authz.user.id, clientId.trim())
+      const clearanceGate = await checkClientMedicalClearanceGate(supabaseAdmin(), clientId.trim())
+      if (clearanceGate.blocked) {
+        return NextResponse.json(
+          { error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' },
+          { status: 409 }
+        )
+      }
+      maxPhase = clearanceGate.effectiveMaxOptPhase
+    }
+
+    const parsedAge = Number(clientAge) || 35
+    if (parsedAge < 18) {
+      return NextResponse.json(
+        { error: 'Forge Athletic programs are strictly restricted to adults aged 18 and older.' },
+        { status: 403 }
+      )
+    }
+
+    const requestedPhase = targetNasmPhase ? Number(targetNasmPhase) : undefined
+    const clampedPhase =
+      requestedPhase !== undefined ? Math.max(1, Math.min(maxPhase, requestedPhase)) : undefined
+
     const program = generateRagNasmProgram({
       clientName,
-      clientAge: Number(clientAge) || 35,
+      clientAge: parsedAge,
       clientSex: clientSex === 'female' ? 'female' : 'male',
       goal,
-      targetNasmPhase: targetNasmPhase ? Number(targetNasmPhase) : undefined,
+      targetNasmPhase: clampedPhase,
       trainingDaysPerWeek: Number(trainingDaysPerWeek) || 4,
       experienceLevel,
       equipmentAccess,

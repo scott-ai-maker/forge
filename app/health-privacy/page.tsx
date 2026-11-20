@@ -144,7 +144,7 @@ export default function ConsumerHealthBiometricPrivacyPage() {
               <strong>Google LLC (Gemini API) &amp; OpenAI OpCo, LLC:</strong> Opt-in posture/body-composition visual landmark estimation, de-identified coaching session note structuring, and individualized periodization synthesis.
             </li>
             <li style={{ marginBottom: '0.35rem' }}>
-              <strong>ElevenLabs Inc. &amp; LiveKit:</strong> Synthesized audio coaching cues and encrypted WebRTC 1:1 live video/audio coaching transport.
+              <strong>ElevenLabs Inc. &amp; Encrypted WebRTC STUN/TURN Infrastructure:</strong> Synthesized audio coaching cues and DTLS-SRTP encrypted WebRTC 1:1 live video/audio coaching transport.
             </li>
             <li style={{ marginBottom: '0.35rem' }}>
               <strong>Vital (TRYVITAL, Inc.):</strong> Athlete-authorized wearable and Apple HealthKit / Google Health Connect telemetry synchronization.

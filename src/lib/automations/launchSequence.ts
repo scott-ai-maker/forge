@@ -1075,33 +1075,7 @@ export async function deliverAutomationPayload(
     }
   }
 
-  // Optional Loops.so transactional bridge if LOOPS_API_KEY + LOOPS_TRANSACTIONAL_ENABLED=1 are set
-  if (
-    process.env.LOOPS_API_KEY?.trim() &&
-    process.env.LOOPS_TRANSACTIONAL_ENABLED === '1'
-  ) {
-    const res = await fetch('https://app.loops.so/api/v1/transactional', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.LOOPS_API_KEY.trim()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: payload.to,
-        transactionalId: payload.templateId,
-        dataVariables: {
-          subject: payload.subject,
-          previewText: payload.previewText,
-          unsubscribeUrl: payload.unsubscribeUrl,
-        },
-      }),
-    })
-    if (!res.ok) {
-      throw new Error(`Loops transactional send failed (${res.status})`)
-    }
-    return { delivered: true, providerMessageId: `loops:${payload.templateId}` }
-  }
-
+  // Email delivery uses Resend exclusively (matching Forge Athletic's WISP and Privacy Policy subprocessor list)
   if (!process.env.RESEND_API_KEY?.trim() || !process.env.MARKETING_FROM_EMAIL?.trim()) {
     return { delivered: false, skipped: true, reason: 'resend_not_configured' }
   }

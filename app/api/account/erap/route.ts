@@ -3,6 +3,7 @@ import { getRequestAuthz, requireRole, AuthzError } from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import {
   evaluateMedicalParq,
+  isValidTenDigitMunicipalDispatch,
   normalizeParqAnswersFromIntake,
   ParqAnswers,
 } from '@/lib/liability-shield'
@@ -119,12 +120,11 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const dispatchDigits = localEmergencyDispatchPhone.replace(/\D/g, '')
-  if (dispatchDigits.length < 10) {
+  if (!isValidTenDigitMunicipalDispatch(localEmergencyDispatchPhone)) {
     return NextResponse.json(
       {
         error:
-          'Enter a 10-digit local municipal police/EMS dispatch number (or building security emergency desk number). Dialing 911 from a remote coach phone connects to the coach city rather than your training location.',
+          'Enter a valid 10-digit local municipal police/EMS dispatch number (or building security emergency desk number). Placeholder strings and bare 911 cannot route emergency dispatch to a remote training location.',
       },
       { status: 400, headers: NO_STORE_HEADERS }
     )
@@ -248,7 +248,7 @@ export async function POST(req: NextRequest) {
   }
 
   const effectiveSignature = existingIntake?.consent_signature_name || typedSignature
-  await recordLegalConsentAudit({
+  const auditWrite = await recordLegalConsentAudit({
     adminClient: admin,
     userId,
     documentTypes: isValidLegalSignature(effectiveSignature)
@@ -267,6 +267,12 @@ export async function POST(req: NextRequest) {
       allPartyRecordingConsentAccepted: true,
     },
   })
+  if (auditWrite.error) {
+    return NextResponse.json(
+      { error: 'Unable to record mandatory ERAP & all-party recording consent audit log. Please retry.' },
+      { status: 500, headers: NO_STORE_HEADERS }
+    )
+  }
 
   const normalized: ParqAnswers = normalizeParqAnswersFromIntake(updatedParqJson, {
     ...existingIntake,

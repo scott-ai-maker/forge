@@ -132,6 +132,7 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
     legalConsentLiability: false,
     legalConsentInformed: false,
     legalConsentPrivacy: false,
+    legalConsentHealthBiometric: false,
     legalConsentCoaching: false,
     legalConsentEmergency: false,
     legalConsentVirtualTelehealth: false,
@@ -395,6 +396,7 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
           legalConsentLiability: intake?.consent_liability_waiver ?? prev.legalConsentLiability,
           legalConsentInformed: intake?.consent_informed_consent ?? prev.legalConsentInformed,
           legalConsentPrivacy: intake?.consent_privacy_practices ?? prev.legalConsentPrivacy,
+          legalConsentHealthBiometric: intake?.consent_privacy_practices ?? prev.legalConsentHealthBiometric,
           legalConsentCoaching: intake?.consent_coaching_agreement ?? prev.legalConsentCoaching,
           legalConsentEmergency: intake?.consent_emergency_care ?? prev.legalConsentEmergency,
           legalConsentVirtualTelehealth: typedParq?.erap?.virtualTelehealthConsent ?? (intake?.consent_liability_waiver ?? prev.legalConsentVirtualTelehealth),
@@ -635,7 +637,8 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
         },
         liabilityWaiver: form.legalConsentLiability,
         informedConsent: form.legalConsentInformed,
-        privacyPractices: form.legalConsentPrivacy,
+        privacyPractices: form.legalConsentPrivacy && form.legalConsentHealthBiometric,
+        healthBiometricConsent: form.legalConsentHealthBiometric,
         coachingAgreement: form.legalConsentCoaching,
         emergencyCare: form.legalConsentEmergency,
         signatureName: form.legalSignatureName,
@@ -684,6 +687,7 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
       !form.legalConsentVirtualTelehealth ||
       !form.legalConsentInformed ||
       !form.legalConsentPrivacy ||
+      !form.legalConsentHealthBiometric ||
       !form.legalConsentCoaching ||
       !form.legalConsentEmergency
     ) {
@@ -991,7 +995,8 @@ export default function OnboardingForm({ initialProfile }: { initialProfile?: On
           <label htmlFor="legal-consent-liability"><input id="legal-consent-liability" type="checkbox" checked={form.legalConsentLiability} onChange={e => updateBooleanField('legalConsentLiability', e.target.checked)} /> I have read and affirmatively accept the <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Athletic Liability Waiver &amp; Assumption of Risk</a> (including release of ordinary negligence, binding individual arbitration, and class-action waiver) and confirm I am at least 18 years old.</label>
           <label htmlFor="legal-consent-telehealth"><input id="legal-consent-telehealth" type="checkbox" checked={form.legalConsentVirtualTelehealth} onChange={e => updateBooleanField('legalConsentVirtualTelehealth', e.target.checked)} /> <strong>NASM Virtual Coaching Telehealth Agreement:</strong> I acknowledge that training sessions and assessments are delivered remotely. The coach cannot physically spot lifts. I agree to maintain an 8x8 ft clear perimeter, verify non-slip flooring, and safely rack weights immediately if video drops. I consent to video transmission for biomechanical form analysis.</label>
           <label htmlFor="legal-consent-informed"><input id="legal-consent-informed" type="checkbox" checked={form.legalConsentInformed} onChange={e => updateBooleanField('legalConsentInformed', e.target.checked)} /> I provide informed consent for non-medical exercise coaching and programming (understanding Forge Athletic does not practice medicine or physical therapy).</label>
-          <label htmlFor="legal-consent-privacy"><input id="legal-consent-privacy" type="checkbox" checked={form.legalConsentPrivacy} onChange={e => updateBooleanField('legalConsentPrivacy', e.target.checked)} /> I separately consent to the <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Privacy Policy</a> and <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Consumer Health &amp; Biometric Data Policy</a> for processing my health readiness and training data.</label>
+          <label htmlFor="legal-consent-privacy"><input id="legal-consent-privacy" type="checkbox" checked={form.legalConsentPrivacy} onChange={e => updateBooleanField('legalConsentPrivacy', e.target.checked)} /> I have read and accept the <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Privacy Policy</a>.</label>
+          <label htmlFor="legal-consent-health-biometric"><input id="legal-consent-health-biometric" type="checkbox" checked={form.legalConsentHealthBiometric} onChange={e => updateBooleanField('legalConsentHealthBiometric', e.target.checked)} /> <strong>Standalone Consumer Health &amp; Biometric Consent (WA MHMDA / NV SB 370 / IL BIPA):</strong> I separately authorize Forge Athletic to collect and process my PAR-Q+ health readiness responses, movement/posture media, and training metrics solely to deliver personalized fitness coaching under the <a href="/health-privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Consumer Health &amp; Biometric Data Policy</a>.</label>
           <label htmlFor="legal-consent-coaching"><input id="legal-consent-coaching" type="checkbox" checked={form.legalConsentCoaching} onChange={e => updateBooleanField('legalConsentCoaching', e.target.checked)} /> I agree to the <a href="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--gold-lt)', textDecoration: 'underline' }}>Terms of Service</a>, coaching expectations, and communication standards.</label>
           <label htmlFor="legal-consent-emergency"><input id="legal-consent-emergency" type="checkbox" checked={form.legalConsentEmergency} onChange={e => updateBooleanField('legalConsentEmergency', e.target.checked)} /> I authorize emergency response actions and notification of my emergency contact if urgent medical risk is identified.</label>
         </div>

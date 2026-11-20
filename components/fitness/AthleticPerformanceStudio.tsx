@@ -263,8 +263,11 @@ export default function AthleticPerformanceStudio({
           <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 18 }}>
             <div style={{ fontSize: 11, color: 'var(--gold-lt)', textTransform: 'uppercase', fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
               <GaaIcon name="sparkles" size={13} tone="gold" />
-              <span>Clinical SAQ &amp; Neuromuscular Recommendations</span>
+              <span>SAQ &amp; Neuromuscular Training Recommendations (Cleared Healthy Adults Only)</span>
             </div>
+            <p style={{ margin: '0 0 8px', fontSize: 11.5, color: '#FDE68A', lineHeight: 1.45 }}>
+              <strong>Contraindication Guardrail:</strong> Do not perform maximal plyometric jump or agility tests if you have any active cardiovascular, hypertension, dizziness, pregnancy, osteoporosis, or acute lower-extremity/spinal PAR-Q+ flag without physician clearance.
+            </p>
             <ul style={{ margin: 0, paddingLeft: 18, color: '#E2E8F0', fontSize: 13, lineHeight: 1.6 }}>
               {compositeProfile.actionableInsights.map((insight, idx) => (
                 <li key={idx} style={{ marginBottom: 4 }}>{insight}</li>

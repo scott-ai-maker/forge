@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
   try {
     const authz = await getRequestAuthz(req)
     requireRole(authz.client.role, ['client', 'coach'])
+    const { requireActiveClient } = await import('@/lib/authz')
+    requireActiveClient(authz.client)
     userId = authz.user.id
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
@@ -57,6 +59,22 @@ export async function POST(req: NextRequest) {
 
   if (!sessionTitle) {
     return NextResponse.json({ error: 'sessionTitle is required' }, { status: 400 })
+  }
+
+  const adminClient = supabaseAdmin()
+  const { checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+  const legalGate = await checkClientLegalConsentGate(adminClient, userId, {
+    requireTermsOfService: true,
+    requireLiabilityWaiver: true,
+  })
+  if (!legalGate.verified) {
+    return NextResponse.json({ error: legalGate.reason, code: 'LEGAL_WAIVER_REQUIRED' }, { status: 403 })
+  }
+
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+  const clearanceGate = await checkClientMedicalClearanceGate(adminClient, userId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json({ error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' }, { status: 403 })
   }
 
   const validPlanId = toValidUuidOrNull(body.workoutPlanId)

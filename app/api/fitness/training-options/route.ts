@@ -138,18 +138,39 @@ export async function POST(req: NextRequest) {
     updatedFields.push('experienceLevel')
   }
 
-  if (existingProfile) {
-    await admin.from('fitness_profiles').update(profileUpdates).eq('user_id', userId)
-  } else {
-    await admin.from('fitness_profiles').insert({
-      user_id: userId,
-      training_days_per_week: trainingDaysPerWeek || 4,
-      fitness_goal: fitnessGoal || 'Body Recomposition & Joint Longevity',
-      experience_level: experienceLevel || 'intermediate',
-      equipment_access: ['dumbbell', 'band', 'bodyweight'],
-      ...profileUpdates,
-    })
+  if (!existingProfile) {
+    return NextResponse.json(
+      {
+        error:
+          'Complete your adult (18+) onboarding profile, PAR-Q+ screening, and Athletic Liability Waiver before generating or customizing training options.',
+        code: 'ONBOARDING_REQUIRED',
+      },
+      { status: 403 }
+    )
   }
+
+  const { checkClientAdultPhotoEligibility, checkClientLegalConsentGate } = await import('@/lib/legal-compliance')
+  const { checkClientMedicalClearanceGate } = await import('@/lib/liability-shield')
+
+  const adultCheck = await checkClientAdultPhotoEligibility(admin, userId)
+  if (!adultCheck.eligible) {
+    return NextResponse.json({ error: adultCheck.error, code: 'ADULT_AGE_REQUIRED' }, { status: 403 })
+  }
+
+  const legalGate = await checkClientLegalConsentGate(admin, userId, {
+    requireTermsOfService: true,
+    requireLiabilityWaiver: true,
+  })
+  if (!legalGate.verified) {
+    return NextResponse.json({ error: legalGate.reason, code: 'LEGAL_WAIVER_REQUIRED' }, { status: 403 })
+  }
+
+  const clearanceGate = await checkClientMedicalClearanceGate(admin, userId)
+  if (clearanceGate.blocked) {
+    return NextResponse.json({ error: clearanceGate.reason, code: 'MEDICAL_CLEARANCE_REQUIRED' }, { status: 409 })
+  }
+
+  await admin.from('fitness_profiles').update(profileUpdates).eq('user_id', userId)
 
   const genResult = await autoGenerateOrUpdateClientWorkoutPlan({
     clientId: userId,

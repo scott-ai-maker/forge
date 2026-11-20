@@ -316,9 +316,9 @@ export function generateRecompositionPlan(
   const currentLbmKg = safeWeightKg * (1 - safeCurrentBf / 100)
   const currentFatMassKg = safeWeightKg * (safeCurrentBf / 100)
 
-  // Default target: lean athletic fitness; clamp to physiological bounds to prevent division by zero
+  // Default target: lean athletic fitness; clamp above ACSM essential-fat thresholds (#24)
   const defaultTarget = sex === 'female' ? 20.0 : 12.0
-  const minSafeTarget = sex === 'female' ? 10.0 : 4.0
+  const minSafeTarget = sex === 'female' ? 12.0 : 6.0
   const maxSafeTarget = sex === 'female' ? 50.0 : 45.0
   const rawTarget = Number.isFinite(targetBodyFatInput) ? (targetBodyFatInput as number) : defaultTarget
   const targetBodyFatPercent = roundToOne(Math.max(minSafeTarget, Math.min(maxSafeTarget, rawTarget)))
@@ -344,9 +344,10 @@ export function generateRecompositionPlan(
   let phaseName = 'Phase 2: Strength Endurance'
 
   if (safeCurrentBf > targetBodyFatPercent + 1.5) {
-    // Fat Loss / Recomposition Focus
+    // Fat Loss / Recomposition Focus (NIH/ACSM non-medical floor: 1,500 kcal male / 1,200 kcal female)
+    const minCalorieFloor = sex === 'male' ? 1500 : 1200
     weeklyDeficitOrSurplus = -3500 // ~1 lb fat loss per week (500 kcal/day deficit)
-    dailyCaloricTarget = Math.max(1400, tdee - 500)
+    dailyCaloricTarget = Math.max(minCalorieFloor, tdee - 500)
     recommendedNasmPhase = safeCurrentBf > 22 ? 1 : 2
     phaseName = recommendedNasmPhase === 1 ? 'Phase 1: Stabilization Endurance' : 'Phase 2: Strength Endurance'
   } else if (safeCurrentBf < targetBodyFatPercent - 2.0) {

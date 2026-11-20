@@ -76,7 +76,7 @@ export default function TermsOfServicePage() {
               <span>Exclusive Ownership of Proprietary Software, Algorithms &amp; Methodologies</span>
             </p>
             <p style={{ margin: 0, fontSize: '0.92rem', color: '#CBD5E1' }}>
-              The Forge Athletic digital platform, including without limitation its software source code, object code, system architecture, database schemas, proprietary algorithms (including the <strong>Forge Adaptive Training Engine™</strong>, <strong>Forge Kinetic Periodization Architect™</strong>, <strong>AI Postural Distortion Mesh Scanner™</strong>, <strong>Chrono-Dosing Ergogenic Protocol™</strong>, <strong>Live Kinetic Telestrator HUD™</strong>, <strong>Sanctuary Mode™</strong>, and <strong>Executive Sunday Intelligence Dossier™</strong>), clean-room sports-science knowledge bases, prompt engineering pipelines, visual interfaces, UI design components, 3D badges, video analytics, audio cadences, and coaching protocols (collectively, the &quot;Proprietary IP&quot;), are the exclusive property and confidential trade secrets of Forge Athletic Performance LLC.
+              The Forge Athletic digital platform, including without limitation its software source code, object code, system architecture, database schemas, proprietary algorithms (including the <strong>Forge Adaptive Training Engine™</strong>, <strong>Forge Kinetic Periodization Architect™</strong>, <strong>Postural Alignment Mesh Estimator™</strong>, <strong>Live Kinetic Telestrator HUD™</strong>, and <strong>Executive Sunday Intelligence Dossier™</strong>), clean-room sports-science knowledge bases, prompt engineering pipelines, visual interfaces, UI design components, 3D badges, video analytics, audio cadences, and coaching protocols (collectively, the &quot;Proprietary IP&quot;), are the exclusive property and confidential trade secrets of Forge Athletic Performance LLC.
             </p>
           </div>
 
@@ -107,7 +107,7 @@ export default function TermsOfServicePage() {
               Feed, input, or train any third-party artificial intelligence, machine learning model, large language model (LLM), computer vision model, or neural network on Forge Athletic proprietary images, videos, workout structures, periodization logic, or coaching protocols;
             </li>
             <li style={{ marginBottom: '0.4rem' }}>
-              Create derivative works, clone software, white-label services, or commercial coaching applications incorporating or copying Forge Athletic&apos;s advisory structure, live telestrator HUD, or chrono-dosing engines.
+              Create derivative works, clone software, white-label services, or commercial coaching applications incorporating or copying Forge Athletic&apos;s coaching architecture, periodization workflows, or live telestrator HUD.
             </li>
           </ul>
 

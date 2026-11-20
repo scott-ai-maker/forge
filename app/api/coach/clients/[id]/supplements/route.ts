@@ -80,7 +80,7 @@ export async function GET(
   ])
 
   const goal = normalizeSupplementGoal(profile?.fitness_goal)
-  const collection = getThorneGoalCollection(goal)
+  const collection = getThorneGoalCollection(goal, intake)
   const physicianConsultAlert = evaluateIntakePhysicianConsultFlag(intake)
 
   return NextResponse.json(
@@ -200,7 +200,7 @@ export async function POST(
     .maybeSingle()
 
   const goal: SupplementGoal = (body.goal as SupplementGoal | undefined) ?? 'hypertrophy'
-  const collection = getThorneGoalCollection(goal)
+  const collection = getThorneGoalCollection(goal, intake)
   const physicianConsultAlert = evaluateIntakePhysicianConsultFlag(intake)
   const customCoachNote = sanitizeCoachNote(body.customCoachNote)
 

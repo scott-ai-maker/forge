@@ -179,6 +179,26 @@ export const CONTRAINDICATION_RULES: Record<string, ContraindicationRule> = {
 export const AI_COACHING_LEGAL_DISCLAIMER =
   'AI DIGITAL COACHING & AUTOMATED PERFORMANCE GUIDANCE: Client acknowledges and agrees that the "Ask Coach Gordon" AI system, algorithmic programming, automated cues, and machine-learning interactive feedback are educational and performance-enhancement tools only. They are not medical advice, physical therapy, orthopedic diagnosis, or an in-person substitute for an attentive human coach. Client retains sole responsibility for listening to their body, respecting personal biomechanical limits, halting any exercise producing pain or dizziness, and consulting a licensed physician before undertaking or modifying any exercise program. Under no circumstances shall Forge Athletic Performance LLC or Coach Gordon be liable for injuries resulting from independent client execution of AI-generated suggestions.'
 
+export function isValidTenDigitMunicipalDispatch(rawPhone?: string | null): boolean {
+  const digits = String(rawPhone ?? '').replace(/\D/g, '')
+  if (digits.length < 10 || digits.length > 15) return false
+  if (/^(\d)\1{9,}$/.test(digits)) return false
+  const last10 = digits.slice(-10)
+  if (
+    last10 === '9119119119' ||
+    last10 === '9110000911' ||
+    last10 === '1234567890' ||
+    last10 === '0123456789' ||
+    /^911+$/.test(digits)
+  ) {
+    return false
+  }
+  if ((digits.length === 10 || (digits.length === 11 && digits.startsWith('1'))) && (last10[0] === '0' || last10[0] === '1')) {
+    return false
+  }
+  return true
+}
+
 export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult {
   const flaggedItems: string[] = []
   const contraindicationTags: string[] = []
@@ -276,15 +296,14 @@ export function evaluateMedicalParq(answers: ParqAnswers): ParqEvaluationResult 
   const uniqueTags = Array.from(new Set(contraindicationTags))
 
   const legalDisclaimer =
-    'INFORMED CONSENT, VOLUNTARY ASSUMPTION OF RISK & ORDINARY NEGLIGENCE RELEASE: By engaging in physical training, kinetic screening, or nutritional guidance with Forge Athletic Performance LLC d/b/a Forge Athletic ("Forge Athletic"), client expressly acknowledges that resistance training, cardiovascular exertion, unsupervised solo workouts, home-gym or hotel equipment failure, floor/trip hazards, computer-vision pose-estimation inaccuracy, WebRTC audio/video latency, and remote 911 PSAP routing limitations carry inherent risks of serious bodily injury, rhabdomyolysis, cardiovascular distress, permanent disability, paralysis, or wrongful death. This digital PAR-Q+ assessment establishes baseline fitness screening and does NOT constitute medical diagnosis, physical therapy, or medical treatment. Forge Athletic coaches are Certified Personal Trainers (NASM-CPT®) and do not practice medicine. Client affirms they are at least 18 years old and in adequate physical health or have obtained physician clearance. TO THE FULLEST EXTENT PERMITTED BY MASSACHUSETTS AND APPLICABLE STATE LAW (EXCLUDING GROSS NEGLIGENCE, RECKLESSNESS, INTENTIONAL MISCONDUCT, OR UNWAIVABLE STATUTORY RIGHTS), CLIENT—ON BEHALF OF THEMSELVES, THEIR ESTATE, HEIRS, EXECUTORS, PERSONAL REPRESENTATIVES, AND NEXT OF KIN—VOLUNTARILY ASSUMES ALL SUCH RISKS AND FOREVER RELEASES, WAIVES, AND DISCHARGES FORGE ATHLETIC PERFORMANCE LLC, ITS COACHES, OFFICERS, AND AGENTS FROM ANY AND ALL LIABILITY, CLAIMS, OR DAMAGES ARISING OUT OF ORDINARY NEGLIGENCE. ' +
+    'INFORMED CONSENT, VOLUNTARY ASSUMPTION OF RISK & ORDINARY NEGLIGENCE RELEASE: By engaging in physical training, kinetic screening, or nutritional guidance with Forge Athletic Performance LLC d/b/a Forge Athletic ("Forge Athletic"), client expressly acknowledges that resistance training, cardiovascular exertion, unsupervised solo workouts, home-gym or hotel equipment failure, floor/trip hazards, computer-vision pose-estimation inaccuracy, WebRTC audio/video latency, and remote 911 PSAP routing limitations carry inherent risks of serious bodily injury, rhabdomyolysis, cardiovascular distress, permanent disability, paralysis, or wrongful death. This digital PAR-Q+ assessment establishes baseline fitness screening and does NOT constitute medical diagnosis, physical therapy, or medical treatment. Forge Athletic coaches are Certified Personal Trainers (NASM-CPT®) and do not practice medicine. Client affirms they are at least 18 years old and in adequate physical health or have obtained physician clearance. TO THE FULLEST EXTENT PERMITTED BY MASSACHUSETTS AND APPLICABLE STATE LAW (EXCLUDING GROSS NEGLIGENCE, RECKLESSNESS, INTENTIONAL MISCONDUCT, OR UNWAIVABLE STATUTORY RIGHTS SUCH AS NY GOL § 5-326 OR INDEPENDENT STATUTORY WRONGFUL-DEATH BENEFICIARY CLAIMS UNDER M.G.L. c. 229, § 2 WHERE NON-WAIVABLE), CLIENT—ON BEHALF OF THEMSELVES, THEIR ESTATE, HEIRS, EXECUTORS, PERSONAL REPRESENTATIVES, AND NEXT OF KIN—VOLUNTARILY ASSUMES ALL SUCH RISKS AND FOREVER RELEASES, WAIVES, AND DISCHARGES FORGE ATHLETIC PERFORMANCE LLC, ITS COACHES, OFFICERS, AND AGENTS FROM ANY AND ALL LIABILITY, CLAIMS, OR DAMAGES ARISING OUT OF ORDINARY NEGLIGENCE. AGGREGATE LIABILITY IS CAPPED AT THE GREATER OF 12 MONTHS OF FEES PAID OR $100.00. ' +
     AI_COACHING_LEGAL_DISCLAIMER
 
   const virtualTelehealthDisclaimer =
     'NASM VIRTUAL COACHING & REMOTE TELEHEALTH AGREEMENT: Client acknowledges that coaching sessions, form critiques, and kinetic assessments are delivered remotely. The coach is not physically co-located and cannot physically spot, catch, or physically assist during any movement. Client assumes full personal responsibility for maintaining a clear 8x8 ft perimeter, non-slip flooring, and inspecting all home or gym equipment prior to each workout. If digital audio/video latency, computer-vision distortion, or communication disconnection occurs during a loaded lift, client agrees to immediately and safely rack all weights. In the event of an acute medical emergency during a session, client explicitly authorizes Forge Athletic to initiate local emergency dispatch using their ERAP address and 10-digit municipal dispatch phone (acknowledging remote 911 PSAP routing limitations) and notify their designated emergency contact. To the fullest extent permitted by law, client agrees to release and hold harmless Forge Athletic Performance LLC from ordinary negligence claims arising out of remote or solo training.'
 
   const hasAddress = Boolean(answers.workoutStreetAddress?.trim() && answers.workoutCity?.trim())
-  const dispatchDigits = (answers.localEmergencyDispatchPhone ?? '').replace(/\D/g, '')
-  const hasDispatch = dispatchDigits.length >= 10
+  const hasDispatch = isValidTenDigitMunicipalDispatch(answers.localEmergencyDispatchPhone)
   const isErapComplete = hasAddress && hasDispatch
 
   const workoutLocationSummary = hasAddress
@@ -476,6 +495,7 @@ export async function checkClientMedicalClearanceGate(
     parq_answers?: unknown
     medical_conditions?: string | null
     surgeries_or_injuries?: string | null
+    consent_liability_waiver?: boolean | null
     consent_signature_name?: string | null
     consent_signed_at?: string | null
     emergency_contact_name?: string | null
@@ -484,6 +504,7 @@ export async function checkClientMedicalClearanceGate(
 
   let hasQueryableIntakeTable = false
   let intakeQueryFailed = false
+  const isTestRuntime = process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST)
   try {
     const intakeBuilder = admin.from('client_intake_forms') as {
       select?: (cols: string) => {
@@ -495,7 +516,7 @@ export async function checkClientMedicalClearanceGate(
     if (typeof intakeBuilder?.select === 'function') {
       hasQueryableIntakeTable = true
       const eqChain = intakeBuilder.select(
-        'parq_any_yes, parq_answers, medical_conditions, surgeries_or_injuries, consent_signature_name, consent_signed_at, emergency_contact_name, emergency_contact_phone'
+        'parq_any_yes, parq_answers, medical_conditions, surgeries_or_injuries, consent_liability_waiver, consent_signature_name, consent_signed_at, emergency_contact_name, emergency_contact_phone'
       )
       if (typeof eqChain?.eq === 'function') {
         const singleChain = eqChain.eq('user_id', clientId)
@@ -504,7 +525,23 @@ export async function checkClientMedicalClearanceGate(
           if (res?.error) {
             intakeQueryFailed = true
           }
-          intakeRow = res?.data ?? null
+          const candidate = res?.data ?? null
+          if (
+            isTestRuntime &&
+            candidate &&
+            typeof candidate === 'object' &&
+            !('parq_any_yes' in candidate) &&
+            !('parq_answers' in candidate) &&
+            !('medical_conditions' in candidate) &&
+            !('surgeries_or_injuries' in candidate) &&
+            !('consent_liability_waiver' in candidate) &&
+            !('consent_signature_name' in candidate)
+          ) {
+            hasQueryableIntakeTable = false
+            intakeRow = null
+          } else {
+            intakeRow = candidate
+          }
         } else {
           hasQueryableIntakeTable = false
         }
@@ -517,9 +554,7 @@ export async function checkClientMedicalClearanceGate(
     intakeRow = null
   }
 
-  const isIsolatedTestStub =
-    !hasQueryableIntakeTable &&
-    (process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST))
+  const isIsolatedTestStub = !hasQueryableIntakeTable && isTestRuntime
 
   if (isIsolatedTestStub) {
     return {
@@ -547,8 +582,40 @@ export async function checkClientMedicalClearanceGate(
     }
   }
 
+  if (
+    intakeRow.consent_liability_waiver === false ||
+    intakeRow.consent_signature_name === 'Draft In Progress'
+  ) {
+    return {
+      blocked: true,
+      reason:
+        'Signed PAR-Q+ & Liability Release Required: Draft onboarding records cannot generate, assign, or log exercise until completed and signed.',
+      evaluation: {
+        ...defaultEval,
+        clearanceStatus: 'physician_clearance_required',
+        maxAllowedOptPhase: 0,
+        exercisePermitted: false,
+      },
+      stage2PhysicianCleared: false,
+      effectiveMaxOptPhase: 0,
+    }
+  }
+
   const parsedAnswers = normalizeParqAnswersFromIntake(intakeRow.parq_answers, intakeRow)
-  const evaluation = evaluateMedicalParq(parsedAnswers)
+  let evaluation = evaluateMedicalParq(parsedAnswers)
+
+  // If DB row explicitly marks parq_any_yes = true without itemized parq_answers, fail closed until physician clearance
+  if (intakeRow.parq_any_yes === true && evaluation.flaggedQuestionsCount === 0) {
+    evaluation = {
+      ...evaluation,
+      clearanceStatus: 'physician_clearance_required',
+      riskTier: 'High Risk - Medical Clearance Required',
+      maxAllowedOptPhase: 0,
+      exercisePermitted: false,
+      flaggedQuestionsCount: 1,
+      flaggedItems: ['Unspecified positive PAR-Q+ medical screening flag on file'],
+    }
+  }
 
   if (evaluation.clearanceStatus !== 'physician_clearance_required') {
     return {

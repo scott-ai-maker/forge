@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
       { onConflict: 'user_id' }
     )
 
-    await recordLegalConsentAudit({
+    const auditWrite = await recordLegalConsentAudit({
       adminClient: admin,
       userId: user.id,
       documentTypes: ['terms_of_service', 'privacy_policy'],
@@ -131,6 +131,12 @@ export async function POST(req: NextRequest) {
         timezone,
       },
     })
+    if (auditWrite.error) {
+      return NextResponse.json(
+        { error: 'Unable to record TCPA SMS consent audit proof right now. Please retry.' },
+        { status: 500, headers: NO_STORE_HEADERS }
+      )
+    }
   } else {
     // Unauthenticated waitlist / prospective visitor: NEVER delete prior carrier STOP suppressions
     // (must reply START/UNSTOP from the handset or sign in to a verified account owning that phone).
