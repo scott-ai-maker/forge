@@ -259,11 +259,11 @@ public class GAAHealthSyncManager {
     }
 
     public boolean isBackgroundDeliveryEnabled() {
-        return prefs.getBoolean(KEY_BG_ENABLED, false);
+        return false;
     }
 
     public void setBackgroundDeliveryEnabled(boolean enabled) {
-        prefs.edit().putBoolean(KEY_BG_ENABLED, enabled).apply();
+        prefs.edit().putBoolean(KEY_BG_ENABLED, false).apply();
     }
 
     public int getBackgroundSyncIntervalMinutes() {
@@ -277,142 +277,57 @@ public class GAAHealthSyncManager {
     // MARK: - Health Availability & Authorization
 
     public boolean isHealthDataAvailable() {
-        return true;
+        // Android Health Connect native SDK queries are intentionally disabled until verified on hardware (#42).
+        return false;
     }
 
     public void requestAuthorization(ResultCallback<Boolean> callback) {
-        // Permissions configured in AndroidManifest.xml and requested via Capacitor/Health Connect
         mainHandler.post(() -> {
             if (callback != null) {
-                callback.onResult(true, true, null);
+                callback.onResult(
+                        false,
+                        false,
+                        "Android Health Connect integration is pending native SDK verification."
+                );
             }
         });
     }
 
     public String getAuthorizationStatus() {
-        return "authorized";
+        return "unavailable";
     }
 
     // MARK: - Background Delivery Scheduling (Android WorkManager)
 
     public void enableBackgroundDelivery(int intervalMinutes, ResultCallback<Boolean> callback) {
-        int safeInterval = Math.max(15, intervalMinutes);
-        setBackgroundDeliveryEnabled(true);
-        setBackgroundSyncIntervalMinutes(safeInterval);
-
-        scheduleWorkManagerBackgroundDelivery(safeInterval);
-
-        Log.i(TAG, "Native Android WorkManager background delivery enabled with interval: " + safeInterval + " min");
-        if (callback != null) {
-            mainHandler.post(() -> callback.onResult(true, true, null));
-        }
-    }
-
-    private void scheduleWorkManagerBackgroundDelivery(int intervalMinutes) {
+        setBackgroundDeliveryEnabled(false);
         try {
-            Constraints constraints = new Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build();
-
-            PeriodicWorkRequest syncWorkRequest = new PeriodicWorkRequest.Builder(
-                    GAAHealthBackgroundWorker.class,
-                    intervalMinutes,
-                    TimeUnit.MINUTES
-            )
-                    .setConstraints(constraints)
-                    .addTag(WORK_TAG_HEALTH_SYNC)
-                    .build();
-
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                    WORK_TAG_HEALTH_SYNC,
-                    ExistingPeriodicWorkPolicy.UPDATE,
-                    syncWorkRequest
-            );
+            WorkManager.getInstance(context).cancelAllWorkByTag(WORK_TAG_HEALTH_SYNC);
         } catch (Exception e) {
-            Log.e(TAG, "Failed scheduling WorkManager background sync: " + e.getMessage(), e);
+            Log.w(TAG, "Unable to cancel WorkManager health sync jobs: " + e.getMessage());
+        }
+
+        Log.i(TAG, "Android Health Connect background delivery disabled pending native SDK verification.");
+        if (callback != null) {
+            mainHandler.post(() -> callback.onResult(
+                    false,
+                    false,
+                    "Android Health Connect background delivery is disabled pending native SDK verification."
+            ));
         }
     }
 
     // MARK: - Query Latest Biometrics & Nutrition
 
     public void queryLatestBiometrics(ResultCallback<JSObject> callback) {
-        executor.execute(() -> {
-            try {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-                Date now = new Date();
-                String today = dateFormat.format(now);
-                String isoNow = isoFormat.format(now);
-
-                JSObject telemetry = new JSObject();
-                telemetry.put("provider", "google_fit");
-                telemetry.put("date", today);
-
-                // Resting Heart Rate & HRV
-                telemetry.put("resting_heart_rate", 54);
-                telemetry.put("hrv_rmssd", 78);
-                telemetry.put("respiratory_rate", 13.8);
-                telemetry.put("vo2_max", 49.5);
-
-                // Daily Activity
-                telemetry.put("steps", 9650);
-                telemetry.put("active_calories", 640);
-                telemetry.put("distance_miles", 4.35);
-
-                // Sleep Architecture
-                JSObject sleep = new JSObject();
-                sleep.put("total_hours", 7.8);
-                sleep.put("deep_hours", 2.1);
-                sleep.put("rem_hours", 1.9);
-                sleep.put("core_hours", 3.5);
-                sleep.put("awake_hours", 0.3);
-                sleep.put("sleep_efficiency_percent", 94);
-                sleep.put("bedtime", "22:45");
-                sleep.put("wakeTime", "06:33");
-                telemetry.put("sleep", sleep);
-
-                // Dietary Nutrition
-                JSObject nutrition = new JSObject();
-                nutrition.put("calories", 2280);
-                nutrition.put("protein", 192);
-                nutrition.put("carbs", 225);
-                nutrition.put("fat", 64);
-                nutrition.put("fiber", 36);
-                nutrition.put("water_oz", 112);
-                telemetry.put("nutrition", nutrition);
-                telemetry.put("water_oz", 112);
-
-                // Recent Workouts
-                JSArray workouts = new JSArray();
-                JSObject workout = new JSObject();
-                workout.put("id", "gh-workout-" + UUID.randomUUID().toString());
-                workout.put("activity_type", "workout.strength_training");
-                workout.put("name", "Strength Training");
-                workout.put("duration_mins", 52);
-                workout.put("calories", 420);
-                workout.put("avg_hr", 134);
-                workout.put("max_hr", 168);
-                workout.put("completed_at", isoNow);
-                workouts.put(workout);
-                telemetry.put("workouts", workouts);
-
-                String userId = getCurrentUserId();
-                if (userId != null && !userId.isEmpty()) {
-                    telemetry.put("client_id", userId);
-                }
-
-                mainHandler.post(() -> {
-                    if (callback != null) {
-                        callback.onResult(true, telemetry, null);
-                    }
-                });
-            } catch (Exception e) {
-                Log.e(TAG, "Error querying biometrics: " + e.getMessage(), e);
-                mainHandler.post(() -> {
-                    if (callback != null) {
-                        callback.onResult(false, null, e.getMessage());
-                    }
-                });
+        // Never fabricate synthetic biometric vitals or sync placeholder health payloads (#42).
+        mainHandler.post(() -> {
+            if (callback != null) {
+                callback.onResult(
+                        false,
+                        null,
+                        "Android Health Connect integration is pending native SDK verification."
+                );
             }
         });
     }
@@ -502,27 +417,13 @@ public class GAAHealthSyncManager {
     // MARK: - Query Current Heart Rate
 
     public void getCurrentHeartRate(ResultCallback<JSObject> callback) {
-        executor.execute(() -> {
-            try {
-                SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-                String nowIso = isoFormat.format(new Date());
-
-                JSObject ret = new JSObject();
-                // Return latest sampled heart rate
-                ret.put("heartRate", 64);
-                ret.put("timestamp", nowIso);
-
-                mainHandler.post(() -> {
-                    if (callback != null) {
-                        callback.onResult(true, ret, null);
-                    }
-                });
-            } catch (Exception e) {
-                mainHandler.post(() -> {
-                    if (callback != null) {
-                        callback.onResult(false, null, e.getMessage());
-                    }
-                });
+        mainHandler.post(() -> {
+            if (callback != null) {
+                callback.onResult(
+                        false,
+                        null,
+                        "Android Health Connect live heart rate is pending native SDK verification."
+                );
             }
         });
     }
@@ -534,20 +435,13 @@ public class GAAHealthSyncManager {
             String completedAt,
             ResultCallback<Boolean> callback
     ) {
-        executor.execute(() -> {
-            try {
-                Log.i(TAG, "Saving mindful session: " + durationMinutes + " min, completedAt: " + completedAt);
-                mainHandler.post(() -> {
-                    if (callback != null) {
-                        callback.onResult(true, true, null);
-                    }
-                });
-            } catch (Exception e) {
-                mainHandler.post(() -> {
-                    if (callback != null) {
-                        callback.onResult(false, false, e.getMessage());
-                    }
-                });
+        mainHandler.post(() -> {
+            if (callback != null) {
+                callback.onResult(
+                        false,
+                        false,
+                        "Android Health Connect write integration is pending native SDK verification."
+                );
             }
         });
     }
@@ -573,20 +467,13 @@ public class GAAHealthSyncManager {
             String completedAt,
             ResultCallback<Boolean> callback
     ) {
-        executor.execute(() -> {
-            try {
-                Log.i(TAG, "Saving workout: " + activityType + ", " + calories + " kcal, " + durationMinutes + " min, avgHr: " + avgHeartRate + ", completedAt: " + completedAt);
-                mainHandler.post(() -> {
-                    if (callback != null) {
-                        callback.onResult(true, true, null);
-                    }
-                });
-            } catch (Exception e) {
-                mainHandler.post(() -> {
-                    if (callback != null) {
-                        callback.onResult(false, false, e.getMessage());
-                    }
-                });
+        mainHandler.post(() -> {
+            if (callback != null) {
+                callback.onResult(
+                        false,
+                        false,
+                        "Android Health Connect workout write integration is pending native SDK verification."
+                );
             }
         });
     }
@@ -604,7 +491,7 @@ public class GAAHealthSyncManager {
                 diag.put("backgroundSyncIntervalMinutes", getBackgroundSyncIntervalMinutes());
                 diag.put("backendUrl", getBackendUrl());
                 diag.put("lastSyncTimestamp", prefs.getString(KEY_LAST_SYNC, ""));
-                diag.put("telemetryReady", true);
+                diag.put("telemetryReady", false);
 
                 mainHandler.post(() -> {
                     if (callback != null) {

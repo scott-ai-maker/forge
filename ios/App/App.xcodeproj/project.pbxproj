@@ -37,6 +37,8 @@
 		FWJC11002026111400000005 /* JointComfortCheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FWJC11002026111400000006 /* JointComfortCheckInView.swift */; };
 		FWB1202C7A8238826DC78201 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FWD7A955E5F260D10039C701 /* Assets.xcassets */; };
 		FWA009BB2F38F415DCEA8701 /* ForgeWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = FWA278F7D1DBA0AAB0DC6101 /* ForgeWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F0A120261120000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F0A120261120000000000002 /* PrivacyInfo.xcprivacy */; };
+		F0A120261120000000000003 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F0A120261120000000000004 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 
@@ -86,6 +88,8 @@
 		FWCA11002026111400000002 /* CameraRemoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraRemoteView.swift; sourceTree = "<group>"; };
 		FWDR11002026111400000004 /* DeskResetWristView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskResetWristView.swift; sourceTree = "<group>"; };
 		FWJC11002026111400000006 /* JointComfortCheckInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JointComfortCheckInView.swift; sourceTree = "<group>"; };
+		F0A120261120000000000002 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F0A120261120000000000004 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 
@@ -151,6 +155,7 @@
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
 				504EC3131FED79650016851F /* Info.plist */,
+				F0A120261120000000000002 /* PrivacyInfo.xcprivacy */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
 				GAA000042026083100000004 /* GAAHealthSyncManager.swift */,
@@ -206,6 +211,7 @@
 				FW3B8707AF229482F351B101 /* Views */,
 				FWD7A955E5F260D10039C701 /* Assets.xcassets */,
 				FW48B781FEB0A8D49F7DC301 /* Info.plist */,
+				F0A120261120000000000004 /* PrivacyInfo.xcprivacy */,
 				FW3647B61E4E0D0C5C942B01 /* ForgeWatch.entitlements */,
 			);
 			path = ForgeWatch;
@@ -308,6 +314,7 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+				F0A120261120000000000001 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -316,6 +323,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FWB1202C7A8238826DC78201 /* Assets.xcassets in Resources */,
+				F0A120261120000000000003 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

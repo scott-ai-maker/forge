@@ -1803,6 +1803,7 @@ export default function UnifiedLiveStudioHud({
   return (
     <div
       ref={containerRef}
+      data-forge-live-broadcast="true"
       className="unified-live-studio-hud teams-studio-shell teams-coach-cockpit"
     >
       {/* ── 1. Top HUD Ribbon: Brand, Athlete Telemetry & Session Actions ── */}

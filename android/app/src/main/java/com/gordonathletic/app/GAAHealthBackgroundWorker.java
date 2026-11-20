@@ -15,11 +15,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * GAAHealthBackgroundWorker
- * Background WorkManager Task executing scheduled biometrics ingest and synchronization
- * for Gordon Athletic Advisory on Android.
+ * Background WorkManager Task for Forge Athletic on Android.
+ * Disabled until real Android Health Connect SDK queries are verified on hardware (#42).
  */
 public class GAAHealthBackgroundWorker extends Worker {
-    private static final String TAG = "GAABackgroundWorker";
+    private static final String TAG = "ForgeHealthWorker";
 
     public GAAHealthBackgroundWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -28,11 +28,9 @@ public class GAAHealthBackgroundWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        Log.i(TAG, "Executing periodic background health delivery worker...");
-
         GAAHealthSyncManager syncManager = GAAHealthSyncManager.getInstance(getApplicationContext());
-        if (!syncManager.isBackgroundDeliveryEnabled()) {
-            Log.i(TAG, "Background delivery is disabled in preferences. Skipping sync cycle.");
+        if (!syncManager.isHealthDataAvailable() || !syncManager.isBackgroundDeliveryEnabled()) {
+            Log.i(TAG, "Android Health Connect background delivery is disabled. Skipping sync cycle.");
             return Result.success();
         }
 

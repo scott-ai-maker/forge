@@ -270,17 +270,42 @@ export default function MobileAppPromoSection({
             </div>
 
             <div style={{ position: 'relative', zIndex: 1, paddingTop: 10, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <TrackedCtaLink
-                href={MOBILE_APPS_CONFIG.ios.url}
-                onClick={(e: React.MouseEvent) => isIosPlaceholder && handleOpenPlaceholder('ios', e)}
-                eventName="ios_card_app_store_click"
-                eventPayload={{ platform: 'ios', bundleId: MOBILE_APPS_CONFIG.ios.bundleId, isPlaceholder: isIosPlaceholder }}
-                className="tactile-btn"
-                aria-label="Download on the App Store"
-                style={{ display: 'inline-block', lineHeight: 0, borderRadius: 7, overflow: 'hidden', cursor: 'pointer' }}
-              >
-                <AppleAppStoreBadgeSvg width={150} height={46} />
-              </TrackedCtaLink>
+              {isIosPlaceholder ? (
+                <button
+                  type="button"
+                  onClick={() => handleOpenPlaceholder('ios')}
+                  className="tactile-btn"
+                  style={{
+                    minHeight: 46,
+                    padding: '8px 16px',
+                    borderRadius: 7,
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(197, 160, 89, 0.45)',
+                    color: '#F8FAFC',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    letterSpacing: '0.03em',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <AppleLogoIcon size={16} color="#F8FAFC" />
+                  <span>iOS App Coming Soon</span>
+                </button>
+              ) : (
+                <TrackedCtaLink
+                  href={MOBILE_APPS_CONFIG.ios.url}
+                  eventName="ios_card_app_store_click"
+                  eventPayload={{ platform: 'ios', bundleId: MOBILE_APPS_CONFIG.ios.bundleId, isPlaceholder: false }}
+                  className="tactile-btn"
+                  aria-label="Download on the App Store"
+                  style={{ display: 'inline-block', lineHeight: 0, borderRadius: 7, overflow: 'hidden', cursor: 'pointer' }}
+                >
+                  <AppleAppStoreBadgeSvg width={150} height={46} />
+                </TrackedCtaLink>
+              )}
 
               <button
                 type="button"
@@ -390,17 +415,42 @@ export default function MobileAppPromoSection({
             </div>
 
             <div style={{ position: 'relative', zIndex: 1, paddingTop: 10, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <TrackedCtaLink
-                href={MOBILE_APPS_CONFIG.android.url}
-                onClick={(e: React.MouseEvent) => isAndroidPlaceholder && handleOpenPlaceholder('android', e)}
-                eventName="android_card_play_store_click"
-                eventPayload={{ platform: 'android', bundleId: MOBILE_APPS_CONFIG.android.bundleId, isPlaceholder: isAndroidPlaceholder }}
-                className="tactile-btn"
-                aria-label="Get it on Google Play"
-                style={{ display: 'inline-block', lineHeight: 0, borderRadius: 7, overflow: 'hidden', cursor: 'pointer' }}
-              >
-                <GooglePlayBadgeSvg width={150} height={46} />
-              </TrackedCtaLink>
+              {isAndroidPlaceholder ? (
+                <button
+                  type="button"
+                  onClick={() => handleOpenPlaceholder('android')}
+                  className="tactile-btn"
+                  style={{
+                    minHeight: 46,
+                    padding: '8px 16px',
+                    borderRadius: 7,
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(56,189,248,0.45)',
+                    color: '#F8FAFC',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    letterSpacing: '0.03em',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <AndroidLogoIcon size={16} color="#3DDC84" />
+                  <span>Android App Coming Soon</span>
+                </button>
+              ) : (
+                <TrackedCtaLink
+                  href={MOBILE_APPS_CONFIG.android.url}
+                  eventName="android_card_play_store_click"
+                  eventPayload={{ platform: 'android', bundleId: MOBILE_APPS_CONFIG.android.bundleId, isPlaceholder: false }}
+                  className="tactile-btn"
+                  aria-label="Get it on Google Play"
+                  style={{ display: 'inline-block', lineHeight: 0, borderRadius: 7, overflow: 'hidden', cursor: 'pointer' }}
+                >
+                  <GooglePlayBadgeSvg width={150} height={46} />
+                </TrackedCtaLink>
+              )}
 
               <button
                 type="button"

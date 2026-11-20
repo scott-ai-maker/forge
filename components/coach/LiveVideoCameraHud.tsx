@@ -994,6 +994,7 @@ export default function LiveVideoCameraHud({
   return (
     <div
       ref={containerRef}
+      data-forge-live-broadcast="true"
       className="live-video-hud-container teams-studio-shell"
     >
       {/* ── Top HUD Status Ribbon (Microsoft Teams Compact Meeting Header) ── */}

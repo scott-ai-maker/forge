@@ -42,7 +42,7 @@
 	<key>NSHealthShareUsageDescription</key>
 	<string>Forge Athletic reads live heart rate, active energy, resting heart rate, and HRV from Apple Watch to pace rest intervals, track cardiovascular recovery, and compute daily readiness.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Forge Athletic saves completed strength workouts, cardio intervals, and 5-Minute Desk Reset mobility sessions to Apple Health to close your Exercise and Move rings accurately.</string>
+	<string>Forge Athletic saves completed strength workouts and cardio intervals to Apple Health to close your Exercise and Move rings accurately.</string>
 	<key>WKBackgroundModes</key>
 	<array>
 		<string>workout-processing</string>

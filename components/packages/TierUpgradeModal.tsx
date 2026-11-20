@@ -250,8 +250,7 @@ export default function TierUpgradeModal({
         <div className="mt-4 flex flex-col gap-2">
           {isCompanion ? (
             <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-center text-xs text-amber-100">
-              Memberships and upgrades are managed on the Forge Athletic website at{' '}
-              <strong>forge-athletic.app</strong>.
+              Memberships are managed externally outside this companion app.
             </div>
           ) : (
             <button

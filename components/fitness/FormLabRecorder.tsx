@@ -499,6 +499,7 @@ export default function FormLabRecorder({
   return (
     <section
       aria-labelledby={headingId}
+      data-forge-recording-active={isRecording || watchRecordingActive ? 'true' : undefined}
       className="forge-surface-card rounded-2xl p-4 text-zinc-100 sm:p-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-2.5">

@@ -527,19 +527,8 @@ import UIKit
             }
         }
 
-        // 7. VO2 Max
-        if let vo2Type = HKObjectType.quantityType(forIdentifier: .vo2Max) {
-            dispatchGroup.enter()
-            fetchLatestQuantitySample(type: vo2Type, predicate: nil) { sample in
-                if let sample = sample {
-                    let val = sample.quantity.doubleValue(for: HKUnit(from: "ml/kg*min"))
-                    setResultValue("vo2_max", round(val * 10) / 10)
-                }
-                dispatchGroup.leave()
-            }
-        }
-
-        // 8. Sleep Architecture (Query past 36h to capture overnight session)
+        // 7. Sleep Architecture (Query past 36h to capture overnight session)
+        // Note: VO2 Max and dietary nutrition queries are omitted to match disclosed App Store scopes (#42).
         if let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) {
             dispatchGroup.enter()
             fetchSleepAnalysis(sleepType: sleepType, start: now.addingTimeInterval(-36 * 3600), end: now) { sleepData in
@@ -548,17 +537,7 @@ import UIKit
             }
         }
 
-        // 9. Dietary Nutrition & Hydration
-        dispatchGroup.enter()
-        fetchDietaryNutrition(startOfDay: startOfDay, now: now) { nutritionData in
-            setResultValue("nutrition", nutritionData)
-            if let waterOz = nutritionData["water_oz"] {
-                setResultValue("water_oz", waterOz)
-            }
-            dispatchGroup.leave()
-        }
-
-        // 10. Recent Workouts
+        // 8. Recent Workouts
         dispatchGroup.enter()
         fetchRecentWorkouts(predicate: recentPredicate) { workouts in
             setResultValue("workouts", workouts)
@@ -798,34 +777,6 @@ import UIKit
         healthStore.execute(query)
     }
 
-    private func fetchDietaryNutrition(startOfDay: Date, now: Date, completion: @escaping ([String: Any]) -> Void) {
-        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: [])
-        let group = DispatchGroup()
-        var nutrition: [String: Any] = [:]
-
-        func addSum(id: HKQuantityTypeIdentifier, key: String, unit: HKUnit) {
-            guard let type = HKObjectType.quantityType(forIdentifier: id) else { return }
-            group.enter()
-            fetchCumulativeSum(type: type, unit: unit, predicate: predicate) { sum in
-                if let sum = sum, sum > 0 {
-                    nutrition[key] = Int(round(sum))
-                }
-                group.leave()
-            }
-        }
-
-        addSum(id: .dietaryEnergyConsumed, key: "calories", unit: .kilocalorie())
-        addSum(id: .dietaryProtein, key: "protein", unit: .gram())
-        addSum(id: .dietaryCarbohydrates, key: "carbs", unit: .gram())
-        addSum(id: .dietaryFatTotal, key: "fat", unit: .gram())
-        addSum(id: .dietaryFiber, key: "fiber", unit: .gram())
-        addSum(id: .dietaryWater, key: "water_oz", unit: HKUnit.fluidOunceUS())
-
-        group.notify(queue: .main) {
-            completion(nutrition)
-        }
-    }
-
     private func fetchRecentWorkouts(predicate: NSPredicate, completion: @escaping ([[String: Any]]) -> Void) {
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
         let query = HKSampleQuery(sampleType: HKObjectType.workoutType(), predicate: predicate, limit: 10, sortDescriptors: [sort]) { _, samples, _ in
@@ -1035,30 +986,18 @@ import UIKit
         durationMinutes: Double,
         completion: @escaping (Bool, Error?) -> Void
     ) {
-        guard isHealthDataAvailable() else {
-            completion(false, NSError(domain: "com.gordonathletic.healthkit", code: 2, userInfo: [NSLocalizedDescriptionKey: "HealthKit unavailable"]))
-            return
-        }
-
-        guard let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession) else {
-            completion(false, NSError(domain: "com.gordonathletic.healthkit", code: 3, userInfo: [NSLocalizedDescriptionKey: "Mindful session type unavailable"]))
-            return
-        }
-
-        let sample = HKCategorySample(
-            type: mindfulType,
-            value: HKCategoryValue.notApplicable.rawValue,
-            start: startDate,
-            end: endDate,
-            metadata: [
-                HKMetadataKeyTimeZone: TimeZone.current.identifier,
-                "GAA_SessionType": "Mindfulness & Parasympathetic Cooldown"
-            ]
+        // Mindful session HealthKit writes are intentionally disabled to match disclosed App Store write scopes (#42).
+        completion(
+            false,
+            NSError(
+                domain: "com.forgeathletic.healthkit",
+                code: 4,
+                userInfo: [
+                    NSLocalizedDescriptionKey:
+                        "Mindful session HealthKit writes are disabled to match disclosed Apple Health scopes."
+                ]
+            )
         )
-
-        healthStore.save(sample) { success, error in
-            completion(success, error)
-        }
     }
 
     // MARK: - Backend Telemetry Synchronization
