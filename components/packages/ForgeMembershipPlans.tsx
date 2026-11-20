@@ -24,9 +24,9 @@ const PLAN_VISUALS: Record<string, { src: string; alt: string }> = {
 }
 
 const PLAN_SUBTITLES: Record<string, string> = {
-  'forge-core': 'Foundation · Autonomous NASM OPT™ Lab',
-  'forge-pro-athlete': 'Guided Asynchronous · Form Lab & Nutrition',
-  'forge-transformation-direct': 'Master Coaching · Direct Access (Cap 15)',
+  'forge-core': 'Autonomous AI Foundation & Daily Posture Care',
+  'forge-pro-athlete': 'Guided Hybrid Coaching & Monthly Video Reviews',
+  'forge-transformation-direct': '1-on-1 Certified Coaching & Direct SMS (Cap 15)',
 }
 
 export default function ForgeMembershipPlans() {
@@ -95,7 +95,7 @@ export default function ForgeMembershipPlans() {
                 borderRadius: '4px',
               }}
             >
-              + FREE 60-MIN KICKOFF MOVEMENT SCREEN
+              + FREE 60-MIN KICKOFF SCREEN &amp; 30-DAY PARTNER PASS
             </span>
           </div>
           <div style={{ color: '#FFFFFF', fontSize: '1.05rem', fontWeight: 700, fontFamily: 'var(--font-heading)', letterSpacing: '0.02em' }}>
@@ -155,7 +155,8 @@ export default function ForgeMembershipPlans() {
       </div>
 
       <div className="forge-plans-grid">
-        {FORGE_MEMBERSHIPS.map((membership, index) => {
+        {FORGE_MEMBERSHIPS.map((membership) => {
+          const isMostPopular = membership.id === 'forge-pro-athlete'
           const annualEnabled = isAnnualBillingEnabled() && membership.annualPriceCents !== undefined
           const discountedMonthly = getDiscountedCents(membership.monthlyPriceCents)
           const discountedAnnual =
@@ -164,7 +165,7 @@ export default function ForgeMembershipPlans() {
               : undefined
 
           return (
-            <article className={`forge-plan-card${index === 0 ? ' forge-plan-card-featured' : ''}`} key={membership.id}>
+            <article className={`forge-plan-card${isMostPopular ? ' forge-plan-card-featured' : ''}`} key={membership.id}>
               {PLAN_VISUALS[membership.id] && (
                 <div
                   style={{
@@ -197,6 +198,7 @@ export default function ForgeMembershipPlans() {
                 </div>
               )}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                {isMostPopular ? <span className="forge-plan-label">Most popular</span> : null}
                 {membership.trialDays ? <span className="forge-plan-label">{membership.trialDays}-day free trial</span> : null}
                 {holidayDealActive && (
                   <span
@@ -273,7 +275,7 @@ export default function ForgeMembershipPlans() {
               <ul>
                 {holidayDealActive && (
                   <li style={{ color: '#34D399', fontWeight: 600 }}>
-                    ★ Bonus: Free 60-Min Kickoff Movement Screen with Coach Gordon
+                    ★ Founding Bonus: Free 60-Min Kickoff Movement Screen with Coach Gordon (unlocked on first paid cycle) + 1 giftable 30-Day Core Lab Partner Pass
                   </li>
                 )}
                 {membership.features.map(feature => <li key={feature}>{feature}</li>)}

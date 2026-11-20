@@ -116,7 +116,7 @@ export default function PartnerPassModal({ open, onClose, memberName }: PartnerP
               Founding Partner Pass
             </h2>
             <p className="mt-0.5 text-xs leading-relaxed text-zinc-300">
-              Gift one workout partner a full 30-day complimentary membership.
+              Gift one workout partner an extended 30-day Core Lab free trial ($0.00 due for 30 days; $49/mo thereafter unless cancelled in 1 click).
             </p>
           </div>
           <button

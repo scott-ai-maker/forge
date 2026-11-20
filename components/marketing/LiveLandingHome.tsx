@@ -104,8 +104,8 @@ export default function LiveLandingHome({ isPreview = false }: { isPreview?: boo
           </div>
           <p className="mt-3 max-w-xl text-xs leading-relaxed text-zinc-400">
             Use code <strong>{HOLIDAY_DEAL_PROMO.code}</strong> for your 25% Founding Continuous
-            Tier Rate Lock, a complimentary 1-on-1 kickoff movement screening with Coach Gordon, and
-            1 free 30-day Founding Partner Pass.
+            Tier Rate Lock, a complimentary 60-minute 1-on-1 kickoff movement screening with Coach
+            Gordon (unlocked on your first paid cycle), and 1 giftable 30-day Core Lab Partner Pass.
           </p>
           <p className="forge-hero-proof">
             {COACH_GORDON_TRUST_PROFILE.verificationBadge} <span>·</span> Prior ACE-CPT (2008–2021){' '}
@@ -178,8 +178,8 @@ export default function LiveLandingHome({ isPreview = false }: { isPreview?: boo
         <FoundingRateLockPricingGrid mode="live" />
 
         <p className="forge-billing-note">
-          Secure Stripe checkout. Includes 1 free 30-day Founding Partner Pass. Cancel recurring
-          memberships at any time.
+          Secure Stripe checkout. Includes 1 giftable 30-day Core Lab Partner Pass. Cancel recurring
+          memberships anytime in 1 click ($0 cancellation fees).
         </p>
       </section>
 

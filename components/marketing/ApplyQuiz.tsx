@@ -50,10 +50,10 @@ const QUESTIONS: Question[] = [
     title: 'What kind of coaching support would you like?',
     description: 'Choose the tools and coach feedback that fit your needs.',
     choices: [
-      { value: 'program_only', label: 'Self-guided training tools (Core)' },
-      { value: 'program_and_messaging', label: 'Nutrition, travel tools, and form reviews (Plus)' },
-      { value: 'hybrid_monthly_calls', label: 'Movement feedback and progress reviews (Plus)' },
-      { value: 'weekly_direct_calls', label: 'One-to-one coaching and video reviews (Coach Support)' },
+      { value: 'program_only', label: 'Self-guided 5-Phase OPT™, 33-point posture checks & 20m Express (Core Lab)' },
+      { value: 'program_and_messaging', label: '4 monthly Form Lab video reviews, Nutrition & Multi-Day Travel Pass (Plus)' },
+      { value: 'hybrid_monthly_calls', label: 'Unlimited Desk Audits, Dual-Screen Readiness & Priority Email (Plus)' },
+      { value: 'weekly_direct_calls', label: 'Direct SMS/Chat (24h SLA), bespoke OPT™ overrides & 8 Form Lab reviews/mo (Coach Support)' },
     ],
   },
   {
@@ -79,11 +79,11 @@ const QUESTIONS: Question[] = [
   {
     key: 'budgetBand',
     title: 'What monthly membership fits your budget?',
-    description: 'Choose the level of training support that works for you.',
+    description: 'All memberships bill month-to-month with $0 cancellation fees (25% off continuously with code HOLIDAY25).',
     choices: [
-      { value: 'under_50', label: 'Core ($49/month · 7-day free trial)' },
-      { value: '50_150', label: 'Plus ($99/month)' },
-      { value: '150_plus', label: 'Coach Support ($299/month)' },
+      { value: 'under_50', label: 'Core Lab ($49/month · 7-day free trial)' },
+      { value: '50_150', label: 'Plus ($99/month · Most Popular)' },
+      { value: '150_plus', label: 'Coach Support ($299/month · Capped at 15 active seats)' },
     ],
   },
   {
@@ -125,9 +125,11 @@ function recommendationFromAnswers(answers: Answers): Tier {
 function recommendationDetails(tier: Tier) {
   if (tier === 'digital_lab') {
     return {
-      title: 'Core',
+      title: 'Core Lab',
       price: '$49',
       cadence: '/month',
+      summary:
+        'Autonomous 5-Phase NASM OPT™ workouts, 20m Express Mode, Coach Gordon’s real voice cues, unlimited local 33-point posture checks, 1 Desk Ergonomics profile, and 1 complimentary onboarding Form Lab video diagnostic (7-day free trial; $36.75/mo with HOLIDAY25).',
     }
   }
   if (tier === 'premium_1_1') {
@@ -135,6 +137,8 @@ function recommendationDetails(tier: Tier) {
       title: 'Coach Support',
       price: '$299',
       cadence: '/month',
+      summary:
+        'Everything in Plus, plus Direct SMS & Priority In-App Chat with Coach Gordon (24h SLA), 8 priority Form Lab video reviews/mo, bespoke OPT™ program overrides, and quarterly video & biomechanical mesh reviews (capped at 15 active seats; $224.25/mo with HOLIDAY25).',
     }
   }
   if (tier === 'hybrid') {
@@ -142,6 +146,8 @@ function recommendationDetails(tier: Tier) {
       title: 'Plus',
       price: '$99',
       cadence: '/month',
+      summary:
+        'Everything in Core Lab, plus 4 monthly Form Lab video reviews, unlimited Desk Ergonomics workstation profiles, Full Dual-Screen Readiness, Phase-Synced Nutrition Blueprint, Multi-Day Travel Pass, and Priority Email access to Coach Gordon ($74.25/mo with HOLIDAY25).',
     }
   }
   if (tier === 'waitlist') {
@@ -149,21 +155,24 @@ function recommendationDetails(tier: Tier) {
       title: 'Early Access',
       price: '',
       cadence: '',
+      summary: 'Join the Jan 4, 2027 Founding Cohort waitlist to reserve your 25% HOLIDAY25 continuous-tier rate lock.',
     }
   }
   return {
-    title: 'Core',
+    title: 'Core Lab',
     price: '$49',
     cadence: '/month',
+    summary:
+      'Autonomous 5-Phase NASM OPT™ workouts, 20m Express Mode, Coach Gordon’s real voice cues, unlimited local 33-point posture checks, and 1 complimentary onboarding Form Lab diagnostic (7-day free trial; $36.75/mo with HOLIDAY25).',
   }
 }
 
 function recommendationCta(tier: Tier) {
-  if (tier === 'digital_lab') return { href: '/packages?tier=forge-core', label: 'Choose Core' }
+  if (tier === 'digital_lab') return { href: '/packages?tier=forge-core', label: 'Choose Core Lab' }
   if (tier === 'premium_1_1') return { href: '/packages?tier=forge-transformation-direct', label: 'Choose Coach Support' }
   if (tier === 'hybrid') return { href: '/packages?tier=forge-pro-athlete', label: 'Choose Plus' }
-  if (tier === 'waitlist') return { href: '/#waitlist-hero', label: 'Join the early access list' }
-  return { href: '/packages?tier=forge-core', label: 'Choose Core' }
+  if (tier === 'waitlist') return { href: '/', label: 'Reserve Founding Pass' }
+  return { href: '/packages?tier=forge-core', label: 'Choose Core Lab' }
 }
 
 export default function ApplyQuiz() {
@@ -262,7 +271,7 @@ export default function ApplyQuiz() {
           )}
         </div>
         <p style={{ color: '#CBD5E1', lineHeight: 1.7, marginBottom: 24, fontSize: 15 }}>
-          Based on your goals, budget, and support preference, this is your highest-fit starting path.
+          {tierDetails.summary}
         </p>
 
         <form

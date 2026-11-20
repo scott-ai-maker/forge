@@ -614,7 +614,7 @@ export default function NasmAccreditationPortfolio() {
             Ready to start moving toward your goals?
           </div>
           <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
-            Join the early-access list for membership updates and introductory pricing. The first group is limited to 15 spots.
+            Join the Founding Cohort waitlist for our Jan 4, 2027 launch and HOLIDAY25 25% continuous-tier rate lock (50 cohort passes across tiers; 1-on-1 Coach Support capped at 15 active seats).
           </div>
         </div>
 

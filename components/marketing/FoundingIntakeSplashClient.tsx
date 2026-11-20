@@ -219,7 +219,7 @@ export default function FoundingIntakeSplashClient() {
                 color: 'var(--gold-lt)',
               }}
             >
-              Forge Athletic · Early Access Membership Updates
+              Forge Athletic · Founding Cohort (50 Passes) · Opens Jan 4, 2027
             </span>
             <span
               style={{
@@ -379,22 +379,22 @@ export default function FoundingIntakeSplashClient() {
           >
             {[
               {
-                icon: 'video-studio' as const,
-                title: 'Practical sports science',
-                body: 'NASM OPT™ periodization, training telemetry, and 100% remote coaching tools designed to support steady progress anywhere you train.',
-                value: 'Train anywhere',
+                icon: 'microscope' as const,
+                title: 'Zero-hardware 33-point camera diagnostics',
+                body: 'Run local in-browser 33-point posture checks, Desk Ergonomics Audits, and 30-second readiness checks right from your phone—zero cloud video uploads or wearable sensors required.',
+                value: 'Zero hardware needed',
               },
               {
                 icon: 'lock' as const,
-                title: 'Clear membership choices',
-                body: 'Choose Core ($49/mo with 7-day trial), Plus ($99/mo), or Coach Support ($299/mo) with straightforward monthly pricing.',
-                value: 'From $49/month',
+                title: 'Clear month-to-month tiers',
+                body: 'Choose Core Lab ($49/mo · 7-day free trial), Plus ($99/mo · 4 Form Lab reviews/mo + Nutrition & Travel), or Coach Support ($299/mo · Direct SMS + 8 reviews/mo). Use HOLIDAY25 for a 25% continuous-tier rate lock.',
+                value: 'From $49/mo · 25% Off',
               },
               {
-                icon: 'microscope' as const,
-                title: '3D Movement assessment',
-                body: '33-point computer-vision movement screening evaluates kinetic chain compensations directly from your phone.',
-                value: 'Included with early access',
+                icon: 'video-studio' as const,
+                title: 'Real voice & adaptive OPT™ training',
+                body: 'Goal-matched 5-Phase NASM OPT™ programming with 20m Express Mode, instant Home, Apartment, Bodyweight & Hotel Travel swaps, and Coach Gordon’s real recorded voice guidance.',
+                value: 'Opens Jan 4, 2027',
               },
             ].map((p, idx) => (
               <div

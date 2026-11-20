@@ -74,78 +74,85 @@ const COMPARISON_ROWS = [
     feature: 'Personalized 5-Phase NASM OPT™ Plan',
     core: 'Included',
     plus: 'Included',
-    support: 'Included (Coach-Reviewed)',
-    note: 'Periodized stabilization, strength endurance, hypertrophy, max strength, and power.',
+    support: 'Included (Coach-Certified)',
+    note: 'Goal-matched periodization across stabilization, strength endurance, hypertrophy, max strength, and power.',
   },
   {
-    feature: '33-Point MediaPipe Movement & Posture Screen',
-    core: 'Autonomous',
-    plus: 'Autonomous + Guided',
-    support: 'Full Coach Review & Correctives',
-    note: 'Identifies kinetic chain compensations (knee valgus, forward lean, asymmetrical shift).',
+    feature: '33-Point MediaPipe Posture Check & Before/After Mesh',
+    core: 'Unlimited (Local Browser)',
+    plus: 'Unlimited (Local Browser)',
+    support: 'Unlimited + Quarterly Coach Mesh Review',
+    note: 'Runs 100% locally in your browser with zero cloud video uploads; tracks forward head tilt, shoulder symmetry, and pelvic balance.',
   },
   {
-    feature: 'In-Gym Audio Cadence & Rest Timers',
+    feature: 'Desk Ergonomics Camera Audit & 5-Min Desk Reset',
+    core: '1 Saved Profile + 5-Min Reset',
+    plus: 'Unlimited Profiles + 5-Min Reset',
+    support: 'Unlimited Profiles + Coach Review',
+    note: '5-second seated camera angle audit (0–100 score) paired with targeted mobility resets between meetings.',
+  },
+  {
+    feature: 'Coach Gordon Real Voice, 20m Express & Offline PWA',
     core: 'Included',
     plus: 'Included',
     support: 'Included',
-    note: 'Zero-distraction HUD with tabular numbers, tempo pulses, and screen wake lock.',
+    note: 'Coach Gordon’s real recorded voice briefings and tempo pacing, 20m Express Mode, and offline set/1RM logging.',
   },
   {
-    feature: '10-Second Joint Comfort & Camera Readiness',
-    core: 'Included',
-    plus: 'Included + Trend Alerts',
-    support: 'Included + Coach Safety Queue',
-    note: 'Daily neck, back, and hip comfort check-ins paired with 1-tap joint-safe NASM regressions.',
+    feature: '30-Second Camera Readiness & 10s Joint Comfort',
+    core: 'Single-Screen + Auto Warm-Up',
+    plus: 'Full Dual-Screen + Trend Alerts',
+    support: 'Full Dual-Screen + Coach Safety Queue',
+    note: 'Overhead Squat & Scapular Wall Slide readiness checks with auto-injected warm-ups and daily Neck, Back & Hips comfort tracking.',
   },
   {
-    feature: 'Nutrition & Macronutrient Blueprint',
-    core: 'Add-on ($39)',
+    feature: 'Phase-Synced Nutrition Blueprint',
+    core: 'Add-on ($39 / 60 days)',
     plus: 'Included',
-    support: 'Included (Bespoke Calibration)',
-    note: 'TDEE, macro split, meal timing, and competition or fat loss periodization.',
+    support: 'Included (Coach-Calibrated)',
+    note: 'General sports-conditioning TDEE, phase-synced macro splits, and workout meal-timing guidance (non-medical educational tool).',
   },
   {
-    feature: 'Travel Training Pass & Hotel Swaps',
-    core: 'Add-on ($19)',
-    plus: 'Included',
-    support: 'Included',
-    note: 'One-tap workout adaptations for limited hotel dumbbells, bands, and bodyweight.',
+    feature: 'Environment Swaps & Multi-Day Travel Pass',
+    core: 'Single-Session Swaps · Multi-Day Add-on ($19)',
+    plus: 'Single-Session + Multi-Day Travel Pass',
+    support: 'Single-Session + Multi-Day Travel Pass',
+    note: 'Adapt sessions across Home Dumbbells, Apartment Gym, Bodyweight Only, or Hotel Travel without losing OPT™ phase progression.',
   },
   {
     feature: 'Form Lab Technique Video Reviews',
-    core: '1 onboarding clip (first paid cycle) · Add-on thereafter',
+    core: '1 onboarding clip (first paid cycle) · Add-on ($49 / 4 clips)',
     plus: '4 reviews / month',
-    support: '8 reviews / month (Priority)',
-    note: 'Frame-by-frame concentric velocity, bar path, and joint angle breakdown.',
+    support: '8 reviews / month (24h Priority)',
+    note: 'Guided 45° lift capture with biomechanical fault breakdown, corrective cues, and Coach Gordon coaching notes.',
   },
   {
     feature: 'Direct Access to Coach Gordon',
-    core: 'Self-Guided (Safety Alerts Only)',
-    plus: 'Priority Email (24h)',
-    support: 'Direct SMS + Chat (24h SLA)',
-    note: 'Direct human access on Plus and Coach Support with your posture deltas and readiness telemetry attached automatically.',
+    core: 'Self-Guided (Automated Safety Alerts Only)',
+    plus: 'Priority Email (1 Business Day)',
+    support: 'Direct SMS + Priority In-App Chat (24h SLA)',
+    note: 'Direct human access on Plus and Coach Support with your posture flags and readiness summary attached automatically.',
   },
   {
-    feature: 'Biomechanical & Diagnostic Testing',
-    core: 'Add-on ($159)',
-    plus: 'Add-on ($159)',
-    support: 'Quarterly Certified Mesh Review',
-    note: 'Comprehensive 5-angle movement screen & kinetic chain evaluation signed off by Coach Gordon.',
+    feature: 'Biomechanical Movement Screen & Diagnostic',
+    core: 'Add-on ($159) · Free Kickoff w/ HOLIDAY25',
+    plus: 'Add-on ($159) · Free Kickoff w/ HOLIDAY25',
+    support: 'Quarterly Coach Review + Free Kickoff w/ HOLIDAY25',
+    note: '5-angle kinetic chain evaluation & corrective warm-up plan; HOLIDAY25 kickoff screen unlocks on first paid billing cycle.',
   },
   {
-    feature: 'Coach Safety Gate Oversight',
-    core: 'Algorithmic + Pinchy Alert',
-    plus: 'Algorithmic + Pinchy Alert',
-    support: 'Bespoke Overrides by Coach Gordon',
-    note: 'Every training phase, injury modification, and deload cycle personally validated by Coach Gordon.',
+    feature: 'Coach Safety Gate & Program Oversight',
+    core: 'Algorithmic OPT™ + Pinchy Joint Regression',
+    plus: 'Algorithmic OPT™ + Monthly Async Review',
+    support: 'Bespoke Coach Gordon Overrides & Sign-Off',
+    note: 'Core and Plus use algorithmic NASM OPT™ guardrails with 1-tap joint regressions; Coach Support adds bespoke plan certification by Coach Gordon.',
   },
   {
-    feature: 'Athlete Roster Limit',
+    feature: 'Founding Cohort & Roster Limits',
     core: '50-Pass Founding Cohort',
     plus: '50-Pass Founding Cohort',
     support: 'Capped at 15 Active Seats',
-    note: 'Founding Cohort rate lock is limited to 50 passes across tiers; 1-on-1 Coach Support is capped at 15 active seats.',
+    note: 'Founding Cohort 25% continuous-tier rate lock is limited to 50 passes across tiers; 1-on-1 Coach Support is strictly capped at 15 active seats.',
   },
 ]
 
@@ -369,7 +376,7 @@ export default function PackagesPage() {
                 </p>
               </div>
               <div style={{ background: 'rgba(8, 14, 20, 0.6)', padding: '1.25rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <strong style={{ color: '#60A5FA', display: 'block', marginBottom: '0.35rem' }}>Downsell Retention Safety</strong>
+                <strong style={{ color: '#60A5FA', display: 'block', marginBottom: '0.35rem' }}>Flexible Tier Switching</strong>
                 <p style={{ color: '#94A3B8', fontSize: '0.86rem', margin: 0, lineHeight: 1.5 }}>
                   If work or budget tightens, step down to Core rather than quitting entirely. Maintain your strength baseline and training consistency without disruption.
                 </p>
@@ -385,8 +392,7 @@ export default function PackagesPage() {
         </section>
 
         <p className="forge-billing-note" style={{ marginTop: '2.5rem', textAlign: 'center' }}>
-          Memberships renew automatically until cancelled. Add-ons and one-to-one sessions are one-time payments. 
-          Checkout is processed securely by Stripe with 256-bit SSL encryption.
+          Memberships bill month-to-month and renew automatically until cancelled ($0 cancellation fees; cancel anytime in 1 click inside Account Settings). Optional Performance Upgrades &amp; Diagnostics are one-time payments with no new subscription. Checkout is processed securely by Stripe with 256-bit SSL encryption.
         </p>
       </div>
 

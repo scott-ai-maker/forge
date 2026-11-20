@@ -225,7 +225,7 @@ export default function TermsOfServicePage() {
             5. Membership Features
           </h2>
           <p style={{ marginBottom: '0.75rem', fontSize: '0.95rem' }}>
-            Membership features are defined by the plan selected at checkout (Core and Plus provide algorithmic periodization and structured asynchronous tools; Coach Support and Private Concierge tiers include direct human review by a certified coach):
+            Membership features are defined by the plan selected at checkout (Core provides autonomous algorithmic periodization, local camera diagnostics, and 1 complimentary onboarding Form Lab diagnostic on the first paid cycle; Plus adds monthly Form Lab video reviews, Nutrition &amp; Travel tools, and Priority Email; Coach Support adds Direct SMS/Chat, 8 priority Form Lab reviews/month, and bespoke human plan oversight by Coach Gordon):
           </p>
           {FORGE_MEMBERSHIPS.map(membership => (
             <div key={membership.id} style={{ border: '1px solid rgba(245,158,11,0.25)', padding: '1rem 1.25rem', marginBottom: '0.9rem', background: 'rgba(15, 23, 42, 0.75)', borderRadius: 6 }}>

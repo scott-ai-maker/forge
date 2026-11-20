@@ -172,7 +172,7 @@ export const ECOSYSTEM_PILLARS: ReadonlyArray<EcosystemPillar> = [
       {
         title: 'Direct Email & Text Access to Coach Gordon',
         description:
-          'Never an outsourced support desk—reach Coach Gordon directly via Email (Core Lab & Plus) or Direct SMS Text Line (Coach Support) with your posture and readiness telemetry automatically attached.',
+          'Never an outsourced support desk—reach Coach Gordon directly via Priority Email on Plus (1 business day) or Direct SMS Text Line & Priority Chat on Coach Support (24h SLA), with Core Lab backed by automated joint-safety alerts and your posture and readiness context attached automatically.',
       },
       {
         title: 'Phase-Synced Nutrition Periodization (Plus & Coach Support)',
@@ -182,7 +182,7 @@ export const ECOSYSTEM_PILLARS: ReadonlyArray<EcosystemPillar> = [
       {
         title: 'Giftable Founding Partner Pass',
         description:
-          'Founding Cohort members receive 1 free 30-day Founding Partner Pass to share with a friend or spouse—all running directly in any mobile or desktop browser.',
+          'Founding Cohort members receive 1 giftable 30-Day Core Lab Partner Pass (extended 30-day Core Lab free trial for a friend or spouse)—running directly in any mobile or desktop browser or installable PWA.',
       },
     ],
   },
@@ -279,7 +279,7 @@ export const FOUNDING_PRICING_CARDS: ReadonlyArray<LandingPricingTierCard> = [
       'Full Dual-Screen Camera Readiness + multi-week joint stiffness trend alerts',
       'Multi-Day Travel Pass (rebuilds multi-day trip schedules around hotel gyms)',
       'Full Nutrition Periodization synced to your active OPT™ phase',
-      'Priority Email access to Coach Gordon (24h business-day response)',
+      'Priority Email access to Coach Gordon (1 business day response)',
       '$99/mo month-to-month billing (no multi-month lock-in)',
     ],
     imageSrc: '/images/remote-virtual-coaching.jpg',
@@ -291,19 +291,19 @@ export const FOUNDING_PRICING_CARDS: ReadonlyArray<LandingPricingTierCard> = [
   {
     id: 'coach_support',
     name: 'Coach Support',
-    eyebrow: '1-on-1 Master Coaching & Direct Text Line',
+    eyebrow: '1-on-1 Certified Coaching & Direct Text Line',
     badge: 'LIMITED ACTIVE SEATS',
     foundingPrice: '$299.00',
     postLaunchPrice: '$299.00',
     billingUnit: '/mo',
     summary:
-      '1-on-1 Master Coaching & Direct Text Line—direct SMS access to Coach Gordon, 8 priority Form Lab video reviews per month, custom injury overrides, and quarterly mesh sign-off.',
+      '1-on-1 Certified Coaching & Direct Text Line—direct SMS access to Coach Gordon, 8 priority Form Lab video reviews per month, custom injury overrides, and quarterly video & mesh reviews.',
     leadIn: 'Everything in Plus, plus:',
     highlights: [
       'Direct SMS Text Line & Priority In-App Chat with Coach Gordon (24h SLA)',
       '8 Form Lab Video Reviews / month with priority 24h telestration turnaround',
       'Bespoke OPT™ Program Overrides & custom injury-history modifications by Coach Gordon',
-      'Quarterly Certified Biomechanical Mesh Review signed off by Coach Gordon',
+      'Quarterly Video & 33-Point Biomechanical Mesh Review with Coach Gordon',
       'Strictly capped at 15 active 1-on-1 coaching seats to protect coach focus',
     ],
     imageSrc: '/images/coach-client-plan.jpg',

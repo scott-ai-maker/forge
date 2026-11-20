@@ -339,7 +339,7 @@ export default function HolidayUnmaskingSplash({
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 text-emerald-400">✓</span>
-                <span>Async Form Lab video reviews &amp; direct Email or SMS access</span>
+                <span>Async Form Lab reviews, Priority Email (Plus) &amp; Direct SMS (Coach Support)</span>
               </li>
             </ul>
 
@@ -427,8 +427,9 @@ export default function HolidayUnmaskingSplash({
                 </h2>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-300">
                   No payment today. Register before Jan 4 to lock in your{' '}
-                  <strong>{HOLIDAY_DEAL_PROMO.code}</strong> 25% continuous tier rate, a free 1-on-1
-                  kickoff movement screen, and a 30-day Partner Pass.
+                  <strong>{HOLIDAY_DEAL_PROMO.code}</strong> 25% continuous tier rate, a free 60-min
+                  kickoff movement screen (on first paid cycle), and a giftable 30-day Core Lab
+                  Partner Pass.
                 </p>
 
                 <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
@@ -675,8 +676,8 @@ export default function HolidayUnmaskingSplash({
             </h2>
             <p className="mx-auto mt-2.5 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
               Lock in 25% off your selected tier with code <strong>{HOLIDAY_DEAL_PROMO.code}</strong>{' '}
-              while continuously enrolled, plus a complimentary kickoff movement screen and 1 free
-              30-day Founding Partner Pass.
+              while continuously enrolled, plus a complimentary 60-min kickoff movement screen (on
+              first paid cycle) and 1 giftable 30-day Core Lab Partner Pass.
             </p>
           </div>
 

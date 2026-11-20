@@ -21,7 +21,7 @@ export const HOLIDAY_DEAL_PROMO = {
   badge: 'FOUNDING MEMBER LAUNCH · CONTINUOUS TIER RATE LOCK',
   headline: '25% Rate Lock + Free 60-Min Kickoff Movement Screen',
   summary:
-    'Lock in 25% off your selected monthly membership tier for as long as continuous active enrollment on that tier is maintained (redeemable through January 31, 2027), plus a complimentary 60-minute 1-on-1 remote movement screen with Coach Gordon.',
+    'Lock in 25% off your selected monthly membership tier for as long as continuous active enrollment on that tier is maintained (redeemable through January 31, 2027), plus a complimentary 60-minute 1-on-1 remote movement screen with Coach Gordon unlocked on your first paid billing cycle.',
   expiresFormatted: 'January 31, 2027 at 11:59 PM EST',
 } as const
 

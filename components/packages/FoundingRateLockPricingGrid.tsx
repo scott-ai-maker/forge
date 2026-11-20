@@ -77,7 +77,7 @@ export default function FoundingRateLockPricingGrid({
                 borderRadius: 4,
               }}
             >
-              + 1 FREE 30-DAY FOUNDING PARTNER PASS
+              + 1 FREE 30-DAY CORE LAB PARTNER PASS
             </span>
           </div>
           <div
@@ -89,10 +89,10 @@ export default function FoundingRateLockPricingGrid({
               letterSpacing: '0.02em',
             }}
           >
-            Founding Rate Protection + Complimentary 1-on-1 Kickoff Movement Screening
+            Founding Rate Protection + Complimentary 60-Min Kickoff Movement Screening
           </div>
           <p style={{ margin: '4px 0 0', color: '#CBD5E1', fontSize: '0.88rem', lineHeight: 1.55 }}>
-            Lock in 25% off your selected monthly tier with code {HOLIDAY_DEAL_PROMO.code} for as long as continuous active enrollment on that tier is maintained.
+            Lock in 25% off your selected monthly tier with code {HOLIDAY_DEAL_PROMO.code} ($36.75/mo Core Lab, $74.25/mo Plus, or $224.25/mo Coach Support) for as long as continuous active enrollment on that tier is maintained. Complimentary 60-minute kickoff movement screen unlocks on your first paid billing cycle.
           </p>
         </div>
 
@@ -305,10 +305,10 @@ export default function FoundingRateLockPricingGrid({
                       }}
                     >
                       {tier.id === 'core_lab'
-                        ? '(7-day free trial · cancel anytime)'
+                        ? '($36.75/mo w/ HOLIDAY25 · 7-day free trial)'
                         : tier.id === 'plus'
-                        ? '(month-to-month · cancel anytime)'
-                        : '(monthly · active seat cap)'}
+                        ? '($74.25/mo w/ HOLIDAY25 · cancel anytime)'
+                        : '($224.25/mo w/ HOLIDAY25 · cap 15 seats)'}
                     </span>
                   )}
                 </div>
