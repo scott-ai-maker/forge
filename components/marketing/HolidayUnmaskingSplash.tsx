@@ -385,7 +385,7 @@ export default function HolidayUnmaskingSplash({
                   alt="Coach Gordon"
                   width={42}
                   height={42}
-                  className="h-10 w-10 rounded-full border border-amber-400/40 object-cover"
+                  className="h-10 w-10 rounded-full border border-amber-400/40 object-cover object-top"
                 />
                 <div className="text-xs">
                   <div className="font-bold text-white">

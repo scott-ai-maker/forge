@@ -18,7 +18,7 @@ export default function robots(): MetadataRoute.Robots {
           '/terms',
           '/async-coaching',
         ],
-        disallow: ['/coach/', '/dashboard/', '/api/', '/auth/', '/preview/', '/test-harness/', '/credentials', '/documents/', '/whats-new'],
+        disallow: ['/coach/', '/dashboard/', '/enterprise', '/enterprise/', '/api/', '/auth/', '/preview/', '/test-harness/', '/credentials', '/documents/', '/whats-new'],
       },
       {
         userAgent: [

@@ -36,6 +36,13 @@ function getLoginSurface(nextPath: string, isCompanion: boolean) {
       description: 'Sign in to access your active training program, plate calculator, and wearable telemetry sync.',
     }
   }
+  if (nextPath.startsWith('/enterprise')) {
+    return {
+      eyebrow: 'Executive Leadership Access',
+      title: 'Enterprise Portal Login',
+      description: 'Sign in with your Forge Athletic leadership account to access the Executive Growth Advisory Board.',
+    }
+  }
   return nextPath.startsWith('/coach')
     ? {
         eyebrow: 'Coach Access',

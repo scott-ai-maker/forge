@@ -23,6 +23,8 @@ import CoachLiveSessionLauncher, { AssignedClientLauncherItem } from '@/componen
 import CoachLiveScheduleAgenda, { CoachScheduledSession } from '@/components/coach/CoachLiveScheduleAgenda'
 import { getTeamsForCoach } from '@/lib/teams'
 import SiteHeader from '@/components/ui/SiteHeader'
+import ExecutiveGrowthCommandCenter from '@/components/enterprise/ExecutiveGrowthCommandCenter'
+import { fetchEnterpriseTelemetrySnapshot } from '@/lib/enterprise-chatbots/telemetry'
 
 export const dynamic = 'force-dynamic'
 
@@ -250,6 +252,10 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
   }))
 
   const coachTeams = await getTeamsForCoach(user.id, launcherClients)
+  const enterpriseTelemetry =
+    activeTab === 'growth'
+      ? await fetchEnterpriseTelemetrySnapshot(user.id, isMasterCoach, now)
+      : null
 
   const recentCheckInsByClient = new Set((recentWorkoutLogs ?? []).map(log => log.user_id))
   const upcomingSessionsByClient = new Set((upcomingSessions ?? []).map(session => session.client_id))
@@ -974,6 +980,7 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
             { key: 'intake' as const, label: 'New Member Requests', icon: null },
             { key: 'pipeline' as const, label: 'Applications', icon: null },
             { key: 'analytics' as const, label: 'Analytics', icon: null },
+            { key: 'growth' as const, label: 'Enterprise AI', icon: 'sparkles' as GaaIconName },
           ].map(tab => {
             const active = activeTab === tab.key
             return (
@@ -1105,6 +1112,33 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
                   </div>
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--gold-lt)', whiteSpace: 'nowrap' }}>Open ➔</span>
+              </a>
+
+              <a
+                href="/coach?tab=growth"
+                className="tactile-btn"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '12px 14px',
+                  background: 'linear-gradient(135deg, rgba(16,185,129,0.14) 0%, rgba(13,27,42,0.96) 100%)',
+                  border: '1px solid rgba(52,211,153,0.4)',
+                  borderRadius: 10,
+                  textDecoration: 'none',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <GaaIcon name="sparkles" size={18} tone="emerald" />
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-serif, Cinzel), Georgia, serif', fontWeight: 700, fontSize: 14, color: 'var(--white)' }}>
+                      Enterprise Growth AI Board
+                    </div>
+                    <div style={{ fontSize: 11, color: '#6EE7B7' }}>B2B Sales, Growth/SEO, CFO &amp; Ops Advisors</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#6EE7B7', whiteSpace: 'nowrap' }}>Open ➔</span>
               </a>
             </div>
 
@@ -1656,6 +1690,12 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
         )}
 
         {activeTab === 'analytics' && <CoachAnalyticsDashboard />}
+
+        {activeTab === 'growth' && enterpriseTelemetry && (
+          <div style={{ marginBottom: 40 }}>
+            <ExecutiveGrowthCommandCenter initialTelemetry={enterpriseTelemetry} />
+          </div>
+        )}
       </div>
     </main>
   )

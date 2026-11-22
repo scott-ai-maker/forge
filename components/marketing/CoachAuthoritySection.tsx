@@ -33,7 +33,7 @@ export default function CoachAuthoritySection() {
                 src={COACH_GORDON_TRUST_PROFILE.portraitSrc}
                 alt="Coach Gordon — NASM-CPT Certified (#1261890687)"
                 onError={() => setPortraitFailed(true)}
-                className="relative z-10 h-full w-full object-cover"
+                className="relative z-10 h-full w-full object-cover object-top"
               />
             ) : null}
             <span className="absolute bottom-2.5 left-2.5 z-20 rounded-md border border-amber-400/40 bg-slate-950/90 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300">
@@ -122,6 +122,50 @@ export default function CoachAuthoritySection() {
               ))}
             </div>
           </details>
+
+          {/* Executive Customer Success Leadership — Lisa Gordon */}
+          <div className="mt-5 flex flex-col gap-4 rounded-xl border border-white/12 bg-[#111318] p-4 sm:flex-row sm:items-center">
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-amber-400/40 bg-slate-900">
+              <Image
+                src="/images/leadership/lisa-gordon.jpg"
+                alt="Lisa Gordon — VP of Customer Success & Enterprise Accounts at Forge Athletic"
+                fill
+                sizes="80px"
+                className="object-cover object-top"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-serif text-base font-bold text-white">Lisa Gordon</h3>
+                <span className="rounded-full border border-amber-400/35 bg-amber-400/12 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-200">
+                  VP of Customer Success &amp; Enterprise Accounts
+                </span>
+              </div>
+              <div className="mt-1 font-mono text-[11px] text-emerald-300">
+                Former CSM Manager · Active Customer Success Manager · B.S. IT &amp; Business
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">
+                Stewards member onboarding, executive retention, and B2B corporate wellness cohorts—ensuring every
+                individual member and leadership team experiences seamless onboarding, Quarterly Business Reviews, and
+                responsive account support.
+              </p>
+              <div className="mt-2 font-mono text-[11px] text-zinc-400">
+                <a
+                  href="mailto:lisa@forge-athletic.app"
+                  className="text-amber-200 underline-offset-2 hover:underline"
+                >
+                  lisa@forge-athletic.app
+                </a>{' '}
+                ·{' '}
+                <a
+                  href="mailto:success@forge-athletic.app"
+                  className="text-zinc-300 underline-offset-2 hover:underline"
+                >
+                  success@forge-athletic.app
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

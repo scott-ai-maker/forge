@@ -80,13 +80,64 @@ export async function requireSurfaceRole(
 export const MASTER_COACH_EMAILS = new Set(
   [
     'coach@forge-athletic.app',
+    'scott@forge-athletic.app',
     (process.env.TEST_COACH_EMAIL || '').toLowerCase().trim(),
   ].filter(Boolean)
 )
 
+const DEFAULT_ENTERPRISE_LEADERSHIP_EMAILS = [
+  'coach@forge-athletic.app',
+  'scott@forge-athletic.app',
+  'lisa@forge-athletic.app',
+  'lisa.gordon1@outlook.com',
+]
+
 export function isMasterCoachEmail(email: string | null | undefined): boolean {
   if (!email) return false
   return MASTER_COACH_EMAILS.has(email.toLowerCase().trim())
+}
+
+export function isLisaGordonEmail(email: string | null | undefined): boolean {
+  if (!email) return false
+  const normalized = email.toLowerCase().trim()
+  return normalized === 'lisa@forge-athletic.app' || normalized === 'lisa.gordon1@outlook.com'
+}
+
+export function isEnterpriseLeaderEmail(email: string | null | undefined): boolean {
+  if (!email) return false
+  const normalized = email.toLowerCase().trim()
+  if (MASTER_COACH_EMAILS.has(normalized)) return true
+  if (DEFAULT_ENTERPRISE_LEADERSHIP_EMAILS.includes(normalized)) return true
+  const extra = (process.env.ENTERPRISE_LEADERSHIP_EMAILS || '')
+    .split(',')
+    .map(entry => entry.toLowerCase().trim())
+    .filter(Boolean)
+  return extra.includes(normalized)
+}
+
+export function requireEnterpriseLeadershipAccess(authz: { user: User; client: ClientRecord }) {
+  if (authz.client.role === 'coach' || isEnterpriseLeaderEmail(authz.user.email)) {
+    return
+  }
+  throw new AuthzError('Forbidden', 403)
+}
+
+export async function requireEnterpriseSurface() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) redirect('/enterprise/login')
+
+  const client = await ensureClientRecord(user)
+  const role = normalizeRole(client.role)
+
+  if (role !== 'coach' && !isEnterpriseLeaderEmail(user.email)) {
+    redirect('/dashboard')
+  }
+
+  return { supabase, user, role: role ?? 'client', client }
 }
 
 async function ensureClientRecord(user: User): Promise<ClientRecord> {

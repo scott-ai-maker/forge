@@ -333,6 +333,7 @@ async function sendEmail(params: {
   subject: string
   html: string
   text: string
+  from?: string
   replyTo?: string
   disableTracking?: boolean
   headers?: Record<string, string>
@@ -349,7 +350,7 @@ async function sendEmail(params: {
 
   const resend = new Resend(process.env.RESEND_API_KEY)
   const { data, error } = await resend.emails.send({
-    from: process.env.MARKETING_FROM_EMAIL!,
+    from: params.from?.trim() || process.env.MARKETING_FROM_EMAIL!,
     to: params.to,
     subject: params.subject,
     html: params.html,
@@ -369,6 +370,8 @@ export async function sendTransactionalEmail(params: {
   subject: string
   html: string
   text: string
+  from?: string
+  replyTo?: string
   headers?: Record<string, string>
 }) {
   const email = normalizeEmail(params.to)

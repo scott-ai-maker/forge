@@ -59,7 +59,7 @@ export interface LandingFaqItem {
 export const COACH_GORDON_TRUST_PROFILE = {
   name: 'Coach Gordon',
   monogram: 'CG',
-  portraitSrc: '/images/hero-personal-coaching-45wk-goal.jpg',
+  portraitSrc: '/images/leadership/scott-gordon-polo.jpg',
   verificationBadge: 'NASM-CPT® Certified (#1261890687)',
   secondaryCredentials:
     'NASM-CPT® (Oct 2026) · Prior ACE-CPT (2008–2021) · B.S. Information Technology · ASTI CPR/AED',

@@ -230,12 +230,12 @@ export default function CredentialsPage() {
             }}
           >
             <Image
-              src="/images/hero-personal-coaching-45wk-goal.jpg"
+              src="/images/leadership/scott-gordon-polo.jpg"
               alt="Coach Gordon, B.S., NASM-CPT"
               width={180}
               height={220}
               priority
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
             />
           </div>
           <div style={{ flex: 1, minWidth: 260 }}>

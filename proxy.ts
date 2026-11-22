@@ -81,10 +81,11 @@ export async function proxy(request: NextRequest) {
   if (!supabaseUrl || !supabaseAnonKey || !isValidUrl) {
     // Supabase is not configured — protect routes defensively by redirecting
     // unauthenticated requests to login without attempting an auth check.
-    if (pathname.startsWith('/dashboard') || pathname.startsWith('/coach')) {
+    const isProtectedEnterprise = pathname.startsWith('/enterprise') && pathname !== '/enterprise/login'
+    if (pathname.startsWith('/dashboard') || pathname.startsWith('/coach') || isProtectedEnterprise) {
       const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      if (isHelperRequest) {
+      url.pathname = isProtectedEnterprise ? '/enterprise/login' : '/auth/login'
+      if (!isProtectedEnterprise && isHelperRequest) {
         url.searchParams.set('mode', 'companion')
       }
       return NextResponse.redirect(url)
@@ -173,17 +174,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // 3. Protect /coach routes
-  if (pathname.startsWith('/coach') && !user) {
+  // 3. Protect /coach and /enterprise routes (excluding /enterprise/login)
+  const isProtectedEnterprisePath = pathname.startsWith('/enterprise') && pathname !== '/enterprise/login'
+  if ((pathname.startsWith('/coach') || isProtectedEnterprisePath) && !user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
+    url.pathname = isProtectedEnterprisePath ? '/enterprise/login' : '/auth/login'
     return NextResponse.redirect(url)
   }
 
   // Force password reset for accounts flagged by admin provisioning.
   // Verify server-authoritative sources (app_metadata & RLS-locked clients.must_reset_password)
   // in addition to user_metadata so a client cannot bypass the flag via updateUser().
-  if (user && (pathname.startsWith('/dashboard') || pathname.startsWith('/coach'))) {
+  if (user && (pathname.startsWith('/dashboard') || pathname.startsWith('/coach') || isProtectedEnterprisePath)) {
     let mustResetPassword =
       user.app_metadata?.must_reset_password === true ||
       user.user_metadata?.must_reset_password === true

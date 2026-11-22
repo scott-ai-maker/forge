@@ -100,7 +100,7 @@ export function normalizeCoachFocusFilter(value: string | string[] | undefined):
 }
 
 // Coach dashboard tab validation
-export const CoachDashboardTabSchema = z.enum(['overview', 'schedule', 'onboarding', 'architect', 'triage', 'roster', 'intake', 'pipeline', 'analytics'])
+export const CoachDashboardTabSchema = z.enum(['overview', 'schedule', 'onboarding', 'architect', 'triage', 'roster', 'intake', 'pipeline', 'analytics', 'growth'])
 export type CoachDashboardTab = z.infer<typeof CoachDashboardTabSchema>
 
 export function normalizeCoachDashboardTab(value: string | string[] | undefined): CoachDashboardTab {

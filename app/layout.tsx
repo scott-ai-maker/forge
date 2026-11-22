@@ -5,6 +5,7 @@ import MobilePortraitLock from '@/components/ui/MobilePortraitLock'
 import ServiceWorkerRegistrar from '@/components/ui/ServiceWorkerRegistrar'
 import PwaInstallPrompt from '@/components/ui/PwaInstallPrompt'
 import TelemetryBootstrap from '@/components/telemetry/TelemetryBootstrap'
+import ForgeSalesConcierge from '@/components/marketing/ForgeSalesConcierge'
 
 const barlowCondensed = localFont({
   src: [
@@ -218,6 +219,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <TelemetryBootstrap />
         <PwaInstallPrompt />
         {children}
+        <ForgeSalesConcierge />
       </body>
     </html>
   )

@@ -29,6 +29,8 @@ describe('app/robots.ts', () => {
 
     expect(disallow).toContain('/coach/')
     expect(disallow).toContain('/dashboard/')
+    expect(disallow).toContain('/enterprise')
+    expect(disallow).toContain('/enterprise/')
     expect(disallow).toContain('/api/')
     expect(disallow).toContain('/preview/')
     expect(disallow).toContain('/credentials')
