@@ -6,10 +6,13 @@ import {
   runPublicConciergeTurn,
 } from '@/lib/enterprise-chatbots/engine'
 import {
+  buildExecutiveBotSystemPrompt,
+  buildPublicConciergeSystemPrompt,
   EXECUTIVE_BOT_ORDER,
   EXECUTIVE_BOT_PROFILES,
   FORGE_ENTERPRISE_DOSSIER,
   FORGE_LEADERSHIP_TEAM,
+  INTERNAL_EXECUTIVE_ROSTER_CONTEXT,
   PUBLIC_CONCIERGE_PROFILE,
 } from '@/lib/enterprise-chatbots/knowledge'
 import {
@@ -75,6 +78,12 @@ describe('Forge Athletic Enterprise Growth Chatbot Engine', () => {
     expect(FORGE_ENTERPRISE_DOSSIER).toContain('Lisa Gordon')
     expect(FORGE_ENTERPRISE_DOSSIER).toContain('VP of Customer Success & Enterprise Accounts')
     expect(FORGE_ENTERPRISE_DOSSIER).toContain('lisa@forge-athletic.app')
+    expect(INTERNAL_EXECUTIVE_ROSTER_CONTEXT).toContain('$400/month ($4,800/year ARR)')
+    expect(INTERNAL_EXECUTIVE_ROSTER_CONTEXT).toContain('indefinite all-features access')
+    expect(buildExecutiveBotSystemPrompt('cfo-revenue')).toContain('$400/month ($4,800/year ARR)')
+    // Ensure internal client revenue details never leak into the public marketing concierge prompt
+    expect(buildPublicConciergeSystemPrompt('prelaunch_waitlist')).not.toContain('$400/month')
+    expect(buildPublicConciergeSystemPrompt('prelaunch_waitlist')).not.toContain('Jen')
     const scottProfile = FORGE_LEADERSHIP_TEAM.find(m => m.id === 'scott-gordon')
     const lisaProfile = FORGE_LEADERSHIP_TEAM.find(m => m.id === 'lisa-gordon')
     expect(scottProfile).toBeDefined()
@@ -89,18 +98,24 @@ describe('Forge Athletic Enterprise Growth Chatbot Engine', () => {
     const telemetry = {
       ...buildBaselineTelemetrySnapshot(new Date('2026-11-22T12:00:00Z')),
       dataSource: 'live_supabase' as const,
-      activeAssignedClients: 9,
-      unassignedClients: 2,
+      activeAssignedClients: 1,
+      unassignedClients: 0,
       waitlistLeadsCount: 142,
       coachingApplicationsCount: 31,
-      inactive14dClientsCount: 3,
-      lowCreditClientsCount: 2,
-      coachSupportUtilizationPct: 60,
+      inactive14dClientsCount: 0,
+      lowCreditClientsCount: 0,
+      coachSupportUtilizationPct: 7,
+      verifiedMonthlyRecurringRevenueUsd: 400,
+      verifiedAnnualRecurringRevenueUsd: 4800,
+      legacyRetainerClientsCount: 1,
+      executiveTeamAccountsCount: 3,
     }
 
     const promptText = formatTelemetryForPrompt(telemetry)
     expect(promptText).toContain('142 Waitlist')
     expect(promptText).toContain('ZERO PII / ZERO PHI')
+    expect(promptText).toContain('$400/mo MRR ($4,800/yr ARR)')
+    expect(promptText).toContain('1 longtime legacy retainer client(s) paying $400/mo')
 
     for (const botId of EXECUTIVE_BOT_ORDER) {
       const res = await runExecutiveBotTurn(
@@ -116,6 +131,9 @@ describe('Forge Athletic Enterprise Growth Chatbot Engine', () => {
       expect(res.engineMode).toBe('deterministic_playbook')
       expect(res.replyMarkdown).toContain('Forge Athletic')
       expect(res.replyMarkdown).not.toMatch(/\bGAA\b|Gordon Athletic/i)
+      if (botId === 'cfo-revenue') {
+        expect(res.replyMarkdown).toContain('$400/mo Verified MRR ($4,800/yr ARR)')
+      }
       expect(res.suggestedFollowUps.length).toBeGreaterThan(0)
     }
   })

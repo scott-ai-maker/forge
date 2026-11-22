@@ -1,5 +1,12 @@
 import GaaIcon, { GaaIconName } from '@/components/ui/GaaIcon'
-import { isMasterCoachEmail, requireSurfaceRole } from '@/lib/authz'
+import {
+  getLegacyRetainerClient,
+  isInternalTeamOrDemoAccountEmail,
+  isLisaGordonEmail,
+  isMasterCoachEmail,
+  isScottGordonEmail,
+  requireSurfaceRole,
+} from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 import {
   normalizeCoachFocusFilter,
@@ -289,13 +296,27 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
   const onboardingCompleteCount = (fitnessProfiles ?? []).filter(profile => profile.onboarding_completed_at).length
   const onboardingCompletionRate = totalClients ? Math.round((onboardingCompleteCount / totalClients) * 100) : 0
 
-  const lowCreditClientsCount = assignedClientIds.filter(clientId => (remainingByClient[clientId] ?? 0) <= 2).length
-  const inactiveClientsCount = assignedClientIds.filter(clientId => !recentCheckInsByClient.has(clientId)).length
-  const clientsWithoutUpcomingSessions = assignedClientIds.filter(clientId => !upcomingSessionsByClient.has(clientId)).length
+  const internalExecOrDemoClientIds = new Set(
+    (assignedClients ?? [])
+      .filter(client => isInternalTeamOrDemoAccountEmail(client.email))
+      .map(client => client.id)
+  )
+  const payingAssignedClients = (assignedClients ?? []).filter(
+    client => !isInternalTeamOrDemoAccountEmail(client.email)
+  )
+  const payingAssignedClientIds = payingAssignedClients.map(client => client.id)
+  const verifiedLegacyMonthlyUsd = payingAssignedClients.reduce(
+    (sum, client) => sum + (getLegacyRetainerClient(client.email)?.monthlyRateUsd ?? 0),
+    0
+  )
 
-  const lowCreditClientIds = new Set(assignedClientIds.filter(clientId => (remainingByClient[clientId] ?? 0) <= 2))
-  const inactiveClientIds = new Set(assignedClientIds.filter(clientId => !recentCheckInsByClient.has(clientId)))
-  const noUpcomingClientIds = new Set(assignedClientIds.filter(clientId => !upcomingSessionsByClient.has(clientId)))
+  const lowCreditClientsCount = payingAssignedClientIds.filter(clientId => (remainingByClient[clientId] ?? 0) <= 2).length
+  const inactiveClientsCount = payingAssignedClientIds.filter(clientId => !recentCheckInsByClient.has(clientId)).length
+  const clientsWithoutUpcomingSessions = payingAssignedClientIds.filter(clientId => !upcomingSessionsByClient.has(clientId)).length
+
+  const lowCreditClientIds = new Set(payingAssignedClientIds.filter(clientId => (remainingByClient[clientId] ?? 0) <= 2))
+  const inactiveClientIds = new Set(payingAssignedClientIds.filter(clientId => !recentCheckInsByClient.has(clientId)))
+  const noUpcomingClientIds = new Set(payingAssignedClientIds.filter(clientId => !upcomingSessionsByClient.has(clientId)))
 
   const unreadClientMessages = (unreadMessages ?? []).filter(message => message.sender_id === message.client_id).length
 
@@ -417,7 +438,16 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
     })
 
   const stats = [
-    { key: 'all', label: 'Active Clients', value: totalClients, hint: 'Current assigned roster', cta: 'View roster' },
+    {
+      key: 'all',
+      label: 'Active Paying Clients',
+      value: payingAssignedClientIds.length,
+      hint:
+        verifiedLegacyMonthlyUsd > 0
+          ? `$${verifiedLegacyMonthlyUsd.toLocaleString()}/mo verified · excl. exec team`
+          : `${totalClients} total assigned`,
+      cta: 'View roster',
+    },
     {
       key: 'sessions-this-week',
       label: 'Sessions This Week',
@@ -496,11 +526,22 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
     (assignedClients ?? []).map(client => {
       const baseChips: Array<{ label: string; tone: keyof typeof chipStyles }> = []
 
+      const legacyClient = getLegacyRetainerClient(client.email)
+      if (isLisaGordonEmail(client.email)) {
+        baseChips.push({ label: 'Executive Team · All-Access', tone: 'gold' })
+      } else if (isScottGordonEmail(client.email)) {
+        baseChips.push({ label: 'Principal · All-Access', tone: 'gold' })
+      } else if (legacyClient) {
+        baseChips.push({ label: legacyClient.relationshipLabel, tone: 'green' })
+      }
+
       const clientStatus = (client as { status?: string }).status
       if (clientStatus === 'paused') baseChips.push({ label: 'Paused', tone: 'gold' })
       else if (clientStatus === 'inactive') baseChips.push({ label: 'Inactive', tone: 'red' })
       else if (clientStatus === 'archived') baseChips.push({ label: 'Archived', tone: 'gray' })
-      else baseChips.push({ label: 'Active', tone: 'green' })
+      else if (!legacyClient && !internalExecOrDemoClientIds.has(client.id)) {
+        baseChips.push({ label: 'Active', tone: 'green' })
+      }
 
       if (weekSessionClientIds.has(client.id)) baseChips.push({ label: 'This week', tone: 'gold' })
       if (completedRolling30ClientIds.has(client.id)) baseChips.push({ label: 'Attended 30d', tone: 'green' })
@@ -571,13 +612,15 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
       key: 'intake',
       title: 'Intake',
       tone: 'gray' as const,
-      clients: (unassignedClients ?? []).map(client => ({
-        id: client.id,
-        name: client.full_name ?? 'Unnamed client',
-        email: client.email,
-        href: '/coach?tab=intake',
-        hint: 'Unassigned and waiting for coach claim.',
-      })),
+      clients: (unassignedClients ?? [])
+        .filter(client => !isInternalTeamOrDemoAccountEmail(client.email))
+        .map(client => ({
+          id: client.id,
+          name: client.full_name ?? 'Unnamed client',
+          email: client.email,
+          href: '/coach?tab=intake',
+          hint: 'Unassigned and waiting for coach claim.',
+        })),
     },
     {
       key: 'onboarding',
@@ -663,7 +706,13 @@ export default async function CoachPage({ searchParams }: { searchParams: CoachP
       title: 'At Risk',
       tone: 'red' as const,
       clients: (assignedClients ?? [])
-        .filter(client => inactiveClientIds.has(client.id) || lowCreditClientIds.has(client.id) || !upcomingSessionsByClient.has(client.id))
+        .filter(
+          client =>
+            !internalExecOrDemoClientIds.has(client.id) &&
+            (inactiveClientIds.has(client.id) ||
+              lowCreditClientIds.has(client.id) ||
+              !upcomingSessionsByClient.has(client.id))
+        )
         .map(client => ({
           id: client.id,
           name: client.full_name ?? 'Unnamed client',

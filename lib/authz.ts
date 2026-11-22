@@ -85,11 +85,46 @@ export const MASTER_COACH_EMAILS = new Set(
   ].filter(Boolean)
 )
 
-const DEFAULT_ENTERPRISE_LEADERSHIP_EMAILS = [
+export const SCOTT_GORDON_EMAILS = new Set([
   'coach@forge-athletic.app',
   'scott@forge-athletic.app',
+  '5c077.60rd0n@gmail.com',
+])
+
+export const LISA_GORDON_EMAILS = new Set([
   'lisa@forge-athletic.app',
   'lisa.gordon1@outlook.com',
+  'da_mona_lisa@msn.com',
+])
+
+export const INTERNAL_QA_OR_DEMO_EMAILS = new Set([
+  'vip.athlete@gordonathleticadvisory.com',
+  'test.athlete@gordonathleticadvisory.com',
+])
+
+export interface LegacyRetainerClientConfig {
+  email: string
+  displayAlias: string
+  monthlyRateUsd: number
+  relationshipLabel: string
+}
+
+export const LEGACY_RETAINER_CLIENTS: readonly LegacyRetainerClientConfig[] = [
+  {
+    email: 'rainvilj@hotmail.com',
+    displayAlias: 'Longtime Legacy Client (Jen)',
+    monthlyRateUsd: 400,
+    relationshipLabel: 'Longtime Client · $400/mo',
+  },
+]
+
+const LEGACY_RETAINER_BY_EMAIL = new Map(
+  LEGACY_RETAINER_CLIENTS.map(client => [client.email.toLowerCase().trim(), client])
+)
+
+const DEFAULT_ENTERPRISE_LEADERSHIP_EMAILS = [
+  ...Array.from(SCOTT_GORDON_EMAILS),
+  ...Array.from(LISA_GORDON_EMAILS),
 ]
 
 export function isMasterCoachEmail(email: string | null | undefined): boolean {
@@ -97,10 +132,15 @@ export function isMasterCoachEmail(email: string | null | undefined): boolean {
   return MASTER_COACH_EMAILS.has(email.toLowerCase().trim())
 }
 
-export function isLisaGordonEmail(email: string | null | undefined): boolean {
+export function isScottGordonEmail(email: string | null | undefined): boolean {
   if (!email) return false
   const normalized = email.toLowerCase().trim()
-  return normalized === 'lisa@forge-athletic.app' || normalized === 'lisa.gordon1@outlook.com'
+  return SCOTT_GORDON_EMAILS.has(normalized) || MASTER_COACH_EMAILS.has(normalized)
+}
+
+export function isLisaGordonEmail(email: string | null | undefined): boolean {
+  if (!email) return false
+  return LISA_GORDON_EMAILS.has(email.toLowerCase().trim())
 }
 
 export function isEnterpriseLeaderEmail(email: string | null | undefined): boolean {
@@ -113,6 +153,41 @@ export function isEnterpriseLeaderEmail(email: string | null | undefined): boole
     .map(entry => entry.toLowerCase().trim())
     .filter(Boolean)
   return extra.includes(normalized)
+}
+
+/**
+ * Founding Principal (Scott Gordon), VP of Customer Success (Lisa Gordon),
+ * and any coach role account receive all Forge Athletic features indefinitely
+ * across every account—while Lisa's role remains 'client' for HIPAA clinical isolation.
+ */
+export function hasIndefiniteAllFeaturesAccess(
+  email: string | null | undefined,
+  role?: string | null
+): boolean {
+  if (role === 'coach') return true
+  return isEnterpriseLeaderEmail(email)
+}
+
+export function isQaOrDemoAccountEmail(email: string | null | undefined): boolean {
+  if (!email) return false
+  return INTERNAL_QA_OR_DEMO_EMAILS.has(email.toLowerCase().trim())
+}
+
+/**
+ * Identifies internal executive team accounts (Scott, Lisa) and QA/demo accounts
+ * so they are excluded from paying-client counts, Coach Support 15-seat cap utilization,
+ * and client churn/inactive alerts on dashboards and executive telemetry.
+ */
+export function isInternalTeamOrDemoAccountEmail(email: string | null | undefined): boolean {
+  if (!email) return false
+  return isEnterpriseLeaderEmail(email) || isQaOrDemoAccountEmail(email)
+}
+
+export function getLegacyRetainerClient(
+  email: string | null | undefined
+): LegacyRetainerClientConfig | null {
+  if (!email) return null
+  return LEGACY_RETAINER_BY_EMAIL.get(email.toLowerCase().trim()) ?? null
 }
 
 export function requireEnterpriseLeadershipAccess(authz: { user: User; client: ClientRecord }) {

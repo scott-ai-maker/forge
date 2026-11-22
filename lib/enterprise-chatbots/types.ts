@@ -107,6 +107,10 @@ export interface EnterpriseTelemetrySnapshot {
   coachingApplicationsCount: number
   coachSupportCap: number
   coachSupportUtilizationPct: number
+  verifiedMonthlyRecurringRevenueUsd: number
+  verifiedAnnualRecurringRevenueUsd: number
+  legacyRetainerClientsCount: number
+  executiveTeamAccountsCount: number
 }
 
 export interface ExecutiveChatRequest {

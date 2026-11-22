@@ -7,12 +7,19 @@
  */
 
 import {
+  getLegacyRetainerClient,
+  isEnterpriseLeaderEmail,
+  isInternalTeamOrDemoAccountEmail,
+} from '@/lib/authz'
+import {
   calculateTimeRemaining,
   getGoLiveDate,
   isPublicRegistrationOpen,
   LAUNCH_CAMPAIGN_INFO,
 } from '@/lib/launch-config'
 import type { EnterpriseTelemetrySnapshot } from './types'
+
+const CONSERVATIVE_STANDARD_CLIENT_MRR_USD = 149
 
 export function buildBaselineTelemetrySnapshot(now: Date = new Date()): EnterpriseTelemetrySnapshot {
   const goLiveDate = getGoLiveDate()
@@ -38,6 +45,10 @@ export function buildBaselineTelemetrySnapshot(now: Date = new Date()): Enterpri
     coachingApplicationsCount: 0,
     coachSupportCap: LAUNCH_CAMPAIGN_INFO.activeCoachSupportRosterCap,
     coachSupportUtilizationPct: 0,
+    verifiedMonthlyRecurringRevenueUsd: 0,
+    verifiedAnnualRecurringRevenueUsd: 0,
+    legacyRetainerClientsCount: 0,
+    executiveTeamAccountsCount: 0,
   }
 }
 
@@ -69,17 +80,18 @@ export async function fetchEnterpriseTelemetrySnapshot(
     const inactiveWindowStart = new Date(now)
     inactiveWindowStart.setDate(inactiveWindowStart.getDate() - 14)
 
-    // Query strictly non-PII IDs & counts (company-wide aggregates for Principal & VP Customer Success)
+    // Query client rows for server-side classification ONLY.
+    // Emails are NEVER emitted in telemetry payloads or sent to external LLMs.
     const assignedQuery = includeCompanyWideAggregates
       ? admin
           .from('clients')
-          .select('id', { count: 'exact' })
+          .select('id, email, status')
           .not('designated_coach_id', 'is', null)
           .eq('role', 'client')
           .limit(500)
       : admin
           .from('clients')
-          .select('id', { count: 'exact' })
+          .select('id, email, status')
           .eq('designated_coach_id', coachId)
           .eq('role', 'client')
           .limit(500)
@@ -89,10 +101,11 @@ export async function fetchEnterpriseTelemetrySnapshot(
       includeCompanyWideAggregates
         ? admin
             .from('clients')
-            .select('id', { count: 'exact', head: true })
+            .select('id, email')
             .is('designated_coach_id', null)
             .eq('role', 'client')
-        : Promise.resolve({ count: 0 }),
+            .limit(500)
+        : Promise.resolve({ data: [] as Array<{ id: string; email: string | null }> }),
       includeCompanyWideAggregates
         ? admin.from('waitlist').select('id', { count: 'exact', head: true })
         : Promise.resolve({ count: 0 }),
@@ -101,11 +114,47 @@ export async function fetchEnterpriseTelemetrySnapshot(
         : Promise.resolve({ count: 0 }),
     ])
 
-    const assignedClientIds = (assignedRes.data ?? []).map(row => row.id as string)
-    const activeAssignedClients = assignedRes.count ?? assignedClientIds.length
-    const unassignedClients = unassignedRes.count ?? 0
+    const allAssignedRows = (assignedRes.data ?? []) as Array<{
+      id: string
+      email: string | null
+      status?: string | null
+    }>
+    const allUnassignedRows = (unassignedRes.data ?? []) as Array<{
+      id: string
+      email: string | null
+    }>
+
+    // Exclude internal executive leadership (Scott, Lisa) and QA/demo accounts
+    // from paying client counts, Coach Support 15-seat cap, and churn alerts.
+    const executiveTeamAccountsCount = [...allAssignedRows, ...allUnassignedRows].filter(row =>
+      isEnterpriseLeaderEmail(row.email)
+    ).length
+
+    const payingAssignedRows = allAssignedRows.filter(
+      row => !isInternalTeamOrDemoAccountEmail(row.email) && row.status !== 'inactive'
+    )
+    const unassignedPayingRows = allUnassignedRows.filter(
+      row => !isInternalTeamOrDemoAccountEmail(row.email)
+    )
+
+    const assignedClientIds = payingAssignedRows.map(row => row.id)
+    const activeAssignedClients = assignedClientIds.length
+    const unassignedClients = unassignedPayingRows.length
     const waitlistLeadsCount = waitlistRes.count ?? 0
     const coachingApplicationsCount = applicationsRes.count ?? 0
+
+    let legacyRetainerClientsCount = 0
+    let verifiedMonthlyRecurringRevenueUsd = 0
+    for (const row of payingAssignedRows) {
+      const legacy = getLegacyRetainerClient(row.email)
+      if (legacy) {
+        legacyRetainerClientsCount += 1
+        verifiedMonthlyRecurringRevenueUsd += legacy.monthlyRateUsd
+      } else {
+        verifiedMonthlyRecurringRevenueUsd += CONSERVATIVE_STANDARD_CLIENT_MRR_USD
+      }
+    }
+    const verifiedAnnualRecurringRevenueUsd = verifiedMonthlyRecurringRevenueUsd * 12
 
     let onboardingCompletedCount = 0
     let sessionsThisWeek = 0
@@ -219,6 +268,10 @@ export async function fetchEnterpriseTelemetrySnapshot(
       coachingApplicationsCount,
       coachSupportCap,
       coachSupportUtilizationPct,
+      verifiedMonthlyRecurringRevenueUsd,
+      verifiedAnnualRecurringRevenueUsd,
+      legacyRetainerClientsCount,
+      executiveTeamAccountsCount,
     }
   } catch (err) {
     console.warn('[EnterpriseTelemetry] Falling back to baseline snapshot:', err)
@@ -227,9 +280,15 @@ export async function fetchEnterpriseTelemetrySnapshot(
 }
 
 export function formatTelemetryForPrompt(snapshot: EnterpriseTelemetrySnapshot): string {
+  const mrr = snapshot.verifiedMonthlyRecurringRevenueUsd ?? 0
+  const arr = snapshot.verifiedAnnualRecurringRevenueUsd ?? mrr * 12
+  const legacyCount = snapshot.legacyRetainerClientsCount ?? 0
+  const execCount = snapshot.executiveTeamAccountsCount ?? 0
+
   return `LIVE AGGREGATED FORGE ATHLETIC TELEMETRY (ZERO PII / ZERO PHI — ${snapshot.dataSource === 'live_supabase' ? 'Live Database' : 'Baseline Model'}):
 - Launch Status: ${snapshot.launchMode === 'prelaunch_waitlist' ? `Pre-Launch Waitlist Mode (${snapshot.daysUntilGoLive} days until ${snapshot.goLiveDateFormatted} go-live)` : 'Public Registration LIVE'}
-- Active Assigned Clients: ${snapshot.activeAssignedClients} (Coach Support roster cap: ${snapshot.coachSupportCap} · ${snapshot.coachSupportUtilizationPct}% utilization)
+- Active Paying Clients: ${snapshot.activeAssignedClients} (includes ${legacyCount} longtime legacy retainer client(s) paying $400/mo; Coach Support roster cap: ${snapshot.coachSupportCap} · ${snapshot.coachSupportUtilizationPct}% utilization; excludes ${execCount} internal executive team accounts with indefinite all-features access)
+- Verified Recurring Revenue: $${mrr.toLocaleString()}/mo MRR ($${arr.toLocaleString()}/yr ARR)
 - Unassigned / Intake Queue Clients: ${snapshot.unassignedClients}
 - Onboarding Completion: ${snapshot.onboardingCompletedCount}/${snapshot.activeAssignedClients} (${snapshot.onboardingCompletionRatePct}%)
 - Live Sessions Scheduled This Week: ${snapshot.sessionsThisWeek}

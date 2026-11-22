@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestAuthz, requireRole, isMasterCoachEmail, AuthzError } from '@/lib/authz'
+import {
+  AuthzError,
+  getLegacyRetainerClient,
+  getRequestAuthz,
+  hasIndefiniteAllFeaturesAccess,
+  isEnterpriseLeaderEmail,
+  isInternalTeamOrDemoAccountEmail,
+  isMasterCoachEmail,
+  isQaOrDemoAccountEmail,
+  requireRole,
+} from '@/lib/authz'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export interface ClientEngagement {
   clientId: string
   fullName: string | null
   email: string
+  accountClassification: 'executive_team' | 'legacy_client' | 'standard_client' | 'qa_demo'
+  monthlyRetainerUsd: number | null
+  indefiniteAllAccess: boolean
   sessionsRemaining: number
   workoutLogsLast28: number
   setsLoggedLast28?: number
@@ -275,10 +288,24 @@ export async function GET(req: NextRequest) {
       trend = 'stable'
     }
 
+    const legacyClient = getLegacyRetainerClient(client.email)
+    const isExecTeam = isEnterpriseLeaderEmail(client.email)
+    const isQaDemo = isQaOrDemoAccountEmail(client.email)
+    const accountClassification: ClientEngagement['accountClassification'] = isExecTeam
+      ? 'executive_team'
+      : isQaDemo
+      ? 'qa_demo'
+      : legacyClient
+      ? 'legacy_client'
+      : 'standard_client'
+
     return {
       clientId: client.id,
       fullName: client.full_name ?? null,
       email: client.email,
+      accountClassification,
+      monthlyRetainerUsd: legacyClient ? legacyClient.monthlyRateUsd : null,
+      indefiniteAllAccess: hasIndefiniteAllFeaturesAccess(client.email, 'client'),
       sessionsRemaining: sessionsMap.get(client.id) ?? 0,
       workoutLogsLast28: logCount28,
       setsLoggedLast28: setsLast28Map.get(client.id) ?? 0,
@@ -303,10 +330,18 @@ export async function GET(req: NextRequest) {
 }
 
 function buildSummary(data: ClientEngagement[]) {
-  const total = data.length
+  // Exclude internal executive team (Scott, Lisa) and QA/demo accounts from paying-client counts & churn risk alerts.
+  const payingClients = data.filter((c) => !isInternalTeamOrDemoAccountEmail(c.email))
+  const total = payingClients.length
+  const verifiedMonthlyRecurringRevenueUsd = payingClients.reduce(
+    (sum, c) => sum + (c.monthlyRetainerUsd ?? 0),
+    0
+  )
+
   if (total === 0) {
     return {
       totalClients: 0,
+      verifiedMonthlyRecurringRevenueUsd: 0,
       avgCompliancePct: null,
       improving: 0,
       declining: 0,
@@ -314,7 +349,7 @@ function buildSummary(data: ClientEngagement[]) {
     }
   }
 
-  const withCompliance = data.filter((c) => c.workoutCompliancePct !== null)
+  const withCompliance = payingClients.filter((c) => c.workoutCompliancePct !== null)
   const avgCompliance =
     withCompliance.length > 0
       ? Math.round(
@@ -325,10 +360,11 @@ function buildSummary(data: ClientEngagement[]) {
 
   return {
     totalClients: total,
+    verifiedMonthlyRecurringRevenueUsd,
     avgCompliancePct: avgCompliance,
-    improving: data.filter((c) => c.trend === 'improving').length,
-    declining: data.filter((c) => c.trend === 'declining').length,
-    needsAttention: data.filter(
+    improving: payingClients.filter((c) => c.trend === 'improving').length,
+    declining: payingClients.filter((c) => c.trend === 'declining').length,
+    needsAttention: payingClients.filter(
       (c) =>
         c.trend === 'declining' ||
         (c.workoutCompliancePct !== null && c.workoutCompliancePct < 50) ||

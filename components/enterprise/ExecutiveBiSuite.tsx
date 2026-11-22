@@ -73,10 +73,10 @@ function formatUsd(amount: number): string {
   if (amount >= 1_000_000) {
     return `$${(amount / 1_000_000).toFixed(2)}M`
   }
-  if (amount >= 1_000) {
+  if (amount >= 10_000) {
     return `$${Math.round(amount / 1_000).toLocaleString()}k`
   }
-  return `$${amount.toLocaleString()}`
+  return `$${Math.round(amount).toLocaleString()}`
 }
 
 export default function ExecutiveBiSuite({
@@ -129,7 +129,9 @@ export default function ExecutiveBiSuite({
       ['Launch Mode', t.launchMode],
       ['Days Until Go-Live', String(t.daysUntilGoLive)],
       ['Executive Health Score (0-100)', String(snapshot.healthScore100)],
-      ['Active Assigned Clients', String(t.activeAssignedClients)],
+      ['Active Paying Clients', String(t.activeAssignedClients)],
+      ['Longtime Legacy Retainer Clients ($400/mo)', String(t.legacyRetainerClientsCount ?? 0)],
+      ['Internal Executive Accounts (Indefinite All-Access)', String(t.executiveTeamAccountsCount ?? 0)],
       ['Unassigned Intake Clients', String(t.unassignedClients)],
       ['Coach Support Cap Utilization (%)', String(t.coachSupportUtilizationPct)],
       ['Onboarding Completion (%)', String(t.onboardingCompletionRatePct)],
@@ -142,7 +144,8 @@ export default function ExecutiveBiSuite({
       ['Waitlist Leads (7d)', String(snapshot.waitlistLast7d)],
       ['Waitlist Leads (30d)', String(snapshot.waitlistLast30d)],
       ['Coaching Applications Total', String(t.coachingApplicationsCount)],
-      ['Estimated ARR Run-Rate (USD)', String(snapshot.estimatedAnnualRunRateUsd)],
+      ['Verified MRR Run-Rate (USD)', String(snapshot.estimatedMonthlyRunRateUsd)],
+      ['Verified ARR Run-Rate (USD)', String(snapshot.estimatedAnnualRunRateUsd)],
       ['Year 1 ARR Target (USD)', String(snapshot.year1ArrTargetUsd)],
     ]
     const csv = rows.map(r => r.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -235,15 +238,23 @@ export default function ExecutiveBiSuite({
             <div className="rounded-2xl border border-amber-400/30 bg-gradient-to-br from-[#121C2E] to-[#0B1220] p-4">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10.5px] font-bold uppercase tracking-wider text-amber-300">
-                  Estimated ARR Run-Rate
+                  Verified Recurring Revenue
                 </span>
                 <TrendingUp size={15} className="text-amber-300" aria-hidden="true" />
               </div>
-              <div className="mt-2 font-mono text-3xl font-extrabold tabular-nums text-white">
-                {formatUsd(snapshot.estimatedAnnualRunRateUsd)}
+              <div className="mt-2 flex items-baseline gap-2 font-mono font-extrabold tabular-nums text-white">
+                <span className="text-3xl">{formatUsd(snapshot.estimatedMonthlyRunRateUsd)}/mo</span>
+                <span className="text-xs font-semibold text-amber-200">
+                  ({formatUsd(snapshot.estimatedAnnualRunRateUsd)} ARR)
+                </span>
               </div>
               <div className="mt-1 text-xs text-zinc-400">
-                Year 1 Target: <strong className="text-amber-200">{formatUsd(snapshot.year1ArrTargetUsd)}</strong> ({snapshot.year1ProgressPct}% · Target EBITDA {snapshot.targetEbitdaMarginPct}%)
+                {(t.legacyRetainerClientsCount ?? 0) > 0 ? (
+                  <>
+                    <strong className="text-emerald-300">{t.legacyRetainerClientsCount} longtime client ($400/mo)</strong> ·{' '}
+                  </>
+                ) : null}
+                Yr 1 Goal: <strong className="text-amber-200">{formatUsd(snapshot.year1ArrTargetUsd)}</strong> ({snapshot.targetEbitdaMarginPct}% EBITDA)
               </div>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
                 <div
@@ -298,7 +309,7 @@ export default function ExecutiveBiSuite({
             <div className="rounded-2xl border border-violet-400/30 bg-gradient-to-br from-[#18162B] to-[#0B1220] p-4">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10.5px] font-bold uppercase tracking-wider text-violet-300">
-                  Coach Support Capacity
+                  Paying Roster Capacity
                 </span>
                 <ShieldCheck size={15} className="text-violet-300" aria-hidden="true" />
               </div>
@@ -307,7 +318,7 @@ export default function ExecutiveBiSuite({
                 <span className="text-base font-normal text-zinc-400">/{t.coachSupportCap}</span>
               </div>
               <div className="mt-1 text-xs text-zinc-400">
-                {t.coachSupportUtilizationPct}% cap used · <strong className="text-rose-300">{t.inactive14dClientsCount}</strong> inactive · <strong className="text-amber-300">{t.lowCreditClientsCount}</strong> low credits
+                {t.coachSupportUtilizationPct}% cap · excludes Scott &amp; Lisa (exec team) · <strong className="text-rose-300">{t.inactive14dClientsCount}</strong> inactive
               </div>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
                 <div
@@ -522,7 +533,12 @@ export default function ExecutiveBiSuite({
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-serif text-base font-bold text-white">{leader.name}</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-serif text-base font-bold text-white">{leader.name}</span>
+                      <span className="rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 font-mono text-[9.5px] font-bold uppercase tracking-wider text-emerald-300">
+                        Indefinite All-Access
+                      </span>
+                    </div>
                     <div className="text-xs font-semibold text-amber-300">{leader.title}</div>
                     <div className="mt-0.5 font-mono text-[10.5px] text-emerald-300">{leader.credentials}</div>
                     <p className="mt-2 text-xs leading-relaxed text-zinc-300">{leader.bio}</p>

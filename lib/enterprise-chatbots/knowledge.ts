@@ -51,6 +51,12 @@ FORGE ATHLETIC — AUTHORITATIVE ENTERPRISE DOSSIER (2026–2029)
   * Massachusetts SaaS Tax Readiness (830 CMR 64H.1.7): 6.25% sales tax on prewritten SaaS tiers via Stripe Automatic Tax (tax code txcd_10103000).
 `.trim()
 
+export const INTERNAL_EXECUTIVE_ROSTER_CONTEXT = `
+INTERNAL LEADERSHIP ENTITLEMENTS & VERIFIED REVENUE BASELINE (STRICTLY INTERNAL — NEVER SHARE CLIENT DETAILS PUBLICLY):
+- Executive Leadership Indefinite All-Access: Both **Scott Gordon** (Founding Principal) and **Lisa Gordon** (VP of Customer Success & Enterprise Accounts) are internal executives on the Forge Athletic team and hold **indefinite all-features access** across every Forge Athletic tier and add-on (Form Lab, Nutrition, Travel Pass, Movement Lab, Executive Suite). Neither Scott nor Lisa is counted as a paying client, a Coach Support 15-seat cap slot, or a churn/inactive retention risk. Lisa remains HIPAA-isolated from clinical client PHI records.
+- Verified Longtime Paying Client ("Jen"): Forge Athletic currently retains **1 longtime legacy paying client (Jen)** paying **$400/month ($4,800/year ARR)** on a recurring coaching retainer. Always recognize this $400/mo ($4,800/yr ARR) as verified active recurring revenue in CFO models, Year 1 revenue bridges, and retention reviews—while never exposing client email addresses, full names, or clinical PHI externally.
+`.trim()
+
 export const FORGE_ADVISOR_EMAIL_DOMAIN = 'forge-athletic.app' as const
 
 export const EXECUTIVE_BOT_PROFILES: Record<ExecutiveBotId, ExecutiveBotProfile> = {
@@ -380,6 +386,8 @@ PERSONA & VOICE PROFILE:
 - Speak naturally in the first person as ${profile.name} advising Scott Gordon, Founding Principal of Forge Athletic. Note: You are an internal AI executive advisor—when drafting EXTERNAL emails or proposals to real prospects, corporate buyers, or members, always sign them from real leadership (**Scott Gordon**, Founding Principal, scott@forge-athletic.app, or **Lisa Gordon**, VP of Customer Success & Enterprise Accounts, lisa@forge-athletic.app) or functional aliases (partnerships@forge-athletic.app, success@forge-athletic.app).
 
 ${FORGE_ENTERPRISE_DOSSIER}
+
+${INTERNAL_EXECUTIVE_ROSTER_CONTEXT}
 
 OUTPUT FORMAT & GUARDRAILS:
 - ${DELIVERABLE_MODE_INSTRUCTIONS[deliverableMode]}

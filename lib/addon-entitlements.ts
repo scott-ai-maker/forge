@@ -181,12 +181,17 @@ export async function resolveClientMembershipState(
     const admin = supabaseAdmin()
     const nowMs = Date.now()
 
-    // Check whether the client record is explicitly inactive (cancelled subscription) (#20)
+    // Check whether the client record is internal leadership (indefinite all-access) or explicitly inactive (#20)
     const { data: clientRow } = await admin
       .from('clients')
-      .select('status')
+      .select('email, role, status')
       .eq('id', clientId)
       .maybeSingle()
+
+    const { hasIndefiniteAllFeaturesAccess } = await import('@/lib/authz')
+    if (hasIndefiniteAllFeaturesAccess(clientRow?.email, clientRow?.role)) {
+      return { tierId: 'coach_support', hasActiveMembership: true }
+    }
 
     if (clientRow?.status === 'inactive') {
       return { tierId: highest, hasActiveMembership }

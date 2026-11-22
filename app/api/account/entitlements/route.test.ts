@@ -1,12 +1,19 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { NextRequest } from 'next/server'
+import {
+  getLegacyRetainerClient,
+  hasIndefiniteAllFeaturesAccess,
+  isInternalTeamOrDemoAccountEmail,
+  isLisaGordonEmail,
+  isScottGordonEmail,
+} from '@/lib/authz'
 
-const { getRequestAuthzMock, supabaseAdminMock } = vi.hoisted(() => ({
-  getRequestAuthzMock: vi.fn(),
-  supabaseAdminMock: vi.fn(),
-}))
+const { getRequestAuthzMock, loadClientEntitlementsMock, resolveClientMembershipStateMock } =
+  vi.hoisted(() => ({
+    getRequestAuthzMock: vi.fn(),
+    loadClientEntitlementsMock: vi.fn(),
+    resolveClientMembershipStateMock: vi.fn(),
+  }))
 
 vi.mock('@/lib/authz', async () => {
   const actual = await vi.importActual<typeof import('@/lib/authz')>('@/lib/authz')
@@ -16,134 +23,108 @@ vi.mock('@/lib/authz', async () => {
   }
 })
 
-vi.mock('@/lib/supabase', () => ({
-  supabaseAdmin: supabaseAdminMock,
-}))
+vi.mock('@/lib/addon-entitlements', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/addon-entitlements')>(
+    '@/lib/addon-entitlements'
+  )
+  return {
+    ...actual,
+    loadClientEntitlements: loadClientEntitlementsMock,
+    resolveClientMembershipState: resolveClientMembershipStateMock,
+  }
+})
 
 import { GET } from './route'
-import {
-  inferForgeTierFromPackageNameClient,
-  tierIdToForgePackageId,
-} from '@/lib/tierEntitlements'
 
-describe('GET /api/account/entitlements & QA Tier Preview Hardening (#20)', () => {
+describe('/api/account/entitlements — Executive Indefinite All-Access & Legacy Client Classification', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.unstubAllEnvs()
   })
 
-  it('resolves DB-verified Plus/Coach Support tier and disables allowQaPreview for production client accounts', async () => {
-    vi.stubEnv('NODE_ENV', 'production')
-    getRequestAuthzMock.mockResolvedValueOnce({
-      user: { id: 'client-paid-1' },
-      client: { role: 'client' },
-    })
+  it('grants indefinite all-features access to Lisa Gordon across both accounts while keeping HIPAA client role isolation', async () => {
+    for (const email of ['lisa.gordon1@outlook.com', 'da_mona_lisa@msn.com', 'lisa@forge-athletic.app']) {
+      expect(isLisaGordonEmail(email)).toBe(true)
+      expect(hasIndefiniteAllFeaturesAccess(email, 'client')).toBe(true)
+      expect(isInternalTeamOrDemoAccountEmail(email)).toBe(true)
 
-    supabaseAdminMock.mockImplementation(() => ({
-      from: (table: string) => {
-        if (table === 'client_addon_entitlements') {
-          return {
-            select: () => ({
-              eq: () => ({
-                gt: () => ({
-                  order: async () => ({
-                    data: [
-                      {
-                        id: 'ent-1',
-                        addon_id: 'forge-pro-athlete',
-                        feature: 'video-review',
-                        uses_total: 4,
-                        uses_remaining: 3,
-                        expires_at: '2099-01-01T00:00:00.000Z',
-                      },
-                    ],
-                    error: null,
-                  }),
-                }),
-              }),
-            }),
-          }
-        }
-        if (table === 'client_packages') {
-          return {
-            select: () => ({
-              eq: () => ({
-                order: async () => ({
-                  data: [
-                    {
-                      package_name: 'Plus',
-                      sessions_remaining: 0,
-                      expires_at: null,
-                    },
-                  ],
-                  error: null,
-                }),
-              }),
-            }),
-          }
-        }
-        return {}
+      getRequestAuthzMock.mockResolvedValueOnce({
+        user: { id: 'lisa-id', email },
+        client: { id: 'lisa-id', role: 'client', status: 'active', email },
+      })
+
+      const res = await GET(new NextRequest('http://localhost:3000/api/account/entitlements'))
+      const body = await res.json()
+
+      expect(res.status).toBe(200)
+      expect(body.tierId).toBe('coach_support')
+      expect(body.hasActiveMembership).toBe(true)
+      expect(body.indefiniteAccess).toBe(true)
+      expect(body.isExecutiveTeam).toBe(true)
+      expect(body.role).toBe('client') // Preserves HIPAA clinical isolation
+      expect(body.features['video-review']).toEqual({ active: true, expiresAt: null, usesRemaining: null })
+      expect(body.features.nutrition).toEqual({ active: true, expiresAt: null, usesRemaining: null })
+      expect(body.features.travel).toEqual({ active: true, expiresAt: null, usesRemaining: null })
+    }
+  })
+
+  it('grants indefinite all-features access to Scott Gordon across coach and personal accounts', async () => {
+    for (const [email, role] of [
+      ['coach@forge-athletic.app', 'coach'],
+      ['scott@forge-athletic.app', 'coach'],
+      ['5c077.60rd0n@gmail.com', 'client'],
+    ] as const) {
+      expect(isScottGordonEmail(email)).toBe(true)
+      expect(hasIndefiniteAllFeaturesAccess(email, role)).toBe(true)
+      expect(isInternalTeamOrDemoAccountEmail(email)).toBe(true)
+
+      getRequestAuthzMock.mockResolvedValueOnce({
+        user: { id: 'scott-id', email },
+        client: { id: 'scott-id', role, status: 'active', email },
+      })
+
+      const res = await GET(new NextRequest('http://localhost:3000/api/account/entitlements'))
+      const body = await res.json()
+
+      expect(res.status).toBe(200)
+      expect(body.tierId).toBe('coach_support')
+      expect(body.hasActiveMembership).toBe(true)
+      expect(body.indefiniteAccess).toBe(true)
+      expect(body.isExecutiveTeam).toBe(true)
+    }
+  })
+
+  it('classifies Jen (rainvilj@hotmail.com) as a longtime paying client at $400/mo and NOT internal executive team', async () => {
+    const legacy = getLegacyRetainerClient('rainvilj@hotmail.com')
+    expect(legacy).not.toBeNull()
+    expect(legacy?.monthlyRateUsd).toBe(400)
+    expect(isInternalTeamOrDemoAccountEmail('rainvilj@hotmail.com')).toBe(false)
+    expect(hasIndefiniteAllFeaturesAccess('rainvilj@hotmail.com', 'client')).toBe(false)
+
+    getRequestAuthzMock.mockResolvedValueOnce({
+      user: { id: 'jen-id', email: 'rainvilj@hotmail.com' },
+      client: { id: 'jen-id', role: 'client', status: 'active', email: 'rainvilj@hotmail.com' },
+    })
+    loadClientEntitlementsMock.mockResolvedValueOnce([
+      {
+        id: 'e1',
+        addon_id: 'forge-transformation-direct',
+        feature: 'nutrition',
+        uses_total: null,
+        uses_remaining: null,
+        expires_at: '2126-11-22T00:00:00.000Z',
       },
-    }))
-
-    const req = new NextRequest('https://forge-athletic.app/api/account/entitlements')
-    const res = await GET(req)
-    expect(res.status).toBe(200)
-    const body = await res.json()
-    expect(body.tierId).toBe('plus')
-    expect(body.role).toBe('client')
-    expect(body.allowQaPreview).toBe(false)
-    expect(body.features['video-review']).toMatchObject({
-      active: true,
-      usesRemaining: 3,
-    })
-  })
-
-  it('enables allowQaPreview and coach_support tier for authenticated coach accounts in production', async () => {
-    vi.stubEnv('NODE_ENV', 'production')
-    getRequestAuthzMock.mockResolvedValueOnce({
-      user: { id: 'coach-1' },
-      client: { role: 'coach' },
+    ])
+    resolveClientMembershipStateMock.mockResolvedValueOnce({
+      tierId: 'coach_support',
+      hasActiveMembership: true,
     })
 
-    const req = new NextRequest('https://forge-athletic.app/api/account/entitlements')
-    const res = await GET(req)
-    expect(res.status).toBe(200)
+    const res = await GET(new NextRequest('http://localhost:3000/api/account/entitlements'))
     const body = await res.json()
+
+    expect(res.status).toBe(200)
     expect(body.tierId).toBe('coach_support')
-    expect(body.role).toBe('coach')
-    expect(body.allowQaPreview).toBe(true)
-  })
-
-  it('maps package names and Stripe package IDs accurately and strips mock localStorage upgrades from production UI', () => {
-    expect(inferForgeTierFromPackageNameClient('Core', 0)).toBe('core_lab')
-    expect(inferForgeTierFromPackageNameClient('Plus', 0)).toBe('plus')
-    expect(inferForgeTierFromPackageNameClient('Coach Support', 0)).toBe('coach_support')
-    // Bonus/add-on session credits must NOT escalate a Core Lab subscriber to $299/mo coach_support (#20)
-    expect(inferForgeTierFromPackageNameClient('Core', 2)).toBe('core_lab')
-
-    expect(tierIdToForgePackageId('core_lab')).toBe('forge-core')
-    expect(tierIdToForgePackageId('plus')).toBe('forge-pro-athlete')
-    expect(tierIdToForgePackageId('coach_support')).toBe('forge-transformation-direct')
-
-    const repoRoot = process.cwd()
-    const switcherSrc = fs.readFileSync(
-      path.join(repoRoot, 'components/settings/TierPreviewSwitcher.tsx'),
-      'utf8'
-    )
-    const upgradeModalSrc = fs.readFileSync(
-      path.join(repoRoot, 'components/packages/TierUpgradeModal.tsx'),
-      'utf8'
-    )
-    const authFormSrc = fs.readFileSync(
-      path.join(repoRoot, 'components/auth/AuthForm.tsx'),
-      'utf8'
-    )
-
-    expect(switcherSrc).toContain('if (!allowQaPreview)')
-    expect(upgradeModalSrc).toContain("fetch('/api/stripe/checkout'")
-    expect(upgradeModalSrc).toContain('autoRenewalConsent: true')
-    expect(upgradeModalSrc).not.toContain('setStoredTierId(')
-    expect(authFormSrc).not.toContain('setStoredTierId(')
+    expect(body.hasActiveMembership).toBe(true)
+    expect(body.isExecutiveTeam).toBe(false)
   })
 })

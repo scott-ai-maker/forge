@@ -47,14 +47,18 @@ const SAMPLE_BI = {
     coachingApplicationsCount: 28,
     coachSupportCap: 15,
     coachSupportUtilizationPct: 53,
+    verifiedMonthlyRecurringRevenueUsd: 400,
+    verifiedAnnualRecurringRevenueUsd: 4800,
+    legacyRetainerClientsCount: 1,
+    executiveTeamAccountsCount: 3,
   },
   healthScore100: 89,
   activeRetention14dPct: 88,
   waitlistToApplicationPct: 23,
   waitlistLast7d: 18,
   waitlistLast30d: 64,
-  estimatedMonthlyRunRateUsd: 1192,
-  estimatedAnnualRunRateUsd: 14304,
+  estimatedMonthlyRunRateUsd: 400,
+  estimatedAnnualRunRateUsd: 4800,
   year1ArrTargetUsd: 585000,
   year2ArrTargetUsd: 1850000,
   year3ArrTargetUsd: 4750000,
@@ -118,5 +122,8 @@ describe('/api/enterprise/metrics', () => {
     expect(text).toContain('forge_active_clients 8')
     expect(text).toContain('forge_waitlist_leads_total 120')
     expect(text).toContain('forge_executive_health_score 89')
+    expect(text).toContain('forge_verified_mrr_usd 400')
+    expect(text).toContain('forge_verified_arr_usd 4800')
+    expect(text).toContain('forge_legacy_retainer_clients 1')
   })
 })

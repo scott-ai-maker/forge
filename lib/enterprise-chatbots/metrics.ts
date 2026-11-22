@@ -205,9 +205,17 @@ export async function fetchEnterpriseBiDashboard(
         )
       : 0
 
-  // Conservative blended ARPU estimate ($149/mo across Core/Plus/Coach Support mix)
-  const estimatedMonthlyRunRateUsd = telemetry.activeAssignedClients * 149
-  const estimatedAnnualRunRateUsd = estimatedMonthlyRunRateUsd * 12
+  // Use verified recurring revenue from live telemetry (includes longtime legacy retainer clients such as $400/mo)
+  const verifiedMonthlyRunRateUsd =
+    telemetry.verifiedMonthlyRecurringRevenueUsd > 0
+      ? telemetry.verifiedMonthlyRecurringRevenueUsd
+      : telemetry.activeAssignedClients * 149
+  const verifiedAnnualRunRateUsd =
+    telemetry.verifiedAnnualRecurringRevenueUsd > 0
+      ? telemetry.verifiedAnnualRecurringRevenueUsd
+      : verifiedMonthlyRunRateUsd * 12
+  const estimatedMonthlyRunRateUsd = verifiedMonthlyRunRateUsd
+  const estimatedAnnualRunRateUsd = verifiedAnnualRunRateUsd
   const year1ProgressPct = Math.min(
     100,
     Math.round((estimatedAnnualRunRateUsd / YEAR1_ARR_TARGET_USD) * 100)
@@ -275,6 +283,15 @@ export function formatPrometheusMetrics(snapshot: EnterpriseBiDashboardSnapshot)
     '# HELP forge_executive_health_score Overall zero-PII Customer Success & Business Health score (0..100).',
     '# TYPE forge_executive_health_score gauge',
     `forge_executive_health_score ${snapshot.healthScore100}`,
+    '# HELP forge_verified_mrr_usd Verified monthly recurring revenue run-rate in USD (excluding internal executive accounts).',
+    '# TYPE forge_verified_mrr_usd gauge',
+    `forge_verified_mrr_usd ${snapshot.estimatedMonthlyRunRateUsd}`,
+    '# HELP forge_verified_arr_usd Verified annualized recurring revenue run-rate in USD (excluding internal executive accounts).',
+    '# TYPE forge_verified_arr_usd gauge',
+    `forge_verified_arr_usd ${snapshot.estimatedAnnualRunRateUsd}`,
+    '# HELP forge_legacy_retainer_clients Count of longtime legacy paying retainer clients.',
+    '# TYPE forge_legacy_retainer_clients gauge',
+    `forge_legacy_retainer_clients ${t.legacyRetainerClientsCount ?? 0}`,
     '# HELP forge_estimated_arr_usd Estimated annualized recurring revenue run-rate in USD.',
     '# TYPE forge_estimated_arr_usd gauge',
     `forge_estimated_arr_usd ${snapshot.estimatedAnnualRunRateUsd}`,

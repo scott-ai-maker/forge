@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestAuthz, AuthzError } from '@/lib/authz'
+import { AuthzError, getRequestAuthz, hasIndefiniteAllFeaturesAccess } from '@/lib/authz'
 import { consumeFeatureUse, refundFeatureUse } from '@/lib/addon-entitlements'
 import {
   analyzeLiftForm,
@@ -25,12 +25,14 @@ function sanitizeClinicalNote(raw: unknown): string | undefined {
 export async function POST(req: NextRequest) {
   let userId = ''
   let isCoach = false
+  let hasUnlimitedFeatureAccess = false
   let consumed = false
 
   try {
     const authz = await getRequestAuthz(req)
     userId = authz.user.id
     isCoach = authz.client.role === 'coach'
+    hasUnlimitedFeatureAccess = hasIndefiniteAllFeaturesAccess(authz.user.email, authz.client.role)
   } catch (error) {
     const status = error instanceof AuthzError ? error.status : 500
     const message = error instanceof Error ? error.message : 'Unauthorized'
@@ -126,7 +128,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    if (!isCoach) {
+    if (!hasUnlimitedFeatureAccess) {
       consumed = await consumeFeatureUse(userId, 'video-review')
       if (!consumed) {
         return NextResponse.json(

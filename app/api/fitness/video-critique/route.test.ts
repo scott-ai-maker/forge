@@ -7,16 +7,10 @@ const mocks = vi.hoisted(() => ({
   refundFeatureUse: vi.fn(),
 }))
 
-vi.mock('@/lib/authz', () => {
-  class MockAuthzError extends Error {
-    status: number
-    constructor(message: string, status = 401) {
-      super(message)
-      this.status = status
-    }
-  }
+vi.mock('@/lib/authz', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/authz')>('@/lib/authz')
   return {
-    AuthzError: MockAuthzError,
+    ...actual,
     getRequestAuthz: mocks.getRequestAuthz,
   }
 })

@@ -171,7 +171,7 @@ function buildDeterministicExecutiveReply(
       return `## Marcus Vance · B2B Corporate Partnerships Playbook
 
 **Prepared for Scott Gordon (Founding Principal, Forge Athletic) · Brief Focus:** ${cleanQuestion}  
-**Live Context:** ${launchStatus} · ${telemetry.waitlistLeadsCount} waitlist leads · ${telemetry.activeAssignedClients} active clients.
+**Live Context:** ${launchStatus} · ${telemetry.waitlistLeadsCount} waitlist leads · ${telemetry.activeAssignedClients} active paying client(s) ($${(telemetry.verifiedMonthlyRecurringRevenueUsd ?? 0).toLocaleString()}/mo verified MRR).
 
 ### 1. Recommended Institutional Offer Ladder
 | Cohort Tier | Seats | Annual Investment | Ideal Buyer |
@@ -225,10 +225,13 @@ scott@forge-athletic.app · partnerships@forge-athletic.app
 
     case 'cfo-revenue': {
       const seatsRemaining = Math.max(0, telemetry.coachSupportCap - telemetry.activeAssignedClients)
+      const verifiedMrr = telemetry.verifiedMonthlyRecurringRevenueUsd ?? 0
+      const verifiedArr = telemetry.verifiedAnnualRecurringRevenueUsd ?? verifiedMrr * 12
+      const legacyCount = telemetry.legacyRetainerClientsCount ?? 0
       return `## David Chen, CFA · Revenue, Margin & Retention Model
 
 **Prepared for Scott Gordon (Founding Principal, Forge Athletic) · Brief Focus:** ${cleanQuestion}  
-**Live Snapshot:** ${telemetry.activeAssignedClients} Active Assigned Clients · ${seatsRemaining}/${telemetry.coachSupportCap} Coach Support cap remaining · ${telemetry.inactive14dClientsCount} inactive (14d) · ${telemetry.lowCreditClientsCount} low credits (<=2).
+**Live Snapshot:** ${telemetry.activeAssignedClients} Active Paying Client(s) (${legacyCount} longtime legacy retainer at $400/mo) · **$${verifiedMrr.toLocaleString()}/mo Verified MRR ($${verifiedArr.toLocaleString()}/yr ARR)** · ${seatsRemaining}/${telemetry.coachSupportCap} Coach Support cap remaining (excluding internal executive team accounts: Scott & Lisa) · ${telemetry.inactive14dClientsCount} inactive (14d) · ${telemetry.lowCreditClientsCount} low credits (<=2).
 
 ### 1. Year 1 ($585,000 ARR) Target Mix & Asset-Light Unit Economics
 | Revenue Stream | Target Year 1 ARR | Monthly Run-Rate | Gross Margin Profile |

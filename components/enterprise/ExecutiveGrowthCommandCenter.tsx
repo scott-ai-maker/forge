@@ -632,23 +632,23 @@ export default function ExecutiveGrowthCommandCenter({
           </div>
 
           <div className="rounded-xl border border-white/[0.08] bg-[#0B121E]/90 p-3">
-            <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-400">Active Roster</div>
+            <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-400">Verified MRR</div>
+            <div className="mt-1 font-mono text-lg font-bold tabular-nums text-amber-300">
+              ${(telemetry.verifiedMonthlyRecurringRevenueUsd ?? 0).toLocaleString()}/mo
+            </div>
+            <div className="text-[10.5px] text-zinc-400">
+              ${(telemetry.verifiedAnnualRecurringRevenueUsd ?? 0).toLocaleString()}/yr ARR · {telemetry.legacyRetainerClientsCount ?? 0} longtime
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.08] bg-[#0B121E]/90 p-3">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-400">Paying Roster</div>
             <div className="mt-1 font-mono text-lg font-bold tabular-nums text-white">
               {telemetry.activeAssignedClients}
               <span className="text-xs font-normal text-zinc-400">/{telemetry.coachSupportCap}</span>
             </div>
             <div className="text-[10.5px] text-zinc-400">
-              {telemetry.coachSupportUtilizationPct}% cap · {telemetry.unassignedClients} intake
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-white/[0.08] bg-[#0B121E]/90 p-3">
-            <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-400">Onboarding</div>
-            <div className="mt-1 font-mono text-lg font-bold tabular-nums text-sky-300">
-              {telemetry.onboardingCompletionRatePct}%
-            </div>
-            <div className="text-[10.5px] text-zinc-400">
-              {telemetry.onboardingCompletedCount}/{telemetry.activeAssignedClients} complete
+              {telemetry.coachSupportUtilizationPct}% cap · excl. exec team
             </div>
           </div>
 
@@ -693,7 +693,7 @@ export default function ExecutiveGrowthCommandCenter({
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-xs font-bold text-white">{leader.name}</span>
                   <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-emerald-300">
-                    Leadership
+                    Leadership · Indefinite All-Access
                   </span>
                 </div>
                 <div className="truncate text-[11px] font-semibold text-amber-200">{leader.title}</div>

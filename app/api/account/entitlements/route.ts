@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequestAuthz, AuthzError } from '@/lib/authz'
+import {
+  AuthzError,
+  getRequestAuthz,
+  hasIndefiniteAllFeaturesAccess,
+  isEnterpriseLeaderEmail,
+} from '@/lib/authz'
 import {
   loadClientEntitlements,
   resolveClientMembershipState,
@@ -20,6 +25,8 @@ export async function GET(req: NextRequest) {
         {
           tierId: 'coach_support',
           hasActiveMembership: true,
+          indefiniteAccess: true,
+          isExecutiveTeam: true,
           role: 'coach',
           allowQaPreview: true,
           features: { 'video-review': open, nutrition: open, travel: open },
@@ -30,14 +37,18 @@ export async function GET(req: NextRequest) {
 
     const authz = await getRequestAuthz(req)
 
-    // Coaches use every feature for client work and may use the QA Tier Preview Switcher.
-    if (authz.client.role === 'coach') {
+    // Founding Principal (Scott Gordon), VP of Customer Success (Lisa Gordon),
+    // and coaches receive every feature indefinitely while preserving each account's
+    // HIPAA role boundary (Lisa remains role: 'client' for clinical isolation).
+    if (hasIndefiniteAllFeaturesAccess(authz.user.email, authz.client.role)) {
       const open = { active: true, expiresAt: null, usesRemaining: null }
       return NextResponse.json(
         {
           tierId: 'coach_support',
           hasActiveMembership: true,
-          role: 'coach',
+          indefiniteAccess: true,
+          isExecutiveTeam: isEnterpriseLeaderEmail(authz.user.email),
+          role: authz.client.role,
           allowQaPreview: true,
           features: { 'video-review': open, nutrition: open, travel: open },
         },
@@ -51,6 +62,8 @@ export async function GET(req: NextRequest) {
       {
         tierId,
         hasActiveMembership,
+        indefiniteAccess: false,
+        isExecutiveTeam: false,
         role: 'client',
         allowQaPreview: isDev,
         features: summarizeAllFeatureAccess(rows),
