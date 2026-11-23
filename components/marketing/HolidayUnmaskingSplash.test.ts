@@ -116,4 +116,62 @@ describe('HolidayUnmaskingSplash & Streamlined Jan 4 Founding Cohort Landing', (
     expect(LAUNCH_CAMPAIGN_INFO.activeCoachSupportRosterCap).toBe(15)
     expect('cohortClaimedInitial' in LAUNCH_CAMPAIGN_INFO).toBe(false)
   })
+
+  it('UAT: verifies every button, #anchor, and internal /route on the splash screen resolves to a real target', () => {
+    const everydayMomentsSource = fs.readFileSync(
+      path.resolve(process.cwd(), 'components/marketing/EverydayMomentsStrip.tsx'),
+      'utf-8'
+    )
+    const faqSource = fs.readFileSync(
+      path.resolve(process.cwd(), 'components/marketing/LandingFaqAccordion.tsx'),
+      'utf-8'
+    )
+    const splashSurface = [
+      componentSource,
+      sneakPeekSource,
+      everydayMomentsSource,
+      pricingGridSource,
+      faqSource,
+    ].join('\n')
+
+    // 1. Every same-page #anchor in HolidayUnmaskingSplash resolves to a real id="..." on the splash surface
+    const samePageAnchors = Array.from(componentSource.matchAll(/href[:=]\s*['"]#([a-z0-9-]+)['"]/gi)).map(m => m[1])
+    expect(samePageAnchors.length).toBeGreaterThanOrEqual(4)
+    for (const anchorId of new Set(samePageAnchors)) {
+      expect(splashSurface).toContain(`id="${anchorId}"`)
+    }
+
+    // 2. Top nav anchors match exact top-to-bottom section order (#movement-lab -> #how-it-works -> #pricing -> #faq)
+    const movementIdx = componentSource.indexOf("href: '#movement-lab'")
+    const howItWorksIdx = componentSource.indexOf("href: '#how-it-works'")
+    const pricingIdx = componentSource.indexOf("href: '#pricing'")
+    const faqIdx = componentSource.indexOf("href: '#faq'")
+    expect(movementIdx).toBeGreaterThan(-1)
+    expect(howItWorksIdx).toBeGreaterThan(movementIdx)
+    expect(pricingIdx).toBeGreaterThan(howItWorksIdx)
+    expect(faqIdx).toBeGreaterThan(pricingIdx)
+
+    // 3. Every internal route linked from the splash screen & Movement Lab exists in app/**/page.tsx
+    const allHrefs = Array.from(
+      [componentSource, sneakPeekSource, pricingGridSource].join('\n').matchAll(/href=["'](\/[^"']*)["']/g)
+    ).map(m => m[1])
+
+    for (const rawHref of new Set(allHrefs)) {
+      const [pathWithoutQuery] = rawHref.split('?')
+      const [cleanPath, hash] = pathWithoutQuery.split('#')
+      const routePageFile =
+        cleanPath === '/'
+          ? path.resolve(process.cwd(), 'app/page.tsx')
+          : path.resolve(process.cwd(), `app${cleanPath}/page.tsx`)
+      expect(fs.existsSync(routePageFile), `Missing page.tsx for splash link ${rawHref}`).toBe(true)
+
+      if (hash) {
+        const targetPageSource = fs.readFileSync(routePageFile, 'utf-8')
+        expect(
+          targetPageSource.includes(`id="${hash}"`) || targetPageSource.includes(`id='${hash}'`),
+          `Missing anchor #${hash} on ${routePageFile}`
+        ).toBe(true)
+      }
+    }
+  })
 })

@@ -10,15 +10,10 @@ function isPreLaunchBlockedPublicPath(pathname: string, searchParams: URLSearchP
     const coachInvite = searchParams.get('coach') || ''
     return !UUID_PATTERN.test(coachInvite)
   }
+  // Keep public informational marketing routes (/packages, /corporate, /audit, /apply, /credentials, /apps)
+  // browsable from the Founding Cohort splash screen while self-serve signup & Stripe checkout stay locked
+  // server-side until Monday, Jan 4, 2027.
   if (
-    pathname === '/packages' ||
-    pathname.startsWith('/packages/') ||
-    pathname === '/pricing' ||
-    pathname.startsWith('/pricing/') ||
-    pathname === '/audit' ||
-    pathname.startsWith('/audit/') ||
-    pathname === '/corporate' ||
-    pathname.startsWith('/corporate/') ||
     pathname === '/async-coaching' ||
     pathname.startsWith('/invite/') ||
     pathname.startsWith('/r/')
@@ -168,6 +163,7 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/dashboard') && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
+    url.searchParams.set('next', pathname)
     if (isHelperRequest) {
       url.searchParams.set('mode', 'companion')
     }
@@ -179,6 +175,9 @@ export async function proxy(request: NextRequest) {
   if ((pathname.startsWith('/coach') || isProtectedEnterprisePath) && !user) {
     const url = request.nextUrl.clone()
     url.pathname = isProtectedEnterprisePath ? '/enterprise/login' : '/auth/login'
+    if (!isProtectedEnterprisePath) {
+      url.searchParams.set('next', pathname)
+    }
     return NextResponse.redirect(url)
   }
 

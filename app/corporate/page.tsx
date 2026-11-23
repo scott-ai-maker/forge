@@ -6,7 +6,6 @@ import SiteFooter from '@/components/ui/SiteFooter'
 import MarketingLoginActions from '@/components/ui/MarketingLoginActions'
 import GaaMasterWatermarkSeal from '@/components/ui/GaaMasterWatermarkSeal'
 import GaaIcon from '@/components/ui/GaaIcon'
-import PurchaseButton from '@/components/packages/PurchaseButton'
 import CorporateInquiryForm from '@/components/corporate/CorporateInquiryForm'
 import CorporateProposalStudio from '@/components/corporate/CorporateProposalStudio'
 
@@ -370,7 +369,7 @@ export default function CorporateRetainersPage() {
         </div>
 
         {/* ── 4. PRICING SECTION ── */}
-        <div id="pricing" style={{ marginBottom: 96 }}>
+        <div id="pricing" style={{ marginBottom: 96, scrollMarginTop: 96 }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <h2 className="font-serif" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', color: '#FFFFFF', margin: 0, letterSpacing: '0.04em' }}>
               TEAM PLAN OPTIONS
@@ -412,12 +411,31 @@ export default function CorporateRetainersPage() {
               </p>
 
               <div style={{ marginTop: 'auto' }}>
-                <PurchaseButton
-                  packageId="corporate"
-                  cadence="monthly"
-                  buttonLabel="Choose monthly team plan ($3,500/month)"
-                  redirectNext="/corporate#pricing"
-                />
+                <a
+                  href="#proposal-form"
+                  className="tactile-btn"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    minHeight: 46,
+                    padding: '12px 18px',
+                    borderRadius: 8,
+                    background: 'rgba(212,160,23,0.16)',
+                    border: '1px solid var(--gold)',
+                    color: 'var(--gold-lt)',
+                    fontFamily: 'Raleway, sans-serif',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    textDecoration: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  Request Monthly Team Plan ($3,500/mo) →
+                </a>
               </div>
             </div>
 
@@ -473,19 +491,37 @@ export default function CorporateRetainersPage() {
               </p>
 
               <div style={{ marginTop: 'auto' }}>
-                <PurchaseButton
-                  packageId="corporate"
-                  cadence="twelve_week"
-                  buttonLabel="Choose annual team plan ($35,000/year)"
-                  redirectNext="/corporate#pricing"
-                />
+                <a
+                  href="#proposal-form"
+                  className="tactile-btn"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    minHeight: 46,
+                    padding: '12px 18px',
+                    borderRadius: 8,
+                    background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
+                    color: '#080E14',
+                    fontFamily: 'Raleway, sans-serif',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    textDecoration: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  Request Annual Team Plan ($35,000/yr) →
+                </a>
               </div>
             </div>
           </div>
         </div>
 
         {/* ── 4.5. Team plan and cost estimator ── */}
-        <div id="proposal-studio" style={{ marginBottom: 96 }}>
+        <div id="proposal-studio" style={{ marginBottom: 96, scrollMarginTop: 96 }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <span style={{ fontSize: 11, color: 'var(--gold-lt)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
               For workplaces
@@ -505,6 +541,7 @@ export default function CorporateRetainersPage() {
         <div
           id="proposal-form"
           style={{
+            scrollMarginTop: 96,
             maxWidth: 780,
             margin: '0 auto',
             background: 'rgba(0,0,0,0.5)',

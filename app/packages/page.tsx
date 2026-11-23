@@ -349,6 +349,7 @@ export default function PackagesPage() {
           id="live-1-on-1"
           aria-labelledby="live-studio-banner-heading"
           style={{
+            scrollMarginTop: '96px',
             margin: '3rem auto 1.5rem',
             padding: '1.5rem 1.75rem',
             borderRadius: '14px',

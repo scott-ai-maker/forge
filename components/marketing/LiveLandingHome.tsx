@@ -8,8 +8,8 @@ import { COACH_GORDON_TRUST_PROFILE } from '@/lib/landingSocialProof'
 import { HOLIDAY_DEAL_PROMO } from '@/lib/launch-config'
 
 const NAV_ANCHORS = [
-  { href: '#how-it-works', label: 'How It Works' },
   { href: '#movement-lab', label: 'Movement Lab' },
+  { href: '#how-it-works', label: 'How It Works' },
   { href: '#pricing', label: 'Pricing' },
   { href: '#faq', label: 'FAQ' },
 ] as const
@@ -188,10 +188,10 @@ export default function LiveLandingHome({ isPreview = false }: { isPreview?: boo
               </span>
             </div>
             <h3 className="mt-2 font-serif text-lg font-bold text-white">
-              Live 1-on-1 Sessions ($180) &amp; Multi-Athlete Team Training ($3,500/mo)
+              Live 1-on-1 Sessions ($180) &amp; Small-Group Team Pods ($1,600–$3,500/mo)
             </h3>
             <p className="mt-1 text-xs leading-relaxed text-zinc-300">
-              Train live in our encrypted 60fps WebRTC studio with real-time telestration &amp; ERAP safety—single 1:1 sessions ($180), 4-pack ($660), 8-pack ($1,240), or corporate Team Live Studio cohorts.
+              Train live in our encrypted 60fps WebRTC studio with real-time telestration &amp; ERAP safety—single 1:1 sessions ($180), 4-pack ($660), 8-pack ($1,240), or small-group corporate Team Live Studio pods (4–6 live athletes per room; up to 10 seats via dual pods).
             </p>
           </div>
           <div className="flex flex-wrap gap-2.5">

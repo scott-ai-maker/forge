@@ -94,7 +94,7 @@ describe('proxy - In-Gym Helper App & Telemetry Decoupling', () => {
     expect(location).toContain('mode=companion')
   })
 
-  it('redirects public pre-launch /auth/signup and /packages requests to the waitlist splash while allowing Master Coach and coach-invite links', async () => {
+  it('keeps public /auth/signup gated pre-launch while allowing public browsing of splash-linked pages (/packages, /corporate, /audit) and preserving ?next=/coach', async () => {
     delete process.env.NEXT_PUBLIC_SITE_UNMASKED
     delete process.env.ALLOW_PRELAUNCH_PUBLIC_SIGNUP
     mockGetUser.mockResolvedValue({ data: { user: null } })
@@ -103,9 +103,12 @@ describe('proxy - In-Gym Helper App & Telemetry Decoupling', () => {
     expect(signupRes.status).toBe(307)
     expect(signupRes.headers.get('location')).toContain('/?waitlist=prelaunch')
 
-    const packagesRes = await proxy(new NextRequest('http://127.0.0.1:3000/packages'))
-    expect(packagesRes.status).toBe(307)
-    expect(packagesRes.headers.get('location')).toContain('/?waitlist=prelaunch')
+    // Public informational routes linked from the Founding Cohort splash screen remain browsable
+    // (Stripe checkout itself stays locked server-side in /api/stripe/checkout)
+    for (const publicPath of ['/packages', '/corporate', '/corporate/proposal', '/audit', '/apply', '/credentials', '/apps']) {
+      const res = await proxy(new NextRequest(`http://127.0.0.1:3000${publicPath}`))
+      expect(res.headers.get('location')).toBeNull()
+    }
 
     // Coach-invite link remains accessible for controlled pre-launch testing
     const invitedRes = await proxy(
@@ -113,11 +116,16 @@ describe('proxy - In-Gym Helper App & Telemetry Decoupling', () => {
     )
     expect(invitedRes.headers.get('location')).toBeNull()
 
-    // Master Coach bypasses pre-launch public lockdown on /packages
+    // Unauthenticated /coach redirects to Coach Login with ?next=/coach preserved
+    const coachRes = await proxy(new NextRequest('http://127.0.0.1:3000/coach'))
+    expect(coachRes.status).toBe(307)
+    expect(coachRes.headers.get('location')).toContain('/auth/login?next=%2Fcoach')
+
+    // Master Coach bypasses pre-launch public lockdown on /async-coaching
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'coach-1', email: 'coach@forge-athletic.app', user_metadata: {} } },
     })
-    const coachPackagesRes = await proxy(new NextRequest('http://127.0.0.1:3000/packages'))
-    expect(coachPackagesRes.headers.get('location')).toBeNull()
+    const coachBypassRes = await proxy(new NextRequest('http://127.0.0.1:3000/async-coaching'))
+    expect(coachBypassRes.headers.get('location')).toBeNull()
   })
 })

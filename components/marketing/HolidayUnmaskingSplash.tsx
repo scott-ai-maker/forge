@@ -18,8 +18,8 @@ import {
 } from '@/lib/launch-config'
 
 const NAV_ANCHORS = [
-  { href: '#how-it-works', label: 'How It Works' },
   { href: '#movement-lab', label: 'Movement Lab' },
+  { href: '#how-it-works', label: 'How It Works' },
   { href: '#pricing', label: 'Pricing' },
   { href: '#faq', label: 'FAQ' },
 ] as const
@@ -48,6 +48,7 @@ export default function HolidayUnmaskingSplash({
   const [invalidField, setInvalidField] = useState<'name' | 'email' | null>(null)
   const [copiedSerial, setCopiedSerial] = useState(false)
   const [showSmsInput, setShowSmsInput] = useState(false)
+  const [showPrelaunchNotice, setShowPrelaunchNotice] = useState(false)
 
   const mountTimeRef = useRef<number>(0)
 
@@ -60,6 +61,12 @@ export default function HolidayUnmaskingSplash({
   useEffect(() => {
     setMounted(true)
     mountTimeRef.current = Date.now()
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('waitlist') === 'prelaunch') {
+        setShowPrelaunchNotice(true)
+      }
+    }
     const resolvedTarget = getGoLiveDate()
     setTargetDate(resolvedTarget)
     setTimeRemaining(calculateTimeRemaining(resolvedTarget))
@@ -277,6 +284,26 @@ export default function HolidayUnmaskingSplash({
             </a>
           ))}
         </nav>
+
+        {showPrelaunchNotice && (
+          <div
+            role="status"
+            className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-400/40 bg-amber-500/12 px-4 py-3 text-xs text-amber-100"
+          >
+            <span>
+              <strong>Pre-Launch Registration Gate:</strong> Public self-serve account creation opens{' '}
+              <strong>{LAUNCH_CAMPAIGN_INFO.dateFormatted} at {LAUNCH_CAMPAIGN_INFO.timeFormatted}</strong>.
+              Reserve your Founding Member Pass below to lock in 25% off ({HOLIDAY_DEAL_PROMO.code}).
+            </span>
+            <button
+              type="button"
+              onClick={scrollToReservationForm}
+              className="rounded-lg bg-amber-400 px-3 py-1.5 font-bold text-[#090A0D]"
+            >
+              Reserve Now ↓
+            </button>
+          </div>
+        )}
 
         {previewMode && (
           <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-400/35 bg-sky-500/10 px-4 py-2.5 text-xs text-sky-300">
@@ -698,10 +725,10 @@ export default function HolidayUnmaskingSplash({
                 </span>
               </div>
               <h3 className="mt-2 font-serif text-lg font-bold text-white">
-                Live 1-on-1 Sessions ($180) &amp; Multi-Athlete Team Training ($3,500/mo)
+                Live 1-on-1 Sessions ($180) &amp; Small-Group Team Pods ($1,600–$3,500/mo)
               </h3>
               <p className="mt-1 text-xs leading-relaxed text-zinc-300">
-                Add real-time 60fps encrypted WebRTC coaching with Coach Gordon—1-on-1 private sessions ($180 single, $660 4-pack, $1,240 8-pack) or executive Team Live Studio cohorts for up to 10 leaders.
+                Add real-time 60fps encrypted WebRTC coaching with Coach Gordon—1-on-1 private sessions ($180 single, $660 4-pack, $1,240 8-pack) or executive Team Live Studio pods (4–6 live athletes per room; up to 10 seats via dual 5-person pods).
               </p>
             </div>
             <div className="flex flex-wrap gap-2.5">
